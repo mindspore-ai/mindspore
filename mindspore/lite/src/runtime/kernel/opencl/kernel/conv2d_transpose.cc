@@ -83,10 +83,12 @@ void Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
   int co4 = UP_DIV(co, C4NUM);
   int stride_h = param->stride_h_;
   int stride_w = param->stride_w_;
+  int n = out_tensors_[0]->shape()[0];
   int oh = out_tensors_[0]->shape()[1];
   int ow = out_tensors_[0]->shape()[2];
   local_size_ = {16, 1, 16};
-  global_size_ = {(size_t)UP_ROUND(UP_DIV(oh, 2), stride_h), (size_t)UP_ROUND(UP_DIV(ow, 2), stride_w), (size_t)co4};
+  global_size_ = {(size_t)UP_ROUND(UP_DIV(oh, 2), stride_h), (size_t)UP_ROUND(UP_DIV(ow, 2), stride_w),
+                  (size_t)co4 * (size_t)n};
   AlignGlobalLocal(global_size_, local_size_);
 }
 
@@ -103,13 +105,14 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
   int stride_w = param->stride_w_;
   int oh = out_tensors_[0]->shape()[1];
   int ow = out_tensors_[0]->shape()[2];
+  int n = in_tensors_[0]->shape()[0];
   int h = in_tensors_[0]->shape()[1];
   int w = in_tensors_[0]->shape()[2];
   cl_int2 kernel_size = {kh, kw};
   cl_int2 stride = {stride_h, stride_w};
   cl_int2 padding = {pad_h, pad_w};
-  cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), 1};
-  cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), 1};
+  cl_int4 src_size = {h, w, UP_DIV(ci, C4NUM), n};
+  cl_int4 dst_size = {oh, ow, UP_DIV(co, C4NUM), n};
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);

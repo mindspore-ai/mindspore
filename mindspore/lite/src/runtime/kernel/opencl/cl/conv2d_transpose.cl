@@ -13,8 +13,10 @@ __kernel void conv2d_transpose(__read_only image2d_t src_data, __write_only imag
   int rem_w = dst_w % stride.y;
   int ceil_w = dst_w / stride.y;
   dst_w = ceil_w * stride.y * 2 + rem_w;
-  int dst_c = get_global_id(2);
-  if (dst_h >= dst_size.x || dst_w >= dst_size.y || dst_c >= dst_size.z) return;
+  int dst_c = get_global_id(2);  // n * c4
+  int n = dst_c / dst_size.z;
+  dst_c = dst_c % dst_size.z;
+  if (dst_h >= dst_size.x || dst_w >= dst_size.y || dst_c >= dst_size.z || n >= dst_size.w) return;
   int weight_base = dst_c * src_size.z * kernel_size.x * kernel_size.y;
   FLT4 r0 = (FLT4)(0.f);
   FLT4 r1 = (FLT4)(0.f);
@@ -40,10 +42,18 @@ __kernel void conv2d_transpose(__read_only image2d_t src_data, __write_only imag
       int kernel_w = kw_start - kw_copy;
       int weight_offset = weight_base + (kernel_h * kernel_size.y + kernel_w) * src_size.z;
       for (int ci = 0; ci < src_size.z; ++ci) {
-        FLT4 x0 = READ_IMAGE(src_data, smp_zero, (int2)(out0_src_w * src_size.z + ci, out0_src_h));
-        FLT4 x1 = READ_IMAGE(src_data, smp_zero, (int2)(out0_src_w * src_size.z + ci, out1_src_h));
-        FLT4 x2 = READ_IMAGE(src_data, smp_zero, (int2)(out1_src_w * src_size.z + ci, out0_src_h));
-        FLT4 x3 = READ_IMAGE(src_data, smp_zero, (int2)(out1_src_w * src_size.z + ci, out1_src_h));
+        FLT4 x0 = (FLT4)0.f;
+        FLT4 x2 = (FLT4)0.f;
+        if (out0_src_h < src_size.x) {
+          x0 = READ_IMAGE(src_data, smp_zero, (int2)(out0_src_w * src_size.z + ci, n * src_size.x + out0_src_h));
+          x2 = READ_IMAGE(src_data, smp_zero, (int2)(out1_src_w * src_size.z + ci, n * src_size.x + out0_src_h));
+        }
+        FLT4 x1 = (FLT4)0.f;
+        FLT4 x3 = (FLT4)0.f;
+        if (out1_src_h < src_size.x) {
+          x1 = READ_IMAGE(src_data, smp_zero, (int2)(out0_src_w * src_size.z + ci, n * src_size.x + out1_src_h));
+          x3 = READ_IMAGE(src_data, smp_zero, (int2)(out1_src_w * src_size.z + ci, n * src_size.x + out1_src_h));
+        }
         FLT16 weight_cache = weight[weight_offset++];
         r0 += x0.x * weight_cache.s0123;
         r0 += x0.y * weight_cache.s4567;
@@ -85,14 +95,14 @@ __kernel void conv2d_transpose(__read_only image2d_t src_data, __write_only imag
     r3 = clamp(r3, (FLT4)(0.0f), (FLT4)(6.0f));
   }
 
-  WRITE_IMAGE(dst_data, (int2)(dst_w * dst_size.z + dst_c, dst_h), r0);
+  WRITE_IMAGE(dst_data, (int2)(dst_w * dst_size.z + dst_c, n * dst_size.x + dst_h), r0);
   if (dst_h + stride.x < dst_size.x && dst_w < dst_size.y) {
-    WRITE_IMAGE(dst_data, (int2)(dst_w * dst_size.z + dst_c, dst_h + stride.x), r1);
+    WRITE_IMAGE(dst_data, (int2)(dst_w * dst_size.z + dst_c, n * dst_size.x + dst_h + stride.x), r1);
   }
   if (dst_h < dst_size.x && dst_w + stride.y < dst_size.y) {
-    WRITE_IMAGE(dst_data, (int2)((dst_w + stride.y) * dst_size.z + dst_c, dst_h), r2);
+    WRITE_IMAGE(dst_data, (int2)((dst_w + stride.y) * dst_size.z + dst_c, n * dst_size.x + dst_h), r2);
   }
   if (dst_h + stride.x < dst_size.x && dst_w + stride.y < dst_size.y) {
-    WRITE_IMAGE(dst_data, (int2)((dst_w + stride.y) * dst_size.z + dst_c, dst_h + stride.x), r3);
+    WRITE_IMAGE(dst_data, (int2)((dst_w + stride.y) * dst_size.z + dst_c, n * dst_size.x + dst_h + stride.x), r3);
   }
 }
