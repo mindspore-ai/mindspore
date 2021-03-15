@@ -632,3 +632,23 @@ inline void Transpose8X8Fp32Sse(const float *src_ptr, float *dst_ptr, int src_st
   _mm_storeu_ps(dst_ptr + (C4NUM + 3) * dst_stride + C4NUM, v11_ma);
 }
 #endif
+
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+void PackWeightConvDw3x3Fp32(const void *src, void *dst, int channel) {
+  // nchw to nc4hw4 with 1D F(2,3)
+  for (int i = 0; i < channel; i++) {
+    float *src_kernel = (float *)src + i * 9;
+    float *dst_kernel = (float *)dst + (i / 4) * 48 + i % 4;
+    for (int y = 0; y < 3; y++) {
+      float g0 = src_kernel[3 * y];
+      float g1 = src_kernel[3 * y + 1];
+      float g2 = src_kernel[3 * y + 2];
+
+      dst_kernel[16 * y] = g0;
+      dst_kernel[16 * y + 4] = 0.5f * (g0 + g1 + g2);
+      dst_kernel[16 * y + 8] = 0.5f * (g0 - g1 + g2);
+      dst_kernel[16 * y + 12] = g2;
+    }
+  }
+}
+#endif
