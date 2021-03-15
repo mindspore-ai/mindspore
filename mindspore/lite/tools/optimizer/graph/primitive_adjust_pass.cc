@@ -71,6 +71,7 @@
 #include "ops/sigmoid.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"
+#include "ops/sparse_softmax_cross_entropy_with_logits.h"
 
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
@@ -111,6 +112,7 @@ using mindspore::ops::kNameResizeBilinear;
 using mindspore::ops::kNameResizeNearestNeighbor;
 using mindspore::ops::kNameScale;
 using mindspore::ops::kNameSigmoid;
+using mindspore::ops::kNameSparseSoftmaxCrossEntropyWithLogits;
 using mindspore::ops::kNameSub;
 using mindspore::ops::kNameTanh;
 using mindspore::ops::kNameTile;
@@ -585,5 +587,7 @@ REGIST_PRIMITIVE_ADJUST(kNameSub, MoveAttrMapCommon<ops::SubFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTanh, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameTile, MoveAttrMapCommon<ops::TileFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTopK, MoveAttrMapCommon<ops::TopKFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameSparseSoftmaxCrossEntropyWithLogits,
+                        MoveAttrMapCommon<ops::SparseSoftmaxCrossEntropyWithLogits>)
 }  // namespace opt
 }  // namespace mindspore

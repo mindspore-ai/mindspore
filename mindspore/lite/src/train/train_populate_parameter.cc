@@ -135,7 +135,7 @@ OpParameter *PopulateSparseSoftmaxCrossEntropyWithLogitsParameter(const void *pr
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_SparseSoftmaxCrossEntropyWithLogits();
   sce_param->op_parameter_.type_ = primitive->value_type();
-  sce_param->is_grad_ = value->grad();
+  sce_param->is_grad_ = value->is_grad();
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
@@ -430,6 +430,27 @@ OpParameter *PopulateResizeGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(resize_grad_param);
 }
 
+OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
+  StridedSliceParameter *strided_slice_param =
+    reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
+  if (strided_slice_param == nullptr) {
+    MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
+    return nullptr;
+  }
+  memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
+
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_StridedSliceGrad();
+  strided_slice_param->op_parameter_.type_ = primitive->value_type();
+
+  strided_slice_param->begins_mask_ = value->begin_mask();
+  strided_slice_param->ends_mask_ = value->end_mask();
+  strided_slice_param->ellipsisMask_ = value->ellipsis_mask();
+  strided_slice_param->newAxisMask_ = value->new_axis_mask();
+  strided_slice_param->shrinkAxisMask_ = value->shrink_axis_mask();
+  return reinterpret_cast<OpParameter *>(strided_slice_param);
+}
+
 void PopulateTrainParameters() {
   lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
                                                 lite::SCHEMA_CUR);
@@ -488,7 +509,7 @@ void PopulateTrainParameters() {
   lite::Registry FlattenGradParameterRegistry(schema::PrimitiveType_FlattenGrad, lite::DefaultPopulateParameter,
                                               lite::SCHEMA_CUR);
   lite::Registry StridedSliceGradParameterRegistry(schema::PrimitiveType_StridedSliceGrad,
-                                                   lite::PopulateStridedSliceParameter, lite::SCHEMA_CUR);
+                                                   PopulateStridedSliceGradParameter, lite::SCHEMA_CUR);
   lite::Registry SqrtGradParameterRegistry(schema::PrimitiveType_SqrtGrad, lite::DefaultPopulateParameter,
                                            lite::SCHEMA_CUR);
   lite::Registry RsqrtGradParameterRegistry(schema::PrimitiveType_RsqrtGrad, lite::DefaultPopulateParameter,

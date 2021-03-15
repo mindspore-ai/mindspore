@@ -910,7 +910,7 @@ table SpaceToDepth {
 }
 
 table SparseSoftmaxCrossEntropyWithLogits {
-    grad: bool;
+    is_grad: bool;
 }
 
 table SparseToDense {

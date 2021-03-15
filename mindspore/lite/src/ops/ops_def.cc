@@ -909,7 +909,7 @@ OP_ATTR_ENUM(format, Format)
 OP_SCHEMA_DEF_END(SpaceToDepth)
 
 OP_SCHEMA_DEF(SparseSoftmaxCrossEntropyWithLogits)
-OP_ATTR(grad, bool)
+OP_ATTR(is_grad, bool)
 OP_SCHEMA_DEF_END(SparseSoftmaxCrossEntropyWithLogits)
 
 OP_SCHEMA_DEF(SparseToDense)

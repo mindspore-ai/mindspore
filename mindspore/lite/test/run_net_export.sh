@@ -47,7 +47,7 @@ logs_path=${basepath}/logs_train
 rm -rf ${logs_path}
 mkdir -p ${logs_path}
 
-docker_image=mindspore_build:210301
+docker_image=mindspore_build:210311
 #docker_image=mindspore/mindspore-gpu:1.1.1
 # Export models
 echo "Start Exporting models ..."

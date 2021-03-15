@@ -31,8 +31,8 @@ class SparseSoftmaxCrossEntropyWithLogits : public PrimitiveC {
   ~SparseSoftmaxCrossEntropyWithLogits() = default;
   MS_DECLARE_PARENT(SparseSoftmaxCrossEntropyWithLogits, PrimitiveC);
   void Init(const bool is_grad = false);
-  void set_grad(const bool is_grad);
-  bool get_grad() const;
+  void set_is_grad(const bool is_grad);
+  bool get_is_grad() const;
 };
 AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
                                                          const PrimitivePtr &primitive,

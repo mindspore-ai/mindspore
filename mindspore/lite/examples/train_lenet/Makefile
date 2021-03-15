@@ -23,7 +23,7 @@ ifeq ($(TARGET),arm64)
 CXX :=  ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
 CFLAGS  += --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fdata-sections -ffunction-sections 
 LDFLAGS := --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Wl,--gc-sections 
-LDFLAGS += -L$(MSDIR) -l$(MSLIB) $(LMDLIB) -pthread -llog -latomic -lm  $(LHIAILIB)
+LDFLAGS += -L$(MSDIR) -l$(MSLIB) $(LMDLIB) -pthread -llog -latomic -lm  $(LHIAILIB) -Wl,-rpath,$(MSDIR)
 else
 CFLAGS += -g
 LDFLAGS := -L$(MSDIR) -l$(MSLIB) $(LMDLIB) -lpthread -Wl,-rpath,$(MSDIR)
@@ -42,7 +42,7 @@ clean:
 
 
 mrproper: 
-	rm -rf package* msl src/*.o bin/ model/*.mindir model/*.ms model/*.so model/converter_lite
+	rm -rf package* msl src/*.o bin/ model/*.mindir model/*.ms model/*.so* model/converter_lite
 
 %.o:%.cc
 	$(CXX) $(CFLAGS) -c $< -o $@
