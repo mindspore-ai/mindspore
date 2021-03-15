@@ -75,10 +75,9 @@ Debugger::Debugger()
   CheckDebuggerEnabledParam();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  device_target_ = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  MS_LOG(INFO) << "Debugger got device_target: " << device_target_;
-  CheckDebuggerEnabledParam();
-  if (device_target_ == kCPUDevice) {
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  MS_LOG(INFO) << "Debugger got device_target: " << device_target;
+  if (device_target == kCPUDevice) {
     MS_LOG(WARNING) << "Not enabling debugger. Debugger does not support CPU.";
   } else if (CheckDebuggerEnabled()) {
     // configure partial memory reuse
@@ -101,12 +100,14 @@ Debugger::Debugger()
   }
 }
 
-void Debugger::Init(const uint32_t device_id) {
+void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   // save device_id
   MS_LOG(INFO) << "Debugger got device_id: " << device_id;
   device_id_ = device_id;
+  MS_LOG(INFO) << "Debugger got device_target: " << device_target;
+  device_target_ = device_target;
   version_ = "1.2.0";
 }
 
