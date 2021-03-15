@@ -68,7 +68,7 @@ class RegOp:
 
     Args:
         op_name (str): Name of op.
-        inputs (list): Inputs inoformation of the op.
+        inputs (list): Inputs information of the op.
         outputs (list): Outputs information of the op.
         attr_ (list): Attribute information of the op.
         dtype_format_ (list): Dtype and format information of the op.
@@ -142,7 +142,7 @@ class RegOp:
         Raises:
             TypeError: If the type of value is not list.
             ValueError: If the size of param list is not equal to the size of key list, or
-                        the size of param list is not equal to the size of funtion list.
+                        the size of param list is not equal to the size of function list.
         """
         for i in [param_list, key_list, fn_list]:
             if not isinstance(i, list):
@@ -459,7 +459,7 @@ class TBERegOp(RegOp):
 
     def op_pattern(self, pattern=None):
         """
-        The behavior type of opeator, such as broadcast, reduce and so on.
+        The behavior type of operator, such as broadcast, reduce and so on.
 
         Args:
             pattern (str): Value of op pattern.

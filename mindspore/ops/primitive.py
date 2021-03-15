@@ -176,7 +176,7 @@ class Primitive(Primitive_):
 
         Returns:
             A tuple consisting of two elements. The first element indicates whether we should filter out current
-            arguments; the seconde element is the output if we need to filter out the arguments.
+            arguments; the second element is the output if we need to filter out the arguments.
         """
         return (False, None)
 
