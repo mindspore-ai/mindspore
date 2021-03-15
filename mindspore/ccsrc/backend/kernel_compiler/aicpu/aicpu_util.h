@@ -59,8 +59,8 @@ constexpr auto kCustRunApi = "RunCpuKernel";
 constexpr auto kDropout2D = "Dropout2D";
 constexpr auto kDropout3D = "Dropout3D";
 const std::set<std::string> kCustAiCpuKernelOps{kIdentity};
-const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter, kPadAndShift, kDropout3D,
-                                            kDropout2D,   kStackInit,      kStackPush,    kStackPop,    kStackDestroy};
+const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
+                                            kPadAndShift, kDropout3D,      kDropout2D};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
