@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/rank_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int RankInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -35,3 +36,5 @@ int RankInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   output->shape_[0] = 1;
   return NNACL_OK;
 }
+
+REG_INFER(Rank, PrimType_Rank, RankInferShape)

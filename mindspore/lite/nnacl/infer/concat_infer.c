@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/concat_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -73,3 +74,5 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   SetShapeArray(outputs[0], output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Concat, PrimType_Concat, ConcatInferShape)

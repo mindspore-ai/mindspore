@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/gru_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
@@ -80,3 +81,5 @@ int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   SetShapeArray(outputs[1], state_shape, state_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(GRU, PrimType_GRU, GruInferShape)

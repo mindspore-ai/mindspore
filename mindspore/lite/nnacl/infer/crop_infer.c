@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/crop_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int CropInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -32,3 +33,5 @@ int CropInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetShapeTensor(outputs[0], inputs[1]);
   return NNACL_OK;
 }
+
+REG_INFER(Crop, PrimType_Crop, CropInferShape)

@@ -16,6 +16,7 @@
 #include "nnacl/infer/layer_norm_grad_infer.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/fp32_grad/layernormgrad_parameter.h"
+#include "nnacl/infer/infer_register.h"
 
 int LayerNormGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
@@ -46,3 +47,5 @@ int LayerNormGradInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   output_dg->shape_size_ = size;
   return NNACL_OK;
 }
+
+REG_INFER(LayerNormGrad, PrimType_LayerNormGrad, LayerNormGradInferShape)

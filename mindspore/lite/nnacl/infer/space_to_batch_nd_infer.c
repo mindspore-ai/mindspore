@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/space_to_batch_nd_infer.h"
 #include <limits.h>
+#include "nnacl/infer/infer_register.h"
 
 int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, OpParameter *parameter) {
@@ -133,3 +134,5 @@ int SpaceToBatchNdInferShape(const TensorC *const *inputs, size_t inputs_size, T
   }
   return NNACL_OK;
 }
+
+REG_INFER(SpaceToBatchND, PrimType_SpaceToBatchND, SpaceToBatchNdInferShape)

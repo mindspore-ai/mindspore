@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/reshape_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 void CalShape(int *data, const TensorC *const *inputs, int *out_shape, size_t *out_shape_size, int shape_size) {
   int input_count = GetElementNum(inputs[0]);
@@ -176,3 +177,5 @@ int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   SetShapeArray(output, out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Reshape, PrimType_Reshape, ReshapeInferShape)

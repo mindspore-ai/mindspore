@@ -15,8 +15,11 @@
  */
 
 #include "nnacl/infer/fft_real_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int FftRealInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
   return FftInferShape(inputs, inputs_size, outputs, outputs_size, parameter);
 }
+
+REG_INFER(FftReal, PrimType_FftReal, FftRealInferShape)

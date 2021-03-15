@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/infer/conv2d_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, ConvParameter *param) {
   int kernel_w = param->kernel_w_;
@@ -100,3 +101,6 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   return NNACL_OK;
 }
+
+REG_INFER(Adder, PrimType_AdderFusion, Conv2dInferShape)
+REG_INFER(Conv2D, PrimType_Conv2DFusion, Conv2dInferShape)

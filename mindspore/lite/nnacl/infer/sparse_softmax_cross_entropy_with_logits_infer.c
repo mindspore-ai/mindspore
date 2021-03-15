@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/sparse_softmax_cross_entropy_with_logits_infer.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
+#include "nnacl/infer/infer_register.h"
 
 int SparseSoftmaxCrossEntropyWithLogitsInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                                   size_t outputs_size, OpParameter *parameter) {
@@ -41,3 +42,6 @@ int SparseSoftmaxCrossEntropyWithLogitsInferShape(const TensorC *const *inputs, 
 
   return NNACL_OK;
 }
+
+REG_INFER(SparseSoftmaxCrossEntropyWithLogits, PrimType_SparseSoftmaxCrossEntropyWithLogits,
+          SparseSoftmaxCrossEntropyWithLogitsInferShape)

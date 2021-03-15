@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/layer_norm_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
@@ -55,3 +56,5 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
 
   return NNACL_OK;
 }
+
+REG_INFER(LayerNormFusion, PrimType_LayerNormFusion, LayerNormInferShape)

@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "nnacl/infer/group_conv2d_grad_input_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int GroupConv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
-                                   size_t outputs_size, OpParameter *parameter) {
-  if (inputs_size < 2 || outputs_size != 1) {
-    return NNACL_ERR;
+InferShape g_infer_func[PrimType_MAX];
+
+InferShape GetInferFunc(int prim_type) {
+  if (prim_type < PrimType_MAX) {
+    return g_infer_func[prim_type];
   }
+  return NULL;
+}
 
-  const TensorC *in0 = inputs[0];
-  TensorC *out = outputs[0];
-
-  SetDataTypeFormat(out, in0);
-
-  size_t shape_size_ = in0->shape_size_;
-  int shape_[MAX_SHAPE_SIZE];
-  for (int i = 0; i < shape_size_; i++) {
-    shape_[i] = in0->shape_[i];
+void RegInfer(int prim_type, InferShape func) {
+  if (prim_type < PrimType_MAX) {
+    g_infer_func[prim_type] = func;
   }
-  SetShapeArray(out, shape_, shape_size_);
-
-  return NNACL_OK;
 }

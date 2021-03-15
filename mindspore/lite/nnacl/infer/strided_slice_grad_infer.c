@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/strided_slice_grad_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 bool StridedSliceCheckInputs(const TensorC *const *inputs, size_t inputs_size) {
   for (size_t i = 1; i < inputs_size; ++i) {
@@ -137,3 +138,5 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   SetShapeArray(outputs[0], output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(StridedSliceGrad, PrimType_StridedSliceGrad, StridedSliceGradInferShape)

@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/pooling_grad_infer.h"
 #include <math.h>
+#include "nnacl/infer/infer_register.h"
 
 int PoolingGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
@@ -60,3 +61,6 @@ int PoolingGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   SetShapeTensor(outputs[0], input);
   return NNACL_OK;
 }
+
+REG_INFER(AvgPoolGrad, PrimType_AvgPoolGrad, PoolingGradInferShape)
+REG_INFER(MaxPoolGrad, PrimType_MaxPoolGrad, PoolingGradInferShape)

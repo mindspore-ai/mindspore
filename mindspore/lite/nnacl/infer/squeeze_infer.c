@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/squeeze_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
@@ -59,3 +60,5 @@ int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   SetShapeArray(outputs[0], out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Squeeze, PrimType_Squeeze, SqueezeInferShape)

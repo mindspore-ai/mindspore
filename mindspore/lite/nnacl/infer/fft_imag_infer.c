@@ -15,8 +15,11 @@
  */
 
 #include "nnacl/infer/fft_imag_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int FftImagInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
   return FftInferShape(inputs, inputs_size, outputs, outputs_size, parameter);
 }
+
+REG_INFER(FftImag, PrimType_FftImag, FftImagInferShape)

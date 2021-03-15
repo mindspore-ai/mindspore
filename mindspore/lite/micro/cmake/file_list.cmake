@@ -242,6 +242,7 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/group_conv2d_grad_input_infer.c
         ${LITE_DIR}/nnacl/infer/gru_infer.c
         ${LITE_DIR}/nnacl/infer/hashtable_lookup_infer.c
+        ${LITE_DIR}/nnacl/infer/infer_register.c
         ${LITE_DIR}/nnacl/infer/invert_permutation_infer.c
         ${LITE_DIR}/nnacl/infer/layer_norm_infer.c
         ${LITE_DIR}/nnacl/infer/layer_norm_grad_infer.c

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/detection_post_process_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int DetectionPostProcessInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                    size_t outputs_size, OpParameter *parameter) {
@@ -77,3 +78,5 @@ int DetectionPostProcessInferShape(const TensorC *const *inputs, size_t inputs_s
 
   return NNACL_OK;
 }
+
+REG_INFER(DetectionPostProcess, PrimType_DetectionPostProcess, DetectionPostProcessInferShape)

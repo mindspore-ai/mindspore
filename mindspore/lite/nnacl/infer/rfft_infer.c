@@ -15,6 +15,8 @@
  */
 
 #include "nnacl/infer/rfft_infer.h"
+#include "nnacl/infer/infer_register.h"
+
 int RfftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
 #ifdef Debug
@@ -37,3 +39,5 @@ int RfftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   ShapePush(output->shape_, &(output->shape_size_), 2);
   return NNACL_OK;
 }
+
+REG_INFER(Rfft, PrimType_Rfft, RfftInferShape)

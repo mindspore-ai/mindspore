@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/arithmetic_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
@@ -117,3 +118,18 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   }
   return NNACL_OK;
 }
+
+REG_INFER(Add, PrimType_AddFusion, ArithmeticInferShape)
+REG_INFER(Div, PrimType_DivFusion, ArithmeticInferShape)
+REG_INFER(Eltwise, PrimType_Eltwise, ArithmeticInferShape)
+REG_INFER(FloorDiv, PrimType_FloorDiv, ArithmeticInferShape)
+REG_INFER(FloorMod, PrimType_FloorMod, ArithmeticInferShape)
+REG_INFER(LogicalAnd, PrimType_LogicalAnd, ArithmeticInferShape)
+REG_INFER(LogicalOr, PrimType_LogicalOr, ArithmeticInferShape)
+REG_INFER(Maximum, PrimType_Maximum, ArithmeticInferShape)
+REG_INFER(Minimum, PrimType_Minimum, ArithmeticInferShape)
+REG_INFER(Mod, PrimType_Mod, ArithmeticInferShape)
+REG_INFER(Mul, PrimType_MulFusion, ArithmeticInferShape)
+REG_INFER(RealDiv, PrimType_RealDiv, ArithmeticInferShape)
+REG_INFER(Sub, PrimType_SubFusion, ArithmeticInferShape)
+REG_INFER(SquaredDifference, PrimType_SquaredDifference, ArithmeticInferShape)

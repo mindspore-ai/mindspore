@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/skip_gram_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int SkipGramInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {
@@ -34,3 +35,5 @@ int SkipGramInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   }
   return NNACL_OK;
 }
+
+REG_INFER(SkipGram, PrimType_SkipGram, SkipGramInferShape)

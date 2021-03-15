@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/one_hot_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int OneHotInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -54,3 +55,5 @@ int OneHotInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   return NNACL_OK;
 }
+
+REG_INFER(OneHot, PrimType_OneHot, OneHotInferShape)

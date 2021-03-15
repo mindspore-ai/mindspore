@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/mfcc_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int MfccInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -44,3 +45,5 @@ int MfccInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   output->shape_[2] = param->dct_coeff_num_;
   return NNACL_OK;
 }
+
+REG_INFER(Mfcc, PrimType_Mfcc, MfccInferShape)

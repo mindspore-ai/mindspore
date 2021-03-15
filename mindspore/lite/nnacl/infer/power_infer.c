@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/power_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int PowerInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -52,3 +53,5 @@ int PowerInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   SetShapeTensor(output_tensor, x_tensor);
   return NNACL_OK;
 }
+
+REG_INFER(Pow, PrimType_PowFusion, PowerInferShape)

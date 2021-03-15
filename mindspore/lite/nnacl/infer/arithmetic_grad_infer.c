@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/arithmetic_grad_infer.h"
 #include "nnacl/arithmetic.h"
+#include "nnacl/infer/infer_register.h"
 
 /*
  * the Arithmetic Grad op include AddGrad, SubGrad, MulGrad, DivGrad, MaximumGrad, MinimumGrad
@@ -99,3 +100,6 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
   dx2->data_type_ = dy->data_type_;
   return NNACL_OK;
 }
+
+REG_INFER(DivGrad, PrimType_DivGrad, ArithmeticGradInferShape)
+REG_INFER(MulGrad, PrimType_MulGrad, ArithmeticGradInferShape)

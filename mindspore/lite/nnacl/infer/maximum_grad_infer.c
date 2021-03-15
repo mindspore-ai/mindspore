@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/maximum_grad_infer.h"
 #include "nnacl/arithmetic.h"
+#include "nnacl/infer/infer_register.h"
 
 int MaximumGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
@@ -58,3 +59,5 @@ int MaximumGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   SetDataTypeFormat(dx2, dy);
   return NNACL_OK;
 }
+
+REG_INFER(MaximumGrad, PrimType_MaximumGrad, MaximumGradInferShape)

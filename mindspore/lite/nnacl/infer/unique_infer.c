@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/unique_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int UniqueInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -39,3 +40,5 @@ int UniqueInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   SetShapeTensor(output1, input);
   return NNACL_OK;
 }
+
+REG_INFER(Unique, PrimType_Unique, UniqueInferShape)

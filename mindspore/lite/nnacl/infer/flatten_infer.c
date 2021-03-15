@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/flatten_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
@@ -45,3 +46,5 @@ int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   SetShapeArray(output, output_shape, 2);
   return NNACL_OK;
 }
+
+REG_INFER(Flatten, PrimType_Flatten, FlattenInferShape)

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/infer/adam_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int AdamInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -39,3 +40,5 @@ int AdamInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
 
   return NNACL_OK;
 }
+
+REG_INFER(Adam, PrimType_Adam, AdamInferShape)

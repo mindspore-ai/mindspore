@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/bn_grad_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int BnGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -39,3 +40,5 @@ int BnGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   SetDataTypeFormat(outputs[2], scale);
   return NNACL_OK;
 }
+
+REG_INFER(BatchNormGrad, PrimType_BatchNormGrad, BnGradInferShape)

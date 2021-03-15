@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/roi_pooling_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ROIPoolingInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
@@ -41,3 +42,5 @@ int ROIPoolingInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   output->shape_[3] = GetChannel(input);
   return NNACL_OK;
 }
+
+REG_INFER(ROIPooling, PrimType_ROIPooling, ROIPoolingInferShape)

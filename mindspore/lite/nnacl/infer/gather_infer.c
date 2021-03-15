@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/gather_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -57,3 +58,5 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   SetShapeArray(output, out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Gather, PrimType_Gather, GatherInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/constant_of_shape_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
@@ -64,3 +65,5 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
   SetShapeArray(out_tensor, out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(ConstantOfShape, PrimType_ConstantOfShape, ConstantOfShapeInferShape)

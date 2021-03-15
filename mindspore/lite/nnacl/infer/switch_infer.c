@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/switch_infer.h"
 #include <string.h>
+#include "nnacl/infer/infer_register.h"
 
 int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -103,3 +104,5 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   return NNACL_OK;
 }
+
+REG_INFER(Switch, PrimType_Switch, SwitchInferShape)

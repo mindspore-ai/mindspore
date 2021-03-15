@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/audio_spectrogram_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int Log2Ceil(uint32_t length) {
   if (length == 0) {
@@ -72,3 +73,5 @@ int AudioSpectrogramInferShape(const TensorC *const *inputs, size_t inputs_size,
   SetShapeArray(output, output_shape, 3);
   return NNACL_OK;
 }
+
+REG_INFER(AudioSpectrogram, PrimType_AudioSpectrogram, AudioSpectrogramInferShape)

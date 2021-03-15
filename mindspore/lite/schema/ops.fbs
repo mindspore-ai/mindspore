@@ -1087,4 +1087,3 @@ table ResizeGrad {
     method: ResizeMethod;
     align_corners: bool;
 }
-

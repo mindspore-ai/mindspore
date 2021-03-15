@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/lin_space_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int LinSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {
@@ -41,3 +42,5 @@ int LinSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   output->shape_[0] = num[0];
   return NNACL_OK;
 }
+
+REG_INFER(LinSpace, PrimType_LinSpace, LinSpaceInferShape)

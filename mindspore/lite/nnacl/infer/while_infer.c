@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/while_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int WhileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -28,3 +29,5 @@ int WhileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   return NNACL_OK;
 }
+
+REG_INFER(While, PrimType_While, WhileInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/expand_dims_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ExpandDimsInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
@@ -44,3 +45,5 @@ int ExpandDimsInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   ShapeInsert(output->shape_, &(output->shape_size_), dim, 1);
   return NNACL_OK;
 }
+
+REG_INFER(ExpandDims, PrimType_ExpandDims, ExpandDimsInferShape)

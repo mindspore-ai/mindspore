@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/scatter_nd_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
@@ -40,3 +41,5 @@ int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   SetShapeArray(output, shape_data, GetElementNum(shape));
   return NNACL_OK;
 }
+
+REG_INFER(ScatterNd, PrimType_ScatterNd, ScatterNdInferShape)

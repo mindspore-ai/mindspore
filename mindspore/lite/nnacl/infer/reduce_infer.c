@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/reduce_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ReduceOnAllAxes(const TensorC *input, TensorC *output, int *out_shape, size_t out_shape_size, bool keep_dims) {
   if (keep_dims) {
@@ -111,3 +112,5 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   // reduce on selected axes
   return ReduceOnSelectedAxes(input, num_axes, actual_axes, output, out_shape, out_shape_size, keep_dims);
 }
+
+REG_INFER(Reduce, PrimType_ReduceFusion, ReduceInferShape)

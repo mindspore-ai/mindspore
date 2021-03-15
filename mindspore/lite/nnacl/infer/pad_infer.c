@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/pad_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
@@ -59,3 +60,5 @@ int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Pad, PrimType_PadFusion, PadInferShape)

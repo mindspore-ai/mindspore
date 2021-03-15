@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/depth_to_space_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int DepthToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                            OpParameter *parameter) {
@@ -54,3 +55,5 @@ int DepthToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   SetShapeArray(outputs[0], output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(DepthToSpace, PrimType_DepthToSpace, DepthToSpaceInferShape)

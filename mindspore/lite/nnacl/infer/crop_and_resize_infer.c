@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/crop_and_resize_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
@@ -56,3 +57,5 @@ int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(CropAndResize, PrimType_CropAndResize, CropAndResizeInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/invert_permutation_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int InvertPermutationInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
@@ -40,3 +41,5 @@ int InvertPermutationInferShape(const TensorC *const *inputs, size_t inputs_size
   SetShapeTensor(output, input);
   return NNACL_OK;
 }
+
+REG_INFER(InvertPermutation, PrimType_InvertPermutation, InvertPermutationInferShape)

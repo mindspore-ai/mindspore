@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/topk_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -51,3 +52,5 @@ int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetShapeArray(output1, out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(TopK, PrimType_TopKFusion, TopKInferShape)

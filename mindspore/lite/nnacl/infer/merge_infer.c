@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/merge_infer.h"
 #include <string.h>
+#include "nnacl/infer/infer_register.h"
 
 int MergeAbleToInfer(const TensorC *const *inputs, size_t inputs_size) {
   for (size_t i = 0; i < inputs_size; i++) {
@@ -94,3 +95,5 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   return NNACL_INFER_INVALID;
 }
+
+REG_INFER(Merge, PrimType_Merge, MergeInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/tensorlist_getitem_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
@@ -81,3 +82,5 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   output->format_ = input0->tensors_[index].format_;
   return NNACL_OK;
 }
+
+REG_INFER(TensorListGetItem, PrimType_TensorListGetItem, TensorListGetItemInferShape)

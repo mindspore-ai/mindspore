@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/strided_slice_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 const size_t kStridedSliceOutputNum = 1;
 const size_t kStridedSliceInputNum = 1;
@@ -377,3 +378,5 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
 
   return NNACL_OK;
 }
+
+REG_INFER(StridedSlice, PrimType_StridedSlice, StridedSliceInferShape)

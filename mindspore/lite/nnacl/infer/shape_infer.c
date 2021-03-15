@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/shape_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ShapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -37,3 +38,5 @@ int ShapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   out_tensor->shape_[0] = (int)(in_tensor->shape_size_);
   return NNACL_OK;
 }
+
+REG_INFER(Shape, PrimType_Shape, ShapeInferShape)

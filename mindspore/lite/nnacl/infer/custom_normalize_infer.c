@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/custom_normalize_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int CustomNormalizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
@@ -39,3 +40,5 @@ int CustomNormalizeInferShape(const TensorC *const *inputs, size_t inputs_size, 
   output->shape_[0] = (string_num == 0 ? 1 : string_num);
   return NNACL_OK;
 }
+
+REG_INFER(CustomNormalize, PrimType_CustomNormalize, CustomNormalizeInferShape)

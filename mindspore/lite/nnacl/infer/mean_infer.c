@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/mean_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int MeanInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {

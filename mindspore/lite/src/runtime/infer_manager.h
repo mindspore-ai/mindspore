@@ -22,10 +22,9 @@
 #include "src/common/prim_util.h"
 #include "src/common/common.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/infer/infer.h"
 
 namespace mindspore::lite {
-typedef int (*InferShape)(const TensorC *const *inputs, size_t input_size, TensorC **outputs, size_t output_size,
-                          OpParameter *parameter);
 int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, std::vector<lite::Tensor *> *outputs,
                      OpParameter *parameter);
 class InferManager {

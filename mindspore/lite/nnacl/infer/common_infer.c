@@ -16,6 +16,7 @@
 #include "nnacl/infer/common_infer.h"
 #include <stdlib.h>
 #include <string.h>
+#include "nnacl/infer/infer_register.h"
 
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tensor_shape) {
   // This function will create a new tensors_
@@ -437,3 +438,48 @@ void VectorCFree(VectorC *vc) {
   free(vc->data_);
   vc->data_ = NULL;
 }
+
+REG_INFER(Abs, PrimType_Abs, CommonInferShape)
+REG_INFER(AbsGrad, PrimType_AbsGrad, CommonInferShape)
+REG_INFER(Activation, PrimType_Activation, CommonInferShape)
+REG_INFER(ActivationGrad, PrimType_ActivationGrad, CommonInferShape)
+REG_INFER(BatchNorm, PrimType_BatchNorm, CommonInferShape)
+REG_INFER(BinaryCrossEntropyGrad, PrimType_BinaryCrossEntropyGrad, CommonInferShape)
+REG_INFER(BiasAdd, PrimType_BiasAdd, CommonInferShape)
+REG_INFER(Ceil, PrimType_Ceil, CommonInferShape)
+REG_INFER(Clip, PrimType_Clip, CommonInferShape)
+REG_INFER(ControlDepend, PrimType_ControlDepend, CommonInferShape)
+REG_INFER(Cos, PrimType_Cos, CommonInferShape)
+REG_INFER(Depend, PrimType_Depend, CommonInferShape)
+REG_INFER(Elu, PrimType_Elu, CommonInferShape)
+REG_INFER(Erf, PrimType_Erf, CommonInferShape)
+REG_INFER(Exp, PrimType_ExpFusion, CommonInferShape)
+REG_INFER(FakeQuantWithMinMaxVars, PrimType_FakeQuantWithMinMaxVars, CommonInferShape)
+REG_INFER(Floor, PrimType_Floor, CommonInferShape)
+REG_INFER(If, PrimType_If, CommonInferShape)
+REG_INFER(InstanceNorm, PrimType_InstanceNorm, CommonInferShape)
+REG_INFER(IsFinite, PrimType_IsFinite, CommonInferShape)
+REG_INFER(LeakyRelu, PrimType_LeakyRelu, CommonInferShape)
+REG_INFER(Log, PrimType_Log, CommonInferShape)
+REG_INFER(LogGrad, PrimType_LogGrad, CommonInferShape)
+REG_INFER(LogicalNot, PrimType_LogicalNot, CommonInferShape)
+REG_INFER(LRN, PrimType_LRN, CommonInferShape)
+REG_INFER(L2Normalize, PrimType_L2NormalizeFusion, CommonInferShape)
+REG_INFER(Neg, PrimType_Neg, CommonInferShape)
+REG_INFER(NegGrad, PrimType_NegGrad, CommonInferShape)
+REG_INFER(PowerGrad, PrimType_PowerGrad, CommonInferShape)
+REG_INFER(PReLU, PrimType_PReLUFusion, CommonInferShape)
+REG_INFER(Reciprocal, PrimType_Reciprocal, CommonInferShape)
+REG_INFER(ReverseSequence, PrimType_ReverseSequence, CommonInferShape)
+REG_INFER(Reverse, PrimType_ReverseV2, CommonInferShape)
+REG_INFER(Round, PrimType_Round, CommonInferShape)
+REG_INFER(Rsqrt, PrimType_Rsqrt, CommonInferShape)
+REG_INFER(Scale, PrimType_ScaleFusion, CommonInferShape)
+REG_INFER(SigmoidCrossEntropyWithLogits, PrimType_SigmoidCrossEntropyWithLogits, CommonInferShape)
+REG_INFER(SigmoidCrossEntropyWithLogitsGrad, PrimType_SigmoidCrossEntropyWithLogitsGrad, CommonInferShape)
+REG_INFER(Sin, PrimType_Sin, CommonInferShape)
+REG_INFER(SmoothL1Loss, PrimType_SmoothL1Loss, CommonInferShape)
+REG_INFER(SmoothL1LossGrad, PrimType_SmoothL1LossGrad, CommonInferShape)
+REG_INFER(Sqrt, PrimType_Sqrt, CommonInferShape)
+REG_INFER(Square, PrimType_Square, CommonInferShape)
+REG_INFER(ZerosLike, PrimType_ZerosLike, CommonInferShape)
