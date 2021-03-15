@@ -38,7 +38,7 @@ int ActivationCPUKernel::Init() {
       type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
       type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
       type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HSIGMOID &&
-      type_ != schema::ActivationType_HARD_TANH) {
+      type_ != schema::ActivationType_HARD_TANH && type_ != schema::ActivationType_GELU) {
     MS_LOG(ERROR) << "Activation fp32 not support type: " << type_;
     return RET_ERROR;
   }
@@ -78,6 +78,8 @@ int ActivationCPUKernel::DoActivation(int task_id) {
     ret = HSigmoid(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_HARD_TANH) {
     ret = HardTanh(input_addr + stride * task_id, count, output_addr + stride * task_id, min_val_, max_val_);
+  } else if (type_ == schema::ActivationType_GELU) {
+    ret = Gelu(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;
