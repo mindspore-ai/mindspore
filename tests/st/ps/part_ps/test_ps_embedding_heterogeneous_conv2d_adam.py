@@ -122,7 +122,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 
 
 class NetFactory:
-    def __init__(self, dataset, input_shape=(2, 1, 32, 32), in_channels=1, out_channels=3,
+    def __init__(self, input_shape=(2, 1, 32, 32), in_channels=1, out_channels=3,
                  kernel_size=5, vocab_size=5, embedding_size=1, output_channels=3072,
                  epoch_size=1, target='CPU', sparse=True):
         self.in_channels = in_channels
@@ -131,13 +131,12 @@ class NetFactory:
         self.vocab_size = vocab_size
         self.embedding_size = embedding_size
         self.output_channels = output_channels
-        self.dataset = dataset
         self.epoch_size = epoch_size
         self.target = target
         self.sparse = sparse
         self.input_np = np.random.randn(*input_shape).astype(np.float32)
 
-    def no_ps_impl(self):
+    def no_ps_impl(self, dataset):
         context.set_ps_context(enable_ps=False)
         net = Menet(self.in_channels, self.out_channels, self.kernel_size, self.vocab_size,
                     self.embedding_size, self.output_channels, self.target, self.sparse)
@@ -148,13 +147,13 @@ class NetFactory:
         opt = Adam(params=filter(lambda x: x.requires_grad, net.get_parameters()))
         opt.target = 'CPU'
         model = Model(net, loss, opt)
-        model.train(self.epoch_size, self.dataset, dataset_sink_mode=False)
+        model.train(self.epoch_size, dataset, dataset_sink_mode=False)
         input_me = Tensor(self.input_np)
         out_me = model.predict(input_me)
         context.set_ps_context(enable_ps=True)
         return out_me.asnumpy()
 
-    def part_ps_impl(self):
+    def part_ps_impl(self, dataset):
         net = Menet(self.in_channels, self.out_channels, self.kernel_size, self.vocab_size,
                     self.embedding_size, self.output_channels, self.target, self.sparse)
         net.embedding_lookup.set_param_ps()
@@ -165,20 +164,21 @@ class NetFactory:
         opt = Adam(params=filter(lambda x: x.requires_grad, net.get_parameters()))
         opt.target = 'CPU'
         model = Model(net, loss, opt)
-        model.train(self.epoch_size, self.dataset, dataset_sink_mode=False)
+        model.train(self.epoch_size, dataset, dataset_sink_mode=False)
         input_me = Tensor(self.input_np)
         out_me = model.predict(input_me)
         return out_me.asnumpy()
 
     def part_cmp(self):
-        part_ps = self.part_ps_impl()
-        no_ps = self.no_ps_impl()
+        ds1 = create_dataset(os.path.join(dataset_path, "train"), 32, 1)
+        ds2 = create_dataset(os.path.join(dataset_path, "train"), 32, 1)
+        part_ps = self.part_ps_impl(ds1)
+        no_ps = self.no_ps_impl(ds2)
         print(part_ps)
         print(no_ps)
         assert np.allclose(no_ps, part_ps, rtol=1.0e-4, atol=1.0e-4)
 
 
 if __name__ == "__main__":
-    datasets = create_dataset(os.path.join(dataset_path, "train"), 32, 1)
-    fact = NetFactory(dataset=datasets)
+    fact = NetFactory()
     fact.part_cmp()
