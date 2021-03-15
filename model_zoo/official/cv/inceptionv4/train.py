@@ -34,7 +34,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.inceptionv4 import Inceptionv4
 from src.dataset import create_dataset, device_num
 
-from src.config import config_ascend as config
+from src.config import config
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 set_seed(1)
@@ -82,12 +82,20 @@ def inception_v4_train():
     """
     print('epoch_size: {} batch_size: {} class_num {}'.format(config.epoch_size, config.batch_size, config.num_classes))
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(device_id=args.device_id)
-    context.set_context(enable_graph_kernel=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.platform)
+    if args.platform == "Ascend":
+        context.set_context(device_id=args.device_id)
+        context.set_context(enable_graph_kernel=False)
+
     rank = 0
     if device_num > 1:
-        init(backend_name='hccl')
+        if args.platform == "Ascend":
+            init(backend_name='hccl')
+        elif args.platform == "GPU":
+            init()
+        else:
+            raise ValueError("Unsupported device target.")
+
         rank = get_rank()
         context.set_auto_parallel_context(device_num=device_num,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -96,7 +104,7 @@ def inception_v4_train():
 
     # create dataset
     train_dataset = create_dataset(dataset_path=args.dataset_path, do_train=True,
-                                   repeat_num=1, batch_size=config.batch_size)
+                                   repeat_num=1, batch_size=config.batch_size, shard_id=rank)
     train_step_size = train_dataset.get_dataset_size()
 
     # create model
@@ -131,8 +139,16 @@ def inception_v4_train():
         load_param_into_net(net, ckpt)
 
     loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-    model = Model(net, loss_fn=loss, optimizer=opt, metrics={
-        'acc', 'top_1_accuracy', 'top_5_accuracy'}, loss_scale_manager=loss_scale_manager, amp_level=config.amp_level)
+
+
+    if args.platform == "Ascend":
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc', 'top_1_accuracy', 'top_5_accuracy'},
+                      loss_scale_manager=loss_scale_manager, amp_level=config.amp_level)
+    elif args.platform == "GPU":
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc', 'top_1_accuracy', 'top_5_accuracy'},
+                      loss_scale_manager=loss_scale_manager, amp_level='O0')
+    else:
+        raise ValueError("Unsupported device target.")
 
     # define callbacks
     performance_cb = TimeMonitor(data_size=train_step_size)
@@ -156,6 +172,8 @@ def parse_args():
     arg_parser = argparse.ArgumentParser(description='InceptionV4 image classification training')
     arg_parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
     arg_parser.add_argument('--device_id', type=int, default=0, help='device id')
+    arg_parser.add_argument('--platform', type=str, default='Ascend', choices=("Ascend", "GPU"),
+                            help='Platform, support Ascend, GPU.')
     arg_parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
     args_opt = arg_parser.parse_args()
     return args_opt

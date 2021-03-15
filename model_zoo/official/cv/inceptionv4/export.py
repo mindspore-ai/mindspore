@@ -20,7 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export, context
 
-from src.config import config_ascend as config
+from src.config import config
 from src.inceptionv4 import Inceptionv4
 
 parser = argparse.ArgumentParser(description='inceptionv4 export')
