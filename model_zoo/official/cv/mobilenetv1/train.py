@@ -68,6 +68,7 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             init()
+            context.set_auto_parallel_context(all_reduce_fusion_config=[75])
         # GPU target
         else:
             init()
