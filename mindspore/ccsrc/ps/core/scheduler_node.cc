@@ -19,7 +19,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 SchedulerNode::~SchedulerNode() {
   MS_LOG(INFO) << "Stop scheduler node!";
   Stop();

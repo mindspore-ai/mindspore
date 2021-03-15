@@ -23,9 +23,6 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
   server_node_ = std::make_shared<core::ServerNode>();
 
-  core::ClusterMetadata::instance()->Init(
-    PSContext::instance()->initial_worker_num(), PSContext::instance()->initial_server_num(),
-    PSContext::instance()->scheduler_host(), PSContext::instance()->scheduler_port());
   MS_LOG(INFO) << "PServer connected successfully.";
   if (!PSContext::instance()->is_server()) {
     MS_LOG(INFO) << "This is not the Server node.";

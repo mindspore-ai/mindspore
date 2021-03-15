@@ -19,9 +19,7 @@
 namespace mindspore {
 namespace ps {
 void Scheduler::Run() {
-  core::ClusterMetadata::instance()->Init(
-    PSContext::instance()->initial_worker_num(), PSContext::instance()->initial_server_num(),
-    PSContext::instance()->scheduler_host(), PSContext::instance()->scheduler_port());
+  MS_LOG(INFO) << "Start scheduler.";
   scheduler_node_.Start();
   scheduler_node_.Finish();
   scheduler_node_.Stop();

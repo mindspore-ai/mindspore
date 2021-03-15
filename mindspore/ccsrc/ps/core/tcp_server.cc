@@ -29,8 +29,6 @@
 #include <csignal>
 #include <utility>
 
-#include "ps/core/comm_util.h"
-
 namespace mindspore {
 namespace ps {
 namespace core {
@@ -445,7 +443,6 @@ int TcpServer::ConnectionNum() const { return connections_.size(); }
 const std::map<evutil_socket_t, std::shared_ptr<TcpConnection>> &TcpServer::Connections() const { return connections_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

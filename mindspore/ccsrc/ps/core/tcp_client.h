@@ -34,6 +34,7 @@
 
 #include "ps/core/cluster_metadata.h"
 #include "utils/convert_utils_base.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {
@@ -99,7 +100,6 @@ class TcpClient {
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
 };
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

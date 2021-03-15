@@ -22,9 +22,6 @@ namespace ps {
 void Worker::Run() {
   std::lock_guard<std::mutex> lock(running_mutex_);
 
-  core::ClusterMetadata::instance()->Init(
-    PSContext::instance()->initial_worker_num(), PSContext::instance()->initial_server_num(),
-    PSContext::instance()->scheduler_host(), PSContext::instance()->scheduler_port());
   server_num_ = PSContext::instance()->initial_server_num();
   if (running_) {
     MS_LOG(INFO) << "'Worker is already running.";

@@ -32,9 +32,6 @@ void ClusterMetadata::Init(const uint32_t &worker_num, const uint32_t &server_nu
                            const uint16_t &scheduler_port) {
   worker_num_ = worker_num;
   server_num_ = server_num;
-  if (!CommUtil::CheckIp(scheduler_host)) {
-    MS_LOG(EXCEPTION) << "The scheduler_host:" << scheduler_host << " is illegal!";
-  }
   scheduler_host_ = std::make_unique<std::string>(scheduler_host);
   scheduler_port_ = scheduler_port;
 }
