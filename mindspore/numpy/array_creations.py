@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """array operations, the function docs are adapted from Numpy API."""
-from copy import deepcopy
-
 import numpy as onp
 
 from ..common import Tensor
@@ -27,10 +25,11 @@ from .._c_expression import Tensor as Tensor_
 from .._c_expression.typing import Float
 
 from .utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, \
-    _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar
+    _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar, \
+    _expand
 from .utils_const import _raise_value_error, _empty, _check_axis_valid, _max, _min, \
     _check_same_type, _is_shape_empty, _check_shape, _check_dtype, _tile_size, _abs, \
-    _raise_type_error, _expanded_shape, _check_is_float, _iota, \
+    _raise_type_error, _expanded_shape, _tuple_getitem, _check_is_float, _iota, \
     _type_convert, _canonicalize_axis, _list_comprehensions, _ceil
 from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape, broadcast_to
 from .dtypes import nan
@@ -49,9 +48,8 @@ def array(obj, dtype=None, copy=True, ndmin=0):
     This function creates tensors from an array-like object.
 
     Args:
-        obj (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-            any form that can be converted to a `Tensor`. This includes lists, lists of
-            tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
+        obj (Union[int, float, bool, list, tuple]): Input data, in any form that
+            can be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
             be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
             of the new tensor will be inferred from obj. Default is :class:`None`.
@@ -76,48 +74,21 @@ def array(obj, dtype=None, copy=True, ndmin=0):
         >>> print(np.array([1,2,3]))
         [1 2 3]
     """
-    if ndmin > 0:
-        # Fall back to original numpy creation.
-        if isinstance(obj, Tensor):
-            obj = obj.asnumpy()
-        return asarray(onp.array(obj, dtype, copy=copy, ndmin=ndmin))
+    res = asarray(obj, dtype)
+    if ndmin > res.ndim:
+        res = _expand(res, ndmin)
 
-    if not copy:
-        return asarray(obj, dtype=dtype)
+    if copy:
+        res = copy_(res)
+    elif dtype is not None and dtype != res.dtype:
+        res = res.astype(dtype)
 
-    obj = deepcopy(obj)
-    return asarray(obj, dtype=dtype)
+    return res
 
 
-def asarray(a, dtype=None):
-    """
-    Converts the input to tensor.
-
-    This function converts tensors from an array-like object.
-
-    Args:
-        a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-            any form that can be converted to a `Tensor`. This includes lists, lists of
-            tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
-        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
-            be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
-            of the new tensor will be inferred from obj. Default is :class:`None`.
-
-    Returns:
-        Tensor, generated tensor with the specified dtype.
-
-    Raises:
-        TypeError: If input arguments have types not specified above.
-        ValueError: If input `a` has different sizes at different dimensions.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.asarray([1,2,3]))
-        [1 2 3]
-    """
+@constexpr
+def asarray_const(a, dtype=None):
+    """Converts the input to tensor. Note here `a` cannot be tensor itself."""
     _check_input_for_asarray(a)
 
     if dtype is not None:
@@ -149,15 +120,59 @@ def asarray(a, dtype=None):
         dtype = mstype.pytype_to_dtype(a.dtype)
         a = Tensor.from_numpy(a)
 
-    # If a is already a tensor and we don't need to cast dtype, return a
-    if isinstance(a, Tensor):
-        if dtype is None or dtype == a.dtype:
-            return a
-
     return Tensor(a, dtype=dtype)
 
 
-asarray_const = constexpr(asarray)
+def asarray(a, dtype=None):
+    """
+    Converts the input to tensor.
+
+    This function converts tensors from an array-like object.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
+            be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
+        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
+            be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
+            of the new tensor will be inferred from obj. Default is :class:`None`.
+
+    Returns:
+        Tensor, generated tensor with the specified dtype.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If input `a` has different sizes at different dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.asarray([1,2,3]))
+        [1 2 3]
+    """
+    if isinstance(a, Tensor):
+        if dtype is None or dtype == a.dtype:
+            return a
+        return a.astype(dtype)
+    return asarray_const(a, dtype)
+
+
+@constexpr
+def asfarray_const(a, dtype=mstype.float32):
+    """Converts the input to tensor. Note here `a` cannot be tensor itself."""
+    _check_input_for_asarray(a)
+    if isinstance(a, (list, tuple)):
+        # Convert all tuple/nested tuples to lists
+        a = _deep_list(a)
+        # Convert all tensor sub-elements to numpy arrays
+        a = _deep_tensor_to_nparray(a)
+        a = onp.asarray(a)
+        if a.dtype is onp.dtype('object'):
+            raise TypeError(f"For Tensor conversion, the input_data is {a} that contains unsupported element.")
+        a = Tensor.from_numpy(a)
+
+    return Tensor(a, dtype)
 
 
 def asfarray(a, dtype=mstype.float32):
@@ -167,9 +182,8 @@ def asfarray(a, dtype=mstype.float32):
     If non-float dtype is defined, this function will return a float32 tensor instead.
 
     Args:
-        a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-            any form that can be converted to a `Tensor`. This includes lists, lists of
-            tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
+       a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
+            be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
             be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type
             of the new tensor will be inferred from `a`. Default is :class:`mindspore.float32`.
@@ -190,27 +204,18 @@ def asfarray(a, dtype=mstype.float32):
         >>> print(np.asfarray([1,2,3]))
         [1. 2. 3.]
     """
-    _check_input_for_asarray(a)
-
     if dtype is None:
         return asarray(a)
 
     dtype = _check_dtype(dtype)
-    if dtype not in (mstype.float16, mstype.float32, mstype.float64):
+    # pylint: disable=consider-using-in
+    if dtype != mstype.float16 and dtype != mstype.float32 and dtype != mstype.float64:
         dtype = mstype.float32
 
-    if isinstance(a, (list, tuple)):
-        # Convert all tuple/nested tuples to lists
-        a = _deep_list(a)
-        # Convert all tensor sub-elements to numpy arrays
-        a = _deep_tensor_to_nparray(a)
-        a = onp.asarray(a)
-        if a.dtype is onp.dtype('object'):
-            raise TypeError(f"For Tensor conversion, the input_data is {a} that contains unsupported element.")
-    if isinstance(a, onp.ndarray):
-        a = Tensor.from_numpy(a)
+    if isinstance(a, Tensor):
+        return a.astype(dtype)
 
-    return Tensor(a, dtype)
+    return asfarray_const(a)
 
 
 def copy_(a):
@@ -218,9 +223,8 @@ def copy_(a):
     Returns a tensor copy of the given object.
 
     Args:
-        a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to a tensor. This includes lists, lists of
-        tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
+        a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
+            be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
 
     Returns:
         Tensor, has the same data as `a`.
@@ -241,8 +245,16 @@ def copy_(a):
     """
     if not isinstance(a, Tensor):
         a = asarray_const(a)
-    return a.copy()
-
+    # The current implementation registers a new memory location for copied tensor by
+    # doing some reduandent operations.
+    origin_dtype = a.dtype
+    if origin_dtype == mstype.bool_:
+        return F.logical_not(F.logical_not(a))
+    if origin_dtype != mstype.float64:
+        a = a.astype("float32")
+    a = a / ones_like(a)
+    a = a.astype(origin_dtype)
+    return a
 
 def ones(shape, dtype=mstype.float32):
     """
@@ -566,6 +578,65 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
     return F.tensor_pow(base, linspace_res).astype(dtype)
 
 
+def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
+    """
+    Returns numbers spaced evenly on a log scale (a geometric progression).
+
+    This is similar to logspace, but with endpoints specified directly. Each output sample
+    is a constant multiple of the previous.
+
+    Args:
+        start (Union[int, list(int), tuple(int), tensor]): The starting value of the sequence.
+        stop (Union[int, list(int), tuple(int), tensor]): The final value of the sequence,
+            unless endpoint is False. In that case, num + 1 values are spaced over the
+            interval in log-space, of which all but the last (a sequence of length num) are
+            returned.
+        num (int, optional): Number of samples to generate. Default is 50.
+        endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
+            not included. Default is True.
+        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
+            be in format of np.float32, or `float32`.If `dtype` is None, infer the data
+            type from other input arguments. Default is None.
+        axis (int, optional): The axis in the result to store the samples. Relevant
+            only if start or stop is array-like.  By default (0), the samples will
+            be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
+            Default is 0.
+
+    Returns:
+        Tensor, with samples equally spaced on a log scale.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = np.geomspace(1, 256, num=9)
+        >>> print(output)
+        [  1.   2.   4.   8.  16.  32.  64. 128. 256.]
+        >>> output = np.geomspace(1, 256, num=8, endpoint=False)
+        >>> print(output)
+        [  1.   2.   4.   8.  16.  32.  64. 128.]
+    """
+    start, stop, num, endpoint, dtype, axis = _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis)
+    root = num
+    if endpoint:
+        root -= 1
+    bases = F.tensor_pow(F.tensor_div(stop, start), asarray_const(1/(root)))
+    exponents = linspace(zeros(F.shape(bases)), F.fill(F.dtype(bases), F.shape(bases), root),
+                         num, endpoint=endpoint, dtype=dtype, axis=axis)
+    shape = F.shape(bases)
+    axis = axis + F.rank(bases) + 1 if axis < 0 else axis
+    expanded_shape = _tuple_getitem(shape, axis, False) + (1,) + _tuple_getitem(shape, axis)
+    bases = F.reshape(bases, expanded_shape)
+    start = F.reshape(start, expanded_shape)
+    res = F.tensor_mul(F.tensor_pow(bases, exponents), start)
+    if dtype is not None:
+        res = F.cast(res, dtype)
+    return res
+
+
 def eye(N, M=None, k=0, dtype=mstype.float32):
     """
     Returns a 2-D tensor with ones on the diagnoal and zeros elsewhere.
@@ -757,7 +828,7 @@ def empty_like(prototype, dtype=None, shape=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = [[(1, 2)], np.ones((1, 2)), [[2, 3]], np.ones((1, 2))]
+        >>> a = np.ones((4,1,2))
         >>> output = np.empty_like(a)
         >>> print(output)
         # result may vary
@@ -794,7 +865,7 @@ def ones_like(a, dtype=None, shape=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = [[(1, 2)], np.ones((1, 2)), [[2, 3]], np.ones((1, 2))]
+        >>> a = np.ones((4,1,2))
         >>> output = np.ones_like(a)
         >>> print(output)
         [[[1. 1.]]
@@ -832,7 +903,7 @@ def zeros_like(a, dtype=None, shape=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = [[(1, 2)], np.ones((1, 2)), [[2, 3]], np.ones((1, 2))]
+        >>> a = np.ones((4,1,2))
         >>> output = np.zeros_like(a)
         >>> print(output)
         [[[0. 0.]]
@@ -871,7 +942,7 @@ def full_like(a, fill_value, dtype=None, shape=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = [[(1, 2)], np.ones((1, 2)), [[2, 3]], np.ones((1, 2))]
+        >>> a = np.ones((4,1,2))
         >>> output = np.full_like(a, 0.5)
         >>> print(output)
         [[[0.5 0.5]]
@@ -1175,9 +1246,8 @@ def _index(i, size, Cartesian=True):
     if Cartesian:
         if i == 1:
             return 0
-        if i == 0:
-            if size >= 2:
-                return 1
+        if i == 0 and size >= 2:
+            return 1
     return i
 
 
@@ -1630,3 +1700,103 @@ def ix_(*args):
             return _raise_value_error('Cross index must be 1 dimensional')
         res += (F.reshape(arr, _expanded_shape(ndim, arr.size, i)),)
     return res
+
+
+def vander(x, N=None, increasing=False):
+    """
+    Generates a Vandermonde matrix.
+
+    The columns of the output matrix are powers of the input vector. The order of
+    the powers is determined by the increasing boolean argument. Specifically, when
+    increasing is `False`, the i-th output column is the input vector raised element-wise
+    to the power of :math:`N - i - 1`. Such a matrix with a geometric progression in each row
+    is named for Alexandre-Theophile Vandermonde.
+
+    Args:
+        x (Union[list, tuple, Tensor]): 1-D input array.
+        N (int, optional): Number of columns in the output. If N is not specified, a
+            square array is returned (``N = len(x)``).
+        increasing (bool, optional): Order of the powers of the columns. If True, the
+            powers increase from left to right, if False (the default) they are reversed.
+
+    Returns:
+        Vandermonde matrix. If `increasing` is `False`, the first column is :math:`x^{(N-1)}`,
+        the second :math:`x^{(N-2)}` and so forth. If `increasing` is `True`, the columns are
+        :math:`x^0, x^1, ..., x^{(N-1)}`.
+
+    Raises:
+        TypeError: If inputs have types not specified above.
+        ValueError: If `x` is not 1-D, or `N` < 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.vander([1,2,3,4,5]))
+        [[  1   1   1   1   1]
+         [ 16   8   4   2   1]
+         [ 81  27   9   3   1]
+         [256  64  16   4   1]
+         [625 125  25   5   1]]
+    """
+    if isinstance(x, (list, tuple)):
+        x = asarray_const(x)
+    elif not isinstance(x, Tensor):
+        _raise_type_error("Input x must be list, tuple or Tensor, but got ", x)
+    if x.ndim != 1:
+        _raise_value_error("Input x must be 1-D, but got dimension=", x.ndim)
+    N = N or x.size
+    if not isinstance(N, int):
+        _raise_type_error("Input N must be an integer.")
+    if N <= 0:
+        _raise_value_error("Input N must > 0.")
+    if not isinstance(increasing, bool):
+        _raise_type_error("increasing must be a bool.")
+    exponent = _iota(x.dtype, N, increasing)
+    x = F.expand_dims(x, 1)
+    exponent = F.expand_dims(exponent, 0)
+    return F.tensor_pow(x, exponent)
+
+
+def indices(dimensions, dtype=mstype.int32, sparse=False):
+    """
+    Returns an array representing the indices of a grid.
+
+    Computes an array where the subarrays contain index values 0, 1, …
+    varying only along the corresponding axis.
+
+    Args:
+        dimensions (tuple or list of ints): The shape of the grid.
+        dtype (data type, optional): Data type of the result.
+        sparse (boolean, optional): Defaults to False. Return a sparse
+            representation of the grid instead of a dense representation.
+
+    Returns:
+        Tensor or tuple of Tensor, If `sparse` is False, returns one array
+        of grid indices, ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
+        If sparse is True, returns a tuple of arrays, with
+        ``grid[i].shape = (1, ..., 1, dimensions[i], 1, ..., 1)`` with
+        ``dimensions[i]`` in the `ith` place
+
+    Raises:
+        TypeError: if input dimensions is not a tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> grid = np.indices((2, 3))
+        >>> print(indices)
+        [Tensor(shape=[2, 3], dtype=Int32, value=
+        [[0, 0, 0],
+        [1, 1, 1]]), Tensor(shape=[2, 3], dtype=Int32, value=
+        [[0, 1, 2],
+        [0, 1, 2]])]
+    """
+    if not isinstance(dimensions, (tuple, list)):
+        _raise_type_error('Shape of the grid must be tuple or list')
+    grids = ()
+    for d in dimensions:
+        grids += (arange(d, dtype=dtype),)
+    return meshgrid(*grids, sparse=sparse, indexing='ij')

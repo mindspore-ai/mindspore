@@ -15,6 +15,7 @@
 """utility functions for mindspore.numpy st tests"""
 import functools
 import numpy as onp
+from mindspore import Tensor
 import mindspore.numpy as mnp
 
 
@@ -90,7 +91,9 @@ def rand_bool(*shape):
 
 def match_res(mnp_fn, onp_fn, *arrs, **kwargs):
     """Checks results from applying mnp_fn and onp_fn on arrs respectively"""
-    mnp_arrs = map(functools.partial(mnp.asarray, dtype='float32'), arrs)
+    dtype = kwargs.get('dtype', mnp.float32)
+    kwargs.pop('dtype', None)
+    mnp_arrs = map(functools.partial(Tensor, dtype=dtype), arrs)
     error = kwargs.get('error', 0)
     kwargs.pop('error', None)
     mnp_res = mnp_fn(*mnp_arrs, **kwargs)
@@ -151,15 +154,32 @@ def run_unary_test(mnp_fn, onp_fn, test_case, error=0):
 
 
 def run_multi_test(mnp_fn, onp_fn, arrs, error=0):
-    mnp_arrs = map(mnp.asarray, arrs)
+    mnp_arrs = map(Tensor, arrs)
     for actual, expected in zip(mnp_fn(*mnp_arrs), onp_fn(*arrs)):
-        match_array(actual.asnumpy(), expected, error)
+        match_all_arrays(actual, expected, error)
 
 
 def run_single_test(mnp_fn, onp_fn, arr, error=0):
-    mnp_arr = mnp.asarray(arr)
+    mnp_arr = Tensor(arr)
     for actual, expected in zip(mnp_fn(mnp_arr), onp_fn(arr)):
         if isinstance(expected, tuple):
             for actual_arr, expected_arr in zip(actual, expected):
                 match_array(actual_arr.asnumpy(), expected_arr, error)
         match_array(actual.asnumpy(), expected, error)
+
+
+def run_logical_test(mnp_fn, onp_fn, test_case):
+    for x1 in test_case.boolean_arrs:
+        for x2 in test_case.boolean_arrs:
+            match_res(mnp_fn, onp_fn, x1, x2, dtype=mnp.bool_)
+
+def to_tensor(obj, dtype=None):
+    if dtype is None:
+        res = Tensor(obj)
+        if res.dtype == mnp.float64:
+            res = res.astype(mnp.float32)
+        if res.dtype == mnp.int64:
+            res = res.astype(mnp.int32)
+    else:
+        res = Tensor(obj, dtype)
+    return res

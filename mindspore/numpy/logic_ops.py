@@ -15,33 +15,29 @@
 """logical operations, the function docs are adapted from Numpy API."""
 
 
-from .math_ops import _apply_tensor_op
 from ..ops import functional as F
 from ..ops.primitive import constexpr
 from ..common import dtype as mstype
 from ..common import Tensor
 from .._c_expression import typing
 
-from .array_creations import zeros, ones
-from .utils import _check_input_tensor
+from .math_ops import _apply_tensor_op, absolute
+from .array_creations import zeros, ones, empty
+from .utils import _check_input_tensor, _to_tensor, _isnan
+from .utils_const import _raise_type_error, _is_shape_empty, _infer_out_shape
 
 
-def not_equal(x1, x2, out=None, where=True, dtype=None):
+def not_equal(x1, x2, dtype=None):
     """
     Returns (x1 != x2) element-wise.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
 
     Args:
         x1 (Tensor): First input tensor to be compared.
         x2 (Tensor): Second input tensor to be compared.
-        out (Tensor or None, optional), default is None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -65,33 +61,21 @@ def not_equal(x1, x2, out=None, where=True, dtype=None):
              [False  True]]
     """
     _check_input_tensor(x1, x2)
-    return _apply_tensor_op(F.not_equal, x1, x2, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.not_equal, x1, x2, dtype=dtype)
 
 
-def less_equal(x1, x2, out=None, where=True, dtype=None):
+def less_equal(x1, x2, dtype=None):
     """
     Returns the truth value of ``(x1 <= x2)`` element-wise.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
 
     Args:
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -113,33 +97,21 @@ def less_equal(x1, x2, out=None, where=True, dtype=None):
         [False  True  True]
     """
     _check_input_tensor(x1, x2)
-    return _apply_tensor_op(F.tensor_le, x1, x2, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.tensor_le, x1, x2, dtype=dtype)
 
 
-def less(x1, x2, out=None, where=True, dtype=None):
+def less(x1, x2, dtype=None):
     """
     Returns the truth value of ``(x1 < x2)`` element-wise.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
 
     Args:
         x1 (Tensor): input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -160,33 +132,21 @@ def less(x1, x2, out=None, where=True, dtype=None):
         >>> print(output)
         [ True False]
     """
-    return _apply_tensor_op(F.tensor_lt, x1, x2, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.tensor_lt, x1, x2, dtype=dtype)
 
 
-def greater_equal(x1, x2, out=None, where=True, dtype=None):
+def greater_equal(x1, x2, dtype=None):
     """
     Returns the truth value of ``(x1 >= x2)`` element-wise.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
 
     Args:
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -207,33 +167,21 @@ def greater_equal(x1, x2, out=None, where=True, dtype=None):
         >>> print(output)
         [ True  True False]
     """
-    return _apply_tensor_op(F.tensor_ge, x1, x2, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.tensor_ge, x1, x2, dtype=dtype)
 
 
-def greater(x1, x2, out=None, where=True, dtype=None):
+def greater(x1, x2, dtype=None):
     """
     Returns the truth value of ``(x1 > x2)`` element-wise.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
 
     Args:
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -254,33 +202,21 @@ def greater(x1, x2, out=None, where=True, dtype=None):
         >>> print(output)
         [ True False]
     """
-    return _apply_tensor_op(F.tensor_gt, x1, x2, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.tensor_gt, x1, x2, dtype=dtype)
 
 
-def equal(x1, x2, out=None, where=True, dtype=None):
+def equal(x1, x2, dtype=None):
     """
     Returns the truth value of ``(x1 == x2)`` element-wise.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
 
     Args:
         x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -301,34 +237,22 @@ def equal(x1, x2, out=None, where=True, dtype=None):
         >>> print(output)
         [ True  True False]
     """
-    return _apply_tensor_op(F.equal, x1, x2, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.equal, x1, x2, dtype=dtype)
 
 
-def isfinite(x, out=None, where=True, dtype=None):
+def isfinite(x, dtype=None):
     """
     Tests element-wise for finiteness (not infinity or not Not a Number).
 
     The result is returned as a boolean array.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
         x (Tensor): Input values.
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -351,37 +275,20 @@ def isfinite(x, out=None, where=True, dtype=None):
         >>> print(output)
         False
     """
-    return _apply_tensor_op(F.isfinite, x, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(F.isfinite, x, dtype=dtype)
 
 
-def _isnan(x):
-    """Computes isnan without applying keyword arguments."""
-    return F.not_equal(x, x)
-
-
-def isnan(x, out=None, where=True, dtype=None):
+def isnan(x, dtype=None):
     """
     Tests element-wise for NaN and return result as a boolean array.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
         Only np.float32 is currently supported.
 
     Args:
         x (Tensor): Input values.
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -404,7 +311,7 @@ def isnan(x, out=None, where=True, dtype=None):
         >>> print(output)
         False
     """
-    return _apply_tensor_op(_isnan, x, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(_isnan, x, dtype=dtype)
 
 
 def _isinf(x):
@@ -419,31 +326,19 @@ def _isinf(x):
     return F.cast(res, mstype.bool_)
 
 
-def isinf(x, out=None, where=True, dtype=None):
+def isinf(x, dtype=None):
     """
     Tests element-wise for positive or negative infinity.
 
     Returns a boolean array of the same shape as `x`, True where ``x == +/-inf``, otherwise False.
 
     Note:
-        Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
-        not supported.
-        When `where` is provided, `out` must have a tensor value. `out` is not supported
-        for storing the result, however it can be used in combination with `where` to set
-        the value at indices for which `where` is set to False.
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
         Only np.float32 is currently supported.
 
     Args:
         x (Tensor): Input values.
-        out (Tensor or None, optional): defaults to None.
-        where (Tensor or None, optional): For any non-default value of type other
-            than :class:`Tensor` or :class:`None`, the output retains its original value.
-            This condition is broadcasted over the input. At locations where the
-            condition is `True`, the out array will be set to the ufunc result.
-            Elsewhere, the out array will retain its original value. Note that
-            if an uninitialized out array is created via the default ``out=None``,
-            locations within it where the condition is `False` will remain
-            uninitialized.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -466,7 +361,7 @@ def isinf(x, out=None, where=True, dtype=None):
         >>> print(output)
         [ True  True False False]
     """
-    return _apply_tensor_op(_isinf, x, out=out, where=where, dtype=dtype)
+    return _apply_tensor_op(_isinf, x, dtype=dtype)
 
 
 def _is_sign_inf(x, fn):
@@ -562,7 +457,7 @@ def isscalar(element):
         element (any): Input argument, can be of any type and shape.
 
     Returns:
-       Boolean, True if `element` is a scalar type, False if it is not.
+        Boolean, True if `element` is a scalar type, False if it is not.
 
     Raises:
         TypeError: if the type of `element` is not supported by mindspore parser.
@@ -587,3 +482,302 @@ def isscalar(element):
     """
     obj_type = F.typeof(element)
     return not isinstance(obj_type, Tensor) and _isscalar(obj_type)
+
+
+def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
+    """
+    Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
+
+    The tolerance values are positive, typically very small numbers. The relative
+    difference (:math:`rtol * abs(b)`) and the absolute difference `atol` are added together
+    to compare against the absolute difference between `a` and `b`.
+
+    Note:
+        For finite values, isclose uses the following equation to test whether two
+        floating point values are equivalent.
+        :math:`absolute(a - b) <= (atol + rtol * absolute(b))`
+
+    Args:
+        a (Union[Tensor, list, tuple]): Input first tensor to compare.
+        b (Union[Tensor, list, tuple]): Input second tensor to compare.
+        rtol (Number): The relative tolerance parameter (see Note).
+        atol (Number): The absolute tolerance parameter (see Note).
+        equal_nan (bool): Whether to compare ``NaN`` as equal. If True, ``NaN`` in
+        `a` will be considered equal to ``NaN`` in `b` in the output tensor.
+
+    Returns:
+        A ``bool`` tensor of where `a` and `b` are equal within the given tolerance.
+
+    Raises:
+        TypeError: If inputs have types not specified above.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.array([0,1,2,float('inf'),float('inf'),float('nan')])
+        >>> b = np.array([0,1,-2,float('-inf'),float('inf'),float('nan')])
+        >>> print(np.isclose(a, b))
+        [ True  True False False  True False]
+        >>> print(np.isclose(a, b, equal_nan=True))
+        [ True  True False False  True  True]
+    """
+    a, b = _to_tensor(a, b)
+    if not isinstance(rtol, (int, float, bool)) or not isinstance(atol, (int, float, bool)):
+        _raise_type_error("rtol and atol are expected to be numbers.")
+    if not isinstance(equal_nan, bool):
+        _raise_type_error("equal_nan is expected to be bool.")
+
+    if _is_shape_empty(a.shape) or _is_shape_empty(b.shape):
+        return empty(_infer_out_shape(a.shape, b.shape), dtype=mstype.bool_)
+    rtol = _to_tensor(rtol).astype("float32")
+    atol = _to_tensor(atol).astype("float32")
+    res = absolute(a - b) <= (atol + rtol * absolute(b))
+    # infs are treated as equal
+    a_posinf = isposinf(a)
+    b_posinf = isposinf(b)
+    a_neginf = isneginf(a)
+    b_neginf = isneginf(b)
+    same_inf = F.logical_or(F.logical_and(a_posinf, b_posinf), F.logical_and(a_neginf, b_neginf))
+    diff_inf = F.logical_or(F.logical_and(a_posinf, b_neginf), F.logical_and(a_neginf, b_posinf))
+    res = F.logical_and(F.logical_or(res, same_inf), F.logical_not(diff_inf))
+    both_nan = F.logical_and(_isnan(a), _isnan(b))
+    if equal_nan:
+        res = F.logical_or(both_nan, res)
+    else:
+        res = F.logical_and(F.logical_not(both_nan), res)
+    return res
+
+
+def in1d(ar1, ar2, invert=False):
+    """
+    Tests whether each element of a 1-D array is also present in a second array.
+
+    Returns a boolean array the same length as `ar1` that is True where an element
+    of `ar1` is in `ar2` and False otherwise.
+
+    Note:
+        Numpy argument `assume_unique` is not supported since the implementation does
+        not rely on the uniqueness of the input arrays.
+
+    Args:
+        ar1 (array_like): Input array with shape `(M,)`.
+        ar2 (array_like): The values against which to test each value of `ar1`.
+        invert (boolean, optional): If True, the values in the returned array are
+            inverted (that is, False where an element of `ar1` is in `ar2` and True
+            otherwise). Default is False.
+
+    Returns:
+       Tensor, with shape `(M,)`. The values ``ar1[in1d]`` are in `ar2`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> test = np.array([0, 1, 2, 5, 0])
+        >>> states = [0, 2]
+        >>> mask = np.in1d(test, states)
+        >>> print(mask)
+        [ True False  True False  True]
+        >>> mask = np.in1d(test, states, invert=True)
+        >>> print(mask)
+        [False  True False  True False]
+    """
+    ar1, ar2 = _to_tensor(ar1, ar2)
+    ar1 = F.expand_dims(ar1.ravel(), -1)
+    ar2 = ar2.ravel()
+    included = F.equal(ar1, ar2)
+    # F.reduce_sum only supports float
+    res = F.reduce_sum(included.astype(mstype.float32), -1).astype(mstype.bool_)
+    if invert:
+        res = F.equal(res, _to_tensor(False))
+    return res
+
+
+def isin(element, test_elements, invert=False):
+    """
+    Calculates element in `test_elements`, broadcasting over `element` only. Returns a
+    boolean array of the same shape as `element` that is True where an element of
+    `element` is in `test_elements` and False otherwise.
+
+    Note:
+        Numpy argument `assume_unique` is not supported since the implementation does
+        not rely on the uniqueness of the input arrays.
+
+    Args:
+        element (array_like): Input array.
+        test_elements (array_like): The values against which to test each value of
+            `element`.
+        invert (boolean, optional): If True, the values in the returned array are
+            inverted, as if calculating `element` not in `test_elements`. Default is False.
+
+    Returns:
+       Tensor, has the same shape as `element`. The values ``element[isin]`` are in
+       `test_elements`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> element = 2*np.arange(4).reshape((2, 2))
+        >>> test_elements = [1, 2, 4, 8]
+        >>> mask = np.isin(element, test_elements)
+        >>> print(mask)
+        [[False  True]
+        [ True False]]
+        >>> mask = np.isin(element, test_elements, invert=True)
+        >>> print(mask)
+        [[ True False]
+        [False  True]]
+    """
+    res = in1d(element, test_elements, invert=invert)
+    return F.reshape(res, F.shape(element))
+
+
+def logical_not(a, dtype=None):
+    """
+    Computes the truth value of NOT `a` element-wise.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+
+    Args:
+        a (Tensor): The input tensor whose dtype is bool.
+        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar.
+        Boolean result with the same shape as `a` of the NOT operation on elements of `a`.
+        This is a scalar if `a` is a scalar.
+
+    Raises:
+        TypeError: if the input is not a tensor or its dtype is not bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.array([True, False])
+        >>> output = np.logical_not(a)
+        >>> print(output)
+        [False  True]
+    """
+    return _apply_tensor_op(F.logical_not, a, dtype=dtype)
+
+
+def logical_or(x1, x2, dtype=None):
+    """
+    Computes the truth value of `x1` OR `x2` element-wise.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
+
+    Args:
+        x1 (Tensor): Input tensor.
+        x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be
+            broadcastable to a common shape (which becomes the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+       Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
+       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+       scalars.
+
+    Raises:
+        TypeError: if the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x1 = np.array([True, False])
+        >>> x2 = np.array([False, True])
+        >>> output = np.logical_or(x1, x2)
+        >>> print(output)
+        [ True  True]
+    """
+    return _apply_tensor_op(F.logical_or, x1, x2, dtype=dtype)
+
+
+def logical_and(x1, x2, dtype=None):
+    """
+    Computes the truth value of `x1` AND `x2` element-wise.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
+
+    Args:
+        x1 (Tensor): Input tensor.
+        x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be
+            broadcastable to a common shape (which becomes the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar.
+        Boolean result of the logical AND operation applied to the elements of `x1` and `x2`;
+        the shape is determined by broadcasting. This is a scalar if both `x1` and `x2` are scalars.
+
+    Raises:
+        TypeError: if the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x1 = np.array([True, False])
+        >>> x2 = np.array([False, False])
+        >>> output = np.logical_and(x1, x2)
+        >>> print(output)
+        [False False]
+    """
+    return _apply_tensor_op(F.logical_and, x1, x2, dtype=dtype)
+
+
+def logical_xor(x1, x2, dtype=None):
+    """
+    Computes the truth value of `x1` XOR `x2`, element-wise.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
+        and `extobj` are not supported.
+
+    Args:
+        x1 (Tensor): Input tensor.
+        x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be
+            broadcastable to a common shape (which becomes the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar.
+        Boolean result of the logical AND operation applied to the elements of `x1` and `x2`;
+        the shape is determined by broadcasting. This is a scalar if both `x1` and `x2` are scalars.
+
+    Raises:
+        TypeError: if the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x1 = np.array([True, False])
+        >>> x2 = np.array([False, False])
+        >>> output = np.logical_xor(x1, x2)
+        >>> print(output)
+        [True False]
+    """
+    _check_input_tensor(x1)
+    _check_input_tensor(x2)
+    y1 = F.logical_or(x1, x2)
+    y2 = F.logical_or(F.logical_not(x1), F.logical_not(x2))
+    return _apply_tensor_op(F.logical_and, y1, y2, dtype=dtype)

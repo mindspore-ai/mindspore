@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `not equal` operations."""
 
+from . import _constexpr_utils as const_utils
 from ...composite import base
 from ... import functional as F
 
@@ -39,6 +40,21 @@ def _not_equal_scalar(x, y):
        bool, if x != y return true, x == y return false.
    """
     return not F.scalar_eq(x, y)
+
+
+@not_equal.register("mstype", "mstype")
+def _not_equal_mstype(x, y):
+    """
+    Determine if two mindspore types are not equal.
+
+    Args:
+       x (mstype): first input mindspore type.
+       y (mstype): second input mindspore type.
+
+    Returns:
+       bool, if x != y return true, x == y return false.
+   """
+    return not const_utils.mstype_eq(x, y)
 
 
 @not_equal.register("String", "String")
