@@ -1875,7 +1875,9 @@ void SessionBasic::Summary(KernelGraph *graph) {
     return;
   }
 
-  if (!IsSupportSummary()) {
+  static bool is_first = true;
+  if (is_first && !IsSupportSummary()) {
+    is_first = false;
     MS_LOG(ERROR) << "The Summary operator can not collect data correctly. Detail: the data sink mode is used and the"
                      " sink size(in model.train() python api) is not equal to 1.";
   }
