@@ -55,7 +55,9 @@ cmd="${CACHE_ADMIN} --start --spilldir /path_that_does_not_exist"
 CacheAdminCmd "${cmd}" 1
 HandleRcExit $? 0 0
 
-# start cache server twice
+# stop cache server first to test start
+StopServer
+# start cache server
 StartServer
 HandleRcExit $? 1 1
 # start the cache server again, however, this time we expect an error
@@ -200,7 +202,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # illegal log level
-cmd="${CACHE_ADMIN} --start -l 4"
+cmd="${CACHE_ADMIN} --start -l 5"
 CacheAdminCmd "${cmd}" 1
 HandleRcExit $? 0 0
 cmd="${CACHE_ADMIN} --start -l -1"

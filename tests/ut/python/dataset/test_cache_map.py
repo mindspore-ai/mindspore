@@ -804,11 +804,11 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(ValueError) as err:
         ds.DatasetCache(session_id=1, size=0, port=0)
-    assert "Input port is not within the required interval of (1025 to 65535)" in str(err.value)
+    assert "Input port is not within the required interval of [1025, 65535]" in str(err.value)
 
     with pytest.raises(ValueError) as err:
         ds.DatasetCache(session_id=1, size=0, port=65536)
-    assert "Input port is not within the required interval of (1025 to 65535)" in str(err.value)
+    assert "Input port is not within the required interval of [1025, 65535]" in str(err.value)
 
     with pytest.raises(TypeError) as err:
         ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=True)

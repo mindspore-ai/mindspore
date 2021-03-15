@@ -148,13 +148,13 @@ Status RandomNode::SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) {
 }
 
 // Visitor accepting method for IRNodePass
-Status RandomNode::Accept(IRNodePass *p, bool *const modified) {
+Status RandomNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<RandomNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status RandomNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+Status RandomNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<RandomNode>(), modified);
 }

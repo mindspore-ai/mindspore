@@ -1293,7 +1293,8 @@ CacheServer::Builder::Builder()
       num_workers_(std::thread::hardware_concurrency() / 2),
       port_(50052),
       shared_memory_sz_in_gb_(kDefaultSharedMemorySize),
-      memory_cap_ratio_(kDefaultMemoryCapRatio) {
+      memory_cap_ratio_(kDefaultMemoryCapRatio),
+      log_level_(1) {
   if (num_workers_ == 0) {
     num_workers_ = 1;
   }

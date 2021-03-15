@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class CacheMergeNode : public DatasetNode {
  public:
   /// \brief Constructor

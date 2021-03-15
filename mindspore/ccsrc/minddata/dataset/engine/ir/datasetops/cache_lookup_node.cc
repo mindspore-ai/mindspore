@@ -80,6 +80,5 @@ Status CacheLookupNode::SamplerBuild(std::shared_ptr<SamplerRT> *const out) {
   *out = std::shared_ptr<SamplerRT>(lookup_op);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
