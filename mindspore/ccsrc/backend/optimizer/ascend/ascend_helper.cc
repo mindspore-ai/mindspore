@@ -240,7 +240,7 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
 }
 
 CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,
-                        const bool need_padding, const std::string &op_name) {
+                        const bool need_padding, const std::string &op_name, const std::vector<int64_t> &perm) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   CNodePtr trans_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(op_name)), input});
@@ -260,6 +260,9 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   if (trans_node->kernel_info() == nullptr) {
     auto kernel_info = std::make_shared<device::KernelInfo>();
     trans_node->set_kernel_info(kernel_info);
+  }
+  if (op_name == prim::kPrimTranspose->name()) {
+    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), trans_node);
   }
   MS_EXCEPTION_IF_NULL(kernel_select);
   kernel_select->SelectKernel(trans_node);

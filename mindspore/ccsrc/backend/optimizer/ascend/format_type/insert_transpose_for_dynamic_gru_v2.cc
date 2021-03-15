@@ -53,9 +53,9 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       auto padding_axis = AnfAlgo::GetOutputReshapeType(transdata_node, 0);
       KernelSelectPtr kernel_select = std::make_shared<KernelSelect>();
       // trans default to hwcn
-      new_transpose_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0),
-                                          kernel_select, false, prim::kPrimTranspose->name());
-      AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{2, 3, 1, 0}), new_transpose_node);
+      new_transpose_node =
+        NewTransOpNode(func_graph, AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0), kernel_select, false,
+                       prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
       AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
       RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
       // trans hwcn to output_format
