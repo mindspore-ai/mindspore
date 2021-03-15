@@ -46,7 +46,7 @@ Status SyncWaitNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   // Right now barrier should only take num_rows_per_buffer = 1
   // The reason for this is because having it otherwise can lead to blocking issues
   // See barrier_op.h for more details
-  int32_t rows_per_buffer = 1;
+  const int32_t rows_per_buffer = 1;
   auto op = std::make_shared<BarrierOp>(rows_per_buffer, connector_que_size_, condition_name_, callback_);
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());

@@ -1114,6 +1114,11 @@ class RandomRotation(ImageTensorOperation):
 
     @check_random_rotation
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
+        if isinstance(degrees, numbers.Number):
+            degrees = degrees % 360
+        if isinstance(degrees, (list, tuple)):
+            degrees = [degrees[0] % 360, degrees[1] % 360]
+
         self.degrees = degrees
         self.resample = resample
         self.expand = expand
