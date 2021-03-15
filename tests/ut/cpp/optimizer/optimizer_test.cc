@@ -24,6 +24,7 @@
 #include "frontend/optimizer/cse_pass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
+#include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "debug/draw.h"
 
 namespace mindspore {
@@ -38,23 +39,24 @@ class TestOptOptimizer : public UT::Common {
 };
 
 TEST_F(TestOptOptimizer, test_step_opt) {
-  FuncGraphPtr before = getPyFun("test_expendJ");
+  FuncGraphPtr before = getPyFun("test_expandJ");
 
   ASSERT_TRUE(nullptr != before);
   pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
-  std::shared_ptr<Optimizer> optimizer = Optimizer::MakeOptimizer("ut_test", res,
-                                                                  {{"main",
-                                                                    {
-                                                                      // Branch culling
-                                                                      irpass.switch_simplify_,
+  std::shared_ptr<Optimizer> optimizer =
+    Optimizer::MakeOptimizer("ut_test", res,
+                             {{"main",
+                               {
+                                 // Branch culling
+                                 irpass.switch_simplify_,
 
-                                                                      // Safe inlining
-                                                                      irpass.arithmetic_simplify_,
-                                                                      irpass.inline_,
-                                                                    }},
-                                                                   {"grad", {irpass.expand_jprim_}},
-                                                                   {"cse", OptPassConfig(CSEPass(false))}},
-                                                                  true);
+                                 // Safe inlining
+                                 irpass.arithmetic_simplify_,
+                                 irpass.inline_,
+                               }},
+                              {"grad", opt::OptPassConfig(opt::irpass::ExpandJPrim())},
+                              {"cse", OptPassConfig(CSEPass(false))}},
+                             true);
   EXPECT_TRUE(optimizer.get() != nullptr);
 
   auto after = optimizer->step(before);

@@ -31,28 +31,17 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-namespace internal {
-AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &resource);
-}  // namespace internal
 
 // {prim::kPrimJ, C}
-class ExpandJPrim : public AnfVisitor {
+class ExpandJPrim {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    x_ = nullptr;
-    AnfVisitor::Match(prim::kPrimJ, {IsVNode})(node);
-    if (x_ != nullptr) {
-      TraceGuard guard(std::make_shared<TraceExpandJ>(node->debug_info()));
-      auto j_node = internal::ExpandJ(x_, optimizer->resource());
-      return j_node;
-    }
-    return nullptr;
-  }
-
-  void Visit(const ValueNodePtr &node) override { x_ = node; }
+  ExpandJPrim() = default;
+  virtual ~ExpandJPrim() = default;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
+  void GetJPrim(const FuncGraphManagerPtr &manager);
 
  private:
-  ValueNodePtr x_{nullptr};
+  std::vector<CNodePtr> j_nodes_;
 };
 }  // namespace irpass
 }  // namespace opt

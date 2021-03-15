@@ -85,7 +85,6 @@ class OptimizeIRPassLib {
   SubstitutionPtr accumulaten_eliminater_;
 
   // Gradient irpasses
-  SubstitutionPtr expand_jprim_;
   SubstitutionPtr minmaximum_grad_;
 
   // inline

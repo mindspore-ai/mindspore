@@ -133,8 +133,8 @@ def cost(x):
 J = Primitive('J')
 
 
-def test_expendJ(x):
-    """ test_expendJ """
+def test_expandJ(x):
+    """ test_expandJ """
     return J(cost)(x)
 
 
