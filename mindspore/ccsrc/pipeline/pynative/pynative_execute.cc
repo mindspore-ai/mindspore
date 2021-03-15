@@ -50,6 +50,7 @@
 
 #include "pipeline/pynative/base.h"
 #include "pybind_api/api_register.h"
+#include "pybind_api/pybind_patch.h"
 #include "vm/transform.h"
 
 #include "frontend/optimizer/ad/grad.h"
@@ -106,6 +107,9 @@ void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T 
   } catch (const py::index_error &ex) {
     inst->ClearRes();
     throw py::index_error(ex);
+  } catch (const py::name_error &ex) {
+    inst->ClearRes();
+    throw py::name_error(ex);
   } catch (const std::exception &ex) {
     inst->ClearRes();
     // re-throw this exception to Python interpreter to handle it
