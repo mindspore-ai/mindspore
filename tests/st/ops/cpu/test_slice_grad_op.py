@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -77,7 +78,52 @@ def test_slice_grad2():
               [[0., 0.], [8., 9.], [10., 11.]]]
     assert (output.asnumpy() == expect).all()
 
+class StridedSliceGrad(nn.Cell):
+    def __init__(self, x, begin, end, stride):
+        super(StridedSliceGrad, self).__init__()
+        self.shape_op = P.Shape()
+        self.shapex = self.shape_op(x)
+        self.begin = begin
+        self.end = end
+        self.stride = stride
+        self.stride_slice = G.StridedSliceGrad()
+
+    def construct(self, dy):
+        return self.stride_slice(dy, self.shapex, self.begin, self.end, self.stride)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_strided_slice_grad_bool_type():
+    x = Tensor([[[False, False, True], [False, True, False]], [[False, True, False], [True, False, False]],
+                [[False, True, True], [True, False, True]]], mstype.bool_)
+    dy = Tensor([False, True, False], mstype.bool_)
+    begin = (1, 0, 0)
+    end = (2, 1, 3)
+    stride = (1, 1, 1)
+    slice_op = StridedSliceGrad(x, begin, end, stride)
+    output = slice_op(dy)
+    expected_output = np.array([[[False, False, False], [False, False, False]],
+                                [[False, True, False], [False, False, False]],
+                                [[False, False, False], [False, False, False]]])
+    assert (output.asnumpy() == expected_output).all()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_strided_slice_grad_float32_type():
+    x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]], mstype.float32)
+    dy = Tensor([3, 3, 3], mstype.float32)
+    begin = (1, 0, 0)
+    end = (2, 1, 3)
+    stride = (1, 1, 1)
+    slice_op = StridedSliceGrad(x, begin, end, stride)
+    output = slice_op(dy)
+    expected_output = np.array([[[0, 0, 0], [0, 0, 0]], [[3, 3, 3], [0, 0, 0]], [[0, 0, 0], [0, 0, 0]]])
+    assert (output.asnumpy() == expected_output).all()
 
 if __name__ == '__main__':
     test_slice_grad()
     test_slice_grad2()
+    test_strided_slice_grad_bool_type()
+    test_strided_slice_grad_float32_type()
