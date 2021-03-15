@@ -462,7 +462,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
 
   schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
   schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
-  std::shared_ptr<Dataset> ds = RandomData(4, schema, {}, some_cache);
+  std::shared_ptr<Dataset> ds = RandomData(8, schema, {}, some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -485,7 +485,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
     iter->GetNextRow(&row);
   }
 
-  EXPECT_EQ(i, 8);
+  EXPECT_EQ(i, 16);
 
   // Manually terminate the pipeline
   iter->Stop();

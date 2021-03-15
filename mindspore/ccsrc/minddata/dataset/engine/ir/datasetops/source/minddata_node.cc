@@ -213,7 +213,7 @@ Status MindDataNode::Accept(IRNodePass *const p, bool *const modified) {
 }
 
 // Visitor accepting method for IRNodePass
-Status MindDataNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+Status MindDataNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<MindDataNode>(), modified);
 }

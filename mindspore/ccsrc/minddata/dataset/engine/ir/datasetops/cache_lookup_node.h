@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class CacheLookupNode : public DatasetNode, public SamplerObj {
  public:
   /// \brief Constructor

@@ -72,6 +72,5 @@ Status CacheNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<CacheNode>(), modified);
 }
-
 }  // namespace dataset
 }  // namespace mindspore
