@@ -655,10 +655,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
                                                         const AnfNodeConfigPtr &out_conf,
                                                         const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList out_specs;
-  if (!multi_poss_.count(evaluators[0])) {
-    multi_poss_[evaluators[0]] = evaluators[1];
-    multi_poss_[evaluators[1]] = evaluators[0];
-  }
+  multi_poss_[evaluators[0]] = evaluators[1];
+  multi_poss_[evaluators[1]] = evaluators[0];
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
