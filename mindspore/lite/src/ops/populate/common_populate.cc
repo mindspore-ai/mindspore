@@ -32,5 +32,6 @@ OpParameter *PopulateCommonParameter(const void *prim) {
 }  // namespace
 
 Registry g_zerosLikeParameterRegistry(schema::PrimitiveType_ZerosLike, PopulateCommonParameter, SCHEMA_CUR);
+Registry g_dependParameterRegistry(schema::PrimitiveType_Depend, PopulateCommonParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

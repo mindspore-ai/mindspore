@@ -42,8 +42,10 @@ OpParameter *PopulateArithmetic(const void *primitive) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
+Registry g_MinimunGradParameterRegistry(schema::PrimitiveType_MinimumGrad, PopulateArithmetic, SCHEMA_CUR);
+Registry g_MaximunGradParameterRegistry(schema::PrimitiveType_MaximumGrad, PopulateArithmetic, SCHEMA_CUR);
 Registry g_realDivParameterRegistry(schema::PrimitiveType_RealDiv, PopulateArithmetic, SCHEMA_CUR);
-Registry g_ogicalAndParameterRegistry(schema::PrimitiveType_LogicalAnd, PopulateArithmetic, SCHEMA_CUR);
+Registry g_logicalAndParameterRegistry(schema::PrimitiveType_LogicalAnd, PopulateArithmetic, SCHEMA_CUR);
 Registry g_parameterRegistry(schema::PrimitiveType_LogicalOr, PopulateArithmetic, SCHEMA_CUR);
 Registry g_equalParameterRegistry(schema::PrimitiveType_Equal, PopulateArithmetic, SCHEMA_CUR);
 Registry g_notEqualParameterRegistry(schema::PrimitiveType_NotEqual, PopulateArithmetic, SCHEMA_CUR);

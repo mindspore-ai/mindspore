@@ -670,6 +670,23 @@ void AnfExporter::ProcessBoolImm(const ValueNodePtr &valueNode, std::unique_ptr<
   output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(*paramTensor));
 }
+int AnfExporter::ProcessNumber(const ValueNodePtr &valueNode, schema::TensorT *paramTensor,
+                               schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
+  auto data = valueNode->value()->cast<NumberPtr>();
+  paramTensor->data.resize(sizeof(int));
+  int number_type = data->number_type();
+  if (EOK != ::memcpy_s(paramTensor->data.data(), sizeof(int), &number_type, sizeof(int))) {
+    MS_LOG(ERROR) << "memcpy_s failed";
+    return RET_MEMORY_FAILED;
+  }
+  paramTensor->dataType = kNumberTypeInt32;
+  paramTensor->dims = {1};
+  paramTensor->nodeType = schema::NodeType_ValueNode;
+  node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
+  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+  meta_graphT->allTensors.emplace_back(paramTensor);
+  return RET_OK;
+}
 void AnfExporter::ProcessInt(const ValueNodePtr &valueNode, std::unique_ptr<schema::TensorT> *paramTensor,
                              schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
   (*paramTensor)->dataType = kNumberTypeInt32;
@@ -765,8 +782,7 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
   } else if (value->isa<mindspore::ValueSequeue>()) {
     ret = ProcessValueSequence(valueNode, &paramTensor, value, output_cnode, meta_graphT);
   } else if (value->isa<Number>()) {
-    MS_LOG(INFO) << "Value is a number.";
-    return RET_OK;
+    ret = ProcessNumber(valueNode, paramTensor.release(), output_cnode, meta_graphT);
   } else if (value->isa<mindspore::ParamValueLite>()) {
     ret = ProcessParamValueLite(valueNode, &paramTensor, value, output_cnode, meta_graphT);
   } else if (value->isa<FuncGraph>()) {
@@ -878,8 +894,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         msTensor->dataType = type;
         meta_graphT->allTensors.emplace_back(msTensor);
         if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
-            opt::CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm) ||
-            opt::CheckPrimitiveType(cnode, prim::kPrimLayerNormFusion)) {
+            opt::CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm)) {
           break;
         }
       }
