@@ -827,10 +827,13 @@ build_java() {
     # install and package
     mkdir -p ${JAVA_PATH}/java/linux_x86/build/lib
     cp ${JAVA_PATH}/java/linux_x86/libs/*.so ${JAVA_PATH}/java/linux_x86/build/lib/jar
-    cp -r ${JAVA_PATH}/java/linux_x86/build/lib/jar ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-linux-x64/lib/
-    cd ${BASEPATH}/output
-    tar czf mindspore-lite-${VERSION_STR}-inference-linux-x64.tar.gz mindspore-lite-${VERSION_STR}-inference-linux-x64
+    cd ${JAVA_PATH}/java/linux_x86/build/
+    cp -r ${JAVA_PATH}/java/linux_x86/build/lib ${JAVA_PATH}/java/linux_x86/build/mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
+    mkdir -p ${JAVA_PATH}/java/linux_x86/build/mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
+    tar czvf mindspore-lite-${VERSION_STR}-inference-linux-x64-jar.tar.gz ./mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
     # copy output
+    cp mindspore-lite-${VERSION_STR}-inference-linux-x64-jar.tar.gz ${BASEPATH}/output
+    cd ${BASEPATH}/output
     [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-inference-linux-x64
     exit 0
 }
