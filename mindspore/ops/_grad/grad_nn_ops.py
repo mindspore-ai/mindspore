@@ -1188,6 +1188,46 @@ def get_bprop_dropout(self):
     return bprop
 
 
+@bprop_getters.register(P.Dropout2D)
+def get_bprop_dropout2d(self):
+    """Grad definition for `Dropout2D` operation."""
+    dtype = P.DType()
+    cast = P.Cast()
+    mul = P.Mul()
+    keep_prob = self.keep_prob
+
+    def bprop(x, out, dout):
+        _, mask = dout
+        y = cast(mask, mstype.float32)
+        if keep_prob != 0:
+            y = y * (1 / keep_prob)
+        y = mul(x, y)
+        y = cast(y, dtype(x))
+        return (y,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Dropout3D)
+def get_bprop_dropout3d(self):
+    """Grad definition for `Dropout3D` operation."""
+    dtype = P.DType()
+    cast = P.Cast()
+    mul = P.Mul()
+    keep_prob = self.keep_prob
+
+    def bprop(x, out, dout):
+        _, mask = dout
+        y = cast(mask, mstype.float32)
+        if keep_prob != 0:
+            y = y * (1 / keep_prob)
+        y = mul(x, y)
+        y = cast(y, dtype(x))
+        return (y,)
+
+    return bprop
+
+
 @bprop_getters.register(P.CTCLoss)
 def get_bprop_ctc_loss(self):
     """Grad definition for `CTCLoss` operation"""
