@@ -88,6 +88,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 };
 
 int MindrtInit();
+void MindrtTerminate(std::vector<std::shared_ptr<LiteOpActor>>);
+
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels);
 
 }  // namespace lite

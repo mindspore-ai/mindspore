@@ -29,7 +29,7 @@ namespace mindspore::lite {
 class MindrtExecutor : public Executor {
  public:
   MindrtExecutor() = default;
-  virtual ~MindrtExecutor() = default;
+  virtual ~MindrtExecutor() { MindrtTerminate(opActors_); }
 
   virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
 
