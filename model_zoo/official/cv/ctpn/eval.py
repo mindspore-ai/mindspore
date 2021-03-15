@@ -65,7 +65,7 @@ def ctpn_infer_test(dataset_path='', ckpt_path='', img_dir=''):
 
         start = time.time()
         # run net
-        output = net(img_data, img_metas, gt_bboxes, gt_labels, gt_num)
+        output = net(img_data, gt_bboxes, gt_labels, gt_num)
         gt_bboxes = gt_bboxes.asnumpy()
         gt_labels = gt_labels.asnumpy()
         gt_num = gt_num.asnumpy().astype(bool)
