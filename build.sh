@@ -536,20 +536,6 @@ write_commit_file() {
     echo ${COMMIT_STR} > "${BASEPATH}/mindspore/lite/build/.commit_id"
 }
 
-gen_fbs() {
-  if [[ "${ENABLE_TOOLS}" == "on" ]]; then
-    if [[ -f ${BASEPATH}/mindspore/lite/build/tools/schema_gen/schema_gen ]]; then
-      cd ${BASEPATH}/mindspore/lite/build/tools/schema_gen
-      ./schema_gen
-      cd -
-      diff_ops=$(diff ${BASEPATH}/mindspore/lite/build/tools/schema_gen/ops.fbs ${BASEPATH}/mindspore/lite/schema/ops.fbs || true)
-      if [[ "X${diff_ops}" != "X" ]]; then
-        cp ${BASEPATH}/mindspore/lite/build/tools/schema_gen/ops.fbs ${BASEPATH}/mindspore/lite/schema/
-      fi
-    fi
-  fi
-}
-
 build_lite()
 {
     get_version
@@ -641,7 +627,6 @@ build_lite()
         -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DX86_64_SIMD=${X86_64_SIMD} "${BASEPATH}/mindspore/lite"
     fi
     make -j$THREAD_NUM && make install && make package
-    gen_fbs
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build failed ----------------"
         exit 1

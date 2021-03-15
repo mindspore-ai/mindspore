@@ -38,7 +38,7 @@
 #define OP_TYPE(OP) prims_type.append("    ").append(#OP).append(",\n");
 
 #define OP_TYPE_DEF_END(type)                   \
-  prims_type.append("}\n\n");                   \
+  prims_type.append("}\n");                     \
   return prims_type;                            \
   }                                             \
   PrimitiveTypeRegister g_gen##type(Gen##type); \
@@ -50,11 +50,11 @@
 #endif
 
 #ifdef GEN_SCHEMA_DEF
-#define OP_SCHEMA_DEF(OP)          \
-  namespace mindspore::lite::ops { \
-  std::string Gen##OP##Def() {     \
-    std::string op_def = "table "; \
-    op_def.append(#OP);            \
+#define OP_SCHEMA_DEF(OP)            \
+  namespace mindspore::lite::ops {   \
+  std::string Gen##OP##Def() {       \
+    std::string op_def = "\ntable "; \
+    op_def.append(#OP);              \
     op_def.append(" {\n");
 
 #elif PRIMITIVE_WRITEABLE
@@ -135,7 +135,7 @@
 
 #ifdef GEN_SCHEMA_DEF
 #define OP_SCHEMA_DEF_END(OP)                      \
-  op_def.append("}\n\n");                          \
+  op_def.append("}\n");                            \
   return op_def;                                   \
   }                                                \
   SchemaOpRegister g_schema_op_##OP(Gen##OP##Def); \
@@ -156,11 +156,11 @@
 #endif
 
 #ifdef GEN_SCHEMA_DEF
-#define OP_SCHEMA_DEF_ONLY(OP)     \
-  namespace mindspore::lite::ops { \
-  std::string Gen##OP##Def() {     \
-    std::string op_def = "table "; \
-    op_def.append(#OP);            \
+#define OP_SCHEMA_DEF_ONLY(OP)       \
+  namespace mindspore::lite::ops {   \
+  std::string Gen##OP##Def() {       \
+    std::string op_def = "\ntable "; \
+    op_def.append(#OP);              \
     op_def.append(" {\n");
 #else
 #define OP_SCHEMA_DEF_ONLY(OP)
@@ -174,7 +174,7 @@
 
 #ifdef GEN_SCHEMA_DEF
 #define OP_SCHEMA_DEF_ONLY_END(OP)                 \
-  op_def.append("}\n\n");                          \
+  op_def.append("}\n");                            \
   return op_def;                                   \
   }                                                \
   SchemaOpRegister g_schema_op_##OP(Gen##OP##Def); \

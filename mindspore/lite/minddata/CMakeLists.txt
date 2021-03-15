@@ -233,6 +233,8 @@ if(BUILD_MINDDATA STREQUAL "full")
     ${MINDDATA_FULL_SRC}
     )
 
+    add_dependencies(minddata-lite fbs_src)
+
     find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
       securec
@@ -315,6 +317,8 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_TODAPI_SRC}
             ${MINDSPORE_LITE_CXXAPI_SRC}
             )
+
+    add_dependencies(minddata-lite fbs_src)
 
     find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
