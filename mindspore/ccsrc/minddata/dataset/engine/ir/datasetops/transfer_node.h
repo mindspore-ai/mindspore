@@ -29,8 +29,8 @@ namespace dataset {
 class TransferNode : public DatasetNode {
  public:
   /// \brief Constructor
-  TransferNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type, bool send_epoch_end,
-               int32_t total_batch, bool create_data_info_queue);
+  TransferNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type, int32_t device_id,
+               bool send_epoch_end, int32_t total_batch, bool create_data_info_queue);
 
   /// \brief Destructor
   ~TransferNode() = default;

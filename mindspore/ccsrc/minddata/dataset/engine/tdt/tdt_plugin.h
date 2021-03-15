@@ -22,33 +22,40 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "tdt/tdt_host_interface.h"
+#include "acl/acl_tdt.h"
+#include "minddata/dataset/engine/tdt/tdt_handle.h"
 
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-enum TdtStatus { SUCCESS, FAILED };
-
-using tdt::DataItem;
 
 class TdtPlugin {
  public:
   static std::shared_ptr<TdtPlugin> GetInstance();
 
-  TdtStatus hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profilig, int32_t &time,
-                     tdt::TdtDataType tdt_type = tdt::TDT_TENSOR);
+  Status hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profilig, int32_t &time,
+                  acltdtTensorType tdt_type = ACL_TENSOR_DATA_TENSOR);
+
+  TdtPlugin(const std::string &channel_name, int32_t device_id);
+
+  ~TdtPlugin();
 
  private:
-  TdtPlugin() {}
+  Status DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true);
 
-  TdtStatus getTdtType(DataType d_type, std::string &datatype);
+  Status AssembleTensor2AclDataset(acltdtTensorType tdt_type, const TensorRow &ts_row, acltdtDataset *acl_dataset);
 
-  TdtStatus translate(const TensorRow &ts_row, std::vector<DataItem> &items);
+  Status getTdtType(DataType d_type, aclDataType &datatype);
+
+  Status translate(acltdtTensorType tdt_type, const TensorRow &ts_row, acltdtDataset **output_acl_dataset);
 
   void *tdt_handle_ = nullptr;
+
+  acltdtChannelHandle *acl_handle_;
 };
 }  // namespace dataset
 }  // namespace mindspore

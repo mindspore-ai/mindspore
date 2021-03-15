@@ -32,20 +32,20 @@ namespace dataset {
 
 // Constructor for TransferNode
 TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type,
-                           bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
+                           int32_t device_id, bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
     : prefetch_size_(16),
       queue_name_(std::move(queue_name)),
       device_type_(std::move(device_type)),
       send_epoch_end_(send_epoch_end),
       total_batch_(total_batch),
       create_data_info_queue_(create_data_info_queue),
-      device_id_(0) {
+      device_id_(device_id) {
   this->AddChild(child);
 }
 
 std::shared_ptr<DatasetNode> TransferNode::Copy() {
-  auto node = std::make_shared<TransferNode>(nullptr, queue_name_, device_type_, send_epoch_end_, total_batch_,
-                                             create_data_info_queue_);
+  auto node = std::make_shared<TransferNode>(nullptr, queue_name_, device_type_, device_id_, send_epoch_end_,
+                                             total_batch_, create_data_info_queue_);
   return node;
 }
 
@@ -103,10 +103,6 @@ Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-
-  // Get device ID (shard ID) from children
-  device_id_ = 0;
-  RETURN_IF_NOT_OK(this->GetShardId(&device_id_));
 
   auto op = std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
                                             total_batch_, create_data_info_queue_);

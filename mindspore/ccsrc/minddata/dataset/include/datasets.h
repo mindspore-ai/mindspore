@@ -156,15 +156,17 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     of data transmission per time is 256M.
   /// \param[in] queue_name Channel name (default="", create new unique name).
   /// \param[in] device_type Type of device (default="", get from MSContext).
+  /// \param[in] device_id id of device (default=1, get from MSContext).
   /// \param[in] num_epochs Number of epochs (default=-1, infinite epochs).
   /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=true).
   /// \param[in] total_batches Number of batches to be sent to the device (default=0, all data).
   /// \param[in] create_data_info_queue Whether to create queue which stores types and shapes
   ///     of data or not(default=false).
   /// \return Returns true if no error encountered else false.
-  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t num_epochs = -1,
-                   bool send_epoch_end = true, int32_t total_batches = 0, bool create_data_info_queue = false) {
-    return DeviceQueueCharIF(StringToChar(queue_name), StringToChar(device_type), num_epochs, send_epoch_end,
+  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t device_id = 0,
+                   int32_t num_epochs = -1, bool send_epoch_end = true, int32_t total_batches = 0,
+                   bool create_data_info_queue = false) {
+    return DeviceQueueCharIF(StringToChar(queue_name), StringToChar(device_type), device_id, num_epochs, send_epoch_end,
                              total_batches, create_data_info_queue);
   }
 
@@ -458,8 +460,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<Iterator> CreateIteratorCharIF(std::vector<std::vector<char>> columns, int32_t num_epochs);
 
   // Char interface(CharIF) of DeviceQueue
-  bool DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type, int32_t num_epochs,
-                         bool send_epoch_end, int32_t total_batches, bool create_data_info_queue);
+  bool DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type, int32_t device_id,
+                         int32_t num_epochs, bool send_epoch_end, int32_t total_batches, bool create_data_info_queue);
 
   // Char interface(CharIF) of Save
   bool SaveCharIF(const std::vector<char> &dataset_path, int32_t num_files, const std::vector<char> &dataset_type);
