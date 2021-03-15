@@ -172,6 +172,9 @@ class KPynativeCellImpl : public KPynativeCell {
   AnfNodePtr last_node_{nullptr};
   bool need_propagate_stop_gradient_{false};
 
+  // For CNode like TupleGetItem, ListGetItem, it's bypassed by caller so no KPynativeOp is called
+  // for these CNode. Here we forge Adjoint for these CNode.
+  PynativeAdjointPtr ForgeCNodeAdjoint(const CNodePtr &cnode);
   bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                     const FuncGraphPtr &bprop_fg);
   void PropagateStopGradient();
@@ -320,7 +323,59 @@ ValuePtr ShallowCopyValue(const ValuePtr &value) {
     return value;
   }
 }
-} // namespace
+}  // namespace
+
+PynativeAdjointPtr KPynativeCellImpl::ForgeCNodeAdjoint(const CNodePtr &cnode) {
+  if (!IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && !IsPrimitiveCNode(cnode, prim::kPrimListGetItem)) {
+    MS_LOG(EXCEPTION) << "Cannot find adjoint for anfnode: " << cnode->DebugString();
+  }
+  if (cnode->size() != 3) {
+    MS_LOG(EXCEPTION) << "CNode should have 3 inputs, CNode: " << cnode->DebugString();
+  }
+  // Input 1 of CNode;
+  PynativeAdjointPtr inp_1_adjoint = nullptr;
+  auto inp_1 = cnode->input(1);
+  auto inp_1_adjoint_iter = anfnode_to_adjoin_.find(inp_1);
+  if (inp_1_adjoint_iter == anfnode_to_adjoin_.end()) {
+    if (!inp_1->isa<CNode>()) {
+      MS_LOG(EXCEPTION) << "Input 1 of CNode should be a CNode, CNode: " << cnode->DebugString();
+    }
+    inp_1_adjoint = ForgeCNodeAdjoint(inp_1->cast<CNodePtr>());
+    if (inp_1_adjoint == nullptr) {
+      MS_LOG(EXCEPTION) << "Build adjoint for input 1 of CNode failed, CNode: " << cnode->DebugString();
+    }
+    inp_1_adjoint->users().push_back(cnode);
+  } else {
+    inp_1_adjoint = inp_1_adjoint_iter->second;
+  }
+  if (!inp_1_adjoint->out()->isa<ValueSequeue>()) {
+    MS_LOG(EXCEPTION) << "Input of CNode should be evaluted to a ValueSequence. CNode: " << cnode->DebugString()
+                      << ", out of input1: " << inp_1_adjoint->out();
+  }
+  auto inp_1_out = inp_1_adjoint->out()->cast<ValueSequeuePtr>();
+
+  // Input 2 of CNode;
+  auto index_value = GetValueNode<Int64ImmPtr>(cnode->input(2));
+  if (index_value == nullptr) {
+    MS_LOG(EXCEPTION) << "CNode input 2 should be a Int64Imm, CNode: " << cnode->DebugString();
+  }
+  auto index_value_imm = index_value->value();
+  if (index_value_imm < 0 || index_value_imm >= inp_1_out->size()) {
+    MS_LOG(EXCEPTION) << "CNode input 2 should be index between [0, " << inp_1_out->size()
+                      << ", but: " << index_value->ToString();
+  }
+  auto cnode_out = (*inp_1_out)[index_value_imm];
+  ValuePtrList op_args{inp_1_out, index_value};
+  auto built = KPynativeOp(cnode, op_args, cnode_out);
+  if (!built) {
+    MS_LOG(EXCEPTION) << "Build Adjoint for GetItem node failed, CNode: " << cnode->DebugString();
+  }
+  auto cnode_adjoint_iter = anfnode_to_adjoin_.find(cnode);
+  if (cnode_adjoint_iter == anfnode_to_adjoin_.end()) {
+    MS_LOG(EXCEPTION) << "Build Adjoint for GetItem node failed, CNode: " << cnode->DebugString();
+  }
+  return cnode_adjoint_iter->second;
+}
 
 bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                                      const FuncGraphPtr &bprop_fg) {
@@ -348,7 +403,12 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
     auto input_anfnode_adjoint_iter = anfnode_to_adjoin_.find(inp_i);
     if (input_anfnode_adjoint_iter == anfnode_to_adjoin_.end()) {
       if (inp_i->isa<CNode>()) {
-        MS_LOG(EXCEPTION) << "Cannot find adjoint for anfnode: " << inp_i->DebugString();
+        auto cnode_inp_i = inp_i->cast<CNodePtr>();
+        auto forged_adjoint = ForgeCNodeAdjoint(cnode_inp_i);
+        if (forged_adjoint) {
+          MS_LOG(EXCEPTION) << "Cannot forge adjoint for anfnode: " << inp_i->DebugString();
+        }
+        forged_adjoint->users().push_back(cnode);
       } else {
         auto inp_i_pynative_adjoint = std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, op_args[i - 1], nullptr);
         anfnode_to_adjoin_.insert(std::make_pair(inp_i, inp_i_pynative_adjoint));
