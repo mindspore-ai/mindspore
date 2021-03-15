@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void ConcatCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   CheckParam(kernel_node);
 
   axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
@@ -35,6 +35,10 @@ template <typename T>
 bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
                                 const std::vector<kernel::AddressPtr> &outputs) {
+  auto node_ = node_wpt_.lock();
+  if (!node_) {
+    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+  }
   size_t input_num = AnfAlgo::GetInputTensorNum(node_);
   std::vector<std::vector<size_t>> input_flat_shape_list;
   for (size_t i = 0; i < input_num; i++) {

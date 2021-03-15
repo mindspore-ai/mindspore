@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 const size_t kUseBucketUniqueSize = 100000;
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   CheckParam(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_size_ = input_shape[0];
@@ -45,7 +45,11 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float, int>(inputs, workspace, outputs);
   }
-  if (node_ != nullptr) {
+  if (!node_wpt_.expired()) {
+    auto node_ = node_wpt_.lock();
+    if (!node_) {
+      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+    }
     std::vector<size_t> out_shape;
     out_shape.emplace_back(output_size_);
     std::vector<TypeId> dtypes;

@@ -20,7 +20,7 @@ namespace mindspore {
 namespace kernel {
 void ReshapeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   x_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(x_data_type_));
 }
@@ -28,6 +28,10 @@ void ReshapeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> & /*workspace*/,
                               const std::vector<kernel::AddressPtr> &outputs) {
+  auto node_ = node_wpt_.lock();
+  if (!node_) {
+    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+  }
   auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "input or output empty!";

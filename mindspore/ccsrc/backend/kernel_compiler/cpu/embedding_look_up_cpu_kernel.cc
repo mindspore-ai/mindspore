@@ -49,7 +49,7 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
 
 void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.empty()) {
     MS_LOG(EXCEPTION) << "param must be at least 1D";
@@ -73,7 +73,11 @@ void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  if (node_ != nullptr) {
+  if (!node_wpt_.expired()) {
+    auto node_ = node_wpt_.lock();
+    if (!node_) {
+      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+    }
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
     if (input_shape.empty()) {
       MS_LOG(EXCEPTION) << "param must be at least 1D";

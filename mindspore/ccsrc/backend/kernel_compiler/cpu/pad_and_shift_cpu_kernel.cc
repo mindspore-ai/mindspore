@@ -22,7 +22,7 @@ namespace mindspore {
 namespace kernel {
 void PadAndShiftCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -77,6 +77,10 @@ void PadAndShiftCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   std::vector<size_t> out_shape;
   out_shape.emplace_back(output_size);
   std::vector<TypeId> dtypes;
+  auto node_ = node_wpt_.lock();
+  if (!node_) {
+    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+  }
   auto output_nums = AnfAlgo::GetOutputTensorNum(node_);
   for (size_t i = 0; i < output_nums; i++) {
     dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));

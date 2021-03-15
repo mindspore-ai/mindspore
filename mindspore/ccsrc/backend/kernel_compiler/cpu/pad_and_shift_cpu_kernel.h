@@ -42,7 +42,7 @@ class PadAndShiftCPUKernel : public CPUKernel {
   size_t cum_sum_size_{1};
   size_t type_size_{4};
   TypeId input_x_dtype_{kTypeUnknown};
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
 };
 
 MS_REG_CPU_KERNEL(PadAndShift,

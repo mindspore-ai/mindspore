@@ -33,7 +33,7 @@ class ReshapeCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
   TypeId x_data_type_{kNumberTypeInt32};
   size_t type_size_ = 4;
 };

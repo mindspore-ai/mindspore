@@ -60,7 +60,7 @@ class UniqueCPUKernel : public CPUKernel {
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
   size_t output_size_{0};
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
 
   template <typename DataType>
   static size_t BucketId(DataType data, size_t bucket_num) {

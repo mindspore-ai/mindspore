@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 void DynamicAssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   input_x_dtype_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
 }
@@ -46,6 +46,10 @@ bool DynamicAssignCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 template <typename T>
 void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &outputs) {
+  auto node_ = node_wpt_.lock();
+  if (!node_) {
+    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+  }
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
   batch_size_ = 1;

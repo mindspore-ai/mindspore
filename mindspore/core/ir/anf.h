@@ -62,6 +62,7 @@ using ValueNodePtr = std::shared_ptr<ValueNode>;
 class CNode;
 using CNodePtr = std::shared_ptr<CNode>;
 using CNodePtrList = std::vector<CNodePtr>;
+using CNodeWeakPtr = std::weak_ptr<CNode>;
 
 class FuncGraph;
 using FuncGraphSet = OrderedSet<FuncGraphPtr>;

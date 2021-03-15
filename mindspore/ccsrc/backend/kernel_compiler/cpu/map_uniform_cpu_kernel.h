@@ -41,7 +41,7 @@ class MapUniformCPUKernel : public CPUKernel {
  private:
   size_t batch_size_{1};
   TypeId dtype_{kTypeUnknown};
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
 };
 
 MS_REG_CPU_KERNEL(MapUniform,
