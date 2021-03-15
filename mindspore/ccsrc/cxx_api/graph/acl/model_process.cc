@@ -102,7 +102,7 @@ Status ModelProcess::ConstructTensors(const std::vector<AclTensorInfo> &acl_tens
   for (size_t i = 0; i < acl_tensor_list.size(); ++i) {
     tensor_list->emplace_back(names[i], data_types[i], shapes[i], nullptr, mem_sizes[i]);
     auto ret = aclrtMemcpy((*tensor_list)[i].MutableData(), (*tensor_list)[i].DataSize(),
-                           acl_tensor_list[i].device_data, acl_tensor_list[i].buffer_size, kind);
+                           acl_tensor_list[i].cur_device_data, acl_tensor_list[i].buffer_size, kind);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Memcpy input " << i << " from " << (is_run_on_device_ ? "host" : "device")
                     << " to host failed, memory size " << acl_tensor_list[i].buffer_size;
@@ -164,7 +164,8 @@ Status ModelProcess::InitInputsBuffer() {
       MS_LOG(WARNING) << "Get name of input " << i << " failed.";
     }
     MS_LOG(INFO) << "Name of input " << i << " is " << input_name;
-    input_infos_.emplace_back(AclTensorInfo{data_mem_buffer, buffer_size, data_type, shape, input_name});
+    input_infos_.emplace_back(
+      AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, data_type, shape, input_name});
   }
   MS_LOG(INFO) << "Create model inputs success";
   return kSuccess;
@@ -246,7 +247,8 @@ Status ModelProcess::InitOutputsBuffer() {
       MS_LOG(WARNING) << "Get name of output " << i << " failed.";
     }
     MS_LOG(INFO) << "Name of input " << i << " is " << output_name;
-    output_infos_.emplace_back(AclTensorInfo{data_mem_buffer, buffer_size, data_type, shape, output_name});
+    output_infos_.emplace_back(
+      AclTensorInfo{data_mem_buffer, data_mem_buffer, buffer_size, data_type, shape, output_name});
   }
   MS_LOG(INFO) << "Create model output success";
   return kSuccess;
@@ -381,17 +383,23 @@ Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
   }
   // copy inputs
   for (size_t i = 0; i < input_infos_.size(); ++i) {
-    const auto &info = input_infos_[i];
+    auto &info = input_infos_[i];
     auto input = inputs[i];
-    const void *data = input.MutableData();
+    void *data = input.MutableData();
     void *input_buffer = nullptr;
     if (!is_run_on_device_) {
-      ret = aclrtMemcpy(info.device_data, info.buffer_size, data, input.DataSize(), ACL_MEMCPY_HOST_TO_DEVICE);
-      if (ret != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, buffer size " << input.DataSize();
-        return kMCDeviceError;
+      if (input.IsDevice()) {
+        info.cur_device_data = data;
+        input_buffer = info.cur_device_data;
+      } else {
+        info.cur_device_data = info.device_data;
+        ret = aclrtMemcpy(info.cur_device_data, info.buffer_size, data, input.DataSize(), ACL_MEMCPY_HOST_TO_DEVICE);
+        if (ret != ACL_ERROR_NONE) {
+          MS_LOG(ERROR) << "Acl memcpy input " << i << " data to device failed, buffer size " << input.DataSize();
+          return kMCDeviceError;
+        }
+        input_buffer = info.cur_device_data;
       }
-      input_buffer = info.device_data;
     } else {
       input_buffer = const_cast<void *>(data);
     }
