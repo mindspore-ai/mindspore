@@ -46,6 +46,7 @@ class TbeTuner:
         self.offline_tune = offline_tune
         self.tune_init = False
         self.rl_init = False
+        self.multi_init = False
         self.offline_dump_path = "./tune_dump"
         if os.environ.get("TUNE_DUMP_PATH") is not None:
             self.offline_dump_path = os.getenv("TUNE_DUMP_PATH", "")
@@ -77,7 +78,8 @@ class TbeTuner:
         """
         DeInitialize tuner interface
         """
-        deinit_multi_process_env()
+        if self.multi_init:
+            deinit_multi_process_env()
         if self.rl_init:
             rl_tune_deinit()
 
@@ -213,6 +215,7 @@ class TbeTuner:
         if ret is None:
             log.error("Init multiprocess env failed")
             return False
+        self.multi_init = True
         process_count = ret[0]
         log.info("Init multiprocess env success with {} process".format(process_count))
         if "RL" in tune_mode:
