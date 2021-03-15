@@ -71,6 +71,7 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
   op_coder->set_thread_num(thread_num);
   parameter->thread_num_ = thread_num;
   op_coder->set_parameter(parameter);
+  op_coder->set_type(primitive_type);
   return op_coder;
 }
 

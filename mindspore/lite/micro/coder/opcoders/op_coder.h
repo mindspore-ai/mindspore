@@ -62,6 +62,9 @@ class OperatorCoder {
   const std::vector<OperatorCoder *> input_ops() const { return input_ops_; }
   const std::vector<OperatorCoder *> output_ops() const { return output_ops_; }
 
+  void set_type(int type) { type_ = type; }
+  const int type() const { return type_; }
+
   size_t node_index() const;
 
   void set_parameter(OpParameter *parameter);
@@ -104,6 +107,7 @@ class OperatorCoder {
   std::vector<OperatorCoder *> input_ops_;
   std::vector<OperatorCoder *> output_ops_;
   std::vector<Tensor *> initial_parameters_;
+  int type_{schema::PrimitiveType_NONE};
 };
 
 // a template func for normal op_coder creator

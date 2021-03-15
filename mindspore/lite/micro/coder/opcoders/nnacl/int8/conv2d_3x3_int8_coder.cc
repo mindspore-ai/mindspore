@@ -113,10 +113,10 @@ int Conv2D3x3Int8Coder::InitTmpBuffer(CoderContext *const context) {
 void Conv2D3x3Int8Coder::ConfigInputOutput() { output_tensor_->set_format(schema::Format_NHWC); }
 
 int Conv2D3x3Int8Coder::Prepare(CoderContext *const context) {
+  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "ConvolutionBase init failed.");
   conv_param_->thread_num_ = thread_num_;
   // to 1, task id is set to 0
   conv_param_->op_parameter_.thread_num_ = thread_num_;
-  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "ConvolutionBase init failed.");
   MS_CHECK_RET_CODE(SetQuantParam(), "Set quant param failed.");
   MS_CHECK_RET_CODE(InitWeightBias(), "Init weight bias failed.");
   // init tmp input, output

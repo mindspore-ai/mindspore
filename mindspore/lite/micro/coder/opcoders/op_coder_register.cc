@@ -15,11 +15,20 @@
  */
 #include "coder/opcoders/op_coder_register.h"
 #include <utility>
+#include <string>
 namespace mindspore::lite::micro {
 
 bool CoderKey::operator<(const CoderKey rhs) const {
   return std::tie(this->target_, this->data_type_, this->op_type_) <
          std::tie(rhs.target_, rhs.data_type_, rhs.op_type_);
+}
+
+std::string CoderKey::ToString() const {
+  std::ostringstream code;
+  code << "target: " << EnumNameTarget(target_) << "\t"
+       << "data_type_: " << data_type_ << "\t"
+       << "op_type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_type_));
+  return code.str();
 }
 
 OpCoderFactory *OpCoderFactory::GetInstance() {
@@ -33,7 +42,7 @@ int OpCoderFactory::RegistOpCoder(Target target, TypeId data_type, schema::Primi
   CoderKey key(target, data_type, operator_type);
   // insert pair to registry
   if (this->opcoder_sets_.find(key) != this->opcoder_sets_.end()) {
-    MS_LOG(ERROR) << "coder has already exists!";
+    MS_LOG(ERROR) << "coder already exist: " << key.ToString();
     return RET_ERROR;
   }
   this->opcoder_sets_.insert(std::pair<CoderKey, CoderCreatorFunc>(key, creator_func));

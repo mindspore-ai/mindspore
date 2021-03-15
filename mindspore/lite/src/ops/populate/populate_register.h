@@ -41,7 +41,8 @@ class PopulateRegistry {
     ParameterGen param_creator = nullptr;
     auto iter = parameters_.find(GenPrimVersionKey(type, version));
     if (iter == parameters_.end()) {
-      MS_LOG(ERROR) << "Unsupported parameter type in Create : " << type;
+      MS_LOG(ERROR) << "Unsupported parameter type in Create : "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
       return nullptr;
     }
     param_creator = iter->second;

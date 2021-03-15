@@ -54,6 +54,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/base/quant_dtype_cast_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/reduce_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/resize_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/base/reshape_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/softmax_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/detection_post_process_base_coder.cc
         #### cmsis int8 coder
@@ -78,7 +79,6 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/expand_dims_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/full_connection_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/gather_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_base_coder.cc
@@ -87,10 +87,8 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/pooling_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/power_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/reduce_fp32_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/reshape_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/scale_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/softmax_fp32_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/squeeze_dims_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/tile_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_fp32_coder.cc
         #### nnacl int8 coder
@@ -141,6 +139,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/log_adapter.cc
         ${LITE_DIR}/src/common/utils.cc
         ### populate operator parameter
+        ${LITE_DIR}/src/ops/ops_utils.cc
         ${LITE_DIR}/src/ops/populate/conv2d_populate.cc
         ${LITE_DIR}/src/ops/populate/arithmetic_populate.cc
         ${LITE_DIR}/src/ops/populate/add_populate.cc
@@ -159,6 +158,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/matmul_populate.cc
         ${LITE_DIR}/src/ops/populate/bias_add_populate.cc
         ${LITE_DIR}/src/ops/populate/activation_populate.cc
+        ${LITE_DIR}/src/ops/populate/softmax_populate.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
         )

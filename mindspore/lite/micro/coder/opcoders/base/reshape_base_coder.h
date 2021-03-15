@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_SQUEEZE_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_SQUEEZE_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_RESHAPE_BASE_CODER_H
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_RESHAPE_BASE_CODER_H
 
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 
-namespace mindspore::lite::micro::nnacl {
-class SqueezeFP32Coder final : public OperatorCoder {
+namespace mindspore::lite::micro {
+class ReshapeBaseCoder final : public OperatorCoder {
  public:
-  SqueezeFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+  ReshapeBaseCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                    const Model::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~SqueezeFP32Coder() override = default;
+  ~ReshapeBaseCoder() override = default;
 
-  int Prepare(CoderContext *const context) override { return RET_OK; }
+  int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
 };
-}  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_SQUEEZE_FP32_CODER_H_
+}  // namespace mindspore::lite::micro
+
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_RESHAPE_BASE_CODER_H

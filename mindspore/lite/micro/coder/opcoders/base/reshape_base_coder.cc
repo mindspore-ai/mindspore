@@ -1,0 +1,63 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "coder/opcoders/base/reshape_base_coder.h"
+#include <vector>
+#include "coder/opcoders/op_coder.h"
+#include "coder/opcoders/serializers/serializer.h"
+#include "include/errorcode.h"
+
+using mindspore::schema::PrimitiveType_ExpandDims;
+using mindspore::schema::PrimitiveType_Flatten;
+using mindspore::schema::PrimitiveType_FlattenGrad;
+using mindspore::schema::PrimitiveType_Reshape;
+using mindspore::schema::PrimitiveType_Squeeze;
+using mindspore::schema::PrimitiveType_Unsqueeze;
+
+namespace mindspore::lite::micro {
+
+int ReshapeBaseCoder::Prepare(CoderContext *const context) {
+  bool is_next_conv = std::any_of(output_ops().begin(), output_ops().end(), [](OperatorCoder *next_op) {
+    return next_op->type() == schema::PrimitiveType_Conv2DFusion;
+  });
+  if (is_next_conv && output_tensor_->shape().size() == 4 && output_tensor_->format() == schema::Format::Format_NCHW) {
+    output_tensor_->set_format(schema::Format::Format_NHWC);
+  }
+  return RET_OK;
+}
+
+int ReshapeBaseCoder::DoCode(CoderContext *const context) {
+  Serializer coder;
+
+  size_t size = input_tensor_->Size();
+  coder.CodeFunction("memcpy", output_tensor_, input_tensor_, size);
+
+  context->AppendCode(coder.str());
+  return RET_OK;
+}
+
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Flatten, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Flatten, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_ExpandDims, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_ExpandDims, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Squeeze, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Squeeze, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Unsqueeze, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Unsqueeze, CPUOpCoderCreator<ReshapeBaseCoder>)
+
+}  // namespace mindspore::lite::micro
