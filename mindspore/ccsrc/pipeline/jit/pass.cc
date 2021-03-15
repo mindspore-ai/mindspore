@@ -110,9 +110,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.partial_eliminate_,
     irpass.replace_applicator_,
 
-    // Specialization
-    irpass.specialize_transform_,
-
     // Miscellaneous
     irpass.item_tuple_or_list_eliminate_,
     irpass.env_get_item_eliminate_,
@@ -139,6 +136,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   });
   opt::OptPassConfig a_2 = opt::OptPassConfig(
     {
+      irpass.specialize_transform_,
       irpass.merge_addn_,
       irpass.float_tuple_getitem_switch_,
       irpass.float_env_getitem_switch_,
