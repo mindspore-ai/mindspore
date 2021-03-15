@@ -385,7 +385,7 @@ int NetTrain::RunNetTrain() {
   } else {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
   }
-
+  context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = flags_->enable_fp16_;
   layer_checksum_ = flags_->layer_checksum_;
   context->thread_num_ = flags_->num_threads_;
   session_ = session::TrainSession::CreateSession(flags_->model_file_.c_str(), context.get());
@@ -545,6 +545,7 @@ int NetTrain::Init() {
   MS_LOG(INFO) << "NumThreads = " << this->flags_->num_threads_;
   MS_LOG(INFO) << "expectedDataFile = " << this->flags_->data_file_;
   MS_LOG(INFO) << "exportDataFile = " << this->flags_->export_file_;
+  MS_LOG(INFO) << "enableFp16 = " << this->flags_->enable_fp16_;
 
   if (this->flags_->epochs_ < 0) {
     MS_LOG(ERROR) << "epochs:" << this->flags_->epochs_ << " must be equal/greater than 0";
