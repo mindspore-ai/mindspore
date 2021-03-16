@@ -994,7 +994,7 @@ MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
   nlohmann::json sample = nullptr;
   if (padded_sample) {
     sample = *padded_sample;
-  };
+  }
   auto ds = std::make_shared<MindDataNode>(CharToString(dataset_file), VectorCharToString(columns_list), sampler_obj,
                                            sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -1006,7 +1006,7 @@ MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
   nlohmann::json sample = nullptr;
   if (padded_sample) {
     sample = *padded_sample;
-  };
+  }
   auto ds = std::make_shared<MindDataNode>(CharToString(dataset_file), VectorCharToString(columns_list), sampler_obj,
                                            sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -1019,7 +1019,7 @@ MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
   nlohmann::json sample = nullptr;
   if (padded_sample) {
     sample = *padded_sample;
-  };
+  }
 
   auto ds = std::make_shared<MindDataNode>(CharToString(dataset_file), VectorCharToString(columns_list), sampler_obj,
                                            sample, num_padded);
@@ -1033,7 +1033,7 @@ MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_f
   nlohmann::json sample = nullptr;
   if (padded_sample) {
     sample = *padded_sample;
-  };
+  }
 
   auto ds = std::make_shared<MindDataNode>(VectorCharToString(dataset_files), VectorCharToString(columns_list),
                                            sampler_obj, sample, num_padded);
@@ -1046,7 +1046,7 @@ MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_f
   nlohmann::json sample = nullptr;
   if (padded_sample) {
     sample = *padded_sample;
-  };
+  }
 
   auto ds = std::make_shared<MindDataNode>(VectorCharToString(dataset_files), VectorCharToString(columns_list),
                                            sampler_obj, sample, num_padded);
@@ -1060,7 +1060,7 @@ MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_f
   nlohmann::json sample = nullptr;
   if (padded_sample) {
     sample = *padded_sample;
-  };
+  }
   auto ds = std::make_shared<MindDataNode>(VectorCharToString(dataset_files), VectorCharToString(columns_list),
                                            sampler_obj, sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
