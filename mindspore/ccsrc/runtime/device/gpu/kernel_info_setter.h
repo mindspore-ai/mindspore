@@ -32,8 +32,11 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-// map<opName, (inputFormatPosition, outputFormatPosition)>, used for getting the insert position of format transform.
-// If input position is empty, then insert all the input positions, because the input numbers of this op are variable.
+const size_t kAllPositions = SIZE_MAX;
+
+// Map<opName, (inputFormatPosition, outputFormatPosition)>, used for getting the inserted position of format transform.
+// If the inserted position is kAllPositions, then insert all the positions, because the input or output numbers of
+// this op are variable.
 static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>> kKernelFormatPositionMap = {
   // Format sensitive.
   {prim::kPrimConv2D->name(), {{0, 1}, {0}}},
@@ -58,8 +61,8 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimRelu6Grad->name(), {{0, 1}, {0}}},
   {kSliceOpName, {{0}, {0}}},
   {kTensorAddOpName, {{0, 1}, {0}}},
-  {prim::kPrimConcat->name(), {{}, {0}}},
-  {prim::kPrimAddN->name(), {{}, {0}}},
+  {prim::kPrimConcat->name(), {{kAllPositions}, {0}}},
+  {prim::kPrimAddN->name(), {{kAllPositions}, {0}}},
 };
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
