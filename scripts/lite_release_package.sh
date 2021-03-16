@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,83 +48,81 @@ function verify_every_file() {
 
 function android_release_package()
 {
-    for name in "train" "inference"
+    for arch in "aarch32" "aarch64"
     do
-        src_arm64_pkg_name="mindspore-lite-${version}-${name}-android-aarch64"
-        src_arm32_pkg_name="mindspore-lite-${version}-${name}-android-aarch32"
-        dst_android_pkg_name="mindspore-lite-${version}-${name}-android"
+        src_inference_pkg_name="mindspore-lite-${version}-inference-android-${arch}"
+        src_train_pkg_name="mindspore-lite-${version}-train-android-${arch}"
+        dst_pkg_name="mindspore-lite-${version}-android-${arch}"
 
-        tar -xzf ${input_path}/android_aarch64/${src_arm64_pkg_name}.tar.gz
-        tar -xzf ${input_path}/android_aarch32/${src_arm32_pkg_name}.tar.gz
+        rm -rf ${src_inference_pkg_name}
+        rm -rf ${src_train_pkg_name}
+        rm -rf ${dst_pkg_name}
+        tar -xzf ${input_path}/android_${arch}/${src_inference_pkg_name}.tar.gz
+        tar -xzf ${input_path}/android_${arch}/${src_train_pkg_name}.tar.gz
 
-        # ARM32 and ARM64 have the same header file.
-        mkdir -p ${dst_android_pkg_name}/minddata/
-        cp -r ${src_arm64_pkg_name}/include/ ${dst_android_pkg_name}/
-        cp -r ${src_arm64_pkg_name}/minddata/include/ ${dst_android_pkg_name}/minddata/
-        cp ${src_arm64_pkg_name}/.commit_id ${dst_android_pkg_name}/
-
-        # Executable files and dynamic libraries are different in different architectures.
-        mkdir -p ${dst_android_pkg_name}/benchmark/aarch64/
-        mkdir -p ${dst_android_pkg_name}/benchmark/aarch32/
-        mkdir -p ${dst_android_pkg_name}/lib/aarch64/   
-        mkdir -p ${dst_android_pkg_name}/lib/aarch32/
-        mkdir -p ${dst_android_pkg_name}/minddata/lib/aarch64/
-        mkdir -p ${dst_android_pkg_name}/minddata/lib/aarch32/
-        cp ${src_arm64_pkg_name}/benchmark/* ${dst_android_pkg_name}/benchmark/aarch64/
-        cp ${src_arm32_pkg_name}/benchmark/* ${dst_android_pkg_name}/benchmark/aarch32/
-        cp ${src_arm64_pkg_name}/lib/* ${dst_android_pkg_name}/lib/aarch64/
-        cp ${src_arm32_pkg_name}/lib/* ${dst_android_pkg_name}/lib/aarch32/
-        cp ${src_arm64_pkg_name}/minddata/lib/* ${dst_android_pkg_name}/minddata/lib/aarch64/
-        cp ${src_arm32_pkg_name}/minddata/lib/* ${dst_android_pkg_name}/minddata/lib/aarch32/
-
-        if [ ${name} == "train" ]
-        then
-            mkdir -p ${dst_android_pkg_name}/benchmark_train/aarch64/
-            mkdir -p ${dst_android_pkg_name}/benchmark_train/aarch32/
-            mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
-            mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
-            cp ${src_arm64_pkg_name}/benchmark_train/* ${dst_android_pkg_name}/benchmark_train/aarch64/
-            cp ${src_arm32_pkg_name}/benchmark_train/* ${dst_android_pkg_name}/benchmark_train/aarch32/
-            cp ${src_arm64_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
-            cp ${src_arm32_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
-        fi
-        mkdir -p ${dst_android_pkg_name}/third_party/hiai_ddk/lib/aarch64/
-        cp -r ${src_arm64_pkg_name}/third_party/hiai_ddk/lib/* ${dst_android_pkg_name}/third_party/hiai_ddk/lib/aarch64/
-        if [ ${name} == "inference" ]
-        then
-            # Copy java runtime to Android package
-            cp ${input_path}/aar/* ${dst_android_pkg_name}
-        fi
-
+        cp -r ${src_train_pkg_name}/tools/benchmark_train/ ${src_inference_pkg_name}/tools/
+        cp -r ${src_train_pkg_name}/train/ ${src_inference_pkg_name}/
         mkdir -p ${output_path}/release/android/
-        tar -czf ${output_path}/release/android/${dst_android_pkg_name}.tar.gz ${dst_android_pkg_name}
+        mv ${src_inference_pkg_name} ${dst_pkg_name}
+        # Copy java runtime to Android package
+        cp ${input_path}/aar/* ${dst_pkg_name}
+        tar -czf ${output_path}/release/android/${dst_pkg_name}.tar.gz ${dst_pkg_name}
         cd ${output_path}/release/android/
-        sha256sum ${dst_android_pkg_name}.tar.gz > ${dst_android_pkg_name}.tar.gz.sha256
+        sha256sum ${dst_pkg_name}.tar.gz > ${dst_pkg_name}.tar.gz.sha256
         cd -
 
-        verify_every_file ${src_arm64_pkg_name} ${dst_android_pkg_name}
-        verify_every_file ${src_arm32_pkg_name} ${dst_android_pkg_name}
-        rm -rf ${src_arm64_pkg_name}
-        rm -rf ${src_arm32_pkg_name}
-        rm -rf ${dst_android_pkg_name}
+        verify_every_file ${src_train_pkg_name}/tools/benchmark_train/ ${dst_pkg_name}
+        verify_every_file ${src_train_pkg_name}/train/ ${dst_pkg_name}
+
+        rm -rf ${src_train_pkg_name}
+        rm -rf ${dst_pkg_name}
     done
 }
 
 function linux_release_package()
 {
+    src_inference_pkg_name="mindspore-lite-${version}-inference-linux-x64-avx"
+    src_train_pkg_name="mindspore-lite-${version}-train-linux-x64"
+    dst_pkg_name="mindspore-lite-${version}-linux-x64"
+
+    rm -rf ${src_inference_pkg_name}
+    rm -rf ${src_train_pkg_name}
+    rm -rf ${dst_pkg_name}
+    tar -xzf ${input_path}/ubuntu_x86/${src_inference_pkg_name}.tar.gz
+    tar -xzf ${input_path}/ubuntu_x86/${src_train_pkg_name}.tar.gz
+
+    cp -r ${src_train_pkg_name}/tools/benchmark_train/ ${src_inference_pkg_name}/tools/
+    cp -r ${src_train_pkg_name}/train/ ${src_inference_pkg_name}/
+
     mkdir -p ${output_path}/release/linux/
-    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-converter-* ${output_path}/release/linux/
-    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-inference-linux-x64-avx.tar.gz  ${output_path}/release/linux/mindspore-lite-${version}-inference-linux-x64.tar.gz
-    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-inference-linux-x64-avx.tar.gz.sha256  ${output_path}/release/linux/mindspore-lite-${version}-inference-linux-x64.tar.gz.sha256
-    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-train-* ${output_path}/release/linux/
+    mv ${src_inference_pkg_name} ${dst_pkg_name}
+    tar -czf ${output_path}/release/linux/${dst_pkg_name}.tar.gz ${dst_pkg_name}
+    cd ${output_path}/release/linux/
+    sha256sum ${dst_pkg_name}.tar.gz > ${dst_pkg_name}.tar.gz.sha256
+    cd -
+
+    verify_every_file ${src_train_pkg_name}/tools/benchmark_train/ ${dst_pkg_name}
+    verify_every_file ${src_train_pkg_name}/train/ ${dst_pkg_name}
+    rm -rf ${src_train_pkg_name}
+    rm -rf ${dst_pkg_name}
 }
 
 function windows_release_package()
 {
+    src_inference_pkg_name="mindspore-lite-${version}-inference-win-x64-avx"
+    dst_pkg_name="mindspore-lite-${version}-win-x64"
+
+    rm -rf ${src_inference_pkg_name}
+    rm -rf ${dst_pkg_name}
+    unzip ${input_path}/windows_x64/${src_inference_pkg_name}.zip
+
+    mv ${src_inference_pkg_name} ${dst_pkg_name}
     mkdir -p ${output_path}/release/windows/
-    cp ${input_path}/windows_x64/mindspore-lite-${version}-converter-* ${output_path}/release/windows/
-    cp ${input_path}/windows_x64/mindspore-lite-${version}-inference-win-x64-avx.zip ${output_path}/release/windows/mindspore-lite-${version}-inference-win-x64.zip
-    cp ${input_path}/windows_x64/mindspore-lite-${version}-inference-win-x64-avx.zip.sha256 ${output_path}/release/windows/mindspore-lite-${version}-inference-win-x64.zip.sha256
+    zip -r ${output_path}/release/windows/${dst_pkg_name}.zip ${dst_pkg_name}
+    cd ${output_path}/release/windows/
+    sha256sum ${dst_pkg_name}.zip > ${dst_pkg_name}.zip.sha256
+    cd -
+    rm -rf ${dst_pkg_name}
 }
 
 echo "============================== begin =============================="

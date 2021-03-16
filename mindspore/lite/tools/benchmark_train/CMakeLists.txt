@@ -24,7 +24,3 @@ else()
         target_link_libraries(benchmark_train mindspore-lite pthread minddata-lite)
     endif()
 endif()
-
-install(TARGETS benchmark_train
-        RUNTIME DESTINATION ${MAIN_DIR}-${RUNTIME_COMPONENT_NAME}/benchmark_train
-        COMPONENT ${RUNTIME_COMPONENT_NAME})

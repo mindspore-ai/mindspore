@@ -17,13 +17,13 @@
 setlocal enabledelayedexpansion
 
 SET BASEPATH=%CD%
-SET OUTPUT_PATH=%BASEPATH%/output
+SET OUTPUT_PATH=%BASEPATH%\output
 SET TOOL_PATH=%1
-SET TOOL_PATH=%TOOL_PATH:"=%/windows_x64
+SET TOOL_PATH=%TOOL_PATH:"=%\windows_x64
 SET MODEL_PATH_BASE=%2
-SET MODEL_PATH=%MODEL_PATH_BASE:"=%/models/hiai
-SET BENCHMARK_BASE=%BASEPATH:"=%/output/benchmark
-SET MODEL_CONFIG=%BASEPATH%/win_models.cfg
+SET MODEL_PATH=%MODEL_PATH_BASE:"=%\models\hiai
+SET BENCHMARK_BASE=%BASEPATH:"=%\output\benchmark
+SET MODEL_CONFIG=%BASEPATH%\win_models.cfg
 
 cd /d %BASEPATH%
 IF EXIST "%BASEPATH%/output" (
@@ -38,22 +38,15 @@ md benchmark
 
 SET RET_CODE=0
 
-7z x -r "%TOOL_PATH%/mindspore-lite-*-converter-win-x64.zip" -o"%BENCHMARK_BASE%"
-IF NOT %errorlevel% == 0 (
-    echo "Decompression of converter tool fail!"
-    SET RET_CODE=1
-    goto run_eof
-)
-
-SET SO_PATH=mindspore-lite-*-inference-win-x64
+SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64
 IF "%3%" == "sse" (
-    SET SO_PATH=mindspore-lite-*-inference-win-x64-sse
+    SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64-sse
 )
 IF "%3%" == "avx" (
-    SET SO_PATH=mindspore-lite-*-inference-win-x64-avx
+    SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64-avx
 )
 IF "%3%" == "avx512" (
-    SET SO_PATH=mindspore-lite-*-inference-win-x64-avx512
+    SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64-avx512
 )
 7z x -r "%TOOL_PATH%/%SO_PATH%.zip" -o"%BENCHMARK_BASE%"
 IF NOT %errorlevel% == 0 (
@@ -70,7 +63,8 @@ SET MODEL_NAME=''
 SET SUFFIX=''
 
 echo "Convert models"
-cd mindspore-lite-*-converter-win-x64/converter
+copy %BENCHMARK_BASE%\%SO_PATH%\tools\converter\lib\* %BENCHMARK_BASE%\%SO_PATH%\tools\converter\converter\
+cd /d %BENCHMARK_BASE%\%SO_PATH%\tools\converter\converter\
 
 for /f "tokens=1-2 delims= " %%i in (%MODEL_CONFIG%) do (
     for /f "tokens=1-2 delims=." %%k in ("%%j") do (
@@ -98,7 +92,8 @@ for /f "tokens=1-2 delims= " %%i in (%MODEL_CONFIG%) do (
 )
 
 echo "Run converted models"
-cd /d %BENCHMARK_BASE%/%SO_PATH%/benchmark
+copy %BENCHMARK_BASE%\%SO_PATH%\inference\lib\* %BENCHMARK_BASE%\%SO_PATH%\tools\benchmark\
+cd /d %BENCHMARK_BASE%\%SO_PATH%\tools\benchmark\
 SET INPUT_BASE=%MODEL_PATH%/input_output/input
 SET OUTPUT_BASE=%MODEL_PATH%/input_output/output
 
