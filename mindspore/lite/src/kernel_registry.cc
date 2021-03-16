@@ -64,7 +64,7 @@ int KernelRegistry::Init() {
 
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   int index = GetCreatorFuncIndex(desc);
-  if (index >= array_size_) {
+  if (index >= array_size_ || index < 0) {
     MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
                   << desc.type;
     return nullptr;

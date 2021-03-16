@@ -18,6 +18,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct TensorC {
+  bool is_ready_;
   int data_type_;
   int format_;
   void *data_;

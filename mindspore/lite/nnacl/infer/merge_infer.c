@@ -18,36 +18,19 @@
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
 
-int MergeAbleToInfer(const TensorC *const *inputs, size_t inputs_size) {
+bool MergeAbleToInfer(const TensorC *const *inputs, size_t inputs_size) {
   for (size_t i = 0; i < inputs_size; i++) {
-    if (inputs[i]->shape_size_ == 0) {
-      return HasZeroShape;
-    }
-    if (inputs[i]->data_ == NULL) {
-      return NotAble;
+    if (!inputs[i]->is_ready_) {
+      return false;
     }
   }
-  return Able;
+  return true;
 }
 
-int MergeInfer(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size) {
+int MergeInfer(TensorC **inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size) {
   for (size_t i = 0; i < inputs_size; i++) {
-    SetDataTypeFormat(outputs[i], inputs[i]);
-    if (((TensorListC *)inputs[i])->data_type_ == kObjectTypeTensorType) {
-      TensorListC *input_tensorlist = (TensorListC *)inputs[i];
-      TensorListC *output_tensorlist = (TensorListC *)outputs[i];
-      ShapeSet(output_tensorlist->element_shape_, &output_tensorlist->element_shape_size_,
-               input_tensorlist->element_shape_, input_tensorlist->element_shape_size_);
-      output_tensorlist->max_elements_num_ = input_tensorlist->max_elements_num_;
-      output_tensorlist->tensors_data_type_ = input_tensorlist->tensors_data_type_;
-
-      output_tensorlist->element_num_ = input_tensorlist->element_num_;
-      for (size_t j = 0; j < output_tensorlist->element_num_; j++) {
-        memcpy(&output_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
-      }
-    } else {
-      SetShapeTensor(outputs[i], inputs[i]);
-    }
+    outputs[i] = inputs[i];
+    inputs[i] = NULL;
   }
   return NNACL_OK;
 }
@@ -55,21 +38,16 @@ int MergeInfer(const TensorC *const *inputs, size_t inputs_size, TensorC **outpu
 int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
 #ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
-  if (check_ret != NNACL_OK) {
-    return check_ret;
+  for (size_t i = 0; i < inputs_size; i++) {
+    if (inputs[i] == NULL) {
+      return NNACL_NULL_PTR;
+    }
   }
   if (inputs_size != 2 * outputs_size) {
     return NNACL_ERR;
   }
 #endif
 
-  if (!parameter->infer_flag_) {
-    return NNACL_INFER_INVALID;
-  }
-  for (size_t i = 0; i < outputs_size; ++i) {
-    outputs[i]->data_type_ = inputs[i]->data_type_;
-  }
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
@@ -80,17 +58,12 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   const TensorC *const *right_part_inputs = inputs + left_part_inputs_size;
   size_t right_part_inputs_size = inputs_size / 2;
 
-  if (MergeAbleToInfer(left_part_inputs, left_part_inputs_size) == Able) {
-    return MergeInfer(left_part_inputs, left_part_inputs_size, outputs, outputs_size);
+  if (MergeAbleToInfer(left_part_inputs, left_part_inputs_size)) {
+    return MergeInfer((TensorC **)left_part_inputs, left_part_inputs_size, outputs, outputs_size);
   }
 
-  if (MergeAbleToInfer(right_part_inputs, right_part_inputs_size) == Able) {
-    return MergeInfer(right_part_inputs, right_part_inputs_size, outputs, outputs_size);
-  }
-
-  if (MergeAbleToInfer(left_part_inputs, left_part_inputs_size) == HasZeroShape &&
-      MergeAbleToInfer(right_part_inputs, right_part_inputs_size) == HasZeroShape) {
-    return MergeInfer(left_part_inputs, left_part_inputs_size, outputs, outputs_size);
+  if (MergeAbleToInfer(right_part_inputs, right_part_inputs_size)) {
+    return MergeInfer((TensorC **)right_part_inputs, right_part_inputs_size, outputs, outputs_size);
   }
 
   return NNACL_INFER_INVALID;
