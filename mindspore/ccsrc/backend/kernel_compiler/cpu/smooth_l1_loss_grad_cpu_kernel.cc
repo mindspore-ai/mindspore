@@ -19,30 +19,20 @@
 
 namespace mindspore {
 namespace kernel {
-void SmoothL1LossGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+template <typename T>
+void SmoothL1LossGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   beta_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
   CheckParam(kernel_node);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (const uint64_t &d : x_shape) {
     tensor_size_ *= d;
   }
 }
 
-bool SmoothL1LossGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  }
-  return true;
-}
-
 template <typename T>
-void SmoothL1LossGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SmoothL1LossGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto target_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto dloss_addr = reinterpret_cast<T *>(inputs[2]->addr);
@@ -58,9 +48,11 @@ void SmoothL1LossGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inpu
       result_addr[i] = (diff / beta) * dloss_addr[i];
     }
   }
+  return true;
 }
 
-void SmoothL1LossGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
+template <typename T>
+void SmoothL1LossGradCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but SmoothL1LossGradCPUKernel needs 3 input.";

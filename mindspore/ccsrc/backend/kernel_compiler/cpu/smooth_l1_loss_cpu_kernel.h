@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class SmoothL1LossCPUKernel : public CPUKernel {
  public:
   SmoothL1LossCPUKernel() = default;
@@ -34,9 +35,6 @@ class SmoothL1LossCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
   void CheckParam(const CNodePtr &kernel_node);
   float beta_ = 1.0;
@@ -44,15 +42,15 @@ class SmoothL1LossCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   SmoothL1Loss,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  SmoothL1LossCPUKernel);
+  SmoothL1LossCPUKernel, float16);
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   SmoothL1Loss,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SmoothL1LossCPUKernel);
+  SmoothL1LossCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SMOOTH_L1_LOSS_CPU_KERNEL_H_

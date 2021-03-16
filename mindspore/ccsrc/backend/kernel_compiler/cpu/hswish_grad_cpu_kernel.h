@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class HSwishGradCPUKernel : public CPUKernel {
  public:
   HSwishGradCPUKernel() = default;
@@ -34,43 +35,35 @@ class HSwishGradCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> x_shape_;
-  TypeId dtype_{kTypeUnknown};
-  using TypeKernel = std::function<void(HSwishGradCPUKernel *, const std::vector<AddressPtr> &inputs,
-                                        const std::vector<AddressPtr> &outputs)>;
-  std::unordered_map<TypeId, TypeKernel> launch_map_;
-  TypeKernel launch_func_;
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   HSwishGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  HSwishGradCPUKernel);
+  HSwishGradCPUKernel, int8_t);
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   HSwishGrad,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  HSwishGradCPUKernel);
+  HSwishGradCPUKernel, int16_t);
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   HSwishGrad,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  HSwishGradCPUKernel);
+  HSwishGradCPUKernel, int);
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   HSwishGrad,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  HSwishGradCPUKernel);
+  HSwishGradCPUKernel, int64_t);
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   HSwishGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  HSwishGradCPUKernel);
+  HSwishGradCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
