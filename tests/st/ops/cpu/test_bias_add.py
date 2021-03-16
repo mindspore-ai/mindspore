@@ -81,27 +81,3 @@ def test_bias_add5d():
     expect_output = np.ones([2, 5, 4, 4, 4]).astype(np.float32) * 2
     print(output)
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_bias_add6d():
-    x = np.ones([2, 4, 4, 4, 4, 1]).astype(np.float32)
-    b = np.array([1, 1, 1, 1]).astype(np.float32)
-    bias_add = Net()
-    output = bias_add(Tensor(x), Tensor(b))
-    expect_output = np.ones([2, 4, 4, 4, 4, 1]).astype(np.float32) * 2
-    print(output)
-    assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_bias_add7d():
-    x = np.ones([2, 4, 4, 4, 4, 1, 2]).astype(np.float32)
-    b = np.array([1, 1, 1, 1]).astype(np.float32)
-    bias_add = Net()
-    output = bias_add(Tensor(x), Tensor(b))
-    expect_output = np.ones([2, 4, 4, 4, 4, 1, 2]).astype(np.float32) * 2
-    print(output)
-    assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
