@@ -193,7 +193,7 @@ def gamma(shape, alpha, beta, seed=None):
         The dtype is float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> shape = (3, 1, 2)
@@ -229,7 +229,7 @@ def poisson(shape, mean, seed=None):
         The dtype is float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> shape = (4, 1)
