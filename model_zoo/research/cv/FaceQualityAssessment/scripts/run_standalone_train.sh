@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 -a $# != 3 ]
+if [ $# != 2 ] && [ $# != 3 ]
 then
     echo "Usage: sh run_standalone_train.sh [TRAIN_LABEL_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]"
     echo "   or: sh run_standalone_train.sh [TRAIN_LABEL_FILE] [USE_DEVICE_ID]"
-exit 1
+    exit 1
 fi
 
 get_real_path(){
@@ -32,7 +32,7 @@ get_real_path(){
 current_exec_path=$(pwd)
 echo ${current_exec_path}
 
-dirname_path=$(dirname $(pwd))
+dirname_path=$(dirname "$(pwd)")
 echo ${dirname_path}
 
 export PYTHONPATH=${dirname_path}:$PYTHONPATH

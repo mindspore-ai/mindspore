@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 # test scenarios for cache op testing.
 
 # Set any path variables here
-CURRPATH=$(cd $(dirname $0); pwd)
-TESTPATH=$(cd ${CURRPATH}/../dataset; pwd)
-PROJECT_PATH=$(cd ${CURRPATH}/../../../..; pwd)
+CURRPATH=$(cd "$(dirname $0)"; pwd)
+TESTPATH=$(cd "${CURRPATH}/../dataset"; pwd)
+PROJECT_PATH=$(cd "${CURRPATH}/../../../../"; pwd)
 
 if [ "x${BUILD_PATH}" == "x" ]; then
    BUILD_PATH=${PROJECT_PATH}/build
@@ -64,7 +64,7 @@ MsgOk()
 
 #################################################################################
 #  Function: MsgFail                                                            #
-#  Description: Display intput msg with a red format for a failure              #
+#  Description: Display input msg with a red format for a failure              #
 #################################################################################
 MsgFail()
 {
@@ -154,11 +154,11 @@ CacheAdminCmd()
    fi
    result=$(${cmd} 2>&1)
    rc=$?
-   if [ ${expect_fail} -eq 0 -a ${rc} -ne 0 ]; then
+   if [ "${expect_fail}" -eq 0 ] && [ "${rc}" -ne 0 ]; then
       MsgFail "FAILED"
       MsgError "cache_admin command failure!" "${rc}" "${result}"
       return 1
-   elif [ ${expect_fail} -eq 1 -a ${rc} -eq 0 ]; then
+   elif [ "${expect_fail}" -eq 1 ] && [ "${rc}" -eq 0 ]; then
       MsgFail "FAILED"
       MsgError "Expected failure but got success!" "${rc}" "${result}"
       return 1
