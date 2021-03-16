@@ -205,7 +205,9 @@ function(mindspore_add_pkg pkg_name)
 
     set(options)
     set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH RELEASE LIB_PATH CUSTOM_CMAKE)
-    set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES ONLY_MAKE ONLY_MAKE_INCS ONLY_MAKE_LIBS)
+    set(multiValueArgs
+            CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS
+            INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES ONLY_MAKE ONLY_MAKE_INCS ONLY_MAKE_LIBS)
     cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT PKG_LIB_PATH)
@@ -356,9 +358,13 @@ function(mindspore_add_pkg pkg_name)
                     -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
 
-            __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
-                    WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
-
+            if(APPLE)
+                __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install --
+                        WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
+            else()
+                __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
+                        WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
+            endif()
         else()
             if(${pkg_name}_CFLAGS)
                 set(${pkg_name}_MAKE_CFLAGS "CFLAGS=${${pkg_name}_CFLAGS}")
@@ -387,8 +393,13 @@ function(mindspore_add_pkg pkg_name)
                         ${${pkg_name}_MAKE_CFLAGS} ${${pkg_name}_MAKE_CXXFLAGS} ${${pkg_name}_MAKE_LDFLAGS})
             endif()
             # build
-            __exec_cmd(COMMAND ${CMAKE_MAKE_PROGRAM} ${${pkg_name}_BUILD_OPTION} -j${THNUM}
-                    WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR})
+            if(APPLE)
+                __exec_cmd(COMMAND ${CMAKE_MAKE_PROGRAM} ${${pkg_name}_BUILD_OPTION}
+                        WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR})
+            else()
+                __exec_cmd(COMMAND ${CMAKE_MAKE_PROGRAM} ${${pkg_name}_BUILD_OPTION} -j${THNUM}
+                        WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR})
+            endif()
 
             if(PKG_INSTALL_INCS OR PKG_INSTALL_LIBS)
                 file(GLOB ${pkg_name}_INSTALL_INCS ${${pkg_name}_SOURCE_DIR}/${PKG_INSTALL_INCS})

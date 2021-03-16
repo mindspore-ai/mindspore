@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/fp16/activation_fp16.h"
+#include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/errorcode.h"
 

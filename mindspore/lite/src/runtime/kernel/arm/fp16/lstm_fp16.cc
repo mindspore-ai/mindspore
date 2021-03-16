@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/lstm_fp16.h"
 #include <vector>
+#include <cfloat>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

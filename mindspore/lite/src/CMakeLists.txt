@@ -8,11 +8,17 @@ include_directories(${LITE_DIR}/nnacl/optimize)
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT APPLE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
         -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
         -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+    endif()
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND APPLE)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32")
     endif()
 endif()
 
@@ -182,18 +188,18 @@ if(SUPPORT_TRAIN)
 endif()
 
 
-if(PLATFORM_ARM)
+if(NOT APPLE AND PLATFORM_ARM)
     set(NDK_STRIP
             "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
 endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
+if(NOT APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
     add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
             ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if(PLATFORM_ARM)
+    if(NOT APPLE AND PLATFORM_ARM)
         add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
                 ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
     elseif(NOT WIN32)
@@ -209,4 +215,55 @@ if(PLATFORM_ARM64)
         target_link_libraries(mindspore-lite cpu_fp16_kernel_mid nnacl_fp16_mid)
         target_link_libraries(mindspore-lite_static cpu_fp16_kernel_mid nnacl_fp16_mid)
     endif()
+endif()
+
+if(DEFINED ARCHS)
+    set(MINDSPORE_LITE_PUB_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/context.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/errorcode.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_session.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_types.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_utils.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/model.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/ms_tensor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/version.h
+            )
+    set(MINDSPORE_LITE_PUB_HDRS_IR_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
+            )
+    add_library(mindspore_lite STATIC
+            ${LITE_SRC}
+            ${MINDSPORE_LITE_PUB_HDRS}
+            ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
+            )
+    add_dependencies(mindspore_lite fbs_src)
+    set_target_properties(mindspore_lite PROPERTIES OUTPUT_NAME "mindspore_lite")
+    set_target_properties(mindspore_lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+    target_link_libraries(mindspore_lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore_lite log)
+
+    if(ENABLE_MINDRT)
+        target_link_libraries(mindspore_lite mindrt_mid)
+    endif()
+
+    if(PLATFORM_ARM64)
+        target_link_libraries(mindspore_lite cpu_opt_kernel_mid nnacl_optimize_mid)
+        if(ENABLE_FP16)
+            target_link_libraries(mindspore_lite cpu_fp16_kernel_mid nnacl_fp16_mid)
+        endif()
+    endif()
+    set_target_properties(mindspore_lite PROPERTIES FRAMEWORK TRUE)
+    set_target_properties(mindspore_lite PROPERTIES
+            OUTPUT_NAME "mindspore_lite"
+            FRAMEWORK_VERSION C
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+            XCODE_ATTRIBUTE_INSTALL_PAYH "@rpath"
+            )
+    FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS})
+        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/)
+    ENDFOREACH()
+    FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS})
+        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/ir/dtype/)
+    ENDFOREACH()
+    target_link_libraries(mindspore_lite)
 endif()

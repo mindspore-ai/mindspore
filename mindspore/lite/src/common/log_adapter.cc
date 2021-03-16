@@ -19,12 +19,16 @@
 #include <cstdio>
 
 #ifdef ENABLE_ARM
+#if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>
+#endif
 #endif
 
 // namespace to support utils module definition namespace mindspore constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 namespace mindspore {
+#if defined(__ANDROID__) || defined(ANDROID)
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
+#endif
 
 int StrToInt(const char *env) {
   if (env == nullptr) return 2;
@@ -45,6 +49,7 @@ bool IsPrint(int level) {
 }
 
 #ifdef ENABLE_ARM
+#if defined(__ANDROID__) || defined(ANDROID)
 // convert MsLogLevel to corresponding android level
 static int GetAndroidLogLevel(MsLogLevel level) {
   switch (level) {
@@ -59,6 +64,7 @@ static int GetAndroidLogLevel(MsLogLevel level) {
       return ANDROID_LOG_ERROR;
   }
 }
+#endif
 #endif
 
 const char *EnumStrForMsLogLevel(MsLogLevel level) {
@@ -78,8 +84,10 @@ const char *EnumStrForMsLogLevel(MsLogLevel level) {
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
   if (IsPrint(log_level_)) {
 #ifdef ENABLE_ARM
+#if defined(__ANDROID__) || defined(ANDROID)
     __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s", location_.file_,
                         location_.line_, location_.func_, msg.str().c_str());
+#endif
 #else
     printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
            msg.str().c_str());

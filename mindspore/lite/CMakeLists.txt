@@ -135,6 +135,10 @@ if(SUPPORT_TRAIN OR WIN32)
     set(ENABLE_MINDRT "off")
 endif()
 
+if(DEFINED ARCHS)
+    add_definitions(-DMS_COMPILE_IOS)
+endif()
+
 file(GLOB FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/*.fbs)
 ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_src ${CMAKE_BINARY_DIR}/schema "")
 ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_inner_src ${CMAKE_BINARY_DIR}/schema/inner
@@ -221,7 +225,7 @@ endif()
 
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    if(NOT DEFINED ENV{ANDROID_NDK})
+    if(NOT APPLE AND NOT DEFINED ENV{ANDROID_NDK})
         message(FATAL_ERROR "env ANDROID_NDK should be set for ARM compile")
     endif()
     add_compile_definitions(ENABLE_ARM)
@@ -267,7 +271,7 @@ endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nnacl)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro/coder)
-if(ENABLE_TOOLS)
+if(NOT APPLE AND ENABLE_TOOLS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
     if(SUPPORT_TRAIN)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark_train)
@@ -285,5 +289,6 @@ if(NOT WIN32)
     endif()
 endif()
 
-include(${TOP_DIR}/cmake/package_lite.cmake)
-
+if(NOT APPLE)
+    include(${TOP_DIR}/cmake/package_lite.cmake)
+endif()

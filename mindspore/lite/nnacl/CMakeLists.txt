@@ -4,7 +4,13 @@ set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(NNACL_DIR)
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND DEFINED ARCHS)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fstrict-aliasing \
+        -ffunction-sections -fdata-sections -ffast-math -Wno-shorten-64-to-32")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fstrict-aliasing \
+        -ffunction-sections -fdata-sections -ffast-math -Wno-shorten-64-to-32")
+    endif()
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT DEFINED ARCHS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
         -ffunction-sections -fdata-sections -ffast-math")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
@@ -49,6 +55,10 @@ if("${X86_64_SIMD}" STREQUAL "avx")
             ${NNACL_DIR}/intrinsics/avx/*.c
             ${NNACL_DIR}/assembly/avx/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+endif()
+
+if(APPLE)
+    set_source_files_properties(${ASSEMBLY_SRC} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 endif()
 
 ########################### build nnacl static library ########################
