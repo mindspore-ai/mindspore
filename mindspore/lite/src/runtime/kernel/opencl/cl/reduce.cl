@@ -183,6 +183,23 @@ __kernel void LocalWCSumSquare(__read_only image2d_t src_data, __write_only imag
   WRITE_IMAGE(dst_data, (int2)(0, X), result2);
 }
 
+__kernel void GlobalCMean(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size, float4 mask) {
+  int X = get_global_id(0);  // H
+  int Y = get_global_id(1);  // W
+  if (X >= size.x || Y >= size.y) {
+    return;
+  }
+  float4 result = (float4)0.f;
+  for (int c = 0; c < size.z; c++) {
+    result += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + c, X)));
+  }
+
+  result /= size.w;
+  FLT4 result2 = (FLT4)(0.f);
+  result2.x = dot(TO_FLT4(result), (FLT4)(1.f));
+  WRITE_IMAGE(dst_data, (int2)(Y, X), result2);
+}
+
 #define GlobalHW(Method)                                                                                       \
   __kernel void GlobalHW##Method(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) { \
     int X = get_global_id(0);                                                                                  \
@@ -297,7 +314,6 @@ __kernel void LocalWCSumSquare(__read_only image2d_t src_data, __write_only imag
 #define DoSum(A, B) A += B
 #define InitSum 0.f
 GlobalHW(Sum) GlobalWC(Sum) LocalHW(Sum) LocalWC(Sum)
-
 #define DoMin(A, B) A = min(A, B)
 #define InitMin 10000.f
   GlobalHW(Min) GlobalWC(Min) LocalHW(Min) LocalWC(Min)
