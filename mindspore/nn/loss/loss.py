@@ -187,8 +187,8 @@ class RMSELoss(_Loss):
 
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
-        - **label** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_M)`.
+        - **label** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_N)`.
 
     Outputs:
         Tensor, weighted loss float tensor.
@@ -219,19 +219,20 @@ class MAELoss(_Loss):
     MAELoss creates a standard to measure the average absolute error between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
 
-    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
+    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`M` and :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        \text{MAE} = \frac{1}{M}\sum_{m=1}^N\left| x_m - y_m \right|
+        MAE =  \begin{cases} \sqrt{\frac{1}{M}\sum_{m=1,n=1}^{M,N}{|x_m-y_n|}}, & \text {if  M > N } \\\\
+        \sqrt{\frac{1}{N}\sum_{m=1,n=1}^{M,N}{|x_m-y_n|}}, &\text{if  M < N } \end{cases}
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
                          Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
-        - **label** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_M)`.
+        - **label** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_N)`.
 
     Outputs:
         Tensor, weighted loss float tensor.
@@ -488,9 +489,9 @@ class MultiClassDiceLoss(_Loss):
             Default: 'softmax'. Choose from: ['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh','Sigmoid']
 
     Inputs:
-        - **y_pred** (Tensor) - Tensor of shape (N, C, ...). y_pred dimension should be greater than 1. The data type
-            must be float16 or float32.
-        - **y** (Tensor) - Tensor of shape (N, C, ...). y dimension should be greater than 1. The data type must be
+        - **y_pred** (Tensor) - Tensor of shape (N, C, ...). The y_pred dimension should be greater than 1. The data
+            type must be float16 or float32.
+        - **y** (Tensor) - Tensor of shape (N, C, ...). The y dimension should be greater than 1. The data type must be
             float16 or float32.
 
     Outputs:

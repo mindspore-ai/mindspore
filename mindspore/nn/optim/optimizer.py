@@ -621,6 +621,17 @@ def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
     return gradient
 
 
+@_apply_grad_centralization.register("Bool", "RowTensor")
+def _tensor_apply_grad_centralization_with_sparse(if_apply, gradient):
+    """Get grad with grad_centralization."""
+    if if_apply:
+        indices = gradient.indices
+        values = op_gc(gradient.values, -1)
+        shape = gradient.dense_shape
+        return RowTensor(indices, values, shape)
+    return gradient
+
+
 @_apply_grad_centralization.register("Bool", "Tensor")
 def _tensor_apply_grad_centralization(if_apply, gradient):
     """Get grad with grad_centralization."""
