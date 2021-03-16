@@ -1480,7 +1480,7 @@ def onp_rot90(input_array):
     return a, b, c, d, e, f, g, h
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

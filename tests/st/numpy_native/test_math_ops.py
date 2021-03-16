@@ -1503,7 +1503,7 @@ def test_arcsin():
     arr = onp.random.uniform(-1, 1, 12).astype('float32')
     onp_asin = onp_arcsin(arr)
     mnp_asin = mnp_arcsin(to_tensor(arr))
-    match_array(mnp_asin.asnumpy(), onp_asin, error=5)
+    match_array(mnp_asin.asnumpy(), onp_asin, error=3)
 
 
 def mnp_arccos(x):
@@ -1524,7 +1524,7 @@ def test_arccos():
     arr = onp.random.uniform(-1, 1, 12).astype('float32')
     onp_acos = onp_arccos(arr)
     mnp_acos = mnp_arccos(to_tensor(arr))
-    match_array(mnp_acos.asnumpy(), onp_acos, error=5)
+    match_array(mnp_acos.asnumpy(), onp_acos, error=2)
 
 
 def mnp_arctan(x):
@@ -1685,7 +1685,7 @@ def onp_arctan2(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_arctan2():
-    run_binop_test(mnp_arctan2, onp_arctan2, test_case)
+    run_binop_test(mnp_arctan2, onp_arctan2, test_case, error=5)
 
 
 def mnp_convolve(mode):
@@ -1707,10 +1707,7 @@ def onp_convolve(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_convolve():
     for mode in ['full', 'same', 'valid']:

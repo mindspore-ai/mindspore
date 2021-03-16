@@ -590,7 +590,7 @@ def in1d(ar1, ar2, invert=False):
     # F.reduce_sum only supports float
     res = F.reduce_sum(included.astype(mstype.float32), -1).astype(mstype.bool_)
     if invert:
-        res = F.equal(res, _to_tensor(False))
+        res = F.logical_not(res)
     return res
 
 

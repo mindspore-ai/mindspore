@@ -2276,7 +2276,7 @@ def convolve(a, v, mode='full'):
         ValueError: if a and v are empty or have wrong dimensions
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> import mindspore.numpy as np
