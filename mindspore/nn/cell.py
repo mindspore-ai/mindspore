@@ -1129,7 +1129,18 @@ class Cell(Cell_):
             param.set_param_ps(init_in_server)
 
     def set_comm_fusion(self, fusion_type, recurse=True):
-        Validator.check_is_int(fusion_type)
+        """
+        Set `comm_fusion` for all the parameters in the Net. Please refer to the description of
+        `mindspore.common.parameter.comm_fusion`.
+
+        Note:
+            The value of attribute will be overwritten when the function is called multiply.
+
+        Args:
+            fusion_type (int): The value of `comm_fusion`.
+            recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
+        """
+        Validator.check_non_negative_int(fusion_type)
         for param in self.trainable_params(recurse):
             param.comm_fusion = fusion_type
         return self
