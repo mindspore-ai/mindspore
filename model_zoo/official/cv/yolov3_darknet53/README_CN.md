@@ -49,13 +49,28 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
     - 训练集：13G，82783张图像  
     - 验证集：6GM，40504张图像
     - 标注：241M，训练/验证标注
-- 数据格式：zip文件
-    - 注：数据将在yolo_dataset.py中处理，并在使用前解压文件。
+- 数据集的文件目录结构如下所示
+
+    ```ext
+        ├── dataset
+            ├── coco2014
+                ├── annotations
+                │   ├─ train.json
+                │   └─ val.json
+                ├─ train
+                │   ├─picture1.jpg
+                │   ├─ ...
+                │   └─picturen.jpg
+                └─ val
+                    ├─picture1.jpg
+                    ├─ ...
+                    └─picturen.jpg
+    ```
 
 # 环境要求
 
 - 硬件（Ascend/GPU）
-    - 使用Ascend或GPU处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 使用Ascend或GPU处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) 至ascend@huawei.com，审核通过即可获得资源。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
@@ -64,11 +79,28 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
 
 # 快速入门
 
-通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：如果在GPU上运行，请在python命令中添加`--device_target=GPU`，或者使用“_gpu”shell脚本（“xxx_gpu.sh”）。
+- 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：如果在GPU上运行，请在python命令中添加`--device_target=GPU`，或者使用“_gpu”shell脚本（“xxx_gpu.sh”）。
+- 在运行任务之前，需要准备backbone_darknet53.ckpt和hccl_8p.json文件。
+    - 使用src路径下的convert_weight.py脚本将darknet53.conv.74转换成mindspore ckpt格式。
+
+      ```command
+      python convert_weight.py --input_file ./darknet53.conv.74
+      ```
+
+      可以从网站[下载](https://pjreddie.com/media/files/darknet53.conv.74) darknet53.conv.74文件。
+      也可以在linux系统中使用指令下载该文件。
+
+      ```command
+      wget https://pjreddie.com/media/files/darknet53.conv.74
+      ```
+
+    - 可以运行model_zoo/utils/hccl_tools/路径下的hccl_tools.py脚本生成hccl_8p.json文件，下面指令中参数"[0, 8)"表示生成0-7的8卡hccl_8p.json文件。
+
+      ```command
+      python hccl_tools.py --device_num "[0,8)"
+      ```
 
 ```python
-# 下面的脚本中的darknet53_backbone.ckpt是从darknet53训练得到的。
-# pretrained_backbone可以使用src/convert_weight.py，将darknet53.conv.74转换为MindSpore checkpoint。可通过`https://pjreddie.com/media/files/darknet53.conv.74`获取darknet53.conv.74。
 # training_shape参数定义网络图像形状，默认为""。
 # 意思是使用10种形状作为输入形状，或者可以设置某种形状。
 # 通过python命令执行训练示例(1卡)。
@@ -313,15 +345,15 @@ sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 | 模型版本              | YOLOv3                                                      |YOLOv3                                                       |
 | 资源                   | Ascend 910；CPU 2.60GHz，192核；内存：755G             | NV SMX2 V100-16G；CPU 2.10GHz，96核；内存：251G        |
 | 上传日期              | 2020-06-31                                 | 2020-09-02                                  |
-| MindSpore版本          | 0.5.0-alpha                                                 | 0.7.0                                                       |
+| MindSpore版本          | 1.1.1                                                 | 1.1.1                                                       |
 | 数据集                    | COCO2014                                                    | COCO2014                                                    |
-| 训练参数        | epoch=320，batch_size=32，lr=0.001，momentum=0.9            | epoch=320，batch_size=32，lr=0.001，momentum=0.9            |
+| 训练参数        | epoch=320，batch_size=32，lr=0.001，momentum=0.9            | epoch=320，batch_size=32，lr=0.1，momentum=0.9            |
 | 优化器                  | Momentum                                                    | Momentum                                                    |
 | 损失函数              | 带logits的Sigmoid交叉熵                           | 带logits的Sigmoid交叉熵                           |
 | 输出                    | 边界框和标签                                             | 边界框和标签                                             |
 | 损失                       | 34                                                          | 34                                                          |
 | 速度                      | 1卡：350毫秒/步;                                           | 1卡: 600毫秒/步;                                           |
-| 总时长                 | 8卡：18.5小时                                             | 8卡: 18小时(shape=416)                                    |
+| 总时长                 | 8卡：13小时                                               | 8卡: 18小时(shape=416)                                    |
 | 参数(M)             | 62.1                                                        | 62.1                                                        |
 | 微调检查点 | 474M (.ckpt文件)                                           | 474M (.ckpt文件)                                           |
 | 脚本                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 |
@@ -333,7 +365,7 @@ sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 | 模型版本       | YOLOv3                      | YOLOv3                       |
 | 资源            | Ascend 910                  | NV SMX2 V100-16G             |
 | 上传日期       |  2020-06-31 | 2020-08-20  |
-| MindSpore版本   | 0.5.0-alpha                 | 0.7.0                        |
+| MindSpore版本   | 1.1.1                 | 1.1.1                        |
 | 数据集             | COCO2014，40504张图像    | COCO2014，40504张图像     |
 | batch_size          | 1                           | 1                            |
 | 输出             | mAP                         | mAP                          |

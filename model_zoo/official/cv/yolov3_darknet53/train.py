@@ -171,7 +171,7 @@ def train():
     args = parse_args()
     network_init(args)
     if args.need_profiler:
-        from mindspore.profiler.profiling import Profiler
+        from mindspore.profiler import Profiler
         profiler = Profiler(output_path=args.outputs_dir, is_detail=True, is_show_op_path=True)
 
     loss_meter = AverageMeter('loss')

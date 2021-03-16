@@ -47,8 +47,23 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
     - Train：13G, 82,783 images
     - Val：6G, 40,504 images
     - Annotations: 241M, Train/Val annotations
-- Data format：zip files
-    - Note：Data will be processed in yolo_dataset.py, and unzip files before uses it.
+- The directory structure is as follows.
+
+    ```text
+        ├── dataset
+            ├── coco2014
+                ├── annotations
+                │   ├─ train.json
+                │   └─ val.json
+                ├─ train
+                │   ├─picture1.jpg
+                │   ├─ ...
+                │   └─picturen.jpg
+                └─ val
+                    ├─picture1.jpg
+                    ├─ ...
+                    └─picturen.jpg
+    ```
 
 ## [Environment Requirements](#contents)
 
@@ -62,11 +77,29 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
 
 ## [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation in as follows. If running on GPU, please add `--device_target=GPU` in the python command or use the "_gpu" shell script ("xxx_gpu.sh").
+- After installing MindSpore via the official website, you can start training and evaluation in as follows. If running on GPU, please add `--device_target=GPU` in the python command or use the "_gpu" shell script ("xxx_gpu.sh").
+- Prepare the backbone_darknet53.ckpt and hccl_8p.json files, before run network.
+    - Pretrained_backbone can use src/convert_weight.py, convert darknet53.conv.74 to mindspore ckpt.
+
+      ```
+      python convert_weight.py --input_file ./darknet53.conv.74
+      ```
+
+      darknet53.conv.74 can get from [download](https://pjreddie.com/media/files/darknet53.conv.74) .
+      you can use command in linux os.
+
+      ```
+      wget https://pjreddie.com/media/files/darknet53.conv.74
+      ```
+
+    - Genatating hccl_8p.json, Run the script of model_zoo/utils/hccl_tools/hccl_tools.py.
+      The following parameter "[0-8)" indicates that the hccl_8p.json file of cards 0 to 7 is generated.
+
+      ```
+      python hccl_tools.py --device_num "[0,8)"
+      ```
 
 ```network
-# The darknet53_backbone.ckpt in the follow script is got from darknet53 training like paper.
-# pretrained_backbone can use src/convert_weight.py, convert darknet53.conv.74 to mindspore ckpt, darknet53.conv.74 can get from `https://pjreddie.com/media/files/darknet53.conv.74` .
 # The parameter of training_shape define image shape for network, default is "".
 # It means use 10 kinds of shape as input shape, or it can be set some kind of shape.
 # run training example(1p) by python command.
@@ -309,15 +342,15 @@ This the standard format from `pycocotools`, you can refer to [cocodataset](http
 | Model Version              | YOLOv3                                                      |YOLOv3                                                       |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G        |
 | uploaded Date              | 09/15/2020 (month/day/year)                                 | 09/02/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       | 1.0.0                                                       |
+| MindSpore Version          | 1.1.1                                                       | 1.1.1                                                       |
 | Dataset                    | COCO2014                                                    | COCO2014                                                    |
-| Training Parameters        | epoch=320, batch_size=32, lr=0.001, momentum=0.9            | epoch=320, batch_size=32, lr=0.001, momentum=0.9            |
+| Training Parameters        | epoch=320, batch_size=32, lr=0.001, momentum=0.9            | epoch=320, batch_size=32, lr=0.1, momentum=0.9            |
 | Optimizer                  | Momentum                                                    | Momentum                                                    |
 | Loss Function              | Sigmoid Cross Entropy with logits                           | Sigmoid Cross Entropy with logits                           |
 | outputs                    | boxes and label                                             | boxes and label                                             |
 | Loss                       | 34                                                          | 34                                                          |
 | Speed                      | 1pc: 350 ms/step;                                           | 1pc: 600 ms/step;                                           |
-| Total time                 | 8pc: 18.5 hours                                             | 8pc: 18 hours(shape=416)                                    |
+| Total time                 | 8pc: 13 hours                                               | 8pc: 18 hours(shape=416)                                    |
 | Parameters (M)             | 62.1                                                        | 62.1                                                        |
 | Checkpoint for Fine tuning | 474M (.ckpt file)                                           | 474M (.ckpt file)                                           |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53 |
@@ -329,7 +362,7 @@ This the standard format from `pycocotools`, you can refer to [cocodataset](http
 | Model Version       | YOLOv3                      | YOLOv3                       |
 | Resource            | Ascend 910                  | NV SMX2 V100-16G             |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 08/20/2020 (month/day/year)  |
-| MindSpore Version   | 1.0.0                       | 1.0.0                        |
+| MindSpore Version   | 1.1.1                       | 1.1.1                        |
 | Dataset             | COCO2014, 40,504  images    | COCO2014, 40,504  images     |
 | batch_size          | 1                           | 1                            |
 | outputs             | mAP                         | mAP                          |
