@@ -71,6 +71,7 @@ constexpr char kRandomVerticalFlipOperation[] = "RandomVerticalFlip";
 constexpr char kRandomVerticalFlipWithBBoxOperation[] = "RandomVerticalFlipWithBBox";
 constexpr char kRescaleOperation[] = "Rescale";
 constexpr char kResizeOperation[] = "Resize";
+constexpr char kResizePreserveAROperation[] = "ResizePreserveAR";
 constexpr char kResizeWithBBoxOperation[] = "ResizeWithBBox";
 constexpr char kRgbaToBgrOperation[] = "RgbaToBgr";
 constexpr char kRgbaToRgbOperation[] = "RgbaToRgb";
@@ -779,6 +780,26 @@ class ResizeOperation : public TensorOperation {
  private:
   std::vector<int32_t> size_;
   InterpolationMode interpolation_;
+};
+
+class ResizePreserveAROperation : public TensorOperation {
+ public:
+  ResizePreserveAROperation(int32_t height, int32_t width, int32_t img_orientation);
+
+  ~ResizePreserveAROperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kResizePreserveAROperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+ private:
+  int32_t height_;
+  int32_t width_;
+  int32_t img_orientation_;
 };
 
 class ResizeWithBBoxOperation : public TensorOperation {

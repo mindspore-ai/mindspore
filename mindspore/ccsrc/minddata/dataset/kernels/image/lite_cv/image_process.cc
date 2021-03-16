@@ -1692,5 +1692,293 @@ bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, Lit
   return true;
 }
 
+void UpdateOrientationAfineMat(const LiteMat &src, int *rotationDstWidth, int *rotationDstHeight, float (*varM)[2][3],
+                               int img_orientation) {
+  int srcOrientation = img_orientation;
+  if (IM_TOOL_EXIF_ORIENTATION_0_DEG_MIRROR == srcOrientation) {
+    (*varM)[0][0] *= -1;
+    (*varM)[0][2] += *rotationDstWidth - 1;
+  } else if ((IM_TOOL_EXIF_ORIENTATION_180_DEG == srcOrientation) ||
+             (IM_TOOL_EXIF_ORIENTATION_180_DEG_MIRROR == srcOrientation)) {
+    // 0, 1, 2 is the matrix index of varM
+    (*varM)[0][0] = -1;
+    (*varM)[0][1] = 0;
+    (*varM)[0][2] = *rotationDstWidth - 1;
+    (*varM)[1][0] = 0;
+    (*varM)[1][1] = -1;
+    (*varM)[1][2] = *rotationDstWidth - 1;
+    if (IM_TOOL_EXIF_ORIENTATION_180_DEG_MIRROR == srcOrientation) {
+      /* with (*varM)irror */
+      (*varM)[0][0] *= -1;
+      (*varM)[0][2] -= *rotationDstWidth - 1;
+    }
+  } else if ((IM_TOOL_EXIF_ORIENTATION_90_DEG_MIRROR == srcOrientation) ||
+             (IM_TOOL_EXIF_ORIENTATION_90_DEG == srcOrientation)) {
+    /* 90 Deg rotation */
+    *rotationDstWidth = src.height_;
+    *rotationDstHeight = src.width_;
+    (*varM)[0][0] = 0;
+    (*varM)[0][1] = -1;
+    (*varM)[0][2] = *rotationDstWidth - 1;
+    (*varM)[1][0] = 1;
+    (*varM)[1][1] = 0;
+    (*varM)[1][2] = 0;
+    if (IM_TOOL_EXIF_ORIENTATION_90_DEG_MIRROR == srcOrientation) {
+      /* with Mirror */
+      (*varM)[0][1] *= -1;
+      (*varM)[0][2] -= *rotationDstWidth - 1;
+    }
+  } else if ((IM_TOOL_EXIF_ORIENTATION_270_DEG_MIRROR == srcOrientation) ||
+             (IM_TOOL_EXIF_ORIENTATION_270_DEG == srcOrientation)) {
+    /* 270 Deg rotation */
+    *rotationDstWidth = src.height_;
+    *rotationDstHeight = src.width_;
+    (*varM)[0][0] = 0;
+    (*varM)[0][1] = 1;
+    (*varM)[0][2] = 0;
+    (*varM)[1][0] = -1;
+    (*varM)[1][1] = 0;
+    (*varM)[1][2] = *rotationDstWidth - 1;
+    if (IM_TOOL_EXIF_ORIENTATION_270_DEG_MIRROR == srcOrientation) {
+      /* with Mirror */
+      (*varM)[0][1] *= -1;
+      (*varM)[0][2] += *rotationDstWidth - 1;
+    }
+  }
+}
+
+void ImageToolsConvertImage(const LiteMat &src, const LiteMat &dst, imageToolsImage_t *imageIn,
+                            imageToolsImage_t *imageOut) {
+  imageIn->image_buff = src.data_ptr_;
+  imageIn->h = src.height_;
+  imageIn->w = src.width_;
+  imageIn->stride = src.width_;
+  imageIn->dataType = IM_TOOL_DATA_TYPE_UINT8;
+
+  imageOut->image_buff = dst.data_ptr_;
+  imageOut->h = dst.height_;
+  imageOut->w = dst.width_;
+  imageOut->stride = dst.width_;
+  imageOut->dataType = IM_TOOL_DATA_TYPE_FLOAT;
+}
+
+void InvAffine2x3(float M[2][3], float invM[][3]) {
+  float inv_det = M[0][0] * M[1][1] - M[1][0] * M[0][1];
+  invM[1][1] = M[0][0] / inv_det;
+  invM[0][1] = -M[0][1] / inv_det;
+  invM[1][0] = -M[1][0] / inv_det;
+  invM[0][0] = M[1][1] / inv_det;
+  invM[0][2] = (M[0][1] * M[1][2] - M[1][1] * M[0][2]) / inv_det;
+  invM[1][2] = -(M[0][0] * M[1][2] - M[1][0] * M[0][2]) / inv_det;
+}
+
+static float *CalDst(float *dst, float v1, float v2, float v3) {
+  *dst++ = v1;
+  *dst++ = v2;
+  *dst++ = v3;
+  return dst;
+}
+
+static void ImageWarpAffineHWCFloat(imageToolsImage_t image, imageToolsImage_t warped_image, float invM[2][3]) {
+  // 3 is r, g, b
+  warped_image.stride *= 3;
+  image.stride *= 3;
+
+  float *warped_image_buff = reinterpret_cast<float *>(warped_image.image_buff);
+
+  float *image_buff = reinterpret_cast<float *>(image.image_buff);
+  for (int y0 = 0; y0 < warped_image.h; y0++) {
+    // Init pointers to start of rows
+    float *dst = warped_image_buff + y0 * warped_image.stride;
+
+    for (int x0 = 0; x0 < warped_image.w; x0++) {
+      // number 0, 1, 2 is the index of MATRIX 'invM'
+      float fPosx = (static_cast<float>(x0) * invM[0][0]) + (static_cast<float>(y0) * invM[0][1]) + invM[0][2];
+      float fPosy = (static_cast<float>(x0) * invM[1][0]) + (static_cast<float>(y0) * invM[1][1]) + invM[1][2];
+      int iPosy = static_cast<int>(fPosy + 2) - 2;  // for floor like result until -2.
+      int iPosx = static_cast<int>(fPosx + 2) - 2;  // for floor like result until -2.
+      if ((iPosx < -1) || (iPosx >= image.w) || (iPosy < -1) || (iPosy >= image.h)) {
+        dst = CalDst(dst, 0.0f, 0.0f, 0.0f);
+        continue;
+      }
+      float fRsiduy = fPosy - iPosy;
+      float fRsidux = fPosx - iPosx;
+      float fOut0 = 0;
+      float fOut1 = 0;
+      float fOut2 = 0;
+      float *fTopeLeft = image_buff + iPosy * image.stride + iPosx * 3;
+      float fCoeff = 1 - fRsidux - fRsiduy + fRsidux * fRsiduy;
+      if ((iPosx >= 0) && (iPosy >= 0)) {
+        // number 0, 1, 2 is the index of MATRIX 'fTopeLeft'
+        fOut0 += fCoeff * fTopeLeft[0];
+        fOut1 += fCoeff * fTopeLeft[1];
+        fOut2 += fCoeff * fTopeLeft[2];
+      }
+      float fSum = fCoeff;
+      fCoeff = fRsiduy - fRsidux * fRsiduy;
+      if ((iPosx >= 0) && (iPosy < image.h - 1)) {
+        // Image channel G and B could be accessed by adding number of 1, 2
+        fOut0 += fCoeff * fTopeLeft[image.stride];
+        fOut1 += fCoeff * fTopeLeft[image.stride + 1];
+        fOut2 += fCoeff * fTopeLeft[image.stride + 2];
+      }
+      fSum += fCoeff;
+      fCoeff = fRsidux - fRsidux * fRsiduy;
+      if ((iPosx < image.w - 1) && (iPosy >= 0)) {
+        // Image channel G and B could be accessed by adding number of 1, 2
+        fOut0 += fCoeff * fTopeLeft[3];
+        fOut1 += fCoeff * fTopeLeft[3 + 1];
+        fOut2 += fCoeff * fTopeLeft[3 + 2];
+      }
+      fSum += fCoeff;
+      if ((iPosx < image.w - 1) && (iPosy < image.h - 1)) {
+        // Image channel G and B could be accessed by adding number of 1, 2
+        fOut0 += (1 - fSum) * fTopeLeft[image.stride + 3];
+        fOut1 += (1 - fSum) * fTopeLeft[image.stride + 3 + 1];
+        fOut2 += (1 - fSum) * fTopeLeft[image.stride + 3 + 2];
+      }
+      dst = CalDst(dst, fOut0, fOut1, fOut2);
+    }
+  }
+}
+
+static void ImageWarpAffineHWCUint8(imageToolsImage_t image, imageToolsImage_t warped_image, float invM[2][3]) {
+  // 3 is r, g, b
+  warped_image.stride *= 3;
+  image.stride *= 3;
+  float *warped_image_buff = reinterpret_cast<float *>(warped_image.image_buff);
+
+  uint8_t *image_buff = reinterpret_cast<uint8_t *>(image.image_buff);
+  for (int y0 = 0; y0 < warped_image.h; y0++) {
+    // Init pointers to start of rows
+    float *dst = warped_image_buff + y0 * warped_image.stride;
+
+    for (int x0 = 0; x0 < warped_image.w; x0++) {
+      float fPosx = (static_cast<float>(x0) * invM[0][0]) + (static_cast<float>(y0) * invM[0][1]) + invM[0][2];
+      float fPosy = (static_cast<float>(x0) * invM[1][0]) + (static_cast<float>(y0) * invM[1][1]) + invM[1][2];
+
+      int iPosy = static_cast<int>(fPosy + 2) - 2;  // for floor like result until -2.
+      int iPosx = static_cast<int>(fPosx + 2) - 2;  // for floor like result until -2.
+      if ((iPosx < -1) || (iPosx >= image.w) || (iPosy < -1) || (iPosy >= image.h)) {
+        dst = CalDst(dst, 0.0f, 0.0f, 0.0f);
+        continue;
+      }
+      float fRsiduy = fPosy - iPosy;
+      float fRsidux = fPosx - iPosx;
+      float fOut0 = 0;
+      float fOut1 = 0;
+      float fOut2 = 0;
+      uint8_t *uiTopeLeft = image_buff + iPosy * image.stride + iPosx * 3;
+      float fCoeff = 1 - fRsidux - fRsiduy + fRsidux * fRsiduy;
+      if ((iPosx >= 0) && (iPosy >= 0)) {
+        // number 0, 1, 2 is the index of MATRIX round.
+        fOut0 += fCoeff * static_cast<float>(uiTopeLeft[0]);
+        fOut1 += fCoeff * static_cast<float>(uiTopeLeft[1]);
+        fOut2 += fCoeff * static_cast<float>(uiTopeLeft[2]);
+      }
+      float fSum = fCoeff;
+      fCoeff = fRsiduy - fRsidux * fRsiduy;
+      if ((iPosx >= 0) && (iPosy < image.h - 1)) {
+        fOut0 += fCoeff * static_cast<float>(uiTopeLeft[image.stride]);
+        fOut1 += fCoeff * static_cast<float>(uiTopeLeft[image.stride + 1]);
+        fOut2 += fCoeff * static_cast<float>(uiTopeLeft[image.stride + 2]);
+      }
+      fSum += fCoeff;
+      fCoeff = fRsidux - fRsidux * fRsiduy;
+      if ((iPosx < image.w - 1) && (iPosy >= 0)) {
+        fOut0 += fCoeff * static_cast<float>(uiTopeLeft[3]);
+        fOut1 += fCoeff * static_cast<float>(uiTopeLeft[3 + 1]);
+        fOut2 += fCoeff * static_cast<float>(uiTopeLeft[3 + 2]);
+      }
+      fSum += fCoeff;
+      if ((iPosx < image.w - 1) && (iPosy < image.h - 1)) {
+        fOut0 += (1 - fSum) * static_cast<float>(uiTopeLeft[image.stride + 3]);
+        fOut1 += (1 - fSum) * static_cast<float>(uiTopeLeft[image.stride + 3 + 1]);
+        fOut2 += (1 - fSum) * static_cast<float>(uiTopeLeft[image.stride + 3 + 2]);
+      }
+      dst = CalDst(dst, fOut0, fOut1, fOut2);
+    }
+  }
+}
+
+int ImageWarpAffineHWC(imageToolsImage_t image, imageToolsImage_t warped_image, float M[2][3], bool bIsMInv) {
+  if ((IM_TOOL_DATA_TYPE_FLOAT != warped_image.dataType) ||
+      ((IM_TOOL_DATA_TYPE_FLOAT != image.dataType) && (IM_TOOL_DATA_TYPE_UINT8 != image.dataType))) {
+    return IM_TOOL_RETURN_STATUS_INVALID_INPUT;
+  }
+  float invM[2][3];
+  if (bIsMInv) {
+    for (int iy = 0; iy < 2; iy++) {
+      for (int ix = 0; ix < 3; ix++) {
+        invM[iy][ix] = M[iy][ix];
+      }
+    }
+  } else {
+    InvAffine2x3(M, invM);
+  }
+
+  if (IM_TOOL_DATA_TYPE_FLOAT == image.dataType) {
+    ImageWarpAffineHWCFloat(image, warped_image, invM);
+  } else {
+    ImageWarpAffineHWCUint8(image, warped_image, invM);
+  }
+  return IM_TOOL_RETURN_STATUS_SUCCESS;
+}
+
+bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float (*ratioShiftWShiftH)[3],
+                                float (*invM)[2][3], int img_orientation) {
+  if (dst.IsEmpty()) {
+    dst.Init(w, h, src.channel_, LDataType::FLOAT32);
+  }
+  //  uint8_t *dst_ptr = dst;
+  float varM[2][3] = {{1.0, 0, 0}, {0, 1.0, 0}};
+  float divisor = 2.0;
+  int rotationDstWidth = src.width_;
+  int rotationDstHeight = src.height_;
+  if (img_orientation > IM_TOOL_EXIF_ORIENTATION_0_DEG) {
+    UpdateOrientationAfineMat(src, &rotationDstWidth, &rotationDstHeight, &varM, img_orientation);
+  }
+
+  /* Resize after orientation fix */
+  float srcAR = static_cast<float>(rotationDstWidth) / static_cast<float>(rotationDstHeight);
+  float dstAR = static_cast<float>(dst.width_) / static_cast<float>(dst.height_);
+  auto dstActiveWidth = static_cast<float>(dst.width_);
+  auto dstActiveHeight = static_cast<float>(dst.height_);
+  float ratio, shiftW, shiftH;
+  if (srcAR < dstAR) {
+    ratio = static_cast<float>(dst.height_) / static_cast<float>(rotationDstHeight);
+    dstActiveWidth = static_cast<float>(rotationDstWidth) * ratio;
+  } else {
+    ratio = static_cast<float>(dst.width_) / static_cast<float>(rotationDstWidth);
+    dstActiveHeight = static_cast<float>(rotationDstHeight) * ratio;
+  }
+  shiftW = (static_cast<float>(dst.width_) - dstActiveWidth) / divisor;
+  shiftH = (static_cast<float>(dst.height_) - dstActiveHeight) / divisor;
+  for (auto &iy : varM) {
+    for (float &ix : iy) {
+      // cppcheck-suppress useStlAlgorithm
+      ix *= ratio;
+    }
+  }
+
+  varM[0][2] += shiftW;
+  varM[1][2] += shiftH;
+  /* Resize and shift by affine transform  */
+  imageToolsImage_t imageIn, imageOut;
+  ImageToolsConvertImage(src, dst, &imageIn, &imageOut);
+  InvAffine2x3(varM, *invM);
+  int retVal = ImageWarpAffineHWC(imageIn, imageOut, *invM, true);
+  if (retVal != 0) {
+    return false;
+  }
+
+  // 0, 1, 2 is the index of corresponding elem in ratioShiftWShiftH
+  (*ratioShiftWShiftH)[0] = ratio;
+  (*ratioShiftWShiftH)[1] = shiftW;
+  (*ratioShiftWShiftH)[2] = shiftH;
+
+  return true;
+}
+
 }  // namespace dataset
 }  // namespace mindspore

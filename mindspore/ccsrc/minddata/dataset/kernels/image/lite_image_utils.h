@@ -95,6 +95,15 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               int32_t output_width, double fx = 0.0, double fy = 0.0,
               InterpolationMode mode = InterpolationMode::kLinear);
 
+/// \brief  Returns Resized image.
+/// \param[in] inputs input TensorRow
+/// \param[in] height Height of output
+/// \param[in] width Width of output
+/// \param[in] img_orientation Angle method of image rotation
+/// \param[out] outputs Resized image of shape <height,width,C> and same type as input
+Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, int32_t img_orientation,
+                      TensorRow *outputs);
+
 /// \brief Take in a 3 channel image in RBG to GRAY
 /// \param[in] input The input image
 /// \param[out] output The output image

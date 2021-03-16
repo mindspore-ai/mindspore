@@ -72,6 +72,7 @@
 #include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
 #endif
+#include "minddata/dataset/kernels/image/resize_preserve_ar_op.h"
 #include "minddata/dataset/kernels/image/rgb_to_gray_op.h"
 #include "minddata/dataset/kernels/image/rotate_op.h"
 #ifndef ENABLE_ANDROID
@@ -1417,6 +1418,25 @@ Status ResizeOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["size"] = size_;
   args["interpolation"] = interpolation_;
+  *out_json = args;
+  return Status::OK();
+}
+
+// ResizePreserveAROperation
+ResizePreserveAROperation::ResizePreserveAROperation(int32_t height, int32_t width, int32_t img_orientation)
+    : height_(height), width_(width), img_orientation_(img_orientation) {}
+
+Status ResizePreserveAROperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> ResizePreserveAROperation::Build() {
+  return std::make_shared<ResizePreserveAROp>(height_, width_, img_orientation_);
+}
+
+Status ResizePreserveAROperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["height"] = height_;
+  args["width"] = width_;
+  args["img_orientation"] = img_orientation_;
   *out_json = args;
   return Status::OK();
 }
