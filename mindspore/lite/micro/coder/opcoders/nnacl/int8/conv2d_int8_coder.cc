@@ -21,6 +21,7 @@
 #include "securec/include/securec.h"
 #include "coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.h"
 #include "coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/convolution_depthwise_int8_coder.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "src/ops/populate/populate_register.h"
@@ -250,7 +251,39 @@ std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tenso
   return coder;
 }
 
-REG_OPERATOR_CODER(kX86, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DINT8CoderCreator)
-REG_OPERATOR_CODER(kARM32A, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DINT8CoderCreator)
-REG_OPERATOR_CODER(kARM64, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DINT8CoderCreator)
+std::unique_ptr<OperatorCoder> CPUConv2DFusionINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
+                                                               const std::vector<Tensor *> &out_tensors,
+                                                               const Model::Node *node, size_t node_index,
+                                                               Target target) {
+  const void *primitive = node->primitive_;
+  if (primitive == nullptr) {
+    return nullptr;
+  }
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  ParameterGen paramGen =
+    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  if (paramGen == nullptr) {
+    MS_LOG(ERROR) << "parameter generator is null";
+    return nullptr;
+  }
+  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
+  std::unique_ptr<OperatorCoder> coder;
+  if (conv_param->group_ == 1) {
+    coder = CPUConv2DINT8CoderCreator(in_tensors, out_tensors, node, node_index, target);
+  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    coder = CPUOpCoderCreator<ConvolutionDepthwiseINT8Coder>(in_tensors, out_tensors, node, node_index, target);
+  } else {
+    // group conv
+  }
+  free(conv_param);
+  if (coder == nullptr) {
+    MS_LOG(ERROR) << "create conv2d int8 coder failed";
+    return nullptr;
+  }
+  return coder;
+}
+
+REG_OPERATOR_CODER(kX86, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
+REG_OPERATOR_CODER(kARM32A, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
+REG_OPERATOR_CODER(kARM64, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
 }  // namespace mindspore::lite::micro::nnacl

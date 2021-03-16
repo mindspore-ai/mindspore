@@ -101,6 +101,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/convolution_depthwise_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/deconvolution_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/pooling_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/resize_int8_coder.cc

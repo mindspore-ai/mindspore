@@ -57,7 +57,8 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
                  conv_parameter.input_batch_, conv_parameter.input_h_, conv_parameter.input_w_,
                  conv_parameter.input_channel_, conv_parameter.output_batch_, conv_parameter.output_h_,
                  conv_parameter.output_w_, conv_parameter.output_channel_, "thread_num", conv_parameter.input_unit_,
-                 conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_);
+                 conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_,
+                 conv_parameter.channel_multiplie_, conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter) {

@@ -17,6 +17,7 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "src/common/log_adapter.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "nnacl/pooling_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
@@ -34,7 +35,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingParam
                  pooling_parameter.output_batch_, pooling_parameter.output_channel_, pooling_parameter.pad_u_,
                  pooling_parameter.pad_d_, pooling_parameter.pad_l_, pooling_parameter.pad_r_,
                  // other parameter
-                 pooling_parameter.thread_num_, nullptr, pooling_parameter.quantize_);
+                 gThreadNum, nullptr, pooling_parameter.quantize_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const BatchNormParameter &batch_norm_parameter) {
@@ -60,14 +61,16 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SoftmaxParam
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter) {
+  code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
   CodeBaseStruct("ConvParameter", name, conv_parameter.op_parameter_, "{}", conv_parameter.kernel_h_,
                  conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_,
                  conv_parameter.dilation_h_, conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_,
                  conv_parameter.pad_l_, conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_,
                  conv_parameter.input_batch_, conv_parameter.input_h_, conv_parameter.input_w_,
                  conv_parameter.input_channel_, conv_parameter.output_batch_, conv_parameter.output_h_,
-                 conv_parameter.output_w_, conv_parameter.output_channel_, conv_parameter.op_parameter_.thread_num_,
-                 conv_parameter.input_unit_, conv_parameter.output_unit_, conv_parameter.act_type_);
+                 conv_parameter.output_w_, conv_parameter.output_channel_, "thread_num", conv_parameter.input_unit_,
+                 conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_,
+                 conv_parameter.channel_multiplie_, conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter) {
