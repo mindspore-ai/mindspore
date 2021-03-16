@@ -174,16 +174,20 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
 
     private void check() {
         isCheckPrivacy = prefs.getBoolean(Preferences.KEY_PRIVACY, false);
-        if (!isCheckPrivacy) {
-            showPrivacy();
-        } else {
+        if (isCheckPrivacy) {
             startPermissionsTask();
         }
     }
 
-    /**
-     * 显示用户协议和隐私政策
-     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        isCheckPrivacy = prefs.getBoolean(Preferences.KEY_PRIVACY, false);
+        if (hasFocus && !isCheckPrivacy){
+            showPrivacy();
+        }
+    }
+
     private void showPrivacy() {
         mContentView = LayoutInflater.from(SplashActivity.this).inflate(R.layout.popup_user,
                 null, false);
