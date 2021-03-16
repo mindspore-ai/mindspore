@@ -4821,7 +4821,7 @@ class _NumpySlicesDataset:
 
 class NumpySlicesDataset(GeneratorDataset):
     """
-    Create a dataset with given data slices, mainly for loading Python data into dataset.
+    Creates a dataset with given data slices, mainly for loading Python data into dataset.
 
     This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
     below shows what input arguments are allowed and their expected behavior.
@@ -4920,7 +4920,7 @@ class _PaddedDataset:
 
 class PaddedDataset(GeneratorDataset):
     """
-    Create a dataset with filler data provided by user. Mainly used to add to the original data set
+    Creates a dataset with filler data provided by user. Mainly used to add to the original data set
     and assign it to the corresponding shard.
 
     Args:

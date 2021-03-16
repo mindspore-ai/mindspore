@@ -43,7 +43,7 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
                         symmetric=(False, False),
                         narrow_range=(False, False)):
     r"""
-    Configs the observer type of weights and data flow with quant params.
+    Config the observer type of weights and data flow with quant params.
 
     Args:
         quant_observer (Union[Observer, list, tuple]): The observer type to do quantization. The first element represent

@@ -202,7 +202,7 @@ class SummaryRecord:
 
     def set_mode(self, mode):
         """
-        Sets the training phase. Different training phases affect data recording.
+        Set the training phase. Different training phases affect data recording.
 
         Args:
             mode (str): The mode to be set, which should be 'train' or 'eval'. When the mode is 'eval',

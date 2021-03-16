@@ -20,7 +20,7 @@ from .metric import Metric
 
 class ROC(Metric):
     """
-    Calculate the ROC curve. It is suitable for solving binary classification and multi classification problems.
+    Calculates the ROC curve. It is suitable for solving binary classification and multi classification problems.
     In the case of multiclass, the values will be calculated based on a one-vs-the-rest approach.
 
     Args:

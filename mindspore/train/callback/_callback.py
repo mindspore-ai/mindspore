@@ -227,9 +227,9 @@ class InternalCallbackParam(dict):
 
 class RunContext:
     """
-    Provides information about the model.
+    Provide information about the model.
 
-    Provides information about original request to model function.
+    Provide information about original request to model function.
     Callback objects can stop the loop by calling request_stop() of run_context.
 
     Args:
@@ -252,7 +252,7 @@ class RunContext:
 
     def request_stop(self):
         """
-        Sets stop requirement during training.
+        Set stop requirement during training.
 
         Callbacks can use this function to request stop of iterations.
         model.train() checks whether this is called or not.
@@ -261,7 +261,7 @@ class RunContext:
 
     def get_stop_requested(self):
         """
-        Returns whether a stop is requested or not.
+        Return whether a stop is requested or not.
 
         Returns:
             bool, if true, model.train() stops iterations.

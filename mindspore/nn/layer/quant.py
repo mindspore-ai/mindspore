@@ -1148,7 +1148,7 @@ class DenseQuant(Cell):
 
 class _QuantActivation(Cell):
     r"""
-    Base class for quantization aware training activation function. Add fake quantized operation
+    Base class for quantization aware training activation function. Adds fake quantized operation
     after activation operation.
     """
 
@@ -1232,7 +1232,7 @@ class ActQuant(_QuantActivation):
 
 class TensorAddQuant(Cell):
     r"""
-    Add fake quantized operation after TensorAdd operation.
+    Adds fake quantized operation after TensorAdd operation.
 
     This part is a more detailed overview of TensorAdd operation. For more detials about Quantilization,
     please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
@@ -1288,7 +1288,7 @@ class TensorAddQuant(Cell):
 
 class MulQuant(Cell):
     r"""
-    Add fake quantized operation after `Mul` operation.
+    Adds fake quantized operation after `Mul` operation.
 
     This part is a more detailed overview of `Mul` operation. For more detials about Quantilization,
     please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.

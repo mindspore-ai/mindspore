@@ -479,7 +479,7 @@ def _get_bbox(rank, shape, central_fraction):
 
 class CentralCrop(Cell):
     """
-    Crop the centeral region of the images with the central_fraction.
+    Crops the centeral region of the images with the central_fraction.
 
     Args:
         central_fraction (float): Fraction of size to crop. It must be float and in range (0.0, 1.0].

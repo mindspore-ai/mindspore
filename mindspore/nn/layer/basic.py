@@ -38,7 +38,7 @@ __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad',
 
 class L1Regularizer(Cell):
     r"""
-    Apply l1 regularization to weights
+    Applies l1 regularization to weights.
 
     l1 regularization makes weights sparsity
 
@@ -730,7 +730,7 @@ class ResizeBilinear(Cell):
 
 class Unfold(Cell):
     r"""
-    Extract patches from images.
+    Extracts patches from images.
     The input tensor must be a 4-D tensor and the data format is NCHW.
 
     Args:

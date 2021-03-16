@@ -123,7 +123,7 @@ class MnistToMR:
 
     def _transform_train(self):
         """
-        Executes transformation from Mnist train part to MindRecord.
+        Execute transformation from Mnist train part to MindRecord.
 
         Returns:
             MSRStatus, whether successfully written into MindRecord.
@@ -171,7 +171,7 @@ class MnistToMR:
 
     def _transform_test(self):
         """
-        Executes transformation from Mnist test part to MindRecord.
+        Execute transformation from Mnist test part to MindRecord.
 
         Returns:
             MSRStatus, whether Mnist is successfully transformed to MindRecord.
@@ -220,7 +220,7 @@ class MnistToMR:
 
     def run(self):
         """
-        Executes transformation from Mnist to MindRecord.
+        Execute transformation from Mnist to MindRecord.
 
         Returns:
             MSRStatus, whether successfully written into MindRecord.

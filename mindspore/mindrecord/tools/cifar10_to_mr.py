@@ -70,7 +70,7 @@ class Cifar10ToMR:
 
     def run(self, fields=None):
         """
-        Executes transformation from cifar10 to MindRecord.
+        Execute transformation from cifar10 to MindRecord.
 
         Args:
             fields (list[str], optional): A list of index fields, e.g.["label"] (default=None).

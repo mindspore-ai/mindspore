@@ -66,7 +66,7 @@ class _ROISpatialData(metaclass=ABCMeta):
 
 class HausdorffDistance(Metric):
     r"""
-    Calculate the Hausdorff distance. Hausdorff distance is the maximum and minimum distance between two point sets.
+    Calculates the Hausdorff distance. Hausdorff distance is the maximum and minimum distance between two point sets.
     Given two feature sets A and B, the Hausdorff distance between two point sets A and B is defined as follows:
 
     .. math::

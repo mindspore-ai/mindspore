@@ -75,7 +75,7 @@ def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_e
 
 def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculate learning rate base on exponential decay function.
+    Calculates learning rate base on exponential decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -118,7 +118,7 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
 
 def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculate learning rate base on natural exponential decay function.
+    Calculates learning rate base on natural exponential decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -162,7 +162,7 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
 
 def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculate learning rate base on inverse-time decay function.
+    Calculates learning rate base on inverse-time decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -205,7 +205,7 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
 
 def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
     r"""
-    Calculate learning rate base on cosine decay function.
+    Calculates learning rate base on cosine decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -257,7 +257,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
 def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power,
                         update_decay_epoch=False):
     r"""
-    Calculate learning rate base on polynomial decay function.
+    Calculates learning rate base on polynomial decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -332,7 +332,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
 
 def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     r"""
-    Get learning rate warming up.
+    Gets learning rate warming up.
 
     For the i-th step, the formula of computing warmup_learning_rate[i] is:
 

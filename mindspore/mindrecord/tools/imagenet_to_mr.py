@@ -120,7 +120,7 @@ class ImageNetToMR:
 
     def run(self):
         """
-        Executes transformation from imagenet to MindRecord.
+        Execute transformation from imagenet to MindRecord.
 
         Returns:
             MSRStatus, whether imagenet is successfully transformed to MindRecord.

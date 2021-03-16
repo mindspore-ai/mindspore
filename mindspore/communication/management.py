@@ -175,7 +175,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
 def get_world_rank_from_group_rank(group, group_rank_id):
     """
-    Gets the rank ID in the world communication group corresponding to
+    Get the rank ID in the world communication group corresponding to
     the rank ID in the specified user communication group.
 
     Note:

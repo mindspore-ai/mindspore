@@ -162,7 +162,7 @@ class BoundingBoxAugment(ImageTensorOperation):
 
 class CenterCrop(ImageTensorOperation):
     """
-    Crops the input image at the center to the given size.
+    Crop the input image at the center to the given size.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -417,7 +417,7 @@ class NormalizePad(ImageTensorOperation):
 
 class Pad(ImageTensorOperation):
     """
-    Pads the image according to padding parameters.
+    Pad the image according to padding parameters.
 
     Args:
         padding (Union[int, sequence]): The number of pixels to pad the image.
