@@ -471,6 +471,9 @@ class Receive(PrimitiveWithInfer):
         self.shape = shape
         self.dtype = dtype
         self.group = group
+        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        args = {"dtype": dtype}
+        validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
 
     def infer_shape(self, x_shape=None):
         return self.shape
