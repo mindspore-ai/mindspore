@@ -289,23 +289,15 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t dx_desc_real) {
-    if (group_ > 1 || CUDNN_MAJOR < 7) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnGetConvolutionBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
-                                                 CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, 0, &algo_),
-        "cudnnGetConvolutionBackwardDataAlgorithm failed");
-    } else {
-      constexpr int requested_algo_count = 1;
-      int returned_algo_count;
-      cudnnConvolutionBwdDataAlgoPerf_t perf_results;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnGetConvolutionBackwardDataAlgorithm_v7(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
-                                                    requested_algo_count, &returned_algo_count, &perf_results),
-        "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
-      algo_ = perf_results.algo;
-    }
+    constexpr int requested_algo_count = 1;
+    int returned_algo_count = 0;
+    cudnnConvolutionBwdDataAlgoPerf_t perf_results;
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudnnGetConvolutionBackwardDataAlgorithm_v7(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
+                                                  requested_algo_count, &returned_algo_count, &perf_results),
+      "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
+    algo_ = perf_results.algo;
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
       algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
     }

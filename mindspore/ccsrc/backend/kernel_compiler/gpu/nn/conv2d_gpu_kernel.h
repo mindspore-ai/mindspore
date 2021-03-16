@@ -310,23 +310,15 @@ class Conv2dGpuFwdKernel : public GpuKernel {
                                 "cudnnSetTensor4dDescriptor failed");
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t input_descriptor_real) {
-    if (group_ > 1 || CUDNN_MAJOR < 7) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnGetConvolutionForwardAlgorithm(
-                                    cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
-                                    CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm_),
-                                  "cudnnGetConvolutionForwardAlgorithm failed");
-    } else {
-      constexpr int requested_algo_count = 1;
-      int returned_algo_count;
-      cudnnConvolutionFwdAlgoPerf_t perf_results;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_,
-                                               output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
-        "cudnnGetConvolutionForwardAlgorithm_v7 failed");
-      conv_algorithm_ = perf_results.algo;
-    }
+    constexpr int requested_algo_count = 1;
+    int returned_algo_count = 0;
+    cudnnConvolutionFwdAlgoPerf_t perf_results;
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_,
+                                             output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
+      "cudnnGetConvolutionForwardAlgorithm_v7 failed");
+    conv_algorithm_ = perf_results.algo;
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
       conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
     }
