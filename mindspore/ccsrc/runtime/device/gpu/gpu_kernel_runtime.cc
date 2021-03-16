@@ -24,6 +24,7 @@
 #include "runtime/device/gpu/distribution/collective_init.h"
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/gpu/gpu_common.h"
 #include "utils/ms_utils.h"
@@ -66,9 +67,7 @@ bool GPUKernelRuntime::SyncStream() {
 }
 
 bool GPUKernelRuntime::Init() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  enable_relation_cache_ = context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+  enable_relation_cache_ = context::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
 
   if (device_init_ == true) {
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();

@@ -97,6 +97,7 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("tune_mode", MsCtxParam::MS_CTX_TUNE_MODE)
                            .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
                            .value("env_config_path", MsCtxParam::MS_CTX_ENV_CONFIG_PATH)
+                           .value("graph_kernel_flags", MsCtxParam::MS_CTX_GRAPH_KERNEL_FLAGS)
                            .value("grad_for_scalar", MsCtxParam::MS_CTX_GRAD_FOR_SCALAR);
                          (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
                            .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")

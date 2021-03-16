@@ -46,6 +46,7 @@
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
@@ -846,9 +847,7 @@ void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_
 }
 
 void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   opt::GraphKernelOptimize(kernel_graph);

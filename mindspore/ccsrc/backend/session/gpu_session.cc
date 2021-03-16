@@ -69,6 +69,7 @@
 #include "utils/ms_utils.h"
 #include "utils/config_manager.h"
 #include "utils/ms_context.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "utils/utils.h"
 #if ENABLE_CPU && ENABLE_GPU
 #include "ps/util.h"
@@ -127,8 +128,6 @@ void GPUSession::StartKernelRT() const {
 
 void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
@@ -136,7 +135,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
   }
   pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
@@ -181,9 +180,7 @@ void GPUSession::RunOpHardwareOptimize(const std::shared_ptr<KernelGraph> &kerne
 }
 
 void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   opt::GraphKernelOptimize(kernel_graph);

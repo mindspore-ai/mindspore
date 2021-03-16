@@ -40,6 +40,7 @@
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
@@ -354,9 +355,7 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", res, GetAfterRecomputePass(irpass));
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+    if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       g_pass_opts["opt_graph_kernel_a"]->set_enable(false);
       g_pass_opts["opt_graph_kernel_b"]->set_enable(false);
     }
