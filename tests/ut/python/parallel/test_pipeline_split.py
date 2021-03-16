@@ -77,7 +77,7 @@ class Net(nn.Cell):
         self.block = nn.CellList()
         for i in range(2):
             cell = MatMulCell(strategy1, strategy2, param)
-            cell.stage = i
+            cell.pipeline_stage = i
             self.block.append(cell)
 
     def construct(self, x):

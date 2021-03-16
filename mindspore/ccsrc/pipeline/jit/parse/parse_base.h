@@ -136,7 +136,7 @@ const char PYTHON_EXTERN_MINDSPORE_FLAG[] = "_mindspore_flags";
 // define the parse constant
 const int64_t MAX_COMPARISON_OPS_SUPPORTED = 1;
 const char CUSTOM_BPROP_NAME[] = "bprop";
-const char STAGE_NAME[] = "stage";
+const char STAGE_NAME[] = "pipeline_stage";
 
 // define the Namespace name
 const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // for ast type namespace
