@@ -67,7 +67,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // init
   // only save device_id
-  void Init(const uint32_t device_id);
+  void Init(const uint32_t device_id, const std::string device_target);
 
   // reset debugger
   void Reset();
