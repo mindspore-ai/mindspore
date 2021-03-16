@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include <nlohmann/json.hpp>  // we need this before the include to avoid ambiguity in nullptr conversion
 #include "minddata/dataset/include/datasets.h"
 #include <algorithm>
 #include <fstream>
 #include <unordered_set>
 #include <utility>
-#include <nlohmann/json.hpp>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/runtime_context.h"
