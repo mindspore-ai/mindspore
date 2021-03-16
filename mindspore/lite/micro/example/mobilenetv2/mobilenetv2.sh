@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 set -e
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-MINDSPORE_ROOT_DIR=${${CURRENT_DIR}%%/mindspore/lite/micro/example/mobilenetv2_quant}
+MINDSPORE_ROOT_DIR=${${CURRENT_DIR}%%/mindspore/lite/micro/example/mobilenetv2}
 
 OUTPUT_DIR=${1:-${MINDSPORE_ROOT_DIR}/output}
 THREAD_NUM=${2:-32}
-MODULE_NAME=mobilenetv2_quant
+MODULE_NAME=mobilenetv2
 OUTPUT_IR=Reshape-64.ir
 CALIB_OUT=${CURRENT_DIR}/Reshape-64.out
 
