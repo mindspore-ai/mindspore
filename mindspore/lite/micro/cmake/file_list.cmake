@@ -97,6 +97,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/batchnorm_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/concat_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/fullconnection_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/matmul_base_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/matmul_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.cc

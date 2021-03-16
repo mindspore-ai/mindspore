@@ -198,11 +198,16 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReshapeQuant
                  reshape_quant_arg.output_activation_min_, reshape_quant_arg.output_activation_max_);
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantParameter &matmul_quant_arg) {
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantParameter &matmul_quant_arg,
+                                     int weight_quant_num) {
+  CodeArray("filter_scale", matmul_quant_arg.filter_scale_, weight_quant_num);
+  CodeArray("filter_zp", matmul_quant_arg.filter_zp_, weight_quant_num);
+  CodeArray("left_shift", matmul_quant_arg.left_shift_, weight_quant_num);
+  CodeArray("right_shift", matmul_quant_arg.right_shift_, weight_quant_num);
+  CodeArray("multiplier", matmul_quant_arg.quant_multiplier_, weight_quant_num);
   CodeBaseStruct("MatmulQuantParameter", name, matmul_quant_arg.input_, matmul_quant_arg.weight_,
-                 matmul_quant_arg.output_, matmul_quant_arg.out_act_min_, matmul_quant_arg.out_act_max_,
-                 matmul_quant_arg.left_shift_[0], matmul_quant_arg.right_shift_[0],
-                 matmul_quant_arg.quant_multiplier_[0]);
+                 matmul_quant_arg.output_, matmul_quant_arg.out_act_min_, matmul_quant_arg.out_act_max_, "filter_scale",
+                 "filter_zp", "left_shift", "right_shift", "multiplier");
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SubQuantArg &sub_quant_arg) {
