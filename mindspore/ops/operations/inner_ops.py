@@ -247,6 +247,7 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyOptimizerAssign"""
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, grad_shape, v_shape, m_shape, var_shape, beta1_shape, sub1_shape,
                     beta2_shape, sub2_shape, eps_shape, steps_shape, use_weight_shape, weight_decay_shape):
@@ -308,6 +309,7 @@ class LambApplyWeightAssign(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyWeightAssign"""
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, w_norm_shape, g_norm_shape, lr_shape, update_shape, var_shape):
         validator.check("var_shape", var_shape, "update_shape", update_shape, Rel.EQ, self.name)
