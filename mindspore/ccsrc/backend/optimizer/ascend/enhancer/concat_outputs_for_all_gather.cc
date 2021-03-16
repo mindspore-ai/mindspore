@@ -41,7 +41,8 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat) {
   auto dtype_iter = std::find_if(inputs_device_type.begin(), inputs_device_type.end(),
                                  [&](const auto &dtype) { return dtype != (*cmp_dtype); });
   if (dtype_iter != inputs_device_type.end()) {
-    MS_LOG(EXCEPTION) << "Input dtype is not same, value: " << (*dtype_iter) << ", need dtype: " << (*cmp_dtype);
+    MS_LOG(EXCEPTION) << "Input dtype is not same, value: " << TypeIdLabel(*dtype_iter)
+                      << ", need dtype: " << TypeIdLabel(*cmp_dtype);
   }
   outputs_device_format.emplace_back(*cmp_format);
   outputs_device_type.emplace_back(*cmp_dtype);
