@@ -137,7 +137,7 @@ int Generator::CodeWeightFile() {
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
   cofs << "unsigned char * " << ctx_->buffer_name() << " = 0 ; \n";
 
-  if (config_->is_weight_file()) {
+  if (config_->target() != kARM32M) {
     std::string net_file = net_src_file_path_ + config_->module_name() + ".net";
     SaveDataToNet(ctx_->saved_weights(), net_file);
     CodeModelParamsForNet(hofs, cofs, ctx_);

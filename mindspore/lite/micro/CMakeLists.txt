@@ -14,7 +14,7 @@ include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
   include(${TOP_DIR}/cmake/external_libs/glog.cmake)
-
+  ### flatbuffer
   include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
   file(GLOB FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../schema/*.fbs)
   ms_build_flatbuffers_lite(FBS_FILES

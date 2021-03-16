@@ -73,9 +73,6 @@ class Configurator {
   void set_debug_mode(bool debug) { debug_mode_ = debug; }
   bool debug_mode() const { return debug_mode_; }
 
-  void set_is_weight_file(bool flag) { is_weight_file_ = flag; }
-  bool is_weight_file() const { return is_weight_file_; }
-
   void set_support_parallel(bool parallel) { support_parallel_ = parallel; }
   bool support_parallel() const { return support_parallel_; }
 
@@ -87,7 +84,6 @@ class Configurator {
   std::string code_path_;
   Target target_{kTargetUnknown};
   CodeMode code_mode_{Code_Unknown};
-  bool is_weight_file_{false};
   bool support_parallel_{false};
   bool debug_mode_{false};
 };

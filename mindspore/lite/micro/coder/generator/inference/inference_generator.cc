@@ -40,7 +40,7 @@ int InferenceGenerator::CodeNetHFile() {
   if (config_->support_parallel()) {
     CodeSetGlobalThreadPoolState(ofs, config_->module_name());
   }
-  if (config_->is_weight_file()) {
+  if (config_->target() != kARM32M) {
     CodeInitWeightState(ofs, config_->module_name());
   }
   CodeManageResourceState(ofs, config_->module_name());
@@ -82,7 +82,7 @@ int InferenceGenerator::CodeBenchmarkFile() {
 
   CodeBenchmarkSetInputs(ofs, config_->module_name(), ctx_);
   CodeBenchmarkSetBuffer(ofs, config_->module_name());
-  if (config_->is_weight_file()) {
+  if (config_->target() != kARM32M) {
     CodeBenchmarkInitWeight(ofs, config_->module_name());
   }
   if (config_->support_parallel()) {
