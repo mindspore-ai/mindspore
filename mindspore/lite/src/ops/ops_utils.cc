@@ -39,7 +39,7 @@ schema::PrimitiveT *GetPrimitiveT(const AnfNodePtr &node) {
   if (creator != nullptr) {
     return creator(node);
   } else {
-    MS_LOG(ERROR) << "can not find MSOpsRegistry for op: " << prim->name();
+    MS_LOG(WARNING) << "can not find MSOpsRegistry for op: " << prim->name();
     return nullptr;
   }
 }
