@@ -26,6 +26,7 @@
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/ascend/ascend_event.h"
+#include "runtime/device/ascend/ascend_launch_mul.h"
 #include "utils/profile.h"
 
 #define CHECK_ASCEND_RT_WITH_EXCEPTION(expression, message)    \
@@ -45,7 +46,6 @@ void AscendBucket::AllocateAllReduceAddr() {
   }
 
   auto total_size = 0;
-  std::vector<size_t> align_size_list;
   std::vector<size_t> origin_size_list;
   for (auto &tensor : grad_tensor_list_) {
     MS_EXCEPTION_IF_NULL(tensor);
@@ -54,7 +54,7 @@ void AscendBucket::AllocateAllReduceAddr() {
     auto origin_size = device_address->GetSize();
     auto align_size = MemoryManager::GetCommonAlignSize(origin_size);
     origin_size_list.emplace_back(origin_size);
-    align_size_list.emplace_back(align_size);
+    align_size_list_.emplace_back(align_size);
     total_size += align_size;
     memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
       static_cast<uint8_t *>(device_address->GetMutablePtr()), device_address->GetSize()));
@@ -72,14 +72,7 @@ void AscendBucket::AllocateAllReduceAddr() {
   uint8_t *memcpy_output = ar_input_addr_;
   for (size_t i = 0; i < bucket_size_; ++i) {
     memcpy_output_addrs_.emplace_back(std::make_shared<kernel::Address>(memcpy_output, origin_size_list[i]));
-    memcpy_output += align_size_list[i];
-  }
-
-  // store output tensor addr
-  uint8_t *tensor_output = ar_output_addr_;
-  for (size_t i = 0; i < bucket_size_; ++i) {
-    new_tensor_output_addrs_.emplace_back(tensor_output);
-    tensor_output += align_size_list[i];
+    memcpy_output += align_size_list_[i];
   }
 }
 
@@ -95,6 +88,10 @@ void AscendBucket::FreeAllDeviceMem() {
     uint8_t *origin_dev_addr = ar_output_addr_ - kMemAlignSize;
     FreeDeviceMem(origin_dev_addr);
     ar_output_addr_ = nullptr;
+  }
+  // clear launch mul device Memory
+  if (launch_kernel != nullptr) {
+    launch_kernel->FreeLaunchDeviceMem();
   }
 }
 
@@ -152,6 +149,15 @@ void AscendBucket::LaunchAllReduce() {
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "HcclAllReduce faled, ret:" << hccl_result;
   }
+}
+
+std::shared_ptr<LaunchKernel> AscendBucket::CreateLaunchKernel() {
+  if (tensor_type_list_.empty()) {
+    MS_LOG(ERROR) << "tensor_type_list_ is empty";
+  }
+  auto launch_mul = std::make_shared<AscendLaunchMul>(stream_, tensor_type_list_[0], total_size_, ar_output_addr_);
+  MS_EXCEPTION_IF_NULL(launch_mul);
+  return launch_mul;
 }
 
 void AscendBucket::Init() {

@@ -18,6 +18,7 @@
 
 #include <memory>
 #include "runtime/device/kernel_runtime_manager.h"
+#include "frontend/parallel/context.h"
 #include "utils/profile.h"
 
 namespace mindspore::device {
@@ -51,6 +52,8 @@ void Bucket::Launch() {
   pre_event_->RecordEvent();
   pre_event_->WaitEvent();
   LaunchAllReduce();
+  // mul fusion
+  CalculateMean();
   post_event_->RecordEvent();
   UpdateTensorAddr();
   // pass event to the tensor
@@ -84,6 +87,29 @@ void Bucket::UpdateTensorAddr() {
   }
 }
 
+void Bucket::CalculateMean() {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto grad_mean = parallel_context->gradients_mean();
+  if (!grad_mean) {
+    return;
+  }
+  launch_kernel = CreateLaunchKernel();
+  MS_EXCEPTION_IF_NULL(launch_kernel);
+  // launch mean
+  launch_kernel->LaunchOpKernel();
+  // store output tensor addr
+  auto launch_output = launch_kernel->GetKernelOutputAddr();
+  if (launch_output.size() != 1) {
+    MS_LOG(ERROR) << "launch mul outputs should have one output";
+  }
+  uint8_t *tensor_output = launch_output[0];
+  for (size_t i = 0; i < bucket_size_; ++i) {
+    new_tensor_output_addrs_.emplace_back(tensor_output);
+    tensor_output += align_size_list_[i];
+  }
+}
+
 void Bucket::LazyDeleteOldAddr() {
   MS_LOG(INFO) << "Lazy delete old grad address";
   for (auto old_addr : tensor_old_addr_list_) {
@@ -95,6 +121,7 @@ void Bucket::LazyDeleteOldAddr() {
 void Bucket::Release() {
   MS_LOG(INFO) << "Clear bucket:" << id_;
   grad_tensor_list_.clear();
+  align_size_list_.clear();
   new_tensor_output_addrs_.clear();
   memcpy_input_addrs_.clear();
   memcpy_output_addrs_.clear();

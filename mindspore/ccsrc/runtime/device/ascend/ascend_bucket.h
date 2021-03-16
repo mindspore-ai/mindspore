@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_BUCKET_H_
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_BUCKET_H_
 
+#include <memory>
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::ascend {
@@ -33,6 +34,7 @@ class AscendBucket : public Bucket {
   void FreeDeviceMem(void *dev_ptr) override;
   void CopyTensorToContiguousMemory() override;
   void LaunchAllReduce() override;
+  std::shared_ptr<LaunchKernel> CreateLaunchKernel() override;
 };
 }  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_BUCKET_H_
