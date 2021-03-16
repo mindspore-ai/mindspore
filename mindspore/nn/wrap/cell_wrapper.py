@@ -338,7 +338,6 @@ class TrainOneStepCell(Cell):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
-        self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)

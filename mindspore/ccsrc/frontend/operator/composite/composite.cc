@@ -644,6 +644,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   FuncGraphPtr forward_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(forward_graph);
+  forward_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
   FuncGraphPtr grad_fg = nullptr;
   {
     TraceGuard g(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
