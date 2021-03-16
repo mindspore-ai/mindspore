@@ -34,7 +34,6 @@ namespace mindspore::lite::micro {
 class CoderFlags : public virtual FlagParser {
  public:
   CoderFlags() {
-    AddFlag(&CoderFlags::is_weight_file_, "isWeightFile", "whether generating weight binary file, true| false", false);
     AddFlag(&CoderFlags::model_path_, "modelPath", "Input model path", "");
     AddFlag(&CoderFlags::code_path_, "codePath", "Input code path", ".");
     AddFlag(&CoderFlags::code_module_name_, "moduleName", "Input code module name", "");
@@ -48,7 +47,6 @@ class CoderFlags : public virtual FlagParser {
 
   std::string model_path_;
   bool support_parallel_{false};
-  bool is_weight_file_{false};
   std::string code_module_name_;
   std::string code_path_;
   std::string code_mode_;
@@ -93,11 +91,6 @@ int Coder::Init(const CoderFlags &flags) const {
   Configurator *config = Configurator::GetInstance();
 
   std::vector<std::function<bool()>> parsers;
-  parsers.emplace_back([flags, config]() -> bool {
-    config->set_is_weight_file(flags.is_weight_file_);
-    return true;
-  });
-
   parsers.emplace_back([&flags, config]() -> bool {
     auto target_item = kTargetMap.find(flags.target_);
     MS_CHECK_TRUE_RET_BOOL(target_item != kTargetMap.end(), "unsupported target: " + flags.target_);
@@ -113,6 +106,10 @@ int Coder::Init(const CoderFlags &flags) const {
   });
 
   parsers.emplace_back([&flags, config]() -> bool {
+    if (flags.support_parallel_ == true && config->target() == kARM32M) {
+      MS_LOG(ERROR) << "arm32M cannot support parallel.";
+      return false;
+    }
     config->set_support_parallel(flags.support_parallel_);
     return true;
   });
@@ -175,7 +172,6 @@ int Coder::Init(const CoderFlags &flags) const {
   print_parameter("codePath", config->code_path());
   print_parameter("codeMode", config->code_mode());
   print_parameter("codeModuleName", config->module_name());
-  print_parameter("isWeightFile", config->is_weight_file());
   print_parameter("debugMode", config->debug_mode());
 
   return RET_OK;

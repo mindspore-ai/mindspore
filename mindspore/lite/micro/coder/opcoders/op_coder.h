@@ -42,10 +42,10 @@ class OperatorCoder {
         node_(node),
         node_index_(node_index) {
     allocator_ = MemoryAllocator::GetInstance();
-    // vectors checked not empty in OpCoderBuilder::build
     input_tensor_ = input_tensors_.at(kInputIndex);
     output_tensor_ = output_tensors_.at(kOutputIndex);
   }
+
   std::string name() const { return node_->name_; }
 
   void set_input_tensor_indices(const std::vector<uint32_t> &input_indices);

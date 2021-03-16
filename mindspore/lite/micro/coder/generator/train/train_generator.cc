@@ -45,7 +45,7 @@ int TrainGenerator::CodeNetHFile() {
   ofs << "#include \"microtensor.h\"\n\n";
   CodeTrainParams(ofs);
   CodeInputAndOutputState(ofs, config_->module_name());
-  if (config_->is_weight_file()) {
+  if (config_->target() != kARM32M) {
     CodeInitWeightState(ofs, config_->module_name());
   }
   CodeManageResourceState(ofs, config_->module_name());
@@ -84,7 +84,7 @@ int TrainGenerator::CodeBenchmarkFile() {
   CodeBenchmarkWarmup(ofs, config_->module_name());
   CodeBenchmarkSetInputs(ofs, config_->module_name(), ctx_);
   CodeBenchmarkSetBuffer(ofs, config_->module_name());
-  if (config_->is_weight_file()) {
+  if (config_->target() != kARM32M) {
     CodeBenchmarkInitWeight(ofs, config_->module_name());
   }
   CodeBenchmarkInference(ofs, config_->module_name());
