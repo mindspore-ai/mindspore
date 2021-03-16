@@ -17,15 +17,17 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
 
+#include <string>
 #include <vector>
+#include <map>
 #include <memory>
+#include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/constants.h"
-#include "dataset/include/transforms.h"
+#include "include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
-
 class DeviceResource;
 // class to run tensor operations in eager mode
 class Execute {
@@ -34,7 +36,7 @@ class Execute {
   // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
   explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
   explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
-  // explicit Execute(TensorTransform op, MapTargetDevice deviceType = MapTargetDevice::KCpu);
+  explicit Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
   explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
 
   explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops,
@@ -62,14 +64,23 @@ class Execute {
 
   Status DeviceMemoryRelease();
 
+  std::string AippCfgGenerator();
+
  private:
+  Status ParseTransforms_();
+
   Status validate_device_();
+
+  std::vector<std::shared_ptr<TensorTransform>> transforms_;
 
   std::vector<std::shared_ptr<TensorOperation>> ops_;
 
   MapTargetDevice device_type_;
 
   std::shared_ptr<DeviceResource> device_resource_;
+
+  struct ExtraInfo;
+  std::shared_ptr<ExtraInfo> info_;
 };
 
 }  // namespace dataset

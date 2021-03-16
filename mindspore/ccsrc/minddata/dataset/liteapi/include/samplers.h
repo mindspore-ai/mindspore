@@ -18,14 +18,12 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
 
 #include <memory>
-#include <string>
 #include <vector>
-
-#include "include/api/status.h"
 
 namespace mindspore {
 namespace dataset {
 
+// Forward declare
 class SamplerObj;
 
 // Abstract class to represent a sampler in the data pipeline.
@@ -33,7 +31,20 @@ class SamplerObj;
 /// \brief An abstract base class to represent a sampler in the data pipeline.
 class Sampler : std::enable_shared_from_this<Sampler> {
   friend class AlbumDataset;
+  friend class CelebADataset;
+  friend class Cifar10Dataset;
+  friend class Cifar100Dataset;
+  friend class CLUEDataset;
+  friend class CocoDataset;
+  friend class CSVDataset;
+  friend class ImageFolderDataset;
+  friend class ManifestDataset;
   friend class MindDataDataset;
+  friend class MnistDataset;
+  friend class RandomDataDataset;
+  friend class TextFileDataset;
+  friend class TFRecordDataset;
+  friend class VOCDataset;
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -57,7 +68,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
 
 /// \brief A class to represent a Distributed Sampler in the data pipeline.
 /// \notes A Sampler that accesses a shard of the dataset.
-class DistributedSampler : public Sampler {
+class DistributedSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -93,7 +104,7 @@ class DistributedSampler : public Sampler {
 /// \brief A class to represent a PK Sampler in the data pipeline.
 /// \notes Samples K elements for each P class in the dataset.
 ///        This will sample all classes.
-class PKSampler : public Sampler {
+class PKSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -119,7 +130,7 @@ class PKSampler : public Sampler {
 
 /// \brief A class to represent a Random Sampler in the data pipeline.
 /// \notes Samples the elements randomly.
-class RandomSampler : public Sampler {
+class RandomSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -143,7 +154,7 @@ class RandomSampler : public Sampler {
 
 /// \brief A class to represent a Sequential Sampler in the data pipeline.
 /// \notes Samples the dataset elements sequentially, same as not having a sampler.
-class SequentialSampler : public Sampler {
+class SequentialSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -190,7 +201,7 @@ class SubsetSampler : public Sampler {
 
 /// \brief A class to represent a Subset Random Sampler in the data pipeline.
 /// \notes Samples the elements randomly from a sequence of indices.
-class SubsetRandomSampler : public SubsetSampler {
+class SubsetRandomSampler final : public SubsetSampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -211,7 +222,7 @@ class SubsetRandomSampler : public SubsetSampler {
 /// \brief A class to represent a Weighted Random Sampler in the data pipeline.
 /// \notes Samples the elements from [0, len(weights) - 1] randomly with the given
 ///        weights (probabilities).
-class WeightedRandomSampler : public Sampler {
+class WeightedRandomSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
@@ -234,6 +245,7 @@ class WeightedRandomSampler : public Sampler {
   int64_t num_samples_;
   bool replacement_;
 };
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_
