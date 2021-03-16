@@ -66,7 +66,6 @@ class LiteModel : public Model {
       node->primitive_ = c_node->primitive();
       node->quant_type_ = c_node->quantType();
       node->name_ = c_node->name()->c_str();
-      node->node_type_ = static_cast<NodeType>(c_node->nodeType());
       auto count = c_node->inputIndex()->size();
       for (uint32_t j = 0; j < count; ++j) {
         node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));

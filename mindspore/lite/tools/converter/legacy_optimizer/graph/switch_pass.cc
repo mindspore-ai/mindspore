@@ -215,7 +215,7 @@ std::unique_ptr<schema::CNodeT> SingleSwitchPass::MakeMergeNode(const std::strin
       merge_node->inputIndex.push_back(old_merge_input[i]);
     } else {
       auto tensor = NewTensor(in_tensor);
-      tensor->nodeType = schema::NodeType_CNode;
+      tensor->nodeType = NodeType_CNode;
       graph_->allTensors.push_back(std::move(tensor));
       merge_node->inputIndex.push_back(graph_->allTensors.size() - 1);
     }

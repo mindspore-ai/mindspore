@@ -31,7 +31,7 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
   std::vector<size_t> sinked_tensor_idxes;
   // put all const tensor index into sinked_tensor_idxes
   for (size_t i = 0; i < graph->allTensors.size(); i++) {
-    if (graph->allTensors.at(i)->nodeType == schema::NodeType::NodeType_ValueNode) {
+    if (graph->allTensors.at(i)->nodeType == NodeType_ValueNode) {
       sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), i);
     }
   }

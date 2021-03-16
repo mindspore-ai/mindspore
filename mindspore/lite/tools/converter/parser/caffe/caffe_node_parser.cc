@@ -18,6 +18,7 @@
 #include <memory>
 #include "securec/include/securec.h"
 #include "ir/dtype/type_id.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,7 +34,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   ConvertShape(proto, &shapeVec);
   weight->dims = shapeVec;
   weight->dataType = kNumberTypeFloat32;
-  weight->nodeType = schema::NodeType::NodeType_ValueNode;
+  weight->nodeType = NodeType_ValueNode;
 
   // cal Weight num
   int count = 1;

@@ -187,7 +187,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->outputIndex = {5, 14};
 
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {BATCH_SIZE, FEATURE_SIZE};
@@ -195,7 +195,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->allTensors.emplace_back(std::move(input0));
   // tensor 1 - relu
   auto relu_out = std::make_unique<schema::TensorT>();
-  relu_out->nodeType = schema::NodeType::NodeType_Parameter;
+  relu_out->nodeType = lite::NodeType_Parameter;
   relu_out->format = schema::Format_NHWC;
   relu_out->dataType = TypeId::kNumberTypeFloat32;
   relu_out->dims = {BATCH_SIZE, FEATURE_SIZE};
@@ -203,7 +203,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->allTensors.emplace_back(std::move(relu_out));
   // tensor 2 - matmul weights
   auto weight = std::make_unique<schema::TensorT>();
-  weight->nodeType = schema::NodeType::NodeType_ValueNode;
+  weight->nodeType = lite::NodeType_ValueNode;
   weight->format = schema::Format_KHWC;
   weight->dataType = TypeId::kNumberTypeFloat32;
   weight->dims = {NUM_CLASSES, FEATURE_SIZE};
@@ -218,7 +218,7 @@ TEST_F(NetworkTest, tuning_layer) {
   delete[] buf;
   // tensor 3 - matmul
   auto input3 = std::make_unique<schema::TensorT>();
-  input3->nodeType = schema::NodeType::NodeType_Parameter;
+  input3->nodeType = lite::NodeType_Parameter;
   input3->format = schema::Format_NHWC;
   input3->dataType = TypeId::kNumberTypeFloat32;
   input3->dims = {BATCH_SIZE, NUM_CLASSES};
@@ -226,7 +226,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->allTensors.emplace_back(std::move(input3));
   // tensor 4 - fc bias
   auto bias = std::make_unique<schema::TensorT>();
-  bias->nodeType = schema::NodeType::NodeType_ValueNode;
+  bias->nodeType = lite::NodeType_ValueNode;
   bias->format = schema::Format_NHWC;
   bias->dataType = TypeId::kNumberTypeFloat32;
   bias->dims = {NUM_CLASSES};
@@ -242,7 +242,7 @@ TEST_F(NetworkTest, tuning_layer) {
 
   // tensor 5 - bias_add
   auto input5 = std::make_unique<schema::TensorT>();
-  input5->nodeType = schema::NodeType::NodeType_Parameter;
+  input5->nodeType = lite::NodeType_Parameter;
   input5->format = schema::Format_NHWC;
   input5->dataType = TypeId::kNumberTypeFloat32;
   input5->dims = {BATCH_SIZE, NUM_CLASSES};
@@ -251,7 +251,7 @@ TEST_F(NetworkTest, tuning_layer) {
   // tensor 6 - Label
   {
     auto label = std::make_unique<schema::TensorT>();
-    label->nodeType = schema::NodeType::NodeType_ValueNode;
+    label->nodeType = lite::NodeType_ValueNode;
     label->format = schema::Format_NHWC;
     label->dataType = TypeId::kNumberTypeFloat32;
     label->dims = {BATCH_SIZE * NUM_CLASSES};
@@ -260,7 +260,7 @@ TEST_F(NetworkTest, tuning_layer) {
   }
   // tensor 7 - Softmaxentropy
   auto input7 = std::make_unique<schema::TensorT>();
-  input7->nodeType = schema::NodeType::NodeType_Parameter;
+  input7->nodeType = lite::NodeType_Parameter;
   input7->format = schema::Format_NHWC;
   input7->dataType = TypeId::kNumberTypeFloat32;
   input7->dims = {BATCH_SIZE, NUM_CLASSES};
@@ -268,7 +268,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->allTensors.emplace_back(std::move(input7));
   // tensor 8 - biasGrad
   auto input8 = std::make_unique<schema::TensorT>();
-  input8->nodeType = schema::NodeType::NodeType_Parameter;
+  input8->nodeType = lite::NodeType_Parameter;
   input8->format = schema::Format_NHWC;
   input8->dataType = TypeId::kNumberTypeFloat32;
   input8->dims = {NUM_CLASSES};
@@ -276,7 +276,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->allTensors.emplace_back(std::move(input8));
   // tensor 9 - matmul2
   auto input9 = std::make_unique<schema::TensorT>();
-  input9->nodeType = schema::NodeType::NodeType_Parameter;
+  input9->nodeType = lite::NodeType_Parameter;
   input9->format = schema::Format_NHWC;
   input9->dataType = TypeId::kNumberTypeFloat32;
   input9->dims = {NUM_CLASSES, FEATURE_SIZE};
@@ -284,7 +284,7 @@ TEST_F(NetworkTest, tuning_layer) {
   meta_graph->allTensors.emplace_back(std::move(input9));
   // tensor 10 weights accumulate
   auto input10 = std::make_unique<schema::TensorT>();
-  input10->nodeType = schema::NodeType::NodeType_ValueNode;
+  input10->nodeType = lite::NodeType_ValueNode;
   input10->format = schema::Format_NHWC;
   input10->dataType = TypeId::kNumberTypeFloat32;
   input10->dims = {NUM_CLASSES, FEATURE_SIZE};
@@ -296,7 +296,7 @@ TEST_F(NetworkTest, tuning_layer) {
   // tensor 11 - lr
   {
     auto lr = std::make_unique<schema::TensorT>();
-    lr->nodeType = schema::NodeType::NodeType_ValueNode;
+    lr->nodeType = lite::NodeType_ValueNode;
     lr->format = schema::Format_NHWC;
     lr->dataType = TypeId::kNumberTypeFloat32;
     lr->dims = {1};
@@ -309,7 +309,7 @@ TEST_F(NetworkTest, tuning_layer) {
   // tensor 12  - momentum
   {
     auto input12 = std::make_unique<schema::TensorT>();
-    input12->nodeType = schema::NodeType::NodeType_ValueNode;
+    input12->nodeType = lite::NodeType_ValueNode;
     input12->format = schema::Format_NHWC;
     input12->dataType = TypeId::kNumberTypeFloat32;
     input12->dims = {1};
@@ -321,7 +321,7 @@ TEST_F(NetworkTest, tuning_layer) {
   }
   // tensor 13 - bias accumulate
   auto input13 = std::make_unique<schema::TensorT>();
-  input13->nodeType = schema::NodeType::NodeType_ValueNode;
+  input13->nodeType = lite::NodeType_ValueNode;
   input13->format = schema::Format_NHWC;
   input13->dataType = TypeId::kNumberTypeFloat32;
   input13->dims = {NUM_CLASSES};
@@ -334,7 +334,7 @@ TEST_F(NetworkTest, tuning_layer) {
   // tensor 14 - loss
   {
     auto loss14 = std::make_unique<schema::TensorT>();
-    loss14->nodeType = schema::NodeType::NodeType_ValueNode;
+    loss14->nodeType = lite::NodeType_ValueNode;
     loss14->format = schema::Format_NHWC;
     loss14->dataType = TypeId::kNumberTypeFloat32;
     loss14->dims = {1};

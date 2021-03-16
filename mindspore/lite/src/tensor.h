@@ -27,6 +27,7 @@
 
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -246,9 +247,9 @@ inline size_t DataTypeSize(const TypeId type) {
   }
 }
 
-inline Tensor::Category TensorCategory(const schema::NodeType node_type, const size_t shape_num, const TypeId data_type,
+inline Tensor::Category TensorCategory(const int node_type, const size_t shape_num, const TypeId data_type,
                                        const size_t data_size) {
-  return (node_type == schema::NodeType::NodeType_ValueNode)
+  return (node_type == NodeType_ValueNode)
            ? (shape_num == 0 && data_size == DataTypeSize(data_type) ? Tensor::Category::CONST_SCALAR
                                                                      : Tensor::Category::CONST_TENSOR)
            : Tensor::Category::VAR;

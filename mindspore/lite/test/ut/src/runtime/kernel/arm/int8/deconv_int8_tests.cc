@@ -31,7 +31,6 @@ namespace mindspore {
 using mindspore::lite::QuantArg;
 using mindspore::lite::Tensor;
 using mindspore::schema::Format_NHWC;
-using mindspore::schema::NodeType_Parameter;
 class TestDeconvInt8 : public mindspore::CommonTest {
  public:
   TestDeconvInt8() {}

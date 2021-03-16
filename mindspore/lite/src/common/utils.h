@@ -29,6 +29,12 @@
 
 namespace mindspore {
 namespace lite {
+enum NodeType {
+  NodeType_ValueNode,  // const
+  NodeType_Parameter,  // var
+  NodeType_CNode       // op
+};
+
 const int USEC = 1000000;
 const int MSEC = 1000;
 std::vector<std::string> StringSplit(std::string str, const std::string &pattern);
@@ -154,7 +160,7 @@ std::vector<std::string> Tokenize(const std::string &src, const std::string &del
 
 enum RemoveSubStrMode { PREFIX, SUFFIX, ANY };
 
-// remove redundant charactor
+// remove redundant character
 std::string RemoveSubStr(const std::string &from, const std::string &sub_str, RemoveSubStrMode mode = ANY);
 
 template <typename T>

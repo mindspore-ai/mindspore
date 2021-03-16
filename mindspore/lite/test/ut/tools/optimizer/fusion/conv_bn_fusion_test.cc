@@ -98,7 +98,7 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
 
   // input 0: data
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 5, 5, 3};
@@ -107,7 +107,7 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
 
   // input 1: weight
   auto input1 = std::make_unique<schema::TensorT>();
-  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->nodeType = lite::NodeType_ValueNode;
   input1->format = schema::Format_KHWC;
   input1->dataType = TypeId::kNumberTypeFloat32;
   input1->dims = {8, 3, 3, 3};
@@ -116,7 +116,7 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
 
   // conv output
   auto conv_output = std::make_unique<schema::TensorT>();
-  conv_output->nodeType = schema::NodeType::NodeType_Parameter;
+  conv_output->nodeType = lite::NodeType_Parameter;
   conv_output->format = schema::Format_NHWC;
   conv_output->dataType = TypeId::kNumberTypeFloat32;
   conv_output->dims = {1, 5, 5, 8};
@@ -124,7 +124,7 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
 
   // caffe bn : mean
   auto input2 = std::make_unique<schema::TensorT>();
-  input2->nodeType = schema::NodeType::NodeType_ValueNode;
+  input2->nodeType = lite::NodeType_ValueNode;
   input2->format = schema::Format_NHWC;
   input2->dataType = TypeId::kNumberTypeFloat32;
   input2->dims = {1, 5, 5, 8};
@@ -133,7 +133,7 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
 
   // caffe bn : var
   auto input3 = std::make_unique<schema::TensorT>();
-  input3->nodeType = schema::NodeType::NodeType_ValueNode;
+  input3->nodeType = lite::NodeType_ValueNode;
   input3->format = schema::Format_NHWC;
   input3->dataType = TypeId::kNumberTypeFloat32;
   input3->dims = {1, 5, 5, 8};
@@ -142,7 +142,7 @@ MetaGraphTptr BuildCaffeGraph(schema::PrimitiveType conv_type) {
 
   // final bn output
   auto output = std::make_unique<schema::TensorT>();
-  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->nodeType = lite::NodeType_Parameter;
   output->format = schema::Format_NHWC;
   output->dataType = TypeId::kNumberTypeFloat32;
   output->dims = {1, 5, 5, 8};
@@ -179,7 +179,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // input 0: data
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 5, 5, 3};
@@ -188,7 +188,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // input 1: conv_bias
   auto input11 = std::make_unique<schema::TensorT>();
-  input11->nodeType = schema::NodeType::NodeType_ValueNode;
+  input11->nodeType = lite::NodeType_ValueNode;
   input11->format = schema::Format_KHWC;
   input11->dataType = TypeId::kNumberTypeFloat32;
   input11->dims = {8, 3, 3, 3};
@@ -197,7 +197,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // input 1: weight
   auto input1 = std::make_unique<schema::TensorT>();
-  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->nodeType = lite::NodeType_ValueNode;
   input1->format = schema::Format_KHWC;
   input1->dataType = TypeId::kNumberTypeFloat32;
   input1->dims = {8, 3, 3, 3};
@@ -206,7 +206,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // conv output
   auto conv_output = std::make_unique<schema::TensorT>();
-  conv_output->nodeType = schema::NodeType::NodeType_Parameter;
+  conv_output->nodeType = lite::NodeType_Parameter;
   conv_output->format = schema::Format_NHWC;
   conv_output->dataType = TypeId::kNumberTypeFloat32;
   conv_output->dims = {1, 5, 5, 8};
@@ -214,7 +214,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // tflite bn : scale
   auto input2 = std::make_unique<schema::TensorT>();
-  input2->nodeType = schema::NodeType::NodeType_ValueNode;
+  input2->nodeType = lite::NodeType_ValueNode;
   input2->format = schema::Format_NHWC;
   input2->dataType = TypeId::kNumberTypeFloat32;
   input2->dims = {1, 5, 5, 8};
@@ -223,7 +223,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // tflite bn : bias
   auto input3 = std::make_unique<schema::TensorT>();
-  input3->nodeType = schema::NodeType::NodeType_ValueNode;
+  input3->nodeType = lite::NodeType_ValueNode;
   input3->format = schema::Format_NHWC;
   input3->dataType = TypeId::kNumberTypeFloat32;
   input3->dims = {1, 5, 5, 8};
@@ -232,7 +232,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // tflite bn : mean
   auto input4 = std::make_unique<schema::TensorT>();
-  input4->nodeType = schema::NodeType::NodeType_ValueNode;
+  input4->nodeType = lite::NodeType_ValueNode;
   input4->format = schema::Format_NHWC;
   input4->dataType = TypeId::kNumberTypeFloat32;
   input4->dims = {1, 5, 5, 8};
@@ -241,7 +241,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // tflite bn : var
   auto input5 = std::make_unique<schema::TensorT>();
-  input5->nodeType = schema::NodeType::NodeType_ValueNode;
+  input5->nodeType = lite::NodeType_ValueNode;
   input5->format = schema::Format_NHWC;
   input5->dataType = TypeId::kNumberTypeFloat32;
   input5->dims = {1, 5, 5, 8};
@@ -250,7 +250,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 
   // final output
   auto output = std::make_unique<schema::TensorT>();
-  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->nodeType = lite::NodeType_Parameter;
   output->format = schema::Format_NHWC;
   output->dataType = TypeId::kNumberTypeFloat32;
   output->dims = {1, 5, 5, 8};

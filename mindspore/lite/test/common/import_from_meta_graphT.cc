@@ -42,7 +42,7 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
   for (size_t i = 0; i < meta_graph_->allTensors.size(); i++) {
     auto &tensor = meta_graph_->allTensors.at(i);
     MS_ASSERT(tensor != nullptr);
-    if (tensor->nodeType != schema::NodeType::NodeType_ValueNode) {
+    if (tensor->nodeType != NodeType_ValueNode) {
       continue;
     }
     auto parameter = func_graph_->add_parameter();

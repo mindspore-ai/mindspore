@@ -100,7 +100,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, schema::ActivationType
 
   // input 0: data
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 5, 5, 3};
@@ -109,7 +109,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, schema::ActivationType
 
   // input 1: weight
   auto input1 = std::make_unique<schema::TensorT>();
-  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->nodeType = lite::NodeType_ValueNode;
   input1->format = schema::Format_KHWC;
   input1->dataType = TypeId::kNumberTypeFloat32;
   input1->dims = {8, 3, 3, 3};
@@ -118,7 +118,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, schema::ActivationType
 
   // conv output
   auto conv_output = std::make_unique<schema::TensorT>();
-  conv_output->nodeType = schema::NodeType::NodeType_Parameter;
+  conv_output->nodeType = lite::NodeType_Parameter;
   conv_output->format = schema::Format_NHWC;
   conv_output->dataType = TypeId::kNumberTypeFloat32;
   conv_output->dims = {1, 5, 5, 8};
@@ -126,7 +126,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, schema::ActivationType
 
   // final output
   auto output = std::make_unique<schema::TensorT>();
-  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->nodeType = lite::NodeType_Parameter;
   output->format = schema::Format_NHWC;
   output->dataType = TypeId::kNumberTypeFloat32;
   output->dims = {1, 5, 5, 8};

@@ -221,7 +221,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   //  -------   tensor    ---------
   //  tensor: 0   before-add input0 <main graph input>
   auto tensor_0 = std::make_unique<schema::TensorT>();
-  tensor_0->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_0->nodeType = lite::NodeType_ValueNode;
   tensor_0->format = schema::Format_NHWC;
   tensor_0->dataType = TypeId::kNumberTypeFloat32;
   tensor_0->dims = {1};
@@ -231,7 +231,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 1    before-add input1 <const>
   auto tensor_1 = std::make_unique<schema::TensorT>();
-  tensor_1->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_1->nodeType = lite::NodeType_ValueNode;
   tensor_1->format = schema::Format_NHWC;
   tensor_1->dataType = TypeId::kNumberTypeFloat32;
   tensor_1->dims = {1};
@@ -244,7 +244,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 2  before-add output/partial input
   auto tensor_2 = std::make_unique<schema::TensorT>();
-  tensor_2->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_2->nodeType = lite::NodeType_Parameter;
   tensor_2->format = schema::Format_NHWC;
   tensor_2->dataType = TypeId::kNumberTypeFloat32;
   tensor_2->dims = {1};
@@ -254,7 +254,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 3    before-add input1 <const>
   auto tensor_3 = std::make_unique<schema::TensorT>();
-  tensor_3->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_3->nodeType = lite::NodeType_ValueNode;
   tensor_3->format = schema::Format_NHWC;
   tensor_3->dataType = TypeId::kNumberTypeFloat32;
   tensor_3->dims = {1};
@@ -266,7 +266,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor 3";
 
   auto tensor_4 = std::make_unique<schema::TensorT>();
-  tensor_4->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_4->nodeType = lite::NodeType_Parameter;
   tensor_4->format = schema::Format_NHWC;
   tensor_4->dataType = TypeId::kNumberTypeFloat32;
   tensor_4->dims = {1};
@@ -276,7 +276,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor :5   partial output <bool>
   auto tensor_5 = std::make_unique<schema::TensorT>();
-  tensor_5->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_5->nodeType = lite::NodeType_Parameter;
   tensor_5->format = schema::Format_NHWC;
   tensor_5->dataType = TypeId::kNumberTypeBool;
   tensor_5->dims = {1};
@@ -286,7 +286,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 6 switch true output
   auto tensor_6 = std::make_unique<schema::TensorT>();
-  tensor_6->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_6->nodeType = lite::NodeType_Parameter;
   tensor_6->format = schema::Format_NHWC;
   tensor_6->dataType = TypeId::kNumberTypeFloat32;
   tensor_6->dims = {1};
@@ -296,7 +296,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 5  switch False output
   auto tensor_7 = std::make_unique<schema::TensorT>();
-  tensor_7->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_7->nodeType = lite::NodeType_Parameter;
   tensor_7->format = schema::Format_NHWC;
   tensor_7->dataType = TypeId::kNumberTypeFloat32;
   tensor_7->dims = {1};
@@ -306,7 +306,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 6  body-add input ,other input is switch true output
   auto tensor_8 = std::make_unique<schema::TensorT>();
-  tensor_8->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_8->nodeType = lite::NodeType_ValueNode;
   tensor_8->format = schema::Format_NHWC;
   tensor_8->dataType = TypeId::kNumberTypeFloat32;
   tensor_8->dims = {1};
@@ -318,7 +318,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor_8";
 
   auto tensor_9 = std::make_unique<schema::TensorT>();
-  tensor_9->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_9->nodeType = lite::NodeType_Parameter;
   tensor_9->format = schema::Format_NHWC;
   tensor_9->dataType = TypeId::kNumberTypeFloat32;
   tensor_9->dims = {1};
@@ -328,7 +328,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 7  after-add input ,other input is switch false output
   auto tensor_10 = std::make_unique<schema::TensorT>();
-  tensor_10->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_10->nodeType = lite::NodeType_ValueNode;
   tensor_10->format = schema::Format_NHWC;
   tensor_10->dataType = TypeId::kNumberTypeFloat32;
   tensor_10->dims = {1};
@@ -341,7 +341,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 8   main graph output
   auto tensor_11 = std::make_unique<schema::TensorT>();
-  tensor_11->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_11->nodeType = lite::NodeType_Parameter;
   tensor_11->format = schema::Format_NHWC;
   tensor_11->dataType = TypeId::kNumberTypeFloat32;
   tensor_11->dims = {1};
@@ -351,7 +351,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
 
   //  tensor: 9  cond-Less  input, other input is tensor 2
   auto tensor_12 = std::make_unique<schema::TensorT>();
-  tensor_12->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_12->nodeType = lite::NodeType_ValueNode;
   tensor_12->format = schema::Format_NHWC;
   tensor_12->dataType = TypeId::kNumberTypeFloat32;
   tensor_12->dims = {1};
@@ -363,7 +363,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor_12";
 
   auto tensor_13 = std::make_unique<schema::TensorT>();
-  tensor_13->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_13->nodeType = lite::NodeType_ValueNode;
   tensor_13->format = schema::Format_NHWC;
   tensor_13->dataType = TypeId::kNumberTypeFloat32;
   tensor_13->dims = {1};
@@ -375,7 +375,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor_13";
 
   auto tensor_14 = std::make_unique<schema::TensorT>();
-  tensor_14->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_14->nodeType = lite::NodeType_Parameter;
   tensor_14->format = schema::Format_NHWC;
   tensor_14->dataType = TypeId::kNumberTypeFloat32;
   tensor_14->dims = {1};
@@ -384,7 +384,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor 14";
 
   auto tensor_15 = std::make_unique<schema::TensorT>();
-  tensor_15->nodeType = schema::NodeType::NodeType_ValueNode;
+  tensor_15->nodeType = lite::NodeType_ValueNode;
   tensor_15->format = schema::Format_NHWC;
   tensor_15->dataType = TypeId::kNumberTypeFloat32;
   tensor_15->dims = {1};
@@ -396,7 +396,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor_15";
 
   auto tensor_16 = std::make_unique<schema::TensorT>();
-  tensor_16->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_16->nodeType = lite::NodeType_Parameter;
   tensor_16->format = schema::Format_NHWC;
   tensor_16->dataType = TypeId::kNumberTypeFloat32;
   tensor_16->dims = {1};
@@ -405,7 +405,7 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   MS_LOG(DEBUG) << "tensor_16";
 
   auto tensor_17 = std::make_unique<schema::TensorT>();
-  tensor_17->nodeType = schema::NodeType::NodeType_Parameter;
+  tensor_17->nodeType = lite::NodeType_Parameter;
   tensor_17->format = schema::Format_NHWC;
   tensor_17->dataType = TypeId::kNumberTypeFloat32;
   tensor_17->dims = {1};

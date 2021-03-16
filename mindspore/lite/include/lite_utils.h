@@ -38,7 +38,6 @@ using TensorPtrVector = std::vector<mindspore::schema::Tensor *>;
 using DeviceContextVector = std::vector<DeviceContext>;
 using Uint32Vector = std::vector<uint32_t>;
 using String = std::string;
-using NodeType = int; /**< 0 : NodeType_ValueNode, 1 : NodeType_Parameter, 2 : NodeType_CNode. */
 using AllocatorPtr = std::shared_ptr<Allocator>;
 
 /// \brief Set data of MSTensor from string vector.

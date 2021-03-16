@@ -56,7 +56,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType op_type, void *op_node) {
 
   // input 0: data1
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
@@ -72,7 +72,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType op_type, void *op_node) {
 
   // input 1: data2
   auto input1 = std::make_unique<schema::TensorT>();
-  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->nodeType = lite::NodeType_ValueNode;
   input1->format = schema::Format_NHWC;
   input1->dataType = TypeId::kNumberTypeFloat32;
   input1->dims = {1, 2, 2, 3};
@@ -88,7 +88,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType op_type, void *op_node) {
 
   // final add output
   auto add_output = std::make_unique<schema::TensorT>();
-  add_output->nodeType = schema::NodeType::NodeType_Parameter;
+  add_output->nodeType = lite::NodeType_Parameter;
   add_output->format = schema::Format_NHWC;
   add_output->dataType = TypeId::kNumberTypeFloat32;
   add_output->dims = {1, 2, 2, 3};
@@ -115,7 +115,7 @@ MetaGraphTptr BuildGraphForOneInput(schema::PrimitiveType op_type, void *op_node
 
   // input 0: data1
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
@@ -131,7 +131,7 @@ MetaGraphTptr BuildGraphForOneInput(schema::PrimitiveType op_type, void *op_node
 
   // final add output
   auto add_output = std::make_unique<schema::TensorT>();
-  add_output->nodeType = schema::NodeType::NodeType_Parameter;
+  add_output->nodeType = lite::NodeType_Parameter;
   add_output->format = schema::Format_NHWC;
   add_output->dataType = TypeId::kNumberTypeFloat32;
   add_output->dims = {1, 2, 2, 3};
@@ -168,7 +168,7 @@ MetaGraphTptr BuildMixGraph() {
 
   // input 0: data1
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
@@ -184,7 +184,7 @@ MetaGraphTptr BuildMixGraph() {
 
   // input 1: data2
   auto input1 = std::make_unique<schema::TensorT>();
-  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->nodeType = lite::NodeType_ValueNode;
   input1->format = schema::Format_NHWC;
   input1->dataType = TypeId::kNumberTypeFloat32;
   input1->dims = {1, 2, 2, 3};
@@ -200,7 +200,7 @@ MetaGraphTptr BuildMixGraph() {
 
   // addoutput
   auto add_output = std::make_unique<schema::TensorT>();
-  add_output->nodeType = schema::NodeType::NodeType_Parameter;
+  add_output->nodeType = lite::NodeType_Parameter;
   add_output->format = schema::Format_NHWC;
   add_output->dataType = TypeId::kNumberTypeFloat32;
   add_output->dims = {1, 2, 2, 3};
@@ -213,7 +213,7 @@ MetaGraphTptr BuildMixGraph() {
 
   // input 2: data3
   auto input2 = std::make_unique<schema::TensorT>();
-  input2->nodeType = schema::NodeType::NodeType_ValueNode;
+  input2->nodeType = lite::NodeType_ValueNode;
   input2->format = schema::Format_NHWC;
   input2->dataType = TypeId::kNumberTypeFloat32;
   input2->dims = {1, 2, 2, 3};
@@ -229,7 +229,7 @@ MetaGraphTptr BuildMixGraph() {
 
   // final mul output
   auto mul_output = std::make_unique<schema::TensorT>();
-  mul_output->nodeType = schema::NodeType::NodeType_Parameter;
+  mul_output->nodeType = lite::NodeType_Parameter;
   mul_output->format = schema::Format_NHWC;
   mul_output->dataType = TypeId::kNumberTypeFloat32;
   mul_output->dims = {1, 2, 2, 3};
@@ -278,7 +278,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // input 0: data1
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 2, 2, 3};
@@ -294,7 +294,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // split output1
   auto split_output1 = std::make_unique<schema::TensorT>();
-  split_output1->nodeType = schema::NodeType::NodeType_Parameter;
+  split_output1->nodeType = lite::NodeType_Parameter;
   split_output1->format = schema::Format_NHWC;
   split_output1->dataType = TypeId::kNumberTypeFloat32;
   split_output1->dims = {1, 1, 2, 3};
@@ -307,7 +307,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // split output2
   auto split_output2 = std::make_unique<schema::TensorT>();
-  split_output2->nodeType = schema::NodeType::NodeType_Parameter;
+  split_output2->nodeType = lite::NodeType_Parameter;
   split_output2->format = schema::Format_NHWC;
   split_output2->dataType = TypeId::kNumberTypeFloat32;
   split_output2->dims = {1, 1, 2, 3};
@@ -320,7 +320,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // input 1: data2
   auto input1 = std::make_unique<schema::TensorT>();
-  input1->nodeType = schema::NodeType::NodeType_ValueNode;
+  input1->nodeType = lite::NodeType_ValueNode;
   input1->format = schema::Format_NHWC;
   input1->dataType = TypeId::kNumberTypeFloat32;
   input1->dims = {1, 1, 2, 3};
@@ -336,7 +336,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // input 2: data3
   auto input2 = std::make_unique<schema::TensorT>();
-  input2->nodeType = schema::NodeType::NodeType_ValueNode;
+  input2->nodeType = lite::NodeType_ValueNode;
   input2->format = schema::Format_NHWC;
   input2->dataType = TypeId::kNumberTypeFloat32;
   input2->dims = {1, 1, 2, 3};
@@ -352,7 +352,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // final mul output1
   auto mul_output = std::make_unique<schema::TensorT>();
-  mul_output->nodeType = schema::NodeType::NodeType_Parameter;
+  mul_output->nodeType = lite::NodeType_Parameter;
   mul_output->format = schema::Format_NHWC;
   mul_output->dataType = TypeId::kNumberTypeFloat32;
   mul_output->dims = {1, 1, 2, 3};
@@ -360,7 +360,7 @@ MetaGraphTptr BuildSplitGraph() {
 
   // final mul output2
   auto mul_output2 = std::make_unique<schema::TensorT>();
-  mul_output2->nodeType = schema::NodeType::NodeType_Parameter;
+  mul_output2->nodeType = lite::NodeType_Parameter;
   mul_output2->format = schema::Format_NHWC;
   mul_output2->dataType = TypeId::kNumberTypeFloat32;
   mul_output2->dims = {1, 1, 2, 3};

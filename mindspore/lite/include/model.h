@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
 #include <vector>
 #include "include/lite_utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore::lite {
 struct MS_API Model {
