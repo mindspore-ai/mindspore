@@ -157,6 +157,16 @@ Status ProfilingManager::SaveProfilingData() {
   MS_LOG(INFO) << "Save profiling data end.";
   return Status::OK();
 }
+Status ProfilingManager::Analyze() {
+  if (!IsProfilingEnable()) {
+    return Status::OK();
+  }
+  MS_LOG(INFO) << "Start to analyze profiling data.";
+  for (auto node : sampling_nodes_) {
+    RETURN_IF_NOT_OK(node.second->Analyze());
+  }
+  return Status::OK();
+}
 
 Status ProfilingManager::ChangeFileMode() {
   if (!IsProfilingEnable()) {

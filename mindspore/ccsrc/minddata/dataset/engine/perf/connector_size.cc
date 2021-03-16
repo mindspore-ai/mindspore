@@ -109,5 +109,7 @@ Status ConnectorSize::Init(const std::string &dir_path, const std::string &devic
   file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).toString();
   return Status::OK();
 }
+
+Status ConnectorSize::Analyze() { return Status::OK(); }
 }  // namespace dataset
 }  // namespace mindspore

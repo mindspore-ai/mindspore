@@ -71,6 +71,7 @@ class BaseCpu {
   // Collect CPU information
   virtual Status Collect(ExecutionTree *tree) = 0;
   virtual Status SaveToFile(const std::string &file_path) = 0;
+  virtual Status Analyze(std::string *name, double *utilization, std::string *extra_message) = 0;
 
  protected:
   std::vector<CpuUtil> cpu_util_;
@@ -90,6 +91,7 @@ class DeviceCpu : public BaseCpu {
   ~DeviceCpu() = default;
   Status Collect(ExecutionTree *tree) override;
   Status SaveToFile(const std::string &file_path) override;
+  Status Analyze(std::string *name, double *utilization, std::string *extra_message) override;
 
  private:
   // Get CPU information, include use/sys/idle/io utilization
@@ -115,6 +117,11 @@ class OperatorCpu : public BaseCpu {
   ~OperatorCpu() = default;
   Status Collect(ExecutionTree *tree) override;
   Status SaveToFile(const std::string &file_path) override;
+  // Analyze will output the name of the metric, the avg utiliization of highest
+  // object within the class and any extra message that would be useful for the user.
+  // The Higher level CPUSampling class will combine information from different classes
+  // to decide if warning should be output.
+  Status Analyze(std::string *name, double *utilization, std::string *extra_message) override;
 
  private:
   // Get cpu information, include use/sys/idle/io utilization
@@ -131,6 +138,8 @@ class OperatorCpu : public BaseCpu {
 
   // Store the id and its corresponding threads.
   std::unordered_map<int32_t, std::vector<pid_t>> op_thread;
+  std::unordered_map<int32_t, std::string> op_name;
+  std::unordered_map<int32_t, int32_t> op_parallel_workers;
   std::unordered_map<int32_t, std::unordered_map<int64_t, CpuOpStat>> pre_op_stat_;
   uint64_t pre_total_stat_;
   int32_t id_count = 0;
@@ -143,6 +152,7 @@ class ProcessCpu : public BaseCpu {
   ~ProcessCpu() = default;
   Status Collect(ExecutionTree *tree) override;
   Status SaveToFile(const std::string &file_path) override;
+  Status Analyze(std::string *name, double *utilization, std::string *extra_message) override;
 
  private:
   // Get CPU information, include use/sys/idle/io utilization
@@ -182,6 +192,9 @@ class CpuSampling : public Sampling {
 
   // Change file mode after save CPU data
   Status ChangeFileMode() override;
+
+  // Analyze sampling data and print message to log
+  Status Analyze() override;
 
  private:
   Status CollectTimeStamp();

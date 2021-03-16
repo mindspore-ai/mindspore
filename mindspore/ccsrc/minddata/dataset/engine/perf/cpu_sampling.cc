@@ -135,6 +135,27 @@ Status DeviceCpu::Collect(ExecutionTree *tree) {
   first_collect_ = false;
   return Status::OK();
 }
+Status DeviceCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
+  *name = std::string("device_info");
+  int total_samples = cpu_util_.size();
+  int sum = 0;
+  // Only analyze the middle half of the samples
+  // Starting and ending may be impacted by startup or ending pipeline activities
+  int start_analyze = total_samples / 4;
+  int end_analyze = total_samples - start_analyze;
+
+  for (int i = start_analyze; i < end_analyze; i++) {
+    sum += cpu_util_[i].user_utilization_;
+    sum += cpu_util_[i].sys_utilization_;
+  }
+
+  // Note device utilization is already in range of 0-1, so don't
+  // need to divide by number of CPUS
+  if ((end_analyze - start_analyze) > 0) {
+    *utilization = sum / (end_analyze - start_analyze);
+  }
+  return Status::OK();
+}
 
 Status DeviceCpu::SaveToFile(const std::string &file_path) {
   Path path = Path(file_path);
@@ -236,6 +257,8 @@ Status OperatorCpu::Collect(ExecutionTree *tree) {
   if (first_collect_) {
     for (auto iter = tree->begin(); iter != tree->end(); ++iter) {
       id_count++;
+      op_name[iter->id()] = iter->NameWithID();
+      op_parallel_workers[iter->id()] = iter->num_workers();
     }
 #if defined(USING_LINUX)
     cpu_processor_num = get_nprocs_conf();
@@ -324,6 +347,37 @@ Status OperatorCpu::Collect(ExecutionTree *tree) {
   pre_total_stat_ = total_stat_;
 
   first_collect_ = false;
+  return Status::OK();
+}
+
+Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
+  int total_samples = cpu_op_util_.size();
+
+  // Only analyze the middle half of the samples
+  // Starting and ending may be impacted by startup or ending pipeline activities
+  int start_analyze = total_samples / 4;
+  int end_analyze = total_samples - start_analyze;
+  double op_util;
+  *utilization = 0;
+
+  // start loop from 0 was as don't want to analyze op -1
+  for (auto op_id = 0; op_id < id_count; op_id++) {
+    int sum = 0;
+    int index = op_id + 1;
+    for (int i = start_analyze; i < end_analyze; i++) {
+      sum += cpu_op_util_[i][index].user_utilization_;
+      sum += cpu_op_util_[i][index].sys_utilization_;
+    }
+    if ((end_analyze - start_analyze) > 0) {
+      op_util = 1.0 * sum * cpu_processor_num / (op_parallel_workers[op_id] * (end_analyze - start_analyze));
+    }
+    if (op_util > *utilization) {
+      *utilization = op_util;
+      *name = op_name[op_id];
+    }
+    extra_message->append(op_name[op_id] + " utiliization per thread: " + std::to_string(op_util) + "% (" +
+                          std::to_string(op_parallel_workers[op_id]) + " parallel_workers);  ");
+  }
   return Status::OK();
 }
 
@@ -453,6 +507,26 @@ Status ProcessCpu::Collect(ExecutionTree *tree) {
   return Status::OK();
 }
 
+Status ProcessCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
+  *name = std::string("process_info");
+  int total_samples = process_util_.size();
+  int sum = 0;
+  // Only analyze the middle half of the samples
+  // Starting and ending may be impacted by startup or ending pipeline activities
+  int start_analyze = total_samples / 4;
+  int end_analyze = total_samples - start_analyze;
+
+  for (int i = start_analyze; i < end_analyze; i++) {
+    sum += process_util_[i].user_utilization_;
+    sum += process_util_[i].sys_utilization_;
+  }
+
+  if ((end_analyze - start_analyze) > 0) {
+    *utilization = sum / (end_analyze - start_analyze);
+  }
+  return Status::OK();
+}
+
 Status ProcessCpu::SaveToFile(const std::string &file_path) {
   Path path = Path(file_path);
   json output;
@@ -526,6 +600,37 @@ Status CpuSampling::SaveSamplingItervalToFile() {
   std::ofstream os(file_path_, std::ios::trunc);
   os << output;
 
+  return Status::OK();
+}
+
+// Analyze profiling data and output warning messages
+Status CpuSampling::Analyze() {
+  std::string name;
+  double utilization = 0;
+
+  // Keep track of specific information returned by differentn CPU sampling types
+  double total_utilization = 0;
+  double max_op_utilization = 0;
+  std::string max_op_name;
+  std::string detailed_op_cpu_message;
+
+  // Save cpu information to json file
+  for (auto cpu : cpu_) {
+    std::string extra_message;
+    RETURN_IF_NOT_OK(cpu->Analyze(&name, &utilization, &extra_message));
+    if (name == "device_info") {
+      total_utilization = utilization;
+    } else if (name != "process_info") {
+      max_op_utilization = utilization;
+      max_op_name = name;
+      detailed_op_cpu_message = extra_message;
+    }
+  }
+  if ((total_utilization < 90) && (max_op_utilization > 80)) {
+    MS_LOG(WARNING) << "Operator " << max_op_name << " is using " << max_op_utilization << "% CPU per thread.  "
+                    << "This operator may benefit from increasing num_parallel_workers."
+                    << "Full Operator CPU utiliization for all operators: " << detailed_op_cpu_message << std::endl;
+  }
   return Status::OK();
 }
 

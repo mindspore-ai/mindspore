@@ -31,7 +31,7 @@ class ExecutionTree;
 // Connector size sampling samples the output connector size of each op in the pipeline.
 // It support JSON serialization for external usage.
 class ConnectorSize : public Sampling {
-  // Connecto size sampling data is stored as a 2D vector
+  // Connector size sampling data is stored as a 2D vector
   //            op_0            ...         op_m
   // sample_0   size_0_0        ...         size_m_0
   // ...        ...             ...         ...
@@ -58,11 +58,13 @@ class ConnectorSize : public Sampling {
 
   Status Init(const std::string &dir_path, const std::string &device_id) override;
 
-  // Parse op infomation and transform to json format
+  // Parse op information and transform to json format
   json ParseOpInfo(const DatasetOp &node, const std::vector<int32_t> &size);
 
   // Change file mode after save throughput data
   Status ChangeFileMode() { return Status::OK(); }
+
+  Status Analyze() override;
 
  private:
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer
