@@ -759,7 +759,7 @@ class InstanceNormGrad(PrimitiveWithInfer):
     """Gradients of InstanceNorm operation."""
 
     @prim_attr_register
-    def __init__(self, is_training=True, epsilon=0.0, momentum=0.1):
+    def __init__(self, epsilon=0.0, momentum=0.1):
         self.init_prim_io_names(inputs=['dy', 'x', 'gamma', 'save_mean', 'save_variance'],
                                 outputs=['dx', 'bn_gamma', 'bn_beta'])
 

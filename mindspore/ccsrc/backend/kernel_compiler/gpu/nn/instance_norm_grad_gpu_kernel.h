@@ -38,7 +38,6 @@ class InstanceNormGradGpuKernel : public GpuKernel {
         mode_(CUDNN_BATCHNORM_SPATIAL),
         bn_ops_(CUDNN_BATCHNORM_OPS_BN),
         epsilon_(10e-5),
-        is_training_(true),
         is_null_input_(false),
         x_desc_(nullptr),
         y_desc_(nullptr),
@@ -79,7 +78,7 @@ class InstanceNormGradGpuKernel : public GpuKernel {
     float *ws_gamma = GetDeviceAddress<float>(workspace, 0);
     void *workspace_addr = nullptr;
     if (workspace_size_ != 0) {
-      workspace_addr = GetDeviceAddress<T>(workspace, 3);
+      workspace_addr = GetDeviceAddress<T>(workspace, 1);
     }
 
     size_t N = input_shape_[0];
@@ -93,18 +92,14 @@ class InstanceNormGradGpuKernel : public GpuKernel {
     const float alpha_param_diff = 1;
     const float beta_param_diff = 0;
     float *reserve_addr = nullptr;
-    if (is_training_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnBatchNormalizationBackwardEx(
-          handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff_, &alpha_param_diff, &beta_param_diff, x_desc_, x,
-          y_desc_, y, dy_desc_, dy, dz_desc_, dz, dx_desc_, dx, scale_bias_diff_desc_, ws_gamma, beta, dgamma, dbeta,
-          epsilon_, save_mean, save_variance, activation_desc_, workspace_addr, workspace_size_, reserve_addr, 0),
-        "Kernel launch failed");
-      ComputeMean(N, C, dgamma, dbeta, reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      MS_LOG(EXCEPTION) << "The backward of InstanceNorm operator in evaluation mode is not implemented yet.";
-    }
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudnnBatchNormalizationBackwardEx(
+        handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff_, &alpha_param_diff, &beta_param_diff, x_desc_, x,
+        y_desc_, y, dy_desc_, dy, dz_desc_, dz, dx_desc_, dx, scale_bias_diff_desc_, ws_gamma, beta, dgamma, dbeta,
+        epsilon_, save_mean, save_variance, activation_desc_, workspace_addr, workspace_size_, reserve_addr, 0),
+      "Kernel launch failed");
+    ComputeMean(N, C, dgamma, dbeta, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -115,8 +110,7 @@ class InstanceNormGradGpuKernel : public GpuKernel {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
 
     InitResource();
-    is_training_ = GetAttr<bool>(kernel_node, "is_training");
-    mode_ = is_training_ ? CUDNN_BATCHNORM_SPATIAL_PERSISTENT : CUDNN_BATCHNORM_SPATIAL;
+    mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
 
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
@@ -214,7 +208,6 @@ class InstanceNormGradGpuKernel : public GpuKernel {
   cudnnBatchNormMode_t mode_;
   cudnnBatchNormOps_t bn_ops_;
   double epsilon_;
-  bool is_training_;
   bool is_null_input_;
 
   cudnnTensorDescriptor_t x_desc_;
