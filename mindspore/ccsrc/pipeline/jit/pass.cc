@@ -168,6 +168,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     irpass.inline_,
     irpass.item_tuple_or_list_eliminate_,
     irpass.depend_value_elim_,
+    irpass.reshape_eliminate_,
   });
 
   OptPassGroupMap map({{"ad_final_opt_", bg_final_opt_}});
