@@ -114,72 +114,72 @@ class GradOperation(GradOperation_):
     To generate a gradient function that returns gradients with respect to the first input
     (see `GradNetWrtX` in Examples).
 
-        1. Construct a `GradOperation` higher-order function with default arguments:
-           `grad_op = GradOperation()`.
+    1. Construct a `GradOperation` higher-order function with default arguments:
+       `grad_op = GradOperation()`.
 
-        2. Call it with input function as argument to get the gradient function: `gradient_function = grad_op(net)`.
+    2. Call it with input function as argument to get the gradient function: `gradient_function = grad_op(net)`.
 
-        3. Call the gradient function with input function's inputs to get the gradients with respect to the first input:
-           `grad_op(net)(x, y)`.
+    3. Call the gradient function with input function's inputs to get the gradients with respect to the first input:
+       `grad_op(net)(x, y)`.
 
     To generate a gradient function that returns gradients with respect to all inputs (see `GradNetWrtXY` in Examples).
 
-        1. Construct a `GradOperation` higher-order function with `get_all=True` which
-           indicates getting gradients with respect to all inputs, they are `x` and `y` in example function `Net()`:
-           `grad_op = GradOperation(get_all=True)`.
+    1. Construct a `GradOperation` higher-order function with `get_all=True` which
+       indicates getting gradients with respect to all inputs, they are `x` and `y` in example function `Net()`:
+       `grad_op = GradOperation(get_all=True)`.
 
-        2. Call it with input function as argument to get the gradient function: `gradient_function = grad_op(net)`.
+    2. Call it with input function as argument to get the gradient function: `gradient_function = grad_op(net)`.
 
-        3. Call the gradient function with input function's inputs to get the gradients with respect to all inputs:
-           `gradient_function(x, y)`.
+    3. Call the gradient function with input function's inputs to get the gradients with respect to all inputs:
+       `gradient_function(x, y)`.
 
     To generate a gradient function that returns gradients with respect to given parameters
     (see `GradNetWithWrtParams` in Examples).
 
-        1. Construct a `GradOperation` higher-order function with `get_by_list=True`:
-           `grad_op = GradOperation(get_by_list=True)`.
+    1. Construct a `GradOperation` higher-order function with `get_by_list=True`:
+       `grad_op = GradOperation(get_by_list=True)`.
 
-        2. Construct a `ParameterTuple` that will be passed to the input function when constructing
-           `GradOperation` higher-order function, it will be used as a parameter filter that determine
-           which gradient to return: `params = ParameterTuple(net.trainable_params())`.
+    2. Construct a `ParameterTuple` that will be passed to the input function when constructing
+       `GradOperation` higher-order function, it will be used as a parameter filter that determine
+       which gradient to return: `params = ParameterTuple(net.trainable_params())`.
 
-        3. Call it with input function and `params` as arguments to get the gradient function:
-           `gradient_function = grad_op(net, params)`.
+    3. Call it with input function and `params` as arguments to get the gradient function:
+       `gradient_function = grad_op(net, params)`.
 
-        4. Call the gradient function with input function's inputs to get the gradients with
-        respect to given parameters: `gradient_function(x, y)`.
+    4. Call the gradient function with input function's inputs to get the gradients with
+       respect to given parameters: `gradient_function(x, y)`.
 
     To generate a gradient function that returns gradients with respect to all inputs and given parameters
     in the format of ((dx, dy), (dz))(see `GradNetWrtInputsAndParams` in Examples).
 
-        1. Construct a `GradOperation` higher-order function with `get_all=True` and `get_by_list=True`:
-           `grad_op = GradOperation(get_all=True, get_by_list=True)`.
+    1. Construct a `GradOperation` higher-order function with `get_all=True` and `get_by_list=True`:
+       `grad_op = GradOperation(get_all=True, get_by_list=True)`.
 
-        2. Construct a `ParameterTuple` that will be passed along input function when constructing
-           `GradOperation` higher-order function: `params = ParameterTuple(net.trainable_params())`.
+    2. Construct a `ParameterTuple` that will be passed along input function when constructing
+       `GradOperation` higher-order function: `params = ParameterTuple(net.trainable_params())`.
 
-        3. Call it with input function and `params` as arguments to get the gradient function:
-           `gradient_function = grad_op(net, params)`.
+    3. Call it with input function and `params` as arguments to get the gradient function:
+       `gradient_function = grad_op(net, params)`.
 
-        4. Call the gradient function with input function's inputs
-           to get the gradients with respect to all inputs and given parameters: `gradient_function(x, y)`.
+    4. Call the gradient function with input function's inputs
+       to get the gradients with respect to all inputs and given parameters: `gradient_function(x, y)`.
 
     We can configure the sensitivity(gradient with respect to output) by setting `sens_param` as True and
     passing an extra sensitivity input to the gradient function, the sensitivity input should has the
     same shape and type with input function's output(see `GradNetWrtXYWithSensParam` in Examples).
 
-        1. Construct a `GradOperation` higher-order function with `get_all=True` and `sens_param=True`:
-           `grad_op = GradOperation(get_all=True, sens_param=True)`.
+    1. Construct a `GradOperation` higher-order function with `get_all=True` and `sens_param=True`:
+       `grad_op = GradOperation(get_all=True, sens_param=True)`.
 
-        2. Define `grad_wrt_output` as `sens_param` which works as the gradient with respect to output:
-           `grad_wrt_output = Tensor(np.ones([2, 2]).astype(np.float32))`.
+    2. Define `grad_wrt_output` as `sens_param` which works as the gradient with respect to output:
+       `grad_wrt_output = Tensor(np.ones([2, 2]).astype(np.float32))`.
 
-        3. Call it with input function as argument to get the gradient function:
-           `gradient_function = grad_op(net)`.
+    3. Call it with input function as argument to get the gradient function:
+       `gradient_function = grad_op(net)`.
 
-        4. Call the gradient function with input function's inputs and `sens_param` to
-           get the gradients with respect to all inputs:
-           `gradient_function(x, y, grad_wrt_output)`.
+    4. Call the gradient function with input function's inputs and `sens_param` to
+       get the gradients with respect to all inputs:
+       `gradient_function(x, y, grad_wrt_output)`.
 
     Args:
         get_all (bool): If True, get all the gradients with respect to inputs. Default: False.

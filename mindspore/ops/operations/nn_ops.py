@@ -510,7 +510,7 @@ class ReLUV2(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `input_x`, `output` or `mask` is not a Tensor.
-        TypeError: If dtype of `output` is not same as `input_x.
+        TypeError: If dtype of `output` is not same as `input_x`.
         TypeError: If dtype of `mask` is not unit8.
 
     Supported Platforms:
@@ -845,8 +845,8 @@ class FusedBatchNorm(Primitive):
     Raises:
         TypeError: If `mode` is not an int.
         TypeError: If `epsilon` or `momentum` is not a float.
-        TypeError: If `output_x`, `updated_scale`, `updated_bias`, `updated_moving_mean` or
-        `updated_moving_variance` is a Tensor.
+        TypeError: If `output_x`, `updated_scale`, `updated_bias`, `updated_moving_mean` or `updated_moving_variance` is
+                   a Tensor.
 
     Supported Platforms:
         ``CPU``
@@ -2880,7 +2880,7 @@ class SGD(PrimitiveWithCheck):
         TypeError: If `nesterov` is not a bool.
         TypeError: If `parameters`, `gradient`, `learning_rate`, `accum`, `momentum` or `stat` is not a Tensor.
         TypeError: If dtype of `parameters`, `gradient`, `learning_rate`, `accum`, `momentum` or `stat` is neither
-        float16 nor float32.
+                   float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4399,7 +4399,7 @@ class Adam(PrimitiveWithInfer):
     Raises:
         TypeError: If neither `use_locking` nor `use_nesterov` is a bool.
         TypeError: If `var`, `m` or `v` is not a Tensor.
-        TypeError: If `beta1_power`, `beta2_power1, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a Tensor.
+        TypeError: If `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4509,8 +4509,8 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
 
     Raises:
         TypeError: If neither `use_locking` nor `use_nesterov` is a bool.
-        TypeError: If `m`,  `v`, `beta1_power`, `beta2_power1, `lr`,
-        `beta1`, `beta2`, `epsilon` or `gradient` is a Tensor.
+        TypeError: If `m`,  `v`, `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a
+                   Tensor.
 
     Supported Platforms:
         ``CPU``
@@ -4630,7 +4630,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
     Raises:
         TypeError: If neither `use_locking` nor `use_neserov` is a bool.
         TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon`,
-        `gradient` or `indices` is not float32.
+                   `gradient` or `indices` is not float32.
 
     Supported Platforms:
         ``CPU``
@@ -4774,7 +4774,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
     Raises:
         TypeError: If neither `use_locking` nor `use_nestrov` is a bool.
         TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon` or
-        gradient is not float32.
+                   gradient is not float32.
         TypeError: If dtype of `indices` is not int32.
 
     Supported Platforms:
@@ -5302,8 +5302,8 @@ class ApplyAdaMax(PrimitiveWithInfer):
         - **v** (Tensor) - The same shape and data type as `v`.
 
     Raises:
-        TypeError: If dtype of `var`, `m`, `v`, `beta_power`, `lr`, `beta1`,
-        `beta2`, `epsilon` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `m`, `v`, `beta_power`, `lr`, `beta1`, `beta2`, `epsilon` or `grad` is neither
+                   float16 nor float32.
         TypeError: If `beta_power`, `lr`, `beta1`, `beta2` or `epsilon` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
 
@@ -5442,8 +5442,8 @@ class ApplyAdadelta(PrimitiveWithInfer):
         - **accum_update** (Tensor) - The same shape and data type as `accum_update`.
 
     Raises:
-        TypeError: If dtype of `var`, `accum`, `accum_update`,
-        `lr`, `rho`, `epsilon` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `var`, `accum`, `accum_update`, `lr`, `rho`, `epsilon` or `grad` is neither float16 nor
+                   float32.
         TypeError: If `accum_update`, `lr`, `rho` or `epsilon` is neither a Number nor a Tensor.
 
     Supported Platforms:
@@ -6095,8 +6095,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2`, `scalar` or `grad` is neither float16
-        nor float32.
+        TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2`, `scalar` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is neither int32 nor int64.
 
     Supported Platforms:
@@ -6926,7 +6925,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
 
     Raises:
-        TypeError: If `lr`, `l1`, `l2`, `lr_power` or`use_locking` is not a float.
+        TypeError: If `lr`, `l1`, `l2`, `lr_power` or `use_locking` is not a float.
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is not int32.
@@ -7198,8 +7197,8 @@ class CTCLoss(PrimitiveWithInfer):
         - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
 
     Raises:
-        TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs` is
-        not a bool.
+        TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs` is not
+                   a bool.
         TypeError: If `inputs`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
         TypeError: If dtype of `inputs` is not one of the following: float16, float32 or float64.
         TypeError: If dtype of `labels_indices` is not int64.
@@ -7691,8 +7690,8 @@ class DynamicGRUV2(PrimitiveWithInfer):
         TypeError: If `cell_depth` or `num_proj` is not an int.
         TypeError: If `keep_prob` or `cell_clip` is not a float.
         TypeError: If `time_major`, `reset_after` or `is_training` is not a bool.
-        TypeError: If `x`, `weight_input`, `weight_hidden`, `bias_input`, `bias_hidden`, `seq_length` or `ini_h` is
-        not a Tensor.
+        TypeError: If `x`, `weight_input`, `weight_hidden`, `bias_input`, `bias_hidden`, `seq_length` or `ini_h` is not
+                   a Tensor.
         TypeError: If dtype of `x`, `weight_input` or `weight_hidden` is not float16.
         TypeError: If dtype of `init_h` is neither float16 nor float32.
 

@@ -141,7 +141,7 @@ class Add(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1337,7 +1337,7 @@ class Sub(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is a Number or a bool or a Tensor.
+        TypeError: If `input_x` and `input_y` is not a Number or a bool or a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1387,7 +1387,7 @@ class Mul(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
         ValueError: If `input_x` and `input_y` are not the same shape.
 
     Supported Platforms:
@@ -1434,7 +1434,7 @@ class SquaredDifference(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: if neither `input_x` nor `input_y` is a Number or a bool or a Tensor.
+        TypeError: if `input_x` and `input_y` is not a Number or a bool or a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1653,7 +1653,7 @@ class Pow(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
         ValueError: If `input_x` and `input_y` are not the same shape.
 
     Supported Platforms:
@@ -2013,7 +2013,7 @@ class Minimum(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
         ValueError: If `input_x` and `input_y` are not the same shape.
 
     Supported Platforms:
@@ -2060,7 +2060,7 @@ class Maximum(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
         ValueError: If `input_x` and `input_y` are not the same shape.
 
     Supported Platforms:
@@ -2107,7 +2107,7 @@ class RealDiv(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
         ValueError: If `input_x` and `input_y` are not the same shape.
 
     Supported Platforms:
@@ -2346,7 +2346,7 @@ class TruncateDiv(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
         ``Ascend``
@@ -2579,7 +2579,7 @@ class Xdivy(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
         ``Ascend``
@@ -2621,7 +2621,7 @@ class Xlogy(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
         ``Ascend``
@@ -2975,7 +2975,7 @@ class NotEqual(_LogicBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
         TypeError: If neither `input_x` nor `input_y` is a Tensor.
 
     Supported Platforms:
@@ -3109,7 +3109,7 @@ class Less(_LogicBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Raises:
-        TypeError: If neither `input_x` nor `input_y` is one of the following: Tensor, Number, bool.
+        TypeError: If `input_x` and `input_y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

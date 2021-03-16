@@ -4164,13 +4164,13 @@ class SpaceToBatch(PrimitiveWithInfer):
         :math:`block\_size` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
         where
 
-            :math:`n' = n*(block\_size*block\_size)`
+        :math:`n' = n*(block\_size*block\_size)`
 
-            :math:`c' = c`
+        :math:`c' = c`
 
-            :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_size`
+        :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_size`
 
-            :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_size`
+        :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_size`
 
     Raises:
         TypeError: If `block_size` is not an int.
@@ -4247,13 +4247,13 @@ class BatchToSpace(PrimitiveWithInfer):
         Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_size
         and crops. The output shape will be (n', c', h', w'), where
 
-                :math:`n' = n//(block\_size*block\_size)`
+        :math:`n' = n//(block\_size*block\_size)`
 
-                :math:`c' = c`
+        :math:`c' = c`
 
-                :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
+        :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
 
-                :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
+        :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
 
     Raises:
         TypeError: If `block_size` or element of `crops` is not an int.
@@ -4332,18 +4332,19 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
+
     Outputs:
         Tensor, the output tensor with the same data type as input. Assume input shape is :math:`(n, c, h, w)` with
         :math:`block\_shape` and :math:`padddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
         where
 
-            :math:`n' = n*(block\_shape[0]*block\_shape[1])`
+        :math:`n' = n*(block\_shape[0]*block\_shape[1])`
 
-            :math:`c' = c`
+        :math:`c' = c`
 
-            :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_shape[0]`
+        :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_shape[0]`
 
-            :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_shape[1]`
+        :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_shape[1]`
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
@@ -4439,13 +4440,13 @@ class BatchToSpaceND(PrimitiveWithInfer):
         Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_shape
         and crops. The output shape will be (n', c', h', w'), where
 
-                :math:`n' = n//(block\_shape[0]*block\_shape[1])`
+        :math:`n' = n//(block\_shape[0]*block\_shape[1])`
 
-                :math:`c' = c`
+        :math:`c' = c`
 
-                :math:`h' = h*block\_shape[0]-crops[0][0]-crops[0][1]`
+        :math:`h' = h*block\_shape[0]-crops[0][0]-crops[0][1]`
 
-                :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
+        :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
