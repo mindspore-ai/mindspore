@@ -1054,7 +1054,7 @@ def roll(a, shift, axis=None):
         Tensor, with the same shape as a.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -1635,7 +1635,7 @@ def flip(m, axis=None):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Example:
         >>> import mindspore.numpy as np
@@ -1689,7 +1689,7 @@ def flipud(m):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Example:
         >>> import mindspore.numpy as np
@@ -1722,7 +1722,7 @@ def fliplr(m):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Example:
         >>> import mindspore.numpy as np
@@ -1989,7 +1989,7 @@ def rot90(a, k=1, axes=(0, 1)):
             the length of `axes` is not `2`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> import mindspore.numpy as np

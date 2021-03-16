@@ -821,10 +821,10 @@ def test_vander():
     for i in range(3):
         mnp_vander = mnp.vander(to_tensor(arrs[i]))
         onp_vander = onp.vander(arrs[i])
-        match_all_arrays(mnp_vander, onp_vander)
+        match_all_arrays(mnp_vander, onp_vander, error=1e-4)
         mnp_vander = mnp.vander(to_tensor(arrs[i]), N=2, increasing=True)
         onp_vander = onp.vander(arrs[i], N=2, increasing=True)
-        match_all_arrays(mnp_vander, onp_vander)
+        match_all_arrays(mnp_vander, onp_vander, error=1e-4)
 
 
 @pytest.mark.level1
