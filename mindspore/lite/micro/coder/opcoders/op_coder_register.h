@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <string>
 #include "src/lite_kernel.h"
 #include "include/model.h"
 #include "coder/coder_config.h"
@@ -41,6 +42,7 @@ class CoderKey {
   }
 
   bool operator<(CoderKey rhs) const;
+  std::string ToString() const;
 
   ~CoderKey() = default;
 

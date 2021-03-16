@@ -62,7 +62,7 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(conv_param_->input_channel_ == conv_param_->output_channel_,
                 "Only support input channel equals output channel.");
   // generate code .h .c
-  Collect(context, {"nnacl/fp32/conv_depthwise.h"}, {"conv_depthwise.c"});
+  Collect(context, {"nnacl/fp32/conv_depthwise_fp32.h"}, {"conv_depthwise_fp32.c"});
 
   nnacl::NNaclFp32Serializer code;
   // call the op function

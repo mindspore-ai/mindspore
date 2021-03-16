@@ -277,7 +277,7 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
   if (arithmetic_opt_run_ == "ElementOptSub" || arithmetic_run_ == "ElementSub") {
     Collect(context, {"nnacl/fp32/sub_fp32.h"}, {"sub_fp32.c"});
   } else if (arithmetic_opt_run_ == "ElementOptAdd" || arithmetic_run_ == "ElementAdd") {
-    Collect(context, {"nnacl/fp32/add_fp32.h"}, {"add_fp32.c"});
+    Collect(context, {"nnacl/fp32/add_fp32.h"}, {"add_fp32.c", "arithmetic_fp32.c", "arithmetic_base.c"});
   } else if (arithmetic_opt_run_ == "ElementOptMul" || arithmetic_run_ == "ElementMul") {
     Collect(context, {"nnacl/fp32/mul_fp32.h"}, {"mul_fp32.c"});
   } else if (arithmetic_run_ == "ElementAddRelu") {

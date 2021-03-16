@@ -119,9 +119,9 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
       asmFiles = {"MatmulFp32.S",          "MatmulFp32Opt.S",      "PreSum4x16Int8Peroc.S",       "MatVecMulFp32.S",
                   "PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "IndirectGemmInt16to32_8x4.S", "MatmulInt8.S"};
     }
-    std::vector<std::string> h_files = {"nnacl/fp32/conv_common_fp32.h", "nnacl/fp32/matmul.h",
+    std::vector<std::string> h_files = {"nnacl/fp32/conv_common_fp32.h", "nnacl/fp32/matmul_fp32.h",
                                         "nnacl/conv_parameter.h", "nnacl/op_base.h"};
-    std::vector<std::string> c_files = {"common_func.c", "conv_common_fp32.c", "matmul.c"};
+    std::vector<std::string> c_files = {"common_func.c", "conv_common_fp32.c", "matmul_fp32.c", "pack_fp32.c"};
     if (de_quant_flag_) {
       h_files.emplace_back("wrapper/fp32/dequant_int8_to_fp32_wrapper.h");
       c_files.emplace_back("dequant_int8_to_fp32_wrapper.c");
