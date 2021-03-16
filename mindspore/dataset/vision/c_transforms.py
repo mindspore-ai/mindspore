@@ -1126,6 +1126,8 @@ class RandomRotation(ImageTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
+        # pylint false positive
+        # pylint: disable=E1130
         degrees = (-self.degrees, self.degrees) if isinstance(self.degrees, numbers.Number) else self.degrees
         interpolation = DE_C_INTER_MODE[self.resample]
         expand = self.expand
