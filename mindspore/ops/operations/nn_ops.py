@@ -7171,6 +7171,9 @@ class CTCLoss(PrimitiveWithInfer):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 
+    The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
+    Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
+
     Args:
         preprocess_collapse_repeated (bool): If true, repeated labels will be collapsed prior to the CTC calculation.
                                              Default: False.
