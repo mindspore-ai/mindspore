@@ -26,8 +26,8 @@
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 
 #include "minddata/dataset/kernels/c_func_op.h"

@@ -36,8 +36,6 @@
 #include "minddata/dataset/include/json_fwd.hpp"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/text.h"
-#include "minddata/dataset/include/type_id.h"
-#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 
 namespace mindspore {
 namespace dataset {
@@ -53,7 +51,6 @@ class DatasetCache;
 class DatasetNode;
 
 class Iterator;
-class PullBasedIteratorConsumer;
 
 class TensorOperation;
 class SchemaObj;
