@@ -64,7 +64,7 @@ namespace hccl {
 bool InitHccl(uint32_t, std::string_view, std::string_view) { return true; }
 bool FinalizeHccl() { return true; }
 bool GenTask(const AnfNodePtr &, HcclDataType, std::vector<HcclTaskInfo> *) { return true; }
-bool CalcOpRunningParam(const AnfNodePtr &) { return true; }
+int64_t CalcWorkspaceSize(const AnfNodePtr &, HcclDataType) { return 0; }
 void *GetHcclOpsKernelInfoStore() { return nullptr; }
 std::string GetHcclType(const AnfNodePtr &) { return ""; }
 }  // namespace hccl
