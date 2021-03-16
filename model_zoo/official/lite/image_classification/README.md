@@ -83,7 +83,7 @@ app
 │   |
 │   ├── cpp # 模型加载和预测主要逻辑封装类
 |   |   ├── ..
-|   |   ├── mindspore_lite_x.x.x-minddata-arm64-cpu #MindSpore Lite版本
+|   |   ├── mindspore_lite_x.x.x-runtime-arm64-cpu #MindSpore Lite版本
 |   |   ├── MindSporeNetnative.cpp # MindSpore调用相关的JNI方法
 │   |   └── MindSporeNetnative.h # 头文件
 |   |   └── MsNetWork.cpp # MindSpre接口封装
@@ -119,7 +119,7 @@ Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通�
 
 > 若自动下载失败，请手动下载相关库文件，解压并放在对应位置：
 
-  mindspore-lite-1.1.0-inference-android.tar.gz [下载链接](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/lite/release/android/mindspore-lite-1.1.0-inference-android.tar.gz)
+  mindspore-lite-1.1.1-runtime-arm64-cpu.tar.gz [下载链接](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.1/MindSpore/lite/release_0220/android/mindspore-lite-1.1.1-runtime-arm64-cpu.tar.gz)
 
 在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`的编译支持，如下所示：
 
@@ -129,6 +129,7 @@ android{
         externalNativeBuild{
             cmake{
                 arguments "-DANDROID_STL=c++_shared"
+                cppFlags "-std=c++17 -fexceptions -frtti"
             }
         }
 
@@ -144,19 +145,16 @@ android{
 ```text
 # ============== Set MindSpore Dependencies. =============
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/flatbuffers/include)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include/ir/dtype)
-include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include/schema)
 
-add_library(mindspore-lite SHARED IMPORTED )
-add_library(minddata-lite SHARED IMPORTED )
+add_library(mindspore-lite SHARED IMPORTED)
+add_library(minddata-lite SHARED IMPORTED)
 
 set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite.so)
 set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/minddata/lib/libminddata-lite.so)
 # --------------- MindSpore Lite set End. --------------------
 
 # Link target library.
