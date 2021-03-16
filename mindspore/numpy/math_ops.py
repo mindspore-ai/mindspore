@@ -580,12 +580,12 @@ def minimum(x1, x2, dtype=None):
     # comparisons with 2 scalars
     if x1.ndim == 0 and x2.ndim == 0:
         x1 = expand_dims(x1, 0)
-        return _apply_tensor_op(F.minimum, x1, x2, dtype=dtype).squeeze()
+        return _apply_tensor_op(functools.partial(_prop_nan, F.minimum), x1, x2, dtype=dtype).squeeze()
     if x1.ndim == 0:
         dtype = x2.dtype
     elif x2.ndim == 0:
         dtype = x1.dtype
-    return _apply_tensor_op(F.minimum, x1, x2, dtype=dtype)
+    return _apply_tensor_op(functools.partial(_prop_nan, F.minimum), x1, x2, dtype=dtype)
 
 
 def mean(a, axis=None, keepdims=False, dtype=None):
@@ -1299,6 +1299,14 @@ def log(x, dtype=None):
     return _apply_tensor_op(F.log, x, dtype=dtype)
 
 
+def _prop_nan(fn, x1, x2):
+    """Selects NaN if either element is NaN"""
+    has_nan = F.logical_or(_isnan(x1), _isnan(x2))
+    nan_tensor = F.fill(_promote(F.dtype(x1), F.dtype(x2)), F.shape(has_nan), nan)
+    res = fn(x1, x2)
+    return F.select(has_nan, nan_tensor, res)
+
+
 def maximum(x1, x2, dtype=None):
     """
     Returns the element-wise maximum of array elements.
@@ -1349,12 +1357,12 @@ def maximum(x1, x2, dtype=None):
     # F.maximum does not support when both operands are scalar
     if x1.ndim == 0 and x2.ndim == 0:
         x1 = expand_dims(x1, 0)
-        return _apply_tensor_op(F.maximum, x1, x2, dtype=dtype).squeeze()
+        return _apply_tensor_op(functools.partial(_prop_nan, F.maximum), x1, x2, dtype=dtype).squeeze()
     if x1.ndim == 0:
         dtype = x2.dtype
     elif x2.ndim == 0:
         dtype = x1.dtype
-    return _apply_tensor_op(F.maximum, x1, x2, dtype=dtype)
+    return _apply_tensor_op(functools.partial(_prop_nan, F.maximum), x1, x2, dtype=dtype)
 
 
 def heaviside(x1, x2, dtype=None):
@@ -1567,7 +1575,7 @@ def hypot(x1, x2, dtype=None):
         [[5. 5. 5.]
         [5. 5. 5.]
         [5. 5. 5.]]
-        >>> output = np.hypot(3*np.ones((3, 3)), np.array([4]))
+        >>> output = np.hypot(3*np.ones((3, 3)), np.array([4.0]))
         >>> print(output)
         [[5. 5. 5.]
         [5. 5. 5.]

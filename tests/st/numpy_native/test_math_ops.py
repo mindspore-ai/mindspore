@@ -251,6 +251,16 @@ def test_float_power():
 @pytest.mark.env_onecard
 def test_minimum():
     run_binop_test(mnp_minimum, onp_minimum, test_case)
+    x = onp.random.randint(-10, 10, 20).astype(onp.float32)
+    y = onp.random.randint(-10, 10, 20).astype(onp.float32)
+    x[onp.random.randint(0, 10, 3)] = onp.nan
+    y[onp.random.randint(0, 10, 3)] = onp.nan
+    x[onp.random.randint(0, 10, 3)] = onp.NINF
+    y[onp.random.randint(0, 10, 3)] = onp.NINF
+    x[onp.random.randint(0, 10, 3)] = onp.PINF
+    y[onp.random.randint(0, 10, 3)] = onp.PINF
+    match_res(mnp_minimum, onp_minimum, x, y)
+    match_res(mnp_minimum, onp_minimum, y, x)
 
 
 def mnp_tensordot(x, y):
@@ -924,6 +934,16 @@ def onp_maximum(x1, x2):
 @pytest.mark.env_onecard
 def test_maximum():
     run_binop_test(mnp_maximum, onp_maximum, test_case)
+    x = onp.random.randint(-10, 10, 20).astype(onp.float32)
+    y = onp.random.randint(-10, 10, 20).astype(onp.float32)
+    x[onp.random.randint(0, 10, 3)] = onp.nan
+    y[onp.random.randint(0, 10, 3)] = onp.nan
+    x[onp.random.randint(0, 10, 3)] = onp.NINF
+    y[onp.random.randint(0, 10, 3)] = onp.NINF
+    x[onp.random.randint(0, 10, 3)] = onp.PINF
+    y[onp.random.randint(0, 10, 3)] = onp.PINF
+    match_res(mnp_maximum, onp_maximum, x, y)
+    match_res(mnp_maximum, onp_maximum, y, x)
 
 
 def mnp_clip(x):

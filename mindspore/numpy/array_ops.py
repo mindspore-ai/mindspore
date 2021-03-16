@@ -1809,10 +1809,7 @@ def _check_indices(size, indices, mode):
     out_of_lowerbounds = F.tensor_lt(indices, lowerbounds)
     out_of_upperbounds = F.tensor_gt(indices, upperbounds)
     if mode == 'raise':
-        # For mode raise, index-out-of-bounds checking is performed at backend since
-        # evaluation of a boolean scalar Tensor always returns true in graph mode
-        # regardless of the truth value contained
-        return indices
+        _raise_unimplemented_error('"raise" mode is not implemented')
     if mode == 'wrap':
         return _mod(indices, F.fill(dtype, shape, size))
     zeros = F.fill(dtype, shape, 0)
@@ -1821,7 +1818,7 @@ def _check_indices(size, indices, mode):
     return clipped
 
 
-def take(a, indices, axis=None, mode='raise'):
+def take(a, indices, axis=None, mode='clip'):
     """
     Takes elements from an array along an axis.
 
@@ -1832,6 +1829,7 @@ def take(a, indices, axis=None, mode='raise'):
 
     Note:
         Numpy argument out is not supported.
+        ``mode = 'raise'`` is not supported, and the default mode is 'clip' instead.
 
     Args:
         a (Tensor): Source array with shape `(Ni…, M, Nk…)`.
