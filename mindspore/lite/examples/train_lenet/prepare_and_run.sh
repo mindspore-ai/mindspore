@@ -52,7 +52,7 @@ if [ "$TARBALL" == "" ]; then
   else
     file=$(ls ../../../../output/mindspore-lite-*-train-linux-x64.tar.gz)
   fi
-  if [ -f ${file} ]; then
+  if [[ ${file} != "" ]] && [[ -f ${file} ]]; then
     TARBALL=${file}
   else
     echo "release.tar.gz was not found"
