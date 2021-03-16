@@ -38,6 +38,9 @@ Wikipedia data: the 2017 English Wikipedia dump version with bidirectional hyper
 dev data: HotPotQA full wiki setting dev data with 7398 question-answer pairs.
 dev tf-idf data: the candidates for each question in dev data which is originated from top-500 retrieved from 5M paragraphs of Wikipedia
 through TF-IDF.
+The dataset of re-ranker consists of two parts:
+Wikipedia data: the 2017 English Wikipedia dump version.
+dev data: HotPotQA full wiki setting dev data with 7398 question-answer pairs.
 
 # [Features](#contents)
 
@@ -64,6 +67,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
   ```python
   # run evaluation example with HotPotQA dev dataset
   sh run_eval_ascend.sh
+  sh run_eval_ascend_reranker_reader.sh
   ```
 
 # [Script Description](#contents)
@@ -75,25 +79,39 @@ After installing MindSpore via the official website and Dataset is correctly gen
 └─tprr
   ├─README.md
   ├─scripts
-  | ├─run_eval_ascend.sh            # Launch evaluation in ascend
+  | ├─run_eval_ascend.sh                      # Launch retriever evaluation in ascend
+  | └─run_eval_ascend_reranker_reader         # Launch re-ranker and reader evaluation in ascend
   |
   ├─src
-  | ├─config.py                     # Evaluation configurations
-  | ├─onehop.py                     # Onehop model
-  | ├─onehop_bert.py                # Onehop bert model
-  | ├─process_data.py               # Data preprocessing
-  | ├─twohop.py                     # Twohop model
-  | ├─twohop_bert.py                # Twohop bert model
-  | └─utils.py                      # Utils for evaluation
+  | ├─build_reranker_data.py                  # build data for re-ranker from result of retriever
+  | ├─config.py                               # Evaluation configurations for retriever
+  | ├─hotpot_evaluate_v1.py                   # Hotpotqa evaluation script
+  | ├─onehop.py                               # Onehop model of retriever
+  | ├─onehop_bert.py                          # Onehop bert model of retriever
+  | ├─process_data.py                         # Data preprocessing for retriever
+  | ├─reader.py                               # Reader model
+  | ├─reader_albert_xxlarge.py                # Albert-xxlarge module of reader model
+  | ├─reader_downstream.py                    # Downstream module of reader model
+  | ├─reader_eval.py                          # Reader evaluation script
+  | ├─rerank_albert_xxlarge.py                # Albert-xxlarge module of re-ranker model
+  | ├─rerank_and_reader_data_generator.py     # Data generator for re-ranker and reader
+  | ├─rerank_and_reader_utils.py              # Utils for re-ranker and reader
+  | ├─rerank_downstream.py                    # Downstream module of re-ranker model
+  | ├─reranker.py                             # Re-ranker model
+  | ├─reranker_eval.py                        # Re-ranker evaluation script
+  | ├─twohop.py                               # Twohop model of retriever
+  | ├─twohop_bert.py                          # Twohop bert model of retriever
+  | └─utils.py                                # Utils for retriever
   |
-  └─retriever_eval.py               # Evaluation net for retriever
+  ├─retriever_eval.py                         # Evaluation net for retriever
+  └─reranker_and_reader_eval.py               # Evaluation net for re-ranker and reader
 ```
 
 ## [Script Parameters](#contents)
 
-Parameters for evaluation can be set in config.py.
+Parameters for retriever evaluation can be set in config.py.
 
-- config for TPRR retriever dataset
+- config for TPRR retriever
 
   ```python
   "q_len": 64,                        # Max query length
@@ -108,17 +126,30 @@ Parameters for evaluation can be set in config.py.
 
   config.py for more configuration.
 
+Parameters for re-ranker and reader evaluation can be passed directly at execution time.
+
+- parameters for TPRR re-ranker and reader
+
+  ```python
+  "seq_len": 512,                     # sequence length
+  "rerank_batch_size": 32,            # batch size for re-ranker evaluation
+  "reader_batch_size": 448,           # batch size for reader evaluation
+  "sp_threshold": 8                   # threshold for picking supporting sentence
+  ```
+
+  config.py for more configuration.
+
 ## [Evaluation Process](#contents)
 
 ### Evaluation
 
-- Evaluation on Ascend
+- Retriever evaluation on Ascend
 
   ```python
   sh run_eval_ascend.sh
   ```
 
-  Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the
+  Evaluation result will be stored in the scripts path, whose folder name begins with "eval_tr". You can find the result like the
   followings in log.
 
   ```python
@@ -138,6 +169,35 @@ Parameters for evaluation can be set in config.py.
   evaluation time (h): 20.155506462653477
   ```
 
+- Re-ranker and reader evaluation on Ascend
+
+  Use the output of retriever as input of re-ranker
+
+  ```python
+  sh run_eval_ascend_reranker_reader.sh
+  ```
+
+  Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the
+  followings in log.
+
+  ```python
+  total top1 pem: 0.8803511141120864
+
+  ...
+  em: 0.67440918298447
+  f1: 0.8025625656569652
+  prec: 0.8292800393689271
+  recall: 0.8136908451841731
+  sp_em: 0.6009453072248481
+  sp_f1: 0.844555664157302
+  sp_prec: 0.8640844345841021
+  sp_recall: 0.8446123918845106
+  joint_em: 0.4537474679270763
+  joint_f1: 0.715119580346802
+  joint_prec: 0.7540052057184267
+  joint_recall: 0.7250240424067661
+  ```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
@@ -154,6 +214,8 @@ Parameters for evaluation can be set in config.py.
 | Batch_size                     | 1                            |
 | Output                         | inference path               |
 | PEM                            | 0.9188                       |
+| total top1 pem                 | 0.88                         |
+| joint_f1                       | 0.7151                       |
 
 # [Description of random situation](#contents)
 

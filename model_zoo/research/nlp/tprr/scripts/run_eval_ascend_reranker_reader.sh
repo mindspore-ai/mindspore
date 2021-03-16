@@ -21,19 +21,19 @@ export DEVICE_NUM=1
 export RANK_SIZE=$DEVICE_NUM
 export RANK_ID=0
 
-if [ -d "eval_tr" ];
+if [ -d "eval" ];
 then
-    rm -rf ./eval_tr
+    rm -rf ./eval
 fi
-mkdir ./eval_tr
+mkdir ./eval
 
-cp ../*.py ./eval_tr
-cp *.sh ./eval_tr
-cp -r ../src ./eval_tr
-cd ./eval_tr || exit
+cp ../*.py ./eval
+cp *.sh ./eval
+cp -r ../src ./eval
+cd ./eval || exit
 env > env.log
 echo "start evaluation"
 
-python retriever_eval.py > log.txt 2>&1 &
+python reranker_and_reader_eval.py --get_reranker_data --run_reranker --cal_reranker_metrics --select_reader_data --run_reader --cal_reader_metrics > log_reranker_and_reader.txt 2>&1 &
 
 cd ..
