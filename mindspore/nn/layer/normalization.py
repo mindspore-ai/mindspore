@@ -31,6 +31,7 @@ from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
 from mindspore.ops import _selected_ops
+from mindspore.common import dtype as mstype
 from ..cell import Cell
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
@@ -999,7 +1000,7 @@ class InstanceNorm2d(Cell):
             if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
                 raise TypeError(f"[{name}]Supported type for arg {key} is [Tensor, numbers.Number, str, Initializer],"
                                 f"but got {type(val)}")
-            if isinstance(val, Tensor) and val.dtype is not float:
+            if isinstance(val, Tensor) and val.dtype != mstype.float32:
                 raise TypeError(f"[{name}]The type of arg {key} should be float32, but got {val.dtype}")
 
 
