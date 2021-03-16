@@ -134,4 +134,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Ceil, LiteKernelCreator<Arith
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Round, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Neg, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reciprocal, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Erf, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 }  // namespace mindspore::kernel
