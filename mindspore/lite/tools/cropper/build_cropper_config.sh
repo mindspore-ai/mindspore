@@ -27,6 +27,8 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/mindspore/core
 -I${MINDSPORE_HOME}/mindspore/core/ir
 -I${MINDSPORE_HOME}/mindspore/core/mindrt/include
+-I${MINDSPORE_HOME}/mindspore/core/mindrt/src
+-I${MINDSPORE_HOME}/mindspore/core/mindrt/
 -I${MINDSPORE_HOME}/mindspore/ccsrc
 -I${MINDSPORE_HOME}/mindspore/lite
 -I${MINDSPORE_HOME}/mindspore/lite/src
@@ -105,6 +107,8 @@ getCommonFile() {
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.h)
   others_files_h=(
     "${MINDSPORE_HOME}"/mindspore/lite/src/populate/populate_register.h
+    "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.h
+    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/infer/infer_register.h
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.h
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.h
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
@@ -118,6 +122,15 @@ getCommonFile() {
     REMOVE_LISTS_STR="$REMOVE_LISTS_STR|$val"
   done
 
+  cxx_api_files=()
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/cxx_api/graph/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/cxx_api/model/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/cxx_api/tensor/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/cxx_api/*.cc)
+  mindrt_files=()
+  while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/core/mindrt/src/*.cc)
+  while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/core/mindrt/src/async/*.cc)
+  while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/core/mindrt/src/actor/*.cc)
   src_files=()
   while IFS='' read -r line; do src_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.cc)
   common_files=()
@@ -132,10 +145,14 @@ getCommonFile() {
   others_files_c=(
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.c
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
-    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/arithmetic_populate.cc
-    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/arithmetic_self_populate.cc
+    "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.cc
+    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/infer/infer_register.c
+    "${MINDSPORE_HOME}"/mindspore/core/utils/status.cc
   )
-  all_files=("${src_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}" "${runtime_files_c[@]}" "${others_files_c[@]}" "${assembly_files[@]}")
+  all_files=("${src_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
+    "${runtime_files_c[@]}" "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
+    "${cxx_api_files[@]}"
+  )
   # shellcheck disable=SC2068
   for file in ${all_files[@]}; do
     map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
@@ -173,6 +190,7 @@ generateOpsList
 getCommonFile
 # get src/ops
 getOpsFile "Registry\(schema::PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
+getOpsFile "REG_INFER\(.*?, PrimType_" "${MINDSPORE_HOME}/mindspore/lite/nnacl/infer" "prototype" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat32" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat16" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt8" &
