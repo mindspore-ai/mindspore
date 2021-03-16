@@ -16,6 +16,7 @@
 """Inner operators."""
 
 import numpy as np
+from mindspore.common import Tensor
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ... import context
@@ -24,6 +25,7 @@ from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_regist
 from ..operations.math_ops import _infer_shape_reduce
 from ...communication.management import GlobalComm
 from .. import signature as sig
+
 
 class ExtractImagePatches(PrimitiveWithInfer):
     """
@@ -163,6 +165,9 @@ class Range(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.int32], self.name)
         return x_dtype
+
+    def infer_value(self, x_value):
+        return Tensor(np.arange(self.start, self.limit, self.delta), dtype=x_value.dtype)
 
 
 class Quant(PrimitiveWithInfer):
@@ -408,6 +413,7 @@ class Send(PrimitiveWithInfer):
         >>> net = Net()
         >>> output = net(input_)
     """
+
     @prim_attr_register
     def __init__(self, sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
         self.rank = dest_rank
@@ -464,6 +470,7 @@ class Receive(PrimitiveWithInfer):
         >>> net = Net()
         >>> output = net()
     """
+
     @prim_attr_register
     def __init__(self, sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP):
         self.rank = src_rank

@@ -2391,6 +2391,7 @@ class Pack(PrimitiveWithInfer):
     Same as operator Stack. Pack will be deprecated in the future.
     Please use Stack instead.
     """
+
     @deprecated("1.1", "Stack", True)
     @prim_attr_register
     def __init__(self, axis=0):
@@ -2469,6 +2470,7 @@ class Unpack(PrimitiveWithInfer):
     Same as operator Unstack. Unpack will be deprecated in the future.
     Please use Unstack instead.
     """
+
     @deprecated("1.1", "Unstack", True)
     @prim_attr_register
     def __init__(self, axis=0):
@@ -3489,7 +3491,6 @@ class ScatterUpdate(_ScatterOp_Dynamic):
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
         self.add_prim_attr('side_effect_mem', True)
-
 
 
 class ScatterNdUpdate(_ScatterNdOp):
@@ -5250,3 +5251,11 @@ class Range(PrimitiveWithCheck):
         valid_dtypes = [mstype.int32, mstype.float32]
         inputs = {"start": start_dtype, "limit": limit_dtype, "delta": delta_dtype}
         validator.check_tensors_dtypes_same_and_valid(inputs, valid_dtypes, self.name)
+
+    def infer_value(self, start_value, limit_value, delat_value):
+        if start_value is not None and limit_value is not None and delat_value is not None:
+            start = np.asscalar(start_value.asnumpy())
+            limit = np.asscalar(limit_value.asnumpy())
+            delat = np.asscalar(delat_value.asnumpy())
+            return Tensor(np.arange(start, limit, delat), dtype=start_value.dtype)
+        return None

@@ -15,7 +15,7 @@
 import numpy as np
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore.common import dtype as mstype
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell, Momentum
 from mindspore.ops import operations as P
@@ -48,17 +48,24 @@ class Net(Cell):
     def __init__(self, weight, start, limit, delta, strategy1=None, strategy2=None, strategy3=None):
         super().__init__()
         self.mul = P.Mul().shard(strategy1)
-        self.range = nn.Range(start, limit, delta)
-        self.range.range_x.shard(strategy2)
+        if isinstance(start, float):
+            self.type = mstype.float32
+        else:
+            self.type = mstype.int32
+        self.start = Tensor(start, self.type)
+        self.limit = Tensor(limit, self.type)
+        self.delta = Tensor(delta, self.type)
+        self.range = P.Range()
+        self.range.shard(strategy2)
         self.mul2 = P.Mul().shard(strategy3)
         self.weight = Parameter(weight, "w")
 
-
     def construct(self, x, b):
-        r_out = self.range()
+        r_out = self.range(self.start, self.limit, self.delta)
         out = self.mul(x, self.weight)
         out = self.mul2(out, r_out)
         return out
+
 
 dev_num = 4
 _x = Tensor(np.ones([64 // dev_num, 8]), dtype=ms.float32)
@@ -98,5 +105,5 @@ def test_range2():
 
 def test_range3():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=dev_num, global_rank=2)
-    net = Net(_w1, 4.0, None, 0.5)
+    net = Net(_w1, 0.0, 4.0, 0.5)
     compile_net(net)
