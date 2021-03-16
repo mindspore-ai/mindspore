@@ -205,6 +205,7 @@ union PrimitiveType {
     SqrtGrad,
     LayerNormGrad,
     ResizeGrad,
+    Splice,
 }
 
 table Abs {
@@ -1087,3 +1088,10 @@ table ResizeGrad {
     method: ResizeMethod;
     align_corners: bool;
 }
+
+table Splice {
+    context: [long];
+    forward_indexes: [long];
+    output_dim: long;
+}
+

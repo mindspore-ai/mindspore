@@ -226,6 +226,9 @@ constexpr auto kCoeff = "coeff";
 constexpr auto kIsDepthWise = "is_depth_wise";
 constexpr auto kZoneoutCell = "zoneout_cell";
 constexpr auto kZoneoutHidden = "zoneout_hidden";
+constexpr auto kSpliceContext = "context";
+constexpr auto kSpliceForwardIndexes = "forward_indexes";
+constexpr auto kSpliceOutputDims = "output_dim";
 
 const std::set<TypeId> common_valid_types = {
   kNumberTypeInt8,   kNumberTypeInt16,  kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt8,  kNumberTypeUInt16,

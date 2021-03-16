@@ -212,8 +212,9 @@ enum PrimType {
   PrimType_SqrtGrad = 185,
   PrimType_LayerNormGrad = 186,
   PrimType_ResizeGrad = 187,
+  PrimType_Splice = 188,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_ResizeGrad
+  PrimType_MAX = PrimType_Splice
 };
 
 void RegInfer(int prim_type, InferShape func);

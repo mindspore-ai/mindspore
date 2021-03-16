@@ -17,13 +17,14 @@
 #include "nnacl/fp32/splice_fp32.h"
 void SpliceFp32(const float *src_data, int src_row, int src_col, const SpliceParameter *splice_parameter,
                 float *dst_data, int dst_row, int dst_col) {
+  int row_offset = splice_parameter->src_to_dst_row_offset_;
   for (int r = 0; r < dst_row; ++r) {
     for (int off = 0; off < splice_parameter->context_dim_; ++off) {
-      int r_off = r + splice_parameter->context_[off];
+      int r_off = r + row_offset + splice_parameter->context_[off];
       r_off = MSMAX(r_off, 0);
       r_off = MSMIN(r_off, src_row - 1);
-      const float *tmp_src_data = src_data + r_off * src_col * sizeof(float);
-      float *tmp_dst_data = dst_data + r * dst_col * sizeof(float);
+      const float *tmp_src_data = src_data + r_off * src_col;
+      float *tmp_dst_data = dst_data + r * dst_col;
       memcpy(tmp_dst_data + off * src_col, tmp_src_data, src_col * sizeof(float));
     }
   }

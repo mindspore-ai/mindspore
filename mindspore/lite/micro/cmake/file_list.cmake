@@ -91,6 +91,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/softmax_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/tile_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/splice_fp32_coder.cc
         #### nnacl int8 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/activation_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/add_int8_coder.cc
@@ -161,6 +162,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/bias_add_populate.cc
         ${LITE_DIR}/src/ops/populate/activation_populate.cc
         ${LITE_DIR}/src/ops/populate/softmax_populate.cc
+        ${LITE_DIR}/src/ops/populate/splice_populate.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
