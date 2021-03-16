@@ -248,3 +248,11 @@ int HardTanh(const float *src, int length, float *dst, float min_val, float max_
   }
   return NNACL_OK;
 }
+
+int Gelu(const float *src, int length, float *dst) {
+  for (int i = 0; i < length; ++i) {
+    float tanh_res = TanhOpt(sqrt(2 / M_PI) * (src[i] + 0.044715 * pow(src[i], 3)));
+    dst[i] = 0.5f * src[i] * (1 + tanh_res);
+  }
+  return NNACL_OK;
+}

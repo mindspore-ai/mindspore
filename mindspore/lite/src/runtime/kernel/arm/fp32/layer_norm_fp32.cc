@@ -61,7 +61,7 @@ int LayerNormCPUKernel::ReSize() {
 }
 
 int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
-  int ret = LayerNorm(src_data_, gamma_data_, beta_data_, dst_data_, param_, mean_data_, var_data_, thread_id);
+  int ret = LayerNorm(src_data_, gamma_data_, beta_data_, dst_data_, mean_data_, var_data_, param_, thread_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLayerNorm error error_code[" << ret << "]";
     return ret;
@@ -85,11 +85,18 @@ int LayerNormCPUKernel::Run() {
   gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->data_c());
   dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  if (out_tensors_.size() >= 3) {
+  if (out_tensors_.size() == 3) {
     mean_data_ = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
     var_data_ = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
+  } else {
+    mean_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float)));
+    var_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float)));
   }
   ret = ParallelLaunch(this->context_->thread_pool_, LayerNormRun, this, op_parameter_->thread_num_);
+  if (out_tensors_.size() != 3) {
+    context_->allocator->Free(mean_data_);
+    context_->allocator->Free(var_data_);
+  }
   return ret;
 }
 

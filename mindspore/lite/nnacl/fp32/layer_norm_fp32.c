@@ -64,9 +64,10 @@ void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data
   }
 }
 
-int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data,
-              LayerNormParameter *param, float *out_mean, float *out_deno, size_t task_id) {
-  if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
+int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data, float *out_mean,
+              float *out_deno, LayerNormParameter *param, size_t task_id) {
+  if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL || out_mean == NULL ||
+      out_deno == NULL) {
     return NNACL_NULL_PTR;
   }
   int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
@@ -74,25 +75,22 @@ int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_
   for (int i = task_id * step; i < thread_end; i++) {
     const float *src_norm = src_data + i * param->norm_inner_size_;
     float *dst_norm = dst_data + i * param->norm_inner_size_;
-    float mean = 0.0f;
-    float square_mean = 0.0f;
-    LayerNormMeanAndSquare(src_norm, param->norm_inner_size_, &mean, &square_mean);
-    const float deno = 1 / sqrtf(square_mean - mean * mean + param->epsilon_);
-    if ((out_mean != NULL) && (out_deno != NULL)) {
-      out_mean[i] = mean;
-      out_deno[i] = deno;
-    }
+    out_mean[i] = 0.0f;
+    out_deno[i] = 0.0f;
+    LayerNormMeanAndSquare(src_norm, param->norm_inner_size_, &out_mean[i], &out_deno[i]);
+    const float deno = 1 / sqrtf(out_deno[i] - out_mean[i] * out_mean[i] + param->epsilon_);
     if (param->norm_outer_size_ <= param->params_outer_size_) {
       for (int x = 0; x < param->norm_inner_size_ / param->params_inner_size_; x++) {
         const float *src_param = src_norm + x * param->params_inner_size_;
         float *dst_param = dst_norm + x * param->params_inner_size_;
-        LayerNormGammaAndBeta(dst_param, src_param, gamma_data, beta_data, param->params_inner_size_, mean, deno);
+        LayerNormGammaAndBeta(dst_param, src_param, gamma_data, beta_data, param->params_inner_size_, out_mean[i],
+                              deno);
       }
     } else {
       int x = i / param->params_outer_size_;
       const float *gamma = gamma_data + x * param->norm_inner_size_;
       const float *beta = beta_data + x * param->norm_inner_size_;
-      LayerNormGammaAndBeta(dst_norm, src_norm, gamma, beta, param->norm_inner_size_, mean, deno);
+      LayerNormGammaAndBeta(dst_norm, src_norm, gamma, beta, param->norm_inner_size_, out_mean[i], deno);
     }
   }
   return NNACL_OK;
