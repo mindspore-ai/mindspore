@@ -26,7 +26,9 @@ get_version() {
 }
 get_version
 MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_imagenet/mobilenetv2.ms"
-MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/mindspore-lite-${VERSION_STR}-inference-android.tar.gz"
+MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-android-aarch64"
+MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/${MINDSPORE_FILE}"
 
 mkdir -p build
 mkdir -p lib
@@ -34,14 +36,13 @@ mkdir -p model
 if [ ! -e ${BASEPATH}/model/mobilenetv2.ms ]; then
   wget -c -O ${BASEPATH}/model/mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
 fi
-if [ ! -e ${BASEPATH}/build/mindspore-lite-${VERSION_STR}-inference-android.tar.gz ]; then
-  wget -c -O ${BASEPATH}/build/mindspore-lite-${VERSION_STR}-inference-android.tar.gz --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
+if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
+  wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
-tar xzvf ${BASEPATH}/build/mindspore-lite-${VERSION_STR}-inference-android.tar.gz -C ${BASEPATH}/build/
-cp -r ${BASEPATH}/build/mindspore-lite-${VERSION_STR}-inference-android/lib/aarch64/libmindspore-lite.a ${BASEPATH}/lib
-cp -r ${BASEPATH}/build/mindspore-lite-${VERSION_STR}-inference-android/third_party/hiai_ddk/lib/aarch64/*.so ${BASEPATH}/lib
-cp -r ${BASEPATH}/build/mindspore-lite-${VERSION_STR}-inference-android/include ${BASEPATH}/
-
+tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/lib/libmindspore-lite.a ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/third_party/hiai_ddk/lib/*.so ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/include ${BASEPATH}/
 cd ${BASEPATH}/build
 cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19" \
   -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_STL="c++_shared" ${BASEPATH}

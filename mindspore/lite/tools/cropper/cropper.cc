@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include <string>
 #include "tools/cropper/cropper.h"
 #include "tools/cropper/cropper_utils.h"
@@ -31,7 +30,7 @@ int Cropper::ReadPackage() {
     in_file.close();
 
     char buf[BUF_SIZE];
-    String cmd = "ar -t " + this->flags_->package_file_;
+    std::string cmd = "ar -t " + this->flags_->package_file_;
     MS_LOG(DEBUG) << cmd;
 
     FILE *p_file = popen(cmd.c_str(), "r");
@@ -40,8 +39,8 @@ int Cropper::ReadPackage() {
       return RET_ERROR;
     }
     while (fgets(buf, BUF_SIZE, p_file) != nullptr) {
-      this->all_files_.push_back(String(buf).substr(0, String(buf).length() - 1));
-      this->discard_files_.push_back(String(buf).substr(0, String(buf).length() - 1));
+      this->all_files_.push_back(std::string(buf).substr(0, std::string(buf).length() - 1));
+      this->discard_files_.push_back(std::string(buf).substr(0, std::string(buf).length() - 1));
     }
     pclose(p_file);
     MS_LOG(DEBUG) << "file nums: " << this->all_files_.size();
@@ -85,9 +84,9 @@ int Cropper::RunCropper() {
   }
   return RET_OK;
 }
+
 int Cropper::GetModelOps() {
   for (const auto &path : this->model_files_) {
-    auto context = std::make_shared<Context>();
     size_t buffer_lens;
     char *graph_buf = ReadFile(path.c_str(), &buffer_lens);
     if (graph_buf == nullptr) {
@@ -124,6 +123,7 @@ int Cropper::GetModelOps() {
   }
   return RET_OK;
 }
+
 int Cropper::GetModelFiles() {
   if (!this->flags_->model_file_.empty()) {
     auto files = StringSplit(this->flags_->model_file_, std::string(DELIM_COMMA));
@@ -132,16 +132,16 @@ int Cropper::GetModelFiles() {
         return RET_INPUT_PARAM_INVALID;
       }
       MS_LOG(DEBUG) << file;
-      String realPath = RealPath(file.c_str());
-      if (realPath.empty()) {
+      std::string real_path = RealPath(file.c_str());
+      if (real_path.empty()) {
         return RET_INPUT_PARAM_INVALID;
       }
-      this->model_files_.push_back(realPath);
+      this->model_files_.push_back(real_path);
     }
   }
   // get models from folder
   if (!this->flags_->model_folder_path_.empty()) {
-    String cmd = "find " + this->flags_->model_folder_path_ + " -name '*.ms'";
+    std::string cmd = "find " + this->flags_->model_folder_path_ + " -name '*.ms'";
     MS_LOG(DEBUG) << cmd;
 
     char buf[BUF_SIZE];
@@ -151,12 +151,12 @@ int Cropper::GetModelFiles() {
       return RET_ERROR;
     }
     while (fgets(buf, BUF_SIZE, p_file) != nullptr) {
-      String realPath = RealPath(String(buf).substr(0, String(buf).length() - 1).c_str());
-      if (realPath.empty()) {
+      std::string real_path = RealPath(std::string(buf).substr(0, std::string(buf).length() - 1).c_str());
+      if (real_path.empty()) {
         pclose(p_file);
         return RET_INPUT_PARAM_INVALID;
       }
-      this->model_files_.emplace_back(realPath);
+      this->model_files_.emplace_back(real_path);
     }
     pclose(p_file);
   }
@@ -177,9 +177,9 @@ int Cropper::GetOpMatchFiles() {
       std::string buf_str = buf;
       auto mapping = StringSplit(buf_str, DELIM_COMMA);
       if (!mapping.empty()) {
-        String primitive = mapping[0];
-        String type = mapping[1];
-        String file = mapping[2];
+        std::string primitive = mapping.at(0);
+        std::string type = mapping.at(1);
+        std::string file = mapping.at(2);
         if (type == "kNumberTypeFloat32" || type == "kNumberTypeFloat16" || type == "kNumberTypeInt32") {
           for (auto op : this->fp32_operators_) {
             if (schema::EnumNamePrimitiveType(op) == primitive) {
@@ -219,6 +219,7 @@ int Cropper::GetOpMatchFiles() {
   }
   return RET_OK;
 }
+
 int Cropper::GetDiscardFileList() {
   // discard_files_=all_files_-archive_files_
   for (const auto &archive : this->archive_files_) {
@@ -233,13 +234,13 @@ int Cropper::GetDiscardFileList() {
   return RET_OK;
 }
 int Cropper::CutPackage() {
-  String copy_bak_cmd = "cp " + this->flags_->package_file_ + " " + this->flags_->package_file_ + ".bak";
-  String ar_cmd = "ar -d " + this->flags_->package_file_ + ".bak ";
+  std::string copy_bak_cmd = "cp " + this->flags_->package_file_ + " " + this->flags_->package_file_ + ".bak";
+  std::string ar_cmd = "ar -d " + this->flags_->package_file_ + ".bak ";
   for (const auto &file : this->discard_files_) {
     ar_cmd.append(file).append(" ");
   }
-  String copy_to_output_cmd = "cp " + this->flags_->package_file_ + ".bak " + this->flags_->output_file_;
-  String rm_bak_cmd = "rm " + this->flags_->package_file_ + ".bak";
+  std::string copy_to_output_cmd = "cp " + this->flags_->package_file_ + ".bak " + this->flags_->output_file_;
+  std::string rm_bak_cmd = "rm " + this->flags_->package_file_ + ".bak";
   int status;
   status = system(copy_bak_cmd.c_str());
   if (status != 0) {

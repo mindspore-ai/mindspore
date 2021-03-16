@@ -20,17 +20,15 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "include/model.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "schema/model_generated.h"
-#include "include/lite_session.h"
 #include "tools/cropper/cropper_flags.h"
 
 namespace mindspore::lite::cropper {
 
-class MS_API Cropper {
+class Cropper {
  public:
   explicit Cropper(CropperFlags *flags) : flags_(flags) {}
 
@@ -63,6 +61,6 @@ class MS_API Cropper {
   CropperFlags *flags_;
 };
 
-int MS_API RunCropper(int argc, const char **argv);
+int RunCropper(int argc, const char **argv);
 }  // namespace mindspore::lite::cropper
 #endif  // MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_H_

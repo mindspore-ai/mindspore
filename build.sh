@@ -557,6 +557,8 @@ build_lite()
     local LOCAL_LITE_PLATFORM=${LITE_PLATFORM}
     local LOCAL_INC_BUILD=${INC_BUILD}
     local LOCAL_LITE_ENABLE_GPU=${LITE_ENABLE_GPU}
+    local LOCAL_LITE_ENABLE_NPU=${ENABLE_NPU}
+
     if [[ "${LITE_LANGUAGE}" == "java" ]]; then
       if [[ "X$1" != "X" ]]; then
         LOCAL_LITE_PLATFORM=$1
@@ -573,13 +575,23 @@ build_lite()
       else
         LOCAL_LITE_ENABLE_GPU=""
       fi
+      mkdir -p ${BASEPATH}/mindspore/lite/build/java
+      cd ${BASEPATH}/mindspore/lite/build/
+      find . -maxdepth 1 | grep -v java | grep '/' | xargs -I {} rm -rf {}
     fi
-    LITE_ENABLE_NPU=${ENABLE_NPU}
-    if [[ "${LITE_LANGUAGE}" == "cpp" && "${DEVICE}" == ""  &&  "${LOCAL_LITE_PLATFORM}" == "arm64" ]]; then
-      LOCAL_LITE_ENABLE_GPU="opencl"
-      LITE_ENABLE_NPU="on"
+    if [[ "${LITE_LANGUAGE}" == "cpp"  ]]; then
+      if [[ "${DEVICE}" == ""  &&  "${LOCAL_LITE_PLATFORM}" == "arm64" ]]; then
+        LOCAL_LITE_ENABLE_GPU="opencl"
+        LOCAL_LITE_ENABLE_NPU="on"
+      fi
+
+      if [[ "${LOCAL_INC_BUILD}" == "off" ]]; then
+          rm -rf ${BASEPATH}/mindspore/lite/build
+      fi
+      mkdir -pv ${BASEPATH}/mindspore/lite/build
     fi
-    if [ "${LITE_ENABLE_NPU}" == "on" ]; then
+
+    if [ "${LOCAL_LITE_ENABLE_NPU}" == "on" ]; then
       if [ "${LOCAL_LITE_PLATFORM}" == "arm64" ]; then
         checkddk
       else
@@ -588,12 +600,7 @@ build_lite()
       fi
     fi
 
-    cd "${BASEPATH}/mindspore/lite"
-    if [[ "${LOCAL_INC_BUILD}" == "off" ]]; then
-        rm -rf build
-    fi
-    mkdir -pv build
-    cd build
+    cd ${BASEPATH}/mindspore/lite/build
     write_commit_file
     BUILD_TYPE="Release"
     if [[ "${DEBUG_MODE}" == "on" ]]; then
@@ -607,7 +614,7 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="on"      \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${LOCAL_LITE_ENABLE_GPU} -DSUPPORT_NPU=${LITE_ENABLE_NPU} -DENABLE_V0=on \
+              -DSUPPORT_GPU=${LOCAL_LITE_ENABLE_GPU} -DSUPPORT_NPU=${LOCAL_LITE_ENABLE_NPU} -DENABLE_V0=on \
               -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
@@ -619,7 +626,7 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL}  -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN}  \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${LOCAL_LITE_ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} -DENABLE_V0=on \
+              -DSUPPORT_GPU=${LOCAL_LITE_ENABLE_GPU} -DSUPPORT_NPU=${LOCAL_LITE_ENABLE_NPU} -DENABLE_V0=on \
               -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
@@ -627,7 +634,7 @@ build_lite()
     else
         cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${LOCAL_LITE_ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${LOCAL_LITE_ENABLE_GPU} -DSUPPORT_NPU=${LOCAL_LITE_ENABLE_NPU} \
         -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} -DENABLE_V0=on \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
@@ -639,7 +646,11 @@ build_lite()
         echo "---------------- mindspore lite: build failed ----------------"
         exit 1
     else
-        mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
+        if [[ "${LITE_LANGUAGE}" == "cpp"  ]]; then
+          mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
+        elif [[ "${LITE_LANGUAGE}" == "java" ]]; then
+          mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/mindspore/lite/build/java
+        fi
         rm -rf ${BASEPATH}/output/tmp/
         echo "---------------- mindspore lite: build success ----------------"
         if [[ "X$LITE_LANGUAGE" = "Xcpp" ]]; then
@@ -654,7 +665,7 @@ build_lite_java_arm64() {
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
         JTARBALL=mindspore-lite-${VERSION_STR}-train-android-aarch64
     fi
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/${JTARBALL}.tar.gz" ]]; then
+    if [[ "X$INC_BUILD" == "Xoff" ]] || [[ ! -f "${BASEPATH}/mindspore/lite/build/java/${JTARBALL}.tar.gz" ]]; then
       if [[ "X${DEVICE}" == "Xcpu" ]]; then
           build_lite "arm64" "off" ""
       elif [[ "X${DEVICE}" == "Xnpu" ]]; then
@@ -665,18 +676,18 @@ build_lite_java_arm64() {
       fi
     fi
     # copy arm64 so
-    cd ${BASEPATH}/output/
+    cd ${BASEPATH}/mindspore/lite/build/java/
     rm -rf ${JTARBALL}
     tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/native/libs/arm64-v8a/
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
-      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
     else
-      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
     fi
     [ -n "${VERSION_STR}" ] && rm -rf ${JTARBALL}
 }
@@ -687,22 +698,22 @@ build_lite_java_arm32() {
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
         JTARBALL=mindspore-lite-${VERSION_STR}-train-android-aarch32
     fi
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/${JTARBALL}.tar.gz" ]]; then
+    if [[ "X$INC_BUILD" == "Xoff" ]] || [[ ! -f "${BASEPATH}/mindspore/lite/build/java/${JTARBALL}.tar.gz" ]]; then
       build_lite  "arm32" "off" ""
     fi
     # copy arm32 so
-    cd ${BASEPATH}/output/
+    cd ${BASEPATH}/mindspore/lite/build/java/
     rm -rf ${JTARBALL}
     tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/native/libs/armeabi-v7a/
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
-      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
     else
-      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
     fi
     [ -n "${VERSION_STR}" ] && rm -rf ${JTARBALL}
 }
@@ -710,26 +721,26 @@ build_lite_java_arm32() {
 build_lite_java_x86() {
     # build mindspore-lite x86
     local JTARBALL=mindspore-lite-${VERSION_STR}-inference-linux-x64
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/${JTARBALL}.tar.gz" ]]; then
+    if [[ "X$INC_BUILD" == "Xoff" ]] || [[ ! -f "${BASEPATH}/mindspore/lite/build/java/${JTARBALL}.tar.gz" ]]; then
       build_lite "x86_64" "off" ""
     fi
     # copy x86 so
-    cd ${BASEPATH}/output/
+    cd ${BASEPATH}/mindspore/lite/build/java
     rm -rf ${JTARBALL}
     tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/linux_x86/libs/
     mkdir -p ${JAVA_PATH}/java/linux_x86/libs/
     mkdir -p ${JAVA_PATH}/native/libs/linux_x86/
-    cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/linux_x86/libs/
-    cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/linux_x86/
+    cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/linux_x86/libs/
+    cp ${BASEPATH}/mindspore/lite/build/java/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/linux_x86/
 }
 
 build_jni_arm64() {
     # build jni so
     cd "${BASEPATH}/mindspore/lite/build"
-    rm -rf java
-    mkdir -pv java
-    cd java
+    rm -rf java/jni
+    mkdir -pv java/jni
+    cd java/jni
     cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
           -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
@@ -741,17 +752,17 @@ build_jni_arm64() {
         exit 1
     fi
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    cp ${BASEPATH}/mindspore/lite/build/java/jni/libmindspore-lite-jni.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/native/libs/arm64-v8a/
-    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/native/libs/arm64-v8a/
+    cp ${BASEPATH}/mindspore/lite/build/java/jni/libmindspore-lite-jni.so ${JAVA_PATH}/native/libs/arm64-v8a/
 }
 
 build_jni_arm32() {
     # build jni so
     cd "${BASEPATH}/mindspore/lite/build"
-    rm -rf java
-    mkdir -pv java
-    cd java
+    rm -rf java/jni
+    mkdir -pv java/jni
+    cd java/jni
     cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
           -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
@@ -763,17 +774,17 @@ build_jni_arm32() {
         exit 1
     fi
     mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+    cp ${BASEPATH}/mindspore/lite/build/java/jni/libmindspore-lite-jni.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/native/libs/armeabi-v7a/
-    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/native/libs/armeabi-v7a/
+    cp ${BASEPATH}/mindspore/lite/build/java/jni/libmindspore-lite-jni.so ${JAVA_PATH}/native/libs/armeabi-v7a/
 }
 
 build_jni_x86_64() {
     # build jni so
     cd "${BASEPATH}/mindspore/lite/build"
-    rm -rf java
-    mkdir -pv java
-    cd java
+    rm -rf java/jni
+    mkdir -pv java/jni
+    cd java/jni
     cmake -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
         -DENABLE_VERBOSE=${ENABLE_VERBOSE}  "${JAVA_PATH}/native/"
     make -j$THREAD_NUM
@@ -782,9 +793,9 @@ build_jni_x86_64() {
         exit 1
     fi
     mkdir -p ${JAVA_PATH}/java/linux_x86/libs/
-    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/java/linux_x86/libs/
+    cp ${BASEPATH}/mindspore/lite/build/java/jni/libmindspore-lite-jni.so ${JAVA_PATH}/java/linux_x86/libs/
     mkdir -p ${JAVA_PATH}/native/libs/linux_x86/
-    cp ${BASEPATH}/mindspore/lite/build/java/libmindspore-lite-jni.so ${JAVA_PATH}/native/libs/linux_x86/
+    cp ${BASEPATH}/mindspore/lite/build/java/jni/libmindspore-lite-jni.so ${JAVA_PATH}/native/libs/linux_x86/
 }
 
 check_java_home() {
@@ -799,6 +810,9 @@ check_java_home() {
 build_java() {
     JAVA_PATH=${BASEPATH}/mindspore/lite/java
     get_version
+    if [[ "X${INC_BUILD}" == "Xoff" ]]; then
+        rm -rf ${BASEPATH}/mindspore/lite/build
+    fi
     # build common module
     cd ${JAVA_PATH}/java/common
     gradle clean
@@ -844,7 +858,7 @@ build_java() {
     # copy output
     cp mindspore-lite-${VERSION_STR}-inference-linux-x64-jar.tar.gz ${BASEPATH}/output
     cd ${BASEPATH}/output
-    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-inference-linux-x64
+    [ -n "${VERSION_STR}" ] && rm -rf ${BASEPATH}/mindspore/lite/build/java/mindspore-lite-${VERSION_STR}-inference-linux-x64
     exit 0
 }
 
