@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-CURRPATH=$(cd $(dirname $0); pwd)
+CURRPATH=$(cd "$(dirname $0)"; pwd)
 PROJECT_PATH=${CURRPATH}/../..
 if [ $BUILD_PATH ];then
     echo "BUILD_PATH = $BUILD_PATH"
