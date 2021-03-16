@@ -21,6 +21,7 @@
 #include "include/api/types.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/core/de_tensor.h"
 #include "utils/log_adapter.h"
 
 using mindspore::Status;

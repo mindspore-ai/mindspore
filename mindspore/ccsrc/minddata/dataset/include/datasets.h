@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -51,6 +52,7 @@ class DatasetCache;
 class DatasetNode;
 
 class Iterator;
+class PullBasedIterator;
 
 class TensorOperation;
 class SchemaObj;

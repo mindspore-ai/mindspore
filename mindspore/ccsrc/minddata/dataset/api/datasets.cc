@@ -19,9 +19,11 @@
 #include <fstream>
 #include <unordered_set>
 #include <utility>
+#include <nlohmann/json.hpp>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/runtime_context.h"
+#include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/util/path.h"
@@ -29,6 +31,7 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 
 #include "minddata/dataset/kernels/c_func_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
