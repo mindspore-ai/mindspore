@@ -45,7 +45,7 @@
   配置`LD_LIBRARY_PATH`环境变量
 
   ```shell
-  export LD_LIBRARY_PATH = /data/local/tmp/runtime_cpp_demo/lib:{LD_LIBRARY_PATH}
+  export LD_LIBRARY_PATH=/data/local/tmp/runtime_cpp_demo/lib:{LD_LIBRARY_PATH}
   ```
 
   运行示例需要传递两个参数，第一个参数是模型路径，第二个参数是Option，不同的Option将会运行不同的推理流程。
