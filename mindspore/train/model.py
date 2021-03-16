@@ -842,5 +842,20 @@ class Model:
             if param.cache_enable:
                 Tensor(param).flush_from_cache()
 
+    @property
+    def train_network(self):
+        """Get the model's train_network."""
+        return self._train_network
+
+    @property
+    def predict_network(self):
+        """Get the model's predict_network."""
+        return self._predict_network
+
+    @property
+    def eval_network(self):
+        """Get the model's eval_network."""
+        return self._eval_network
+
 
 __all__ = ["Model"]
