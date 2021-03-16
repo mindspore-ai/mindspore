@@ -64,17 +64,17 @@ class UniqueGpuKernel : public GpuKernel {
                                "cudaStreamSynchronized failed");
     std::vector<TypeId> type_ids;
     std::vector<std::vector<size_t>> shapes;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node_);
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node_.lock());
     for (size_t i = 0; i < output_num; ++i) {
-      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node_, i);
+      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node_.lock(), i);
       if (i == 0) {
         shape[0] = post_output_size_;
       }
-      TypeId type_id = AnfAlgo::GetOutputInferDataType(kernel_node_, i);
+      TypeId type_id = AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), i);
       type_ids.emplace_back(type_id);
       shapes.emplace_back(shape);
     }
-    AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, kernel_node_.get());
+    AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, kernel_node_.lock().get());
   }
 
   void ResetResource() noexcept override {
@@ -84,7 +84,6 @@ class UniqueGpuKernel : public GpuKernel {
     num_elements_ = 1;
     post_output_size_ = 0;
     stream_ptr_ = nullptr;
-    kernel_node_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -106,7 +105,6 @@ class UniqueGpuKernel : public GpuKernel {
   size_t workspace_size_;
   int num_elements_;
   int post_output_size_;
-  CNodePtr kernel_node_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

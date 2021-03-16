@@ -54,18 +54,18 @@ class DynamicRangeGpuKernel : public GpuKernel {
 
     DynamicRangeErrorCode error_code = DynamicRangeErrorCode::kOk;
 
-    CHECK_CUDA_RET_WITH_ERROR(c_node_ptr_,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(&error_code, error_code_device_address, sizeof(DynamicRangeErrorCode),
                                               cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy error code to host.");
-    CHECK_CUDA_RET_WITH_EXCEPT(c_node_ptr_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
 
     // use workspace[0] for actual output shape, we know it must be 1d
-    CHECK_CUDA_RET_WITH_ERROR(c_node_ptr_,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(&output_shape_, output_shape_device_address, sizeof(int64_t),
                                               cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy output_shape to host.");
-    CHECK_CUDA_RET_WITH_EXCEPT(c_node_ptr_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
 
     LogExceptionIfNotOk(error_code);
 
@@ -98,17 +98,16 @@ class DynamicRangeGpuKernel : public GpuKernel {
 
   void PostExecute() override {
     // required synchronize for PostExecute
-    CHECK_CUDA_RET_WITH_EXCEPT(c_node_ptr_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                "cudaStreamSynchronize failed");
 
-    std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(c_node_ptr_, 0)};
+    std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
     std::vector<std::vector<size_t>> output_shape = {{(size_t)output_shape_}};
-    AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, c_node_ptr_.get());
+    AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
   }
 
   void ResetResource() noexcept override {
     stream_ptr_ = nullptr;
-    c_node_ptr_ = nullptr;
     output_shape_ = 0;
     max_output_length_ = 0;
     input_size_list_.clear();
@@ -124,7 +123,7 @@ class DynamicRangeGpuKernel : public GpuKernel {
     }
 
     max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");
-    c_node_ptr_ = kernel_node;
+    kernel_node_ = kernel_node;
     InitSizeLists();
 
     return true;
@@ -145,7 +144,6 @@ class DynamicRangeGpuKernel : public GpuKernel {
 
  private:
   void *stream_ptr_;
-  CNodePtr c_node_ptr_;
   int64_t output_shape_;
   int64_t max_output_length_;
 

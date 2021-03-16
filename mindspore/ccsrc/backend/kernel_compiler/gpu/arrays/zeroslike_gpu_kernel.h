@@ -39,7 +39,7 @@ class ZerosLikeGpuKernel : public GpuKernel {
 
     CHECK_CUDA_RET_WITH_EXCEPT(
       kernel_node_,
-      // have to use a float literal instead of an int literal beacuse of ambigious half() overload.
+      // have to use a float literal instead of an int literal because of ambiguous half() overload.
       cudaMemsetAsync(output_device_address, static_cast<T>(0.0), input_size_ * sizeof(T),
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemset failed");
@@ -61,7 +61,6 @@ class ZerosLikeGpuKernel : public GpuKernel {
   }
 
   void ResetResource() noexcept override {
-    kernel_node_ = nullptr;
     input_size_ = 1;
     input_size_list_.clear();
     output_size_list_.clear();
@@ -76,7 +75,6 @@ class ZerosLikeGpuKernel : public GpuKernel {
   }
 
  private:
-  CNodePtr kernel_node_;
   size_t input_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
