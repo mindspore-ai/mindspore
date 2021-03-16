@@ -25,6 +25,7 @@ import mindspore._c_dataengine as cde
 import mindspore.dataset as ds
 from ..core import validator_helpers as validator
 
+
 def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
     """
     Create sampler based on user input.
@@ -615,8 +616,8 @@ class SubsetSampler(BuiltinSampler):
     Examples:
         >>> indices = [0, 1, 2, 3, 4, 5]
         >>>
-        >>> # creates a SubsetRandomSampler, will sample from the provided indices
-        >>> sampler = ds.SubsetRandomSampler(indices)
+        >>> # creates a SubsetSampler, will sample from the provided indices
+        >>> sampler = ds.SubsetSampler(indices)
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
@@ -694,7 +695,7 @@ class SubsetRandomSampler(SubsetSampler):
     Samples the elements randomly from a sequence of indices.
 
     Args:
-        indices (list[int]): A sequence of indices.
+        indices (Any iterable python object but string): A sequence of indices.
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
@@ -740,17 +741,16 @@ class IterSampler(Sampler):
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
-        >>> class MySampler():
-        >>>     def __iter__(self):
-        >>>         for i in range(99, -1, -1):
-        >>>             yield i
+        >>> class MySampler:
+        ...     def __iter__(self):
+        ...         for i in range(99, -1, -1):
+        ...             yield i
 
         >>> # creates an IterSampler
         >>> sampler = ds.IterSampler(sampler=MySampler())
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
      """
 
     def __init__(self, sampler, num_samples=None):
