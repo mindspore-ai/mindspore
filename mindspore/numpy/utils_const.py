@@ -219,6 +219,22 @@ def _raise_runtime_error(info, param=None):
         raise RuntimeError(info)
     raise RuntimeError(info + f"{param}")
 
+
+def _raise_unimplemented_error(info, param=None):
+    """
+    Raise NotImplementedError in both graph/pynative mode
+
+    Args:
+        info(str): info string to display
+        param(python obj): any object that can be recognized by graph mode. If is
+            not None, then param's value information will be extracted and displayed.
+            Default is None.
+    """
+    if param is None:
+        raise NotImplementedError(info)
+    raise NotImplementedError(info + f"{param}")
+
+
 @constexpr
 def _empty(dtype, shape):
     """Returns an uninitialized array with dtype and shape."""
@@ -454,3 +470,8 @@ def _seq_prod(seq1, seq2):
 def _make_tensor(val, dtype):
     """ Returns the tensor with value `val` and dtype `dtype`."""
     return Tensor(val, dtype)
+
+
+def _tuple_slice(tup, start, end):
+    """get sliced tuple from start and end."""
+    return tup[start:end]
