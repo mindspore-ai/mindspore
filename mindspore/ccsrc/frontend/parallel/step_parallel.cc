@@ -3325,6 +3325,15 @@ static void HandleNoUsedParameter(const FuncGraphPtr &root) {
   if (full_batch) {
     return;
   }
+
+  // in grad accumulation mode, if use dynamic lr, it has some parameters in optimizer which no used for first graph,
+  // but used for second graph(such as global_step), so can not change their shapes
+  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
+  if (grad_accumulation_step > 1) {
+    MS_LOG(INFO) << "In grad accumulation mode, do not handle no used parameters";
+    return;
+  }
+
   auto dev_num = g_device_manager->stage_device_num();
   auto parameters = root->parameters();
   for (auto &parameter : parameters) {
