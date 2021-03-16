@@ -191,8 +191,8 @@ class ForwardValueAndGrad(Cell):
     The backward graph will be created in the gradient function to calculating gradient.
 
     Args:
-        network (Cell): The training network. The network only supports single output.
-        weights (ParameterTuple): The parameters of the training network that need to calculate the gradient
+        network (Cell): The training network.
+        weights (ParameterTuple): The parameters of the training network that need to calculate the gradient.
         get_all (bool): If True, get all the gradients with respect to inputs. Default: False.
         get_by_list (bool): If True, get all the gradients with respect to Parameter variables.
             If get_all and get_by_list are both False, get the gradient with respect to first input.
@@ -206,8 +206,8 @@ class ForwardValueAndGrad(Cell):
             the input parameter.
 
     Inputs:
-        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
-        - **(\*sens)** - A sensitivity (gradient with respect to output) as the input of backpropagation.
+        - **(\*inputs)** (Tuple(Tensor...)) - Tuple of inputs with shape :math:`(N, \ldots)`.
+        - **(sens)** - A sensitivity (gradient with respect to output) as the input of backpropagation.
             If network has single output, the sens is a tensor.
             If network has multiple outputs, the sens is the tuple(tensor).
 
@@ -216,37 +216,33 @@ class ForwardValueAndGrad(Cell):
         - **gradients** (tuple(tensor)) - The gradients of network parameters and inputs.
 
     Supported Platforms:
-        ``Ascend`` ``GPU````CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> inputs = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32))
-        >>> labels = Tensor(np.ones([32]).astype(np.int32))
+        >>> class Net(nn.Cell):
+        ...    def __init__(self):
+        ...        super(Net, self).__init__()
+        ...        self.weight = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="weight")
+        ...        self.matmul = P.MatMul()
+        ...
+        ...    def construct(self, x):
+        ...        out = self.matmul(x, self.weight)
+        ...        return x
+        ...
         >>> net = Net()
-        >>> weights = ParameterTuple(filter(lambda x: x.requires_grad, net.get_parameters()))
-        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
-        >>> #1) Using the WithLossCell existing provide
-        >>> loss_net = nn.WithLossCell(net, loss_fn)
-        >>> forward_value_and_grad = nn.ForwardValueAndGrad(loss_net, weights=weights, get_by_list=True)
-        >>> loss, grads = forward_value_and_grad(inputs, labels)
-        >>>
-        >>> #2) Using user-defined WithLossCell
-        >>> class MyWithLossCell(Cell):
-        ...    def __init__(self, backbone, loss_fn):
-        ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
-        ...        self._backbone = backbone
-        ...        self._loss_fn = loss_fn
-        ...
-        ...    def construct(self, x, y, label):
-        ...        out = self._backbone(x, y)
-        ...        return self._loss_fn(out, label)
-        ...
-        ...    @property
-        ...    def backbone_network(self):
-        ...        return self._backbone
-        ...
-        >>> loss_net = MyWithLossCell(net, loss_fn)
-        >>> forward_value_and_grad = nn.ForwardValueAndGrad(loss_net, weights=weights, get_by_list=True)
-        >>> loss, grads = forward_value_and_grad(inputs, labels)
+        >>> criterion = nn.SoftmaxCrossEntropyWithLogits()
+        >>> net_with_criterion = WithLossCell(net, criterion)
+        >>> weight = ParameterTuple(net.trainable_params())
+        >>> train_network = nn.ForwardValueAndGrad(net_with_criterion, weights=weight, get_all=True, get_by_list=True)
+        >>> inputs = Tensor(np.ones([1, 2]).astype(np.float32))
+        >>> labels = Tensor(np.zeros([1, 2]).astype(np.float32))
+        >>> result = train_network(inputs, labels)
+        >>> print(result)
+        (Tensor(shape=[1], dtype=Float32, value=[0]), ((Tensor(shape=[1, 2], dtype=Float32, value=
+        [[0.5, 0.5]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[0, 0]])), (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[0, 0],
+         [0, 0]]),)))
     """
 
     def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False):
