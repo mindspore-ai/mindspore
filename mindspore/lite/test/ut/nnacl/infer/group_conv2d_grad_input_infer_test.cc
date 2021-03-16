@@ -30,6 +30,9 @@ TEST_F(GroupConv2dGradInputInferTest, GroupConv2dGradInputInferTest0) {
   inputs[1] = new TensorC;
   inputs[0]->data_type_ = kNumberTypeInt32;
   inputs[0]->format_ = Format_NHWC;
+  inputs[0]->shape_size_ = 2;
+  inputs[0]->shape_[0] = 4;
+  inputs[0]->shape_[1] = 3;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConvParameter *parameter = new ConvParameter;

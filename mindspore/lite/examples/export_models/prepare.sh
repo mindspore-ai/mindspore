@@ -2,9 +2,10 @@
 
 display_usage()
 {
-  echo "Usage: prepare.sh [-d mindspore_docker] [-i]"
+  echo "Usage: prepare.sh [-d mindspore_docker] [-c model_config_file] [-i]"
   echo "Options:"
   echo "    -d docker where mindspore is installed. If no docker is provided script will use local python"
+  echo "    -c network configuration file. default is models_train.cfg"
   echo "    -i create input and output files"
 
 }
@@ -13,9 +14,13 @@ checkopts()
 {
   DOCKER=""
   TRAIN_IO=""
-  while getopts 'd:r:i' opt
+  CONFIG_FILE="models_train.cfg"
+  while getopts 'c:d:i' opt
   do
     case "${opt}" in
+      c)
+        CONFIG_FILE=$OPTARG
+        ;;
       d)
         DOCKER=$OPTARG
         ;;
@@ -78,7 +83,7 @@ while read line; do
     else
       export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
     fi
-done < models_train.cfg
+done < ${CONFIG_FILE}
 
 Print_Result ${export_result_file}
 rm ${export_result_file}

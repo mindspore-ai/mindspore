@@ -148,7 +148,7 @@ int TrainSession::CompileTrainGraph(mindspore::lite::TrainModel *model) {
   }
   orig_output_node_map_ = output_node_map_;
   orig_output_tensor_map_ = output_tensor_map_;
-
+  orig_output_tensor_names_ = output_tensor_names_;
   for (auto inTensor : inputs_) inTensor->MutableData();
   RestoreOps(restore);
   CompileTrainKernels();      // Prepare a list of train kernels
@@ -246,7 +246,7 @@ int TrainSession::Train() {
   // set train outputs
   output_node_map_ = train_output_node_map_;
   output_tensor_map_ = train_output_tensor_map_;
-
+  output_tensor_names_ = train_output_tensor_names_;
   return RET_OK;
 }
 
@@ -265,12 +265,14 @@ int TrainSession::Eval() {
   // set eval outputs
   output_node_map_ = eval_output_node_map_;
   output_tensor_map_ = eval_output_tensor_map_;
+  output_tensor_names_ = eval_output_tensor_names_;
   return RET_OK;
 }
 
 void TrainSession::CompileEvalOutputs() {
   eval_output_node_map_.clear();
   eval_output_tensor_map_.clear();
+  eval_output_tensor_names_.clear();
   for (auto kernel : this->train_kernels_) {
     if (IsLossKernel(kernel) && !(IsGradKernel(kernel))) {
       for (auto in_kernel : kernel->in_kernels()) {
@@ -283,6 +285,11 @@ void TrainSession::CompileEvalOutputs() {
             auto index = TSFindTensor(tensors_, ms_tensor);
             if (index != tensors_.size()) {
               eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+              if (!ms_tensor->tensor_name().empty()) {
+                eval_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
+              } else {
+                eval_output_tensor_names_.emplace_back(std::to_string(index));
+              }
             }
           }
         }
@@ -291,11 +298,13 @@ void TrainSession::CompileEvalOutputs() {
   }
   if (eval_output_node_map_.size() == 0) eval_output_node_map_ = orig_output_node_map_;
   if (eval_output_tensor_map_.size() == 0) eval_output_tensor_map_ = orig_output_tensor_map_;
+  if (eval_output_tensor_names_.size() == 0) eval_output_tensor_names_ = orig_output_tensor_names_;
 }
 
 void TrainSession::CompileTrainOutputs() {
   train_output_node_map_.clear();
   train_output_tensor_map_.clear();
+  train_output_tensor_names_.clear();
   for (auto kernel : this->train_kernels_) {
     if (orig_output_node_map_.find(kernel->name()) == orig_output_node_map_.end()) continue;
     // Mask out optimizer out tensors
@@ -308,12 +317,18 @@ void TrainSession::CompileTrainOutputs() {
         auto index = TSFindTensor(tensors_, ms_tensor);
         if (index != tensors_.size()) {
           train_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+          if (!ms_tensor->tensor_name().empty()) {
+            train_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
+          } else {
+            train_output_tensor_names_.emplace_back(std::to_string(index));
+          }
         }
       }
     }
   }
   if (train_output_node_map_.size() == 0) train_output_node_map_ = orig_output_node_map_;
   if (train_output_tensor_map_.size() == 0) train_output_tensor_map_ = orig_output_tensor_map_;
+  if (train_output_tensor_names_.size() == 0) train_output_tensor_names_ = orig_output_tensor_names_;
 }
 
 void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {
@@ -340,6 +355,7 @@ void TrainSession::CompileTrainKernels() {
 }
 
 void TrainSession::CompileInferenceKernels() {
+  inference_kernels_.clear();
   for (auto item : eval_output_node_map_) {
     std::string kernel_name = item.first;
     auto kernel = TSFindKernel(train_kernels_, kernel_name);
@@ -351,17 +367,17 @@ void TrainSession::CompileInferenceKernels() {
 }
 
 void TrainSession::CompileOptimizedKernels() {
-  std::vector<lite::Tensor *> ot;
+  std::vector<lite::Tensor *> out_tensor;
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
-      std::copy(kernel->in_tensors().begin(), kernel->in_tensors().end(), std::back_inserter(ot));
+      std::copy(kernel->in_tensors().begin(), kernel->in_tensors().end(), std::back_inserter(out_tensor));
     }
   }
 
   for (auto kernel : this->train_kernels_) {
     if (!IsOptimizer(kernel)) {
       for (auto it : kernel->in_tensors()) {
-        if (std::find(ot.begin(), ot.end(), it) != ot.end()) {
+        if (std::find(out_tensor.begin(), out_tensor.end(), it) != out_tensor.end()) {
           kernel->set_trainable(true);
           break;
         }
@@ -394,7 +410,7 @@ float TrainSession::GetLearningRate() {
   return 0.0;
 }
 
-int TrainSession::SetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum) {
+int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum) {
   auto mod = (virtual_batch_multiplier <= 1) ? kernel::OptimizerKernel::WeightUpdateMode::NORMAL
                                              : kernel::OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH;
   virtual_batch_multiplier_ = (virtual_batch_multiplier <= 1) ? 0 : virtual_batch_multiplier;
@@ -436,6 +452,13 @@ int TrainSession::SetupVirtualBatch(int virtual_batch_multiplier, float lr, floa
     }
   }
   return RET_OK;
+}
+int TrainSession::SetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum) {
+  int tmp = (virtual_batch_multiplier <= 1) ? 0 : virtual_batch_multiplier;
+  if (tmp != 0 && virtual_batch_multiplier_ != 0) {
+    AdminSetupVirtualBatch(0, lr, momentum);
+  }
+  return AdminSetupVirtualBatch(virtual_batch_multiplier, lr, momentum);
 }
 
 int TrainSession::OptimizerStep() {
@@ -480,6 +503,17 @@ bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
           (kernel->Type() == schema::PrimitiveType_FusedBatchNorm));
 }
 
+int TrainSession::SetLossName(std::string loss_name) {
+  session::TrainSession::SetLossName(loss_name);
+  CompileEvalOutputs();
+  CompileInferenceKernels();
+  if (IsEval()) {
+    output_node_map_ = eval_output_node_map_;
+    output_tensor_map_ = eval_output_tensor_map_;
+    output_tensor_names_ = eval_output_tensor_names_;
+  }
+  return RET_OK;
+}
 }  // namespace lite
 
 session::TrainSession *session::TrainSession::CreateSession(const char *model_buf, size_t size, lite::Context *context,

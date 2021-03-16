@@ -59,6 +59,9 @@ class NetRunner {
   unsigned int epochs_ = 10;
   bool verbose_ = false;
   int save_checkpoint_ = 0;
+  int batch_size_ = 32;
+  int h_ = 32;
+  int w_ = 32;
 };
 
 #endif  // MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_NET_RUNNER_H_

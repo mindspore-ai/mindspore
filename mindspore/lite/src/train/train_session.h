@@ -62,6 +62,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   int SetLearningRate(float learning_rate) override;
   float GetLearningRate() override;
   int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) override;
+  int SetLossName(std::string loss_name) override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }
   std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
@@ -110,18 +111,22 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   TrainModel *model_ = nullptr;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
+  std::vector<std::string> orig_output_tensor_names_;
 
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> eval_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> eval_output_tensor_map_;
+  std::vector<std::string> eval_output_tensor_names_;
 
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> train_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> train_output_tensor_map_;
+  std::vector<std::string> train_output_tensor_names_;
 
   std::vector<kernel::LiteKernel *> inference_kernels_;
   std::vector<kernel::LiteKernel *> train_kernels_;
 
  private:
   void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
+  int AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
   int OptimizerStep();
   int virtual_batch_idx_ = 0;
   int virtual_batch_multiplier_ = 0;
