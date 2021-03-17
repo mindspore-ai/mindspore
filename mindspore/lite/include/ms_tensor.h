@@ -100,6 +100,10 @@ struct CallBackParam {
   std::string node_type; /**< node type argument */
 };
 
+struct GPUCallBackParam : CallBackParam {
+  double execute_time{-1.f};
+};
+
 /// \brief KernelCallBack defined the function pointer for callBack.
 using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
                                           std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;

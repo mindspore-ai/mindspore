@@ -195,7 +195,7 @@ class OpenCLKernel : public LiteKernel {
   lite::opencl::MemType GetMemType() { return out_mem_type_; }
   void SetMemType(lite::opencl::MemType mem_type) { out_mem_type_ = mem_type; }
   OpParameter *GetParameter() { return op_parameter_; }
-  double GetProfilingTimeMs();
+  virtual double GetProfilingTimeMs();
   int DequantWeight();
   void FreeDequantedWeight();
   virtual int InferShape();

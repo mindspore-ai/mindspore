@@ -163,6 +163,8 @@ class MS_API Benchmark {
                                      int *total_size);
 
   int InitCallbackParameter();
+  int InitTimeProfilingCallbackParameter();
+  int InitPerfProfilingCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 

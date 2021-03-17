@@ -198,12 +198,29 @@ int WinogradOpenCLKernel::Run() {
   ocl_runtime_->RunKernel(kernel_4x4to36_, global_4x4to36_, local_4x4to36_, nullptr, &event_);
 
   MS_LOG(DEBUG) << "winograd kernel1 Running!";
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &kernel2_event_);
 
   MS_LOG(DEBUG) << "winograd kernel2 Running!";
   ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_36to4x4_, global_36to4x4_, local_36to4x4_, nullptr, &event_);
+  ocl_runtime_->RunKernel(kernel_36to4x4_, global_36to4x4_, local_36to4x4_, nullptr, &kernel3_event_);
   return RET_OK;
 }
 
+double WinogradOpenCLKernel::GetProfilingTimeMs() {
+  if (!ocl_runtime_->isProfiling()) {
+    return MAX_PROFILING_TIME_MILLI_SECOND;
+  }
+  cl_ulong time_start;
+  cl_ulong time_end;
+  event_.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+  event_.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+  cl_ulong time_ns = time_end - time_start;
+  kernel2_event_.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+  kernel2_event_.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+  time_ns += time_end - time_start;
+  kernel3_event_.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+  kernel3_event_.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+  time_ns += time_end - time_start;
+  return static_cast<double>(time_ns) * 1e-6;
+}
 }  // namespace mindspore::kernel
