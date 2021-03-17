@@ -18,23 +18,59 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(ApplyAdagrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      AdagradGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(ApplyAdagrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      AdagradGpuKernel, half)
+MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        AdagradGpuKernel, float, float, float)
+MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        AdagradGpuKernel, half, half, half)
+MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        AdagradGpuKernel, half, float, half)
+MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        AdagradGpuKernel, float, float, half)
+MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        AdagradGpuKernel, float, half, float)
+MS_REG_GPU_KERNEL_THREE(ApplyAdagrad,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        AdagradGpuKernel, half, float, float)
 }  // namespace kernel
 }  // namespace mindspore

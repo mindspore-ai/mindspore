@@ -18,13 +18,15 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAGRAD_IMPL_H_
 
 #include "runtime/device/gpu/cuda_common.h"
-template <typename T>
+template <typename T, typename S, typename G>
 void ApplyAdagrad(const size_t size,
                   const bool update_slots,
-                  const T *learning_rate,
-                  const T *gradient,
+                  const S *learning_rate,
+                  const G *gradient,
                   T *variable,
                   T *accumulation,
+                  T *variable_out,
+                  T *accumulation_out,
                   cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAGRAD_IMPL_H_
