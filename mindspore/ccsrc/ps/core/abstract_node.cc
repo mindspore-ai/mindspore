@@ -50,6 +50,9 @@ void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const 
                       << " is not match the current node id:" << node_info_.node_id_;
   }
 
+  if (register_resp_message.rank_id() < 0) {
+    MS_LOG(EXCEPTION) << "The rank id is wrong.";
+  }
   node_info_.rank_id_ = register_resp_message.rank_id();
 
   MS_LOG(INFO) << "The node id is:" << node_info_.node_id_ << ", and the rank id is:" << node_info_.rank_id_
