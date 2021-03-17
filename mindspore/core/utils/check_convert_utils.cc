@@ -184,9 +184,8 @@ AttrConverterPair CheckAndConvertUtils::GetAttrConvertPair(const std::string &op
   if (op_attr_map_it == PrimAttrConvertMap.end()) {
     return attr_pair;
   }
-  auto op_attr_map = op_attr_map_it->second;
-  auto attr_pair_it = op_attr_map.find(attr_name);
-  if (attr_pair_it == op_attr_map.end()) {
+  auto attr_pair_it = op_attr_map_it->second.find(attr_name);
+  if (attr_pair_it == op_attr_map_it->second.end()) {
     return attr_pair;
   }
 
