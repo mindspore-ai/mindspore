@@ -430,7 +430,7 @@ void IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
       mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
       attr_proto->set_name(attr.first);
       auto attr_value = attr.second;
-      CheckAndConvertUtils::ConvertAttrValueToString(type_name, attr.first, &attr_value);
+      CheckAndConvertUtils::ConvertAttrValueInExport(type_name, attr.first, &attr_value);
       SetValueToAttributeProto(attr_value, attr_proto);
     }
   } else {
