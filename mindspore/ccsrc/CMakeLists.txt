@@ -355,7 +355,7 @@ if(ENABLE_D)
     set(MINDSPORE_RPATH
         ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 elseif(ENABLE_GPU)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/cuda/lib64)
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:${CUDA_PATH}/lib64)
 endif()
 set(MINDSPORE_RPATH ${ORIGIN_PATH}/lib:${MINDSPORE_RPATH})
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
