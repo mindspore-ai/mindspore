@@ -6140,10 +6140,10 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         >>> output = net(grad, indices)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.09999990e+00,  5.199999981e+00],
-         [ 0.00000000e+00,  1.000000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.00000000e+00,  1.000000000e+00],
-         [ 1.00000000e+00,  1.000000000e+00]]))
+        [[ 2.09999990e+00,  5.19999981e+00],
+         [ 0.00000000e+00,  1.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00,  1.00000000e+00],
+         [ 1.00000000e+00,  1.00000000e+00]]))
     """
 
     __mindspore_signature__ = (
