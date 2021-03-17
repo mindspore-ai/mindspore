@@ -227,8 +227,9 @@ class Primitive(Primitive_):
         pass, we will recompute it in backward pass.
 
         Note:
+
             - If the computation involves something like randomization or global variable, the equivalence
-            is not guaranteed currently.
+              is not guaranteed currently.
 
         Args:
             mode (bool): Specifies whether the primitive is recomputed. Default: True.
