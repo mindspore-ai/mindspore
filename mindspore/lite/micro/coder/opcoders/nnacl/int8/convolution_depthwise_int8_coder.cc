@@ -22,8 +22,6 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "nnacl/int8/conv_depthwise_int8.h"
 
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
-
 namespace mindspore::lite::micro {
 
 int ConvolutionDepthwiseINT8Coder::Prepare(CoderContext *const context) {
@@ -105,6 +103,4 @@ int ConvolutionDepthwiseINT8Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_DepthwiseConv2D,
-                   CPUOpCoderCreator<ConvolutionDepthwiseINT8Coder>)
 }  // namespace mindspore::lite::micro

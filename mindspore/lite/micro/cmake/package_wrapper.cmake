@@ -7,7 +7,9 @@ set(RUNTIME_SRC
         )
 
 set(WRAPPER_SRC
+        ${WRAPPER_DIR}/base/common_wrapper.c
         ${WRAPPER_DIR}/base/detection_post_process_base_wrapper.c
+        ${WRAPPER_DIR}/base/optimize_handler_wrapper.c
         ${WRAPPER_DIR}/fp32/matmul_fp32_wrapper.c
         ${WRAPPER_DIR}/int8/matmul_int8_wrapper.c
         ${WRAPPER_DIR}/int8/add_int8_wrapper.c
