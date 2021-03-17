@@ -338,7 +338,9 @@ std::set<size_t> OpenCLKernel::GenerateLocalByGlobal(size_t global_i) {
   std::set<size_t> local_ = {};
   int index = 1;
   while (index <= global_i) {
-    local_.insert(index);
+    if (global_i % index == 0) {
+      local_.insert(index);
+    }
     index *= 2;
   }
   for (size_t i = 1; i <= 16; i++) {
