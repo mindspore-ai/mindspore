@@ -137,6 +137,8 @@ class Range(Cell):
 
     def __init__(self, start, limit=None, delta=1):
         super(Range, self).__init__()
+        if delta == 0:
+            raise ValueError("The input of `delta` can not be equal to zero.")
         data = np.arange(start, limit, delta)
         if data.dtype == np.float:
             self.ms_dtype = mstype.float32
