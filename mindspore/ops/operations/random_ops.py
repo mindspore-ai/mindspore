@@ -529,9 +529,11 @@ class Multinomial(PrimitiveWithInfer):
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
+
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
         seed2 (int): Random seed2, must be non-negative. Default: 0.
+
     Inputs:
         - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
           dimensions.

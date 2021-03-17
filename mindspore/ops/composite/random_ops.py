@@ -192,6 +192,12 @@ def gamma(shape, alpha, beta, seed=None):
         of `alpha` and `beta`.
         The dtype is float32.
 
+    Raises:
+        TypeError: If `shape` is not a tuple.
+        TypeError: If neither `alpha` nor `beta` is a Tensor.
+        TypeError: If `seed` is not an int.
+        TypeError: If dtype of `alpha` and `beta` is not float32.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -227,6 +233,11 @@ def poisson(shape, mean, seed=None):
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input "shape" and shapes of `mean`.
         The dtype is float32.
+
+    Raises:
+        TypeError: If `shape` is not a tuple.
+        TypeError: If `mean` is not a Tensor whose dtype is not float32.
+        TypeError: If `seed` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -265,6 +276,11 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
     Outputs:
         Tensor, has the same rows with input. The number of sampled indices of each row is `num_samples`.
         The dtype is float32.
+
+    Raises:
+        TypeError: If `inputs` is not a Tensor whose dtype is not float32.
+        TypeError: If `num_sample` is not an int.
+        TypeError: If `seed` is neither an int nor a optional.
 
     Supported Platforms:
         ``GPU``

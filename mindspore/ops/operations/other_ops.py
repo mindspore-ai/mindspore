@@ -38,6 +38,10 @@ class Assign(PrimitiveWithCheck):
     Outputs:
         Tensor, has the same type as original `variable`.
 
+    Raises:
+        TypeError: If `variable` is not a Parameter.
+        TypeError: If `value` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -629,6 +633,9 @@ class PopulationCount(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same shape as the input.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
