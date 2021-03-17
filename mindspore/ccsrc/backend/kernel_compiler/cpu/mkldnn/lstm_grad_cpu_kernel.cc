@@ -23,6 +23,12 @@
 namespace mindspore {
 namespace kernel {
 const int kMaxLSTMLayer = 100;
+const int kInputWorkSpaceIndex = 10;
+void LSTMGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
+}
+
 void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   using tag = dnnl::memory::format_tag;
@@ -61,6 +67,7 @@ void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     dst_h_desc, dst_c_desc);
   prim_backward_desc_ = dnnl::lstm_backward::primitive_desc(*backward_desc, eng, prim_forward_desc);
   primitive_ = std::make_shared<dnnl::lstm_backward>(prim_backward_desc_);
+  reserve_size_ = static_cast<size_t>(prim_forward_desc.workspace_desc().get_size());
   AddArgument(DNNL_ARG_WORKSPACE, prim_forward_desc.workspace_desc());
   AddArgumentOp(src_desc, src_h_desc, src_c_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
 }

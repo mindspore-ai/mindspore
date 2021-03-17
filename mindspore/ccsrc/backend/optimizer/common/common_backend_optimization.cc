@@ -24,6 +24,7 @@
 #include "backend/optimizer/pass/const_to_attr_strided_slice_grad.h"
 #include "backend/optimizer/pass/convert_const_scalar_to_tensor.h"
 #include "backend/optimizer/pass/convert_attr_to_unify_mindir.h"
+#include "backend/optimizer/pass/add_training_attr.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -48,6 +49,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
+  common_pm->AddPass(std::make_shared<AddTrainingAttr>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
