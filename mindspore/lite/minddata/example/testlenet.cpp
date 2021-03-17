@@ -33,13 +33,13 @@
 using mindspore::dataset::Dataset;
 using mindspore::dataset::Iterator;
 using mindspore::dataset::Mnist;
-using mindspore::dataset::TensorOperation;
+using mindspore::dataset::TensorTransform;
 
 int main(int argc, char **argv) {
   std::string folder_path = "./testMnistData/";
   std::shared_ptr<Dataset> ds = Mnist(folder_path, "all");
 
-  std::shared_ptr<TensorOperation> resize = mindspore::dataset::vision::Resize({32, 32});
+  std::shared_ptr<TensorTransform> resize(new mindspore::dataset::vision::Resize({32, 32}));
   ds = ds->Map({resize});
 
   ds = ds->Shuffle(2);

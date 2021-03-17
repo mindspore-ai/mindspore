@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "include/api/status.h"
 #include "include/constants.h"
 #include "include/transforms.h"
 
@@ -36,7 +37,7 @@ class RotateOperation;
 
 /// \brief Affine TensorTransform.
 /// \notes Apply affine transform on input image.
-class Affine : public TensorTransform {
+class Affine final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees The degrees to rotate the image by
@@ -64,9 +65,10 @@ class Affine : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
+
 /// \brief CenterCrop TensorTransform.
 /// \notes Crops the input image at the center to the given size.
-class CenterCrop : public TensorTransform {
+class CenterCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -77,6 +79,7 @@ class CenterCrop : public TensorTransform {
   /// \brief Destructor.
   ~CenterCrop() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -106,7 +109,7 @@ class RGB2GRAY : public TensorTransform {
 
 /// \brief Crop TensorTransform.
 /// \notes Crop an image based on location and crop size
-class Crop : public TensorTransform {
+class Crop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
@@ -118,6 +121,7 @@ class Crop : public TensorTransform {
   /// \brief Destructor.
   ~Crop() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -129,7 +133,7 @@ class Crop : public TensorTransform {
 
 /// \brief Decode TensorTransform.
 /// \notes Decode the input image in RGB mode.
-class Decode : public TensorTransform {
+class Decode final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] rgb A boolean of whether to decode in RGB mode or not.
@@ -138,6 +142,7 @@ class Decode : public TensorTransform {
   /// \brief Destructor.
   ~Decode() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -151,7 +156,7 @@ class Decode : public TensorTransform {
 
 /// \brief Normalize TensorTransform.
 /// \notes Normalize the input image with respect to mean and standard deviation.
-class Normalize : public TensorTransform {
+class Normalize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
@@ -163,16 +168,21 @@ class Normalize : public TensorTransform {
   /// \brief Destructor.
   ~Normalize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
   struct Data;
   std::shared_ptr<Data> data_;
 };
 
-class RandomAffine : public TensorTransform {
+/// \brief RandomAffine TensorTransform.
+/// \notes Applies a Random Affine transformation on input image in RGB or Greyscale mode.
+class RandomAffine final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degree
@@ -210,7 +220,7 @@ class RandomAffine : public TensorTransform {
 
 /// \brief Resize TensorTransform.
 /// \notes Resize the input image to the given size.
-class Resize : public TensorTransform {
+class Resize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -222,6 +232,7 @@ class Resize : public TensorTransform {
   /// \brief Destructor.
   ~Resize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -235,7 +246,7 @@ class Resize : public TensorTransform {
 
 /// \brief Rotate TensorTransform.
 /// \notes Rotate the input image using a specified angle id.
-class Rotate : public TensorTransform {
+class Rotate final : public TensorTransform {
  public:
   /// \brief Constructor.
   Rotate();
@@ -243,6 +254,7 @@ class Rotate : public TensorTransform {
   /// \brief Destructor.
   ~Rotate() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "include/constants.h"
@@ -29,10 +31,32 @@ namespace dataset {
 
 class TensorOperation;
 
+// We need the following two groups of forward declaration to friend the class in class TensorTransform.
+namespace transforms {
+class Compose;
+class RandomApply;
+class RandomChoice;
+}  // namespace transforms
+
+namespace vision {
+class BoundingBoxAugment;
+class RandomSelectSubpolicy;
+class UniformAugment;
+}  // namespace vision
+
 // Abstract class to represent a tensor transform operation in the data pipeline.
 /// \class TensorTransform transforms.h
 /// \brief A base class to represent a tensor transform operation in the data pipeline.
 class TensorTransform : public std::enable_shared_from_this<TensorTransform> {
+  friend class Dataset;
+  friend class Execute;
+  friend class transforms::Compose;
+  friend class transforms::RandomApply;
+  friend class transforms::RandomChoice;
+  friend class vision::BoundingBoxAugment;
+  friend class vision::RandomSelectSubpolicy;
+  friend class vision::UniformAugment;
+
  public:
   /// \brief Constructor
   TensorTransform() {}
@@ -40,6 +64,7 @@ class TensorTransform : public std::enable_shared_from_this<TensorTransform> {
   /// \brief Destructor
   ~TensorTransform() = default;
 
+ protected:
   /// \brief Pure virtual function to convert a TensorTransform class into a IR TensorOperation object.
   /// \return shared pointer to the newly created TensorOperation.
   virtual std::shared_ptr<TensorOperation> Parse() = 0;
@@ -55,17 +80,22 @@ namespace transforms {
 
 /// \brief Compose Op.
 /// \notes Compose a list of transforms into a single transform.
-class Compose : public TensorTransform {
+class Compose final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] transforms A vector of transformations to be applied.
+  /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
   explicit Compose(const std::vector<TensorTransform *> &transforms);
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
   explicit Compose(const std::vector<std::shared_ptr<TensorTransform>> &transforms);
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of TensorTransform objects to be applied.
   explicit Compose(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
 
   /// \brief Destructor
   ~Compose() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -78,7 +108,7 @@ class Compose : public TensorTransform {
 /// \brief Duplicate Op.
 /// \notes Duplicate the input tensor to a new output tensor.
 ///     The input tensor is carried over to the output list.
-class Duplicate : public TensorTransform {
+class Duplicate final : public TensorTransform {
  public:
   /// \brief Constructor.
   Duplicate();
@@ -86,6 +116,7 @@ class Duplicate : public TensorTransform {
   /// \brief Destructor
   ~Duplicate() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -93,7 +124,7 @@ class Duplicate : public TensorTransform {
 
 /// \brief OneHot Op.
 /// \notes Convert the labels into OneHot format.
-class OneHot : public TensorTransform {
+class OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_classes number of classes.
@@ -102,6 +133,7 @@ class OneHot : public TensorTransform {
   /// \brief Destructor
   ~OneHot() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -113,18 +145,25 @@ class OneHot : public TensorTransform {
 
 /// \brief RandomApply Op.
 /// \notes Randomly perform a series of transforms with a given probability.
-class RandomApply : public TensorTransform {
+class RandomApply final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] transforms A vector of transformations to be applied.
+  /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
   /// \param[in] prob The probability to apply the transformation list (default=0.5)
   explicit RandomApply(const std::vector<TensorTransform *> &transforms, double prob = 0.5);
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
+  /// \param[in] prob The probability to apply the transformation list (default=0.5)
   explicit RandomApply(const std::vector<std::shared_ptr<TensorTransform>> &transforms, double prob = 0.5);
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of TensorTransform objects to be applied.
+  /// \param[in] prob The probability to apply the transformation list (default=0.5)
   explicit RandomApply(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, double prob = 0.5);
 
   /// \brief Destructor
   ~RandomApply() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -136,17 +175,22 @@ class RandomApply : public TensorTransform {
 
 /// \brief RandomChoice Op.
 /// \notes Randomly selects one transform from a list of transforms to perform operation.
-class RandomChoice : public TensorTransform {
+class RandomChoice final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] transforms A vector of transformations to be chosen from to apply.
+  /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
   explicit RandomChoice(const std::vector<TensorTransform *> &transforms);
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
   explicit RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms);
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of TensorTransform objects to be applied.
   explicit RandomChoice(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
 
   /// \brief Destructor
   ~RandomChoice() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -158,7 +202,7 @@ class RandomChoice : public TensorTransform {
 
 /// \brief TypeCast Op.
 /// \notes Tensor operation to cast to a given MindSpore data type.
-class TypeCast : public TensorTransform {
+class TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type mindspore.dtype to be cast to.
@@ -169,6 +213,7 @@ class TypeCast : public TensorTransform {
   /// \brief Destructor
   ~TypeCast() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -181,7 +226,7 @@ class TypeCast : public TensorTransform {
 /// \brief Unique Op.
 /// \notes Return an output tensor containing all the unique elements of the input tensor in
 ///     the same order that they occur in the input tensor.
-class Unique : public TensorTransform {
+class Unique final : public TensorTransform {
  public:
   /// \brief Constructor.
   Unique();
@@ -189,6 +234,7 @@ class Unique : public TensorTransform {
   /// \brief Destructor
   ~Unique() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
