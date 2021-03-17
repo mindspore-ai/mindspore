@@ -1647,7 +1647,7 @@ bool GradExecutor::IsTopGraph(const std::string &cell_id) {
 
 bool GradExecutor::IsTopestGraph(const std::string &cell_id) {
   return std::any_of(top_cell_list_.begin(), top_cell_list_.end(), [&cell_id](const TopCellInfoPtr &value) {
-    return value->cell_id() == cell_id && value->is_topest();
+    return (value->cell_id() == cell_id || cell_id.find(value->cell_id()) != std::string::npos) && value->is_topest();
   });
 }
 
@@ -1764,7 +1764,7 @@ void GradExecutor::ClearResidualRes(const std::string &cell_id) {
     return;
   }
   auto is_real_dynamic = pre_top_cell_->is_real_dynamic();
-  if (is_real_dynamic) {
+  if (is_real_dynamic && cell_id == pre_top_cell_->cell_id()) {
     // Clear previous step resource
     auto resource = GetResource(cell_id);
     if (resource != nullptr && resource->results().find(pipeline::kBackend) != resource->results().end()) {
