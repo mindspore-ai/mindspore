@@ -65,7 +65,7 @@ function android_release_package()
         mkdir -p ${output_path}/release/android/
         mv ${src_inference_pkg_name} ${dst_pkg_name}
         # Copy java runtime to Android package
-        cp ${input_path}/aar/* ${dst_pkg_name}
+        cp ${input_path}/aar/mindspore-lite-*maven*.zip ${dst_pkg_name}
         tar -czf ${output_path}/release/android/${dst_pkg_name}.tar.gz ${dst_pkg_name}
         cd ${output_path}/release/android/
         sha256sum ${dst_pkg_name}.tar.gz > ${dst_pkg_name}.tar.gz.sha256
@@ -83,16 +83,20 @@ function linux_release_package()
 {
     src_inference_pkg_name="mindspore-lite-${version}-inference-linux-x64-avx"
     src_train_pkg_name="mindspore-lite-${version}-train-linux-x64"
+    src_jar_pkg_name="mindspore-lite-${version}-inference-linux-x64-jar"
     dst_pkg_name="mindspore-lite-${version}-linux-x64"
 
     rm -rf ${src_inference_pkg_name}
     rm -rf ${src_train_pkg_name}
+    rm -rf ${src_jar_pkg_name}
     rm -rf ${dst_pkg_name}
     tar -xzf ${input_path}/ubuntu_x86/${src_inference_pkg_name}.tar.gz
     tar -xzf ${input_path}/ubuntu_x86/${src_train_pkg_name}.tar.gz
+    tar -xzf ${input_path}/aar/${src_jar_pkg_name}.tar.gz
 
     cp -r ${src_train_pkg_name}/tools/benchmark_train/ ${src_inference_pkg_name}/tools/
     cp -r ${src_train_pkg_name}/train/ ${src_inference_pkg_name}/
+    cp -r ${src_jar_pkg_name}/jar/ ${src_inference_pkg_name}/inference/lib/
 
     mkdir -p ${output_path}/release/linux/
     mv ${src_inference_pkg_name} ${dst_pkg_name}
@@ -103,7 +107,9 @@ function linux_release_package()
 
     verify_every_file ${src_train_pkg_name}/tools/benchmark_train/ ${dst_pkg_name}
     verify_every_file ${src_train_pkg_name}/train/ ${dst_pkg_name}
+    verify_every_file ${src_jar_pkg_name}/ ${dst_pkg_name}
     rm -rf ${src_train_pkg_name}
+    rm -rf ${src_jar_pkg_name}
     rm -rf ${dst_pkg_name}
 }
 
