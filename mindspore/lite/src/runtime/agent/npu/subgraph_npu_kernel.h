@@ -38,6 +38,7 @@ class SubGraphNpuKernel : public SubGraphKernel {
                     const lite::InnerContext *ctx = nullptr, lite::NPUManager *npu_manager = nullptr)
       : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx), npu_manager_(npu_manager) {
     subgraph_type_ = kNpuSubGraph;
+    desc_.arch = kernel::KERNEL_ARCH::kNPU;
   }
 
   ~SubGraphNpuKernel() override;

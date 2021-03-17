@@ -50,6 +50,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
       return;
     }
     input_op_datas_.erase(op_uuid);
+    AsyncOutput(context);
     SetOutputData(context);
   }
   void Init() {
@@ -83,6 +84,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  private:
   void SetOutputData(OpContext<Tensor> *context);
+  void AsyncOutput(OpContext<Tensor> *context);
 
   kernel::LiteKernel *kernel_;
 };

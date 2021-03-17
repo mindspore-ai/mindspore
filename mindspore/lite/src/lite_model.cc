@@ -104,6 +104,12 @@ void LiteModel::Free() {
     tensor_buf = nullptr;
   }
   attr_tensor_bufs_.resize(0);
+
+  for (auto &node_buf : node_bufs_) {
+    free(node_buf);
+    node_buf = nullptr;
+  }
+  node_bufs_.resize(0);
 }
 
 void LiteModel::Destroy() {

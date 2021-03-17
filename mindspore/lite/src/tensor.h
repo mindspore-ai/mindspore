@@ -22,6 +22,7 @@
 #include <string>
 #include <numeric>
 #include <functional>
+#include <atomic>
 #include "include/ms_tensor.h"
 #include "src/runtime/allocator.h"
 
@@ -205,7 +206,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   std::vector<int> shape_;
   schema::Format format_;
   Category category_;
-  size_t ref_count_ = 0;
+  std::atomic_int ref_count_ = 0;
   size_t init_ref_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;

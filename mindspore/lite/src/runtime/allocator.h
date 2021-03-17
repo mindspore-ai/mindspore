@@ -70,7 +70,7 @@ class DefaultAllocator : public Allocator {
   std::multimap<size_t, MemBuf *> freeList_;
   // 6 is empirical value
   int shiftFactor_ = 6;
-  bool lockFlag_ = false;
+  bool lockFlag_ = true;
 };
 
 constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;

@@ -34,6 +34,7 @@ class OpenCLSubGraph : public SubGraphKernel {
       : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
     subgraph_type_ = kGpuSubGraph;
+    desc_.arch = kernel::KERNEL_ARCH::kGPU;
     this->name_ = "GpuSubGraph";
     nodes_set_.insert(nodes.begin(), nodes.end());
     all_kernels_infer_done_ = std::all_of(nodes_.begin(), nodes_.end(), [](const kernel::LiteKernel *kernel) {

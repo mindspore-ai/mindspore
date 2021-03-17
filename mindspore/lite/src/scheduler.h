@@ -74,7 +74,8 @@ class Scheduler {
   static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
   // vector<LiteKernel/SubGraphKernel> --> vector<SubGraphKernel>
-  int ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels);
+  int ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel, std::vector<kernel::LiteKernel *> *dst_kernel,
+                         std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
 
   // create subgraph_kernel from a vector of kernel
   kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
