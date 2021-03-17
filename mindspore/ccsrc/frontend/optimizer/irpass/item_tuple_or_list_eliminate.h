@@ -360,7 +360,26 @@ class GetitemDependReorder : public AnfVisitor {
 
     auto fg = node->func_graph();
     auto item_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), x_, c_}, fg);
-    return NewCNode({NewValueNode(prim::kPrimDepend), item_node, y_}, fg);
+    auto depend_node = NewCNode({NewValueNode(prim::kPrimDepend), item_node, y_}, fg);
+    auto abs = x_->abstract();
+    if (abs == nullptr) {
+      return depend_node;
+    }
+    auto idx_value = GetValueNode<Int64ImmPtr>(c_);
+    MS_EXCEPTION_IF_NULL(idx_value);
+    int64_t idx = idx_value->value();
+    if (abs->isa<abstract::AbstractTuple>()) {
+      auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
+      if (LongToSize(idx) >= abs_tuple->elements().size() || idx < 0) {
+        MS_LOG(EXCEPTION) << "The idx value " << idx << " of tuple_getitem node " << c_->DebugString()
+                          << " is out of range.";
+      }
+      item_node->set_abstract(abs_tuple->elements()[idx]);
+    } else {
+      item_node->set_abstract(abs);
+    }
+    depend_node->set_abstract(item_node->abstract());
+    return depend_node;
   }
 
   void Visit(const CNodePtr &cnode) override {
