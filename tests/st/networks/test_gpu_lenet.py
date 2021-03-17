@@ -23,13 +23,14 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as CV
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
-from mindspore.nn import Dense, TrainOneStepCell, WithLossCell
+from mindspore.nn import Dense, TrainOneStepCell, WithLossCell, ForwardValueAndGrad
 from mindspore.nn.metrics import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor
 from mindspore.common.initializer import TruncatedNormal
@@ -204,3 +205,30 @@ def test_train_and_eval_lenet():
     ds_eval = create_dataset(os.path.join('/home/workspace/mindspore_dataset/mnist', "test"), 32, 1)
     acc = model.eval(ds_eval, dataset_sink_mode=True)
     print("============== {} ==============".format(acc))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_train_lenet_with_new_interface(num_classes=10, epoch=20, batch_size=32):
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    network = LeNet5(num_classes)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    net_with_criterion = WithLossCell(network, criterion)
+    net_with_criterion.set_train()
+
+    weights = ParameterTuple(network.trainable_params())
+    optimizer = nn.Momentum(weights, 0.1, 0.9)
+
+    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
+    losses = []
+    for i in range(0, epoch):
+        data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
+        label = Tensor(np.ones([batch_size]).astype(np.int32))
+        sens = Tensor(np.ones([1]).astype(np.float32))
+        loss, grads = train_network(data, label, sens)
+        grads = F.identity(grads)
+        optimizer(grads)
+        losses.append(loss)
+    assert losses[-1].asnumpy() < 0.008
+    assert losses[-1].asnumpy() > 0.001

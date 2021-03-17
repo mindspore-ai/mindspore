@@ -22,10 +22,10 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, ParameterTuple
+from mindspore import Tensor
 from mindspore import amp
 from mindspore.nn import Dense
-from mindspore.nn import TrainOneStepCell, WithLossCell, ForwardValueAndGrad
+from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.basic import Flatten
 from mindspore.nn.layer.conv import Conv2d
@@ -33,7 +33,6 @@ from mindspore.nn.layer.normalization import BatchNorm2d
 from mindspore.nn.layer.pooling import MaxPool2d
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 from mindspore.ops.operations import Add
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -400,29 +399,3 @@ def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
     assert (losses[-1][0].asnumpy() < 1)
     assert not losses[-1][1].asnumpy()
     assert (losses[-1][2].asnumpy() > 1)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_trainTensor_with_new_interface(num_classes=10, epoch=8, batch_size=1):
-    net = resnet50(num_classes)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    net_with_criterion = WithLossCell(net, criterion)
-    net_with_criterion.set_train()
-
-    weights = ParameterTuple(filter(lambda x: x.requires_grad, net.get_parameters()))
-    optimizer = Momentum(weights, 0.1, 0.9)
-
-    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
-    losses = []
-    for i in range(0, epoch):
-        data = Tensor(np.ones([batch_size, 3, 224, 224]
-                              ).astype(np.float32) * 0.01)
-        label = Tensor(np.ones([batch_size]).astype(np.int32))
-        sens = Tensor(np.ones([1]).astype(np.float32))
-        loss, grads = train_network(data, label, sens)
-        grads = F.identity(grads)
-        optimizer(grads)
-        losses.append(loss)
-    assert (losses[-1].asnumpy() < 0.8)
