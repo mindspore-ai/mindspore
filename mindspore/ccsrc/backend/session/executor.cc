@@ -336,7 +336,7 @@ void Executor::RunGraph(const SessionPtr &session, const GraphId &graph_id,
   RunTask(task, true, true);
 }
 
-void Executor::WaitTaskGraphAvailable(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task) {
+void Executor::WaitLockedInputs(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task) {
   bool need_lock = false;
   for (auto &tensor : task->input_tensors_) {
     if (tensor->NeedWait()) {
@@ -388,11 +388,13 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     RunTask(task, true, true);
     return;
   }
-  WaitTaskGraphAvailable(session, task);
-  if (!IsTaskReady(task)) {
+  WaitLockedInputs(session, task);
+  {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
-    pending_tasks_.push_back(task);
-    return;
+    if (!IsTaskReady(task)) {
+      pending_tasks_.push_back(task);
+      return;
+    }
   }
   RunTask(task, false);
 }
