@@ -137,10 +137,11 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_L2NormalizeFusion};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
-  schema::PrimitiveType_Eltwise,   schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
-  schema::PrimitiveType_PowFusion, schema::PrimitiveType_StridedSlice, schema::PrimitiveType_AddFusion,
-  schema::PrimitiveType_Split,     schema::PrimitiveType_SliceFusion,  schema::PrimitiveType_Crop,
-  schema::PrimitiveType_MulFusion, schema::PrimitiveType_Maximum,      schema::PrimitiveType_ActivationGrad};
+  schema::PrimitiveType_Eltwise,       schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
+  schema::PrimitiveType_PowFusion,     schema::PrimitiveType_StridedSlice, schema::PrimitiveType_AddFusion,
+  schema::PrimitiveType_AddN,          schema::PrimitiveType_Split,        schema::PrimitiveType_SliceFusion,
+  schema::PrimitiveType_Crop,          schema::PrimitiveType_MulFusion,    schema::PrimitiveType_Maximum,
+  schema::PrimitiveType_ActivationGrad};
 
 static const std::unordered_map<int, int> nc2NhAxisMap = {{0, 0}, {1, -1}, {2, 1}, {3, 2}};
 
