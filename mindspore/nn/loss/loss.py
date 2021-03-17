@@ -490,9 +490,9 @@ class MultiClassDiceLoss(_Loss):
 
     Inputs:
         - **y_pred** (Tensor) - Tensor of shape (N, C, ...). The y_pred dimension should be greater than 1. The data
-            type must be float16 or float32.
+          type must be float16 or float32.
         - **y** (Tensor) - Tensor of shape (N, C, ...). The y dimension should be greater than 1. The data type must be
-            float16 or float32.
+          loat16 or float32.
 
     Outputs:
         Tensor, a tensor of shape with the per-example sampled MultiClass Dice Losses.
