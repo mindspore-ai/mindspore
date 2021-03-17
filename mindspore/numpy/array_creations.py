@@ -168,7 +168,7 @@ def asfarray_const(a, dtype=mstype.float32):
         a = _deep_tensor_to_nparray(a)
         a = onp.asarray(a)
         if a.dtype is onp.dtype('object'):
-            raise TypeError(f"For Tensor conversion, the input_data is {a} that contains unsupported element.")
+            raise ValueError(f"For Tensor conversion, the input_data is {a} that contains unsupported element.")
         a = Tensor.from_numpy(a)
 
     return Tensor(a, dtype)
@@ -214,7 +214,7 @@ def asfarray(a, dtype=mstype.float32):
     if isinstance(a, Tensor):
         return a.astype(dtype)
 
-    return asfarray_const(a)
+    return asfarray_const(a, dtype)
 
 
 def copy_(a):

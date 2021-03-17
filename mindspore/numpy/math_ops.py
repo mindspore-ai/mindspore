@@ -109,9 +109,6 @@ def count_nonzero(x, axis=None, keepdims=False):
         Tensor, indicating number of non-zero values in the `x` along a given axis.
         Otherwise, the total number of non-zero values in `x` is returned.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -217,9 +214,6 @@ def rad2deg(x, dtype=None):
         Tensor, the corresponding angle in degrees. This is a tensor scalar if `x`
         is a tensor scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -254,9 +248,6 @@ def add(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the sum of `x1` and `x2`, element-wise. This is a scalar
         if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -297,9 +288,6 @@ def subtract(x1, x2, dtype=None):
         Tensor or scalar, the difference of `x1` and `x2`, element-wise. This is a
         scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -333,9 +321,6 @@ def multiply(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the product of `x1` and `x2`, element-wise. This is a scalar
         if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -380,9 +365,6 @@ def divide(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, this is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -422,9 +404,6 @@ def true_divide(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, this is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -461,9 +440,6 @@ def power(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the bases in `x1` raised to the exponents in `x2`. This
         is a scalar if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -507,9 +483,6 @@ def float_power(x1, x2, dtype=None):
         Tensor or scalar, the bases in `x1` raised to the exponents in `x2`. This
         is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -538,9 +511,7 @@ def minimum(x1, x2, dtype=None):
    Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        Unlike numpy, when one of the elements is a NaN, the second element is
-        always returned regardless of whether the second element is a NaN, instead
-        of returning NaN.
+        On Ascend, input arrays containing inf or NaN are not supported.
 
     Args:
         x1 (Tensor): first input tensor to be compared.
@@ -1166,9 +1137,6 @@ def square(x, dtype=None):
         Tensor or scalar, element-wise ``x*x``, of the same shape and dtype as `x`.
         This is a scalar if `x` is a scalar..
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1200,9 +1168,6 @@ def sqrt(x, dtype=None):
         Tensor or scalar, an array of the same shape as `x`, containing the positive
         square-root of each element in `x`. For negative elements, nan is returned.
         This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1242,9 +1207,6 @@ def reciprocal(x, dtype=None):
     Returns:
         Tensor or scalar, this is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1283,9 +1245,6 @@ def log(x, dtype=None):
         Tensor or scalar, the natural logarithm of `x`, element-wise. This is a
         scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1316,9 +1275,7 @@ def maximum(x1, x2, dtype=None):
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        Unlike numpy, when one of the elements is a NaN, the second element is
-        always returned regardless of whether the second element is a NaN, instead
-        of returning NaN.
+        On Ascend, input arrays containing inf or NaN are not supported.
 
     Args:
         x1 (Tensor): Input array
@@ -1331,9 +1288,6 @@ def maximum(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the maximum of `x1` and `x2`, element-wise. This is a scalar
         if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1384,9 +1338,6 @@ def heaviside(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the output array, element-wise Heaviside step function
         of `x1`. This is a scalar if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1562,9 +1513,6 @@ def hypot(x1, x2, dtype=None):
         Tensor or scalar, the hypotenuse of the triangle(s). This is a scalar if
         both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1614,9 +1562,6 @@ def floor(x, dtype=None):
         Tensor or scalar, the floor of each element in `x`. This is a scalar if `x`
         is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1647,9 +1592,6 @@ def floor_divide(x1, x2, dtype=None):
 
     Returns:
         Tensor or scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1708,9 +1650,6 @@ def remainder(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the element-wise remainder of the quotient
         ``floor_divide(x1, x2)``. This is a scalar if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1787,9 +1726,6 @@ def fmod(x1, x2, dtype=None):
         Tensor or scalar, the remainder of the division of `x1` by `x2`. This is a
         scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1821,9 +1757,6 @@ def trunc(x, dtype=None):
     Returns:
         Tensor or scalar, the truncated value of each element in `x`. This is a scalar if `x` is
         a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1859,9 +1792,6 @@ def exp(x, dtype=None):
         Tensor or scalar, element-wise exponential of `x`. This is a scalar if both
         `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1892,9 +1822,6 @@ def expm1(x, dtype=None):
     Returns:
         Tensor or scalar, element-wise exponential minus one, ``out = exp(x) - 1``.
         This is a scalar if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2117,6 +2044,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(6).reshape(2, 3)
         >>> output = np.trapz(a,  x=[-2, 1, 2], axis=1)
         >>> print(output)
@@ -2197,16 +2125,14 @@ def gcd(x1, x2, dtype=None):
         Tensor or scalar, the greatest common divisor of the absolute value of the inputs.
         This is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.gcd(np.arange(6), np.array(20))
         >>> print(output)
-       [20  1  2  1  4  5]
+        [20  1  2  1  4  5]
     """
     return _apply_tensor_op(_gcd, x1, x2, dtype=dtype)
 
@@ -2229,16 +2155,14 @@ def lcm(x1, x2, dtype=None):
         Tensor or scalar, the lowest common multiple of the absolute value of the inputs.
         This is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.lcm(np.arange(6), np.array(20))
         >>> print(output)
-       [ 0 20 20 60 20 20]
+        [ 0 20 20 60 20 20]
     """
     def _lcm(x1, x2):
         """Calculates lcm without applying keyword arguments"""
@@ -2290,7 +2214,7 @@ def convolve(a, v, mode='full'):
         >>> import mindspore.numpy as np
         >>> output = np.convolve([1., 2., 3., 4., 5.], [2., 3.], mode="valid")
         >>> print(output)
-       [ 3.  6.  9. 12.]
+        [ 3.  6.  9. 12.]
     """
     if not isinstance(a, Tensor):
         a = asarray_const(a)
@@ -2406,6 +2330,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.cov([[2., 3., 4., 5.], [0., 2., 3., 4.], [7., 8., 9., 10.]])
         >>> print(output)
         [[1.6666666 2.1666667 1.6666666]
@@ -2509,6 +2434,10 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     if dtype is None:
         dtype = F.dtype(a)
     axes = _check_axis_valid(axis, ndim)
+    if initial is not None:
+        if ((isinstance(initial, Tensor) and F.rank(initial) > 0) or
+                not isinstance(initial, (int, float, bool, Tensor))):
+            _raise_type_error('initial should be scalar')
 
     if _is_shape_empty(shape):
         if not axes:
@@ -2578,6 +2507,7 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, 1], [1, np.nan]])
         >>> output = np.nansum(a)
         >>> print(output)
@@ -2638,6 +2568,7 @@ def nanmean(a, axis=None, dtype=None, keepdims=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, np.nan], [3, 4]])
         >>> output = np.nanmean(a)
         >>> print(output)
@@ -2700,6 +2631,7 @@ def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, np.nan], [3, 4]])
         >>> output = np.nanstd(a)
         >>> print(output)
@@ -2752,6 +2684,7 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, np.nan], [3, 4]])
         >>> output = np.nanvar(a)
         >>> print(output)
@@ -2784,13 +2717,11 @@ def exp2(x, dtype=None):
     Returns:
         Tensor or scalar, element-wise 2 to the power `x`.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.array([2, 3]).astype(np.float32)
         >>> output = np.exp2(x)
         >>> print(output)
@@ -2817,6 +2748,7 @@ def kron(a, b):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.kron([1,10,100], [5,6,7])
         >>> print(output)
         [  5   6   7  50  60  70 500 600 700]
@@ -2885,6 +2817,7 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.array([[1,2,3], [4,5,6]])
         >>> y = np.array([[4,5,6], [1,2,3]])
         >>> output = np.cross(x, y)
@@ -2968,13 +2901,11 @@ def ceil(x, dtype=None):
     Returns:
         Tensor or scalar, the floor of each element in `x`. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
         >>> output = np.ceil(a)
         >>> print(output)
@@ -3086,6 +3017,7 @@ def cumsum(a, axis=None, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.cumsum(np.ones((3,3)), axis=0)
         >>> print(output)
         [[1. 1. 1.]
@@ -3141,6 +3073,7 @@ def nancumsum(a, axis=None, dtype=None):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, 2], [3, np.nan]])
         >>> output = np.nancumsum(a)
         >>> print(output)
@@ -3212,9 +3145,6 @@ def log1p(x, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3251,9 +3181,6 @@ def logaddexp(x1, x2, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3285,9 +3212,6 @@ def log2(x, dtype=None):
 
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3329,9 +3253,6 @@ def logaddexp2(x1, x2, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3363,9 +3284,6 @@ def log10(x, dtype=None):
 
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3407,9 +3325,6 @@ def sin(x, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3439,9 +3354,6 @@ def cos(x, dtype=None):
 
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3575,9 +3487,6 @@ def arctan(x, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3606,9 +3515,6 @@ def sinh(x, dtype=None):
 
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -3639,9 +3545,6 @@ def cosh(x, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -3670,9 +3573,6 @@ def tanh(x, dtype=None):
 
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3703,9 +3603,6 @@ def arcsinh(x, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3735,9 +3632,6 @@ def arccosh(x, dtype=None):
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3766,9 +3660,6 @@ def arctanh(x, dtype=None):
 
     Returns:
         Tensor or scalar. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -3800,9 +3691,6 @@ def arctan2(x1, x2, dtype=None):
     Returns:
         Tensor or scalar, the sum of `x1` and `x2`, element-wise. This is a scalar
         if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -29,7 +29,7 @@ from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
 class Cases():
     def __init__(self):
         self.all_shapes = [
-            0, 1, 2, (), (1,), (2,), (1, 2, 3), [], [1], [2], [1, 2, 3]
+            1, 2, (1,), (2,), (1, 2, 3), [1], [2], [1, 2, 3]
         ]
         self.onp_dtypes = [onp.int32, 'int32', int,
                            onp.float32, 'float32', float,
@@ -97,18 +97,12 @@ class Cases():
 
         self.mnp_prototypes = [
             mnp.ones((2, 3, 4)),
-            mnp.ones((0, 3, 0, 2, 5)),
-            onp.ones((2, 7, 0)),
-            onp.ones(()),
             [mnp.ones(3), (1, 2, 3), onp.ones(3), [4, 5, 6]],
             ([(1, 2), mnp.ones(2)], (onp.ones(2), [3, 4])),
         ]
 
         self.onp_prototypes = [
             onp.ones((2, 3, 4)),
-            onp.ones((0, 3, 0, 2, 5)),
-            onp.ones((2, 7, 0)),
-            onp.ones(()),
             [onp.ones(3), (1, 2, 3), onp.ones(3), [4, 5, 6]],
             ([(1, 2), onp.ones(2)], (onp.ones(2), [3, 4])),
         ]
@@ -794,23 +788,11 @@ def test_stack():
     for i in range(-4, 4):
         match_res(mnp.stack, onp.stack, arr, axis=i)
 
-    arr = rand_int(7, 4, 0, 3)
-    match_res(mnp.stack, onp.stack, arr)
-    for i in range(-4, 4):
-        match_res(mnp.stack, onp.stack, arr, axis=i)
-
     arrs = [rand_int(3, 4, 5) for i in range(10)]
     match_res(mnp.stack, onp.stack, arrs)
     match_res(mnp.stack, onp.stack, tuple(arrs))
     match_res(mnp_stack, onp_stack, *arrs)
     for i in range(-4, 4):
-        match_res(mnp.stack, onp.stack, arrs, axis=i)
-
-    arrs = [rand_int(3, 0, 5, 8, 0) for i in range(5)]
-    match_res(mnp.stack, onp.stack, arrs)
-    match_res(mnp.stack, onp.stack, tuple(arrs))
-    match_res(mnp_stack, onp_stack, *arrs)
-    for i in range(-6, 6):
         match_res(mnp.stack, onp.stack, arrs, axis=i)
 
 
@@ -868,28 +850,22 @@ def onp_moveaxis(a):
 def test_moveaxis():
     a = rand_int(2, 4, 5, 9, 6)
     match_res(mnp_moveaxis, onp_moveaxis, a)
-    a = rand_int(2, 4, 5, 0, 6, 7, 1, 3, 8)
-    match_res(mnp_moveaxis, onp_moveaxis, a)
 
 
 def mnp_tile(x):
-    a = mnp.tile(x, 0)
-    b = mnp.tile(x, 1)
-    c = mnp.tile(x, 3)
-    d = mnp.tile(x, [5, 1])
-    e = mnp.tile(x, (3, 1, 0))
-    f = mnp.tile(x, [5, 1, 2, 3, 7])
-    return a, b, c, d, e, f
+    a = mnp.tile(x, 1)
+    b = mnp.tile(x, 3)
+    c = mnp.tile(x, [5, 1])
+    d = mnp.tile(x, [5, 1, 2, 3, 7])
+    return a, b, c, d
 
 
 def onp_tile(x):
-    a = onp.tile(x, 0)
-    b = onp.tile(x, 1)
-    c = onp.tile(x, 3)
-    d = onp.tile(x, [5, 1])
-    e = onp.tile(x, (3, 1, 0))
-    f = onp.tile(x, [5, 1, 2, 3, 7])
-    return a, b, c, d, e, f
+    a = onp.tile(x, 1)
+    b = onp.tile(x, 3)
+    c = onp.tile(x, [5, 1])
+    d = onp.tile(x, [5, 1, 2, 3, 7])
+    return a, b, c, d
 
 
 @pytest.mark.level1
@@ -901,8 +877,6 @@ def onp_tile(x):
 def test_tile():
     a = rand_int(2, 3, 4)
     match_res(mnp_tile, onp_tile, a)
-    b = rand_int(5, 0, 8)
-    match_res(mnp_tile, onp_tile, b)
 
 
 def mnp_broadcast_to(x):
@@ -1022,21 +996,13 @@ def test_fliplr():
 def mnp_split(input_tensor):
     a = mnp.split(input_tensor, indices_or_sections=1)
     b = mnp.split(input_tensor, indices_or_sections=3)
-    c = mnp.split(input_tensor, indices_or_sections=(-9, -8, 6))
-    d = mnp.split(input_tensor, indices_or_sections=(3, 2, 1))
-    e = mnp.split(input_tensor, indices_or_sections=(-10, -4, 5, 10))
-    f = mnp.split(input_tensor, indices_or_sections=[0, 2], axis=1)
-    return a, b, c, d, e, f
+    return a, b
 
 
 def onp_split(input_array):
     a = onp.split(input_array, indices_or_sections=1)
     b = onp.split(input_array, indices_or_sections=3)
-    c = onp.split(input_array, indices_or_sections=(-9, -8, 6))
-    d = onp.split(input_array, indices_or_sections=(3, 2, 1))
-    e = onp.split(input_array, indices_or_sections=(-10, -4, 5, 10))
-    f = onp.split(input_array, indices_or_sections=[0, 2], axis=1)
-    return a, b, c, d, e, f
+    return a, b
 
 
 @pytest.mark.level1
@@ -1090,16 +1056,12 @@ def test_array_split():
 
 def mnp_vsplit(input_tensor):
     a = mnp.vsplit(input_tensor, indices_or_sections=3)
-    b = mnp.vsplit(input_tensor, indices_or_sections=(-10, -4, 5, 10))
-    c = mnp.vsplit(input_tensor, indices_or_sections=[0, 2])
-    return a, b, c
+    return a
 
 
 def onp_vsplit(input_array):
     a = onp.vsplit(input_array, indices_or_sections=3)
-    b = onp.vsplit(input_array, indices_or_sections=(-10, -4, 5, 10))
-    c = onp.vsplit(input_array, indices_or_sections=[0, 2])
-    return a, b, c
+    return a
 
 
 @pytest.mark.level1
@@ -1123,16 +1085,12 @@ def test_vsplit():
 
 def mnp_hsplit(input_tensor):
     a = mnp.hsplit(input_tensor, indices_or_sections=3)
-    b = mnp.hsplit(input_tensor, indices_or_sections=(-10, -4, 5, 10))
-    c = mnp.hsplit(input_tensor, indices_or_sections=[0, 2])
-    return a, b, c
+    return a
 
 
 def onp_hsplit(input_array):
     a = onp.hsplit(input_array, indices_or_sections=3)
-    b = onp.hsplit(input_array, indices_or_sections=(-10, -4, 5, 10))
-    c = onp.hsplit(input_array, indices_or_sections=[0, 2])
-    return a, b, c
+    return a
 
 
 @pytest.mark.level1
@@ -1156,17 +1114,11 @@ def test_hsplit():
 
 def mnp_dsplit(input_tensor):
     a = mnp.dsplit(input_tensor, indices_or_sections=3)
-    b = mnp.dsplit(input_tensor, indices_or_sections=(-10, -4, 5, 10))
-    c = mnp.dsplit(input_tensor, indices_or_sections=[0, 2])
-    return a, b, c
-
+    return a
 
 def onp_dsplit(input_array):
     a = onp.dsplit(input_array, indices_or_sections=3)
-    b = onp.dsplit(input_array, indices_or_sections=(-10, -4, 5, 10))
-    c = onp.dsplit(input_array, indices_or_sections=[0, 2])
-    return a, b, c
-
+    return a
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
