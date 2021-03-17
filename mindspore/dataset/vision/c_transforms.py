@@ -1118,6 +1118,8 @@ class RandomRotation(ImageTensorOperation):
             degrees = degrees % 360
         if isinstance(degrees, (list, tuple)):
             degrees = [degrees[0] % 360, degrees[1] % 360]
+            if degrees[0] > degrees[1]:
+                degrees[1] += 360
 
         self.degrees = degrees
         self.resample = resample

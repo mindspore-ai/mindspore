@@ -299,7 +299,11 @@ class Ngram(TextTensorOperation):
             (default=None, which will use whitespace as separator).
 
     Examples:
-        >>> ngram_op = text.Ngram(3, separator="")
+        >>> ngram_op = text.Ngram(3, separator="-")
+        >>> output = ngram_op(["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"])
+        >>> # output
+        >>> # ["WildRose Country-Canada's Ocean Playground-Land of Living Skies"]
+        >>> # same ngram_op called through map
         >>> text_file_dataset = text_file_dataset.map(operations=ngram_op)
     """
 
