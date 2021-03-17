@@ -17,13 +17,12 @@
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
 #include <vector>
 #include "include/lite_utils.h"
-#include "src/common/utils.h"
 
 namespace mindspore::lite {
 struct MS_API Model {
   struct Node {
     String name_;
-    NodeType node_type_;
+    int node_type_;
     const void *primitive_;
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
