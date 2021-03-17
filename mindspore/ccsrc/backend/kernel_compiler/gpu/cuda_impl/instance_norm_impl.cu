@@ -61,30 +61,30 @@ void CopyMemDevice2Device(const size_t N, const size_t C, float *gamma_addr, flo
 }
 
 __global__ void ComputeMeanKernel(const size_t thread_num, const size_t N, const size_t C,
-                              float *save_mean_addr, float *save_var_addr) {
+                                  float *dgamma, float *dbeta, const float *ws_dgamma, const float *ws_dbeta) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < thread_num; pos += gridDim.x * blockDim.x) {
     size_t cur_addr = pos / C;
     size_t cur_local_index = pos % C;
     float tmp = 0;
     if (cur_addr) {
       for (size_t i = 0; i < N; i++) {
-        tmp += save_var_addr[i * C + cur_local_index];
+        tmp += ws_dgamma[i * C + cur_local_index];
       }
-      save_var_addr[cur_local_index] = tmp / N;
+      dgamma[cur_local_index] = tmp;
     } else {
       for (size_t i = 0; i < N; i++) {
-        tmp += save_mean_addr[i * C + cur_local_index];
+        tmp += ws_dbeta[i * C + cur_local_index];
       }
-      save_mean_addr[cur_local_index] = tmp / N;
+      dbeta[cur_local_index] = tmp;
     }
   }
   return;
 }
 
 void ComputeMean(const size_t N, const size_t C,
-                 float *save_mean_addr, float *save_var_addr,
+                 float *dgamma, float *dbeta, const float *ws_dgamma, const float *ws_dbeta,
                  cudaStream_t cuda_stream) {
   size_t thread_num = C * 2;
   ComputeMeanKernel<<<GET_BLOCKS(thread_num), GET_THREADS, 0, cuda_stream>>>(
-          thread_num, N, C, save_mean_addr, save_var_addr);
+          thread_num, N, C, dgamma, dbeta, ws_dgamma, ws_dbeta);
 }

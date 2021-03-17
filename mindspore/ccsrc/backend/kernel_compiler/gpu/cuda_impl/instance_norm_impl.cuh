@@ -22,6 +22,6 @@ void CopyMemDevice2Device(const size_t N, const size_t C,
                           float *gamma_addr, float *beta_addr, float *runing_mean_addr, float *runnig_variance_addr,
                           float *ws_gamma, float *ws_beta, float *ws_mean, float *ws_var,
                           cudaStream_t cuda_stream);
-void ComputeMean(const size_t N, const size_t C, float *save_mean_addr, float *save_var_addr,
-                 cudaStream_t cuda_stream);
+void ComputeMean(const size_t N, const size_t C, float *dgamma, float *dbeta, const float *ws_dgamma,
+                 const float *ws_dbeta, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_INSTANCE_NORM_IMPL_H_
