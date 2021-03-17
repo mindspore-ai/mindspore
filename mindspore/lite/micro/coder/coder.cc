@@ -121,7 +121,7 @@ int Coder::Init(const CoderFlags &flags) const {
 
   parsers.emplace_back([&flags, config]() -> bool {
     if (!FileExists(flags.model_path_)) {
-      MS_LOG(ERROR) << "code_gen model_path " << flags.model_path_ << " is not valid";
+      MS_LOG(ERROR) << "model_path \"" << flags.model_path_ << "\" is not valid";
       return false;
     }
     if (flags.code_module_name_.empty() || isdigit(flags.code_module_name_.at(0))) {
@@ -194,12 +194,12 @@ int RunCoder(int argc, const char **argv) {
   Coder code_gen;
   STATUS status = code_gen.Init(flags);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Coder init Error : " << status;
+    MS_LOG(ERROR) << "Coder init Error";
     return status;
   }
   status = code_gen.Run(flags.model_path_);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run Coder Error : " << status;
+    MS_LOG(ERROR) << "Coder Run Error.";
     return status;
   }
   MS_LOG(INFO) << "end of Coder";

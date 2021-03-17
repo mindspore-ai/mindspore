@@ -2,7 +2,6 @@ if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     add_definitions(-DUSE_GLOG)
 endif()
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections ")
 set(3RD_DIR ${TOP_DIR}/third_party)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(MICRO_DIR ${LITE_DIR}/micro)

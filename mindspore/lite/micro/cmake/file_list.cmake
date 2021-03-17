@@ -201,10 +201,8 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/arithmetic_compare_infer.c
         ${LITE_DIR}/nnacl/infer/arithmetic_grad_infer.c
         ${LITE_DIR}/nnacl/infer/arithmetic_infer.c
-        ${LITE_DIR}/nnacl/infer/assert_op_infer.c
         ${LITE_DIR}/nnacl/infer/assign_add_infer.c
         ${LITE_DIR}/nnacl/infer/assign_infer.c
-        ${LITE_DIR}/nnacl/infer/audio_spectrogram_infer.c
         ${LITE_DIR}/nnacl/infer/batch_to_space_infer.c
         ${LITE_DIR}/nnacl/infer/bias_grad_infer.c
         ${LITE_DIR}/nnacl/infer/binary_cross_entropy_infer.c
@@ -217,67 +215,36 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/conv2d_grad_filter_infer.c
         ${LITE_DIR}/nnacl/infer/conv2d_grad_input_infer.c
         ${LITE_DIR}/nnacl/infer/conv2d_infer.c
-        ${LITE_DIR}/nnacl/infer/crop_and_resize_infer.c
-        ${LITE_DIR}/nnacl/infer/crop_infer.c
-        ${LITE_DIR}/nnacl/infer/custom_extract_features_infer.c
-        ${LITE_DIR}/nnacl/infer/custom_normalize_infer.c
-        ${LITE_DIR}/nnacl/infer/custom_predict_infer.c
         ${LITE_DIR}/nnacl/infer/deconv2d_infer.c
         ${LITE_DIR}/nnacl/infer/dedepthwise_conv2d_infer.c
-        ${LITE_DIR}/nnacl/infer/depth_to_space_infer.c
         ${LITE_DIR}/nnacl/infer/depthwise_conv2d_infer.c
         ${LITE_DIR}/nnacl/infer/detection_post_process_infer.c
-        ${LITE_DIR}/nnacl/infer/dropout_grad_infer.c
-        ${LITE_DIR}/nnacl/infer/dropout_infer.c
-        ${LITE_DIR}/nnacl/infer/embedding_lookup_infer.c
         ${LITE_DIR}/nnacl/infer/expand_dims_infer.c
-        ${LITE_DIR}/nnacl/infer/fft_imag_infer.c
-        ${LITE_DIR}/nnacl/infer/fft_real_infer.c
         ${LITE_DIR}/nnacl/infer/fill_infer.c
-        ${LITE_DIR}/nnacl/infer/flatten_grad_infer.c
-        ${LITE_DIR}/nnacl/infer/flatten_infer.c
         ${LITE_DIR}/nnacl/infer/full_connection_infer.c
         ${LITE_DIR}/nnacl/infer/fused_batchnorm_infer.c
         ${LITE_DIR}/nnacl/infer/gather_infer.c
         ${LITE_DIR}/nnacl/infer/gather_nd_infer.c
         ${LITE_DIR}/nnacl/infer/group_conv2d_grad_input_infer.c
-        ${LITE_DIR}/nnacl/infer/gru_infer.c
-        ${LITE_DIR}/nnacl/infer/hashtable_lookup_infer.c
         ${LITE_DIR}/nnacl/infer/infer_register.c
-        ${LITE_DIR}/nnacl/infer/invert_permutation_infer.c
-        ${LITE_DIR}/nnacl/infer/layer_norm_infer.c
-        ${LITE_DIR}/nnacl/infer/layer_norm_grad_infer.c
-        ${LITE_DIR}/nnacl/infer/lin_space_infer.c
         ${LITE_DIR}/nnacl/infer/lsh_projection_infer.c
         ${LITE_DIR}/nnacl/infer/lstm_infer.c
         ${LITE_DIR}/nnacl/infer/matmul_infer.c
         ${LITE_DIR}/nnacl/infer/maximum_grad_infer.c
         ${LITE_DIR}/nnacl/infer/mean_infer.c
-        ${LITE_DIR}/nnacl/infer/merge_infer.c
-        ${LITE_DIR}/nnacl/infer/mfcc_infer.c
-        ${LITE_DIR}/nnacl/infer/non_max_suppression_infer.c
-        ${LITE_DIR}/nnacl/infer/one_hot_infer.c
-        ${LITE_DIR}/nnacl/infer/pad_infer.c
-        ${LITE_DIR}/nnacl/infer/partial_infer.c
         ${LITE_DIR}/nnacl/infer/pooling_grad_infer.c
         ${LITE_DIR}/nnacl/infer/pooling_infer.c
         ${LITE_DIR}/nnacl/infer/power_infer.c
-        ${LITE_DIR}/nnacl/infer/prior_box_infer.c
         ${LITE_DIR}/nnacl/infer/quant_dtype_cast_infer.c
-        ${LITE_DIR}/nnacl/infer/random_standard_normal_infer.c
         ${LITE_DIR}/nnacl/infer/range_infer.c
         ${LITE_DIR}/nnacl/infer/rank_infer.c
         ${LITE_DIR}/nnacl/infer/reduce_infer.c
         ${LITE_DIR}/nnacl/infer/reshape_infer.c
         ${LITE_DIR}/nnacl/infer/resize_infer.c
-        ${LITE_DIR}/nnacl/infer/rfft_infer.c
         ${LITE_DIR}/nnacl/infer/roi_pooling_infer.c
-        ${LITE_DIR}/nnacl/infer/scatter_nd_infer.c
         ${LITE_DIR}/nnacl/infer/select_infer.c
         ${LITE_DIR}/nnacl/infer/sgd_infer.c
         ${LITE_DIR}/nnacl/infer/shape_infer.c
-        ${LITE_DIR}/nnacl/infer/size_infer.c
-        ${LITE_DIR}/nnacl/infer/skip_gram_infer.c
         ${LITE_DIR}/nnacl/infer/slice_infer.c
         ${LITE_DIR}/nnacl/infer/softmax_cross_entropy_infer.c
         ${LITE_DIR}/nnacl/infer/softmax_infer.c
@@ -288,23 +255,13 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/sparse_to_dense_infer.c
         ${LITE_DIR}/nnacl/infer/split_infer.c
         ${LITE_DIR}/nnacl/infer/squeeze_infer.c
-        ${LITE_DIR}/nnacl/infer/stack_infer.c
         ${LITE_DIR}/nnacl/infer/strided_slice_grad_infer.c
         ${LITE_DIR}/nnacl/infer/strided_slice_infer.c
-        ${LITE_DIR}/nnacl/infer/switch_infer.c
-        ${LITE_DIR}/nnacl/infer/tensorlist_fromtensor_infer.c
-        ${LITE_DIR}/nnacl/infer/tensorlist_getitem_infer.c
-        ${LITE_DIR}/nnacl/infer/tensorlist_reserve_infer.c
-        ${LITE_DIR}/nnacl/infer/tensorlist_setitem_infer.c
-        ${LITE_DIR}/nnacl/infer/tensorlist_stack_infer.c
         ${LITE_DIR}/nnacl/infer/tile_infer.c
         ${LITE_DIR}/nnacl/infer/topk_infer.c
         ${LITE_DIR}/nnacl/infer/transpose_infer.c
-        ${LITE_DIR}/nnacl/infer/uniform_real_infer.c
-        ${LITE_DIR}/nnacl/infer/unique_infer.c
         ${LITE_DIR}/nnacl/infer/unsorted_segment_sum_infer.c
         ${LITE_DIR}/nnacl/infer/unsqueeze_infer.c
-        ${LITE_DIR}/nnacl/infer/unstack_infer.c
         ${LITE_DIR}/nnacl/infer/where_infer.c
         ${LITE_DIR}/nnacl/infer/while_infer.c
         ${LITE_DIR}/nnacl/infer/splice_infer.c
