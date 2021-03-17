@@ -1176,8 +1176,11 @@ AnfNodePtr AnfRuntimeAlgorithm::GetInputNode(const CNodePtr &node, size_t index)
 
 bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<ValueNode>() || IsPrimitiveCNode(node, prim::kPrimLoad)) {
+  if (node->isa<ValueNode>()) {
     return false;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
+    return IsFeatureMapOutput(node->cast<CNodePtr>()->input(1));
   }
   auto kernel_info = static_cast<const device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
