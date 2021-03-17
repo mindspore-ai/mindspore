@@ -255,6 +255,7 @@ void ReplaceLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const FuncGrap
   (void)std::copy_if(make_tuple_inputs.begin(), make_tuple_inputs.end(), std::back_inserter(new_make_tuple_inputs),
                      [load](const AnfNodePtr &input) { return load != input; });
   const auto &new_make_tuple = fg->NewCNode(new_make_tuple_inputs);
+  new_make_tuple->set_abstract(make_tuple->abstract());
   manager->Replace(make_tuple, new_make_tuple);
 }
 
