@@ -66,7 +66,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
     // Sigmoid gets the input tensors in reverse order!
     error_code = SigmoidGrad(input_addr + start, yt_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
-    error_code = TanhGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    error_code = TanhGrad(input_addr + start, yt_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
     error_code = HSwishGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
