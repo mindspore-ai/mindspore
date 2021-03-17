@@ -13,7 +13,25 @@
 # limitations under the License.
 # ============================================================================
 """Providing akg compile with json"""
+import importlib
+import os
 import sys
+
+def get_akg_path():
+    """get akg directory base path"""
+    search_res = importlib.util.find_spec("mindspore")
+    if search_res is None:
+        raise RuntimeError("Cannot find mindspore module!")
+
+    res_path = search_res.origin
+    find_pos = res_path.find("__init__.py")
+    if find_pos == -1:
+        raise RuntimeError("Find module mindspore origin file failed!")
+    akg_path = "{}_akg".format(res_path[:find_pos])
+    if not os.path.isdir(akg_path):
+        raise RuntimeError("Cannot find akg from mindspore module!")
+    return akg_path
+
 def run_compiler(op_json):
     """
     Run AKG compiler to compile op with subprocess, if this process of
@@ -25,6 +43,7 @@ def run_compiler(op_json):
     Returns:
         None
     """
+    sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
     res = func(op_json)
