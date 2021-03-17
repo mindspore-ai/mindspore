@@ -87,7 +87,7 @@ class UncertaintyEvaluation:
         self.epi_model = deepcopy(model)
         self.ale_model = deepcopy(model)
         self.epi_train_dataset = train_dataset
-        self.ale_train_dataset = train_dataset
+        self.ale_train_dataset = deepcopy(train_dataset)
         self.task_type = task_type
         self.epochs = Validator.check_positive_int(epochs)
         self.epi_uncer_model_path = epi_uncer_model_path
@@ -101,7 +101,8 @@ class UncertaintyEvaluation:
         if not isinstance(model, Cell):
             raise TypeError('The model should be Cell type.')
         if task_type not in ('regression', 'classification'):
-            raise ValueError('The task should be regression or classification.')
+            raise ValueError(
+                'The task should be regression or classification.')
         if task_type == 'classification':
             self.num_classes = Validator.check_positive_int(num_classes)
         else:
@@ -119,15 +120,19 @@ class UncertaintyEvaluation:
             self.epi_uncer_model = EpistemicUncertaintyModel(self.epi_model)
             if self.epi_uncer_model.drop_count == 0 and self.epi_train_dataset is not None:
                 if self.task_type == 'classification':
-                    net_loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+                    net_loss = SoftmaxCrossEntropyWithLogits(
+                        sparse=True, reduction="mean")
                     net_opt = Adam(self.epi_uncer_model.trainable_params())
-                    model = Model(self.epi_uncer_model, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+                    model = Model(self.epi_uncer_model, net_loss,
+                                  net_opt, metrics={"Accuracy": Accuracy()})
                 else:
                     net_loss = MSELoss()
                     net_opt = Adam(self.epi_uncer_model.trainable_params())
-                    model = Model(self.epi_uncer_model, net_loss, net_opt, metrics={"MSE": MSE()})
+                    model = Model(self.epi_uncer_model, net_loss,
+                                  net_opt, metrics={"MSE": MSE()})
                 if self.save_model:
-                    config_ck = CheckpointConfig(keep_checkpoint_max=self.epochs)
+                    config_ck = CheckpointConfig(
+                        keep_checkpoint_max=self.epochs)
                     ckpoint_cb = ModelCheckpoint(prefix='checkpoint_epi_uncer_model',
                                                  directory=self.epi_uncer_model_path,
                                                  config=config_ck)
@@ -137,7 +142,8 @@ class UncertaintyEvaluation:
                     model.train(self.epochs, self.epi_train_dataset, dataset_sink_mode=False,
                                 callbacks=[LossMonitor()])
                 else:
-                    uncer_param_dict = load_checkpoint(self.epi_uncer_model_path)
+                    uncer_param_dict = load_checkpoint(
+                        self.epi_uncer_model_path)
                     load_param_into_net(self.epi_uncer_model, uncer_param_dict)
 
     def _eval_epistemic_uncertainty(self, eval_data, mc=10):
@@ -164,15 +170,19 @@ class UncertaintyEvaluation:
         Get the model which can obtain the aleatoric uncertainty.
         """
         if self.ale_train_dataset is None:
-            raise ValueError('The train dataset should not be None when evaluating aleatoric uncertainty.')
+            raise ValueError(
+                'The train dataset should not be None when evaluating aleatoric uncertainty.')
         if self.ale_uncer_model is None:
-            self.ale_uncer_model = AleatoricUncertaintyModel(self.ale_model, self.num_classes, self.task_type)
+            self.ale_uncer_model = AleatoricUncertaintyModel(
+                self.ale_model, self.num_classes, self.task_type)
             net_loss = AleatoricLoss(self.task_type)
             net_opt = Adam(self.ale_uncer_model.trainable_params())
             if self.task_type == 'classification':
-                model = Model(self.ale_uncer_model, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+                model = Model(self.ale_uncer_model, net_loss,
+                              net_opt, metrics={"Accuracy": Accuracy()})
             else:
-                model = Model(self.ale_uncer_model, net_loss, net_opt, metrics={"MSE": MSE()})
+                model = Model(self.ale_uncer_model, net_loss,
+                              net_opt, metrics={"MSE": MSE()})
             if self.save_model:
                 config_ck = CheckpointConfig(keep_checkpoint_max=self.epochs)
                 ckpoint_cb = ModelCheckpoint(prefix='checkpoint_ale_uncer_model',
@@ -284,7 +294,8 @@ class AleatoricUncertaintyModel(Cell):
             self.ale_model = ale_model
             self.var_layer = Dense(num_classes, num_classes)
         else:
-            self.ale_model, self.var_layer, self.pred_layer = self._make_aleatoric(ale_model)
+            self.ale_model, self.var_layer, self.pred_layer = self._make_aleatoric(
+                ale_model)
 
     def construct(self, x):
         if self.task == 'classification':
@@ -327,7 +338,8 @@ class AleatoricLoss(Cell):
             self.exp = P.Exp()
             self.normal = C.normal
             self.to_tensor = P.ScalarToArray()
-            self.entropy = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+            self.entropy = SoftmaxCrossEntropyWithLogits(
+                sparse=True, reduction="mean")
         else:
             self.mean = P.ReduceMean()
             self.exp = P.Exp()
@@ -337,7 +349,8 @@ class AleatoricLoss(Cell):
         y_pred, var = data_pred
         if self.task == 'classification':
             sample_times = 10
-            epsilon = self.normal((1, sample_times), self.to_tensor(0.0), self.to_tensor(1.0), 0)
+            epsilon = self.normal((1, sample_times), self.to_tensor(
+                0.0), self.to_tensor(1.0), 0)
             total_loss = 0
             for i in range(sample_times):
                 y_pred_i = y_pred + epsilon[0][i] * var
@@ -345,5 +358,6 @@ class AleatoricLoss(Cell):
                 total_loss += loss
             avg_loss = total_loss / sample_times
             return avg_loss
-        loss = self.mean(0.5 * self.exp(-var) * self.pow(y - y_pred, 2) + 0.5 * var)
+        loss = self.mean(0.5 * self.exp(-var) *
+                         self.pow(y - y_pred, 2) + 0.5 * var)
         return loss

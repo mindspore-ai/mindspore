@@ -34,13 +34,14 @@ class BondForce(PrimitiveWithInfer):
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         F = (F_x, F_y, F_z) = 2*k*(1 - r_0/|dr|)*dr
 
+    Args:
+        atom_numbers(int32): the number of atoms N.
+        bond_numbers(int32): the number of harmonic bonds M.
+
     Inputs:
-        - **atom_numbers** (int32) - the number of atoms N.
-        - **bond_numbers** (int32) - the number of harmonic bonds M.
-        - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate
-        value of each atom.
+        - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate value of each atom.
         - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-    between the real space float coordinates and the unsigned int coordinates.
+          between the real space float coordinates and the unsigned int coordinates.
         - **atom_a** (Tensor, int32) - [M,], the first atom index of each bond.
         - **atom_b** (Tensor, int32) - [M,], the second atom index of each bond.
         - **bond_k** (Tensor, float32) - [M,], the force constant of each bond.
@@ -51,11 +52,12 @@ class BondForce(PrimitiveWithInfer):
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
+        assert isinstance(bond_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -67,28 +69,28 @@ class BondForce(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k_shape", cls_name)
-        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k", cls_name)
+        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0", cls_name)
         return uint_crd_f_shape
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('bond_k_type', bond_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('bond_r0_type', bond_r0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('bond_k', bond_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_r0', bond_r0_type, [mstype.float32], self.name)
         return bond_r0_type
 
 
 class BondEnergy(PrimitiveWithInfer):
     """
-    BondEnergyCuda:
+    BondEnergy:
 
     Calculate the harmonic potential energy between each bonded atom pair.
     Assume our system has N atoms and M harmonic bonds.
@@ -98,25 +100,28 @@ class BondEnergy(PrimitiveWithInfer):
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         E = k*(|dr| - r_0)^2
 
+    Args:
+        Same as operator BondForce().
+
     Inputs:
         Same as operator BondForce().
 
-    .. math::
+        .. math::
 
-        dr = (x_1-x_2, y_1-y_2, z_1-z_2)
-        E = k*(|dr| - r_0)^2
+            dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+            E = k*(|dr| - r_0)^2
 
     Outputs:
-        - **bond_ene** (Tensor, float32) - [M,], the harmonic potential energy
-        for each bond.
+        - **bond_ene** (Tensor, float32) - [M,], the harmonic potential energy for each bond.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
+        assert isinstance(bond_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -128,49 +133,52 @@ class BondEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k_shape", cls_name)
-        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k", cls_name)
+        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0", cls_name)
 
         return bond_k_shape
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('bond_k_type', bond_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('bond_r0_type', bond_r0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('bond_k', bond_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_r0', bond_r0_type, [mstype.float32], self.name)
         return bond_r0_type
 
 
 class BondAtomEnergy(PrimitiveWithInfer):
     """
-    BondAtomEnergyCuda:
+    BondAtomEnergy:
 
     Add the potential energy caused by simple harmonic bonds to the total
     potential energy of each atom.
 
     The calculation formula is the same as operator BondEnergy().
 
+    Args:
+        Same as operator BondForce().
+
     Inputs:
         Same as operator BondForce().
 
     Outputs:
-        - **atom_ene** (Tensor, float32) - [N,], the accumulated potential
-        energy for each atom.
+        - **atom_ene** (Tensor, float32) - [N,], the accumulated potential energy for each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
+        assert isinstance(bond_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -182,23 +190,22 @@ class BondAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k_shape", cls_name)
-        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0_shape", cls_name)
-
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k", cls_name)
+        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0", cls_name)
         return [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('bond_k_type', bond_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('bond_r0_type', bond_r0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('bond_k', bond_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_r0', bond_r0_type, [mstype.float32], self.name)
         return bond_r0_type
 
 
@@ -210,6 +217,9 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator BondForce() and BondEnergy().
 
+    Args:
+        Same as operator BondForce().
+
     Inputs:
         Same as operator BondForce().
 
@@ -219,11 +229,12 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
+        assert isinstance(bond_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -235,25 +246,25 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k_shape", cls_name)
-        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k", cls_name)
+        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0", cls_name)
 
         return uint_crd_f_shape, [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
 
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
 
-        validator.check_tensor_dtype_valid('bond_k_type', bond_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('bond_r0_type', bond_r0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_k', bond_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_r0', bond_r0_type, [mstype.float32], self.name)
         return bond_r0_type, bond_r0_type
 
 
@@ -272,21 +283,24 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         virial = |dr|*(|dr| - r_0)*k
 
+    Args:
+        Same as operator BondForce().
+
     Inputs:
         Same as operator BondForce()
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator BondForce().
-        - **atom_v** (Tensor, float32) - [N,], the accumulated virial coefficient
-        for each atom.
+        - **atom_v** (Tensor, float32) - [N,], the accumulated virial coefficient for each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
+        assert isinstance(bond_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -298,25 +312,25 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k_shape", cls_name)
-        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(bond_k_shape[0], M, Rel.EQ, "bond_k", cls_name)
+        validator.check_int(bond_r0_shape[0], M, Rel.EQ, "bond_r0", cls_name)
 
         return uint_crd_f_shape, [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
 
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
 
-        validator.check_tensor_dtype_valid('bond_k_type', bond_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('bond_r0_type', bond_r0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_k', bond_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('bond_r0', bond_r0_type, [mstype.float32], self.name)
         return bond_r0_type, bond_r0_type
 
 
@@ -352,34 +366,36 @@ class DihedralForce(PrimitiveWithInfer):
         F_c = - dEdrl - dEdrjpart
         F_d = dEdrl
 
+    Args:
+        dihedral_numbers(int32): the number of dihedral terms M.
+
     Inputs:
         - **dihedral_numbers** (int32) - the number of dihedral terms M.
         - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinates
-        value of each atom.
-        - **scalar_f** (Tensor, float32) - [3, ], the 3-D scale factor between
-        the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [M, ], the 1st atom index of each dihedral.
-        - **atom_b** (Tensor, int32) - [M, ], the 2nd atom index of each dihedral.
-        - **atom_c** (Tensor, int32) - [M, ], the 3rd atom index of each dihedral.
-        - **atom_d** (Tensor, int32) - [M, ], the 4th atom index of each dihedral.
-        4 atoms are connected in the form a-b-c-d.
-        - **ipn** (Tensor, int32) - [M, ], the period of dihedral angle of each dihedral.
-        - **pk** (Tensor, float32) - [M, ], the force constant of each dihedral.
-        - **gamc** (Tensor, float32) - [M, ], k*cos(phi_0) of each dihedral.
-        - **gams** (Tensor, float32) - [M, ], k*sin(phi_0) of each dihedral.
-        - **pn** (Tensor, float32) - [M, ], the floating point form of ipn.
+          value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each dihedral.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd atom index of each dihedral.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each dihedral.
+        - **atom_d** (Tensor, int32) - [M,], the 4th atom index of each dihedral.
+          4 atoms are connected in the form a-b-c-d.
+        - **ipn** (Tensor, int32) - [M,], the period of dihedral angle of each dihedral.
+        - **pk** (Tensor, float32) - [M,], the force constant of each dihedral.
+        - **gamc** (Tensor, float32) - [M,], k*cos(phi_0) of each dihedral.
+        - **gams** (Tensor, float32) - [M,], k*sin(phi_0) of each dihedral.
+        - **pn** (Tensor, float32) - [M,], the floating point form of ipn.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
+        assert isinstance(dihedral_numbers, int)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -390,32 +406,32 @@ class DihedralForce(PrimitiveWithInfer):
                     ipn_shape, pk_shape, gamc_shape, gams_shape, pn_shape):
         cls_name = self.name
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d_shape", cls_name)
-        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn_shape", cls_name)
-        validator.check_int(pk_shape[0], M, Rel.EQ, "pk_shape", cls_name)
-        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc_shape", cls_name)
-        validator.check_int(gams_shape[0], M, Rel.EQ, "gams_shape", cls_name)
-        validator.check_int(pn_shape[0], M, Rel.EQ, "pn_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d", cls_name)
+        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn", cls_name)
+        validator.check_int(pk_shape[0], M, Rel.EQ, "pk", cls_name)
+        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc", cls_name)
+        validator.check_int(gams_shape[0], M, Rel.EQ, "gams", cls_name)
+        validator.check_int(pn_shape[0], M, Rel.EQ, "pn", cls_name)
         return uint_crd_f_shape
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, atom_d_type,
                     ipn_type, pk_type, gamc_type, gams_type, pn_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_d_type', atom_d_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('ipn_type', ipn_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('pk_type', pk_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gamc_type', gamc_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gams_type', gams_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('pn_type', pn_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_d', atom_d_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('ipn', ipn_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('pk', pk_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gamc', gamc_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gams', gams_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pn', pn_type, [mstype.float32], self.name)
 
         return pn_type
 
@@ -431,21 +447,23 @@ class DihedralEnergy(PrimitiveWithInfer):
 
         E = k(1 + cos(n*phi - phi_0))
 
+    Args:
+        Same as operator DihedralForce().
+
     Inputs:
         Same as operator DihedralForce().
 
     Outputs:
-        - **ene** (Tensor, float32) - [M, ], the potential energy for each
-        dihedral term.
+        - **ene** (Tensor, float32) - [M,], the potential energy for each
+          dihedral term.
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
+        assert isinstance(dihedral_numbers, int)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -456,32 +474,32 @@ class DihedralEnergy(PrimitiveWithInfer):
                     ipn_shape, pk_shape, gamc_shape, gams_shape, pn_shape):
         cls_name = self.name
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d_shape", cls_name)
-        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn_shape", cls_name)
-        validator.check_int(pk_shape[0], M, Rel.EQ, "pk_shape", cls_name)
-        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc_shape", cls_name)
-        validator.check_int(gams_shape[0], M, Rel.EQ, "gams_shape", cls_name)
-        validator.check_int(pn_shape[0], M, Rel.EQ, "pn_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d", cls_name)
+        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn", cls_name)
+        validator.check_int(pk_shape[0], M, Rel.EQ, "pk", cls_name)
+        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc", cls_name)
+        validator.check_int(gams_shape[0], M, Rel.EQ, "gams", cls_name)
+        validator.check_int(pn_shape[0], M, Rel.EQ, "pn", cls_name)
         return [M,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, atom_d_type,
                     ipn_type, pk_type, gamc_type, gams_type, pn_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_d_type', atom_d_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('ipn_type', ipn_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('pk_type', pk_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gamc_type', gamc_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gams_type', gams_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('pn_type', pn_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_d', atom_d_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('ipn', ipn_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('pk', pk_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gamc', gamc_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gams', gams_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pn', pn_type, [mstype.float32], self.name)
 
         return pn_type
 
@@ -495,21 +513,23 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator DihedralEnergy().
 
+    Args:
+        Same as operator DihedralEnergy().
+
     Inputs:
         Same as operator DihedralEnergy().
 
     Outputs:
-        - **ene** (Tensor, float32) - [N, ], the accumulated potential
-        energy for each atom.
+        - **ene** (Tensor, float32) - [N,], the accumulated potential
+          energy for each atom.
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
+        assert isinstance(dihedral_numbers, int)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -521,32 +541,32 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = uint_crd_f_shape[0]
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d_shape", cls_name)
-        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn_shape", cls_name)
-        validator.check_int(pk_shape[0], M, Rel.EQ, "pk_shape", cls_name)
-        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc_shape", cls_name)
-        validator.check_int(gams_shape[0], M, Rel.EQ, "gams_shape", cls_name)
-        validator.check_int(pn_shape[0], M, Rel.EQ, "pn_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d", cls_name)
+        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn", cls_name)
+        validator.check_int(pk_shape[0], M, Rel.EQ, "pk", cls_name)
+        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc", cls_name)
+        validator.check_int(gams_shape[0], M, Rel.EQ, "gams", cls_name)
+        validator.check_int(pn_shape[0], M, Rel.EQ, "pn", cls_name)
         return [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, atom_d_type,
                     ipn_type, pk_type, gamc_type, gams_type, pn_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_d_type', atom_d_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('ipn_type', ipn_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('pk_type', pk_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gamc_type', gamc_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gams_type', gams_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('pn_type', pn_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_d', atom_d_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('ipn', ipn_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('pk', pk_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gamc', gamc_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gams', gams_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pn', pn_type, [mstype.float32], self.name)
 
         return pn_type
 
@@ -559,21 +579,23 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator DihedralForce() and DihedralEnergy().
 
+    Args:
+        Same as operator DihedralForce().
+
     Inputs:
         Same as operator DihedralForce().
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator DihedralForce().
-        - **ene** (Tensor, float32) - [N, ], same as operator DihedralAtomEnergy().
+        - **ene** (Tensor, float32) - [N,], same as operator DihedralAtomEnergy().
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
+        assert isinstance(dihedral_numbers, int)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -585,32 +607,32 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = uint_crd_f_shape[0]
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d_shape", cls_name)
-        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn_shape", cls_name)
-        validator.check_int(pk_shape[0], M, Rel.EQ, "pk_shape", cls_name)
-        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc_shape", cls_name)
-        validator.check_int(gams_shape[0], M, Rel.EQ, "gams_shape", cls_name)
-        validator.check_int(pn_shape[0], M, Rel.EQ, "pn_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(atom_d_shape[0], M, Rel.EQ, "atom_d", cls_name)
+        validator.check_int(ipn_shape[0], M, Rel.EQ, "ipn", cls_name)
+        validator.check_int(pk_shape[0], M, Rel.EQ, "pk", cls_name)
+        validator.check_int(gamc_shape[0], M, Rel.EQ, "gamc", cls_name)
+        validator.check_int(gams_shape[0], M, Rel.EQ, "gams", cls_name)
+        validator.check_int(pn_shape[0], M, Rel.EQ, "pn", cls_name)
         return uint_crd_f_shape, [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, atom_d_type,
                     ipn_type, pk_type, gamc_type, gams_type, pn_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_d_type', atom_d_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('ipn_type', ipn_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('pk_type', pk_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gamc_type', gamc_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('gams_type', gams_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('pn_type', pn_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_d', atom_d_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('ipn', ipn_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('pk', pk_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gamc', gamc_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('gams', gams_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pn', pn_type, [mstype.float32], self.name)
 
         return pn_type, pn_type
 
@@ -634,31 +656,29 @@ class AngleForce(PrimitiveWithInfer):
              - 1/|dr_{cb}|/|dr_{ab}|*dr_{ab}]
         F_b = -F_a - F_c
 
+    Args:
+        angle_numbers(int32): the number of angles M.
+
     Inputs:
-        - **angle_numbers** (int32) - the number of angles M.
-        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate
-        value of each atom.
-        - **scaler_f** (Tensor, float32) - [3, ], the 3-D scale factor between
-        the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [M, ], the 1st atom index of each angle.
-        - **atom_b** (Tensor, int32) - [M, ], the 2nd and the central atom index
-        of each angle.
-        - **atom_c** (Tensor, int32) - [M, ], the 3rd atom index of each angle.
-        - **angle_k** (Tensor, float32) - [M, ], the force constant for each angle.
-        - **angle_theta0** (Tensor, float32) - [M, ], the equilibrium position value
-        for each angle.
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each angle.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd and the central atom index of each angle.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each angle.
+        - **angle_k** (Tensor, float32) - [M,], the force constant for each angle.
+        - **angle_theta0** (Tensor, float32) - [M,], the equilibrium position value for each angle.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, angle_numbers):
+        assert isinstance(angle_numbers, int)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -669,24 +689,24 @@ class AngleForce(PrimitiveWithInfer):
                     angle_theta0_shape):
         cls_name = self.name
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k_shape", cls_name)
-        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k", cls_name)
+        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0", cls_name)
         return uint_crd_f_shape
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, angle_k_type,
                     angle_theta0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('angle_k_type', angle_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('angle_theta0_type', angle_theta0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('angle_k', angle_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('angle_theta0', angle_theta0_type, [mstype.float32], self.name)
         return angle_k_type
 
 
@@ -703,21 +723,22 @@ class AngleEnergy(PrimitiveWithInfer):
         theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
         E = k*(theta - theta_0)^2
 
+    Args:
+        Same as operator AngleForce().
+
     Inputs:
         Same as operator AngleForce().
 
     Outputs:
-        - **ene** (Tensor, float32) - [M, ], the potential energy for
-        each angle term.
+        - **ene** (Tensor, float32) - [M,], the potential energy for each angle term.
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, angle_numbers):
+        assert isinstance(angle_numbers, int)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -728,24 +749,24 @@ class AngleEnergy(PrimitiveWithInfer):
                     angle_theta0_shape):
         cls_name = self.name
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k_shape", cls_name)
-        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k", cls_name)
+        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0", cls_name)
         return [M,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, angle_k_type,
                     angle_theta0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('angle_k_type', angle_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('angle_theta0_type', angle_theta0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('angle_k', angle_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('angle_theta0', angle_theta0_type, [mstype.float32], self.name)
         return angle_k_type
 
 
@@ -758,21 +779,22 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator AngleEnergy().
 
+    Args:
+        Same as operator AngleForce().
+
     Inputs:
         Same as operator AngleForce().
 
     Outputs:
-        - **ene** (Tensor, float32) - [N, ], the accumulated potential energy
-        for each atom.
+        - **ene** (Tensor, float32) - [N,], the accumulated potential energy for each atom.
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, angle_numbers):
+        assert isinstance(angle_numbers, int)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -784,24 +806,24 @@ class AngleAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = uint_crd_f_shape[0]
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k_shape", cls_name)
-        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k", cls_name)
+        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0", cls_name)
         return [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, angle_k_type,
                     angle_theta0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('angle_k_type', angle_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('angle_theta0_type', angle_theta0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('angle_k', angle_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('angle_theta0', angle_theta0_type, [mstype.float32], self.name)
         return angle_k_type
 
 
@@ -813,21 +835,23 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator AngleForce() and AngleEnergy().
 
+    Args:
+        Same as operator AngleForce().
+
     Inputs:
         Same as operator AngleForce().
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator AngleForce().
-        - **ene** (Tensor, float) - [N, ], same as operator AngleAtomEnergy().
+        - **ene** (Tensor, float) - [N,], same as operator AngleAtomEnergy().
 
     Supported Platforms:
         ``GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, angle_numbers):
+        assert isinstance(angle_numbers, int)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -839,24 +863,24 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = uint_crd_f_shape[0]
         M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape", cls_name)
-        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f_shape", cls_name)
-        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a_shape", cls_name)
-        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b_shape", cls_name)
-        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c_shape", cls_name)
-        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k_shape", cls_name)
-        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0_shape", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
+        validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
+        validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
+        validator.check_int(atom_c_shape[0], M, Rel.EQ, "atom_c", cls_name)
+        validator.check_int(angle_k_shape[0], M, Rel.EQ, "angle_k", cls_name)
+        validator.check_int(angle_theta0_shape[0], M, Rel.EQ, "angle_theta0", cls_name)
         return uint_crd_f_shape, [N,]
 
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, atom_c_type, angle_k_type,
                     angle_theta0_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_a_type', atom_a_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_b_type', atom_b_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_c_type', atom_c_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('angle_k_type', angle_k_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('angle_theta0_type', angle_theta0_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('scaler_f', scaler_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_a', atom_a_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_b', atom_b_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_c', atom_c_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('angle_k', angle_k_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('angle_theta0', angle_theta0_type, [mstype.float32], self.name)
         return angle_k_type, angle_k_type
 
 
@@ -876,38 +900,34 @@ class Dihedral14LJForce(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
         F = k*(-12*A/|dr|^{14} + 6*B/|dr|^{8})*dr
 
+    Args:
+        dihedral_14_numbers(int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers(int32): the number of atoms N.
+
     Inputs:
-        - **dihedral_14_numbers** (int32) - the number of necessary dihedral
-        1,4 terms M.
-        - **atom_numbers** (int32) - the number of atoms N.
-        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate
-        value of each atom.
-        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each
-        atom.
+
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
         - **charge** (Tensor, float32) - [N,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular
-        simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral
-        1,4 term.
-        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral
-        1,4 term.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
         - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
-        Lennard-Jones part of force correction of each dihedral 1,4 term.
-        - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones
-        scheme of each atom pair type.
-        - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones
-        shceme of each atom pair type.
+          Lennard-Jones part of force correction of each dihedral 1,4 term.
+        - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+        - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
         self.init_prim_io_names(
@@ -918,23 +938,22 @@ class Dihedral14LJForce(PrimitiveWithInfer):
         self.add_prim_attr('atom_numbers', self.atom_numbers)
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
-                    lj_scale_factor_shape,
-                    LJ_type_A_shape, LJ_type_B_shape):
+                    lj_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
         return uint_crd_f_shape
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     lj_scale_factor_type, LJ_type_A_type, LJ_type_B_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
 
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
 
-        validator.check_tensor_dtype_valid('lj_scale_factor_type', lj_scale_factor_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_A_type', LJ_type_A_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_B_type', LJ_type_B_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('lj_scale_factor', lj_scale_factor_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_A', LJ_type_A_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_B', LJ_type_B_type, [mstype.float32], self.name)
         return LJ_type_B_type
 
 
@@ -950,20 +969,24 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z-b)
         E = k*(A/|dr|^{12} - B/|dr|^{6})
 
+    Args:
+        Same as operator Dihedral14LJForce().
+
     Inputs:
         Same as operator Dihedral14LJForce().
 
     Outputs:
         - **ene** (Tensor, float32) - [M,], the Lennard-Jones potential
-        energy correction for each necessary dihedral 1,4 term.
+          energy correction for each necessary dihedral 1,4 term.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -980,15 +1003,15 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     lj_scale_factor_type, LJ_type_A_type, LJ_type_B_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('lj_scale_factor_type', lj_scale_factor_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_A_type', LJ_type_A_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_B_type', LJ_type_B_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('lj_scale_factor', lj_scale_factor_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_A', LJ_type_A_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_B', LJ_type_B_type, [mstype.float32], self.name)
 
         return LJ_type_A_type
 
@@ -1008,22 +1031,26 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
         F = -k*q_a*q_b/|r|^3*dr
 
+    Args:
+        Same as operator Dihedral14LJForce().
+
     Inputs:
         - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
-        Coulomb part of force correction for each dihedral 1,4 terms.
+          Coulomb part of force correction for each dihedral 1,4 terms.
 
-        The rest of the inputs is the same as operator Dihedral14LJForce().
+          The rest of the inputs is the same as operator Dihedral14LJForce().
 
     Outputs:
         - **frc_f** (Tensor, float) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1041,16 +1068,16 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     lj_scale_factor_type, cf_scale_factor_type, LJ_type_A_type, LJ_type_B_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('lj_scale_factor_type', lj_scale_factor_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('cf_scale_factor_type', cf_scale_factor_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_A_type', LJ_type_A_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_B_type', LJ_type_B_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('lj_scale_factor', lj_scale_factor_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('cf_scale_factor', cf_scale_factor_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_A', LJ_type_A_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_B', LJ_type_B_type, [mstype.float32], self.name)
 
         return LJ_type_A_type
 
@@ -1067,22 +1094,24 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
     Dihedral14LJForceWithDirectCF(), and the energy correction part is the same
     as operator Dihedral14LJEnergy() and Dihedral14CFEnergy().
 
+    Args:
+        Same as operator Dihedral14LJForce().
+
     Inputs:
         Same as operator Dihedral14LJForceWithdirectCF().
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
-        - **atom_energy** (Tensor, float32) - [N,], the accumulated potential
-        energy for each atom.
+        - **atom_energy** (Tensor, float32) - [N,], the accumulated potential energy for each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
-
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1100,16 +1129,16 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     lj_scale_factor_type, cf_scale_factor_type, LJ_type_A_type, LJ_type_B_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('lj_scale_factor_type', lj_scale_factor_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('cf_scale_factor_type', cf_scale_factor_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_A_type', LJ_type_A_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_B_type', LJ_type_B_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('lj_scale_factor', lj_scale_factor_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('cf_scale_factor', cf_scale_factor_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_A', LJ_type_A_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_B', LJ_type_B_type, [mstype.float32], self.name)
 
         return charge_dtype, charge_dtype
 
@@ -1123,21 +1152,23 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator Dihedral14LJEnergy().
 
+    Args:
+        Same as operator Dihedral14LJForce().
+
     Inputs:
         Same as operator Dihedral14LJForce().
 
     Outputs:
-        - **ene** (Tensor, float32) - [N,], the accumulated potential energy of
-        each atom.
+        - **ene** (Tensor, float32) - [N,], the accumulated potential energy of each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
-
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1154,16 +1185,16 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     lj_scale_factor_type, LJ_type_A_type, LJ_type_B_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('lj_scale_factor_type', lj_scale_factor_type, [mstype.float32],
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('lj_scale_factor', lj_scale_factor_type, [mstype.float32],
                                            self.name)
-        validator.check_tensor_dtype_valid('LJ_type_A_type', LJ_type_A_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('LJ_type_B_type', LJ_type_B_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_A', LJ_type_A_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('LJ_type_B', LJ_type_B_type, [mstype.float32], self.name)
 
         return LJ_type_A_type
 
@@ -1180,21 +1211,23 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
         E = k*q_a*q_b/|dr|
 
+    Args:
+        Same as operator Dihedral14LJForce().
+
     Inputs:
-        The meaning and type of each input is the same as that of operator
-        Dihedral14LJForceWithDirectCF().
+        The meaning and type of each input is the same as that of operator Dihedral14LJForceWithDirectCF().
 
     Outputs:
-        - **ene** (Tensor, float32) - [M,], the accumulated potential energy
-        of each atom.
+        - **ene** (Tensor, float32) - [M,], the accumulated potential energy of each atom.
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1210,13 +1243,13 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     cf_scale_factor_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('lj_scale_factor_type', cf_scale_factor_type, [mstype.float32],
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('lj_scale_factor', cf_scale_factor_type, [mstype.float32],
                                            self.name)
 
         return charge_dtype
@@ -1231,23 +1264,24 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator Dihedral14CFEnergy().
 
+    Args:
+        Same as operator Dihedral14LJForce().
+
     Inputs:
-        The meaning and type of each input is the same as that of operator
-        Dihedral14LJForceWithDirectCF().
+        The meaning and type of each input is the same as that of operator Dihedral14LJForceWithDirectCF().
 
     Outputs:
-        - **ene** (Tensor, float32) - [N,], the accumulated potential energy
-        of each atom.
+        - **ene** (Tensor, float32) - [N,], the accumulated potential energy of each atom.
 
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
-
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
+        assert isinstance(nb14_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1263,13 +1297,13 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
                     cf_scale_factor_type):
-        validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('LJtype_dtype', LJtype_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('charge_dtype', charge_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('boxlength_f_type', boxlength_f_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('a_14_type', a_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('b_14_type', b_14_type, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('cf_scale_factor_type', cf_scale_factor_type, [mstype.float32],
+        validator.check_tensor_dtype_valid('uint_crd_f', uint_crd_f_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('LJtype', LJtype_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength_f', boxlength_f_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('a_14', a_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('b_14', b_14_type, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('cf_scale_factor', cf_scale_factor_type, [mstype.float32],
                                            self.name)
 
         return charge_dtype
@@ -1288,23 +1322,21 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
     scheme for efficient configurational sampling for classical/quantum canonical
     ensembles via molecular dynamics. DOI: 10.1063/1.4991621.
 
-    Inputs:
-        - **float4_numbers** (int32) - total length to store random numbers.
-        - **atom_numbers** (int32) - the number of atoms N.
-        - **dt** (float32) - time step for finite difference.
-        - **half_dt** (float32) - half of time step for finite difference.
-        - **exp_gamma** (float32) - parameter in Liu's dynamic, equals
-        exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
-        dynamics.
-        - **max_velocity** (float32) - the upper limit of velocity, when the
-        veclocity overflows, scale it to the upper limit.
-        - **is_max_velocity** (int32) - whether the max velocity control is
-        open or not.
+    Args:
+        float4_numbers(int32): total length to store random numbers.
+        atom_numbers(int32): the number of atoms N.
+        dt(float32): time step for finite difference.
+        half_dt(float32): half of time step for finite difference.
+        exp_gamma(float32): parameter in Liu's dynamic, equals exp(-gamma_ln * dt),
+                            where gamma_ln is the firction factor in Langvin dynamics.
+        max_velocity(float32): the upper limit of velocity, when the veclocity overflows,
+                               scale it to the upper limit.
+        is_max_velocity(int32): whether the max velocity control is open or not.
 
-        - **mass_inverse** (Tensor, float32) - [N,], the inverse value of
-        mass of each atom.
+    Inputs:
+        - **mass_inverse** (Tensor, float32) - [N,], the inverse value of mass of each atom.
         - **sqrt_mass** (Tensor, float32) - [N,], the inverse square root value
-        of effect mass in Liu's dynamics of each atom.
+          of effect mass in Liu's dynamics of each atom.
 
     Outputs:
         - **vel** (Tensor, float32) - [N, 3], the velocity of each atom.
@@ -1314,11 +1346,17 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, float4_numbers, atom_numbers, half_dt, dt, exp_gamma, is_max_velocity, max_velocity):
+        assert isinstance(float4_numbers, int)
+        assert isinstance(atom_numbers, int)
+        assert isinstance(half_dt, float)
+        assert isinstance(dt, float)
+        assert isinstance(exp_gamma, float)
+        assert isinstance(is_max_velocity, int)
+        assert isinstance(max_velocity, float)
         self.float4_numbers = float4_numbers
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt
@@ -1342,8 +1380,8 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
         return [self.atom_numbers, 3], [self.atom_numbers, 3], [self.atom_numbers, 3], [self.atom_numbers, 3]
 
     def infer_dtype(self, mass_inverse_dtype, sqrt_mass_dtype):
-        validator.check_tensor_dtype_valid('mass_inverse_dtype', mass_inverse_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('sqrt_mass_dtype', sqrt_mass_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('mass_inverse', mass_inverse_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('sqrt_mass', sqrt_mass_dtype, [mstype.float32], self.name)
 
         return mass_inverse_dtype, mass_inverse_dtype, mass_inverse_dtype, mass_inverse_dtype
 
@@ -1353,42 +1391,39 @@ class PMEReciprocalForce(PrimitiveWithInfer):
     PMEReciprocalForce:
 
     Calculate the reciprocal part of long-range Coulumb force using
-    PME(Particle Meshed Ewald) method. Assume the number of atoms is
-    N.
+    PME(Particle Meshed Ewald) method. Assume the number of atoms is N.
 
     The detailed calculation formula of PME(Particle Meshed Ewald) method
     can be found in this paper: A Smooth Particle Mesh Ewald Method. DOI:
     10.1063/1.470117.
 
-    Inputs:
-        - **atom_numbers** (int32) - the number of atoms, N.
-        - **beta** (float32) - the PME beta parameter, determined by the
-        non-bond cutoff value and simulation precision tolerance.
-        - **fftx** (int32) - the number of points for Fourier transform
-        in dimension X.
-        - **ffty** (int32) - the number of points for Fourier transform
-        in dimension Y.
-        - **fftz** (int32) - the number of points for Fourier transform
-        in dimension Z.
+    Args:
+        atom_numbers(int32): the number of atoms, N.
+        beta(float32): the PME beta parameter, determined by the
+                       non-bond cutoff value and simulation precision tolerance.
+        fftx(int32): the number of points for Fourier transform in dimension X.
+        ffty(int32): the number of points for Fourier transform in dimension Y.
+        fftz(int32): the number of points for Fourier transform in dimension Z.
 
-        - **boxlength** (Tensor, float32) - [3,], the length of simulation
-        box in 3 dimensions.
-        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates
-        value of each atom.
-        - **charge** (Tensor, float32) - [N,], the charge carried by each
-        atom.
+    Inputs:
+        - **boxlength** (Tensor, float32) - [3,], the length of simulation box in 3 dimensions.
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates value of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge carried by each atom.
 
     Outputs:
         - **force** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
         ```GPU```
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta, fftx, ffty, fftz):
+        assert isinstance(atom_numbers, int)
+        assert isinstance(beta, float)
+        assert isinstance(fftx, int)
+        assert isinstance(ffty, int)
+        assert isinstance(fftz, int)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -1406,9 +1441,9 @@ class PMEReciprocalForce(PrimitiveWithInfer):
         return uint_crd_shape
 
     def infer_dtype(self, boxlength_type, uint_crd_type, charge_type):
-        validator.check_tensor_dtype_valid('boxlength_type', boxlength_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('uint_crd_type', uint_crd_type, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('charge_type', charge_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('boxlength', boxlength_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd', uint_crd_type, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_type, [mstype.float32], self.name)
         return charge_type
 
 
@@ -1420,18 +1455,20 @@ class PMEExcludedForce(PrimitiveWithInfer):
     PME(Particle Meshed Ewald) method. Assume the number of atoms is
     N, and the length of excluded list is E.
 
+    Args:
+        atom_numbers(int32): the number of atoms, N.
+        beta(float32): the PME beta parameter, determined by the
+          non-bond cutoff value and simulation precision tolerance.
+
     Inputs:
-        - **atom_numbers** (int32) - the number of atoms, N.
-        - **beta** (float32) - the PME beta parameter, determined by the
-        non-bond cutoff value and simulation precision tolerance.
         - **scaler** (Tensor, float32) - [3,], the scale factor between real space
-        coordinates and its unsigned int value.
+          coordinates and its unsigned int value.
         - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index
-        in excluded list for each atom.
+          in excluded list for each atom.
         - **excluded_numbers** (Tensor, int32) - [N,], the number of atom excluded
-        in excluded list for each atom.
+          in excluded list for each atom.
         - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-        list of each atom.
+          list of each atom.
 
         The rest of the input is the same as that of operator PMEReciprocalForce().
 
@@ -1440,12 +1477,12 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     Supported Platforms:
         ```GPU```
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta):
+        assert isinstance(atom_numbers, int)
+        assert isinstance(beta, float)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.init_prim_io_names(
@@ -1460,14 +1497,14 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     def infer_dtype(self, uint_crd_type, sacler_type, charge_type, excluded_list_start_type, excluded_list_type,
                     excluded_atom_numbers_type):
-        validator.check_tensor_dtype_valid('sacler_type', sacler_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('uint_crd_type', uint_crd_type, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('charge_type', charge_type, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('excluded_list_start_type', excluded_list_start_type, [mstype.int32],
+        validator.check_tensor_dtype_valid('sacler', sacler_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('uint_crd', uint_crd_type, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('charge', charge_type, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('excluded_list_start', excluded_list_start_type, [mstype.int32],
                                            self.name)
-        validator.check_tensor_dtype_valid('excluded_list_type', excluded_list_type, [mstype.int32],
+        validator.check_tensor_dtype_valid('excluded_list', excluded_list_type, [mstype.int32],
                                            self.name)
-        validator.check_tensor_dtype_valid('excluded_atom_numbers_type', excluded_atom_numbers_type, [mstype.int32],
+        validator.check_tensor_dtype_valid('excluded_atom_numbers', excluded_atom_numbers_type, [mstype.int32],
                                            self.name)
         return charge_type
 
@@ -1482,8 +1519,11 @@ class PMEEnergy(PrimitiveWithInfer):
 
         E = sum_{ij} q_iq_j/r_{ij}
 
+    Args:
+        same as operator PMEReciprocalForce().
+
     Inputs:
-        Same as that of operator PMEReciprocalForce(), PMEExcludedForce()
+        Same as operator PMEReciprocalForce(), PMEExcludedForce()
         and PMEDirectAtomEnergy().
 
     Outputs:
@@ -1494,12 +1534,15 @@ class PMEEnergy(PrimitiveWithInfer):
 
     Supported Platforms:
         ```GPU``
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta, fftx, ffty, fftz):
+        assert isinstance(atom_numbers, int)
+        assert isinstance(beta, float)
+        assert isinstance(fftx, int)
+        assert isinstance(ffty, int)
+        assert isinstance(fftz, int)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -1552,39 +1595,33 @@ class LJEnergy(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
         E = A/|dr|^{12} - B/|dr|^{6}
 
+    Agrs:
+        atom_numbers(int32): the number of atoms, N.
+        cutoff_square(float32): the square value of cutoff.
+
     Inputs:
-        - **atom_numbers** (int32) - the number of atoms, N.
-        - **cutoff_square** (float32) - the square value of cutoff.
-        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinate
-        value of each atom.
-        - **LJtype** (Tensor, int32) - [N,], the Lennard-Jones type of each
-        atom.
-        - **charge** (Tensor, float32) - [N,], the charge carried by each
-        atom.
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJtype** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge carried by each atom.
         - **scaler** (Tensor, float32) - [3,], the scale factor between real
-        space coordinate and its unsigned int value.
+          space coordinate and its unsigned int value.
         - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
-        - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom,
-        the max number is 800.
-        - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient
-        of each kind of atom pair.
-        - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient
-        of each kind of atom pair.
+        - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
+        - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient of each kind of atom pair.
+        - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient of each kind of atom pair.
 
     Outputs:
-        - **d_LJ_energy_atom** (Tensor, float32) - [N,], the Lennard-Jones
-        potential energy of each atom.
-        - **d_LJ_energy_sum** (float32), the sum of Lennard-Jones potential
-        energy of each atom.
+        - **d_LJ_energy_atom** (Tensor, float32) - [N,], the Lennard-Jones potential energy of each atom.
+        - **d_LJ_energy_sum** (float32), the sum of Lennard-Jones potential energy of each atom.
 
     Supported Platforms:
         ```GPU```
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff_square):
+        assert isinstance(atom_numbers, int)
+        assert isinstance(cutoff_square, float)
         self.atom_numbers = atom_numbers
         self.cutoff_square = cutoff_square
         self.init_prim_io_names(
@@ -1620,6 +1657,9 @@ class LJForce(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
         F = (-12*A/|dr|^{14} + 6*B/|dr|^{8}) * dr
 
+    Args:
+        Same as operator LJEnergy().
+
     Inputs:
         Same as operator LJEnergy().
 
@@ -1628,11 +1668,12 @@ class LJForce(PrimitiveWithInfer):
 
     Supported Platforms:
         ```GPU```
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff_square):
+        assert isinstance(atom_numbers, int)
+        assert isinstance(cutoff_square, float)
         self.atom_numbers = atom_numbers
         self.cutoff_square = cutoff_square
         self.init_prim_io_names(
@@ -1665,23 +1706,25 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
 
-    Inputs:
-        - **pme_beta** (float32), PME beta parameter, same as operator
-        PMEReciprocalForce().
+    Args:
+        pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
+        The rest is same as operator LJEnergy().
 
-        the rest of the input is the same as operator LJForce().
+    Inputs:
+        same as operator LJForce().
 
     Outputs:
         - **frc** (Tensor, float32), [N, 3], the force felt by each atom.
 
     Supported Platforms:
         ```GPU```
-
-    Examples:
     """
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff, pme_beta):
+        assert isinstance(atom_numbers, int)
+        assert isinstance(cutoff, float)
+        assert isinstance(pme_beta, float)
         self.atom_numbers = atom_numbers
         self.cutoff = cutoff
         self.pme_beta = pme_beta
@@ -1713,7 +1756,6 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
 
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
@@ -1729,14 +1771,14 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
     def infer_shape(self, center_atoms_shape, crd_f_shape):
         cls_name = self.name
         N = self.center_numbers
-        validator.check_int(center_atoms_shape[0], N, Rel.EQ, "center_atoms_shape", cls_name)
-        validator.check_int(crd_f_shape[0], N, Rel.EQ, "crd_f_shape", cls_name)
-        validator.check_int(crd_f_shape[1], 3, Rel.EQ, "crd_f_shape", cls_name)
+        validator.check_int(center_atoms_shape[0], N, Rel.EQ, "center_atoms", cls_name)
+        validator.check_int(crd_f_shape[0], N, Rel.EQ, "crd_f", cls_name)
+        validator.check_int(crd_f_shape[1], 3, Rel.EQ, "crd_f", cls_name)
         return [3,]
 
     def infer_dtype(self, center_atoms_dtype, crd_f_dtype):
-        validator.check_tensor_dtype_valid('center_atoms_dtype', center_atoms_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('crd_f_dtype', crd_f_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('center_atoms', center_atoms_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('crd_f', crd_f_dtype, [mstype.float32], self.name)
 
         return crd_f_dtype
 
@@ -1745,15 +1787,20 @@ class MDTemperature(PrimitiveWithInfer):
     """
     MDTemperature:
 
+    Calculate the temperature.
+
     Supported Platforms:
         ``GPU``
-    Examples:
     """
 
     @prim_attr_register
-    def __init__(self, residue_numbers):
+    def __init__(self, residue_numbers, atom_numbers):
+        assert isinstance(residue_numbers, int)
+        assert isinstance(atom_numbers, int)
         self.residue_numbers = residue_numbers
+        self.atom_numbers = atom_numbers
         self.add_prim_attr('residue_numbers', self.residue_numbers)
+        self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
             inputs=['start', 'end', 'atom_vel_f', 'atom_mass'],
             outputs=['ek'])
@@ -1761,18 +1808,22 @@ class MDTemperature(PrimitiveWithInfer):
     def infer_shape(self, start_shape, end_shape, atom_vel_f_shape, atom_mass_shape):
         cls_name = self.name
         N = self.residue_numbers
-        validator.check_int(start_shape[0], N, Rel.EQ, "start_shape", cls_name)
-        validator.check_int(end_shape[0], N, Rel.EQ, "end_shape", cls_name)
-        validator.check_int(atom_vel_f_shape[0], N, Rel.EQ, "atom_vel_f_shape", cls_name)
-        validator.check_int(atom_vel_f_shape[1], 3, Rel.EQ, "atom_vel_f_shape", cls_name)
-        validator.check_int(atom_mass_shape[0], N, Rel.EQ, "atom_mass_shape", cls_name)
+        M = self.atom_numbers
+        validator.check_int(len(start_shape), 1, Rel.EQ, "start", cls_name)
+        validator.check_int(start_shape[0], N, Rel.EQ, "end", cls_name)
+        validator.check_int(len(end_shape), 1, Rel.EQ, "start", cls_name)
+        validator.check_int(end_shape[0], N, Rel.EQ, "end", cls_name)
+        validator.check_int(atom_vel_f_shape[0], M, Rel.EQ, "atom_vel_f", cls_name)
+        validator.check_int(atom_vel_f_shape[1], 3, Rel.EQ, "atom_vel_f", cls_name)
+        validator.check_int(len(atom_mass_shape), 1, Rel.EQ, "atom_mass", cls_name)
+        validator.check_int(atom_mass_shape[0], M, Rel.EQ, "atom_mass", cls_name)
         return [N,]
 
     def infer_dtype(self, start_dtype, end_dtype, atom_vel_f_dtype, atom_mass_dtype):
-        validator.check_tensor_dtype_valid('start_dtype', start_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('end_dtype', end_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('atom_vel_f_dtype', atom_vel_f_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('atom_mass_dtype', atom_mass_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('start', start_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('end', end_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('atom_vel_f', atom_vel_f_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('atom_mass', atom_mass_dtype, [mstype.float32], self.name)
         return atom_mass_dtype
 
 
@@ -1786,74 +1837,53 @@ class NeighborListUpdate(PrimitiveWithInfer):
     grid is M, the maximum number of atoms in single atom's neighbor list
     is L, and the number of total atom in excluded list is E.
 
-    Inputs:
-        - **grid_numbers** (int32) - the total number of grids divided.
-        - **refresh_count** (int32) - the counter which counts how many
-        iteration steps have passed since last update.
-        - **not_first_time** (int32) - whether to construct the neighbor
-        list first time or not.
-        - **Nxy** (int32) - the total number of grids divided in xy plane.
-        - **excluded_atom_numbers** (int32) - the total atom numbers in
-        the excluded list.
-        - **cutoff** (float32) - the cutoff distance for short-range force
-        calculation.
-        - **skin** (float32) - the overflow value of cutoff to maintain a
-        neighbor list.
-        - **cutoff_square** (float32) - the suqare value of cutoff.
-        - **half_skin_square** (float32) - skin*skin/4, indicates the maximum
-        square value of the distance atom allowed to move between two updates.
-        - **cutoff_with_skin** (float32) - cutoff + skin, indicates the
-        radius of the neighbor list for each atom.
-        - **half_cutoff_with_skin** (float32) - cutoff_with_skin/2.
-        - **cutoff_with_skin_square** (float32) - the square value of
-        cutoff_with_skin.
-        - **refresh_interval** (int32) - the number of iteration steps
-        between two updates of neighbor list.
-        - **max_atom_in_grid_numbers** (int32) - the maximum number of atoms
-        in one grid.
+    Args:
+        grid_numbers(int32): the total number of grids divided.
+        refresh_count(int32): the counter which counts how many
+          iteration steps have passed since last update.
+        not_first_time(int32): whether to construct the neighbor
+          list first time or not.
+        Nxy(int32): the total number of grids divided in xy plane.
+        excluded_atom_numbers(int32): the total atom numbers in the excluded list.
+        cutoff(float32): the cutoff distance for short-range force calculation.
+        skin(float32): the overflow value of cutoff to maintain a neighbor list.
+        cutoff_square(float32): the suqare value of cutoff.
+        half_skin_square(float32): skin*skin/4, indicates the maximum
+          square value of the distance atom allowed to move between two updates.
+        cutoff_with_skin(float32): cutoff + skin, indicates the
+          radius of the neighbor list for each atom.
+        half_cutoff_with_skin(float32): cutoff_with_skin/2.
+        cutoff_with_skin_square(float32): the square value of cutoff_with_skin.
+        refresh_interval(int32): the number of iteration steps between two updates of neighbor list.
+        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid.
 
-        - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number
-        of atoms in each grid bucket.
-        - **bucket** (Tensor, int32) - (Tensor,int32) - [G, M], the atom
-        indices in each grid bucket.
+    Inputs:
+        - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
+        - **bucket** (Tensor, int32) - (Tensor,int32) - [G, M], the atom indices in each grid bucket.
         - **crd** (Tensor, float32) - [N,], the coordinates of each atom.
-        - **box_length** (Tensor, float32) - [3,], the length of 3 dimensions
-        of the simulation box.
-        - **grid_N** (Tensor, int32) - [3,], the number of grids divided of
-        3 dimensions of the simulation box.
+        - **box_length** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
+        - **grid_N** (Tensor, int32) - [3,], the number of grids divided of 3 dimensions of the simulation box.
         - **grid_length_inverse** (float32) - the inverse value of grid length.
-        - **atom_in_grid_serial** (Tensor, int32) - [N,], the grid index for
-        each atom.
-        - **old_crd** (Tensor, float32) - [N, 3], the coordinates before update
-        of each atom.
+        - **atom_in_grid_serial** (Tensor, int32) - [N,], the grid index for each atom.
+        - **old_crd** (Tensor, float32) - [N, 3], the coordinates before update of each atom.
         - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the scale factor
-        between the unsigned int value and the real space coordinates.
-        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates
-        value fo each atom.
-        - **gpointer** (Tensor, int32) - [G, 125], the 125 nearest neighbor grids
-        (including self) of each grid.
-        - **nl_atom_numbers** (Tensor, int32) - [N,], the number of atoms in
-        neighbor list of each atom.
-        - **nl_atom_serial** (Tensor, int32) - [N, L], the indices of atoms in
-        neighbor list of each atom.
+          between the unsigned int value and the real space coordinates.
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates value fo each atom.
+        - **gpointer** (Tensor, int32) - [G, 125], the 125 nearest neighbor grids (including self) of each grid.
+        - **nl_atom_numbers** (Tensor, int32) - [N,], the number of atoms in neighbor list of each atom.
+        - **nl_atom_serial** (Tensor, int32) - [N, L], the indices of atoms in neighbor list of each atom.
         - **uint_dr_to_dr_cof** (Tensor, float32) - [3,], the scale factor between
-        the real space coordinates and the unsigned int value.
-        - **excluded_list_start** (Tensor, int32) - [N,], the start excluded
-        index in excluded list for each atom.
-        - **excluded_numbers** (Tensor, int32) - [N,], the number of atom excluded
-        in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-        list of each atom.
-        - **need_refresh_flag** (Tensor, int32) - [N,], whether the neighbor list
-        of each atom need update or not.
+          the real space coordinates and the unsigned int value.
+        - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index in excluded list for each atom.
+        - **excluded_numbers** (Tensor, int32) - [N,], the number of atom excluded in excluded list for each atom.
+        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded list of each atom.
+        - **need_refresh_flag** (Tensor, int32) - [N,], whether the neighbor list of each atom need update or not.
 
     Outputs:
         - **res** (float32)
 
     Supported Platforms:
         ```GPU```
-
-    Examples:
     """
 
     @prim_attr_register
@@ -1923,34 +1953,34 @@ class NeighborListUpdate(PrimitiveWithInfer):
         assert len(need_refresh_flag_shape) == 1
 
         validator.check_int(atom_numbers_in_grid_bucket_shape[0], self.grid_numbers, Rel.EQ,
-                            "atom_numbers_in_grid_bucket_shape", self.name)
-        validator.check_int(bucket_shape[0], self.grid_numbers, Rel.EQ, "bucket_shape", self.name)
-        validator.check_int(bucket_shape[1], self.max_atom_in_grid_numbers, Rel.EQ, "bucket_shape", self.name)
-        validator.check_int(crd_shape[0], self.atom_numbers, Rel.EQ, "crd_shape", self.name)
-        validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape", self.name)
-        validator.check_int(box_length_shape[0], 3, Rel.EQ, "box_length_shape", self.name)
-        validator.check_int(grid_N_shape[0], 3, Rel.EQ, "grid_N_shape", self.name)
-        validator.check_int(grid_length_inverse_shape[0], 3, Rel.EQ, "grid_length_inverse_shape", self.name)
-        validator.check_int(atom_in_grid_serial_shape[0], self.atom_numbers, Rel.EQ, "atom_in_grid_serial_shape",
+                            "atom_numbers_in_grid_bucket", self.name)
+        validator.check_int(bucket_shape[0], self.grid_numbers, Rel.EQ, "bucket", self.name)
+        validator.check_int(bucket_shape[1], self.max_atom_in_grid_numbers, Rel.EQ, "bucket", self.name)
+        validator.check_int(crd_shape[0], self.atom_numbers, Rel.EQ, "crd", self.name)
+        validator.check_int(crd_shape[1], 3, Rel.EQ, "crd", self.name)
+        validator.check_int(box_length_shape[0], 3, Rel.EQ, "box_length", self.name)
+        validator.check_int(grid_N_shape[0], 3, Rel.EQ, "grid_N", self.name)
+        validator.check_int(grid_length_inverse_shape[0], 3, Rel.EQ, "grid_length_inverse", self.name)
+        validator.check_int(atom_in_grid_serial_shape[0], self.atom_numbers, Rel.EQ, "atom_in_grid_serial",
                             self.name)
-        validator.check_int(old_crd_shape[0], self.atom_numbers, Rel.EQ, "old_crd_shape", self.name)
-        validator.check_int(old_crd_shape[1], 3, Rel.EQ, "old_crd_shape", self.name)
-        validator.check_int(crd_to_uint_crd_cof_shape[0], 3, Rel.EQ, "crd_to_uint_crd_cof_shape", self.name)
-        validator.check_int(uint_crd_shape[0], self.atom_numbers, Rel.EQ, "uint_crd_shape", self.name)
-        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd_shape", self.name)
-        validator.check_int(gpointer_shape[0], self.grid_numbers, Rel.EQ, "gpointer_shape", self.name)
-        validator.check_int(gpointer_shape[1], 125, Rel.EQ, "gpointer_shape", self.name)
-        validator.check_int(nl_atom_numbers_shape[0], self.atom_numbers, Rel.EQ, "nl_atom_numbers_shape", self.name)
-        validator.check_int(nl_atom_serial_shape[0], self.atom_numbers, Rel.EQ, "nl_atom_serial_shape", self.name)
-        validator.check_int(nl_atom_serial_shape[1], self.max_neighbor_numbers, Rel.EQ, "nl_atom_serial_shape",
+        validator.check_int(old_crd_shape[0], self.atom_numbers, Rel.EQ, "old_crd", self.name)
+        validator.check_int(old_crd_shape[1], 3, Rel.EQ, "old_crd", self.name)
+        validator.check_int(crd_to_uint_crd_cof_shape[0], 3, Rel.EQ, "crd_to_uint_crd_cof", self.name)
+        validator.check_int(uint_crd_shape[0], self.atom_numbers, Rel.EQ, "uint_crd", self.name)
+        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd", self.name)
+        validator.check_int(gpointer_shape[0], self.grid_numbers, Rel.EQ, "gpointer", self.name)
+        validator.check_int(gpointer_shape[1], 125, Rel.EQ, "gpointer", self.name)
+        validator.check_int(nl_atom_numbers_shape[0], self.atom_numbers, Rel.EQ, "nl_atom_numbers", self.name)
+        validator.check_int(nl_atom_serial_shape[0], self.atom_numbers, Rel.EQ, "nl_atom_serial", self.name)
+        validator.check_int(nl_atom_serial_shape[1], self.max_neighbor_numbers, Rel.EQ, "nl_atom_serial",
                             self.name)
-        validator.check_int(uint_dr_to_dr_cof_shape[0], 3, Rel.EQ, "uint_dr_to_dr_cof_shape", self.name)
-        validator.check_int(excluded_list_start_shape[0], self.atom_numbers, Rel.EQ, "excluded_list_start_shape",
+        validator.check_int(uint_dr_to_dr_cof_shape[0], 3, Rel.EQ, "uint_dr_to_dr_cof", self.name)
+        validator.check_int(excluded_list_start_shape[0], self.atom_numbers, Rel.EQ, "excluded_list_start",
                             self.name)
-        validator.check_int(excluded_list_shape[0], self.excluded_atom_numbers, Rel.EQ, "excluded_list_shape",
+        validator.check_int(excluded_list_shape[0], self.excluded_atom_numbers, Rel.EQ, "excluded_list",
                             self.name)
-        validator.check_int(excluded_numbers_shape[0], self.atom_numbers, Rel.EQ, "excluded_numbers_shape", self.name)
-        validator.check_int(need_refresh_flag_shape[0], 1, Rel.EQ, "need_refresh_flag_shape", self.name)
+        validator.check_int(excluded_numbers_shape[0], self.atom_numbers, Rel.EQ, "excluded_numbers", self.name)
+        validator.check_int(need_refresh_flag_shape[0], 1, Rel.EQ, "need_refresh_flag", self.name)
 
         return [1,]
 
@@ -1959,30 +1989,134 @@ class NeighborListUpdate(PrimitiveWithInfer):
                     uint_crd_dtype, gpointer_dtype, nl_atom_numbers_dtype, nl_atom_serial_dtype,
                     uint_dr_to_dr_cof_dtype, excluded_list_start_dtype, excluded_list_dtype, excluded_numbers_dtype,
                     need_refresh_flag_dtype):
-        validator.check_tensor_dtype_valid('atom_numbers_in_grid_bucket_dtype', atom_numbers_in_grid_bucket_dtype,
+        validator.check_tensor_dtype_valid('atom_numbers_in_grid_bucket', atom_numbers_in_grid_bucket_dtype,
                                            [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('bucket_dtype', bucket_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('crd_dtype', crd_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('box_length_dtype', box_length_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('grid_N_dtype', grid_N_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('grid_length_inverse_dtype', grid_length_inverse_dtype, [mstype.float32],
+        validator.check_tensor_dtype_valid('bucket', bucket_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('crd', crd_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('box_length', box_length_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('grid_N', grid_N_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('grid_length_inverse', grid_length_inverse_dtype, [mstype.float32],
                                            self.name)
-        validator.check_tensor_dtype_valid('atom_in_grid_serial_dtype', atom_in_grid_serial_dtype, [mstype.int32],
+        validator.check_tensor_dtype_valid('atom_in_grid_serial', atom_in_grid_serial_dtype, [mstype.int32],
                                            self.name)
-        validator.check_tensor_dtype_valid('old_crd_dtype', old_crd_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('crd_to_uint_crd_cof_dtype', crd_to_uint_crd_cof_dtype, [mstype.float32],
+        validator.check_tensor_dtype_valid('old_crd', old_crd_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('crd_to_uint_crd_cof', crd_to_uint_crd_cof_dtype, [mstype.float32],
                                            self.name)
-        validator.check_tensor_dtype_valid('uint_crd_dtype', uint_crd_dtype, [mstype.uint32], self.name)
-        validator.check_tensor_dtype_valid('gpointer_dtype', gpointer_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('nl_atom_numbers_dtype', nl_atom_numbers_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('nl_atom_serial_dtype', nl_atom_serial_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('uint_dr_to_dr_cof_dtype', uint_dr_to_dr_cof_dtype, [mstype.float32],
+        validator.check_tensor_dtype_valid('uint_crd', uint_crd_dtype, [mstype.uint32], self.name)
+        validator.check_tensor_dtype_valid('gpointer', gpointer_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('nl_atom_numbers', nl_atom_numbers_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('nl_atom_serial', nl_atom_serial_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('uint_dr_to_dr_cof', uint_dr_to_dr_cof_dtype, [mstype.float32],
                                            self.name)
-        validator.check_tensor_dtype_valid('excluded_list_start_dtype', excluded_list_start_dtype, [mstype.int32],
+        validator.check_tensor_dtype_valid('excluded_list_start', excluded_list_start_dtype, [mstype.int32],
                                            self.name)
-        validator.check_tensor_dtype_valid('excluded_list_dtype', excluded_list_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('excluded_numbers_dtype', excluded_numbers_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('need_refresh_flag_dtype', need_refresh_flag_dtype, [mstype.int32],
+        validator.check_tensor_dtype_valid('excluded_list', excluded_list_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('excluded_numbers', excluded_numbers_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('need_refresh_flag', need_refresh_flag_dtype, [mstype.int32],
                                            self.name)
 
+        return mstype.float32
+
+
+class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
+    """
+    MDIterationLeapFrog:
+
+    One step of classical leap frog algorithm to solve the finite difference
+    Hamiltonian equations of motion for certain system, using Langevin dynamics
+    with Liu's thermostat scheme. Assume the number of atoms is N and the target
+    control temperature is T.
+
+    Detailed iteration formula can be found in this paper: A unified thermostat
+    scheme for efficient configurational sampling for classical/quantum canonical
+    ensembles via molecular dynamics. DOI: 10.1063/1.4991621.
+
+    Inputs:
+        - **float4_numbers** (int32) - total length to store random numbers.
+        - **atom_numbers** (int32) - the number of atoms N.
+        - **dt** (float32) - time step for finite difference.
+        - **half_dt** (float32) - half of time step for finite difference.
+        - **exp_gamma** (float32) - parameter in Liu's dynamic, equals
+        exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
+        dynamics.
+        - **max_velocity** (float32) - the upper limit of velocity, when the
+        veclocity overflows, scale it to the upper limit.
+        - **is_max_velocity** (int32) - whether the max velocity control is
+        open or not.
+
+        - **mass_inverse** (Tensor, float32) - [N,], the inverse value of
+        mass of each atom.
+        - **sqrt_mass** (Tensor, float32) - [N,], the inverse square root value
+        of effect mass in Liu's dynamics of each atom.
+        - **vel** (Tensor, float32) - [N, 3], the velocity of each atom.
+        - **crd** (Tensor, float32) - [N, 3], the coordinate of each atom.
+        - **frc** (Tensor, float32) - [N, 3], the force felt by each atom.
+        - **acc** (Tensor, float32) - [N, 3], the acceleration of each atom.
+        - **random force** (Tensor, float32) - [N, 3], the random forces.
+
+    Outputs:
+        - **res** (float32)
+
+    Supported Platforms:
+        ``GPU``
+    Examples:
+    """
+
+    @prim_attr_register
+    def __init__(self, float4_numbers, atom_numbers, half_dt, dt, exp_gamma, is_max_velocity, max_velocity):
+        assert isinstance(float4_numbers, int)
+        assert isinstance(atom_numbers, int)
+        assert isinstance(half_dt, float)
+        assert isinstance(dt, float)
+        assert isinstance(exp_gamma, float)
+        assert isinstance(is_max_velocity, int)
+        assert isinstance(max_velocity, float)
+        self.float4_numbers = float4_numbers
+        self.atom_numbers = atom_numbers
+        self.half_dt = half_dt
+        self.dt = dt
+        self.exp_gamma = exp_gamma
+        self.is_max_velocity = is_max_velocity
+        self.max_velocity = max_velocity
+
+        self.init_prim_io_names(
+            inputs=['mass_inverse', 'sqrt_mass', 'vel_in', 'crd_in', 'frc_in', 'acc_in', 'random_force'],
+            outputs=['res'])
+        self.add_prim_attr('float4_numbers', self.float4_numbers)
+        self.add_prim_attr('atom_numbers', self.atom_numbers)
+        self.add_prim_attr('half_dt', self.half_dt)
+        self.add_prim_attr('dt', self.dt)
+        self.add_prim_attr('exp_gamma', self.exp_gamma)
+        self.add_prim_attr('is_max_velocity', self.is_max_velocity)
+        self.add_prim_attr('max_velocity', self.max_velocity)
+
+    def infer_shape(self, mass_inverse_shape, sqrt_mass_shape, vel_in_shape, crd_in_shape, frc_in_shape, acc_in_shape,
+                    random_force_shape):
+        N = self.atom_numbers
+        validator.check_int(len(mass_inverse_shape), 1, Rel.EQ, "mass_inverse", self.name)
+        validator.check_int(len(sqrt_mass_shape), 1, Rel.EQ, "mass_inverse", self.name)
+        validator.check_int(mass_inverse_shape[0], N, Rel.EQ, "mass_inverse", self.name)
+        validator.check_int(sqrt_mass_shape[0], N, Rel.EQ, "mass_inverse", self.name)
+        validator.check_int(vel_in_shape[0], N, Rel.EQ, "vel_in", self.name)
+        validator.check_int(vel_in_shape[1], 3, Rel.EQ, "vel_in", self.name)
+        validator.check_int(crd_in_shape[0], N, Rel.EQ, "crd_in", self.name)
+        validator.check_int(crd_in_shape[1], 3, Rel.EQ, "crd_in", self.name)
+        validator.check_int(frc_in_shape[0], N, Rel.EQ, "frc_in", self.name)
+        validator.check_int(frc_in_shape[1], 3, Rel.EQ, "frc_in", self.name)
+        validator.check_int(acc_in_shape[0], N, Rel.EQ, "acc_in", self.name)
+        validator.check_int(acc_in_shape[1], 3, Rel.EQ, "acc_in", self.name)
+        validator.check_int(random_force_shape[0], N, Rel.EQ, "random_force", self.name)
+        validator.check_int(random_force_shape[1], 3, Rel.EQ, "random_force", self.name)
+
+        return [1,]
+
+    def infer_dtype(self, mass_inverse_dtype, sqrt_mass_dtype, vel_in_dtype, crd_in_dtype, frc_in_dtype, acc_in_dtype,
+                    rf_dtype):
+        validator.check_tensor_dtype_valid('mass_inverse', mass_inverse_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('sqrt_mass', sqrt_mass_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('vel_in', vel_in_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('crd_in', crd_in_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('frc_in', frc_in_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('acc_in', acc_in_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('rf', rf_dtype, [mstype.float32], self.name)
         return mstype.float32
