@@ -109,17 +109,22 @@ void NetRunner::InitAndFigureInputs() {
 
   auto inputs = session_->GetInputs();
   MS_ASSERT(inputs.size() > 1);
+  auto nhwc_input_dims = inputs.at(0)->shape();
+  MS_ASSERT(nhwc_input_dims.size() == 4);
+  batch_size_ = nhwc_input_dims.at(0);
+  h_ = nhwc_input_dims.at(1);
+  w_ = nhwc_input_dims.at(2);
 }
 
 float NetRunner::CalculateAccuracy(int max_tests) {
   test_ds_ = Mnist(data_dir_ + "/test", "all");
   TypeCast typecast_f("float32");
-  Resize resize({32, 32});
+  Resize resize({h_, w_});
   test_ds_ = test_ds_->Map({&resize, &typecast_f}, {"image"});
 
   TypeCast typecast("int32");
   test_ds_ = test_ds_->Map({&typecast}, {"label"});
-  test_ds_ = test_ds_->Batch(32, true);
+  test_ds_ = test_ds_->Batch(batch_size_, true);
 
   Rescaler rescale(255.0);
 
@@ -133,16 +138,14 @@ int NetRunner::InitDB() {
   train_ds_ = Mnist(data_dir_ + "/train", "all");
 
   TypeCast typecast_f("float32");
-  Resize resize({32, 32});
-  // Normalize rescale_op({0.0, 0.0, 0.0}, {255.0, 255.0, 255.0}); pending on Minddata operator
-  // Rescale rescale_op(255.0, 0.0);
+  Resize resize({h_, w_});
   train_ds_ = train_ds_->Map({&resize, &typecast_f}, {"image"});
 
   TypeCast typecast("int32");
   train_ds_ = train_ds_->Map({&typecast}, {"label"});
 
   train_ds_ = train_ds_->Shuffle(2);
-  train_ds_ = train_ds_->Batch(32, true);
+  train_ds_ = train_ds_->Batch(batch_size_, true);
 
   if (verbose_) {
     std::cout << "DatasetSize is " << train_ds_->GetDatasetSize() << std::endl;
@@ -156,8 +159,8 @@ int NetRunner::InitDB() {
 }
 
 int NetRunner::TrainLoop() {
-  struct mindspore::lite::StepLRLambda step_lr_lambda(1, 0.9);
-  mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 100);
+  struct mindspore::lite::StepLRLambda step_lr_lambda(1, 0.8);
+  mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 1);
 
   mindspore::lite::LossMonitor lm(100);
   mindspore::lite::ClassificationTrainAccuracyMonitor am(1);

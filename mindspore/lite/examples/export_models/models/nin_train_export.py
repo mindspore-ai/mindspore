@@ -25,14 +25,14 @@ from mindspore.train.serialization import export
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
 
 n = NiN(num_classes=10)
-loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
 optimizer = nn.SGD(n.trainable_params(), learning_rate=0.01, momentum=0.9, dampening=0.0, weight_decay=5e-4,
                    nesterov=True, loss_scale=0.9)
 net = TrainWrap(n, loss_fn, optimizer)
 
 batch = 2
 x = Tensor(np.random.randn(batch, 3, 32, 32), mstype.float32)
-label = Tensor(np.zeros([batch, 10]).astype(np.float32))
+label = Tensor(np.zeros([batch]).astype(np.int32))
 export(net, x, label, file_name="mindir/nin_train", file_format='MINDIR')
 
 if len(sys.argv) > 1:

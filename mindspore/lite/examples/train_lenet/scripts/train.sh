@@ -15,4 +15,4 @@
 # ============================================================================
 
 # an simple tutorial as follows, more parameters can be setting
-LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/lenet_tod.ms -e 3 -d dataset
+LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/lenet_tod.ms -e 5 -d dataset

@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include "include/lite_session.h"
+#include "include/errorcode.h"
 
 namespace mindspore {
 namespace session {
@@ -135,7 +136,11 @@ class TrainSession : public session::LiteSession {
 
   /// \brief Set part of the name that identify a loss kernel
   /// \param[in] loss_name Identifucation name for loss kernels
-  void SetLossName(std::string loss_name) { loss_name_ = loss_name; }
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int SetLossName(std::string loss_name) {
+    loss_name_ = loss_name;
+    return mindspore::lite::RET_OK;
+  }
 
  protected:
   bool train_mode_ = false;

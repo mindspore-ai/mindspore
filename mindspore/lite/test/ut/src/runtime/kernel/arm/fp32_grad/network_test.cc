@@ -32,6 +32,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 
+using mindspore::lite::RET_OK;
 namespace mindspore {
 class NetworkTest : public mindspore::CommonTest {
  public:
@@ -552,6 +553,37 @@ TEST_F(NetworkTest, mobileface_net) {
   delete model;
   delete session;
   delete context;
+}
+
+TEST_F(NetworkTest, setname) {
+  std::string net = "./test_data/nets/lenet_train.ms";
+  lite::Context context;
+  context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
+  context.thread_num_ = 1;
+  auto session = mindspore::session::TrainSession::CreateSession(net, &context);
+  ASSERT_NE(session, nullptr);
+
+  auto tensors_map = session->GetOutputs();
+  auto tensor_names = session->GetOutputTensorNames();
+  EXPECT_EQ(tensors_map.size(), 1);
+  EXPECT_EQ(tensors_map.begin()->first, "24");
+  EXPECT_EQ(tensor_names.size(), 1);
+  EXPECT_EQ(tensor_names.at(0), "Default/network-WithLossCell/_backbone-LeNet5/fc3-Dense/BiasAdd-op107");
+
+  auto res = session->SetLossName("nhwc");
+  EXPECT_EQ(res, RET_OK);
+  tensors_map = session->GetOutputs();
+  tensor_names = session->GetOutputTensorNames();
+  EXPECT_EQ(tensors_map.begin()->first, "8");
+  EXPECT_EQ(tensor_names.at(0), "Default/network-WithLossCell/_backbone-LeNet5/max_pool2d-MaxPool2d/MaxPool-op88");
+
+  res = session->SetLossName("loss");
+  EXPECT_EQ(res, RET_OK);
+  tensors_map = session->GetOutputs();
+  tensor_names = session->GetOutputTensorNames();
+  EXPECT_EQ(tensors_map.begin()->first, "24");
+  EXPECT_EQ(tensor_names.at(0), "Default/network-WithLossCell/_backbone-LeNet5/fc3-Dense/BiasAdd-op107");
+  delete session;
 }
 
 }  // namespace mindspore
