@@ -55,7 +55,7 @@ class HcclKernel : public AscendKernelMod {
   mutable std::vector<size_t> input_size_list_;
   mutable std::vector<size_t> output_size_list_;
   mutable std::vector<size_t> workspace_size_list_;
-  AnfNodePtr anf_node_;
+  AnfNodeWeakPtr anf_node_;
   std::string op_name_;
   std::string group_;
 };
