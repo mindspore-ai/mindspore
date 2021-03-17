@@ -91,6 +91,29 @@ class CenterCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief ResizePreserveAR TensorTransform.
+/// \notes Keep the original picture ratio and fill the rest.
+class ResizePreserveAR final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] height The height of image output value after resizing.
+  /// \param[in] width The width of image output value after resizing.
+  /// \param[in] img_orientation Angle method of image rotation.
+  ResizePreserveAR(int32_t height, int32_t width, int32_t img_orientation = 0);
+
+  /// \brief Destructor.
+  ~ResizePreserveAR() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief RGB2GRAY TensorTransform.
 /// \notes Convert RGB image or color image to grayscale image
 class RGB2GRAY : public TensorTransform {

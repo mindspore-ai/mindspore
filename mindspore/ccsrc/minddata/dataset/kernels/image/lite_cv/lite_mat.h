@@ -63,6 +63,14 @@ struct Point {
   Point(float _x, float _y) : x(_x), y(_y) {}
 };
 
+typedef struct imageToolsImage {
+  int w;
+  int h;
+  int stride;
+  int dataType;
+  void *image_buff;
+} imageToolsImage_t;
+
 using BOOL_C1 = Chn1<bool>;
 using BOOL_C2 = Chn2<bool>;
 using BOOL_C3 = Chn3<bool>;

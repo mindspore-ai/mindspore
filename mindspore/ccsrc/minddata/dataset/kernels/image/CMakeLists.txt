@@ -44,6 +44,7 @@ add_library(kernels-image OBJECT
     random_sharpness_op.cc
     rescale_op.cc
     resize_op.cc
+    resize_preserve_ar_op.cc
     rgb_to_gray_op.cc
     rgba_to_bgr_op.cc
     rgba_to_rgb_op.cc

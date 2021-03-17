@@ -1736,3 +1736,20 @@ TEST_F(MindDataImageProcess, testConvertRgbToGray) {
   cv::imwrite("./mindspore_image.jpg", dst_image);
   CompareMat(rgb_mat, lite_mat_gray);
 }
+
+TEST_F(MindDataImageProcess, testResizePreserveARWithFillerv) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  LiteMat lite_mat_rgb;
+  lite_mat_rgb.Init(image.cols, image.rows, image.channels(), image.data, LDataType::UINT8);
+  LiteMat lite_mat_resize;
+  float ratioShiftWShiftH[3] = {0};
+  float invM[2][3] = {{0, 0, 0}, {0, 0, 0}};
+  int h = 1000;
+  int w = 1000;
+  bool ret = ResizePreserveARWithFiller(lite_mat_rgb, lite_mat_resize, h, w, &ratioShiftWShiftH, &invM, 0);
+  ASSERT_TRUE(ret == true);
+  cv::Mat dst_image(lite_mat_resize.height_, lite_mat_resize.width_, CV_32FC3, lite_mat_resize.data_ptr_);
+  cv::imwrite("./mindspore_image.jpg", dst_image);
+}

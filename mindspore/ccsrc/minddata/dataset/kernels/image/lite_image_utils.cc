@@ -421,6 +421,43 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   return Status::OK();
 }
 
+Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, int32_t img_orientation,
+                      TensorRow *outputs) {
+  outputs->resize(3);
+  std::shared_ptr<Tensor> input = inputs[0];
+  LiteMat lite_mat_src(input->shape()[1], input->shape()[0], input->shape()[2],
+                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                       GetLiteCVDataType(input->type()));
+
+  LiteMat lite_mat_dst;
+  std::shared_ptr<Tensor> image_tensor;
+  TensorShape new_shape = TensorShape({height, width, input->shape()[2]});
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, DataType(DataType::DE_FLOAT32), &image_tensor));
+  uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*image_tensor->begin<uint8_t>()));
+  lite_mat_dst.Init(width, height, input->shape()[2], reinterpret_cast<void *>(buffer), LDataType::FLOAT32);
+
+  float ratioShiftWShiftH[3] = {0};
+  float invM[2][3] = {{0, 0, 0}, {0, 0, 0}};
+  bool ret =
+    ResizePreserveARWithFiller(lite_mat_src, lite_mat_dst, height, width, &ratioShiftWShiftH, &invM, img_orientation);
+  CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize: bilinear resize failed.");
+
+  std::shared_ptr<Tensor> ratio_tensor;
+  TensorShape ratio_shape = TensorShape({3});
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(ratio_shape, DataType(DataType::DE_FLOAT32),
+                                            reinterpret_cast<uint8_t *>(&ratioShiftWShiftH), &ratio_tensor));
+
+  std::shared_ptr<Tensor> invM_tensor;
+  TensorShape invM_shape = TensorShape({2, 3});
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(invM_shape, DataType(DataType::DE_FLOAT32),
+                                            reinterpret_cast<uint8_t *>(&invM), &invM_tensor));
+
+  (*outputs)[0] = image_tensor;
+  (*outputs)[1] = ratio_tensor;
+  (*outputs)[2] = invM_tensor;
+  return Status::OK();
+}
+
 Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   if (input->Rank() != 3) {
     RETURN_STATUS_UNEXPECTED("RgbToGray: input image is not in shape of <H,W,C>");

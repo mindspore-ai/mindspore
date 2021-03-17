@@ -735,6 +735,22 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
   return std::make_shared<ResizeOperation>(data_->size_, data_->interpolation_);
 }
 
+// ResizePreserveAR Transform Operation.
+struct ResizePreserveAR::Data {
+  Data(int32_t height, int32_t width, int32_t img_orientation)
+      : height_(height), width_(width), img_orientation_(img_orientation) {}
+  int32_t height_;
+  int32_t width_;
+  int32_t img_orientation_;
+};
+
+ResizePreserveAR::ResizePreserveAR(int32_t height, int32_t width, int32_t img_orientation)
+    : data_(std::make_shared<Data>(height, width, img_orientation)) {}
+
+std::shared_ptr<TensorOperation> ResizePreserveAR::Parse() {
+  return std::make_shared<ResizePreserveAROperation>(data_->height_, data_->width_, data_->img_orientation_);
+}
+
 #ifdef ENABLE_ANDROID
 // Rotate Transform Operation.
 Rotate::Rotate() {}

@@ -28,6 +28,19 @@ namespace mindspore {
 namespace dataset {
 
 #define CV_PI 3.1415926535897932384626433832795
+#define IM_TOOL_EXIF_ORIENTATION_0_DEG 1
+#define IM_TOOL_EXIF_ORIENTATION_0_DEG_MIRROR 2
+#define IM_TOOL_EXIF_ORIENTATION_180_DEG 3
+#define IM_TOOL_EXIF_ORIENTATION_180_DEG_MIRROR 4
+#define IM_TOOL_EXIF_ORIENTATION_90_DEG_MIRROR 5
+#define IM_TOOL_EXIF_ORIENTATION_90_DEG 6
+#define IM_TOOL_EXIF_ORIENTATION_270_DEG_MIRROR 7
+#define IM_TOOL_EXIF_ORIENTATION_270_DEG 8
+#define NUM_OF_RGB_CHANNELS 9
+#define IM_TOOL_DATA_TYPE_FLOAT (1)
+#define IM_TOOL_DATA_TYPE_UINT8 (2)
+#define IM_TOOL_RETURN_STATUS_SUCCESS (0)
+#define IM_TOOL_RETURN_STATUS_INVALID_INPUT (1)
 
 #define INT16_CAST(X) \
   static_cast<int16_t>(::std::min(::std::max(static_cast<int>(X + (X >= 0.f ? 0.5f : -0.5f)), -32768), 32767));
@@ -139,6 +152,10 @@ bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, 
 
 /// \brief Convert RGB image or color image to grayscale image
 bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
+
+/// \brief Resize preserve AR with filler
+bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float (*ratioShiftWShiftH)[3],
+                                float (*invM)[2][3], int img_orientation);
 
 }  // namespace dataset
 }  // namespace mindspore
