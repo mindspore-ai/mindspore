@@ -136,10 +136,17 @@ private:
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
 
+  FuncGraphPtr GetOptBpropFromCache(
+    const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim);
+
+  FuncGraphPtr GenSpecOptBprop(
+    const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim);
+
 private:
   // cache optimized bprop graph
   PrimBpropCache prim_bprop_cache_;
   opt::irpass::OptimizeIRPassLib irpass_;
+
 };
 
 // bprop_fg has the signature:

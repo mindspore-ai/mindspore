@@ -184,6 +184,16 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(inputs[0]);
   MS_LOG(DEBUG) << "Hash of prim " << prim->ToString() << " is:" << prim->hash();
 
+  //  kPrimBpropCut
+  if (IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
+    return GenSpecOptBprop(bprop_fg, op_args, out, prim);
+  }
+
+  return GetOptBpropFromCache(bprop_fg, op_args, out, prim);
+}
+
+FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(
+  const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim) {
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, abs_list);
 
@@ -212,6 +222,21 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
   level_2_graph_info->TryFreeArgsValue(op_args, out);
   return BasicClone(level_2_graph_info->opt_func_graph());
+}
+
+FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(
+  const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim) {
+  // do step1 opt
+  bprop_fg->debug_info()->set_name(prim->ToString());
+  auto level_1_graph_info = PrimBpropOptStep1(bprop_fg);
+
+  // do step2 opt
+  abstract::AbstractBasePtrList abs_list;
+  ArgsToAbs(prim, op_args, abs_list);
+  auto new_abs_list = AddOutToAbsList(out, abs_list);
+  auto level_2_graph_info = PrimBpropOptStep2(level_1_graph_info->opt_func_graph_, new_abs_list);
+  level_2_graph_info->TryFreeArgsValue(op_args, out);
+  return level_2_graph_info->opt_func_graph();
 }
 
 PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) {
