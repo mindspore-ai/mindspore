@@ -84,27 +84,23 @@ AnfNodePtr EliminateUpdateStateOnlyUsedNode(const CNodePtr &update_state, const 
 //   user(u)
 AnfNodePtr EliminateUpdateStateForPureNode(const CNodePtr &update_state, const AnfNodePtr &attach) {
   if (IsPrimitiveCNode(attach, prim::kPrimTupleGetItem)) {
-    auto tuple_getitem_cnode = attach->cast<CNodePtr>();
-    auto mgr = GetManager(attach);
-    if (mgr == nullptr) {
+    // Skip tuple_getitem.
+    return nullptr;
+  }
+  auto cnode = dyn_cast<CNode>(attach);
+  if (cnode == nullptr) {
+    // Skip value node or parameter.
+    return nullptr;
+  }
+  if (cnode->size() > 1) {
+    // If the last input is a monad, means the attach node has side-effect and
+    // we should keep UpdateState; otherwise, we will remove the UpdateState.
+    if (HasAbstractMonad(cnode->inputs().back())) {
       return nullptr;
-    }
-    if (!OnlyUpdateStateUse(update_state, attach)) {
-      // Skip if UpdateState is not the only user of cnode.
-      return nullptr;
-    }
-    auto &node_users = mgr->node_users();
-    auto iter = node_users.find(tuple_getitem_cnode->input(1));
-    if (iter == node_users.end()) {
-      return nullptr;
-    }
-    auto &partial_users = iter->second;
-    if (partial_users.size() > 1) {
-      // Remove UpdateState by replace it with its input monad.
-      return update_state->input(kInputIndex);
     }
   }
-  return nullptr;
+  // Remove UpdateState by replace it with its input monad.
+  return update_state->input(kInputIndex);
 }
 
 // Eliminate redundant UpdateState/Depend pair nodes caused by inline.
