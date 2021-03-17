@@ -32,6 +32,10 @@ typedef struct LstmParameter {
   bool bidirectional_;
   float zoneout_cell_;
   float zoneout_hidden_;
+  int input_row_align_;
+  int input_col_align_;
+  int state_row_align_;
+  int state_col_align_;
   int col_align_;
   int row_align_;
 } LstmParameter;

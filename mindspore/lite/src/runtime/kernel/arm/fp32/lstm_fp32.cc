@@ -31,78 +31,98 @@ using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore::kernel {
 void LstmCPUKernel::FreeTmpBuffer() {
+  if (weight_i_ptr_ != nullptr) {
+    free(weight_i_ptr_);
+    weight_i_ptr_ = nullptr;
+  }
+  if (input_bias_ != nullptr) {
+    free(input_bias_);
+    input_bias_ = nullptr;
+  }
   if (!is_vec_) {
-    if (weight_i_ptr_ != nullptr) {
-      free(weight_i_ptr_);
-      weight_i_ptr_ = nullptr;
-    }
     if (weight_h_ptr_ != nullptr) {
       free(weight_h_ptr_);
       weight_h_ptr_ = nullptr;
     }
-    if (bias_ptr_ != nullptr) {
-      free(bias_ptr_);
-      bias_ptr_ = nullptr;
-    }
+  }
+  if (state_bias_ != nullptr) {
+    free(state_bias_);
+    state_bias_ = nullptr;
   }
 }
 
 void LstmCPUKernel::FreeRunBuffer() {
-  context_->allocator->Free(gate_buffer_);
   for (int i = 0; i < 2; i++) {
     context_->allocator->Free(state_buffer_[i]);
   }
+  context_->allocator->Free(buffer_[0]);
+  context_->allocator->Free(buffer_[1]);
   if (!is_vec_) {
-    for (int i = 0; i < 2; i++) {
-      context_->allocator->Free(matmul_buffer_[i]);
-    }
+    context_->allocator->Free(buffer_[2]);
   }
+  context_->allocator->Free(buffer_[3]);
 }
 
-int LstmCPUKernel::InitWeightBias() {
-  auto weight_batch = lstm_param_->bidirectional_ ? 8 : 4;
-  if (!is_vec_) {
-    // malloc and init input * weight right matrix buffer
-    auto weight_i = in_tensors_.at(1);
-    MS_ASSERT(weight_i != nullptr);
-    weight_i_ptr_ = reinterpret_cast<float *>(
-      malloc(weight_batch * lstm_param_->col_align_ * lstm_param_->input_size_ * sizeof(float)));
-    if (weight_i_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "LstmCPUKernel malloc weight_i_ptr_ error.";
-      return RET_ERROR;
-    }
-    auto weight_i_data = reinterpret_cast<float *>(weight_i->data_c());
-    PackLstmWeight(weight_i_ptr_, weight_i_data, weight_batch, lstm_param_->input_size_, lstm_param_->hidden_size_,
-                   lstm_param_->col_align_);
+int LstmCPUKernel::InitInputWeightBias() {
+  // malloc and init input * weight right matrix buffer
+  // input -- row: seq_len * batch; col: input_size
+  // weight -- row: hidden_size; col: input_size, need transpose
+  // result -- row: seq_len * batch; col: hidden_size
+  auto weight_i = in_tensors_.at(1);
+  MS_ASSERT(weight_i != nullptr);
+  weight_i_ptr_ = reinterpret_cast<float *>(
+    malloc(weight_batch_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float)));
+  if (weight_i_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc weight_i_ptr_ error.";
+    return RET_ERROR;
+  }
+  auto weight_i_data = reinterpret_cast<float *>(weight_i->data_c());
+  PackLstmWeight(weight_i_ptr_, weight_i_data, weight_batch_, lstm_param_->input_size_, lstm_param_->hidden_size_,
+                 lstm_param_->input_col_align_);
 
-    // malloc and init state * weight right matrix buffer
-    auto weight_h = in_tensors_.at(2);
-    MS_ASSERT(weight_h != nullptr);
+  // input bias
+  input_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * lstm_param_->input_col_align_ * sizeof(float)));
+  if (input_bias_ == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc input_bias_ error.";
+    return RET_ERROR;
+  }
+  memset(input_bias_, 0, weight_batch_ * lstm_param_->input_col_align_ * sizeof(float));
+  PackLstmBias(input_bias_, reinterpret_cast<float *>(in_tensors_.at(3)->data_c()), weight_batch_,
+               lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_);
+  return RET_OK;
+}
+
+int LstmCPUKernel::InitStateWeightBias() {
+  // malloc and init state * weight right matrix buffer, state * weight will be executed seq_len_ times.
+  // state -- row: batch; col: hidden_size
+  // weight -- row: hidden_size; col: hidden_size, need transpose
+  // result -- row: batch; col: hidden_size
+  auto weight_h = in_tensors_.at(2);
+  MS_ASSERT(weight_h != nullptr);
+  auto weight_h_data = reinterpret_cast<float *>(weight_h->data_c());
+  if (!is_vec_) {
     weight_h_ptr_ = reinterpret_cast<float *>(
-      malloc(weight_batch * lstm_param_->col_align_ * lstm_param_->hidden_size_ * sizeof(float)));
+      malloc(weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->hidden_size_ * sizeof(float)));
     if (weight_h_ptr_ == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc weight_h_ptr_ error.";
       return RET_ERROR;
     }
-    auto weight_h_data = reinterpret_cast<float *>(weight_h->data_c());
-    PackLstmWeight(weight_h_ptr_, weight_h_data, weight_batch, lstm_param_->hidden_size_, lstm_param_->hidden_size_,
-                   lstm_param_->col_align_);
-
-    // init bias
-    int bias_batch = lstm_param_->bidirectional_ ? 16 : 8;
-    bias_ptr_ = reinterpret_cast<float *>(malloc(bias_batch * lstm_param_->col_align_ * sizeof(float)));
-    if (bias_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "LstmCPUKernel malloc bias_ptr_ error.";
-      return RET_ERROR;
-    }
-    memset(bias_ptr_, 0, bias_batch * lstm_param_->col_align_ * sizeof(float));
-    auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
-    for (int i = 0; i < bias_batch; i++) {
-      auto src_batch = bias_data + i * lstm_param_->hidden_size_;
-      auto dst_batch = bias_ptr_ + i * lstm_param_->col_align_;
-      memcpy(dst_batch, src_batch, lstm_param_->hidden_size_ * sizeof(float));
-    }
+    PackLstmWeight(weight_h_ptr_, weight_h_data, weight_batch_, lstm_param_->hidden_size_, lstm_param_->hidden_size_,
+                   lstm_param_->state_col_align_);
+  } else {
+    weight_h_ptr_ = weight_h_data;
   }
+
+  // state bias
+  state_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * lstm_param_->state_col_align_ * sizeof(float)));
+  if (state_bias_ == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc state_bias_ error.";
+    return RET_ERROR;
+  }
+  memset(state_bias_, 0, weight_batch_ * lstm_param_->state_col_align_ * sizeof(float));
+  auto state_bias = reinterpret_cast<float *>(in_tensors_.at(3)->data_c()) + 4 * lstm_param_->hidden_size_;
+  PackLstmBias(state_bias_, state_bias, weight_batch_, lstm_param_->hidden_size_, lstm_param_->state_col_align_,
+               lstm_param_->bidirectional_);
   return RET_OK;
 }
 
@@ -119,9 +139,9 @@ int LstmCPUKernel::InitParam() {
   std::vector<int> w_shape = weight_i->shape();
   lstm_param_->hidden_size_ = w_shape.at(1) / 4;
 
-  lstm_param_->input_step_ = lstm_param_->batch_ * lstm_param_->input_size_;
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? 2 * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
+  weight_batch_ = lstm_param_->bidirectional_ ? 8 : 4;
 
 #ifdef ENABLE_AVX
   row_tile_ = C6NUM;
@@ -136,9 +156,12 @@ int LstmCPUKernel::InitParam() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
+  lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, row_tile_);
+  lstm_param_->input_col_align_ = UP_ROUND(lstm_param_->hidden_size_, col_tile_);
+
   is_vec_ = lstm_param_->batch_ == 1;
-  lstm_param_->row_align_ = is_vec_ ? 1 : UP_ROUND(lstm_param_->batch_, row_tile_);
-  lstm_param_->col_align_ = is_vec_ ? lstm_param_->hidden_size_ : UP_ROUND(lstm_param_->hidden_size_, col_tile_);
+  lstm_param_->state_row_align_ = is_vec_ ? 1 : UP_ROUND(lstm_param_->batch_, row_tile_);
+  lstm_param_->state_col_align_ = is_vec_ ? lstm_param_->hidden_size_ : UP_ROUND(lstm_param_->hidden_size_, col_tile_);
   return RET_OK;
 }
 
@@ -157,9 +180,16 @@ int LstmCPUKernel::ReSize() {
   }
 
   FreeTmpBuffer();
-  ret = InitWeightBias();
+  ret = InitInputWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitWeightBias error.";
+    MS_LOG(ERROR) << "LstmCPUKernel InitInputWeightBias error.";
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
+
+  ret = InitStateWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmCPUKernel InitStateWeightBias error.";
     FreeTmpBuffer();
     return RET_ERROR;
   }
@@ -167,32 +197,42 @@ int LstmCPUKernel::ReSize() {
 }
 
 int LstmCPUKernel::MallocRunBuffer() {
-  if (!is_vec_) {
-    matmul_buffer_[0] = reinterpret_cast<float *>(
-      context_->allocator->Malloc(4 * lstm_param_->row_align_ * lstm_param_->input_size_ * sizeof(float)));
-    if (matmul_buffer_[0] == nullptr) {
-      MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight left matirx error.";
-      return RET_ERROR;
-    }
+  for (int i = 0; i < 4; i++) {
+    buffer_[i] = nullptr;
+  }
+  buffer_[0] = reinterpret_cast<float *>(
+    context_->allocator->Malloc(lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float)));
+  if (buffer_[0] == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight left matirx error.";
+    return RET_ERROR;
+  }
 
-    matmul_buffer_[1] = reinterpret_cast<float *>(
-      context_->allocator->Malloc(4 * lstm_param_->row_align_ * lstm_param_->hidden_size_ * sizeof(float)));
-    if (matmul_buffer_[1] == nullptr) {
+  buffer_[1] = reinterpret_cast<float *>(context_->allocator->Malloc(4 * lstm_param_->seq_len_ * lstm_param_->batch_ *
+                                                                     lstm_param_->hidden_size_ * sizeof(float)));
+  if (buffer_[1] == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight result matirx error.";
+    return RET_ERROR;
+  }
+
+  if (!is_vec_) {
+    buffer_[2] = reinterpret_cast<float *>(
+      context_->allocator->Malloc(4 * lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float)));
+    if (buffer_[2] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
     }
   }
 
-  gate_buffer_ = reinterpret_cast<float *>(
-    context_->allocator->Malloc(8 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float)));
-  if (gate_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "LstmCPUKernel malloc gate_buffer error.";
+  buffer_[3] = reinterpret_cast<float *>(
+    context_->allocator->Malloc(4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float)));
+  if (buffer_[3] == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc state gate buffer error.";
     return RET_ERROR;
   }
   state_buffer_[0] = nullptr;
   state_buffer_[1] = nullptr;
   if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
-    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
+    auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
     state_buffer_[0] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
     if (state_buffer_[0] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for cell error.";
@@ -200,7 +240,7 @@ int LstmCPUKernel::MallocRunBuffer() {
     }
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
-    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
+    auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
     state_buffer_[1] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
     if (state_buffer_[1] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for hidden error.";
@@ -235,18 +275,13 @@ int LstmCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  if (is_vec_) {
-    weight_i_ptr_ = reinterpret_cast<float *>(in_tensors_[1]->data_c());
-    weight_h_ptr_ = reinterpret_cast<float *>(in_tensors_[2]->data_c());
-    bias_ptr_ = reinterpret_cast<float *>(in_tensors_[3]->data_c());
-  }
   MS_ASSERT(weight_h_ptr_);
   MS_ASSERT(weight_i_ptr_);
-  MS_ASSERT(bias_ptr_);
-  MS_ASSERT(gate_buffer_);
-  Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,
+  MS_ASSERT(input_bias_);
+  MS_ASSERT(state_bias_);
+  Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
        reinterpret_cast<float *>(output_hidden_state->data_c()), reinterpret_cast<float *>(output_cell_state->data_c()),
-       gate_buffer_, state_buffer_, matmul_buffer_, lstm_param_);
+       state_buffer_, buffer_, lstm_param_);
   FreeRunBuffer();
   return RET_OK;
 }

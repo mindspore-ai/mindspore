@@ -41,16 +41,18 @@ class LstmCPUKernel : public LiteKernel {
   void FreeRunBuffer();
   int InitParam();
   int MallocRunBuffer();
-  int InitWeightBias();
+  int InitInputWeightBias();
+  int InitStateWeightBias();
 
-  float *gate_buffer_ = nullptr;
   float *state_buffer_[2];
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;
-  float *bias_ptr_ = nullptr;
-  float *matmul_buffer_[2];
+  float *input_bias_ = nullptr;
+  float *state_bias_ = nullptr;
+  float *buffer_[4];
   int row_tile_ = 0;
   int col_tile_ = 0;
+  int weight_batch_ = 0;
   bool is_vec_ = false;
   LstmParameter *lstm_param_ = nullptr;
 };
