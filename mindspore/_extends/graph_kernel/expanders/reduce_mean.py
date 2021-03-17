@@ -27,8 +27,9 @@ class ReduceMean(Expander):
         axis = self.attrs['axis']
         keep_dims = self.attrs['keep_dims']
 
-        # cal reduce_mean, when axis is None, reduce all axes.
-        if not axis:
+        if not isinstance(axis, (tuple, list)):
+            axis = (axis,)
+        elif not axis:
             axis = list(range(len(x.shape)))
         reduce_size = 1.0
         for idx in axis:
