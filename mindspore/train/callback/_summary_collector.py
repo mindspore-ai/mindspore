@@ -147,28 +147,32 @@ class SummaryCollector(Callback):
         RuntimeError: If an error occurs during data collection.
 
     Examples:
-        >>> # Simple usage:
+        >>> import mindspore.nn as nn
+        >>> from mindspore import context
+        >>> from mindspore.train.callback import SummaryCollector
         >>> from mindspore.train import Model
-        >>> summary_collector = SummaryCollector(summary_dir='./summary_dir')
-        >>> dataset = get_dataset('/path/to/MNIST')
-        >>> network = LeNet5()
-        >>> model = Model(network)
-        >>> model.train(epoch=1, dataset=dataset, callbacks=summary_collector)
+        >>> from mindspore.nn.metrics import Accuracy
         >>>
-        >>> # Do not collect metric and collect the first layer parameter, others are collected by default
-        >>> specified={'collect_metric': False, 'histogram_regular': '^conv1.*'}
-        >>> summary_collector = SummaryCollector(summary_dir='./summary_dir', collect_specified_data=specified)
-        >>> model.train(epoch=1, dataset=dataset, callbacks=summary_collector)
-        >>>
-        >>> # Only collect metric, custom lineage data and record data that collected by the summary operator,
-        >>> # others are not collected
-        >>> specified = {'collect_metric': True}
-        >>> summary_collector = SummaryCollector('./summary_dir',
-        >>>                                      collect_specified_data=specified,
-        >>>                                      keep_default_action=False,
-        >>>                                      custom_lineage_data={'version': 'resnet50_v1'}
-        >>>                                      )
-        >>> model.train(epoch=1, dataset=dataset, callbacks=summary_collector)
+        >>> if __name__ == '__main__':
+        ...     # If the device_target is GPU, set the device_target to "GPU"
+        ...     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
+        ...     # The detail of create_dataset method shown in model_zoo.official.cv.lenet.src.dataset.py
+        ...     ds_train = create_dataset(mnist_dataset_dir, 32)
+        ...     # The detail of LeNet5 shown in model_zoo.official.cv.lenet.src.lenet.py
+        ...     network = LeNet5(10)
+        ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
+        ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
+        ...
+        ...     # Simple usage:
+        ...     summary_collector = SummaryCollector(summary_dir='./summary_dir')
+        ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
+        ...
+        ...     # Do not collect metric and collect the first layer parameter, others are collected by default
+        ...     specified={'collect_metric': False, 'histogram_regular': '^conv1.*'}
+        ...     summary_collector = SummaryCollector(summary_dir='./summary_dir', collect_specified_data=specified)
+        ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
     """
 
     _DEFAULT_SPECIFIED_DATA = {
