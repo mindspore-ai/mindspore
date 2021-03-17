@@ -174,7 +174,7 @@ class Executor {
   void RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run = false);
   std::vector<std::shared_ptr<RunGraphTask>> GetNewReadyTasks();
   bool IsTaskReady(const std::shared_ptr<RunGraphTask> &task);
-  void WaitTaskGraphAvailable(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task);
+  void WaitLockedInputs(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task);
   void OnWorkerExit();
   void OnRunGraphFinished();
   void OnException();
