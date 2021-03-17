@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class HSigmoidCPUKernel : public CPUKernel {
  public:
   HSigmoidCPUKernel() = default;
@@ -34,34 +35,26 @@ class HSigmoidCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> x_shape_;
-  TypeId dtype_{kTypeUnknown};
-  using TypeKernel = std::function<void(HSigmoidCPUKernel *, const std::vector<AddressPtr> &inputs,
-                                        const std::vector<AddressPtr> &outputs)>;
-  std::unordered_map<TypeId, TypeKernel> launch_map_;
-  TypeKernel launch_func_;
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                  HSigmoidCPUKernel);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                    HSigmoidCPUKernel, int8_t);
 
-MS_REG_CPU_KERNEL(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  HSigmoidCPUKernel);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+                    HSigmoidCPUKernel, int16_t);
 
-MS_REG_CPU_KERNEL(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  HSigmoidCPUKernel);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    HSigmoidCPUKernel, int);
 
-MS_REG_CPU_KERNEL(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  HSigmoidCPUKernel);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    HSigmoidCPUKernel, int64_t);
 
-MS_REG_CPU_KERNEL(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  HSigmoidCPUKernel);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    HSigmoidCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
