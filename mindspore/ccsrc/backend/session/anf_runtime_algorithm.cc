@@ -1156,6 +1156,9 @@ uint32_t AnfRuntimeAlgorithm::GetGraphId(const AnfNode *node) {
 bool AnfRuntimeAlgorithm::IsTupleOutput(const AnfNodePtr &anf) {
   MS_EXCEPTION_IF_NULL(anf);
   TypePtr type = anf->Type();
+  if (type == nullptr) {
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(type);
   return type->isa<Tuple>();
 }
