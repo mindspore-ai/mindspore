@@ -32,11 +32,11 @@ class EnvConfigParser {
   }
 
   void Parse();
-  std::string config_path() const { return config_file_; }
+  std::string ConfigPath() const { return config_file_; }
 
-  bool has_rdr_setting() const { return has_rdr_setting_; }
-  bool rdr_enabled() const { return rdr_enabled_; }
-  std::string rdr_path() const { return rdr_path_; }
+  bool HasRdrSetting() const { return has_rdr_setting_; }
+  bool RdrEnabled() const { return rdr_enabled_; }
+  std::string RdrPath() const { return rdr_path_; }
 
  private:
   EnvConfigParser() {}
@@ -50,6 +50,8 @@ class EnvConfigParser {
   bool has_rdr_setting_{false};
   std::string rdr_path_{"./rdr/"};
 
+  void ParseFromFile();
+  void ParseFromEnv();
   std::string GetIfstreamString(const std::ifstream &ifstream);
   void ParseRdrSetting(const nlohmann::json &content);
 

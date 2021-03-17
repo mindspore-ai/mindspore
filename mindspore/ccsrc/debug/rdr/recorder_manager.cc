@@ -25,11 +25,11 @@ void RecorderManager::UpdateRdrEnable() {
     return;
   }
   auto &config_parser = mindspore::EnvConfigParser::GetInstance();
-  rdr_enable_ = config_parser.rdr_enabled();
-  if (config_parser.has_rdr_setting()) {
+  rdr_enable_ = config_parser.RdrEnabled();
+  if (config_parser.HasRdrSetting()) {
 #ifdef __linux__
     if (!rdr_enable_) {
-      MS_LOG(WARNING) << "Please set the 'enable' as true using 'rdr' setting in file '" << config_parser.config_path()
+      MS_LOG(WARNING) << "Please set the 'enable' as true using 'rdr' setting in file '" << config_parser.ConfigPath()
                       << "' if you want to use RDR.";
     }
 #else

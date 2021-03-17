@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "debug/env_config_parser.h"
+#include <algorithm>
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
@@ -22,12 +23,46 @@
 #include "utils/convert_utils_base.h"
 
 namespace {
+constexpr auto kEnableEnv = "MS_RDR_ENABLE";
+constexpr auto kPathEnv = "MS_RDR_PATH";
 constexpr auto kRdrSettings = "rdr";
 constexpr auto kPath = "path";
 constexpr auto kEnable = "enable";
 }  // namespace
 
 namespace mindspore {
+std::optional<bool> GetRdrEnableFromEnv() {
+  // get environment variable to configure RDR
+  const char *env_enable_char = std::getenv(kEnableEnv);
+  if (env_enable_char != nullptr) {
+    std::string env_enable_str = env_enable_char;
+    (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
+    if (env_enable_str != "0" && env_enable_str != "1") {
+      MS_LOG(WARNING) << "The environment variable '" << kEnableEnv << "' should be 0 or 1.";
+    }
+    if (env_enable_str == "1") {
+      return true;
+    }
+    return false;
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string> GetRdrPathFromEnv() {
+  // get environment variable to configure RDR
+  const char *path_char = std::getenv(kPathEnv);
+  if (path_char != nullptr) {
+    std::string err_msg = "RDR path parse from environment variable failed. Please check the settings about '" +
+                          std::string(kPathEnv) + "' in environment variables.";
+    std::string path = path_char;
+    if (!Common::IsPathValid(path, maxDirectoryLength, err_msg, false)) {
+      return std::string("");
+    }
+    return path;
+  }
+  return std::nullopt;
+}
+
 bool EnvConfigParser::CheckJsonStringType(const nlohmann::json &content, const std::string &setting_key,
                                           const std::string &key) {
   if (!content.is_string()) {
@@ -55,13 +90,24 @@ std::string EnvConfigParser::GetIfstreamString(const std::ifstream &ifstream) {
   return buffer.str();
 }
 
-void EnvConfigParser::Parse() {
-  std::lock_guard<std::mutex> guard(lock_);
-  if (already_parsed_) {
-    return;
+void EnvConfigParser::ParseFromEnv() {
+  // Get RDR seetings from environment variables
+  auto rdr_enable_env = GetRdrEnableFromEnv();
+  if (rdr_enable_env.has_value()) {
+    has_rdr_setting_ = true;
+    rdr_enabled_ = rdr_enable_env.value();
   }
-  already_parsed_ = true;
+  auto path_env = GetRdrPathFromEnv();
+  if (path_env.has_value()) {
+    has_rdr_setting_ = true;
+    std::string path = path_env.value();
+    if (!path.empty()) {
+      rdr_path_ = path;
+    }
+  }
+}
 
+void EnvConfigParser::ParseFromFile() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto config_file = context->get_param<std::string>(MS_CTX_ENV_CONFIG_PATH);
@@ -92,8 +138,20 @@ void EnvConfigParser::Parse() {
   std::string cfg = ss.str();
   MS_LOG(INFO) << "Env config json:" << cfg;
 
+  // Parse rdr seetings from file
   ParseRdrSetting(j);
+
   ConfigToString();
+}
+
+void EnvConfigParser::Parse() {
+  std::lock_guard<std::mutex> guard(lock_);
+  if (already_parsed_) {
+    return;
+  }
+  already_parsed_ = true;
+  ParseFromEnv();
+  ParseFromFile();
 }
 
 void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
@@ -142,7 +200,6 @@ void EnvConfigParser::ParseRdrEnable(const nlohmann::json &content) {
   if (!content.is_boolean()) {
     MS_LOG(WARNING) << "Json parse failed. 'enable' in " << kRdrSettings << " should be boolean."
                     << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
-    rdr_enabled_ = false;
     return;
   }
   rdr_enabled_ = content;
