@@ -14,6 +14,7 @@
 # ============================================================================
 """ test ops """
 import functools
+import pytest
 
 import numpy as np
 
@@ -890,7 +891,7 @@ class StridedSliceNet(nn.Cell):
         out_3 = self.strided_slice_3(x, self.begins, self.ends, self.strides) + self.const_3
         return out_0, out_1, out_2, out_3
 
-
+@pytest.mark.skip(reason='0 in shape is not support')
 def test_strided_slice_const():
     class StridedSLiceConstNet(nn.Cell):
         """StridedSLiceConstNet net definition"""

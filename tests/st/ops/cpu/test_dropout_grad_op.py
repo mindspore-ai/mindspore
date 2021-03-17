@@ -107,6 +107,7 @@ def test_dropout_grad_004():
     assert np.all(np.abs(diff) < error)
 
 
+@pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
