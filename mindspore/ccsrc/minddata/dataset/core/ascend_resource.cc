@@ -16,8 +16,8 @@
 
 #include "include/api/context.h"
 #include "include/api/types.h"
-#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/core/ascend_resource.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {

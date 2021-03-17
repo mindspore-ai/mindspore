@@ -51,6 +51,7 @@
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/services.h"

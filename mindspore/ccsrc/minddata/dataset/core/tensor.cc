@@ -24,7 +24,7 @@
 #include <utility>
 #include <functional>
 
-#include "minddata/dataset/include/type_id.h"
+#include "minddata/dataset/core/type_id.h"
 
 #include "utils/ms_utils.h"
 #include "minddata/dataset/include/constants.h"

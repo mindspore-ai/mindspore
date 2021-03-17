@@ -19,16 +19,19 @@
 #include <fstream>
 #include <unordered_set>
 #include <utility>
+#include <nlohmann/json.hpp>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/runtime_context.h"
+#include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 
 #include "minddata/dataset/kernels/c_func_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -985,54 +988,81 @@ ManifestDataset::ManifestDataset(const std::vector<char> &dataset_file, const st
 
 MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json padded_sample,
+                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  nlohmann::json sample = nullptr;
+  if (padded_sample) {
+    sample = *padded_sample;
+  }
   auto ds = std::make_shared<MindDataNode>(CharToString(dataset_file), VectorCharToString(columns_list), sampler_obj,
-                                           padded_sample, num_padded);
+                                           sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
                                  const std::vector<std::vector<char>> &columns_list, Sampler *sampler,
-                                 nlohmann::json padded_sample, int64_t num_padded) {
+                                 nlohmann::json *padded_sample, int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  nlohmann::json sample = nullptr;
+  if (padded_sample) {
+    sample = *padded_sample;
+  }
   auto ds = std::make_shared<MindDataNode>(CharToString(dataset_file), VectorCharToString(columns_list), sampler_obj,
-                                           padded_sample, num_padded);
+                                           sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample,
+                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler.get().Parse();
+  nlohmann::json sample = nullptr;
+  if (padded_sample) {
+    sample = *padded_sample;
+  }
+
   auto ds = std::make_shared<MindDataNode>(CharToString(dataset_file), VectorCharToString(columns_list), sampler_obj,
-                                           padded_sample, num_padded);
+                                           sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json padded_sample,
+                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  nlohmann::json sample = nullptr;
+  if (padded_sample) {
+    sample = *padded_sample;
+  }
+
   auto ds = std::make_shared<MindDataNode>(VectorCharToString(dataset_files), VectorCharToString(columns_list),
-                                           sampler_obj, padded_sample, num_padded);
+                                           sampler_obj, sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                                  const std::vector<std::vector<char>> &columns_list, Sampler *sampler,
-                                 nlohmann::json padded_sample, int64_t num_padded) {
+                                 nlohmann::json *padded_sample, int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  nlohmann::json sample = nullptr;
+  if (padded_sample) {
+    sample = *padded_sample;
+  }
+
   auto ds = std::make_shared<MindDataNode>(VectorCharToString(dataset_files), VectorCharToString(columns_list),
-                                           sampler_obj, padded_sample, num_padded);
+                                           sampler_obj, sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample,
+                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler.get().Parse();
+  nlohmann::json sample = nullptr;
+  if (padded_sample) {
+    sample = *padded_sample;
+  }
   auto ds = std::make_shared<MindDataNode>(VectorCharToString(dataset_files), VectorCharToString(columns_list),
-                                           sampler_obj, padded_sample, num_padded);
+                                           sampler_obj, sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 #endif

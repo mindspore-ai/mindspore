@@ -17,6 +17,7 @@
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/include/execute.h"
 
 namespace mindspore {
