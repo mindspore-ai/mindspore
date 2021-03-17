@@ -25,6 +25,8 @@ SET MODEL_PATH=%MODEL_PATH_BASE:"=%\models\hiai
 SET BENCHMARK_BASE=%BASEPATH:"=%\output\benchmark
 SET MODEL_CONFIG=%BASEPATH%\win_models.cfg
 
+for /f "tokens=3 delims=-" %%i in ('dir /b %TOOL_PATH%\mindspore-lite-*-inference-win-x64.zip') do set VERSION=%%i
+
 cd /d %BASEPATH%
 IF EXIST "%BASEPATH%/output" (
     rd /s /q output
@@ -38,15 +40,15 @@ md benchmark
 
 SET RET_CODE=0
 
-SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64
+SET SO_PATH=mindspore-lite-%VERSION%-inference-win-x64
 IF "%3%" == "sse" (
-    SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64-sse
+    SET SO_PATH=mindspore-lite-%VERSION%-inference-win-x64-sse
 )
 IF "%3%" == "avx" (
-    SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64-avx
+    SET SO_PATH=mindspore-lite-%VERSION%-inference-win-x64-avx
 )
 IF "%3%" == "avx512" (
-    SET SO_PATH=mindspore-lite-1.2.0-inference-win-x64-avx512
+    SET SO_PATH=mindspore-lite-%VERSION%-inference-win-x64-avx512
 )
 7z x -r "%TOOL_PATH%/%SO_PATH%.zip" -o"%BENCHMARK_BASE%"
 IF NOT %errorlevel% == 0 (
