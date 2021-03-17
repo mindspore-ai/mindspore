@@ -1751,12 +1751,10 @@ class MappableDataset(SourceDataset):
                 original dataset.
                 If after rounding:
 
-                    - Any size equals 0, an error will occur.
-
-                    - The sum of split sizes < K, the difference will be added to the first split.
-
-                    - The sum of split sizes > K, the difference will be removed from the first large
-                      enough split such that it will have at least 1 row after removing the difference.
+                - Any size equals 0, an error will occur.
+                - The sum of split sizes < K, the difference will be added to the first split.
+                - The sum of split sizes > K, the difference will be removed from the first large
+                  enough split such that it will have at least 1 row after removing the difference.
 
             randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
                 If True, the data will be randomly split. Otherwise, each split will be created with

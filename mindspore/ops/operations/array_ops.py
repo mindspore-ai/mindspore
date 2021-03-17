@@ -2891,16 +2891,16 @@ class StridedSlice(PrimitiveWithInfer):
         Tensor.
         The output is explained by following example.
 
-            - In the 0th dimension, begin is 1, end is 2, and strides is 1,
-              because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
-              Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
-            - In the 1st dimension, similarly, the interval is :math:`[0,1)`.
-              Based on the return value of the 0th dimension, return the element with :math:`index = 0`,
-              i.e., [3, 3, 3].
-            - In the 2nd dimension, similarly, the interval is :math:`[0,3)`.
-              Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
-              i.e., [3, 3, 3].
-            - Finally, the output is [3, 3, 3].
+        - In the 0th dimension, begin is 1, end is 2, and strides is 1,
+          because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
+          Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
+        - In the 1st dimension, similarly, the interval is :math:`[0,1)`.
+          Based on the return value of the 0th dimension, return the element with :math:`index = 0`,
+          i.e., [3, 3, 3].
+        - In the 2nd dimension, similarly, the interval is :math:`[0,3)`.
+          Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
+          i.e., [3, 3, 3].
+        - Finally, the output is [3, 3, 3].
 
     Raises:
         TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is not an int.

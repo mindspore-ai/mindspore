@@ -1163,9 +1163,9 @@ class Cell(Cell_):
 
         Note:
             - If the computation involves something like randomization or global variable, the equivalence
-            is not guaranteed currently.
+              is not guaranteed currently.
             - If the recompute api of a primitive in this cell is also called, the recompute mode of this
-            primitive is subject to the recompute api of the primitive.
+              primitive is subject to the recompute api of the primitive.
 
         Args:
             mode (bool): Specifies whether the cell is recomputed. Default: True.
