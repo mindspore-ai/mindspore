@@ -173,7 +173,10 @@ int CoderSession::Init(const std::string &model_path) {
   MS_LOG(DEBUG) << "start reading model file";
   size_t size = 0;
   char *graph_buf = ReadFile(model_path.c_str(), &size);
-  MS_CHECK_PTR(graph_buf);
+  if (graph_buf == nullptr) {
+    MS_LOG(ERROR) << "read model file from path \"" << model_path << "\" failed.";
+    return RET_ERROR;
+  }
   // new a context for session
   if (size >= UINT_MAX) {
     MS_LOG(ERROR) << "the size is invalid";

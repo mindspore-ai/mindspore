@@ -45,6 +45,11 @@ else()
     -fstack-protector-all -Wno-attributes -Wno-deprecated-declarations \
     -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
+
+if(NOT WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack -fPIC -pie ${CMAKE_EXE_LINKER_FLAGS}")
+endif()
+
 add_subdirectory(coder)
 if(BUILD_TESTCASES AND NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
   add_subdirectory(test)

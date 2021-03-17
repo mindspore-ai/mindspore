@@ -22,7 +22,11 @@ const char *bench_cmake_lists_txt = R"RAW(
 cmake_minimum_required(VERSION 3.14)
 project(benchmark)
 
-message("project name: ${MODEL_LIB_PATH}")
+if(NOT DEFINED MODEL_LIB)
+    message(FATAL_ERROR "MODEL_LIB not set")
+endif()
+
+get_filename_component(MODEL_LIB ${MODEL_LIB} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 function(parse_lib_info lib_full_path lib_name lib_path)
     string(FIND "${lib_full_path}" "/" POS REVERSE)
@@ -34,6 +38,8 @@ function(parse_lib_info lib_full_path lib_name lib_path)
 endfunction(parse_lib_info)
 
 parse_lib_info(${MODEL_LIB} MODEL_LIB_NAME MODEL_LIB_PATH)
+
+message("project name: ${MODEL_LIB_NAME}")
 
 option(MICRO_BUILD_ARM64 "build android arm64" OFF)
 option(MICRO_BUILD_ARM32A "build android arm32" OFF)
@@ -73,6 +79,17 @@ target_link_libraries(benchmark ${MODEL_LIB_NAME} -lm -pthread)
 const char *src_cmake_lists_txt = R"RAW(
 cmake_minimum_required(VERSION 3.14)
 project(net)
+
+if(NOT DEFINED OP_LIB)
+    message(FATAL_ERROR "OP_LIB not set")
+endif()
+
+if(NOT DEFINED OP_HEADER_PATH)
+    message(FATAL_ERROR "OP_HEADER_PATH not set")
+endif()
+
+get_filename_component(OP_LIB ${OP_LIB} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+get_filename_component(OP_HEADER_PATH ${OP_HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")
