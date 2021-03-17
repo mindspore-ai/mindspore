@@ -54,19 +54,18 @@ void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
   return;
 }
 
+void LiteOpActor::AddResultIndex(size_t index) {
+  results_index_.push_back(index);
+  return;
+}
+
 void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
-  auto size = context->outputData_->size();
-  MS_ASSERT(size == context->results_->size());
-  for (size_t i = 0; i < size; i++) {
-    auto outputData = context->outputData_->at(i);
-    if (GetAID() == outputData->op_id_) {
-      outputData->data_ = kernel_->out_tensors()[outputData->index_];
-      context->SetResult(i, RET_OK);
-    }
+  for (auto index : results_index_) {
+    context->SetResult(index, RET_OK);
   }
 }
 
-int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", 1); }
+int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", 2); }
 
 void MindrtTerminate(std::vector<std::shared_ptr<LiteOpActor>> actor_list) {
   for (auto actor : actor_list) {

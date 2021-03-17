@@ -167,6 +167,8 @@ int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> *platforms) {
   max_alloc_size_ = device_->getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
   max_image2d_width_ = device_->getInfo<CL_DEVICE_IMAGE2D_MAX_WIDTH>();
   max_image2d_height_ = device_->getInfo<CL_DEVICE_IMAGE2D_MAX_HEIGHT>();
+  supported_extensions_ = std::string(device_->getInfo<CL_DEVICE_EXTENSIONS>());
+  cache_line_size_ = device_->getInfo<CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE>();
   MS_LOG(INFO) << "Address space bits: " << device_->getInfo<CL_DEVICE_ADDRESS_BITS>();
   MS_LOG(INFO) << "Global Mem Size: " << global_memery_size_;
   MS_LOG(INFO) << "Global Mem Cache Size: " << global_memery_cachesize_;
@@ -755,6 +757,21 @@ void OpenCLRuntime::StoreCache() {
   uint8_t *buf = fbb->GetBufferPointer();
   lite::WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb->GetSize());
   MS_LOG(INFO) << "store opencl cache ok, size=" << fbb->GetSize();
+}
+
+cl::Buffer *OpenCLRuntime::CreateSharedMemoryBuffer(size_t size, void *host_ptr) {
+  cl_int error = CL_SUCCESS;
+  cl_mem cl_buffer = clImportMemoryARM(context_->get(), CL_MEM_READ_WRITE, NULL, host_ptr, size, &error);
+  if (error != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Create OpenCL shared memory failed for" << CLErrorCode(error);
+    return nullptr;
+  }
+  cl::Buffer *buffer = new (std::nothrow) cl::Buffer(cl_buffer, false);
+  if (buffer == nullptr) {
+    MS_LOG(ERROR) << "New OpenCL Buffer failed";
+    return nullptr;
+  }
+  return buffer;
 }
 
 }  // namespace mindspore::lite::opencl

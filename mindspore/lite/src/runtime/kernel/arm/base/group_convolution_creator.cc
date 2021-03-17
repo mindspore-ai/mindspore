@@ -113,6 +113,7 @@ void GroupConvCreator::FreeGroupConvs() {
     }
     delete sub_conv;
   }
+  group_convs_.clear();
 }
 
 int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {

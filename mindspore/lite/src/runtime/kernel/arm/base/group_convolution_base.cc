@@ -70,6 +70,7 @@ void GroupConvolutionBaseCPUKernel::FreeSubKernel() {
     delete sub_conv;
     sub_conv = nullptr;
   }
+  group_convs_.clear();
 }
 
 int GroupConvolutionBaseCPUKernel::PreProcess() {

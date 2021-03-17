@@ -102,7 +102,7 @@ void WinogradOpenCLKernel::InitFilter() {
     packed_filter_ = allocator->Malloc({width, height, dtype});
   } else {
     size = UP_DIV(CO_SLICES_, Ogroup) * 6 * 6 * CI_SLICES_ * Ogroup * CI_TILE * CO_TILE * sizeof_FLT_;
-    packed_filter_ = allocator->Malloc(size);
+    packed_filter_ = allocator->Malloc(size, MemType::BUF);
   }
 
   // rearrange filter

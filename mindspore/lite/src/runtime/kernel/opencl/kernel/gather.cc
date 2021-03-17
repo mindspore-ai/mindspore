@@ -129,7 +129,8 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto indices_tensor = in_tensors_.at(1);
   auto indices_num = indices_tensor->ElementsNum();
-  indices_data_ = reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num));
+  indices_data_ =
+    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num), lite::opencl::MemType::BUF);
   allocator->MapBuffer(indices_data_, CL_MAP_WRITE, nullptr, true);
   if (indices_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -154,7 +155,8 @@ int GatherOpenCLKernel::InitWeights() {
   auto indices_tensor = in_tensors_.at(1);
   auto indices_num = indices_tensor->ElementsNum();
   auto allocator = ocl_runtime_->GetAllocator();
-  indices_data_ = reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num));
+  indices_data_ =
+    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num), lite::opencl::MemType::BUF);
   if (indices_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;

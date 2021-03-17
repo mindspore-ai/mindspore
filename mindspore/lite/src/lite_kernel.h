@@ -33,15 +33,7 @@
 #include "include/context.h"
 
 namespace mindspore::kernel {
-enum KERNEL_ARCH {
-  kCPU,
-  kGPU,
-  kAPU,
-  kNPU,
-  kALL, /* Support GPU NPU CPU */
-  kKernelArch_MIN = kCPU,
-  kKernelArch_MAX = kALL
-};
+enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
 
 struct KernelKey {
   KERNEL_ARCH arch;

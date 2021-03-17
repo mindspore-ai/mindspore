@@ -133,7 +133,8 @@ int FullConnectionOpenCLKernel::InitFilter() {
   int co4 = UP_DIV(CO_, C4NUM);
   int nhw_remainder = intensor_shape.N * intensor_shape.H * intensor_shape.W / N_;
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  padWeight_ = allocator->Malloc(nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
+  padWeight_ = allocator->Malloc(nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size,
+                                 lite::opencl::MemType::BUF);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);

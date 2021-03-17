@@ -90,10 +90,10 @@ int BatchNormOpenCLKernel::Initweight() {
   auto weight_tensor = in_tensors_.at(1);
   size_t weight_size = img_info.OriginSize;
   // allocated memory for weight and init value
-  scale_ = allocator->Malloc(weight_size);
-  offset_ = allocator->Malloc(weight_size);
-  mean_ = allocator->Malloc(weight_size);
-  variance_ = allocator->Malloc(weight_size);
+  scale_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  offset_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  mean_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  variance_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
 
   allocator->MapBuffer(scale_, CL_MAP_WRITE, nullptr, true);
   allocator->MapBuffer(offset_, CL_MAP_WRITE, nullptr, true);

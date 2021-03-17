@@ -102,6 +102,7 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   LOAD_OPENCL_FUNCTION_PTR(clCreateProgramWithSource);
   LOAD_OPENCL_FUNCTION_PTR(clCreateBuffer);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage2D);
+  LOAD_OPENCL_FUNCTION_PTR(clImportMemoryARM);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage3D);
   LOAD_OPENCL_FUNCTION_PTR(clRetainKernel);
   LOAD_OPENCL_FUNCTION_PTR(clCreateKernel);
@@ -192,6 +193,7 @@ CL_DEFINE_FUNC_PTR(clReleaseKernel);
 CL_DEFINE_FUNC_PTR(clCreateProgramWithSource);
 CL_DEFINE_FUNC_PTR(clCreateBuffer);
 CL_DEFINE_FUNC_PTR(clCreateImage2D);
+CL_DEFINE_FUNC_PTR(clImportMemoryARM);
 CL_DEFINE_FUNC_PTR(clCreateImage3D);
 CL_DEFINE_FUNC_PTR(clRetainKernel);
 CL_DEFINE_FUNC_PTR(clCreateKernel);

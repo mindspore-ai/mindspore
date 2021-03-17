@@ -22,9 +22,9 @@
 #include "include/model.h"
 #include "src/lite_kernel.h"
 #include "src/lite_model.h"
+#include "src/inner_context.h"
 
 namespace mindspore::lite {
-#ifdef SUBGRAPH_SPLIT
 class SearchSubGraph {
   enum TensorType { NORMAL, CONST, INPUT };
 
@@ -39,11 +39,11 @@ class SearchSubGraph {
     std::vector<uint32_t> heads_;
     std::vector<uint32_t> ends_;
     bool search_terminate_ = false;
-    mindspore::kernel::KERNEL_ARCH device_;
+    DeviceType device_;
   };
 
  public:
-  SearchSubGraph(Model *model, std::vector<size_t> output_nodes) {
+  SearchSubGraph(const InnerContext *context, Model *model, std::vector<size_t> output_nodes) : context_(context) {
     output_nodes_.insert(output_nodes_.end(), output_nodes.begin(), output_nodes.end());
     node_list_ = model->all_nodes_;
     model_ = reinterpret_cast<LiteModel *>(model);
@@ -65,14 +65,13 @@ class SearchSubGraph {
   void InitMainGraphDevice();
 
  private:
+  const InnerContext *context_ = nullptr;
   LiteModel *model_ = nullptr;
   std::vector<Tensor> tensors_;
   std::vector<Subgraph> sub_graphs_;
   std::vector<size_t> output_nodes_;
   std::vector<Model::Node *> node_list_;
 };
-
-#endif
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_SPLIT_H_

@@ -18,11 +18,10 @@
 #include <vector>
 #include <utility>
 #include "src/tensor.h"
-#include "schema/inner/ops_generated.h"
-#include "schema/inner/model_generated.h"
+#include "schema/ops_generated.h"
+#include "schema/model_generated.h"
 
 namespace mindspore::lite {
-#ifdef SUBGRAPH_SPLIT
 const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph_index) {
   flatbuffers::FlatBufferBuilder fbb(1024);
   auto val_offset = schema::CreatePartialFusion(fbb, subgraph_index);
@@ -46,7 +45,7 @@ void SearchSubGraph::ConvertSubGraphToModel() {
     if (subgraph.nodes_.empty()) {
       continue;
     }
-    mindspore::kernel::KERNEL_ARCH device = subgraph.device_;
+    //    DeviceType device = subgraph.device_;
 
     int new_sub_index = model_->sub_graphs_.size();
     int partial_index = model_->all_nodes_.size();
@@ -72,7 +71,7 @@ void SearchSubGraph::ConvertSubGraphToModel() {
       new_sub_graph->node_indices_.push_back(node_index);
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
-      model_->all_nodes_[node_index]->device_type_ = device;
+      //      model_->all_nodes_[node_index]->device_type_ = device;
     }
 
     for (uint32_t head_index : subgraph.heads_) {
@@ -134,7 +133,7 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
   /* remove const node */
   for (int i = input.size() - 1; i >= 0; i--) {
     if (tensors_[input[i]].type_ == CONST) {
-      input.erase(input.begin() + i);
+      VectorErase(&input, input[i]);
     }
   }
 
@@ -223,36 +222,62 @@ void SearchSubGraph::InitSearchTensor() {
 }
 
 void SearchSubGraph::InitSubgraphDevice() {
-  sub_graphs_[0].device_ = kernel::KERNEL_ARCH::kCPU;
-  sub_graphs_[1].device_ = kernel::KERNEL_ARCH::kALL;
-}
-
-void SearchSubGraph::InitMainGraphDevice() {
-  kernel::KERNEL_ARCH main_device = kernel::KERNEL_ARCH::kALL;
-  Model::SubGraph *main_graph = model_->sub_graphs_.front();
-  for (uint32_t node_index : main_graph->node_indices_) {
-    Model::Node *node = model_->all_nodes_[node_index];
-    node->device_type_ = main_device;
+  for (size_t i = 0; i < sub_graphs_.size(); i++) {
+    sub_graphs_[i].device_ = (i % 2 == 0) ? DT_CPU : DT_GPU;
   }
 }
 
+void SearchSubGraph::InitMainGraphDevice() {
+  //  DeviceType main_device = DT_GPU;
+  //  Model::SubGraph *main_graph = model_->sub_graphs_.front();
+  //  for (uint32_t node_index : main_graph->node_indices_) {
+  //    Model::Node *node = model_->all_nodes_[node_index];
+  //    node->device_type_ = main_device;
+}
+
 void SearchSubGraph::SubgraphFusion() {
-  Subgraph new_npu_sub;
-  Subgraph &npu_sub1 = sub_graphs_[1];
-  Subgraph &npu_sub2 = sub_graphs_[2];
-  new_npu_sub.nodes_.insert(new_npu_sub.nodes_.end(), npu_sub1.nodes_.begin(), npu_sub1.nodes_.end());
-  new_npu_sub.nodes_.insert(new_npu_sub.nodes_.end(), npu_sub2.nodes_.begin(), npu_sub2.nodes_.end());
-  new_npu_sub.heads_.insert(new_npu_sub.heads_.end(), npu_sub1.heads_.begin(), npu_sub1.heads_.end());
-  new_npu_sub.heads_.insert(new_npu_sub.heads_.end(), npu_sub2.heads_.begin(), npu_sub2.heads_.end());
-  new_npu_sub.ends_.insert(new_npu_sub.ends_.end(), npu_sub1.ends_.begin(), npu_sub1.ends_.end());
-  new_npu_sub.ends_.insert(new_npu_sub.ends_.end(), npu_sub2.ends_.begin(), npu_sub2.ends_.end());
-  sub_graphs_.erase(sub_graphs_.begin() + 2);
-  sub_graphs_.erase(sub_graphs_.begin() + 1);
-  sub_graphs_.insert(sub_graphs_.end(), std::move(new_npu_sub));
+  while (sub_graphs_.size() > 2) {
+    size_t sub1_index = 0;
+    int sub2_index = -1;
+    for (; sub1_index < sub_graphs_.size(); sub1_index++) {
+      for (size_t tmp2 = sub1_index + 1; tmp2 < sub_graphs_.size(); tmp2++) {
+        if (sub_graphs_[sub1_index].device_ == sub_graphs_[tmp2].device_) {
+          sub2_index = tmp2;
+          break;
+        }
+      }
+      if (sub2_index != -1) {
+        break;
+      }
+    }
+    MS_ASSERT(sub2_index > sub1_index);
+
+    Subgraph new_npu_sub;
+    Subgraph &npu_sub1 = sub_graphs_[sub1_index];
+    Subgraph &npu_sub2 = sub_graphs_[sub2_index];
+    new_npu_sub.nodes_.insert(new_npu_sub.nodes_.end(), npu_sub1.nodes_.begin(), npu_sub1.nodes_.end());
+    new_npu_sub.nodes_.insert(new_npu_sub.nodes_.end(), npu_sub2.nodes_.begin(), npu_sub2.nodes_.end());
+    new_npu_sub.heads_.insert(new_npu_sub.heads_.end(), npu_sub1.heads_.begin(), npu_sub1.heads_.end());
+    new_npu_sub.heads_.insert(new_npu_sub.heads_.end(), npu_sub2.heads_.begin(), npu_sub2.heads_.end());
+    new_npu_sub.ends_.insert(new_npu_sub.ends_.end(), npu_sub1.ends_.begin(), npu_sub1.ends_.end());
+    new_npu_sub.ends_.insert(new_npu_sub.ends_.end(), npu_sub2.ends_.begin(), npu_sub2.ends_.end());
+    sub_graphs_.erase(sub_graphs_.begin() + sub2_index);
+    sub_graphs_.erase(sub_graphs_.begin() + sub1_index);
+    sub_graphs_.insert(sub_graphs_.end(), std::move(new_npu_sub));
+  }
+
   return;
 }
 
 void SearchSubGraph::SubGraphSplitByOutput() {
+  if (!context_->IsGpuEnabled() || output_nodes_.size() > 4) {
+    return;
+  }
+
+  if (context_->IsCpuFloat16Enabled() || context_->IsGpuFloat16Enabled()) {
+    return;
+  }
+
   InitSearchTensor();
 
   InitSearchSubGraph();
@@ -265,5 +290,4 @@ void SearchSubGraph::SubGraphSplitByOutput() {
 
   InitMainGraphDevice();
 }
-#endif
 }  // namespace mindspore::lite

@@ -28,6 +28,7 @@ j* you may not use this file except in compliance with the License.
 #include "src/runtime/gpu/opencl/opencl_wrapper.h"
 #include "src/runtime/gpu/opencl/opencl_allocator.h"
 #include "schema/gpu_cache_generated.h"
+#define EXT_ARM_IMPORT_MEMORY_HOST "cl_arm_import_memory_host"
 
 namespace mindspore::lite::opencl {
 
@@ -151,6 +152,9 @@ class OpenCLRuntime {
 
   bool isProfiling() const { return profiling_; }
   void SetProfiling(bool profiling) { profiling_ = profiling; }
+  bool isExtensionEnable(std::string ext) { return supported_extensions_.find(ext) != std::string::npos; }
+  cl::Buffer *CreateSharedMemoryBuffer(size_t size, void *host_ptr);
+  uint GetCacheLineSize() const { return cache_line_size_; }
 
  private:
   static OpenCLRuntime *GetInstance();
@@ -196,6 +200,8 @@ class OpenCLRuntime {
   bool profiling_{true};
 #else
   bool profiling_{false};
+  std::string supported_extensions_{""};
+  uint cache_line_size_{1};
 #endif
   // for cache
  private:
