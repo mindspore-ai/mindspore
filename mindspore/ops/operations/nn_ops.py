@@ -521,7 +521,7 @@ class ReLUV2(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `input_x`, `output` or `mask` is not a Tensor.
-        TypeError: If dtype of `output` is not same as `input_x`.
+        TypeError: If dtype of `output` is not same as `input_x` .
         TypeError: If dtype of `mask` is not unit8.
 
     Supported Platforms:

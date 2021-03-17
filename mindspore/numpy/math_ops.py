@@ -535,7 +535,7 @@ def minimum(x1, x2, dtype=None):
 
     Compares two tensors and returns a new tensor containing the element-wise minima.
 
-   Note:
+    Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
         Unlike numpy, when one of the elements is a NaN, the second element is
@@ -818,11 +818,11 @@ def tensordot(a, b, axes=2):
     `a` and the first `N` dimensions of `b` are summed over.
     Three common use cases are:
 
-        ``axes = 0`` : tensor product
+    - ``axes = 0`` : tensor product
 
-        ``axes = 1`` : tensor dot product
+    - ``axes = 1`` : tensor dot product
 
-        ``axes = 2`` : (default) tensor double contraction
+    - ``axes = 2`` : (default) tensor double contraction
 
     When axes is integer_like, the sequence for evaluation will be: first the `-Nth`
     axis in `a` and 0th axis in `b`, and the -1th axis in `a` and `Nth` axis in `b` last.

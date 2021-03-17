@@ -915,7 +915,7 @@ class InstanceNorm2d(Cell):
     Supported Platforms:
         ``GPU``
 
-    Raise:
+    Raises:
         TypeError: If `num_features` is not an int.
         TypeError: If `eps` is not a float.
         TypeError: If `momentum` is not a float.
