@@ -46,7 +46,9 @@ TEST_F(TestOpenCL_Reduce, Mean) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(axis, schema::ReduceMode_ReduceMean, false);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(axis.size())}, axis.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -59,7 +61,9 @@ TEST_F(TestOpenCL_Reduce, Sum) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(axis, schema::ReduceMode_ReduceSum, false);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(axis.size())}, axis.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -72,7 +76,9 @@ TEST_F(TestOpenCL_Reduce, MeanWC) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(axis, schema::ReduceMode_ReduceMean, true);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(axis.size())}, axis.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -85,8 +91,24 @@ TEST_F(TestOpenCL_Reduce, SumWC) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(axis, schema::ReduceMode_ReduceSum, true);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(axis.size())}, axis.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
+TEST_F(TestOpenCL_Reduce, MeanC) {
+  std::vector<int> axis = {3};
+  std::vector<int> input_shape = {1, 3, 2, 2};
+  std::vector<int> output_shape = {1, 3, 2, 1};
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  float output_data[] = {0.5, 2.5, 4.5, 6.5, 8.5, 10.5};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis, schema::ReduceMode_ReduceMean, true);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(axis.size())}, axis.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test
