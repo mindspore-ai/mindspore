@@ -149,7 +149,6 @@ class Parameter(Tensor_):
         self._is_init = False
         self._inited_param = None
         self._sliced = False
-        self.comm_fusion = 1
         self.is_param_ps = False
         self._cast_type = None
         self._unique = False

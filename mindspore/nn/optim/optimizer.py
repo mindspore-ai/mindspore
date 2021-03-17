@@ -585,6 +585,8 @@ class Optimizer(Cell):
             ops = P.Broadcast(root)
             if root > 0:
                 param_group[root] = F.depend(param_group[root], new_param_group[root-1])
+            else:
+                param_group[root] = F.depend(param_group[root], optim_result)
             next_params = ops(param_group[root])
             new_param_group.append(next_params)
             for i in range(F.tuple_len(next_params)):
