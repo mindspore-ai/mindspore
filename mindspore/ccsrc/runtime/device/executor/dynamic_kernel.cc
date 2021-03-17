@@ -30,16 +30,18 @@ namespace mindspore {
 namespace device {
 void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init Start";
-  is_dynamic_shape_ = AnfAlgo::IsDynamicShape(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  is_dynamic_shape_ = AnfAlgo::IsDynamicShape(cnode);
   if (!is_dynamic_shape_) {
-    MS_LOG(DEBUG) << "cnode is not dynamic shape:" << cnode_ptr_->fullname_with_scope();
+    MS_LOG(DEBUG) << "cnode is not dynamic shape:" << cnode->fullname_with_scope();
     return;
   }
 
-  is_input_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode_ptr_, kAttrInputIsDynamicShape);
-  is_output_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode_ptr_, kAttrOutputIsDynamicShape);
+  is_input_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape);
+  is_output_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape);
 
-  auto ret = abstract::GetDependsFormMap(cnode_ptr_);
+  auto ret = abstract::GetDependsFormMap(cnode);
   if (ret.empty()) {
     MS_LOG(DEBUG) << "No dynamic_shape_depends found";
     return;
@@ -50,13 +52,15 @@ void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init End";
 }
 
-int DynamicKernel::GetKernelType() { return AnfAlgo::GetKernelType(cnode_ptr_); }
+int DynamicKernel::GetKernelType() { return AnfAlgo::GetKernelType(cnode_ptr_.lock()); }
 
 void DynamicKernel::RebuildDependTensor() {
   depend_tensor_map_.clear();
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
   for (auto depend : depend_list_) {
-    auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, depend);
-    auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode_ptr_, depend);
+    auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, depend);
+    auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, depend);
     std::vector<int64_t> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
     auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
     auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
@@ -72,11 +76,12 @@ void DynamicKernel::InferShape() {
   if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
     return;
   }
-  MS_EXCEPTION_IF_NULL(cnode_ptr_);
-  MS_LOG(INFO) << "InferShape start, node:" << cnode_ptr_->fullname_with_scope();
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
   InferShapeRecursive();
 
-  auto inputs = cnode_ptr_->inputs();
+  auto inputs = cnode->inputs();
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
   }
@@ -86,9 +91,9 @@ void DynamicKernel::InferShape() {
   // rebuild depend tensor map for gpu dynamic memory allocation.
   RebuildDependTensor();
 
-  auto input_size = AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  auto input_size = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < input_size; ++i) {
-    auto input_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, i);
+    auto input_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
     auto real_input = input_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
 
@@ -101,12 +106,12 @@ void DynamicKernel::InferShape() {
       real_input->abstract()->set_value(tensor_ptr);
     }
 
-    auto cnode_input = cnode_ptr_->input(i + 1);
+    auto cnode_input = cnode->input(i + 1);
     MS_EXCEPTION_IF_NULL(cnode_input);
     if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
       auto base_shape = real_input->Shape();
       if (!base_shape->isa<abstract::TupleShape>()) {
-        MS_LOG(EXCEPTION) << "Node:" << cnode_ptr_->fullname_with_scope()
+        MS_LOG(EXCEPTION) << "Node:" << cnode->fullname_with_scope()
                           << " input is a tuple_get_item but real input node shape is not a TupleShape";
       }
       auto tuple_ptr = base_shape->cast<abstract::TupleShapePtr>();
@@ -124,13 +129,15 @@ void DynamicKernel::InferShape() {
   }
 
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
-  cnode_ptr_->set_abstract(eval_result);
+  cnode->set_abstract(eval_result);
 }
 
 void DynamicKernel::InferShapeRecursive() {
-  auto input_size = AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_size = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < input_size; i++) {
-    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, i);
+    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
     auto input_node = input_node_with_index.first;
     MS_EXCEPTION_IF_NULL(input_node);
     InferShapeForNopNode(&input_node);

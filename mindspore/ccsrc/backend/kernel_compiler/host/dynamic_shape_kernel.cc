@@ -21,12 +21,14 @@ namespace mindspore {
 namespace kernel {
 void DynamicShapeKernel::Execute() {
   MS_LOG(INFO) << "Execute DynamicShapeKernel Start";
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "Invalid Input Num:" << input_num;
   }
 
-  auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, 0);
+  auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
 
   auto output_type = TypeId::kNumberTypeInt64;
@@ -38,7 +40,7 @@ void DynamicShapeKernel::Execute() {
     *(data_ptr + i) = prev_output_shape[i];
   }
 
-  auto output_addr = AnfAlgo::GetOutputAddr(cnode_ptr_, 0);
+  auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
   output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
                                 output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c());
