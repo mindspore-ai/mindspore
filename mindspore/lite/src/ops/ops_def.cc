@@ -1006,6 +1006,11 @@ OP_SCHEMA_DEF(Unstack)
 OP_ATTR_WITH_VALUE(axis, long, 0)
 OP_SCHEMA_DEF_END(Unstack)
 
+OP_SCHEMA_DEF_ONLY(While)
+OP_ATTR_ONLY(cond_subgraph_index, long)
+OP_ATTR_ONLY(body_subgraph_index, long)
+OP_SCHEMA_DEF_ONLY_END(While)
+
 OP_SCHEMA_DEF(Where)
 OP_SCHEMA_DEF_END(Where)
 
@@ -1014,6 +1019,9 @@ OP_SCHEMA_DEF_END(ZerosLike)
 
 OP_SCHEMA_DEF(Select)
 OP_SCHEMA_DEF_END(Select)
+
+OP_SCHEMA_DEF_ONLY(If)
+OP_SCHEMA_DEF_ONLY_END(If)
 
 OP_SCHEMA_DEF(GRU)
 OP_ATTR_WITH_VALUE(bidirectional, bool, false)

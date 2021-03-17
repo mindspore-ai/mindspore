@@ -154,4 +154,33 @@
 #else
 #define OP_SCHEMA_DEF_END(OP)
 #endif
+
+#ifdef GEN_SCHEMA_DEF
+#define OP_SCHEMA_DEF_ONLY(OP)     \
+  namespace mindspore::lite::ops { \
+  std::string Gen##OP##Def() {     \
+    std::string op_def = "table "; \
+    op_def.append(#OP);            \
+    op_def.append(" {\n");
+#else
+#define OP_SCHEMA_DEF_ONLY(OP)
+#endif
+
+#ifdef GEN_SCHEMA_DEF
+#define OP_ATTR_ONLY(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
+#else
+#define OP_ATTR_ONLY(key, type)
+#endif
+
+#ifdef GEN_SCHEMA_DEF
+#define OP_SCHEMA_DEF_ONLY_END(OP)                 \
+  op_def.append("}\n\n");                          \
+  return op_def;                                   \
+  }                                                \
+  SchemaOpRegister g_schema_op_##OP(Gen##OP##Def); \
+  }  // namespace mindspore::lite::ops
+#else
+#define OP_SCHEMA_DEF_ONLY_END(OP)
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_DEF_H_
