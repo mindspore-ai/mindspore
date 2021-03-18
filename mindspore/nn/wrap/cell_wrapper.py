@@ -202,7 +202,7 @@ class ForwardValueAndGrad(Cell):
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically.
             Default: False.
-            If the sensor_param is True, a sensitivity (gradient with respect to output) needs to be transferred through
+            If the sens_param is True, a sensitivity (gradient with respect to output) needs to be transferred through
             the input parameter.
 
     Inputs:
@@ -227,11 +227,11 @@ class ForwardValueAndGrad(Cell):
         ...
         ...    def construct(self, x):
         ...        out = self.matmul(x, self.weight)
-        ...        return x
+        ...        return out
         ...
         >>> net = Net()
         >>> criterion = nn.SoftmaxCrossEntropyWithLogits()
-        >>> net_with_criterion = WithLossCell(net, criterion)
+        >>> net_with_criterion = nn.WithLossCell(net, criterion)
         >>> weight = ParameterTuple(net.trainable_params())
         >>> train_network = nn.ForwardValueAndGrad(net_with_criterion, weights=weight, get_all=True, get_by_list=True)
         >>> inputs = Tensor(np.ones([1, 2]).astype(np.float32))
@@ -239,10 +239,10 @@ class ForwardValueAndGrad(Cell):
         >>> result = train_network(inputs, labels)
         >>> print(result)
         (Tensor(shape=[1], dtype=Float32, value=[0]), ((Tensor(shape=[1, 2], dtype=Float32, value=
-        [[0.5, 0.5]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[1, 1]]), Tensor(shape=[1, 2], dtype=Float32, value=
         [[0, 0]])), (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[0, 0],
-         [0, 0]]),)))
+        [[0.5, 0.5],
+         [0.5, 0.5]]),)))
     """
 
     def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False):
