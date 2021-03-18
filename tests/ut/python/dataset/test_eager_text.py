@@ -52,12 +52,17 @@ def test_python_tokenizer():
         if not words:
             return [""]
         return words
-    txt = "Welcome to Beijing !"
-    txt = T.PythonTokenizer(my_tokenizer)(txt)
-    logger.info("Tokenize result: {}".format(txt))
+    txt1 = np.array("Welcome to Beijing !".encode())
+    txt1 = T.PythonTokenizer(my_tokenizer)(txt1)
+    logger.info("Tokenize result: {}".format(txt1))
+
+    txt2 = np.array("Welcome to Beijing !")
+    txt2 = T.PythonTokenizer(my_tokenizer)(txt2)
+    logger.info("Tokenize result: {}".format(txt2))
 
     expected = ['Welcome', 'to', 'Beijing', '!']
-    np.testing.assert_equal(txt, expected)
+    np.testing.assert_equal(txt1, expected)
+    np.testing.assert_equal(txt2, expected)
 
 
 if __name__ == '__main__':

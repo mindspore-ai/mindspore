@@ -216,7 +216,7 @@ def to_str(array, encoding='utf8'):
     """
 
     if not isinstance(array, np.ndarray):
-        raise ValueError('input should be a NumPy array.')
+        raise TypeError('input should be a NumPy array.')
 
     return np.char.decode(array, encoding)
 

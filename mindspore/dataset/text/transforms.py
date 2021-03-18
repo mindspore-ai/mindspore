@@ -533,7 +533,9 @@ class PythonTokenizer:
         self.random = False
 
     def __call__(self, in_array):
-        if not isinstance(in_array, str):
+        if not isinstance(in_array, np.ndarray):
+            raise TypeError("input should be a NumPy array. Got {}.".format(type(in_array)))
+        if in_array.dtype.type is np.bytes_:
             in_array = to_str(in_array)
         tokens = self.tokenizer(in_array)
         return tokens
