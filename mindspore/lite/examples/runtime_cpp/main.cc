@@ -53,6 +53,7 @@ std::string RealPath(const char *path) {
   std::string res = resolved_path.get();
   return res;
 }
+
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     std::cerr << "file is nullptr." << std::endl;
