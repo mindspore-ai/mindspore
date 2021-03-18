@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
+#include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
 #include <memory>
 #include <functional>
 #include "ops/concat.h"
@@ -24,32 +24,21 @@
 #include "ops/transpose.h"
 #include "src/common/utils.h"
 #include "utils/utils.h"
-#include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kWhileUniqInputsLength = 6;
 constexpr size_t kCondNodesNum = 12;
 constexpr size_t kCondCNodesNum = 4;
 constexpr size_t kBodyNodesNum = 69;
 constexpr size_t kBodyCNodesNum = 25;
 const auto &p1 = std::placeholders::_1;
-
-bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
-
-bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim);
-  }
-  return false;
-}
 }  // namespace
 
-BiDirectionTfGruCellFusion::BiDirectionTfGruCellFusion(const std::string &name, bool multigraph)
-    : PatternProcessPass(name, multigraph) {
+TfBidirectionGruFusion::TfBidirectionGruFusion(int num_fw_vars, int num_bw_vars, const std::string &name,
+                                               bool multi_graph)
+    : PatternProcessPass(name, multi_graph) {
   /*
    * vars for while input
    * fw_while_inputs:
@@ -57,8 +46,10 @@ BiDirectionTfGruCellFusion::BiDirectionTfGruCellFusion(const std::string &name, 
    * bw_while_inputs:
    * 0:cond 1:body 2:kernel_gate 3:bias_gate 4:cand_kernel 5:cand_bias
    */
-  for (size_t i = 0; i < kWhileUniqInputsLength; ++i) {
+  for (int i = 0; i < num_fw_vars; ++i) {
     fw_vars_.emplace_back(std::make_shared<Var>());
+  }
+  for (int i = 0; i < num_bw_vars; ++i) {
     bw_vars_.emplace_back(std::make_shared<Var>());
   }
   input_ = std::make_shared<Var>();
@@ -68,7 +59,7 @@ BiDirectionTfGruCellFusion::BiDirectionTfGruCellFusion(const std::string &name, 
   bw_init_state_ = std::make_shared<Var>();
 }
 
-const BaseRef BiDirectionTfGruCellFusion::DefinePattern() const {
+const BaseRef TfBidirectionGruFusion::DefinePattern() const {
   // forward
   auto fw_reduce = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion)),
                               input_length_, std::make_shared<CondVar>(IsParameterNode)});
@@ -134,7 +125,7 @@ const BaseRef BiDirectionTfGruCellFusion::DefinePattern() const {
   return concat;
 }
 
-AnfNodePtr BiDirectionTfGruCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
+AnfNodePtr TfBidirectionGruFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
   auto is_parameter1 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter2 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter3 = std::make_shared<CondVar>(IsParameterNode);
@@ -152,7 +143,7 @@ AnfNodePtr BiDirectionTfGruCellFusion::GetCondGraphPattern(const PrimitiveVarMap
   return pattern;
 }
 
-AnfNodePtr BiDirectionTfGruCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
+AnfNodePtr TfBidirectionGruFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
   std::vector<CondVarPtr> placeholders;
   for (int i = 0; i < 13; ++i) {
     placeholders.emplace_back(std::make_shared<CondVar>(IsParameterNode));
@@ -206,7 +197,7 @@ AnfNodePtr BiDirectionTfGruCellFusion::GetBodyGraphPattern(const PrimitiveVarMap
   return pattern;
 }
 
-ParamValueLitePtr BiDirectionTfGruCellFusion::GetDefaultParamValue(const AnfNodePtr &parameter_anf) const {
+ParamValueLitePtr TfBidirectionGruFusion::GetDefaultParamValue(const AnfNodePtr &parameter_anf) const {
   MS_ASSERT(parameter_anf != nullptr);
   if (!utils::isa<ParameterPtr>(parameter_anf)) {
     MS_LOG(DEBUG) << "parameter_anf is not ParameterPtr";
@@ -221,9 +212,9 @@ ParamValueLitePtr BiDirectionTfGruCellFusion::GetDefaultParamValue(const AnfNode
   return param_value;
 }
 
-STATUS BiDirectionTfGruCellFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf,
-                                                         const AnfNodePtr &bw_cand_kernel_anf, int *input_size,
-                                                         int *hidden_size) const {
+STATUS TfBidirectionGruFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf,
+                                                     const AnfNodePtr &bw_cand_kernel_anf, int *input_size,
+                                                     int *hidden_size) const {
   MS_ASSERT(fw_cand_kernel != nullptr);
   MS_ASSERT(bw_cand_kernel != nullptr);
   MS_ASSERT(input_size != nullptr);
@@ -256,9 +247,9 @@ STATUS BiDirectionTfGruCellFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_ca
   return RET_OK;
 }
 
-ParameterPtr BiDirectionTfGruCellFusion::AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
-                                                             const std::vector<int> &shape, const TypeId type,
-                                                             void **tensor_data) const {
+ParameterPtr TfBidirectionGruFusion::AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
+                                                         const std::vector<int> &shape, const TypeId type,
+                                                         void **tensor_data) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(tensor_data != nullptr);
   auto parameter = func_graph->add_parameter();
@@ -300,9 +291,8 @@ ParameterPtr BiDirectionTfGruCellFusion::AddDefaultParameter(const FuncGraphPtr 
   return parameter;
 }
 
-void BiDirectionTfGruCellFusion::CopyFlattenMatData(const float *mat, const int R, const int C, const int r0,
-                                                    const int r1, const int c0, const int c1, float *data,
-                                                    bool t) const {
+void TfBidirectionGruFusion::CopyFlattenMatData(const float *mat, const int R, const int C, const int r0, const int r1,
+                                                const int c0, const int c1, float *data, bool t) const {
   MS_ASSERT(mat != nullptr);
   MS_ASSERT(data != nullptr);
   MS_ASSERT(0 <= r0 && r0 < r1 && r1 <= R);
@@ -320,9 +310,9 @@ void BiDirectionTfGruCellFusion::CopyFlattenMatData(const float *mat, const int 
   }
 }
 
-STATUS BiDirectionTfGruCellFusion::ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight,
-                                                     const int input_size, const int hidden_size,
-                                                     float *gate_tensor_data, float *recu_tensor_data) const {
+STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight,
+                                                 const int input_size, const int hidden_size, float *gate_tensor_data,
+                                                 float *recu_tensor_data) const {
   MS_ASSERT(gate_weight != nullptr);
   MS_ASSERT(cand_weight != nullptr);
   MS_ASSERT(gate_tensor_data != nullptr);
@@ -375,8 +365,8 @@ STATUS BiDirectionTfGruCellFusion::ConvertWeightData(const AnfNodePtr &gate_weig
   return RET_OK;
 }
 
-STATUS BiDirectionTfGruCellFusion::ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias,
-                                                   const int hidden_size, float *tensor_data) const {
+STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias,
+                                               const int hidden_size, float *tensor_data) const {
   MS_ASSERT(bias != nullptr);
   MS_ASSERT(tensor_data != nullptr);
   std::vector<int> gate_shape{hidden_size * 2};
@@ -407,10 +397,9 @@ STATUS BiDirectionTfGruCellFusion::ConvertBiasData(const AnfNodePtr &gate_bias, 
   return RET_OK;
 }
 
-CNodePtr BiDirectionTfGruCellFusion::GetStackedHiddenState(const FuncGraphPtr &func_graph,
-                                                           const AnfNodePtr &fw_init_state,
-                                                           const AnfNodePtr &bw_init_state,
-                                                           const std::string base_name) const {
+CNodePtr TfBidirectionGruFusion::GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
+                                                       const AnfNodePtr &bw_init_state,
+                                                       const std::string base_name) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(fw_init_state != nullptr);
   MS_ASSERT(bw_init_state != nullptr);
@@ -424,35 +413,32 @@ CNodePtr BiDirectionTfGruCellFusion::GetStackedHiddenState(const FuncGraphPtr &f
   return new_node;
 }
 
-CNodePtr BiDirectionTfGruCellFusion::CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                                                              const EquivPtr &equiv, const EquivPtr &fw_body_equiv,
-                                                              const EquivPtr &bw_body_equiv,
-                                                              const std::string &base_name) const {
+CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                          const EquivPtr &equiv, const std::string &base_name,
+                                                          int var_offset) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(input != nullptr);
   MS_ASSERT(equiv != nullptr);
-  MS_ASSERT(fw_body_equiv != nullptr);
-  MS_ASSERT(bw_body_equiv != nullptr);
   auto gru_prim = std::make_shared<ops::GRU>();
   gru_prim->set_bidirectional(true);
   auto value_node = NewValueNode(gru_prim);
 
-  auto fw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[2]]);
+  auto fw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[var_offset]]);
   MS_ASSERT(fw_gate_kernel != nullptr);
-  auto fw_gate_bias = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[3]]);
+  auto fw_gate_bias = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[var_offset + 1]]);
   MS_ASSERT(fw_gate_bias != nullptr);
-  auto fw_cand_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[4]]);
+  auto fw_cand_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[var_offset + 2]]);
   MS_ASSERT(fw_cand_kernel != nullptr);
-  auto fw_cand_bias = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[5]]);
+  auto fw_cand_bias = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[var_offset + 3]]);
   MS_ASSERT(fw_cand_bias != nullptr);
 
-  auto bw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[2]]);
+  auto bw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[var_offset]]);
   MS_ASSERT(bw_gate_kernel != nullptr);
-  auto bw_gate_bias = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[3]]);
+  auto bw_gate_bias = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[var_offset + 1]]);
   MS_ASSERT(bw_gate_bias != nullptr);
-  auto bw_cand_kernel = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[4]]);
+  auto bw_cand_kernel = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[var_offset + 2]]);
   MS_ASSERT(bw_cand_kernel != nullptr);
-  auto bw_cand_bias = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[5]]);
+  auto bw_cand_bias = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[var_offset + 3]]);
   MS_ASSERT(bw_cand_bias != nullptr);
 
   auto fw_init_state = utils::cast<AnfNodePtr>((*equiv)[fw_init_state_]);
@@ -522,8 +508,8 @@ CNodePtr BiDirectionTfGruCellFusion::CreateBiDirectionGruNode(const FuncGraphPtr
   return new_node;
 }
 
-CNodePtr BiDirectionTfGruCellFusion::GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
-                                                        const std::string base_name) const {
+CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
+                                                    const std::string base_name) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(gru_output != nullptr);
   auto split_prim = std::make_shared<ops::Split>();
@@ -571,8 +557,8 @@ CNodePtr BiDirectionTfGruCellFusion::GetPostProcessNode(const FuncGraphPtr &func
   return transpose_new_node;
 }
 
-const AnfNodePtr BiDirectionTfGruCellFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &concat_node,
-                                                     const EquivPtr &equiv) const {
+const AnfNodePtr TfBidirectionGruFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &concat_node,
+                                                 const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(concat_node != nullptr);
   MS_LOG(DEBUG) << "bidirection tf gru fusion pass";
@@ -628,7 +614,7 @@ const AnfNodePtr BiDirectionTfGruCellFusion::Process(const FuncGraphPtr &func_gr
   }
 
   const std::string gru_name = "gru_" + concat_node->fullname_with_scope();
-  auto gru_node = CreateBiDirectionGruNode(func_graph, transpose_input, equiv, fw_body_equiv, bw_body_equiv, gru_name);
+  auto gru_node = CreateBiDirectionGruNode(func_graph, transpose_input, equiv, gru_name, 2);
   if (gru_node == nullptr) {
     return nullptr;
   }

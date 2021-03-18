@@ -28,7 +28,7 @@ ops::PrimitiveC *TFMergeParser::Parse(const tensorflow::NodeDef &tf_op,
                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Merge>();
 
-  *output_size = tf_op.input_size();
+  *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }

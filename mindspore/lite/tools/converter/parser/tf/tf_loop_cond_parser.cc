@@ -18,7 +18,7 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/converter/ops/loop_cond.h"
+#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {

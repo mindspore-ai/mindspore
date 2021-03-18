@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_LOOP_COND_H_
-#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_LOOP_COND_H_
-
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_ARRAY_SIZE_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_ARRAY_SIZE_PARSER_H_
+#include <string>
+#include <memory>
+#include <map>
 #include <vector>
-#include <set>
-#include <cmath>
-#include "ops/primitive_c.h"
-
-using mindspore::ops::PrimitiveC;
+#include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
 namespace lite {
-constexpr auto kNameLoopCond = "LoopCond";
-class LoopCond : public PrimitiveC {
+class TFTensorArraySizeParser : public TFNodeParser {
  public:
-  LoopCond() : PrimitiveC(kNameLoopCond) {}
-  ~LoopCond() = default;
-  MS_DECLARE_PARENT(LoopCond, PrimitiveC);
+  TFTensorArraySizeParser() = default;
+  ~TFTensorArraySizeParser() override = default;
+  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                         std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_LOOP_COND_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_ARRAY_SIZE_PARSER_H_

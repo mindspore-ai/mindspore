@@ -240,13 +240,15 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/conv_tuplegetitem_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tflite_lstm_cell_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_lstm_cell_fusion.cc
-            ${LITE_DIR}/tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_transform_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/group_depthwise_op_convert_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/tflite_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/update_conv2d_param_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_transpose_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/redundant_op_remove_pass.cc
@@ -258,6 +260,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_control_op_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_while.cc
+            ${LITE_DIR}/tools/optimizer/graph/functionalize_cond.cc
             ${LITE_DIR}/tools/optimizer/graph/inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/primitive_adjust_pass.cc
             )

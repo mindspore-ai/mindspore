@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 #include "src/common/log_adapter.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "mindspore/core/ir/primitive.h"
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
 #include "tools/optimizer/fusion/conv_tuple_activation_fusion.h"
@@ -31,7 +33,8 @@
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
-#include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
+#include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
+#include "tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.h"
 #include "tools/optimizer/graph/primitive_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
@@ -42,6 +45,7 @@
 #include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
+#include "tools/optimizer/graph/unused_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
@@ -81,7 +85,7 @@ int AnfTransform::AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &opti
     fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());
     fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());
     fusion_pm->AddPass(std::make_shared<opt::TfLstmCellFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::BiDirectionTfGruCellFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfBidirectionGruFusion>());
   }
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
@@ -225,6 +229,23 @@ int AnfTransform::RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter
   return RET_OK;
 }
 
+int AnfTransform::RunPrecedingPass(const FuncGraphPtr &old_graph, const converter::Flags &config) {
+  MS_ASSERT(old_graph != nullptr);
+  auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto asylic_pm = std::make_shared<opt::PassManager>("asylic pass manager", false);
+  // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic
+  asylic_pm->AddPass(std::make_shared<opt::TfBidirectionGruCfFusion>());
+  // remove remaining cyclic nodes
+  asylic_pm->AddPass(std::make_shared<opt::UnusedNodeRemovePass>());
+  asylic_optimizer->AddPassManager(asylic_pm);
+  if (!asylic_optimizer->Optimize(old_graph)) {
+    MS_LOG(ERROR) << "gru cf fusion pass failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config,
                              const FuncGraphPtr &new_graph) {
   // quant
@@ -266,7 +287,13 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     return old_graph;
   }
 
-  auto status = RunAdjustPass(old_graph, config);
+  auto status = RunPrecedingPass(old_graph, *config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run Preceding pass failed.";
+    return nullptr;
+  }
+
+  status = RunAdjustPass(old_graph, config);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run Adjust pass failed.";
     return nullptr;

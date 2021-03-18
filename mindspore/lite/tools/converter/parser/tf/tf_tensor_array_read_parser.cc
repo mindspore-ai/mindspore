@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_if_parser.h"
+#include "tools/converter/parser/tf/tf_tensor_array_read_parser.h"
 #include <string>
 #include <memory>
 #include <map>
@@ -23,10 +23,19 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFIfParser::Parse(const tensorflow::NodeDef &tf_op,
-                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                   std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<If>();
+ops::PrimitiveC *TFTensorArrayReadParser::Parse(const tensorflow::NodeDef &tf_op,
+                                                const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                                std::vector<std::string> *inputs, int *output_size) {
+  MS_LOG(DEBUG) << "TF TensorArrayReadParser";
+  if (inputs == nullptr || output_size == nullptr) {
+    MS_LOG(ERROR) << "inputs or output_size is nullptr";
+    return nullptr;
+  }
+  auto prim = std::make_unique<TensorArrayReadV3>();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "prim is nullptr";
+    return nullptr;
+  }
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
@@ -34,7 +43,6 @@ ops::PrimitiveC *TFIfParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   return prim.release();
 }
-TFNodeRegistrar g_tfStatelessIfParser("StatelessIf", new TFIfParser());
-TFNodeRegistrar g_tfIfParser("If", new TFIfParser());
+TFNodeRegistrar g_tfTensorArrayReadParser("TensorArrayReadV3", new TFTensorArrayReadParser());
 }  // namespace lite
 }  // namespace mindspore
