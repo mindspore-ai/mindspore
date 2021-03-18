@@ -199,7 +199,7 @@ def gamma(shape, alpha, beta, seed=None):
         TypeError: If dtype of `alpha` and `beta` is not float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> shape = (3, 1, 2)
@@ -240,7 +240,7 @@ def poisson(shape, mean, seed=None):
         TypeError: If `seed` is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> shape = (4, 1)
