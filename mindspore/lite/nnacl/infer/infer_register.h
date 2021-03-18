@@ -214,7 +214,7 @@ enum PrimType {
   PrimType_ResizeGrad = 187,
   PrimType_Splice = 188,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Splice
+  PrimType_MAX = PrimType_Splice + 1
 };
 
 void RegInfer(int prim_type, InferShape func);
