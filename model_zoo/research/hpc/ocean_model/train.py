@@ -46,8 +46,15 @@ if __name__ == "__main__":
 
     # define grid and init variable update
     net_init = GOMO_init(im, jm, kb, stencil_width)
+    init_res = net_init(dx, dy, dz, uab, vab, elb, etb, sb, tb, ub, vb, h, w, vfluxf, zz, fsm)
+    for res_tensor in init_res:
+        if isinstance(res_tensor, (list, tuple)):
+            for rt in res_tensor:
+                rt.data_sync(True)
+        else:
+            res_tensor.data_sync(True)
     ua, va, el, et, etf, d, dt, l, q2b, q2lb, kh, km, kq, aam, w, q2, q2l, t, s, u, v, cbc, rmean, rho, x_d, y_d, z_d\
-        = net_init(dx, dy, dz, uab, vab, elb, etb, sb, tb, ub, vb, h, w, vfluxf, zz, fsm)
+        = init_res
 
     # define GOMO model
     Model = GOMO(im=im, jm=jm, kb=kb, stencil_width=stencil_width, variable=variable, x_d=x_d, y_d=y_d, z_d=z_d,
