@@ -15,8 +15,10 @@
  */
 
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
+#include <algorithm>
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "nnacl/transpose.h"
+#include "nnacl/scale.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
 
@@ -47,6 +49,7 @@ kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor
     kernel->set_desc(key);
   } else {
     MS_LOG(ERROR) << "New Nchw2Nhwc Kernel failed.";
+    free(transpose_param);
     return nullptr;
   }
 
@@ -106,8 +109,9 @@ void NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel,
   pre_kernel->set_out_kernels(out_kernels);
 }
 
-void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
-                                                 std::vector<kernel::LiteKernel *> kernels) {
+void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel,
+                                                 const std::vector<kernel::LiteKernel *> &trans_kernels,
+                                                 const std::vector<kernel::LiteKernel *> &kernels) {
   // For kernel before trans, there may be multiple outputs.
   auto cur_out_kernels = pre_kernel->out_kernels();
   for (size_t i = 0; i < kernels.size(); i++) {
@@ -116,11 +120,11 @@ void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel,
       cur_out_kernels.erase(itr);
     }
   }
-  cur_out_kernels.push_back(trans_kernel);
+  std::copy(trans_kernels.begin(), trans_kernels.end(), std::back_inserter(cur_out_kernels));
   pre_kernel->set_out_kernels(cur_out_kernels);
   // For kernel before trans, the output tensor is used for output tensor of trans, so replace the output tensor with
   // the input tensor of trans.
-  pre_kernel->set_out_tensors(trans_kernel->in_tensors());
+  pre_kernel->set_out_tensors({trans_kernels.at(0)->in_tensors().at(0)});
 }
 
 void NPUPassUtils::UpdateNH2NCTransNodePostKernel(kernel::LiteKernel *trans_kernel, kernel::LiteKernel *post_kernel) {
@@ -229,5 +233,12 @@ kernel::LiteKernel *NPUPassUtils::KernelInputFromKernel(const kernel::LiteKernel
     return nullptr;
   }
   return *it;
+}
+
+bool NPUPassUtils::Scale4dCase(const kernel::LiteKernel *kernel) {
+  MS_ASSERT(kernel != nullptr && kernel->op_parameter() != nullptr);
+  auto scale_param = reinterpret_cast<ScaleParameter *>(kernel->op_parameter());
+  auto in_tensor = kernel->in_tensors().at(1);
+  return in_tensor->shape().size() == 1 && (scale_param->axis_ == 3 || scale_param->axis_ == -1);
 }
 }  // namespace mindspore::lite

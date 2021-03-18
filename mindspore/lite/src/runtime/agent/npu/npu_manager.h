@@ -27,9 +27,7 @@
 #include "include/HiAiModelManagerService.h"
 
 namespace mindspore::lite {
-static std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
-  schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Resize,
-  schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion};
+
 struct SubGraphModel {
  public:
   SubGraphModel(int index, std::string model_name, std::shared_ptr<domi::ModelBufferData> model_buffer_data)
