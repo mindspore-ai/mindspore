@@ -38,13 +38,15 @@ void HcclDynamicKernel::UpdateArgs() {
     return;
   }
   MS_LOG(INFO) << "Start to UpdateArgs";
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   // Update input, output, count
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_workspaces;
   AddressPtrList kernel_outputs;
-  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode_ptr_, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
   if (kernel_inputs.empty() || kernel_outputs.empty()) {
     MS_LOG(EXCEPTION) << "Inputs or outputs is empty";
   }
@@ -58,30 +60,31 @@ void HcclDynamicKernel::UpdateArgs() {
   output_ptr_ = output0->addr;
 
   std::vector<std::vector<size_t>> hccl_kernel_input_shape_list;
-  if (!HcomUtil::GetKernelInputShape(cnode_ptr_, &hccl_kernel_input_shape_list)) {
+  if (!HcomUtil::GetKernelInputShape(cnode, &hccl_kernel_input_shape_list)) {
     MS_LOG(EXCEPTION) << "GetKernelInputShape fail!";
   }
 
   std::vector<HcclDataType> hccl_data_type_list;
-  if (!HcomUtil::GetHcomDataType(cnode_ptr_, &hccl_data_type_list)) {
+  if (!HcomUtil::GetHcomDataType(cnode, &hccl_data_type_list)) {
     MS_LOG(EXCEPTION) << "GetHcomDataType fail!";
   }
 
   // Update Hccl count
-  if (!HcomUtil::GetHcomCount(cnode_ptr_, hccl_data_type_list, hccl_kernel_input_shape_list, &count_)) {
+  if (!HcomUtil::GetHcomCount(cnode, hccl_data_type_list, hccl_kernel_input_shape_list, &count_)) {
     MS_LOG(EXCEPTION) << "GetHcomCount fail!";
   }
   MS_LOG(INFO) << "Update Hccl count:" << count_;
 }
 
 void HcclDynamicKernel::StaticShapeExecute() {
-  MS_EXCEPTION_IF_NULL(cnode_ptr_);
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_workspaces;
   AddressPtrList kernel_outputs;
-  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode_ptr_, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
   kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
 }
 

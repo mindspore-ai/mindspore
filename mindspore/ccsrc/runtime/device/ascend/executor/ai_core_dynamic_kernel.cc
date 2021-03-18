@@ -43,29 +43,33 @@ void AiCoreDynamicKernel::Execute() {
   if (stream_ == nullptr) {
     MS_LOG(EXCEPTION) << "stream_ptr should not be nullptr.";
   }
-  MS_LOG(INFO) << "Start Execute node:" << cnode_ptr_->fullname_with_scope();
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Start Execute node:" << cnode->fullname_with_scope();
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto args_size = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtime_args_.size());
   if (RT_ERROR_NONE != rtKernelLaunch(stub_func_, block_dim_, runtime_args_.data(), args_size, l2ctrl, stream_)) {
     MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunch error.";
   }
-  MS_LOG(INFO) << "End Execute node:" << cnode_ptr_->fullname_with_scope();
+  MS_LOG(INFO) << "End Execute node:" << cnode->fullname_with_scope();
 }
 
 void AiCoreDynamicKernel::ParseCompileJson() {
-  if (!AnfAlgo::IsDynamicShape(cnode_ptr_)) {
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!AnfAlgo::IsDynamicShape(cnode)) {
     return;
   }
-  if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, cnode_ptr_)) {
+  if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, cnode)) {
     MS_LOG(EXCEPTION) << "Get compile_info failed";
   }
-  auto compile_info_attr = AnfAlgo::GetNodeAttr<std::string>(cnode_ptr_, kAttrCompileInfo);
+  auto compile_info_attr = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCompileInfo);
   MS_LOG(INFO) << "Get compile_info:" << compile_info_attr;
   op_compile_info_.str = compile_info_attr;
   op_compile_info_.key = "";
 
-  if (AnfAlgo::HasNodeAttr(kAttrFusionType, cnode_ptr_)) {
-    auto fusion_type = AnfAlgo::GetNodeAttr<std::string>(cnode_ptr_, kAttrFusionType);
+  if (AnfAlgo::HasNodeAttr(kAttrFusionType, cnode)) {
+    auto fusion_type = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFusionType);
     MS_LOG(INFO) << "Get fusion_type:" << fusion_type;
     (*compile_info_json_)["_pattern"] = fusion_type;
     op_compile_info_.key = std::hash<std::string>{}(fusion_type);
@@ -85,14 +89,15 @@ void AiCoreDynamicKernel::UpdateArgs() {
   }
 
   AllocateWorkspace();
-
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_workspaces;
   AddressPtrList kernel_outputs;
-  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode_ptr_, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
 
   runtime_args_.clear();
 
@@ -112,11 +117,12 @@ void AiCoreDynamicKernel::UpdateArgs() {
 }
 
 void AiCoreDynamicKernel::ComputeTiling() {
-  MS_EXCEPTION_IF_NULL(cnode_ptr_);
-  MS_LOG(INFO) << "Start compute tiling of:" << cnode_ptr_->fullname_with_scope();
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Start compute tiling of:" << cnode->fullname_with_scope();
   optiling::OpRunInfo op_run_info;
 
-  OpTilingCalculater::GetInstance().CalculateTiling(NOT_NULL(cnode_ptr_), op_compile_info_, depend_tensor_map_,
+  OpTilingCalculater::GetInstance().CalculateTiling(NOT_NULL(cnode), op_compile_info_, depend_tensor_map_,
                                                     NOT_NULL(&op_run_info));
   block_dim_ = op_run_info.block_dim;
   workspaces_size_ = op_run_info.workspaces;

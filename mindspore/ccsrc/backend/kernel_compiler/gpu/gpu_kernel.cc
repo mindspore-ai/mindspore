@@ -23,14 +23,16 @@ void GpuDynamicKernel::UpdateArgs() {
     return;
   }
 
-  MS_LOG(INFO) << "Update Args: " << cnode_ptr_->fullname_with_scope();
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode_ptr_);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto gpu_kernel_mod = dynamic_cast<GpuKernel *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(gpu_kernel_mod);
   gpu_kernel_mod->DestroyResource();
   gpu_kernel_mod->ResetResource();
-  gpu_kernel_mod->Init(cnode_ptr_);
+  gpu_kernel_mod->Init(cnode);
 }
 }  // namespace kernel
 }  // namespace mindspore

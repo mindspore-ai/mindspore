@@ -62,23 +62,24 @@ void AiCpuDynamicKernel::Execute() {
 
 void AiCpuDynamicKernel::Initialize() {
   // is dynamic
-  MS_LOG(INFO) << "Initialize node:" << cnode_ptr_->fullname_with_scope();
+  auto cnode = cnode_ptr_.lock();
+  MS_LOG(INFO) << "Initialize node:" << cnode->fullname_with_scope();
   DynamicKernel::Initialize();
 
-  input_num_ = AnfAlgo::GetInputTensorNum(cnode_ptr_);
-  output_num_ = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  input_num_ = AnfAlgo::GetInputTensorNum(cnode);
+  output_num_ = AnfAlgo::GetOutputTensorNum(cnode);
 
   UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
-  auto op_name = AnfAlgo::GetCNodeName(cnode_ptr_);
+  auto op_name = AnfAlgo::GetCNodeName(cnode);
   if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
     shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   }
   unknow_type_ = shape_type;
   // Parse aicpu ext info
   if (is_dynamic_shape_) {
-    MS_EXCEPTION_IF_NULL(cnode_ptr_);
+    MS_EXCEPTION_IF_NULL(cnode);
     ext_info_handler_ =
-      std::make_shared<AicpuExtInfoHandler>(cnode_ptr_->fullname_with_scope(), input_num_, output_num_, shape_type);
+      std::make_shared<AicpuExtInfoHandler>(cnode->fullname_with_scope(), input_num_, output_num_, shape_type);
     ext_info_handler_->Parse(ext_info_data_);
   }
 
@@ -108,14 +109,14 @@ void AiCpuDynamicKernel::Initialize() {
 bool AiCpuDynamicKernel::UpdateInputOutputAddr() {
   std::vector<uint64_t> io_addrs;
   io_addrs.reserve(input_num_ + output_num_);
-
+  auto cnode = cnode_ptr_.lock();
   for (size_t i = 0; i < input_num_; ++i) {
-    auto input_addr = AnfAlgo::GetPrevNodeOutputAddr(cnode_ptr_, i);
+    auto input_addr = AnfAlgo::GetPrevNodeOutputAddr(cnode, i);
     io_addrs.emplace_back(reinterpret_cast<uintptr_t>(input_addr->GetMutablePtr()));
   }
 
   for (size_t i = 0; i < output_num_; ++i) {
-    auto output_addr = AnfAlgo::GetOutputAddr(cnode_ptr_, i);
+    auto output_addr = AnfAlgo::GetOutputAddr(cnode, i);
     io_addrs.emplace_back(reinterpret_cast<uintptr_t>(output_addr->GetMutablePtr()));
   }
 
@@ -135,19 +136,21 @@ bool AiCpuDynamicKernel::UpdateInputOutputAddr() {
 }
 
 bool AiCpuDynamicKernel::UpdateExtInfo() {
-  MS_LOG(INFO) << "UpdateExtInfo of " << cnode_ptr_->fullname_with_scope() << " start";
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
   if (input_num_ == 0 && output_num_ == 0) {
-    MS_LOG(INFO) << "Node:" << cnode_ptr_->fullname_with_scope() << " no need to update output shape";
+    MS_LOG(INFO) << "Node:" << cnode->fullname_with_scope() << " no need to update output shape";
     return true;
   }
 
   for (size_t i = 0; i < input_num_; ++i) {
-    ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode_ptr_));
+    ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode));
   }
 
-  if (AnfAlgo::IsDynamicShape(cnode_ptr_) && unknow_type_ != DEPEND_COMPUTE) {
+  if (AnfAlgo::IsDynamicShape(cnode) && unknow_type_ != DEPEND_COMPUTE) {
     for (size_t i = 0; i < output_num_; ++i) {
-      ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode_ptr_));
+      ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode));
     }
   }
 
@@ -158,7 +161,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
     return false;
   }
 
-  MS_LOG(INFO) << "UpdateExtInfo of " << cnode_ptr_->fullname_with_scope() << " end";
+  MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " end";
   return true;
 }
 
@@ -196,12 +199,14 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
     shapes.emplace_back(size_t_shape);
   }
 
-  AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode_ptr_.get());
+  AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode_ptr_.lock().get());
   return true;
 }
 
 void AiCpuDynamicKernel::PostExecute() {
-  MS_LOG(INFO) << "Aicpu " << cnode_ptr_->fullname_with_scope() << " PostExecute";
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Aicpu " << cnode->fullname_with_scope() << " PostExecute";
   if (unknow_type_ != DEPEND_COMPUTE) {
     return;
   }
@@ -209,7 +214,7 @@ void AiCpuDynamicKernel::PostExecute() {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return;
   }
-  if (AnfAlgo::IsDynamicShape(cnode_ptr_) && unknow_type_ == DEPEND_COMPUTE) {
+  if (AnfAlgo::IsDynamicShape(cnode) && unknow_type_ == DEPEND_COMPUTE) {
     MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info";
     UpdateOutputShapeFromExtInfo();
   }
