@@ -116,6 +116,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const DeQuantArg &
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SpliceParameter &splice_parameter) {
   CodeArray("splice_context", splice_parameter.context_, splice_parameter.context_dim_, false);
   CodeBaseStruct("SpliceParameter", name, splice_parameter.op_parameter_, splice_parameter.context_dim_,
-                 splice_parameter.forward_indexes_dim_, "splice_context", nullptr, splice_parameter.output_dim_);
+                 splice_parameter.forward_indexes_dim_, splice_parameter.src_to_dst_row_offset_, "splice_context",
+                 nullptr, splice_parameter.output_dim_);
 }
 }  // namespace mindspore::lite::micro::nnacl

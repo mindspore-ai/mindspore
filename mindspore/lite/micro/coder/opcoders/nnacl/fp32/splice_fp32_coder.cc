@@ -32,14 +32,10 @@ int SpliceFP32Coder::DoCode(CoderContext *const context) {
     MS_LOG(ERROR) << "SpliceFP32Coder src_shape size not equal to dst_shape";
     return RET_ERROR;
   }
-  int src_row = src_shape.at(kInputIndex);
-  int dst_row = dst_shape.at(kInputIndex);
+  int src_row = src_shape.at(kWeightIndex);
+  int dst_row = dst_shape.at(kWeightIndex);
   int src_col = src_shape.at(kBiasIndex);
   int dst_col = dst_shape.at(kBiasIndex);
-  if (src_row != dst_row) {
-    MS_LOG(ERROR) << "SpliceFP32Coder src_row not equal to dst_row";
-    return RET_ERROR;
-  }
   if (src_col * splice_parameter->context_dim_ != dst_col) {
     MS_LOG(ERROR) << "SpliceFP32Coder src_col not match to dst_col";
     return RET_ERROR;

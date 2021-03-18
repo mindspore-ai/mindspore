@@ -242,6 +242,7 @@
 #include "ops/lin_space.h"
 #include "ops/uniform_real.h"
 #include "ops/grad/abs_grad.h"
+#include "ops/splice.h"
 
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP)                                        \
   namespace mindspore::lite::ops {                                            \
@@ -453,5 +454,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(RsqrtGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(SqrtGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(LayerNormGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(ResizeGrad);
+FUNC_MSOP2SCHEMAOP_DECLARE(Splice);
 #endif
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_

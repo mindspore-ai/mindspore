@@ -54,3 +54,5 @@ int SpliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   output->shape_[2] = out_dim;
   return NNACL_OK;
 }
+
+REG_INFER(Splice, PrimType_Splice, SpliceInferShape)
