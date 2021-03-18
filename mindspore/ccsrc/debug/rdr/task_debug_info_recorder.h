@@ -34,14 +34,13 @@ using TaskDebugInfoPtr = std::shared_ptr<device::ascend::tasksink::TaskDebugInfo
 class TaskDebugInfoRecorder : public BaseRecorder {
  public:
   TaskDebugInfoRecorder() {}
-  TaskDebugInfoRecorder(const std::string &module, const std::string &tag,
-                        const std::vector<TaskDebugInfoPtr> &task_debug_info, int graph_id)
-      : BaseRecorder(module, tag), graph_id_(graph_id), task_debug_info_(task_debug_info) {}
+  TaskDebugInfoRecorder(const std::string &module, const std::string &name,
+                        const std::vector<TaskDebugInfoPtr> &task_debug_info)
+      : BaseRecorder(module, name), task_debug_info_(task_debug_info) {}
   ~TaskDebugInfoRecorder() {}
   virtual void Export();
 
  private:
-  int graph_id_;
   std::vector<TaskDebugInfoPtr> task_debug_info_;
 };
 using TaskDebugInfoRecorderPtr = std::shared_ptr<TaskDebugInfoRecorder>;

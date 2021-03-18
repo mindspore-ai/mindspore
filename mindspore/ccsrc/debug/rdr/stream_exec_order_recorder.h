@@ -61,9 +61,8 @@ using CNodePtr = std::shared_ptr<CNode>;
 class StreamExecOrderRecorder : public BaseRecorder {
  public:
   StreamExecOrderRecorder() : BaseRecorder() {}
-  StreamExecOrderRecorder(const std::string &module, const std::string &tag, const int &graph_id,
-                          const std::vector<CNodePtr> &exec_order)
-      : BaseRecorder(module, tag), graph_id_(graph_id) {
+  StreamExecOrderRecorder(const std::string &module, const std::string &name, const std::vector<CNodePtr> &exec_order)
+      : BaseRecorder(module, name) {
     // Extract information from execute order.
     for (size_t i = 0; i < exec_order.size(); i++) {
       CNodePtr cur_cnode_ptr = exec_order[i];
@@ -104,7 +103,6 @@ class StreamExecOrderRecorder : public BaseRecorder {
 
  private:
   std::vector<ExecNodePtr> exec_order_;
-  int graph_id_{0};
 };
 using StreamExecOrderRecorderPtr = std::shared_ptr<StreamExecOrderRecorder>;
 }  // namespace mindspore

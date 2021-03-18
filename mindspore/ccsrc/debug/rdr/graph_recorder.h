@@ -27,9 +27,9 @@ using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 class GraphRecorder : public BaseRecorder {
  public:
   GraphRecorder() : BaseRecorder(), func_graph_(nullptr), graph_type_("") {}
-  GraphRecorder(const std::string &module, const std::string &tag, const FuncGraphPtr &graph,
+  GraphRecorder(const std::string &module, const std::string &name, const FuncGraphPtr &graph,
                 const std::string &file_type)
-      : BaseRecorder(module, tag), func_graph_(graph), graph_type_(file_type) {}
+      : BaseRecorder(module, name), func_graph_(graph), graph_type_(file_type) {}
   ~GraphRecorder() {}
   void SetGraphType(const std::string &file_type) { graph_type_ = file_type; }
   void SetFuncGraph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }

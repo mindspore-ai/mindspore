@@ -65,83 +65,77 @@ static const char *GetSubModuleName(SubModuleId module_id) {
 }  // namespace
 namespace RDR {
 #ifdef ENABLE_D
-bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
-                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list, int graph_id) {
+bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
+                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
   TaskDebugInfoRecorderPtr task_debug_info_recorder =
-    std::make_shared<TaskDebugInfoRecorder>(submodule_name, tag, task_debug_info_list, graph_id);
+    std::make_shared<TaskDebugInfoRecorder>(submodule_name, name, task_debug_info_list);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(task_debug_info_recorder));
   return ans;
 }
 #endif  // ENABLE_D
 
-bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
+bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
-  GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, tag, graph, file_type);
+  GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, name, graph, file_type);
   graph_recorder->SetDumpFlag(full_name);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_recorder));
   return ans;
 }
 
-bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
-                          const std::vector<CNodePtr> &final_exec_order, int graph_id) {
+bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
+                          const std::vector<CNodePtr> &final_exec_order) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
   GraphExecOrderRecorderPtr graph_exec_order_recorder =
-    std::make_shared<GraphExecOrderRecorder>(submodule_name, tag, final_exec_order, graph_id);
+    std::make_shared<GraphExecOrderRecorder>(submodule_name, name, final_exec_order);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_exec_order_recorder));
   return ans;
 }
 
-bool RecordString(SubModuleId module, const std::string &tag, const std::string &data, const std::string &filename) {
+bool RecordString(SubModuleId module, const std::string &name, const std::string &data) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
-  StringRecorderPtr string_recorder = std::make_shared<StringRecorder>(submodule_name, tag, data, filename);
-  string_recorder->SetFilename(filename);
+  StringRecorderPtr string_recorder = std::make_shared<StringRecorder>(submodule_name, name, data);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(string_recorder));
   return ans;
 }
 
-bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
-                           const std::vector<CNodePtr> &exec_order) {
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
   StreamExecOrderRecorderPtr stream_exec_order_recorder =
-    std::make_shared<StreamExecOrderRecorder>(submodule_name, tag, graph_id, exec_order);
+    std::make_shared<StreamExecOrderRecorder>(submodule_name, name, exec_order);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(stream_exec_order_recorder));
   return ans;
 }
 
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &tag, const std::string &op_name,
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
                           const GPUMemInfo &mem_info) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
-  std::string directory = mindspore::EnvConfigParser::GetInstance().rdr_path();
-  MemAddressRecorder::Instance().SetModule(submodule_name);
-  MemAddressRecorder::Instance().SetFilename(tag);  // set filename using tag
-  MemAddressRecorder::Instance().SetDirectory(directory);
-  MemAddressRecorder::Instance().SaveMemInfo(op_name, mem_info);
-  return true;
+  MemAddressRecorderPtr mem_info_recorder = std::make_shared<MemAddressRecorder>(submodule_name, name);
+  mem_info_recorder->SaveMemInfo(op_name, mem_info);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(mem_info_recorder), false);
+  return ans;
 }
-void TriggerAll() {
-  mindspore::RecorderManager::Instance().TriggerAll();
-  MemAddressRecorder::Instance().Export();
-}
+
+void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
 void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
 }  // namespace RDR

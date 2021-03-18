@@ -21,7 +21,7 @@
 
 namespace mindspore {
 void BaseRecorder::SetDirectory(const std::string &directory) {
-  std::string error_message = module_ + ":" + tag_ + " set directory failed.";
+  std::string error_message = module_ + ":" + name_ + " set directory failed.";
   if (Common::IsPathValid(directory, maxDirectoryLength, error_message)) {
     directory_ = directory;
     if (directory_.back() != '/') {
@@ -31,7 +31,7 @@ void BaseRecorder::SetDirectory(const std::string &directory) {
 }
 
 void BaseRecorder::SetFilename(const std::string &filename) {
-  std::string error_message = module_ + ":" + tag_ + " set filename failed.";
+  std::string error_message = module_ + ":" + name_ + " set filename failed.";
   if (Common::IsFilenameValid(filename, maxDirectoryLength, error_message)) {
     filename_ = filename;
   }
@@ -40,7 +40,7 @@ void BaseRecorder::SetFilename(const std::string &filename) {
 std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) {
   std::string filename;
   if (filename_.empty()) {
-    filename = module_ + delimiter_ + tag_;
+    filename = module_ + delimiter_ + name_;
     if (!suffix.empty()) {
       filename += delimiter_ + suffix;
     }
@@ -55,7 +55,7 @@ std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suff
   auto realpath = Common::GetRealPath(file_path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. "
-                  << "Info: module=" << module_ << ", tag=" << tag_ << ", "
+                  << "Info: module=" << module_ << ", name=" << name_ << ", "
                   << "path=" << file_path << ".";
   }
 

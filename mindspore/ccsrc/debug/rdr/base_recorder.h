@@ -24,21 +24,21 @@
 #include "debug/env_config_parser.h"
 #include "mindspore/core/utils/log_adapter.h"
 
-const int maxTagLength = 32;
+const int maxNameLength = 32;
 namespace mindspore {
 class BaseRecorder {
  public:
-  BaseRecorder() : module_(""), tag_(""), directory_(""), filename_(""), timestamp_("") {}
-  BaseRecorder(const std::string &module, const std::string &tag) : module_(module), tag_(tag), filename_("") {
+  BaseRecorder() : module_(""), name_(""), directory_(""), filename_(""), timestamp_("") {}
+  BaseRecorder(const std::string &module, const std::string &name) : module_(module), name_(name), filename_("") {
     directory_ = mindspore::EnvConfigParser::GetInstance().rdr_path();
 
-    if (tag.length() > maxTagLength) {
-      tag_ = tag.substr(0, maxTagLength);
-      MS_LOG(WARNING) << "The tag length is " << tag.length() << ", exceeding the limit " << maxTagLength
-                      << ". It will be intercepted as '" << tag_ << "'.";
+    if (name.length() > maxNameLength) {
+      name_ = name.substr(0, maxNameLength);
+      MS_LOG(WARNING) << "The name length is " << name.length() << ", exceeding the limit " << maxNameLength
+                      << ". It will be intercepted as '" << name_ << "'.";
     }
 
-    std::string err_msg = module_ + ":" + tag_ + " set filename failed.";
+    std::string err_msg = module_ + ":" + name_ + " set filename failed.";
     if (!filename_.empty() && !Common::IsFilenameValid(filename_, maxFilenameLength, err_msg)) {
       filename_ = "";
     }
@@ -57,7 +57,7 @@ class BaseRecorder {
   virtual ~BaseRecorder() {}
 
   std::string GetModule() const { return module_; }
-  std::string GetTag() const { return tag_; }
+  std::string GetName() const { return name_; }
   std::string GetTimeStamp() const { return timestamp_; }
   std::optional<std::string> GetFileRealPath(const std::string &suffix = "");
 
@@ -65,10 +65,11 @@ class BaseRecorder {
   void SetFilename(const std::string &filename);
   void SetModule(const std::string &module) { module_ = module; }
   virtual void Export() {}
+  virtual void UpdateInfo(const BaseRecorder &recorder) {}
 
  protected:
   std::string module_;
-  std::string tag_;
+  std::string name_;
   std::string directory_;
   std::string filename_;
   std::string timestamp_;  // year,month,day,hour,minute,second

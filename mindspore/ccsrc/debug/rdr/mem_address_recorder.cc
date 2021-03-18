@@ -32,10 +32,6 @@ std::string MemInfo2String(const std::string &label, const AddressPtrList &info)
   return ss.str();
 }
 }  // namespace
-MemAddressRecorder &MemAddressRecorder::Instance() {
-  static MemAddressRecorder recorder;
-  return recorder;
-}
 
 void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info) {
   std::lock_guard<std::mutex> lock(mtx_);
@@ -48,6 +44,7 @@ void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMemInf
   auto outputs = mem_info.outputs_;
   mem_info_stream << MemInfo2String("kernel_outputs", *outputs);
   mem_info_stream << std::endl;
+
   std::string mem_info_str = mem_info_stream.str();
   mem_info_container_[op_name] = mem_info_str;
 }
@@ -70,5 +67,13 @@ void MemAddressRecorder::Export() {
   }
   fout.close();
   ChangeFileMode(file_path, S_IRUSR);
+}
+
+void MemAddressRecorder::UpdateInfo(const BaseRecorder &recorder) {
+  const MemAddressRecorder *mem_recorder = reinterpret_cast<const MemAddressRecorder *>(&recorder);
+  std::map<std::string, std::string> mem_info = mem_recorder->MemInfo();
+  for (const auto &info : mem_info) {
+    mem_info_container_[info.first] = info.second;
+  }
 }
 }  // namespace mindspore

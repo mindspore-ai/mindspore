@@ -36,17 +36,16 @@ struct GPUMemInfo {
 };
 class MemAddressRecorder : public BaseRecorder {
  public:
-  static MemAddressRecorder &Instance();
+  MemAddressRecorder() {}
+  MemAddressRecorder(const std::string &module, const std::string &name) : BaseRecorder(module, name) {}
+  ~MemAddressRecorder() {}
+
   virtual void Export();
   void SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info);
-  void SetTag(const std::string &tag) { tag_ = tag; }
+  void UpdateInfo(const BaseRecorder &recorder);
+  std::map<std::string, std::string> MemInfo() const { return mem_info_container_; }
 
  private:
-  MemAddressRecorder() {}
-  MemAddressRecorder(const MemAddressRecorder &recorder);
-  ~MemAddressRecorder() {}
-  MemAddressRecorder &operator=(const MemAddressRecorder &recorder);
-
   mutable std::mutex mtx_;
 
   std::map<std::string, std::string> mem_info_container_;
