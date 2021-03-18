@@ -243,7 +243,7 @@ def test():
     args = parse_args()
 
     devid = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, save_graphs=True, device_id=devid)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, save_graphs=False, device_id=devid)
 
     # logger
     args.outputs_dir = os.path.join(args.log_path,
