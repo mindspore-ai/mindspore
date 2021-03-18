@@ -78,9 +78,10 @@ cp model/*.ms ${PACKAGE}/model || exit 1
 cp scripts/*.sh ${PACKAGE}/
 
 # Copy the shared MindSpore ToD library
-tar -xzf ${TARBALL} --wildcards --no-anchored libmindspore-lite.so
-tar -xzf ${TARBALL} --wildcards --no-anchored include
-mv mindspore-*/lib ${PACKAGE}/
+tar -xzf ${TARBALL}
+mv mindspore-*/train/lib ${PACKAGE}/
+mv mindspore-*/train/minddata/lib/* ${PACKAGE}/lib/
+mv mindspore-*/train/minddata/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
 rm -rf msl
 mkdir msl
 mv mindspore-*/* msl/

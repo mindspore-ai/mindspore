@@ -8,15 +8,15 @@ OBJ:=$(SRC:.cc=.o)
 
 CFLAGS := -Ofast -std=c++17  \
 	-I . \
-        -I ./msl \
-        -I ./msl/third_party/flatbuffers/include
+        -I ./msl/train \
+        -I ./msl/train/third_party/flatbuffers/include
 
 
 ifeq ($(TARGET),arm64)
 CXX :=  ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
 CFLAGS  += --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fdata-sections -ffunction-sections 
 LDFLAGS := --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Wl,--gc-sections 
-LDFLAGS += -L$(MSDIR) -l$(MSLIB) -pthread -llog -latomic -lm  
+LDFLAGS += -L$(MSDIR) -l$(MSLIB) -pthread -llog -latomic -lm -Wl,-rpath,$(MSDIR)
 else
 CFLAGS += -g
 LDFLAGS := -L$(MSDIR) -l$(MSLIB) -lpthread -Wl,-rpath,$(MSDIR)

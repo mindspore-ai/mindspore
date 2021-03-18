@@ -14,9 +14,9 @@ OBJ:=$(SRC:.cc=.o)
 
 CFLAGS := -Ofast -std=c++17  \
 	-I . \
-        -I ./msl \
-        -I ./msl/minddata \
-        -I ./msl/third_party/flatbuffers/include
+        -I ./msl/train \
+        -I ./msl/train/minddata \
+        -I ./msl/train/third_party/flatbuffers/include
 
 
 ifeq ($(TARGET),arm64)

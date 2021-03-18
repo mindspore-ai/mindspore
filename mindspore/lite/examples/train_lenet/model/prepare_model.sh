@@ -14,8 +14,8 @@ CONVERTER="../../../build/tools/converter/converter_lite"
 if [ ! -f "$CONVERTER" ]; then
   if ! command -v converter_lite &> /dev/null
   then
-    tar -xzf ../../../../../output/mindspore-lite-*-converter-linux-x64.tar.gz --strip-components 2 --wildcards --no-anchored converter_lite libmindspore_gvar.so
-    tar -xzf ../../../../../output/mindspore-lite-*-converter-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored libglog.so.0
+    tar -xzf ../../../../../output/mindspore-lite-*-train-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored converter_lite libmindspore_gvar.so
+    tar -xzf ../../../../../output/mindspore-lite-*-train-linux-x64.tar.gz --strip-components 6 --wildcards --no-anchored libglog.so.0
     if [ -f ./converter_lite ]; then
       CONVERTER=./converter_lite
     else
@@ -26,7 +26,6 @@ if [ ! -f "$CONVERTER" ]; then
     CONVERTER=converter_lite
   fi
 fi
-
 
 echo "============Converting========="
 LD_LIBRARY_PATH=./ $CONVERTER --fmk=MINDIR --trainModel=true --modelFile=lenet_tod.mindir --outputFile=lenet_tod
