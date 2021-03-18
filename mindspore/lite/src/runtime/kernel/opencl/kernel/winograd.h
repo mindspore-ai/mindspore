@@ -39,6 +39,7 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
 
   std::vector<BaseTuningParameter> GenerateTuningParam() override { return {}; }
   int Tune() override { return RET_OK; }
+  double GetProfilingTimeMs() override;
 
  private:
   void BuildKernel() override;
@@ -47,8 +48,10 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
 
   cl::Kernel kernel_4x4to36_;
   cl::Kernel kernel_36to4x4_;
+  cl::Event kernel2_event_;
   cl::NDRange global_4x4to36_, local_4x4to36_;
   cl::NDRange global_36to4x4_, local_36to4x4_;
+  cl::Event kernel3_event_;
   void *winograd_mem0_{nullptr};
   void *winograd_mem1_{nullptr};
 };

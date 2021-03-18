@@ -18,6 +18,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <utility>
 #include "src/runtime/gpu/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/kernel/to_format.h"
@@ -458,6 +459,35 @@ int OpenCLSubGraph::Run() {
   }
 
   ret = executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
+    return ret;
+  }
+  if (!ocl_runtime_->SyncCommandQueue()) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int OpenCLSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) {
+  if (executor_ == nullptr) {
+    MS_LOG(ERROR) << "executor is nullptr";
+    return RET_ERROR;
+  }
+  int ret;
+  for (auto &tensor : in_tensors_) {
+    MS_ASSERT(tensor);
+    if (tensor->data_c() == nullptr) {
+      MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
+      return RET_ERROR;
+    }
+    ret = allocator_->UnmapBuffer(tensor->data_c());
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+
+  ret = executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_, before, after);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
     return ret;

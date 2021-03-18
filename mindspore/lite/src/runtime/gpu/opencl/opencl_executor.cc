@@ -32,15 +32,18 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
                               const KernelCallBack &before, const KernelCallBack &after, bool is_tune) {
   int ret{RET_OK};
   auto opencl_runtime_ins = ocl_runtime.GetInstance();
+  if (before != nullptr && after != nullptr) {
+    opencl_runtime_ins->SetProfiling(true);
+  }
   auto profiling_tmp = opencl_runtime_ins->isProfiling();
   if (is_tune) {
     opencl_runtime_ins->SetProfiling(true);
   }
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel);
-    CallBackParam callbackParam;
+    GPUCallBackParam callbackParam;
     callbackParam.node_name = kernel->name();
-
+    callbackParam.node_type = kernel->type_str();
     if (before != nullptr) {
       if (!before(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
         MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
@@ -70,9 +73,12 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
         MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
         return ret;
       }
-      if (profiling_tmp)
+      if (profiling_tmp) {
+        auto execute_time = op_kernel->GetProfilingTimeMs();
         MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
                      << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
+        callbackParam.execute_time = execute_time;
+      }
     }
     ret = kernel->PostProcess();
     if (ret != RET_OK) {
