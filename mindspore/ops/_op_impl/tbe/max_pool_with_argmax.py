@@ -29,6 +29,7 @@ max_pool_with_argmax_op_info = TBERegOp("MaxPoolWithArgmax") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .output(1, "argmax", False, "required", "all") \
+    .need_check_supported(True) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.U16_5HD) \
     .get_op_info()
 
