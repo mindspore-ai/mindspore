@@ -50,7 +50,7 @@ int PowerGradCPUKernel::Execute(int task_id) {
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
-
+  count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
 

@@ -8,6 +8,7 @@ fi
 echo "============Exporting=========="
 if [ -n "$1" ]; then
   DOCKER_IMG=$1
+  rm *.so*
   docker run -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER --privileged=true ${DOCKER_IMG} /bin/bash -c "python transfer_learning_export.py; chmod 444 transfer_learning_tod*.mindir; rm -rf __pycache__"
 else
   echo "MindSpore docker was not provided, attempting to run locally"

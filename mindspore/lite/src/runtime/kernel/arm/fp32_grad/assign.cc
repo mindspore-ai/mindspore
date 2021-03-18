@@ -41,7 +41,9 @@ int AssignCPUKernel::Execute(int task_id) {
 
   int start = stride * task_id;
 
-  memcpy(&(x[start]), &(y[start]), count * sizeof(float));
+  if (count > 0) {
+    memcpy(&(x[start]), &(y[start]), count * sizeof(float));
+  }
   return RET_OK;
 }
 

@@ -82,10 +82,13 @@ tar -xzf ${TARBALL}
 mv mindspore-*/train/lib ${PACKAGE}/
 mv mindspore-*/train/minddata/lib/* ${PACKAGE}/lib/
 mv mindspore-*/train/minddata/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+if [ "${TARGET}" == "arm64" ]; then
+  tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
+  mv mindspore-*/train/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
+fi
+
 rm -rf msl
-mkdir msl
-mv mindspore-*/* msl/
-rm -rf mindspore-*
+mv mindspore-* msl/
 
 # Convert the dataset into the package
 ./prepare_dataset.sh ${PLACES_DATA_PATH} || exit 1

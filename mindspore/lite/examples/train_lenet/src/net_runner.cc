@@ -101,7 +101,7 @@ void NetRunner::InitAndFigureInputs() {
 
   session_ = mindspore::session::TrainSession::CreateSession(ms_file_, &context);
   MS_ASSERT(nullptr != session_);
-  loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_, &context);
+  loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_);
 
   acc_metrics_ = std::shared_ptr<AccuracyMetrics>(new AccuracyMetrics);
 

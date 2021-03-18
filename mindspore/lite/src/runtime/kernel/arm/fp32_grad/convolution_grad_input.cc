@@ -92,6 +92,7 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   float *mat_workspace = workspace_temp + ws_size_;
   int stride = UP_DIV(batch, thread_num);
   int count = MSMIN(stride, batch - stride * task_id);
+  count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
 

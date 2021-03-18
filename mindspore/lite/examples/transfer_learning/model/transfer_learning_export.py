@@ -49,7 +49,7 @@ HEAD.weight.set_data(M.Tensor(np.random.normal(
     0, 0.1, HEAD.weight.data.shape).astype("float32")))
 HEAD.bias.set_data(M.Tensor(np.zeros(HEAD.bias.data.shape, dtype="float32")))
 
-sgd = M.nn.SGD(HEAD.trainable_params(), learning_rate=0.01, momentum=0.9,
+sgd = M.nn.SGD(HEAD.trainable_params(), learning_rate=0.015, momentum=0.9,
                dampening=0.01, weight_decay=0.0, nesterov=False, loss_scale=1.0)
 net = TrainWrap(HEAD, optimizer=sgd)
 backbone_out = M.Tensor(np.zeros([BATCH_SIZE, 1000]).astype(np.float32))

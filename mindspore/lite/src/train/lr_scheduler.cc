@@ -23,7 +23,7 @@
 #include <fstream>
 #include <memory>
 #include "include/errorcode.h"
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 

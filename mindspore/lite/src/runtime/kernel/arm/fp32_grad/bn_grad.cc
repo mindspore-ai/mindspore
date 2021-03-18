@@ -76,6 +76,7 @@ int BNGradCPUKernel::Execute(int task_id) {
   int total = spatial * batch;
   int stride = UP_DIV(total, thread_num);
   int count = MSMIN(stride, total - stride * task_id);
+  count = (count < 0) ? 0 : count;
   switch (stage) {
     case 0: {
       for (int job = task_id; job < 4; job += thread_num) {

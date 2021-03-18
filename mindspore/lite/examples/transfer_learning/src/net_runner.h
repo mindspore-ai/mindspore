@@ -22,7 +22,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 #include "include/ms_tensor.h"
 #include "src/dataset.h"
 

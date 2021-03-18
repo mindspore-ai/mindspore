@@ -108,6 +108,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   float *mat_tmp = mat_workspace + mat_alloc_;
   int stride = UP_DIV(batch, thread_num);
   int count = MSMIN(stride, batch - stride * task_id);
+  count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
 
@@ -115,6 +116,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
 #ifdef ENABLE_ARM
     stride = UP_DIV(k_h * k_w, thread_num);
     count = MSMIN(stride, k_h * k_w - stride * task_id);
+    count = (count < 0) ? 0 : count;
     start = stride * task_id;
     ConvDwFilterGrad(x_addr, dy_addr, dw_addr, start, count, conv_param);
 #else

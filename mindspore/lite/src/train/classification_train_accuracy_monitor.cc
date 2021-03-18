@@ -19,7 +19,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 #include "src/common/utils.h"
 #include "src/train/train_utils.h"
 

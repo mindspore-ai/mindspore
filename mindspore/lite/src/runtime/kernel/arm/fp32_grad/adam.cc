@@ -32,8 +32,8 @@ namespace mindspore::kernel {
 
 int AdamCPUKernel::ReSize() { return RET_OK; }
 
-int DoAdam(float *m, float *v, float *gradient, float *weight, float beta1, float beta2, float beta1_power,
-           float beta2_power, float eps, float learning_rate, bool nesterov, size_t start, size_t end) {
+static int DoAdam(float *m, float *v, float *gradient, float *weight, float beta1, float beta2, float beta1_power,
+                  float beta2_power, float eps, float learning_rate, bool nesterov, int start, int end) {
   if ((1.f - beta1_power) <= 0.0f) {
     MS_LOG(ERROR) << "divisor cannot be 0 or below";
     return RET_ERROR;
@@ -47,13 +47,13 @@ int DoAdam(float *m, float *v, float *gradient, float *weight, float beta1, floa
   const float one_minus_beta1 = 1.f - beta1;
   const float one_minus_beta2 = 1.f - beta2;
   if (nesterov) {  // Nadam
-    for (size_t i = start; i < end; ++i) {
+    for (int i = start; i < end; ++i) {
       m[i] += (gradient[i] - m[i]) * one_minus_beta1;
       v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
       weight[i] -= update_lr * (m[i] * beta1 + one_minus_beta1 * gradient[i]) / (std::sqrt(v[i]) + eps);
     }
   } else {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = start; i < end; ++i) {
       m[i] += (gradient[i] - m[i]) * one_minus_beta1;
       v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
       weight[i] -= update_lr * m[i] / (std::sqrt(v[i]) + eps);
@@ -77,7 +77,6 @@ int AdamCPUKernel::Execute(int task_id) {
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
-
   int start = stride * task_id;
   int end = start + count;
 

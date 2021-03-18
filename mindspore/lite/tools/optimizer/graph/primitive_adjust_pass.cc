@@ -126,6 +126,7 @@ constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
 constexpr auto kNameFusedBatchNormEx = "FusedBatchNormEx";
 constexpr auto kNameFusedBatchNormGradEx = "FusedBatchNormGradEx";
+constexpr auto kNameFusedBatchNormGradCPU = "FusedBatchNormGradCPU";
 constexpr auto kNameHSigmoid = "HSigmoid";
 constexpr auto kNameHSigmoidGrad = "HSigmoidGrad";
 constexpr auto kNameHSwish = "HSwish";
@@ -549,6 +550,7 @@ REGIST_PRIMITIVE_ADJUST(kNameEluGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameExp, MoveAttrMapCommon<ops::ExpFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormEx, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradEx, MoveAttrMapCommon<ops::BatchNormGrad>)
+REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradCPU, MoveAttrMapCommon<ops::BatchNormGrad>)
 REGIST_PRIMITIVE_ADJUST(kNameGeLU, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameGeLUGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameHSigmoid, MoveAttrMapActivation)

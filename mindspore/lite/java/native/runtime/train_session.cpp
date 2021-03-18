@@ -17,7 +17,7 @@
 #include <jni.h>
 #include "common/ms_log.h"
 #include "common/jni_utils.h"
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 #include "include/errorcode.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_TrainSession_createSession(JNIEnv *env, jobject thiz,

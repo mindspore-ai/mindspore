@@ -33,21 +33,21 @@ namespace mindspore::kernel {
 int SgdCPUKernel::ReSize() { return RET_OK; }
 
 int DoSgd(float *weight, float *accumulate, float *gradient, float learning_rate, float dampening, float moment,
-          bool nesterov, size_t start, size_t end) {
+          bool nesterov, int start, int end) {
   if (moment > 0.f) {
     if (nesterov) {
-      for (size_t i = start; i < end; ++i) {
+      for (int i = start; i < end; ++i) {
         accumulate[i] = accumulate[i] * moment + gradient[i] * (1.f - dampening);
         weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
       }
     } else {
-      for (size_t i = start; i < end; ++i) {
+      for (int i = start; i < end; ++i) {
         accumulate[i] = accumulate[i] * moment + gradient[i] * (1.f - dampening);
         weight[i] -= accumulate[i] * learning_rate;
       }
     }
   } else {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = start; i < end; ++i) {
       weight[i] -= gradient[i] * learning_rate;
     }
   }
@@ -55,14 +55,14 @@ int DoSgd(float *weight, float *accumulate, float *gradient, float learning_rate
 }
 
 int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, float learning_rate, float dampening,
-              float moment, bool nesterov, size_t start, size_t end) {
+              float moment, bool nesterov, int start, int end) {
   std::copy(&(gradient[start]), &(gradient[end]), &(accumulate[start]));
   if (nesterov) {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = start; i < end; ++i) {
       weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
     }
   } else {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = start; i < end; ++i) {
       weight[i] -= accumulate[i] * learning_rate;
     }
   }
@@ -80,7 +80,7 @@ int SgdCPUKernel::Execute(int task_id) {
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
-
+  count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
 
@@ -97,16 +97,18 @@ int SgdCPUKernel::ExecuteInit(int task_id) {
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
-  size_t end = start + count;
+  int start = stride * task_id;
+  int end = start + count;
 
-  DoSgdInit(weight, accumulate, gradient, stat, learning_rate, sgd_param_->dampening_, moment,
-            sgd_param_->use_nesterov_, start, end);
+  if (count > 0) {
+    DoSgdInit(weight, accumulate, gradient, stat, learning_rate, sgd_param_->dampening_, moment,
+              sgd_param_->use_nesterov_, start, end);
+  }
   return RET_OK;
 }
 

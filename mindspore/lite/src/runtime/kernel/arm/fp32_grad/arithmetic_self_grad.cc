@@ -72,7 +72,9 @@ int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
   int count = MSMIN(stride, length - stride * task_id);
   int start = stride * task_id;
 
-  (*self_grad_operation_)(dy + start, in_x + start, dx + start, count);
+  if (count > 0) {
+    (*self_grad_operation_)(dy + start, in_x + start, dx + start, count);
+  }
   return RET_OK;
 }
 

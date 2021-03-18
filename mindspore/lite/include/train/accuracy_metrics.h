@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 
 constexpr int METRICS_CLASSIFICATION = 0;
-constexpr int METRICS_MULTILABLE = 1;
+constexpr int METRICS_MULTILABEL = 1;
 
 class AccuracyMetrics : public Metrics {
  public:
