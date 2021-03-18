@@ -37,11 +37,20 @@ const char *load_input_h = R"RAW(
 
 #ifndef MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
 #define MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *ReadInputData(const char *real_input_path, int *size);
 
 void SaveOutputData(char *final_name, unsigned char *output_data, unsigned int out_size);
 
 int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int inputs_num);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
 

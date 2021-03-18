@@ -28,6 +28,11 @@
 namespace mindspore::lite::micro {
 void CodeSourceFileInclude(std::ofstream &ofs, const std::string &weight_file, const std::string &header);
 
+void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+
+void CodeCopyOutputsState(std::ofstream &ofs);
+void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+
 void CodeInputAndOutputState(std::ofstream &ofs, const std::string &module_name);
 void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_name,
                                  const std::unique_ptr<CoderContext> &ctx);
@@ -35,8 +40,6 @@ void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_n
 void CodeGraphQuantArgsState(std::ofstream &ofs, const std::string &module_name);
 void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::string &module_name,
                                  const std::unique_ptr<CoderContext> &ctx);
-
-void CodeInitWeightState(std::ofstream &ofs, const std::string &module_name);
 
 void CodeManageResourceState(std::ofstream &ofs, const std::string &module_name);
 void CodeInitResourceImplement(std::ofstream &ofs, const std::string &module_name,

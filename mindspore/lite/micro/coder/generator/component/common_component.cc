@@ -17,7 +17,9 @@
 #include "coder/generator/component/common_component.h"
 #include <memory>
 #include "coder/generator/component/const_blocks/license.h"
+#include "coder/generator/component/component.h"
 #include "coder/utils/type_cast.h"
+#include "coder/utils/coder_utils.h"
 #include "coder/log.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
@@ -27,6 +29,59 @@ void CodeSourceFileInclude(std::ofstream &ofs, const std::string &weight_file, c
   ofs << g_hwLicense << "#include \"microtensor.h\"\n"
       << "#include \"" << weight_file << "\"\n"
       << "#include \"" << header << "\"\n\n";
+}
+
+void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  std::vector<Tensor *> inputs = ctx->graph_inputs();
+  std::vector<Tensor *> outputs = ctx->graph_outputs();
+  size_t inputs_size = inputs.size();
+  size_t outputs_size = outputs.size();
+  ofs << kNameSpaceMindSpore << " {\n";
+  ofs << kNameSpaceLite << " {\n";
+  ofs << "int LiteSession::CompileGraph(lite::Model *model) {\n";
+  ofs << "  inputs_.resize(" << inputs_size << ");\n";
+  for (size_t i = 0; i < inputs_size; ++i) {
+    Tensor *input = inputs[i];
+    ofs << "  inputs_[" << i << "] = new (std::nothrow) MTensor(\"" << input->tensor_name() << "\", "
+        << EnumNameDataType(input->data_type()) << ", " << ArrayToString(input->shape()) << ");\n";
+    ofs << "  MS_ERROR_IF_NULL(inputs_[" << i << "]);\n";
+  }
+  ofs << "  outputs_.resize(" << outputs_size << ");\n";
+  for (size_t i = 0; i < outputs_size; ++i) {
+    Tensor *output = outputs[i];
+    ofs << "  outputs_[" << i << "] = new (std::nothrow) MTensor(\"" << output->tensor_name() << "\", "
+        << EnumNameDataType(output->data_type()) << ", " << ArrayToString(output->shape()) << ");\n";
+    ofs << "  MS_ERROR_IF_NULL(outputs_[" << i << "]);\n";
+  }
+  ofs << "  for (const auto &output: outputs_) {\n"
+         "    output_tensor_map_[output->tensor_name()] = output;\n"
+         "  }\n";
+  ofs << "  return RET_OK;\n";
+  ofs << "}\n\n";
+}
+
+void CodeCopyOutputsState(std::ofstream &ofs) { ofs << "int CopyOutputsData(void **outputs, int num);\n\n"; }
+
+void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  auto tensor_map = ctx->tensors_map();
+  std::vector<Tensor *> outputs = ctx->graph_outputs();
+  size_t outputs_size = outputs.size();
+
+  ofs << "int CopyOutputsData(void **outputs, int num) {\n"
+         "  if (outputs == NULL) {\n"
+         "    return RET_ERROR;\n"
+         "  }\n"
+      << "  if (num != " << outputs_size << ") {\n"
+      << "    return RET_ERROR;\n"
+         "  }\n";
+  for (size_t i = 0; i < outputs_size; ++i) {
+    Tensor *output = outputs[i];
+    MS_CHECK_PTR_IF_NULL(output);
+    ofs << "  memcpy(outputs[" << i << "], " << tensor_map[output] << ", " << output->Size() << ");\n";
+  }
+  ofs << "  outputs[0] = net_B;\n"
+         "  return RET_OK;\n"
+         "}\n\n";
 }
 
 void CodeInputAndOutputState(std::ofstream &ofs, const std::string &module_name) {
@@ -61,7 +116,7 @@ void PrintMicroTensors(std::ofstream &ofs, std::vector<Tensor *> tensors, const 
         << "  " << name << "[" << i << "].ndim = " << tensor->shape().size() << ";\n"
         << "  " << name << "[" << i << "].dim = dim" << i << ";\n"
         << "  " << name << "[" << i << "].type = " << EnumMicroTensorDataType(tensor->data_type()) << ";\n"
-        << "  " << name << "[" << i << "].format = " << std::to_string(tensor->format()) << ";\n"
+        << "  " << name << "[" << i << "].format = " << EnumMicroTensorFormat(tensor->format()) << ";\n"
         << "  " << name << "[" << i << "].data =" << item->second << ";\n";
   }
 }
@@ -82,7 +137,7 @@ void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_n
       << "    return RET_ERROR;\n"
          "  }\n";
   for (size_t i = 0; i < size; ++i) {
-    ofs << "\t" << ctx->input_name() + std::to_string(i) << " = inputs[" << i << "];\n";
+    ofs << "\t" << ctx->input_name() << i << " = inputs[" << i << "];\n";
   }
   ofs << "  return RET_OK;\n}\n";
 
@@ -129,14 +184,6 @@ void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::string &module_n
       << "}\n";
 }
 
-void CodeInitWeightState(std::ofstream &ofs, const std::string &module_name) {
-  ofs << "/**\n"
-      << "  * @param weight_buffer, the address of the weight binary file\n"
-      << "  * @param weight_size, the size of the model file in bytes\n"
-      << "  **/\n"
-      << "int " << module_name << "_Init(void *weight_buffer, int weight_size);\n\n";
-}
-
 void CodeManageResourceState(std::ofstream &ofs, const std::string &module_name) {
   ofs << "/**\n"
       << "  * get the memory space size of the inference.\n"
@@ -161,12 +208,10 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::string &module_nam
       << "}\n";
   ofs << "int " << module_name << "_SetBuffer( void *buffer) {\n";
   ofs << "  if (buffer == NULL) {\n"
-         "    MICRO_ERROR(\"memory buffer is NULL\");\n"
          "    return RET_ERROR;\n"
          "  }\n";
-  ofs << "  " << ctx->buffer_name()
-      << " = buffer;\n"
-         "  return RET_OK;\n"
+  ofs << "  " << ctx->buffer_name() << " = buffer;\n"
+      << "  return RET_OK;\n"
          "}\n";
 }
 

@@ -75,13 +75,6 @@ void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs) {
   }
 }
 
-template <typename T>
-std::string ArrayToString(const std::vector<T> &array) {
-  std::string result = "{";
-  std::for_each(array.begin(), array.end(), [&result](const T &t) { result += std::to_string(t) + ", "; });
-  return result + "}";
-}
-
 std::string TensorsToString(const std::vector<Tensor *> &tensors, const std::string &is_input) {
   MemoryAllocator *allocator = MemoryAllocator::GetInstance();
   std::string info;

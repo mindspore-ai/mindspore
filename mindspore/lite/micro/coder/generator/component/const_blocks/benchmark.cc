@@ -43,7 +43,7 @@ const char *benchmark_source = R"RAW(
 #include "include/ms_tensor.h"
 #include "include/errorcode.h"
 
-#include "read_file.h"
+#include "load_input.h"
 
 using namespace mindspore;
 
@@ -86,12 +86,13 @@ int main(int argc, const char **argv) {
   for (size_t i = 0; i < inputs_num; ++i) {
     inputs_size[i] = inputs[i]->Size();
   }
-  int ret = ReadInputsFile(argv[1], inputs_binbuf, inputs_size, inputs_num);
+  int ret = ReadInputsFile(const_cast<char *>(argv[1]), inputs_binbuf, inputs_size, inputs_num);
   if (ret != lite::RET_OK) {
     return lite::RET_ERROR;
   }
   for (size_t i = 0; i < inputs_num; ++i) {
-    inputs[i]->set_data(inputs_binbuf[i]);
+    void *input_data = inputs[i]->MutableData();
+    memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
   }
 
   ret = session->RunGraph();
@@ -100,7 +101,11 @@ int main(int argc, const char **argv) {
   }
 
   auto outputs = session->GetOutputs();
-  std::cout << outputs.size() << std::endl;
+  std::cout << "output size: " << outputs.size() << std::endl;
+  for (const auto &item : outputs) {
+    auto output = item.second;
+    std::cout << "name: " << output->tensor_name() << ", size: " << output->Size() << std::endl;
+  }
 
   std::cout << "run benchmark success" << std::endl;
   delete session;

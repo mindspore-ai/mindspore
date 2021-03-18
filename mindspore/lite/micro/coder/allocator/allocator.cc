@@ -96,7 +96,7 @@ void MemoryAllocator::RecordTensorsAddr(const std::map<Tensor *, size_t> &offset
 void MemoryAllocator::AssignGraphInputs(const std::vector<Tensor *> &inputs) {
   size_t num = inputs.size();
   for (size_t i = 0; i < num; ++i) {
-    inputs_addr_.insert(std::make_pair(inputs.at(i), net_input_addr_ + std::to_string(i)));
+    tensors_addr_.insert(std::make_pair(inputs.at(i), net_input_addr_ + std::to_string(i)));
   }
 }
 

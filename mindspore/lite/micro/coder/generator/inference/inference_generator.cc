@@ -20,11 +20,18 @@
 #include "coder/generator/component/common_component.h"
 #include "coder/generator/component/parallel_component.h"
 #include "coder/generator/component/benchmark_component.h"
+#include "coder/generator/component/weight_component.h"
 #include "coder/generator/component/const_blocks/license.h"
+#include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
 int InferenceGenerator::CodeNetHFile() {
-  std::string net_include_file = net_inc_file_path_ + net_inc_hfile_;
+  std::string net_include_file;
+  if (config_->interface() == Interface_CPP) {
+    net_include_file = net_src_file_path_ + net_inc_hfile_;
+  } else {
+    net_include_file = net_inc_file_path_ + net_inc_hfile_;
+  }
   std::ofstream ofs(net_include_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
@@ -33,7 +40,11 @@ int InferenceGenerator::CodeNetHFile() {
     ofs << "#include \"thread_pool.h\"\n";
   }
   ofs << "#include \"microtensor.h\"\n\n";
+  ofs << kExternCpp;
   CodeInputAndOutputState(ofs, config_->module_name());
+  if (config_->interface() == Interface_CPP) {
+    CodeCopyOutputsState(ofs);
+  }
   if (is_get_quant_args_) {
     CodeGraphQuantArgsState(ofs, config_->module_name());
   }
@@ -45,6 +56,7 @@ int InferenceGenerator::CodeNetHFile() {
   }
   CodeManageResourceState(ofs, config_->module_name());
   CodeInferenceState(ofs, config_->module_name());
+  ofs << kEndExternCpp;
   return RET_OK;
 }
 
@@ -58,6 +70,9 @@ int InferenceGenerator::CodeNetCFile() {
     CodeSetGlobalThreadPoolImplement(ofs, config_->module_name());
   }
   CodeInputAndOutputImplement(ofs, config_->module_name(), ctx_);
+  if (config_->interface() == Interface_CPP) {
+    CodeCopyOutputsImplement(ofs, ctx_);
+  }
   CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
   if (is_get_quant_args_) {

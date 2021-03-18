@@ -87,6 +87,9 @@ int CoderGraph::ConvertTensors() {
                                  "memcpy_s copy data failed!", delete dstTensor);
       dstTensor->set_data(dst_data);
     }
+    if (origin_tensor->name() != nullptr) {
+      dstTensor->set_tensor_name(origin_tensor->name()->str());
+    }
     auto quant_params = origin_tensor->quantParams();
     if (quant_params != nullptr) {
       for (int j = 0; j < static_cast<int>(quant_params->size()); j++) {

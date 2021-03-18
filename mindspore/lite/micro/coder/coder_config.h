@@ -22,6 +22,7 @@
 namespace mindspore::lite::micro {
 enum Target { kX86 = 0, kARM32M = 1, kARM32A = 2, kARM64 = 3, kAllTargets = 4, kTargetUnknown = 99 };
 enum CodeMode { Inference = 0, Train = 1, Code_Unknown = 99 };
+enum Interface { Interface_CPP = 0, Interface_C = 1, Interface_Unknown = 99 };
 
 inline const char *EnumNameTarget(Target target) {
   switch (target) {
@@ -70,6 +71,9 @@ class Configurator {
   void set_code_mode(CodeMode code_mode) { code_mode_ = code_mode; }
   CodeMode code_mode() const { return code_mode_; }
 
+  void set_interface(Interface interface) { interface_ = interface; }
+  Interface interface() const { return interface_; }
+
   void set_debug_mode(bool debug) { debug_mode_ = debug; }
   bool debug_mode() const { return debug_mode_; }
 
@@ -84,6 +88,7 @@ class Configurator {
   std::string code_path_;
   Target target_{kTargetUnknown};
   CodeMode code_mode_{Code_Unknown};
+  Interface interface_{Interface_CPP};
   bool support_parallel_{false};
   bool debug_mode_{false};
 };

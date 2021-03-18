@@ -59,15 +59,19 @@ if(MICRO_BUILD_ARM32A)
   add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
-
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    message("*******************${CMAKE_BUILD_TYPE}**********")
-    set(CMAKE_C_FLAGS "-DDebug -g -fPIC -fPIE -fvisibility=default ${CMAKE_C_FLAGS}")
+    message(STATUS "build benchmark with debug info")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 else()
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -O3 -fstack-protector-strong -fomit-frame-pointer ${CMAKE_C_FLAGS}")
-    set(CMAKE_C_FLAGS_Release "${CMAKE_C_FLAGS_Release} -O3 -ffunction-sections -fdata-sections")
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
 link_directories(${MODEL_LIB_PATH})
 include(benchmark.cmake)
@@ -96,6 +100,7 @@ message("operator header path: ${OP_HEADER_PATH}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 include_directories(${OP_HEADER_PATH})
+include_directories(${HEADER_PATH})
 
 include(net.cmake)
 
@@ -118,12 +123,17 @@ if(MICRO_BUILD_ARM32A)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    set(CMAKE_C_FLAGS "-DDebug -g -fPIC -fPIE -fvisibility=default ${CMAKE_C_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 else()
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -O3 -Werror -fstack-protector-strong -fomit-frame-pointer ${CMAKE_C_FLAGS}")
-    set(CMAKE_C_FLAGS_Release "${CMAKE_C_FLAGS_Release} -O3 -ffunction-sections -Werror -fdata-sections")
-    string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
 
 function(create_library)
