@@ -165,6 +165,10 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   op_info_json[kJFullName] = anf_node->fullname_with_scope();
   json_name_ = op_name + "_" + std::to_string(hash_id) + "_" + std::to_string(device_id);
   json_info_ = json_str;
+  auto iter = tbe::opTypeAdapter.find(op_name);
+  if (iter != tbe::opTypeAdapter.end()) {
+    op_name = iter->second;
+  }
   op_info_json["Type"] = op_name;
   op_info_json["graph_id"] = AnfAlgo::GetGraphId(anf_node.get());
   op_info_json[kJKernelName] = json_name_;
