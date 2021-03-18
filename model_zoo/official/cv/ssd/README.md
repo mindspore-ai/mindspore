@@ -317,8 +317,9 @@ You can train your own model based on either pretrained classification model or 
 
 1. Convert your own dataset to COCO or VOC style. Otherwise you have to add your own data preprocess code.
 2. Change config.py according to your own dataset, especially the `num_classes`.
-3. Set argument `filter_weight` to `True` while calling `train.py`, this will filter the final detection box weight from the pretrained model.
-4. Build your own bash scripts using new config and arguments for further convenient.
+3. Prepare a pretrained checkpoint. You can load the pretrained checkpoint by `pre_trained` argument. Transfer training means a new training job, so just keep `pre_trained_epoch_size`  same as default value `0`.
+4. Set argument `filter_weight` to `True` while calling `train.py`, this will filter the final detection box weight from the pretrained model.
+5. Build your own bash scripts using new config and arguments for further convenient.
 
 ### [Evaluation Process](#contents)
 
