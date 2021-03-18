@@ -28,6 +28,7 @@
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "coder/coder_config.h"
+#include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
 
@@ -39,6 +40,7 @@ class CoderFlags : public virtual FlagParser {
     AddFlag(&CoderFlags::code_module_name_, "moduleName", "Input code module name", "");
     AddFlag(&CoderFlags::target_, "target", "generated code target, x86| ARM32M| ARM32A| ARM64", "x86");
     AddFlag(&CoderFlags::code_mode_, "codeMode", "generated code mode, Inference | Train", "Inference");
+    AddFlag(&CoderFlags::interface_, "interface", "the interface of generated code, CPP | C", "CPP");
     AddFlag(&CoderFlags::support_parallel_, "supportParallel", "whether support parallel launch, true | false", false);
     AddFlag(&CoderFlags::debug_mode_, "debugMode", "dump the tensors data for debugging, true | false", false);
   }
@@ -50,6 +52,7 @@ class CoderFlags : public virtual FlagParser {
   std::string code_module_name_;
   std::string code_path_;
   std::string code_mode_;
+  std::string interface_;
   bool debug_mode_{false};
   std::string target_;
 };
@@ -87,6 +90,7 @@ int Coder::Init(const CoderFlags &flags) const {
   static const std::map<std::string, Target> kTargetMap = {
     {"x86", kX86}, {"ARM32M", kARM32M}, {"ARM32A", kARM32A}, {"ARM64", kARM64}, {"All", kAllTargets}};
   static const std::map<std::string, CodeMode> kCodeModeMap = {{"Inference", Inference}, {"Train", Train}};
+  static const std::map<std::string, Interface> kInterfaceMap = {{"CPP", Interface_CPP}, {"C", Interface_C}};
 
   Configurator *config = Configurator::GetInstance();
 
@@ -106,7 +110,14 @@ int Coder::Init(const CoderFlags &flags) const {
   });
 
   parsers.emplace_back([&flags, config]() -> bool {
-    if (flags.support_parallel_ == true && config->target() == kARM32M) {
+    auto item = kInterfaceMap.find(flags.interface_);
+    MS_CHECK_TRUE_RET_BOOL(item != kInterfaceMap.end(), "unsupported interface: " + flags.code_mode_);
+    config->set_interface(item->second);
+    return true;
+  });
+
+  parsers.emplace_back([&flags, config]() -> bool {
+    if (flags.support_parallel_ && config->target() == kARM32M) {
       MS_LOG(ERROR) << "arm32M cannot support parallel.";
       return false;
     }
@@ -162,6 +173,7 @@ int Coder::Init(const CoderFlags &flags) const {
     }
     return RET_ERROR;
   }
+  config->set_module_name(kModelName);
 
   auto print_parameter = [](auto name, auto value) {
     MS_LOG(INFO) << std::setw(20) << std::left << name << "= " << value;

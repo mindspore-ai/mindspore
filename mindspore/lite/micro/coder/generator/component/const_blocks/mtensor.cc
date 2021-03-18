@@ -19,6 +19,7 @@
 namespace mindspore::lite::micro {
 
 const char *tensor_header = R"RAW(
+
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -60,16 +61,16 @@ struct QuantArg {
 class MTensor : public mindspore::tensor::MSTensor {
  public:
   MTensor() = default;
-  MTensor(std::string name, enum TypeId type, std::vector<int32_t> shape, void *data)
-      : tensor_name_(std::move(name)), data_type_(type), shape_(std::move(shape)), data_(data) {}
-  ~MTensor() override = default;
+  MTensor(std::string name, enum TypeId type, std::vector<int32_t> shape)
+      : tensor_name_(std::move(name)), data_type_(type), shape_(std::move(shape)) {}
+  ~MTensor() override;
 
   TypeId data_type() const override { return data_type_; }
   std::vector<int> shape() const override { return shape_; }
   int DimensionSize(size_t index) const override;
   int ElementsNum() const override;
   size_t Size() const override;
-  void *MutableData() override { return data_; };
+  void *MutableData() override;
   std::string tensor_name() const override { return tensor_name_; }
   void set_tensor_name(const std::string name) override { tensor_name_ = name; }
   void set_data(void *data) override { data_ = data; }
@@ -87,9 +88,11 @@ class MTensor : public mindspore::tensor::MSTensor {
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 
+
 )RAW";
 
 const char *tensor_source = R"RAW(
+
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -144,6 +147,13 @@ size_t DataTypeSize(const TypeId type) {
   }
 }
 
+MTensor::~MTensor() {
+  if (data_ != nullptr) {
+    free(data_);
+    data_ = nullptr;
+  }
+}
+
 int MTensor::DimensionSize(const size_t index) const {
   int dim_size = -1;
   if (index < shape_.size()) {
@@ -163,6 +173,13 @@ int MTensor::ElementsNum() const {
 size_t MTensor::Size() const {
   size_t element_size = DataTypeSize(data_type_);
   return element_size * ElementsNum();
+}
+
+void *MTensor::MutableData() {
+  if (data_ == nullptr) {
+    data_ = malloc(this->Size());
+  }
+  return data_;
 }
 }  // namespace lite
 }  // namespace mindspore

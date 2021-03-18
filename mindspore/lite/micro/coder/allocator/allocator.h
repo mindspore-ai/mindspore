@@ -104,11 +104,7 @@ class MemoryAllocator {
     }
     std::string type_info = wrap(type_name);
     void *variable = reinterpret_cast<void *>(t);
-    auto item = inputs_addr_.find(variable);
-    if (item != inputs_addr_.end()) {
-      return type_info + item->second;
-    }
-    item = workspaces_addr_.find(variable);
+    auto item = workspaces_addr_.find(variable);
     if (item != workspaces_addr_.end()) {
       return type_info + wrap(item->second);
     }
@@ -174,7 +170,6 @@ class MemoryAllocator {
   std::map<Tensor *, std::string> origin_weights_addr_;
   std::map<Tensor *, std::string> malloc_weights_addr_;
   std::map<Tensor *, std::string> tensors_addr_;
-  std::map<void *, std::string> inputs_addr_;
   std::string net_input_addr_;
   std::string net_buffer_addr_;
   std::string net_weight_addr_;

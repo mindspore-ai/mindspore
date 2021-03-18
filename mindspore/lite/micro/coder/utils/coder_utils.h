@@ -35,6 +35,13 @@ std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
 
 void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs);
 
+template <typename T>
+std::string ArrayToString(std::vector<T> array) {
+  std::string result;
+  std::for_each(array.begin(), array.end(), [&result](const T &t) { result += std::to_string(t) + ", "; });
+  return "{" + result + "}";
+}
+
 }  // namespace mindspore::lite::micro
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_

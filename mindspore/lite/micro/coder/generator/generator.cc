@@ -15,16 +15,19 @@
  */
 #include "coder/generator/generator.h"
 #include <sys/stat.h>
-#include <map>
 #include <set>
 #include <fstream>
 #include "coder/generator/component/cmake_component.h"
 #include "coder/generator/component/weight_component.h"
+#include "coder/generator/component/common_component.h"
 #include "coder/generator/component/const_blocks/micro_tensor.h"
 #include "coder/generator/component/const_blocks/cmake_lists.h"
 #include "coder/generator/component/const_blocks/debug_utils.h"
 #include "coder/generator/component/const_blocks/load_input.h"
 #include "coder/generator/component/const_blocks/thread_pool.h"
+#include "coder/generator/component/const_blocks/msession.h"
+#include "coder/generator/component/const_blocks/mtensor.h"
+#include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/log.h"
 
@@ -48,8 +51,11 @@ Generator::Generator(std::unique_ptr<CoderContext> ctx) {
   this->net_inc_hfile_ = module_name + ".h";
   this->net_src_cfile_ = module_name + ".c";
   this->net_weight_hfile_ = module_name + "_weight.h";
-  this->net_main_cfile_ = module_name + "_benchmark.c";
-
+  if (config_->interface() == Interface_CPP) {
+    this->net_main_cfile_ = "benchmark.cc";
+  } else {
+    this->net_main_cfile_ = "benchmark.c";
+  }
   this->net_src_file_path_ = config_->code_path() + "/src/";
   this->net_inc_file_path_ = config_->code_path() + "/include/";
   this->net_main_file_path_ = config_->code_path() + "/benchmark/";
@@ -80,9 +86,14 @@ int Generator::CodeBenchmarkCMakeFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << test_cmake_file;
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR})\n";
-  ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
+  if (config_->interface() == Interface_CPP) {
+    ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/)\n";
+    ofs << "include_directories(${HEADER_PATH})\n";
+  } else {
+    ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
+  }
   ofs << "set(SRC_FILES\n";
-  ofs << "\t\t" << config_->module_name() + "_benchmark.c\n";
+  ofs << "\t\t" << net_main_cfile_ << "\n";
   ofs << "\t\tload_input.c\n";
   ofs << "\t\tdebug_utils.c\n";
   ofs << ")\n";
@@ -95,28 +106,49 @@ int Generator::CodeSourceCMakeFile() {
   std::ofstream ofs(src_cmake_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << src_cmake_file;
-  CodeCMakeNetLibrary(ofs, config_->module_name(), ctx_, config_->target());
+  CodeCMakeNetLibrary(ofs, ctx_, config_);
   ofs.close();
   return RET_OK;
 }
 
 int Generator::CodeStaticContent() {
-  std::vector<std::pair<std::string, std::string>> static_blocks = {
-    {net_inc_file_path_ + "microtensor.h", micro_tensor_h},
+  std::vector<std::pair<std::string, std::string>> const_blocks = {
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
     {net_main_file_path_ + "debug_utils.h", debug_utils_h},
     {net_main_file_path_ + "debug_utils.c", debug_utils_c},
     {net_main_file_path_ + "load_input.h", load_input_h},
     {net_main_file_path_ + "load_input.c", load_input_c},
     {net_main_file_path_ + "CMakeLists.txt", bench_cmake_lists_txt}};
-  if (config_->support_parallel()) {
-    static_blocks.emplace_back(net_inc_file_path_ + "thread_pool.h", thread_pool_h);
+  if (config_->interface() == Interface_CPP) {
+    const_blocks.emplace_back(net_src_file_path_ + "microtensor.h", micro_tensor_h);
+    const_blocks.emplace_back(net_src_file_path_ + "session.h", session_header);
+    const_blocks.emplace_back(net_src_file_path_ + "tensor.h", tensor_header);
+    const_blocks.emplace_back(net_src_file_path_ + "tensor.cc", tensor_source);
+    const_blocks.emplace_back(net_main_file_path_ + "benchmark.cc", benchmark_source);
+  } else {
+    const_blocks.emplace_back(net_inc_file_path_ + "microtensor.h", micro_tensor_h);
   }
-  for (const auto &static_block : static_blocks) {
+  if (config_->support_parallel()) {
+    const_blocks.emplace_back(net_inc_file_path_ + "thread_pool.h", thread_pool_h);
+  }
+  for (const auto &static_block : const_blocks) {
     std::string file_name = static_block.first;
     std::string content = static_block.second;
     MS_CHECK_RET_CODE(WriteContentToFile(file_name, content), "write file failed");
   }
+  return RET_OK;
+}
+
+int Generator::CodeSessionImplement() {
+  std::string cfile = net_src_file_path_ + "session.cc";
+  std::ofstream ofs(cfile);
+  MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
+  MS_LOG(INFO) << "write " << cfile;
+  ofs << g_hwLicense;
+  ofs << "#include \"session.h\"\n";
+  ofs << "#include \"net.h\"\n\n";
+  CodeSessionCompileGraph(ofs, ctx_);
+  ofs << session_source;
   return RET_OK;
 }
 
@@ -156,9 +188,13 @@ int Generator::GenerateCode() {
   MS_CHECK_RET_CODE(CodeNetCFile(), "code net c file failed.");
   MS_CHECK_RET_CODE(CodeWeightFile(), "code weight file failed.");
   MS_CHECK_RET_CODE(CodeSourceCMakeFile(), "code net cmake file failed.");
-  MS_CHECK_RET_CODE(CodeBenchmarkFile(), "code benchmark file failed.");
   MS_CHECK_RET_CODE(CodeBenchmarkCMakeFile(), "code benchmark cmake file failed.");
   MS_CHECK_RET_CODE(CodeStaticContent(), "code static content failed.");
+  if (config_->interface() == Interface_CPP) {
+    MS_CHECK_RET_CODE(CodeSessionImplement(), "code session file failed.");
+  } else {
+    MS_CHECK_RET_CODE(CodeBenchmarkFile(), "code benchmark file failed.");
+  }
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro

@@ -34,6 +34,7 @@
 #include "coder/utils/type_cast.h"
 
 namespace mindspore::lite::micro {
+
 class Generator {
  public:
   explicit Generator(std::unique_ptr<CoderContext> ctx);
@@ -66,6 +67,7 @@ class Generator {
   int CodeBenchmarkCMakeFile();
   int CodeSourceCMakeFile();
   int CodeStaticContent();
+  int CodeSessionImplement();
 
   std::string cmake_file_name_{"net.cmake"};
   // the user's generated file's permission

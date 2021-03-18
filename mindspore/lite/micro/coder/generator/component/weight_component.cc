@@ -84,6 +84,14 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
   cofs << "\n";
 }
 
+void CodeInitWeightState(std::ofstream &ofs, const std::string &module_name) {
+  ofs << "/**\n"
+      << "  * @param weight_buffer, the address of the weight binary file\n"
+      << "  * @param weight_size, the size of the model file in bytes\n"
+      << "  **/\n"
+      << "int " << module_name << "_Init(void *weight_buffer, int weight_size);\n\n";
+}
+
 void CodeWeightInitFunc(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx) {
   ofs << "int " << module_name << "_Init(void *weight_buffer, int weight_size) {\n"
       << "  if (weight_buffer == NULL) {\n"

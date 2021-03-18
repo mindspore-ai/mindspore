@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_CMAKE_COMPONENT_H_
-#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_CMAKE_COMPONENT_H_
-
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
-#include <fstream>
-#include "src/tensor.h"
-#include "coder/coder_config.h"
-#include "coder/context.h"
+#include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
-void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config);
+
+const char *kModelName = "net";
+const char *kSession = "session";
+
+const char *kByteType = "unsigned char *";
+const char *kConstByteType = "const unsigned char *";
+
+const char *kNameSpaceMindSpore = "namespace mindspore";
+const char *kNameSpaceLite = "namespace lite";
+
+const char *kExternCpp = R"RAW(
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+)RAW";
+
+const char *kEndExternCpp = R"RAW(
+#ifdef __cplusplus
+}
+#endif
+
+)RAW";
 
 }  // namespace mindspore::lite::micro
-
-#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CMAKE_COMPONENT_H_

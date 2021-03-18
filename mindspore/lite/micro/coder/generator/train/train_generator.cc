@@ -19,6 +19,7 @@
 #include <string>
 #include "coder/generator/component/common_component.h"
 #include "coder/generator/component/benchmark_component.h"
+#include "coder/generator/component/weight_component.h"
 #include "coder/generator/component/train_component.h"
 #include "coder/generator/component/const_blocks/license.h"
 

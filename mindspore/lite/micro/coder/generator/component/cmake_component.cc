@@ -20,10 +20,9 @@
 
 namespace mindspore::lite::micro {
 
-void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx,
-                         Target target) {
+void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
-  if (target == kARM32M) {
+  if (config->target() == kARM32M) {
     ofs << "include_directories(${OP_HEADER_PATH}/CMSIS/NN/Include)\n"
         << "include_directories(${OP_HEADER_PATH}/CMSIS/DSP/Include)\n"
         << "include_directories(${OP_HEADER_PATH}/CMSIS/Core/Include)\n";
@@ -32,12 +31,15 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, con
   for (const std::string &c_file : ctx->c_files()) {
     ofs << "    " << c_file << ".o\n";
   }
-  ofs << "    " << module_name << "_weight.c.o\n"
-      << "    " << module_name << ".c.o\n"
-      << ")\n";
-
+  ofs << "    net_weight.c.o\n"
+      << "    net.c.o\n";
+  if (config->interface() == Interface_CPP) {
+    ofs << "    session.cc.o\n"
+        << "    tensor.cc.o\n";
+  }
+  ofs << ")\n";
   std::set<std::string> kernel_cmake_asm_set_files = ctx->asm_files();
-  if (!kernel_cmake_asm_set_files.empty() && (target == kARM32A || target == kARM64)) {
+  if (!kernel_cmake_asm_set_files.empty() && (config->target() == kARM32A || config->target() == kARM64)) {
     ofs << "set(ASSEMBLY_SRC\n";
     for (const std::string &asm_file : kernel_cmake_asm_set_files) {
       ofs << "    " << asm_file << ".o\n";
@@ -46,9 +48,11 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, con
         << "set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)\n"
         << "list(APPEND OP_SRC ${ASSEMBLY_SRC})\n";
   }
-
-  ofs << "file(GLOB NET_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c)\n"
-      << "add_library(net STATIC ${NET_SRC})\n";
+  ofs << "file(GLOB NET_SRC\n"
+         "     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc\n"
+         "     ${CMAKE_CURRENT_SOURCE_DIR}/*.c\n"
+         "     )\n"
+         "add_library(net STATIC ${NET_SRC})\n";
 }
 
 }  // namespace mindspore::lite::micro
