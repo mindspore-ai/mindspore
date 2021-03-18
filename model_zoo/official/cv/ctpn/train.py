@@ -100,10 +100,10 @@ if __name__ == '__main__':
         weight_decay=config.weight_decay, loss_scale=config.loss_scale)
     net_with_loss = WithLossCell(net, loss)
     if args_opt.run_distribute:
-        net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale, reduce_flag=True,
+        net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale, reduce_flag=True,
                                mean=True, degree=device_num)
     else:
-        net = TrainOneStepCell(net_with_loss, net, opt, sens=config.loss_scale)
+        net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale)
 
     time_cb = TimeMonitor(data_size=dataset_size)
     loss_cb = LossCallBack(rank_id=rank)
