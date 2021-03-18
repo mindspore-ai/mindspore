@@ -132,7 +132,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   }
 
   // Load parameter into graph
-  if (endsWith(abs_path_buff, "_graph.mindir")) {
+  if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
     int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
     memcpy(abs_path, abs_path_buff, path_len);
     abs_path[path_len] = '\0';
