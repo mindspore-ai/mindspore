@@ -99,7 +99,7 @@ def get_args(phase):
     args.n_sub_categories = cfg.n_sub_categories
     args.n_words = cfg.n_words
     if phase == "train":
-        args.epochs = cfg.epochs if args.epochs is None else args.epochs * math.ceil(args.device_num ** 0.5)
+        args.epochs = cfg.epochs * math.ceil(args.device_num ** 0.5) if args.epochs is None else args.epochs
         args.lr = cfg.lr if args.lr is None else args.lr
         args.print_times = cfg.print_times if args.print_times is None else args.print_times
     args.embedding_file = cfg.embedding_file.format(args.dataset_path)

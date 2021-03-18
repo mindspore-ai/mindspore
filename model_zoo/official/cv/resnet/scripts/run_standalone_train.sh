@@ -73,7 +73,6 @@ fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
 
