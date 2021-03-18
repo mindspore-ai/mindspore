@@ -71,7 +71,7 @@ Status DvppDecodeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     imageInfo.data = static_cast<void *>(buffer);
     ResourceInfo resource;
     resource.aclConfigPath = "";
-    resource.deviceIds.insert(mindspore::GlobalContext::GetGlobalDeviceID());
+    resource.deviceIds.insert(0);
     std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
     APP_ERROR ret = instance->InitResource(resource);
     if (ret != APP_ERR_OK) {

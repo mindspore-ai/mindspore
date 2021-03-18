@@ -31,6 +31,8 @@ class AclModelOptions {
   explicit AclModelOptions(const std::shared_ptr<Context> &context);
   ~AclModelOptions() = default;
   std::string GenAclOptionsKey() const;
+  uint32_t GetDeviceID() const { return device_id_; }
+  std::string GetDumpCfgPath() const { return dump_cfg_path_; }
   void RenameInput(const std::vector<std::string> &);
 
   // return tuple<init_options, build_options>
@@ -50,7 +52,9 @@ class AclModelOptions {
   std::string dynamic_batch_size_;
   std::string dynamic_image_size_;
   std::map<int, std::vector<int>> input_shape_map_;
-  std::vector<std::string> dynamic_image_size_nums_;
+  // other options
+  uint32_t device_id_;
+  std::string dump_cfg_path_;
 };
 }  // namespace mindspore
 

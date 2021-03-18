@@ -74,7 +74,7 @@ std::shared_ptr<GraphCell> MsModel::GenerateGraphCell(const std::vector<std::vec
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
-  auto ret = ModelImpl::Load(graph_cell);
+  auto ret = ModelImpl::Load(graph_cell, GetDeviceID());
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
     return nullptr;
@@ -99,7 +99,7 @@ Status MsModel::Build() {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
-  auto ret = ModelImpl::Load(graph_cell);
+  auto ret = ModelImpl::Load(graph_cell, GetDeviceID());
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
     return ret;
@@ -169,5 +169,28 @@ std::vector<MSTensor> MsModel::GetInputs() {
 std::vector<MSTensor> MsModel::GetOutputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
   return graph_cell_->GetOutputs();
+}
+
+uint32_t MsModel::GetDeviceID() const {
+  if (model_context_ == nullptr) {
+    return 0;
+  }
+
+  auto &device_infos = model_context_->MutableDeviceInfo();
+  if (device_infos.size() != 1) {
+    return 0;
+  }
+
+  auto ascend910_info = device_infos[0]->Cast<Ascend910DeviceInfo>();
+  if (ascend910_info != nullptr) {
+    return ascend910_info->GetDeviceID();
+  }
+
+  auto gpu_info = device_infos[0]->Cast<NvidiaGPUDeviceInfo>();
+  if (gpu_info != nullptr) {
+    return gpu_info->GetDeviceID();
+  }
+
+  return 0;
 }
 }  // namespace mindspore

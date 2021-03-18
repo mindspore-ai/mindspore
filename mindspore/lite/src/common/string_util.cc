@@ -53,6 +53,7 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
   }
   std::vector<int> shape = {offset[num]};
   tensor->set_shape(shape);
+  tensor->set_data_type(kObjectTypeString);
   tensor->FreeData();
   void *data = tensor->MutableData();
   if (data == nullptr) {

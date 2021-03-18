@@ -20,6 +20,8 @@
 #include <fstream>
 #include <iostream>
 #include "gtest/gtest.h"
+#include "include/api/context.h"
+
 namespace ST {
 class Common : public testing::Test {
  public:
@@ -56,7 +58,7 @@ class Common : public testing::Test {
 
   void ReadFile(const char *file, size_t *size, char **buf);
 
-  void ContextAutoSet();
+  std::shared_ptr<mindspore::Context> ContextAutoSet();
 };
 }  // namespace ST
 #endif  // TESTS_CXX_ST_COMMON_COMMON_TEST_H_

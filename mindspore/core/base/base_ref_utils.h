@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 
-#include "include/infer_tensor.h"
 #include "ir/tensor.h"
 #include "base/base_ref.h"
 

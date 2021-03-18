@@ -21,12 +21,19 @@
 namespace mindspore {
 std::vector<Output> CellBase::operator()(const std::vector<Input> &inputs) const { return Clone()->Construct(inputs); }
 
-ParameterCell::ParameterCell(const ParameterCell &cell) : tensor_(cell.tensor_.Clone()) {}
+ParameterCell::ParameterCell(const ParameterCell &cell) {
+  auto tmp_ptr = cell.tensor_.Clone();
+  tensor_ = *tmp_ptr;
+  MSTensor::DestroyTensorPtr(tmp_ptr);
+}
+
 ParameterCell &ParameterCell::operator=(const ParameterCell &cell) {
   if (&cell == this) {
     return *this;
   }
-  tensor_ = cell.tensor_.Clone();
+  auto tmp_ptr = cell.tensor_.Clone();
+  tensor_ = *tmp_ptr;
+  MSTensor::DestroyTensorPtr(tmp_ptr);
   return *this;
 }
 
@@ -40,10 +47,16 @@ ParameterCell &ParameterCell::operator=(ParameterCell &&cell) {
   return *this;
 }
 
-ParameterCell::ParameterCell(const MSTensor &tensor) : tensor_(tensor.Clone()) {}
+ParameterCell::ParameterCell(const MSTensor &tensor) {
+  auto tmp_ptr = tensor.Clone();
+  tensor_ = *tmp_ptr;
+  MSTensor::DestroyTensorPtr(tmp_ptr);
+}
 
 ParameterCell &ParameterCell::operator=(const MSTensor &tensor) {
-  tensor_ = tensor.Clone();
+  auto tmp_ptr = tensor.Clone();
+  tensor_ = *tmp_ptr;
+  MSTensor::DestroyTensorPtr(tmp_ptr);
   return *this;
 }
 
@@ -54,54 +67,67 @@ ParameterCell &ParameterCell::operator=(MSTensor &&tensor) {
   return *this;
 }
 
-GraphCell::GraphCell(const Graph &graph)
-    : graph_(std::make_shared<Graph>(graph)),
-      executor_(Factory<GraphCell::GraphImpl>::Instance().Create(GlobalContext::GetGlobalDeviceTarget())) {
-  MS_EXCEPTION_IF_NULL(graph_);
-  MS_EXCEPTION_IF_NULL(executor_);
-  executor_->SetGraph(graph_);
-}
+GraphCell::GraphCell(const Graph &graph) : graph_(std::make_shared<Graph>(graph)) { MS_EXCEPTION_IF_NULL(graph_); }
 
-GraphCell::GraphCell(const std::shared_ptr<Graph> &graph)
-    : graph_(graph),
-      executor_(Factory<GraphCell::GraphImpl>::Instance().Create(GlobalContext::GetGlobalDeviceTarget())) {
-  MS_EXCEPTION_IF_NULL(graph_);
-  MS_EXCEPTION_IF_NULL(executor_);
-  executor_->SetGraph(graph_);
-}
+GraphCell::GraphCell(const std::shared_ptr<Graph> &graph) : graph_(graph) { MS_EXCEPTION_IF_NULL(graph_); }
 
-GraphCell::GraphCell(Graph &&graph)
-    : graph_(std::make_shared<Graph>(graph)),
-      executor_(Factory<GraphCell::GraphImpl>::Instance().Create(GlobalContext::GetGlobalDeviceTarget())) {
-  MS_EXCEPTION_IF_NULL(graph_);
-  MS_EXCEPTION_IF_NULL(executor_);
-  executor_->SetGraph(graph_);
-}
+GraphCell::GraphCell(Graph &&graph) : graph_(std::make_shared<Graph>(graph)) { MS_EXCEPTION_IF_NULL(graph_); }
 
 Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
-  MS_EXCEPTION_IF_NULL(executor_);
+  if (executor_ == nullptr) {
+    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    if (executor_ == nullptr) {
+      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      return kMEFailed;
+    }
+    executor_->SetGraph(graph_);
+  }
   return executor_->Run(inputs, outputs);
 }
 
-Status GraphCell::Load() {
-  MS_EXCEPTION_IF_NULL(executor_);
-  return executor_->Load();
+Status GraphCell::Load(uint32_t device_id) {
+  if (executor_ == nullptr) {
+    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    if (executor_ == nullptr) {
+      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      return kMEFailed;
+    }
+    executor_->SetGraph(graph_);
+  }
+  return executor_->Load(device_id);
 }
 
 std::vector<MSTensor> GraphCell::GetInputs() {
-  MS_EXCEPTION_IF_NULL(executor_);
+  if (executor_ == nullptr) {
+    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    if (executor_ == nullptr) {
+      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      return {};
+    }
+    executor_->SetGraph(graph_);
+  }
   return executor_->GetInputs();
 }
 
 std::vector<MSTensor> GraphCell::GetOutputs() {
-  MS_EXCEPTION_IF_NULL(executor_);
+  if (executor_ == nullptr) {
+    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    if (executor_ == nullptr) {
+      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      return {};
+    }
+    executor_->SetGraph(graph_);
+  }
   return executor_->GetOutputs();
 }
 
 InputAndOutput::InputAndOutput() : cell_(nullptr), prev_(), index_(-1) {}
 
-InputAndOutput::InputAndOutput(const MSTensor &tensor)
-    : cell_(std::make_shared<ParameterCell>(tensor.Clone())), prev_(), index_(-1) {}
+InputAndOutput::InputAndOutput(const MSTensor &tensor) : prev_(), index_(-1) {
+  auto tmp_ptr = tensor.Clone();
+  cell_ = std::make_shared<ParameterCell>(*tmp_ptr);
+  MSTensor::DestroyTensorPtr(tmp_ptr);
+}
 InputAndOutput::InputAndOutput(MSTensor &&tensor)
     : cell_(std::make_shared<ParameterCell>(tensor)), prev_(), index_(-1) {}
 

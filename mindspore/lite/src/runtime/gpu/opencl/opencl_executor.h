@@ -32,10 +32,10 @@ class OpenCLExecutor : public Executor {
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override { return RET_OK; }
 
   int Run(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
-          const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
           const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
   int RunOrTune(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
-                const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+                const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                 const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr, bool is_tune = false);
 
  protected:

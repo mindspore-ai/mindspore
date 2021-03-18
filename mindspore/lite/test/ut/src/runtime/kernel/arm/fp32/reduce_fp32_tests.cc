@@ -22,7 +22,6 @@
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/runtime/allocator.h"
 
-using mindspore::lite::Allocator;
 using mindspore::lite::Tensor;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceASum;

@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace dataset {
 
-Status DeviceResource::InitResource() {
+Status DeviceResource::InitResource(uint32_t) {
   return Status(StatusCode::kMDUnexpectedError,
                 "Is this a valid device? If yes, please implement this InitResource() in the derived class.");
 }

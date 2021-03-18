@@ -105,7 +105,7 @@ int LiteKernel::PreProcess() {
 
   for (auto *output : this->out_tensors()) {
     MS_ASSERT(output != nullptr);
-    if (output->ElementsNum() >= lite::MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
+    if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
       MS_LOG(ERROR) << "The size of output tensor is too big";
       return RET_ERROR;
     }

@@ -45,6 +45,12 @@ class MS_API MSTensor {
   /// \brief Destructor of MindSpore Lite Model.
   virtual ~MSTensor() = default;
 
+  /// \brief Create a MSTensor.
+  ///
+  /// \return Pointer to an instance of MindSpore Lite MSTensor.
+  static MSTensor *CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape, const void *data,
+                                size_t data_len);
+
   /// \brief Get data type of the MindSpore Lite MSTensor.
   ///
   /// \note TypeId is defined in mindspore/mindspore/include/api/type_id.h. Only number types in TypeId enum are
@@ -58,12 +64,8 @@ class MS_API MSTensor {
   /// \return A vector of int as the shape of the MindSpore Lite MSTensor.
   virtual std::vector<int> shape() const = 0;
 
-  /// \brief Get size of the dimension of the MindSpore Lite MSTensor index by the parameter index.
-  ///
-  /// \param[in] index Define index of dimension returned.
-  ///
-  /// \return Size of dimension of the MindSpore Lite MSTensor.
-  virtual int DimensionSize(size_t index) const = 0;
+  /// \brief Set the shape of MSTensor.
+  virtual void set_shape(const std::vector<int> &name) = 0;
 
   /// \brief Get number of element in MSTensor.
   ///
@@ -75,13 +77,6 @@ class MS_API MSTensor {
   /// \return Byte size of data in MSTensor.
   virtual size_t Size() const = 0;
 
-  /// \brief Get the pointer of data in MSTensor.
-  ///
-  /// \note The data pointer can be used to both write and read data in MSTensor.
-  ///
-  /// \return the pointer points to data in MSTensor.
-  virtual void *MutableData() = 0;
-
   /// \brief Get the name of MSTensor.
   ///
   /// \return the name of MSTensor.
@@ -89,6 +84,22 @@ class MS_API MSTensor {
 
   /// \brief Set the name of MSTensor.
   virtual void set_tensor_name(const std::string name) = 0;
+
+  /// \brief Get the pointer of data in MSTensor.
+  ///
+  /// \note The data pointer can be used to both write and read data in MSTensor. The memory buffer will be
+  /// automatically allocated.
+  ///
+  /// \return the pointer points to data in MSTensor.
+  virtual void *MutableData() = 0;
+
+  /// \brief Get the pointer of data in MSTensor.
+  ///
+  /// \note The data pointer can be used to both write and read data in MSTensor. No memory buffer will be
+  /// allocated.
+  ///
+  /// \return the pointer points to data in MSTensor.
+  virtual void *data() = 0;
 
   /// \brief Set the data of MSTensor.
   virtual void set_data(void *data) = 0;

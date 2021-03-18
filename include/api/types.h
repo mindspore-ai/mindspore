@@ -43,15 +43,19 @@ class MS_API MSTensor {
  public:
   class Impl;
 
-  static inline MSTensor CreateTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
-                                      const void *data, size_t data_len) noexcept;
-  static inline MSTensor CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
-                                         const void *data, size_t data_len) noexcept;
+  static inline MSTensor *CreateTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                                       const void *data, size_t data_len) noexcept;
+  static inline MSTensor *CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                                          const void *data, size_t data_len) noexcept;
+  static inline MSTensor *StringsToTensor(const std::string &name, const std::vector<std::string> &str);
+  static inline std::vector<std::string> TensorToStrings(const MSTensor &tensor);
+  static void DestroyTensorPtr(MSTensor *tensor) noexcept;
 
   MSTensor();
   explicit MSTensor(const std::shared_ptr<Impl> &impl);
   inline MSTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape, const void *data,
                   size_t data_len);
+  explicit MSTensor(std::nullptr_t);
   ~MSTensor();
 
   inline std::string Name() const;
@@ -65,21 +69,24 @@ class MS_API MSTensor {
 
   bool IsDevice() const;
 
-  MSTensor Clone() const;
+  MSTensor *Clone() const;
   bool operator==(std::nullptr_t) const;
+  bool operator!=(std::nullptr_t) const;
 
  private:
   // api without std::string
-  static MSTensor CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
-                               const void *data, size_t data_len) noexcept;
-  static MSTensor CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
-                                  const void *data, size_t data_len) noexcept;
+  static MSTensor *CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                                const void *data, size_t data_len) noexcept;
+  static MSTensor *CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                                   const void *data, size_t data_len) noexcept;
+  static MSTensor *CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &str);
+  static std::vector<std::vector<char>> TensorToStringChars(const MSTensor &tensor);
+
   MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
            size_t data_len);
   std::vector<char> CharName() const;
 
   friend class ModelImpl;
-  explicit MSTensor(std::nullptr_t);
   std::shared_ptr<Impl> impl_;
 };
 
@@ -103,14 +110,22 @@ class MS_API Buffer {
   std::shared_ptr<Impl> impl_;
 };
 
-MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
-                                const void *data, size_t data_len) noexcept {
+MSTensor *MSTensor::CreateTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+                                 const void *data, size_t data_len) noexcept {
   return CreateTensor(StringToChar(name), type, shape, data, data_len);
 }
 
-MSTensor MSTensor::CreateRefTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
-                                   const void *data, size_t data_len) noexcept {
+MSTensor *MSTensor::CreateRefTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+                                    const void *data, size_t data_len) noexcept {
   return CreateRefTensor(StringToChar(name), type, shape, data, data_len);
+}
+
+MSTensor *MSTensor::StringsToTensor(const std::string &name, const std::vector<std::string> &str) {
+  return CharStringsToTensor(StringToChar(name), VectorStringToChar(str));
+}
+
+std::vector<std::string> MSTensor::TensorToStrings(const MSTensor &tensor) {
+  return VectorCharToString(TensorToStringChars(tensor));
 }
 
 MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,

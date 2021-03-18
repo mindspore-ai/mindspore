@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@
 #include <limits.h>
 #include <numeric>
 #include "include/api/status.h"
+#include "include/api/dual_abi_helper.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
+#include "src/common/string_util.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 
@@ -62,40 +64,106 @@ MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) {}
 MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                    const void *data, size_t data_len)
-    : impl_(std::make_shared<Impl>(CharToString(name), type, shape, data, data_len)) {}
+    : impl_(std::shared_ptr<Impl>(Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len))) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 
-MSTensor MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
-                                const void *data, size_t data_len) noexcept {
-  auto impl = std::make_shared<Impl>(CharToString(name), type, shape, data, data_len);
+bool MSTensor::operator!=(std::nullptr_t) const { return impl_ != nullptr; }
+
+MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                                 const void *data, size_t data_len) noexcept {
+  auto new_data = malloc(data_len);
+  if (new_data == nullptr) {
+    MS_LOG(ERROR) << "Allocate data failed.";
+    return nullptr;
+  }
+  ::memcpy(new_data, data, data_len);
+  auto impl = std::shared_ptr<Impl>(Impl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len));
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
-    return MSTensor(nullptr);
+    free(new_data);
+    return nullptr;
   }
-  return MSTensor(impl);
+  auto ms_tensor = new (std::nothrow) MSTensor(impl);
+  if (ms_tensor == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    free(new_data);
+    return nullptr;
+  }
+  impl->set_own_data(true);
+  return ms_tensor;
 }
 
-MSTensor MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
-                                   const void *data, size_t data_len) noexcept {
-  auto tensor = CreateTensor(name, type, shape, data, data_len);
-  if (tensor == nullptr) {
-    return MSTensor(nullptr);
+MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,
+                                    const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
+  auto impl = std::shared_ptr<Impl>(Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len));
+  if (impl == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    return nullptr;
   }
-  tensor.impl_->set_need_copy(false);
-  return tensor;
+  auto ms_tensor = new (std::nothrow) MSTensor(impl);
+  if (ms_tensor == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    return nullptr;
+  }
+  return ms_tensor;
 }
 
-MSTensor MSTensor::Clone() const {
-  MSTensor ret;
+MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
+  auto impl = std::shared_ptr<Impl>(Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs)));
+  if (impl == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    return nullptr;
+  }
+  auto ms_tensor = new (std::nothrow) MSTensor(impl);
+  if (ms_tensor == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    return nullptr;
+  }
+  return ms_tensor;
+}
+
+std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &tensor) {
+  if (tensor.impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor.";
+    std::vector<std::vector<char>> empty;
+    return empty;
+  }
+  return VectorStringToChar(Impl::TensorImplToStrings(tensor.impl_));
+}
+
+MSTensor *MSTensor::Clone() const {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
-    ret.impl_ = nullptr;
-    return ret;
+    MS_LOG(ERROR) << "Invalid tensor.";
+    return nullptr;
   }
-  ret.impl_ = impl_->Clone();
-  return ret;
+  auto data_len = this->DataSize();
+  if (data_len <= 0) {
+    MS_LOG(ERROR) << "Illegal data size of tensor.";
+    return nullptr;
+  }
+  auto new_data = malloc(data_len);
+  if (new_data == nullptr) {
+    MS_LOG(ERROR) << "Allocate data failed.";
+    return nullptr;
+  }
+  auto impl =
+    std::shared_ptr<Impl>(Impl::CreateTensorImpl(this->Name(), this->DataType(), this->Shape(), new_data, data_len));
+  if (impl == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    free(new_data);
+    return nullptr;
+  }
+  auto ms_tensor = new (std::nothrow) MSTensor(impl);
+  if (ms_tensor == nullptr) {
+    MS_LOG(ERROR) << "Allocate tensor impl failed.";
+    free(new_data);
+    return nullptr;
+  }
+  ::memcpy(new_data, impl_->MutableData(), data_len);
+  impl->set_own_data(true);
+  return ms_tensor;
 }
 
 std::vector<char> MSTensor::CharName() const {
@@ -160,10 +228,14 @@ bool MSTensor::IsDevice() const {
   return false;
 }
 
-Buffer::Buffer() : impl_(std::make_shared<Impl>()) { MS_LOG(ERROR) << "Unsupported feature."; }
-Buffer::Buffer(const void *data, size_t data_len) : impl_(std::make_shared<Impl>(data, data_len)) {
-  MS_LOG(ERROR) << "Unsupported feature.";
+void MSTensor::DestroyTensorPtr(MSTensor *tensor) noexcept {
+  if (tensor != nullptr) {
+    delete tensor;
+  }
 }
+
+Buffer::Buffer() : impl_(nullptr) { MS_LOG(ERROR) << "Unsupported feature."; }
+Buffer::Buffer(const void *data, size_t data_len) : impl_(nullptr) { MS_LOG(ERROR) << "Unsupported feature."; }
 Buffer::~Buffer() = default;
 
 Buffer Buffer::Clone() const {

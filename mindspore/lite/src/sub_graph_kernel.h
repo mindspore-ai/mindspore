@@ -33,9 +33,9 @@ namespace mindspore::kernel {
 // store origin data and allocator of input tensor of subgraph for PreProcess and PostProcess
 struct DataStore {
   void *data_ = nullptr;
-  lite::Allocator *allocator_ = nullptr;
-  static DataStore *CreateDataStore(void *data = nullptr, lite::Allocator *data_allocator = nullptr,
-                                    lite::Allocator *allocator = nullptr) {
+  mindspore::Allocator *allocator_ = nullptr;
+  static DataStore *CreateDataStore(void *data = nullptr, mindspore::Allocator *data_allocator = nullptr,
+                                    mindspore::Allocator *allocator = nullptr) {
     DataStore *data_store = nullptr;
     if (allocator == nullptr) {
       data_store = static_cast<DataStore *>(malloc(sizeof(DataStore)));
