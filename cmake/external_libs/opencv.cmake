@@ -8,7 +8,8 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(opencv_CXXFLAGS "${opencv_CXXFLAGS} -Wno-attributes -Wno-unknown-pragmas")
     set(opencv_CXXFLAGS "${opencv_CXXFLAGS} -Wno-unused-value -Wno-implicit-fallthrough")
 else()
-    set(opencv_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
+    set(opencv_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2")
+    set(opencv_CXXFLAGS "${opencv_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
     set(opencv_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
     set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 endif()
@@ -44,6 +45,7 @@ if(WIN32)
             -DBUILD_TIFF=OFF
             -DWITH_JASPER=OFF
             -DBUILD_JASPER=OFF
+            -DWITH_LAPACK=OFF
             -DTIFF_INCLUDE_DIR=${tiff_INC}
             -DTIFF_LIBRARY=${tiff_LIB})
 else()
@@ -67,6 +69,7 @@ else()
             -DBUILD_TIFF=OFF
             -DWITH_JASPER=OFF
             -DBUILD_JASPER=OFF
+            -DWITH_LAPACK=OFF
             -DTIFF_INCLUDE_DIR=${tiff_INC}
             -DTIFF_LIBRARY=${tiff_LIB})
 endif()
