@@ -908,7 +908,7 @@ class CosineEmbeddingLoss(_Loss):
         prod_sum = self.reduce_sum(x1 * x2, (1,))
         square1 = self.reduce_sum(F.square(x1), (1,))
         square2 = self.reduce_sum(F.square(x2), (1,))
-        denom = F.sqrt(square1 * square2)
+        denom = F.sqrt(square1) * F.sqrt(square2)
         cosine = prod_sum / denom
 
         pos_value = 1.0 - cosine
