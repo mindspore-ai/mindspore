@@ -974,7 +974,7 @@ class RandomErasing:
     """
     Erase the pixels, within a selected rectangle region, to the given value.
 
-    Randomly applied on the input NumPy image array with a given probability.
+    Randomly applied on the input NumPy image array of shape (C, H, W) with a given probability.
 
     Zhun Zhong et al. 'Random Erasing Data Augmentation' 2017 See https://arxiv.org/pdf/1708.04896.pdf
 

@@ -84,6 +84,14 @@ def check_value_cutoff(value, valid_range, arg_name=""):
                                                                                  valid_range[1]))
 
 
+def check_value_ratio(value, valid_range, arg_name=""):
+    arg_name = pad_arg_name(arg_name)
+    if value <= valid_range[0] or value > valid_range[1]:
+        raise ValueError(
+            "Input {0}is not within the required interval of ({1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
+
+
 def check_value_normalize_std(value, valid_range, arg_name=""):
     arg_name = pad_arg_name(arg_name)
     if value <= valid_range[0] or value > valid_range[1]:
