@@ -362,7 +362,8 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     is_in_get_ = false;
 
     auto fg = node->func_graph();
-    if (idx_ == -1 || switch_ == nullptr || fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
+    if (idx_ == -1 || switch_ == nullptr || fg == nullptr ||
+        (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) && !ExistEnvNode(fg))) {
       return nullptr;
     }
 
