@@ -262,7 +262,7 @@ def load(file_name):
     if not isinstance(file_name, str):
         raise ValueError("The file name must be string.")
     if not os.path.exists(file_name):
-        raise ValueError("The file is not exist.")
+        raise ValueError("The file does not exist.")
     if not file_name.endswith(".mindir"):
         raise ValueError("The MindIR should end with mindir, please input the correct file name.")
 
@@ -362,7 +362,7 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
         raise ValueError("The ckpt_file_name must be string.")
 
     if not os.path.exists(ckpt_file_name):
-        raise ValueError("The checkpoint file is not exist.")
+        raise ValueError("The checkpoint file does not exist.")
 
     if ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("Please input the correct checkpoint file name.")
