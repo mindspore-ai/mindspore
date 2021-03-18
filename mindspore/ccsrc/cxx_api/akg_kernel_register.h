@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
-#define MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
+#ifndef MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
+#define MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
 
 namespace mindspore {
 void RegAllOp();
-bool PythonIsInited();
-void InitPython();
-void FinalizePython();
-
-class PythonEnvGuard {
- public:
-  PythonEnvGuard();
-  ~PythonEnvGuard();
-
- private:
-  bool origin_init_status_;
-};
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
+#endif  // MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_

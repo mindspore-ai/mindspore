@@ -10,7 +10,7 @@ if(ENABLE_ACL)
     include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-            "python_utils.cc"
+            "akg_kernel_register.cc"
             "model/acl/*.cc"
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
@@ -19,11 +19,12 @@ endif()
 
 if(ENABLE_D)
     file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-        "python_utils.cc" "model/ms/*.cc" "graph/ascend/*.cc")
+        "akg_kernel_register.cc" "model/ms/*.cc" "graph/ascend/*.cc")
 endif()
 
 if(ENABLE_GPU)
-    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/ms/*.cc" "graph/gpu/*.cc")
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR}
+        "akg_kernel_register.cc" "model/ms/*.cc" "graph/gpu/*.cc")
 endif()
 
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc

@@ -13,52 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cxx_api/python_utils.h"
+#include "cxx_api/akg_kernel_register.h"
 #include <dlfcn.h>
 #include <mutex>
-#include <vector>
 #include <memory>
 #include <string>
 #include <fstream>
-#include "mindspore/core/utils/ms_context.h"
-#include "pybind11/pybind11.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
-
-namespace py = pybind11;
 
 static std::mutex init_mutex;
 static bool Initialized = false;
 
 namespace mindspore {
-static void RegAllOpFromPython() {
-  MsContext::GetInstance()->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-  Py_Initialize();
-  auto c_expression = PyImport_ImportModule("mindspore._c_expression");
-  MS_EXCEPTION_IF_NULL(c_expression);
-  PyObject *c_expression_dict = PyModule_GetDict(c_expression);
-  MS_EXCEPTION_IF_NULL(c_expression_dict);
-
-  PyObject *op_info_loader_class = PyDict_GetItemString(c_expression_dict, "OpInfoLoaderPy");
-  MS_EXCEPTION_IF_NULL(op_info_loader_class);
-  PyObject *op_info_loader = PyInstanceMethod_New(op_info_loader_class);
-  MS_EXCEPTION_IF_NULL(op_info_loader);
-  PyObject *op_info_loader_ins = PyObject_CallObject(op_info_loader, nullptr);
-  MS_EXCEPTION_IF_NULL(op_info_loader_ins);
-  auto all_ops_info_vector_addr_ul = PyObject_CallMethod(op_info_loader_ins, "get_all_ops_info", nullptr);
-  MS_EXCEPTION_IF_NULL(all_ops_info_vector_addr_ul);
-  auto all_ops_info_vector_addr = PyLong_AsVoidPtr(all_ops_info_vector_addr_ul);
-  auto all_ops_info = static_cast<std::vector<kernel::OpInfo *> *>(all_ops_info_vector_addr);
-  for (auto op_info : *all_ops_info) {
-    kernel::OpLib::RegOpInfo(std::shared_ptr<kernel::OpInfo>(op_info));
-  }
-  all_ops_info->clear();
-  delete all_ops_info;
-  Py_DECREF(op_info_loader);
-  Py_DECREF(op_info_loader_class);
-  Py_DECREF(c_expression_dict);
-  Py_DECREF(c_expression);
-}
-
 static bool RegAllOpFromFile() {
   Dl_info info;
   int dl_ret = dladdr(reinterpret_cast<void *>(RegAllOpFromFile), &info);
@@ -111,36 +77,10 @@ void RegAllOp() {
   }
   bool ret = RegAllOpFromFile();
   if (!ret) {
-    MS_LOG(INFO) << "Reg all op from file failed, start to reg from python.";
-    RegAllOpFromPython();
+    MS_LOG(ERROR) << "Register operators failed. The package may damaged or file is missing.";
+    return;
   }
 
   Initialized = true;
-}
-
-bool PythonIsInited() { return Py_IsInitialized() != 0; }
-
-void InitPython() {
-  if (!PythonIsInited()) {
-    Py_Initialize();
-  }
-}
-
-void FinalizePython() {
-  if (PythonIsInited()) {
-    Py_Finalize();
-  }
-}
-
-PythonEnvGuard::PythonEnvGuard() {
-  origin_init_status_ = PythonIsInited();
-  InitPython();
-}
-
-PythonEnvGuard::~PythonEnvGuard() {
-  // finalize when init by this
-  if (!origin_init_status_) {
-    FinalizePython();
-  }
 }
 }  // namespace mindspore
