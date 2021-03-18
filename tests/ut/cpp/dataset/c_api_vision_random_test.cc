@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
+#include "minddata/dataset/include/config.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision.h"
@@ -840,6 +841,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
 
 TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithBBoxSuccess1 with single integer input.";
+  // setting seed here to prevent random core dump
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
@@ -873,14 +877,16 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   }
 
   EXPECT_EQ(i, 3);
-
+  
   // Manually terminate the pipeline
   iter->Stop();
+  config::set_seed(current_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithBBoxSuccess2 with (height, width) input.";
-
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds =
@@ -921,6 +927,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
 
   // Manually terminate the pipeline
   iter->Stop();
+  config::set_seed(current_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
@@ -1086,6 +1093,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxSuccess1.";
   // Testing RandomResizedCropWithBBox with default values
   // Create an VOC Dataset
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds =
     VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
@@ -1118,6 +1127,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
 
   EXPECT_EQ(i, 4);
 
+  config::set_seed(current_seed);
   // Manually terminate the pipeline
   iter->Stop();
 }
@@ -1127,6 +1137,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   // Testing RandomResizedCropWithBBox with non-default values
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
   std::shared_ptr<Dataset> ds =
     VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
   EXPECT_NE(ds, nullptr);
@@ -1158,6 +1170,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   }
 
   EXPECT_EQ(i, 4);
+  config::set_seed(current_seed);
 
   // Manually terminate the pipeline
   iter->Stop();
