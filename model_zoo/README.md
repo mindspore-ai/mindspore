@@ -15,6 +15,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 - [Official](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official)
     - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
         - [Image Classification](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
+            - [DenseNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/densenet/README.md)
             - [GoogleNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet/README.md)
             - [ResNet50[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
             - [ResNet50_Quant](https://gitee.com/mindspore/mindspore/blob/master/model_zoo/official/cv/resnet50_quant/README.md)

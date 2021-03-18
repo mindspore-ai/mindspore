@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from mindspore.ops import operations as P
 from mindspore.common import initializer as init
 from src.utils.var_init import default_recurisive_init, KaimingNormal
 
-__all__ = ["DenseNet121"]
+__all__ = ["DenseNet121", "DenseNet100"]
 
 class GlobalAvgPooling(nn.Cell):
     """
@@ -123,13 +123,17 @@ class _Transition(nn.Cell):
     """
     the transition layer
     """
-    def __init__(self, num_input_features, num_output_features):
+    def __init__(self, num_input_features, num_output_features, avgpool=False):
         super(_Transition, self).__init__()
+        if avgpool:
+            poollayer = nn.AvgPool2d(kernel_size=2, stride=2)
+        else:
+            poollayer = nn.MaxPool2d(kernel_size=2, stride=2)
         self.features = nn.SequentialCell(OrderedDict([
             ('norm', nn.BatchNorm2d(num_input_features)),
             ('relu', nn.ReLU()),
             ('conv', conv1x1(num_input_features, num_output_features)),
-            ('pool', nn.MaxPool2d(kernel_size=2, stride=2))
+            ('pool', poollayer)
         ]))
 
     def construct(self, x):
@@ -142,17 +146,23 @@ class Densenet(nn.Cell):
     """
     __constants__ = ['features']
 
-    def __init__(self, growth_rate, block_config, num_init_features, bn_size=4, drop_rate=0):
+    def __init__(self, growth_rate, block_config, num_init_features=None, bn_size=4, drop_rate=0):
         super(Densenet, self).__init__()
 
         layers = OrderedDict()
-        layers['conv0'] = conv7x7(3, num_init_features, stride=2, padding=3)
-        layers['norm0'] = nn.BatchNorm2d(num_init_features)
-        layers['relu0'] = nn.ReLU()
-        layers['pool0'] = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
+        if num_init_features:
+            layers['conv0'] = conv7x7(3, num_init_features, stride=2, padding=3)
+            layers['norm0'] = nn.BatchNorm2d(num_init_features)
+            layers['relu0'] = nn.ReLU()
+            layers['pool0'] = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
+            num_features = num_init_features
+        else:
+            layers['conv0'] = conv3x3(3, growth_rate*2, stride=1, padding=1)
+            layers['norm0'] = nn.BatchNorm2d(growth_rate*2)
+            layers['relu0'] = nn.ReLU()
+            num_features = growth_rate * 2
 
         # Each denseblock
-        num_features = num_init_features
         for i, num_layers in enumerate(block_config):
             block = _DenseBlock(
                 num_layers=num_layers,
@@ -165,8 +175,12 @@ class Densenet(nn.Cell):
             num_features = num_features + num_layers*growth_rate
 
             if i != len(block_config)-1:
-                trans = _Transition(num_input_features=num_features,
-                                    num_output_features=num_features // 2)
+                if num_init_features:
+                    trans = _Transition(num_input_features=num_features, num_output_features=num_features // 2,
+                                        avgpool=False)
+                else:
+                    trans = _Transition(num_input_features=num_features, num_output_features=num_features // 2,
+                                        avgpool=True)
                 layers['transition%d'%(i+1)] = trans
                 num_features = num_features // 2
 
@@ -184,6 +198,11 @@ class Densenet(nn.Cell):
     def get_out_channels(self):
         return self.out_channels
 
+
+def _densenet100(**kwargs):
+    return Densenet(growth_rate=12, block_config=(16, 16, 16), **kwargs)
+
+
 def _densenet121(**kwargs):
     return Densenet(growth_rate=32, block_config=(6, 12, 24, 16), num_init_features=64, **kwargs)
 
@@ -199,6 +218,38 @@ def _densenet169(**kwargs):
 def _densenet201(**kwargs):
     return Densenet(growth_rate=32, block_config=(6, 12, 48, 32), num_init_features=64, **kwargs)
 
+
+class DenseNet100(nn.Cell):
+    """
+    the densenet100 architecture
+    """
+    def __init__(self, num_classes, include_top=True):
+        super(DenseNet100, self).__init__()
+        self.backbone = _densenet100()
+        out_channels = self.backbone.get_out_channels()
+        self.include_top = include_top
+        if self.include_top:
+            self.head = CommonHead(num_classes, out_channels)
+
+        default_recurisive_init(self)
+        for _, cell in self.cells_and_names():
+            if isinstance(cell, nn.Conv2d):
+                cell.weight.set_data(init.initializer(KaimingNormal(a=math.sqrt(5), mode='fan_out',
+                                                                    nonlinearity='relu'),
+                                                      cell.weight.shape,
+                                                      cell.weight.dtype))
+            elif isinstance(cell, nn.BatchNorm2d):
+                cell.gamma.set_data(init.initializer('ones', cell.gamma.shape))
+                cell.beta.set_data(init.initializer('zeros', cell.beta.shape))
+            elif isinstance(cell, nn.Dense):
+                cell.bias.set_data(init.initializer('zeros', cell.bias.shape))
+
+    def construct(self, x):
+        x = self.backbone(x)
+        if not self.include_top:
+            return x
+        x = self.head(x)
+        return x
 
 
 class DenseNet121(nn.Cell):

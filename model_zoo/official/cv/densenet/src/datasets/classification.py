@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,17 +50,10 @@ class TxtDataset():
         return len(self.imgs)
 
 
-def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank, group_size,
-                           mode='train',
-                           input_mode='folder',
-                           root='',
-                           num_parallel_workers=None,
-                           shuffle=None,
-                           sampler=None,
-                           class_indexing=None,
-                           drop_remainder=True,
-                           transform=None,
-                           target_transform=None):
+def classification_dataset_imagenet(data_dir, image_size, per_batch_size, max_epoch, rank, group_size, mode='train',
+                                    input_mode='folder', root='', num_parallel_workers=None, shuffle=None,
+                                    sampler=None, class_indexing=None, drop_remainder=True, transform=None,
+                                    target_transform=None):
     """
     A function that returns a dataset for classification. The mode of input dataset could be "folder" or "txt".
     If it is "folder", all images within one folder have the same label. If it is "txt", all paths of images
@@ -88,7 +81,7 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
             unique index starting from 0).
 
     Examples:
-        >>> from src.datasets.classification import classification_dataset
+        >>> from src.datasets.classification import classification_dataset_imagenet
         >>> # path to imagefolder directory. This directory needs to contain sub-directories which contain the images
         >>> data_dir = "/path/to/imagefolder_directory"
         >>> de_dataset = classification_dataset(data_dir, image_size=[224, 244],
@@ -141,6 +134,80 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
         dataset = TxtDataset(root, data_dir)
         sampler = DistributedSampler(dataset, rank, group_size, shuffle=shuffle)
         de_dataset = de.GeneratorDataset(dataset, ["image", "label"], sampler=sampler)
+
+    de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=8, operations=transform_img)
+    de_dataset = de_dataset.map(input_columns="label", num_parallel_workers=8, operations=transform_label)
+
+    columns_to_project = ["image", "label"]
+    de_dataset = de_dataset.project(columns=columns_to_project)
+
+    de_dataset = de_dataset.batch(per_batch_size, drop_remainder=drop_remainder)
+    de_dataset = de_dataset.repeat(1)
+
+    return de_dataset
+
+
+def classification_dataset_cifar10(data_dir, image_size, per_batch_size, max_epoch, rank, group_size, mode='train',
+                                   num_parallel_workers=None, shuffle=None, sampler=None, drop_remainder=True,
+                                   transform=None, target_transform=None):
+    """
+    A function that returns cifar10 dataset for classification.
+
+    Args:
+        data_dir (str): Path to the root directory that contains the dataset's bin files.
+        image_size (Union(int, sequence)): Size of the input images.
+        per_batch_size (int): the batch size of evey step during training.
+        max_epoch (int): the number of epochs.
+        rank (int): The shard ID within num_shards (default=None).
+        group_size (int): Number of shards that the dataset should be divided
+            into (default=None).
+        mode (str): "train" or others. Default: " train".
+        input_mode (str): The form of the input dataset. "folder" or "txt". Default: "folder".
+        root (str): the images path for "input_mode="txt"". Default: " ".
+        num_parallel_workers (int): Number of workers to read the data. Default: None.
+        shuffle (bool): Whether or not to perform shuffle on the dataset
+            (default=None, performs shuffle).
+        sampler (Sampler): Object used to choose samples from the dataset. Default: None.
+
+    Examples:
+        >>> from src.datasets.classification import classification_dataset_cifar10
+        >>> # path to imagefolder directory. This directory needs to contain bin files of data.
+        >>> data_dir = "/path/to/datafolder_directory"
+        >>> de_dataset = classification_dataset_cifar10(data_dir, image_size=[32, 32],
+        >>>                               per_batch_size=64, max_epoch=100,
+        >>>                               rank=0, group_size=1)
+    """
+
+    mean = [0.5 * 255, 0.5 * 255, 0.5 * 255]
+    std = [0.5 * 255, 0.5 * 255, 0.5 * 255]
+
+    if transform is None:
+        if mode == 'train':
+            transform_img = [
+                vision_C.RandomCrop(image_size, padding=4),
+                vision_C.RandomHorizontalFlip(prob=0.5),
+                vision_C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4),
+                vision_C.Normalize(mean=mean, std=std),
+                vision_C.HWC2CHW()
+            ]
+        else:
+            transform_img = [
+                vision_C.Normalize(mean=mean, std=std),
+                vision_C.HWC2CHW()
+            ]
+    else:
+        transform_img = transform
+
+    if target_transform is None:
+        transform_label = [
+            normal_C.TypeCast(mstype.int32)
+        ]
+    else:
+        transform_label = target_transform
+
+    de_dataset = de.Cifar10Dataset(data_dir, num_parallel_workers=num_parallel_workers, shuffle=shuffle,
+                                                                      sampler=sampler, num_shards=group_size,
+                                                                      shard_id=rank)
 
     de_dataset = de_dataset.map(input_columns="image", num_parallel_workers=8, operations=transform_img)
     de_dataset = de_dataset.map(input_columns="label", num_parallel_workers=8, operations=transform_label)

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 """
 ##############test densenet example#################
-python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT
+python eval.py --net densenet121 --dataset imagenet --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT
 """
 
 import os
@@ -34,10 +34,6 @@ from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 from src.utils.logging import get_logger
-from src.datasets import classification_dataset
-from src.network import DenseNet121
-from src.config import config
-
 
 class ParameterReduce(nn.Cell):
     """
@@ -61,10 +57,13 @@ def parse_args(cloud_args=None):
     """
     parser = argparse.ArgumentParser('mindspore classification test')
 
+    # network and dataset choices
+    parser.add_argument('--net', type=str, default='', help='Densenet Model, densenet100 or densenet121')
+    parser.add_argument('--dataset', type=str, default='', help='Dataset, either cifar10 or imagenet')
+
     # dataset related
     parser.add_argument('--data_dir', type=str, default='', help='eval data dir')
-    parser.add_argument('--num_classes', type=int, default=1000, help='num of classes in dataset')
-    parser.add_argument('--image_size', type=str, default='224,224', help='image size of the dataset')
+
     # network related
     parser.add_argument('--backbone', default='resnet50', help='backbone')
     parser.add_argument('--pretrained', default='', type=str, help='fully path of pretrained model to load.'
@@ -80,12 +79,21 @@ def parse_args(cloud_args=None):
     parser.add_argument('--train_url', type=str, default="", help='train url')
 
     # platform
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='device target')
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU', 'CPU'),
+                        help='device target')
 
     args, _ = parser.parse_known_args()
     args = merge_args(args, cloud_args)
 
+    if args.net == "densenet100":
+        from src.config import config_100 as config
+    else:
+        from src.config import config_121 as config
+
     args.per_batch_size = config.per_batch_size
+    args.image_size = config.image_size
+    args.num_classes = config.num_classes
+
     args.image_size = list(map(int, args.image_size.split(',')))
 
     return args
@@ -151,7 +159,8 @@ def generate_results(model, rank, group_size, top1_correct, top5_correct, img_to
 
 def test(cloud_args=None):
     """
-    network eval function. Get top1 and top5 ACC from classification.
+    network eval function. Get top1 and top5 ACC from classification for imagenet,
+    and top1 ACC for cifar10.
     The result will be save at [./outputs] by default.
     """
     args = parse_args(cloud_args)
@@ -185,13 +194,23 @@ def test(cloud_args=None):
     else:
         args.models = [args.pretrained,]
 
+    if args.net == "densenet100":
+        from src.network.densenet import DenseNet100 as DenseNet
+    else:
+        from src.network.densenet import DenseNet121 as DenseNet
+
+    if args.dataset == "cifar10":
+        from src.datasets import classification_dataset_cifar10 as classification_dataset
+    else:
+        from src.datasets import classification_dataset_imagenet as classification_dataset
+
     for model in args.models:
         de_dataset = classification_dataset(args.data_dir, image_size=args.image_size,
                                             per_batch_size=args.per_batch_size,
                                             max_epoch=1, rank=args.rank, group_size=args.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator()
-        network = DenseNet121(args.num_classes)
+        network = DenseNet(args.num_classes)
 
         param_dict = load_checkpoint(model)
         param_dict_new = {}
@@ -240,15 +259,13 @@ def test(cloud_args=None):
         img_tot = results[2, 0]
         acc1 = 100.0 * top1_correct / img_tot
         acc5 = 100.0 * top5_correct / img_tot
-        args.logger.info('after allreduce eval: top1_correct={}, tot={}, acc={:.2f}%'.format(top1_correct,
-                                                                                             img_tot,
+        args.logger.info('after allreduce eval: top1_correct={}, tot={}, acc={:.2f}%'.format(top1_correct, img_tot,
                                                                                              acc1))
-        args.logger.info('after allreduce eval: top5_correct={}, tot={}, acc={:.2f}%'.format(top5_correct,
-                                                                                             img_tot,
-                                                                                             acc5))
+        if args.dataset == 'imagenet':
+            args.logger.info('after allreduce eval: top5_correct={}, tot={}, acc={:.2f}%'.format(top5_correct, img_tot,
+                                                                                                 acc5))
     if args.is_distributed:
         release()
-
 
 if __name__ == "__main__":
     test()
