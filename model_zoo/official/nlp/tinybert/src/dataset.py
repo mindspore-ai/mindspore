@@ -52,7 +52,7 @@ def create_tinybert_dataset(task='td', batch_size=32, device_num=1, rank=0,
         data_set = ds.MindDataset(data_files, columns_list=columns_list,
                                   shuffle=(do_shuffle == "true"), num_shards=device_num, shard_id=rank)
     else:
-        data_set = ds.TFRecordDataset(data_files, schema_dir, columns_list=columns_list,
+        data_set = ds.TFRecordDataset(data_files, schema_dir if schema_dir != "" else None, columns_list=columns_list,
                                       shuffle=shuffle, num_shards=device_num, shard_id=rank,
                                       shard_equal_rows=shard_equal_rows)
     if device_num == 1 and shuffle is True:

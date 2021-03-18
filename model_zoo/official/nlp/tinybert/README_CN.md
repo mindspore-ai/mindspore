@@ -50,8 +50,15 @@ TinyBERT模型的主干结构是转换器，转换器包含四个编码器模块
 
 # 数据集
 
-- 下载zhwiki或enwiki数据集进行一般蒸馏。使用[WikiExtractor](https://github.com/attardi/wikiextractor)提取和整理数据集中的文本。如需将数据集转化为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码库中的create_pretraining_data.py文件。
-- 下载GLUE数据集进行任务蒸馏。将数据集由JSON格式转化为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码库中的run_classifier.py文件。
+- 生成通用蒸馏阶段数据集
+    - 下载[zhwiki](https://dumps.wikimedia.org/zhwiki/)或[enwiki](https://dumps.wikimedia.org/enwiki/)数据集进行预训练，
+    - 使用[WikiExtractor](https://github.com/attardi/wikiextractor)提取和整理数据集中的文本，使用步骤如下：
+        - pip install wikiextractor
+        - python -m wikiextractor.WikiExtractor -o <output file path> -b <output file size> <Wikipedia dump file>
+    - 将数据集转换为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码仓中的create_pretraining_data.py文件，同时下载对应的vocab.txt文件, 如果出现AttributeError: module 'tokenization' has no attribute 'FullTokenizer’，请安装bert-tensorflow。
+- 生成下游任务蒸馏阶段数据集
+    - 下载数据集进行微调和评估，如[GLUE](https://github.com/nyu-mll/GLUE-baselines)
+    - 将数据集文件从JSON格式转换为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码仓中的run_classifier.py文件。
 
 # 环境要求
 
