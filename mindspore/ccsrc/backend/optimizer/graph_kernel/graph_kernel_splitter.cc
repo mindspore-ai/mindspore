@@ -286,7 +286,7 @@ class AreaGraph {
       }
     }
     auto new_main_cnode = main_func_graph->NewCNode(main_cnode_inputs);
-    new_main_cnode->set_abstract(sub_func_graph->get_return()->abstract());
+    new_main_cnode->set_abstract(sub_func_graph->output()->abstract());
     return new_main_cnode;
   }
 
@@ -639,7 +639,7 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
       need_inline_.clear();
       return;
     } else {
-      MS_LOG(INFO) << "CostModel split successed. The kernel is split to " << split_plan_.size() << " parts.";
+      MS_LOG(INFO) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
     }
     MapNodeGroup();
     GroupReturnNode();
@@ -740,7 +740,7 @@ bool GraphKernelSplitter::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
 
   // Split subgraphs in reversed topo order,
-  // since the nodes behind the processing node may be modified when spliting.
+  // since the nodes behind the processing node may be modified when splitting.
   bool changed = false;
   for (auto iter = todos.crbegin(); iter != todos.crend(); ++iter) {
     auto node = (*iter)->cast<CNodePtr>();

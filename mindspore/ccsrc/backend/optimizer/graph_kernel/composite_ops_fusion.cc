@@ -73,6 +73,14 @@ bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &che
     return edges;
   };
 
+  // consider prior depend both in fused_op_set
+  auto range = depend_prior.equal_range(check_node);
+  for (auto iter = range.first; iter != range.second; ++iter) {
+    if (fused_op_set.count(iter->second.first)) {
+      circle_nodes->push_back(iter->second.first);
+    }
+  }
+
   std::set<AnfNodePtr> cached_done_set;
   auto cnode = check_node->cast<CNodePtr>();
   const auto &inputs = InputEdges(cnode);
