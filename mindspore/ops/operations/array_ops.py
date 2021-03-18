@@ -619,8 +619,11 @@ class Squeeze(PrimitiveWithInfer):
     """
     Returns a tensor with the same type but dimensions of 1 are removed based on `axis`.
 
+    If `axis` is specified, it will remove the dimensions of size 1 in the given `axis`.
+    It `axis` is None, it will remove all the dimensions of size 1.
+
     Note:
-        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim`.
+        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
 
     Args:
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
@@ -1004,6 +1007,9 @@ class UniqueWithPad(PrimitiveWithInfer):
 class Split(PrimitiveWithCheck):
     """
     Splits the input tensor into output_num of tensors along the given axis and output numbers.
+
+    The `input_x` tensor will be split into equally sized sub-tensors.
+    This requires that `input_x.shape(axis)` is divisible by `output_num`.
 
     Args:
         axis (int): Index of the split position. Default: 0.
@@ -1866,8 +1872,9 @@ class Tile(PrimitiveWithInfer):
     r"""
     Replicates a tensor with given multiples times.
 
-    Creates a new tensor by replicating input multiples times. The dimension of
-    output tensor is the larger of the input tensor dimension and the length of `multiples`.
+    Creates a new tensor by replicating `input_x` `multiples` times. The i'th dimension of
+    output tensor has `input_x.shape(i) * multiples[i]` elements, and the values of `input_x`
+    are replicated `multiples[i]` times along the i'th dimension.
 
     Inputs:
         - **input_x** (Tensor) - 1-D or higher Tensor. Set the shape of input tensor as
@@ -1880,7 +1887,6 @@ class Tile(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same data type as the `input_x`.
-
         - If the length of `multiples` is the same as the length of shape of `input_x`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
@@ -2581,13 +2587,22 @@ class Slice(PrimitiveWithInfer):
     """
     Slices a tensor in the specified shape.
 
+    Slice the tensor 'input_x` in shape of `size` and starting at the location specified by `begin`,
+    The slice `begin` represents the offset in each dimension of `input_x`,
+    The slice `size` represents the size of the output tensor.
+
+    Note that `begin` is zero-based and `size` is one-based.
+
+    If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
+    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`
+
     Inputs:
-        - **x** (Tensor): The target tensor.
+        - **input_x** (Tensor): The target tensor.
         - **begin** (tuple, list): The beginning of the slice. Only constant value is allowed.
         - **size** (tuple, list): The size of the slice. Only constant value is allowed.
 
     Outputs:
-        Tensor, the shape is : input `size`, the data type is the same as input `x`.
+        Tensor, the shape is : input `size`, the data type is the same as `input_x`.
 
     Raises:
         TypeError: If `begin` or `size` is neither tuple nor list.
@@ -2745,6 +2760,14 @@ class Select(PrimitiveWithInfer):
     selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each
     element.
 
+    It can be defined as:
+
+    .. math::
+        out_i = \begin{cases}
+        x_i, & \text{if } condition_i \\
+        y_i, & \text{otherwise}
+        \end{cases}
+
     If condition is a vector, then :math:`x` and :math:`y` are higher-dimensional matrices, then it
     chooses to copy that row (external dimensions) from :math:`x` and :math:`y`. If condition has
     the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
@@ -2888,19 +2911,21 @@ class StridedSlice(PrimitiveWithInfer):
           before reaching the maximum location. Only constant value is allowed.
 
     Outputs:
-        Tensor.
-        The output is explained by following example.
+        Tensor, The output is explained by following example.
 
-        - In the 0th dimension, begin is 1, end is 2, and strides is 1,
-          because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
-          Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
-        - In the 1st dimension, similarly, the interval is :math:`[0,1)`.
-          Based on the return value of the 0th dimension, return the element with :math:`index = 0`,
-          i.e., [3, 3, 3].
-        - In the 2nd dimension, similarly, the interval is :math:`[0,3)`.
-          Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
-          i.e., [3, 3, 3].
-        - Finally, the output is [3, 3, 3].
+        In the 0th dimension, begin is 1, end is 2, and strides is 1,
+        because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
+        Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
+
+        In the 1st dimension, similarly, the interval is :math:`[0,1)`.
+        Based on the return value of the 0th dimension, return the element with :math:`index = 0`,
+        i.e., [3, 3, 3].
+
+        In the 2nd dimension, similarly, the interval is :math:`[0,3)`.
+        Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
+        i.e., [3, 3, 3].
+
+        Finally, the output is [3, 3, 3].
 
     Raises:
         TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is not an int.
