@@ -67,6 +67,10 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
           continue;
         }
         auto value_node = current_node->cast<ValueNodePtr>()->value();
+        // not a string
+        if (value_node->type() == nullptr) {
+          continue;
+        }
         if (value_node->type()->generic_type_id() == kObjectTypeString) {
           auto current_string_value = GetValue<std::string>(value_node);
           string_pos.push_back(i);
