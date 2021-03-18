@@ -1512,6 +1512,14 @@ SoftDvppDecodeRandomCropResizeJpegOperation::SoftDvppDecodeRandomCropResizeJpegO
 Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
   // size
   RETURN_IF_NOT_OK(ValidateVectorSize("SoftDvppDecodeRandomCropResizeJpeg", size_));
+  for (int32_t i = 0; i < size_.size(); i++) {
+    if (size_[i] % 2 == 1) {
+      std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: size[" + std::to_string(i) +
+                            "] must be even values, got: " + std::to_string(size_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
   // scale
   RETURN_IF_NOT_OK(ValidateVectorScale("SoftDvppDecodeRandomCropResizeJpeg", scale_));
   // ratio
@@ -1554,6 +1562,14 @@ SoftDvppDecodeResizeJpegOperation::SoftDvppDecodeResizeJpegOperation(std::vector
 
 Status SoftDvppDecodeResizeJpegOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorSize("SoftDvppDecodeResizeJpeg", size_));
+  for (int32_t i = 0; i < size_.size(); i++) {
+    if (size_[i] % 2 == 1) {
+      std::string err_msg = "SoftDvppDecodeResizeJpeg: size[" + std::to_string(i) +
+                            "] must be even values, got: " + std::to_string(size_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
   return Status::OK();
 }
 

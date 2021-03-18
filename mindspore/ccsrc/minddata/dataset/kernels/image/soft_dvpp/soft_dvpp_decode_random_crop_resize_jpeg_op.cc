@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,14 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::Compute(const std::shared_ptr<Tenso
                                                      std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (!IsNonEmptyJPEG(input)) {
-    RETURN_STATUS_UNEXPECTED("SoftDvppDecodeRandomCropResizeJpeg only support process jpeg image.");
+    RETURN_STATUS_UNEXPECTED("SoftDvppDecodeRandomCropResizeJpeg: only support processing raw jpeg image.");
   }
   SoftDpCropInfo crop_info;
   RETURN_IF_NOT_OK(GetCropInfo(input, &crop_info));
   try {
     unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
-    CHECK_FAIL_RETURN_UNEXPECTED(buffer != nullptr, "The input image buffer is empty.");
+    CHECK_FAIL_RETURN_UNEXPECTED(buffer != nullptr,
+                                 "SoftDvppDecodeRandomCropResizeJpeg: the input image buffer is empty.");
     SoftDpProcsessInfo info;
     info.input_buffer = static_cast<uint8_t *>(buffer);
     info.input_buffer_size = input->SizeInBytes();
@@ -69,14 +70,14 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::Compute(const std::shared_ptr<Tenso
     info.output_buffer_size = target_width_ * target_height_ * 3;
     info.is_v_before_u = true;
     int ret = DecodeAndCropAndResizeJpeg(&info, crop_info);
-    std::string error_info("Soft dvpp DecodeAndResizeJpeg failed with return code: ");
-    error_info += std::to_string(ret);
+    std::string error_info("SoftDvppDecodeRandomCropResizeJpeg: failed with return code: ");
+    error_info += std::to_string(ret) + ", please check the log information for more details.";
     CHECK_FAIL_RETURN_UNEXPECTED(ret == 0, error_info);
     std::shared_ptr<CVTensor> cv_tensor = nullptr;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_rgb_img, &cv_tensor));
     *output = std::static_pointer_cast<Tensor>(cv_tensor);
   } catch (const cv::Exception &e) {
-    std::string error = "Error in SoftDvppDecodeRandomCropResizeJpegOp:" + std::string(e.what());
+    std::string error = "SoftDvppDecodeRandomCropResizeJpeg:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
