@@ -1350,6 +1350,22 @@ TEST_F(MindDataImageProcess, testGetPerspectiveTransform) {
   AccuracyComparison(expect_matrix, M);
 }
 
+TEST_F(MindDataImageProcess, testGetPerspectiveTransformFail) {
+  std::vector<Point> src = {Point(165, 270), Point(835, 270), Point(360, 125), Point(615, 125)};
+  std::vector<Point> dst = {Point(100, 100), Point(500, 30)};
+
+  LiteMat M;
+  bool ret = GetPerspectiveTransform(src, dst, M);
+  EXPECT_FALSE(ret);
+
+  std::vector<Point> src1 = {Point(360, 125), Point(615, 125)};
+  std::vector<Point> dst2 = {Point(165, 270), Point(835, 270), Point(100, 100), Point(500, 30)};
+
+  LiteMat M1;
+  bool ret1 = GetPerspectiveTransform(src, dst, M1);
+  EXPECT_FALSE(ret1);
+}
+
 TEST_F(MindDataImageProcess, testGetAffineTransform) {
   std::vector<std::vector<double>> expect_matrix = {{0.400000, 0.066667, 16.666667}, {0.000000, 0.333333, 23.333333}};
 
@@ -1361,6 +1377,22 @@ TEST_F(MindDataImageProcess, testGetAffineTransform) {
   ret = GetAffineTransform(src, dst, M);
   EXPECT_TRUE(ret);
   AccuracyComparison(expect_matrix, M);
+}
+
+TEST_F(MindDataImageProcess, testGetAffineTransformFail) {
+  std::vector<Point> src = {Point(50, 50), Point(200, 50)};
+  std::vector<Point> dst = {Point(40, 40), Point(100, 40), Point(50, 90)};
+
+  LiteMat M;
+  bool ret = GetAffineTransform(src, dst, M);
+  EXPECT_FALSE(ret);
+
+  std::vector<Point> src1 = {Point(50, 50), Point(200, 50), Point(50, 200)};
+  std::vector<Point> dst1 = {Point(40, 40), Point(100, 40)};
+
+  LiteMat M1;
+  bool ret1 = GetAffineTransform(src1, dst1, M1);
+  EXPECT_FALSE(ret1);
 }
 
 TEST_F(MindDataImageProcess, TestConv2D8U) {

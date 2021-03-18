@@ -1560,6 +1560,9 @@ bool GetPerspectiveTransformImpl(const LiteMat &src1, const LiteMat &src2, LiteM
 }
 
 bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M) {
+  if (src_point.size() != 4 || dst_point.size() != 4) {
+    return false;
+  }
   double m[8][8];
   double n[8];
   LiteMat src1(8, 8, m, LDataType(LDataType::DOUBLE));
@@ -1645,6 +1648,9 @@ bool GetAffineTransformImpl(LiteMat src, LiteMat dst) {
 }
 
 bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M) {
+  if (src_point.size() != 3 || dst_point.size() != 3) {
+    return false;
+  }
   double m[6 * 6];
   double n[6];
   LiteMat src1(6, 6, m, LDataType(LDataType::DOUBLE));
