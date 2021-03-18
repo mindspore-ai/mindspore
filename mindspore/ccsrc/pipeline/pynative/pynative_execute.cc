@@ -773,81 +773,6 @@ AnfNodePtr ForwardExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::ve
   return cnode;
 }
 
-AnfNodePtr ForwardExecutor::MakeCNodeForPrimBpOpt(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
-                                                  abstract::AbstractBasePtrList *args_spec_list) {
-  MS_EXCEPTION_IF_NULL(op_masks);
-  MS_EXCEPTION_IF_NULL(args_spec_list);
-  MS_EXCEPTION_IF_NULL(op_exec_info);
-
-  auto prim = op_exec_info->py_primitive;
-  std::vector<AnfNodePtr> inputs;
-  inputs.emplace_back(NewValueNode(prim));
-
-  const auto &signature = prim->signatures();
-  auto sig_size = signature.size();
-  auto size = op_exec_info->op_inputs.size();
-
-  // ignore monad signature
-  for (auto sig : signature) {
-    if (sig.default_value != nullptr && sig.default_value->isa<Monad>()) {
-      --sig_size;
-    }
-  }
-  if (sig_size > 0 && sig_size != size) {
-    MS_EXCEPTION(ValueError) << op_exec_info->op_name << " inputs size " << size << " does not match the requires "
-                             << "inputs size " << sig_size;
-  }
-  if (op_exec_info->op_name != prim::kPrimCast->name()) {
-    RunParameterAutoMixPrecisionCast(op_exec_info);
-  }
-
-  grad()->InitGradForPrimBpOpt();
-
-  MS_LOG(DEBUG) << "Get op " << op_exec_info->op_name << " grad flag " << grad()->grad_flag();
-  bool need_construct_graph = grad()->grad_flag() && !grad()->cell_stack().empty();
-  for (size_t i = 0; i < op_exec_info->op_inputs.size(); i++) {
-    abstract::AbstractBasePtr abs = nullptr;
-    const auto &obj = op_exec_info->op_inputs[i];
-    auto id = GetId(obj);
-    auto it = node_abs_map_.find(id);
-    if (it != node_abs_map_.end()) {
-      abs = it->second;
-    }
-    bool op_mask = false;
-    if (py::isinstance<tensor::MetaTensor>(obj)) {
-      auto meta_tensor = obj.cast<tensor::MetaTensorPtr>();
-      if (meta_tensor) {
-        op_mask = meta_tensor->is_parameter();
-      }
-    }
-    MS_LOG(DEBUG) << "Gen args i " << i << " op_mask " << op_mask;
-    (*op_masks).emplace_back(op_mask);
-
-    // Construct grad graph
-    if (need_construct_graph) {
-      AnfNodePtr input_node = nullptr;
-      if (!grad()->top_cell_list().empty()) {
-        input_node = grad()->GetInput(obj, op_mask);
-      }
-      // update abstract
-      if (input_node != nullptr) {
-        inputs.emplace_back(input_node);
-        if (input_node->abstract() != nullptr) {
-          abs = input_node->abstract();
-        }
-      }
-    }
-    (*args_spec_list).emplace_back(CheckConstValue(prim, obj, abs, id, i));
-  }
-
-  CNodePtr cnode = nullptr;
-  if (need_construct_graph) {
-    cnode = grad()->curr_g()->NewCNodeInOrder(inputs);
-    MS_LOG(DEBUG) << "Make CNode for " << op_exec_info->op_name << " new cnode is " << cnode->DebugString(4);
-  }
-  return cnode;
-}
-
 abstract::AbstractBasePtr ForwardExecutor::CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
                                                            const abstract::AbstractBasePtr &abs, const std::string &id,
                                                            size_t index) {
@@ -1647,7 +1572,6 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   PushCellStack(cell_id);
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
-    mindspore::device::clear_step_kernel_mod();
     auto graph_info = std::make_shared<GraphInfo>(cell_id);
     top_cell()->graph_info_map()[curr_g_] = graph_info;
     auto df_builder = GetDfbuilder(cell_id);

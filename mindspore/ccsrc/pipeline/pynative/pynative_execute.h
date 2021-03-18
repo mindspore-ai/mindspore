@@ -264,9 +264,6 @@ class ForwardExecutor {
   std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
 
-  AnfNodePtr MakeCNodeForPrimBpOpt(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
-                                   abstract::AbstractBasePtrList *args_spec_list);
-
  private:
   GradExecutorPtr grad() const;
   MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);

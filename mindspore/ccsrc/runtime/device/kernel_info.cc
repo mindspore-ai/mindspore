@@ -108,33 +108,13 @@ bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t
   return true;
 }
 
-static std::vector<kernel::KernelModPtr> g_kernel_mod_vec_long;
-static std::vector<kernel::KernelModPtr> g_kernel_mod_vec_step;
-static size_t clear_cnt = 0;
-void clear_step_kernel_mod() {
-  if (clear_cnt > 2) {
-    g_kernel_mod_vec_step.clear();
-  } else {
-    clear_cnt++;
-  }
-}
-
-void clear_global_kernel_mod() {
-  g_kernel_mod_vec_long.clear();
-}
-
 void KernelInfo::set_kernel_mod(const kernel::KernelModPtr &kernel_mod) {
-  kernel_mod_ = kernel_mod.get();
-  if (clear_cnt > 2) {
-    g_kernel_mod_vec_step.emplace_back(kernel_mod);
-  } else {
-    g_kernel_mod_vec_long.emplace_back(kernel_mod);
-  }
+  kernel_mod_ = kernel_mod;
 }
 
-kernel::KernelMod *KernelInfo::MutableKernelMod() const { return kernel_mod_; }
+kernel::KernelMod *KernelInfo::MutableKernelMod() const { return kernel_mod_.get(); }
 
-const kernel::KernelMod *KernelInfo::kernel_mod() const { return kernel_mod_; }
+const kernel::KernelMod *KernelInfo::kernel_mod() const { return kernel_mod_.get(); }
 
 bool KernelInfo::operator==(const KernelInfo &other) const {
   if (stream_id_ != other.stream_id_ || stream_distinction_label_ != other.stream_distinction_label_ ||
