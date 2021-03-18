@@ -25,7 +25,7 @@ AclGraphImpl::AclGraphImpl()
     : init_flag_(false),
       load_flag_(false),
       device_type_("AscendCL"),
-      device_id_(GlobalContext::GetGlobalDeviceID()),
+      device_id_(0),
       context_(nullptr),
       acl_env_(nullptr) {}
 
@@ -33,7 +33,7 @@ AclGraphImpl::~AclGraphImpl() { (void)FinalizeEnv(); }
 
 Status AclGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
-  Status ret = Load();
+  Status ret = Load(device_id_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
     return ret;
@@ -43,7 +43,7 @@ Status AclGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTens
 }
 
 std::vector<MSTensor> AclGraphImpl::GetInputs() {
-  Status ret = Load();
+  Status ret = Load(device_id_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
     return {};
@@ -53,7 +53,7 @@ std::vector<MSTensor> AclGraphImpl::GetInputs() {
 }
 
 std::vector<MSTensor> AclGraphImpl::GetOutputs() {
-  Status ret = Load();
+  Status ret = Load(device_id_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
     return {};
@@ -90,7 +90,7 @@ Status AclGraphImpl::InitEnv() {
     return kSuccess;
   }
 
-  acl_env_ = AclEnvGuard::GetAclEnv(GlobalContext::GetGlobalDumpConfigPath());
+  acl_env_ = AclEnvGuard::GetAclEnv("");
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
     return kMCDeviceError;
@@ -161,7 +161,7 @@ Status AclGraphImpl::FinalizeEnv() {
   return kSuccess;
 }
 
-Status AclGraphImpl::Load() {
+Status AclGraphImpl::Load(uint32_t device_id) {
   // check graph type
   if (graph_->ModelType() != ModelType::kOM) {
     Status ret = ConvertToOM();
@@ -176,6 +176,7 @@ Status AclGraphImpl::Load() {
   auto om_data = graph_data->GetOMData();
 
   // init
+  device_id_ = device_id;
   Status ret = InitEnv();
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";

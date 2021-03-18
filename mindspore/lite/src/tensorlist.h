@@ -77,7 +77,7 @@ class TensorList : public Tensor {
 
   int MallocTensorListData(TypeId dtype, const std::vector<std::vector<int> > &tensor_shape);
 
-  int MallocData(const mindspore::lite::Allocator *allocator = nullptr) override;
+  int MallocData(const mindspore::Allocator *allocator = nullptr) override;
 
   int FreeTensorListData();
 

@@ -57,7 +57,7 @@ int InnerContext::Init() {
     }
   }
   if (this->allocator == nullptr) {
-    this->allocator = Allocator::Create();
+    this->allocator = mindspore::Allocator::Create();
     if (this->allocator == nullptr) {
       MS_LOG(ERROR) << "Create Allocator failed";
       return RET_NULL_PTR;

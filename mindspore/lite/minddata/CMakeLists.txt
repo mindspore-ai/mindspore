@@ -110,6 +110,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${TOP_DIR}/mindspore/lite/src/cxx_api/types.cc
         ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor/tensor_impl.cc
         ${TOP_DIR}/mindspore/lite/src/tensor.cc
+        ${TOP_DIR}/mindspore/lite/src/common/string_util.cc
         ${CORE_DIR}/utils/status.cc
         ${MINDDATA_DIR}/api/datasets.cc
         ${MINDDATA_DIR}/kernels/data/data_utils.cc
@@ -306,7 +307,6 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
     set(MINDSPORE_LITE_CXXAPI_SRC
             ${CORE_DIR}/utils/status.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/cxx_api/types.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/cxx_api/tensor/tensor_impl.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/tensor.cc
             )
 

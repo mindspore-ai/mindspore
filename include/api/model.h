@@ -24,39 +24,52 @@
 #include "include/api/status.h"
 #include "include/api/types.h"
 #include "include/api/graph.h"
+#include "include/api/context.h"
 #include "include/api/cell.h"
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 class ModelImpl;
-struct Context;
 
 class MS_API Model {
  public:
-  explicit Model(const std::vector<Output> &network, const std::shared_ptr<Context> &model_context = nullptr);
-  explicit Model(const GraphCell &graph, const std::shared_ptr<Context> &model_context = nullptr);
+  Model();
   ~Model();
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
-  Status Build();
+  Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr);
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
   std::vector<MSTensor> GetInputs();
-  std::vector<MSTensor> GetOutputs();
+  inline MSTensor GetInputByTensorName(const std::string &tensor_name);
 
-  static inline bool CheckModelSupport(const std::string &device_type, ModelType model_type);
+  std::vector<MSTensor> GetOutputs();
+  inline std::vector<std::string> GetOutputTensorNames();
+  inline MSTensor GetOutputByTensorName(const std::string &tensor_name);
+
+  static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
 
  private:
   // api without std::string
-  static bool CheckModelSupport(const std::vector<char> &device_type, ModelType model_type);
+  MSTensor GetInputByTensorName(const std::vector<char> &tensor_name);
+  std::vector<std::vector<char>> GetOutputTensorNamesChar();
+  MSTensor GetOutputByTensorName(const std::vector<char> &tensor_name);
+  std::vector<MSTensor> GetOutputsByNodeName(const std::vector<char> &node_name);
+
   std::shared_ptr<ModelImpl> impl_;
 };
 
-bool Model::CheckModelSupport(const std::string &device_type, ModelType model_type) {
-  return CheckModelSupport(StringToChar(device_type), model_type);
+MSTensor Model::GetInputByTensorName(const std::string &tensor_name) {
+  return GetInputByTensorName(StringToChar(tensor_name));
+}
+
+std::vector<std::string> Model::GetOutputTensorNames() { return VectorCharToString(GetOutputTensorNamesChar()); }
+
+MSTensor Model::GetOutputByTensorName(const std::string &tensor_name) {
+  return GetOutputByTensorName(StringToChar(tensor_name));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

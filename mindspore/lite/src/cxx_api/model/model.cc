@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,30 @@
  * limitations under the License.
  */
 #include "include/api/model.h"
-#include "include/api/lite_context.h"
+#include "include/api/types.h"
+#include "include/api/context.h"
+#include "include/api/dual_abi_helper.h"
 #include "src/cxx_api/model/model_impl.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
 
-Status Model::Build() {
+Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context) {
+  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteNullptr;
   }
+  if (graph.GetGraph() == nullptr) {
+    MS_LOG(ERROR) << "Invalid graph.";
+    return kLiteNullptr;
+  }
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return kLiteNullptr;
+  }
+  impl_->SetContext(model_context);
+  impl_->SetGraph(graph.GetGraph());
   return impl_->Build();
 }
 
@@ -44,30 +57,11 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs);
 }
 
-Model::Model(const GraphCell &graph, const std::shared_ptr<Context> &model_context) {
-  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
-  if (impl_ == nullptr || graph.GetGraph() == nullptr) {
-    MS_LOG(ERROR) << "Invalid graph.";
-  } else if (model_context == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-  } else {
-    auto new_graph_cell = std::shared_ptr<GraphCell>(new (std::nothrow) GraphCell(graph));
-    if (new_graph_cell != nullptr) {
-      impl_->SetContext(model_context);
-      impl_->SetGraphCell(new_graph_cell);
-    } else {
-      MS_LOG(ERROR) << "New graphcell failed.";
-    }
-  }
-}
-
-Model::Model(const std::vector<Output> &network, const std::shared_ptr<Context> &model_context) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-}
+Model::Model() : impl_(nullptr) {}
 
 Model::~Model() {}
 
-bool Model::CheckModelSupport(const std::vector<char> &, ModelType) {
+bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return false;
 }
@@ -90,4 +84,37 @@ std::vector<MSTensor> Model::GetOutputs() {
   return impl_->GetOutputs();
 }
 
+MSTensor Model::GetInputByTensorName(const std::vector<char> &name) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return MSTensor(nullptr);
+  }
+  return impl_->GetInputByTensorName(CharToString(name));
+}
+
+std::vector<std::vector<char>> Model::GetOutputTensorNamesChar() {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    std::vector<std::vector<char>> empty;
+    return empty;
+  }
+  return VectorStringToChar(impl_->GetOutputTensorNames());
+}
+
+MSTensor Model::GetOutputByTensorName(const std::vector<char> &name) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return MSTensor(nullptr);
+  }
+  return impl_->GetOutputByTensorName(CharToString(name));
+}
+
+std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_name) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    std::vector<MSTensor> empty;
+    return empty;
+  }
+  return impl_->GetOutputsByNodeName(CharToString(node_name));
+}
 }  // namespace mindspore

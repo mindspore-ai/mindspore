@@ -34,7 +34,7 @@ class MindrtExecutor : public Executor {
   virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
 
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+                  const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  protected:

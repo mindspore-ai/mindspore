@@ -24,6 +24,8 @@
 #include "utils/utils.h"
 
 namespace mindspore {
+inline std::string g_device_target = "Default";
+
 template <class T>
 class Factory {
   using U = std::function<std::shared_ptr<T>()>;

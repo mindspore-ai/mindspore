@@ -113,9 +113,9 @@ int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector
   return RET_OK;
 }
 
-int TensorList::MallocData(const mindspore::lite::Allocator *allocator) {
+int TensorList::MallocData(const mindspore::Allocator *allocator) {
   if (allocator != nullptr) {
-    allocator_ = const_cast<mindspore::lite::Allocator *>(allocator);
+    allocator_ = const_cast<mindspore::Allocator *>(allocator);
   }
   // malloc data buf of each tensor in tensors_
   for (int i = 0; i < this->ElementsNum(); ++i) {

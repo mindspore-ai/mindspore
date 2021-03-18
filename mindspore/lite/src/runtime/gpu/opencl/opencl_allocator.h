@@ -40,7 +40,7 @@ struct ImageSize {
   }
 };
 
-class OpenCLAllocator : public Allocator {
+class OpenCLAllocator : public mindspore::Allocator {
  public:
   explicit OpenCLAllocator(OpenCLRuntime *ocl_runtime);
   ~OpenCLAllocator() override;

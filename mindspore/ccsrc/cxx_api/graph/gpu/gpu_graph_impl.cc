@@ -30,7 +30,7 @@ API_FACTORY_REG(GraphCell::GraphImpl, GPU, GPUGraphImpl);
 GPUGraphImpl::GPUGraphImpl()
     : session_impl_(nullptr),
       graph_id_(0),
-      device_id_(GlobalContext::GetGlobalDeviceID()),
+      device_id_(0),
       inputs_info_(),
       outputs_info_(),
       input_names_(),
@@ -83,7 +83,7 @@ Status GPUGraphImpl::FinalizeEnv() {
   return kSuccess;
 }
 
-Status GPUGraphImpl::Load() {
+Status GPUGraphImpl::Load(uint32_t device_id) {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
@@ -95,6 +95,7 @@ Status GPUGraphImpl::Load() {
   auto func_graph = graph_data->GetFuncGraph();
 
   // init
+  device_id_ = device_id;
   Status ret = InitEnv();
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";
@@ -176,7 +177,7 @@ Status GPUGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::vec
 Status GPUGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
-    Status ret = Load();
+    Status ret = Load(device_id_);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return ret;
@@ -211,7 +212,7 @@ Status GPUGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTens
 
 std::vector<MSTensor> GPUGraphImpl::GetInputs() {
   if (!load_flag_) {
-    Status ret = Load();
+    Status ret = Load(device_id_);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return {};
@@ -235,7 +236,7 @@ std::vector<MSTensor> GPUGraphImpl::GetInputs() {
 
 std::vector<MSTensor> GPUGraphImpl::GetOutputs() {
   if (!load_flag_) {
-    Status ret = Load();
+    Status ret = Load(device_id_);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return {};

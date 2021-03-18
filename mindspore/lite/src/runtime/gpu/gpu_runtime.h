@@ -64,7 +64,7 @@ class DevKernel {
  public:
   void *data{nullptr};
 };
-class GpuAllocator : public Allocator {};
+class GpuAllocator : public mindspore::Allocator {};
 class GpuRuntime {
  public:
   GpuRuntime() {}

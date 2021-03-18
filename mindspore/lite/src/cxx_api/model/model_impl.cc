@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,16 @@
 #include <unordered_map>
 #include <algorithm>
 #include "include/api/types.h"
-#include "include/api/lite_context.h"
+#include "include/api/context.h"
+#include "include/api/dual_abi_helper.h"
 #include "include/lite_session.h"
 #include "include/context.h"
 #include "src/lite_model.h"
 #include "src/runtime/allocator.h"
-#include "src/cxx_api/utils.h"
+#include "src/common/string_util.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
+#include "src/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -39,13 +41,9 @@ Status ModelImpl::Build() {
     MS_LOG(DEBUG) << "Model has been already built.";
     return kSuccess;
   }
-  if (graph_cell_ == nullptr || graph_cell_->GetGraph() == nullptr || graph_cell_->GetGraph()->graph_data_ == nullptr) {
-    MS_LOG(ERROR) << "Graph cell is invalid.";
-    return kLiteNullptr;
-  }
-  auto model = graph_cell_->GetGraph()->graph_data_->lite_model();
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Lite model is nullptr.";
+  auto model = graph_->graph_data_->lite_model();
+  if (graph_ == nullptr || graph_->graph_data_ == nullptr || model == nullptr) {
+    MS_LOG(ERROR) << "Invalid graph.";
     return kLiteNullptr;
   }
   if (model->buf == nullptr) {
@@ -57,36 +55,58 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
   lite::Context model_context;
-  model_context.allocator = Context::GetAllocator(context_);
+  auto device_list = context_->MutableDeviceInfo();
+  if (device_list.size() == 0) {
+    MS_LOG(ERROR) << "Invalid device list.";
+    return kLiteInputParamInvalid;
+  }
+  if (device_list.size() > 2) {
+    MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
+    return kLiteInputParamInvalid;
+  }
+  model_context.allocator = context_->GetAllocator();
   if (model_context.allocator == nullptr) {
-    model_context.allocator = lite::Allocator::Create();
+    model_context.allocator = Allocator::Create();
     if (model_context.allocator == nullptr) {
       MS_LOG(ERROR) << "Create Allocator failed.";
       return kLiteNullptr;
     }
     MS_LOG(DEBUG) << "Set new allocator.";
-    Context::SetAllocator(context_, model_context.allocator);
+    context_->SetAllocator(model_context.allocator);
   }
-  model_context.vendor_name_ = Context::GetVendorName(context_);
-  model_context.thread_num_ = Context::GetThreadNum(context_);
+  model_context.thread_num_ = context_->GetThreadNum();
   model_context.device_list_.clear();
-  if (Context::IfCPUEnabled(context_) && Context::IfGPUEnabled(context_) && Context::IfNPUEnabled(context_)) {
-    MS_LOG(ERROR) << "CPU/GPU/NPU cannot be enabled at the same time.";
+  if (device_list[0]->GetDeviceType() != kCPU) {
+    MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
     return kLiteInputParamInvalid;
   }
-  if (!Context::IfCPUEnabled(context_)) {
-    MS_LOG(INFO) << "CPU is forced to be enabled.";
+  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
+  lite::CpuBindMode mode;
+  if (cpu_context->GetThreadAffinity() == 0) {
+    mode = lite::NO_BIND;
+  } else if (cpu_context->GetThreadAffinity() == 1) {
+    mode = lite::HIGHER_CPU;
+  } else if (cpu_context->GetThreadAffinity() == 2) {
+    mode = lite::MID_CPU;
+  } else {
+    MS_LOG(ERROR) << "Invalid thread affinity.";
+    return kLiteInputParamInvalid;
   }
-  lite::DeviceInfo cpu_info = {
-    .cpu_device_info_ = {Context::IfCPUFp16Enabled(context_), Context::GetCPUBindMode(context_)}};
+  lite::DeviceInfo cpu_info = {.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode}};
   model_context.device_list_.push_back({lite::DT_CPU, cpu_info});
-  if (Context::IfGPUEnabled(context_)) {
-    lite::DeviceInfo gpu_info = {.gpu_device_info_ = {Context::IfGPUFp16Enabled(context_)}};
-    model_context.device_list_.push_back({lite::DT_GPU, gpu_info});
-  }
-  if (Context::IfNPUEnabled(context_)) {
-    lite::DeviceInfo npu_info = {.npu_device_info_ = {Context::GetNPUFrequency(context_)}};
-    model_context.device_list_.push_back({lite::DT_NPU, npu_info});
+  if (device_list.size() == 2) {
+    if (device_list[1]->GetDeviceType() == kMaliGPU) {
+      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
+      lite::DeviceInfo gpu_info = {.gpu_device_info_ = {gpu_context->GetEnableFP16()}};
+      model_context.device_list_.push_back({lite::DT_GPU, gpu_info});
+    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
+      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
+      lite::DeviceInfo npu_info = {.npu_device_info_ = {npu_context->GetFrequency()}};
+      model_context.device_list_.push_back({lite::DT_NPU, npu_info});
+    } else {
+      MS_LOG(ERROR) << "Invalid device.";
+      return kLiteInputParamInvalid;
+    }
   }
   auto session = std::shared_ptr<session::LiteSession>(session::LiteSession::CreateSession(&model_context));
   if (session == nullptr) {
@@ -98,10 +118,17 @@ Status ModelImpl::Build() {
     MS_LOG(ERROR) << "Build model failed.";
     return static_cast<StatusCode>(ret);
   }
+  session->BindThread(true);
   session_.swap(session);
   model->Free();
   MS_LOG(DEBUG) << "Build model success.";
   return kSuccess;
+}
+
+static void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MSTensor *> tensors) {
+  for (size_t j = 0; j < old_data.size(); j++) {
+    tensors.at(j)->set_data(old_data.at(j));
+  }
 }
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
@@ -122,35 +149,44 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   for (size_t i = 0; i < inputs.size(); i++) {
     auto input = input_tensors.at(i);
     auto user_input = inputs.at(i);
+    if (user_input.DataType() != static_cast<enum DataType>(input->data_type())) {
+      ResetTensorData(old_data, input_tensors);
+      MS_LOG(ERROR) << "Tensor " << user_input.Name() << " has a different data type from input" << input->tensor_name()
+                    << ".";
+      return kLiteInputTensorError;
+    }
     if (user_input.Name() != input->tensor_name()) {
       MS_LOG(WARNING) << "Tensor " << user_input.Name() << " has a different name from input" << input->tensor_name()
                       << ".";
     }
-    old_data.push_back(input->MutableData());
-    if (user_input.MutableData() != input->MutableData()) {
-      if (input->Size() != user_input.DataSize()) {
-        for (size_t j = 0; j < old_data.size(); j++) {
-          input_tensors.at(j)->set_data(old_data.at(j));
-        }
-        MS_LOG(ERROR) << "Tensor " << user_input.Name() << " has wrong data size.";
-        return kLiteInputTensorError;
+    old_data.push_back(input->data());
+    if (input->data_type() == kObjectTypeString) {
+      std::vector<int32_t> shape = TruncateShape(user_input.Shape(), input->data_type(), user_input.DataSize(), false);
+      if (shape.empty() && !(user_input.Shape().empty())) {
+        ResetTensorData(old_data, input_tensors);
+        MS_LOG(ERROR) << "Input dims of tensor " << user_input.Name() << " is invalid.";
+        return kLiteParamInvalid;
       }
-      if (user_input.impl_->need_copy()) {
-        ::memcpy(input->MutableData(), user_input.MutableData(), input->Size());
-      } else {
+      input->set_shape(shape);
+      input->set_data(user_input.MutableData());
+    } else {
+      if (user_input.MutableData() != input->data()) {
+        if (input->Size() != user_input.DataSize()) {
+          ResetTensorData(old_data, input_tensors);
+          MS_LOG(ERROR) << "Tensor " << user_input.Name() << " has wrong data size.";
+          return kLiteInputTensorError;
+        }
         input->set_data(user_input.MutableData());
       }
     }
   }
   auto ret = session_->RunGraph();
+  ResetTensorData(old_data, input_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run graph failed.";
     return static_cast<StatusCode>(ret);
   }
   MS_LOG(DEBUG) << "Run graph success.";
-  for (size_t i = 0; i < old_data.size(); i++) {
-    input_tensors.at(i)->set_data(old_data.at(i));
-  }
   auto res = GetOutputs();
   if (res.empty()) {
     MS_LOG(DEBUG) << "Empty outputs.";
@@ -176,7 +212,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
-    if (impl == nullptr) {
+    if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }
@@ -214,7 +250,83 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   res.resize(names.size());
   for (size_t i = 0; i < names.size(); i++) {
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[names[i]]));
-    if (impl == nullptr) {
+    if (impl == nullptr || impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return empty;
+    }
+    auto tensor = MSTensor(impl);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return empty;
+    }
+    res[i] = tensor;
+  }
+  return res;
+}
+
+MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return MSTensor(nullptr);
+  }
+  auto res = session_->GetInputsByTensorName(name);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
+    return MSTensor(nullptr);
+  }
+  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(res));
+  if (impl == nullptr || impl->lite_tensor() == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed.";
+    return MSTensor(nullptr);
+  }
+
+  return MSTensor(impl);
+}
+
+std::vector<std::string> ModelImpl::GetOutputTensorNames() {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    std::vector<std::string> empty;
+    return empty;
+  }
+  return session_->GetOutputTensorNames();
+}
+
+MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return MSTensor(nullptr);
+  }
+  auto res = session_->GetOutputByTensorName(name);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
+    return MSTensor(nullptr);
+  }
+  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(res));
+  if (impl == nullptr || impl->lite_tensor() == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed.";
+    return MSTensor(nullptr);
+  }
+
+  return MSTensor(impl);
+}
+
+std::vector<MSTensor> ModelImpl::GetOutputsByNodeName(const std::string &name) {
+  std::vector<MSTensor> empty;
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return empty;
+  }
+  std::vector<MSTensor> res;
+  auto outputs = session_->GetOutputsByNodeName(name);
+  if (outputs.empty()) {
+    MS_LOG(ERROR) << "The outputs of model is null.";
+    return empty;
+  }
+  res.resize(outputs.size());
+  for (size_t i = 0; i < outputs.size(); i++) {
+    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[i]));
+    if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }

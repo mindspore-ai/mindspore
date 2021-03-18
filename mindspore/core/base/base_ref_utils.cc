@@ -16,8 +16,6 @@
 #include "base/base_ref_utils.h"
 #include <vector>
 #include <memory>
-
-#include "include/infer_tensor.h"
 #include "ir/tensor.h"
 
 namespace mindspore {

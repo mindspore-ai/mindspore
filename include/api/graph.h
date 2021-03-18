@@ -27,6 +27,7 @@ namespace mindspore {
 class MS_API Graph {
  public:
   class GraphData;
+  Graph();
   explicit Graph(const std::shared_ptr<GraphData> &graph_data);
   explicit Graph(std::shared_ptr<GraphData> &&graph_data);
   explicit Graph(std::nullptr_t);
@@ -34,6 +35,7 @@ class MS_API Graph {
 
   enum ModelType ModelType() const;
   bool operator==(std::nullptr_t) const;
+  bool operator!=(std::nullptr_t) const;
 
  private:
   friend class GraphCell;

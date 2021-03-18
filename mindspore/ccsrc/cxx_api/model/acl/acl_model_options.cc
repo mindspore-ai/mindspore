@@ -27,10 +27,19 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (context == nullptr) {
     return;
   }
-  insert_op_cfg_path_ = ModelContext::GetInsertOpConfigPath(context);
-  input_format_ = ModelContext::GetInputFormat(context);
-  input_shape_map_ = ModelContext::GetInputShapeMap(context);
-  auto out_type = ModelContext::GetOutputType(context);
+  auto &device_infos = context->MutableDeviceInfo();
+  if (device_infos.size() != 1) {
+    return;
+  }
+  auto ascend310_info = device_infos[0]->Cast<Ascend310DeviceInfo>();
+  if (ascend310_info == nullptr) {
+    return;
+  }
+
+  insert_op_cfg_path_ = ascend310_info->GetInsertOpConfigPath();
+  input_format_ = ascend310_info->GetInputFormat();
+  input_shape_map_ = ascend310_info->GetInputShapeMap();
+  auto out_type = ascend310_info->GetOutputType();
   auto iter = kSupportedDtypeOptionMap.find(out_type);
   if (out_type == DataType::kTypeUnknown) {
     // do nothing
@@ -39,10 +48,12 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   } else {
     output_type_ = iter->second;
   }
-  dynamic_batch_size_ = ModelContext::GetDynamicBatchSize(context);
-  precision_mode_ = ModelContext::GetPrecisionMode(context);
-  op_select_impl_mode_ = ModelContext::GetOpSelectImplMode(context);
-  fusion_switch_cfg_path_ = ModelContext::GetFusionSwitchConfigPath(context);
+  dynamic_batch_size_ = ascend310_info->GetDynamicBatchSize();
+  precision_mode_ = ascend310_info->GetPrecisionMode();
+  op_select_impl_mode_ = ascend310_info->GetOpSelectImplMode();
+  fusion_switch_cfg_path_ = ascend310_info->GetFusionSwitchConfigPath();
+  device_id_ = ascend310_info->GetDeviceID();
+  dump_cfg_path_ = ascend310_info->GetDumpConfigPath();
 }
 
 void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {

@@ -25,7 +25,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace mindspore::lite {
+namespace mindspore {
+
 struct AllocatorContext {
   int shiftFactor;
   bool lockFlag;
@@ -75,6 +76,6 @@ class DefaultAllocator : public Allocator {
 constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
 constexpr int64_t MAX_THREAD_POOL_SIZE = static_cast<size_t>(3000) * 1024 * 1024;
 
-}  // namespace mindspore::lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_ALLOCATOR_H_

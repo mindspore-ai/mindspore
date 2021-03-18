@@ -45,6 +45,9 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   acl_env = global_acl_env_;
   if (acl_env != nullptr) {
     MS_LOG(INFO) << "Acl has been initialized, skip.";
+    if (!cfg_file.empty()) {
+      MS_LOG(WARNING) << "Dump config file option " << cfg_file << " is ignored.";
+    }
   } else {
     acl_env = std::make_shared<AclEnvGuard>(cfg_file);
     aclError ret = acl_env->GetErrno();

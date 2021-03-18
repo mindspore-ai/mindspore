@@ -43,9 +43,9 @@ class ModelImpl {
   virtual std::vector<MSTensor> GetOutputs() = 0;
 
  protected:
-  Status Load(const std::shared_ptr<GraphCell> &graph_cell) {
+  Status Load(const std::shared_ptr<GraphCell> &graph_cell, uint32_t device_id) {
     MS_EXCEPTION_IF_NULL(graph_cell);
-    return graph_cell->Load();
+    return graph_cell->Load(device_id);
   }
 
   FuncGraphPtr GetFuncGraph() const {

@@ -24,162 +24,201 @@
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
-constexpr auto kDeviceTypeAscend310 = "Ascend310";
-constexpr auto kDeviceTypeAscend910 = "Ascend910";
-constexpr auto kDeviceTypeGPU = "GPU";
+enum DeviceType {
+  kCPU = 0,
+  kMaliGPU,
+  kNvidiaGPU,
+  kKirinNPU,
+  kAscend910,
+  kAscend310,
+  // add new type here
+  kInvalidDeviceType = 100,
+};
 
-struct MS_API Context {
+class Allocator;
+class DeviceInfoContext;
+
+class MS_API Context {
  public:
   Context();
-  virtual ~Context() = default;
+  ~Context() = default;
+
+  void SetThreadNum(int32_t thread_num);
+  int32_t GetThreadNum() const;
+
+  void SetAllocator(const std::shared_ptr<Allocator> &allocator);
+  std::shared_ptr<Allocator> GetAllocator() const;
+
+  std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
+
+ private:
   struct Data;
-  std::shared_ptr<Data> data;
+  std::shared_ptr<Data> data_;
 };
 
-struct MS_API GlobalContext : public Context {
+class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoContext> {
  public:
-  static std::shared_ptr<Context> GetGlobalContext();
+  struct Data;
 
-  static inline void SetGlobalDeviceTarget(const std::string &device_target);
-  static inline std::string GetGlobalDeviceTarget();
+  DeviceInfoContext();
+  virtual ~DeviceInfoContext() = default;
+  virtual enum DeviceType GetDeviceType() const = 0;
 
-  static void SetGlobalDeviceID(const uint32_t &device_id);
-  static uint32_t GetGlobalDeviceID();
+  template <class T>
+  std::shared_ptr<T> Cast() {
+    static_assert(std::is_base_of<DeviceInfoContext, T>::value, "Wrong cast type.");
+    if (GetDeviceType() != T().GetDeviceType()) {
+      return nullptr;
+    }
 
-  static inline void SetGlobalDumpConfigPath(const std::string &cfg_path);
-  static inline std::string GetGlobalDumpConfigPath();
+    return std::static_pointer_cast<T>(shared_from_this());
+  }
+
+ protected:
+  std::shared_ptr<Data> data_;
+};
+
+class MS_API CPUDeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kCPU; };
+
+  /// \brief Set the thread affinity of CPU cores.
+  ///
+  /// \param mode: 0: no affinities, 1: big cores first, 2: little cores first
+  void SetThreadAffinity(int mode);
+  int GetThreadAffinity() const;
+  void SetEnableFP16(bool is_fp16);
+  bool GetEnableFP16() const;
+};
+
+class MS_API MaliGPUDeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kMaliGPU; };
+
+  void SetEnableFP16(bool is_fp16);
+  bool GetEnableFP16() const;
+};
+
+class MS_API KirinNPUDeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kKirinNPU; };
+
+  void SetFrequency(int frequency);
+  int GetFrequency() const;
+};
+
+class MS_API NvidiaGPUDeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kNvidiaGPU; };
+
+  void SetDeviceID(uint32_t device_id);
+  uint32_t GetDeviceID() const;
+
+  void SetGpuTrtInferMode(bool gpu_trt_infer_mode);
+  bool GetGpuTrtInferMode() const;
+};
+
+class MS_API Ascend910DeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kAscend910; };
+
+  void SetDeviceID(uint32_t device_id);
+  uint32_t GetDeviceID() const;
+};
+
+class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kAscend310; };
+
+  void SetDeviceID(uint32_t device_id);
+  uint32_t GetDeviceID() const;
+
+  inline void SetDumpConfigPath(const std::string &cfg_path);
+  inline std::string GetDumpConfigPath() const;
+
+  inline void SetInsertOpConfigPath(const std::string &cfg_path);
+  inline std::string GetInsertOpConfigPath() const;
+
+  inline void SetInputFormat(const std::string &format);
+  inline std::string GetInputFormat() const;
+
+  inline void SetInputShape(const std::string &shape);
+  inline std::string GetInputShape() const;
+
+  void SetInputShapeMap(const std::map<int, std::vector<int>> &shape);
+  std::map<int, std::vector<int>> GetInputShapeMap() const;
+
+  void SetDynamicBatchSize(const std::vector<size_t> &dynamic_batch_size);
+  inline std::string GetDynamicBatchSize() const;
+
+  void SetOutputType(enum DataType output_type);
+  enum DataType GetOutputType() const;
+
+  inline void SetPrecisionMode(const std::string &precision_mode);
+  inline std::string GetPrecisionMode() const;
+
+  inline void SetOpSelectImplMode(const std::string &op_select_impl_mode);
+  inline std::string GetOpSelectImplMode() const;
+
+  inline void SetFusionSwitchConfigPath(const std::string &cfg_path);
+  inline std::string GetFusionSwitchConfigPath() const;
 
  private:
-  // api without std::string
-  static void SetGlobalDeviceTarget(const std::vector<char> &device_target);
-  static std::vector<char> GetGlobalDeviceTargetChar();
+  void SetDumpConfigPath(const std::vector<char> &cfg_path);
+  std::vector<char> GetDumpConfigPathChar() const;
 
-  static void SetGlobalDumpConfigPath(const std::vector<char> &cfg_path);
-  static std::vector<char> GetGlobalDumpConfigPathChar();
+  void SetInsertOpConfigPath(const std::vector<char> &cfg_path);
+  std::vector<char> GetInsertOpConfigPathChar() const;
+
+  void SetInputFormat(const std::vector<char> &format);
+  std::vector<char> GetInputFormatChar() const;
+
+  void SetInputShape(const std::vector<char> &shape);
+  std::vector<char> GetInputShapeChar() const;
+
+  std::vector<char> GetDynamicBatchSizeChar() const;
+
+  void SetPrecisionMode(const std::vector<char> &precision_mode);
+  std::vector<char> GetPrecisionModeChar() const;
+
+  void SetOpSelectImplMode(const std::vector<char> &op_select_impl_mode);
+  std::vector<char> GetOpSelectImplModeChar() const;
+
+  void SetFusionSwitchConfigPath(const std::vector<char> &cfg_path);
+  std::vector<char> GetFusionSwitchConfigPathChar() const;
 };
 
-struct MS_API ModelContext : public Context {
- public:
-  static inline void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
-  static inline std::string GetInsertOpConfigPath(const std::shared_ptr<Context> &context);
+void Ascend310DeviceInfo::SetDumpConfigPath(const std::string &cfg_path) { SetDumpConfigPath(StringToChar(cfg_path)); }
+std::string Ascend310DeviceInfo::GetDumpConfigPath() const { return CharToString(GetDumpConfigPathChar()); }
 
-  static inline void SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format);
-  static inline std::string GetInputFormat(const std::shared_ptr<Context> &context);
-
-  static inline void SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape);
-  static inline std::string GetInputShape(const std::shared_ptr<Context> &context);
-
-  static void SetInputShapeMap(const std::shared_ptr<Context> &context, const std::map<int, std::vector<int>> &shape);
-  static std::map<int, std::vector<int>> GetInputShapeMap(const std::shared_ptr<Context> &context);
-
-  static void SetDynamicBatchSize(const std::shared_ptr<Context> &context,
-                                  const std::vector<size_t> &dynamic_batch_size);
-  static inline std::string GetDynamicBatchSize(const std::shared_ptr<Context> &context);
-
-  static void SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type);
-  static enum DataType GetOutputType(const std::shared_ptr<Context> &context);
-
-  static inline void SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode);
-  static inline std::string GetPrecisionMode(const std::shared_ptr<Context> &context);
-
-  static inline void SetOpSelectImplMode(const std::shared_ptr<Context> &context,
-                                         const std::string &op_select_impl_mode);
-  static inline std::string GetOpSelectImplMode(const std::shared_ptr<Context> &context);
-
-  static inline void SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
-  static inline std::string GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context);
-
-  static inline void SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::string &gpu_trt_infer_mode);
-  static inline std::string GetGpuTrtInferMode(const std::shared_ptr<Context> &context);
-
- private:
-  // api without std::string
-  static void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
-  static std::vector<char> GetInsertOpConfigPathChar(const std::shared_ptr<Context> &context);
-
-  static void SetInputFormat(const std::shared_ptr<Context> &context, const std::vector<char> &format);
-  static std::vector<char> GetInputFormatChar(const std::shared_ptr<Context> &context);
-
-  static void SetInputShape(const std::shared_ptr<Context> &context, const std::vector<char> &shape);
-  static std::vector<char> GetInputShapeChar(const std::shared_ptr<Context> &context);
-
-  static void SetPrecisionMode(const std::shared_ptr<Context> &context, const std::vector<char> &precision_mode);
-  static std::vector<char> GetPrecisionModeChar(const std::shared_ptr<Context> &context);
-
-  static void SetOpSelectImplMode(const std::shared_ptr<Context> &context,
-                                  const std::vector<char> &op_select_impl_mode);
-  static std::vector<char> GetOpSelectImplModeChar(const std::shared_ptr<Context> &context);
-
-  static void SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
-  static std::vector<char> GetFusionSwitchConfigPathChar(const std::shared_ptr<Context> &context);
-
-  static void SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::vector<char> &gpu_trt_infer_mode);
-  static std::vector<char> GetGpuTrtInferModeChar(const std::shared_ptr<Context> &context);
-  static std::vector<char> GetDynamicBatchSizeChar(const std::shared_ptr<Context> &context);
-};
-
-void GlobalContext::SetGlobalDeviceTarget(const std::string &device_target) {
-  SetGlobalDeviceTarget(StringToChar(device_target));
+void Ascend310DeviceInfo::SetInsertOpConfigPath(const std::string &cfg_path) {
+  SetInsertOpConfigPath(StringToChar(cfg_path));
 }
-std::string GlobalContext::GetGlobalDeviceTarget() { return CharToString(GetGlobalDeviceTargetChar()); }
+std::string Ascend310DeviceInfo::GetInsertOpConfigPath() const { return CharToString(GetInsertOpConfigPathChar()); }
 
-void GlobalContext::SetGlobalDumpConfigPath(const std::string &cfg_path) {
-  SetGlobalDumpConfigPath(StringToChar(cfg_path));
-}
-std::string GlobalContext::GetGlobalDumpConfigPath() { return CharToString(GetGlobalDumpConfigPathChar()); }
+void Ascend310DeviceInfo::SetInputFormat(const std::string &format) { SetInputFormat(StringToChar(format)); }
+std::string Ascend310DeviceInfo::GetInputFormat() const { return CharToString(GetInputFormatChar()); }
 
-void ModelContext::SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path) {
-  SetInsertOpConfigPath(context, StringToChar(cfg_path));
-}
-std::string ModelContext::GetInsertOpConfigPath(const std::shared_ptr<Context> &context) {
-  return CharToString(GetInsertOpConfigPathChar(context));
-}
+void Ascend310DeviceInfo::SetInputShape(const std::string &shape) { SetInputShape(StringToChar(shape)); }
+std::string Ascend310DeviceInfo::GetInputShape() const { return CharToString(GetInputShapeChar()); }
 
-void ModelContext::SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format) {
-  SetInputFormat(context, StringToChar(format));
-}
-std::string ModelContext::GetInputFormat(const std::shared_ptr<Context> &context) {
-  return CharToString(GetInputFormatChar(context));
-}
+std::string Ascend310DeviceInfo::GetDynamicBatchSize() const { return CharToString(GetDynamicBatchSizeChar()); }
 
-void ModelContext::SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape) {
-  SetInputShape(context, StringToChar(shape));
+void Ascend310DeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
+  SetPrecisionMode(StringToChar(precision_mode));
 }
-std::string ModelContext::GetInputShape(const std::shared_ptr<Context> &context) {
-  return CharToString(GetInputShapeChar(context));
-}
+std::string Ascend310DeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
 
-void ModelContext::SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode) {
-  SetPrecisionMode(context, StringToChar(precision_mode));
+void Ascend310DeviceInfo::SetOpSelectImplMode(const std::string &op_select_impl_mode) {
+  SetOpSelectImplMode(StringToChar(op_select_impl_mode));
 }
-std::string ModelContext::GetPrecisionMode(const std::shared_ptr<Context> &context) {
-  return CharToString(GetPrecisionModeChar(context));
-}
+std::string Ascend310DeviceInfo::GetOpSelectImplMode() const { return CharToString(GetOpSelectImplModeChar()); }
 
-void ModelContext::SetOpSelectImplMode(const std::shared_ptr<Context> &context,
-                                       const std::string &op_select_impl_mode) {
-  SetOpSelectImplMode(context, StringToChar(op_select_impl_mode));
+void Ascend310DeviceInfo::SetFusionSwitchConfigPath(const std::string &cfg_path) {
+  SetFusionSwitchConfigPath(StringToChar(cfg_path));
 }
-std::string ModelContext::GetOpSelectImplMode(const std::shared_ptr<Context> &context) {
-  return CharToString(GetOpSelectImplModeChar(context));
-}
-
-void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path) {
-  SetFusionSwitchConfigPath(context, StringToChar(cfg_path));
-}
-std::string ModelContext::GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context) {
-  return CharToString(GetFusionSwitchConfigPathChar(context));
-}
-
-std::string ModelContext::GetDynamicBatchSize(const std::shared_ptr<Context> &context) {
-  return CharToString(GetDynamicBatchSizeChar(context));
-}
-
-void ModelContext::SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::string &gpu_trt_infer_mode) {
-  SetGpuTrtInferMode(context, StringToChar(gpu_trt_infer_mode));
-}
-std::string ModelContext::GetGpuTrtInferMode(const std::shared_ptr<Context> &context) {
-  return CharToString(GetGpuTrtInferModeChar(context));
+std::string Ascend310DeviceInfo::GetFusionSwitchConfigPath() const {
+  return CharToString(GetFusionSwitchConfigPathChar());
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H

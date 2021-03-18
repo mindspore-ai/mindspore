@@ -23,10 +23,10 @@
 namespace mindspore {
 namespace dataset {
 
-Status AscendResource::InitResource() {
+Status AscendResource::InitResource(uint32_t device_id) {
   ResourceInfo resource;
   resource.aclConfigPath = "";
-  resource.deviceIds.insert(mindspore::GlobalContext::GetGlobalDeviceID());
+  resource.deviceIds.insert(device_id);
   ascend_resource_ = ResourceManager::GetInstance();
   APP_ERROR ret = ascend_resource_->InitResource(resource);
   if (ret != APP_ERR_OK) {
@@ -35,8 +35,8 @@ Status AscendResource::InitResource() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  int device_id = *(resource.deviceIds.begin());
-  aclrtContext context = ascend_resource_->GetContext(device_id);
+  int cur_device_id = *(resource.deviceIds.begin());
+  aclrtContext context = ascend_resource_->GetContext(cur_device_id);
   processor_ = std::make_shared<MDAclProcess>(context, false);
   ret = processor_->InitResource();
   if (ret != APP_ERR_OK) {
