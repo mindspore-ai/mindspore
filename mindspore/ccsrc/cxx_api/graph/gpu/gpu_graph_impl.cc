@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
+#include "cxx_api/akg_kernel_register.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/base_ref_utils.h"
 #include "backend/session/session_factory.h"
@@ -43,6 +44,8 @@ Status GPUGraphImpl::InitEnv() {
     return kSuccess;
   }
 
+  // Register op implemented with AKG.
+  RegAllOp();
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {
     MS_LOG(ERROR) << "Get Context failed!";

@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
-#include "cxx_api/python_utils.h"
+#include "cxx_api/akg_kernel_register.h"
 #include "utils/log_adapter.h"
 #include "utils/context/context_extends.h"
 #include "mindspore/core/base/base_ref_utils.h"
@@ -27,6 +27,7 @@
 #include "runtime/dev.h"
 #include "pipeline/jit/pipeline.h"
 #include "frontend/parallel/step_parallel.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, Ascend910, AscendGraphImpl);
@@ -380,4 +381,30 @@ std::shared_ptr<AscendGraphImpl::MsEnvGuard> AscendGraphImpl::MsEnvGuard::GetEnv
 
 std::map<uint32_t, std::weak_ptr<AscendGraphImpl::MsEnvGuard>> AscendGraphImpl::MsEnvGuard::global_ms_env_;
 std::mutex AscendGraphImpl::MsEnvGuard::global_ms_env_mutex_;
+
+PythonEnvGuard::PythonEnvGuard() {
+  origin_init_status_ = PythonIsInited();
+  InitPython();
+}
+
+PythonEnvGuard::~PythonEnvGuard() {
+  // finalize when init by this
+  if (!origin_init_status_) {
+    FinalizePython();
+  }
+}
+
+bool PythonEnvGuard::PythonIsInited() { return Py_IsInitialized() != 0; }
+
+void PythonEnvGuard::InitPython() {
+  if (!PythonIsInited()) {
+    Py_Initialize();
+  }
+}
+
+void PythonEnvGuard::FinalizePython() {
+  if (PythonIsInited()) {
+    Py_Finalize();
+  }
+}
 }  // namespace mindspore

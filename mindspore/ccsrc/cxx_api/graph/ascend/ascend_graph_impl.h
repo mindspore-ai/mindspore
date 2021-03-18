@@ -79,5 +79,17 @@ class AscendGraphImpl::MsEnvGuard {
   Status errno_;
   uint32_t device_id_;
 };
+
+class PythonEnvGuard {
+ public:
+  PythonEnvGuard();
+  ~PythonEnvGuard();
+
+ private:
+  bool PythonIsInited();
+  void InitPython();
+  void FinalizePython();
+  bool origin_init_status_;
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H
