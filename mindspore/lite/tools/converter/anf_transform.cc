@@ -27,7 +27,8 @@
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
-#include "tools/optimizer/fusion/layer_norm_fusion.h"
+#include "tools/optimizer/fusion/tf_norm_fusion.h"
+#include "tools/optimizer/fusion/onnx_layer_norm_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
@@ -77,7 +78,8 @@ int AnfTransform::AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &opti
     auto conv_scale_pass = std::make_shared<opt::ConvScaleFusion>();
     conv_scale_pass->SetFmkType(config->fmk);
     fusion_pm->AddPass(conv_scale_pass);
-    fusion_pm->AddPass(std::make_shared<opt::LayerNormFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
     fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
     fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());

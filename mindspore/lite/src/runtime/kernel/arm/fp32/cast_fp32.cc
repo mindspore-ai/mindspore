@@ -53,6 +53,37 @@ int CastCPUKernel::ReSize() {
   return RET_OK;
 }
 
+int CastCPUKernel::CastToFp32(lite::Tensor *input, lite::Tensor *output, int offset, int data_num) {
+  auto input_data_type = input->data_type();
+  auto output_data = output->data_c();
+  switch (input_data_type) {
+    case kNumberTypeBool:
+      BoolToFloat32(reinterpret_cast<bool *>(input->MutableData()) + offset,
+                    reinterpret_cast<float *>(output_data) + offset, data_num);
+      break;
+    case kNumberTypeUInt8:
+      Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->MutableData()) + offset,
+                     reinterpret_cast<float *>(output_data) + offset, data_num);
+      break;
+    case kNumberTypeInt32:
+      Int32ToFloat32(reinterpret_cast<int32_t *>(input->MutableData()) + offset,
+                     reinterpret_cast<float *>(output_data) + offset, data_num);
+      break;
+    case kNumberTypeFloat16:
+      Fp16ToFloat32(reinterpret_cast<uint16_t *>(input->MutableData()) + offset,
+                    reinterpret_cast<float *>(output_data) + offset, data_num);
+      break;
+    case kNumberTypeInt64:
+      Int64ToFloat32(reinterpret_cast<int64_t *>(input->MutableData()) + offset,
+                     reinterpret_cast<float *>(output_data) + offset, data_num);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int CastCPUKernel::DoCast(int thread_id) {
   auto input = in_tensors_.at(0);
   int data_num = MSMIN(stride_, data_num_ - thread_id * stride_);
@@ -91,32 +122,17 @@ int CastCPUKernel::DoCast(int thread_id) {
     } else if (input_data_type == kNumberTypeBool && output_data_type == kNumberTypeInt32) {
       BoolToInt32(reinterpret_cast<bool *>(input->data_c()) + offset, reinterpret_cast<int32_t *>(output_data) + offset,
                   data_num);
+#ifdef ENABLE_FP16
+    } else if (input_data_type == kNumberTypeInt64 && output_data_type == kNumberTypeFloat16) {
+      Int64ToFp16(reinterpret_cast<int64_t *>(input->data_c()) + offset,
+                  reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+#endif
     } else {
       MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
       return RET_ERROR;
     }
   } else {
-    switch (input_data_type) {
-      case kNumberTypeBool:
-        BoolToFloat32(reinterpret_cast<bool *>(input->MutableData()) + offset,
-                      reinterpret_cast<float *>(output_data) + offset, data_num);
-        break;
-      case kNumberTypeUInt8:
-        Uint8ToFloat32(reinterpret_cast<uint8_t *>(input->MutableData()) + offset,
-                       reinterpret_cast<float *>(output_data) + offset, data_num);
-        break;
-      case kNumberTypeInt32:
-        Int32ToFloat32(reinterpret_cast<int32_t *>(input->MutableData()) + offset,
-                       reinterpret_cast<float *>(output_data) + offset, data_num);
-        break;
-      case kNumberTypeFloat16:
-        Fp16ToFloat32(reinterpret_cast<uint16_t *>(input->MutableData()) + offset,
-                      reinterpret_cast<float *>(output_data) + offset, data_num);
-        break;
-      default:
-        MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
-        return RET_ERROR;
-    }
+    return CastToFp32(input, output, offset, data_num);
   }
   return RET_OK;
 }
@@ -132,6 +148,7 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, LiteKernelCreator<CastC
 REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
 #ifndef ENABLE_ARM
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)

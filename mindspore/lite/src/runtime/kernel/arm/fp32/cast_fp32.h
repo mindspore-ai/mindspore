@@ -38,6 +38,7 @@ class CastCPUKernel : public LiteKernel {
   int DoCast(int thread_id);
 
  private:
+  int CastToFp32(lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
   int stride_;
   int data_num_;
 };

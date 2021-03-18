@@ -60,6 +60,8 @@ std::vector<schema::PrimitiveType> GetInsertOpList();
 
 std::vector<schema::PrimitiveType> GetNhwcOpList();
 
+std::vector<schema::PrimitiveType> GetNchwOpList();
+
 std::vector<schema::PrimitiveType> GetNhwcAllInputOpList();
 
 std::unordered_map<schema::PrimitiveType, std::vector<int>> GetExtNhwcIndexes();

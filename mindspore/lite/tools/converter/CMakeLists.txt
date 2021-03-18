@@ -44,7 +44,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/conv_tuplegetitem_fusion.cc
         ../optimizer/fusion/constant_folding_fusion.cc
         ../optimizer/fusion/quant_dtype_cast_fusion.cc
-        ../optimizer/fusion/layer_norm_fusion.cc
+        ../optimizer/fusion/tf_norm_fusion.cc
+        ../optimizer/fusion/onnx_layer_norm_fusion.cc
         ../optimizer/fusion/batchmatmul_fusion.cc
         ../optimizer/fusion/sigmoid_mul_fusion.cc
         ../optimizer/fusion/conv_conv_fusion.cc

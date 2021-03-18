@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/fusion/layer_norm_fusion.h"
+#include "tools/optimizer/fusion/tf_norm_fusion.h"
 #include <memory>
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
 #include "ops/rsqrt.h"
+#include "mindspore/core/ops/instance_norm.h"
 #include "src/param_value_lite.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -26,41 +27,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool IsAddNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimAddFusion);
-  }
-  return false;
-}
-
-bool IsSquaredDifferenceNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSquaredDifference);
-  }
-  return false;
-}
-
-bool IsRsqrtNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimRsqrt);
-  }
-  return false;
-}
-
-bool IsMulNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
-  }
-  return false;
-}
-
-bool IsSubNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSubFusion);
-  }
-  return false;
-}
-
 lite::STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
   MS_ASSERT(node != nullptr);
   if (utils::isa<ParameterPtr>(n)) {
@@ -106,7 +72,7 @@ bool IsReduceNode(const EquivPtr &equiv, const VarPtr &input_prim, const VarPtr 
 }
 }  // namespace
 
-const BaseRef LayerNormFusion::DefinePattern() const {
+const BaseRef TfNormFusion::DefinePattern() const {
   VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
   auto squared_diffference1 = std::make_shared<CondVar>(IsSquaredDifferenceNode);
   VectorRef squared_diffference1_ref = VectorRef({squared_diffference1, input_, mean1_ref});
@@ -128,13 +94,26 @@ const BaseRef LayerNormFusion::DefinePattern() const {
   return add2_ref;
 }
 
-CNodePtr LayerNormFusion::CreateLayerNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, float epsilon,
-                                              int begin_norm_axis, int begin_params_axis) const {
+CNodePtr TfNormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
+                                      const schema::PrimitiveType type, float epsilon, int begin_norm_axis,
+                                      int begin_params_axis) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
-  auto layer_norm_primitive = std::make_shared<ops::LayerNormFusion>();
-  layer_norm_primitive->Init(begin_norm_axis, begin_params_axis, epsilon);
-  auto value_node = NewValueNode(layer_norm_primitive);
+  auto norm_primitive = std::make_unique<schema::PrimitiveT>();
+  norm_primitive->value.type = type;
+  PrimitiveCPtr primitive = nullptr;
+  if (type == schema::PrimitiveType_LayerNormFusion) {
+    auto layer_norm_primitive = std::make_shared<ops::LayerNormFusion>();
+    layer_norm_primitive->Init(begin_norm_axis, begin_params_axis, epsilon, true);
+    primitive = layer_norm_primitive;
+  } else if (type == schema::PrimitiveType_InstanceNorm) {
+    auto instance_norm_primitive = std::make_shared<ops::InstanceNorm>();
+    instance_norm_primitive->Init(epsilon);
+    primitive = instance_norm_primitive;
+  } else {
+    return nullptr;
+  }
+  auto value_node = NewValueNode(primitive);
   std::vector<AnfNodePtr> new_node_inputs = {value_node};
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_ASSERT(input_node != nullptr);
@@ -149,10 +128,11 @@ CNodePtr LayerNormFusion::CreateLayerNormNode(const FuncGraphPtr &func_graph, co
   return new_node;
 }
 
-bool LayerNormFusion::GetAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
-                              const std::vector<int> &params_shape, int *begin_norm_axis,
-                              int *begin_params_axis) const {
+bool TfNormFusion::GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
+                                      const std::vector<int> &params_shape, schema::PrimitiveType *type,
+                                      int *begin_norm_axis, int *begin_params_axis) const {
   MS_ASSERT(input_node != nullptr);
+  MS_ASSERT(type != nullptr);
   MS_ASSERT(begin_norm_axis != nullptr);
   MS_ASSERT(begin_params_axis != nullptr);
   auto abstract = input_cnode->abstract();
@@ -170,30 +150,44 @@ bool LayerNormFusion::GetAxis(const CNodePtr &input_cnode, const std::vector<int
     return false;
   }
   auto shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-  if (mean_axes.back() + 1 != static_cast<int>(shape.size())) {
-    MS_LOG(DEBUG) << "mean node is not reduce to last axis";
-    return false;
-  }
   for (size_t i = 1; i < mean_axes.size(); ++i) {
     if (mean_axes[i] != mean_axes[i - 1] + 1) {
       MS_LOG(DEBUG) << "mean axes is not continuous";
       return false;
     }
   }
-  // there is no need to check params_shape
-  *begin_norm_axis = mean_axes.front();
-  *begin_params_axis = static_cast<int>(shape.size()) - static_cast<int>(params_shape.size());
-  if (*begin_params_axis < 0) {
-    MS_LOG(DEBUG) << "LayerNorm begin_params_axis illegal, not fuse";
+  if (shape.size() == 4 && mean_axes.size() == 2 && mean_axes[0] == 1 && mean_axes[1] == 2) {
+    if (params_shape.size() == 1 && params_shape.back() == shape.back()) {
+      *type = schema::PrimitiveType_InstanceNorm;
+      return true;
+    }
+  }
+  if (mean_axes.back() >= 0 && mean_axes.back() + 1 != static_cast<int>(shape.size())) {
+    MS_LOG(DEBUG) << "mean node is not reduce to last axis";
     return false;
   }
+
+  // there is no need to check params_shape
+  *begin_norm_axis = mean_axes.front();
+  if (*begin_norm_axis >= 0) {
+    *begin_params_axis = static_cast<int>(shape.size()) - static_cast<int>(params_shape.size());
+    if (*begin_params_axis < 0) {
+      MS_LOG(DEBUG) << "LayerNorm begin_params_axis illegal, not fuse";
+      return false;
+    }
+  } else {
+    *begin_params_axis = -static_cast<int>(params_shape.size());
+  }
+
+  *type = schema::PrimitiveType_LayerNormFusion;
   return true;
 }
 
-bool LayerNormFusion::CheckPattern(const EquivPtr &equiv, float *epsilon, int *begin_norm_axis,
-                                   int *begin_params_axis) const {
+bool TfNormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type, float *epsilon,
+                                int *begin_norm_axis, int *begin_params_axis) const {
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(epsilon != nullptr);
+  MS_ASSERT(type != nullptr);
   MS_ASSERT(begin_norm_axis != nullptr);
   MS_ASSERT(begin_params_axis != nullptr);
   // beta
@@ -243,9 +237,6 @@ bool LayerNormFusion::CheckPattern(const EquivPtr &equiv, float *epsilon, int *b
   if (mean1_axes != mean2_axes) {
     return false;
   }
-  if (mean1_axes.size() != gamma_shape.size() || mean1_axes.size() != beta_shape.size()) {
-    return false;
-  }
   if (gamma_shape != beta_shape) {
     return false;
   }
@@ -254,14 +245,14 @@ bool LayerNormFusion::CheckPattern(const EquivPtr &equiv, float *epsilon, int *b
   } else {
     return false;
   }
-  if (!GetAxis(input_cnode, mean1_axes, gamma_shape, begin_norm_axis, begin_params_axis)) {
+  if (!GetNormTypeAndAxis(input_cnode, mean1_axes, gamma_shape, type, begin_norm_axis, begin_params_axis)) {
     return false;
   }
   return true;
 }
 
-const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                          const EquivPtr &equiv) const {
+const AnfNodePtr TfNormFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                       const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   MS_ASSERT(equiv != nullptr);
@@ -273,14 +264,24 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   float epsilon = 0.0f;
   int begin_norm_axis = 0;
   int begin_params_axis = 0;
-  if (!CheckPattern(equiv, &epsilon, &begin_norm_axis, &begin_params_axis)) {
+  schema::PrimitiveType type = schema::PrimitiveType_NONE;
+  if (!CheckPattern(equiv, &type, &epsilon, &begin_norm_axis, &begin_params_axis)) {
     return nullptr;
   }
-  auto layer_norm_cnode = CreateLayerNormNode(func_graph, equiv, epsilon, begin_norm_axis, begin_params_axis);
-  layer_norm_cnode->set_abstract(add2_cnode->abstract()->Clone());
-  layer_norm_cnode->set_fullname_with_scope("layer_norm_" + add2_cnode->fullname_with_scope());
-  MS_LOG(INFO) << "layernorm node:" << layer_norm_cnode->fullname_with_scope() << " fusion success";
-  return layer_norm_cnode;
+  auto norm_cnode = CreateNormNode(func_graph, equiv, type, epsilon, begin_norm_axis, begin_params_axis);
+  if (norm_cnode == nullptr) {
+    MS_LOG(DEBUG) << "create norm cnode failed";
+    return nullptr;
+  }
+  norm_cnode->set_abstract(add2_cnode->abstract()->Clone());
+  if (type == schema::PrimitiveType_LayerNormFusion) {
+    norm_cnode->set_fullname_with_scope("layer_norm_" + add2_cnode->fullname_with_scope());
+    MS_LOG(INFO) << "layer_norm node:" << norm_cnode->fullname_with_scope() << " fusion success";
+  } else if (type == schema::PrimitiveType_InstanceNorm) {
+    norm_cnode->set_fullname_with_scope("instance_norm_" + add2_cnode->fullname_with_scope());
+    MS_LOG(INFO) << "instance_norm node:" << norm_cnode->fullname_with_scope() << " fusion success";
+  }
+  return norm_cnode;
 }
 }  // namespace opt
 }  // namespace mindspore

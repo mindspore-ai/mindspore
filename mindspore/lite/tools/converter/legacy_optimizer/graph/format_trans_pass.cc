@@ -48,7 +48,12 @@ STATUS FormatTransPass::Run(schema::MetaGraphT *graph) {
 STATUS FormatTransPass::GetInsertFormatTrans(const schema::CNodeT &node, FormatTransNodeType *beforeNodeType,
                                              FormatTransNodeType *afterNodeType) {
   if (fmk_type_ == converter::FmkType_TFLITE) {  // inference by nhwc
-    return RET_NO_CHANGE;
+    if (!IsContain(GetNchwOpList(), GetCNodeTType(node))) {
+      return RET_NO_CHANGE;
+    }
+    *beforeNodeType = kNHWC2NCHW;
+    *afterNodeType = kNCHW2NHWC;
+    return RET_OK;
   } else if (fmk_type_ == converter::FmkType_CAFFE || fmk_type_ == converter::FmkType_MS ||
              fmk_type_ == converter::FmkType_ONNX) {
     if (!IsContain(GetNhwcOpList(), GetCNodeTType(node))) {
@@ -61,6 +66,11 @@ STATUS FormatTransPass::GetInsertFormatTrans(const schema::CNodeT &node, FormatT
     if (IsContain(GetNhwcOpList(), GetCNodeTType(node)) && GetFormat(node) == schema::Format_NCHW) {
       *beforeNodeType = kNCHW2NHWC;
       *afterNodeType = kNHWC2NCHW;
+      return RET_OK;
+    }
+    if (IsContain(GetNchwOpList(), GetCNodeTType(node))) {
+      *beforeNodeType = kNHWC2NCHW;
+      *afterNodeType = kNCHW2NHWC;
       return RET_OK;
     }
     return RET_NO_CHANGE;
