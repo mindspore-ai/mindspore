@@ -4,7 +4,6 @@ project(micro)
 option(BUILD_TESTCASES "if build testcase" on)
 option(PLATFORM_ARM32 "build operator for android arm 32" off)
 option(PLATFORM_ARM64 "build operator for android arm 64" off)
-option(ENABLE_CONVERTER "turn it on to compile codegen" on)
 
 string(REPLACE "/mindspore/lite/micro" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -13,6 +12,7 @@ include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
+  set(ENABLE_CONVERTER ON)
   include(${TOP_DIR}/cmake/external_libs/glog.cmake)
   ### flatbuffer
   include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
@@ -29,6 +29,8 @@ if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     ${CMAKE_BINARY_DIR}/schema/inner
     "inner"
   )
+else()
+  set(ENABLE_CONVERTER OFF)
 endif()
 
 
