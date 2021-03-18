@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,21 +32,18 @@ from mindspore.context import ParallelMode
 from mindspore.common import set_seed
 
 from src.optimizers import get_param_groups
-from src.network import DenseNet121
-from src.datasets import classification_dataset
 from src.losses.crossentropy import CrossEntropy
 from src.lr_scheduler import MultiStepLR, CosineAnnealingLR
 from src.utils.logging import get_logger
-from src.config import config
 
 set_seed(1)
 
 class BuildTrainNetwork(nn.Cell):
     """build training network"""
-    def __init__(self, network, criterion):
+    def __init__(self, net, crit):
         super(BuildTrainNetwork, self).__init__()
-        self.network = network
-        self.criterion = criterion
+        self.network = net
+        self.criterion = crit
 
     def construct(self, input_data, label):
         output = self.network(input_data)
@@ -108,6 +105,10 @@ def parse_args(cloud_args=None):
     """parameters"""
     parser = argparse.ArgumentParser('mindspore classification training')
 
+    # network and dataset choices
+    parser.add_argument('--net', type=str, default='', help='Densenet Model, densenet100 or densenet121')
+    parser.add_argument('--dataset', type=str, default='', help='Dataset, either cifar10 or imagenet')
+
     # dataset related
     parser.add_argument('--data_dir', type=str, default='', help='train data dir')
 
@@ -121,10 +122,17 @@ def parse_args(cloud_args=None):
     parser.add_argument('--train_url', type=str, default="", help='train url')
 
     # platform
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='device target')
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU', 'CPU'),
+                        help='device target')
 
     args, _ = parser.parse_known_args()
     args = merge_args(args, cloud_args)
+
+    if args.net == "densenet100":
+        from src.config import config_100 as config
+    else:
+        from src.config import config_121 as config
+
     args.image_size = config.image_size
     args.num_classes = config.num_classes
     args.lr = config.lr
@@ -158,14 +166,25 @@ def merge_args(args, cloud_args):
     """dictionary"""
     args_dict = vars(args)
     if isinstance(cloud_args, dict):
-        for key in cloud_args.keys():
-            val = cloud_args[key]
-            if key in args_dict and val:
-                arg_type = type(args_dict[key])
+        for k in cloud_args.keys():
+            val = cloud_args[k]
+            if k in args_dict and val:
+                arg_type = type(args_dict[k])
                 if arg_type is not type(None):
                     val = arg_type(val)
-                args_dict[key] = val
+                args_dict[k] = val
     return args
+
+def get_lr_scheduler(args):
+    if args.lr_scheduler == 'exponential':
+        lr_scheduler = MultiStepLR(args.lr, args.lr_epochs, args.lr_gamma, args.steps_per_epoch, args.max_epoch,
+                                   warmup_epochs=args.warmup_epochs)
+    elif args.lr_scheduler == 'cosine_annealing':
+        lr_scheduler = CosineAnnealingLR(args.lr, args.T_max, args.steps_per_epoch, args.max_epoch,
+                                         warmup_epochs=args.warmup_epochs, eta_min=args.eta_min)
+    else:
+        raise NotImplementedError(args.lr_scheduler)
+    return lr_scheduler
 
 def train(cloud_args=None):
     """training process"""
@@ -200,9 +219,18 @@ def train(cloud_args=None):
                                     datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
     args.logger = get_logger(args.outputs_dir, args.rank)
 
+    if args.net == "densenet100":
+        from src.network.densenet import DenseNet100 as DenseNet
+    else:
+        from src.network.densenet import DenseNet121 as DenseNet
+
+    if args.dataset == "cifar10":
+        from src.datasets import classification_dataset_cifar10 as classification_dataset
+    else:
+        from src.datasets import classification_dataset_imagenet as classification_dataset
+
     # dataloader
-    de_dataset = classification_dataset(args.data_dir, args.image_size,
-                                        args.per_batch_size, args.max_epoch,
+    de_dataset = classification_dataset(args.data_dir, args.image_size, args.per_batch_size, args.max_epoch,
                                         args.rank, args.group_size)
     de_dataset.map_model = 4
     args.steps_per_epoch = de_dataset.get_dataset_size()
@@ -212,12 +240,11 @@ def train(cloud_args=None):
     # network
     args.logger.important_info('start create network')
     # get network and init
-    network = DenseNet121(args.num_classes)
+    network = DenseNet(args.num_classes)
     # loss
     if not args.label_smooth:
         args.label_smooth_factor = 0.0
-    criterion = CrossEntropy(smooth_factor=args.label_smooth_factor,
-                             num_classes=args.num_classes)
+    criterion = CrossEntropy(smooth_factor=args.label_smooth_factor, num_classes=args.num_classes)
 
     # load pretrain model
     if os.path.isfile(args.pretrained):
@@ -234,30 +261,12 @@ def train(cloud_args=None):
         args.logger.info('load model {} success'.format(args.pretrained))
 
     # lr scheduler
-    if args.lr_scheduler == 'exponential':
-        lr_scheduler = MultiStepLR(args.lr,
-                                   args.lr_epochs,
-                                   args.lr_gamma,
-                                   args.steps_per_epoch,
-                                   args.max_epoch,
-                                   warmup_epochs=args.warmup_epochs)
-    elif args.lr_scheduler == 'cosine_annealing':
-        lr_scheduler = CosineAnnealingLR(args.lr,
-                                         args.T_max,
-                                         args.steps_per_epoch,
-                                         args.max_epoch,
-                                         warmup_epochs=args.warmup_epochs,
-                                         eta_min=args.eta_min)
-    else:
-        raise NotImplementedError(args.lr_scheduler)
+    lr_scheduler = get_lr_scheduler(args)
     lr_schedule = lr_scheduler.get_lr()
 
     # optimizer
-    opt = Momentum(params=get_param_groups(network),
-                   learning_rate=Tensor(lr_schedule),
-                   momentum=args.momentum,
-                   weight_decay=args.weight_decay,
-                   loss_scale=args.loss_scale)
+    opt = Momentum(params=get_param_groups(network), learning_rate=Tensor(lr_schedule),
+                   momentum=args.momentum, weight_decay=args.weight_decay, loss_scale=args.loss_scale)
 
     # mixed precision training
     criterion.add_flags_recursive(fp32=True)
@@ -280,6 +289,8 @@ def train(cloud_args=None):
         model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O3")
     elif args.device_target == 'GPU':
         model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O0")
+    elif args.device_target == 'CPU':
+        model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O0")
     else:
         raise ValueError("Unsupported device target.")
 
@@ -290,8 +301,7 @@ def train(cloud_args=None):
         ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
                                        keep_checkpoint_max=ckpt_max_num)
-        ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=args.outputs_dir,
+        ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=args.outputs_dir,
                                   prefix='{}'.format(args.rank))
         callbacks.append(ckpt_cb)
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE DATASET CKPT_FILE"
-echo "for example: sh scripts/run_distribute_train.sh 8 /data/hccl.json /path/to/dataset ckpt_file"
+echo "sh scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE NET_NAME DATASET_NAME DATASET CKPT_FILE"
+echo "for example: sh scripts/run_distribute_train.sh 8 /data/hccl.json densenet121 imagenet /path/to/dataset ckpt_file"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
@@ -25,8 +25,10 @@ echo "After running the script, the network runs in the background. The log will
 
 export RANK_SIZE=$1
 export RANK_TABLE_FILE=$2
-DATASET=$3
-CKPT_FILE=$4
+NET_NAME=$3
+DATASET_NAME=$4
+DATASET=$5
+CKPT_FILE=$6
 
 for((i=0;i<RANK_SIZE;i++))
 do
@@ -41,9 +43,9 @@ do
     env > env.log
     if [ -f $CKPT_FILE ]
     then
-      python train.py --data_dir=$DATASET --pretrained=$CKPT_FILE > log.txt 2>&1 &
+      python train.py --net=$NET_NAME --dataset=$DATASET_NAME --data_dir=$DATASET --pretrained=$CKPT_FILE > log.txt 2>&1 &
     else
-      python train.py --data_dir=$DATASET > log.txt 2>&1 &
+      python train.py --net=$NET_NAME --dataset=$DATASET_NAME --data_dir=$DATASET > log.txt 2>&1 &
     fi
 
     cd ../

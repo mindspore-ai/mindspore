@@ -14,16 +14,16 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 3 ]
+if [ $# -lt 5 ]
 then
-    echo "Usage: sh run_distribute_train_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [PRE_TRAINED](optional)"
-exit 1
+    echo "Usage: sh run_distribute_train_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [NET_NAME] [DATASET_NAME] [DATASET_PATH] [PRE_TRAINED](optional)"
+    exit 1
 fi
 
 if [ $1 -lt 1 ] && [ $1 -gt 8 ]
 then
     echo "error: DEVICE_NUM=$1 is not in (1-8)"
-exit 1
+    exit 1
 fi
 
 export DEVICE_NUM=$1
@@ -40,30 +40,38 @@ cd ../train || exit
 
 export CUDA_VISIBLE_DEVICES="$2"
 
-if [ -f $4 ]  # pretrained ckpt
-then 
+if [ -f $6 ]  # pretrained ckpt
+then
     if [ $1 -gt 1 ]
     then
         mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
-                                                 --data_dir=$3 \
+                                                 --net=$3 \
+                                                 --dataset=$4 \
+                                                 --data_dir=$5 \
                                                  --device_target='GPU' \
-                                                 --pretrained=$4 > train.log 2>&1 &
+                                                 --pretrained=$6 > train.log 2>&1 &
     else
         python3 ${BASEPATH}/../train.py \
-                --data_dir=$3 \
+                --net=$3 \
+                --dataset=$4 \
+                --data_dir=$5 \
                 --is_distributed=0 \
                 --device_target='GPU' \
-                --pretrained=$4 > train.log 2>&1 &
+                --pretrained=$6 > train.log 2>&1 &
     fi
 else
     if [ $1 -gt 1 ]
     then
         mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
-                                                 --data_dir=$3 \
+                                                 --net=$3 \
+                                                 --dataset=$4 \
+                                                 --data_dir=$5 \
                                                  --device_target='GPU' > train.log 2>&1 &
     else
         python3 ${BASEPATH}/../train.py \
-                --data_dir=$3 \
+                --net=$3 \
+                --dataset=$4 \
+                --data_dir=$5 \
                 --is_distributed=0 \
                 --device_target='GPU' > train.log 2>&1 &
     fi

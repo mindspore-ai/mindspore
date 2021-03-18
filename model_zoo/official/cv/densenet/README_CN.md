@@ -3,7 +3,7 @@
 <!-- TOC -->
 
 - [目录](#目录)
-- [DenseNet121描述](#densenet121描述)
+- [DenseNet描述](#densenet描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [特性](#特性)
@@ -27,32 +27,50 @@
 
 <!-- /TOC -->
 
-# DenseNet121描述
+# DenseNet描述
 
-DenseNet-121是一个基于卷积的神经网络，用于图像分类。有关该模型的描述，可查阅[此论文](https://arxiv.org/abs/1608.06993)。华为的DenseNet-121是[MindSpore](https://www.mindspore.cn/)上的一个实现。
+DenseNet是一个基于卷积的神经网络，用于图像分类。有关该模型的描述，可查阅[此论文](https://arxiv.org/abs/1608.06993)。华为的DenseNet是[MindSpore](https://www.mindspore.cn/)上的一个实现。
 
 仓库中还包含用于启动训练和推理例程的脚本。
 
 # 模型架构
 
-DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都会接受其前面所有层作为其额外的输入，并将自己的特征映射传递给后续所有层。会使用到级联。每一层都从前几层接受“集体知识”。
+DenseNet模型支持两种模式：DenseNet-100 和DenseNet-121。数字表示网络中包含的卷积层数量。
+
+DenseNet-121构建在4个密集连接块上， DenseNet-100则构建在3个密集连接块上。各个密集块中，每个层都会接受其前面所有层作为其额外的输入，并将自己的特征映射传递给后续所有层。会使用到级联。每一层都从前几层接受“集体知识”。
 
 # 数据集
 
-使用的数据集： ImageNet
+DenseNet-121使用的数据集： ImageNet
+
 数据集的默认配置如下：
 
 - 训练数据集预处理：
-- 图像的输入尺寸：224\*224
-- 裁剪的原始尺寸大小范围（最小值，最大值）：(0.08, 1.0)
-- 裁剪的宽高比范围（最小值，最大值）：(0.75, 1.333)
-- 图像翻转概率：0.5
-- 随机调节亮度、对比度、饱和度：(0.4, 0.4, 0.4)
-- 根据平均值和标准偏差对输入图像进行归一化
+    - 图像的输入尺寸：224\*224
+    - 裁剪的原始尺寸大小范围（最小值，最大值）：(0.08, 1.0)
+    - 裁剪的宽高比范围（最小值，最大值）：(0.75, 1.333)
+    - 图像翻转概率：0.5
+    - 随机调节亮度、对比度、饱和度：(0.4, 0.4, 0.4)
+    - 根据平均值和标准偏差对输入图像进行归一化
 
 - 测试数据集预处理：
-- 图像的输入尺寸：224\*224（将图像缩放到256\*256，然后在中央区域裁剪图像）
-- 根据平均值和标准偏差对输入图像进行归一化
+    - 图像的输入尺寸：224\*224（将图像缩放到256\*256，然后在中央区域裁剪图像）
+    - 根据平均值和标准偏差对输入图像进行归一化
+
+DenseNet-100使用的数据集： Cifar-10
+
+数据集的默认配置如下：
+
+- 训练数据集预处理：
+    - 图像的输入尺寸：32\*32
+    - 随机裁剪的边界填充值：4
+    - 图像翻转概率：0.5
+    - 随机调节亮度、对比度、饱和度：(0.4, 0.4, 0.4)
+    - 根据平均值和标准偏差对输入图像进行归一化
+
+- 测试数据集预处理：
+    - 图像的输入尺寸：32\*32
+    - 根据平均值和标准偏差对输入图像进行归一化
 
 # 特性
 
@@ -79,15 +97,15 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 
   ```python
   # 训练示例
-  python train.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
 
   # 分布式训练示例
-  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
 
   # 评估示例
-  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -101,15 +119,15 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
   ```python
   # 训练示例
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
 
   # 分布式训练示例
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [DATASET_PATH]
+  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
 
   # 评估示例
-  python eval.py --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [DATASET_PATH] [CHECKPOINT_PATH]
+  sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
 # 脚本说明
@@ -119,8 +137,8 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 ```shell
 ├── model_zoo
     ├── README.md                          // 所有模型的说明
-    ├── densenet121
-        ├── README.md                    // DenseNet-121相关说明
+    ├── densenet
+        ├── README.md                    // DenseNet相关说明
         ├── scripts
         │   ├── run_distribute_train.sh             // Ascend分布式shell脚本
         │   ├── run_distribute_train_gpu.sh             // GPU分布式shell脚本
@@ -148,10 +166,10 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 可通过`train.py`脚本中的参数修改训练行为。`train.py`脚本中的参数如下：
 
 ```param
-  --Data_dir              训练数据目录
-  --num_classes           数据集中的类个数（默认为1000）
+  --data_dir              训练数据目录
+  --num_classes           数据集中的类个数（DenseNet-121中默认为1000，DenseNet-100中默认为10）
   --image_size            数据集图片大小
-  --per_batch_size        每GPU的迷你批次大小（默认为256）
+  --per_batch_size        每GPU的迷你批次大小（DenseNet-121中默认为32， DenseNet-100中默认为64）
   --pretrained            预训练模型的路径
   --lr_scheduler          LR调度类型，取值包括 exponential，cosine_annealing
   --lr                    初始学习率
@@ -181,10 +199,10 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 - Ascend处理器环境运行
 
   ```python
-  python train.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
   ```
 
-  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。损失值的实现如下：
+  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
 
   ```log
   2020-08-22 16:58:56,617:INFO:epoch[0], iter[5003], loss:4.367, mean_fps:0.00 imgs/sec
@@ -200,7 +218,15 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 
   ```python
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  ```
+
+  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
+
+- CPU处理器环境运行
+
+  ```python
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
   ```
 
   以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
@@ -210,10 +236,10 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 - Ascend处理器环境运行
 
   ```shell
-  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
   ```
 
-  上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。损失值的实现如下：
+  上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
 
   ```log
   2020-08-22 16:58:54,556:INFO:epoch[0], iter[5003], loss:3.857, mean_fps:0.00 imgs/sec
@@ -230,7 +256,7 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 
   ```bash
   cd scripts
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [DATASET_PATH]
+  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
   ```
 
   上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。
@@ -244,12 +270,12 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
   运行以下命令进行评估。
 
   ```eval
-  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
-  上述python命令在后台运行。可以通过“output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log”文件查看结果。测试数据集的准确率如下：
+  上述python命令在后台运行。可以通过“output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log”文件查看结果。DenseNet-121在ImageNet的测试数据集的准确率如下：
 
   ```log
   2020-08-24 09:21:50,551:INFO:after allreduce eval: top1_correct=37657, tot=49920, acc=75.43%
@@ -261,27 +287,49 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
   运行以下命令进行评估。
 
   ```eval
-  python eval.py --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [DATASET_PATH] [CHECKPOINT_PATH]
+  sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
-  上述python命令在后台运行。可以通过“eval/eval.log”文件查看结果。测试数据集的准确率如下：
+  上述python命令在后台运行。可以通过“eval/eval.log”文件查看结果。DenseNet-121在ImageNet的测试数据集的准确率如下：
 
   ```log
   2021-02-04 14:20:50,551:INFO:after allreduce eval: top1_correct=37637, tot=49984, acc=75.30%
   2021-02-04 14:20:50,551:INFO:after allreduce eval: top5_correct=46370, tot=49984, acc=92.77%
   ```
 
+  DenseNet-100在Cifar-10的测试数据集的准确率如下：
+
+  ```log
+  2021-03-12 18:04:07,893:INFO:after allreduce eval: top1_correct=9536, tot=9984, acc=95.51%
+  ```  
+
+- CPU处理器环境
+
+  运行以下命令进行评估。
+
+  ```eval
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='CPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  ```
+
+  上述python命令在后台运行。可以通过“eval/eval.log”文件查看结果。DenseNet-100在Cifar-10的测试数据集的准确率如下：
+
+  ```log
+  2021-03-18 09:06:43,247:INFO:after allreduce eval: top1_correct=9492, tot=9984, acc=95.07%
+  ```
+
 # 模型描述
 
 ## 性能
+
+### DenseNet121
 
 ### 训练准确率结果
 
 | 参数                | Ascend                     | GPU                        |
 | ------------------- | -------------------------- | -------------------------- |
-| 模型版本            | Inception V1               | Inception V1               |
+| 模型版本            | DenseNet-121               | DenseNet-121               |
 | 资源                | Ascend 910                 | Tesla V100-PCIE            |
 | 上传日期            | 2020/9/15                  | 2021/2/4                   |
 | MindSpore版本       | 1.0.0                      | 1.1.1                      |
@@ -294,7 +342,7 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 
 | 参数                | Ascend                           | GPU                              |
 | ------------------- | -------------------------------- | -------------------------------- |
-| 模型版本            | Inception V1                     | Inception V1                     |
+| 模型版本            | DenseNet-121                    | DenseNet-121                     |
 | 资源                | Ascend 910                       | Tesla V100-PCIE                  |
 | 上传日期            | 2020/9/15                        | 2021/2/4                         |
 | MindSpore版本       | 1.0.0                            | 1.1.1                            |
@@ -303,6 +351,23 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 | 输出                | 概率                             | 概率                             |
 | 速度                | 单卡：760 img/s；8卡：6000 img/s | 单卡：161 img/s；8卡：1288 img/s |
 
+### DenseNet100
+
+### 训练结果
+
+| 参数                | GPU                              |
+| ------------------- | -------------------------------- |
+| 模型版本            | DenseNet-100                     |
+| 资源                | Tesla V100-PCIE                  |
+| 上传日期            | 2021/03/18                        |
+| MindSpore版本       | 1.2.0                            |
+| 数据集              | Cifar-10                        |
+| 轮次                | 300                                 |
+| batch_size          | 64                               |
+| 输出                | 概率                                |
+| 训练性能            | Top1：95.28%         |
+| 速度                | 单卡：600.07 img/sec             |
+
 # 随机情况说明
 
 dataset.py中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。
@@ -310,4 +375,3 @@ dataset.py中设置了“create_dataset”函数内的种子，同时还使用�
 # ModelZoo主页
 
  请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。  
-

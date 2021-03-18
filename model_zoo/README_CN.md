@@ -15,6 +15,7 @@
 - [官方](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official)
     - [计算机视觉](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
         - [图像分类](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
+            - [DenseNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/densenet/README.md)
             - [GoogleNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet/README.md)
             - [ResNet-50[基准]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
             - [ResNet50_Quant](https://gitee.com/mindspore/mindspore/blob/master/model_zoo/official/cv/resnet50_quant/README.md)

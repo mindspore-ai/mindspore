@@ -1,6 +1,6 @@
 # Contents
 
-- [DenseNet121 Description](#densenet121-description)
+- [DenseNet Description](#densenet-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -16,25 +16,28 @@
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
+    - [Performance](#performance)
         - [Training accuracy results](#training-accuracy-results)
         - [Training performance results](#training-performance-results)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-# [DenseNet121 Description](#contents)
+# [DenseNet Description](#contents)
 
-DenseNet121 is a convolution based neural network for the task of image classification. The paper describing the model can be found [here](https://arxiv.org/abs/1608.06993). HuaWei’s DenseNet121 is a implementation on [MindSpore](https://www.mindspore.cn/).
+DenseNet is a convolution based neural network for the task of image classification. The paper describing the model can be found [here](https://arxiv.org/abs/1608.06993). HuaWei’s DenseNet is a implementation on [MindSpore](https://www.mindspore.cn/).
 
 The repository also contains scripts to launch training and inference routines.
 
 # [Model Architecture](#contents)
 
-DenseNet121 builds on 4 densely connected block. In every dense block, each layer obtains additional inputs from all preceding layers and passes on its own feature-maps to all subsequent layers. Concatenation is used. Each layer is receiving a “collective knowledge” from all preceding layers.
+DenseNet supports two kinds of implementations: DenseNet100 and DenseNet121, where the number represents number of layers in the network.
+
+DenseNet121 builds on 4 densely connected block and DenseNet100 builds on 3. In every dense block, each layer obtains additional inputs from all preceding layers and passes on its own feature-maps to all subsequent layers. Concatenation is used. Each layer is receiving a “collective knowledge” from all preceding layers.
 
 # [Dataset](#contents)
 
-Dataset used: ImageNet
+Dataset used in DenseNet121: ImageNet
+
 The default configuration of the Dataset are as follows:
 
 - Training Dataset preprocess:
@@ -49,11 +52,27 @@ The default configuration of the Dataset are as follows:
     - Input size of images is 224\*224 (Resize to 256\*256 then crops images at the center)
     - Normalize the input image with respect to mean and standard deviation
 
+Dataset used in DenseNet100: Cifar-10
+
+The default configuration of the Dataset are as follows:
+
+- Training Dataset preprocess:
+    - Input size of images is 32\*32
+    - Randomly cropping is applied to the image with padding=4
+    - Probability of the image being flipped set to 0.5
+    - Randomly adjust the brightness, contrast, saturation (0.4, 0.4, 0.4)
+    - Normalize the input image with respect to mean and standard deviation
+
+- Test Dataset preprocess:
+    - Input size of images is 32\*32
+    - Normalize the input image with respect to mean and standard deviation
+
 # [Features](#contents)
 
 ## Mixed Precision
 
 The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
+
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
@@ -74,15 +93,15 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
-  python train.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
 
   # run distributed training example
-  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
 
   # run evaluation example
-  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -95,17 +114,19 @@ After installing MindSpore via the official website, you can start training and 
 
   For running on GPU, please change `platform` from `Ascend` to `GPU`
 
+  ```python
   # run training example
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
 
   # run distributed training example
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [DATASET_PATH]
+  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7  [NET_NAME] [DATASET_NAME] [DATASET_PATH]
 
   # run evaluation example
-  python eval.py --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [DATASET_PATH] [CHECKPOINT_PATH]
+  sh run_distribute_eval_gpu.sh 1 0  [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
+  ```
 
 # [Script Description](#contents)
 
@@ -114,8 +135,8 @@ After installing MindSpore via the official website, you can start training and 
 ```text
 ├── model_zoo
     ├── README.md                          // descriptions about all the models
-    ├── densenet121
-        ├── README.md                    // descriptions about densenet121
+    ├── densenet
+        ├── README.md                    // descriptions about densenet
         ├── scripts
         │   ├── run_distribute_train.sh             // shell script for distributed on Ascend
         │   ├── run_distribute_train_gpu.sh             // shell script for distributed on GPU
@@ -144,9 +165,9 @@ You can modify the training behaviour through the various flags in the `train.py
 
 ```python
   --data_dir              train data dir
-  --num_classes           num of classes in dataset（default:1000)
+  --num_classes           num of classes in dataset(default:1000 for densenet121; 10 for densenet100)
   --image_size            image size of the dataset
-  --per_batch_size        mini-batch size (default: 256) per gpu
+  --per_batch_size        mini-batch size (default: 32 for densenet121; 64 for densenet100) per gpu
   --pretrained            path of pretrained model
   --lr_scheduler          type of LR schedule: exponential, cosine_annealing
   --lr                    initial learning rate
@@ -176,10 +197,10 @@ You can modify the training behaviour through the various flags in the `train.py
 - running on Ascend
 
   ```python
-  python train.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
   ```
 
-  The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`. The loss value will be achieved as follows:
+  The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`. The loss value of training DenseNet121 on ImageNet will be achieved as follows:
 
   ```shell
   2020-08-22 16:58:56,617:INFO:epoch[0], iter[5003], loss:4.367, mean_fps:0.00 imgs/sec
@@ -195,22 +216,30 @@ You can modify the training behaviour through the various flags in the `train.py
 
   ```python
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.
 
   After training, you'll get some checkpoint files under the folder `./ckpt_0/` by default.
 
+- running on CPU
+
+  ```python
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
+  ```
+
+  The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`.
+
 ### Distributed Training
 
 - running on Ascend
 
   ```bash
-  sh scripts/run_distribute_train.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME]  [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
   ```
 
-  The above shell script will run distribute training in the background. You can view the results log and model checkpoint through the file `train[X]/output/202x-xx-xx_time_xx_xx_xx/`. The loss value will be achieved as follows:
+  The above shell script will run distribute training in the background. You can view the results log and model checkpoint through the file `train[X]/output/202x-xx-xx_time_xx_xx_xx/`. The loss value of training DenseNet121 on ImageNet will be achieved as follows:
 
   ```log
   2020-08-22 16:58:54,556:INFO:epoch[0], iter[5003], loss:3.857, mean_fps:0.00 imgs/sec
@@ -227,7 +256,7 @@ You can modify the training behaviour through the various flags in the `train.py
 
   ```bash
   cd scripts
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [DATASET_PATH]
+  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file `train/train.log`.
@@ -241,14 +270,14 @@ You can modify the training behaviour through the various flags in the `train.py
   running the command below for evaluation.
 
   ```python
-  python eval.py --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
-  The above python command will run in the background. You can view the results through the file "output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log". The accuracy of the test dataset will be as follows:
+  The above python command will run in the background. You can view the results through the file "output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log". The accuracy of evaluating DenseNet121 on the test dataset of ImageNet will be as follows:
 
-  ```shell
+  ```log
   2020-08-24 09:21:50,551:INFO:after allreduce eval: top1_correct=37657, tot=49920, acc=75.43%
   2020-08-24 09:21:50,551:INFO:after allreduce eval: top5_correct=46224, tot=49920, acc=92.60%
   ```
@@ -258,27 +287,49 @@ You can modify the training behaviour through the various flags in the `train.py
   running the command below for evaluation.
 
   ```python
-  python eval.py --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [DATASET_PATH] [CHECKPOINT_PATH]
+  sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
-  The above python command will run in the background. You can view the results through the file "eval/eval.log". The accuracy of the test dataset will be as follows:
+  The above python command will run in the background. You can view the results through the file "eval/eval.log". The accuracy of evaluating DenseNet121 on the test dataset of ImageNet will be as follows:
 
-  ```shell
+  ```log
   2021-02-04 14:20:50,551:INFO:after allreduce eval: top1_correct=37637, tot=49984, acc=75.30%
   2021-02-04 14:20:50,551:INFO:after allreduce eval: top5_correct=46370, tot=49984, acc=92.77%
+  ```
+
+  The accuracy of evaluating DenseNet100 on the test dataset of Cifar-10 will be as follows:
+
+  ```log
+  2021-03-12 18:04:07,893:INFO:after allreduce eval: top1_correct=9536, tot=9984, acc=95.51%
+  ```
+
+- evaluation on CPU
+
+  running the command below for evaluation.
+
+  ```python
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='CPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  ```
+
+  The above python command will run in the background. You can view the results through the file "eval/eval.log".  The accuracy of evaluating DenseNet100 on the test dataset of Cifar-10 will be as follows:
+
+  ```log
+  2021-03-18 09:06:43,247:INFO:after allreduce eval: top1_correct=9492, tot=9984, acc=95.07%
   ```
 
 # [Model Description](#contents)
 
 ## [Performance](#contents)
 
+### DenseNet121
+
 ### Training accuracy results
 
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
-| Model Version       | Inception V1                | Inception V1                |
+| Model Version       | DenseNet121               | DenseNet121               |
 | Resource            | Ascend 910                  | Tesla V100-PCIE             |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 01/27/2021 (month/day/year) |
 | MindSpore Version   | 1.0.0                       | 1.1.0                       |
@@ -291,7 +342,7 @@ You can modify the training behaviour through the various flags in the `train.py
 
 | Parameters          | Ascend                      | GPU                          |
 | ------------------- | --------------------------- | ---------------------------- |
-| Model Version       | Inception V1                | Inception V1                 |
+| Model Version       | DenseNet121              | DenseNet121               |
 | Resource            | Ascend 910                  | Tesla V100-PCIE              |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 02/04/2021 (month/day/year)  |
 | MindSpore Version   | 1.0.0                       | 1.1.1                        |
@@ -299,6 +350,23 @@ You can modify the training behaviour through the various flags in the `train.py
 | batch_size          | 32                          | 32                           |
 | outputs             | probability                 | probability                  |
 | speed               | 1pc:760 img/s;8pc:6000 img/s| 1pc:161 img/s;8pc:1288 img/s |
+
+### DenseNet100
+
+### Training performance
+
+| Parameters          | GPU                          |
+| ------------------- | ---------------------------- |
+| Model Version       | DenseNet100               |
+| Resource            | Tesla V100-PCIE              |
+| Uploaded Date       | 03/18/2021 (month/day/year)  |
+| MindSpore Version   | 1.2.0                        |
+| Dataset             | Cifar-10                     |
+| batch_size          | 64                           |
+| epochs              | 300                         |
+| outputs             | probability                  |
+| accuracy            | 95.31%                  |
+| speed               | 1pc: 600.07 img/sec    |
 
 # [Description of Random Situation](#contents)
 

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import DenseNet121
+from src.network import DenseNet121, DenseNet100
 
 def create_network(name, *args, **kwargs):
     if name == 'densenet121':
         return DenseNet121(*args, **kwargs)
+    if name == 'densenet100':
+        return DenseNet100(*args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")

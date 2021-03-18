@@ -16,24 +16,15 @@
 
 if [ $# -lt 4 ]
 then
-    echo "Usage: sh run_distribute_eval_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CHECKPOINT_PATH]"
-exit 1
+    echo "Usage: sh run_eval_cpu.sh [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]"
+    exit 1
 fi
-
-if [ $1 -lt 1 ] && [ $1 -gt 8 ]
-then
-    echo "error: DEVICE_NUM=$1 is not in (1-8)"
-exit 1
-fi
-
-export DEVICE_NUM=$1
-export RANK_SIZE=$1
 
 # check checkpoint file
 if [ ! -f $4 ]
 then
-    echo "error: CHECKPOINT_PATH=$4 is not a file"    
-exit 1
+    echo "error: CHECKPOINT_PATH=$4 is not a file"
+    exit 1
 fi
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
@@ -46,18 +37,10 @@ fi
 mkdir ../eval
 cd ../eval || exit
 
-export CUDA_VISIBLE_DEVICES="$2"
-
-if [ $1 -gt 1 ]
-then
-    mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../eval.py \
-                                             --data_dir=$3 \
-                                             --device_target='GPU' \
-                                             --pretrained=$4 > eval.log 2>&1 &
-else
-
-    python3 ${BASEPATH}/../eval.py \
+python ${BASEPATH}/../eval.py \
+            --net=$1 \
+            --dataset=$2 \
             --data_dir=$3 \
-            --device_target='GPU' \
+            --device_target='CPU' \
+            --is_distributed=0 \
             --pretrained=$4 > eval.log 2>&1 &
-fi

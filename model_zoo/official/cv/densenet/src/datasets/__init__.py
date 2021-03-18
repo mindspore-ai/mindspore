@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,6 @@
 read dataset for classification
 """
 
-from .classification import classification_dataset
+from .classification import classification_dataset_cifar10, classification_dataset_imagenet
 
-__all__ = ["classification_dataset"]
+__all__ = ["classification_dataset_cifar10", "classification_dataset_imagenet"]

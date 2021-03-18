@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ from mindspore.common import dtype as mstype
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
-from src.network import DenseNet121
-from src.config import config
+parser = argparse.ArgumentParser(description="densenet export")
 
-parser = argparse.ArgumentParser(description="densenet121 export")
+parser.add_argument("--net", type=str, default='', help="Densenet Model, densenet100 or densenet121")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=32, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="densenet121", help="output file name.")
+parser.add_argument("--file_name", type=str, default="densenet", help="output file name.")
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
@@ -37,8 +36,15 @@ context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
+if args.net == "densenet100":
+    from src.config import config_100 as config
+    from src.network.densenet import DenseNet100 as DenseNet
+else:
+    from src.config import config_121 as config
+    from src.network.densenet import DenseNet121 as DenseNet
+
 if __name__ == "__main__":
-    network = DenseNet121(config.num_classes)
+    network = DenseNet(config.num_classes)
 
     param_dict = load_checkpoint(args.ckpt_file)
 
