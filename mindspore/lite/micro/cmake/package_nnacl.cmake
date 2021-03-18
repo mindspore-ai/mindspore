@@ -9,6 +9,8 @@ file(GLOB KERNEL_SRC
 
 if(MICRO_BUILD_ARM64)
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.S)
+    file(GLOB OPT_SRC ${NNACL_DIR}/assembly/opt/*.S)
+    list(APPEND ASSEMBLY_SRC ${OPT_SRC})
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 

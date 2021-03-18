@@ -30,15 +30,16 @@ void InitInt8MatrixA(int8_t *src_ptr, int32_t *input_sums, int8_t *dst_ptr, int 
   }
 }
 
-void InitInt8MatrixB(int8_t *src_ptr, int32_t *weight_bias_sums_batch_, int8_t *dst_ptr, int batch, int deep, int col,
-                     int col_4, int deep_16, int input_zp, int *weight_zp, const int *bias_ptr, bool b_transpose) {
+void InitInt8MatrixB(int8_t *weight_ptr, int32_t *weight_bias_sums_batch_, int8_t *dst_ptr, int batch, int deep,
+                     int col, int col_align, int deep_16, int input_zp, int *weight_zp, const int *bias_ptr,
+                     bool b_transpose, bool filter_per_channel) {
   for (int i = 0; i < batch; ++i) {
-    int8_t *cur_b = src_ptr + i * deep * col;
-    int8_t *cur_b_pack = dst_ptr + i * col_4 * deep_16;
-    int32_t *cur_sums = weight_bias_sums_batch_ + i * col_4;
+    int8_t *cur_b = weight_ptr + i * deep * col;
+    int8_t *cur_b_pack = dst_ptr + i * col_align * deep_16;
+    int32_t *cur_sums = weight_bias_sums_batch_ + i * col_align;
     if (b_transpose) {
       RowMajor2Row16x4MajorInt8(cur_b, cur_b_pack, col, deep);
-      CalcWeightBiasSums(cur_b, deep, col, input_zp, weight_zp, bias_ptr, cur_sums, ColMajor, false);
+      CalcWeightBiasSums(cur_b, deep, col, input_zp, weight_zp, bias_ptr, cur_sums, ColMajor, filter_per_channel);
     } else {
       RowMajor2Col16x4MajorInt8(cur_b, deep, col, cur_b_pack);
       CalcWeightBiasSums(cur_b, deep, col, input_zp, weight_zp, bias_ptr, cur_sums, RowMajor, false);

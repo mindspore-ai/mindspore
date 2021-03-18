@@ -25,8 +25,9 @@ extern "C" {
 void InitInt8MatrixA(int8_t *src_ptr, int32_t *input_sums, int8_t *dst_ptr, int batch, int row, int deep, int input_zp,
                      const int *weight_zp, bool a_transpose);
 
-void InitInt8MatrixB(int8_t *src_ptr, int32_t *weight_bias_sums_batch_, int8_t *dst_ptr, int batch, int deep, int col,
-                     int col_4, int deep_16, int input_zp, int *weight_zp, const int *bias_ptr, bool b_transpose);
+void InitInt8MatrixB(int8_t *weight_ptr, int32_t *weight_bias_sums_batch_, int8_t *dst_ptr, int batch, int deep,
+                     int col, int col_align, int deep_16, int input_zp, int *weight_zp, const int *bias_ptr,
+                     bool b_transpose, bool filter_per_channel);
 
 #ifdef __cplusplus
 }
