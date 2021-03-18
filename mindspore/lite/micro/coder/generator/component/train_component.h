@@ -28,12 +28,11 @@
 namespace mindspore::lite::micro {
 void CodeTrainParams(std::ofstream &ofs);
 
-void CodeFeaturesState(std::ofstream &ofs, const std::string &module_name);
-void CodeFeaturesImplement(std::ofstream &ofs, const std::string &module_name,
-                           const std::unique_ptr<CoderContext> &ctx);
+void CodeFeaturesState(std::ofstream &ofs);
+void CodeFeaturesImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeTrainState(std::ofstream &ofs, const std::string &module_name);
-void CodeTrainImplement(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx);
+void CodeTrainState(std::ofstream &ofs);
+void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 }  // namespace mindspore::lite::micro
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_

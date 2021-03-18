@@ -184,7 +184,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
     init_code.CodeFunction("memset", weight_bias_sums_, 0, weight_bias_sums_size_);
     init_code.CodeMallocExpression(pack_b_ptr_, b_pack_ptr_size_);
     init_code.CodeFunction("memset", pack_b_ptr_, 0, b_pack_ptr_size_);
-    init_code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_);
+    init_code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
     init_code.CodeFunction("InitInt8MatrixB", filter_tensor_, weight_bias_sums_, pack_b_ptr_, param_->batch,
                            param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
                            "init_filter_zp", bias_ptr_, param_->b_transpose_, filter_per_channel_);

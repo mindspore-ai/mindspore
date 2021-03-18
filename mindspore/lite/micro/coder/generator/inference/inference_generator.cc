@@ -35,19 +35,19 @@ int InferenceGenerator::CodeNetHFile() {
     ofs << "#include \"thread_pool.h\"\n";
   }
   ofs << kExternCpp;
-  CodeInputState(ofs, config_->module_name());
+  CodeInputState(ofs);
   CodeCopyOutputsState(ofs);
   if (is_get_quant_args_) {
-    CodeGraphQuantArgsState(ofs, config_->module_name());
+    CodeGraphQuantArgsState(ofs);
   }
   if (config_->support_parallel()) {
-    CodeSetGlobalThreadPoolState(ofs, config_->module_name());
+    CodeSetGlobalThreadPoolState(ofs);
   }
   if (config_->target() != kARM32M) {
-    CodeInitWeightState(ofs, config_->module_name());
+    CodeInitWeightState(ofs);
   }
-  CodeManageResourceState(ofs, config_->module_name());
-  CodeInferenceState(ofs, config_->module_name());
+  CodeManageResourceState(ofs);
+  CodeInferenceState(ofs);
   ofs << kEndExternCpp;
   return RET_OK;
 }
@@ -64,14 +64,14 @@ int InferenceGenerator::CodeNetCFile() {
     ofs << "#include \"" << kDebugUtils << "\"\n";
   }
   if (config_->support_parallel()) {
-    CodeSetGlobalThreadPoolImplement(ofs, config_->module_name());
+    CodeSetGlobalThreadPoolImplement(ofs);
   }
-  CodeInputImplement(ofs, config_->module_name(), ctx_);
+  CodeInputImplement(ofs, ctx_);
   CodeCopyOutputsImplement(ofs, ctx_);
-  CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
-  CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
+  CodeInitResourceImplement(ofs, ctx_);
+  CodeFreeResourceImplement(ofs, ctx_);
   if (is_get_quant_args_) {
-    CodeGraphQuantArgsImplement(ofs, config_->module_name(), ctx_);
+    CodeGraphQuantArgsImplement(ofs, ctx_);
   }
   CodeNetRunFunc(ofs);
   ofs.close();

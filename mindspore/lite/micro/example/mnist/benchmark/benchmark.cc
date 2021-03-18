@@ -1,24 +1,4 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
-#include "coder/generator/component/const_blocks/benchmark.h"
-
-namespace mindspore::lite::micro {
-
-const char *benchmark_source = R"RAW(
 
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
@@ -118,7 +98,7 @@ int main(int argc, const char **argv) {
 
   const char *model_buffer = nullptr;
   int model_size = 0;
-  // read .bin file by ReadBinaryFile;
+  // read .net file by ReadBinaryFile;
   if (argc >= 3) {
     model_buffer = static_cast<const char *>(ReadInputData(argv[2], &model_size));
   }
@@ -165,6 +145,3 @@ int main(int argc, const char **argv) {
   return lite::RET_OK;
 }
 
-)RAW";
-
-}  // namespace mindspore::lite::micro

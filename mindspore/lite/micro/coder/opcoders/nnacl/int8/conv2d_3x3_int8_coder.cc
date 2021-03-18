@@ -102,7 +102,7 @@ int Conv2D3x3Int8Coder::InitTmpBuffer(CoderContext *const context) {
 
   /*=============================tmp_out_============================*/
   tmp_out_size_ = oc4 * C4NUM * output_batch * output_w * output_h * sizeof(uint8_t);
-  tmp_out_ = static_cast<uint8_t *>(allocator_->Malloc(kNumberTypeUInt8, tmp_out_size_, kWorkspace));
+  tmp_out_ = static_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, tmp_out_size_, kWorkspace));
 
   /*=============================input_data_============================*/
   c8_input_size_ = in_batch * input_h * input_w * ic8 * C8NUM * sizeof(int16_t);

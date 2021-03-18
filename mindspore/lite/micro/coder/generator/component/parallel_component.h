@@ -22,13 +22,13 @@
 
 namespace mindspore::lite::micro {
 
-void CodeCreateThreadPool(std::ofstream &ofs, const std::string &module_name);
+void CodeCreateThreadPool(std::ofstream &ofs);
 
 void CodeDestroyThreadPool(std::ofstream &ofs);
 
-void CodeSetGlobalThreadPoolState(std::ofstream &ofs, const std::string &module_name);
+void CodeSetGlobalThreadPoolState(std::ofstream &ofs);
 
-void CodeSetGlobalThreadPoolImplement(std::ofstream &ofs, const std::string &module_name);
+void CodeSetGlobalThreadPoolImplement(std::ofstream &ofs);
 
 }  // namespace mindspore::lite::micro
 
