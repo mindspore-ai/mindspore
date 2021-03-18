@@ -92,7 +92,7 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
   for (auto &user_info : users_info) {
     auto user_node = user_info.first;
     arg_info.using_flg_ = true;
-    MS_LOG(WARNING) << "param:" << param->ToString() << " used by node:" << user_node->ToString();
+    MS_LOG(DEBUG) << "param:" << param->ToString() << " used by node:" << user_node->ToString();
     if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) {
       MS_LOG(EXCEPTION) << "tuple param:" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
                         << " unexpect used by node:" << user_node->ToString();
@@ -184,8 +184,8 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(inputs[0]);
   MS_LOG(DEBUG) << "Hash of prim " << prim->ToString() << " is:" << prim->hash();
 
-  //  kPrimBpropCut
-  if (IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
+  //  kPrimHookBackward
+  if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
     return GenSpecOptBprop(bprop_fg, op_args, out, prim);
   }
 
@@ -336,11 +336,6 @@ abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr
   new_abs_list.emplace_back(out_abs);
   new_abs_list.emplace_back(out_abs);
   return new_abs_list;
-}
-
-FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
-                                    const ValuePtr &out) {
-  return PrimBpropOptimizer::GetPrimBpropOptimizerInst().OptimizeBPropFuncGraph(bprop_fg, c_node, op_args, out);
 }
 
 }  // namespace pipeline

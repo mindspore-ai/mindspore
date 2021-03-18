@@ -149,13 +149,6 @@ private:
 
 };
 
-// bprop_fg has the signature:
-// (sens_input1, sens_input2,...)bprop_fg(input1, input2, ..., out, d_out)
-// c_node contains the prim(input 0) and the input parameters of that prim;
-// op_args contains the arguments list of each input parameters, it maybe tensor or tuple
-// out contains the out of c_node;
-FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
-                                    const ValuePtr &out);
 }  // namespace pipeline
 }  // namespace mindspore
 
