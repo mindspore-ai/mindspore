@@ -164,9 +164,9 @@ class ROC(Metric):
             A tuple, composed of `fpr`, `tpr`, and `thresholds`.
 
             - **fpr** (np.array) - np.array with false positive rates. If multiclass, this is a list of such np.array,
-                one for each class.
+              one for each class.
             - **tps** (np.array) - np.array with true positive rates. If multiclass, this is a list of such np.array,
-                one for each class.
+              one for each class.
             - **thresholds** (np.array) - thresholds used for computing false- and true positive rates.
         """
         if self._is_update is False:

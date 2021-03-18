@@ -857,12 +857,10 @@ class Dataset:
                 original dataset.
                 If after rounding:
 
-                    - Any size equals 0, an error will occur.
-
-                    - The sum of split sizes < K, the difference will be added to the first split.
-
-                    - The sum of split sizes > K, the difference will be removed from the first large
-                      enough split such that it will have at least 1 row after removing the difference.
+                - Any size equals 0, an error will occur.
+                - The sum of split sizes < K, the difference will be added to the first split.
+                - The sum of split sizes > K, the difference will be removed from the first large
+                  enough split such that it will have at least 1 row after removing the difference.
 
             randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
                 If True, the data will be randomly split. Otherwise, each split will be created with
@@ -4120,9 +4118,9 @@ class VOCDataset(MappableDataset):
 
     The generated dataset has multiple columns :
 
-        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
-          ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
-        - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
+    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+      ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+    - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 
     This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
     below shows what input arguments are allowed and their expected behavior.
@@ -4276,13 +4274,13 @@ class CocoDataset(MappableDataset):
 
     The generated dataset has multi-columns :
 
-        - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-          ['iscrowd', dtype=uint32]].
-        - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
-        - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
-          ['num_keypoints', dtype=uint32]].
-        - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-          ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
+    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+      ['iscrowd', dtype=uint32]].
+    - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
+    - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+      ['num_keypoints', dtype=uint32]].
+    - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+      ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
 
     This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. CocoDataset doesn't support
     PKSampler. The table below shows what input arguments are allowed and their expected behavior.

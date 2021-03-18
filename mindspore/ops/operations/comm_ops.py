@@ -29,10 +29,10 @@ class ReduceOp:
 
     There are four kinds of operation options, "SUM", "MAX", "MIN", and "PROD".
 
-        - SUM: Take the sum.
-        - MAX: Take the maximum.
-        - MIN: Take the minimum.
-        - PROD: Take the product.
+    - SUM: Take the sum.
+    - MAX: Take the maximum.
+    - MIN: Take the minimum.
+    - PROD: Take the product.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -285,7 +285,7 @@ class _HostAllGather(PrimitiveWithInfer):
 
 class ReduceScatter(PrimitiveWithInfer):
     """
-     Reduces and scatters tensors from the specified communication group.
+    Reduces and scatters tensors from the specified communication group.
 
     Note:
         The back propagation of the op is not supported yet. Stay tuned for more.
