@@ -14,6 +14,7 @@ set(MINDSPORELITE_VERSION mindspore-lite-1.1.1-runtime-arm64-cpu)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/minddata/include)
 
 add_library(mindspore-lite SHARED IMPORTED)
 add_library(minddata-lite SHARED IMPORTED)
