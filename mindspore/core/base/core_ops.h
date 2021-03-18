@@ -512,6 +512,7 @@ inline const PrimitivePtr kPrimScaleFusion = std::make_shared<Primitive>("ScaleF
 inline const PrimitivePtr kPrimSubFusion = std::make_shared<Primitive>("SubFusion");
 inline const PrimitivePtr kPrimMulFusion = std::make_shared<Primitive>("MulFusion");
 inline const PrimitivePtr kPrimSigmoid = std::make_shared<Primitive>("Sigmoid");
+inline const PrimitivePtr kPrimSigmoidGrad = std::make_shared<Primitive>("SigmoidGrad");
 inline const PrimitivePtr kPrimClip = std::make_shared<Primitive>("Clip");
 inline const PrimitivePtr kPrimHardTanh = std::make_shared<Primitive>("HardTanh");
 inline const PrimitivePtr kPrimDepthWiseConv2DTransposeFusion =

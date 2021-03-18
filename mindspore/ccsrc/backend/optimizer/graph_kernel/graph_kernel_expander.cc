@@ -58,6 +58,12 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimSoftmax,
     prim::kPrimLayerNorm,
     prim::kPrimLayerNormGrad,
+    prim::kPrimSigmoid,
+    prim::kPrimSigmoidGrad,
+    prim::kPrimSigmoidCrossEntropyWithLogits,
+    prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
+    prim::kPrimSoftmaxCrossEntropyWithLogits,
+    prim::kPrimAssignAdd,
 #endif
   };
   return expand_ops;
