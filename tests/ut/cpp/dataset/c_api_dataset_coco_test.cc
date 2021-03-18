@@ -329,8 +329,7 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
     EXPECT_MSTENSOR_EQ(bbox, expect_bbox);
 
     std::shared_ptr<Tensor> de_expect_categoryid;
-    ASSERT_OK(
-      Tensor::CreateFromVector(expect_categoryid_vector[i], TensorShape({bbox_size, 1}), &de_expect_categoryid));
+    ASSERT_OK(Tensor::CreateFromVector(expect_categoryid_vector[i], TensorShape({bbox_size, 1}), &de_expect_categoryid));
     mindspore::MSTensor expect_categoryid =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_categoryid));
     EXPECT_MSTENSOR_EQ(category_id, expect_categoryid);
@@ -420,8 +419,7 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
     EXPECT_MSTENSOR_EQ(image, expect_image);
 
     std::shared_ptr<Tensor> de_expect_segmentation;
-    ASSERT_OK(
-      Tensor::CreateFromVector(expect_segmentation_vector[i], TensorShape(expect_size[i]), &de_expect_segmentation));
+    ASSERT_OK(Tensor::CreateFromVector(expect_segmentation_vector[i], TensorShape(expect_size[i]), &de_expect_segmentation));
     mindspore::MSTensor expect_segmentation =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_segmentation));
     EXPECT_MSTENSOR_EQ(segmentation, expect_segmentation);

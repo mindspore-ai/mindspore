@@ -632,20 +632,24 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // std::vector<uint64_t> label_list;
+  std::vector<uint64_t> label_list;
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto label = row["label"];
-    // uint64_t label_value;
-    // label->GetItemAt(&label_value, {0});
-    // label_list.push_back(label_value);
+    auto label = row["label"];
+
+    std::shared_ptr<Tensor> de_label;
+    uint64_t label_value;
+    ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
+    de_label->GetItemAt(&label_value, {0});
+    label_list.push_back(label_value);
+
     iter->GetNextRow(&row);
   }
 
   // Only 1 column whose label is equal to 3
   EXPECT_EQ(i, 1);
-  // EXPECT_EQ(label_list.at(0), 3);
+  EXPECT_EQ(label_list.at(0), 3);
 
   // Manually terminate the pipeline
   iter->Stop();
@@ -674,21 +678,25 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess2) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // std::vector<uint64_t> label_list;
+  std::vector<uint64_t> label_list;
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto label = row["label"];
-    // uint64_t label_value;
-    // label->GetItemAt(&label_value, {0});
-    // label_list.push_back(label_value);
+    auto label = row["label"];
+
+    std::shared_ptr<Tensor> de_label;
+    uint64_t label_value;
+    ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
+    de_label->GetItemAt(&label_value, {0});
+    label_list.push_back(label_value);
+
     iter->GetNextRow(&row);
   }
 
   // There are 2 columns whose label is more than 1
   EXPECT_EQ(i, 2);
-  // EXPECT_EQ(label_list.at(0), 2);
-  // EXPECT_EQ(label_list.at(1), 3);
+  EXPECT_EQ(label_list.at(0), 2);
+  EXPECT_EQ(label_list.at(1), 3);
 
   // Manually terminate the pipeline
   iter->Stop();
@@ -1079,7 +1087,7 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    // EXPECT_EQ(image.Shape()[0], 30);
+    EXPECT_EQ(image.Shape()[0], 30);
     iter->GetNextRow(&row);
   }
 

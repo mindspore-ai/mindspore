@@ -66,7 +66,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
 
   auto image1 = row1["image"];
 
-  // EXPECT_EQ(*image, *image1);
+  EXPECT_MSTENSOR_EQ(image, image1);
 
   // Manually terminate the pipeline
   iter1->Stop();

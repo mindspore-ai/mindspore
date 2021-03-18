@@ -164,12 +164,10 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // FIXME
-    //    auto image = row["image"];
-    //    auto image_copy = row["image_copy"];
-    //    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    //    auto n = memcmp(&image, &image_copy, image.DataSize());
-    //    EXPECT_EQ(n, 0);
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_MSTENSOR_EQ(image, image_copy);
     iter->GetNextRow(&row);
   }
 

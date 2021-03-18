@@ -71,15 +71,19 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   iter->GetNextRow(&row);
 
   // Expected result after tokenization
-  // std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe",
-  // "."};
+  std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe", "."};
+  std::shared_ptr<Tensor> de_expected_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
+  mindspore::MSTensor expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto txt = row["text"];
-    // MS_LOG(INFO) << *txt;
-    // mindspore::MSTensor expected_tensor;
-    // Tensor::CreateFromVector(expected, &expected_tensor);
-    // EXPECT_EQ(*txt, *expected_tensor);
+    auto txt = row["text"];
+    TEST_MS_LOG_MSTENSOR(INFO, "txt: ", txt);
+
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -127,15 +131,19 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
   iter->GetNextRow(&row);
 
   // Expected result after tokenization
-  // std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe",
-  // "."};
+  std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe", "."};
+  std::shared_ptr<Tensor> de_expected_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
+  mindspore::MSTensor expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto txt = row["text"];
-    // MS_LOG(INFO) << *txt;
-    // mindspore::MSTensor expected_tensor;
-    // Tensor::CreateFromVector(expected, &expected_tensor);
-    // EXPECT_EQ(*txt, *expected_tensor);
+    auto txt = row["text"];
+    TEST_MS_LOG_MSTENSOR(INFO, "txt: ", txt);
+
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+
     iter->GetNextRow(&row);
     i++;
   }

@@ -222,7 +222,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtensionFail) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
   // Expect no data: cannot find files with specified extension
-  // EXPECT_EQ(row.size(), 0);
+  EXPECT_EQ(row.size(), 0);
 
   // Manually terminate the pipeline
   iter->Stop();

@@ -46,8 +46,8 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["file_name"];
-    // MS_LOG(INFO) << "Tensor image file name: " << *image;
+    auto image = row["file_name"];
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
 
     iter->GetNextRow(&row);
   }
@@ -96,8 +96,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["file_name"];
-    // MS_LOG(INFO) << "Tensor image file name: " << *image;
+    auto image = row["file_name"];
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
+
     iter->GetNextRow(&row);
   }
 
@@ -131,8 +132,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess3) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["file_name"];
-    // MS_LOG(INFO) << "Tensor image file name: " << *image;
+    auto image = row["file_name"];
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
+
     iter->GetNextRow(&row);
   }
 
@@ -165,8 +167,8 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess4) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor label: " << *label;
+    auto label = row["label"];
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
     iter->GetNextRow(&row);
   }
 
@@ -266,7 +268,8 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
     uint64_t j = 0;
     while (row.size() != 0) {
       j++;
-      // MS_LOG(INFO) << "Tensor label: " << *row["label"];
+      auto label = row["label"];
+      TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
       iter->GetNextRow(&row);
     }
     EXPECT_EQ(j, expected_samples[i]);
@@ -312,10 +315,10 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["file_name"];
+    auto image = row["file_name"];
     auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor file name: " << *image;
-    // MS_LOG(INFO) << "Tensor label: " << *label;
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 
@@ -383,10 +386,10 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["file_name"];
+    auto image = row["file_name"];
     auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor file name: " << *image;
-    // MS_LOG(INFO) << "Tensor label: " << *label;
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 
@@ -459,7 +462,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
   while (row.size() != 0) {
     i++;
     auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor label: " << *label;
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 

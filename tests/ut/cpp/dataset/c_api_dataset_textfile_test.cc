@@ -60,12 +60,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -317,12 +320,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1A) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -375,12 +381,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1B) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -432,12 +441,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse4Shard) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -492,12 +504,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1A) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -552,12 +567,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1B) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -611,12 +629,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -666,12 +687,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1A) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -724,12 +748,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1B) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
@@ -782,12 +809,15 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal4) {
   while (row.size() != 0) {
     auto text = row["text"];
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+
     i++;
     iter->GetNextRow(&row);
   }
