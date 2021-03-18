@@ -988,7 +988,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq not provided (default 0)
-  jieba_tokenizer->AddWord("男默女泪");
+  ASSERT_OK(jieba_tokenizer->AddWord("男默女泪"));
 
   // Create Map operation on ds
   ds = ds->Map({jieba_tokenizer}, {"text"});
@@ -1038,7 +1038,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq is set explicitly to 0
-  jieba_tokenizer->AddWord("男默女泪", 0);
+  ASSERT_OK(jieba_tokenizer->AddWord("男默女泪", 0));
 
   // Create Map operation on ds
   ds = ds->Map({jieba_tokenizer}, {"text"});
@@ -1088,7 +1088,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq 10
-  jieba_tokenizer->AddWord("男默女泪", 10);
+  ASSERT_OK(jieba_tokenizer->AddWord("男默女泪", 10));
 
   // Create Map operation on ds
   ds = ds->Map({jieba_tokenizer}, {"text"});
@@ -1138,7 +1138,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq 20000
-  jieba_tokenizer->AddWord("江大桥", 20000);
+  ASSERT_OK(jieba_tokenizer->AddWord("江大桥", 20000));
 
   // Create Map operation on ds
   ds = ds->Map({jieba_tokenizer}, {"text"});
@@ -1192,6 +1192,115 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWordFail) {
     std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer1, nullptr);
   EXPECT_NE(jieba_tokenizer1->AddWord("我们", -1), Status::OK());
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDict) {
+  // Testing AddDict of JiebaTokenizer when the input is a vector of word-freq pair.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddDict.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/6.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file});
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Add word with freq 20000
+  std::vector<std::pair<std::string, int64_t>> user_dict = {{"江大桥", 20000}};
+  ASSERT_OK(jieba_tokenizer->AddDict(user_dict));
+
+  // Create Map operation on ds
+  ds = ds->Map({jieba_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"江州", "市长", "江大桥", "参加", "了", "长江大桥", "的", "通车", "仪式"};
+  std::shared_ptr<Tensor> de_expected_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
+  mindspore::MSTensor expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["text"];
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDictFromFile) {
+  // Testing AddDict of JiebaTokenizer when the input is a path to dict.
+  // Test error scenario for AddDict: invalid path
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddDictFromFile.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/3.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file});
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Load dict from txt file
+  std::string user_dict_path = datasets_root_path_ + "/testJiebaDataset/user_dict.txt";
+  std::string invalid_path = datasets_root_path_ + "/testJiebaDataset/invalid_path.txt";
+  EXPECT_ERROR(jieba_tokenizer->AddDict(invalid_path));
+  ASSERT_OK(jieba_tokenizer->AddDict(user_dict_path));
+
+  // Create Map operation on ds
+  ds = ds->Map({jieba_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"今天天气", "太好了", "我们", "一起", "去", "外面", "玩吧"};
+  std::shared_ptr<Tensor> de_expected_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
+  mindspore::MSTensor expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["text"];
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
@@ -2521,6 +2630,421 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess1) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+std::vector<std::string> vocab_english = {"book", "cholera", "era", "favor", "##ite", "my",
+                                          "is",   "love",    "dur", "##ing", "the"};
+
+std::vector<std::string> vocab_chinese = {"我", "最", "喜", "欢", "的", "书", "是", "霍", "乱", "时", "期", "爱", "情"};
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess1.";
+  // Test WordpieceTokenizer with default parameters on English vocab
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/wordpiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(10);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_english, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer = std::make_shared<text::WordpieceTokenizer>(vocab);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {
+    {"my"}, {"favor", "##ite"}, {"book"}, {"is"}, {"love"}, {"dur", "##ing"}, {"the"}, {"cholera"}, {"era"}, {"[UNK]"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["text"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess2.";
+  // Test WordpieceTokenizer with empty unknown_token
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/wordpiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(10);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_english, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer =
+    std::make_shared<text::WordpieceTokenizer>(vocab, "##", 100, "", false);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {
+    {"my"}, {"favor", "##ite"}, {"book"}, {"is"}, {"love"}, {"dur", "##ing"}, {"the"}, {"cholera"}, {"era"}, {"what"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["text"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess3.";
+  // Test WordpieceTokenizer with non-default max_bytes_per_token
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/wordpiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(10);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_english, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer =
+    std::make_shared<text::WordpieceTokenizer>(vocab, "##", 4, "[UNK]", false);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {{"my"},    {"[UNK]"}, {"book"},  {"is"},  {"love"},
+                                                    {"[UNK]"}, {"the"},   {"[UNK]"}, {"era"}, {"[UNK]"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["text"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess4.";
+  // Test WordpieceTokenizer with default parameters on Chinese vocab
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/wordpiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(10);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(15);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_chinese, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer =
+    std::make_shared<text::WordpieceTokenizer>(vocab, "##", 100, "[UNK]", false);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {{"我"}, {"最"}, {"喜"}, {"欢"}, {"的"}, {"书"}, {"是"},   {"霍"},
+                                                    {"乱"}, {"时"}, {"期"}, {"的"}, {"爱"}, {"情"}, {"[UNK]"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["text"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 15);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess5.";
+  // Test WordpieceTokenizer with with_offsets true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/wordpiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(10);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_english, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer =
+    std::make_shared<text::WordpieceTokenizer>(vocab, "##", 100, "[UNK]", true);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {
+    {"my"}, {"favor", "##ite"}, {"book"}, {"is"}, {"love"}, {"dur", "##ing"}, {"the"}, {"cholera"}, {"era"}, {"[UNK]"}};
+  std::vector<std::vector<uint32_t>> expected_offsets_start = {{0}, {0, 5}, {0}, {0}, {0}, {0, 3}, {0}, {0}, {0}, {0}};
+  std::vector<std::vector<uint32_t>> expected_offsets_limit = {{2}, {5, 8}, {4}, {2}, {4}, {3, 6}, {3}, {7}, {3}, {4}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["token"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+
+    auto start = row["offsets_start"];
+    std::shared_ptr<Tensor> de_expected_start_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected_offsets_start[i], &de_expected_start_tensor));
+    mindspore::MSTensor expected_start_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_start_tensor));
+    EXPECT_MSTENSOR_EQ(start, expected_start_tensor);
+
+    auto limit = row["offsets_limit"];
+    std::shared_ptr<Tensor> de_expected_limit_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected_offsets_limit[i], &de_expected_limit_tensor));
+    mindspore::MSTensor expected_limit_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_limit_tensor));
+    EXPECT_MSTENSOR_EQ(limit, expected_limit_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess6) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess6.";
+  // Test WordpieceTokenizer with max_bytes_per_token equals to 0
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/wordpiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(10);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_english, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer =
+    std::make_shared<text::WordpieceTokenizer>(vocab, "##", 0, "[UNK]", true);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {{"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"},
+                                                    {"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto txt = row["token"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(txt, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerFail1.";
+  // Test WordpieceTokenizer with nullptr vocab
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer = std::make_shared<text::WordpieceTokenizer>(nullptr);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid WordpieceTokenizer input with nullptr vocab
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestWordpieceTokenizerFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerFail2.";
+  // Test WordpieceTokenizer with negative max_bytes_per_token
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(vocab_english, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create WordpieceTokenizer operation on ds
+  std::shared_ptr<TensorTransform> wordpiece_tokenizer = std::make_shared<text::WordpieceTokenizer>(vocab, "##", -1);
+  EXPECT_NE(wordpiece_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({wordpiece_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid WordpieceTokenizer input with nullptr vocab
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess) {
