@@ -34,11 +34,5 @@ Status TypeCastOp::OutputType(const std::vector<DataType> &inputs, std::vector<D
   return Status::OK();
 }
 
-Status TypeCastOp::to_json(nlohmann::json *out_json) {
-  nlohmann::json args;
-  args["data_type"] = type_.ToString();
-  *out_json = args;
-  return Status::OK();
-}
 }  // namespace dataset
 }  // namespace mindspore

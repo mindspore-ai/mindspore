@@ -387,18 +387,18 @@ class ToNumber(TextTensorOperation):
     """
     Tensor operation to convert every element of a string tensor to a number.
 
-    Strings are casted according to the rules specified in the following links:
+    Strings are cast according to the rules specified in the following links:
     https://en.cppreference.com/w/cpp/string/basic_string/stof,
     https://en.cppreference.com/w/cpp/string/basic_string/stoul,
     except that any strings which represent negative numbers cannot be cast to an
     unsigned integer type.
 
     Args:
-        data_type (mindspore.dtype): mindspore.dtype to be casted to. Must be
+        data_type (mindspore.dtype): mindspore.dtype to be cast to. Must be
             a numeric type.
 
     Raises:
-        RuntimeError: If strings are invalid to cast, or are out of range after being casted.
+        RuntimeError: If strings are invalid to cast, or are out of range after being cast.
 
     Examples:
         >>> import mindspore.common.dtype as mstype

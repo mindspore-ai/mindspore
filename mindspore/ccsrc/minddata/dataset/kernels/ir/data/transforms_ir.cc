@@ -78,6 +78,13 @@ Status OneHotOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
 
+Status OneHotOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_classes"] = num_classes_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // PreBuiltOperation
 PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(tensor_op) {
 #ifdef ENABLE_PYTHON
@@ -148,6 +155,13 @@ Status TypeCastOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> TypeCastOperation::Build() { return std::make_shared<TypeCastOp>(data_type_); }
+
+Status TypeCastOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["data_type"] = data_type_;
+  *out_json = args;
+  return Status::OK();
+}
 
 #ifndef ENABLE_ANDROID
 // UniqueOperation

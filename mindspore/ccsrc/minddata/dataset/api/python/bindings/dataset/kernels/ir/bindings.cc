@@ -64,6 +64,28 @@ PYBIND_REGISTER(
       }));
   }));
 
+PYBIND_REGISTER(
+  DuplicateOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::DuplicateOperation, TensorOperation, std::shared_ptr<transforms::DuplicateOperation>>(
+      *m, "DuplicateOperation")
+      .def(py::init([]() {
+        auto duplicate = std::make_shared<transforms::DuplicateOperation>();
+        THROW_IF_ERROR(duplicate->ValidateParams());
+        return duplicate;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  OneHotOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::OneHotOperation, TensorOperation, std::shared_ptr<transforms::OneHotOperation>>(
+      *m, "OneHotOperation")
+      .def(py::init([](int32_t num_classes) {
+        auto one_hot = std::make_shared<transforms::OneHotOperation>(num_classes);
+        THROW_IF_ERROR(one_hot->ValidateParams());
+        return one_hot;
+      }));
+  }));
+
 PYBIND_REGISTER(RandomChoiceOperation, 1, ([](const py::module *m) {
                   (void)py::class_<transforms::RandomChoiceOperation, TensorOperation,
                                    std::shared_ptr<transforms::RandomChoiceOperation>>(*m, "RandomChoiceOperation")
@@ -87,5 +109,28 @@ PYBIND_REGISTER(RandomApplyOperation, 1, ([](const py::module *m) {
                       return random_apply;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  TypeCastOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::TypeCastOperation, TensorOperation, std::shared_ptr<transforms::TypeCastOperation>>(
+      *m, "TypeCastOperation")
+      .def(py::init([](std::string data_type) {
+        auto type_cast = std::make_shared<transforms::TypeCastOperation>(data_type);
+        THROW_IF_ERROR(type_cast->ValidateParams());
+        return type_cast;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  UniqueOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::UniqueOperation, TensorOperation, std::shared_ptr<transforms::UniqueOperation>>(
+      *m, "UniqueOperation")
+      .def(py::init([]() {
+        auto unique = std::make_shared<transforms::UniqueOperation>();
+        THROW_IF_ERROR(unique->ValidateParams());
+        return unique;
+      }));
+  }));
+
 }  // namespace dataset
 }  // namespace mindspore

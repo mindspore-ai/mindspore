@@ -21,7 +21,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 
-from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_option, check_slice_op, \
+from .validators import check_num_classes, check_ms_type, check_fill_value, check_slice_option, check_slice_op, \
     check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops
 from ..core.datatypes import mstype_to_detype
 
@@ -52,7 +52,7 @@ class TensorOperation:
         raise NotImplementedError("TensorOperation has to implement parse() method.")
 
 
-class OneHot(cde.OneHotOp):
+class OneHot(TensorOperation):
     """
     Tensor operation to apply one hot encoding.
 
@@ -72,7 +72,9 @@ class OneHot(cde.OneHotOp):
     @check_num_classes
     def __init__(self, num_classes):
         self.num_classes = num_classes
-        super().__init__(num_classes)
+
+    def parse(self):
+        return cde.OneHotOperation(self.num_classes)
 
 
 class Fill(cde.FillOp):
@@ -102,7 +104,7 @@ class Fill(cde.FillOp):
         super().__init__(cde.Tensor(np.array(fill_value)))
 
 
-class TypeCast(cde.TypeCastOp):
+class TypeCast(TensorOperation):
     """
     Tensor operation to cast to a given MindSpore data type.
 
@@ -123,11 +125,13 @@ class TypeCast(cde.TypeCastOp):
         >>> dataset = dataset.map(operations=type_cast_op)
     """
 
-    @check_de_type
+    @check_ms_type
     def __init__(self, data_type):
         data_type = mstype_to_detype(data_type)
         self.data_type = str(data_type)
-        super().__init__(data_type)
+
+    def parse(self):
+        return cde.TypeCastOperation(self.data_type)
 
 
 class _SliceOption(cde.SliceOption):
@@ -314,7 +318,7 @@ class Concatenate(cde.ConcatenateOp):
         super().__init__(axis, prepend, append)
 
 
-class Duplicate(cde.DuplicateOp):
+class Duplicate(TensorOperation):
     """
     Duplicate the input tensor to output, only support transform one column each time.
 
@@ -337,8 +341,11 @@ class Duplicate(cde.DuplicateOp):
         >>> # +---------+---------+
     """
 
+    def parse(self):
+        return cde.DuplicateOperation()
 
-class Unique(cde.UniqueOp):
+
+class Unique(TensorOperation):
     """
     Perform the unique operation on the input tensor, only support transform one column each time.
 
@@ -373,9 +380,11 @@ class Unique(cde.UniqueOp):
         >>> # +---------+-----------------+---------+
 
     """
+    def parse(self):
+        return cde.UniqueOperation()
 
 
-class Compose():
+class Compose(TensorOperation):
     """
     Compose a list of transforms into a single transform.
 
@@ -401,7 +410,7 @@ class Compose():
         return cde.ComposeOperation(operations)
 
 
-class RandomApply():
+class RandomApply(TensorOperation):
     """
     Randomly perform a series of transforms with a given probability.
 
@@ -429,7 +438,7 @@ class RandomApply():
         return cde.RandomApplyOperation(self.prob, operations)
 
 
-class RandomChoice():
+class RandomChoice(TensorOperation):
     """
     Randomly select one transform from a list of transforms to perform operation.
 

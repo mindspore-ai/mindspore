@@ -87,7 +87,7 @@ def check_num_classes(method):
     return new_method
 
 
-def check_de_type(method):
+def check_ms_type(method):
     """Wrapper method to check the parameters of data type."""
 
     @wraps(method)

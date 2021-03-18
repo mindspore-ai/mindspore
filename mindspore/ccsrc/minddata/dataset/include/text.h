@@ -351,7 +351,7 @@ class SentencePieceTokenizer final : public TensorTransform {
   /// \param[in] vocab a SentencePieceVocab object.
   /// \param[in] out_type The type of output.
   SentencePieceTokenizer(const std::shared_ptr<SentencePieceVocab> &vocab,
-                         mindspore::dataset::SPieceTokenizerOutType out_typee);
+                         mindspore::dataset::SPieceTokenizerOutType out_type);
 
   /// \brief Constructor.
   /// \param[in] vocab_path vocab model file path.
@@ -398,14 +398,14 @@ class SlidingWindow final : public TensorTransform {
 };
 
 /// \brief Tensor operation to convert every element of a string tensor to a number.
-///   Strings are casted according to the rules specified in the following links:
+///   Strings are cast according to the rules specified in the following links:
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stof,
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stoul,
 ///   except that any strings which represent negative numbers cannot be cast to an unsigned integer type.
 class ToNumber final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] data_type of the tensor to be casted to. Must be a numeric type.
+  /// \param[in] data_type of the tensor to be cast to. Must be a numeric type.
   explicit ToNumber(const std::string &data_type) : ToNumber(StringToChar(data_type)) {}
 
   explicit ToNumber(const std::vector<char> &data_type);
