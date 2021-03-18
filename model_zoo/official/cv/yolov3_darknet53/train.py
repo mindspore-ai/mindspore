@@ -134,7 +134,7 @@ def conver_training_shape(args):
 def network_init(args):
     devid = int(os.getenv('DEVICE_ID', '0'))
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=args.device_target, save_graphs=True, device_id=devid)
+                        device_target=args.device_target, save_graphs=False, device_id=devid)
     # init distributed
     if args.is_distributed:
         if args.device_target == "Ascend":
