@@ -32,6 +32,9 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
  private:
   void AddArgumentOp(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &src_h_desc,
                      const dnnl::memory::desc &src_c_desc, const dnnl::memory::desc &bias_desc,
@@ -54,6 +57,7 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
   int num_directions_;
   bool bidirectional_;
   bool has_bias_;
+  size_t reserve_size_;
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;
   dnnl::memory::dims bias_dims_;

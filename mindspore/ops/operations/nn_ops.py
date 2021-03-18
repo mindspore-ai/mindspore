@@ -3885,29 +3885,7 @@ class LSTM(PrimitiveWithInfer):
         y_shape = (x_shape[0], x_shape[1], self.hidden_size * self.num_directions)
 
         # set arbitrary shape for reserved space
-        type_size = 4
-        gates_ws_ld = self.get_good_ld(self.hidden_size * 4, type_size)
-        states_ws_ld = self.get_good_ld(max(self.hidden_size, self.input_size), type_size)
-        self.ws_gates_size = self.num_layers * self.num_directions * x_shape[0] * x_shape[1] * gates_ws_ld * type_size
-        self.ws_states_size = (self.num_layers + 1) * self.num_directions * (x_shape[0] + 1) * x_shape[
-            1] * states_ws_ld * type_size
-        self.ws_c_states_size = (self.num_layers + 1) * self.num_directions * (x_shape[0] + 1) * x_shape[
-            1] * states_ws_ld * type_size
-        self.ws_diff_states_size = (self.num_layers + 1) * self.num_directions * (x_shape[0] + 1) * (2 + 1) * x_shape[
-            1] * states_ws_ld * type_size
-        self.ws_grid_comp_size = 0
-        self.page_size = 4096
-        current_offset = 0
-        current_offset += self.ws_gates_size
-        current_offset = self.rnd_up(current_offset, self.page_size)
-        current_offset += self.ws_states_size
-        current_offset = self.rnd_up(current_offset, self.page_size)
-        current_offset += self.ws_c_states_size
-        current_offset = self.rnd_up(current_offset, self.page_size)
-        current_offset += self.ws_diff_states_size
-        current_offset = self.rnd_up(current_offset, self.page_size)
-        current_offset += self.ws_grid_comp_size
-        reserved_shape = (current_offset, 1)
+        reserved_shape = (1, 1)
         state_shape = (1, 1)
         return (y_shape, h_shape, c_shape, reserved_shape, state_shape)
 
@@ -3915,15 +3893,6 @@ class LSTM(PrimitiveWithInfer):
         args = {'x': x_dtype, 'h': h_dtype, 'c': c_dtype, 'w': w_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
         return (x_dtype, x_dtype, x_dtype, x_dtype, x_dtype)
-
-    def rnd_up(self, current_offset, page_size):
-        return ((current_offset + page_size - 1) // page_size) * page_size
-
-    def get_good_ld(self, dim, type_size):
-        ld = self.rnd_up(dim, 64 // type_size)
-        if ld * 256 == 0:
-            return ld + 64 // type_size
-        return ld
 
 
 class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):

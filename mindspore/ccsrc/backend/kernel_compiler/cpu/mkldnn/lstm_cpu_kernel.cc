@@ -22,6 +22,12 @@
 namespace mindspore {
 namespace kernel {
 const int kMaxLSTMLayer = 100;
+const int kOutputWorkSpaceIndex = 3;
+void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
+}
+
 void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 #ifdef PLATFORM_86
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -53,12 +59,25 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = formatted_md(dst_dims, tag::tnc);
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
-  auto desc = std::make_shared<dnnl::lstm_forward::desc>(dnnl::prop_kind::forward_training, direction, src_desc,
-                                                         src_h_desc, src_c_desc, formatted_md(weights_dims_, tag::any),
-                                                         formatted_md(weights_h_dims_, tag::any), bias_desc, dst_desc,
-                                                         dst_h_desc, dst_c_desc);
+  if (!kernel_node->HasAttr(kAttrIsTraining)) {
+    MS_LOG(WARNING) << "LSTM has no attr is_training";
+  }
+  is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
+  auto prop_kind = dnnl::prop_kind::forward_training;
+  if (!is_training) {
+    prop_kind = dnnl::prop_kind::forward_inference;
+  }
+  auto desc = std::make_shared<dnnl::lstm_forward::desc>(
+    prop_kind, direction, src_desc, src_h_desc, src_c_desc, formatted_md(weights_dims_, tag::any),
+    formatted_md(weights_h_dims_, tag::any), bias_desc, dst_desc, dst_h_desc, dst_c_desc);
   prim_desc_ = dnnl::lstm_forward::primitive_desc(*desc, eng);
   primitive_ = std::make_shared<dnnl::lstm_forward>(prim_desc_);
+  if (is_training) {
+    reserve_size_ = static_cast<size_t>(prim_desc_.workspace_desc().get_size());
+    AddArgument(DNNL_ARG_WORKSPACE, prim_desc_.workspace_desc());
+  } else {
+    reserve_size_ = 1;
+  }
   AddArgument(DNNL_ARG_SRC_LAYER, src_desc);
   AddArgument(DNNL_ARG_SRC_ITER, src_h_desc);
   AddArgument(DNNL_ARG_SRC_ITER_C, src_c_desc);
@@ -68,7 +87,6 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST_LAYER, dst_desc);
   AddArgument(DNNL_ARG_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_DST_ITER_C, dst_c_desc);
-  AddArgument(DNNL_ARG_WORKSPACE, prim_desc_.workspace_desc());
 }
 
 void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
@@ -140,7 +158,9 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER_C, outputs[2]->addr);
-  SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[3]->addr);
+  if (is_training) {
+    SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[3]->addr);
+  }
   ExecutePrimitive();
   return true;
 }

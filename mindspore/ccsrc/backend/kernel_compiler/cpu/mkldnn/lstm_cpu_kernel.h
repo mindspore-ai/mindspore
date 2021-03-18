@@ -36,6 +36,9 @@ class LstmCPUKernel : public MKLCPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
  private:
   void CheckParam(const CNodePtr &kernel_node);
   int weight_size_ = 0;
@@ -48,6 +51,8 @@ class LstmCPUKernel : public MKLCPUKernel {
   int num_directions_;
   bool bidirectional_;
   bool has_bias_;
+  size_t reserve_size_;
+  bool is_training;
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;
   dnnl::memory::dims bias_dims_;
