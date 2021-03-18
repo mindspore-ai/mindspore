@@ -33,6 +33,8 @@ namespace kernel {
 namespace tbe {
 using std::string;
 using std::vector;
+const std::map<std::string, std::string> opTypeAdapter = {
+  {"ReLUV2", "ReluV2"}, {"ReLU6", "Relu6"}, {"ReLU6Grad", "Relu6Grad"}, {"ReLUGrad", "ReluGrad"}, {"ReLU", "Relu"}};
 
 class TbeUtils {
  public:
