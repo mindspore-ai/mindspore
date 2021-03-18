@@ -30,9 +30,6 @@ class TrainGenerator : public Generator {
  private:
   int CodeNetHFile() override;
   int CodeNetCFile() override;
-
-  int CodeBenchmarkFile() override;
-
   void CodeGradientFunc(std::ofstream &ofs) const;
 };
 }  // namespace mindspore::lite::micro

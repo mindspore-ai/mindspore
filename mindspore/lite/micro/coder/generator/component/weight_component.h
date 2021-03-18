@@ -23,7 +23,7 @@
 #include <memory>
 #include <fstream>
 #include "src/tensor.h"
-#include "coder/coder_config.h"
+#include "coder/config.h"
 #include "coder/context.h"
 
 namespace mindspore::lite::micro {

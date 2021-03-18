@@ -30,8 +30,11 @@ void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext
   }
   ofs << "#include <stdlib.h>\n"
       << "#include <string.h>\n"
-      << "#include \"microtensor.h\"\n\n"
       << "extern unsigned char *" << ctx->buffer_name() << ";\n";
+  ofs << "enum STATUS {\n"
+         "  RET_OK = 0,\n"
+         "  RET_ERROR = 1,\n"
+         "};\n\n";
 }
 
 void CodeModelParamsState(std::ofstream &ofs, const std::map<std::string, Tensor *> &weights) {

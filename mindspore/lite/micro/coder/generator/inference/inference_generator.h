@@ -30,8 +30,6 @@ class InferenceGenerator : public Generator {
  private:
   int CodeNetHFile() override;
   int CodeNetCFile() override;
-
-  int CodeBenchmarkFile() override;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_INFERENCE_GENERATOR_H_

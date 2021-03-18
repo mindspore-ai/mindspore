@@ -17,14 +17,13 @@
 #include <sys/stat.h>
 #include <set>
 #include <fstream>
+#include "coder/generator/component/component.h"
 #include "coder/generator/component/cmake_component.h"
 #include "coder/generator/component/weight_component.h"
 #include "coder/generator/component/common_component.h"
-#include "coder/generator/component/const_blocks/micro_tensor.h"
 #include "coder/generator/component/const_blocks/cmake_lists.h"
 #include "coder/generator/component/const_blocks/debug_utils.h"
 #include "coder/generator/component/const_blocks/load_input.h"
-#include "coder/generator/component/const_blocks/thread_pool.h"
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
@@ -51,14 +50,8 @@ Generator::Generator(std::unique_ptr<CoderContext> ctx) {
   this->net_inc_hfile_ = module_name + ".h";
   this->net_src_cfile_ = module_name + ".c";
   this->net_weight_hfile_ = module_name + "_weight.h";
-  if (config_->interface() == Interface_CPP) {
-    this->net_main_cfile_ = "benchmark.cc";
-  } else {
-    this->net_main_cfile_ = "benchmark.c";
-  }
-  this->net_src_file_path_ = config_->code_path() + "/src/";
-  this->net_inc_file_path_ = config_->code_path() + "/include/";
-  this->net_main_file_path_ = config_->code_path() + "/benchmark/";
+  this->net_src_file_path_ = config_->code_path() + kSourcePath;
+  this->net_main_file_path_ = config_->code_path() + kBenchmarkPath;
   origin_umask_ = umask(user_umask_);
   MS_LOG(DEBUG) << "origin umask: " << origin_umask_ << ", user umask: " << user_umask_;
 }
@@ -86,16 +79,11 @@ int Generator::CodeBenchmarkCMakeFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << test_cmake_file;
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR})\n";
-  if (config_->interface() == Interface_CPP) {
-    ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/)\n";
-    ofs << "include_directories(${HEADER_PATH})\n";
-  } else {
-    ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
-  }
+  ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/)\n";
+  ofs << "include_directories(${HEADER_PATH})\n";
   ofs << "set(SRC_FILES\n";
-  ofs << "\t\t" << net_main_cfile_ << "\n";
+  ofs << "\t\t" << kBenchmarkFile << "\n";
   ofs << "\t\tload_input.c\n";
-  ofs << "\t\tdebug_utils.c\n";
   ofs << ")\n";
   ofs.close();
   return RET_OK;
@@ -113,23 +101,17 @@ int Generator::CodeSourceCMakeFile() {
 
 int Generator::CodeStaticContent() {
   std::vector<std::pair<std::string, std::string>> const_blocks = {
-    {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
-    {net_main_file_path_ + "debug_utils.h", debug_utils_h},
-    {net_main_file_path_ + "debug_utils.c", debug_utils_c},
     {net_main_file_path_ + "load_input.h", load_input_h},
     {net_main_file_path_ + "load_input.c", load_input_c},
-    {net_main_file_path_ + "CMakeLists.txt", bench_cmake_lists_txt}};
-  if (config_->interface() == Interface_CPP) {
-    const_blocks.emplace_back(net_src_file_path_ + "microtensor.h", micro_tensor_h);
-    const_blocks.emplace_back(net_src_file_path_ + "session.h", session_header);
-    const_blocks.emplace_back(net_src_file_path_ + "tensor.h", tensor_header);
-    const_blocks.emplace_back(net_src_file_path_ + "tensor.cc", tensor_source);
-    const_blocks.emplace_back(net_main_file_path_ + "benchmark.cc", benchmark_source);
-  } else {
-    const_blocks.emplace_back(net_inc_file_path_ + "microtensor.h", micro_tensor_h);
-  }
-  if (config_->support_parallel()) {
-    const_blocks.emplace_back(net_inc_file_path_ + "thread_pool.h", thread_pool_h);
+    {net_main_file_path_ + "CMakeLists.txt", bench_cmake_lists_txt},
+    {net_main_file_path_ + "benchmark.cc", benchmark_source},
+    {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
+    {net_src_file_path_ + "session.h", session_header},
+    {net_src_file_path_ + "tensor.h", tensor_header},
+    {net_src_file_path_ + "tensor.cc", tensor_source}};
+  if (config_->debug_mode()) {
+    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
+    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
   }
   for (const auto &static_block : const_blocks) {
     std::string file_name = static_block.first;
@@ -190,11 +172,7 @@ int Generator::GenerateCode() {
   MS_CHECK_RET_CODE(CodeSourceCMakeFile(), "code net cmake file failed.");
   MS_CHECK_RET_CODE(CodeBenchmarkCMakeFile(), "code benchmark cmake file failed.");
   MS_CHECK_RET_CODE(CodeStaticContent(), "code static content failed.");
-  if (config_->interface() == Interface_CPP) {
-    MS_CHECK_RET_CODE(CodeSessionImplement(), "code session file failed.");
-  } else {
-    MS_CHECK_RET_CODE(CodeBenchmarkFile(), "code benchmark file failed.");
-  }
+  MS_CHECK_RET_CODE(CodeSessionImplement(), "code session file failed.");
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro

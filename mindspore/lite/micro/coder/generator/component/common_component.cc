@@ -25,12 +25,6 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite::micro {
-void CodeSourceFileInclude(std::ofstream &ofs, const std::string &weight_file, const std::string &header) {
-  ofs << g_hwLicense << "#include \"microtensor.h\"\n"
-      << "#include \"" << weight_file << "\"\n"
-      << "#include \"" << header << "\"\n\n";
-}
-
 void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
@@ -84,7 +78,7 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
          "}\n\n";
 }
 
-void CodeInputAndOutputState(std::ofstream &ofs, const std::string &module_name) {
+void CodeInputState(std::ofstream &ofs, const std::string &module_name) {
   ofs << "/**\n"
       << "  * set input tensors\n"
       << "  * @param inputs, the input data ptr's array of the model, the tensors' count of input may be greater than "
@@ -92,37 +86,9 @@ void CodeInputAndOutputState(std::ofstream &ofs, const std::string &module_name)
       << "  * @param num, the input data's number of the model.\n"
       << "  **/\n"
       << "int " << module_name << "_SetInputs(const void **inputs, int num);\n\n";
-
-  ofs << "/**\n"
-      << "  * get output tensor of the model \n"
-      << "  **/\n"
-      << "const MicroTensorList *" << module_name << "_GetOutputs();\n\n";
 }
 
-void PrintMicroTensors(std::ofstream &ofs, std::vector<Tensor *> tensors, const std::string &name,
-                       const std::map<Tensor *, std::string> &tensors_map) {
-  for (size_t i = 0; i < tensors.size(); ++i) {
-    Tensor *tensor = tensors[i];
-    auto item = tensors_map.find(tensor);
-    if (item == tensors_map.end()) {
-      MS_LOG(ERROR) << "nonexistent tensor";
-      break;
-    }
-    ofs << "  static int dim" << i << "[] = {";
-    for (size_t j = 0; j < tensor->shape().size(); ++j) {
-      ofs << tensor->shape()[j] << ", ";
-    }
-    ofs << "};\n"
-        << "  " << name << "[" << i << "].ndim = " << tensor->shape().size() << ";\n"
-        << "  " << name << "[" << i << "].dim = dim" << i << ";\n"
-        << "  " << name << "[" << i << "].type = " << EnumMicroTensorDataType(tensor->data_type()) << ";\n"
-        << "  " << name << "[" << i << "].format = " << EnumMicroTensorFormat(tensor->format()) << ";\n"
-        << "  " << name << "[" << i << "].data =" << item->second << ";\n";
-  }
-}
-
-void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_name,
-                                 const std::unique_ptr<CoderContext> &ctx) {
+void CodeInputImplement(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx) {
   // input tensors
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -140,20 +106,6 @@ void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_n
     ofs << "\t" << ctx->input_name() << i << " = inputs[" << i << "];\n";
   }
   ofs << "  return RET_OK;\n}\n";
-
-  // output tensors
-  std::vector<Tensor *> outputs = ctx->graph_outputs();
-  size_t output_num = outputs.size();
-  std::string output_name = ctx->output_name();
-
-  ofs << "const MicroTensorList* " << module_name << "_GetOutputs() {\n"
-      << "  static MicroTensor " << output_name << "[" << output_num << "] ;\n";
-
-  PrintMicroTensors(ofs, outputs, output_name, ctx->tensors_map());
-  ofs << "  static MicroTensorList  " << module_name << "_TensorArray;\n"
-      << "  " << module_name << "_TensorArray.num = " << output_num << ";\n"
-      << "  " << module_name << "_TensorArray.tensor = &" << output_name << "[0];\n"
-      << "  return  &" << module_name << "_TensorArray; \n}\n";
 }
 
 void CodeGraphQuantArgsState(std::ofstream &ofs, const std::string &module_name) {

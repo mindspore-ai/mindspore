@@ -126,4 +126,21 @@ std::string EnumMicroTensorDataType(TypeId type) {
       return "DataType_DT_UNDEFINED";
   }
 }
+
+std::string EnumNameTarget(Target target) {
+  switch (target) {
+    case kX86:
+      return "kX86";
+    case kARM32M:
+      return "kARM32M";
+    case kARM32A:
+      return "kARM32A";
+    case kARM64:
+      return "kARM64";
+    case kAllTargets:
+      return "kAllTargets";
+    default:
+      return "kTargetUnknown";
+  }
+}
 }  // namespace mindspore::lite::micro

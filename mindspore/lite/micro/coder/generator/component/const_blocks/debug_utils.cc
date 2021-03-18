@@ -42,13 +42,53 @@ const char *debug_utils_h = R"RAW(
 #include <sys/time.h>
 #include <time.h>
 #include <stdint.h>
-#include "microtensor.h"
+
+#define MICRO_INFO(content, args...) \
+  { printf("[INFO] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
+#define MICRO_ERROR(content, args...) \
+  { printf("[ERROR] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
+
+enum DataType {
+  DataType_DT_FLOAT = 0,
+  DataType_DT_FLOAT16 = 1,
+  DataType_DT_INT8 = 2,
+  DataType_DT_INT32 = 3,
+  DataType_DT_UINT8 = 4,
+  DataType_DT_INT16 = 5,
+  DataType_DT_UINT32 = 8,
+  DataType_DT_INT64 = 9,
+  DataType_DT_UINT16 = 10,
+  DataType_DT_UNDEFINED = 16,
+  DataType_MIN = DataType_DT_FLOAT,
+  DataType_MAX = DataType_DT_UNDEFINED
+};
+
+enum Format {
+  Format_NCHW = 0,
+  Format_NHWC = 1,
+  Format_HWKC = 2,
+  Format_HWCK = 3,
+  Format_KCHW = 4,
+  Format_CKHW = 5,
+  Format_KHWC = 6,
+  Format_CHWK = 7,
+  Format_NC4HW4 = 100,
+  Format_NUM_OF_FORMAT = 101,
+  Format_MIN = Format_NCHW,
+  Format_MAX = Format_NUM_OF_FORMAT
+};
+
+typedef struct {
+  enum DataType type;
+  enum Format format;
+  int ndim;
+  int *dim;
+  void *data;
+} MicroTensor;
 
 void PrintTensor(MicroTensor *tensor, FILE *output_file, const char *is_input);
 
 void PrintTensorData(MicroTensor *tensor);
-
-uint64_t GetTimeUs();
 
 #endif  // MINDSPORE_LITE_MICRO_MICRODEBUGUTIL_H_
 
@@ -257,17 +297,6 @@ void PrintTensor(MicroTensor *tensor, FILE *output_file, const char *is_input) {
   fprintf(output_file, "%s Data:\n", is_input);
   PrintDataToFile(tensor->data, tensorSize, tensor->type, output_file);
   (void)fflush(output_file);
-}
-
-uint64_t GetTimeUs() {
-  const int USEC = 1000000;
-  const int MSEC = 1000;
-  struct timespec ts = {0, 0};
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-    return 0;
-  }
-  uint64_t retval = (uint64_t)((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
-  return retval;
 }
 
 )RAW";

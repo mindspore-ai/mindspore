@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include "coder/generator/component/common_component.h"
-#include "coder/generator/component/benchmark_component.h"
 #include "coder/generator/component/weight_component.h"
 #include "coder/generator/component/train_component.h"
 #include "coder/generator/component/const_blocks/license.h"
@@ -35,7 +34,7 @@ void TrainGenerator::CodeGradientFunc(std::ofstream &ofs) const {
 }
 
 int TrainGenerator::CodeNetHFile() {
-  std::string net_include_file = net_inc_file_path_ + net_inc_hfile_;
+  std::string net_include_file = net_src_file_path_ + net_inc_hfile_;
   std::ofstream ofs(net_include_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
@@ -45,7 +44,7 @@ int TrainGenerator::CodeNetHFile() {
   }
   ofs << "#include \"microtensor.h\"\n\n";
   CodeTrainParams(ofs);
-  CodeInputAndOutputState(ofs, config_->module_name());
+  CodeInputState(ofs, config_->module_name());
   if (config_->target() != kARM32M) {
     CodeInitWeightState(ofs, config_->module_name());
   }
@@ -61,36 +60,13 @@ int TrainGenerator::CodeNetCFile() {
   std::ofstream ofs(net_impl_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;
-  CodeSourceFileInclude(ofs, net_weight_hfile_, net_inc_hfile_);
-  CodeInputAndOutputImplement(ofs, config_->module_name(), ctx_);
+  CodeInputImplement(ofs, config_->module_name(), ctx_);
   CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFeaturesImplement(ofs, config_->module_name(), ctx_);
   CodeNetRunFunc(ofs);
   CodeGradientFunc(ofs);
   CodeTrainImplement(ofs, config_->module_name(), ctx_);
-  ofs.close();
-  return RET_OK;
-}
-
-int TrainGenerator::CodeBenchmarkFile() {
-  std::string net_main_impl_file = net_main_file_path_ + net_main_cfile_;
-  std::ofstream ofs(net_main_impl_file);
-  MS_LOG(INFO) << "write " << net_main_impl_file;
-  MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
-  std::vector<Tensor *> inputs = ctx_->graph_inputs();
-  size_t inputs_num = inputs.size();
-  CodeBenchmarkHeader(ofs, net_inc_hfile_);
-  CodeBenchmarkUsage(ofs);
-  CodeBenchmarkWarmup(ofs, config_->module_name());
-  CodeBenchmarkSetInputs(ofs, config_->module_name(), ctx_);
-  CodeBenchmarkSetBuffer(ofs, config_->module_name());
-  if (config_->target() != kARM32M) {
-    CodeBenchmarkInitWeight(ofs, config_->module_name());
-  }
-  CodeBenchmarkInference(ofs, config_->module_name());
-  CodeBenchmarkPrintOutputs(ofs, config_->module_name());
-  CodeBenchmarkFreeResourse(ofs, config_->module_name(), inputs_num);
   ofs.close();
   return RET_OK;
 }

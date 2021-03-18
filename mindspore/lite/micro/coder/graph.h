@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include "coder/coder_config.h"
+#include "coder/config.h"
 #include "include/context.h"
 #include "include/model.h"
 #include "schema/inner/model_generated.h"

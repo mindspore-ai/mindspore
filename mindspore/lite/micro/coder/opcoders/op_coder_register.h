@@ -23,7 +23,7 @@
 #include <string>
 #include "src/lite_kernel.h"
 #include "include/model.h"
-#include "coder/coder_config.h"
+#include "coder/config.h"
 namespace mindspore::lite::micro {
 class OperatorCoder;
 using CoderCreatorFunc = std::function<std::unique_ptr<OperatorCoder>(

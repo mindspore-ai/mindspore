@@ -32,7 +32,7 @@ constexpr _mode_t kMicroDirMode = 0777;
 constexpr __mode_t kMicroDirMode = 0777;
 #endif
 
-static std::array<std::string, 3> kWorkDirs = {"src", "include", "benchmark"};
+static std::array<std::string, 3> kWorkDirs = {"src", "benchmark"};
 
 bool DirExists(const std::string &dir_path) {
   struct stat file_info;

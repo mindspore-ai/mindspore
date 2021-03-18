@@ -26,7 +26,12 @@ if(NOT DEFINED MODEL_LIB)
     message(FATAL_ERROR "MODEL_LIB not set")
 endif()
 
+if(NOT DEFINED HEADER_PATH)
+    message(FATAL_ERROR "HEADER_PATH not set")
+endif()
+
 get_filename_component(MODEL_LIB ${MODEL_LIB} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+get_filename_component(HEADER_PATH ${HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 function(parse_lib_info lib_full_path lib_name lib_path)
     string(FIND "${lib_full_path}" "/" POS REVERSE)
@@ -68,9 +73,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 else()
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
 link_directories(${MODEL_LIB_PATH})
@@ -92,8 +97,13 @@ if(NOT DEFINED OP_HEADER_PATH)
     message(FATAL_ERROR "OP_HEADER_PATH not set")
 endif()
 
+if(NOT DEFINED HEADER_PATH)
+    message(FATAL_ERROR "HEADER_PATH not set")
+endif()
+
 get_filename_component(OP_LIB ${OP_LIB} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 get_filename_component(OP_HEADER_PATH ${OP_HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+get_filename_component(HEADER_PATH ${HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")
@@ -130,9 +140,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 else()
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
 

@@ -29,7 +29,7 @@
 #include "include/errorcode.h"
 #include "src/tensor.h"
 #include "coder/log.h"
-#include "coder/coder_config.h"
+#include "coder/config.h"
 #include "coder/context.h"
 #include "coder/utils/type_cast.h"
 
@@ -43,7 +43,6 @@ class Generator {
   int GenerateCode();
 
  protected:
-  virtual int CodeBenchmarkFile() = 0;
   virtual int CodeNetHFile() = 0;
   virtual int CodeNetCFile() = 0;
   virtual int CodeWeightFile();
@@ -56,10 +55,8 @@ class Generator {
   bool is_get_quant_args_{false};
   std::string net_inc_hfile_;
   std::string net_src_cfile_;
-  std::string net_main_cfile_;
   std::string net_weight_hfile_;
 
-  std::string net_inc_file_path_;
   std::string net_src_file_path_;
   std::string net_main_file_path_;
 

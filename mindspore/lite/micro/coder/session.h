@@ -23,7 +23,7 @@
 #include "schema/inner/model_generated.h"
 #include "coder/graph.h"
 #include "coder/context.h"
-#include "coder/coder_config.h"
+#include "coder/config.h"
 #include "coder/allocator/allocator.h"
 #include "coder/opcoders/op_coder.h"
 
