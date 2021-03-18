@@ -36,9 +36,9 @@ cfg = edict({
         'warmup_steps': 10000,
     }),
     'Lamb': edict({
-        'learning_rate': 3e-5,
+        'learning_rate': 3e-4,
         'end_learning_rate': 0.0,
-        'power': 5.0,
+        'power': 2.0,
         'warmup_steps': 10000,
         'weight_decay': 0.01,
         'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),

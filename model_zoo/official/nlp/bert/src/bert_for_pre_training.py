@@ -599,7 +599,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
             scaling_sens = sens
         # alloc status and clear should be right before gradoperation
         init = self.alloc_status()
-        init = F.depend(loss, init)
+        init = F.depend(init, loss)
         clear_status = self.clear_status(init)
         scaling_sens = F.depend(scaling_sens, clear_status)
         # update accumulation parameters

@@ -804,7 +804,8 @@ class BertModel(nn.Cell):
         self.bert_embedding_lookup = nn.Embedding(
             vocab_size=config.vocab_size,
             embedding_size=self.embedding_size,
-            use_one_hot=use_one_hot_embeddings)
+            use_one_hot=use_one_hot_embeddings,
+            embedding_table=TruncatedNormal(config.initializer_range))
 
         self.bert_embedding_postprocessor = EmbeddingPostprocessor(
             embedding_size=self.embedding_size,
