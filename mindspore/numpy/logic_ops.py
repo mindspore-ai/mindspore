@@ -84,9 +84,6 @@ def less_equal(x1, x2, dtype=None):
        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -120,9 +117,6 @@ def less(x1, x2, dtype=None):
        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -154,9 +148,6 @@ def greater_equal(x1, x2, dtype=None):
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -190,9 +181,6 @@ def greater(x1, x2, dtype=None):
        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -224,9 +212,6 @@ def equal(x1, x2, dtype=None):
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -260,9 +245,6 @@ def isfinite(x, dtype=None):
        Tensor or scalar, true where `x` is not positive infinity, negative infinity,
        or NaN; false otherwise. This is a scalar if `x` is a scalar.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -295,9 +277,6 @@ def isnan(x, dtype=None):
     Returns:
        Tensor or scalar, true where `x` is NaN, false otherwise. This is a scalar if
        `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -345,9 +324,6 @@ def isinf(x, dtype=None):
     Returns:
        Tensor or scalar, true where `x` is positive or negative infinity, false
        otherwise. This is a scalar if `x` is a scalar.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -688,9 +664,6 @@ def logical_or(x1, x2, dtype=None):
        bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -725,9 +698,6 @@ def logical_and(x1, x2, dtype=None):
         Boolean result of the logical AND operation applied to the elements of `x1` and `x2`;
         the shape is determined by broadcasting. This is a scalar if both `x1` and `x2` are scalars.
 
-    Raises:
-        TypeError: if the input is not a tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -761,9 +731,6 @@ def logical_xor(x1, x2, dtype=None):
         Tensor or scalar.
         Boolean result of the logical AND operation applied to the elements of `x1` and `x2`;
         the shape is determined by broadcasting. This is a scalar if both `x1` and `x2` are scalars.
-
-    Raises:
-        TypeError: if the input is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

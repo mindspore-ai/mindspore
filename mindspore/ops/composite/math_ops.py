@@ -591,9 +591,9 @@ def matmul(x1, x2, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x1 = np.arange(2*3*4).reshape(2, 3, 4).astype('float32')
-        >>> x2 = np.arange(4*5).reshape(4, 5).astype('float32')
-        >>> output = np.matmul(x1, x2)
+        >>> x1 = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
+        >>> x2 = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
+        >>> output = ops.matmul(x1, x2)
         >>> print(output)
         [[[  70.   76.   82.   88.   94.]
         [ 190.  212.  234.  256.  278.]

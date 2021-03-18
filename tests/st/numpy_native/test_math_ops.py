@@ -37,13 +37,6 @@ class Cases():
             rand_int(1, 1),
         ]
 
-        # empty arrays
-        self.empty_arrs = [
-            rand_int(0),
-            rand_int(4, 0),
-            rand_int(2, 0, 2),
-        ]
-
         # arrays of the same size expanded across the 0th dimension
         self.expanded_arrs = [
             rand_int(2, 3),
@@ -244,8 +237,6 @@ def test_float_power():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -687,11 +678,11 @@ def test_ptp():
 
 
 def mnp_add_dtype(x1, x2):
-    return mnp.add(x1, x2, dtype=mnp.float16)
+    return mnp.add(x1, x2, dtype=mnp.float32)
 
 
 def onp_add_dtype(x1, x2):
-    return onp.add(x1, x2, dtype=onp.float16)
+    return onp.add(x1, x2, dtype=onp.float32)
 
 
 @pytest.mark.level1
@@ -927,8 +918,6 @@ def onp_maximum(x1, x2):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1410,24 +1399,22 @@ def mnp_diff(input_tensor):
     a = mnp.diff(input_tensor, 2, append=3.0)
     b = mnp.diff(input_tensor, 4, prepend=6, axis=-2)
     c = mnp.diff(input_tensor, 0, append=3.0, axis=-1)
-    d = mnp.diff(input_tensor, 10, prepend=6)
-    e = mnp.diff(input_tensor, 1, prepend=input_tensor)
-    f = mnp.ediff1d(input_tensor, to_end=input_tensor)
-    g = mnp.ediff1d(input_tensor)
-    h = mnp.ediff1d(input_tensor, to_begin=3)
-    return a, b, c, d, e, f, g, h
+    d = mnp.diff(input_tensor, 1, prepend=input_tensor)
+    e = mnp.ediff1d(input_tensor, to_end=input_tensor)
+    f = mnp.ediff1d(input_tensor)
+    g = mnp.ediff1d(input_tensor, to_begin=3)
+    return a, b, c, d, e, f, g
 
 
 def onp_diff(input_array):
     a = onp.diff(input_array, 2, append=3.0)
     b = onp.diff(input_array, 4, prepend=6, axis=-2)
     c = onp.diff(input_array, 0, append=3.0, axis=-1)
-    d = onp.diff(input_array, 10, prepend=6)
-    e = onp.diff(input_array, 1, prepend=input_array)
-    f = onp.ediff1d(input_array, to_end=input_array)
-    g = onp.ediff1d(input_array)
-    h = onp.ediff1d(input_array, to_begin=3)
-    return a, b, c, d, e, f, g, h
+    d = onp.diff(input_array, 1, prepend=input_array)
+    e = onp.ediff1d(input_array, to_end=input_array)
+    f = onp.ediff1d(input_array)
+    g = onp.ediff1d(input_array, to_begin=3)
+    return a, b, c, d, e, f, g
 
 
 @pytest.mark.level1
@@ -1926,7 +1913,6 @@ def test_mean():
     run_multi_test(mnp_mean, onp_mean, test_case.arrs, error=3)
     run_multi_test(mnp_mean, onp_mean, test_case.expanded_arrs, error=3)
     run_multi_test(mnp_mean, onp_mean, test_case.scalars, error=3)
-    run_multi_test(mnp_mean, onp_mean, test_case.empty_arrs, error=3)
 
 
 @pytest.mark.level1
@@ -1961,3 +1947,14 @@ def test_exception_add():
 def test_exception_mean():
     with pytest.raises(ValueError):
         mnp.mean(to_tensor(test_case.arrs[0]), (-1, 0))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_exception_amax():
+    with pytest.raises(TypeError):
+        mnp.amax(mnp.array([[1, 2], [3, 4]]).astype(mnp.float32), initial=[1.0, 2.0])

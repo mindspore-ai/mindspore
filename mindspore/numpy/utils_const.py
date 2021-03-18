@@ -472,6 +472,7 @@ def _make_tensor(val, dtype):
     return Tensor(val, dtype)
 
 
+@constexpr
 def _tuple_slice(tup, start, end):
     """get sliced tuple from start and end."""
     return tup[start:end]

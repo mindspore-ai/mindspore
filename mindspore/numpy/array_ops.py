@@ -30,7 +30,8 @@ from .utils_const import _check_axes_range, _check_start_normalize, \
     _check_same_type, _check_axis_valid, _add_unit_axes, _broadcast_tuples, \
     _check_is_float, _check_axis_in_range, _check_axis_type, _canonicalize_axis, \
     _list_comprehensions, _check_element_int, _is_shape_empty, _type_convert, \
-    _tuple_getitem, _expanded_shape, _seq_prod, _get_device, _tuple_setitem
+    _tuple_getitem, _expanded_shape, _seq_prod, _get_device, _tuple_setitem, \
+    _raise_unimplemented_error
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32

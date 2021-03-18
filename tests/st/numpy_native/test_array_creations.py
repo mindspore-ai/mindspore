@@ -26,7 +26,7 @@ from .utils import rand_int, rand_bool, match_array, match_res, match_meta, \
 class Cases():
     def __init__(self):
         self.all_shapes = [
-            0, 1, 2, (), (1,), (2,), (1, 2, 3), [], [1], [2], [1, 2, 3]
+            1, 2, (1,), (2,), (1, 2, 3), [1], [2], [1, 2, 3]
         ]
         self.onp_dtypes = [onp.int32, 'int32', int,
                            onp.float32, 'float32', float,
@@ -94,18 +94,16 @@ class Cases():
 
         self.mnp_prototypes = [
             mnp.ones((2, 3, 4)),
-            mnp.ones((0, 3, 0, 2, 5)),
-            mnp.ones((2, 7, 0)),
-            mnp.ones(()),
+            mnp.ones((1, 3, 1, 2, 5)),
+            mnp.ones((2, 7, 1)),
             [mnp.ones(3), (1, 2, 3), mnp.ones(3), [4, 5, 6]],
             ([(1, 2), mnp.ones(2)], (mnp.ones(2), [3, 4])),
         ]
 
         self.onp_prototypes = [
             onp.ones((2, 3, 4)),
-            onp.ones((0, 3, 0, 2, 5)),
-            onp.ones((2, 7, 0)),
-            onp.ones(()),
+            onp.ones((1, 3, 1, 2, 5)),
+            onp.ones((2, 7, 1)),
             [onp.ones(3), (1, 2, 3), onp.ones(3), [4, 5, 6]],
             ([(1, 2), onp.ones(2)], (onp.ones(2), [3, 4])),
         ]
@@ -255,10 +253,6 @@ def test_ones():
 def test_full():
     actual = onp.full((2, 2), [1, 2])
     expected = mnp.full((2, 2), [1, 2]).asnumpy()
-    match_array(actual, expected)
-
-    actual = onp.full((2, 0), onp.inf)
-    expected = mnp.full((2, 0), mnp.inf).asnumpy()
     match_array(actual, expected)
 
     actual = onp.full((2, 3), True)
@@ -579,28 +573,18 @@ def onp_diagonal(arr):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_diagonal():
-    arr = rand_int(0, 0)
-    match_res(mnp.diagonal, onp.diagonal, arr, offset=1)
 
     arr = rand_int(3, 5)
-    for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
+    for i in [-1, 0, 2]:
         match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=0, axis2=1)
         match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=1, axis2=0)
 
     arr = rand_int(7, 4, 9)
-    for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
+    for i in [-1, 0, 2]:
         match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=0, axis2=-1)
         match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=-2, axis2=2)
         match_res(mnp.diagonal, onp.diagonal, arr,
                   offset=i, axis1=-1, axis2=-2)
-
-    arr = rand_int(2, 5, 8, 1)
-    match_res(mnp_diagonal, onp_diagonal, arr)
-    for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
-        match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=-3, axis2=2)
-        match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=1, axis2=3)
-        match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=0, axis2=-2)
-        match_res(mnp.diagonal, onp.diagonal, arr, offset=i, axis1=2, axis2=-1)
 
 
 def mnp_trace(arr):
@@ -618,27 +602,18 @@ def onp_trace(arr):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_trace():
-    arr = rand_int(0, 0)
-    match_res(mnp.trace, onp.trace, arr, offset=1)
 
     arr = rand_int(3, 5)
-    for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
+    for i in [-1, 0]:
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=0, axis2=1)
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=1, axis2=0)
 
     arr = rand_int(7, 4, 9)
-    for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
+    for i in [-1, 0, 2]:
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=0, axis2=-1)
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=-2, axis2=2)
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=-1, axis2=-2)
 
-    arr = rand_int(2, 5, 8, 1)
-    match_res(mnp_trace, onp_trace, arr)
-    for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=-3, axis2=2)
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=1, axis2=3)
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=0, axis2=-2)
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=2, axis2=-1)
 
 
 def mnp_meshgrid(*xi):
@@ -712,7 +687,7 @@ def test_ogrid():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_diagflat():
-    arrs = [rand_int(0), rand_int(2, 3), rand_int(3, 5, 0)]
+    arrs = [rand_int(2, 3)]
     for arr in arrs:
         for i in [-2, 0, 7]:
             match_res(mnp.diagflat, onp.diagflat, arr, k=i)
@@ -725,8 +700,7 @@ def test_diagflat():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_diag():
-    arrs = [rand_int(0), rand_int(0, 0), rand_int(7), rand_int(5, 5),
-            rand_int(3, 8), rand_int(9, 6)]
+    arrs = [rand_int(7), rand_int(5, 5), rand_int(3, 8), rand_int(9, 6)]
     for arr in arrs:
         for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
             match_res(mnp.diag, onp.diag, arr, k=i)
