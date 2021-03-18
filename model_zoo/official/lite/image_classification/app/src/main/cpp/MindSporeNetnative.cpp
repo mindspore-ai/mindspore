@@ -27,8 +27,8 @@
 #include "include/ms_tensor.h"
 #include "MindSporeNetnative.h"
 #include "MSNetWork.h"
-#include "minddata/include/lite_cv/lite_mat.h"
-#include "minddata/include/lite_cv/image_process.h"
+#include "lite_cv/lite_mat.h"
+#include "lite_cv/image_process.h"
 
 using mindspore::dataset::LiteMat;
 using mindspore::dataset::LPixelType;
