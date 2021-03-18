@@ -39,6 +39,11 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
     uint32_t port = register_message.port();
 
     rank_id = ++next_server_rank_id_;
+    if (IntToUint(rank_id) >= ClusterMetadata::instance()->total_server_num()) {
+      MS_LOG(WARNING) << "The rank id is greater than the number of servers.";
+      rank_id = -1;
+      --next_server_rank_id_;
+    }
     NodeInfo node_info;
     node_info.node_role_ = NodeRole::SERVER;
     node_info.node_id_ = node_id;
@@ -50,6 +55,11 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
                  << " assign rank id:" << rank_id;
   } else if (register_message.role() == NodeRole::WORKER) {
     rank_id = ++next_worker_rank_id_;
+    if (IntToUint(rank_id) >= ClusterMetadata::instance()->total_worker_num()) {
+      MS_LOG(WARNING) << "The rank id is greater than the number of workers.";
+      rank_id = -1;
+      --next_worker_rank_id_;
+    }
     NodeInfo node_info;
     node_info.node_role_ = NodeRole::WORKER;
     node_info.node_id_ = node_id;

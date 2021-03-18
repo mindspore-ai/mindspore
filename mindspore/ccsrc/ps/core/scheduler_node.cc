@@ -120,7 +120,7 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
   // assign worker node and server node rank id
   int rank_id = node_manager_.NextRankId(register_message);
   if (rank_id < 0) {
-    MS_LOG(EXCEPTION) << "The rank id is wrong!";
+    MS_LOG(WARNING) << "The rank id is wrong!";
   }
   const std::string &node_id = register_message.node_id();
   node_manager_.UpdateHeartbeat(node_id);
