@@ -37,7 +37,9 @@ int StridedSliceCPUKernel::Init() {
 void StridedSliceCPUKernel::InitFastRunParam() {
   auto in_shape = in_tensors_.front()->shape();
   auto out_shape = out_tensors_.front()->shape();
-  // cal inner, outer
+  // reset && cal inner, outer
+  outer_ = 1;
+  inner_ = 1;
   for (int i = 0; i < split_axis_; ++i) {
     outer_ *= in_shape[i];
   }
