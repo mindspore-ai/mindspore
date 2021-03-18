@@ -21,10 +21,14 @@
 #include <semaphore.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+#ifdef __WIN32__
+#include <windows.h>
+#endif
 
 #ifdef __ANDROID__
 #define BIND_CORE
-#include <unistd.h>
 #include <sched.h>
 #endif
 #ifdef MS_COMPILE_IOS
@@ -48,7 +52,6 @@
 #define RET_TP_ERROR (-8)
 #define RET_TP_SYSTEM_ERROR (-1)
 
-#define MAX_THREAD_NUM (200)
 #define DEFAULT_SPIN_COUNT (30000)
 
 typedef struct {
@@ -831,8 +834,15 @@ int CreateNewThread(struct ThreadPool *thread_pool, int thread_id) {
 }
 
 ThreadPool *CreateThreadPool(int thread_num, int mode) {
+#ifdef __WIN32__
+  SYSTEM_INFO sys_info;
+  GetSystemInfo(&sys_info);
+  long max_thread_num = sys_info.dwNumberOfProcessors;
+#else
+  long max_thread_num = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
   LOG_INFO("create thread pool, thread_num: %d, mode: %d", thread_num, mode);
-  if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
+  if (thread_num <= 0 || thread_num > max_thread_num) {
     LOG_ERROR("invalid thread num: %d", thread_num);
     return NULL;
   }
@@ -851,7 +861,7 @@ ThreadPool *CreateThreadPool(int thread_num, int mode) {
     LOG_ERROR("Malloc ThreadPool failed");
     return NULL;
   }
-  thread_pool->thread_num = thread_num > MAX_THREAD_NUM ? MAX_THREAD_NUM : thread_num;
+  thread_pool->thread_num = thread_num > max_thread_num ? max_thread_num : thread_num;
   thread_pool->is_alive = ATOMIC_VAR_INIT(true);
   thread_pool->mode = mode;
   thread_pool->thread_list = NULL;

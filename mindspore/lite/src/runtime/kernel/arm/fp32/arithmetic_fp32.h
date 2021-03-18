@@ -97,6 +97,8 @@ class ArithmeticCPUKernel : public LiteKernel {
   virtual void TileConstTensor(const void *in_data, void *out_data, size_t ndim, const int *in_shape,
                                const int *in_strides, const int *out_strides, const int *multiple);
   virtual int Execute(const void *input0, const void *input1, void *output, int size, bool is_opt);
+  virtual bool IsBatchScalarCalc();
+  virtual bool IsScalarClac();
   bool input0_broadcast_ = false;
   bool input1_broadcast_ = false;
   void *input0_ptr_ = nullptr;
@@ -111,9 +113,7 @@ class ArithmeticCPUKernel : public LiteKernel {
   int BatchScalarCalc(int task_id);
   int BiasCalc(int task_id);
   void FreeConstTileBuff();
-  bool isScalarClac();
-  bool isBatchScalarCalc();
-  bool isBiasCalc();
+  bool IsBiasCalc();
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;

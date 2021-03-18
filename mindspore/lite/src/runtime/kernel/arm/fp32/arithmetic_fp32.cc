@@ -61,7 +61,7 @@ int ArithmeticCPUKernel::ReSize() {
     }
   }
   int ret = RET_OK;
-  if (!isScalarClac() && !isBatchScalarCalc() && !isBiasCalc()) {
+  if (!IsScalarClac() && !IsBatchScalarCalc() && !IsBiasCalc()) {
     ret = ConstTensorBroadCast();
   }
   return ret;
@@ -77,7 +77,7 @@ int ArithmeticCPUKernel::CheckDataType() {
   return RET_OK;
 }
 
-bool ArithmeticCPUKernel::isScalarClac() {  // 2 32 240 240, 1 1 1 1
+bool ArithmeticCPUKernel::IsScalarClac() {  // 2 32 240 240, 1 1 1 1
   if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) && (arithmetic_opt_run_ != nullptr)) {
     return true;
   } else {
@@ -85,7 +85,7 @@ bool ArithmeticCPUKernel::isScalarClac() {  // 2 32 240 240, 1 1 1 1
   }
 }
 
-bool ArithmeticCPUKernel::isBatchScalarCalc() {  // 2 32 240 240,  2 32 1 1
+bool ArithmeticCPUKernel::IsBatchScalarCalc() {  // 2 32 240 240,  2 32 1 1
   if (arithmetic_opt_run_ == nullptr) {
     return false;
   }
@@ -107,7 +107,7 @@ bool ArithmeticCPUKernel::isBatchScalarCalc() {  // 2 32 240 240,  2 32 1 1
   return true;
 }
 
-bool ArithmeticCPUKernel::isBiasCalc() {  // 2 240 240 32,    1 1 1 32
+bool ArithmeticCPUKernel::IsBiasCalc() {  // 2 240 240 32,    1 1 1 32
   int last_shape0 = param_->in_shape0_[param_->ndim_ - 1];
   int last_shape1 = param_->in_shape1_[param_->ndim_ - 1];
   if (param_->in_elements_num0_ > param_->in_elements_num1_) {
@@ -365,7 +365,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   }
   int offset = stride * task_id * data_type_len_;
   /* run opt function, one of input is scalar */
-  if (isScalarClac()) {  // 2 32 240 240, 1 1 1 1
+  if (IsScalarClac()) {  // 2 32 240 240, 1 1 1 1
     if (param_->in_elements_num0_ == 1) {
       return Execute(input0_ptr_, static_cast<uint8_t *>(input1_ptr_) + offset,
                      static_cast<uint8_t *>(output_ptr_) + offset, count, true);
@@ -375,11 +375,11 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
     }
   }
   /* run opt function, every batch one of input is scalar */
-  if (isBatchScalarCalc()) {  // 2 32 240 240,  2 32 1 1
+  if (IsBatchScalarCalc()) {  // 2 32 240 240,  2 32 1 1
     return BatchScalarCalc(task_id);
   }
   /* each batch is eltwise calculation */
-  if (isBiasCalc()) {  // 2 240 240 32,    1 1 1 32
+  if (IsBiasCalc()) {  // 2 240 240 32,    1 1 1 32
     return BiasCalc(task_id);
   }
   /* need broadcast in runtime */

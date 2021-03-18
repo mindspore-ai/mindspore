@@ -40,6 +40,8 @@ class ArithmeticFP16CPUKernel : public ArithmeticCPUKernel {
   ~ArithmeticFP16CPUKernel() = default;
   int ReSize() override;
   int Run() override;
+  bool IsBatchScalarCalc() override;
+  bool IsScalarClac() override;
 
  private:
   void InitRunFunction(int primitive_type) override;
