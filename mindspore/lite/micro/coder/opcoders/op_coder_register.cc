@@ -16,6 +16,7 @@
 #include "coder/opcoders/op_coder_register.h"
 #include <utility>
 #include <string>
+#include "coder/utils/type_cast.h"
 namespace mindspore::lite::micro {
 
 bool CoderKey::operator<(const CoderKey rhs) const {

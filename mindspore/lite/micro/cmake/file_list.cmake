@@ -19,8 +19,6 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/generator.cc
         ${MICRO_DIR}/coder/generator/inference/inference_generator.cc
         ${MICRO_DIR}/coder/generator/train/train_generator.cc
-        ${MICRO_DIR}/coder/generator/component/component.cc
-        ${MICRO_DIR}/coder/generator/component/benchmark_component.cc
         ${MICRO_DIR}/coder/generator/component/common_component.cc
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
@@ -33,8 +31,6 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/const_blocks/license.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/load_input.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/benchmark.cc
-        ${MICRO_DIR}/coder/generator/component/const_blocks/micro_tensor.cc
-        ${MICRO_DIR}/coder/generator/component/const_blocks/thread_pool.cc
         )
 
 set(MINDSPORE_CORE

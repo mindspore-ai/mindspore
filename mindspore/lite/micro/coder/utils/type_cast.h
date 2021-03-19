@@ -26,6 +26,7 @@
 #include "securec/include/securec.h"
 #include "src/tensor.h"
 #include "nnacl/int8/quantize.h"
+#include "coder/config.h"
 
 namespace mindspore::lite::micro {
 std::string EnumNameDataType(TypeId type);
@@ -35,6 +36,8 @@ std::string GetTensorDataType(TypeId type);
 std::string EnumMicroTensorFormat(schema::Format format);
 
 std::string EnumMicroTensorDataType(TypeId type);
+
+std::string EnumNameTarget(Target target);
 
 /**
  * @tparam T

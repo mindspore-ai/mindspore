@@ -19,7 +19,6 @@
 #include <string>
 #include "coder/generator/component/common_component.h"
 #include "coder/generator/component/parallel_component.h"
-#include "coder/generator/component/benchmark_component.h"
 #include "coder/generator/component/weight_component.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/generator/component/component.h"
@@ -27,11 +26,7 @@
 namespace mindspore::lite::micro {
 int InferenceGenerator::CodeNetHFile() {
   std::string net_include_file;
-  if (config_->interface() == Interface_CPP) {
-    net_include_file = net_src_file_path_ + net_inc_hfile_;
-  } else {
-    net_include_file = net_inc_file_path_ + net_inc_hfile_;
-  }
+  net_include_file = net_src_file_path_ + net_inc_hfile_;
   std::ofstream ofs(net_include_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
@@ -39,12 +34,9 @@ int InferenceGenerator::CodeNetHFile() {
   if (config_->support_parallel()) {
     ofs << "#include \"thread_pool.h\"\n";
   }
-  ofs << "#include \"microtensor.h\"\n\n";
   ofs << kExternCpp;
-  CodeInputAndOutputState(ofs, config_->module_name());
-  if (config_->interface() == Interface_CPP) {
-    CodeCopyOutputsState(ofs);
-  }
+  CodeInputState(ofs, config_->module_name());
+  CodeCopyOutputsState(ofs);
   if (is_get_quant_args_) {
     CodeGraphQuantArgsState(ofs, config_->module_name());
   }
@@ -65,50 +57,23 @@ int InferenceGenerator::CodeNetCFile() {
   std::ofstream ofs(net_impl_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;
-  CodeSourceFileInclude(ofs, net_weight_hfile_, net_inc_hfile_);
+  ofs << g_hwLicense << "\n"
+      << "#include \"" << net_weight_hfile_ << "\"\n"
+      << "#include \"" << net_inc_hfile_ << "\"\n\n";
+  if (config_->debug_mode()) {
+    ofs << "#include \"" << kDebugUtils << "\"\n";
+  }
   if (config_->support_parallel()) {
     CodeSetGlobalThreadPoolImplement(ofs, config_->module_name());
   }
-  CodeInputAndOutputImplement(ofs, config_->module_name(), ctx_);
-  if (config_->interface() == Interface_CPP) {
-    CodeCopyOutputsImplement(ofs, ctx_);
-  }
+  CodeInputImplement(ofs, config_->module_name(), ctx_);
+  CodeCopyOutputsImplement(ofs, ctx_);
   CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
   if (is_get_quant_args_) {
     CodeGraphQuantArgsImplement(ofs, config_->module_name(), ctx_);
   }
   CodeNetRunFunc(ofs);
-  ofs.close();
-  return RET_OK;
-}
-
-int InferenceGenerator::CodeBenchmarkFile() {
-  std::string net_main_impl_file = net_main_file_path_ + net_main_cfile_;
-  std::ofstream ofs(net_main_impl_file);
-  MS_LOG(INFO) << "write " << net_main_impl_file;
-  MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
-  std::vector<Tensor *> inputs = ctx_->graph_inputs();
-  size_t inputs_num = inputs.size();
-
-  CodeBenchmarkHeader(ofs, net_inc_hfile_);
-  CodeBenchmarkUsage(ofs);
-  CodeBenchmarkWarmup(ofs, config_->module_name());
-
-  CodeBenchmarkSetInputs(ofs, config_->module_name(), ctx_);
-  CodeBenchmarkSetBuffer(ofs, config_->module_name());
-  if (config_->target() != kARM32M) {
-    CodeBenchmarkInitWeight(ofs, config_->module_name());
-  }
-  if (config_->support_parallel()) {
-    CodeCreateThreadPool(ofs, config_->module_name());
-  }
-  CodeBenchmarkInference(ofs, config_->module_name());
-  CodeBenchmarkPrintOutputs(ofs, config_->module_name());
-  if (config_->support_parallel()) {
-    CodeDestroyThreadPool(ofs);
-  }
-  CodeBenchmarkFreeResourse(ofs, config_->module_name(), inputs_num);
   ofs.close();
   return RET_OK;
 }

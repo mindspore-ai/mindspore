@@ -32,10 +32,11 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
     ofs << "    " << c_file << ".o\n";
   }
   ofs << "    net_weight.c.o\n"
-      << "    net.c.o\n";
-  if (config->interface() == Interface_CPP) {
-    ofs << "    session.cc.o\n"
-        << "    tensor.cc.o\n";
+      << "    net.c.o\n"
+      << "    session.cc.o\n"
+      << "    tensor.cc.o\n";
+  if (config->debug_mode()) {
+    ofs << "    debug_utils.c.o\n";
   }
   ofs << ")\n";
   std::set<std::string> kernel_cmake_asm_set_files = ctx->asm_files();

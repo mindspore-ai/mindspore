@@ -19,18 +19,30 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *kModelName;
+constexpr auto kModelName = "net";
 
-extern const char *kSession;
+constexpr auto kSourcePath = "/src/";
 
-extern const char *kByteType;
-extern const char *kConstByteType;
+constexpr auto kBenchmarkPath = "/benchmark/";
+constexpr auto kBenchmarkFile = "benchmark.cc";
 
-extern const char *kNameSpaceMindSpore;
-extern const char *kNameSpaceLite;
+constexpr auto kSession = "session";
+constexpr auto kTensor = "tensor";
 
-extern const char *kExternCpp;
-extern const char *kEndExternCpp;
+constexpr auto kNameSpaceMindSpore = "namespace mindspore";
+constexpr auto kNameSpaceLite = "namespace lite";
+
+constexpr auto kDebugUtils = "debug_utils.h";
+
+constexpr auto kExternCpp =
+  "#ifdef __cplusplus\n"
+  "extern \"C\" {\n"
+  "#endif\n";
+
+constexpr char kEndExternCpp[] =
+  "#ifdef __cplusplus\n"
+  "}\n"
+  "#endif\n";
 
 }  // namespace mindspore::lite::micro
 
