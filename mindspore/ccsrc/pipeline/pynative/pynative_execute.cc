@@ -294,7 +294,8 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info,
       if (input_tensors[index]->Dtype()->type_id() == kNumberTypeInt64) {
         (void)graph_info.append(std::to_string(*reinterpret_cast<int *>(input_tensors[index]->data_c())));
         graph_info += "_";
-      } else if (input_tensors[index]->Dtype()->type_id() == kNumberTypeFloat32) {
+      } else if (input_tensors[index]->Dtype()->type_id() == kNumberTypeFloat32 ||
+                 input_tensors[index]->Dtype()->type_id() == kNumberTypeFloat16) {
         (void)graph_info.append(std::to_string(*reinterpret_cast<float *>(input_tensors[index]->data_c())));
         graph_info += "_";
       } else {
