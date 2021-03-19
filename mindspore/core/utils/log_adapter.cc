@@ -71,6 +71,20 @@ static int GetGlogLevel(MsLogLevel level) {
       return google::GLOG_ERROR;
   }
 }
+// get threshold level
+static int GetThresholdLevel(std::string threshold) {
+  if (threshold.empty()) {
+    return google::GLOG_WARNING;
+  } else if (threshold == std::to_string(DEBUG) || threshold == std::to_string(INFO)) {
+    return google::GLOG_INFO;
+  } else if (threshold == std::to_string(WARNING)) {
+    return google::GLOG_WARNING;
+  } else if (threshold == std::to_string(ERROR)) {
+    return google::GLOG_ERROR;
+  } else {
+    return google::GLOG_WARNING;
+  }
+}
 #else
 
 #undef Dlog
@@ -449,6 +463,11 @@ void common_log_init(void) {
     FLAGS_logtostderr = true;
     MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
   }
+
+  // default GLOG_stderrthreshold level to WARNING
+  auto threshold = mindspore::GetEnv("GLOG_stderrthreshold");
+  FLAGS_stderrthreshold = mindspore::GetThresholdLevel(threshold);
+
 #endif
   mindspore::InitSubModulesLogLevel();
 }
