@@ -19,6 +19,8 @@
 
 int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
+  outputs[0]->data_type_ = kNumberTypeFloat32;
+  outputs[0]->format_ = inputs[0]->format_;
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
@@ -33,7 +35,6 @@ int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     output_shape[i] = input_data[i];
   }
   SetShapeArray(outputs[0], output_shape, output_shape_size);
-  outputs[0]->data_type_ = kNumberTypeFloat32;
   return NNACL_OK;
 }
 
