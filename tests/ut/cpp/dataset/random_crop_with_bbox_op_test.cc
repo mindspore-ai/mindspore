@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,10 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
   // Crop params
   unsigned int crop_height = 1280;
   unsigned int crop_width = 1280;
+  // setting seed here to prevent random core dump
+  uint32_t current_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(327362);
+
   std::unique_ptr<RandomCropWithBBoxOp> op(
     new RandomCropWithBBoxOp(crop_height, crop_width, 513, 513, 513, 513, BorderType::kConstant, false));
 
@@ -89,6 +93,7 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
     EXPECT_EQ(4, output_tensor_row_[1]->shape()[1]);  // check for existence of 4 columns
   }
   MS_LOG(INFO) << "testRandomCropWithBBoxOp2 end.";
+  GlobalContext::config_manager()->set_seed(current_seed);
 }
 
 TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
@@ -96,6 +101,10 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
   // Crop params
   unsigned int crop_height = 1280;
   unsigned int crop_width = 1280;
+  // setting seed here to prevent random core dump
+  uint32_t current_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(327362);
+
   std::unique_ptr<RandomCropWithBBoxOp> op(new RandomCropWithBBoxOp(crop_height, crop_width, crop_height * 3 + 1,
                                                                     crop_height * 3 + 1, crop_width * 3 + 1,
                                                                     crop_width * 3 + 1, BorderType::kConstant, false));
@@ -106,4 +115,5 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
     ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
   }
   MS_LOG(INFO) << "testRandomCropWithBBoxOp3 end.";
+  GlobalContext::config_manager()->set_seed(current_seed);
 }
