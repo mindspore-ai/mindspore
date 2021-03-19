@@ -27,7 +27,7 @@ class LearningRateScheduler(Callback):
     Change the learning_rate during training.
 
     Note:
-        This class are not supported on CPU.
+        This class is not supported on CPU.
 
     Args:
         learning_rate_function (Function): The function about how to change the learning rate during training.
