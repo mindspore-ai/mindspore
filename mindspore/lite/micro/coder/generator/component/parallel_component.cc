@@ -19,7 +19,7 @@
 
 namespace mindspore::lite::micro {
 
-void CodeCreateThreadPool(std::ofstream &ofs, const std::string &module_name) {
+void CodeCreateThreadPool(std::ofstream &ofs) {
   ofs << "  int thread_num = 4;\n"
          "  BindMode bind_mode = NO_BIND_MODE;\n"
          "  if (argc >= 6) {\n"
@@ -31,7 +31,8 @@ void CodeCreateThreadPool(std::ofstream &ofs, const std::string &module_name) {
          "    MICRO_ERROR(\"create thread pool failed\");\n"
          "    return RET_ERROR;\n"
          "  }\n"
-      << "  ret = " << module_name << "_SetThreadPool(thread_pool);\n"
+      << "  ret = "
+      << "SetThreadPool(thread_pool);\n"
       << "  if (ret != RET_OK) {\n"
          "    MICRO_ERROR(\"set global thread pool failed\");\n"
          "    return RET_ERROR;\n"
@@ -41,16 +42,18 @@ void CodeCreateThreadPool(std::ofstream &ofs, const std::string &module_name) {
 
 void CodeDestroyThreadPool(std::ofstream &ofs) { ofs << "  DestroyThreadPool(thread_pool);\n"; }
 
-void CodeSetGlobalThreadPoolState(std::ofstream &ofs, const std::string &module_name) {
+void CodeSetGlobalThreadPoolState(std::ofstream &ofs) {
   ofs << "/*\n"
          " * set global thread pool, which is created by user\n"
          " */\n"
-      << "int " << module_name << "_SetThreadPool(struct ThreadPool *thread_pool);\n\n";
+      << "int "
+      << "SetThreadPool(struct ThreadPool *thread_pool);\n\n";
 }
 
-void CodeSetGlobalThreadPoolImplement(std::ofstream &ofs, const std::string &module_name) {
+void CodeSetGlobalThreadPoolImplement(std::ofstream &ofs) {
   ofs << "struct ThreadPool *g_thread_pool = NULL;\n"
-      << "int " << module_name << "_SetThreadPool(struct ThreadPool *thread_pool) {\n"
+      << "int "
+      << "SetThreadPool(struct ThreadPool *thread_pool) {\n"
       << "  if (thread_pool == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n"

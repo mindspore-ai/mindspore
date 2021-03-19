@@ -31,7 +31,7 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
   for (const std::string &c_file : ctx->c_files()) {
     ofs << "    " << c_file << ".o\n";
   }
-  ofs << "    net_weight.c.o\n"
+  ofs << "    weight.c.o\n"
       << "    net.c.o\n"
       << "    session.cc.o\n"
       << "    tensor.cc.o\n";
