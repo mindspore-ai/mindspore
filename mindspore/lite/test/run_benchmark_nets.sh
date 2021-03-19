@@ -1240,11 +1240,11 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1252,9 +1252,9 @@ function Run_arm64() {
         fi
         # run benchmark test without clib data
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1278,11 +1278,11 @@ function Run_arm64() {
         do
           input_files=$input_files'/data/local/tmp/input_output/input/'$model_name'.ms_'$i'.bin,'
         done
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1290,9 +1290,9 @@ function Run_arm64() {
         fi
         # run benchmark test with input data
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1306,11 +1306,11 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1318,9 +1318,9 @@ function Run_arm64() {
         fi
         # run benchmark test without clib data
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1334,22 +1334,22 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1365,22 +1365,22 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1396,22 +1396,22 @@ function Run_arm64() {
         fi
         model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
-        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
+        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1425,22 +1425,22 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}'_train' >> "${run_arm64_log_file}"
+        echo ${model_name}'_train' >> "${run_arm64_fp32_log_file}"
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1456,28 +1456,28 @@ function Run_arm64() {
         fi
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         if [[ $model_name == "transformer_20200831_encoder_fp32.tflite" ]]; then
-            echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/encoder_buffer_in_0-35.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_log_file}"
+            echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/encoder_buffer_in_0-35.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_fp32_log_file}"
             echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/encoder_buffer_in_35.bin,/data/local/tmp/input_output/input/encoder_buffer_in_0.bin,/data/local/tmp/input_output/input/encoder_buffer_in_1.bin,/data/local/tmp/input_output/input/encoder_buffer_in_4.bin,/data/local/tmp/input_output/input/encoder_buffer_in_2.bin,/data/local/tmp/input_output/input/encoder_buffer_in_3.bin,/data/local/tmp/input_output/input/encoder_buffer_in_7.bin,/data/local/tmp/input_output/input/encoder_buffer_in_5.bin,/data/local/tmp/input_output/input/encoder_buffer_in_6.bin,/data/local/tmp/input_output/input/encoder_buffer_in_10.bin,/data/local/tmp/input_output/input/encoder_buffer_in_8.bin,/data/local/tmp/input_output/input/encoder_buffer_in_9.bin,/data/local/tmp/input_output/input/encoder_buffer_in_11.bin,/data/local/tmp/input_output/input/encoder_buffer_in_12.bin,/data/local/tmp/input_output/input/encoder_buffer_in_15.bin,/data/local/tmp/input_output/input/encoder_buffer_in_13.bin,/data/local/tmp/input_output/input/encoder_buffer_in_14.bin,/data/local/tmp/input_output/input/encoder_buffer_in_18.bin,/data/local/tmp/input_output/input/encoder_buffer_in_16.bin,/data/local/tmp/input_output/input/encoder_buffer_in_17.bin,/data/local/tmp/input_output/input/encoder_buffer_in_21.bin,/data/local/tmp/input_output/input/encoder_buffer_in_19.bin,/data/local/tmp/input_output/input/encoder_buffer_in_20.bin,/data/local/tmp/input_output/input/encoder_buffer_in_22.bin,/data/local/tmp/input_output/input/encoder_buffer_in_23.bin,/data/local/tmp/input_output/input/encoder_buffer_in_26.bin,/data/local/tmp/input_output/input/encoder_buffer_in_24.bin,/data/local/tmp/input_output/input/encoder_buffer_in_25.bin,/data/local/tmp/input_output/input/encoder_buffer_in_29.bin,/data/local/tmp/input_output/input/encoder_buffer_in_27.bin,/data/local/tmp/input_output/input/encoder_buffer_in_28.bin,/data/local/tmp/input_output/input/encoder_buffer_in_32.bin,/data/local/tmp/input_output/input/encoder_buffer_in_30.bin,/data/local/tmp/input_output/input/encoder_buffer_in_31.bin,/data/local/tmp/input_output/input/encoder_buffer_in_33.bin,/data/local/tmp/input_output/input/encoder_buffer_in_34.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> adb_run_cmd.txt
         fi
         if [[ $model_name == "transformer_20200831_decoder_fp32.tflite" ]]; then
-            echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/decoder_buffer_in_0-10.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_log_file}"
+            echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/decoder_buffer_in_0-10.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_fp32_log_file}"
             echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/decoder_buffer_in_9.bin,/data/local/tmp/input_output/input/decoder_buffer_in_2.bin,/data/local/tmp/input_output/input/decoder_buffer_in_0.bin,/data/local/tmp/input_output/input/decoder_buffer_in_1.bin,/data/local/tmp/input_output/input/decoder_buffer_in_5.bin,/data/local/tmp/input_output/input/decoder_buffer_in_3.bin,/data/local/tmp/input_output/input/decoder_buffer_in_4.bin,/data/local/tmp/input_output/input/decoder_buffer_in_8.bin,/data/local/tmp/input_output/input/decoder_buffer_in_6.bin,/data/local/tmp/input_output/input/decoder_buffer_in_7.bin,/data/local/tmp/input_output/input/decoder_buffer_in_10.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> adb_run_cmd.txt
         fi
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1493,22 +1493,22 @@ function Run_arm64() {
         fi
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1522,160 +1522,28 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64_awq: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64_awq: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_awaretraining_config}
-
-    # Run fp16 converted models:
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
-        model_name=${model_info%%;*}
-        length=${#model_name}
-        input_shapes=${model_info:length+1}
-        echo "---------------------------------------------------------" >> "${run_arm64_log_file}"
-        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
-
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-        if [[ $accuracy_limit == "-1" ]]; then
-          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --enableFp16=true --inputShapes='${input_shapes} >> adb_run_cmd.txt
-        else
-          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
-        fi
-        cat adb_run_cmd.txt >> "${run_arm64_log_file}"
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_onnx_fp16_config}
-
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
-        echo "---------------------------------------------------------" >> "${run_arm64_log_file}"
-        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
-
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-
-        cat adb_run_cmd.txt >> "${run_arm64_log_file}"
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_caffe_fp16_config}
-
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
-        echo "---------------------------------------------------------" >> "${run_arm64_log_file}"
-        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
-
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-
-        cat adb_run_cmd.txt >> "${run_arm64_log_file}"
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_tflite_fp16_config}
-
-    # Run gpu tflite converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_gpu_fp32_config}
-
-    # Run GPU fp16 converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    #sleep 1
-    done < ${models_gpu_fp16_config}
-
-    # Run GPU weightquant converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu_weightquant: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu_weightquant: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    #sleep 1
-    done < ${models_gpu_weightquant_config}
 
     # Run mindir weightquant converted train models:
     while read line; do
@@ -1685,48 +1553,17 @@ function Run_arm64() {
         fi
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --loopCount=1 --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --loopCount=1 --accuracyThreshold='${accuracy_limit} >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --loopCount=1 --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}'[weightQuant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}'[weightQuant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindspore_weightquant_config}
-
-    # Run npu converted models:
-    while read line; do
-        model_line_info=${line}
-        if [[ $model_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${line}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${line}|awk -F ' ' '{print $2}'`
-        input_num=`echo ${line}|awk -F ' ' '{print $3}'`
-        data_path="/data/local/tmp/input_output/"
-        input_files=''
-        if [[ -z "$input_num" || $input_num == 1 ]]; then
-          input_files=${data_path}'input/'$model_name'.ms.bin'
-        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        echo "mindspore run npu: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_npu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_npu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_npu_config}
 
     # Run converted models which has multiple inputs:
     while read line; do
@@ -1748,11 +1585,11 @@ function Run_arm64() {
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1772,11 +1609,11 @@ function Run_arm64() {
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
-        echo ${model_name} >> "${run_arm64_log_file}"
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2' >> "${run_arm64_fp32_log_file}"
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1795,6 +1632,7 @@ function Run_arm32() {
     if [ -f ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ]; then
         cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
+
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
@@ -1838,6 +1676,252 @@ function Run_arm32() {
     done < ${models_arm32_config}
 }
 
+# Run on arm64-fp16 platform:
+function Run_arm64_fp16() {
+    cd ${arm64_path} || exit 1
+    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
+
+    # If build with minddata, copy the minddata related libs
+    cd ${benchmark_test_path} || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    fi
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+
+    # adb push all needed files to the phone
+    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+
+    # run adb ,run session ,check the result:
+    echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
+    echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark' >> adb_cmd.txt
+
+    adb -s ${device_id} shell < adb_cmd.txt
+
+    # Run fp16 converted models:
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        model_name=${model_info%%;*}
+        length=${#model_name}
+        input_shapes=${model_info:length+1}
+        echo "---------------------------------------------------------" >> "${run_arm64_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        if [[ $accuracy_limit == "-1" ]]; then
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --enableFp16=true --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        else
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        fi
+        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_onnx_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_arm64_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_caffe_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_arm64_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tflite_fp16_config}
+}
+# Run on gpu platform:
+function Run_gpu() {
+    cd ${arm64_path} || exit 1
+    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
+
+    # If build with minddata, copy the minddata related libs
+    cd ${benchmark_test_path} || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    fi
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+
+    # adb push all needed files to the phone
+    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+
+    # run adb ,run session ,check the result:
+    echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
+    echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark' >> adb_cmd.txt
+
+    adb -s ${device_id} shell < adb_cmd.txt
+
+    # Run gpu tflite converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_gpu_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_gpu_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_gpu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_gpu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_gpu_fp32_config}
+
+    # Run GPU fp16 converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_gpu_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_gpu_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    #sleep 1
+    done < ${models_gpu_fp16_config}
+
+    # Run GPU weightquant converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_gpu_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_gpu_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_gpu_weightquant: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_gpu_weightquant: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    #sleep 1
+    done < ${models_gpu_weightquant_config}
+}
+
+# Run on npu platform:
+function Run_npu() {
+    cd ${arm64_path} || exit 1
+    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
+
+    # If build with minddata, copy the minddata related libs
+    cd ${benchmark_test_path} || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    fi
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+
+    # adb push all needed files to the phone
+    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+
+    # run adb ,run session ,check the result:
+    echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
+    echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark' >> adb_cmd.txt
+
+    adb -s ${device_id} shell < adb_cmd.txt
+
+    # Run npu converted models:
+    while read line; do
+        model_line_info=${line}
+        if [[ $model_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${line}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${line}|awk -F ' ' '{print $2}'`
+        input_num=`echo ${line}|awk -F ' ' '{print $3}'`
+        data_path="/data/local/tmp/input_output/"
+        input_files=''
+        if [[ -z "$input_num" || $input_num == 1 ]]; then
+          input_files=${data_path}'input/'$model_name'.ms.bin'
+        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
+          for i in $(seq 1 $input_num)
+          do
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+          done
+        fi
+        echo "mindspore run npu: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_npu_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_npu_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_npu_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_npu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_npu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_npu_config}
+}
+
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
@@ -1851,12 +1935,30 @@ function MS_PRINT_TESTCASE_END_MSG() {
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
 }
 
+function Print_Converter_Result() {
+    MS_PRINT_TESTCASE_END_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
+    done < ${run_converter_result_file}
+    MS_PRINT_TESTCASE_END_MSG
+}
+
+function Print_Benchmark_Result() {
+    MS_PRINT_TESTCASE_START_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+    done < ${run_benchmark_result_file}
+    MS_PRINT_TESTCASE_END_MSG
+}
+
 basepath=$(pwd)
 echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
-while getopts "r:m:d:" opt; do
+while getopts "r:m:d:e:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -1869,6 +1971,10 @@ while getopts "r:m:d:" opt; do
         d)
             device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
+            ;;
+        e)
+            backend=${OPTARG}
+            echo "backend is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -1940,15 +2046,6 @@ sleep 1
 wait ${Run_converter_PID}
 Run_converter_status=$?
 
-function Print_Converter_Result() {
-    MS_PRINT_TESTCASE_END_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
-    done < ${run_converter_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
@@ -1959,7 +2056,6 @@ else
     Print_Converter_Result
     exit 1
 fi
-
 
 # Write benchmark result to temp file
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
@@ -1974,11 +2070,20 @@ echo 'run x86 sse logs: ' > ${run_x86_sse_log_file}
 run_x86_avx_log_file=${basepath}/run_x86_avx_log.txt
 echo 'run x86 avx logs: ' > ${run_x86_avx_log_file}
 
-run_arm64_log_file=${basepath}/run_arm64_log.txt
-echo 'run arm64 logs: ' > ${run_arm64_log_file}
+run_arm64_fp32_log_file=${basepath}/run_arm64_fp32_log.txt
+echo 'run arm64_fp32 logs: ' > ${run_arm64_fp32_log_file}
+
+run_arm64_fp16_log_file=${basepath}/run_arm64_fp16_log.txt
+echo 'run arm64_fp16 logs: ' > ${run_arm64_fp16_log_file}
 
 run_arm32_log_file=${basepath}/run_arm32_log.txt
 echo 'run arm32 logs: ' > ${run_arm32_log_file}
+
+run_gpu_log_file=${basepath}/run_gpu_log.txt
+echo 'run gpu logs: ' > ${run_gpu_log_file}
+
+run_npu_log_file=${basepath}/run_npu_log.txt
+echo 'run npu logs: ' > ${run_npu_log_file}
 
 # Copy the MindSpore models:
 echo "Push files to the arm and run benchmark"
@@ -1989,90 +2094,141 @@ cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
 # Copy models converted using old release of mslite converter for compatibility test
 cp -a ${models_path}/compatibility_test/*.ms ${benchmark_test_path} || exit 1
 
-# Run on x86
-echo "start Run x86 ..."
-Run_x86 &
-Run_x86_PID=$!
-sleep 1
+backend=${backend:-"all"}
+isFailed=0
 
-# Run on x86-sse
-echo "start Run x86 sse ..."
-Run_x86_sse &
-Run_x86_sse_PID=$!
-sleep 1
-
-# Run on x86-avx
-echo "start Run x86 avx ..."
-Run_x86_avx &
-Run_x86_avx_PID=$!
-sleep 1
-
-# Run on arm64
-echo "start Run arm64 ..."
-Run_arm64
-Run_arm64_status=$?
-sleep 1
-
-# Run on arm32
-echo "start Run arm32 ..."
-Run_arm32
-Run_arm32_status=$?
-sleep 1
-
-wait ${Run_x86_PID}
-Run_x86_status=$?
-
-function Print_Benchmark_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < ${run_benchmark_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
-# Check benchmark result and return value
-if [[ ${Run_x86_status} != 0 ]];then
-    echo "Run_x86 failed"
-    cat ${run_x86_log_file}
-    Print_Benchmark_Result
-    exit 1
+if [[ $backend == "all" || $backend == "x86" ]]; then
+    # Run on x86
+    echo "start Run x86 ..."
+    Run_x86 &
+    Run_x86_PID=$!
+    sleep 1
+fi
+if [[ $backend == "all" || $backend == "x86-sse" ]]; then
+    # Run on x86-sse
+    echo "start Run x86 sse ..."
+    Run_x86_sse &
+    Run_x86_sse_PID=$!
+    sleep 1
+fi
+if [[ $backend == "all" || $backend == "x86-avx" ]]; then
+    # Run on x86-avx
+    echo "start Run x86 avx ..."
+    Run_x86_avx &
+    Run_x86_avx_PID=$!
+    sleep 1
 fi
 
-wait ${Run_x86_sse_PID}
-Run_x86_sse_status=$?
-
-if [[ ${Run_x86_sse_status} != 0 ]];then
-      echo "Run_x86 sse failed"
-      cat ${run_x86_sse_log_file}
-      Print_Benchmark_Result
-      exit 1
+if [[ $backend == "all" || $backend == "arm64_fp32" ]]; then
+    # Run on arm64
+    echo "start Run arm64 ..."
+    Run_arm64
+    Run_arm64_fp32_status=$?
+    sleep 1
 fi
 
-wait ${Run_x86_avx_PID}
-Run_x86_avx_status=$?
-
-if [[ ${Run_x86_avx_status} != 0 ]];then
-      echo "Run_x86 avx failed"
-      cat ${run_x86_avx_log_file}
-      Print_Benchmark_Result
-      exit 1
+if [[ $backend == "all" || $backend == "arm64_fp16" ]]; then
+    # Run on arm64-fp16
+    echo "start Run arm64-fp16 ..."
+    Run_arm64_fp16
+    Run_arm64_fp16_status=$?
+    sleep 1
 fi
 
-if [[ ${Run_arm64_status} != 0 ]];then
-    echo "Run_arm64 failed"
-    cat ${run_arm64_log_file}
-    Print_Benchmark_Result
-    exit 1
+if [[ $backend == "all" || $backend == "arm32" ]]; then
+    # Run on arm32
+    echo "start Run arm32 ..."
+    Run_arm32
+    Run_arm32_status=$?
+    sleep 1
 fi
 
-if [[ ${Run_arm32_status} != 0 ]];then
-    echo "Run_arm32 failed"
-    cat ${run_arm32_log_file}
-    Print_Benchmark_Result
-    exit 1
+if [[ $backend == "all" || $backend == "gpu" ]]; then
+    # Run on gpu
+    echo "start Run gpu ..."
+    Run_gpu
+    Run_gpu_status=$?
+    sleep 1
+fi
+if [[ $backend == "all" || $backend == "npu" ]]; then
+    # Run on npu
+    echo "start Run npu ..."
+    Run_npu
+    Run_npu_status=$?
+    sleep 1
 fi
 
-echo "Run_x86 and Run_x86_sse and Run_arm64 and Run_arm32 is ended"
+if [[ $backend == "all" || $backend == "x86" ]]; then
+    wait ${Run_x86_PID}
+    Run_x86_status=$?
+
+    # Check benchmark result and return value
+    if [[ ${Run_x86_status} != 0 ]];then
+        echo "Run_x86 failed"
+        cat ${run_x86_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-sse" ]]; then
+    wait ${Run_x86_sse_PID}
+    Run_x86_sse_status=$?
+
+    if [[ ${Run_x86_sse_status} != 0 ]];then
+        echo "Run_x86 sse failed"
+        cat ${run_x86_sse_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-avx" ]]; then
+    wait ${Run_x86_avx_PID}
+    Run_x86_avx_status=$?
+
+    if [[ ${Run_x86_avx_status} != 0 ]];then
+        echo "Run_x86 avx failed"
+        cat ${run_x86_avx_log_file}
+        isFailed=1
+    fi
+fi
+
+if [[ $backend == "all" || $backend == "arm64_fp32" ]]; then
+    if [[ ${Run_arm64_fp32_status} != 0 ]];then
+        echo "Run_arm64_fp32 failed"
+        cat ${run_arm64_fp32_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "arm64_fp16" ]]; then
+    if [[ ${Run_arm64_fp16_status} != 0 ]];then
+        echo "Run_arm64_fp16 failed"
+        cat ${run_arm64_fp16_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "arm32" ]]; then
+    if [[ ${Run_arm32_status} != 0 ]];then
+        echo "Run_arm32 failed"
+        cat ${run_arm32_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "gpu" ]]; then
+    if [[ ${Run_gpu_status} != 0 ]];then
+        echo "Run_gpu failed"
+        cat ${run_gpu_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "npu" ]]; then
+    if [[ ${Run_npu_status} != 0 ]];then
+        echo "Run_npu failed"
+        cat ${run_npu_log_file}
+        isFailed=1
+    fi
+fi
+
+echo "Run_x86 and Run_x86_sse and Run_arm64_fp32 and Run_arm64_fp16 and Run_arm32 and Run_gpu and Run_npu is ended"
 Print_Benchmark_Result
+if [[ $isFailed == 1 ]]; then
+    exit 1
+fi
 exit 0
