@@ -1680,8 +1680,17 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
 
 bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
+    if (src.IsEmpty()) {
+      return false;
+    }
     if (mat.IsEmpty()) {
       mat.Init(w, h, 1, LDataType::UINT8);
+    }
+    if (mat.channel_ != 1) {
+      return false;
+    }
+    if ((src.width_ != w) || (src.height_ != h)) {
+      return false;
     }
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = src;

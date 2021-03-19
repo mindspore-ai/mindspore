@@ -1769,6 +1769,39 @@ TEST_F(MindDataImageProcess, testConvertRgbToGray) {
   CompareMat(rgb_mat, lite_mat_gray);
 }
 
+TEST_F(MindDataImageProcess, testConvertRgbToGrayFail) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat rgb_mat;
+  cv::Mat rgb_mat1;
+
+  cv::cvtColor(image, rgb_mat, CV_BGR2GRAY);
+  cv::imwrite("./opencv_image.jpg", rgb_mat);
+
+  cv::cvtColor(image, rgb_mat1, CV_BGR2RGB);
+
+  // The width and height of the output image is different from the original image.
+  LiteMat lite_mat_rgb;
+  lite_mat_rgb.Init(rgb_mat1.cols, rgb_mat1.rows, rgb_mat1.channels(), rgb_mat1.data, LDataType::UINT8);
+  LiteMat lite_mat_gray;
+  bool ret = ConvertRgbToGray(lite_mat_rgb, LDataType::UINT8, 1000, 1000, lite_mat_gray);
+  ASSERT_TRUE(ret == false);
+
+  // The input lite_mat_rgb object is null.
+  LiteMat lite_mat_rgb1;
+  LiteMat lite_mat_gray1;
+  bool ret1 = ConvertRgbToGray(lite_mat_rgb1, LDataType::UINT8, image.cols, image.rows, lite_mat_gray1);
+  ASSERT_TRUE(ret1 == false);
+
+  // The channel of output image object is not 1.
+  LiteMat lite_mat_rgb2;
+  lite_mat_rgb2.Init(rgb_mat1.cols, rgb_mat1.rows, rgb_mat1.channels(), rgb_mat1.data, LDataType::UINT8);
+  LiteMat lite_mat_gray2;
+  lite_mat_gray2.Init(rgb_mat1.cols, rgb_mat1.rows, rgb_mat1.channels(), rgb_mat1.data, LDataType::UINT8);
+  bool ret2 = ConvertRgbToGray(lite_mat_rgb2, LDataType::UINT8, image.cols, image.rows, lite_mat_gray2);
+  ASSERT_TRUE(ret2 == false);
+}
+
 TEST_F(MindDataImageProcess, testResizePreserveARWithFillerv) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
