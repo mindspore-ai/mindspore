@@ -33,7 +33,7 @@
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 
 namespace mindspore::lite {
 enum MS_API DataType { kImage = 0, kBinary = 1 };
@@ -156,7 +156,6 @@ class MS_API NetTrain {
       std::cout << refOutput[j] << " ";
     }
     for (int j = 0; j < size; j++) {
-      std::cout << std::endl;
       if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
         std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
         MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";

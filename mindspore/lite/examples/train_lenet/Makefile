@@ -16,7 +16,7 @@ CFLAGS := -Ofast -std=c++17  \
 	-I . \
         -I ./msl/train \
         -I ./msl/train/minddata \
-        -I ./msl/train/third_party/flatbuffers/include
+        -I ./msl/tools/third_party/flatbuffers/include
 
 
 ifeq ($(TARGET),arm64)

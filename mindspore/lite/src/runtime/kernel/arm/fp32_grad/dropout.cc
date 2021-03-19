@@ -67,22 +67,24 @@ int DropoutCPUKernel::Execute(int task_id) {
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
-  size_t end = start + count;
+  int start = stride * task_id;
+  int end = start + count;
 
   if (param == nullptr) {
     MS_LOG(ERROR) << "Dropout op_parameter_ nullptr";
     return RET_NULL_PTR;
   }
-  if (IsEval()) {
-    std::copy(&(input_ptr[start]), &(input_ptr[end]), &(output_ptr[start]));
-  } else {
-    std::default_random_engine generator;
-    std::bernoulli_distribution distribution(param->ratio_);
+  if (count > 0) {
+    if (IsEval()) {
+      std::copy(&(input_ptr[start]), &(input_ptr[end]), &(output_ptr[start]));
+    } else {
+      std::default_random_engine generator;
+      std::bernoulli_distribution distribution(param->ratio_);
 
-    for (size_t i = start; i < end; i++) {
-      mask[i] = distribution(generator);
-      output_ptr[i] = input_ptr[i] * mask[i] * scale_;
+      for (int i = start; i < end; i++) {
+        mask[i] = distribution(generator);
+        output_ptr[i] = input_ptr[i] * mask[i] * scale_;
+      }
     }
   }
   return RET_OK;

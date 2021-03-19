@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "include/train/train_loop_callback.h"
 #include "include/train/metrics.h"
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 
 namespace mindspore {
 class MSTensor;
@@ -41,10 +41,9 @@ class TrainLoop {
   /// \brief Static method to create a TrainLoop object
   ///
   /// \param[in] train_session Train session object as return from CreateSession\CreateTransferSession API
-  /// \param[in] context Defines the context of the session to be created
   ///
   /// \return Pointer of MindSpore Lite TrainLoop
-  static TrainLoop *CreateTrainLoop(session::TrainSession *train_session, lite::Context *context, int batch_size = -1);
+  static TrainLoop *CreateTrainLoop(session::TrainSession *train_session);
 
   /// \brief Class destructor
   virtual ~TrainLoop() = default;

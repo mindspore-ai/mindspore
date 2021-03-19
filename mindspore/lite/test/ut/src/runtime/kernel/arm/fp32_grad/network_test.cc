@@ -24,7 +24,7 @@
 
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"

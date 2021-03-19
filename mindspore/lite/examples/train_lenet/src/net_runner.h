@@ -23,7 +23,6 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "include/train_session.h"
 #include "include/train/train_loop.h"
 #include "include/train/accuracy_metrics.h"
 #include "include/ms_tensor.h"

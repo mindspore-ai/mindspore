@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
-#include "include/train_session.h"
+#include "include/train/train_session.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 

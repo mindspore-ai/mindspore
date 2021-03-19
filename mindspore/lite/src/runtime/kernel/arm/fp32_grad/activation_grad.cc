@@ -55,32 +55,33 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
   size_t start = stride * task_id;
 
   auto error_code = RET_OK;
-
-  if (param_act_grad_->type_ == schema::ActivationType_RELU) {
-    error_code = ReluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationType_RELU6) {
-    error_code = Relu6Grad(yt_addr + start, input_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationType_LEAKY_RELU) {
-    error_code = LReluGrad(yt_addr + start, input_addr + start, count, output_addr + start, param_act_grad_->alpha_);
-  } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
-    // Sigmoid gets the input tensors in reverse order!
-    error_code = SigmoidGrad(input_addr + start, yt_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
-    error_code = TanhGrad(input_addr + start, yt_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
-    error_code = HSwishGrad(yt_addr + start, input_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
-    error_code = HSigmoidGrad(yt_addr + start, input_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationType_ELU) {
-    error_code = EluGrad(yt_addr + start, input_addr + start, count, output_addr + start, param_act_grad_->alpha_);
-  } else if (param_act_grad_->type_ == schema::ActivationType_GELU) {
-    error_code = GeluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
-  } else {
-    MS_LOG(ERROR) << "Activation type error";
-    return RET_ERROR;
-  }
-  if (error_code != RET_OK) {
-    return RET_ERROR;
+  if (count > 0) {
+    if (param_act_grad_->type_ == schema::ActivationType_RELU) {
+      error_code = ReluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    } else if (param_act_grad_->type_ == schema::ActivationType_RELU6) {
+      error_code = Relu6Grad(yt_addr + start, input_addr + start, count, output_addr + start);
+    } else if (param_act_grad_->type_ == schema::ActivationType_LEAKY_RELU) {
+      error_code = LReluGrad(yt_addr + start, input_addr + start, count, output_addr + start, param_act_grad_->alpha_);
+    } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
+      // Sigmoid gets the input tensors in reverse order!
+      error_code = SigmoidGrad(input_addr + start, yt_addr + start, count, output_addr + start);
+    } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
+      error_code = TanhGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
+      error_code = HSwishGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
+      error_code = HSigmoidGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    } else if (param_act_grad_->type_ == schema::ActivationType_ELU) {
+      error_code = EluGrad(yt_addr + start, input_addr + start, count, output_addr + start, param_act_grad_->alpha_);
+    } else if (param_act_grad_->type_ == schema::ActivationType_GELU) {
+      error_code = GeluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    } else {
+      MS_LOG(ERROR) << "Activation type error";
+      return RET_ERROR;
+    }
+    if (error_code != RET_OK) {
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

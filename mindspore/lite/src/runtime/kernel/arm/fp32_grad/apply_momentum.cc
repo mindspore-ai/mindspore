@@ -30,15 +30,15 @@ using mindspore::schema::PrimitiveType_ApplyMomentum;
 namespace mindspore::kernel {
 int ApplyMomentumCPUKernel::ReSize() { return RET_OK; }
 
-int DoApplyMomentum(float *weight, float *accumulate, float learning_rate, float *gradient, float moment, bool nesterov,
-                    size_t start, size_t end) {
+static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate, float *gradient, float moment,
+                           bool nesterov, int start, int end) {
   if (nesterov) {
-    for (size_t i = start; i < end; i++) {
+    for (int i = start; i < end; i++) {
       accumulate[i] = accumulate[i] * moment + gradient[i];
       weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
     }
   } else {
-    for (size_t i = start; i < end; i++) {
+    for (int i = start; i < end; i++) {
       accumulate[i] = accumulate[i] * moment + gradient[i];
       weight[i] -= accumulate[i] * learning_rate;
     }
@@ -56,6 +56,7 @@ int ApplyMomentumCPUKernel::Execute(int task_id) {
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
+  count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
 
