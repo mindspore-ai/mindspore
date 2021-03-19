@@ -65,14 +65,45 @@ class Profiler:
             This parameter is used to support offline parsing.
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, context
+        >>> from mindspore.train import Model
+        >>> import mindspore.dataset as ds
         >>> from mindspore.profiler import Profiler
-        >>> import mindspore.context
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-        >>>                     device_id=int(os.environ["DEVICE_ID"]))
-        >>> profiler = Profiler()
-        >>> model = Model()
-        >>> model.train()
-        >>> profiler.analyse()
+        >>>
+        >>>
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.fc = nn.Dense(2,2)
+        ...     def construct(self, x):
+        ...         return self.fc(x)
+        >>>
+        >>> def generator():
+        ...     for i in range(2):
+        ...         yield (np.ones([2, 2]).astype(np.float32), np.ones([2]).astype(np.int32))
+        >>>
+        >>> def train(net):
+        ...     optimizer = nn.Momentum(net.trainable_params(), 1, 0.9)
+        ...     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+        ...     data = ds.GeneratorDataset(generator, ["data", "label"])
+        ...     model = Model(net, loss, optimizer)
+        ...     model.train(1, data)
+        >>>
+        >>> if __name__ == '__main__':
+        ...     # If the device_target is GPU, set the device_target to "GPU"
+        ...     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        ...
+        ...     # Init Profiler
+        ...     # Note that the Profiler should be initialized after context.set_context and before model.train
+        ...     profiler = Profiler()
+        ...
+        ...     # Train Model
+        ...     net = Net()
+        ...     train(net)
+        ...
+        ...     # Profiler end
+        ...     profiler.analyse()
     """
 
     _hwts_output_filename_target = "output_format_data_hwts_"
@@ -83,6 +114,7 @@ class Profiler:
         # get device_id and device_target
         self._get_devid_and_devtarget()
         self._get_output_path(kwargs)
+
         os.environ['PROFILING_MODE'] = 'true'
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
 
@@ -154,17 +186,7 @@ class Profiler:
 
     def analyse(self):
         """
-        Collect and analyse performance data, called after training or during training.
-
-        Examples:
-            >>> from mindspore.profiler import Profiler
-            >>> import mindspore.context
-            >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-            >>>                     device_id=int(os.environ["DEVICE_ID"]))
-            >>> profiler = Profiler()
-            >>> model = Model()
-            >>> model.train()
-            >>> profiler.analyse()
+        Collect and analyse performance data, called after training or during training. The example shows above.
         """
         self._cpu_profiler.stop()
         if self._device_target and self._device_target == "GPU":
