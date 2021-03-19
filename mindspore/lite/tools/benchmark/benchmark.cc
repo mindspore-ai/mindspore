@@ -374,8 +374,12 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
       bias = CompareData<int16_t>(name, tensor->shape(), mutableData);
       break;
     }
+    case TypeId::kNumberTypeBool: {
+      bias = CompareData<bool>(name, tensor->shape(), mutableData);
+      break;
+    }
     default:
-      MS_LOG(ERROR) << "Datatype " << msCalibDataType << " is not supported.";
+      MS_LOG(ERROR) << "Datatype " << tensor->data_type() << " is not supported.";
       return RET_ERROR;
   }
   if (bias < 0) {
@@ -529,6 +533,8 @@ int Benchmark::PrintInputData() {
         std::cout << static_cast<const int32_t *>(in_data)[j] << " ";
       } else if (tensor_data_type == TypeId::kNumberTypeInt64) {
         std::cout << static_cast<const int64_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeBool) {
+        std::cout << static_cast<const bool *>(in_data)[j] << " ";
       } else {
         MS_LOG(ERROR) << "Datatype: " << tensor_data_type << " is not supported.";
         return RET_ERROR;
