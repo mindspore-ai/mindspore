@@ -44,6 +44,7 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimTile,
     prim::kPrimSqrtGrad,
     prim::kPrimClipByNormNoDivSum,
+    prim::kLambApplyOptimizerAssign,
 #elif ENABLE_GPU
     prim::kPrimBiasAdd,
     prim::kPrimBiasAddGrad,
