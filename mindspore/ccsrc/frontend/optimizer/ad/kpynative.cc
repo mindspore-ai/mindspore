@@ -16,8 +16,10 @@
  * limitations under the License.
  */
 
+#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include "ir/anf.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
@@ -177,9 +179,11 @@ class KPynativeCellImpl : public KPynativeCell {
   AnfNodePtr last_node_{nullptr};
   bool need_propagate_stop_gradient_{false};
 
-  // For CNode like TupleGetItem, ListGetItem, it's bypassed by caller so no KPynativeOp is called
-  // for these CNode. Here we forge Adjoint for these CNode.
+  // For CNode like TupleGetItem, ListGetItem, MakeTuple, MakeList, it's bypassed by caller so
+  // no KPynativeOp is called for these CNode. Here we forge Adjoint for these CNode.
   PynativeAdjointPtr ForgeCNodeAdjoint(const CNodePtr &cnode);
+  PynativeAdjointPtr ForgeGetItemAdjoint(const CNodePtr &cnode);
+  PynativeAdjointPtr ForgeMakeSequenceAdjoint(const CNodePtr &cnode);
   bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                     const FuncGraphPtr &bprop_fg);
   void PropagateStopGradient();
@@ -188,6 +192,8 @@ class KPynativeCellImpl : public KPynativeCell {
   bool BackPropagate();
   bool BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app);
   FuncGraphPtr BuildBpropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode);
+  // Back propagate for MakeList or MakeTuple is generated from MetaFuncGraph.
+  FuncGraphPtr BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -293,6 +299,8 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
   FuncGraphPtr bprop_fg = nullptr;
   if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
     bprop_fg = BuildBpropCutFuncGraph(prim, cnode);
+  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+    bprop_fg = BuildMakeSequenceBprop(prim, cnode);
   } else {
     bprop_fg = g_k_prims.GetPossibleBprop(prim);
   }
@@ -338,12 +346,9 @@ ValuePtr ShallowCopyValue(const ValuePtr &value) {
 }
 }  // namespace
 
-PynativeAdjointPtr KPynativeCellImpl::ForgeCNodeAdjoint(const CNodePtr &cnode) {
-  if (!IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && !IsPrimitiveCNode(cnode, prim::kPrimListGetItem)) {
-    MS_LOG(EXCEPTION) << "Cannot find adjoint for anfnode: " << cnode->DebugString();
-  }
+PynativeAdjointPtr KPynativeCellImpl::ForgeGetItemAdjoint(const CNodePtr &cnode) {
   if (cnode->size() != 3) {
-    MS_LOG(EXCEPTION) << "CNode should have 3 inputs, CNode: " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "TupleGetItem/ListGetItem CNode should have 3 inputs, but CNode: " << cnode->DebugString();
   }
   // Input 1 of CNode;
   PynativeAdjointPtr inp_1_adjoint = nullptr;
@@ -391,6 +396,68 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeCNodeAdjoint(const CNodePtr &cnode) {
     MS_LOG(EXCEPTION) << "Build Adjoint for GetItem node failed, CNode: " << cnode->DebugString();
   }
   return cnode_adjoint_iter->second;
+}
+
+PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &cnode) {
+  // () or [] is not supported yet.
+  if (cnode->size() <= 1) {
+    MS_LOG(DEBUG) << "MakeTuple/MakeList CNode is empty Tuple/List, CNode: " << cnode->DebugString();
+    static auto dummy_adjoint = std::make_shared<PynativeAdjoint>(nullptr, ValuePtrList{}, nullptr, nullptr);
+    anfnode_to_adjoin_[cnode] = dummy_adjoint;
+    cnode->set_stop_gradient(true);
+    return dummy_adjoint;
+  }
+  ValuePtrList op_args;
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    const auto &inp = cnode->input(i);
+    auto inp_adjoint_iter = anfnode_to_adjoin_.find(inp);
+    if (inp_adjoint_iter == anfnode_to_adjoin_.end()) {
+      MS_LOG(DEBUG) << "Item in CNode cannot found in cache. Inp is: " << inp->DebugString();
+      if (inp->isa<CNode>()) {
+        const auto inp_cnode = inp->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(inp_cnode);
+        auto forged_inp_adjoint = ForgeCNodeAdjoint(inp->cast<CNodePtr>());
+        op_args.push_back(forged_inp_adjoint->out());
+      } else if (inp->isa<ValueNode>()) {
+        const auto &inp_value = GetValueNode(inp);
+        op_args.push_back(inp_value);
+      } else {
+        MS_LOG(EXCEPTION) << "Input of MakeTuple/MakeLis is not a CNode or ValueNode, but: " << inp->DebugString();
+      }
+    } else {
+      op_args.push_back(inp_adjoint_iter->second->out());
+    }
+  }
+  ValuePtr cnode_out = nullptr;
+  if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    cnode_out = MakeValue(op_args);
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
+    cnode_out = std::make_shared<ValueList>(op_args);
+  }
+
+  auto built = KPynativeOp(cnode, op_args, cnode_out);
+  if (!built) {
+    MS_LOG(EXCEPTION) << "Build Adjoint for MakeTuple/MakeList node failed, CNode: " << cnode->DebugString();
+  }
+  auto cnode_adjoint_iter = anfnode_to_adjoin_.find(cnode);
+  if (cnode_adjoint_iter == anfnode_to_adjoin_.end()) {
+    MS_LOG(EXCEPTION) << "Build Adjoint for MakeTuple/MakeList node failed, CNode: " << cnode->DebugString();
+  }
+  return cnode_adjoint_iter->second;
+}
+
+PynativeAdjointPtr KPynativeCellImpl::ForgeCNodeAdjoint(const CNodePtr &cnode) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimListGetItem)) {
+    MS_LOG(DEBUG) << "Build cnode adjoint for anfnode: " << cnode->DebugString();
+    return ForgeGetItemAdjoint(cnode);
+  }
+
+  if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
+    MS_LOG(DEBUG) << "Build cnode adjoint for anfnode: " << cnode->DebugString();
+    return ForgeMakeSequenceAdjoint(cnode);
+  }
+  MS_LOG(EXCEPTION) << "Unknown cnode: " << cnode->DebugString();
 }
 
 bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
@@ -448,17 +515,22 @@ FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr
 
 bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app) {
   for (size_t i = 1; i < cnode_primal->size(); i++) {
-    auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i - 1))});
     auto input = cnode_primal->input(i);
     // Useless to accumulate sens for ValueNode, the sens for ValueNode should be zeros_like;
     if (input->isa<ValueNode>()) {
       continue;
     }
+    auto cnode_input = input->cast<CNodePtr>();
+    if (cnode_input != nullptr && cnode_input->stop_gradient()) {
+      MS_LOG(DEBUG) << "Bypass accumulate dout to cnode with stop_gradient flag, cnode: " << input->ToString();
+      continue;
+    }
     // Backprop sens wrt inputs.
     auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-      MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString() << ".";
+      MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString();
     }
+    auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i - 1))});
     input_adjoint_iter->second->AccumulateDout(din);
   }
   return true;
@@ -565,6 +637,51 @@ FuncGraphPtr KPynativeCellImpl::BuildBpropCutFuncGraph(const PrimitivePtr &prim,
 
   func_graph->set_output(func_graph->NewCNode(outputs));
   return func_graph;
+}
+
+FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode) {
+  using KeyPair = std::pair<std::string, size_t>;
+  static std::map<KeyPair, FuncGraphPtr> bprop_func_graph_cache;
+  auto inputs_num = cnode->size() - 1;
+  KeyPair key{prim->name(), inputs_num};
+  auto bprop_func_graph_iter = bprop_func_graph_cache.find(key);
+  if (bprop_func_graph_iter != bprop_func_graph_cache.end()) {
+    return bprop_func_graph_iter->second;
+  }
+
+  FuncGraphPtr b = std::make_shared<FuncGraph>();
+
+  std::ostringstream ss;
+  ss << "◀" << prim->ToString() << inputs_num;
+  b->debug_info()->set_name(ss.str());
+  for (size_t i = 0; i < inputs_num; ++i) {
+    auto param = b->add_parameter();
+  }
+  // out, dout
+  auto p1 = b->add_parameter();
+  AnfNodePtr dout = b->add_parameter();
+
+  std::vector<AnfNodePtr> grads;
+  PrimitivePtr getitem_prim;
+
+  if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
+    getitem_prim = prim::kPrimTupleGetItem;
+  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+    getitem_prim = prim::kPrimListGetItem;
+  } else {
+    MS_LOG(EXCEPTION) << "Prim should be MakeTuple or MakeList, Invalid prim: " << prim->ToString();
+  }
+
+  grads.push_back(NewValueNode(prim));
+  for (size_t i = 0; i < inputs_num; ++i) {
+    grads.push_back(b->NewCNode({NewValueNode(getitem_prim), dout, NewValueNode(SizeToLong(i))}));
+  }
+
+  b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  b->set_output(b->NewCNode(grads));
+
+  bprop_func_graph_cache[key] = b;
+  return b;
 }
 }  // namespace ad
 }  // namespace mindspore
