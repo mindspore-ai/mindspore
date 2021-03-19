@@ -118,7 +118,7 @@ class SequentialCell(Cell):
         TypeError: If the type of the `args` is not list or OrderedDict.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")

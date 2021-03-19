@@ -81,7 +81,7 @@ class Embedding(Cell):
         ValueError: If `padding_idx` is an int which not in range [0, `vocab_size`].
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.Embedding(20000, 768,  True)
