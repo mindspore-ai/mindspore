@@ -116,7 +116,7 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
   return lite_tensors;
 }
 
-STATUS NodeInferShpae(const std::unique_ptr<schema::CNodeT> &node, const std::vector<Tensor *> &inputs,
+STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::vector<Tensor *> &inputs,
                       std::vector<Tensor *> *outputs) {
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
   auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
@@ -197,7 +197,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       FreeTensors(input_tensors, output_tensors);
       return RET_INFER_ERR;
     }
-    auto status = NodeInferShpae(node, input_tensors, &output_tensors);
+    auto status = NodeInferShape(node, input_tensors, &output_tensors);
     MS_LOG(DEBUG) << "cur node:" << node->name;
     if (status == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name
