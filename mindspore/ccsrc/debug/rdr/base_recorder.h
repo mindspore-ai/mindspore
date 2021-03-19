@@ -30,7 +30,7 @@ class BaseRecorder {
  public:
   BaseRecorder() : module_(""), name_(""), directory_(""), filename_(""), timestamp_("") {}
   BaseRecorder(const std::string &module, const std::string &name) : module_(module), name_(name), filename_("") {
-    directory_ = mindspore::EnvConfigParser::GetInstance().rdr_path();
+    directory_ = mindspore::EnvConfigParser::GetInstance().RdrPath();
 
     if (name.length() > maxNameLength) {
       name_ = name.substr(0, maxNameLength);
