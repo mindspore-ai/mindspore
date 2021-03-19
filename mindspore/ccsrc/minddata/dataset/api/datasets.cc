@@ -204,8 +204,10 @@ int64_t Dataset::GetDatasetSize(bool estimate) {
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
   std::shared_ptr<DatasetSizeGetter> size_getter = std::make_shared<DatasetSizeGetter>();
-  RETURN_SECOND_IF_ERROR(size_getter->Init(this->IRNode()), -1);
-  RETURN_SECOND_IF_ERROR(size_getter->GetDatasetSize(&dataset_size, estimate), -1);
+  DatasetSizeGetter *consumer = size_getter.get();
+  runtime_context->AssignConsumer(size_getter);
+  RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), -1);
+  RETURN_SECOND_IF_ERROR(consumer->GetDatasetSize(&dataset_size, estimate), -1);
   return dataset_size;
 }
 
@@ -213,8 +215,10 @@ std::vector<DataType> Dataset::GetOutputTypes() {
   std::vector<DataType> types;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->GetOutputTypes(&types), {});
+  TreeGetters *consumer = tree_getters_.get();
+  runtime_context->AssignConsumer(tree_getters_);
+  RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(consumer->GetOutputTypes(&types), {});
   return types;
 }
 
@@ -222,8 +226,10 @@ std::vector<TensorShape> Dataset::GetOutputShapes() {
   std::vector<TensorShape> shapes;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->GetOutputShapes(&shapes), {});
+  TreeGetters *consumer = tree_getters_.get();
+  runtime_context->AssignConsumer(tree_getters_);
+  RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(consumer->GetOutputShapes(&shapes), {});
   return shapes;
 }
 
@@ -231,8 +237,10 @@ int64_t Dataset::GetNumClasses() {
   int64_t num_classes;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
-  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), -1);
-  RETURN_SECOND_IF_ERROR(tree_getters_->GetNumClasses(&num_classes), -1);
+  TreeGetters *consumer = tree_getters_.get();
+  runtime_context->AssignConsumer(tree_getters_);
+  RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), -1);
+  RETURN_SECOND_IF_ERROR(consumer->GetNumClasses(&num_classes), -1);
   return num_classes;
 }
 
@@ -240,8 +248,10 @@ std::vector<std::string> Dataset::GetColumnNames() {
   std::vector<std::string> col_names;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->GetColumnNames(&col_names), {});
+  TreeGetters *consumer = tree_getters_.get();
+  runtime_context->AssignConsumer(tree_getters_);
+  RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(consumer->GetColumnNames(&col_names), {});
   return col_names;
 }
 
@@ -249,8 +259,10 @@ std::vector<std::pair<std::string, std::vector<int32_t>>> Dataset::GetClassIndex
   std::vector<std::pair<std::string, std::vector<int32_t>>> output_class_indexing;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
-  RETURN_SECOND_IF_ERROR(tree_getters_->GetClassIndexing(&output_class_indexing), {});
+  TreeGetters *consumer = tree_getters_.get();
+  runtime_context->AssignConsumer(tree_getters_);
+  RETURN_SECOND_IF_ERROR(consumer->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(consumer->GetClassIndexing(&output_class_indexing), {});
   return output_class_indexing;
 }
 
