@@ -28,6 +28,8 @@ class TdtHandle {
 
   static bool DestroyHandle();
 
+  static std::vector<acltdtChannelHandle *> GetHandle();
+
  private:
   TdtHandle() {}
 
