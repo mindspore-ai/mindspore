@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PRIM_BPROP_OPTIMIZER_H
 
 #include <vector>
+#include <utility>
 #include <unordered_map>
 
 #include "frontend/optimizer/irpass.h"
@@ -32,14 +33,45 @@ class PrimBpropOptGraphLevel2Info;
 
 struct PrimitiveTotalEqual;
 
+struct PrimitiveTupleListHasher;
+
+struct PrimitiveTupleListEqual;
+
 using PrimBpropOptGraphInfoPtr = std::shared_ptr<PrimBpropOptGraphInfo>;
 
 using PrimBpropOptGraphLevel2InfoPtr = std::shared_ptr<PrimBpropOptGraphLevel2Info>;
 
 using PrimBpropCache = std::unordered_map<PrimitivePtr, PrimBpropOptGraphInfoPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 
+using TupleListKey = std::pair<PrimitivePtr, abstract::AbstractBasePtrList>;
+
 using PrimBpropLevel2Cache = std::unordered_map<abstract::AbstractBasePtrList, PrimBpropOptGraphLevel2InfoPtr,
   abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+
+using PrimTupleListCache = std::unordered_map<TupleListKey, FuncGraphPtr,
+  PrimitiveTupleListHasher, PrimitiveTupleListEqual>;
+
+struct PrimitiveTupleListHasher {
+  bool operator()(const TupleListKey &key) const {
+    abstract::AbstractBasePtrListHasher hasher;
+    return hasher(key.second);
+  }
+};
+
+struct PrimitiveTupleListEqual {
+  bool operator()(TupleListKey const &t1, TupleListKey const &t2) const {
+    MS_EXCEPTION_IF_NULL(t1.first);
+    MS_EXCEPTION_IF_NULL(t2.first);
+
+    if (!(*t1.first == *t2.first)) {
+      return false;
+    }
+    abstract::AbstractBasePtrListEqual cmp;
+    return cmp(t1.second, t2.second);
+  }
+};
+
+
 
 struct PrimitiveTotalEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
@@ -140,13 +172,13 @@ private:
     const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim);
 
   FuncGraphPtr GenSpecOptBprop(
-    const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim);
+    const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim, bool hook_flg);
 
-private:
+ private:
   // cache optimized bprop graph
   PrimBpropCache prim_bprop_cache_;
   opt::irpass::OptimizeIRPassLib irpass_;
-
+  PrimTupleListCache tuple_list_bprop_cache_;
 };
 
 }  // namespace pipeline

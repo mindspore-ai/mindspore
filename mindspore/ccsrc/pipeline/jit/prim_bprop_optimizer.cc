@@ -185,8 +185,10 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   MS_LOG(DEBUG) << "Hash of prim " << prim->ToString() << " is:" << prim->hash();
 
   //  kPrimHookBackward
-  if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
-    return GenSpecOptBprop(bprop_fg, op_args, out, prim);
+  bool hookback_flg = IsPrimitiveEquals(prim, prim::kPrimHookBackward);
+  if (hookback_flg || IsPrimitiveEquals(prim, prim::kPrimMakeTuple) ||
+      IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+    return GenSpecOptBprop(bprop_fg, op_args, out, prim, hookback_flg);
   }
 
   return GetOptBpropFromCache(bprop_fg, op_args, out, prim);
@@ -225,17 +227,28 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(
 }
 
 FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(
-  const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim) {
+  const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim, bool hook_flg) {
+  abstract::AbstractBasePtrList abs_list;
+  ArgsToAbs(prim, op_args, abs_list);
+  if (!hook_flg) {
+    auto iter = tuple_list_bprop_cache_.find(std::pair(prim, abs_list));
+    if (iter != tuple_list_bprop_cache_.end()) {
+      return BasicClone(iter->second);
+    }
+  }
+
   // do step1 opt
   bprop_fg->debug_info()->set_name(prim->ToString());
   auto level_1_graph_info = PrimBpropOptStep1(bprop_fg);
 
   // do step2 opt
-  abstract::AbstractBasePtrList abs_list;
-  ArgsToAbs(prim, op_args, abs_list);
   auto new_abs_list = AddOutToAbsList(out, abs_list);
   auto level_2_graph_info = PrimBpropOptStep2(level_1_graph_info->opt_func_graph_, new_abs_list);
   level_2_graph_info->TryFreeArgsValue(op_args, out);
+
+  if (!hook_flg) {
+    tuple_list_bprop_cache_[std::pair(prim, abs_list)] = BasicClone(level_2_graph_info->opt_func_graph());
+  }
   return level_2_graph_info->opt_func_graph();
 }
 
