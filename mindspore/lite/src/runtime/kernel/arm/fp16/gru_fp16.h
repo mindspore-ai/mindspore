@@ -38,15 +38,16 @@ class GruFp16CPUKernel : public LiteKernel {
   void FreeTmpBuffer();
   void FreeRunBuffer();
   int InitParam();
-  int InitWeight(const lite::Tensor *tensor, float16_t *ptr, int deep);
-  int InitWeightBias();
+  int InitInputWeightBias();
+  int InitStateWeightBias();
   int MallocRunBuffer();
 
-  float16_t *gate_buffer_ = nullptr;
   float16_t *weight_g_ptr_ = nullptr;
   float16_t *weight_r_ptr_ = nullptr;
-  float16_t *bias_ptr_ = nullptr;
-  float16_t *matmul_buffer_[2];
+  float16_t *input_bias_ = nullptr;
+  float16_t *state_bias_ = nullptr;
+  float16_t *buffer_[4];
+  int weight_batch_ = 0;
   bool is_vec_ = false;
   GruParameter *gru_param_ = nullptr;
 };

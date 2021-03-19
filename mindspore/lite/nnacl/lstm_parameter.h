@@ -27,7 +27,6 @@ typedef struct LstmParameter {
   int seq_len_;
   int batch_;
   // other parameter
-  int input_step_;
   int output_step_;
   bool bidirectional_;
   float zoneout_cell_;
@@ -36,8 +35,6 @@ typedef struct LstmParameter {
   int input_col_align_;
   int state_row_align_;
   int state_col_align_;
-  int col_align_;
-  int row_align_;
 } LstmParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_LSTM_PARAMETER_H_

@@ -25,6 +25,10 @@ void PackLstmWeightFp32ToFp16(float16_t *dst, const float *src, int batch, int d
 
 void PackLstmWeightFp16(float16_t *dst, const float16_t *src, int batch, int deep, int col, int col_align);
 
+void PackLstmBiasFp32ToFp16(float16_t *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional);
+
+void PackLstmBiasFp16(float16_t *dst, const float16_t *src, int batch, int col, int col_align, bool is_bidirectional);
+
 void LstmMatMulFp16(float16_t *c, const float16_t *a, const float16_t *b, const float16_t *bias, int row, int deep,
                     int col, bool is_vec);
 
@@ -36,8 +40,8 @@ void ElementMulAccFp16(const float16_t *input0, const float16_t *input1, float16
 int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float16_t *output, const int element_size);
 
 void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight_i, const float16_t *weight_h,
-              const float16_t *bias, float16_t *hidden_state, float16_t *cell_state, float16_t *gate_buffer,
-              float16_t *state_buffer[2], float16_t *matmul_buffer[2], const LstmParameter *lstm_param);
+              const float16_t *input_bias, const float16_t *state_bias, float16_t *hidden_state, float16_t *cell_state,
+              float16_t *buffer[6], const LstmParameter *lstm_param);
 #ifdef __cplusplus
 }
 #endif

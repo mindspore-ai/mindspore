@@ -52,15 +52,18 @@ void LstmCPUKernel::FreeTmpBuffer() {
 }
 
 void LstmCPUKernel::FreeRunBuffer() {
-  for (int i = 0; i < 2; i++) {
-    context_->allocator->Free(state_buffer_[i]);
-  }
   context_->allocator->Free(buffer_[0]);
   context_->allocator->Free(buffer_[1]);
   if (!is_vec_) {
     context_->allocator->Free(buffer_[2]);
   }
   context_->allocator->Free(buffer_[3]);
+  if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
+    context_->allocator->Free(buffer_[4]);
+  }
+  if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
+    context_->allocator->Free(buffer_[5]);
+  }
 }
 
 int LstmCPUKernel::InitInputWeightBias() {
@@ -197,7 +200,7 @@ int LstmCPUKernel::ReSize() {
 }
 
 int LstmCPUKernel::MallocRunBuffer() {
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 6; i++) {
     buffer_[i] = nullptr;
   }
   buffer_[0] = reinterpret_cast<float *>(
@@ -216,7 +219,7 @@ int LstmCPUKernel::MallocRunBuffer() {
 
   if (!is_vec_) {
     buffer_[2] = reinterpret_cast<float *>(
-      context_->allocator->Malloc(4 * lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float)));
+      context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float)));
     if (buffer_[2] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
@@ -229,20 +232,19 @@ int LstmCPUKernel::MallocRunBuffer() {
     MS_LOG(ERROR) << "LstmCPUKernel malloc state gate buffer error.";
     return RET_ERROR;
   }
-  state_buffer_[0] = nullptr;
-  state_buffer_[1] = nullptr;
+
   if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
     auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
-    state_buffer_[0] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
-    if (state_buffer_[0] == nullptr) {
+    buffer_[4] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
+    if (buffer_[4] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for cell error.";
       return RET_ERROR;
     }
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
     auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
-    state_buffer_[1] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
-    if (state_buffer_[1] == nullptr) {
+    buffer_[5] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
+    if (buffer_[5] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for hidden error.";
       return RET_ERROR;
     }
@@ -281,7 +283,7 @@ int LstmCPUKernel::Run() {
   MS_ASSERT(state_bias_);
   Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
        reinterpret_cast<float *>(output_hidden_state->data_c()), reinterpret_cast<float *>(output_cell_state->data_c()),
-       state_buffer_, buffer_, lstm_param_);
+       buffer_, lstm_param_);
   FreeRunBuffer();
   return RET_OK;
 }

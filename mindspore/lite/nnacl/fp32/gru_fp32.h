@@ -20,8 +20,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Gru(float *output, const float *input, const float *weight_g, const float *weight_r, const float *bias,
-         float *hidden_state, float *gate_buffer, float *matmul_buffer[2], int check_seq_len,
+void Gru(float *output, const float *input, const float *weight_g, const float *weight_r, const float *input_bias,
+         const float *state_bias, float *hidden_state, float *buffer[4], int check_seq_len,
          const GruParameter *gru_parm);
 #ifdef __cplusplus
 }
