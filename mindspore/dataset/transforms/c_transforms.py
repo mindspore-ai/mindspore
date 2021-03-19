@@ -164,15 +164,15 @@ class Slice(cde.SliceOp):
     (Currently only rank-1 tensors are supported).
 
     Args:
-        *slices(Union[int, list(int), slice, None, Ellipsis]):
-            Maximum `n` number of arguments to slice a tensor of rank `n`.
+        slices (Union[int, list[int], slice, None, Ellipsis]):
+            Maximum `n` number of arguments to slice a tensor of rank `n` .
             One object in slices can be one of:
 
             1.  :py:obj:`int`: Slice this index only along the first dimension. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object along the first dimension.
                 Similar to start:stop:step.
-            4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`[:]' in Python indexing.
+            4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`[:]` in Python indexing.
             5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None`.
 
     Examples:

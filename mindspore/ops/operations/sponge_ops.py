@@ -901,11 +901,10 @@ class Dihedral14LJForce(PrimitiveWithInfer):
         F = k*(-12*A/|dr|^{14} + 6*B/|dr|^{8})*dr
 
     Args:
-        dihedral_14_numbers(int32): the number of necessary dihedral 1,4 terms M.
-        atom_numbers(int32): the number of atoms N.
+        dihedral_14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
-
         - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
         - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
         - **charge** (Tensor, float32) - [N,], the charge of each atom.

@@ -1887,6 +1887,7 @@ class Tile(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same data type as the `input_x`.
+
         - If the length of `multiples` is the same as the length of shape of `input_x`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
