@@ -53,6 +53,7 @@ void GPULaunchkernel::KernelSelect(std::shared_ptr<session::KernelGraph> kernel_
 }
 
 void GPULaunchkernel::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
-  device::gpu::GpuBuild(kernel_graph);
+  auto kernels = kernel_graph->execution_order();
+  device::gpu::CreateGPUKernel(kernels);
 }
 }  // namespace mindspore::device::gpu

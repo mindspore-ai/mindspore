@@ -27,12 +27,10 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void GpuBuild(const KernelGraphPtr &kernel_graph) {
+void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
   bool already_check_nvcc = false;
-  auto kernels = kernel_graph->execution_order();
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &kernel : kernels) {
     std::string kernel_name = session::AnfRuntimeAlgorithm::GetCNodeName(kernel);
