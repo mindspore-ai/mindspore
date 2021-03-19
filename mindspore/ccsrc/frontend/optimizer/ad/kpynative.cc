@@ -97,6 +97,15 @@ FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
   add_backward_funcgraph_cache[args_spec] = specialized_add_fg;
   return BasicClone(specialized_add_fg);
 }
+
+AnfNodePtr BuildZerosLikeDout(const FuncGraphPtr &tape, const ValuePtr &out) {
+  // Build zeros_like(out) as dout
+  abstract::AbstractBasePtrList args_spec{out->ToAbstract()->Broaden()};
+  auto zeros_like_fg = GetZerosLike(args_spec);
+  auto zeros_like_dout = tape->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out)});
+  zeros_like_dout->set_abstract(zeros_like_fg->output()->abstract());
+  return zeros_like_dout;
+}
 }  // namespace
 
 class PynativeAdjoint {
@@ -113,13 +122,9 @@ class PynativeAdjoint {
     if (dout_ != nullptr) {
       return dout_;
     }
-    // Build zeros_like(out) as dout
-    abstract::AbstractBasePtrList args_spec{out_->ToAbstract()->Broaden()};
-    auto zeros_like_fg = GetZerosLike(args_spec);
-    auto zeros_like_dout = tape_->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out_)});
-    zeros_like_dout->set_abstract(zeros_like_fg->output()->abstract());
-    return zeros_like_dout;
+    return BuildZerosLikeDout(tape_, out_);
   }
+
   void AccumulateDout(const AnfNodePtr &dout_factor) {
     if (dout_ != nullptr) {
       MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
@@ -236,9 +241,17 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
     for (auto weight : weights) {
       auto input_adjoint_iter = anfnode_to_adjoin_.find(weight);
       if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-        MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << weight->ToString();
+        // If weight is not used in the network, just return zeros_like() as dout;
+        MS_LOG(WARNING) << "Weight is not used in network, weight: " << weight->ToString();
+        auto input_w = weight->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(input_w);
+        auto default_param = input_w->default_param();
+        MS_EXCEPTION_IF_NULL(default_param);
+        auto dout = BuildZerosLikeDout(tape_, default_param);
+        node_list.push_back(dout);
+      } else {
+        node_list.push_back(input_adjoint_iter->second->RealDout());
       }
-      node_list.push_back(input_adjoint_iter->second->RealDout());
     }
   }
   auto tape_output = tape_->NewCNode(node_list);
