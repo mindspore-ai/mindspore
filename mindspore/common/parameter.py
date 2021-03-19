@@ -502,9 +502,11 @@ class Parameter(Tensor_):
         Args:
             layout (Union[None, list(list(int))]): Parameter slice
                 layout [dev_mat, tensor_map, slice_shape]. Default: None.
+
                 - dev_mat (list(int)): Device matrix.
                 - tensor_map (list(int)): Tensor map.
                 - slice_shape (list(int)): Shape of slice.
+
             set_sliced (bool): True if the parameter is set sliced after initializing the data.
                 Default: False.
 
