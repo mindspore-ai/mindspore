@@ -415,8 +415,10 @@ void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const Gr
       // Release GIL before calling into (potentially long-running) C++ code
       if (Py_IsInitialized()) {
         py::gil_scoped_release release;
+        session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
+      } else {
+        session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
       }
-      session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
     }
   } else {
     auto task = std::make_shared<RunOpTask>();
