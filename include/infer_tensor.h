@@ -111,7 +111,7 @@ class InferTensor : public InferTensorBase {
  public:
   InferTensor() = default;
   ~InferTensor() = default;
-  InferTensor(DataType type, std::vector<int64_t> shape, const void *data, size_t data_len) {
+  InferTensor(DataType type, const std::vector<int64_t> &shape, const void *data, size_t data_len) {
     set_data_type(type);
     set_shape(shape);
     set_data(data, data_len);
