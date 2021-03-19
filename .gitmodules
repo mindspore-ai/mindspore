@@ -1,6 +1,6 @@
-[submodule "akg"]
-	path = akg
-	url = https://gitee.com/mindspore/akg.git
 [submodule "graphengine"]
 	path = graphengine
 	url = https://gitee.com/mindspore/graphengine.git
+[submodule "akg"]
+	path = akg
+	url = https://gitee.com/mindspore-akg/akg.git
