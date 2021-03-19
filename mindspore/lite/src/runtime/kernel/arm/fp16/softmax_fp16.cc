@@ -43,59 +43,74 @@ int SoftmaxFp16CPUKernel::Init() {
   return ReSize();
 }
 
-int SoftmaxFp16CPUKernel::ReSize() { return SoftmaxBaseCPUKernel::ReSize(); }
-
-int SoftmaxFp16CPUKernel::MallocTmpBuffer() {
+int SoftmaxFp16CPUKernel::ReSize() {
+  auto ret = SoftmaxBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto n_dim = softmax_param_->n_dim_;
   auto axis = softmax_param_->axis_;
-  if (axis == -1) {
-    softmax_param_->axis_ += n_dim;
-    axis = softmax_param_->axis_;
-  }
   auto in_shape = in_tensors_.front()->shape();
-  int out_plane_size = 1;
+  out_plane_size_ = 1;
   for (int i = 0; i < axis; ++i) {
-    out_plane_size *= in_shape[i];
+    out_plane_size_ *= in_shape[i];
   }
-  int in_plane_size = 1;
+  in_plane_size_ = 1;
   for (int i = axis + 1; i < n_dim; i++) {
-    in_plane_size *= in_shape[i];
+    in_plane_size_ *= in_shape[i];
   }
-
-  sum_data_ =
-    reinterpret_cast<float16_t *>(context_->allocator->Malloc(out_plane_size * in_plane_size * sizeof(float16_t)));
+  if (sum_data_ != nullptr) {
+    free(sum_data_);
+  }
+  sum_data_ = reinterpret_cast<float16_t *>(malloc(out_plane_size_ * in_plane_size_ * sizeof(float16_t)));
   if (sum_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc data for softmax fail!";
     return RET_ERROR;
   }
-  memset(sum_data_, 0, out_plane_size * in_plane_size * sizeof(float16_t));
   return RET_OK;
 }
 
-void SoftmaxFp16CPUKernel::FreeTmpBuffer() {
-  if (sum_data_ != nullptr) {
-    context_->allocator->Free(sum_data_);
-    sum_data_ = nullptr;
+int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
+  int unit = UP_DIV(out_plane_size_, context_->thread_num_);
+  int begin = task_id * unit;
+  int end = MSMIN(begin + unit, out_plane_size_);
+  int channel = softmax_param_->input_shape_[softmax_param_->axis_];
+  int offset = begin * channel;
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->MutableData());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->MutableData());
+  SoftmaxLastAxisFp16(input_ptr + offset, output_ptr + offset, end - begin, channel);
+  return RET_OK;
+}
+
+int SoftmaxLastAxisFp16Run(void *cdata, int task_id) {
+  auto kernel = reinterpret_cast<SoftmaxFp16CPUKernel *>(cdata);
+  auto ret = kernel->DoSoftmaxLastAxis(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "DoSoftmaxLastAxisFp16 error task_id: " << task_id << ", ret: " << ret;
   }
+  return ret;
 }
 
 int SoftmaxFp16CPUKernel::Run() {
-  auto ret = MallocTmpBuffer();
-  if (ret != RET_OK) {
-    FreeTmpBuffer();
-    MS_LOG(ERROR) << "MallocTmpBuffer failed";
-    return RET_ERROR;
-  }
-
   auto input_tensor = in_tensors_.at(0);
+  MS_ASSERT(input_tensor);
   auto output_tensor = out_tensors_.at(0);
-
+  MS_ASSERT(output_tensor);
   input_fp16_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  MS_ASSERT(input_fp16_);
   output_fp16_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
-
-  SoftmaxFp16(input_fp16_, output_fp16_, sum_data_, softmax_param_);
-
-  FreeTmpBuffer();
+  MS_ASSERT(output_fp16_);
+  if (in_plane_size_ == 1) {
+    auto ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxLastAxisFp16Run, this, context_->thread_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SoftmaxFp16CPUKernel ParallelLaunch failed, ret: " << ret;
+    }
+    return ret;
+  } else {
+    MS_ASSERT(sum_data_);
+    memset(sum_data_, 0, out_plane_size_ * in_plane_size_ * sizeof(float16_t));
+    SoftmaxFp16(input_fp16_, output_fp16_, sum_data_, softmax_param_);
+  }
   return RET_OK;
 }
 

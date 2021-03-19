@@ -22,14 +22,21 @@ void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
   int cur_batch_offset = 0;
   for (int i = 0; i < batch; i++, cur_batch_offset += channel) {
     int j = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
     float32x4_t max4 = vdupq_n_f32(-FLT_MAX);
     int count = (channel / C4NUM) * C4NUM;
     for (; j < count; j += C4NUM) {
       float32x4_t input4 = vld1q_f32(src + cur_batch_offset + j);
       max4 = vmaxq_f32(max4, input4);
     }
+#ifdef ENABLE_ARM64
     float max = vmaxvq_f32(max4);
+#else
+    float max = max4[0];
+    for (int m = 1; m < 4; ++m) {
+      max = MSMAX(max, max4[m]);
+    }
+#endif
 #else
     float max = -FLT_MAX;
 #endif
@@ -66,7 +73,11 @@ void SumAndDiv(const float *src, float *dst, int batch, int channel) {
     for (; j < count; j += C4NUM) {
       sum4 = vaddq_f32(sum4, vld1q_f32(src + cur_batch_offset + j));
     }
+#ifdef ENABLE_ARM64
+    sum = vaddvq_f32(sum4);
+#else
     sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
+#endif
 #endif
     for (; j < channel; j++) {
       sum += src[cur_batch_offset + j];
