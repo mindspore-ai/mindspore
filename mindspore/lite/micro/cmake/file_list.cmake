@@ -76,6 +76,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/batchnorm_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/biasadd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/concat_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/conv2d_delegate_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.cc
@@ -281,8 +282,8 @@ endif()
 
 #### avx
 if("${X86_64_SIMD}" STREQUAL "avx")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
-    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
     set(AVX_SRC
             ${LITE_DIR}/nnacl/intrinsics/avx/common_utils.c
             ${LITE_DIR}/nnacl/intrinsics/sse/sse_common.c

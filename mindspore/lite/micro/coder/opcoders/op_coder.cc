@@ -25,6 +25,7 @@ OperatorCoder::~OperatorCoder() {
   if (parameter_ != nullptr) {
     free(parameter_);
   }
+  parameter_ = nullptr;
 }
 
 const std::vector<Tensor *> OperatorCoder::input_tensors() const { return input_tensors_; }
