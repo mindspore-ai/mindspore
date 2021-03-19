@@ -1049,6 +1049,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchLayerInputs(const CNodePtr
     new_make_tuple_inputs.emplace_back(new_partial);
   }
   auto new_make_tuple = graph->NewCNode(new_make_tuple_inputs);
+  new_make_tuple->set_abstract(make_tuple_node->abstract());
   switch_layer_inputs.emplace_back(new_make_tuple);
   auto new_switch_layer = graph->NewCNode(switch_layer_inputs);
   cnode_inputs.emplace_back(new_switch_layer);
