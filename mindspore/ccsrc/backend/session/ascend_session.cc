@@ -66,6 +66,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/graph_recorder.h"
 #include "runtime/device/ascend/ascend_bucket.h"
 #endif
 #if ENABLE_CPU && ENABLE_D
@@ -1011,7 +1012,8 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     std::string name = "graph_build." + std::to_string(graph->graph_id());
-    mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, true, ".ir;.pb");
+    DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
+    mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, dump_params, ".ir;.pb");
     if (save_graphs) {
       std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
       DumpIR(file_name, graph, true, kWholeStack);

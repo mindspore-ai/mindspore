@@ -20,6 +20,8 @@
 #include <memory>
 
 #include "mindspore/core/utils/log_adapter.h"
+#include "debug/rdr/graph_recorder.h"
+
 namespace mindspore {
 class FuncGraph;
 class CNode;
@@ -44,8 +46,8 @@ using TaskDebugInfoPtr = std::shared_ptr<device::ascend::tasksink::TaskDebugInfo
 #endif  // ENABLE_D
 
 namespace RDR {
-bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type = ".ir;.pb;.dat");
+bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph,
+                    const DumpGraphParams &info, const std::string &file_type = ".ir;.pb;.dat");
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
                           const std::vector<CNodePtr> &final_exec_order);
 bool RecordString(SubModuleId module, const std::string &name, const std::string &data);
