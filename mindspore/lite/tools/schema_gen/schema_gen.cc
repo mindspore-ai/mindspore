@@ -22,6 +22,7 @@
 #include "include/errorcode.h"
 #include "src/ops/schema_register.h"
 #include "src/common/log_adapter.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore::lite {
 using mindspore::lite::ops::SchemaRegisterImpl;
@@ -65,6 +66,7 @@ int SchemaGen::Init() {
   output.write(ns.c_str(), ns.length());
   std::string prim_type = instance->GetPrimTypeGenFunc()();
   output.write(prim_type.c_str(), prim_type.length());
+
   for (auto &&func : instance->GetAllOpDefCreateFuncs()) {
     std::string &&str = func();
     output.write(str.c_str(), str.length());
@@ -72,6 +74,7 @@ int SchemaGen::Init() {
 
   output.close();
   chmod(path.c_str(), S_IRUSR);
+  std::cout << "Successfully generate ops.fbs in " << flags_->export_path_ + "/ops.fbs" << std::endl;
   return RET_OK;
 }
 
@@ -88,7 +91,11 @@ int RunSchemaGen(int argc, const char **argv) {
     std::cerr << flags.Usage() << std::endl;
     return 0;
   }
-
+  flags.export_path_ = RealPath(flags.export_path_.c_str());
+  if (flags.export_path_.empty()) {
+    std::cerr << flags.Usage() << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
   SchemaGen gen(&flags);
   int ret = gen.Init();
   if (ret != RET_OK) {

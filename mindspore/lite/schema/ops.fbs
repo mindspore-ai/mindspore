@@ -1094,4 +1094,3 @@ table Splice {
     forward_indexes: [long];
     output_dim: long;
 }
-
