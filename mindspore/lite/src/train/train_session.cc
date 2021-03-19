@@ -387,6 +387,10 @@ void TrainSession::CompileOptimizedKernels() {
 }
 
 int TrainSession::SetLearningRate(float learning_rate) {
+  if (learning_rate < 0.0f) {
+    MS_LOG(ERROR) << "learning rate should more than 0";
+    return RET_ERROR;
+  }
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
