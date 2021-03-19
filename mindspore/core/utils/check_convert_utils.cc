@@ -230,7 +230,7 @@ bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, con
 bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {
-    MS_LOG(INFO) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
+    MS_LOG(DEBUG) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
     return false;
   }
   if (!(*value)->isa<Int64Imm>()) {
@@ -280,7 +280,7 @@ void RestoreTargetAttr(const std::string &attr_name, ValuePtr *const value) {
 void CheckAndConvertUtils::ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {
-    MS_LOG(INFO) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
+    MS_LOG(DEBUG) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
     return;
   }
   // convert enum to string
@@ -292,7 +292,7 @@ void CheckAndConvertUtils::ConvertAttrValueInExport(const std::string &op_type, 
 void CheckAndConvertUtils::ConvertAttrValueInLoad(const std::string &op_type, const std::string &attr_name,
                                                   ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {
-    MS_LOG(INFO) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
+    MS_LOG(DEBUG) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
     return;
   }
   // convert string to enum
@@ -626,7 +626,7 @@ TypeId CheckAndConvertUtils::CheckTypeSame(const std::string &arg_name, const Ty
 bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name,
                                                ValuePtr *const value) {
   if (*value == nullptr) {
-    MS_LOG(INFO) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
+    MS_LOG(DEBUG) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
     return false;
   }
   if (op_type.empty() || attr_name.empty()) {

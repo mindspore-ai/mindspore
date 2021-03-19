@@ -1051,7 +1051,8 @@ class Cell(Cell_):
         """
         Sets the cell to training mode.
 
-        The cell itself and all children cells will be set to training mode.
+        The cell itself and all children cells will be set to training mode. Layers that have different constructions
+        for training and predicting , such as `BatchNorm`, will distinguish between the branches by this attribute.
 
         Args:
             mode (bool): Specifies whether the model is training. Default: True.
