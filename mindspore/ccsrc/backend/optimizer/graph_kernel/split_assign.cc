@@ -27,16 +27,22 @@
 
 namespace mindspore {
 namespace opt {
-
 const BaseRef SplitAssign::DefinePattern() const {
+  VarPtr v = std::make_shared<Var>();
   VarPtr Xs = std::make_shared<Var>();
   VarPtr Us = std::make_shared<Var>();
   VarPtr UMonad = std::make_shared<Var>();
-  return VectorRef({prim::kPrimAssign, Xs, Us, UMonad});
+  return VectorRef({v, Xs, Us, UMonad});
+}
+
+bool CanSplit(const AnfNodePtr &node) {
+  return IsPrimitiveCNode(node, prim::kPrimAssignAdd) || IsPrimitiveCNode(node, prim::kPrimAssign) ||
+         IsPrimitiveCNode(node, prim::kPrimAssignSub);
 }
 
 const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
+  if (!CanSplit(node)) return node;
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kAssignInputTensorNum);
@@ -49,7 +55,7 @@ const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &func_graph, const AnfN
   depend_cnode->set_abstract(original_inputs[1]->abstract());
   depend_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   // Create new assign node, delete U from inputs.
-  AnfNodePtrList new_assign_inputs = {NewValueNode(prim::kPrimAssign), depend_cnode, original_inputs[2]};
+  AnfNodePtrList new_assign_inputs = {cnode->input(0), depend_cnode, original_inputs[2]};
   auto new_assign_cnode = func_graph->NewCNode(new_assign_inputs);
   new_assign_cnode->set_abstract(original_abstract);
   new_assign_cnode->set_kernel_info(cnode->kernel_info_ptr());
