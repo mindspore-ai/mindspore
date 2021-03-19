@@ -121,17 +121,6 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
         MS_LOG(ERROR) << "Unsupported output data type " << output_data_type;
         return RET_ERROR;
     }
-  } else if (input_data_type == kNumberTypeInt64) {
-    switch (output_data_type) {
-      case kNumberTypeFloat16:
-        Int64ToFloat32(reinterpret_cast<int64_t *>(input->MutableData()) + offset,
-                       reinterpret_cast<float *>(output_data) + offset, data_num);
-        break;
-      default:
-        MS_LOG(ERROR) << "Unsupported output data type " << output_data_type;
-        return RET_ERROR;
-    }
-
   } else {
     MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
     return RET_ERROR;
@@ -147,5 +136,4 @@ int CastFp16CPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, LiteKernelCreator<CastFp16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Cast, LiteKernelCreator<CastFp16CPUKernel>)
 }  // namespace mindspore::kernel
