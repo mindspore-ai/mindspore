@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_EXECUTOR_H_
 
 #include <vector>
+#include <thread>
 #include <unordered_map>
 #include "src/runtime/allocator.h"
 #include "src/lite_kernel.h"
@@ -43,6 +44,7 @@ class ParallelExecutor : public Executor {
   std::vector<kernel::LiteKernel *> readyKernels;
   std::vector<int> results;
   struct ThreadPool *thread_pool_ = nullptr;
+  int max_thread_num_ = std::thread::hardware_concurrency();
 };
 
 }  // namespace mindspore::lite

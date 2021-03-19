@@ -61,6 +61,36 @@ int ArithmeticFP16CPUKernel::CheckDataType() {
   return RET_OK;
 }
 
+bool ArithmeticFP16CPUKernel::IsScalarClac() {  // 2 32 240 240, 1 1 1 1
+  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) && (arithmetic_opt_func_ != nullptr)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool ArithmeticFP16CPUKernel::IsBatchScalarCalc() {
+  if (arithmetic_opt_func_ == nullptr) {
+    return false;
+  }
+  size_t break_axis = 0;
+  for (size_t i = 0; i < param_->ndim_; i++) {
+    if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
+      break_axis = i;
+      break;
+    }
+  }
+  if (break_axis < param_->ndim_) {
+    for (size_t i = break_axis; i < param_->ndim_; i++) {
+      if (param_->in_shape1_[i] != 1) {
+        return false;
+      }
+    }
+  }
+  break_pos_ = break_axis;
+  return true;
+}
+
 void ArithmeticFP16CPUKernel::InitRunFunction(int primitive_type) {
   ARITHMETIC_FUNC_INFO_FP16 fun_table[] = {
     {PrimitiveType_MulFusion, schema::ActivationType_RELU, ElementMulReluFp16, ElementOptMulReluFp16},

@@ -18,11 +18,10 @@
 #include "src/runtime/parallel_executor.h"
 #include "src/runtime/runtime_api.h"
 
-#define MAX_THREAD_NUM 8
 namespace mindspore::lite {
 ParallelExecutor::~ParallelExecutor() { DestroyThreadPool(thread_pool_); }
 int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *> &kernels) {
-  thread_pool_ = CreateLiteThreadPool(MAX_THREAD_NUM, NO_BIND);
+  thread_pool_ = CreateLiteThreadPool(max_thread_num_, NO_BIND);
   if (thread_pool_ == nullptr) {
     MS_LOG(ERROR) << "Memory error: fail to new ThreadPool";
     return RET_ERROR;
