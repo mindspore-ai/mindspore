@@ -70,7 +70,7 @@ class TimeDistributed(Cell):
     Args:
         layer(Union[Cell, Primitive]): The Cell or Primitive which will be wrapped.
         time_axis(int): The axis of time_step.
-        reshape_with_axis(int): The axis which time_axis will be reshaped with. Default: None.
+        reshape_with_axis(int): The axis which will be reshaped with time_axis. Default: None.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, T, *)`.
