@@ -161,6 +161,10 @@ RTS_API rtError_t rtRegTaskFailCallbackByModule(const char *moduleName, rtTaskFa
   return RT_ERROR_NONE;
 }
 
+RTS_API rtError_t rtRegisterAllKernel(const rtDevBinary_t *bin, void **module) { return RT_ERROR_NONE; }
+
+RTS_API rtError_t rtDevBinaryUnRegister(void *handle) { return RT_ERROR_NONE; }
+
 RTS_API rtError_t rtMemsetAsync(void *ptr, uint64_t destMax, uint32_t value, uint64_t count, rtStream_t stream) {
   return RT_ERROR_NONE;
 }
