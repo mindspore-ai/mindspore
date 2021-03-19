@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ namespace opt {
 const BaseRef BatchNormReluGradFusion::DefinePattern() const {
   VectorRef relu_grad = VectorRef({prim::kPrimReluGrad, dy_, y_});
   VectorRef batch_norm_grad =
-    VectorRef({prim::kPrimFusedBatchNormGradEx, relu_grad, x_, scale_, save_mean_, save_var_, reserve_});
+    VectorRef({prim::kPrimBatchNormGrad, relu_grad, x_, scale_, save_mean_, save_var_, reserve_});
   return batch_norm_grad;
 }
 
@@ -82,7 +82,7 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   auto bias = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
   MS_EXCEPTION_IF_NULL(bias);
 
-  auto prim = std::make_shared<Primitive>(kFusedBatchNormGradExWithActivation);
+  auto prim = std::make_shared<Primitive>(kBatchNormGradWithActivation);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
   auto fused_batch_norm_grad_with_relu = graph->NewCNode(inputs);

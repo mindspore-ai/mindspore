@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_EX_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_EX_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GPU_KERNEL_H_
 
 #include <string>
 #include <vector>
@@ -27,10 +27,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FusedBatchNormExGpuKernel : public GpuKernel {
+class BatchNormGpuKernel : public GpuKernel {
  public:
-  FusedBatchNormExGpuKernel() { ResetResource(); }
-  ~FusedBatchNormExGpuKernel() override { DestroyResource(); }
+  BatchNormGpuKernel() { ResetResource(); }
+  ~BatchNormGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -46,30 +46,38 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     auto x = GetDeviceAddress<T>(inputs, 0);
     auto scale = GetDeviceAddress<float>(inputs, 1);
     auto bias = GetDeviceAddress<float>(inputs, 2);
-    auto runing_mean = GetDeviceAddress<float>(inputs, 3);
-    auto runnig_variance = GetDeviceAddress<float>(inputs, 4);
+    auto running_mean = GetDeviceAddress<float>(inputs, 3);
+    auto running_variance = GetDeviceAddress<float>(inputs, 4);
     T *z = nullptr;
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
       z = GetDeviceAddress<T>(inputs, 5);
     }
 
     auto y = GetDeviceAddress<T>(outputs, 0);
-    auto save_mean = GetDeviceAddress<float>(outputs, 3);
-    auto save_variance = GetDeviceAddress<float>(outputs, 4);
-    auto reserve_addr = GetDeviceAddress<float>(outputs, 5);
+    auto reserve_addr = GetDeviceAddress<float>(outputs, 2);
     T *workspace_addr = nullptr;
     if (workspace_size_ != 0) {
       workspace_addr = GetDeviceAddress<T>(workspace, 0);
     }
     const float alpha = 1;
     const float beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnBatchNormalizationForwardTrainingEx(handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x, z_desc_, z, y_desc_,
-                                               y, scale_bias_mean_var_desc_, scale, bias, exp_avg_factor_, runing_mean,
-                                               runnig_variance, epsilon_, save_mean, save_variance, activation_desc_,
-                                               workspace_addr, workspace_size_, reserve_addr, reserve_size_),
-      "Kernel launch failed");
+    if (is_train_) {
+      auto save_mean = GetDeviceAddress<float>(outputs, 3);
+      auto save_variance = GetDeviceAddress<float>(outputs, 4);
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
+        cudnnBatchNormalizationForwardTrainingEx(
+          handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x, z_desc_, z, y_desc_, y, scale_bias_mean_var_desc_, scale,
+          bias, exp_avg_factor_, running_mean, running_variance, epsilon_, save_mean, save_variance, activation_desc_,
+          workspace_addr, workspace_size_, reserve_addr, reserve_size_),
+        "Kernel launch failed");
+    } else {
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnBatchNormalizationForwardInference(
+                                    handle_, mode_, &alpha, &beta, x_desc_, x, y_desc_, y, scale_bias_mean_var_desc_,
+                                    scale, bias, running_mean, running_variance, epsilon_),
+                                  "Kernel launch failed");
+    }
     return true;
   }
 
@@ -77,18 +85,22 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     kernel_node_ = kernel_node;
     MS_EXCEPTION_IF_NULL(kernel_node);
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel_name == kFusedBatchNormEx) {
+    if (kernel_name == kBatchNorm) {
       bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-    } else if (kernel_name == kFusedBatchNormExWithActivation) {
+    } else if (kernel_name == kBatchNormWithActivation) {
       bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
-    } else if (kernel_name == kFusedBatchNormExWithAddAndActivation) {
+    } else if (kernel_name == kBatchNormWithAddAndActivation) {
       bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
     } else {
       MS_LOG(EXCEPTION) << "Invalid kernel name: " << kernel_name;
     }
 
     InitResource();
-    mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
+    if (is_train_) {
+      mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
+    } else {
+      mode_ = CUDNN_BATCHNORM_SPATIAL;
+    }
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     exp_avg_factor_ = GetAttr<float>(kernel_node, "momentum");
 
@@ -106,11 +118,11 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
 
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "tensor shape is " << shape.size() << ", FusedBatchNormExGpuKernel should be 4";
+      MS_LOG(EXCEPTION) << "tensor shape is " << shape.size() << ", BatchNormGpuKernel should be 4";
     }
     is_null_input_ = CHECK_NULL_INPUT(shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "FusedBatchNormExGpuKernel input is null";
+      MS_LOG(WARNING) << "BatchNormGpuKernel input is null";
       InitSizeLists();
       return true;
     }
@@ -121,6 +133,7 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     }
     SetTensorDescriptor(format, shape);
     InitSizeLists();
+    is_train_ = GetAttr<bool>(kernel_node, "is_training");
     return true;
   }
 
@@ -135,6 +148,7 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
     epsilon_ = 10e-5;
     exp_avg_factor_ = 0.1;
+    is_train_ = false;
     is_null_input_ = false;
     x_desc_ = nullptr;
     y_desc_ = nullptr;
@@ -215,11 +229,10 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     }
 
     output_size_list_.push_back(output_size_);   // output
+    output_size_list_.push_back(reserve_size_);  // reserve space
     output_size_list_.push_back(para_size_);     // save scale
-    output_size_list_.push_back(para_size_);     // save bias
     output_size_list_.push_back(para_size_);     // save mean
     output_size_list_.push_back(para_size_);     // save variance
-    output_size_list_.push_back(reserve_size_);  // reserve space
 
     workspace_size_list_.push_back(workspace_size_);
   }
@@ -280,6 +293,7 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
   cudnnBatchNormOps_t bn_ops_;
   double epsilon_;
   double exp_avg_factor_;
+  bool is_train_;
   bool is_null_input_;
   cudnnTensorDescriptor_t x_desc_;
   cudnnTensorDescriptor_t y_desc_;

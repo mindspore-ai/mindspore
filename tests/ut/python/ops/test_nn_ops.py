@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -688,26 +688,6 @@ test_cases_for_verify_exception = [
     }),
     ('MaxPoolWithArgmax_ValueError_4', {
         'block': (lambda _: P.MaxPoolWithArgmax(strides=-1), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('FusedBatchNorm_ValueError_1', {
-        'block': (lambda _: P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': TypeError}),
-        'desc_inputs': [0],
-    }),
-    ('FusedBatchNorm_ValueError_2', {
-        'block': (lambda _: P.FusedBatchNorm(mode=2, epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('FusedBatchNorm_ValueError_3', {
-        'block': (lambda _: P.FusedBatchNorm(mode=0, epsilon=-1e-5, momentum=0.1), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('FusedBatchNorm_ValueError_4', {
-        'block': (lambda _: P.FusedBatchNorm(mode=0, epsilon=1e-5, momentum=-0.1), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('FusedBatchNorm_ValueError_5', {
-        'block': (lambda _: P.FusedBatchNorm(mode=1, epsilon=-0.001, momentum=0.0), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_1', {

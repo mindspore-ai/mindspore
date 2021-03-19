@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,9 +53,7 @@ enum MatchCountPriority : int {
   MATCH_COUNT_PRIORITY_END
 };
 const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
-  {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}},
-  {prim::kPrimFusedBatchNorm->name(),
-   {kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0}}};
+  {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
 
 bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfo &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -233,6 +231,24 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilteredKernelInfoByDtype(
   return result;
 }
 
+bool CheckHitTargetDtype(const std::map<TypeId, TypeId> &type_map, const TypeId &in_dtype, const TypeId &device_dtype,
+                         bool *flag) {
+  auto iter = type_map.find(in_dtype);
+  // if infer dtype node in type_map and the infer dtype not equal kernel info dtype, return false
+  if (iter == type_map.end() && in_dtype != device_dtype) {
+    return false;
+  }
+  // infer dtype in type_map, but can not find dst dtype that supported raise or reduce,
+  // or infer dtype not equal kernel info dtype, return false
+  if (iter != type_map.end() && iter->second != device_dtype && in_dtype != device_dtype) {
+    return false;
+  }
+  if (in_dtype == kNumberTypeInt64 && device_dtype == kNumberTypeInt32) {
+    *flag = true;
+  }
+  return true;
+}
+
 bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info, const CNodePtr &cnode,
                     const std::map<TypeId, TypeId> &type_map) {
   // filte kernel info that unsupported raise or reduce datatype
@@ -245,18 +261,8 @@ bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build
     if (device_dtype == kNumberTypeFloat || device_dtype == kNumberTypeFloat32) {
       device_dtype = kNumberTypeFloat32;
     }
-    auto iter = type_map.find(in_dtype);
-    // if infer dtype node in type_map and the infer dtype not equal kernel info dtype, return false
-    if (iter == type_map.end() && in_dtype != device_dtype) {
+    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, &flag)) {
       return false;
-    }
-    // infer dtype in type_map, but can not find dst dtype that supported raise or reduce,
-    // or infer dtype not equal kernel info dtype, return false
-    if (iter != type_map.end() && iter->second != device_dtype && in_dtype != device_dtype) {
-      return false;
-    }
-    if (in_dtype == kNumberTypeInt64 && device_dtype == kNumberTypeInt32) {
-      flag = true;
     }
   }
 
@@ -266,18 +272,9 @@ bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build
     if (device_dtype == kNumberTypeFloat || device_dtype == kNumberTypeFloat32) {
       device_dtype = kNumberTypeFloat32;
     }
-    auto iter = type_map.find(in_dtype);
-    // if infer dtype node in type_map and the infer dtype not equal kernel info dtype, return false
-    if (iter == type_map.end() && in_dtype != device_dtype) {
+
+    if (!CheckHitTargetDtype(type_map, in_dtype, device_dtype, &flag)) {
       return false;
-    }
-    // infer dtype in type_map, but can not find dst dtype that supported raise or reduce,
-    // or infer dtype not equal kernel info dtype, return false
-    if (iter != type_map.end() && iter->second != device_dtype && in_dtype != device_dtype) {
-      return false;
-    }
-    if (in_dtype == kNumberTypeInt64 && device_dtype == kNumberTypeInt32) {
-      flag = true;
     }
   }
   if (flag) {

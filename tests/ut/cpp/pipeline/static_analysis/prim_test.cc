@@ -612,65 +612,6 @@ TEST_F(TestPrim, test_tensor_to_scalar_prim) {
   ASSERT_TRUE(*res == *expected);
 }
 
-TEST_F(TestPrim, test_fused_batch_norm) {
-  PrimitivePtr fused_batch_norm = prim::kPrimFusedBatchNorm;
-  fused_batch_norm->AddAttr("epsilon", MakeValue(0.001f));
-  fused_batch_norm->AddAttr("momentum", MakeValue(0.1f));
-
-  FuncGraphPtr func_graph = MakeFuncGraph(fused_batch_norm, 5);
-
-  // NCHW
-  std::vector<int64_t> inputs_dims = {128, 64, 32, 64};
-  std::vector<int64_t> scale_dims = {64};
-  std::vector<int64_t> offset_dims = {64};
-  std::vector<int64_t> mean_dims = {64};
-  std::vector<int64_t> variance_dims = {64};
-
-  tensor::TensorPtr inputs = std::make_shared<tensor::Tensor>();
-  inputs->set_data_type(kNumberTypeFloat32);
-  inputs->set_shape(inputs_dims);
-
-  tensor::TensorPtr scale = std::make_shared<tensor::Tensor>();
-  scale->set_data_type(kNumberTypeFloat32);
-  scale->set_shape(scale_dims);
-
-  tensor::TensorPtr offset = std::make_shared<tensor::Tensor>();
-  offset->set_data_type(kNumberTypeFloat32);
-  offset->set_shape(offset_dims);
-
-  tensor::TensorPtr mean = std::make_shared<tensor::Tensor>();
-  mean->set_data_type(kNumberTypeFloat32);
-  mean->set_shape(mean_dims);
-
-  tensor::TensorPtr variance = std::make_shared<tensor::Tensor>();
-  variance->set_data_type(kNumberTypeFloat32);
-  variance->set_shape(variance_dims);
-
-  AbstractBasePtr abstract_inputs = FromValue(inputs, true);
-  AbstractBasePtr abstract_scale = FromValue(scale, true);
-  AbstractBasePtr abstract_offset = FromValue(offset, true);
-  AbstractBasePtr abstract_mean = FromValue(mean, true);
-  AbstractBasePtr abstract_variance = FromValue(variance, true);
-  AbstractBasePtrList args_spec_list = {abstract_inputs, abstract_scale, abstract_offset, abstract_mean,
-                                        abstract_variance};
-
-  AbstractBasePtr expected0 = abstract_inputs->Clone();
-  AbstractBasePtr expected1 = abstract_scale->Clone();
-
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
-  MS_LOG(INFO) << "result: " << res->ToString();
-  MS_LOG(INFO) << "expected0: " << expected0->ToString();
-  MS_LOG(INFO) << "expected1: " << expected1->ToString();
-
-  std::shared_ptr<AbstractTuple> abs_tuple = dyn_cast<AbstractTuple>(res);
-  ASSERT_TRUE(abs_tuple != nullptr);
-  ASSERT_TRUE(*abs_tuple->elements()[0] == *expected0);
-  ASSERT_TRUE(*abs_tuple->elements()[1] == *expected1);
-  ASSERT_TRUE(*abs_tuple->elements()[2] == *expected1);
-  ASSERT_TRUE(*abs_tuple->elements()[3] == *expected1);
-  ASSERT_TRUE(*abs_tuple->elements()[4] == *expected1);
-}
-
 TEST_F(TestPrim, test_pooling) {
   PrimitivePtr pooling = prim::kPrimPooling;
   pooling->AddAttr("mode", MakeValue(std::string("avg")));

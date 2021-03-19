@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ make_tuple = Primitive('MakeTuple')
 four2five = Primitive('Four2Five')
 five2four = Primitive('Five2Four')
 cast = Primitive('Cast')
-conv = P.Conv2D(out_channel=64, kernel_size=7, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1)
-bn = P.FusedBatchNorm()
 relu = P.ReLU()
 
 
@@ -136,25 +134,6 @@ def test_eliminate_depend_input2(tag):
         depend_intput = depend(y, z)
         sum_add = add(x, depend_intput)
         return sum_add
-
-    return fns[tag]
-
-
-def test_opt_match(tag):
-    fns = FnDict()
-
-    @fns
-    def graph1(x, y):
-        sum_add = add(x, y)
-        output = make_tuple(sum_add)
-        return output
-
-    @fns
-    def graph2(x, w, scale, b, mean, variance):
-        conv_output = conv(x, w)
-        bn_output = bn(conv_output, scale, b, mean, variance)
-        res = tuple_getitem(bn_output, 0)
-        return res
 
     return fns[tag]
 

@@ -37,7 +37,7 @@ TEST_F(TestHWOptimizeBatchNormGrad2BNInferGrad, test_fusion) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
-  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, y_abstract, y_abstract, y_abstract};
+  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, y_abstract, y_abstract, y_abstract, y_abstract};
   auto fg = GetKernelGraph(g, args_spec_list);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -57,7 +57,7 @@ TEST_F(TestHWOptimizeBatchNormGrad2BNInferGrad, test_no_fusion) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
-  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, y_abstract, y_abstract, y_abstract};
+  AbstractBasePtrList args_spec_list{x_abstract, x_abstract, y_abstract, y_abstract, y_abstract, y_abstract};
   auto fg = GetKernelGraph(g, args_spec_list);
   auto origin_graph = std::make_shared<session::KernelGraph>(*fg);
 

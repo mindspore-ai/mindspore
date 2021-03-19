@@ -140,77 +140,6 @@ void FusedBatchNormCheckDim(const PrimitivePtr &primitive, const AbstractBasePtr
   }
 }
 
-AbstractBasePtr InferImplFusedBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
-  // Inputs: five tensors(x, gamma, beta, mean, variance).
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 5);
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  MS_LOG(DEBUG) << "InferImplFusedBatchNorm args0:" << args_spec_list[0]->ToString()
-                << ", arg1:" << args_spec_list[1]->ToString();
-  FusedBatchNormCheckDim(primitive, args_spec_list);
-
-  auto input = args_spec_list[0];
-  auto input_shape = dyn_cast<Shape>(input->GetShapeTrack());
-  MS_EXCEPTION_IF_NULL(input_shape);
-  const auto &input_shape_list = input_shape->shape();
-  if (input_shape_list.size() < 2) {
-    MS_LOG(EXCEPTION) << "Input shape size should >= 2.";
-  }
-
-  for (size_t i = 1; i < args_spec_list.size(); ++i) {
-    auto arg_shape = dyn_cast<Shape>(args_spec_list[i]->GetShapeTrack());
-    MS_EXCEPTION_IF_NULL(arg_shape);
-    const auto &arg_shape_list = arg_shape->shape();
-    if (arg_shape_list.size() < 1) {
-      MS_LOG(EXCEPTION) << "Arg shape size should >= 1.";
-    }
-    if (arg_shape_list[0] != input_shape_list[1]) {
-      MS_LOG(EXCEPTION) << op_name << " size of tensor param[" << i << "](which is " << arg_shape_list[0]
-                        << ") should match the second dimension of tensor"
-                           " param[0](which is "
-                        << input_shape_list[1] << ").";
-    }
-  }
-  auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "param 0 of FusedBatchNorm should be %s");
-
-  AbstractTensorPtrList tensorPtrList = std::vector<AbstractTensorPtr>();
-  for (size_t i = 1; i < args_spec_list.size(); ++i) {
-    auto param = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
-    tensorPtrList.push_back(param);
-  }
-  (void)CheckTensorsDTypeSame(tensorPtrList, {kFloat16, kFloat32}, "param 1 to 4 of FusedBatchNorm should be %s");
-
-  // check validity;
-  auto epsilon_value = primitive->GetAttr("epsilon");
-  auto momentum_value = primitive->GetAttr("momentum");
-  MS_EXCEPTION_IF_NULL(epsilon_value);
-  MS_EXCEPTION_IF_NULL(momentum_value);
-  if (!epsilon_value->isa<FP32Imm>() || !momentum_value->isa<FP32Imm>()) {
-    MS_LOG(EXCEPTION) << "expect epsilon and momentum be float, but: epsilon: " << epsilon_value->ToString()
-                      << ", momentum: " << momentum_value->ToString();
-  }
-
-  auto epsilon = epsilon_value->cast<FP32ImmPtr>()->value();
-  auto momentum = momentum_value->cast<FP32ImmPtr>()->value();
-
-  if (epsilon > 1.0f || epsilon <= 0.0f) {
-    MS_LOG(EXCEPTION) << "expect epsilon is greater than 0 and less or equal than 1, but epsilon: " << epsilon;
-  }
-  if (momentum > 1.0f || momentum < 0.0f) {
-    MS_LOG(EXCEPTION) << "expect momentum is great or equal than 0 and less or equal than 1, but epsilon: " << momentum;
-  }
-
-  // Outputs: y, running_mean, running_variance, save_mean, save_inv_variance.
-  AbstractBasePtr y = input->Broaden();
-  AbstractBasePtr other = args_spec_list[1]->Broaden();
-  MS_LOG(DEBUG) << "output y: " << y->ToString() << ", other: " << other->ToString();
-
-  AbstractBasePtrList elements = {y, other, other, other, other};
-  return std::make_shared<AbstractTuple>(elements);
-}
-
 AbstractBasePtr InferImplSparseSoftmaxCrossEntropyWithLogits(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                              const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -228,24 +157,8 @@ AbstractBasePtr InferImplSparseSoftmaxCrossEntropyWithLogits(const AnalysisEngin
   return std::make_shared<abstract::AbstractTensor>(type_tensor->element(), shape);
 }
 
-AbstractBasePtr InferImplFusedBatchNormGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_spec_list) {
-  // Inputs: five tensors(y_backprop, x, scale, save_mean, save_inv_variance).
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[2]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[3]);
-
-  CheckArgsSize(primitive->name(), args_spec_list, 5);
-  auto dx = args_spec_list[1]->Broaden();
-  auto dscale = args_spec_list[2]->Broaden();
-  auto dbias = args_spec_list[3]->Broaden();
-
-  AbstractBasePtrList rets = {dx, dscale, dbias};
-  return std::make_shared<AbstractTuple>(rets);
-}
-
-AbstractBasePtr InferImplFusedBatchNormEx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: five tensors(x, gamma, beta, mean, variance).
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 5);
@@ -256,12 +169,21 @@ AbstractBasePtr InferImplFusedBatchNormEx(const AnalysisEnginePtr &, const Primi
   ShapeVector x_min_shape = input_x->shape()->min_shape();
   ShapeVector x_max_shape = input_x->shape()->max_shape();
   CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
-  if (x_shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "Input rank should 4.";
+
+  auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "param x of BatchNorm should be");
+  AbstractTensorPtrList tensorPtrList = std::vector<AbstractTensorPtr>();
+  for (size_t i = 1; i < args_spec_list.size(); ++i) {
+    auto param = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+    tensorPtrList.push_back(param);
   }
+  (void)CheckTensorsDTypeSame(tensorPtrList, {kFloat16, kFloat32},
+                              "param  gamma, beta, mean, variance of Batchnorm should be");
+
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   int64_t data_format = GetAndCheckFormat(data_format_ptr);
+
   int64_t c_axis = 1;
   if (data_format == Format::NHWC) {
     c_axis = 3;
@@ -275,8 +197,8 @@ AbstractBasePtr InferImplFusedBatchNormEx(const AnalysisEnginePtr &, const Primi
       MS_LOG(EXCEPTION) << "Arg " << i << " rank should be 1, but got " << arg_shape.size();
     }
     if ((x_shape[c_axis] != Shape::SHP_ANY) && (arg_shape[0] != x_shape[c_axis])) {
-      MS_LOG(EXCEPTION) << "Arg " << i << " shape[0] should equal to x_shape[" << c_axis << "]=" << x_shape[c_axis]
-                        << ", but got " << arg_shape[0];
+      MS_EXCEPTION(ValueError) << "Arg " << i << " shape[0] should equal to x_shape[" << c_axis
+                               << "]=" << x_shape[c_axis] << ", but got " << arg_shape[0];
     }
   }
   AbstractTensorPtr input_gamma = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
@@ -288,7 +210,7 @@ AbstractBasePtr InferImplFusedBatchNormEx(const AnalysisEnginePtr &, const Primi
   AbstractTensorPtr output = std::make_shared<AbstractTensor>(input_x->element(), output_shape_ptr);
   ShapePtr gamma_shape_ptr = std::make_shared<Shape>(gamma_shape, gamma_min_shape, gamma_max_shape);
   AbstractTensorPtr output_gamma = std::make_shared<AbstractTensor>(input_gamma->element(), gamma_shape_ptr);
-  AbstractBasePtrList rets = {output, output_gamma, output_gamma, output_gamma, output_gamma, output_gamma};
+  AbstractBasePtrList rets = {output, output_gamma, output_gamma, output_gamma, output_gamma};
   return std::make_shared<AbstractTuple>(rets);
 }
 

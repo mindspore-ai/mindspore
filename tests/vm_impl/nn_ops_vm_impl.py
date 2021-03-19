@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,27 +88,6 @@ def vm_impl_tanh(self):
     def vm_impl(x):
         x = x.asnumpy()
         return Tensor(vm.tanh(x))
-
-    return vm_impl
-
-
-@vm_impl_getters.register(P.FusedBatchNorm)
-def vm_impl_fused_batch_norm(self):
-    """Generate vm_impl function for FusedBatchNorm"""
-
-    def vm_impl(x, scale, b, mean, variance):
-        # pylint: disable=unused-argument
-        x = x.asnumpy()
-        scale = scale.asnumpy()
-        b = b.asnumpy()
-        mean = mean.asnumpy()
-        variance = variance.asnumpy()
-        out, x_mean, x_var, running_mean, running_var = vm.batch_norm(x, scale, b, mean, \
-                                                                      variance, \
-                                                                      eps=self.epsilon, \
-                                                                      momentum=self.momentum)
-        return Tensor(out), Tensor(x_mean), Tensor(x_var), \
-               Tensor(running_mean), Tensor(running_var)
 
     return vm_impl
 
@@ -219,23 +198,6 @@ def vm_impl_avg_pool_grad(self):
         dout = dout.asnumpy()
         out = vm.avg_pool_grad(dout, origin_shape, self.kernel_size[-2], self.kernel_size[-1], self.strides[-2])
         return Tensor(out)
-
-    return vm_impl
-
-
-# pylint: disable=function-redefined
-@vm_impl_getters.register(G.FusedBatchNormGrad)
-def vm_impl_fused_batch_norm_grad(self):
-    """Generate vm_impl function for FusedBatchNormGrad"""
-
-    def vm_impl(dy, x, scale, save_mean, save_inv_variance):
-        dy = dy.asnumpy()
-        x = x.asnumpy()
-        scale = scale.asnumpy()
-        save_mean = save_mean.asnumpy()
-        save_inv_variance = save_inv_variance.asnumpy()
-        dx, dscale, dshift = vm.batch_norm_grad(dy, x, scale, save_mean, save_inv_variance)
-        return (Tensor(dx), Tensor(dscale), Tensor(dshift))
 
     return vm_impl
 

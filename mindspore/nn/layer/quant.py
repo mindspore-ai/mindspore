@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -541,19 +541,9 @@ class Conv2dBnFoldQuantOneConv(Cell):
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
-        if self._target == "Ascend":
-            self.bn_train = P.BatchNorm(is_training=True,
-                                        epsilon=self.eps,
-                                        momentum=self.momentum)
-        if self._target == "GPU":
-            self.bn_train = P.FusedBatchNormEx(mode=1,
-                                               epsilon=self.eps,
-                                               momentum=self.momentum,
-                                               data_format=self.format)
-        if self._target == "CPU":
-            self.bn_train = P.FusedBatchNorm(mode=1,
-                                             epsilon=self.eps,
-                                             momentum=self.momentum)
+        self.bn_train = P.BatchNorm(is_training=True, epsilon=self.eps,
+                                    momentum=self.momentum, data_format=self.format)
+
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
         data_parallel_strategy = ((1,), (1,))
         data_parallel_strategy_one = ((1,), ())

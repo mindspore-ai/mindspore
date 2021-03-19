@@ -140,25 +140,16 @@ class _BatchNorm(Cell):
         else:
             self.is_ge_backend = False
 
-        if self._target == "Ascend":
-            self.bn_train = P.BatchNorm(is_training=True,
-                                        epsilon=self.eps,
-                                        momentum=self.momentum,
-                                        data_format=self.format)
-        if self._target == "GPU":
-            self.bn_train = P.FusedBatchNormEx(mode=1,
-                                               epsilon=self.eps,
-                                               momentum=self.momentum,
-                                               data_format=self.format)
-        if self._target == "CPU":
-            self.bn_train = P.FusedBatchNorm(mode=1,
-                                             epsilon=self.eps,
-                                             momentum=self.momentum)
+        self.bn_train = P.BatchNorm(is_training=True,
+                                    epsilon=self.eps,
+                                    momentum=self.momentum,
+                                    data_format=self.format)
         if self.is_global:
             self.bn_train = inner.SyncBatchNorm(epsilon=self.eps,
                                                 momentum=self.momentum,
                                                 group=SYNC_BN_GROUP_NAME,
                                                 device_num=self.group_device_num)
+
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
 
         data_parallel_strategy = ((1,), (1,))

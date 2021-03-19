@@ -414,25 +414,6 @@ TEST_F(TestOps, ReluTest) {
   ASSERT_EQ(prim->name(), kPrimRelu->name());
 }
 
-TEST_F(TestOps, FusedBatchNormTest) {
-  auto prim = std::make_shared<Primitive>("FusedBatchNorm");
-  ASSERT_EQ(prim->name(), kPrimFusedBatchNorm->name());
-}
-
-TEST_F(TestOps, FusedBatchNormAttrTest) {
-  Primitive prim("FusedBatchNorm");
-  prim.SetAttrs({
-    {"epsilon", MakeValue(0.001f)},
-    {"momentum", MakeValue(0.1f)},
-  });
-  ASSERT_EQ(prim.name(), kPrimFusedBatchNorm->name());
-
-  FP32Imm epsilon(0.001f);
-  FP32Imm momentum(0.1f);
-  ASSERT_EQ(*prim.GetAttr("epsilon"), epsilon);
-  ASSERT_EQ(*prim.GetAttr("momentum"), momentum);
-}
-
 TEST_F(TestOps, PoolingTest) {
   auto prim = std::make_shared<Primitive>("Pooling");
   ASSERT_EQ(prim->name(), kPrimPooling->name());

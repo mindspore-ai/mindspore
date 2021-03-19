@@ -101,9 +101,9 @@ namespace {
 std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
   // define a vector containing real output number
   std::vector<int> real_outputs;
-  // P.FusedBatchNorm is used for training; P.BatchNorm is used for inference
+  // P.BatchNorm is used for training and inference
   // can add the filter list for more operators here....
-  if (node_name == "FusedBatchNorm" || node_name == "BatchNorm") {
+  if (node_name == "BatchNorm") {
     MS_LOG(INFO) << "loading node named " << node_name;
     real_outputs.insert(real_outputs.end(), {0, 3, 4});
   } else {

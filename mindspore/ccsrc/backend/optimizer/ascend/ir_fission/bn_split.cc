@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (AnfAlgo::GetInputTensorNum(bn_cnode) != kBnInputTensorNum) {
-    MS_LOG(INFO) << "FusedbatchNorm's input size less than " << kBnInputTensorNum << ". " << bn_cnode->DebugString();
+    MS_LOG(INFO) << "BatchNorm's input size less than " << kBnInputTensorNum << ". " << bn_cnode->DebugString();
     return false;
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
@@ -51,7 +51,7 @@ bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &
   bn_training_reduce->set_kernel_info(kernel_info);
   std::vector<size_t> bn_shape_i0 = AnfAlgo::GetPrevNodeOutputInferShape(bn_cnode, 0);
   if (bn_shape_i0.size() < kShape2dDims) {
-    MS_LOG(INFO) << "The FusedBatchNorm's first input's shape dims less than " << kShape2dDims;
+    MS_LOG(INFO) << "The BatchNorm's first input's shape dims less than " << kShape2dDims;
     return false;
   }
   std::vector<size_t> bn_training_reduce_shape = {bn_shape_i0[1]};
