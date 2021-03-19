@@ -156,8 +156,8 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
       nc2nh_out_tensors[0] = out_tensor;
 
       // Create post transform kernel: Nchw2Nhwc
-      auto *post_trans_kernel =
-        NPUPassUtils::CreateNchw2NhwcKernel({nc2nh_tensor, nc2nh_perm_tensor}, nc2nh_out_tensors, context_, name);
+      auto *post_trans_kernel = NPUPassUtils::CreateNchw2NhwcKernel(
+        {nc2nh_tensor, nc2nh_perm_tensor}, nc2nh_out_tensors, context_, name + "_" + std::to_string(i));
       // Set in_kernels, out_kernels, in_tensors, out_tensors for transform kernel
       NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {post_insert_kernel}, post_trans_kernel->in_tensors(),
                                  post_trans_kernel->out_tensors());
