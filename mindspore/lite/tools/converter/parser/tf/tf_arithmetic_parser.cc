@@ -404,7 +404,7 @@ ops::PrimitiveC *TFPowParser::Parse(const tensorflow::NodeDef &tf_op,
   auto prim = std::make_unique<ops::PowFusion>();
 
   *output_size = 1;
-  if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
     return nullptr;
   }
