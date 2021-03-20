@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
+#include "minddata/dataset/include/config.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision.h"
@@ -1399,6 +1400,10 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
 TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxSuccess.";
+  // setting seed here to prevent random core dump
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
+
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
@@ -1434,6 +1439,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   EXPECT_EQ(i, 3);
   // Manually terminate the pipeline
   iter->Stop();
+  config::set_seed(current_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
@@ -2036,12 +2042,16 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
   // Testing RandomResizedCropWithBBox with default values
   // Create an VOC Dataset
+  // setting seed here to prevent random core dump
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
+
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({5});
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({500});
   EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
@@ -2062,7 +2072,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 5, true);
+    EXPECT_EQ(image->shape()[0] == 500 && image->shape()[1] == 500, true);
     iter->GetNextRow(&row);
   }
 
@@ -2070,18 +2080,23 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
 
   // Manually terminate the pipeline
   iter->Stop();
+  config::set_seed(current_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   // Testing RandomResizedCropWithBBox with non-default values
   // Create an VOC Dataset
+  // setting seed here to prevent random core dump
+  uint32_t current_seed = config::get_seed();
+  config::set_seed(327362);
+
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
   std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox(
-    {5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20);
+    {500, 500}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20);
   EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
@@ -2102,7 +2117,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 10, true);
+    EXPECT_EQ(image->shape()[0] == 500 && image->shape()[1] == 500, true);
     iter->GetNextRow(&row);
   }
 
@@ -2110,6 +2125,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
 
   // Manually terminate the pipeline
   iter->Stop();
+  config::set_seed(current_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
