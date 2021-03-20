@@ -67,6 +67,11 @@ template void TensorScatterUpdate<float, int>(float *input, int *indices, float 
                                               const size_t &output_size, const size_t &indices_dim_0,
                                               const size_t &indices_dim_1, int *indices_stride, int *work_shape,
                                               cudaStream_t stream);
+template void TensorScatterUpdate<double, int>(double *input, int *indices, double *update, double *output,
+                                               const size_t &block_size, const size_t &input_size,
+                                               const size_t &output_size, const size_t &indices_dim_0,
+                                               const size_t &indices_dim_1, int *indices_stride, int *work_shape,
+                                               cudaStream_t stream);
 template void TensorScatterUpdate<char, int>(char *input, int *indices, char *update, char *output,
                                              const size_t &block_size, const size_t &input_size,
                                              const size_t &output_size, const size_t &indices_dim_0,
