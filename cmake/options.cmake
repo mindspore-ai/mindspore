@@ -21,6 +21,11 @@ option(ENABLE_DEBUGGER "enable debugger" OFF)
 option(ENABLE_IBVERBS "enable IBVERBS for parameter server" OFF)
 option(ENABLE_PYTHON "Enable python" ON)
 option(ENABLE_ACL "enable acl" OFF)
+option(ENABLE_GLIBCXX "enable_glibcxx" OFF)
+
+if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL)
+    set(ENABLE_GLIBCXX ON)
+endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(WIN32)
