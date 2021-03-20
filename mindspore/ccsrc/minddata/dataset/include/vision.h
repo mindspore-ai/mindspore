@@ -398,6 +398,7 @@ class RandomCropDecodeResize final : public TensorTransform {
 
 /// \brief RandomCropWithBBox TensorTransform.
 /// \notes Crop the input image at a random location and adjust bounding boxes accordingly.
+///        If cropped area is out of bbox, the return bbox will be empty.
 class RandomCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -578,6 +579,7 @@ class RandomResizedCrop final : public TensorTransform {
 
 /// \brief RandomResizedCropWithBBox TensorTransform.
 /// \notes Crop the input image to a random size and aspect ratio.
+///        If cropped area is out of bbox, the return bbox will be empty.
 class RandomResizedCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.

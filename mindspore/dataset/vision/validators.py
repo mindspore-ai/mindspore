@@ -21,7 +21,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
-    check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff
+    check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio
 from .utils import Inter, Border, ImageBatchFormat
 
 
@@ -153,7 +153,8 @@ def check_random_color_adjust_param(value, input_name, center=1, bound=(0, FLOAT
 
 
 def check_erasing_value(value):
-    if not (isinstance(value, (numbers.Number, str, bytes)) or
+    if not (isinstance(value, (numbers.Number,)) or
+            (isinstance(value, (str,)) and value == "random") or
             (isinstance(value, (tuple, list)) and len(value) == 3)):
         raise ValueError("The value for erasing should be either a single value, "
                          "or a string 'random', or a sequence of 3 elements for RGB respectively.")
@@ -479,6 +480,18 @@ def check_random_erasing(method):
     def new_method(self, *args, **kwargs):
         [prob, scale, ratio, value, inplace, max_attempts], _ = parse_user_args(method, *args, **kwargs)
 
+        type_check(prob, (float, int,), "prob")
+        type_check_list(scale, (float, int,), "scale")
+        if len(scale) != 2:
+            raise TypeError("scale should be a list or tuple of length 2.")
+        type_check_list(ratio, (float, int,), "ratio")
+        if len(ratio) != 2:
+            raise TypeError("ratio should be a list or tuple of length 2.")
+        type_check(value, (int, list, tuple, str), "value")
+        type_check(inplace, (bool,), "inplace")
+        type_check(max_attempts, (int,), "max_attempts")
+        check_erasing_value(value)
+
         check_value(prob, [0., 1.], "prob")
         if scale[0] > scale[1]:
             raise ValueError("scale should be in (min,max) format. Got (max,min).")
@@ -486,11 +499,14 @@ def check_random_erasing(method):
         check_positive(scale[1], "scale[1]")
         if ratio[0] > ratio[1]:
             raise ValueError("ratio should be in (min,max) format. Got (max,min).")
-        check_range(ratio, [0, FLOAT_MAX_INTEGER])
-        check_positive(ratio[0], "ratio[0]")
-        check_positive(ratio[1], "ratio[1]")
-        check_erasing_value(value)
-        type_check(inplace, (bool,), "inplace")
+        check_value_ratio(ratio[0], [0, FLOAT_MAX_INTEGER])
+        check_value_ratio(ratio[1], [0, FLOAT_MAX_INTEGER])
+        if isinstance(value, int):
+            check_value(value, (0, 255))
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                type_check(item, (int,), "value")
+                check_value(item, [0, 255], "value")
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
 
         return method(self, *args, **kwargs)
