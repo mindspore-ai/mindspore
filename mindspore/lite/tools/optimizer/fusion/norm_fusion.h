@@ -28,10 +28,10 @@
 namespace mindspore {
 namespace opt {
 
-/// fuse layer_norm, instance_norm into one operator
-class TfNormFusion : public PatternProcessPass {
+/// fuse layer_norm or instance_norm into one operator
+class NormFusion : public PatternProcessPass {
  public:
-  explicit TfNormFusion(const std::string &name = "tf_norm_fusion", bool multigraph = true)
+  explicit NormFusion(const std::string &name = "tf_norm_fusion", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {
     input_ = std::make_shared<Var>();
     mean1_ = std::make_shared<Var>();
@@ -43,8 +43,8 @@ class TfNormFusion : public PatternProcessPass {
     epsilon_ = std::make_shared<Var>();
   }
 
-  ~TfNormFusion() override = default;
-  const BaseRef DefinePattern() const override;
+  ~NormFusion() override = default;
+  virtual const BaseRef DefinePattern() const = 0;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
@@ -67,40 +67,20 @@ class TfNormFusion : public PatternProcessPass {
   VarPtr epsilon_ = nullptr;
 };
 
-inline bool IsAddNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimAddFusion);
-  }
-  return false;
-}
+/// fuse tf layer_norm or instance_norm into one operator
+class TfNormFusion : public NormFusion {
+ public:
+  ~TfNormFusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
 
-inline bool IsSquaredDifferenceNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSquaredDifference);
-  }
-  return false;
-}
+/// fuse onnx layer_norm into one operator
+class OnnxLayerNormFusion : public NormFusion {
+ public:
+  ~OnnxLayerNormFusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
 
-inline bool IsRsqrtNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimRsqrt);
-  }
-  return false;
-}
-
-inline bool IsMulNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
-  }
-  return false;
-}
-
-inline bool IsSubNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSubFusion);
-  }
-  return false;
-}
 }  // namespace opt
 }  // namespace mindspore
 

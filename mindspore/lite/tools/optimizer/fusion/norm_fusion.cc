@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/fusion/tf_norm_fusion.h"
+#include "tools/optimizer/fusion/norm_fusion.h"
 #include <memory>
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
@@ -27,7 +27,61 @@
 namespace mindspore {
 namespace opt {
 namespace {
-lite::STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
+inline bool IsAddNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimAddFusion);
+  }
+  return false;
+}
+
+inline bool IsSquaredDifferenceNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSquaredDifference);
+  }
+  return false;
+}
+
+inline bool IsRsqrtNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimRsqrt);
+  }
+  return false;
+}
+
+inline bool IsMulNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
+  }
+  return false;
+}
+
+inline bool IsSubNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSubFusion);
+  }
+  return false;
+}
+inline bool IsPowNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimPowFusion);
+  }
+  return false;
+}
+inline bool IsSqrtNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSqrt);
+  }
+  return false;
+}
+inline bool IsDivNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimDiv) ||
+           CheckPrimitiveType(utils::cast<AnfNodePtr>(n), std::make_shared<Primitive>("DivFusion"));
+  }
+  return false;
+}
+
+STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
   MS_ASSERT(node != nullptr);
   if (utils::isa<ParameterPtr>(n)) {
     auto axes_param = utils::cast<ParameterPtr>(n);
@@ -72,31 +126,9 @@ bool IsReduceNode(const EquivPtr &equiv, const VarPtr &input_prim, const VarPtr 
 }
 }  // namespace
 
-const BaseRef TfNormFusion::DefinePattern() const {
-  VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
-  auto squared_diffference1 = std::make_shared<CondVar>(IsSquaredDifferenceNode);
-  VectorRef squared_diffference1_ref = VectorRef({squared_diffference1, input_, mean1_ref});
-  auto mul1 = std::make_shared<CondVar>(IsMulNode);
-  VectorRef mean2_ref = VectorRef({mean2_, squared_diffference1_ref, mean2_axes_});
-  auto add1 = std::make_shared<CondVar>(IsAddNode);
-  VectorRef add1_ref = VectorRef({add1, mean2_ref, epsilon_});
-  auto rsqrt1 = std::make_shared<CondVar>(IsRsqrtNode);
-  VectorRef rsqrt1_ref = VectorRef({rsqrt1, add1_ref});
-  auto mul2 = std::make_shared<CondVar>(IsMulNode);
-  VectorRef mul2_ref = VectorRef({mul2, rsqrt1_ref, gamma_});
-  VectorRef mul1_ref = VectorRef({mul1, input_, mul2_ref});
-  auto mul3 = std::make_shared<CondVar>(IsMulNode);
-  VectorRef mul3_ref = VectorRef({mul3, mean1_ref, mul2_ref});
-  auto sub1 = std::make_shared<CondVar>(IsSubNode);
-  VectorRef sub1_ref = VectorRef({sub1, beta_, mul3_ref});
-  auto add2 = std::make_shared<CondVar>(IsAddNode);
-  VectorRef add2_ref = VectorRef({add2, mul1_ref, sub1_ref});
-  return add2_ref;
-}
-
-CNodePtr TfNormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                      const schema::PrimitiveType type, float epsilon, int begin_norm_axis,
-                                      int begin_params_axis) const {
+CNodePtr NormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
+                                    const schema::PrimitiveType type, float epsilon, int begin_norm_axis,
+                                    int begin_params_axis) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   auto norm_primitive = std::make_unique<schema::PrimitiveT>();
@@ -128,9 +160,9 @@ CNodePtr TfNormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const Equi
   return new_node;
 }
 
-bool TfNormFusion::GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
-                                      const std::vector<int> &params_shape, schema::PrimitiveType *type,
-                                      int *begin_norm_axis, int *begin_params_axis) const {
+bool NormFusion::GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
+                                    const std::vector<int> &params_shape, schema::PrimitiveType *type,
+                                    int *begin_norm_axis, int *begin_params_axis) const {
   MS_ASSERT(input_node != nullptr);
   MS_ASSERT(type != nullptr);
   MS_ASSERT(begin_norm_axis != nullptr);
@@ -183,8 +215,8 @@ bool TfNormFusion::GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::ve
   return true;
 }
 
-bool TfNormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type, float *epsilon,
-                                int *begin_norm_axis, int *begin_params_axis) const {
+bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type, float *epsilon, int *begin_norm_axis,
+                              int *begin_params_axis) const {
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(epsilon != nullptr);
   MS_ASSERT(type != nullptr);
@@ -251,8 +283,8 @@ bool TfNormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *ty
   return true;
 }
 
-const AnfNodePtr TfNormFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                       const EquivPtr &equiv) const {
+const AnfNodePtr NormFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                     const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   MS_ASSERT(equiv != nullptr);
@@ -276,12 +308,48 @@ const AnfNodePtr TfNormFusion::Process(const FuncGraphPtr &func_graph, const Anf
   norm_cnode->set_abstract(add2_cnode->abstract()->Clone());
   if (type == schema::PrimitiveType_LayerNormFusion) {
     norm_cnode->set_fullname_with_scope("layer_norm_" + add2_cnode->fullname_with_scope());
-    MS_LOG(INFO) << "layer_norm node:" << norm_cnode->fullname_with_scope() << " fusion success";
+    MS_LOG(DEBUG) << "layer_norm node:" << norm_cnode->fullname_with_scope() << " fusion success";
   } else if (type == schema::PrimitiveType_InstanceNorm) {
     norm_cnode->set_fullname_with_scope("instance_norm_" + add2_cnode->fullname_with_scope());
-    MS_LOG(INFO) << "instance_norm node:" << norm_cnode->fullname_with_scope() << " fusion success";
+    MS_LOG(DEBUG) << "instance_norm node:" << norm_cnode->fullname_with_scope() << " fusion success";
   }
   return norm_cnode;
+}
+
+const BaseRef TfNormFusion::DefinePattern() const {
+  VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
+  auto squared_diffference1 = std::make_shared<CondVar>(IsSquaredDifferenceNode);
+  VectorRef squared_diffference1_ref = VectorRef({squared_diffference1, input_, mean1_ref});
+  auto mul1 = std::make_shared<CondVar>(IsMulNode);
+  VectorRef mean2_ref = VectorRef({mean2_, squared_diffference1_ref, mean2_axes_});
+  auto add1 = std::make_shared<CondVar>(IsAddNode);
+  VectorRef add1_ref = VectorRef({add1, mean2_ref, epsilon_});
+  auto rsqrt1 = std::make_shared<CondVar>(IsRsqrtNode);
+  VectorRef rsqrt1_ref = VectorRef({rsqrt1, add1_ref});
+  auto mul2 = std::make_shared<CondVar>(IsMulNode);
+  VectorRef mul2_ref = VectorRef({mul2, rsqrt1_ref, gamma_});
+  VectorRef mul1_ref = VectorRef({mul1, input_, mul2_ref});
+  auto mul3 = std::make_shared<CondVar>(IsMulNode);
+  VectorRef mul3_ref = VectorRef({mul3, mean1_ref, mul2_ref});
+  auto sub1 = std::make_shared<CondVar>(IsSubNode);
+  VectorRef sub1_ref = VectorRef({sub1, beta_, mul3_ref});
+  auto add2 = std::make_shared<CondVar>(IsAddNode);
+  VectorRef add2_ref = VectorRef({add2, mul1_ref, sub1_ref});
+  return add2_ref;
+}
+
+const BaseRef OnnxLayerNormFusion::DefinePattern() const {
+  VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
+  VectorRef sub1_ref = VectorRef({std::make_shared<CondVar>(IsSubNode), input_, mean1_ref});
+  VectorRef sub2_ref = VectorRef({std::make_shared<CondVar>(IsSubNode), input_, mean1_ref});
+  VectorRef pow_ref = VectorRef({std::make_shared<CondVar>(IsPowNode), sub2_ref, std::make_shared<Var>()});
+  VectorRef mean2_ref = VectorRef({mean2_, pow_ref, mean2_axes_});
+  VectorRef add1_ref = VectorRef({std::make_shared<CondVar>(IsAddNode), mean2_ref, epsilon_});
+  VectorRef sqrt_ref = VectorRef({std::make_shared<CondVar>(IsSqrtNode), add1_ref});
+  VectorRef div_ref = VectorRef({std::make_shared<CondVar>(IsDivNode), sub1_ref, sqrt_ref});
+  VectorRef mul_ref = VectorRef({std::make_shared<CondVar>(IsMulNode), gamma_, div_ref});
+  VectorRef add2_ref = VectorRef({std::make_shared<CondVar>(IsAddNode), mul_ref, beta_});
+  return add2_ref;
 }
 }  // namespace opt
 }  // namespace mindspore
