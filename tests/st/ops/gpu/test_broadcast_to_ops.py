@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ def test_broadcast_dyn_init():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
-    ms_shape = (-1, 4, 5, 6)
+    ms_shape = (-1, -1, 5, 6)
     np_shape = (3, 4, 5, 6)
     x_np = np.random.rand(3, 1, 5, 1).astype(np.float32)
     output = P.BroadcastTo(ms_shape)(Tensor(x_np))
@@ -66,7 +66,7 @@ def test_broadcast_dyn_init():
     expect = np.broadcast_to(x1_np, np_shape)
     assert np.allclose(output.asnumpy(), expect)
 
-    ms_shape = (2, 3, -1, 5)
+    ms_shape = (2, 3, -1, -1)
     np_shape = (2, 3, 4, 5)
     x1_np = np.random.rand(4, 5).astype(np.float32)
     output = P.BroadcastTo(ms_shape)(Tensor(x1_np))
@@ -84,6 +84,12 @@ def test_broadcast_dyn_invalid_init():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     ms_shape = (2, -1, 4, 5)
+    x_np = np.random.rand(4, 5).astype(np.float32)
+    with pytest.raises(ValueError):
+        P.BroadcastTo(ms_shape)(Tensor(x_np))
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    ms_shape = (-1, 1, -1, -1)
     x_np = np.random.rand(4, 5).astype(np.float32)
     with pytest.raises(ValueError):
         P.BroadcastTo(ms_shape)(Tensor(x_np))
