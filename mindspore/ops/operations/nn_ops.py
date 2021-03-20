@@ -217,7 +217,7 @@ class LogSoftmax(PrimitiveWithInfer):
         ValueError: If `axis` is not in range [-len(logits), len(logits)].
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
