@@ -275,8 +275,8 @@ STATUS WeightQuantizer::ProcessLstmWeightByIndex(const CNodePtr &cnode, const Pr
   ParamValueLitePtr param_value;
   GetLiteParameter(weight_i, &param_node, &param_value);
   if (param_node == nullptr || param_value == nullptr) {
-    MS_LOG(ERROR) << "GetLiteParameter error";
-    return RET_ERROR;
+    MS_LOG(INFO) << "LSTM input index " << index << " is not weight";
+    return RET_OK;
   }
   if (param_value->tensor_type() != TypeId::kNumberTypeFloat32) {
     MS_LOG(WARNING) << "param_value tensor type is: " << param_value->tensor_type() << " not quant";
