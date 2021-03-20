@@ -1607,7 +1607,6 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, 
 
   in_grad_process_ = true;
   curr_g_ = std::make_shared<FuncGraph>();
-  PushGraphStack();
   // Init resource for new top cell
   auto df_builder = std::make_shared<FuncGraph>();
   auto resource = std::make_shared<pipeline::Resource>();
