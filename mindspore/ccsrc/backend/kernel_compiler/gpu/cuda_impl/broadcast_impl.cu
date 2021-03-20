@@ -556,6 +556,9 @@ void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const siz
 }
 
 template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
+                          const size_t &o1, const size_t &o2, const size_t &o3, const double *input_addr,
+                          double *output_addr, cudaStream_t stream);
+template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
                           const size_t &o1, const size_t &o2, const size_t &o3, const float *input_addr,
                           float *output_addr, cudaStream_t stream);
 template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
