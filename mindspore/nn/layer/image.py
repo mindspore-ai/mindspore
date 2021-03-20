@@ -226,7 +226,7 @@ class SSIM(Cell):
         ValueError: If `filter_size` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.SSIM()
@@ -417,7 +417,7 @@ class PSNR(Cell):
         ValueError: If length of shape of `img1` or `img2` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.PSNR()

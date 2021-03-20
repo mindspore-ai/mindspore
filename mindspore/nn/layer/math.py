@@ -78,7 +78,7 @@ class ReduceLogSumExp(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
@@ -926,7 +926,7 @@ class Moments(Cell):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.Moments(axis=3, keep_dims=True)
