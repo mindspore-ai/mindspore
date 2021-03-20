@@ -36,6 +36,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         -Wno-overloaded-virtual -Wno-unused-const-variable -Wno-pessimizing-move")
 endif()
 
+if(ENABLE_CPU)
+    file(GLOB_RECURSE _CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
+    list(APPEND _PREACTIVATE_SRC_LIST ${_CPU_SRC_LIST})
+endif()
+
 set_property(SOURCE ${_PREACTIVATE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
   SUBMODULE_ID=mindspore::SubModuleId::SM_PRE_ACT)
 add_library(_mindspore_backend_optimizer_obj OBJECT ${_PREACTIVATE_SRC_LIST})
