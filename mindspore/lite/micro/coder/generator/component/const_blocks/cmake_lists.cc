@@ -19,32 +19,17 @@
 namespace mindspore::lite::micro {
 
 const char *bench_cmake_lists_txt = R"RAW(
+
 cmake_minimum_required(VERSION 3.14)
 project(benchmark)
 
-if(NOT DEFINED MODEL_LIB)
-    message(FATAL_ERROR "MODEL_LIB not set")
+if(NOT DEFINED PKG_PATH)
+    message(FATAL_ERROR "PKG_PATH not set")
 endif()
 
-if(NOT DEFINED HEADER_PATH)
-    message(FATAL_ERROR "HEADER_PATH not set")
-endif()
+get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-get_filename_component(MODEL_LIB ${MODEL_LIB} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
-get_filename_component(HEADER_PATH ${HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
-function(parse_lib_info lib_full_path lib_name lib_path)
-    string(FIND "${lib_full_path}" "/" POS REVERSE)
-    math(EXPR POS "${POS} + 1")
-    string(SUBSTRING ${lib_full_path} 0 ${POS} path)
-    set(${lib_path} ${path} PARENT_SCOPE)
-    string(SUBSTRING ${lib_full_path} "${POS}" "-1" name)
-    set(${lib_name} ${name} PARENT_SCOPE)
-endfunction(parse_lib_info)
-
-parse_lib_info(${MODEL_LIB} MODEL_LIB_NAME MODEL_LIB_PATH)
-
-message("project name: ${MODEL_LIB_NAME}")
+set(HEADER_PATH ${PKG_PATH}/inference)
 
 option(MICRO_BUILD_ARM64 "build android arm64" OFF)
 option(MICRO_BUILD_ARM32A "build android arm32" OFF)
@@ -73,37 +58,39 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 else()
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
-link_directories(${MODEL_LIB_PATH})
-include(benchmark.cmake)
+
+add_subdirectory(src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/)
+include_directories(${HEADER_PATH})
+set(SRC_FILES
+        benchmark/benchmark.cc
+        benchmark/load_input.c
+)
 add_executable(benchmark ${SRC_FILES})
-target_link_libraries(benchmark ${MODEL_LIB_NAME} -lm -pthread)
+target_link_libraries(benchmark net -lm -pthread)
 
 )RAW";
 
 const char *src_cmake_lists_txt = R"RAW(
+
 cmake_minimum_required(VERSION 3.14)
 project(net)
 
-if(NOT DEFINED OP_LIB)
-    message(FATAL_ERROR "OP_LIB not set")
+if(NOT DEFINED PKG_PATH)
+    message(FATAL_ERROR "PKG_PATH not set")
 endif()
 
-if(NOT DEFINED OP_HEADER_PATH)
-    message(FATAL_ERROR "OP_HEADER_PATH not set")
-endif()
+get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-if(NOT DEFINED HEADER_PATH)
-    message(FATAL_ERROR "HEADER_PATH not set")
-endif()
-
-get_filename_component(OP_LIB ${OP_LIB} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
-get_filename_component(OP_HEADER_PATH ${OP_HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
-get_filename_component(HEADER_PATH ${HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(OP_LIB ${PKG_PATH}/tools/codegen/operator_library/lib/libops.a)
+set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/operator_library/include)
+set(HEADER_PATH ${PKG_PATH}/inference)
 
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")

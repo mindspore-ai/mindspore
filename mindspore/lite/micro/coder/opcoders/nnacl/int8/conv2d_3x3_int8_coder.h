@@ -51,7 +51,7 @@ class Conv2D3x3Int8Coder final : public Conv2DBaseCoder {
   int16_t *block_unit_buffer_{nullptr};
   int16_t *tile_buffer_{nullptr};
   int32_t *tmp_dst_buffer_{nullptr};
-  uint8_t *tmp_out_{nullptr};
+  int8_t *tmp_out_{nullptr};
   int16_t *c8_input_{nullptr};
 
   size_t tile_buffer_size_{0};

@@ -71,23 +71,6 @@ void Generator::CodeNetRunFunc(std::ofstream &ofs) {
   ofs << "}\n";
 }
 
-int Generator::CodeBenchmarkCMakeFile() {
-  std::string net_main_cmake_file_path = net_main_file_path_;
-  std::string test_cmake_file = net_main_cmake_file_path + "benchmark.cmake";
-  std::ofstream ofs(test_cmake_file);
-  MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
-  MS_LOG(INFO) << "write " << test_cmake_file;
-  ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR})\n";
-  ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/)\n";
-  ofs << "include_directories(${HEADER_PATH})\n";
-  ofs << "set(SRC_FILES\n";
-  ofs << "\t\t" << kBenchmarkFile << "\n";
-  ofs << "\t\tload_input.c\n";
-  ofs << ")\n";
-  ofs.close();
-  return RET_OK;
-}
-
 int Generator::CodeSourceCMakeFile() {
   std::string src_cmake_file = net_src_file_path_ + cmake_file_name_;
   std::ofstream ofs(src_cmake_file);
@@ -102,7 +85,7 @@ int Generator::CodeStaticContent() {
   std::vector<std::pair<std::string, std::string>> const_blocks = {
     {net_main_file_path_ + "load_input.h", load_input_h},
     {net_main_file_path_ + "load_input.c", load_input_c},
-    {net_main_file_path_ + "CMakeLists.txt", bench_cmake_lists_txt},
+    {config_->code_path() + "/" + "CMakeLists.txt", bench_cmake_lists_txt},
     {net_main_file_path_ + "benchmark.cc", benchmark_source},
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
     {net_src_file_path_ + "session.h", session_header},
@@ -169,7 +152,6 @@ int Generator::GenerateCode() {
   MS_CHECK_RET_CODE(CodeNetCFile(), "code net c file failed.");
   MS_CHECK_RET_CODE(CodeWeightFile(), "code weight file failed.");
   MS_CHECK_RET_CODE(CodeSourceCMakeFile(), "code net cmake file failed.");
-  MS_CHECK_RET_CODE(CodeBenchmarkCMakeFile(), "code benchmark cmake file failed.");
   MS_CHECK_RET_CODE(CodeStaticContent(), "code static content failed.");
   MS_CHECK_RET_CODE(CodeSessionImplement(), "code session file failed.");
   return RET_OK;

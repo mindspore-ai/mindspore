@@ -28,16 +28,19 @@
 #include "wrapper/int8/matmul_int8_wrapper.h"
 #include <stdlib.h>
 #include <string.h>
-#include "microtensor.h"
+extern unsigned char *g_Buffer;
+enum STATUS {
+  RET_OK = 0,
+  RET_ERROR = 1,
+};
 
-extern unsigned char *net_B;
-extern int16_t net_W10[];
-extern int32_t net_W11[];
-extern int16_t net_W12[];
-extern int32_t net_W13[];
-extern int32_t *net_W14;
-extern int8_t *net_W15;
-extern int32_t *net_W16;
-extern int32_t *net_W17;
-extern int8_t *net_W18;
-extern int32_t *net_W19;
+extern int16_t g_Weight10[];
+extern int32_t g_Weight11[];
+extern int16_t g_Weight12[];
+extern int32_t g_Weight13[];
+extern int32_t *g_Weight14;
+extern int8_t *g_Weight15;
+extern int32_t *g_Weight16;
+extern int32_t *g_Weight17;
+extern int8_t *g_Weight18;
+extern int32_t *g_Weight19;
