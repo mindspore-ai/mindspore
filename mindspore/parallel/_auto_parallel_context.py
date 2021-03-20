@@ -18,7 +18,7 @@ import mindspore.context as context
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
 from mindspore.parallel._ps_context import _is_role_pserver
 from mindspore._c_expression import AutoParallelContext
-from mindspore._checkparam import args_type_check
+from mindspore._checkparam import args_type_check, Validator
 
 _MAX_GROUP_NAME_LEN = 127
 _DEFAULT_HCCL_FUSION_GROUP_NAME = "hccl_world_groupsum1"
@@ -257,6 +257,7 @@ class _AutoParallelContext:
             grad_accumulation_step (int): The grad accumulation step.
         """
         self.check_context_handle()
+        Validator.check_positive_int(grad_accumulation_step)
         self._context_handle.set_grad_accumulation_step(grad_accumulation_step)
 
     def get_grad_accumulation_step(self):
