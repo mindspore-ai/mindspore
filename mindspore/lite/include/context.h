@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_LITE_INCLUDE_CONTEXT_H_
 #define MINDSPORE_LITE_INCLUDE_CONTEXT_H_
 
-#include <string>
-#include <memory>
 #include "include/ms_tensor.h"
 #include "include/lite_utils.h"
 #include "include/lite_types.h"
@@ -55,10 +53,14 @@ struct DeviceContext {
 
 /// \brief Context defined for holding environment variables during runtime.
 struct Context {
-  std::string vendor_name_;
+  String vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
   AllocatorPtr allocator = nullptr;
+#ifndef NOT_USE_STL
   DeviceContextVector device_list_ = {{DT_CPU, {false, MID_CPU}}};
+#else
+  DeviceContextVector device_list_;
+#endif  // NOT_USE_STL
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_CONTEXT_H_
