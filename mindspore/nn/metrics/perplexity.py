@@ -32,6 +32,9 @@ class Perplexity(Metric):
         ignore_label (int): Index of an invalid label to be ignored when counting. If set to `None`, it will include all
                             entries. Default: -1.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
@@ -39,6 +42,7 @@ class Perplexity(Metric):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> perplexity = metric.eval()
+        >>> print(perplexity)
         2.231443166940565
     """
 

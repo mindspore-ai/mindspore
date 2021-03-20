@@ -30,6 +30,9 @@ class ROC(Metric):
             to 1. For multiclass problems, this argument should not be set, as it is iteratively changed in the
             range [0,num_classes-1]. Default: None.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> # 1) binary classification example
         >>> x = Tensor(np.array([3, 1, 4, 2]))
@@ -38,8 +41,11 @@ class ROC(Metric):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> fpr, tpr, thresholds = metric.eval()
+        >>> print(fpr)
         [0., 0., 0.33333333, 0.6666667, 1.]
+        >>> print(tpr)
         [0., 1, 1., 1., 1.]
+        >>> print(thresholds)
         [5, 4, 3, 2, 1]
         >>>
         >>> # 2) multiclass classification example
@@ -50,9 +56,12 @@ class ROC(Metric):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> fpr, tpr, thresholds = metric.eval()
+        >>> print(fpr)
         [array([0., 0., 0.33333333, 0.66666667, 1.]), array([0., 0.33333333, 0.33333333, 1.]),
         array([0., 0.33333333, 1.]), array([0., 0., 1.])]
+        >>> print(tpr)
         [array([0., 1., 1., 1., 1.]), array([0., 0., 1., 1.]), array([0., 1., 1.]), array([0., 1., 1.])]
+        >>> print(thresholds)
         [array([1.28, 0.28, 0.2, 0.1, 0.05]), array([1.55, 0.55, 0.2, 0.05]), array([1.15, 0.15, 0.05]),
         array([1.75, 0.75, 0.05])]
     """

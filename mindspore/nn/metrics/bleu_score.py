@@ -27,6 +27,9 @@ class BleuScore(Metric):
         n_gram (int): The n_gram value ranged from 1 to 4. Default: 4
         smooth (bool): Whether or not to apply smoothing. Default: False
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Example:
         >>> candidate_corpus = [['i', 'have', 'a', 'pen', 'on', 'my', 'desk']]
         >>> reference_corpus = [[['i', 'have', 'a', 'pen', 'in', 'my', 'desk'],
@@ -35,6 +38,7 @@ class BleuScore(Metric):
         >>> metric.clear()
         >>> metric.update(candidate_corpus, reference_corpus)
         >>> bleu_score = metric.eval()
+        >>> print(output)
         0.5946035575013605
     """
     def __init__(self, n_gram=4, smooth=False):
