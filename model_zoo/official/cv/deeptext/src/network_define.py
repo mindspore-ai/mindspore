@@ -69,7 +69,7 @@ class LossCallBack(Callback):
             total_loss = self.loss_sum / self.count
 
             loss_file = open("./loss_{}.log".format(self.rank_id), "a+")
-            loss_file.write("%lu epoch: %s step: %s ,total_loss: %.5f" %
+            loss_file.write("%lu epoch: %s step: %s total_loss: %.5f" %
                             (time_stamp_current - time_stamp_first, cb_params.cur_epoch_num, cur_step_in_epoch,
                              total_loss))
             loss_file.write("\n")
