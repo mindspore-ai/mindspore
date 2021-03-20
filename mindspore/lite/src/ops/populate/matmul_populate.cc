@@ -15,7 +15,6 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/matmul_parameter.h"
-
 namespace mindspore {
 namespace lite {
 

@@ -219,8 +219,13 @@ enum PrimType {
 
 void RegInfer(int prim_type, InferShape func);
 
+#ifdef MS_COMPILE_IOS
+#define REG_INFER(op, type, func) \
+  void _##op##type() { RegInfer(type, func); }
+#else
 #define REG_INFER(op, type, func) \
   __attribute__((constructor(102))) void Reg##op##Infer() { RegInfer(type, func); }
+#endif
 #ifdef __cplusplus
 }
 #endif
