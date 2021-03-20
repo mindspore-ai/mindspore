@@ -23,11 +23,13 @@
 using float16 = float16_t;
 inline float half_to_float(float16 h) { return static_cast<float>(h); }
 #else
+#ifndef ENABLE_MD_LITE_X86_64
 #include <functional>
 #include "Eigen/Core"
 
 using float16 = Eigen::half;
 using HalfToFloat = std::function<float(float16)>;
 const inline HalfToFloat half_to_float = Eigen::half_impl::half_to_float;
+#endif
 #endif
 #endif  // MINDSPORE_CORE_BASE_FLOAT16_H_

@@ -20,10 +20,13 @@
 #include <unordered_map>
 #include <functional>
 #include <string>
+#include "Eigen/Core"
 #include "ops/fusion/conv2d_fusion.h"
 #include "src/common/common.h"
 #include "frontend/operator/ops.h"
 #include "backend/optimizer/common/helper.h"
+
+using float16 = Eigen::half;
 
 namespace mindspore {
 namespace opt {
