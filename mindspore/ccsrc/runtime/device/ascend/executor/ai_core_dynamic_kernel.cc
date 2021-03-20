@@ -45,11 +45,23 @@ void AiCoreDynamicKernel::Execute() {
   }
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "Start Execute node:" << cnode->fullname_with_scope();
+  auto node_info = cnode->fullname_with_scope();
+  MS_LOG(INFO) << "Start Execute node:" << node_info;
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto args_size = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtime_args_.size());
-  if (RT_ERROR_NONE != rtKernelLaunch(stub_func_, block_dim_, runtime_args_.data(), args_size, l2ctrl, stream_)) {
-    MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunch error.";
+  if (handle_ != nullptr) {
+    const auto dev_func =
+      origin_key_.find("kernel0") != origin_key_.npos ? origin_key_ : origin_key_ + "_" + std::to_string(tiling_key_);
+    const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
+    if (RT_ERROR_NONE != rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtime_args_.data(),
+                                                  args_size, l2ctrl, stream_, kernel_info.c_str())) {
+      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunchWithHandle error.";
+    }
+
+  } else {
+    if (RT_ERROR_NONE != rtKernelLaunch(stub_func_, block_dim_, runtime_args_.data(), args_size, l2ctrl, stream_)) {
+      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunch error.";
+    }
   }
   MS_LOG(INFO) << "End Execute node:" << cnode->fullname_with_scope();
 }
@@ -127,6 +139,7 @@ void AiCoreDynamicKernel::ComputeTiling() {
   block_dim_ = op_run_info.block_dim;
   workspaces_size_ = op_run_info.workspaces;
   tiling_data_ = op_run_info.tiling_data.str();
+  tiling_key_ = op_run_info.tiling_key;
 }
 
 void AiCoreDynamicKernel::AllocateWorkspace() {

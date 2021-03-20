@@ -18,7 +18,7 @@ import os
 import sys
 from te.platform.cce_conf import te_set_version
 from te.platform.fusion_util import fusion_op
-import te
+import tbe.common.context.op_info as operator_info
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # pylint: disable=wrong-import-position
 from tbe_common import check_kernel_info, get_args, get_built_in_impl_path
@@ -68,6 +68,7 @@ def build_op(build_type, json_str, tune_mode=None):
     check_kernel_info(kernel_info)
     te_set_version(kernel_info["op_info"]["socVersion"])
     op_name = kernel_info['op_info']['name']
+    op_type = kernel_info['op_info']['Type']
 
     try:
         custom_flag = False
@@ -117,10 +118,13 @@ def build_op(build_type, json_str, tune_mode=None):
             # with te.op.dynamic():
             import tbe.common.context.op_context as op_context
             with op_context.OpContext("dynamic"):
+                op_info = operator_info.OpInfo(op_type, op_type)
+                op_context.get_context().add_op_info(op_info)
                 op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+                compile_info = op_context.get_context().get_compile_info()
                 if tune_mode is not None:
-                    return (te.op.get_compile_info()), (inputs_args, outputs_args, attrs_args), op_module_name
-                return te.op.get_compile_info()
+                    return compile_info, (inputs_args, outputs_args, attrs_args), op_module_name
+                return compile_info
         else:
             res = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
             if tune_mode is not None:

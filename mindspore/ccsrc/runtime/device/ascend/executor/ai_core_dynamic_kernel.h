@@ -40,6 +40,15 @@ class AiCoreDynamicKernel : public DynamicKernel {
         tiling_data_ptr_(tiling_data_ptr),
         op_para_size_(op_para_size),
         runtime_args_(runtime_args) {}
+  AiCoreDynamicKernel(void *handle, uint32_t block_dim, void *tiling_data_ptr, uint32_t op_para_size, void *stream,
+                      const CNodePtr &cnode_ptr, const std::vector<void *> &runtime_args, const std::string &ori_key)
+      : DynamicKernel(stream, cnode_ptr),
+        handle_(handle),
+        block_dim_(block_dim),
+        tiling_data_ptr_(tiling_data_ptr),
+        op_para_size_(op_para_size),
+        runtime_args_(runtime_args),
+        origin_key_(ori_key) {}
   ~AiCoreDynamicKernel() override;
 
   void Execute() override;
@@ -53,6 +62,7 @@ class AiCoreDynamicKernel : public DynamicKernel {
 
  private:
   const void *stub_func_;
+  void *handle_{nullptr};
   uint32_t block_dim_;
   void *tiling_data_ptr_;  // device ptr
   uint32_t op_para_size_;  // size of tiling_data_ptr_
@@ -62,6 +72,8 @@ class AiCoreDynamicKernel : public DynamicKernel {
   std::vector<DeviceAddressPtr> workspace_addr_;
   std::shared_ptr<nlohmann::json> compile_info_json_;
   optiling::OpCompileInfo op_compile_info_{};
+  uint32_t tiling_key_{0};
+  const std::string origin_key_{""};
 
   void ComputeTiling();
   bool CopyTilingToDevice();
