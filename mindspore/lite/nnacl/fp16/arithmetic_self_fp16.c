@@ -59,9 +59,6 @@ int ElementSqrtFp16(float16_t *input, float16_t *output, int element_size) {
 
 int ElementRsqrtFp16(float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input[i] <= 0) {
-      return NNACL_ERRCODE_RSQRT_NEGATIVE_OR_ZERO;
-    }
     output[i] = 1.f / sqrtf(input[i]);
   }
   return NNACL_OK;
