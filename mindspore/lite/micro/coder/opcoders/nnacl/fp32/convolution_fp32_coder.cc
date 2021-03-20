@@ -32,17 +32,14 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore::lite::micro::nnacl {
 int ConvolutionFP32Coder::InitTmpBuffer() {
   int in_channel = conv_param_->input_channel_;
-  int uint_size;
-  if (target_ == kARM32A) {
-    uint_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C4NUM * thread_num_;
-  } else {
-    uint_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C12NUM * thread_num_;
-  }
+  int uint_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C12NUM * thread_num_;
   packed_input_size_ = uint_size * sizeof(float);
   packed_input_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, packed_input_size_, kWorkspace));
+  MS_CHECK_PTR(packed_input_);
   col_major_input_size_ = uint_size * sizeof(float);
   col_major_input_ =
     reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, col_major_input_size_, kWorkspace));
+  MS_CHECK_PTR(col_major_input_);
   return RET_OK;
 }
 
@@ -68,12 +65,13 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   int kernel_plane = kernel_h * kernel_w;
-  const int oc_block = C8NUM;
-  int oc_block_num = UP_DIV(out_channel, C8NUM);
-  int pack_weight_size = oc_block_num * oc_block * in_channel * kernel_plane;
+  int oc_block = C8NUM;
+  if (target_ == kARM32A) {
+    oc_block = C4NUM;
+  }
+  int oc_block_num = UP_ROUND(out_channel, oc_block);
+  int pack_weight_size = oc_block_num * in_channel * kernel_plane;
   pack_weight_size_ = pack_weight_size * sizeof(float);
-  auto origin_weight = reinterpret_cast<float *>(filter_tensor_->MutableData());
-  MS_CHECK_PTR(origin_weight);
   packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(packed_weight_);
   auto out_channel_size = static_cast<size_t>(out_channel);
@@ -88,10 +86,15 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   }
   init_code.CodeMallocExpression(packed_weight_, pack_weight_size_);
   init_code.CodeFunction("memset", packed_weight_, 0, pack_weight_size_);
-  init_code.CodeFunction("RowMajor2Col8Major", init_weight_str, packed_weight_, out_channel_size,
-                         in_channel * kernel_plane);
+  if (target_ == kARM32A) {
+    init_code.CodeFunction("RowMajor2Col4Major", init_weight_str, packed_weight_, out_channel_size,
+                           in_channel * kernel_plane);
+  } else {
+    init_code.CodeFunction("RowMajor2Col8Major", init_weight_str, packed_weight_, out_channel_size,
+                           in_channel * kernel_plane);
+  }
 
-  auto bias_data_size = static_cast<size_t>(oc_block_num * oc_block * sizeof(float));
+  auto bias_data_size = static_cast<size_t>(oc_block_num * sizeof(float));
   bias_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(bias_data_);
   if (input_tensors_.size() == kInputSize2) {
@@ -140,79 +143,4 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-
-std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderCreator(const std::vector<Tensor *> &in_tensors,
-                                                              const std::vector<Tensor *> &out_tensors,
-                                                              const Model::Node *node, size_t node_index,
-                                                              Target target) {
-  std::vector<Tensor *> inputs = in_tensors;
-  std::vector<Tensor *> outputs = out_tensors;
-  const void *primitive = node->primitive_;
-  if (primitive == nullptr) {
-    return nullptr;
-  }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
-  if (paramGen == nullptr) {
-    MS_LOG(ERROR) << "parameter generator is null";
-    return nullptr;
-  }
-  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
-  bool use_winograd = false;
-  int out_unit = 0;
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  conv_param->input_h_ = inputs.at(kInputIndex)->Height();
-  conv_param->input_w_ = inputs.at(kInputIndex)->Width();
-  conv_param->input_channel_ = inputs.at(kInputIndex)->Channel();
-  conv_param->output_h_ = outputs.at(kOutputIndex)->Height();
-  conv_param->output_w_ = outputs.at(kOutputIndex)->Width();
-  conv_param->output_channel_ = outputs.at(kOutputIndex)->Channel();
-  conv_param->op_parameter_.thread_num_ = 1;
-  CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
-  free(conv_param);
-  // weight de quant
-  std::unique_ptr<OperatorCoder> coder;
-  if (kernel_h == 1 && kernel_w == 1) {
-    MS_LOG(DEBUG) << "create ConvolutionFP32Coder";
-    coder = CPUOpCoderCreator<ConvolutionFP32Coder>(in_tensors, out_tensors, node, node_index, target);
-  } else if (use_winograd) {
-    MS_LOG(DEBUG) << "create Conv2DWinogradFP32Coder";
-    coder = std::make_unique<ConvolutionWinogradFP32Coder>(in_tensors, out_tensors, node, node_index, target, out_unit);
-  } else {
-    MS_LOG(DEBUG) << "create ConvolutionFP32Coder";
-    coder = CPUOpCoderCreator<ConvolutionFP32Coder>(in_tensors, out_tensors, node, node_index, target);
-  }
-  return coder;
-}
-
-std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector<Tensor *> &in_tensors,
-                                                               const std::vector<Tensor *> &out_tensors,
-                                                               const Model::Node *node, size_t node_index,
-                                                               Target target) {
-  const void *primitive = node->primitive_;
-  if (primitive == nullptr) {
-    return nullptr;
-  }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
-  if (paramGen == nullptr) {
-    MS_LOG(ERROR) << "parameter generator is null";
-    return nullptr;
-  }
-  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
-  std::unique_ptr<OperatorCoder> coder;
-  if (conv_param->group_ == 1) {
-    coder = CPUConvolutionFP32CoderCreator(in_tensors, out_tensors, node, node_index, target);
-  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    coder = CPUOpCoderCreator<ConvolutionDepthwiseFP32Coder>(in_tensors, out_tensors, node, node_index, target);
-  } else {
-    // GroupConv
-  }
-  return coder;
-}
-
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Conv2DFusion, CPUConv2DFusionFP32CoderCreator)
 }  // namespace mindspore::lite::micro::nnacl
