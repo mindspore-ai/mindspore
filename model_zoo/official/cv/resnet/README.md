@@ -284,6 +284,8 @@ Please follow the instructions in the link [hccn_tools](https://gitee.com/mindsp
 
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the following in log.
 
+If you want to change device_id for standalone training, you can set environment variable `export DEVICE_ID=x` or set `device_id=x` in context.
+
 #### Running on GPU
 
 ```bash
