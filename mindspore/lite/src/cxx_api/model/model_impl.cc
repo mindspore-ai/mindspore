@@ -95,12 +95,12 @@ Status ModelImpl::Build() {
   lite::DeviceInfo cpu_info = {.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode}};
   model_context.device_list_.push_back({lite::DT_CPU, cpu_info});
   if (device_list.size() == 2) {
-    if (device_list[0]->GetDeviceType() == kMaliGPU) {
-      auto gpu_context = device_list[0]->Cast<MaliGPUDeviceInfo>();
+    if (device_list[1]->GetDeviceType() == kMaliGPU) {
+      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
       lite::DeviceInfo gpu_info = {.gpu_device_info_ = {gpu_context->GetEnableFP16()}};
       model_context.device_list_.push_back({lite::DT_GPU, gpu_info});
-    } else if (device_list[0]->GetDeviceType() == kKirinNPU) {
-      auto npu_context = device_list[0]->Cast<KirinNPUDeviceInfo>();
+    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
+      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
       lite::DeviceInfo npu_info = {.npu_device_info_ = {npu_context->GetFrequency()}};
       model_context.device_list_.push_back({lite::DT_NPU, npu_info});
     } else {

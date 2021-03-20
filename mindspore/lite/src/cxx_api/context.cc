@@ -121,9 +121,9 @@ void CPUDeviceInfo::SetThreadAffinity(int affinity) {
 int CPUDeviceInfo::GetThreadAffinity() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
-    return false;
+    return 0;
   }
-  return GetValue<bool>(data_, kModelOptionCpuThreadAffinity);
+  return GetValue<int>(data_, kModelOptionCpuThreadAffinity);
 }
 
 void MaliGPUDeviceInfo::SetEnableFP16(bool is_fp16) {
