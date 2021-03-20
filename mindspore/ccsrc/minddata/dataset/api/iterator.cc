@@ -38,7 +38,6 @@ Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
     return rc;
   }
   for (auto de_tensor : md_map) {
-    CHECK_FAIL_RETURN_UNEXPECTED(de_tensor.second->HasData(), "Apply transform failed, output tensor has no data");
     std::vector<char> col_name(de_tensor.first.begin(), de_tensor.first.end());
     row->insert(std::make_pair(col_name, mindspore::MSTensor(std::make_shared<DETensor>(de_tensor.second))));
   }
@@ -57,10 +56,8 @@ Status Iterator::GetNextRow(MSTensorVec *row) {
     row->clear();
     return rc;
   }
-  for (auto de_tensor : md_row) {
-    CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
-    row->push_back(mindspore::MSTensor(std::make_shared<DETensor>(de_tensor)));
-  }
+  std::transform(md_row.begin(), md_row.end(), std::back_inserter(*row),
+                 [](auto t) { return mindspore::MSTensor(std::make_shared<DETensor>(t)); });
   return Status::OK();
 }
 
