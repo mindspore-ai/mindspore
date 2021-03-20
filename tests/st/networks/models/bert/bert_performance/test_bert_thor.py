@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -234,7 +234,7 @@ def test_bert_thor_8p():
         os.system("rm -rf " + str(i))
 
     print("End training...")
-    assert mean_cost < 66
+    assert mean_cost < 69
     assert mean_loss < 8.125
 
 
