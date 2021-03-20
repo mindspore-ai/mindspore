@@ -19,8 +19,7 @@
 #include <cstdlib>
 #include <fstream>
 #include "utils/ms_utils.h"
-#include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/engine/perf/connector_size.h"
@@ -28,7 +27,6 @@
 #include "minddata/dataset/engine/perf/cpu_sampling.h"
 #include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
 #include "minddata/dataset/util/log_adapter.h"
-#include "minddata/dataset/util/path.h"
 
 namespace mindspore {
 namespace dataset {
@@ -61,13 +59,11 @@ Status ProfilingManager::Initialize() {
 #endif
   dir_path_ = real_path;
 
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  int32_t rank_id = cfg->rank_id();
   // If DEVICE_ID is not set, default value is 0
-  if (rank_id < 0) {
-    rank_id = 0;
+  device_id_ = common::GetEnv("DEVICE_ID");
+  if (device_id_.empty()) {
+    device_id_ = "0";
   }
-  device_id_ = std::to_string(rank_id);
 
   // Register all profiling node.
   // device_queue node is used for graph mode
