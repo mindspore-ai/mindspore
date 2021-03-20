@@ -35,8 +35,8 @@ def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mod
     shp_weight_conv = (out_channels, in_channels, kernel_size, kernel_size)
 
     shp_bias_conv = (out_channels,)
-    weights = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float16).to_tensor()
-    bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float16).to_tensor()
+    weights = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float32).to_tensor()
+    bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float32).to_tensor()
 
     layers = []
     layers += [nn.Conv2d(in_channels, out_channels,
@@ -147,7 +147,7 @@ class Deeptext_VGG16(nn.Cell):
 
         self.rpn_max_num = config.rpn_max_num
 
-        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(np.float16))
+        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(np.float32))
         self.ones_mask = np.ones((self.rpn_max_num, 1)).astype(np.bool)
         self.zeros_mask = np.zeros((self.rpn_max_num, 1)).astype(np.bool)
         self.bbox_mask = Tensor(np.concatenate((self.ones_mask, self.zeros_mask,
@@ -155,10 +155,10 @@ class Deeptext_VGG16(nn.Cell):
         self.nms_pad_mask = Tensor(np.concatenate((self.ones_mask, self.ones_mask,
                                                    self.ones_mask, self.ones_mask, self.zeros_mask), axis=1))
 
-        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_score_thr)
-        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * 0)
-        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(np.float16) * -1)
-        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_iou_thr)
+        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float32) * config.test_score_thr)
+        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float32) * 0)
+        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(np.float32) * -1)
+        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float32) * config.test_iou_thr)
         self.test_max_per_img = config.test_max_per_img
         self.nms_test = P.NMSWithMask(config.test_iou_thr)
         self.softmax = P.Softmax(axis=1)
@@ -174,14 +174,14 @@ class Deeptext_VGG16(nn.Cell):
         # Init tensor
         self.use_ambigous_sample = config.use_ambigous_sample
         roi_align_index = [np.array(np.ones((config.num_expected_pos_stage2 + config.num_expected_neg_stage2, 1)) * i,
-                                    dtype=np.float16) for i in range(self.train_batch_size)]
+                                    dtype=np.float32) for i in range(self.train_batch_size)]
         if self.use_ambigous_sample:
             roi_align_index = [np.array(np.ones((
                 config.num_expected_pos_stage2 + config.num_expected_amb_stage2 + config.num_expected_neg_stage2,
                 1)) * i,
-                                        dtype=np.float16) for i in range(self.train_batch_size)]
+                                        dtype=np.float32) for i in range(self.train_batch_size)]
 
-        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=np.float16) \
+        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=np.float32) \
                                 for i in range(self.test_batch_size)]
 
         self.roi_align_index_tensor = Tensor(np.concatenate(roi_align_index))
@@ -197,8 +197,8 @@ class Deeptext_VGG16(nn.Cell):
     def construct(self, img_data, img_metas, gt_bboxes, gt_labels, gt_valids):
         # f1, f2, f3, f4, f5 = self.vgg16_feature_extractor(img_data)
         _, _, _, f4, f5 = self.vgg16_feature_extractor(img_data)
-        f4 = self.cast(f4, mstype.float16)
-        f5 = self.cast(f5, mstype.float16)
+        f4 = self.cast(f4, mstype.float32)
+        f5 = self.cast(f5, mstype.float32)
         x = (f4, f5)
 
         rpn_loss, cls_score, bbox_pred, rpn_cls_loss, rpn_reg_loss, _ = self.rpn_with_loss(x,
@@ -274,10 +274,10 @@ class Deeptext_VGG16(nn.Cell):
         roi_feats = self.cast(roi_feats, mstype.float32)
         roi_feats = self.concat1((roi_feats, roi_align4_out))
 
-        roi_feats = self.cast(roi_feats, mstype.float16)
+        roi_feats = self.cast(roi_feats, mstype.float32)
         roi_feats = self.roi_align_fuse(roi_feats)
 
-        roi_feats = self.cast(roi_feats, mstype.float16)
+        roi_feats = self.cast(roi_feats, mstype.float32)
 
         rcnn_masks = self.concat(mask_tuple)
         rcnn_masks = F.stop_gradient(rcnn_masks)
@@ -427,6 +427,6 @@ class Deeptext_VGG16(nn.Cell):
         for i in range(num_levels):
             anchors = self.anchor_generators[i].grid_anchors(
                 featmap_sizes[i], self.anchor_strides[i])
-            multi_level_anchors += (Tensor(anchors.astype(np.float16)),)
+            multi_level_anchors += (Tensor(anchors.astype(np.float32)),)
 
         return multi_level_anchors

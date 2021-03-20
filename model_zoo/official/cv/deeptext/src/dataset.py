@@ -247,9 +247,9 @@ def image_bgr_rgb(img, img_shape, gt_bboxes, gt_label, gt_num):
 def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """transpose operation for image"""
     img_data = img.transpose(2, 0, 1).copy()
-    img_data = img_data.astype(np.float16)
-    img_shape = img_shape.astype(np.float16)
-    gt_bboxes = gt_bboxes.astype(np.float16)
+    img_data = img_data.astype(np.float32)
+    img_shape = img_shape.astype(np.float32)
+    gt_bboxes = gt_bboxes.astype(np.float32)
     gt_label = gt_label.astype(np.int32)
     gt_num = gt_num.astype(np.bool)
 
@@ -327,6 +327,52 @@ def preprocess_fn(image, box, is_training):
     return _data_aug(image, box, is_training)
 
 
+def get_imgs_and_annos(img_dir, txt_dir, image_files, image_anno_dict):
+    img_basenames = []
+    for file in os.listdir(img_dir):
+        # Filter git file.
+        if 'gif' not in file:
+            img_basenames.append(os.path.basename(file))
+
+    img_names = []
+    for item in img_basenames:
+        temp1, _ = os.path.splitext(item)
+        img_names.append((temp1, item))
+    for img, img_basename in img_names:
+        image_path = img_dir + '/' + img_basename
+        annos = []
+        # Parse annotation of dataset in paper.
+        if len(img) == 6 and '_' not in img_basename:
+            gt = open(txt_dir + '/' + img + '.txt').read().splitlines()
+            if img.isdigit() and int(img) > 1200:
+                continue
+            for img_each_label in gt:
+                spt = img_each_label.replace(',', '').split(' ')
+                if ' ' not in img_each_label:
+                    spt = img_each_label.split(',')
+                annos.append(
+                    [spt[0], spt[1], str(int(spt[0]) + int(spt[2])), str(int(spt[1]) + int(spt[3]))] + [1] + [
+                        int(0)])
+        else:
+            anno_file = txt_dir + '/gt_img_' + img.split('_')[-1] + '.txt'
+            if not os.path.exists(anno_file):
+                anno_file = txt_dir + '/gt_' + img.split('_')[-1] + '.txt'
+            if not os.path.exists(anno_file):
+                anno_file = txt_dir + '/img_' + img.split('_')[-1] + '.txt'
+            gt = open(anno_file).read().splitlines()
+            for img_each_label in gt:
+                spt = img_each_label.replace(',', '').split(' ')
+                if ' ' not in img_each_label:
+                    spt = img_each_label.split(',')
+                annos.append([spt[0], spt[1], spt[2], spt[3]] + [1] + [int(0)])
+
+        image_files.append(image_path)
+        if annos:
+            image_anno_dict[image_path] = np.array(annos)
+        else:
+            image_anno_dict[image_path] = np.array([0, 0, 0, 0, 0, 1])
+
+
 def create_label(is_training):
     """Create image label."""
     image_files = []
@@ -340,50 +386,7 @@ def create_label(is_training):
         txt_dirs = config.test_txts.split(',')
 
     for img_dir, txt_dir in zip(img_dirs, txt_dirs):
-        img_basenames = []
-        for file in os.listdir(img_dir):
-            # Filter git file.
-            if 'gif' not in file:
-                img_basenames.append(os.path.basename(file))
-
-        img_names = []
-        for item in img_basenames:
-            temp1, _ = os.path.splitext(item)
-            img_names.append((temp1, item))
-
-        for img, img_basename in img_names:
-            image_path = img_dir + '/' + img_basename
-            annos = []
-            # Parse annotation of dataset in paper.
-            if len(img) == 6 and '_' not in img_basename:
-                gt = open(txt_dir + '/' + img + '.txt').read().splitlines()
-                if img.isdigit() and int(img) > 1200:
-                    continue
-                for img_each_label in gt:
-                    spt = img_each_label.replace(',', '').split(' ')
-                    if ' ' not in img_each_label:
-                        spt = img_each_label.split(',')
-                    annos.append(
-                        [spt[0], spt[1], str(int(spt[0]) + int(spt[2])), str(int(spt[1]) + int(spt[3]))] + [1] + [
-                            int(0)])
-            else:
-                anno_file = txt_dir + '/gt_img_' + img.split('_')[-1] + '.txt'
-                if not os.path.exists(anno_file):
-                    anno_file = txt_dir + '/gt_' + img.split('_')[-1] + '.txt'
-                if not os.path.exists(anno_file):
-                    anno_file = txt_dir + '/img_' + img.split('_')[-1] + '.txt'
-                gt = open(anno_file).read().splitlines()
-                for img_each_label in gt:
-                    spt = img_each_label.replace(',', '').split(' ')
-                    if ' ' not in img_each_label:
-                        spt = img_each_label.split(',')
-                    annos.append([spt[0], spt[1], spt[2], spt[3]] + [1] + [int(0)])
-
-            image_files.append(image_path)
-            if annos:
-                image_anno_dict[image_path] = np.array(annos)
-            else:
-                image_anno_dict[image_path] = np.array([0, 0, 0, 0, 0, 1])
+        get_imgs_and_annos(img_dir, txt_dir, image_files, image_anno_dict)
 
     if is_training and config.use_coco:
         coco_root = config.coco_root
@@ -460,7 +463,7 @@ def create_deeptext_dataset(mindrecord_file, batch_size=2, repeat_num=12, device
     normalize_op = C.Normalize((123.675, 116.28, 103.53), (58.395, 57.12, 57.375))
     horizontally_op = C.RandomHorizontalFlip(1)
     type_cast0 = CC.TypeCast(mstype.float32)
-    type_cast1 = CC.TypeCast(mstype.float16)
+    type_cast1 = CC.TypeCast(mstype.float32)
     type_cast2 = CC.TypeCast(mstype.int32)
     type_cast3 = CC.TypeCast(mstype.bool_)
 
