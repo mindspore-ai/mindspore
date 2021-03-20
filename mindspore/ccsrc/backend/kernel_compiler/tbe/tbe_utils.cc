@@ -116,8 +116,8 @@ KernelPackPtr TbeUtils::InsertCache(const std::string &kernel_name, const std::s
   return SearchCache(kernel_name, processor);
 }
 
-int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buffer, void **module,
-                                  const string &magic) {
+int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buffer, void **module, const string &magic,
+                                  const bool dynamic_flag) {
   static std::map<string, uint32_t> magic_maps = {{"RT_DEV_BINARY_MAGIC_ELF", RT_DEV_BINARY_MAGIC_ELF},
                                                   {"RT_DEV_BINARY_MAGIC_PLAIN", RT_DEV_BINARY_MAGIC_PLAIN},
                                                   {"RT_DEV_BINARY_MAGIC_PLAIN_AICPU", RT_DEV_BINARY_MAGIC_PLAIN_AICPU},
@@ -132,8 +132,9 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
   }
   dev_bin.magic = iter->second;
   dev_bin.length = kernel_buffer.len;
-  dev_bin.version = 2;
-  if (RT_ERROR_NONE != rtDevBinaryRegister(&dev_bin, module)) {
+  dev_bin.version = 0;
+  auto ret = dynamic_flag ? rtRegisterAllKernel(&dev_bin, module) : rtDevBinaryRegister(&dev_bin, module);
+  if (RT_ERROR_NONE != ret) {
     MS_LOG(INFO) << "Call runtime rtDevBinaryRegister error.";
     return -1;
   }
@@ -141,7 +142,8 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
 }
 
 uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel_pack, bool force_reload,
-                                     uint32_t *block_dim) {
+                                     uint32_t *block_dim, const bool dynamic_flag, void **handle,
+                                     std::string *origin_key) {
   auto kernel = kernel_pack.GetKernel();
   if (kernel == nullptr) {
     MS_LOG(EXCEPTION) << "Invalid kernel pack, json or kernel is nullptr.";
@@ -162,13 +164,23 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     if (iter != info_table_.end()) {
       auto kernelmeta = iter->second;
       *block_dim = kernelmeta->block_dim_;
-      return kernelmeta->func_stub_;
+      if (!dynamic_flag) {
+        return kernelmeta->func_stub_;
+      }
     }
   }
   void *module = nullptr;
-  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic) != 0) {
+  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic, dynamic_flag) != 0) {
     MS_LOG(INFO) << "Call runtime BinaryRegister error.";
+    if (module != nullptr) {
+      (void)rtDevBinaryUnRegister(module);
+    }
     return 0;
+  }
+  if (dynamic_flag) {
+    *handle = module;
+    *origin_key = func_name;
+    return 1;
   }
   // to diff different funcs.
   uintptr_t func_stub = ++kernel_stub_gen_;

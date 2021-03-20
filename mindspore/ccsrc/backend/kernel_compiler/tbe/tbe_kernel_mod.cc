@@ -113,18 +113,11 @@ device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_pt
   AddressPtrList kernel_workspaces;
   AddressPtrList kernel_outputs;
   device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  auto dynamic_flag = AnfAlgo::IsDynamicShape(cnode_ptr);
 
   // Get para_size from json
   auto kernel_json_info = kernel_pack_->kernel_json_info();
   auto op_para_size = kernel_json_info.op_para_size;
-
-  // Get stub_function
-  uint32_t block_dim = 1;  // default blockdim equal to 1.
-  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
-  if (func_stub == 0) {
-    MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-  }
-  const void *stub_func_ptr = reinterpret_cast<void *>(func_stub);
 
   // Generate args
   std::vector<void *> runtime_args;
@@ -146,8 +139,26 @@ device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_pt
     runtime_args.push_back(tiling_data_ptr);
   }
 
-  auto executor = std::make_shared<device::ascend::AiCoreDynamicKernel>(
-    stub_func_ptr, block_dim, tiling_data_ptr, op_para_size, stream_ptr, cnode_ptr, runtime_args);
+  // Get stub_function
+  uint32_t block_dim = 1;  // default blockdim equal to 1.
+  device::DynamicKernelPtr executor = nullptr;
+  std::string origin_key;
+  void *handle = nullptr;
+  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, dynamic_flag, &handle, &origin_key);
+  if (dynamic_flag) {
+    if (func_stub != 1) {
+      MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+    }
+    executor = std::make_shared<device::ascend::AiCoreDynamicKernel>(handle, block_dim, tiling_data_ptr, op_para_size,
+                                                                     stream_ptr, cnode_ptr, runtime_args, origin_key);
+  } else {
+    if (func_stub == 0) {
+      MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+    }
+    const void *stub_func_ptr = reinterpret_cast<void *>(func_stub);
+    executor = std::make_shared<device::ascend::AiCoreDynamicKernel>(stub_func_ptr, block_dim, tiling_data_ptr,
+                                                                     op_para_size, stream_ptr, cnode_ptr, runtime_args);
+  }
   return executor;
 }
 
