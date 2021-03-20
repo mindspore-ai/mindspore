@@ -10,6 +10,9 @@ endif()
 if(ENABLE_D)
     add_compile_definitions(ENABLE_D)
 endif()
+if(NOT ENABLE_GLIBCXX)
+    add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
+endif()
 
 #add python lib and include for all ut executables;
 message("PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
