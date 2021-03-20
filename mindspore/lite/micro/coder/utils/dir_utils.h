@@ -24,7 +24,7 @@ static const char kSlash[] = "\\";
 static const char kSlash[] = "/";
 #endif
 
-int InitProjDirs(const std::string &project_root_dir, const std::string &module_name);
+int InitProjDirs(const std::string &project_root_dir, const std::string &proj_name);
 
 bool DirExists(const std::string &dir_path);
 

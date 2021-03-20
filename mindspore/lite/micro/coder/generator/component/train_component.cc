@@ -39,24 +39,23 @@ void CodeTrainParams(std::ofstream &ofs) {
          "};\n\n";
 }
 
-void CodeFeaturesState(std::ofstream &ofs, const std::string &module_name) {
+void CodeFeaturesState(std::ofstream &ofs) {
   ofs << "/**\n"
          " *\n"
          " * @param size, return the number of features\n"
          " * @return, the address of features\n"
          " */\n"
-      << "FeatureParam *" << module_name << "_GetFeatures(int *size);\n\n";
+      << "FeatureParam *GetFeatures(int *size);\n\n";
   ofs << "/**\n"
          " *\n"
          " * @param features, the address of features\n"
          " * @param size, the number of features\n"
          " * @return, status\n"
          " */\n"
-      << "int " << module_name << "_UpdateFeatures(FeatureParam *features, int size);\n\n";
+      << "int UpdateFeatures(FeatureParam *features, int size);\n\n";
 }
 
-void CodeFeaturesImplement(std::ofstream &ofs, const std::string &module_name,
-                           const std::unique_ptr<CoderContext> &ctx) {
+void CodeFeaturesImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   size_t features_num = 0;
   ofs << "static FeatureParam feature_params[] = {\n";
   for (const auto &item : ctx->saved_weights()) {
@@ -72,12 +71,13 @@ void CodeFeaturesImplement(std::ofstream &ofs, const std::string &module_name,
   }
   ofs << "};\n";
 
-  ofs << "FeatureParam *" << module_name << "_GetFeatures(int *size) {\n"
+  ofs << "FeatureParam *GetFeatures(int *size) {\n"
       << "  *size = " << features_num << ";\n"
       << "  return feature_params;\n"
          "}\n\n";
 
-  ofs << "int " << module_name << "_UpdateFeatures(FeatureParam *features, int size) {\n"
+  ofs << "int "
+      << "UpdateFeatures(FeatureParam *features, int size) {\n"
       << "  for (int i = 0; i < size; ++i) {\n"
          "    FeatureParam *src = features + i;\n"
          "    FeatureParam dst;\n"
@@ -106,22 +106,22 @@ void CodeFeaturesImplement(std::ofstream &ofs, const std::string &module_name,
          "}\n\n";
 }
 
-void CodeTrainState(std::ofstream &ofs, const std::string &module_name) {
-  ofs << "/**\n"
-         " * Train Function\n"
-         " * @param epoch, the train epoch\n"
-         " * @param iterations, which is equal to batch_num, the number of iterations of each epoch\n"
-         " * @param use_train_param, default parameters already exists, such as the momentum, user can update these\n"
-         " * parameters to improve the accuracy\n"
-         " * @param parameter, the TrainParameter contains epsilon/beta1/beta2\n"
-         " * @return status\n"
-         " */\n"
-      << "int " << module_name
-      << "_Train(const int epoch, const int iterations, bool use_train_param, const struct TrainParameter *parameter, "
-         "const struct EarlyStop *early_stop);\n\n";
+void CodeTrainState(std::ofstream &ofs) {
+  ofs
+    << "/**\n"
+       " * Train Function\n"
+       " * @param epoch, the train epoch\n"
+       " * @param iterations, which is equal to batch_num, the number of iterations of each epoch\n"
+       " * @param use_train_param, default parameters already exists, such as the momentum, user can update these\n"
+       " * parameters to improve the accuracy\n"
+       " * @param parameter, the TrainParameter contains epsilon/beta1/beta2\n"
+       " * @return status\n"
+       " */\n"
+    << "int Train(const int epoch, const int iterations, bool use_train_param, const struct TrainParameter *parameter, "
+       "const struct EarlyStop *early_stop);\n\n";
 }
 
-void CodeTrainImplement(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx) {
+void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   size_t inputs_num = inputs.size();
   auto inputs_tostring = [&]() {
@@ -151,8 +151,7 @@ void CodeTrainImplement(std::ofstream &ofs, const std::string &module_name, cons
     }
     return result;
   };
-  ofs << "int " << module_name
-      << "_Train(const int epoch, const int iterations, bool use_train_param, const struct TrainParameter "
+  ofs << "int Train(const int epoch, const int iterations, bool use_train_param, const struct TrainParameter "
          "*parameter, const struct EarlyStop *early_stop) {\n"
          "  if (iterations <= 0 || epoch <= 0) {\n"
          "    MICRO_ERROR(\"error iterations or epoch!, epoch:%d, iterations:%d\", epoch, iterations);\n"
@@ -169,9 +168,12 @@ void CodeTrainImplement(std::ofstream &ofs, const std::string &module_name, cons
       << "    float loss = 0;\n"
       << "    for (int j = 0; j < iterations; ++j) {\n"
       << "      " << offset_inputs() << "\n"
-      << "      " << module_name << "_SetInputs(input_ptr, " << inputs_num << ");\n"
-      << "      " << module_name << "_Inference();\n"
-      << "      loss = " << module_name << "_ComputeLossAndGradient();\n"
+      << "      "
+      << "_SetInputs(input_ptr, " << inputs_num << ");\n"
+      << "      "
+      << "_Inference();\n"
+      << "      loss = "
+      << "ComputeLossAndGradient();\n"
       << "    }\n"
          "  }\n"
          "  return RET_OK;\n"

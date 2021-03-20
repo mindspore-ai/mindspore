@@ -104,9 +104,9 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   for (size_t i = 0; i < inputs_.size(); ++i) {
     inputs_data[i] = inputs_[i]->MutableData();
   }
-  net_SetInputs(inputs_data, inputs_.size());
+  SetInputs(inputs_data, inputs_.size());
 
-  net_Inference();
+  Inference();
 
   void *outputs_data[outputs_.size()];
   for (size_t i = 0; i < outputs_.size(); ++i) {
@@ -118,7 +118,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
 }
 
 LiteSession::~LiteSession() {
-  net_FreeResource();
+  FreeResource();
   if (runtime_buffer_ != nullptr) {
     free(runtime_buffer_);
     runtime_buffer_ = nullptr;
@@ -141,12 +141,12 @@ LiteSession::~LiteSession() {
 }
 
 int LiteSession::InitRuntimeBuffer() {
-  int buffer_size = net_GetBufferSize();
+  int buffer_size = GetBufferSize();
   runtime_buffer_ = malloc(buffer_size);
   if (runtime_buffer_ == nullptr) {
     return RET_ERROR;
   }
-  int ret = net_SetBuffer(runtime_buffer_);
+  int ret = SetBuffer(runtime_buffer_);
   if (ret != RET_OK) {
     return RET_ERROR;
   }
@@ -215,7 +215,7 @@ session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, s
   if (ret != lite::RET_OK) {
     return nullptr;
   }
-  net_Init(const_cast<char *>(net_buf), size);
+  Init(const_cast<char *>(net_buf), size);
   return session;
 }
 }  // namespace mindspore

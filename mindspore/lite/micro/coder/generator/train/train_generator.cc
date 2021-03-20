@@ -24,7 +24,7 @@
 
 namespace mindspore::lite::micro {
 void TrainGenerator::CodeGradientFunc(std::ofstream &ofs) const {
-  ofs << "float " << config_->module_name() << "_ComputeLossAndGradient() {\n";
+  ofs << "float ComputeLossAndGradient() {\n";
   ofs << "  float loss = 0;\n";
   for (const auto &block : ctx_->train_blocks()) {
     ofs << "\t{\n" << block << "\t}\n";
@@ -44,14 +44,14 @@ int TrainGenerator::CodeNetHFile() {
   }
   ofs << "#include \"microtensor.h\"\n\n";
   CodeTrainParams(ofs);
-  CodeInputState(ofs, config_->module_name());
+  CodeInputState(ofs);
   if (config_->target() != kARM32M) {
-    CodeInitWeightState(ofs, config_->module_name());
+    CodeInitWeightState(ofs);
   }
-  CodeManageResourceState(ofs, config_->module_name());
-  CodeInferenceState(ofs, config_->module_name());
-  CodeFeaturesState(ofs, config_->module_name());
-  CodeTrainState(ofs, config_->module_name());
+  CodeManageResourceState(ofs);
+  CodeInferenceState(ofs);
+  CodeFeaturesState(ofs);
+  CodeTrainState(ofs);
   return RET_OK;
 }
 
@@ -60,13 +60,13 @@ int TrainGenerator::CodeNetCFile() {
   std::ofstream ofs(net_impl_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;
-  CodeInputImplement(ofs, config_->module_name(), ctx_);
-  CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
-  CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
-  CodeFeaturesImplement(ofs, config_->module_name(), ctx_);
+  CodeInputImplement(ofs, ctx_);
+  CodeInitResourceImplement(ofs, ctx_);
+  CodeFreeResourceImplement(ofs, ctx_);
+  CodeFeaturesImplement(ofs, ctx_);
   CodeNetRunFunc(ofs);
   CodeGradientFunc(ofs);
-  CodeTrainImplement(ofs, config_->module_name(), ctx_);
+  CodeTrainImplement(ofs, ctx_);
   ofs.close();
   return RET_OK;
 }

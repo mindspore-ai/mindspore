@@ -30,9 +30,6 @@ class Configurator {
     return &configurator;
   }
 
-  void set_module_name(const std::string &module_name) { module_name_ = module_name; }
-  std::string module_name() const { return module_name_; }
-
   void set_code_path(const std::string &code_path) { code_path_ = code_path; }
   std::string code_path() const { return code_path_; }
 
@@ -48,16 +45,18 @@ class Configurator {
   void set_support_parallel(bool parallel) { support_parallel_ = parallel; }
   bool support_parallel() const { return support_parallel_; }
 
+  int ParseProjDir(std::string model_path);
+  std::string proj_dir() const { return proj_dir_; }
+
  private:
   Configurator() = default;
   ~Configurator() = default;
-
-  std::string module_name_;
   std::string code_path_;
   Target target_{kTargetUnknown};
   CodeMode code_mode_{Code_Unknown};
   bool support_parallel_{false};
   bool debug_mode_{false};
+  std::string proj_dir_;
 };
 }  // namespace mindspore::lite::micro
 
