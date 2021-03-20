@@ -24,62 +24,68 @@
 using namespace mindspore;
 
 static const char tensor_add_file[] = "/home/workspace/mindspore_dataset/mindir/add/add.mindir";
-static const float input_data_1[2][2] = {{1,2},{3,4}};
-static const float input_data_2[2][2] = {{2,3},{4,5}};
-static const float input_data_3[1] ={2};
+static const float input_data_1[2][2] = {{1, 2}, {3, 4}};
+static const float input_data_2[2][2] = {{2, 3}, {4, 5}};
+static const float input_data_3[1] = {2};
 
 class TestDynamicBatchSize : public ST::Common {
  public:
-    TestDynamicBatchSize() {}
+  TestDynamicBatchSize() {}
 };
 
 TEST_F(TestDynamicBatchSize, InferMindIR) {
-  mindspore::GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-  mindspore::GlobalContext::SetGlobalDeviceID(2);
-  std::map<int,std::vector<int>> input_shape;
-  input_shape.insert(std::make_pair(0,std::vector<int>{-1,2}));
-  input_shape.insert(std::make_pair(1,std::vector<int>{-1,2}));
-  auto model_context = std::make_shared<ModelContext>();
-  std::vector<size_t> dynamic_batch_size ={1,2,4,8};
-  ModelContext::SetDynamicBatchSize(model_context,dynamic_batch_size);
-  ModelContext::SetInputShapeMap(model_context,input_shape);
-  auto graph = Serialization::LoadModel(tensor_add_file, ModelType::kMindIR);
-  Model tensor_add(GraphCell(graph),model_context);
-  ASSERT_TRUE(tensor_add.Build() == kSuccess);
+#ifdef ENABLE_ACL
+  auto context = ContextAutoSet();
+  ASSERT_TRUE(context != nullptr);
+  ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  ASSERT_TRUE(ascend310_info != nullptr);
+
+  std::map<int, std::vector<int>> input_shape;
+  input_shape.insert(std::make_pair(0, std::vector<int>{-1, 2}));
+  input_shape.insert(std::make_pair(1, std::vector<int>{-1, 2}));
+  std::vector<size_t> dynamic_batch_size = {1, 2, 4, 8};
+  ascend310_info->SetDynamicBatchSize(dynamic_batch_size);
+  ascend310_info->SetInputShapeMap(input_shape);
+
+  Graph graph;
+  ASSERT_TRUE(Serialization::Load(tensor_add_file, ModelType::kMindIR, &graph) == kSuccess);
+  Model tensor_add;
+  ASSERT_TRUE(tensor_add.Build(GraphCell(graph), context) == kSuccess);
 
   // get model inputs
   std::vector<MSTensor> origin_inputs = tensor_add.GetInputs();
-  ASSERT_EQ(origin_inputs.size()-1, 2);
+  ASSERT_EQ(origin_inputs.size() - 1, 2);
 
   // prepare input
   std::vector<MSTensor> outputs;
   std::vector<MSTensor> inputs;
-  size_t row = sizeof(input_data_1)/sizeof(input_data_1[0]);
-  size_t col = sizeof(input_data_1[0])/sizeof(input_data_1[0][0]);;
-  inputs.emplace_back(origin_inputs[0].Name(), origin_inputs[0].DataType(), origin_inputs[0].Shape(),
-                      input_data_1, sizeof(float) * row*col);
-  inputs.emplace_back(origin_inputs[1].Name(), origin_inputs[1].DataType(), origin_inputs[1].Shape(),
-                      input_data_2, sizeof(float) * row*col);
-  inputs.emplace_back(origin_inputs[2].Name(), origin_inputs[2].DataType(), origin_inputs[2].Shape(),
-        input_data_3, sizeof(float) * 1);
+  size_t row = sizeof(input_data_1) / sizeof(input_data_1[0]);
+  size_t col = sizeof(input_data_1[0]) / sizeof(input_data_1[0][0]);
+  inputs.emplace_back(origin_inputs[0].Name(), origin_inputs[0].DataType(), origin_inputs[0].Shape(), input_data_1,
+                      sizeof(float) * row * col);
+  inputs.emplace_back(origin_inputs[1].Name(), origin_inputs[1].DataType(), origin_inputs[1].Shape(), input_data_2,
+                      sizeof(float) * row * col);
+  inputs.emplace_back(origin_inputs[2].Name(), origin_inputs[2].DataType(), origin_inputs[2].Shape(), input_data_3,
+                      sizeof(float) * 1);
 
   // infer
   ASSERT_TRUE(tensor_add.Predict(inputs, &outputs) == kSuccess);
 
   // assert input
   inputs = tensor_add.GetInputs();
-  ASSERT_EQ(inputs.size()-1, 2);
+  ASSERT_EQ(inputs.size() - 1, 2);
   auto after_input_data_1 = inputs[0].Data();
   auto after_input_data_2 = inputs[1].Data();
   const float *p = reinterpret_cast<const float *>(after_input_data_1.get());
-  float input_data1[inputs[0].DataSize() / sizeof(float)] ={0};
-  float input_data2[inputs[1].DataSize() / sizeof(float)] ={0};
-  size_t k=0,t=0;
-  for(size_t i=0;i<row;i++)
-      for(size_t j=0;j<col;j++){
-          input_data1[k++]=input_data_1[i][j];
-          input_data2[t++]=input_data_2[i][j];
-      }
+  float input_data1[inputs[0].DataSize() / sizeof(float)] = {0};
+  float input_data2[inputs[1].DataSize() / sizeof(float)] = {0};
+  size_t k = 0, t = 0;
+  for (size_t i = 0; i < row; i++)
+    for (size_t j = 0; j < col; j++) {
+      input_data1[k++] = input_data_1[i][j];
+      input_data2[t++] = input_data_2[i][j];
+    }
   for (size_t i = 0; i < inputs[0].DataSize() / sizeof(float); ++i) {
     ASSERT_LE(std::abs(p[i] - input_data1[i]), 1e-4);
   }
@@ -96,4 +102,5 @@ TEST_F(TestDynamicBatchSize, InferMindIR) {
       ASSERT_LE(std::abs(p[i] - (input_data1[i] + input_data2[i])), 1e-4);
     }
   }
+#endif  // ENABLE_ACL
 }

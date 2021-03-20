@@ -27,7 +27,7 @@ set(API_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/types.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/lite_context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model_impl.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc

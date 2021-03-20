@@ -36,7 +36,7 @@ class GraphCell::GraphImpl {
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
 
   virtual Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
-  virtual Status Load() = 0;
+  virtual Status Load(uint32_t device_id) = 0;
 
   virtual std::vector<MSTensor> GetInputs() = 0;
   virtual std::vector<MSTensor> GetOutputs() = 0;

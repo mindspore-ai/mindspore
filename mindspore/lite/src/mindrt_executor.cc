@@ -58,7 +58,7 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
 }
 
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                        const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
+                        const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                         const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   if (kernels.front()->Type() != schema::PrimitiveType_Merge) {

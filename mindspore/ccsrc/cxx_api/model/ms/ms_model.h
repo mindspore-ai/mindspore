@@ -48,6 +48,7 @@ class MsModel : public ModelImpl {
 
  private:
   std::shared_ptr<GraphCell> GenerateGraphCell(const std::vector<std::vector<int64_t>> &dims);
+  uint32_t GetDeviceID() const;
 
   std::shared_ptr<GraphCell> graph_cell_;
   std::map<std::string, std::shared_ptr<GraphCell>> dynamic_size_graph_map_;

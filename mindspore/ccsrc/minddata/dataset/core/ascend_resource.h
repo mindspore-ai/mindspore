@@ -36,7 +36,7 @@ class AscendResource : public DeviceResource {
   AscendResource() = default;
   ~AscendResource() = default;
 
-  Status InitResource() override;
+  Status InitResource(uint32_t device_id) override;
 
   Status FinalizeResource() override;
 

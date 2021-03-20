@@ -103,8 +103,9 @@ class MS_API GraphCell final : public Cell<GraphCell> {
   std::vector<MSTensor> GetOutputs();
 
  private:
+  friend class Model;
   friend class ModelImpl;
-  Status Load();
+  Status Load(uint32_t device_id);
 
   std::shared_ptr<Graph> graph_;
   std::shared_ptr<GraphImpl> executor_;

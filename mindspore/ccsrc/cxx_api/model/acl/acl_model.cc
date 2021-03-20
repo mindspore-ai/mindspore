@@ -18,6 +18,7 @@
 #include <memory>
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
+#include "cxx_api/graph/acl/acl_env_guard.h"
 
 namespace mindspore {
 API_FACTORY_REG(ModelImpl, Ascend310, AclModel);
@@ -40,6 +41,11 @@ Status AclModel::Build() {
 
   std::unique_ptr<AclModelOptions> options = std::make_unique<AclModelOptions>(model_context_);
   MS_EXCEPTION_IF_NULL(options);
+  std::string dump_cfg = options->GetDumpCfgPath();
+  if (!dump_cfg.empty()) {
+    MS_LOG(INFO) << "Options dump config file path " << dump_cfg;
+    (void)AclEnvGuard::GetAclEnv(dump_cfg);
+  }
   std::string options_key = options->GenAclOptionsKey();
   std::shared_ptr<Graph> graph;
   if (auto iter = dynamic_size_graph_map_.find(options_key); iter != dynamic_size_graph_map_.end()) {
@@ -75,7 +81,7 @@ Status AclModel::Build() {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
-  auto ret = ModelImpl::Load(graph_cell);
+  auto ret = ModelImpl::Load(graph_cell, options->GetDeviceID());
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
     return ret;
@@ -108,7 +114,8 @@ Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<s
   }
 
   if (model_context_ == nullptr) {
-    model_context_ = std::make_shared<ModelContext>();
+    model_context_ = std::make_shared<Context>();
+    model_context_->MutableDeviceInfo().emplace_back(std::make_shared<Ascend310DeviceInfo>());
   }
 
   std::string input_shape_option;
@@ -130,7 +137,14 @@ Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<s
     }
   }
   MS_LOG(INFO) << "Set input size option is " << input_shape_option;
-  ModelContext::SetInputShape(model_context_, input_shape_option);
+  auto &device_infos = model_context_->MutableDeviceInfo();
+  if (device_infos.size() != 1) {
+    MS_LOG(ERROR) << "Invalid model context, only single device info is supported.";
+    return kMCInvalidArgs;
+  }
+  auto ascend310_info = device_infos[0]->Cast<Ascend310DeviceInfo>();
+  MS_EXCEPTION_IF_NULL(ascend310_info);
+  ascend310_info->SetInputShape(input_shape_option);
   auto graph_cell_bak = std::move(graph_cell_);
   auto ret = Build();
   if (ret != kSuccess) {

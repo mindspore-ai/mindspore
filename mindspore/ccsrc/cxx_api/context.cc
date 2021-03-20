@@ -17,41 +17,57 @@
 #include <any>
 #include <map>
 #include <type_traits>
+#include "cxx_api/factory.h"
 #include "utils/log_adapter.h"
 
-constexpr auto kGlobalContextDeviceTarget = "mindspore.ascend.globalcontext.device_target";
-constexpr auto kGlobalContextDeviceID = "mindspore.ascend.globalcontext.device_id";
-constexpr auto kGlobalContextDumpCfgPath = "mindspore.ascend.globalcontext.dump_config_file_path";
-constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
-constexpr auto kModelOptionInputFormat = "mindspore.option.input_format";                    // nchw or nhwc
-constexpr auto kModelOptionInputShapeMap = "mindspore.option.input_shape_map";
-constexpr auto kModelOptionInputShape = "mindspore.option.input_shape";
+constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
+constexpr auto kModelOptionCpuThreadAffinity = "mindspore.option.cpu.thread_affinity";
+constexpr auto kModelOptionMaliGpuEnableFP16 = "mindspore.option.mali_gpu.enable_fp16";
+constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
+constexpr auto kModelOptionDeviceID = "mindspore.option.device_id";
+constexpr auto kModelOptionNvidiaGpuDeviceID = kModelOptionDeviceID;
+constexpr auto kModelOptionNvidiaGpuTrtInferMode = "mindspore.option.nvidia_gpu.trt_infer_mode";
+constexpr auto kModelOptionAscend910DeviceID = kModelOptionDeviceID;
+constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
+constexpr auto kModelOptionAscend310DumpCfgPath = "mindspore.option.ascend310.dump_config_file_path";
+constexpr auto kModelOptionAscend310InsertOpCfgPath =
+  "mindspore.option.ascend310.insert_op_config_file_path";                                    // aipp config file
+constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";  // nchw or nhwc
+constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
+constexpr auto kModelOptionAscend310InputShape = "mindspore.option.ascend310.input_shape";
 // Mandatory while dynamic batch: e.g. "input_op_name1: n1,c2,h3,w4;input_op_name2: n4,c3,h2,w1"
-constexpr auto kModelOptionOutputType = "mindspore.option.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
-constexpr auto kModelOptionPrecisionMode = "mindspore.option.precision_mode";
+constexpr auto kModelOptionAscend310OutputType =
+  "mindspore.option.ascend310.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
+constexpr auto kModelOptionAscend310PrecisionMode = "mindspore.option.ascend310.precision_mode";
 // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
-constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_mode";
-constexpr auto KModelOptionFusionSwitchCfgPath = "mindspore.option.fusion_switch_config_file_path";
+constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend310.op_select_impl_mode";
+constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
 // "False": Inference with native backend, "True": Inference with Tensor-RT engine, default as "False"
-constexpr auto kModelOptionGpuTrtInferMode = "mindspore.option.gpu_trt_infer_mode";
-constexpr auto kModelOptionDynamicBatchSize = "mindspore.option.dynamic_batch_size";
-constexpr auto kModelOptionDynamicImageSize = "mindspore.option.dynamic_image_size";
+constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
 
 namespace mindspore {
+class Allocator {};
+
 struct Context::Data {
+  std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
+  int32_t thread_num;
+  std::shared_ptr<Allocator> allocator;
+};
+
+struct DeviceInfoContext::Data {
   std::map<std::string, std::any> params;
 };
 
-Context::Context() : data(std::make_shared<Data>()) {}
+Context::Context() : data_(std::make_shared<Data>()) {}
 
 template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
-static const U &GetValue(const std::shared_ptr<Context> &context, const std::string &key) {
+static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, const std::string &key) {
   static U empty_result;
-  if (context == nullptr || context->data == nullptr) {
+  if (data == nullptr) {
     return empty_result;
   }
-  auto iter = context->data->params.find(key);
-  if (iter == context->data->params.end()) {
+  auto iter = data->params.find(key);
+  if (iter == data->params.end()) {
     return empty_result;
   }
   const std::any &value = iter->second;
@@ -62,210 +78,205 @@ static const U &GetValue(const std::shared_ptr<Context> &context, const std::str
   return std::any_cast<const U &>(value);
 }
 
-std::shared_ptr<Context> GlobalContext::GetGlobalContext() {
-  static std::shared_ptr<Context> g_context = std::make_shared<Context>();
-  return g_context;
+void Context::SetThreadNum(int32_t thread_num) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->thread_num = thread_num;
+}
+int32_t Context::GetThreadNum() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return data_->thread_num;
 }
 
-void GlobalContext::SetGlobalDeviceTarget(const std::vector<char> &device_target) {
-  auto global_context = GetGlobalContext();
-  MS_EXCEPTION_IF_NULL(global_context);
-  if (global_context->data == nullptr) {
-    global_context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(global_context->data);
-  }
-  global_context->data->params[kGlobalContextDeviceTarget] = CharToString(device_target);
+void Context::SetAllocator(const std::shared_ptr<Allocator> &allocator) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->allocator = allocator;
+}
+std::shared_ptr<Allocator> Context::GetAllocator() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return data_->allocator;
 }
 
-std::vector<char> GlobalContext::GetGlobalDeviceTargetChar() {
-  auto global_context = GetGlobalContext();
-  MS_EXCEPTION_IF_NULL(global_context);
-  const std::string &ref = GetValue<std::string>(global_context, kGlobalContextDeviceTarget);
+std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
+  MS_EXCEPTION_IF_NULL(data_);
+  return data_->device_info_list;
+}
+
+DeviceInfoContext::DeviceInfoContext() : data_(std::make_shared<Data>()) {}
+
+void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionCpuEnableFP16] = is_fp16;
+}
+bool CPUDeviceInfo::GetEnableFP16() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<bool>(data_, kModelOptionCpuEnableFP16);
+}
+
+void CPUDeviceInfo::SetThreadAffinity(int affinity) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionCpuThreadAffinity] = affinity;
+}
+int CPUDeviceInfo::GetThreadAffinity() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<bool>(data_, kModelOptionCpuThreadAffinity);
+}
+
+void MaliGPUDeviceInfo::SetEnableFP16(bool is_fp16) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionMaliGpuEnableFP16] = is_fp16;
+}
+bool MaliGPUDeviceInfo::GetEnableFP16() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<bool>(data_, kModelOptionMaliGpuEnableFP16);
+}
+
+void KirinNPUDeviceInfo::SetFrequency(int frequency) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionKirinNpuFrequency] = frequency;
+}
+int KirinNPUDeviceInfo::GetFrequency() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<int>(data_, kModelOptionKirinNpuFrequency);
+}
+
+void NvidiaGPUDeviceInfo::SetDeviceID(uint32_t device_id) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionNvidiaGpuDeviceID] = device_id;
+}
+uint32_t NvidiaGPUDeviceInfo::GetDeviceID() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<uint32_t>(data_, kModelOptionNvidiaGpuDeviceID);
+}
+
+void NvidiaGPUDeviceInfo::SetGpuTrtInferMode(bool gpu_trt_infer_mode) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionNvidiaGpuTrtInferMode] = gpu_trt_infer_mode;
+}
+bool NvidiaGPUDeviceInfo::GetGpuTrtInferMode() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<bool>(data_, kModelOptionNvidiaGpuTrtInferMode);
+}
+
+void Ascend910DeviceInfo::SetDeviceID(uint32_t device_id) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend910DeviceID] = device_id;
+}
+uint32_t Ascend910DeviceInfo::GetDeviceID() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<uint32_t>(data_, kModelOptionAscend910DeviceID);
+}
+
+void Ascend310DeviceInfo::SetDeviceID(uint32_t device_id) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310DeviceID] = device_id;
+}
+uint32_t Ascend310DeviceInfo::GetDeviceID() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<uint32_t>(data_, kModelOptionAscend310DeviceID);
+}
+
+void Ascend310DeviceInfo::SetDumpConfigPath(const std::vector<char> &cfg_path) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310DumpCfgPath] = CharToString(cfg_path);
+}
+std::vector<char> Ascend310DeviceInfo::GetDumpConfigPathChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DeviceID);
   return StringToChar(ref);
 }
 
-void GlobalContext::SetGlobalDeviceID(const uint32_t &device_id) {
-  auto global_context = GetGlobalContext();
-  MS_EXCEPTION_IF_NULL(global_context);
-  if (global_context->data == nullptr) {
-    global_context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(global_context->data);
-  }
-  global_context->data->params[kGlobalContextDeviceID] = device_id;
+void Ascend310DeviceInfo::SetInsertOpConfigPath(const std::vector<char> &cfg_path) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310InsertOpCfgPath] = CharToString(cfg_path);
 }
-
-uint32_t GlobalContext::GetGlobalDeviceID() {
-  auto global_context = GetGlobalContext();
-  MS_EXCEPTION_IF_NULL(global_context);
-  return GetValue<uint32_t>(global_context, kGlobalContextDeviceID);
-}
-
-void GlobalContext::SetGlobalDumpConfigPath(const std::vector<char> &cfg_path) {
-  auto global_context = GetGlobalContext();
-  MS_EXCEPTION_IF_NULL(global_context);
-  if (global_context->data == nullptr) {
-    global_context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(global_context->data);
-  }
-  global_context->data->params[kGlobalContextDumpCfgPath] = CharToString(cfg_path);
-}
-
-std::vector<char> GlobalContext::GetGlobalDumpConfigPathChar() {
-  auto global_context = GetGlobalContext();
-  MS_EXCEPTION_IF_NULL(global_context);
-  const std::string &ref = GetValue<std::string>(global_context, kGlobalContextDumpCfgPath);
+std::vector<char> Ascend310DeviceInfo::GetInsertOpConfigPathChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InsertOpCfgPath);
   return StringToChar(ref);
 }
 
-void ModelContext::SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionInsertOpCfgPath] = CharToString(cfg_path);
+void Ascend310DeviceInfo::SetInputFormat(const std::vector<char> &format) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310InputFormat] = CharToString(format);
 }
-
-std::vector<char> ModelContext::GetInsertOpConfigPathChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionInsertOpCfgPath);
+std::vector<char> Ascend310DeviceInfo::GetInputFormatChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InputFormat);
   return StringToChar(ref);
 }
 
-void ModelContext::SetInputFormat(const std::shared_ptr<Context> &context, const std::vector<char> &format) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionInputFormat] = CharToString(format);
+void Ascend310DeviceInfo::SetInputShape(const std::vector<char> &shape) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310InputShape] = CharToString(shape);
 }
-
-std::vector<char> ModelContext::GetInputFormatChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionInputFormat);
+std::vector<char> Ascend310DeviceInfo::GetInputShapeChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310InputShape);
   return StringToChar(ref);
 }
 
-void ModelContext::SetInputShape(const std::shared_ptr<Context> &context, const std::vector<char> &shape) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionInputShape] = CharToString(shape);
-}
-
-std::vector<char> ModelContext::GetInputShapeChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionInputShape);
-  return StringToChar(ref);
-}
-
-void ModelContext::SetInputShapeMap(const std::shared_ptr<Context> &context,
-                                    const std::map<int, std::vector<int>> &shape) {
-  MS_EXCEPTION_IF_NULL(context);
-  context->data->params[kModelOptionInputShapeMap] = shape;
-}
-
-std::map<int, std::vector<int>> ModelContext::GetInputShapeMap(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  return GetValue<std::map<int, std::vector<int>>>(context, kModelOptionInputShapeMap);
-}
-
-void ModelContext::SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionOutputType] = output_type;
-}
-
-enum DataType ModelContext::GetOutputType(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  return GetValue<enum DataType>(context, kModelOptionOutputType);
-}
-
-void ModelContext::SetPrecisionMode(const std::shared_ptr<Context> &context, const std::vector<char> &precision_mode) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionPrecisionMode] = CharToString(precision_mode);
-}
-
-std::vector<char> ModelContext::GetPrecisionModeChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionPrecisionMode);
-  return StringToChar(ref);
-}
-
-void ModelContext::SetOpSelectImplMode(const std::shared_ptr<Context> &context,
-                                       const std::vector<char> &op_select_impl_mode) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionOpSelectImplMode] = CharToString(op_select_impl_mode);
-}
-
-std::vector<char> ModelContext::GetOpSelectImplModeChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionOpSelectImplMode);
-  return StringToChar(ref);
-}
-
-void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context,
-                                             const std::vector<char> &cfg_path) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[KModelOptionFusionSwitchCfgPath] = CharToString(cfg_path);
-}
-
-std::vector<char> ModelContext::GetFusionSwitchConfigPathChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, KModelOptionFusionSwitchCfgPath);
-  return StringToChar(ref);
-}
-
-void ModelContext::SetGpuTrtInferMode(const std::shared_ptr<Context> &context,
-                                      const std::vector<char> &gpu_trt_infer_mode) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
-  context->data->params[kModelOptionGpuTrtInferMode] = CharToString(gpu_trt_infer_mode);
-}
-
-std::vector<char> ModelContext::GetGpuTrtInferModeChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionGpuTrtInferMode);
-  return StringToChar(ref);
-}
-
-void ModelContext::SetDynamicBatchSize(const std::shared_ptr<Context> &context, const std::vector<size_t> &batch_size) {
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->data == nullptr) {
-    context->data = std::make_shared<Data>();
-    MS_EXCEPTION_IF_NULL(context->data);
-  }
+void Ascend310DeviceInfo::SetDynamicBatchSize(const std::vector<size_t> &dynamic_batch_size) {
+  MS_EXCEPTION_IF_NULL(data_);
   std::string batchs = "";
-  for (auto bs : batch_size) {
-    batchs += std::to_string(bs) + ",";
+  for (size_t i = 0; i < dynamic_batch_size.size(); ++i) {
+    if (i != 0) {
+      batchs.push_back(',');
+    }
+    batchs += std::to_string(dynamic_batch_size[i]);
   }
-  context->data->params[kModelOptionDynamicBatchSize] = batchs;
+  data_->params[kModelOptionAscend310DynamicBatchSize] = batchs;
+}
+std::vector<char> Ascend310DeviceInfo::GetDynamicBatchSizeChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DynamicBatchSize);
+  return StringToChar(ref);
 }
 
-std::vector<char> ModelContext::GetDynamicBatchSizeChar(const std::shared_ptr<Context> &context) {
-  MS_EXCEPTION_IF_NULL(context);
-  const std::string &ref = GetValue<std::string>(context, kModelOptionDynamicBatchSize);
+void Ascend310DeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310PrecisionMode] = CharToString(precision_mode);
+}
+std::vector<char> Ascend310DeviceInfo::GetPrecisionModeChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310PrecisionMode);
   return StringToChar(ref);
+}
+
+void Ascend310DeviceInfo::SetOpSelectImplMode(const std::vector<char> &op_select_impl_mode) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310OpSelectImplMode] = CharToString(op_select_impl_mode);
+}
+std::vector<char> Ascend310DeviceInfo::GetOpSelectImplModeChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310OpSelectImplMode);
+  return StringToChar(ref);
+}
+
+void Ascend310DeviceInfo::SetFusionSwitchConfigPath(const std::vector<char> &cfg_path) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[KModelOptionAscend310FusionSwitchCfgPath] = CharToString(cfg_path);
+}
+std::vector<char> Ascend310DeviceInfo::GetFusionSwitchConfigPathChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, KModelOptionAscend310FusionSwitchCfgPath);
+  return StringToChar(ref);
+}
+
+void Ascend310DeviceInfo::SetInputShapeMap(const std::map<int, std::vector<int>> &shape) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310InputShapeMap] = shape;
+}
+std::map<int, std::vector<int>> Ascend310DeviceInfo::GetInputShapeMap() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<std::map<int, std::vector<int>>>(data_, kModelOptionAscend310InputShapeMap);
+}
+
+void Ascend310DeviceInfo::SetOutputType(enum DataType output_type) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310OutputType] = output_type;
+}
+enum DataType Ascend310DeviceInfo::GetOutputType() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return GetValue<enum DataType>(data_, kModelOptionAscend310OutputType);
 }
 }  // namespace mindspore

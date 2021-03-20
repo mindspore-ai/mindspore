@@ -68,38 +68,59 @@ static Buffer ReadFile(const std::string &file) {
   return buffer;
 }
 
-Graph Serialization::LoadModel(const void *model_data, size_t data_size, ModelType model_type) {
+Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph) {
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Output args graph is nullptr.";
+    return kMEInvalidInput;
+  }
+
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph = nullptr;
     try {
       anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data), data_size);
     } catch (const std::exception &) {
-      MS_LOG(EXCEPTION) << "Load MindIR failed.";
+      MS_LOG(ERROR) << "Load model failed.";
+      return kMEInvalidInput;
     }
 
-    return Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    *graph = Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    return kSuccess;
   } else if (model_type == kOM) {
-    return Graph(std::make_shared<Graph::GraphData>(Buffer(model_data, data_size), kOM));
+    *graph = Graph(std::make_shared<Graph::GraphData>(Buffer(model_data, data_size), kOM));
+    return kSuccess;
   }
-  MS_LOG(EXCEPTION) << "Unsupported ModelType " << model_type;
+
+  MS_LOG(ERROR) << "Unsupported ModelType " << model_type;
+  return kMEInvalidInput;
 }
 
-Graph Serialization::LoadModel(const std::vector<char> &file, ModelType model_type) {
+Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph) {
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Output args graph is nullptr.";
+    return kMEInvalidInput;
+  }
+
   std::string file_path = CharToString(file);
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph = LoadMindIR(file_path);
     if (anf_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "Load model failed.";
+      MS_LOG(ERROR) << "Load model failed.";
+      return kMEInvalidInput;
     }
-    return Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    *graph = Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    return kSuccess;
   } else if (model_type == kOM) {
     Buffer data = ReadFile(file_path);
     if (data.Data() == nullptr) {
-      MS_LOG(EXCEPTION) << "Read file " << file_path << " failed.";
+      MS_LOG(ERROR) << "Read file " << file_path << " failed.";
+      return kMEInvalidInput;
     }
-    return Graph(std::make_shared<Graph::GraphData>(data, kOM));
+    *graph = Graph(std::make_shared<Graph::GraphData>(data, kOM));
+    return kSuccess;
   }
-  MS_LOG(EXCEPTION) << "Unsupported ModelType " << model_type;
+
+  MS_LOG(ERROR) << "Unsupported ModelType " << model_type;
+  return kMEInvalidInput;
 }
 
 Status Serialization::LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "include/api/cell.h"
-#include "include/api/lite_context.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -77,7 +76,7 @@ Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return kLiteError;
 }
 
-Status GraphCell::Load() {
+Status GraphCell::Load(uint32_t device_id) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kLiteError;
 }

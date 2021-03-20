@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,51 @@
 #include <functional>
 #include "include/api/types.h"
 #include "include/api/status.h"
+#include "include/lite_utils.h"
 #include "include/ms_tensor.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+using mindspore::lite::RET_OK;
+
 class MSTensor::Impl {
  public:
   Impl() {}
-  virtual ~Impl() = default;
-  explicit Impl(tensor::MSTensor *tensor) : lite_tensor_(tensor) {
+
+  virtual ~Impl() {
+    if (lite_tensor_ == nullptr) {
+      return;
+    }
+    if (!from_session_) {
+      if (!own_data_) {
+        lite_tensor_->set_data(nullptr);
+      }
+      delete lite_tensor_;
+      lite_tensor_ = nullptr;
+    }
+  }
+
+  explicit Impl(tensor::MSTensor *tensor) : lite_tensor_(tensor), from_session_(true) {
     if (tensor != nullptr) {
       tensor_name_ = tensor->tensor_name();
     }
   }
 
-  bool operator==(std::nullptr_t) const { return lite_tensor_ == nullptr; }
+  static Impl *CreateTensorImpl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+                                const void *data, size_t data_len);
 
-  Impl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
-       size_t data_len);
+  static Impl *StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
+
+  static std::vector<std::string> TensorImplToStrings(const std::shared_ptr<Impl> &impl) {
+    std::vector<std::string> empty;
+    auto lite_tensor = impl->lite_tensor();
+    if (lite_tensor == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor impl.";
+      return empty;
+    }
+    return lite::MSTensorToStrings(lite_tensor);
+  }
 
   virtual const std::string &Name() const {
     static std::string empty = "";
@@ -110,11 +136,6 @@ class MSTensor::Impl {
 
   virtual bool IsDevice() const { return false; }
 
-  virtual std::shared_ptr<Impl> Clone() const {
-    MS_LOG(ERROR) << "Unsupported feature.";
-    return nullptr;
-  }
-
   tensor::MSTensor *lite_tensor() { return lite_tensor_; }
 
   Status set_lite_tensor(tensor::MSTensor *tensor) {
@@ -126,15 +147,14 @@ class MSTensor::Impl {
     return kSuccess;
   }
 
-  void set_need_copy(bool need_copy) { need_copy_ = need_copy; }
-
-  bool need_copy() { return need_copy_; }
+  void set_own_data(bool own_data) { own_data_ = own_data; }
 
  private:
-  tensor::MSTensor *lite_tensor_;
-  std::string tensor_name_;
-  std::vector<int64_t> shape_;
-  bool need_copy_ = true;
+  tensor::MSTensor *lite_tensor_ = nullptr;
+  std::string tensor_name_ = "";
+  std::vector<int64_t> shape_ = {};
+  bool own_data_ = false;
+  bool from_session_ = false;
 };
 
 }  // namespace mindspore

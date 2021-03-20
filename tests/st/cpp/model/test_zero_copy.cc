@@ -51,46 +51,49 @@ std::vector<std::string> GetAllFiles(std::string_view dir_name);
 
 TEST_F(TestZeroCopy, TestMindIR) {
 #ifdef ENABLE_ACL
-    // Set context
-    mindspore::GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-    mindspore::GlobalContext::SetGlobalDeviceID(0);
-    auto model_context = std::make_shared<ModelContext>();
-    ModelContext::SetInsertOpConfigPath(model_context,aipp_path);
-    // Define model
-    auto graph = mindspore::Serialization::LoadModel(resnet_file, mindspore::ModelType::kMindIR);
-    mindspore::Model resnet50(mindspore::GraphCell(graph),model_context);
-    // Build model
-    ASSERT_TRUE(resnet50.Build() == kSuccess);
-    // Get model info
-    std::vector<mindspore::MSTensor> model_inputs =resnet50.GetInputs();
-    ASSERT_EQ(model_inputs.size(), 1);
-    // Define transform operations
-    std::shared_ptr<TensorTransform> decode(new vision::Decode());
-    std::shared_ptr<TensorTransform> resize(new vision::Resize({256}));
-    std::shared_ptr<TensorTransform> center_crop(new vision::CenterCrop({224,224}));
-    mindspore::dataset::Execute Transform({decode,resize,center_crop},MapTargetDevice::kAscend310);
-    size_t count=0;
-    // Read images
-    std::vector<std::string> images =GetAllFiles(image_path);
-    for(const auto &image_file:images){
-        // prepare input
-        std::vector<mindspore::MSTensor> inputs;
-        std::vector<mindspore::MSTensor> outputs;
-        std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-        mindspore::dataset::Tensor::CreateFromFile(image_file, &de_tensor);
-        auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
-        // Apply transform on images
-        Status rc = Transform(image, &image);
-        ASSERT_TRUE(rc == kSuccess);
-        inputs.push_back(image);
-        // infer
-        ASSERT_TRUE(resnet50.Predict(inputs, &outputs)==kSuccess);
-        if(GetMax(outputs[0])==0){
-          ++count;
-        }
-        Transform.DeviceMemoryRelease();
+  // Set context
+  auto context = ContextAutoSet();
+  ASSERT_TRUE(context != nullptr);
+  ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  ASSERT_TRUE(ascend310_info != nullptr);
+  ascend310_info->SetInsertOpConfigPath(aipp_path);
+  auto device_id = ascend310_info->GetDeviceID();
+  // Define model
+  Graph graph;
+  ASSERT_TRUE(Serialization::Load(resnet_file, ModelType::kMindIR, &graph) == kSuccess);
+  Model resnet50;
+  ASSERT_TRUE(resnet50.Build(GraphCell(graph), context) == kSuccess);
+  // Get model info
+  std::vector<mindspore::MSTensor> model_inputs = resnet50.GetInputs();
+  ASSERT_EQ(model_inputs.size(), 1);
+  // Define transform operations
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize({256}));
+  std::shared_ptr<TensorTransform> center_crop(new vision::CenterCrop({224, 224}));
+  mindspore::dataset::Execute Transform({decode, resize, center_crop}, MapTargetDevice::kAscend310, device_id);
+  size_t count = 0;
+  // Read images
+  std::vector<std::string> images = GetAllFiles(image_path);
+  for (const auto &image_file : images) {
+    // prepare input
+    std::vector<mindspore::MSTensor> inputs;
+    std::vector<mindspore::MSTensor> outputs;
+    std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
+    mindspore::dataset::Tensor::CreateFromFile(image_file, &de_tensor);
+    auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+    // Apply transform on images
+    Status rc = Transform(image, &image);
+    ASSERT_TRUE(rc == kSuccess);
+    inputs.push_back(image);
+    // infer
+    ASSERT_TRUE(resnet50.Predict(inputs, &outputs) == kSuccess);
+    if (GetMax(outputs[0]) == 0) {
+      ++count;
     }
-    ASSERT_GE(static_cast<double>(count)/images.size()*100.0, 20.0);
+    Transform.DeviceMemoryRelease();
+  }
+  ASSERT_GE(static_cast<double>(count) / images.size() * 100.0, 20.0);
 #endif
 }
 
@@ -149,8 +152,7 @@ std::vector<std::string> GetAllFiles(std::string_view dir_name) {
   while ((filename = readdir(dir)) != nullptr) {
     std::string d_name = std::string(filename->d_name);
     // get rid of "." and ".."
-    if (d_name == "." || d_name == ".." || filename->d_type != DT_REG)
-      continue;
+    if (d_name == "." || d_name == ".." || filename->d_type != DT_REG) continue;
     res.emplace_back(std::string(dir_name) + "/" + filename->d_name);
   }
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "include/api/context.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -58,10 +57,10 @@ void Common::ReadFile(const char *file, size_t *size, char **buf) {
   ifs.close();
 }
 
-void Common::ContextAutoSet() {
-  auto device_target = GetEnv("DEVICE_TARGET");
-  if (device_target.empty()) {
-    device_target = mindspore::kDeviceTypeAscend310;  // default is 310
+std::shared_ptr<mindspore::Context> Common::ContextAutoSet() {
+  auto device_target_str = GetEnv("DEVICE_TARGET");
+  if (device_target_str.empty()) {
+    device_target_str = "Ascend310";  // default is 310
   }
 
   auto device_id_str = GetEnv("DEVICE_ID");
@@ -69,9 +68,21 @@ void Common::ContextAutoSet() {
     device_id_str = "0";  // default is 0
   }
   uint32_t device_id = std::strtoul(device_id_str.c_str(), nullptr, 10);
+  auto context = std::make_shared<mindspore::Context>();
 
-  mindspore::GlobalContext::SetGlobalDeviceTarget(device_target);
-  mindspore::GlobalContext::SetGlobalDeviceID(device_id);
+  if (device_target_str == "Ascend310") {
+    auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+    ascend310_info->SetDeviceID(device_id);
+    context->MutableDeviceInfo().emplace_back(ascend310_info);
+  } else if (device_target_str == "Ascend910") {
+    auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+    ascend310_info->SetDeviceID(device_id);
+    context->MutableDeviceInfo().emplace_back(ascend310_info);
+  } else {
+    return context;
+  }
+
+  return context;
 }
 }  // namespace ST
 
