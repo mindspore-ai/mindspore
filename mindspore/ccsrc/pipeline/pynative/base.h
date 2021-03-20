@@ -50,16 +50,17 @@ enum PynativeStatusCode {
 enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
+  bool is_dynamic_shape = false;
+  bool is_mixed_precision_cast = false;
+  size_t next_input_index = 0;
   std::string op_name;
+  std::string op_info;
+  std::string next_op_name = "";
   PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
 
   py::list op_inputs;
   std::vector<int64_t> inputs_mask;
-  bool is_dynamic_shape = false;
-  std::string next_op_name = "";
-  bool is_mixed_precision_cast = false;
-  size_t next_input_index = 0;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 

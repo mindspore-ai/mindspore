@@ -286,13 +286,13 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
       if (element->isa<tensor::Tensor>()) {
         auto tensor = element->cast<tensor::TensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
-        tensors->push_back(tensor);
+        tensors->emplace_back(tensor);
       }
     }
   } else if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    tensors->push_back(tensor);
+    tensors->emplace_back(tensor);
   }
 }
 }  // namespace mindspore
