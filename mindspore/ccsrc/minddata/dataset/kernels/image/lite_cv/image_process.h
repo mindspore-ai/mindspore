@@ -148,7 +148,8 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
                 PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
 /// \brief Filter the image by a Sobel kernel
-bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, PaddBorderType pad_type);
+bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize = 3, double scale = 1.0,
+           PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
 /// \brief Convert RGB image or color image to grayscale image
 bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
