@@ -16,7 +16,7 @@
 #include <memory>
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/reduce_parameter.h"
-
+using mindspore::schema::PrimitiveType_ReduceFusion;
 namespace mindspore {
 namespace lite {
 
@@ -37,7 +37,7 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(reduce_param);
 }
 
-Registry ReduceParameterRegistry(schema::PrimitiveType_ReduceFusion, PopulateReduceParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_ReduceFusion, PopulateReduceParameter, SCHEMA_CUR)
 
 }  // namespace lite
 }  // namespace mindspore

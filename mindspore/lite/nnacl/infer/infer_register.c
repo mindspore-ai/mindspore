@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 #include "nnacl/infer/infer_register.h"
+#ifdef MS_COMPILE_IOS
+extern void _ReducePrimType_ReduceFusion();
+extern void _ReshapePrimType_Reshape();
 
+void RegisterInfer() {
+  _ReducePrimType_ReduceFusion();
+  _ReshapePrimType_Reshape();
+}
+#endif
 InferShape *g_infer_func;
 
 __attribute__((constructor(101))) void InitInferFuncBuf() {
@@ -22,6 +30,9 @@ __attribute__((constructor(101))) void InitInferFuncBuf() {
   if (g_infer_func != NULL) {
     memset(g_infer_func, 0, PrimType_MAX * sizeof(InferShape));
   }
+#ifdef MS_COMPILE_IOS
+  RegisterInfer();
+#endif
 }
 
 InferShape GetInferFunc(int prim_type) {
