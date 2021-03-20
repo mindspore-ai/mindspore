@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,4 +54,43 @@ def test_net():
                        [84., 87., 90., 93.],
                        [96., 99., 102., 105.]]]]
 
+    assert (output.asnumpy() == expect_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_net_float64():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
+    y = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
+    z = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
+    add = Net()
+    output = add(Tensor(x), Tensor(y), Tensor(z))
+    expect_result = np.array([[[[0., 3., 6., 9.],
+                                [12., 15., 18., 21.],
+                                [24., 27., 30., 33.]],
+                               [[36., 39., 42., 45.],
+                                [48., 51., 54., 57.],
+                                [60., 63., 66., 69.]],
+                               [[72., 75., 78., 81.],
+                                [84., 87., 90., 93.],
+                                [96., 99., 102., 105.]]]]).astype(np.float64)
+    assert (output.asnumpy() == expect_result).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
+    y = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
+    z = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
+    add = Net()
+    output = add(Tensor(x), Tensor(y), Tensor(z))
+    expect_result = np.array([[[[0., 3., 6., 9.],
+                                [12., 15., 18., 21.],
+                                [24., 27., 30., 33.]],
+                               [[36., 39., 42., 45.],
+                                [48., 51., 54., 57.],
+                                [60., 63., 66., 69.]],
+                               [[72., 75., 78., 81.],
+                                [84., 87., 90., 93.],
+                                [96., 99., 102., 105.]]]]).astype(np.float64)
     assert (output.asnumpy() == expect_result).all()

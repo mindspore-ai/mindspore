@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ADDN_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ADDN_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ADDN_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ADDN_GPU_KERNEL_H_
 
 #include <memory>
 #include <vector>
@@ -63,11 +63,18 @@ class AddNGpuFwdKernel : public GpuKernel {
     }
     const float alpha = 1;
     const float beta = 0;
+    const double dalpha = static_cast<double>(1.0f);
+    const double dbeta = static_cast<double>(0.0f);
     for (size_t i = 0; i < num_input_; i++) {
       T *input_addr = GetDeviceAddress<T>(inputs, i);
       if (cudnn_data_type_ == CUDNN_DATA_INT32) {
         ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
+        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                    cudnnAddTensor(cudnn_handle_, &dalpha, input_descriptor_, input_addr,
+                                                   &(i > 0 ? dalpha : dbeta), input_descriptor_, work_addr),
+                                    "cudnnAddTensor failed");
       } else {
         CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                     cudnnAddTensor(cudnn_handle_, &alpha, input_descriptor_, input_addr,
@@ -169,4 +176,4 @@ class AddNGpuFwdKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ADDN_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ADDN_GPU_KERNEL_H_
