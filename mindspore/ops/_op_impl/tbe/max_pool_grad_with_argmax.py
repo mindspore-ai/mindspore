@@ -30,6 +30,7 @@ max_pool_grad_with_argmax_op_info = TBERegOp("MaxPoolGradWithArgmax") \
     .input(1, "grad", False, "required", "all") \
     .input(2, "argmax", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
+    .need_check_supported(True) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.U16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.I64_5HD, DataType.F16_5HD) \
     .get_op_info()
