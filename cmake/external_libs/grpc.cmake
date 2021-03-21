@@ -1,10 +1,13 @@
 set(grpc_USE_STATIC_LIBS ON)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden \
+      -D_FORTIFY_SOURCE=2 -O2")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden \
+      -D_FORTIFY_SOURCE=2 -O2")
 else()
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden \
+      -D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
 endif()
 
 set(grpc_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
@@ -106,7 +109,8 @@ function(ms_grpc_generate c_var h_var)
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/proto"
                 COMMAND protobuf::protoc --version
                 COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto
-                --grpc_out=${CMAKE_BINARY_DIR}/proto --plugin=protoc-gen-grpc=$<TARGET_FILE:grpc::grpc_cpp_plugin> ${abs_file}
+                        --grpc_out=${CMAKE_BINARY_DIR}/proto
+                        --plugin=protoc-gen-grpc=$<TARGET_FILE:grpc::grpc_cpp_plugin> ${abs_file}
                 DEPENDS protobuf::protoc grpc::grpc_cpp_plugin ${abs_file}
                 COMMENT "Running C++ gRPC compiler on ${file}" VERBATIM)
     endforeach()
@@ -114,5 +118,4 @@ function(ms_grpc_generate c_var h_var)
     set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)
     set(${c_var} ${${c_var}} PARENT_SCOPE)
     set(${h_var} ${${h_var}} PARENT_SCOPE)
-
 endfunction()

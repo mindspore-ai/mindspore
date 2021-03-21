@@ -86,8 +86,10 @@ function(ms_protobuf_generate_py c_var h_var py_var)
                 COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
                 COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
                 COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
-                COMMAND cp "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
+                COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"
+                        "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                COMMAND cp "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                        "${PROJECT_SOURCE_DIR}/mindspore/train/"
                 DEPENDS protobuf::protoc ${abs_file}
                 COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
     endforeach()
