@@ -53,11 +53,10 @@ static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
   MS_INT32X4 integer = MS_CVTQPS_EPI32(input / param[0]);
   MS_FLOAT32X4 decimal = input - MS_CVTQEPI32_PS(integer) * param[0];
   MS_INT32X4 int_exp = MS_SLLIQ_EPI32(MS_ADDQ_EPI32(integer, MS_MOVQ_EPI32(127)), 23);
-  memcpy(dst, &int_exp, sizeof(int32_t) * 4);
   MS_FLOAT32X4 decimal_exp =
     param[5] +
     decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  MS_STQ_F32(dst, decimal_exp * MS_LDQ_F32(dst));
+  MS_STQ_F32(dst, decimal_exp * MS_LDQ_F32((float *)(&int_exp)));
 }
 #endif
 
@@ -76,11 +75,10 @@ static inline void simd_exp_avx(MS_FLOAT32X8 input, float *dst) {
   MS_INT32X8 integer = MS_CVT256PS_EPI32(input / param[0]);
   MS_FLOAT32X8 decimal = input - MS_CVT256EPI32_PS(integer) * param[0];
   MS_INT32X8 int_exp = MS_SLLI256_EPI32(MS_ADD256_EPI32(integer, MS_MOV256_EPI32(127)), 23);
-  memcpy(dst, &int_exp, sizeof(int32_t) * 8);
   MS_FLOAT32X8 decimal_exp =
     param[5] +
     decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  MS_ST256_F32(dst, decimal_exp * MS_LD256_F32(dst));
+  MS_ST256_F32(dst, decimal_exp * MS_LD256_F32((float *)(&int_exp)));
 }
 #endif
 
@@ -90,10 +88,10 @@ static inline void single_exp(float src, float *dst) {
   int integer = src / param[0];
   float decimal = src - integer * param[0];
   int int_exp = (integer + 127) << 23;
-  memcpy(dst, &int_exp, sizeof(float));
-  const float decimal_exp =
+  float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  *dst *= decimal_exp;
+  float *ptr = (float *)&int_exp;
+  *dst = *ptr * decimal_exp;
 }
 #ifdef __cplusplus
 }
