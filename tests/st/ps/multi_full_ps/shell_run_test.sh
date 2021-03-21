@@ -44,6 +44,7 @@ do
 done
 
 export MS_ROLE=MS_WORKER
+process_pid=()
 if [ $DEVICE_TARGET == "Ascend" ];then
 for((i=0;i<$MS_WORKER_NUM;i++));
 do
@@ -53,14 +54,27 @@ do
   export RANK_ID=$i
   export DEVICE_ID=$i
   python ${self_path}/../test_multi_full_ps.py --device_target=$DEVICE_TARGET &
+  process_pid[${i}]=`echo $!`
+done
+
+for((i=0; i<${MS_WORKER_NUM}; i++)); do
+    wait ${process_pid[i]}
+    status=`echo $?`
+    if [ "${status}" != "0" ]; then
+        echo "[ERROR] test_multi_full_ps failed. status: ${status}"
+        exit 1
+    else
+        echo "[INFO] test_multi_full_ps success."
+    fi
 done
 fi
+
 if [ $DEVICE_TARGET == "GPU" ];then
   rm -rf ${execute_path}/worker/
   mkdir ${execute_path}/worker/
   cd ${execute_path}/worker/ || exit
   mpirun -n $MS_WORKER_NUM python ${self_path}/../test_multi_full_ps.py --device_target=$DEVICE_TARGET &
+  wait $!
 fi
 
-wait $!
-exit $?
+exit 0

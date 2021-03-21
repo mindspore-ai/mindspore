@@ -42,13 +42,25 @@ do
 done
 
 export MS_ROLE=MS_WORKER
+process_pid=()
 for((i=0;i<$MS_WORKER_NUM;i++));
 do
   rm -rf ${execute_path}/worker_$i/
   mkdir ${execute_path}/worker_$i/
   cd ${execute_path}/worker_$i/ || exit
   python ${self_path}/../test_cmp_sparse_embedding.py --device_target=$DEVICE_TARGET &
+  process_pid[${i}]=`echo $!`
 done
 
-wait $!
-exit $?
+for((i=0; i<${MS_WORKER_NUM}; i++)); do
+    wait ${process_pid[i]}
+    status=`echo $?`
+    if [ "${status}" != "0" ]; then
+        echo "[ERROR] test_cmp_sparse_embedding failed. status: ${status}"
+        exit 1
+    else
+        echo "[INFO] test_cmp_sparse_embedding success."
+    fi
+done
+
+exit 0

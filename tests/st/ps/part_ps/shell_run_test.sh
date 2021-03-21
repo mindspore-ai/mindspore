@@ -43,13 +43,26 @@ do
 done
 
 export MS_ROLE=MS_WORKER
+process_pid=()
 for((i=0;i<$MS_WORKER_NUM;i++));
 do
   rm -rf ${execute_path}/worker_$i/
   mkdir ${execute_path}/worker_$i/
   cd ${execute_path}/worker_$i/ || exit
   python ${self_path}/../test_ps_embedding_heterogeneous_conv2d_adam.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH &
+  process_pid[${i}]=`echo $!`
 done
 
-wait $!
-exit $?
+
+for((i=0; i<${MS_WORKER_NUM}; i++)); do
+    wait ${process_pid[i]}
+    status=`echo $?`
+    if [ "${status}" != "0" ]; then
+        echo "[ERROR] test_ps_embedding_heterogeneous_conv2d_adam failed. status: ${status}"
+        exit 1
+    else
+        echo "[INFO] test_ps_embedding_heterogeneous_conv2d_adam success."
+    fi
+done
+
+exit 0
