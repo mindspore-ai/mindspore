@@ -25,6 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_GELU;
 using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
@@ -73,6 +74,8 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
   } else if (type_ == schema::ActivationType_HARD_TANH) {
     error_code =
       HardTanhFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, min_val_, max_val_);
+  } else if (type_ == schema::ActivationType_GELU) {
+    error_code = GeluFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, true);
   } else {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type_;
     return RET_ERROR;
