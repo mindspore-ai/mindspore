@@ -79,7 +79,7 @@ int ActivationCPUKernel::DoActivation(int task_id) {
   } else if (type_ == schema::ActivationType_HARD_TANH) {
     ret = HardTanh(input_addr + stride * task_id, count, output_addr + stride * task_id, min_val_, max_val_);
   } else if (type_ == schema::ActivationType_GELU) {
-    ret = Gelu(input_addr + stride * task_id, count, output_addr + stride * task_id);
+    ret = Gelu(input_addr + stride * task_id, count, output_addr + stride * task_id, true);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;

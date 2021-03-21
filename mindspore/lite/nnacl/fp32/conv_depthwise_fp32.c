@@ -17,11 +17,6 @@
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/common_func.h"
 #include "nnacl/fp32/common_func_fp32.h"
-#include "nnacl/fp32/winograd_transform.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_ARM64
-#include <arm_neon.h>
-#endif
 
 #if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,

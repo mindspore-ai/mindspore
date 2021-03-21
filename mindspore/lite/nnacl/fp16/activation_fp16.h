@@ -34,6 +34,7 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num);
 int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num);
 int SwishFp16(const float16_t *src, float16_t *dst, int ele_num);
 int HardTanhFp16(const float16_t *src, int length, float16_t *dst, float min_val, float max_val);
+int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate);
 #ifdef __cplusplus
 }
 #endif

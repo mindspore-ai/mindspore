@@ -134,50 +134,21 @@ float TanhOpt(float src) {
 
 int Tanh(const float *src, int length, float *dst) {
   int i = 0;
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE) || defined(ENABLE_AVX)
-  const int cnt = 6;
-  float data[] = {378.0f, 17325.0f, 135135.0f, 28.0f, 3150.0f, 62370.0f};
-#endif
-
 #if defined(ENABLE_AVX)
-  MS_FLOAT32X8 neg_one_8 = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
-  MS_FLOAT32X8 pos_one_8 = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-  MS_FLOAT32X8 param256[6];
-  for (int j = 0; j < cnt; ++j) {
-    param256[j] = MS_MOV256_F32(data[j]);
-  }
   for (; i < length - 8; i += 8) {
     MS_FLOAT32X8 input = MS_LD256_F32(src + i);
-    MS_FLOAT32X8 square = input * input;
-    MS_FLOAT32X8 a = (((square + param256[0]) * square + param256[1]) * square + param256[2]) * input;
-    MS_FLOAT32X8 b = ((param256[3] * square + param256[4]) * square + param256[5]) * square + param256[2];
-    MS_ST256_F32(dst + i, MS_MIN256_F32(MS_MAX256_F32(a / b, neg_one_8), pos_one_8));
+    MS_ST256_F32(dst + i, MS_TANHX8_F32(input));
   }
 #endif
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  MS_FLOAT32X4 param[6];
-  MS_FLOAT32X4 neg_one = {-1.0f, -1.0f, -1.0f, -1.0f};
-  MS_FLOAT32X4 pos_one = {1.0f, 1.0f, 1.0f, 1.0f};
-  for (int j = 0; j < cnt; ++j) {
-    param[j] = MS_MOVQ_F32(data[j]);
-  }
   for (; i < length - 4; i += 4) {
     MS_FLOAT32X4 input = MS_LDQ_F32(src + i);
-    MS_FLOAT32X4 square = input * input;
-    MS_FLOAT32X4 a = (((square + param[0]) * square + param[1]) * square + param[2]) * input;
-    MS_FLOAT32X4 b = ((param[3] * square + param[4]) * square + param[5]) * square + param[2];
-    MS_STQ_F32(dst + i, MS_MINQ_F32(MS_MAXQ_F32(a / b, neg_one), pos_one));
+    MS_STQ_F32(dst + i, MS_TANHX4_F32(input));
   }
 #endif
   for (; i < length; ++i) {
-    float input = src[i];
-    float square = input * input;
-    float a = (((square + 378.0f) * square + 17325.0f) * square + 135135.0f) * input;
-    float b = ((28.0f * square + 3150.0f) * square + 62370.0f) * square + 135135.0f;
-    dst[i] = a / b;
-    dst[i] = MSMAX(dst[i], -1);
-    dst[i] = MSMIN(dst[i], 1);
+    dst[i] = TanhOpt(src[i]);
   }
   return NNACL_OK;
 }
@@ -249,10 +220,44 @@ int HardTanh(const float *src, int length, float *dst, float min_val, float max_
   return NNACL_OK;
 }
 
-int Gelu(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    float tanh_res = TanhOpt(sqrt(2 / M_PI) * (src[i] + 0.044715 * pow(src[i], 3)));
-    dst[i] = 0.5f * src[i] * (1 + tanh_res);
+int Gelu(const float *src, int length, float *dst, bool approximate) {
+  if (src == NULL || dst == NULL) {
+    return NNACL_ERR;
+  }
+  int i = 0;
+  if (approximate) {
+    // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
+#if defined(ENABLE_AVX)
+    int C8 = UP_ROUND(length, C8NUM);
+    for (; i < C8; i += C8NUM) {
+      MS_FLOAT32X8 in = MS_LD256_F32(src + i);
+      MS_FLOAT32X8 res = 0.5 * in * (1.0 + MS_TANHX8_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
+      MS_ST256_F32(dst + i, res);
+    }
+#endif
+#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
+    int C4 = UP_ROUND(length, C4NUM);
+    for (; i < C4; i += C4NUM) {
+      MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
+      MS_FLOAT32X4 res = 0.5 * in * (1.0 + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
+      MS_STQ_F32(dst + i, res);
+    }
+#endif
+    for (; i < length; i++) {
+      dst[i] = 0.5 * src[i] * (1.0 + TanhOpt((0.79788456080287f + 0.035677408136f * src[i] * src[i]) * src[i]));
+    }
+  } else {
+#if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
+    int C4 = UP_ROUND(length, C4NUM);
+    for (; i < C4; i += C4NUM) {
+      MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
+      MS_FLOAT32X4 res = 0.5 * in * (1.0 + MS_ERFX4_F32(in / 1.4142135623730951f));
+      MS_STQ_F32(dst + i, res);
+    }
+#endif
+    for (; i < length; i++) {
+      dst[i] = 0.5 * src[i] * (1.0 + erf(src[i] / 1.4142135623730951f));
+    }
   }
   return NNACL_OK;
 }
