@@ -26,6 +26,14 @@
 
 namespace mindspore::lite::micro {
 void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  auto array_tostring = [&ofs](const std::vector<int> &array, const std::string &name) {
+    size_t num = array.size();
+    ofs << "  Vector<int> " << name << ";\n";
+    ofs << "  " << name << ".resize(" << num << ");\n";
+    for (size_t i = 0; i < num; ++i) {
+      ofs << "  " << name << "[" << i << "] = " << array[i] << ";\n";
+    }
+  };
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
   size_t inputs_size = inputs.size();
@@ -36,20 +44,21 @@ void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderCont
   ofs << "  inputs_.resize(" << inputs_size << ");\n";
   for (size_t i = 0; i < inputs_size; ++i) {
     Tensor *input = inputs[i];
-    ofs << "  inputs_[" << i << "] = new (std::nothrow) MTensor(\"" << input->tensor_name() << "\", "
-        << EnumNameDataType(input->data_type()) << ", " << ArrayToString(input->shape()) << ");\n";
+    std::string shape_i = "in_shape_" + std::to_string(i);
+    array_tostring(input->shape(), shape_i);
+    ofs << "  inputs_[" << i << "] = new (std::nothrow) MTensor(String(\"" << input->tensor_name() << "\"), "
+        << EnumNameDataType(input->data_type()) << ", " << shape_i << ");\n";
     ofs << "  MS_ERROR_IF_NULL(inputs_[" << i << "]);\n";
   }
   ofs << "  outputs_.resize(" << outputs_size << ");\n";
   for (size_t i = 0; i < outputs_size; ++i) {
     Tensor *output = outputs[i];
-    ofs << "  outputs_[" << i << "] = new (std::nothrow) MTensor(\"" << output->tensor_name() << "\", "
-        << EnumNameDataType(output->data_type()) << ", " << ArrayToString(output->shape()) << ");\n";
+    std::string shape_i = "out_shape_" + std::to_string(i);
+    array_tostring(output->shape(), shape_i);
+    ofs << "  outputs_[" << i << "] = new (std::nothrow) MTensor(String(\"" << output->tensor_name() << "\"), "
+        << EnumNameDataType(output->data_type()) << ", " << shape_i << ");\n";
     ofs << "  MS_ERROR_IF_NULL(outputs_[" << i << "]);\n";
   }
-  ofs << "  for (const auto &output: outputs_) {\n"
-         "    output_tensor_map_[output->tensor_name()] = output;\n"
-         "  }\n";
   ofs << "  return RET_OK;\n";
   ofs << "}\n\n";
 }

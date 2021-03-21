@@ -129,6 +129,7 @@ int Generator::CodeSessionImplement() {
   ofs << g_hwLicense;
   ofs << "#include \"session.h\"\n";
   ofs << "#include \"net.h\"\n\n";
+  ofs << "#include <new>\n\n";
   CodeSessionCompileGraph(ofs, ctx_);
   ofs << session_source;
   return RET_OK;

@@ -72,10 +72,6 @@ void PrintData(void *data, size_t data_number) {
 }
 
 void TensorToString(tensor::MSTensor *tensor) {
-  uint8_t i = 0;
-  std::cout << "uint8: " << i << std::endl;
-
-  std::cout << "Name: " << tensor->tensor_name();
   std::cout << ", DataType: " << tensor->data_type();
   std::cout << ", Size: " << tensor->Size();
   std::cout << ", Shape:";
@@ -129,7 +125,7 @@ int main(int argc, const char **argv) {
   }
 
   // set model inputs tensor data
-  std::vector<tensor::MSTensor *> inputs = session->GetInputs();
+  Vector<tensor::MSTensor *> inputs = session->GetInputs();
   size_t inputs_num = inputs.size();
   void *inputs_binbuf[inputs_num];
   int inputs_size[inputs_num];
@@ -148,13 +144,6 @@ int main(int argc, const char **argv) {
   ret = session->RunGraph();
   if (ret != lite::RET_OK) {
     return lite::RET_ERROR;
-  }
-
-  auto outputs = session->GetOutputs();
-  std::cout << "output size: " << outputs.size() << std::endl;
-  for (const auto &item : outputs) {
-    auto output = item.second;
-    TensorToString(output);
   }
 
   std::cout << "run benchmark success" << std::endl;

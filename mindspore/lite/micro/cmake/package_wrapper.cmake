@@ -22,6 +22,7 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/int8/resize_int8_wrapper.c
         ${WRAPPER_DIR}/int8/slice_int8_wrapper.c
         ${WRAPPER_DIR}/int8/batchnorm_int8_wrapper.c
+        ${LITE_DIR}/src/common/string.cc
         )
 
 list(APPEND FILE_SET ${WRAPPER_SRC} ${RUNTIME_SRC})

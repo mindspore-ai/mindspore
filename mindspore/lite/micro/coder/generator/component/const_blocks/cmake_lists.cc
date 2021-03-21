@@ -49,6 +49,8 @@ message("project name: ${MODEL_LIB_NAME}")
 option(MICRO_BUILD_ARM64 "build android arm64" OFF)
 option(MICRO_BUILD_ARM32A "build android arm32" OFF)
 
+add_compile_definitions(NOT_USE_STL)
+
 if(MICRO_BUILD_ARM64 OR MICRO_BUILD_ARM32A)
   add_compile_definitions(ENABLE_NEON)
   add_compile_definitions(ENABLE_ARM)
@@ -107,6 +109,8 @@ get_filename_component(HEADER_PATH ${HEADER_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURR
 
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")
+
+add_compile_definitions(NOT_USE_STL)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 include_directories(${OP_HEADER_PATH})
