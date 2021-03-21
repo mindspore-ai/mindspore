@@ -123,7 +123,6 @@ class StackedRNNForGPU(nn.Cell):
         self.transpose = P.Transpose()
 
     def construct(self, x):
-        x = self.cast(x, mstype.float32)
         x = self.transpose(x, (3, 0, 2, 1))
         x = self.reshape(x, (-1, self.batch_size, self.input_size))
         output, _ = self.lstm(x, (self.h, self.c))
