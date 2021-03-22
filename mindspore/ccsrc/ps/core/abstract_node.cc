@@ -418,14 +418,18 @@ bool AbstractNode::InitClientToScheduler() {
   client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_host, scheduler_port);
   client_to_scheduler_->SetMessageCallback(
     [&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
-      if (handlers_.count(meta->cmd()) == 0) {
-        MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+      try {
+        if (handlers_.count(meta->cmd()) == 0) {
+          MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+        }
+        if (handlers_[meta->cmd()] != nullptr) {
+          const auto &handler_ptr = handlers_[meta->cmd()];
+          (this->*handler_ptr)(meta, data, size);
+        }
+        NotifyMessageArrival(meta);
+      } catch (const std::exception &e) {
+        MsException::Instance().SetException();
       }
-      if (handlers_[meta->cmd()] != nullptr) {
-        const auto &handler_ptr = handlers_[meta->cmd()];
-        (this->*handler_ptr)(meta, data, size);
-      }
-      NotifyMessageArrival(meta);
     });
 
   client_to_scheduler_->Init();

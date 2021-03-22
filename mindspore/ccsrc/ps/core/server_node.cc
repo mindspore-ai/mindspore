@@ -40,6 +40,7 @@ bool ServerNode::Start(const uint32_t &timeout) {
     FetchServers(client_to_scheduler_);
     MS_LOG(INFO) << "Server node get all the servers address successful!";
   }
+  MsException::Instance().CheckException();
   MS_LOG(INFO) << "Start the node is successful!";
   return true;
 }

@@ -26,6 +26,7 @@
 
 #include "ps/core/node.h"
 #include "ps/core/message.h"
+#include "utils/ms_exception.h"
 
 namespace mindspore {
 namespace ps {
