@@ -20,6 +20,10 @@
 #include <fstream>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/path.h"
+#ifdef ENABLE_GPUQUE
+#include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/core/global_context.h"
+#endif
 #include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/engine/perf/connector_size.h"
@@ -59,11 +63,26 @@ Status ProfilingManager::Initialize() {
 #endif
   dir_path_ = real_path;
 
+#ifdef ENABLE_GPUQUE
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  int32_t rank_id = cfg->rank_id();
   // If DEVICE_ID is not set, default value is 0
+  if (rank_id < 0) {
+    device_id_ = common::GetEnv("DEVICE_ID");
+    // If DEVICE_ID is not set, default value is 0
+    if (device_id_.empty()) {
+      device_id_ = "0";
+    }
+  } else {
+    device_id_ = std::to_string(rank_id);
+  }
+#else
   device_id_ = common::GetEnv("DEVICE_ID");
+  // If DEVICE_ID is not set, default value is 0
   if (device_id_.empty()) {
     device_id_ = "0";
   }
+#endif
 
   // Register all profiling node.
   // device_queue node is used for graph mode
