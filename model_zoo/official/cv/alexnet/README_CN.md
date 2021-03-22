@@ -23,44 +23,44 @@
 
 <!-- /TOC -->
 
-# AlexNet描述
+## AlexNet描述
 
 AlexNet是2012年提出的最有影响力的神经网络之一。该网络在ImageNet数据集识别方面取得了显着的成功。
 
 [论文](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-concumulational-neural-networks.pdf)： Krizhevsky A, Sutskever I, Hinton G E. ImageNet Classification with Deep ConvolutionalNeural Networks. *Advances In Neural Information Processing Systems*. 2012.
 
-# 模型架构
+## 模型架构
 
 AlexNet由5个卷积层和3个全连接层组成。多个卷积核用于提取图像中有趣的特征，从而得到更精确的分类。
 
-# 数据集
+## 数据集
 
 使用的数据集：[CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 
 - 数据集大小：175M，共10个类、60,000个32*32彩色图像
-  - 训练集：146M，50,000个图像
-  - 测试集：29.3M，10,000个图像
+    - 训练集：146M，50,000个图像
+    - 测试集：29.3M，10,000个图像
 - 数据格式：二进制文件
-  - 注意：数据在dataset.py中处理。
+    - 注意：数据在dataset.py中处理。
 - 下载数据集。目录结构如下：
 
-```
+```bash
 ├─cifar-10-batches-bin
 │
 └─cifar-10-verify-bin
 ```
 
-# 环境要求
+## 环境要求
 
 - 硬件（Ascend/GPU）
-  - 准备Ascend或GPU处理器搭建硬件环境。
+    - 准备Ascend或GPU处理器搭建硬件环境。
 - 框架
-  - [MindSpore](https://www.mindspore.cn/install)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-  - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
@@ -71,11 +71,11 @@ sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
 sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
-# 脚本说明
+## 脚本说明
 
-## 脚本及样例代码
+### 脚本及样例代码
 
-```
+```bash
 ├── cv
     ├── alexnet
         ├── README.md                    // AlexNet相关说明
@@ -93,7 +93,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         ├── eval.py               //  评估脚本
 ```
 
-## 脚本参数
+### 脚本参数
 
 ```python
 train.py和config.py中主要参数如下：
@@ -108,13 +108,13 @@ train.py和config.py中主要参数如下：
 --data_path：数据集所在路径
 ```
 
-## 训练过程
+### 训练过程
 
-### 训练
+#### 训练
 
 - Ascend处理器环境运行
 
-  ```
+  ```bash
   python train.py --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # 或进入脚本目录，执行脚本
   sh run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
@@ -122,7 +122,7 @@ train.py和config.py中主要参数如下：
 
   经过训练后，损失值如下：
 
-  ```
+  ```bash
   # grep "loss is " log
   epoch: 1 step: 1, loss is 2.2791853
   ...
@@ -136,7 +136,7 @@ train.py和config.py中主要参数如下：
 
 - GPU环境运行
 
-  ```
+  ```bash
   python train.py --device_target "GPU" --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # 或进入脚本目录，执行脚本
   sh run_standalone_train_for_gpu.sh cifar-10-batches-bin ckpt
@@ -144,7 +144,7 @@ train.py和config.py中主要参数如下：
 
   经过训练后，损失值如下：
 
-  ```
+  ```bash
   # grep "loss is " log
   epoch: 1 step: 1, loss is 2.3125906
   ...
@@ -153,15 +153,15 @@ train.py和config.py中主要参数如下：
   epoch: 30 step: 1561, loss is 0.103845775
   ```
 
-## 评估过程
+### 评估过程
 
-### 评估
+#### 评估
 
 在运行以下命令之前，请检查用于评估的检查点路径。
 
 - Ascend处理器环境运行
 
-  ```
+  ```bash
   python eval.py --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > eval_log.txt 2>&1 &
   #或进入脚本目录，执行脚本
   sh run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
@@ -169,14 +169,14 @@ train.py和config.py中主要参数如下：
 
   可通过"eval_log”文件查看结果。测试数据集的准确率如下：
 
-  ```
+  ```bash
   # grep "Accuracy: " eval_log
   'Accuracy': 0.8832
   ```
 
 - GPU环境运行
 
-  ```
+  ```bash
   python eval.py --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > eval_log 2>&1 &
   #或进入脚本目录，执行脚本
   sh run_standalone_eval_for_gpu.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-30_1562.ckpt
@@ -184,16 +184,16 @@ train.py和config.py中主要参数如下：
 
   可通过"eval_log”文件查看结果。测试数据集的准确率如下：
 
-  ```
+  ```bash
   # grep "Accuracy: " eval_log
   'Accuracy': 0.88512
   ```
 
-# 模型描述
+## 模型描述
 
-## 性能
+### 性能
 
-### 评估性能
+#### 评估性能
 
 | 参数 | Ascend | GPU |
 | -------------------------- | ------------------------------------------------------------| -------------------------------------------------|
@@ -209,11 +209,12 @@ train.py和config.py中主要参数如下：
 | 速度 | 21毫秒/步 | 16.8毫秒/步 |
 | 总时间 | 17分钟 | 14分钟|
 | 微调检查点 | 445M （.ckpt文件） | 445M （.ckpt文件） |
-| 脚本 | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet |
+| 脚本 | [AlexNet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet) | [AlexNet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet) |
 
-# 随机情况说明
+## 随机情况说明
 
 dataset.py中设置了“create_dataset”函数内的种子。
 
-# ModelZoo主页
- 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
+## ModelZoo主页
+
+请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。

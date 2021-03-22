@@ -22,17 +22,17 @@
 
 <!-- /TOC -->
 
-# 图注意力网络描述
+## 图注意力网络描述
 
 图注意力网络（GAT）由Petar Veličković等人于2017年提出。GAT通过利用掩蔽自注意层来克服现有基于图的方法的缺点，在Cora等传感数据集和PPI等感应数据集上都达到了最先进的性能。以下是用MindSpore的Cora数据集训练GAT的例子。
 
 [论文](https://arxiv.org/abs/1710.10903): Veličković, P., Cucurull, G., Casanova, A., Romero, A., Lio, P., & Bengio, Y. (2017).Graph attention networks. arXiv preprint arXiv:1710.10903.
 
-# 模型架构
+## 模型架构
 
 请注意节点更新函数是级联还是平均，取决于注意力层是否为网络输出层。
 
-# 数据集
+## 数据集
 
 - 数据集大小：
 
@@ -82,13 +82,13 @@
   ./run_process_data_ascend.sh ./data citeseer
   ```
 
-# 特性
+## 特性
 
-## 混合精度
+### 混合精度
 
 为了充分利用Ascend芯片强大的运算能力，加快训练过程，此处采用混合训练方法。MindSpore能够处理FP32输入和FP16操作符。在GAT示例中，除损失计算部分外，模型设置为FP16模式。
 
-# 环境要求
+## 环境要求
 
 - 硬件（Ascend）
 - 框架
@@ -97,7 +97,7 @@
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
 通过官方网站安装MindSpore，并正确生成数据集后，您可以按照如下步骤进行训练和评估：
 
@@ -108,9 +108,9 @@
   sh run_train_ascend.sh [DATASET_NAME]
   ```
 
-# 脚本说明
+## 脚本说明
 
-## 脚本及样例代码
+### 脚本及样例代码
 
 ```shell
 .
@@ -129,7 +129,7 @@
   └─train.py               # 训练网络
 ```
 
-## 脚本参数
+### 脚本参数
 
 在config.py中可以同时配置训练参数和评估参数。
 
@@ -146,9 +146,9 @@
   "feature_dropout":0.6              # 特征层dropout系数
   ```
 
-## 训练过程
+### 训练过程
 
-### 训练
+#### 训练
 
 - Ascend处理器环境运行
 
@@ -175,9 +175,9 @@
   ...
   ```
 
-# 模型描述
+## 模型描述
 
-## 性能
+### 性能
 
 | 参数                            | GAT                                       |
 | ------------------------------------ | ----------------------------------------- |
@@ -193,10 +193,10 @@
 | 总时长                           | 39s                                       |
 | 脚本                              | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gat>  |
 
-# 随机情况说明
+## 随机情况说明
 
 GAT模型中有很多的dropout操作，如果想关闭dropout，可以在src/config.py中将attn_dropout和feature_dropout设置为0。注：该操作会导致准确率降低到80%左右。
 
-# ModelZoo主页
+## ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。

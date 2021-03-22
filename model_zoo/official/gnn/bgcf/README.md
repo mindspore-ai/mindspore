@@ -1,3 +1,5 @@
+# Contents
+
 <!--TOC -->
 
 - [Bayesian Graph Collaborative Filtering](#bayesian-graph-collaborative-filtering)
@@ -21,7 +23,7 @@
 
 <!--TOC -->
 
-# [Bayesian Graph Collaborative Filtering](#contents)
+## [Bayesian Graph Collaborative Filtering](#contents)
 
 Bayesian Graph Collaborative Filtering(BGCF) was proposed in 2020 by Sun J, Guo W, Zhang D et al. By naturally incorporating the
 uncertainty in the user-item interaction graph shows excellent performance on Amazon recommendation dataset.This is an example of
@@ -29,12 +31,12 @@ training of BGCF with Amazon-Beauty dataset in MindSpore. More importantly, this
 
 [Paper](https://dl.acm.org/doi/pdf/10.1145/3394486.3403254): Sun J, Guo W, Zhang D, et al. A Framework for Recommending Accurate and Diverse Items Using Bayesian Graph Convolutional Neural Networks[C]//Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining. 2020: 2030-2039.
 
-# [Model Architecture](#contents)
+## [Model Architecture](#contents)
 
 Specially, BGCF contains two main modules. The first is sampling, which produce sample graphs based in node copying. Another module
 aggregate the neighbors sampling from nodes consisting of mean aggregator and attention aggregator.
 
-# [Dataset](#contents)
+## [Dataset](#contents)
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
@@ -69,13 +71,13 @@ Note that you can run the scripts based on the dataset mentioned in original pap
   sh run_process_data_ascend.sh [SRC_PATH]
   ```
 
-# [Features](#contents)
+## [Features](#contents)
 
-## Mixed Precision
+### Mixed Precision
 
 To ultilize the strong computation power of Ascend chip, and accelerate the training process, the mixed training method is used. MindSpore is able to cope with FP32 inputs and FP16 operators. In BGCF example, the model is set to FP16 mode except for the loss calculation part.
 
-# [Environment Requirements](#contents)
+## [Environment Requirements](#contents)
 
 - Hardware (Ascend/GPU)
 - Framework
@@ -84,7 +86,7 @@ To ultilize the strong computation power of Ascend chip, and accelerate the trai
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
-# [Quick Start](#contents)
+## [Quick Start](#contents)
 
 After installing MindSpore via the official website and Dataset is correctly generated, you can start training and evaluation as follows.
 
@@ -108,9 +110,9 @@ After installing MindSpore via the official website and Dataset is correctly gen
   sh run_eval_gpu.sh 0 dataset_path
   ```  
 
-# [Script Description](#contents)
+## [Script Description](#contents)
 
-## [Script and Sample Code](#contents)
+### [Script and Sample Code](#contents)
 
 ```shell
 .
@@ -135,7 +137,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
   └─train.py               # Train net
 ```
 
-## [Script Parameters](#contents)
+### [Script Parameters](#contents)
 
 Parameters for both training and evaluation can be set in config.py.
 
@@ -154,9 +156,9 @@ Parameters for both training and evaluation can be set in config.py.
 
   config.py for more configuration.
 
-## [Training Process](#contents)
+### [Training Process](#contents)
 
-### Training
+#### Training
 
 - running on Ascend
 
@@ -197,9 +199,9 @@ Parameters for both training and evaluation can be set in config.py.
   Epoch 004 iter 12 loss 21628.908
   ```
 
-## [Evaluation Process](#contents)
+### [Evaluation Process](#contents)
 
-### Evaluation
+#### Evaluation
 
 - Evaluation on Ascend
 
@@ -242,11 +244,11 @@ Parameters for both training and evaluation can be set in config.py.
   sedp_@10:0.01926,     sedp_@20:0.01547,    nov_@10:7.60851,    nov_@20:7.81969
   ```
 
-# [Model Description](#contents)
+## [Model Description](#contents)
 
-## [Performance](#contents)
+### [Performance](#contents)
 
-### Training Performance
+#### Training Performance
 
 | Parameter                      | BGCF Ascend                                | BGCF GPU                                   |
 | ------------------------------ | ------------------------------------------ | ------------------------------------------ |
@@ -261,7 +263,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Training Cost                  | 25min                                      | 60min                                      |
 | Scripts                        | [bgcf script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf) | [bgcf script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf) |
 
-### Inference Performance
+#### Inference Performance
 
 | Parameter                      | BGCF Ascend                  | BGCF GPU                     |
 | ------------------------------ | ---------------------------- | ---------------------------- |
@@ -275,10 +277,10 @@ Parameters for both training and evaluation can be set in config.py.
 | Recall@20                      | 0.1534                       | 0.15524                      |
 | NDCG@20                        | 0.0912                       | 0.09249                      |
 
-# [Description of random situation](#contents)
+## [Description of random situation](#contents)
 
 BGCF model contains lots of dropout operations, if you want to disable dropout, set the neighbor_dropout to [0.0, 0.0, 0.0] in src/config.py.
 
-# [ModelZoo Homepage](#contents)
+## [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](http://gitee.com/mindspore/mindspore/tree/master/model_zoo).

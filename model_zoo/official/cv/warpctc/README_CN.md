@@ -28,19 +28,19 @@
 
 <!-- /TOC -->
 
-# WarpCTC描述
+## WarpCTC描述
 
 以下为MindSpore中用自生成的验证码图像数据集来训练WarpCTC的例子。
 
-# 模型架构
+## 模型架构
 
 WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请参见src/warpctc.py。
 
-# 数据集
+## 数据集
 
 该数据集由第三方库[captcha](https://github.com/lepture/captcha)自行生成，可以在图像中随机生成数字0至9。在本网络中，我们设置数字个数为1至4。
 
-# 环境要求
+## 环境要求
 
 - 硬件（Ascend/GPU）
     - 使用Ascend或GPU处理器来搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawie,审核通过即可获得资源。
@@ -50,7 +50,7 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
 - 生成数据集
 
@@ -102,9 +102,9 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
     ```
 
-# 脚本说明
+## 脚本说明
 
-## 脚本及样例代码
+### 脚本及样例代码
 
 ```text
 .
@@ -130,9 +130,9 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
   └── train.py                          # 训练网络
 ```
 
-## 脚本参数
+### 脚本参数
 
-### 训练脚本参数
+#### 训练脚本参数
 
 ```bash
 # Ascend分布式训练
@@ -204,11 +204,11 @@ bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
 bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 ```
 
-# 模型描述
+## 模型描述
 
-## 性能
+### 性能
 
-### 训练性能
+#### 训练性能
 
 | 参数                 | Ascend 910                                    |   GPU |
 | -------------------------- | --------------------------------------------- |---------------------------------- |
@@ -228,7 +228,7 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | 微调检查点 | 20.3M (.ckpt文件)                            | 20.3M (.ckpt文件) |
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc) | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc) |
 
-### 评估性能
+#### 评估性能
 
 | 参数          | WarpCTC                     |
 | ------------------- | --------------------------- |
@@ -242,10 +242,10 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | 准确率            | 99.0%                       |
 | 推理模型 | 20.3M (.ckpt文件)          |
 
-# 随机情况说明
+## 随机情况说明
 
 在dataset.py中设置“create_dataset”函数内的种子。使用train.py中的随机种子进行权重初始化。
 
-# ModelZoo主页
+## ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。

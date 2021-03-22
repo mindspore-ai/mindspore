@@ -8,16 +8,18 @@
     - [Generate MindRecord](#generate-mindrecord)
     - [Create MindDataset By MindRecord](#create-minddataset-by-mindrecord)
 
-
 <!-- /TOC -->
 
 ## What does the example do
 
 This example is used to read data from aclImdb dataset, preprocess it and generate mindrecord. The preprocessing process mainly uses vocab file to convert the training set text into dictionary sequence, which can be further used in the subsequent training process.
 
-1.  run.sh: generate MindRecord entry script.
+1. run.sh: generate MindRecord entry script.
+
     - gen_mindrecord.py : read the aclImdb data, preprocess it and transfer it to mindrecord.
-2.  run_read.py: create MindDataset by MindRecord entry script.
+
+2. run_read.py: create MindDataset by MindRecord entry script.
+
     - create_dataset.py: use MindDataset to read MindRecord to generate dataset.
 
 ## How to use the example to generate MindRecord
@@ -30,19 +32,22 @@ Download aclImdb dataset, transfer it to mindrecord, use MindDataset to read min
     > [aclImdb dataset download address](http://ai.stanford.edu/~amaas/data/sentiment/) **-> Large Movie Review Dataset v1.0**
 
 2. Unzip the training data to dir example/nlp_to_mindrecord/aclImdb_preprocess/data.
-    ```
+
+    ```bash
     tar -zxvf aclImdb_v1.tar.gz -C {your-mindspore}/example/nlp_to_mindrecord/aclImdb_preprocess/data/
     ```
 
 ### Generate MindRecord
 
 1. Run the run.sh script.
+
     ```bash
     bash run.sh
     ```
 
 2. Output like this:
-    ```
+
+    ```bash
     ...
     >> begin generate mindrecord by train data
     >> transformed 256 record...
@@ -70,7 +75,8 @@ Download aclImdb dataset, transfer it to mindrecord, use MindDataset to read min
     ```
 
 3. Generate mindrecord files
-    ```
+
+    ```bash
     $ ls output/
     aclImdb_test.mindrecord  aclImdb_test.mindrecord.db  aclImdb_train.mindrecord  aclImdb_train.mindrecord.db  README.md
     ```
@@ -78,12 +84,14 @@ Download aclImdb dataset, transfer it to mindrecord, use MindDataset to read min
 ### Create MindDataset By MindRecord
 
 1. Run the run_read.sh script.
+
     ```bash
     bash run_read.sh
     ```
 
 2. Output like this:
-    ```
+
+    ```bash
     example 24992: {
         'input_ids': array(
             [   -1,    -1,    65,     0,    89,     0,   367,     0,    -1,
@@ -141,6 +149,7 @@ Download aclImdb dataset, transfer it to mindrecord, use MindDataset to read min
         'score': array(7, dtype=int32),
         'label': array(0, dtype=int32)}
     ```
+
     - id : the id "3219" is from review docs like **3219**_10.txt.
     - label : indicates whether the review is positive or negative, positive: 0, negative: 1.
     - score : the score "10" is from review docs like 3219_**10**.txt.

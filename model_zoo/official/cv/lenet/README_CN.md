@@ -1,4 +1,5 @@
 # 目录
+
 <!-- TOC -->
 
 - [目录](#目录)
@@ -22,29 +23,29 @@
 
 <!-- /TOC -->
 
-# LeNet描述
+## LeNet描述
 
 LeNet是1998年提出的一种典型的卷积神经网络。它被用于数字识别并取得了巨大的成功。
 
 [论文](https://ieeexplore.ieee.org/document/726791)： Y.Lecun, L.Bottou, Y.Bengio, P.Haffner.Gradient-Based Learning Applied to Document Recognition.*Proceedings of the IEEE*.1998.
 
-# 模型架构
+## 模型架构
 
 LeNet非常简单，包含5层，由2个卷积层和3个全连接层组成。
 
-# 数据集
+## 数据集
 
-使用的数据集：[MNIST](<http://yann.lecun.com/exdb/mnist/>) 
+使用的数据集：[MNIST](<http://yann.lecun.com/exdb/mnist/>)
 
 - 数据集大小：52.4M，共10个类，6万张 28*28图像
-  - 训练集：6万张图像  
-  - 测试集：5万张图像
+    - 训练集：6万张图像  
+    - 测试集：5万张图像
 - 数据格式：二进制文件
-  - 注：数据在dataset.py中处理。
+    - 注：数据在dataset.py中处理。
 
 - 目录结构如下：
 
-```
+```bash
 └─Data
     ├─test
     │      t10k-images.idx3-ubyte
@@ -55,19 +56,19 @@ LeNet非常简单，包含5层，由2个卷积层和3个全连接层组成。
            train-labels.idx1-ubyte
 ```
 
-# 环境要求
+## 环境要求
 
 - 硬件(Ascend/GPU/CPU)
-  - 使用Ascend、GPU或CPU处理器来搭建硬件环境。
+    - 使用Ascend、GPU或CPU处理器来搭建硬件环境。
 - 框架
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
-  - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
-通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估： 
+通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
 ```python
 # 进入脚本目录，训练LeNet
@@ -76,11 +77,11 @@ sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
 sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
-# 脚本说明
+## 脚本说明
 
-## 脚本及样例代码
+### 脚本及样例代码
 
-```
+```bash
 ├── cv
     ├── lenet
         ├── README.md                    // Lenet描述
@@ -119,7 +120,7 @@ train.py和config.py中主要参数如下：
 
 ### 训练
 
-```
+```bash
 python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_train_ascend.sh Data ckpt
@@ -127,7 +128,7 @@ sh run_standalone_train_ascend.sh Data ckpt
 
 训练结束，损失值如下：
 
-```
+```bash
 # grep "loss is " log.txt
 epoch:1 step:1, loss is 2.2791853
 ...
@@ -145,7 +146,7 @@ epoch:1 step:1538, loss is 1.0221305
 
 在运行以下命令之前，请检查用于评估的检查点路径。
 
-```
+```bash
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
@@ -153,12 +154,12 @@ sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 
 您可以通过log.txt文件查看结果。测试数据集的准确性如下：
 
-```
+```bash
 # grep "Accuracy:" log.txt
 'Accuracy':0.9842
 ```
 
-# 模型描述
+## 模型描述
 
 ## 性能
 
@@ -178,11 +179,12 @@ sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 | 速度                      | 1.70毫秒/步                          |
 | 总时长                 | 43.1秒                          |                                       |
 | 微调检查点 | 482k (.ckpt文件)                                         |
-| 脚本                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet |
+| 脚本                    | [LeNet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet) |
 
-# 随机情况说明
+## 随机情况说明
 
 在dataset.py中，我们设置了“create_dataset”函数内的种子。
 
-# ModelZoo主页
- 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。  
+## ModelZoo主页
+
+请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。  
