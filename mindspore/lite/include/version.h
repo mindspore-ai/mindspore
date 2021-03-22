@@ -29,7 +29,7 @@ const int ms_version_revision = 0;
 ///
 /// \return The version string of MindSpore Lite.
 inline String Version() {
-  return "MindSpore Lite " + to_string(ms_version_major) + "." + to_string(ms_version_revision) + "." +
+  return "MindSpore Lite " + to_string(ms_version_major) + "." + to_string(ms_version_minor) + "." +
          to_string(ms_version_revision);
 }
 }  // namespace lite
