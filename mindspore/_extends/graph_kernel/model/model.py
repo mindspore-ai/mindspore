@@ -177,7 +177,6 @@ class PrimLib:
         'ReduceMax': Prim(REDUCE),
         'ReduceMin': Prim(REDUCE),
         'MakeTuple': Prim(CONTROL),
-        'ControlDepend': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),
         'ExpandDims': Prim(RESHAPE),
