@@ -2,7 +2,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 #include "ir/signature.h"
 #include "debug/trace.h"
 #include "utils/ms_context.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -184,7 +185,9 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
         return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
       });
 
-    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
+    auto call_node = func_graph->NewCNodeInOrder(inputs2);
+    call_node->AddAttr(kAttrIgnoreSideEffect, MakeValue(true));
+    inputs.push_back(call_node);
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -222,7 +225,9 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
         return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
       });
 
-    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
+    auto call_node = func_graph->NewCNodeInOrder(inputs2);
+    call_node->AddAttr(kAttrIgnoreSideEffect, MakeValue(true));
+    inputs.push_back(call_node);
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -253,7 +258,9 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
       j++;
     }
 
-    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
+    auto call_node = func_graph->NewCNodeInOrder(inputs2);
+    call_node->AddAttr(kAttrIgnoreSideEffect, MakeValue(true));
+    inputs.push_back(call_node);
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
