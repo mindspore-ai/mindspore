@@ -18,8 +18,7 @@
 
 namespace mindspore {
 namespace mindquantum {
-ParameterResolver::ParameterResolver()
-    : data_(ParaType()), no_grad_parameters_(ParaSetType()), requires_grad_parameters_(ParaSetType()) {}
+ParameterResolver::ParameterResolver() {}
 
 ParameterResolver::ParameterResolver(const ParaType &data, const ParaSetType &no_grad_parameters,
                                      const ParaSetType &requires_grad_parameters)
