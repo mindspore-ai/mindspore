@@ -162,8 +162,7 @@ const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeT
 class CheckAndConvertUtils {
  public:
   static std::vector<int64_t> CheckPositiveVector(const std::string &arg_name, const std::vector<int64_t> &arg_value,
-                                                  const std::string &prim_name, bool allow_four = false,
-                                                  bool ret_four = false);
+                                                  const std::string &prim_name);
   static std::string CheckString(const std::string &arg_name, const std::string &arg_value,
                                  const std::set<std::string> &check_list, const std::string &prim_name);
 

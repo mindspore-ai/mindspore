@@ -330,24 +330,10 @@ bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, cons
 
 std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string &arg_name,
                                                                const std::vector<int64_t> &arg_value,
-                                                               const std::string &prim_name, bool allow_four,
-                                                               bool ret_four) {
-  auto raise_message = [allow_four, prim_name, arg_value, arg_name]() -> void {
-    std::ostringstream buffer;
-    buffer << "For " << prim_name << " attr " << arg_name << " should be a positive vector of size two ";
-    if (allow_four) {
-      buffer << "or four ";
-    }
-    buffer << " positive int64_t numbers , but got [";
-    for (auto item : arg_value) {
-      buffer << item << ",";
-    }
-    buffer << "]";
-    MS_EXCEPTION(ValueError) << buffer.str();
-  };
+                                                               const std::string &prim_name) {
   for (auto item : arg_value) {
     if (item < 0) {
-      raise_message();
+      MS_EXCEPTION(ValueError) << "For " << prim_name << " attr " << arg_name << " should be a positive vector";
     }
   }
   return arg_value;
