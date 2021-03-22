@@ -63,11 +63,8 @@ function(ms_build_flatbuffers source_schema_files
     endif()
 endfunction()
 
-function(ms_build_flatbuffers_lite source_schema_files
-                                   source_schema_dirs
-                                   custom_target_name
-                                   generated_output_dir
-                                   if_inner)
+function(ms_build_flatbuffers_lite
+  source_schema_files source_schema_dirs custom_target_name generated_output_dir if_inner)
 
     set(total_schema_dirs "")
     set(total_generated_files "")
