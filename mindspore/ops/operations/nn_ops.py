@@ -372,13 +372,16 @@ class ReLU(PrimitiveWithCheck):
 
 class Mish(PrimitiveWithInfer):
     r"""
-    Computes MISH of input tensors element-wise.
+    Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
 
     The function is shown as follows:
 
     .. math::
 
         \text{output} = x * \tan(\log(1 + \exp(\text{x})))
+
+    See more details in `A Self Regularized Non-Monotonic Neural Activation Function
+    <https://arxiv.org/abs/1908.08681>`_.
 
     Inputs:
         - **x** (Tensor) - The input tensor. Only support float16 and float32.
@@ -390,7 +393,7 @@ class Mish(PrimitiveWithInfer):
         ``Ascend``
 
     Raise:
-        TypeError: If num_features data type not float16 and float32 Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
