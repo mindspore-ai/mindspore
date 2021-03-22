@@ -159,8 +159,6 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderCreator(const std::vector<
     return nullptr;
   }
   auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
-  bool use_winograd = false;
-  int out_unit = 0;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   conv_param->input_h_ = inputs.at(kInputIndex)->Height();
@@ -170,7 +168,8 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderCreator(const std::vector<
   conv_param->output_w_ = outputs.at(kOutputIndex)->Width();
   conv_param->output_channel_ = outputs.at(kOutputIndex)->Channel();
   conv_param->op_parameter_.thread_num_ = 1;
-  CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
+  int out_unit = 0;
+  bool use_winograd = CheckIfUseWinograd(&out_unit, conv_param);
   free(conv_param);
   // weight de quant
   std::unique_ptr<OperatorCoder> coder;

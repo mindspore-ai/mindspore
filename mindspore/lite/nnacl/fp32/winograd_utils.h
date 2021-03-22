@@ -308,7 +308,7 @@ void OutputTransform8x7Relu6Unit(const float *src_data, float *dst_data, const f
 
 int SelectOutputUnit(ConvParameter *conv_param);
 
-void CheckIfUseWinograd(bool *use_winograd, int *output_unit, ConvParameter *conv_param);
+bool CheckIfUseWinograd(int *output_unit, ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif

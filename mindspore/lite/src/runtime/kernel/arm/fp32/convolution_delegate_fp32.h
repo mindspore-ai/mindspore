@@ -18,6 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/fp32/convolution_creator_manager.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
@@ -39,12 +40,31 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override { return conv_kernel_->Run(); }
+
+ protected:
   int GetWeightAndBias();
   int GetWeightData();
   int GetBiasData();
-  static float *CopyData(lite::Tensor *tensor);
-  void FreeCopiedData();
 
+  void SetInputOutputShapeInfo();
+  kernel::LiteKernel *CpuConvFp32KernelSelect();
+
+  // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
+  // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
+  // copying data of const tensor is necessary. Otherwise, just pass origin raw pointer of data.
+  static float *CopyData(lite::Tensor *tensor);
+  void FreeCopiedData() {
+    if (origin_weight_ != nullptr && need_free_weight_) {
+      free(origin_weight_);
+      origin_weight_ = nullptr;
+    }
+    if (origin_bias_ != nullptr && need_free_bias_) {
+      free(origin_bias_);
+      origin_bias_ = nullptr;
+    }
+  }
+
+  // Train API
   int Eval() override {
     LiteKernel::Eval();
     return conv_kernel_->Eval();
@@ -59,29 +79,12 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
   }
 
  protected:
-  bool need_free_weight_ = false;
-  bool need_free_bias_ = false;
-  kernel::LiteKernel *conv_kernel_ = nullptr;
-  float *origin_weight_ = nullptr;
-  float *origin_bias_ = nullptr;
+  kernel::LiteKernel *conv_kernel_{nullptr};
+  float *origin_weight_{nullptr};
+  float *origin_bias_{nullptr};
+  bool need_free_weight_{false};
+  bool need_free_bias_{false};
 };
-
-void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *input, const lite::Tensor *output,
-                             const InnerContext *ctx);
-
-void FreeMemory(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
-                const std::vector<lite::Tensor *> &new_outputs);
-
-ConvParameter *CreateNewConvParameter(ConvParameter *parameter);
-
-lite::Tensor *CreateInputTensor(TypeId data_type, const std::vector<int> &in_shape, bool infered_flag);
-
-lite::Tensor *CreateOutputTensor(const std::vector<int> &out_shape, const std::vector<lite::Tensor *> &outputs,
-                                 bool infered_flag, int index);
-
-kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const InnerContext *ctx, float *origin_weight, float *origin_bias);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DELEGATE_FP32_H_
