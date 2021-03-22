@@ -308,11 +308,8 @@ class CenterNetWithLossScaleCell(nn.Cell):
             cond = self.less_equal(self.base, flag_reduce)
         else:
             cond = self.less_equal(self.base, flag_sum)
-        overflow = cond
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
+
+        succ = self.optimizer(grads)
         ret = (loss, cond, scaling_sens)
         return ops.depend(ret, succ)
 
