@@ -35,8 +35,8 @@ void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor 
 void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const std::string &net_file);
 void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeInitWeightState(std::ofstream &ofs, const std::string &module_name);
-void CodeWeightInitFunc(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx);
+void CodeInitWeightState(std::ofstream &ofs);
+void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
 }  // namespace mindspore::lite::micro
 

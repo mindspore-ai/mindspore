@@ -73,29 +73,30 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
     MS_CHECK_PTR_IF_NULL(output);
     ofs << "  memcpy(outputs[" << i << "], " << tensor_map[output] << ", " << output->Size() << ");\n";
   }
-  ofs << "  outputs[0] = net_B;\n"
-         "  return RET_OK;\n"
+  ofs << "  return RET_OK;\n"
          "}\n\n";
 }
 
-void CodeInputState(std::ofstream &ofs, const std::string &module_name) {
+void CodeInputState(std::ofstream &ofs) {
   ofs << "/**\n"
       << "  * set input tensors\n"
       << "  * @param inputs, the input data ptr's array of the model, the tensors' count of input may be greater than "
          "one.\n"
       << "  * @param num, the input data's number of the model.\n"
       << "  **/\n"
-      << "int " << module_name << "_SetInputs(const void **inputs, int num);\n\n";
+      << "int "
+      << "SetInputs(const void **inputs, int num);\n\n";
 }
 
-void CodeInputImplement(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx) {
+void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   // input tensors
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
     ofs << "static const unsigned char *" << ctx->input_name() + std::to_string(i) << " = 0;\n";
   }
   size_t size = inputs.size();
-  ofs << "int " << module_name << "_SetInputs(const void **inputs, int num) {\n"
+  ofs << "int "
+      << "SetInputs(const void **inputs, int num) {\n"
       << "  if (inputs == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n"
@@ -108,15 +109,15 @@ void CodeInputImplement(std::ofstream &ofs, const std::string &module_name, cons
   ofs << "  return RET_OK;\n}\n";
 }
 
-void CodeGraphQuantArgsState(std::ofstream &ofs, const std::string &module_name) {
+void CodeGraphQuantArgsState(std::ofstream &ofs) {
   ofs << "/**\n"
       << "  * get input and output QuantArgs of the model \n"
       << "  **/\n"
-      << "GraphQuantArgs " << module_name << "_GetInOutQuantArgs();\n\n";
+      << "GraphQuantArgs "
+      << "GetInOutQuantArgs();\n\n";
 }
 
-void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::string &module_name,
-                                 const std::unique_ptr<CoderContext> &ctx) {
+void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   std::vector<Tensor *> graph_inputs = ctx->graph_inputs();
   Tensor *in_tensor = graph_inputs.at(kInputIndex);
   MS_CHECK_PTR_IF_NULL(in_tensor);
@@ -129,36 +130,41 @@ void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::string &module_n
     MS_LOG(ERROR) << "code model quant args failed";
     return;
   }
-  ofs << "GraphQuantArgs " << module_name << "_GetInOutQuantArgs() {\n"
+  ofs << "GraphQuantArgs "
+      << "GetInOutQuantArgs() {\n"
       << "\t\tGraphQuantArgs quan_args = { " << in_quant_args.at(0).scale << ", " << out_quant_args.at(0).scale << ", "
       << in_quant_args.at(0).zeroPoint << ", " << out_quant_args.at(0).zeroPoint << "};\n"
       << "\t\treturn quan_args;\n"
       << "}\n";
 }
 
-void CodeManageResourceState(std::ofstream &ofs, const std::string &module_name) {
+void CodeManageResourceState(std::ofstream &ofs) {
   ofs << "/**\n"
       << "  * get the memory space size of the inference.\n"
       << "  **/\n"
-      << "int " << module_name << "_GetBufferSize();\n";
+      << "int "
+      << "GetBufferSize();\n";
 
   ofs << "/**\n"
       << "  * set the memory space for the inference\n"
       << "  **/\n"
-      << "int " << module_name << "_SetBuffer(void *buffer);\n\n";
+      << "int "
+      << "SetBuffer(void *buffer);\n\n";
 
   ofs << "/**\n"
       << "  * free the memory of packed weights, and set the membuf buffer and input address to NULL\n"
       << "  **/\n"
-      << "void " << module_name << "_FreeResource();\n";
+      << "void "
+      << "FreeResource();\n";
 }
 
-void CodeInitResourceImplement(std::ofstream &ofs, const std::string &module_name,
-                               const std::unique_ptr<CoderContext> &ctx) {
-  ofs << "int " << module_name << "_GetBufferSize() {\n"
+void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  ofs << "int "
+      << "GetBufferSize() {\n"
       << "  return " << ctx->total_buffer_size() << ";\n"
       << "}\n";
-  ofs << "int " << module_name << "_SetBuffer( void *buffer) {\n";
+  ofs << "int "
+      << "SetBuffer( void *buffer) {\n";
   ofs << "  if (buffer == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n";
@@ -167,9 +173,9 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::string &module_nam
          "}\n";
 }
 
-void CodeFreeResourceImplement(std::ofstream &ofs, const std::string &module_name,
-                               const std::unique_ptr<CoderContext> &ctx) {
-  ofs << "void " << module_name << "_FreeResource() {\n";
+void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  ofs << "void "
+      << "FreeResource() {\n";
   ofs << "  " << ctx->buffer_name() << "= NULL;\n";
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   size_t size = inputs.size();
@@ -194,11 +200,12 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::string &module_nam
   ofs << "}\n";
 }
 
-void CodeInferenceState(std::ofstream &ofs, const std::string &module_name) {
+void CodeInferenceState(std::ofstream &ofs) {
   ofs << "/**\n"
       << "  * net inference function\n"
       << "  **/\n"
-      << "void " << module_name << "_Inference();\n\n";
+      << "void "
+      << "Inference();\n\n";
 }
 
 }  // namespace mindspore::lite::micro

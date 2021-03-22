@@ -32,7 +32,7 @@ constexpr _mode_t kMicroDirMode = 0777;
 constexpr __mode_t kMicroDirMode = 0777;
 #endif
 
-static std::array<std::string, 3> kWorkDirs = {"src", "benchmark"};
+static std::array<std::string, 2> kWorkDirs = {"src", "benchmark"};
 
 bool DirExists(const std::string &dir_path) {
   struct stat file_info;
@@ -76,18 +76,18 @@ static int MkMicroDir(const std::string &currentDir) {
   return RET_OK;
 }
 
-int InitProjDirs(const std::string &pro_root_dir, const std::string &module_name) {
+int InitProjDirs(const std::string &project_root_dir, const std::string &proj_name) {
 #if defined(_WIN32) || defined(_WIN64)
   std::ofstream pro_file;
-  std::string read_me_file = pro_root_dir + "\\readMe.txt";
+  std::string read_me_file = project_root_dir + "\\readMe.txt";
   pro_file.open(read_me_file.c_str());
   pro_file << "This is a directory for generating coding files. Do not edit !!!\n";
 #else
   std::ifstream pro_file;
-  pro_file.open(pro_root_dir.c_str());
+  pro_file.open(project_root_dir.c_str());
 #endif
   if (!pro_file.is_open()) {
-    MS_LOG(ERROR) << pro_root_dir << ":  model's root dir not exists or have no access to open, please check it!!!";
+    MS_LOG(ERROR) << project_root_dir << ":  model's root dir not exists or have no access to open, please check it!!!";
     pro_file.close();
     return RET_ERROR;
   }
@@ -95,11 +95,10 @@ int InitProjDirs(const std::string &pro_root_dir, const std::string &module_name
   // 1. coderDir 2.WorkRootDir 3. WorkChildDir
   std::string current_dir;
   std::string slashCh = std::string(kSlash);
-  if (pro_root_dir.back() == slashCh.back()) {
-    current_dir = pro_root_dir + module_name;
-  } else {
-    current_dir = pro_root_dir + slashCh + module_name;
+  if (project_root_dir.back() != slashCh.back()) {
+    current_dir = project_root_dir + slashCh;
   }
+  current_dir += proj_name;
   std::string work_dir = current_dir;
   STATUS ret = MkMicroDir(current_dir);
   if (ret == RET_ERROR) {

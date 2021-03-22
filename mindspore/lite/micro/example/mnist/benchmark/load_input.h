@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -14,21 +15,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_DIRS_H_
-#define MINDSPORE_LITE_MICRO_CODER_UTILS_DIRS_H_
-#include <string>
-namespace mindspore::lite::micro {
-#if defined(_WIN32) || defined(_WIN64)
-static const char kSlash[] = "\\";
-#else
-static const char kSlash[] = "/";
+#ifndef MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
+#define MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-int InitProjDirs(const std::string &project_root_dir, const std::string &proj_name);
+void *ReadInputData(const char *real_input_path, int *size);
 
-bool DirExists(const std::string &dir_path);
+void SaveOutputData(char *final_name, unsigned char *output_data, unsigned int out_size);
 
-bool FileExists(const std::string &dir_path);
+int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int inputs_num);
 
-}  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_DIRS_H_
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
+

@@ -31,21 +31,18 @@ void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderCont
 void CodeCopyOutputsState(std::ofstream &ofs);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeInputState(std::ofstream &ofs, const std::string &module_name);
-void CodeInputImplement(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx);
+void CodeInputState(std::ofstream &ofs);
+void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeGraphQuantArgsState(std::ofstream &ofs, const std::string &module_name);
-void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::string &module_name,
-                                 const std::unique_ptr<CoderContext> &ctx);
+void CodeGraphQuantArgsState(std::ofstream &ofs);
+void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeManageResourceState(std::ofstream &ofs, const std::string &module_name);
-void CodeInitResourceImplement(std::ofstream &ofs, const std::string &module_name,
-                               const std::unique_ptr<CoderContext> &ctx);
+void CodeManageResourceState(std::ofstream &ofs);
+void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeFreeResourceImplement(std::ofstream &ofs, const std::string &module_name,
-                               const std::unique_ptr<CoderContext> &ctx);
+void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeInferenceState(std::ofstream &ofs, const std::string &module_name);
+void CodeInferenceState(std::ofstream &ofs);
 }  // namespace mindspore::lite::micro
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMMON_COMPONENT_H_

@@ -15,111 +15,39 @@
 # ============================================================================
 set -e
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-MINDSPORE_ROOT_DIR=${${CURRENT_DIR}%%/mindspore/lite/micro/example/mnist}
+BASEPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+MINDSPORE_ROOT_DIR=${${BASEPATH}%%/mindspore/lite/micro/example/mnist}
 
-OUTPUT_DIR=${1:-${MINDSPORE_ROOT_DIR}/output}
-THREAD_NUM=${2:-32}
-MODULE_NAME=mnist
-OUTPUT_IR=Reshape-64.ir
-CALIB_OUT=${CURRENT_DIR}/Reshape-64.out
+echo "current dir is: ${BASEPATH}"
 
-echo "current dir is: ${CURRENT_DIR}"
-echo "packed output dir is :${OUTPUT_DIR}"
+VERSION_HEADER=${MINDSPORE_ROOT_DIR}/mindspore/lite/include/version.h
+INPUT_BIN=${BASEPATH}/mnist_input.bin
 
-if [ ! -d "${OUTPUT_DIR}" ]; then
-  echo "folder ${OUTPUT_DIR} does not exist"
-  return 1
-fi
-
-# rm if already exist
-WORKSPACE=${CURRENT_DIR}/build
-rm -rf ${WORKSPACE}
-mkdir ${WORKSPACE} || exit 1
-PROJECT_DIR=${WORKSPACE}/${MODULE_NAME}
-
-compare_output() {
-  local OUTPUT_FILE=$1
-  local CALIB_FILE=$2
-  if [[ ! -f "${OUTPUT_FILE}" || ! -f "${CALIB_FILE}" ]]; then
-    echo "file ${OUTPUT_FILE}, ${CALIB_FILE} does not exist, pwd $(pwd)"
-    exit 1
-  fi
-  lines=$(cat ${CALIB_FILE} | wc -l)
-  for ((i = 1; i <= $lines; i++)); do
-    line1=$(awk 'NR=="'${i}'"{print $0}' ${CALIB_FILE})
-    line2=$(awk 'NR=="'${i}'"{print $0}' ${OUTPUT_FILE})
-    if [[ "${line1}" != "${line2}" ]]; then
-      echo -e "file ${OUTPUT_FILE}, ${CALIB_FILE}, compare failed! line: ${i}"
-      exit 1
-    fi
-  done
-  echo -e "compare success, ${OUTPUT_FILE}, ${CALIB_FILE}"
+get_version() {
+    VERSION_MAJOR=$(grep "const int ms_version_major =" ${VERSION_HEADER} | tr -dc "[0-9]")
+    VERSION_MINOR=$(grep "const int ms_version_minor =" ${VERSION_HEADER} | tr -dc "[0-9]")
+    VERSION_REVISION=$(grep "const int ms_version_revision =" ${VERSION_HEADER} | tr -dc "[0-9]")
+    VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
+get_version
+MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-inference-linux-x64"
+MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
 
-# cp oplib and codegen
-cp ${OUTPUT_DIR}/mindspore-lite-*-codegen-linux-x64.tar.gz ${WORKSPACE}/ || exit 1
-cd ${WORKSPACE} || exit 1
-tar -zxf mindspore-lite-*-codegen-linux-x64.tar.gz || exit 1
-cd mindspore-lite-*-codegen-linux-x64 || exit 1
-mv operator_library/ ${WORKSPACE}/ || exit 1
-mv codegen ${WORKSPACE}/ || exit 1
-cd -
-rm -r mindspore-lite-*-codegen-linux-x64 || exit 1
-rm mindspore-lite-*-codegen-linux-x64.tar.gz || exit 1
+mkdir -p build
 
-# convert model
-cp ${OUTPUT_DIR}/mindspore-lite-*-converter-linux-x64.tar.gz ${WORKSPACE}/ || exit 1
-cd ${WORKSPACE} || exit 1
-tar -zxf mindspore-lite-*-converter-linux-x64.tar.gz || exit 1
-rm mindspore-lite-*-converter-linux-x64.tar.gz || exit 1
-cd mindspore-lite-*-converter-linux-x64 || exit 1
-export LD_LIBRARY_PATH=./lib/:./third_party/protobuf/lib:./third_party/flatbuffers/lib:./third_party/glog/lib
-converter/converter_lite --fmk=TFLITE \
-                         --modelFile=${CURRENT_DIR}/mnist.tflite \
-                         --outputFile=${WORKSPACE}/mnist
-cd -
-rm -rf mindspore-lite-*-converter-linux-x64 || exit 1
-
-# generate code
-${WORKSPACE}/codegen --modelPath=${WORKSPACE}/mnist.ms \
-                     --moduleName=${MODULE_NAME} \
-                     --isWeightFile=true \
-                     --debugMode=true
-rm codegen
-
-if [ ! -d "${PROJECT_DIR}" ]; then
-  echo "folder ${PROJECT_DIR} does not exist"
-  return 1
+if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
+  wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
-cd ${PROJECT_DIR} || exit 1
 
-# 1. build static lib.a
-echo -e "building static library"
-mkdir -p src/build && cd src/build || exit 1
-OP_HEADER_PATH=${WORKSPACE}/operator_library/include
-OP_LIB=${WORKSPACE}/operator_library/lib/x86/libops.a
-echo "Head Path: ${OP_HEADER_PATH}"
-echo "Lib Path: ${OP_LIB}"
-cmake -DCMAKE_BUILD_TYPE=Debug       \
-      -DOP_LIB=${OP_LIB}             \
-      -DOP_HEADER_PATH=${OP_HEADER_PATH} ..
-make -j${THREAD_NUM}
+tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/ || exit 1
+rm ${BASEPATH}/build/${MINDSPORE_FILE} || exit 1
+PKG_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}
+# build benchmark
+mkdir -p ${BASEPATH}/build/benchmark && cd ${BASEPATH}/build/benchmark || exit 1
+cmake -DPKG_PATH=${PKG_PATH} ${BASEPATH}
+make
 
-# 2. build benchmark
-cd ${PROJECT_DIR}/benchmark && mkdir -p build && cd build || exit 1
-cmake -DMODEL_LIB="${PROJECT_DIR}/src/build/libnet.a" ..
-make -j${THREAD_NUM}
-
-echo "net file: ${PROJECT_DIR}/src/${MODULE_NAME}.net"
+echo "net file: ${BASEPATH}/src/mnist.bin"
 # 3. run benchmark
-./benchmark ${CURRENT_DIR}/input_1_224_224_3_uint8.bin ${PROJECT_DIR}/src/${MODULE_NAME}.net
-compare_output ${OUTPUT_IR} ${CALIB_OUT}
-
-RET=$?
-if [[ "${RET}" -eq 0 ]]; then
-  echo -e "run benchmark success: ${MODULE_NAME}"
-else
-  echo -e "run benchmark failed: ${MODULE_NAME}"
-  exit 1
-fi
+./benchmark ${INPUT_BIN} ${BASEPATH}/src/net.bin

@@ -33,7 +33,7 @@ echo "SCRIPTS_PATH=$SCRIPTS_PATH"
 # print usage message
 function usage()
 {
-  echo "Check whether the specified source files were well formated"
+  echo "Check whether the specified source files were well formatted"
   echo "Usage:"
   echo "bash $0 [-a] [-c] [-l] [-h]"
   echo "e.g. $0 -a"
@@ -97,8 +97,11 @@ fi
 CHECK_RESULT_FILE=__code_format_check_result__
 echo "0" > "$CHECK_RESULT_FILE"
 
-# check format of files modified in the lastest commit 
+# check format of files modified in the latest commit
 while read line; do
+  if [ ! -e ${line} ]; then
+    continue
+  fi
   BASE_NAME=$(basename "${line}")
   TEMP_FILE="__TEMP__${BASE_NAME}"
   cp "${line}" "${TEMP_FILE}"
@@ -107,7 +110,7 @@ while read line; do
   ret=$?
   rm "${TEMP_FILE}"
   if [[ "${ret}" -ne 0 ]]; then
-    echo "File ${line} is not formated, please format it."
+    echo "File ${line} is not formatted, please format it."
     echo "1" > "${CHECK_RESULT_FILE}"
     break
   fi
@@ -118,6 +121,6 @@ rm "${CHECK_RESULT_FILE}"
 rm "${CHECK_LIST_FILE}"
 cd "${CURRENT_PATH}" || exit 1
 if [[ "X${result}" == "X0" ]]; then
-  echo "Check PASS: specified files are well formated!"
+  echo "Check PASS: specified files are well formatted!"
 fi
 exit "${result}"

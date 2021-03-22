@@ -61,7 +61,6 @@ class Generator {
   std::string net_main_file_path_;
 
  private:
-  int CodeBenchmarkCMakeFile();
   int CodeSourceCMakeFile();
   int CodeStaticContent();
   int CodeSessionImplement();
