@@ -24,9 +24,9 @@ from mindspore.common.initializer import initializer
 def _conv(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float16)
+    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32)
     shape_bias = (out_channels,)
-    bias = Tensor(np.array(np.zeros(shape_bias)).astype(np.float16))
+    bias = Tensor(np.array(np.zeros(shape_bias)).astype(np.float32))
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=kernel_size, stride=stride, padding=padding,
                      pad_mode=pad_mode, weight_init=weights, has_bias=True, bias_init=bias)
@@ -34,9 +34,9 @@ def _conv(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mod
 def _convTanspose(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad'):
     """ConvTranspose wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float16)
+    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32)
     shape_bias = (out_channels,)
-    bias = Tensor(np.array(np.zeros(shape_bias)).astype(np.float16))
+    bias = Tensor(np.array(np.zeros(shape_bias)).astype(np.float32))
     return nn.Conv2dTranspose(in_channels, out_channels,
                               kernel_size=kernel_size, stride=stride, padding=padding,
                               pad_mode=pad_mode, weight_init=weights, has_bias=True, bias_init=bias)
@@ -45,21 +45,27 @@ class FpnMask(nn.Cell):
     """conv layers of mask head"""
     def __init__(self, input_channels, output_channels, num_classes):
         super(FpnMask, self).__init__()
-        self.mask_conv1 = _conv(input_channels, output_channels, kernel_size=3, pad_mode="same")
+        self.mask_conv1 = _conv(input_channels, output_channels, kernel_size=3,
+                                pad_mode="same").to_float(mstype.float16)
         self.mask_relu1 = P.ReLU()
 
-        self.mask_conv2 = _conv(output_channels, output_channels, kernel_size=3, pad_mode="same")
+        self.mask_conv2 = _conv(output_channels, output_channels, kernel_size=3,
+                                pad_mode="same").to_float(mstype.float16)
         self.mask_relu2 = P.ReLU()
 
-        self.mask_conv3 = _conv(output_channels, output_channels, kernel_size=3, pad_mode="same")
+        self.mask_conv3 = _conv(output_channels, output_channels, kernel_size=3,
+                                pad_mode="same").to_float(mstype.float16)
         self.mask_relu3 = P.ReLU()
 
-        self.mask_conv4 = _conv(output_channels, output_channels, kernel_size=3, pad_mode="same")
+        self.mask_conv4 = _conv(output_channels, output_channels, kernel_size=3,
+                                pad_mode="same").to_float(mstype.float16)
         self.mask_relu4 = P.ReLU()
 
-        self.mask_deconv5 = _convTanspose(output_channels, output_channels, kernel_size=2, stride=2, pad_mode="valid")
+        self.mask_deconv5 = _convTanspose(output_channels, output_channels, kernel_size=2,
+                                          stride=2, pad_mode="valid").to_float(mstype.float16)
         self.mask_relu5 = P.ReLU()
-        self.mask_conv6 = _conv(output_channels, num_classes, kernel_size=1, stride=1, pad_mode="valid")
+        self.mask_conv6 = _conv(output_channels, num_classes, kernel_size=1, stride=1,
+                                pad_mode="valid").to_float(mstype.float16)
 
     def construct(self, x):
         x = self.mask_conv1(x)
