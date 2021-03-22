@@ -53,7 +53,7 @@ class MS_API MSTensor {
   virtual Vector<int> shape() const = 0;
 
   /// \brief Set the shape of MSTensor.
-  virtual void set_shape(const Vector<int> &name) = 0;
+  virtual void set_shape(const Vector<int> &shape) = 0;
 
   /// \brief Get number of element in MSTensor.
   ///
@@ -71,7 +71,7 @@ class MS_API MSTensor {
   virtual String tensor_name() const = 0;
 
   /// \brief Set the name of MSTensor.
-  virtual void set_tensor_name(const String name) = 0;
+  virtual void set_tensor_name(const String &name) = 0;
 
   /// \brief Get the pointer of data in MSTensor.
   ///

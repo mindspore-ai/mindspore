@@ -74,7 +74,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual bool operator==(const Tensor &tensor);
 
-  void set_tensor_name(std::string name) override { tensor_name_ = name; }
+  void set_tensor_name(const std::string &name) override { tensor_name_ = name; }
 
   std::string tensor_name() const override { return tensor_name_; }
 

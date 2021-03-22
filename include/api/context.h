@@ -82,7 +82,7 @@ class MS_API CPUDeviceInfo : public DeviceInfoContext {
  public:
   enum DeviceType GetDeviceType() const override { return DeviceType::kCPU; };
 
-  /// \brief Set the thread affinity of CPU cores.
+  /// \brief Set the thread affinity to CPU cores.
   ///
   /// \param mode: 0: no affinities, 1: big cores first, 2: little cores first
   void SetThreadAffinity(int mode);
