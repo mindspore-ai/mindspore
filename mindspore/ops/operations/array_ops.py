@@ -642,7 +642,7 @@ class Squeeze(PrimitiveWithInfer):
         ValueError: If the corresponding dimension of the specified axis does not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
@@ -1992,7 +1992,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         ValueError: If length of shape of `segment_ids` is less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
@@ -5297,6 +5297,9 @@ class Range(PrimitiveWithCheck):
         >>> output = ops.Range()(start, limit, delta)
         >>> print(output)
         [0, 4, 8]
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
