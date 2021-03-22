@@ -1381,11 +1381,14 @@ class QuantBlock(Cell):
         self.activation = activation
         self.has_act = activation is not None
         self.bias_add = P.BiasAdd()
+        self.sub = P.Sub()
+        self.weight_offset = Parameter(np.zeros(shape=weight.shape, dtype=np.int8), name='weight_offset')
 
     def construct(self, x):
         x = self.quant(x)
         if self.has_bias:
-            x = self.core_op(x, self.weight)
+            weight = self.sub(self.weight, self.weight_offset)
+            x = self.core_op(x, weight)
             x = self.bias_add(x, self.bias)
         else:
             x = self.core_op(x, self.weight)
