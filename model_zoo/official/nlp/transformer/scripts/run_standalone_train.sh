@@ -52,7 +52,6 @@ elif [ $DEVICE_TARGET == 'GPU' ];then
         --distribute="false" \
         --epoch_size=$EPOCH_SIZE \
         --device_target=$DEVICE_TARGET \
-        --device_id=$DEVICE_ID \
         --enable_save_ckpt="true" \
         --enable_lossscale="true" \
         --do_shuffle="true" \

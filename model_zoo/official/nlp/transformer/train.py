@@ -122,7 +122,10 @@ def run_transformer_train():
     """
     parser = argparse_init()
     args, _ = parser.parse_known_args()
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+    if args.device_target == "Ascend":
+        context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+    else:
+        context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     context.set_context(reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
 
     if args.distribute == "true":
