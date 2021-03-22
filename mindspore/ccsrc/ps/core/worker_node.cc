@@ -41,6 +41,7 @@ bool WorkerNode::Start(const uint32_t &timeout) {
     FetchServers(client_to_scheduler_);
     MS_LOG(INFO) << "Worker node get all the servers address successful!";
   }
+  MsException::Instance().CheckException();
   MS_LOG(INFO) << "The Worker node has successfully started.";
   return true;
 }
@@ -59,22 +60,16 @@ void WorkerNode::Initialize() {
 }
 
 bool WorkerNode::Stop() {
-  MS_LOG(INFO) << "Stop worker node!";
   if (!is_already_stopped_.load()) {
+    MS_LOG(INFO) << "Stop worker node!";
     is_ready_ = true;
     is_timeout_ = true;
     is_finish_ = true;
-    if (heart_beat_thread_->joinable()) {
-      heart_beat_thread_->join();
-    }
     client_to_scheduler_->Stop();
     if (!connected_nodes_.empty()) {
       for (auto &connected_node : connected_nodes_) {
         connected_node.second->Stop();
       }
-    }
-    if (client_to_scheduler_thread_->joinable()) {
-      client_to_scheduler_thread_->join();
     }
     is_already_stopped_ = true;
   }
