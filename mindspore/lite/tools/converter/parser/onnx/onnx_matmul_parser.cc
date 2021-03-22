@@ -46,5 +46,6 @@ ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, con
 }
 
 OnnxNodeRegistrar g_onnxMatmulParser("MatMul", new OnnxMatmulParser());
+OnnxNodeRegistrar g_onnxGemmParser("Gemm", new OnnxMatmulParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -11,12 +11,12 @@ STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "$
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 if(ENABLE_CONVERTER)
-set(CCSRC_SRC
-        ## ccsrc
-        ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
-        ${CCSRC_DIR}/backend/optimizer/common/visit.cc
-        ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
-        )
+    set(CCSRC_SRC
+            ## ccsrc
+            ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
+            ${CCSRC_DIR}/backend/optimizer/common/visit.cc
+            ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
+            )
 else()
     set(TEST_LITE_SRC ${LITE_DIR}/src/common/log_adapter.cc)
     add_compile_definitions(USE_ANDROID_LOG)
@@ -38,10 +38,10 @@ file(GLOB KERNEL_OP_SRC
 file(GLOB KERNEL_OP_TRAIN_SRC
         ${LITE_DIR}/nnacl/fp32_grad/*.c
         ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
-)
+        )
 
 if(SUPPORT_TRAIN)
-        list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
+    list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
 endif()
 if(PLATFORM_ARM64)
     # assembly
@@ -114,9 +114,9 @@ if(SUPPORT_GPU STREQUAL vulkan)
 endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-  if(ENABLE_CONVERTER)
-    set(BUILD_MINDDATA "off")
-  endif()
+    if(ENABLE_CONVERTER)
+        set(BUILD_MINDDATA "off")
+    endif()
 endif()
 ### runtime framework
 add_definitions(-DENABLE_V0)
@@ -189,19 +189,19 @@ if(ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt/)
     include_directories(${CORE_DIR}/mindrt/src/)
     set(TEST_LITE_SRC ${TEST_LITE_SRC}
-        ${LITE_DIR}/src/lite_mindrt.cc
-        ${LITE_DIR}/src/mindrt_executor.cc
-        ${CORE_DIR}/mindrt/src/litebus.cc
-        ${CORE_DIR}/mindrt/src/actor/actor.cc
-        ${CORE_DIR}/mindrt/src/actor/actormgr.cc
-        ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
-        ${CORE_DIR}/mindrt/src/actor/actorthread.cc
-        ${CORE_DIR}/mindrt/src/actor/aid.cc
-        ${CORE_DIR}/mindrt/src/async/async.cc
-        ${CORE_DIR}/mindrt/src/async/future.cc
-        ${CORE_DIR}/mindrt/src/async/uuid_base.cc
-        ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
-        )
+            ${LITE_DIR}/src/lite_mindrt.cc
+            ${LITE_DIR}/src/mindrt_executor.cc
+            ${CORE_DIR}/mindrt/src/litebus.cc
+            ${CORE_DIR}/mindrt/src/actor/actor.cc
+            ${CORE_DIR}/mindrt/src/actor/actormgr.cc
+            ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
+            ${CORE_DIR}/mindrt/src/actor/actorthread.cc
+            ${CORE_DIR}/mindrt/src/actor/aid.cc
+            ${CORE_DIR}/mindrt/src/async/async.cc
+            ${CORE_DIR}/mindrt/src/async/future.cc
+            ${CORE_DIR}/mindrt/src/async/uuid_base.cc
+            ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
+            )
 endif()
 
 
@@ -242,6 +242,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tf_lstm_cell_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/matmul_add_fusion.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_transform_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
@@ -286,16 +287,16 @@ else()
 endif()
 ### test src
 file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
-    ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
-    ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
-    ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
-    ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
-    ${TEST_DIR}/ut/nnacl/infer/*.cc
-)
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
+        ${TEST_DIR}/ut/nnacl/infer/*.cc
+        )
 
 file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
-    ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32_grad/*.cc
-)
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32_grad/*.cc
+        )
 
 set(TEST_SRC
         ${TEST_LITE_SRC}
@@ -306,7 +307,7 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
-)
+        )
 
 if(ENABLE_CONVERTER)
     set(TEST_SRC
@@ -358,7 +359,7 @@ endif()
 
 if(ENABLE_FP16 AND SUPPORT_TRAIN)
     file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC_GRAD
-        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16_grad/*.cc)
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16_grad/*.cc)
     list(APPEND TEST_SRC ${TEST_CASE_KERNEL_FP16_SRC_GRAD})
 endif()
 
