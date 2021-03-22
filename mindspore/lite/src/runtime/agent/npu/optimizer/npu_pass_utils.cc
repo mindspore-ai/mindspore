@@ -106,6 +106,9 @@ void NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel,
       break;
     }
   }
+  if (out_kernels.empty()) {
+    out_kernels.push_back(trans_kernel);
+  }
   pre_kernel->set_out_kernels(out_kernels);
 }
 

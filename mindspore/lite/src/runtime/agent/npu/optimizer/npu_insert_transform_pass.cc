@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/agent/npu/optimizer/npu_insert_transform_pass.h"
+#include <algorithm>
 #include <set>
 #include <string>
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
@@ -51,7 +52,8 @@ int GetInsertState(kernel::LiteKernel *kernel) {
 
   // current kernel is target kernel
   // use out kernels to count how many out lines from current kernel
-  size_t in_out_tensor_num = kernel->in_tensors().size() + kernel->out_kernels().size();
+  size_t in_out_tensor_num =
+    kernel->in_tensors().size() + std::max(kernel->out_kernels().size(), static_cast<size_t>(1));
   size_t transpose_input_num = 0;
   size_t transpose_output_num = 0;
   bool need_pre_insert = false;
@@ -64,6 +66,9 @@ int GetInsertState(kernel::LiteKernel *kernel) {
     } else {
       need_pre_insert = true;
     }
+  }
+  if (kernel->out_kernels().empty()) {
+    need_post_insert = true;
   }
   for (const auto out_kernel : kernel->out_kernels()) {
     if (NPUPassUtils::IsNhwc2Nchw(out_kernel)) {

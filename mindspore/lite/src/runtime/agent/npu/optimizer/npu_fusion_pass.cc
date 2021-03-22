@@ -141,6 +141,23 @@ void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
 
 void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
   auto tensor = cur_kernel->out_tensors()[0];
+
+  // in case: node->nh2nc->nc2nh(graph output) --->>> node->nc2nh, node out_tensor should be put to nnc2nh out tensors
+  auto out_kernels = cur_kernel->out_kernels();
+  if (out_kernels.size() == 1 && out_kernels[0]->out_kernels().size() == 1 &&
+      out_kernels[0]->out_kernels()[0]->out_kernels().empty() &&
+      out_kernels[0]->out_kernels()[0]->type_str() == "Transpose") {
+    auto nc_tensor = out_kernels[0]->out_tensors()[0];  // nh2nc's out tensor
+    cur_kernel->set_out_tensors({nc_tensor});
+    auto post_post_kernel = out_kernels[0]->out_kernels()[0];
+    // nc2nh kernel set in_tensor out_tensor
+    auto post_post_k_in_tensors = post_post_kernel->in_tensors();
+    post_post_k_in_tensors[0] = nc_tensor;
+    post_post_kernel->set_in_tensors(post_post_k_in_tensors);
+    post_post_kernel->set_out_tensors({tensor});
+    return;
+  }
+
   tensor->set_format(schema::Format_NCHW);
   auto nhwc_shape = tensor->shape();
   tensor->set_shape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
