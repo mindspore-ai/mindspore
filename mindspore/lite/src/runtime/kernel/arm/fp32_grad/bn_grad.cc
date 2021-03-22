@@ -18,7 +18,7 @@
 #include <math.h>
 #include <algorithm>
 #include <vector>
-
+#include <string>
 #include <thread>
 #include <fstream>
 
@@ -51,6 +51,12 @@ int BNGradCPUKernel::Execute(int task_id) {
   auto *input_scale = in_tensors_.at(2);
   auto *input_mean = in_tensors_.at(3);
   auto *input_var = in_tensors_.at(4);
+
+  auto kernel_name = this->name();
+  if (kernel_name.find("FusedBatchNormGradCPU") != std::string::npos) {
+    input_mean = in_tensors_.at(4);
+    input_var = in_tensors_.at(5);
+  }
   auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
   int stage = stage_;
   int thread_num = thread_num_;
