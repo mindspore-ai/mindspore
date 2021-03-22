@@ -74,10 +74,13 @@ void GraphRecorder::Export() {
   if (graph_type_.find(".ir") != std::string::npos) {
     save_flag = true;
     std::string realpath_ir = realpath + ".ir";
-    if (full_name_) {
-      DumpIRForRDR(realpath_ir, func_graph_, true, kTopStack);
+    if (dump_graph_info_.dump_mode <= static_cast<int>(kWholeStack) &&
+        dump_graph_info_.dump_mode >= static_cast<int>(kOff)) {
+      LocDumpMode dump_mode = LocDumpMode(dump_graph_info_.dump_mode);
+      DumpIRForRDR(realpath_ir, func_graph_, dump_graph_info_.dump_full_name, dump_mode);
     } else {
-      DumpIRForRDR(realpath_ir, func_graph_, false, kWholeStack);
+      MS_LOG(WARNING) << "Unknown save graph LocDumoMode: " << dump_graph_info_.dump_mode
+                      << ", it must be in the range [0,2].";
     }
   }
   if (graph_type_.find(".pb") != std::string::npos) {

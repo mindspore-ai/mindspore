@@ -374,7 +374,8 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   BuildKernel(graph);
 #ifdef ENABLE_DUMP_IR
   std::string name = "graph_build";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, false, ".ir,.pb");
+  DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, dump_params, ".ir,.pb");
 #endif
   // Get summary nodes.
   SetSummaryNodes(graph.get());
