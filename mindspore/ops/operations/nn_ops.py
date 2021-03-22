@@ -664,7 +664,7 @@ class HSwish(PrimitiveWithInfer):
         TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> hswish = ops.HSwish()
@@ -708,7 +708,7 @@ class Sigmoid(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
@@ -754,7 +754,7 @@ class HSigmoid(PrimitiveWithInfer):
         TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> hsigmoid = ops.HSigmoid()
@@ -1158,7 +1158,7 @@ class BatchNorm(PrimitiveWithInfer):
         TypeError: If dtype of `input_x`, `scale` or `mean` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
@@ -1940,7 +1940,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
@@ -2482,7 +2482,7 @@ class SmoothL1Loss(PrimitiveWithInfer):
         ValueError: If shape of `prediction` is not the same as `target`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = ops.SmoothL1Loss()
@@ -2795,7 +2795,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         ValueError: If `decay`, `momentum` or `epsilon` is not a constant value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> apply_rms = ops.ApplyRMSProp()
@@ -2898,7 +2898,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         TypeError: If dtype of `decay`, `momentum` or `epsilon` is not float.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> centered_rms_prop = ops.ApplyCenteredRMSProp()
@@ -2987,7 +2987,7 @@ class LayerNorm(Primitive):
         TypeError: If `input_x`, `gamma` or `beta` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
@@ -3367,7 +3367,7 @@ class GeLU(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> tensor = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -3868,7 +3868,7 @@ class Pad(PrimitiveWithInfer):
         ValueError: If shape of `paddings` is not (n, 2).
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -3940,7 +3940,7 @@ class MirrorPad(PrimitiveWithInfer):
         TypeError: If `mode` is not a str.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -4193,7 +4193,7 @@ class Adam(PrimitiveWithInfer):
         TypeError: If `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -6999,7 +6999,7 @@ class CTCLoss(PrimitiveWithInfer):
         TypeError: If dtype of `labels_values` or `sequence_length` is not int32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> np.random.seed(0)
