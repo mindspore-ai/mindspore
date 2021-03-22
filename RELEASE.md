@@ -20,6 +20,10 @@ Previously the number of outputs of these operator is different on different bac
 
 The FusedBatchNorm and FusedBatchNormEx interface has been deleted. Please use the batchnorm operator to replace it.
 
+##### `MetaTensor` deleted ([!10325](https://gitee.com/mindspore/mindspore/pulls/10325))
+
+The MetaTensor interface has been deleted. The function of MetaTensor has been integrated into tensor.
+
 # MindSpore 1.1.1 Release Notes
 
 ## MindSpore
