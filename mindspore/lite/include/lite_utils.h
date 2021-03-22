@@ -99,8 +99,12 @@ class String {
   char *buffer_;
 };
 
-String operator+(const String &str1, const char *str2);
-String operator+(const char *str1, const String &str2);
+String operator+(const String &lhs, const char *rhs);
+String operator+(const char *lhs, const String &rhs);
+
+bool operator==(const String &lhs, const String &rhs);
+bool operator==(const String &lhs, const char *rhs);
+bool operator==(const char *lhs, const String &rhs);
 
 String to_string(int32_t value);
 String to_string(float value);

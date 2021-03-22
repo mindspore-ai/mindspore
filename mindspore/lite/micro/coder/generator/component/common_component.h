@@ -24,9 +24,11 @@
 #include <fstream>
 #include "src/tensor.h"
 #include "coder/context.h"
+#include "coder/config.h"
 
 namespace mindspore::lite::micro {
 void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeCreateSessionImplement(std::ofstream &ofs, Target target);
 
 void CodeCopyOutputsState(std::ofstream &ofs);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
