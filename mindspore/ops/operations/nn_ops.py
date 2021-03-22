@@ -970,9 +970,14 @@ class BNTrainingReduce(PrimitiveWithInfer):
         >>> bn_training_reduce = ops.BNTrainingReduce()
         >>> output = bn_training_reduce(input_x)
         >>> print(output)
-        (Tensor(shape=[3], dtype=Float32, value=
-        [ 1.22880000e+04,  1.22880000e+04,  1.22880000e+04]), Tensor(shape=[3], dtype=Float32, value=
-        [ 1.22880000e+04,  1.22880000e+04,  1.22880000e+04]))
+        (Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
+        [[[[ 2.73200464e+00, 2,73200464e+00],
+           [ 2.73200464e+00, 2,73200464e+00]],
+          [[ 2.73200464e+00, 2,73200464e+00],
+           [ 2.73200464e+00, 2,73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-01,
+        9.24999952e-01]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-01, 9.24999952e-01]),
+        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-01, 2.50000000e-01]), Tensor(shape=[2], dtype=Float32,
+        value= [ 1.87500000e-01, 1.87500000-01]))
     """
 
     @prim_attr_register
@@ -1028,7 +1033,7 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         TypeError: If dtype of `epsilon` or `factor` is not float.
         TypeError: If `x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is not a Tensor.
         TypeError: If dtype of `x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is neither float16 nor
-        float32.
+                   float32.
 
     Supported Platforms:
         ``Ascend``
@@ -2219,9 +2224,9 @@ class NLLLoss(PrimitiveWithInfer):
         >>> nll_loss = ops.NLLLoss(reduction="mean")
         >>> loss, weight = nll_loss(input, target, weight)
         >>> print(loss)
-        [-0.52507716]
+        -0.52507716
         >>> print(weight)
-        [1.1503246 0.79172504]
+        1.1503246
     """
 
     @prim_attr_register
@@ -2998,7 +3003,7 @@ class LayerNorm(Primitive):
          [2.]]
         >>> print(variance)
         [[0.6666667]
-         [0.6666667]])
+         [0.6666667]]
     """
 
     @prim_attr_register
