@@ -159,7 +159,7 @@ int NetRunner::InitDB() {
 }
 
 int NetRunner::TrainLoop() {
-  struct mindspore::lite::StepLRLambda step_lr_lambda(1, 0.8);
+  struct mindspore::lite::StepLRLambda step_lr_lambda(1, 0.7);
   mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 1);
 
   mindspore::lite::LossMonitor lm(100);
