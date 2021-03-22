@@ -24,9 +24,12 @@
 
 namespace mindspore {
 namespace label_manage {
-static TraceLabelType trace_type = TraceLabelType::kShortSymbol;
-TraceLabelType GetGlobalTraceLabelType() { return trace_type; }
-void SetGlobalTraceLabelType(TraceLabelType label_type) { trace_type = label_type; }
+static TraceLabelType global_trace_type = (common::GetEnv("ENV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
+                                            ? TraceLabelType::kWithUniqueId
+                                            : TraceLabelType::kShortSymbol;
+TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
+void SetGlobalTraceLabelType(TraceLabelType label_type) { global_trace_type = label_type; }
+
 struct NameWithTrace {
   std::string name;
   std::vector<std::string> trace_labels;
