@@ -40,16 +40,16 @@ class LstmFp16CPUKernel : public LiteKernel {
   void FreeTmpBuffer();
   void FreeRunBuffer();
   int InitParam();
-  int InitWeight(const lite::Tensor *tensor, float16_t *ptr, int deep);
-  int InitWeightBias();
+  int InitInputWeightBias();
+  int InitStateWeightBias();
   int MallocRunBuffer();
 
-  float16_t *gate_buffer_ = nullptr;
-  float16_t *state_buffer_[2];
   float16_t *weight_i_ptr_ = nullptr;
   float16_t *weight_h_ptr_ = nullptr;
-  float16_t *bias_ptr_ = nullptr;
-  float16_t *matmul_buffer_[2];
+  float16_t *input_bias_ = nullptr;
+  float16_t *state_bias_ = nullptr;
+  float16_t *buffer_[6];
+  int weight_batch_ = 0;
   bool is_vec_ = false;
   LstmParameter *lstm_param_ = nullptr;
 };

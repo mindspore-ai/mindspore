@@ -20,40 +20,21 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 
-void UpdateGruInputGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row,
-                        int deep, int col, int col_align, bool is_vec) {
-  for (int i = 0; i < 3; i++) {
-    const float *weight_i = weight + deep * col * i;
-    const float *bias_i = bias + col_align * i;
-    float *gate = gate_buffer + row * col * i;
-    LstmMatMul(gate, input, weight_i, bias_i, row, deep, col, is_vec);
-  }
-}
-
-void GruStepUnit(float *output, const float *input, const float *input_weight, const float *state_weight,
-                 const float *bias, float *hidden_state, float *gate_buffer, float *matmul_buffer[2],
-                 const GruParameter *gru_param) {
+void GruStepUnit(float *output, float *update_gate, float *reset_gate, float *hidden_buffer, const float *state_weight,
+                 const float *state_bias, float *hidden_state, float *buffer[4], const GruParameter *gru_param) {
+  float *packed_state = buffer[2];
+  float *state_gate = buffer[3];
   bool is_vec = gru_param->batch_ == 1;
-  // input * weight
-  if (is_vec) {
-    UpdateGruInputGate(gate_buffer, input, input_weight, bias, gru_param->batch_, gru_param->input_size_,
-                       gru_param->hidden_size_, gru_param->col_align_, is_vec);
-  } else {
-    // pack input for matmul
-    PackLstmInput(input, matmul_buffer[0], gru_param->batch_, gru_param->input_size_);
-    UpdateGruInputGate(gate_buffer, matmul_buffer[0], input_weight, bias, gru_param->batch_, gru_param->input_size_,
-                       gru_param->hidden_size_, gru_param->col_align_, is_vec);
-  }
 
   const float *state_update_weight = state_weight;
   const float *state_reset_weight = state_weight + gru_param->hidden_size_ * gru_param->hidden_size_;
   const float *state_hidden_weight = state_weight + gru_param->hidden_size_ * gru_param->hidden_size_ * 2;
-  float *state_update_gate = gate_buffer + gru_param->batch_ * gru_param->hidden_size_ * 3;
-  float *state_reset_gate = gate_buffer + gru_param->batch_ * gru_param->hidden_size_ * 4;
-  float *state_hidden_buffer = gate_buffer + gru_param->batch_ * gru_param->hidden_size_ * 5;
-  const float *state_update_bias = bias + gru_param->hidden_size_ * 3;
-  const float *state_reset_bias = bias + gru_param->hidden_size_ * 4;
-  const float *state_hidden_bias = bias + gru_param->hidden_size_ * 5;
+  float *state_update_gate = state_gate;
+  float *state_reset_gate = state_gate + gru_param->batch_ * gru_param->hidden_size_;
+  float *state_hidden_buffer = state_gate + gru_param->batch_ * gru_param->hidden_size_ * 2;
+  const float *state_update_bias = state_bias;
+  const float *state_reset_bias = state_bias + gru_param->hidden_size_;
+  const float *state_hidden_bias = state_bias + gru_param->hidden_size_ * 2;
 
   // state * weight
   if (is_vec) {
@@ -62,16 +43,15 @@ void GruStepUnit(float *output, const float *input, const float *input_weight, c
     LstmMatMul(state_update_gate, hidden_state, state_update_weight, state_update_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   } else {
-    PackLstmInput(hidden_state, matmul_buffer[1], gru_param->batch_, gru_param->hidden_size_);
-    LstmMatMul(state_reset_gate, matmul_buffer[1], state_reset_weight, state_reset_bias, gru_param->batch_,
+    PackLstmInput(hidden_state, packed_state, gru_param->batch_, gru_param->hidden_size_);
+    LstmMatMul(state_reset_gate, packed_state, state_reset_weight, state_reset_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
-    LstmMatMul(state_update_gate, matmul_buffer[1], state_update_weight, state_update_bias, gru_param->batch_,
+    LstmMatMul(state_update_gate, packed_state, state_update_weight, state_update_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   }
-  ElementAdd(gate_buffer, state_update_gate, gate_buffer, gru_param->batch_ * gru_param->hidden_size_ * 2);
-  float *update_gate = gate_buffer;
-  float *reset_gate = gate_buffer + gru_param->batch_ * gru_param->hidden_size_;
-  float *hidden_buffer = gate_buffer + gru_param->batch_ * gru_param->hidden_size_ * 2;
+  ElementAdd(update_gate, state_update_gate, update_gate, gru_param->batch_ * gru_param->hidden_size_);
+  ElementAdd(reset_gate, state_update_gate + gru_param->batch_ * gru_param->hidden_size_, reset_gate,
+             gru_param->batch_ * gru_param->hidden_size_);
 
   // update reset_gate
   Sigmoid(reset_gate, gru_param->batch_ * gru_param->hidden_size_, reset_gate);
@@ -83,8 +63,8 @@ void GruStepUnit(float *output, const float *input, const float *input_weight, c
     LstmMatMul(state_hidden_buffer, reset_gate, state_hidden_weight, state_hidden_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   } else {
-    PackLstmInput(reset_gate, matmul_buffer[1], gru_param->batch_, gru_param->hidden_size_);
-    LstmMatMul(state_hidden_buffer, matmul_buffer[1], state_hidden_weight, state_hidden_bias, gru_param->batch_,
+    PackLstmInput(reset_gate, packed_state, gru_param->batch_, gru_param->hidden_size_);
+    LstmMatMul(state_hidden_buffer, packed_state, state_hidden_weight, state_hidden_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   }
   ElementAdd(hidden_buffer, state_hidden_buffer, hidden_buffer, gru_param->batch_ * gru_param->hidden_size_);
@@ -104,15 +84,41 @@ void GruStepUnit(float *output, const float *input, const float *input_weight, c
   memcpy(output, hidden_state, gru_param->batch_ * gru_param->hidden_size_ * sizeof(float));
 }
 
-void Gru(float *output, const float *input, const float *weight_g, const float *weight_r, const float *bias,
-         float *hidden_state, float *gate_buffer, float *matmul_buffer[2], int check_seq_len,
+void GruUnidirectional(float *output, const float *packed_input, const float *weight_g, const float *weight_r,
+                       const float *input_bias, const float *state_bias, float *hidden_state, float *buffer[4],
+                       const GruParameter *gru_param, bool is_backward) {
+  float *gate = buffer[1];
+  for (int i = 0; i < 3; i++) {
+    const float *weight_loop = weight_g + gru_param->input_size_ * gru_param->input_col_align_ * i;
+    const float *bias_loop = input_bias + gru_param->input_col_align_ * i;
+    float *gate_loop = gate + gru_param->seq_len_ * gru_param->batch_ * gru_param->hidden_size_ * i;
+    MatMulOpt(packed_input, weight_loop, gate_loop, bias_loop, ActType_No, gru_param->input_size_,
+              gru_param->seq_len_ * gru_param->batch_, gru_param->hidden_size_, gru_param->hidden_size_, OutType_Nhwc);
+  }
+
+  float *update_gate = gate;
+  float *reset_gate = gate + gru_param->seq_len_ * gru_param->batch_ * gru_param->hidden_size_;
+  float *hidden_buffer = gate + gru_param->seq_len_ * gru_param->batch_ * gru_param->hidden_size_ * 2;
+  for (int t = 0; t < gru_param->seq_len_; t++) {
+    int real_t = is_backward ? gru_param->seq_len_ - t - 1 : t;
+    float *update_gate_t = update_gate + gru_param->batch_ * gru_param->hidden_size_ * real_t;
+    float *reset_gate_t = reset_gate + gru_param->batch_ * gru_param->hidden_size_ * real_t;
+    float *hidden_buffer_t = hidden_buffer + gru_param->batch_ * gru_param->hidden_size_ * real_t;
+    float *output_ptr = output + real_t * gru_param->output_step_;
+    GruStepUnit(output_ptr, update_gate_t, reset_gate_t, hidden_buffer_t, weight_r, state_bias, hidden_state, buffer,
+                gru_param);
+  }
+}
+
+void Gru(float *output, const float *input, const float *weight_g, const float *weight_r, const float *input_bias,
+         const float *state_bias, float *hidden_state, float *buffer[4], int check_seq_len,
          const GruParameter *gru_param) {
   // forward
-  for (int t = 0; t < check_seq_len; t++) {
-    const float *input_ptr = input + t * gru_param->input_step_;
-    float *output_ptr = output + t * gru_param->output_step_;
-    GruStepUnit(output_ptr, input_ptr, weight_g, weight_r, bias, hidden_state, gate_buffer, matmul_buffer, gru_param);
-  }
+  float *packed_input = buffer[0];
+  PackLstmInput(input, packed_input, gru_param->seq_len_ * gru_param->batch_, gru_param->input_size_);
+  GruUnidirectional(output, packed_input, weight_g, weight_r, input_bias, state_bias, hidden_state, buffer, gru_param,
+                    false);
+
   // zero out extra fw outputs
   for (int t = check_seq_len; t < gru_param->seq_len_; t++) {
     float *output_ptr = output + t * gru_param->output_step_;
@@ -123,17 +129,16 @@ void Gru(float *output, const float *input, const float *weight_g, const float *
 
   // backward
   if (gru_param->bidirectional_) {
-    const float *backward_weight_g = weight_g + 3 * gru_param->col_align_ * gru_param->input_size_;
-    const float *backward_weight_r = weight_r + 3 * gru_param->col_align_ * gru_param->hidden_size_;
-    const float *backward_bias = bias + 6 * gru_param->hidden_size_;
+    const float *backward_weight_g = weight_g + 3 * gru_param->input_col_align_ * gru_param->input_size_;
+    const float *backward_weight_r = weight_r + 3 * gru_param->state_col_align_ * gru_param->hidden_size_;
+    const float *backward_input_bias = input_bias + 3 * gru_param->input_col_align_;
+    const float *backward_state_bias = state_bias + 3 * gru_param->state_col_align_;
     float *backward_output = output + gru_param->batch_ * gru_param->hidden_size_;
     float *backward_hidden_state = hidden_state + gru_param->batch_ * gru_param->hidden_size_;
-    for (int t = check_seq_len - 1; t >= 0; t--) {
-      const float *input_ptr = input + t * gru_param->input_step_;
-      float *output_ptr = backward_output + t * gru_param->output_step_;
-      GruStepUnit(output_ptr, input_ptr, backward_weight_g, backward_weight_r, backward_bias, backward_hidden_state,
-                  gate_buffer, matmul_buffer, gru_param);
-    }
+
+    GruUnidirectional(backward_output, packed_input, backward_weight_g, backward_weight_r, backward_input_bias,
+                      backward_state_bias, backward_hidden_state, buffer, gru_param, true);
+
     // zero out extra bw outputs
     for (int t = gru_param->seq_len_ - 1; t >= check_seq_len; t--) {
       float *output_ptr = backward_output + t * gru_param->output_step_;

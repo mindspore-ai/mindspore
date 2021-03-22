@@ -39,15 +39,17 @@ class GruCPUKernel : public LiteKernel {
   void FreeRunBuffer();
   int InitParam();
   int MallocRunBuffer();
-  int InitWeightBias();
+  int InitInputWeightBias();
+  int InitStateWeightBias();
 
-  float *gate_buffer_ = nullptr;
   float *weight_g_ptr_ = nullptr;
   float *weight_r_ptr_ = nullptr;
-  float *bias_ptr_ = nullptr;
-  float *matmul_buffer_[2];
+  float *input_bias_ = nullptr;
+  float *state_bias_ = nullptr;
+  float *buffer_[4];
   int row_tile_ = 0;
   int col_tile_ = 0;
+  int weight_batch_ = 0;
   bool is_vec_ = false;
   GruParameter *gru_param_ = nullptr;
 };
