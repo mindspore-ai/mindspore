@@ -53,6 +53,9 @@ class DataGen:
         data_db = pkl.load(f_wiki, encoding="gbk")
         dev_data = json.load(f_train)
         q_doc_text = pkl.load(f_doc, encoding='gbk')
+        f_wiki.close()
+        f_train.close()
+        f_doc.close()
         return data_db, dev_data, q_doc_text
 
     def process_data(self):
