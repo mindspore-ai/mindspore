@@ -42,7 +42,7 @@ enum ParseStatusCode : int64_t {
   PARSE_PARAMETER_INVALID,           // parameter is invalid
   PARSE_NO_RETURN,                   // function no return node
   PARSE_NODE_TYPE_NO_MATCH,          // ast node type is error
-  PARSE_NODE_TYPE_UNKOWN,            // node type is unkown
+  PARSE_NODE_TYPE_UNKNOWN,           // node type is unknown
   PARSE_NODE_METHOD_UNSUPPORTED,     // no method to parse the node
   PARSE_DONT_RESOLVE_SYMBOL,         // can't resolve the string
   PARSE_NOT_SUPPORTED_COMPARE_EXPR,  // the comparison is not supported
@@ -54,7 +54,7 @@ enum ParseStatusCode : int64_t {
 // NOTE: Since when the for loop was unrolled, it depends backend operators `tuple_getitem` and `scalar_add` which were
 //  not implemented, so here set MAX_FOR_LOOP_COUNT to int64_t max limit to override default value `600`. This will make
 //  the for loop will always be unrolled, but don't worry about the memory were exhausted, an exception will be raised
-//  when function call depth execeeds the limit `context.get_context('max_call_depth')`.
+//  when function call depth exceeds the limit `context.get_context('max_call_depth')`.
 const int64_t MAX_FOR_LOOP_COUNT = std::numeric_limits<int64_t>::max();
 
 class AstNodeType;
@@ -191,7 +191,7 @@ class Parser {
   FunctionBlockPtr ParseStatements(FunctionBlockPtr block, const py::object &stmt_node);
   // parse one ast statement node
   FunctionBlockPtr ParseStatement(const FunctionBlockPtr &block, const py::object &node);
-  // parse an ast expresion node
+  // parse an ast expression node
   AnfNodePtr ParseExprNode(const FunctionBlockPtr &block, const py::object &node);
 
   void MakeConditionBlocks(const FunctionBlockPtr &block, const FunctionBlockPtr &trueBlock,
@@ -363,7 +363,7 @@ class ParseAst {
 };
 
 // update the graph flags
-bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph);
+bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
 TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph);

@@ -156,7 +156,7 @@ AnfNodePtr AppendParameterObj(const FuncGraphPtr &func_graph, const py::object &
   auto top_graph = func_graph;
   // If the parameter node has been created , return it
   AnfNodePtr para_node = nullptr;
-  for (auto param : top_graph->parameters()) {
+  for (const auto &param : top_graph->parameters()) {
     auto param_node = dyn_cast<Parameter>(param);
     if (param_node != nullptr && param_node->name() == param_name) {
       para_node = param;
@@ -179,15 +179,15 @@ AnfNodePtr AppendParameterObj(const FuncGraphPtr &func_graph, const py::object &
 
 void UpdataParam(const FuncGraphPtr &top_graph, const py::object &cell) {
   auto params = py::list(cell.attr("get_parameters")()).cast<std::vector<py::object>>();
-  for (size_t i = 0; i < params.size(); i++) {
-    (void)AppendParameterObj(top_graph, params[i]);
+  for (const auto &param : params) {
+    (void)AppendParameterObj(top_graph, param);
   }
 }
 
 void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseAst> &ast) {
   // Check whether the functions referred by this function and itself are missing 'return' statement
   auto mng = Manage(fn, false);
-  for (auto func_graph : mng->func_graphs()) {
+  for (const auto &func_graph : mng->func_graphs()) {
     if (func_graph->get_return() != nullptr) {
       continue;
     }
@@ -198,7 +198,7 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseAst> &as
     MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
   }
   // Clear manager info after checking missing return
-  for (auto fg : mng->func_graphs()) {
+  for (const auto &fg : mng->func_graphs()) {
     fg->ClearAllManagerInfo();
   }
 }
@@ -306,7 +306,7 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
   current_fg->debug_info()->set_name(function_name);
   MS_EXCEPTION_IF_NULL(ast_);
   py::list deco_list = node.attr("decorator_list");
-  if (deco_list.size() > 0) {
+  if (!deco_list.empty()) {
     current_fg->debug_info()->set_deco_location(GetLocation(deco_list));
   }
 
@@ -548,7 +548,7 @@ AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
   } else {
     // no else actually
     MS_LOG(ERROR) << "Unsupported Num type : " << (std::string)py::str(obj);
-    errcode_ = PARSE_NODE_TYPE_UNKOWN;
+    errcode_ = PARSE_NODE_TYPE_UNKNOWN;
     return nullptr;
   }
 }
@@ -600,7 +600,7 @@ AnfNodePtr Parser::ParseNameConstant(const FunctionBlockPtr &, const py::object 
   } else {
     // no else actually
     MS_LOG(ERROR) << "Unsupported NameConstant type: " << (std::string)py::str(obj);
-    errcode_ = PARSE_NODE_TYPE_UNKOWN;
+    errcode_ = PARSE_NODE_TYPE_UNKNOWN;
     return nullptr;
   }
 }
@@ -1528,7 +1528,7 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   AnfNodePtr target_node = ParseExprNode(block, targ);
   MS_EXCEPTION_IF_NULL(target_node);
 
-  std::string attr_name = targ.attr("attr").cast<std::string>();
+  auto attr_name = targ.attr("attr").cast<std::string>();
   std::string var_name = "self." + attr_name;
 
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
@@ -1560,7 +1560,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   // Getitem apply should return the sequence data structure itself
   std::string var_name;
   if (ast_->IsClassMember(value_obj)) {
-    std::string attr_name = value_obj.attr("attr").cast<std::string>();
+    auto attr_name = value_obj.attr("attr").cast<std::string>();
     var_name = "self." + attr_name;
     if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
       MS_EXCEPTION(TypeError) << "'" << var_name << "' was not defined in the class '__init__' function.";
@@ -1675,9 +1675,9 @@ void Parser::RemoveUnnecessaryPhis() {
     MS_EXCEPTION_IF_NULL(block);
     removable_phis.insert(block->removable_phis().begin(), block->removable_phis().end());
     std::transform(block->removable_phis().begin(), block->removable_phis().end(), std::back_inserter(phis),
-                   [](std::pair<ParameterPtr, AnfNodePtr> pair) { return pair.first; });
+                   [](const std::pair<ParameterPtr, AnfNodePtr> &pair) { return pair.first; });
   }
-  if (removable_phis.size() == 0) {
+  if (removable_phis.empty()) {
     return;
   }
   auto fg_name = func_graph_->ToString();
@@ -1693,14 +1693,14 @@ void Parser::RemoveUnnecessaryPhis() {
   for (FunctionBlockPtr &block : func_block_list_) {
     MS_EXCEPTION_IF_NULL(block);
     auto &local_removable_phis = block->removable_phis();
-    if (local_removable_phis.size() == 0) {
+    if (local_removable_phis.empty()) {
       continue;
     }
     auto func_graph = block->func_graph();
     auto &parameters = func_graph->parameters();
     std::vector<AnfNodePtr> new_parameters(parameters.size());
     auto it = std::copy_if(
-      parameters.begin(), parameters.end(), new_parameters.begin(), [&local_removable_phis](AnfNodePtr param) {
+      parameters.begin(), parameters.end(), new_parameters.begin(), [&local_removable_phis](const AnfNodePtr &param) {
         return local_removable_phis.find(param->cast<ParameterPtr>()) == local_removable_phis.end();
       });
 
@@ -1708,7 +1708,7 @@ void Parser::RemoveUnnecessaryPhis() {
     new_parameters.resize(std::distance(new_parameters.begin(), it));
     func_graph->set_parameters(new_parameters);
   }
-  for (auto fg : mng->func_graphs()) {
+  for (const auto &fg : mng->func_graphs()) {
     fg->ClearAllManagerInfo();
   }
 }
@@ -1812,7 +1812,7 @@ bool ParseAst::IsClassMember(const py::object &node) {
   return ret.cast<bool>();
 }
 
-bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph) {
+bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "FuncGraph is null";
     return false;
@@ -1846,7 +1846,7 @@ bool UpdateFuncGraphFlags(py::object obj, const FuncGraphPtr &func_graph) {
 }
 
 // Generate and copy a ValueNode, or a CNode with its child nodes
-static AnfNodePtr CopyNodesFromParamDefaultValue(const FuncGraphPtr func_graph, const AnfNodePtr &param_node) {
+static AnfNodePtr CopyNodesFromParamDefaultValue(const FuncGraphPtr &func_graph, const AnfNodePtr &param_node) {
   MS_EXCEPTION_IF_NULL(param_node);
   if (param_node->isa<ValueNode>()) {
     return std::make_shared<ValueNode>(param_node->cast<ValueNodePtr>()->value());
