@@ -79,10 +79,23 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
   return ReSize();
 }
 
+static void SetInputOutputShapeInfo(ConvParameter *conv_param, lite::Tensor *input, lite::Tensor *output,
+                                    const InnerContext *ctx) {
+  conv_param->input_batch_ = input->Batch();
+  conv_param->input_h_ = input->Height();
+  conv_param->input_w_ = input->Width();
+  conv_param->input_channel_ = input->Channel();
+  conv_param->output_batch_ = output->Batch();
+  conv_param->output_h_ = output->Height();
+  conv_param->output_w_ = output->Width();
+  conv_param->output_channel_ = output->Channel();
+  conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
+}
+
 int ConvolutionDelegateFP16CPUKernel::ReSize() {
   // Update shape info of input and output
-  SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(op_parameter_), in_tensors_.front(), out_tensors_.front(),
-                          context_);
+  kernel::SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(op_parameter_), in_tensors_.front(),
+                                  out_tensors_.front(), context_);
   if (fp16_conv_kernel_ == nullptr) {
     fp16_conv_kernel_ = CpuConvFp16KernelSelect(in_tensors_, out_tensors_, op_parameter_, context_, origin_weight_,
                                                 origin_bias_, origin_weight_data_type_, origin_bias_data_type_);
