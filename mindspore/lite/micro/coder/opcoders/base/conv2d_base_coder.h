@@ -32,24 +32,7 @@ class Conv2DBaseCoder : public OperatorCoder {
                   const Model::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~Conv2DBaseCoder() override {
-    if (conv_quant_arg_ == nullptr) {
-      return;
-    }
-    free(conv_quant_arg_->real_multiplier_);
-    free(conv_quant_arg_->left_shift_);
-    free(conv_quant_arg_->right_shift_);
-    free(conv_quant_arg_->quant_multiplier_);
-    free(conv_quant_arg_->out_act_min_);
-    free(conv_quant_arg_->out_act_max_);
-    free(conv_quant_arg_->input_quant_args_);
-    free(conv_quant_arg_->filter_quant_args_);
-    free(conv_quant_arg_->output_quant_args_);
-    conv_param_ = nullptr;
-    conv_quant_arg_ = nullptr;
-    filter_tensor_ = nullptr;
-    bias_tensor_ = nullptr;
-  }
+  ~Conv2DBaseCoder() override;
 
  protected:
   virtual int Init();
@@ -68,7 +51,7 @@ class Conv2DBaseCoder : public OperatorCoder {
 
   int SetQuantMultiplier();
 
-  int CheckResizeValid() const;
+  int CheckResizeValid();
 
   int SetIfPerChannel();
 
@@ -80,6 +63,11 @@ class Conv2DBaseCoder : public OperatorCoder {
 
   std::string LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format);
 
+ private:
+  int MallocConvQuantParams(size_t input_arg_num, size_t filter_arg_num, size_t output_arg_num);
+  void FreeConvQuantParams();
+
+ protected:
   ConvParameter *conv_param_{nullptr};
 
   ConvQuantArg *conv_quant_arg_{nullptr};

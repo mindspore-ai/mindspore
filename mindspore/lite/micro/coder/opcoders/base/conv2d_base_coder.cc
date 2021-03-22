@@ -20,23 +20,80 @@
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "coder/log.h"
+namespace mindspore::lite::micro {
 
-namespace {
-int MallocConvQuantParams(ConvQuantArg *quant_arg, size_t input_arg_num, size_t filter_arg_num, size_t output_arg_num) {
+Conv2DBaseCoder::~Conv2DBaseCoder() {
+  FreeConvQuantParams();
+  conv_param_ = nullptr;
+  conv_quant_arg_ = nullptr;
+  filter_tensor_ = nullptr;
+  bias_tensor_ = nullptr;
+}
+
+void Conv2DBaseCoder::FreeConvQuantParams() {
+  if (conv_quant_arg_ == nullptr) {
+    return;
+  }
+  if (conv_quant_arg_->real_multiplier_ != nullptr) {
+    free(conv_quant_arg_->real_multiplier_);
+    conv_quant_arg_->real_multiplier_ = nullptr;
+  }
+  if (conv_quant_arg_->left_shift_ != nullptr) {
+    free(conv_quant_arg_->left_shift_);
+    conv_quant_arg_->left_shift_ = nullptr;
+  }
+  if (conv_quant_arg_->right_shift_ != nullptr) {
+    free(conv_quant_arg_->right_shift_);
+    conv_quant_arg_->right_shift_ = nullptr;
+  }
+  if (conv_quant_arg_->quant_multiplier_ != nullptr) {
+    free(conv_quant_arg_->quant_multiplier_);
+    conv_quant_arg_->quant_multiplier_ = nullptr;
+  }
+  if (conv_quant_arg_->out_act_min_ != nullptr) {
+    free(conv_quant_arg_->out_act_min_);
+    conv_quant_arg_->out_act_min_ = nullptr;
+  }
+  if (conv_quant_arg_->out_act_max_ != nullptr) {
+    free(conv_quant_arg_->out_act_max_);
+    conv_quant_arg_->out_act_max_ = nullptr;
+  }
+  if (conv_quant_arg_->input_quant_args_ != nullptr) {
+    free(conv_quant_arg_->input_quant_args_);
+    conv_quant_arg_->input_quant_args_ = nullptr;
+  }
+  if (conv_quant_arg_->filter_quant_args_ != nullptr) {
+    free(conv_quant_arg_->filter_quant_args_);
+    conv_quant_arg_->filter_quant_args_ = nullptr;
+  }
+  if (conv_quant_arg_->output_quant_args_ != nullptr) {
+    free(conv_quant_arg_->output_quant_args_);
+    conv_quant_arg_->output_quant_args_ = nullptr;
+  }
+}
+
+int Conv2DBaseCoder::MallocConvQuantParams(size_t input_arg_num, size_t filter_arg_num, size_t output_arg_num) {
   MS_CHECK_TRUE(input_arg_num > 0, "invalid value of input_arg_num");
   MS_CHECK_TRUE(filter_arg_num > 0, "invalid value of filter_arg_num");
   MS_CHECK_TRUE(output_arg_num > 0, "invalid value of output_arg_num");
-  quant_arg->input_quant_args_ = static_cast<QuantArg *>(malloc(input_arg_num * sizeof(struct QuantArg)));
-  MS_CHECK_PTR(quant_arg->input_quant_args_);
-  quant_arg->filter_quant_args_ = static_cast<QuantArg *>(malloc(filter_arg_num * sizeof(QuantArg)));
-  MS_CHECK_PTR(quant_arg->filter_quant_args_);
-  quant_arg->output_quant_args_ = static_cast<QuantArg *>(malloc(output_arg_num * sizeof(QuantArg)));
-  MS_CHECK_PTR(quant_arg->output_quant_args_);
-  return mindspore::lite::RET_OK;
+  conv_quant_arg_->input_quant_args_ = reinterpret_cast<::QuantArg *>(malloc(input_arg_num * sizeof(::QuantArg)));
+  if (conv_quant_arg_->input_quant_args_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
+  conv_quant_arg_->filter_quant_args_ = reinterpret_cast<::QuantArg *>(malloc(filter_arg_num * sizeof(::QuantArg)));
+  if (conv_quant_arg_->filter_quant_args_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
+  conv_quant_arg_->output_quant_args_ = reinterpret_cast<::QuantArg *>(malloc(output_arg_num * sizeof(::QuantArg)));
+  if (conv_quant_arg_->output_quant_args_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
-}  // namespace
 
-namespace mindspore::lite::micro {
 std::string Conv2DBaseCoder::LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
   std::string ret;
   if (src_format == schema::Format_NHWC && dst_format == schema::Format_NC4HW4) {
@@ -116,7 +173,7 @@ int Conv2DBaseCoder::MallocQuantParam() {
   conv_quant_arg_->input_arg_num_ = input_arg_num;
   conv_quant_arg_->filter_arg_num_ = filter_arg_num;
   conv_quant_arg_->output_arg_num_ = output_arg_num;
-  MallocConvQuantParams(conv_quant_arg_, input_arg_num, filter_arg_num, output_arg_num);
+  MallocConvQuantParams(input_arg_num, filter_arg_num, output_arg_num);
   return RET_OK;
 }
 
@@ -125,7 +182,7 @@ int Conv2DBaseCoder::SetInputTensorQuantParam() {
   if (in_arg_num == kPerTensor) {
     QuantArg input_quant_arg = input_tensor_->quant_params().at(0);
     conv_quant_arg_->input_quant_args_[0].zp_ = input_quant_arg.zeroPoint;
-    conv_quant_arg_->input_quant_args_[0].scale_ = input_quant_arg.scale;
+    conv_quant_arg_->input_quant_args_[0].scale_ = static_cast<float>(input_quant_arg.scale);
     return RET_OK;
   } else {
     // per channel
@@ -139,12 +196,12 @@ int Conv2DBaseCoder::SetFilterTensorQuantParam() {
   if (weight_arg_num == kPerTensor) {
     QuantArg weight_quant_arg = filter_tensor_->quant_params().at(0);
     conv_quant_arg_->filter_quant_args_[0].zp_ = weight_quant_arg.zeroPoint;
-    conv_quant_arg_->filter_quant_args_[0].scale_ = weight_quant_arg.scale;
+    conv_quant_arg_->filter_quant_args_[0].scale_ = static_cast<float>(weight_quant_arg.scale);
   } else {
     std::vector<QuantArg> weight_quant_arg = filter_tensor_->quant_params();
     for (int i = 0; i < static_cast<int>(weight_arg_num); ++i) {
       conv_quant_arg_->filter_quant_args_[i].zp_ = weight_quant_arg[i].zeroPoint;
-      conv_quant_arg_->filter_quant_args_[i].scale_ = weight_quant_arg[i].scale;
+      conv_quant_arg_->filter_quant_args_[i].scale_ = static_cast<float>(weight_quant_arg[i].scale);
     }
   }
   return RET_OK;
@@ -155,7 +212,7 @@ int Conv2DBaseCoder::SetOutputTensorQuantParam() {
   if (out_arg_num == kPerTensor) {
     QuantArg output_quant_arg = output_tensor_->quant_params().at(0);
     conv_quant_arg_->output_quant_args_[0].zp_ = output_quant_arg.zeroPoint;
-    conv_quant_arg_->output_quant_args_[0].scale_ = output_quant_arg.scale;
+    conv_quant_arg_->output_quant_args_[0].scale_ = static_cast<float>(output_quant_arg.scale);
   } else {
     MS_LOG(ERROR) << "Not Support Per Channel for input now.";
     return RET_ERROR;
@@ -170,17 +227,35 @@ int Conv2DBaseCoder::SetQuantMultiplier() {
     weight_arg_num = conv_quant_arg_->filter_arg_num_;
   }
   conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(weight_arg_num * sizeof(double)));
-  MS_CHECK_PTR(conv_quant_arg_->real_multiplier_);
+  if (conv_quant_arg_->real_multiplier_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
   conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(weight_arg_num * sizeof(int32_t)));
-  MS_CHECK_PTR(conv_quant_arg_->left_shift_);
+  if (conv_quant_arg_->left_shift_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
   conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(weight_arg_num * sizeof(int32_t)));
-  MS_CHECK_PTR(conv_quant_arg_->right_shift_);
+  if (conv_quant_arg_->right_shift_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
   conv_quant_arg_->quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(weight_arg_num * sizeof(int32_t)));
-  MS_CHECK_PTR(conv_quant_arg_->quant_multiplier_);
+  if (conv_quant_arg_->quant_multiplier_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
   conv_quant_arg_->out_act_min_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
-  MS_CHECK_PTR(conv_quant_arg_->out_act_min_);
+  if (conv_quant_arg_->out_act_min_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
   conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
-  MS_CHECK_PTR(conv_quant_arg_->out_act_max_);
+  if (conv_quant_arg_->out_act_max_ == nullptr) {
+    FreeConvQuantParams();
+    return RET_ERROR;
+  }
   for (int i = 0; i < weight_arg_num; ++i) {
     const auto in_scale =
       static_cast<double>(conv_quant_arg_->input_quant_args_[0].scale_ * conv_quant_arg_->filter_quant_args_[i].scale_);
@@ -197,7 +272,7 @@ int Conv2DBaseCoder::SetQuantMultiplier() {
   return RET_OK;
 }
 
-int Conv2DBaseCoder::CheckResizeValid() const {
+int Conv2DBaseCoder::CheckResizeValid() {
   // ===============check in channel================= //
   int32_t filter_in_channel = filter_tensor_->Channel();
   int32_t resize_in_channel = input_tensor_->Channel();
@@ -240,10 +315,6 @@ int Conv2DBaseCoder::SetQuantParam() {
   MS_CHECK_RET_CODE(SetIfPerChannel(), "Set if per tensor channel failed.");
   SetRoundingAndMultipilerMode();
   MS_CHECK_RET_CODE(SetQuantMultiplier(), "Set Quant Multiplier Failed.");
-  // now only consider per tensor for output
-  MS_CHECK_PTR(conv_param_->conv_quant_arg_.out_act_min_);
-  MS_CHECK_PTR(conv_param_->conv_quant_arg_.out_act_max_);
-  MS_CHECK_PTR(conv_param_->conv_quant_arg_.output_quant_args_);
   bool relu = conv_param_->act_type_ == ActType_Relu;
   bool relu6 = conv_param_->act_type_ == ActType_Relu6;
   CalculateActivationRangeQuantized(relu, relu6, conv_param_->conv_quant_arg_.output_quant_args_[0].zp_,
