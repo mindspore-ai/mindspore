@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#if defined(ENBALE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
+#if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #endif
 
