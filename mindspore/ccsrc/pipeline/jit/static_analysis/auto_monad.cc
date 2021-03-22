@@ -27,6 +27,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "utils/flags.h"
+#include "utils/utils.h"
 #include "utils/ordered_map.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
@@ -1291,6 +1292,14 @@ class AutoMonadConverter {
   }
 
   AnfNodePtr UpdateState(const AnfNodePtr &state, const AnfNodePtr &attach) {
+    // Not attach UpdateState if set kAttrIgnoreSideEffect.
+    auto attr_ignore_side_effect = attach->cast<CNodePtr>()->GetAttr(kAttrIgnoreSideEffect);
+    auto ignore_side_effect = attr_ignore_side_effect != nullptr && attr_ignore_side_effect->isa<BoolImm>() &&
+                              GetValue<bool>(attr_ignore_side_effect);
+    if (ignore_side_effect) {
+      return state;
+    }
+
     auto update_state = NewValueNode(prim::kPrimUpdateState);
     auto update_state_cnode = func_graph_->NewCNode({update_state, state, attach});
     update_state_cnode->set_abstract(state->abstract());
