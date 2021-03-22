@@ -61,7 +61,7 @@ class GradCAM(IntermediateLayerAttribution):
     Args:
         network (Cell): The black-box model to be explained.
         layer (str, optional): The layer name to generate the explanation, usually chosen as the last convolutional
-            layer for better practice. If it is '', the explantion will be generated at the input layer.
+            layer for better practice. If it is '', the explanation will be generated at the input layer.
             Default: ''.
 
     Inputs:
@@ -76,18 +76,17 @@ class GradCAM(IntermediateLayerAttribution):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import GradCAM
-        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-        >>> # load a trained network
-        >>> net = resnet50(10)
-        >>> param_dict = load_checkpoint("resnet50.ckpt")
-        >>> load_param_into_net(net, param_dict)
+        >>>
+        >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+        >>> net = LeNet5(10, num_channel=3)
         >>> # specify a layer name to generate explanation, usually the layer can be set as the last conv layer.
-        >>> layer_name = 'layer4'
+        >>> layer_name = 'conv2'
         >>> # init GradCAM with a trained network and specify the layer to obtain attribution
         >>> gradcam = GradCAM(net, layer=layer_name)
-        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
         >>> label = 5
         >>> saliency = gradcam(inputs, label)
+        >>> print(saliency.shape)
     """
 
     def __init__(self, network, layer=""):
