@@ -21,7 +21,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.dtype import tensor, dtype_to_pytype
 from ..primitive import prim_attr_register, Primitive, PrimitiveWithInfer
-
+from .. import signature as sig
 
 class ScalarCast(PrimitiveWithInfer):
     """
@@ -374,3 +374,70 @@ class MakeRefKey(Primitive):
 
     def __call__(self):
         pass
+
+class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
+    """
+    Optimizer that implements the Momentum algorithm with weight decay and loss scale.
+
+    Refer to the paper `On the importance of initialization and momentum in deep
+    learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
+
+    Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
+
+    Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
+
+    Inputs:
+        - **weight_decay** (Tensor) - The weight decay value, must be a scalar tensor with float data type.
+          Default: 0.0.
+        - **loss_scale** (Tensor) - The loss scale value, must be a scalar tensor with float data type.
+          Default: 1.0.
+        - **variable** (Parameter) - Weights to be updated. data type must be float.
+        - **accumulation** (Parameter) - Accumulated gradient value by moment weight.
+          Has the same data type with `variable`.
+        - **learning_rate** (Union[Number, Tensor]) - The learning rate value, must be a float number or
+          a scalar tensor with float data type.
+        - **gradient** (Tensor) - Gradient, has the same data type as `variable`.
+        - **momentum** (Union[Number, Tensor]) - Momentum, must be a float number or
+          a scalar tensor with float data type.
+
+    Outputs:
+        Tensor, parameters to be updated.
+
+    Supported Platforms:
+        ``GPU``
+    Examples:
+        Please refer to the usage in :class:`mindspore.nn.Momentum`, and add weight_decay and loss_scale as inputs.
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('weight_decay', dtype=sig.sig_dtype.T3),
+        sig.make_sig('loss_scale', dtype=sig.sig_dtype.T3),
+        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('accumulation', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('learning_rate', dtype=sig.sig_dtype.T1),
+        sig.make_sig('gradient', dtype=sig.sig_dtype.T),
+        sig.make_sig('momentum', dtype=sig.sig_dtype.T2)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['weight_decay', 'loss_scale', 'variable', 'accumulation', 'learning_rate',
+                                        'gradient', 'momentum'], outputs=['output'])
+
+    def infer_shape(self, d_shape, s_shape, v_shape, a_shape, l_shape, g_shape, m_shape):
+        return v_shape
+
+    def infer_dtype(self, d_dtype, s_dtype, v_dtype, a_dtype, l_dtype, g_dtype, m_dtype):
+        valid_dtypes = [mstype.float16, mstype.float32]
+        if v_dtype != mstype.type_refkey and a_dtype != mstype.type_refkey:
+            validator.check_tensor_dtype_valid("v", v_dtype, valid_dtypes, self.name)
+            validator.check_tensor_dtype_valid("a", a_dtype, valid_dtypes, self.name)
+        validator.check_scalar_or_tensor_types_same({"l_dtype": l_dtype}, valid_dtypes, self.name)
+        validator.check_scalar_or_tensor_types_same({"g_dtype": g_dtype}, valid_dtypes, self.name)
+        validator.check_scalar_or_tensor_types_same({"m_dtype": m_dtype}, valid_dtypes, self.name)
+        validator.check_scalar_or_tensor_types_same({"d_dtype": d_dtype}, valid_dtypes, self.name)
+        validator.check_scalar_or_tensor_types_same({"s_dtype": s_dtype}, valid_dtypes, self.name)
+        return v_dtype
