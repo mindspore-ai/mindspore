@@ -538,6 +538,7 @@ write_commit_file() {
 
 build_lite()
 {
+    rm -rf ${BASEPATH}/output/*
     get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
     local LOCAL_LITE_PLATFORM=${LITE_PLATFORM}
