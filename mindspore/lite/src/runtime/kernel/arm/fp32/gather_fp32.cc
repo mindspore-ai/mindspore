@@ -65,8 +65,8 @@ int GatherCPUKernel::DoGather(int task_id) {
   int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
 
   int data_size = lite::DataTypeSize(input_tensor->data_type());
-  int8_in += thread_stride * limit * data_size;
-  int8_out += thread_stride * indices_element_size * data_size;
+  int8_in += thread_stride * limit * inner_size * data_size;
+  int8_out += thread_stride * indices_element_size * inner_size * data_size;
 
   int error_code = Gather(int8_in, count, inner_size, limit, indices_data_, indices_element_size, int8_out, data_size);
 
