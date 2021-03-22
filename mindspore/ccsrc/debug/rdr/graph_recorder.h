@@ -19,9 +19,13 @@
 #include <string>
 #include <memory>
 
-#include "debug/anf_ir_utils.h"
 #include "debug/rdr/base_recorder.h"
+
 namespace mindspore {
+struct DumpGraphParams {
+  bool dump_full_name;
+  int dump_mode;
+};
 class FuncGraph;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 class GraphRecorder : public BaseRecorder {
@@ -33,14 +37,14 @@ class GraphRecorder : public BaseRecorder {
   ~GraphRecorder() {}
   void SetGraphType(const std::string &file_type) { graph_type_ = file_type; }
   void SetFuncGraph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
-  void SetDumpFlag(bool full_name) { full_name_ = full_name; }
+  void SetDumpFlag(DumpGraphParams info) { dump_graph_info_ = info; }
 
   virtual void Export();
 
  private:
   FuncGraphPtr func_graph_;
   std::string graph_type_;
-  bool full_name_{false};
+  DumpGraphParams dump_graph_info_;
 };
 using GraphRecorderPtr = std::shared_ptr<GraphRecorder>;
 }  // namespace mindspore

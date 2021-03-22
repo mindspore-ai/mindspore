@@ -15,7 +15,7 @@
  */
 #include "debug/rdr/running_data_recorder.h"
 #include <utility>
-#include "debug/rdr/graph_recorder.h"
+
 #include "debug/rdr/graph_exec_order_recorder.h"
 #include "debug/rdr/recorder_manager.h"
 #include "debug/rdr/string_recorder.h"
@@ -78,14 +78,14 @@ bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
 }
 #endif  // ENABLE_D
 
-bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type) {
+bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph,
+                    const DumpGraphParams &info, const std::string &file_type) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
   GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, name, graph, file_type);
-  graph_recorder->SetDumpFlag(full_name);
+  graph_recorder->SetDumpFlag(info);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_recorder));
   return ans;
 }
