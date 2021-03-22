@@ -13,7 +13,7 @@ set(OP_SRC
     quant_dtype_cast_int8.c.o
     reshape_int8.c.o
     softmax_fp32.c.o
-    net_weight.c.o
+    weight.c.o
     net.c.o
     session.cc.o
     tensor.cc.o

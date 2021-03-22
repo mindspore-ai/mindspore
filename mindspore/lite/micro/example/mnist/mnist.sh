@@ -42,31 +42,12 @@ fi
 
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/ || exit 1
 rm ${BASEPATH}/build/${MINDSPORE_FILE} || exit 1
-CODEGEN_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}/tools/codegen
-HEADER_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference
-# 1. build static lib.a
-echo -e "building static library"
-mkdir -p ${BASEPATH}/build/src && cd ${BASEPATH}/build/src || exit 1
-OP_HEADER_PATH=${CODEGEN_PATH}/operator_library/include
-OP_LIB=${CODEGEN_PATH}/operator_library/lib/libops.a
-echo "Head Path: ${OP_HEADER_PATH}"
-echo "Lib Path: ${OP_LIB}"
-echo "Header Path: ${HEADER_PATH}"
-
-cmake -DCMAKE_BUILD_TYPE=Debug            \
-      -DOP_LIB=${OP_LIB}                  \
-      -DOP_HEADER_PATH=${OP_HEADER_PATH}  \
-      -DHEADER_PATH=${HEADER_PATH}        \
-      ${BASEPATH}/src
-make
-
-# 2. build benchmark
+PKG_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}
+# build benchmark
 mkdir -p ${BASEPATH}/build/benchmark && cd ${BASEPATH}/build/benchmark || exit 1
-cmake -DMODEL_LIB="${BASEPATH}/build/src/libnet.a"  \
-      -DHEADER_PATH=${HEADER_PATH}                  \
-      ${BASEPATH}/benchmark
+cmake -DPKG_PATH=${PKG_PATH} ${BASEPATH}
 make
 
-echo "net file: ${BASEPATH}/src/mnist.net"
+echo "net file: ${BASEPATH}/src/mnist.bin"
 # 3. run benchmark
-./benchmark ${INPUT_BIN} ${BASEPATH}/src/net.net
+./benchmark ${INPUT_BIN} ${BASEPATH}/src/net.bin

@@ -1,4 +1,5 @@
 
+
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -36,6 +37,55 @@ void usage() {
     "args[3]: loop count for performance test\n"
     "args[4]: runtime thread num\n"
     "args[5]: runtime thread bind mode\n\n");
+}
+
+template <typename T>
+void PrintData(void *data, size_t data_number) {
+  if (data == nullptr) {
+    return;
+  }
+  auto casted_data = static_cast<T *>(data);
+  for (size_t i = 0; i < 10 && i < data_number; i++) {
+    std::cout << std::to_string(casted_data[i]) << ", ";
+  }
+  std::cout << std::endl;
+}
+
+void TensorToString(tensor::MSTensor *tensor) {
+  uint8_t i = 0;
+  std::cout << "uint8: " << i << std::endl;
+
+  std::cout << "Name: " << tensor->tensor_name();
+  std::cout << ", DataType: " << tensor->data_type();
+  std::cout << ", Size: " << tensor->Size();
+  std::cout << ", Shape:";
+  for (auto &dim : tensor->shape()) {
+    std::cout << " " << dim;
+  }
+  std::cout << ", Data:" << std::endl;
+  switch (tensor->data_type()) {
+    case kNumberTypeFloat32: {
+      PrintData<float>(tensor->MutableData(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeFloat16: {
+      PrintData<int16_t>(tensor->MutableData(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeInt32: {
+      PrintData<int32_t>(tensor->MutableData(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeInt16: {
+      PrintData<int16_t>(tensor->MutableData(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeInt8: {
+      PrintData<int8_t>(tensor->MutableData(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeUInt8: {
+      PrintData<uint8_t>(tensor->MutableData(), tensor->ElementsNum());
+    } break;
+    default:
+      std::cout << "Unsupported data type to print" << std::endl;
+      break;
+  }
 }
 
 int main(int argc, const char **argv) {
@@ -84,7 +134,7 @@ int main(int argc, const char **argv) {
   std::cout << "output size: " << outputs.size() << std::endl;
   for (const auto &item : outputs) {
     auto output = item.second;
-    std::cout << "name: " << output->tensor_name() << ", size: " << output->Size() << std::endl;
+    TensorToString(output);
   }
 
   std::cout << "run benchmark success" << std::endl;

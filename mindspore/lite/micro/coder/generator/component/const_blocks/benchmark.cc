@@ -118,7 +118,7 @@ int main(int argc, const char **argv) {
 
   const char *model_buffer = nullptr;
   int model_size = 0;
-  // read .net file by ReadBinaryFile;
+  // read .bin file by ReadBinaryFile;
   if (argc >= 3) {
     model_buffer = static_cast<const char *>(ReadInputData(argv[2], &model_size));
   }

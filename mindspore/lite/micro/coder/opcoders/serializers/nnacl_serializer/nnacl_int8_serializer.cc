@@ -45,20 +45,20 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
 
   std::string conv_quant_arg = name + "_conv_quant_arg";
 
-  CodeBaseStruct("ConvQuantArg", conv_quant_arg, quant_arg.round_mode_, quant_arg.quant_multiplier_mode_, quant_arg_in,
-                 quant_arg_w, quant_arg_out, real_multiplier, left_shift, right_shift, quant_multiplier, out_act_min,
-                 out_act_max, quant_arg.input_arg_num_, quant_arg.filter_arg_num_, quant_arg.output_arg_num_,
-                 quant_arg.per_channel_);
+  CodeBaseStruct<false>("ConvQuantArg", conv_quant_arg, quant_arg.round_mode_, quant_arg.quant_multiplier_mode_,
+                        quant_arg_in, quant_arg_w, quant_arg_out, real_multiplier, left_shift, right_shift,
+                        quant_multiplier, out_act_min, out_act_max, quant_arg.input_arg_num_, quant_arg.filter_arg_num_,
+                        quant_arg.output_arg_num_, quant_arg.per_channel_);
   code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
-  CodeBaseStruct("ConvParameter", name, conv_parameter.op_parameter_, conv_quant_arg, conv_parameter.kernel_h_,
-                 conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_,
-                 conv_parameter.dilation_h_, conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_,
-                 conv_parameter.pad_l_, conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_,
-                 conv_parameter.input_batch_, conv_parameter.input_h_, conv_parameter.input_w_,
-                 conv_parameter.input_channel_, conv_parameter.output_batch_, conv_parameter.output_h_,
-                 conv_parameter.output_w_, conv_parameter.output_channel_, "thread_num", conv_parameter.input_unit_,
-                 conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_,
-                 conv_parameter.channel_multiplie_, conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
+  CodeBaseStruct<false>(
+    "ConvParameter", name, conv_parameter.op_parameter_, conv_quant_arg, conv_parameter.kernel_h_,
+    conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_,
+    conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_, conv_parameter.pad_l_,
+    conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_, conv_parameter.input_batch_,
+    conv_parameter.input_h_, conv_parameter.input_w_, conv_parameter.input_channel_, conv_parameter.output_batch_,
+    conv_parameter.output_h_, conv_parameter.output_w_, conv_parameter.output_channel_, "thread_num",
+    conv_parameter.input_unit_, conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_,
+    conv_parameter.channel_multiplie_, conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter) {
@@ -201,11 +201,11 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReshapeQuant
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantParameter &matmul_quant_arg,
                                      int weight_quant_num) {
-  CodeArray("filter_scale", matmul_quant_arg.filter_scale_, weight_quant_num);
-  CodeArray("filter_zp", matmul_quant_arg.filter_zp_, weight_quant_num);
-  CodeArray("left_shift", matmul_quant_arg.left_shift_, weight_quant_num);
-  CodeArray("right_shift", matmul_quant_arg.right_shift_, weight_quant_num);
-  CodeArray("multiplier", matmul_quant_arg.quant_multiplier_, weight_quant_num);
+  CodeArray("filter_scale", matmul_quant_arg.filter_scale_, weight_quant_num, false);
+  CodeArray("filter_zp", matmul_quant_arg.filter_zp_, weight_quant_num, false);
+  CodeArray("left_shift", matmul_quant_arg.left_shift_, weight_quant_num, false);
+  CodeArray("right_shift", matmul_quant_arg.right_shift_, weight_quant_num, false);
+  CodeArray("multiplier", matmul_quant_arg.quant_multiplier_, weight_quant_num, false);
   CodeBaseStruct("MatmulQuantParameter", name, matmul_quant_arg.input_, matmul_quant_arg.weight_,
                  matmul_quant_arg.output_, matmul_quant_arg.out_act_min_, matmul_quant_arg.out_act_max_, "filter_scale",
                  "filter_zp", "left_shift", "right_shift", "multiplier");
