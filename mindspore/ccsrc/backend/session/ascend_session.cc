@@ -67,12 +67,12 @@
 #include "debug/rdr/running_data_recorder.h"
 #include "debug/rdr/recorder_manager.h"
 #include "debug/rdr/graph_recorder.h"
-#include "runtime/device/ascend/ascend_bucket.h"
 #endif
 #if ENABLE_CPU && ENABLE_D
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
+#include "runtime/device/ascend/ascend_bucket.h"
 #include "profiler/device/common/memory_profiling.h"
 
 using mindspore::device::ascend::ProfilingManager;
