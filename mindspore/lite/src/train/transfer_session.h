@@ -64,11 +64,11 @@ class TransferSession : public lite::TrainSession {
   int CompileTransferGraph();
 
  protected:
-  lite::LiteSession *backbone_session_;
-  char *lite_model_;
+  lite::LiteSession *backbone_session_ = nullptr;
+  char *lite_model_ = nullptr;
   std::vector<mindspore::tensor::MSTensor *> combined_inputs_;
   std::vector<std::pair<mindspore::tensor::MSTensor *, mindspore::tensor::MSTensor *>> backbone_head_map_;
-  bool is_valid_;
+  bool is_valid_ = false;
 
  private:
   bool CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask);
