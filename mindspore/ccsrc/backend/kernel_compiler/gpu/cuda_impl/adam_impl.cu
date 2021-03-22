@@ -41,10 +41,45 @@ __global__ void ApplyAdamKernel(const size_t size, const T *gradient, const T *b
 }
 
 template <typename T>
+__global__ void AdamWeightDecayKernel(const size_t size, const T *gradient, const float *learning_rate,
+                                      const float *beta1, const float *beta2, const float *epsilon, const float *decay,
+                                      T *variable, T *m, T *v) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    T next_m = beta1[0] * m[i] + (1 - beta1[0]) * gradient[i];
+    T next_v = beta2[0] * v[i] + (1 - beta2[0]) * gradient[i] * gradient[i];
+    T update = next_m / (sqrt(next_v) + epsilon[0]);
+    update += decay[0] * variable[i];
+    variable[i] -= learning_rate[0] * update;
+    m[i] = next_m;
+    v[i] = next_v;
+  }
+}
+template <>
+__global__ void AdamWeightDecayKernel(const size_t size, const half *gradient, const float *learning_rate,
+                                      const float *beta1, const float *beta2, const float *epsilon, const float *decay,
+                                      half *variable, half *m, half *v) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    half next_m = __float2half(beta1[0]) * m[i] + __float2half(1 - beta1[0]) * gradient[i];
+    half next_v = __float2half(beta2[0]) * v[i] + __float2half(1 - beta2[0]) * gradient[i] * gradient[i];
+    half update = next_m / (hsqrt(next_v) + __float2half(epsilon[0]));
+    update += __float2half(decay[0]) * variable[i];
+    variable[i] -= __float2half(learning_rate[0]) * update;
+    m[i] = next_m;
+    v[i] = next_v;
+  }
+}
+template <typename T>
 void ApplyAdam(const size_t size, const T *gradient, const T *beta1_power, const T *beta2_power, const T *learning_rate,
                const T *beta1, const T *beta2, const T *epsilon, T *variable, T *m, T *v, cudaStream_t cuda_stream) {
   ApplyAdamKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, gradient, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon, variable, m, v);
+}
+template <typename T>
+void AdamWeightDecayOp(const size_t size, const T *gradient, const float *learning_rate, const float *beta1,
+                       const float *beta2, const float *epsilon, const float *decay, T *variable, T *m, T *v,
+                       cudaStream_t cuda_stream) {
+  AdamWeightDecayKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, gradient, learning_rate, beta1, beta2,
+                                                                           epsilon, decay, variable, m, v);
 }
 
 template void ApplyAdam<float>(const size_t size, const float *gradient, const float *beta1_power,
@@ -54,3 +89,9 @@ template void ApplyAdam<float>(const size_t size, const float *gradient, const f
 template void ApplyAdam<half>(const size_t size, const half *gradient, const half *beta1_power, const half *beta2_power,
                               const half *learning_rate, const half *beta1, const half *beta2, const half *epsilon,
                               half *variable, half *m, half *v, cudaStream_t cuda_stream);
+template void AdamWeightDecayOp<float>(const size_t size, const float *gradient, const float *learning_rate,
+                                       const float *beta1, const float *beta2, const float *epsilon, const float *decay,
+                                       float *variable, float *m, float *v, cudaStream_t cuda_stream);
+template void AdamWeightDecayOp<half>(const size_t size, const half *gradient, const float *learning_rate,
+                                      const float *beta1, const float *beta2, const float *epsilon, const float *decay,
+                                      half *variable, half *m, half *v, cudaStream_t cuda_stream);

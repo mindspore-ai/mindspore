@@ -441,3 +441,93 @@ class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_types_same({"d_dtype": d_dtype}, valid_dtypes, self.name)
         validator.check_scalar_or_tensor_types_same({"s_dtype": s_dtype}, valid_dtypes, self.name)
         return v_dtype
+
+
+class AdamWeightDecay(PrimitiveWithInfer):
+    r"""
+    Updates gradients by the Adaptive Moment Estimation (AdamWeightDecay) algorithm with weight decay.
+
+    The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
+
+    The updating formulas are as follows,
+
+    .. math::
+        \begin{array}{ll} \\
+            m = \beta_1 * m + (1 - \beta_1) * g \\
+            v = \beta_2 * v + (1 - \beta_2) * g * g \\
+            w = w - lr * \frac{m}{\sqrt{v} + \epsilon}
+        \end{array}
+
+    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
+    `gradient`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`\lr` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
+    `epsilon`.
+
+    Args:
+        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
+            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If false, the result is unpredictable. Default: False.
+
+    Inputs:
+        - **var** (Tensor) - Weights to be updated.
+        - **m** (Tensor) - The 1st moment vector in the updating formula, has the same type as `var`.
+        - **v** (Tensor) - the 2nd moment vector in the updating formula.
+          Mean square gradients with the same type as `var`.
+        - **lr** (float) - :math:`l` in the updating formula.
+        - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
+        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
+        - **epsilon** (float) - Term added to the denominator to improve numerical stability.
+        - **gradient** (Tensor) - Gradient, has the same type as `var`.
+
+    Outputs:
+        Tuple of 3 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+        - **v** (Tensor) - The same shape and data type as `v`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as ops
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.adam_weight_decay = ops.AdamWeightDecay()
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="v")
+        ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad):
+        ...         out = self.adam_weight_decay(self.var, self.m, self.v, lr, beta1, beta2,
+        ...                               epsilon, decay, grad)
+        ...         return out
+        >>> np.random.seed(0)
+        >>> net = Net()
+        >>> gradient = Tensor(np.random.rand(2, 2).astype(np.float32))
+        >>> output = net(0.9, 0.9, 0.999, 1e-8, 1e-5, gradient)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+    def infer_shape(self, var_shape, m_shape, v_shape, lr_shape, beta1_shape, beta2_shape,
+                    epsilon_shape, decay_shape, grad_shape):
+        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        return var_shape, m_shape, v_shape
+
+    def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
+                    epsilon_dtype, decay, grad_dtype):
+        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
+
+        args = {"lr": lr_dtype, "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype,
+                "decay": decay}
+        validator.check_scalar_or_tensor_types_same(args, [mstype.float32], self.name, True)
+        return var_dtype, m_dtype, v_dtype

@@ -36,7 +36,7 @@ from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithL
                 BertTrainAccumulationAllReduceEachWithLossScaleCell, \
                 BertTrainAccumulationAllReducePostWithLossScaleCell, \
                 BertTrainOneStepWithLossScaleCellForAdam, \
-                AdamWeightDecayForBert
+                AdamWeightDecayForBert, AdamWeightDecayOp
 from src.dataset import create_bert_dataset
 from src.config import cfg, bert_net_cfg
 from src.utils import LossCallBack, BertLearningRate
@@ -96,6 +96,8 @@ def _get_optimizer(args_opt, network):
                         {'order_params': params}]
         if args_opt.enable_lossscale == "true" and args_opt.device_target == 'GPU':
             optimizer = AdamWeightDecayForBert(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
+        elif context.get_context("mode") == context.PYNATIVE_MODE and args_opt.device_target == 'GPU':
+            optimizer = AdamWeightDecayOp(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
         else:
             optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
     elif cfg.optimizer == "Thor":

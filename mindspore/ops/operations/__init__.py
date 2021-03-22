@@ -42,7 +42,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
                         TensorSummary, HistogramSummary, Print, Assert)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign, MakeRefKey,
-                        FusedWeightScaleApplyMomentum)
+                        FusedWeightScaleApplyMomentum, AdamWeightDecay)
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        BitwiseAnd, BitwiseOr,
@@ -149,6 +149,7 @@ __all__ = [
     'TopK',
     'LinSpace',
     'Adam',
+    'AdamWeightDecay',
     'FusedSparseAdam',
     'FusedSparseLazyAdam',
     'AdamNoUpdateParam',
