@@ -332,7 +332,7 @@ def test_arange():
     match_array(actual, expected, error=6)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -361,6 +361,10 @@ def test_linspace():
                           endpoint=False, dtype=onp.float32)
     expected = mnp.linspace(
         2.0, [3, 4, 5], num=5, endpoint=False).asnumpy()
+    match_array(actual, expected, error=6)
+
+    actual = onp.linspace(2.0, [[3, 4, 5]], num=5, endpoint=False, axis=2)
+    expected = mnp.linspace(2.0, [[3, 4, 5]], num=5, endpoint=False, axis=2).asnumpy()
     match_array(actual, expected, error=6)
 
     start = onp.random.random([2, 1, 4]).astype("float32")
