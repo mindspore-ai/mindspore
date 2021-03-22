@@ -76,8 +76,6 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<T
     return nullptr;
   }
   auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
-  bool use_winograd = false;
-  int out_unit = 0;
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   conv_param->input_h_ = in_tensors.at(kInputIndex)->Height();
@@ -87,7 +85,8 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<T
   conv_param->output_w_ = out_tensors.at(kOutputIndex)->Width();
   conv_param->output_channel_ = out_tensors.at(kOutputIndex)->Channel();
   conv_param->op_parameter_.thread_num_ = 1;
-  CheckIfUseWinograd(&use_winograd, &out_unit, conv_param);
+  int out_unit = 0;
+  bool use_winograd = CheckIfUseWinograd(&out_unit, conv_param);
   free(conv_param);
   std::unique_ptr<OperatorCoder> coder;
   if (kernel_h == 1 && kernel_w == 1) {

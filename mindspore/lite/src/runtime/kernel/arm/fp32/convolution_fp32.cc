@@ -28,6 +28,14 @@ using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+#ifdef ENABLE_AVX
+#define OC_BLOCK C16NUM
+#elif ENABLE_ARM32
+#define OC_BLOCK C4NUM
+#else
+#define OC_BLOCK C8NUM
+#endif
+
 int ConvolutionCPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   int in_channel = filter_tensor->Channel();
@@ -35,14 +43,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-#ifdef ENABLE_AVX
-  const int oc_block = C16NUM;
-#elif ENABLE_ARM32
-  const int oc_block = C4NUM;
-#else
-  const int oc_block = C8NUM;
-#endif
-  int oc_block_num = UP_ROUND(out_channel, oc_block);
+  int oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
   int pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
@@ -164,14 +165,7 @@ void ConvolutionCPUKernel::PackWeight() {
   int in_channel = filter_tensor->Channel();
   int out_channel = filter_tensor->Batch();
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-#ifdef ENABLE_AVX
-  const int oc_block = C16NUM;
-#elif ENABLE_ARM32
-  const int oc_block = C4NUM;
-#else
-  const int oc_block = C8NUM;
-#endif
-  int oc_block_num = UP_ROUND(out_channel, oc_block);
+  int oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
   int pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->data_c());
