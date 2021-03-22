@@ -286,6 +286,7 @@ constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
 constexpr auto kHcclWorldGroup = "hccl_world_group";
+constexpr auto kSyncBnGroup = "sync_bn_group";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
