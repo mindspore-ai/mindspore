@@ -28,6 +28,7 @@ DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
 
 DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size) {
   size_t align_size = AlignMemorySize(size);
+  std::lock_guard<std::mutex> locker(mutex_);
   // Find the idle memory buf by tensor size, if not find, then add new memory block and memory buf.
   DeviceMemPtr device_addr = FindIdleMemBuf(align_size);
   if (!device_addr) {
@@ -44,6 +45,7 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t
   if (!device_addr) {
     return device_addr_list;
   }
+  std::lock_guard<std::mutex> locker(mutex_);
   // Remove the pre-alloc memory.
   auto mem_block = FindMemBlock(device_addr);
   MS_EXCEPTION_IF_NULL(mem_block);
@@ -189,9 +191,10 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &devic
 
 void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   MS_EXCEPTION_IF_NULL(device_addr);
+  std::lock_guard<std::mutex> locker(mutex_);
   auto mem_block = FindMemBlock(device_addr);
   if (mem_block == nullptr) {
-    // May be destory the memory pool first, then destory the address, so this is normal case.
+    // May be destroy the memory pool first, then destroy the address, so this is normal case.
     MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
     return;
   }
@@ -263,6 +266,7 @@ void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr &dev
 }
 
 void DynamicMemPoolBestFit::ReleaseDeviceRes() {
+  std::lock_guard<std::mutex> locker(mutex_);
   MS_LOG(INFO) << "The dynamic memory pool total size is " << total_mem_statistics_ << ", total used size is "
                << total_used_mem_statistics_ << ", used peak size is " << used_mem_peak_statistics_ << ".";
   for (auto iter = global_mem_block_list_.begin(); iter != global_mem_block_list_.end(); ++iter) {
@@ -276,6 +280,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {
+  std::lock_guard<std::mutex> locker(mutex_);
   MS_LOG(INFO) << "Start dump dynamic memory pool info.";
   DeviceAddrMapMemBuf mem_block_map;
   DynamicMemBufPtr mem_buf;
