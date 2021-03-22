@@ -26,14 +26,19 @@ void TdtHandle::AddHandle(acltdtChannelHandle *handle) {
 }
 
 bool TdtHandle::DestroyHandle() {
-  for (auto handle : acl_handle) {
+  bool destroy_all = true;
+  for (auto &handle : acl_handle) {
     if (handle != nullptr) {
       if (acltdtDestroyChannel(handle) != ACL_SUCCESS) {
-        return false;
+        destroy_all = false;
+      } else {
+        handle = nullptr;
       }
     }
   }
-  return true;
+  return destroy_all;
 }
+
+std::vector<acltdtChannelHandle *> TdtHandle::GetHandle() { return acl_handle; }
 }  // namespace dataset
 }  // namespace mindspore
