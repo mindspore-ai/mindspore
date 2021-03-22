@@ -56,7 +56,7 @@ class MyTimeMonitor(Callback):
 
     def step_end(self, run_context):
         step_msseconds = (time.time() - self.step_time) * 1000
-        if step_msseconds < 265:
+        if step_msseconds < 275:
             self.total = self.total + 1
         print(f"step time:{step_msseconds}", flush=True)
 
