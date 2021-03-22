@@ -41,7 +41,7 @@ struct KernelBuildTaskInfo {
 
 class ParallelBuildManager {
  public:
-  ParallelBuildManager() = default;
+  ParallelBuildManager() { AscendKernelBuildClient::Instance().TbeReset(); }
   ~ParallelBuildManager();
   void SaveTaskInfo(int32_t task_id, const AnfNodePtr &anf_node, const std::string &json_name,
                     const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
