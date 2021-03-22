@@ -2981,7 +2981,8 @@ class StridedSlice(PrimitiveWithInfer):
 
         ret_shape = self._compute_slicing_shape(x['shape'], begin_v, end_v, strides_v)
 
-        value = None if all(ret_shape) else Tensor(np.array([]).reshape(ret_shape), x['dtype'].element_type())
+        value = None if all(ret_shape) else Tensor(np.array([]).reshape(ret_shape), x['dtype'].element_type(),
+                                                   check_zero_dims=False)
         if "max_value" in x and "min_value" in x:
             validator.check_value_type("min_value", x["min_value"], [tuple, list], self.name)
             validator.check_value_type("max_value", x["max_value"], [tuple, list], self.name)
