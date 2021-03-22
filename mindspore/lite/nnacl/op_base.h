@@ -61,6 +61,7 @@
 #define kInputSize2 3
 #define MAX_AXIS_SIZE 6
 #define MAX_LEN 256
+#define FLT16_MAX 65504
 
 typedef enum LiteDataType {
   kDataTypeFloat,
