@@ -1185,8 +1185,19 @@ class ExecuteOrderGenerator {
         MS_EXCEPTION_IF_NULL(target);
         auto para = param_write_times.find(target);
         if (para != param_write_times.end() && para->second == 1) {
-          // If target only write once, replace target with source and erase assign node.
+          // Check source of the Assign.
           auto &source = node->inputs().at(kAssignSourceIndex);
+          MS_EXCEPTION_IF_NULL(source);
+          if (source->isa<Parameter>()) {
+            auto it = param_write_times.find(source);
+            if (it != param_write_times.end() && it->second > 0) {
+              // Skip if Assign source is a parameter and be written in other place.
+              ++iter;
+              continue;
+            }
+          }
+          // If target only write once, and source not be written,
+          // replace target with source and erase the Assign node.
           auto kg = target->func_graph()->cast<KernelGraphPtr>();
           MS_EXCEPTION_IF_NULL(kg);
           kg->ReplaceNode(NOT_NULL(target), NOT_NULL(source));
