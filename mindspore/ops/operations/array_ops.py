@@ -4572,7 +4572,7 @@ class BroadcastTo(PrimitiveWithInfer):
         target shape is in an invalid location.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (2, 3)

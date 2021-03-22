@@ -293,7 +293,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         TypeError: If `quant_delay` is not greater than or equal to 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
@@ -448,7 +448,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
