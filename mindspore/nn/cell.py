@@ -733,7 +733,7 @@ class Cell(Cell_):
         """
         Initialize all parameters and replace the original saved parameters in cell.
 
-        Notes:
+        Note:
             trainable_params() and other similar interfaces may return different parameter instance after
             `init_parameters_data`, do not save these result.
 
