@@ -18,7 +18,6 @@
 #include <memory>
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
-#include "src/param_value_lite.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -46,8 +45,8 @@ bool IsBatchNode(const BaseRef &n) {
 void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node, float *trans_scale, float eps,
                  int kernel_num) {
   auto bn_var_param = bn_var_node->cast<ParameterPtr>()->default_param();
-  auto bn_var_tensor = std::dynamic_pointer_cast<ParamValueLite>(bn_var_param);
-  auto bn_var_data = reinterpret_cast<float *>(bn_var_tensor->tensor_addr());
+  auto bn_var_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_var_param);
+  auto bn_var_data = reinterpret_cast<float *>(bn_var_tensor->data_c());
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
   if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, kernel_num * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s transScale error";
@@ -67,8 +66,8 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
   }
   if (bn_scale_node != nullptr) {
     auto bn_scale_param = bn_scale_node->cast<ParameterPtr>()->default_param();
-    auto bn_scale_tensor = std::dynamic_pointer_cast<ParamValueLite>(bn_scale_param);
-    auto bn_scale_data = reinterpret_cast<float *>(bn_scale_tensor->tensor_addr());
+    auto bn_scale_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_scale_param);
+    auto bn_scale_data = reinterpret_cast<float *>(bn_scale_tensor->data_c());
     // scale/sqrt(variance + eps)
     for (int32_t i = 0; i < kernel_num; i++) {
       trans_scale[i] *= bn_scale_data[i];
@@ -78,8 +77,8 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
 void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node, const float *trans_scale,
                   float *trans_bias, int kernel_num) {
   auto bn_mean_param = bn_mean_node->cast<ParameterPtr>()->default_param();
-  auto bn_mean_tensor = std::dynamic_pointer_cast<ParamValueLite>(bn_mean_param);
-  auto bn_mean_data = reinterpret_cast<float *>(bn_mean_tensor->tensor_addr());
+  auto bn_mean_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_mean_param);
+  auto bn_mean_data = reinterpret_cast<float *>(bn_mean_tensor->data_c());
   // cal transBias, tf : -scale*mean/sqrt(variance + eps) + bias; caffe : -mean/sqrt(variance + eps)
   // -mean/sqrt(variance + eps)
   for (int32_t i = 0; i < kernel_num; i++) {
@@ -88,8 +87,8 @@ void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node
 
   if (bn_bias_node != nullptr) {
     auto bn_bias_param = bn_bias_node->cast<ParameterPtr>()->default_param();
-    auto bn_bias_tensor = std::dynamic_pointer_cast<ParamValueLite>(bn_bias_param);
-    auto bn_bias_data = reinterpret_cast<float *>(bn_bias_tensor->tensor_addr());
+    auto bn_bias_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_bias_param);
+    auto bn_bias_data = reinterpret_cast<float *>(bn_bias_tensor->data_c());
     // -scale*mean/sqrt(variance + eps) + bias
     for (int32_t i = 0; i < kernel_num; i++) {
       trans_bias[i] += bn_bias_data[i];
@@ -108,18 +107,18 @@ STATUS CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_f
     return RET_ERROR;
   }
   auto origin_param = origin_node->cast<ParameterPtr>()->default_param();
-  auto origin_tensor = std::dynamic_pointer_cast<ParamValueLite>(origin_param);
-  auto origin_data = reinterpret_cast<float *>(origin_tensor->tensor_addr());
+  auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(origin_param);
+  auto origin_data = reinterpret_cast<float *>(origin_tensor->data_c());
 
   auto scale_factor_param = scale_factor_node->cast<ParameterPtr>()->default_param();
-  auto scale_factor_tensor = std::dynamic_pointer_cast<ParamValueLite>(scale_factor_param);
-  if (scale_factor_tensor->tensor_shape_size() < 1) {
+  auto scale_factor_tensor = std::dynamic_pointer_cast<tensor::Tensor>(scale_factor_param);
+  if (scale_factor_tensor->DataSize() < 1) {
     MS_LOG(ERROR) << "scale factor data size is not equal to 1";
     return RET_ERROR;
   }
-  auto scale_factor_data = (reinterpret_cast<float *>(scale_factor_tensor->tensor_addr()))[0];
+  auto scale_factor_data = (reinterpret_cast<float *>(scale_factor_tensor->data_c()))[0];
   float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
-  for (int i = 0; i < origin_tensor->tensor_shape_size(); i++) {
+  for (int i = 0; i < origin_tensor->DataSize(); i++) {
     origin_data[i] = origin_data[i] * scale_factor;
   }
   return RET_OK;

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
+#include "src/common/utils.h"
 #include "tools/common/graph_util.h"
+#include "abstract/utils.h"
 
 namespace mindspore::lite {
 std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor) {
@@ -41,6 +42,111 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
   dstQuantParam->dstDtype = srcQuantParam->dstDtype;
   dstQuantParam->multiplier = srcQuantParam->multiplier;
   return dstQuantParam;
+}
+
+tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std::vector<int64_t> &shape,
+                                   TypeId data_type) {
+  tensor::TensorPtr tensor_info = nullptr;
+  if (shape.empty() && data_size == mindspore::abstract::TypeIdSize(data_type)) {
+    ShapeVector scalar_shape = {1};
+    tensor_info = std::make_shared<tensor::Tensor>(data_type, scalar_shape);
+    tensor_info->set_shape({});
+  } else {
+    tensor_info = std::make_shared<tensor::Tensor>(data_type, shape);
+  }
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "new tensor init failed";
+    return nullptr;
+  }
+  if (data_size == 0) {
+    return tensor_info;
+  }
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "input tensor data is nullptr";
+    return nullptr;
+  }
+  auto ret = memcpy_s(tensor_info->data_c(), tensor_info->data().nbytes(), data, data_size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s error : " << ret;
+    return nullptr;
+  }
+  return tensor_info;
+}
+
+int SetTensorData(const tensor::TensorPtr &tensor_info, const void *data, size_t data_size) {
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "tensor info is nullptr.";
+    return RET_ERROR;
+  }
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr.";
+    return RET_ERROR;
+  }
+  auto ret = memcpy_s(tensor_info->data_c(), tensor_info->data().nbytes(), data, data_size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s error : " << ret;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+std::unique_ptr<schema::TensorT> CreateTensorTFromTensorInfo(const tensor::TensorPtr &tensor_info,
+                                                             const std::string &tensor_name) {
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Input tensor is nullptr";
+    return nullptr;
+  }
+  auto schema_tensor = std::make_unique<schema::TensorT>();
+  schema_tensor->name = tensor_name;
+  auto ret = UpdateTensorTFromTensorInfo(tensor_info, &schema_tensor);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init schema tensor failed";
+    return nullptr;
+  }
+  return schema_tensor;
+}
+
+int UpdateTensorTFromTensorInfo(const tensor::TensorPtr &src_tensor, std::unique_ptr<schema::TensorT> *dst_tensor) {
+  if (src_tensor == nullptr) {
+    MS_LOG(ERROR) << "Input tensor info is nullptr";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (dst_tensor == nullptr || *dst_tensor == nullptr) {
+    MS_LOG(ERROR) << "Input schema tensor is nullptr";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  auto &schema_tensor = *dst_tensor;
+  schema_tensor->format = schema::Format_NHWC;
+  schema_tensor->dataType = src_tensor->data_type();
+  auto &shape_vector = src_tensor->shape();
+  std::vector<int32_t> dims;
+  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(dims),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  schema_tensor->dims = dims;
+  if (src_tensor->data().data() != nullptr) {
+    schema_tensor->data.resize(src_tensor->data().nbytes());
+    if (EOK != memcpy_s(schema_tensor->data.data(), schema_tensor->data.size(), src_tensor->data().data(),
+                        src_tensor->data().nbytes())) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int InitParameterFromTensorInfo(const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info) {
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "tensor info is nullptr.";
+    return RET_ERROR;
+  }
+  auto abstract_tensor = tensor_info->ToAbstract();
+  if (abstract_tensor == nullptr) {
+    MS_LOG(ERROR) << "Create abstract tensor failed.";
+    return RET_ERROR;
+  }
+  param_node->set_abstract(abstract_tensor);
+  param_node->set_default_param(tensor_info);
+  return RET_OK;
 }
 
 size_t GetElementSize(const TensorT &tensor) { return GetElementSize(TypeId(tensor.dataType)); }

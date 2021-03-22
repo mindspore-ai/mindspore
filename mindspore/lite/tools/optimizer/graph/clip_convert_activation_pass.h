@@ -19,7 +19,6 @@
 #include <string>
 #include "tools/converter/converter_flags.h"
 #include "backend/optimizer/common/pass.h"
-#include "src/param_value_lite.h"
 
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::QuantType;

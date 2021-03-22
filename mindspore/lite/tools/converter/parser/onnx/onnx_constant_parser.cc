@@ -17,19 +17,13 @@
 #include "tools/converter/parser/onnx/onnx_constant_parser.h"
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include "ops/constant.h"
-#include "src/param_value_lite.h"
+#include "tools/common/tensor_util.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim) {
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  if (param_value == nullptr) {
-    MS_LOG(ERROR) << "new a paramValueLite failed.";
-    return RET_ERROR;
-  }
   auto data_type =
     OnnxModelParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
   if (data_type == kTypeUnknown) {
@@ -41,14 +35,16 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
   std::vector<int> shape;
   std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
                  [](const int64_t &val) { return static_cast<int32_t>(val); });
-  param_value->set_tensor_type(data_type);
-  param_value->set_tensor_shape(shape);
-  param_value->set_format(schema::Format_NCHW);
-  if (OnnxModelParser::CopyOnnxTensorData(onnx_const_tensor, param_value) != RET_OK) {
+  auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "new a paramValueLite failed.";
+    return RET_ERROR;
+  }
+  if (OnnxModelParser::CopyOnnxTensorData(onnx_const_tensor, tensor_info) != RET_OK) {
     MS_LOG(ERROR) << "get value failed.";
     return RET_ERROR;
   }
-  prim->set_attr("const_data", param_value);
+  prim->set_attr("const_data", tensor_info);
   return RET_OK;
 }
 

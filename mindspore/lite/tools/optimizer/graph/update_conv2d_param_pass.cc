@@ -52,8 +52,8 @@ lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
     return lite::RET_NO_CHANGE;
   }
   auto default_param = weight_param->default_param();
-  auto weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(default_param);
-  auto weight_shape = weight_tensor->tensor_shape();
+  auto weight_tensor = std::dynamic_pointer_cast<tensor::Tensor>(default_param);
+  auto weight_shape = weight_tensor->shape();
   std::vector<int64_t> kernel_size = {weight_shape[0], weight_shape[1]};
   conv->set_kernel_size(kernel_size);
   conv->set_in_channel(weight_shape[2]);
@@ -75,8 +75,8 @@ lite::STATUS UpdateConv2DParamPass::UpdateDepthWiseConv2D(const CNodePtr &cnode)
     if (input_node->isa<Parameter>()) {
       auto param_node = input_node->cast<ParameterPtr>();
       auto param = param_node->default_param();
-      auto weight = std::dynamic_pointer_cast<ParamValueLite>(param);
-      conv->set_in_channel(static_cast<int64_t>(weight->tensor_shape().at(0)));
+      auto weight = std::dynamic_pointer_cast<tensor::Tensor>(param);
+      conv->set_in_channel(static_cast<int64_t>(weight->shape().at(0)));
     }
   }
   return lite::RET_OK;

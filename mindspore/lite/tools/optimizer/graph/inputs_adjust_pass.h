@@ -21,7 +21,6 @@
 #include <string>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "backend/optimizer/common/pass.h"
-#include "src/param_value_lite.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::STATUS;

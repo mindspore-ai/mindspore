@@ -69,9 +69,7 @@ lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const Fu
     if (!utils::isa<CNode>(node)) {
       continue;
     }
-    if (CheckPrimitiveType(node, prim::kPrimConv2DFusion) || CheckPrimitiveType(node, kPrimConv2DBackpropInputFusion) ||
-        CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion) ||
-        CheckPrimitiveType(node, prim::kPrimApplyMomentum) || CheckPrimitiveType(node, prim::kPrimSGD) ||
+    if (CheckPrimitiveType(node, prim::kPrimApplyMomentum) || CheckPrimitiveType(node, prim::kPrimSGD) ||
         CheckPrimitiveType(node, prim::kPrimAdam)) {
       continue;
     }
@@ -79,6 +77,13 @@ lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const Fu
     auto inputs = cnode->inputs();
     if (std::any_of(inputs.begin(), inputs.end(),
                     [&weight_node](const AnfNodePtr &anf_node) { return weight_node == anf_node; })) {
+      if (CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
+          CheckPrimitiveType(node, kPrimConv2DBackpropInputFusion) ||
+          CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+        auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+        prim->AddAttr(kWeightFormat, MakeValue<int64_t>(mindspore::KHWC));
+        continue;
+      }
       adjust_nodes.push_back(cnode);
     }
   }
@@ -138,9 +143,14 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     }
     auto conv_cnode = node->cast<CNodePtr>();
     MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
+    auto prim = GetValueNode<PrimitivePtr>(conv_cnode->input(0));
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
+      return lite::RET_ERROR;
+    }
     auto weight_node = conv_cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
-    auto weight_value = GetLiteParamValue(weight_node);
+    auto weight_value = GetTensorInfo(weight_node);
     if (weight_value == nullptr) {
       MS_LOG(ERROR) << "weight node must param value";
       return false;
@@ -148,31 +158,30 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     MS_ASSERT(weight_value->tensor_type() == TypeId::kNumberTypeFloat32 ||
               weight_value->tensor_type() == TypeId::kNumberTypeUInt8);
     lite::STATUS status;
-    schema::Format src_format = static_cast<schema::Format>(weight_value->format());
+    auto value_ptr = prim->GetAttr(opt::kWeightFormat);
+    auto weight_src_format = static_cast<schema::Format>(GetValue<int64_t>(value_ptr));
     schema::Format weight_dst_format = schema::Format::Format_KHWC;
     if (dst_format != schema::Format::Format_NUM_OF_FORMAT) {
       weight_dst_format = dst_format;
     }
-    status = TransFilterFormat(weight_value, weight_dst_format);
+    status = TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
     if (status == RET_OK) {
-      weight_value->set_format(weight_dst_format);
+      prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(weight_dst_format));
     } else {
-      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_value->format()]) << "To"
+      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
                     << EnumNameFormat(weight_dst_format) << " failed, node : " << node->fullname_with_scope()
                     << "quant type:" << quant_type;
       return ERROR;
     }
-    status = HandleWeightSharing(graph, weight_node->cast<ParameterPtr>(), src_format, weight_dst_format);
+    status = HandleWeightSharing(graph, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "handle weight-sharing failed.";
       return false;
     }
-    auto type_id = static_cast<TypeId>(weight_value->tensor_type());
+    auto type_id = static_cast<TypeId>(weight_value->data_type());
     auto type_ptr = TypeIdToType(type_id);
-    auto shape = weight_value->tensor_shape();
-    std::vector<int64_t> shape_vector;
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                         [](const int32_t &value) { return static_cast<int64_t>(value); });
+    auto shape = weight_value->shape();
+    std::vector<int64_t> shape_vector(shape.begin(), shape.end());
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     weight_node->set_abstract(abstract_tensor);
   }

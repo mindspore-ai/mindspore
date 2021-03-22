@@ -23,6 +23,7 @@
 #include "Eigen/Core"
 #include "ops/fusion/conv2d_fusion.h"
 #include "src/common/common.h"
+#include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
 #include "backend/optimizer/common/helper.h"
 
@@ -433,33 +434,31 @@ int CheckLeastInputSize(const CNodePtr &node, const int size) {
 }
 
 ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
-                            const ParamValueLitePtr &weight_tensor) {
+                            const tensor::TensorPtr &weight_tensor) {
   auto bias_parameter = func_graph->add_parameter();
   MS_ASSERT(bias_parameter != nullptr);
-  std::vector<int> shape = {kernel_num};
-  std::vector<int64_t> shape_vector;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  auto abstract_tensor =
-    std::make_shared<abstract::AbstractTensor>(TypeIdToType(weight_tensor->tensor_type()), shape_vector);
-  bias_parameter->set_abstract(abstract_tensor);
+  std::vector<int64_t> shape_vector = {kernel_num};
+  auto tensor_info = lite::CreateTensorInfo(bias_data, kernel_num * sizeof(float) / sizeof(uint8_t), shape_vector,
+                                            weight_tensor->data_type());
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
+    return nullptr;
+  }
+  auto status = lite::InitParameterFromTensorInfo(bias_parameter, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->SetTensorData(bias_data, kernel_num * sizeof(float) / sizeof(uint8_t));
-  param_value->set_format(weight_tensor->format());
-  param_value->set_tensor_type(weight_tensor->tensor_type());
-  param_value->set_tensor_shape(shape);
-  bias_parameter->set_default_param(param_value);
   return bias_parameter;
 }
 
-ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node) {
+tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   if (!utils::isa<ParameterPtr>(node)) {
     if (utils::isa<ValueNodePtr>(node)) {
       auto valueNode = node->cast<ValueNodePtr>();
-      auto value = std::dynamic_pointer_cast<ParamValueLite>(valueNode->value());
+      auto value = std::dynamic_pointer_cast<tensor::Tensor>(valueNode->value());
       if (value != nullptr) {
         return value;
       }
@@ -469,8 +468,8 @@ ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node) {
   }
   auto param = node->cast<ParameterPtr>();
   MS_ASSERT(param != nullptr);
-  auto param_value = std::dynamic_pointer_cast<ParamValueLite>(param->default_param());
-  return param_value;
+  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param());
+  return tensor_info;
 }
 
 AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
@@ -526,11 +525,11 @@ bool IsParamNode(const BaseRef &n) {
     return false;
   }
   auto param = utils::cast<ParameterPtr>(n)->default_param();
-  auto tensor = std::dynamic_pointer_cast<ParamValueLite>(param);
+  auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param);
   if (tensor == nullptr) {
     return false;
   }
-  return tensor->tensor_addr() != nullptr;
+  return tensor->data_c() != nullptr;
 }
 
 bool IsConvNode(const BaseRef &n) {
@@ -717,8 +716,8 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
   }
   return output_node_list;
 }
-STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
-                    int32_t *filterH, int32_t *filterW) {
+STATUS GetFilterDim(const std::vector<int64_t> &oriDims, kTransFilterType type, int64_t *filterK, int64_t *filterC,
+                    int64_t *filterH, int64_t *filterW) {
   MS_ASSERT(oriDims.size() == 4);
   std::unordered_map<kTransFilterType, int> maps = {
     {kKCHW2HWCK, 1}, {kKCHW2HWKC, 1}, {kKCHW2KHWC, 1}, {kKCHW2CKHW, 1}, {kCKHW2HWCK, 2},
@@ -780,7 +779,7 @@ STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, 
   return RET_OK;
 }
 
-STATUS SetFilterDim(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+STATUS SetFilterDim(const tensor::TensorPtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                     int32_t filterH, int32_t filterW) {
   MS_ASSERT(tensor != nullptr);
   std::unordered_map<kTransFilterType, int> maps = {
@@ -796,22 +795,22 @@ STATUS SetFilterDim(const ParamValueLitePtr &tensor, kTransFilterType type, int3
 
   switch (maps.find(type)->second) {
     case 1:
-      tensor->set_tensor_shape({filterH, filterW, filterC, filterK});
+      tensor->set_shape({filterH, filterW, filterC, filterK});
       break;
     case 2:
-      tensor->set_tensor_shape({filterH, filterW, filterK, filterC});
+      tensor->set_shape({filterH, filterW, filterK, filterC});
       break;
     case 3:
-      tensor->set_tensor_shape({filterK, filterC, filterH, filterW});
+      tensor->set_shape({filterK, filterC, filterH, filterW});
       break;
     case 4:
-      tensor->set_tensor_shape({filterC, filterK, filterH, filterW});
+      tensor->set_shape({filterC, filterK, filterH, filterW});
       break;
     case 5:
-      tensor->set_tensor_shape({filterC, filterH, filterW, filterK});
+      tensor->set_shape({filterC, filterH, filterW, filterK});
       break;
     case 6:
-      tensor->set_tensor_shape({filterK, filterH, filterW, filterC});
+      tensor->set_shape({filterK, filterH, filterW, filterC});
       break;
     default:
       MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
@@ -981,7 +980,7 @@ void TransFilterDataKHWC2CHWK(kTransFilterType type, int32_t filterK, int32_t fi
 }
 
 template <typename T>
-static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+static STATUS TransFilterData(const tensor::TensorPtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                               int32_t filterH, int32_t filterW) {
   MS_ASSERT(tensor != nullptr);
   int count = filterH * filterW * filterC * filterK;
@@ -995,7 +994,7 @@ static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType 
     return RET_ERROR;
   }
 
-  void *originWeightData = tensor->tensor_addr();
+  void *originWeightData = tensor->data_c();
   T *weightData = static_cast<T *>(originWeightData);
 
   if (weightData == nullptr) {
@@ -1046,7 +1045,7 @@ static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType 
     }
   }
 
-  auto ret = ::memcpy_s(tensor->tensor_addr(), count * sizeof(T), buf.get(), count * sizeof(T));
+  auto ret = ::memcpy_s(tensor->data_c(), count * sizeof(T), buf.get(), count * sizeof(T));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed: " << ret;
     return RET_ERROR;
@@ -1055,18 +1054,18 @@ static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType 
 }
 
 template <typename T>
-static STATUS TransFilterFormat(const ParamValueLitePtr &tensor, kTransFilterType type) {
+static STATUS TransFilterFormat(const tensor::TensorPtr &tensor, kTransFilterType type) {
   MS_ASSERT(tensor != nullptr);
-  auto oriDims = tensor->tensor_shape();
+  auto oriDims = tensor->shape_c();
   if (oriDims.size() != (size_t)lite::DIM_DEFAULT_SIZE) {
     MS_LOG(ERROR) << "Filter dim-num is not supported, dim-num: " << oriDims.size();
     return lite::RET_ERROR;
   }
 
-  int32_t filterH;
-  int32_t filterW;
-  int32_t filterC;
-  int32_t filterK;
+  int64_t filterH;
+  int64_t filterW;
+  int64_t filterC;
+  int64_t filterK;
   auto status = GetFilterDim(oriDims, type, &filterK, &filterC, &filterH, &filterW);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "GetFilterDim failed: " << status;
@@ -1086,7 +1085,7 @@ static STATUS TransFilterFormat(const ParamValueLitePtr &tensor, kTransFilterTyp
   return lite::RET_OK;
 }
 
-STATUS TransFilterFormatWithType(const ParamValueLitePtr &tensor, TypeId data_type,
+STATUS TransFilterFormatWithType(const tensor::TensorPtr &tensor, TypeId data_type,
                                  kTransFilterType trans_filter_type) {
   if (data_type == kNumberTypeFloat32) {
     return TransFilterFormat<float>(tensor, trans_filter_type);
@@ -1102,17 +1101,16 @@ STATUS TransFilterFormatWithType(const ParamValueLitePtr &tensor, TypeId data_ty
   }
 }
 
-STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_format) {
+STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_format, schema::Format dst_format) {
   if (tensor == nullptr) {
     return lite::RET_NULL_PTR;
   }
-  auto ori_dims = tensor->tensor_shape();
+  auto ori_dims = tensor->shape_c();
   if (ori_dims.size() != (size_t)lite::DIM_DEFAULT_SIZE) {
     MS_LOG(ERROR) << "Filter dim-num is not supported, dim-num: " << ori_dims.size();
     return lite::RET_ERROR;
   }
-  auto src_format = tensor->format();
-  auto data_type = tensor->tensor_type();
+  auto data_type = tensor->data_type();
   lite::STATUS status;
   std::unordered_map<schema::Format, kTransFilterType> khwc_trans_maps = {
     {schema::Format::Format_KCHW, kKCHW2KHWC}, {schema::Format::Format_CKHW, kCKHW2KHWC},
@@ -1195,42 +1193,42 @@ STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_for
 }
 
 ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                const ParamValueLitePtr &param_value) {
+                                const tensor::TensorPtr &tensor_info) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(param_value != nullptr);
   auto param_node = func_graph->add_parameter();
-  auto shape = param_value->tensor_shape();
+  auto shape = tensor_info->shape();
   std::vector<int64_t> shape_vector;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                  [](const int &val) { return static_cast<int64_t>(val); });
-  auto data_type = param_value->tensor_type() == kNumberTypeInt64 ? kNumberTypeInt32 : param_value->tensor_type();
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(data_type), shape_vector);
-  param_node->set_abstract(abstract_tensor);
+  auto data_type = tensor_info->data_type() == kNumberTypeInt64 ? kNumberTypeInt32 : tensor_info->data_type();
   if (utils::isa<CNodePtr>(node)) {
     param_node->set_name(node->cast<CNodePtr>()->fullname_with_scope());
   } else if (utils::isa<ParameterPtr>(node)) {
     param_node->set_name(node->cast<ParameterPtr>()->name());
   }
-  ParamValueLitePtr param_value_new = std::make_shared<ParamValueLite>();
-  param_value_new->set_format(param_value->format());
-  param_value_new->set_tensor_shape(shape);
+  auto tensor_info_new = std::make_shared<tensor::Tensor>(data_type, shape_vector);
+  if (tensor_info_new == nullptr) {
+    MS_LOG(ERROR) << "new tensor::Tensor failed.";
+    return nullptr;
+  }
   size_t data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
-  if (param_value->tensor_size() == 0) {
-    if (param_value->tensor_type() == kNumberTypeInt64) {
-      param_value_new->set_tensor_type(kNumberTypeInt32);
+  if (tensor_info->Size() == 0) {
+    auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info_new);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "init parameter from tensor info failed";
+      return nullptr;
     }
-    param_node->set_default_param(param_value_new);
     return param_node;
   }
-  if (param_value->tensor_type() == kNumberTypeInt64) {
-    param_value_new->set_tensor_type(kNumberTypeInt32);
-    auto *tensor_data = new (std::nothrow) int[data_count];
+  if (tensor_info->data_type() == kNumberTypeInt64) {
+    auto *tensor_data = reinterpret_cast<int *>(tensor_info_new->data_c());
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << "new data failed";
       return nullptr;
     }
-    auto *origin_data = reinterpret_cast<int64_t *>(param_value->tensor_addr());
+    auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
     for (size_t i = 0; i < data_count; ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
         MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
@@ -1239,23 +1237,24 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
         tensor_data[i] = static_cast<int>(origin_data[i]);
       }
     }
-    param_value_new->SetTensorData(tensor_data, data_count * sizeof(int32_t));
   } else {
-    param_value_new->set_tensor_type(param_value->tensor_type());
-    char *tensor_data = new (std::nothrow) char[param_value->tensor_size()];
+    tensor_info_new->set_data_type(tensor_info->data_type());
+    auto *tensor_data = reinterpret_cast<char *>(tensor_info_new->data_c());
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << "new data failed";
       return nullptr;
     }
-    if (memcpy_s(tensor_data, param_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size()) !=
-        lite::RET_OK) {
+    if (memcpy_s(tensor_data, tensor_info->Size(), tensor_info->data_c(), tensor_info->Size()) != lite::RET_OK) {
       MS_LOG(ERROR) << "memcpy data failed.";
-      delete[] tensor_data;
       return nullptr;
     }
-    param_value_new->SetTensorData(tensor_data, param_value->tensor_size());
   }
-  param_node->set_default_param(param_value_new);
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info_new);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+  param_node->set_default_param(tensor_info_new);
   return param_node;
 }
 
@@ -1264,21 +1263,19 @@ ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const in
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data.size() != 0);
   auto param_node = func_graph->add_parameter();
-
-  auto type_ptr = TypeIdToType(kNumberTypeInt32);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr);
-  param_node->set_abstract(abstract_tensor);
   param_node->set_name(node_name);
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_shape({1});
-  param_value->set_tensor_type(kNumberTypeInt32);
+  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(int32_t), {1}, kNumberTypeInt32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
 
-  char *default_data = new (std::nothrow) char[sizeof(int32_t)];
-  *(reinterpret_cast<int32_t *>(default_data)) = data;
-  param_value->SetTensorData(default_data, sizeof(int32_t));
-  param_node->set_default_param(param_value);
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
   return param_node;
 }
 
@@ -1287,29 +1284,21 @@ ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std:
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data.size() != 0);
   auto param_node = func_graph->add_parameter();
-
-  auto type_ptr = TypeIdToType(kNumberTypeInt32);
-  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  param_node->set_abstract(abstract_tensor);
   param_node->set_name(node_name);
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  std::vector<int32_t> shape{static_cast<int32_t>(data.size())};
-  param_value->set_tensor_shape(shape);
-  param_value->set_tensor_type(kNumberTypeInt32);
-
-  if (!data.empty()) {
-    char *default_data = new (std::nothrow) char[data.size() * sizeof(int32_t)];
-    if (memcpy_s(default_data, data.size() * sizeof(int32_t), data.data(), data.size() * sizeof(int32_t)) != EOK) {
-      MS_LOG(ERROR) << "memcpy data failed.";
-      delete[] default_data;
-      return nullptr;
-    }
-    param_value->SetTensorData(default_data, data.size() * sizeof(int32_t));
+  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
+  auto tensor_info = lite::CreateTensorInfo(data.data(), data.size() * sizeof(int32_t), shape_vector, kNumberTypeInt32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
   }
-  param_node->set_default_param(param_value);
+
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+
   return param_node;
 }
 
@@ -1318,24 +1307,11 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data.size() != 0);
   auto param_node = func_graph->add_parameter();
+  param_node->set_name(node_name);
 
-  auto type_ptr = TypeIdToType(kNumberTypeInt32);
   std::vector<int64_t> shape_vector;
   shape_vector.push_back(data.size());
   shape_vector.push_back(2);
-
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  param_node->set_abstract(abstract_tensor);
-  param_node->set_name(node_name);
-
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-
-  MS_ASSERT(param_value != nullptr);
-  std::vector<int32_t> shape;
-  shape.push_back(data.size());
-  shape.push_back(2);
-  param_value->set_tensor_shape(shape);
-  param_value->set_tensor_type(kNumberTypeInt32);
 
   std::vector<int32_t> data_1d;
   for (auto pair : data) {
@@ -1343,14 +1319,16 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
   }
 
   auto size = data_1d.size() * sizeof(int32_t);
-  char *default_data = new (std::nothrow) char[size];
-  if (memcpy_s(default_data, size, data_1d.data(), size) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] default_data;
+  auto tensor_info = lite::CreateTensorInfo(data_1d.data(), size, shape_vector, kNumberTypeInt32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
     return nullptr;
   }
-  param_value->SetTensorData(default_data, size);
-  param_node->set_default_param(param_value);
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
   return param_node;
 }
 
@@ -1359,26 +1337,18 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data.size() != 0);
   auto param_node = func_graph->add_parameter();
-
-  auto type_ptr = TypeIdToType(kNumberTypeFloat32);
-  std::vector<int64_t> shape_vector = {1};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  param_node->set_abstract(abstract_tensor);
   param_node->set_name(node_name);
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_shape({1});
-  param_value->set_tensor_type(kNumberTypeFloat32);
-
-  char *default_data = new (std::nothrow) char[sizeof(float)];
-  if (memcpy_s(default_data, sizeof(float), &data, sizeof(float)) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] default_data;
+  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(float), {1}, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
     return nullptr;
   }
-  param_value->SetTensorData(default_data, sizeof(float));
-  param_node->set_default_param(param_value);
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
   return param_node;
 }
 }  // namespace opt

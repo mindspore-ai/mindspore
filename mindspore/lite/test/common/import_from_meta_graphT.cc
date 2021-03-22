@@ -18,12 +18,12 @@
 #include <algorithm>
 #include "schema/inner/model_generated.h"
 #include "frontend/operator/ops.h"
-#include "src/param_value_lite.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/converter_context.h"
 #include "include/errorcode.h"
 #include "test/common/import_from_meta_graphT.h"
-#include "ir/func_graph.h"
+#include "src/common/utils.h"
+#include "tools/common/tensor_util.h"
 
 namespace mindspore::lite {
 AnfNodePtr AnfImporterFromMetaGraphT::GetNode(int tensor_id) {
@@ -50,41 +50,34 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
     std::copy(tensor->dims.begin(), tensor->dims.end(), shape.begin());
     auto type_id = static_cast<TypeId>(tensor->dataType);
     auto type_ptr = TypeIdToType(type_id);
-    std::vector<int64_t> shape_vector;
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                         [](const int32_t &value) { return static_cast<int64_t>(value); });
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-    MS_ASSERT(nullptr != abstract_tensor);
-    parameter->set_abstract(abstract_tensor);
+    std::vector<int64_t> shape_vector(shape.begin(), shape.end());
     if (!tensor->name.empty()) {
       parameter->set_name(tensor->name);
     } else {
       parameter->set_name("const-" + std::to_string(i));
     }
-
-    ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-    MS_ASSERT(nullptr != param_value);
-    param_value->set_tensor_shape(shape);
-    param_value->set_tensor_type(type_id);
-    param_value->set_format(tensor->format);
+    tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(type_id, shape_vector);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "create tensor info failed.";
+      return RET_ERROR;
+    }
+    int status = RET_OK;
     if (!tensor->data.empty()) {
       auto size = tensor->data.size();
-      char *tensor_data = new (std::nothrow) char[size];
-      if (tensor_data == nullptr) {
-        MS_LOG(ERROR) << "new char[] failed";
-        return RET_MEMORY_FAILED;
-      }
+      auto tensor_data = static_cast<char *>(tensor_info->data_c());
       auto ret = memcpy_s(tensor_data, size, tensor->data.data(), size);
       if (EOK != ret) {
         MS_LOG(ERROR) << "memcpy_s error";
-        delete[] tensor_data;
         return RET_MEMORY_FAILED;
       }
-      param_value->SetTensorData(tensor_data, size);
-      parameter->set_default_param(param_value);
+      status = lite::InitParameterFromTensorInfo(parameter, tensor_info);
     } else if (std::find(meta_graph_->inputIndex.begin(), meta_graph_->inputIndex.end(), i) ==
                meta_graph_->inputIndex.end()) {
-      parameter->set_default_param(param_value);
+      status = lite::InitParameterFromTensorInfo(parameter, tensor_info);
+    }
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "init parameter from tensor info failed";
+      return RET_ERROR;
     }
     AddNode(i, parameter);
   }

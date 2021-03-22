@@ -18,7 +18,6 @@
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
 #include "mindspore/core/ops/instance_norm.h"
-#include "src/param_value_lite.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -33,13 +32,12 @@ STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
     if (!axes_param->has_default() || axes_param->default_param() == nullptr) {
       return lite::RET_NOT_SUPPORT;
     }
-    auto axes_value = axes_param->default_param()->cast<ParamValueLitePtr>();
+    auto axes_value = axes_param->default_param()->cast<tensor::TensorPtr>();
     if (axes_value == nullptr) {
       return lite::RET_ERROR;
     }
-    axes->resize(axes_value->tensor_shape()[0]);
-    if (memcpy_s(axes->data(), axes_value->tensor_size(), axes_value->tensor_addr(), axes_value->tensor_size()) ==
-        EOK) {
+    axes->resize(axes_value->shape()[0]);
+    if (memcpy_s(axes->data(), axes_value->Size(), axes_value->data_c(), axes_value->Size()) == EOK) {
       return lite::RET_OK;
     }
   }
@@ -174,8 +172,10 @@ bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type
     return false;
   }
   auto beta_param = beta_node->cast<ParameterPtr>()->default_param();
-  auto beta_tensor = std::dynamic_pointer_cast<ParamValueLite>(beta_param);
-  auto beta_shape = beta_tensor->tensor_shape();
+  auto beta_tensor = std::dynamic_pointer_cast<tensor::Tensor>(beta_param);
+  std::vector<int> beta_shape;
+  std::transform(beta_tensor->shape().begin(), beta_tensor->shape().end(), std::back_inserter(beta_shape),
+                 [](int64_t val) { return static_cast<int>(val); });
   // gamma
   auto gamma_node = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
   MS_ASSERT(gamma_node != nullptr);
@@ -183,8 +183,10 @@ bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type
     return false;
   }
   auto gamma_param = gamma_node->cast<ParameterPtr>()->default_param();
-  auto gamma_tensor = std::dynamic_pointer_cast<ParamValueLite>(gamma_param);
-  auto gamma_shape = gamma_tensor->tensor_shape();
+  auto gamma_tensor = std::dynamic_pointer_cast<tensor::Tensor>(gamma_param);
+  std::vector<int> gamma_shape;
+  std::transform(gamma_tensor->shape().begin(), gamma_tensor->shape().end(), std::back_inserter(gamma_shape),
+                 [](int64_t val) { return static_cast<int>(val); });
   // epsilon
   auto epsilon_node = utils::cast<AnfNodePtr>((*equiv)[epsilon_]);
   MS_ASSERT(epsilon_node != nullptr);
@@ -192,9 +194,9 @@ bool NormFusion::CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type
     return false;
   }
   auto epsilon_param = epsilon_node->cast<ParameterPtr>()->default_param();
-  auto epsilon_tensor = std::dynamic_pointer_cast<ParamValueLite>(epsilon_param);
-  auto epsilon_data = reinterpret_cast<float *>(epsilon_tensor->tensor_addr());
-  auto epsilon_shape = epsilon_tensor->tensor_shape();
+  auto epsilon_tensor = std::dynamic_pointer_cast<tensor::Tensor>(epsilon_param);
+  auto epsilon_data = reinterpret_cast<float *>(epsilon_tensor->data_c());
+  auto epsilon_shape = epsilon_tensor->shape();
   // mean2
   std::vector<int> mean2_axes;
   if (!IsReduceNode(equiv, mean2_, mean2_axes_, &mean2_axes)) {

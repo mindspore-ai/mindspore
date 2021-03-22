@@ -54,23 +54,23 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     }
     if ((min == -1) && (max == -1)) {
       if (clip_cnode->size() > kClipMinIndex) {
-        auto min_param_value = GetLiteParamValue(clip_cnode->input(kClipMinIndex));
-        if (min_param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
+        auto min_tensor_info = GetTensorInfo(clip_cnode->input(kClipMinIndex));
+        if (min_tensor_info->data_type() != mindspore::kNumberTypeFloat32) {
           MS_LOG(ERROR) << "Clip param type invalid";
           return false;
         }
-        min = *reinterpret_cast<float *>(min_param_value->tensor_addr());
+        min = *reinterpret_cast<float *>(min_tensor_info->data_c());
       } else {
         min = FLT_MIN;
       }
 
       if (clip_cnode->size() > kClipMaxIndex) {
-        auto max_param_value = GetLiteParamValue(clip_cnode->input(kClipMaxIndex));
-        if (max_param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
+        auto max_tensor_info = GetTensorInfo(clip_cnode->input(kClipMaxIndex));
+        if (max_tensor_info->data_type() != mindspore::kNumberTypeFloat32) {
           MS_LOG(ERROR) << "Clip param type invalid";
           return false;
         }
-        max = *reinterpret_cast<float *>(max_param_value->tensor_addr());
+        max = *reinterpret_cast<float *>(max_tensor_info->data_c());
       } else {
         max = FLT_MAX;
       }

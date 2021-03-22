@@ -49,17 +49,17 @@ const float GeLUFusion::GetParameterValue(const EquivPtr &equiv, const VarPtr &i
   if (!parameter_node->has_default() || parameter_node->default_param() == nullptr) {
     return value;
   }
-  auto param_value_lite = parameter_node->default_param()->cast<ParamValueLitePtr>();
+  auto param_value_lite = parameter_node->default_param()->cast<tensor::TensorPtr>();
   if (param_value_lite == nullptr) {
     return value;
   }
-  if (param_value_lite->tensor_type() != kNumberTypeFloat32 && param_value_lite->tensor_type() != kNumberTypeFloat) {
+  if (param_value_lite->data_type() != kNumberTypeFloat32 && param_value_lite->data_type() != kNumberTypeFloat) {
     return value;
   }
-  if (param_value_lite->tensor_size() != sizeof(float)) {
+  if (param_value_lite->Size() != sizeof(float)) {
     return value;
   }
-  return *static_cast<float *>(param_value_lite->tensor_addr());
+  return *static_cast<float *>(param_value_lite->data_c());
 }
 
 const AnfNodePtr GeLUFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

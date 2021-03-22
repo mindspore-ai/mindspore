@@ -29,7 +29,6 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
-#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -41,12 +40,10 @@ class TFModelParser : public ModelParser {
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
 
  private:
-  static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);
+  static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
   STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
                             const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
-  static STATUS GetValueFromType(const tensorflow::TensorProto &tensor_proto,
-                                 const tensorflow::TensorShapeProto &tensor_shape, ParamValueLitePtr param_value,
-                                 const TypeId &type, int shape_size);
+  static STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
   STATUS ConvertGraphInputsAndConsts(const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes,

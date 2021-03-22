@@ -21,7 +21,6 @@
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/param_value_lite.h"
 
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::QuantType;
@@ -34,7 +33,6 @@ class MindirAdjustPass : public Pass {
   void SetFmkType(FmkType fmk_type) { fmk_type_ = fmk_type; }
   int ValueNodeInt64Convert(AnfNodePtr anf_node);
   void SetTrainFlag(bool train_flag) { train_flag_ = train_flag; }
-  int ParameterNodeConvert(AnfNodePtr anf_node);
   int ComputeQuantParams(AnfNodePtr anf_node);
   bool Run(const FuncGraphPtr &graph) override;
 

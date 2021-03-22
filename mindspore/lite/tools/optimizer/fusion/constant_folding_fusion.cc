@@ -18,11 +18,11 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <algorithm>
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/common/node_util.h"
+#include "tools/common/tensor_util.h"
 #include "src/common/common.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/kernel_registry.h"
@@ -85,34 +85,27 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   auto parameter = func_graph->add_parameter();
   std::vector<int> shape(tensor->shape());
   std::vector<int64_t> shape_vector;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  auto type_id = static_cast<TypeId>(tensor->data_type());
-  auto type_ptr = TypeIdToType(type_id);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  parameter->set_abstract(abstract_tensor);
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                 [](const int32_t &value) { return static_cast<int64_t>(value); });
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_shape(shape);
-  param_value->set_tensor_type(type_id);
-  param_value->set_format(tensor->format());
+  auto tensor_info = std::make_shared<tensor::Tensor>(tensor->data_type(), shape_vector);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
+    return nullptr;
+  }
   if (tensor->MutableData() != nullptr) {
-    auto size = tensor->Size();
-    auto tensor_data = new (std::nothrow) uint8_t[size];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "tensor_data is nullptr";
-      return nullptr;
-    }
-    auto ret = memcpy_s(tensor_data, size, tensor->MutableData(), tensor->Size());
+    auto tensor_data = static_cast<uint8_t *>(tensor_info->data_c());
+    auto ret = memcpy_s(tensor_data, tensor->Size(), tensor->MutableData(), tensor->Size());
     if (ret != EOK) {
-      delete[] tensor_data;
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return nullptr;
     }
-    param_value->SetTensorData(tensor_data, size);
   }
-  parameter->set_default_param(param_value);
+  auto status = lite::InitParameterFromTensorInfo(parameter, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
   return parameter;
 }
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
@@ -203,11 +196,11 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
                              const std::vector<Tensor *> &outputs) {
   MS_ASSERT(cnode != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  auto quant_param_valueptr = prim->GetAttr("quant_params");
-  if (quant_param_valueptr == nullptr) {
+  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
+  if (quant_tensor_info_ptr == nullptr) {
     return lite::RET_OK;
   }
-  auto quant_param_holder = quant_param_valueptr->cast<lite::QuantParamHolderPtr>();
+  auto quant_param_holder = quant_tensor_info_ptr->cast<lite::QuantParamHolderPtr>();
   if (quant_param_holder == nullptr) {
     MS_LOG(ERROR) << "quant param is invalid.";
     return lite::RET_ERROR;

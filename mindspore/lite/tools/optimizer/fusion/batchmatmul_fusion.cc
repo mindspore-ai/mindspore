@@ -19,8 +19,7 @@
 #include <algorithm>
 #include "ops/mat_mul.h"
 #include "schema/inner/model_generated.h"
-#include "src/param_value_lite.h"
-#include "utils/utils.h"
+#include "tools/common/tensor_util.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -52,12 +51,12 @@ void *GetInputAddr(const AnfNodePtr &node, size_t input_index) {
   }
   if (cnode->input(input_index)->isa<Parameter>()) {
     auto param_input = cnode->input(input_index)->cast<ParameterPtr>();
-    auto param_value = std::dynamic_pointer_cast<ParamValueLite>(param_input->default_param());
-    if (param_value == nullptr) {
-      MS_LOG(ERROR) << "param not paramValueLite";
+    auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_input->default_param());
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "param not tensor::Tensor";
       return nullptr;
     }
-    return param_value->tensor_addr();
+    return tensor_info->data_c();
   }
   MS_LOG(ERROR) << "input not parameter";
   return nullptr;
@@ -68,42 +67,36 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
   auto joint_fullconnect_size = stack_node->inputs().size() - 1;
   auto fc = stack_node->input(1)->cast<CNodePtr>();
   auto fc_weight = fc->input(2)->cast<ParameterPtr>();
-  auto fc_weight_param = std::dynamic_pointer_cast<ParamValueLite>(fc_weight->default_param());
-  auto tensor_size = fc_weight_param->tensor_size();
-  auto rmatmul_input_shape = fc_weight_param->tensor_shape();
-  auto new_tensor_data = new (std::nothrow) int8_t[joint_fullconnect_size * tensor_size];
-  if (new_tensor_data == nullptr) {
-    MS_LOG(ERROR) << "tensor_data is nullptr";
+  auto fc_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(fc_weight->default_param());
+  auto tensor_size = fc_weight_param->Size();
+  auto rmatmul_input_shape = fc_weight_param->shape();
+
+  rmatmul_input_shape.insert(rmatmul_input_shape.begin(), joint_fullconnect_size);
+  std::vector<int64_t> shape_vector(rmatmul_input_shape.begin(), rmatmul_input_shape.end());
+  auto tensor_info = lite::CreateTensorInfo(nullptr, 0, shape_vector, fc_weight_param->data_type());
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
     return RET_ERROR;
   }
   for (size_t i = 1; i < joint_fullconnect_size + 1; i++) {
     auto tensor_addr = GetInputAddr(stack_node->input(i), 2);
     if (tensor_addr == nullptr) {
       MS_LOG(ERROR) << "input tensor addr nullptr";
-      delete[] new_tensor_data;
       return RET_ERROR;
     }
-    if (EOK != memcpy_s(new_tensor_data + (i - 1) * tensor_size, tensor_size, tensor_addr, tensor_size)) {
+    if (EOK != memcpy_s(static_cast<int8_t *>(tensor_info->data_c()) + (i - 1) * tensor_size, tensor_size, tensor_addr,
+                        tensor_size)) {
       MS_LOG(ERROR) << "memcpy_s data failed";
-      delete[] new_tensor_data;
       return RET_ERROR;
     }
   }
-  rmatmul_input_shape.insert(rmatmul_input_shape.begin(), joint_fullconnect_size);
-  auto type_ptr = TypeIdToType(fc_weight_param->tensor_type());
-  std::vector<int64_t> shape_vector;
-  (void)std::transform(rmatmul_input_shape.begin(), rmatmul_input_shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  rmatmul_input->set_abstract(abstract_tensor);
+  auto status = lite::InitParameterFromTensorInfo(rmatmul_input, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
   rmatmul_input->set_name(stack_node->fullname_with_scope() + "right_parameter");
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_shape(rmatmul_input_shape);
-  param_value->set_tensor_type(fc_weight_param->tensor_type());
-  param_value->set_format(fc_weight_param->format());
-  param_value->SetTensorData(new_tensor_data, joint_fullconnect_size * tensor_size);
-  rmatmul_input->set_default_param(param_value);
+
   return RET_OK;
 }
 }  // namespace

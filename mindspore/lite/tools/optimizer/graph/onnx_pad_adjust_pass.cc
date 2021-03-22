@@ -21,7 +21,7 @@
 #include "ops/reshape.h"
 #include "ops/transpose.h"
 #include "ops/primitive_c.h"
-#include "src/param_value_lite.h"
+#include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
@@ -32,35 +32,22 @@ ParameterPtr OnnxPadAdjustPass::CreateNewParameter(const FuncGraphPtr &func_grap
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data != nullptr);
   auto parameter = func_graph->add_parameter();
-  std::vector<int> shape;
-  shape.push_back(static_cast<int>(data.size()));
-  std::vector<int64_t> shape_vector;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  auto type_id = static_cast<TypeId>(kNumberTypeInt32);
-  auto type_ptr = TypeIdToType(type_id);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  parameter->set_abstract(abstract_tensor);
-
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_shape(shape);
-  param_value->set_tensor_type(type_id);
-  param_value->set_format(schema::Format_NCHW);
-
+  ShapeVector shape_vector;
+  shape_vector.push_back(static_cast<int64_t>(data.size()));
   size_t size = data.size() * sizeof(int);
-  auto tensor_data = new (std::nothrow) uint8_t[size];
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "tensor_data is nullptr";
+
+  auto tensor_info = lite::CreateTensorInfo(data.data(), size, shape_vector, kNumberTypeInt32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
     return nullptr;
   }
-  auto ret = memcpy_s(tensor_data, size, data.data(), size);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "set tensor data failed.";
+
+  auto status = lite::InitParameterFromTensorInfo(parameter, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
     return nullptr;
   }
-  param_value->SetTensorData(tensor_data, size);
-  parameter->set_default_param(param_value);
+
   return parameter;
 }
 

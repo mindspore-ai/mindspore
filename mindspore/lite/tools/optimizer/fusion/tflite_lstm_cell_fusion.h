@@ -50,7 +50,7 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   VarPtr hidden_zoneout_new_ = nullptr;
   std::vector<VarPtr> while_input_vars_;
 
-  lite::STATUS GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v) const;
+  lite::STATUS GetFloatScalarFromTensorInfo(const AnfNodePtr &tensor_info, float *v) const;
   CNodePtr CreateSqueezeNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
                              const std::vector<int> &axis) const;
   lite::STATUS AdjustOtherGetItems(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode,

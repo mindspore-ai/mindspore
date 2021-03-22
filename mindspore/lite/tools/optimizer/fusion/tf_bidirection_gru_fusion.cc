@@ -23,6 +23,7 @@
 #include "ops/stack.h"
 #include "ops/transpose.h"
 #include "src/common/utils.h"
+#include "tools/common/tensor_util.h"
 #include "utils/utils.h"
 #include "securec/include/securec.h"
 
@@ -197,7 +198,7 @@ AnfNodePtr TfBidirectionGruFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr 
   return pattern;
 }
 
-ParamValueLitePtr TfBidirectionGruFusion::GetDefaultParamValue(const AnfNodePtr &parameter_anf) const {
+tensor::TensorPtr TfBidirectionGruFusion::GetDefaultTensorInfo(const AnfNodePtr &parameter_anf) const {
   MS_ASSERT(parameter_anf != nullptr);
   if (!utils::isa<ParameterPtr>(parameter_anf)) {
     MS_LOG(DEBUG) << "parameter_anf is not ParameterPtr";
@@ -208,8 +209,8 @@ ParamValueLitePtr TfBidirectionGruFusion::GetDefaultParamValue(const AnfNodePtr 
     MS_LOG(DEBUG) << "parameter not have default value";
     return nullptr;
   }
-  auto param_value = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-  return param_value;
+  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(parameter->default_param());
+  return tensor_info;
 }
 
 STATUS TfBidirectionGruFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf,
@@ -219,19 +220,19 @@ STATUS TfBidirectionGruFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_k
   MS_ASSERT(bw_cand_kernel != nullptr);
   MS_ASSERT(input_size != nullptr);
   MS_ASSERT(hidden_size != nullptr);
-  auto fw_cand_kernel_value = GetDefaultParamValue(fw_cand_kernel_anf);
+  auto fw_cand_kernel_value = GetDefaultTensorInfo(fw_cand_kernel_anf);
   if (fw_cand_kernel_value == nullptr) {
     return RET_ERROR;
   }
-  auto fw_cand_kernel_shape = fw_cand_kernel_value->tensor_shape();
+  auto fw_cand_kernel_shape = fw_cand_kernel_value->shape();
   if (fw_cand_kernel_shape.size() != 2) {
     return RET_ERROR;
   }
-  auto bw_cand_kernel_value = GetDefaultParamValue(bw_cand_kernel_anf);
+  auto bw_cand_kernel_value = GetDefaultTensorInfo(bw_cand_kernel_anf);
   if (bw_cand_kernel_value == nullptr) {
     return RET_ERROR;
   }
-  auto bw_cand_kernel_shape = bw_cand_kernel_value->tensor_shape();
+  auto bw_cand_kernel_shape = bw_cand_kernel_value->shape();
   if (bw_cand_kernel_shape.size() != 2) {
     return RET_ERROR;
   }
@@ -261,32 +262,13 @@ ParameterPtr TfBidirectionGruFusion::AddDefaultParameter(const FuncGraphPtr &fun
   }
   parameter->set_abstract(abstract_tensor);
 
-  auto gate_weight_default = std::make_shared<ParamValueLite>();
+  auto gate_weight_default = std::make_shared<tensor::Tensor>(type, shape_vector);
   if (gate_weight_default == nullptr) {
     MS_LOG(ERROR) << "gate_weight_default is nullptr";
     return nullptr;
   }
-  gate_weight_default->set_tensor_shape(shape);
-  gate_weight_default->set_tensor_type(type);
-  gate_weight_default->set_format(schema::Format_NHWC);
-  int data_len = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
-  int data_size = 0;
-  if (type == kNumberTypeFloat32 || type == kNumberTypeFloat) {
-    data_size = data_len * sizeof(float);
-    *tensor_data = new (std::nothrow) float[data_len];
-  } else if (type == kNumberTypeInt || type == kNumberTypeInt32) {
-    data_size = data_len * sizeof(int);
-    *tensor_data = new (std::nothrow) int[data_len];
-  } else {
-    MS_LOG(DEBUG) << "unsupported data type";
-    return nullptr;
-  }
-  if (*tensor_data == nullptr) {
-    MS_LOG(ERROR) << "new data failed";
-    return nullptr;
-  }
 
-  gate_weight_default->SetTensorData(*tensor_data, data_size);
+  *tensor_data = gate_weight_default->data_c();
   parameter->set_default_param(gate_weight_default);
   return parameter;
 }
@@ -317,27 +299,27 @@ STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, 
   MS_ASSERT(cand_weight != nullptr);
   MS_ASSERT(gate_tensor_data != nullptr);
   MS_ASSERT(recu_tensor_data != nullptr);
-  const std::vector<int> gate_shape{input_size + hidden_size, hidden_size * 2};
-  const std::vector<int> cand_shape{hidden_size * 2, hidden_size};
-  auto gate_weight_value = GetDefaultParamValue(gate_weight);
+  const std::vector<int64_t> gate_shape{input_size + hidden_size, hidden_size * 2};
+  const std::vector<int64_t> cand_shape{hidden_size * 2, hidden_size};
+  auto gate_weight_value = GetDefaultTensorInfo(gate_weight);
   if (gate_weight_value == nullptr) {
     return RET_ERROR;
   }
-  auto gate_weight_data = reinterpret_cast<float *>(gate_weight_value->tensor_addr());
+  auto gate_weight_data = reinterpret_cast<float *>(gate_weight_value->data_c());
   if (gate_weight_data == nullptr) {
     return RET_ERROR;
   }
-  auto gate_weight_shape = gate_weight_value->tensor_shape();
+  auto gate_weight_shape = gate_weight_value->shape();
 
-  auto cand_weight_value = GetDefaultParamValue(cand_weight);
+  auto cand_weight_value = GetDefaultTensorInfo(cand_weight);
   if (cand_weight_value == nullptr) {
     return RET_ERROR;
   }
-  auto cand_weight_data = reinterpret_cast<float *>(cand_weight_value->tensor_addr());
+  auto cand_weight_data = reinterpret_cast<float *>(cand_weight_value->data_c());
   if (cand_weight_data == nullptr) {
     return RET_ERROR;
   }
-  auto cand_weight_shape = cand_weight_value->tensor_shape();
+  auto cand_weight_shape = cand_weight_value->shape();
 
   if (gate_weight_shape != gate_shape || cand_weight_shape != cand_shape) {
     return RET_ERROR;
@@ -369,20 +351,20 @@ STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, cons
                                                const int hidden_size, float *tensor_data) const {
   MS_ASSERT(bias != nullptr);
   MS_ASSERT(tensor_data != nullptr);
-  std::vector<int> gate_shape{hidden_size * 2};
-  std::vector<int> cand_shape{hidden_size};
-  auto gate_bias_value = GetDefaultParamValue(gate_bias);
+  std::vector<int64_t> gate_shape{hidden_size * 2};
+  std::vector<int64_t> cand_shape{hidden_size};
+  auto gate_bias_value = GetDefaultTensorInfo(gate_bias);
   if (gate_bias_value == nullptr) {
     return RET_ERROR;
   }
-  auto gate_bias_data = reinterpret_cast<float *>(gate_bias_value->tensor_addr());
-  auto gate_bias_shape = gate_bias_value->tensor_shape();
-  auto cand_bias_value = GetDefaultParamValue(cand_bias);
+  auto gate_bias_data = reinterpret_cast<float *>(gate_bias_value->data_c());
+  auto gate_bias_shape = gate_bias_value->shape();
+  auto cand_bias_value = GetDefaultTensorInfo(cand_bias);
   if (cand_bias_value == nullptr) {
     return RET_ERROR;
   }
-  auto cand_bias_data = reinterpret_cast<float *>(cand_bias_value->tensor_addr());
-  auto cand_bias_shape = cand_bias_value->tensor_shape();
+  auto cand_bias_data = reinterpret_cast<float *>(cand_bias_value->data_c());
+  auto cand_bias_shape = cand_bias_value->shape();
   if (gate_bias_shape != gate_shape || cand_bias_shape != cand_shape) {
     return RET_ERROR;
   }
@@ -504,6 +486,8 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
   std::vector<AnfNodePtr> new_node_inputs = {value_node, input,          gate_weight, recu_weight,
                                              bias,       stacked_hidden, input_length};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  auto prim = GetValueNode<PrimitivePtr>(new_node->input(0));
+  prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::NHWC));
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }

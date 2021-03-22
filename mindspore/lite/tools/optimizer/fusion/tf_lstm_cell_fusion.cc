@@ -17,7 +17,7 @@
 #include <memory>
 #include "ops/lstm.h"
 #include "src/common/utils.h"
-#include "src/param_value_lite.h"
+#include "tools/common/tensor_util.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -110,19 +110,10 @@ AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primi
   return pattern;
 }
 
-STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int> &shape,
+STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int64_t> &shape,
                                                      const float *const data_ptr, const int hidden_size) const {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(data_ptr != nullptr);
-  auto default_param = std::make_shared<ParamValueLite>();
-  if (default_param == nullptr) {
-    MS_LOG(ERROR) << "new_default is nullptr";
-    return RET_ERROR;
-  }
-  default_param->set_tensor_shape(shape);
-  default_param->set_tensor_type(kNumberTypeFloat32);
-  default_param->set_format(schema::Format_NHWC);
-
   if (shape.size() != 3) {
     MS_LOG(ERROR) << "lstm weight shape must have 3 dims";
     return RET_ERROR;
@@ -141,16 +132,17 @@ STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight,
       }
     }
   }
-  default_param->SetTensorData(tensor_data, param_num * 4);
-  weight->set_default_param(default_param);
-  std::vector<int64_t> shape_vector_i(shape.begin(), shape.end());
-  auto abstract_tensor_i = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector_i);
-  if (abstract_tensor_i == nullptr) {
-    MS_LOG(ERROR) << "abstract_tensor is nullptr";
-    delete[] tensor_data;
+  auto tensor_info = lite::CreateTensorInfo(tensor_data, param_num * 4, shape, kNumberTypeFloat32);
+  delete[] tensor_data;
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
-  weight->set_abstract(abstract_tensor_i);
+  auto status = lite::InitParameterFromTensorInfo(weight, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -169,17 +161,17 @@ STATUS TfLstmCellFusion::SplitWeights(const AnfNodePtr &weight, const ParameterP
     MS_LOG(DEBUG) << "weight not have default value";
     return RET_ERROR;
   }
-  if (!utils::isa<ParamValueLitePtr>(weight_param->default_param())) {
-    MS_LOG(DEBUG) << "default value is not ParamValueLite";
+  if (!utils::isa<tensor::TensorPtr>(weight_param->default_param())) {
+    MS_LOG(DEBUG) << "default value is not tensor::Tensor";
     return RET_FAILED;
   }
-  auto origin_tensor = std::dynamic_pointer_cast<ParamValueLite>(weight_param->default_param());
-  if (origin_tensor->tensor_type() != kNumberTypeFloat32 && origin_tensor->tensor_type() != kNumberTypeFloat) {
+  auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(weight_param->default_param());
+  if (origin_tensor->data_type() != kNumberTypeFloat32 && origin_tensor->data_type() != kNumberTypeFloat) {
     MS_LOG(DEBUG) << "origin_tensor is not float32 type";
     return RET_ERROR;
   }
-  auto data_ptr = reinterpret_cast<float *>(origin_tensor->tensor_addr());
-  auto data_shape = origin_tensor->tensor_shape();
+  auto data_ptr = reinterpret_cast<float *>(origin_tensor->data_c());
+  auto data_shape = origin_tensor->shape();
   if (data_shape.size() != 2) {
     MS_LOG(ERROR) << "weight data shape invalid";
     return RET_ERROR;
@@ -194,13 +186,13 @@ STATUS TfLstmCellFusion::SplitWeights(const AnfNodePtr &weight, const ParameterP
   }
   const auto input_size = data_shape[0] - hidden_size;
 
-  std::vector<int> shape_i{1, 4 * hidden_size, input_size};
+  std::vector<int64_t> shape_i{1, 4 * hidden_size, input_size};
   if (SetWeightAbstractAndDefault(weight_i, shape_i, data_ptr, hidden_size) != RET_OK) {
     MS_LOG(ERROR) << "get weight_i failed";
     return RET_ERROR;
   }
 
-  std::vector<int> shape_c{1, 4 * hidden_size, hidden_size};
+  std::vector<int64_t> shape_c{1, 4 * hidden_size, hidden_size};
   if (SetWeightAbstractAndDefault(weight_c, shape_c, data_ptr + input_size * data_shape[1], hidden_size) != RET_OK) {
     MS_LOG(ERROR) << "get weight_i failed";
     return RET_ERROR;
@@ -222,32 +214,23 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     MS_LOG(DEBUG) << "bias not have default value";
     return RET_ERROR;
   }
-  if (!utils::isa<ParamValueLitePtr>(old_bias_param->default_param())) {
-    MS_LOG(DEBUG) << "default value is not ParamValueLite";
+  if (!utils::isa<tensor::TensorPtr>(old_bias_param->default_param())) {
+    MS_LOG(DEBUG) << "default value is not tensor::Tensor";
     return RET_FAILED;
   }
-  auto origin_tensor = std::dynamic_pointer_cast<ParamValueLite>(old_bias_param->default_param());
-  if (origin_tensor->tensor_type() != kNumberTypeFloat32 && origin_tensor->tensor_type() != kNumberTypeFloat) {
+  auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(old_bias_param->default_param());
+  if (origin_tensor->data_type() != kNumberTypeFloat32 && origin_tensor->data_type() != kNumberTypeFloat) {
     MS_LOG(DEBUG) << "origin_tensor is not float32 type";
     return RET_ERROR;
   }
-  auto data_ptr = reinterpret_cast<float *>(origin_tensor->tensor_addr());
-  auto data_shape = origin_tensor->tensor_shape();
+  auto data_ptr = reinterpret_cast<float *>(origin_tensor->data_c());
+  auto data_shape = origin_tensor->shape();
   if (data_shape.size() != 1 || data_shape[0] != 4 * hidden_size) {
     MS_LOG(DEBUG) << "bias data shape illegal";
     return RET_ERROR;
   }
-  std::vector<int> shape{1, 8 * hidden_size};
 
-  auto default_param = std::make_shared<ParamValueLite>();
-  if (default_param == nullptr) {
-    MS_LOG(ERROR) << "new_default is nullptr";
-    return RET_ERROR;
-  }
-  default_param->set_tensor_shape(shape);
-  default_param->set_tensor_type(kNumberTypeFloat32);
-  default_param->set_format(schema::Format_NHWC);
-
+  std::vector<int64_t> shape{1, 8 * hidden_size};
   std::unique_ptr<float[]> tensor_data(new (std::nothrow) float[hidden_size * 8]);
 
   auto forget_bias_node = utils::cast<AnfNodePtr>((*body_equiv)[forget_bias_]);
@@ -256,7 +239,7 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     return RET_ERROR;
   }
   float forget_bias_value = 0.0f;
-  if (GetFloatScalarFromParamValueLite(forget_bias_node, &forget_bias_value) != RET_OK) {
+  if (GetFloatScalarFromTensorInfo(forget_bias_node, &forget_bias_value) != RET_OK) {
     return RET_ERROR;
   }
 
@@ -273,15 +256,19 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
       }
     }
   }
-  default_param->SetTensorData(tensor_data.release(), hidden_size * 8 * 4);
-  new_bias->set_default_param(default_param);
-  std::vector<int64_t> shape_vector_i(shape.begin(), shape.end());
-  auto abstract_tensor_i = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector_i);
-  if (abstract_tensor_i == nullptr) {
-    MS_LOG(ERROR) << "abstract_tensor is nullptr";
+
+  auto tensor_info = lite::CreateTensorInfo(tensor_data.get(), hidden_size * 8 * 4, shape, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
-  new_bias->set_abstract(abstract_tensor_i);
+
+  auto status = lite::InitParameterFromTensorInfo(new_bias, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
+
   return RET_OK;
 }
 

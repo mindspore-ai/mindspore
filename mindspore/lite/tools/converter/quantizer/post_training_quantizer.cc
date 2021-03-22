@@ -565,8 +565,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not cast to Parameter";
     return RET_NULL_PTR;
   }
-  ParamValueLitePtr paramValue = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-  if (paramValue == nullptr) {
+  tensor::TensorPtr tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(parameter->default_param());
+  if (tensor_info == nullptr) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
@@ -583,8 +583,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
       quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
     }
   }
-  auto status =
-    QuantFilter<int8_t>(paramValue, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t, perchanel);
+  auto status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t,
+                                    perchanel, kNumberTypeInt8);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -616,8 +616,8 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const Primitiv
   auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
   MS_ASSERT(bias_parameter_ptr != nullptr);
   auto bias_default_param = bias_parameter_ptr->default_param();
-  auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
-  MS_ASSERT(bias_parameter_ptr != nullptr);
+  auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
+  MS_ASSERT(bias_parameter != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_ASSERT(quant_param_holder != nullptr);
   auto active_weight_quant_params = quant_param_holder->input_quant_params();
@@ -653,7 +653,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const Primitiv
     bias_scales.push_back(scaleX * scaleY);
   }
   MS_ASSERT(!bias_scales.empty());
-  size_t shape_size = bias_param->tensor_shape_size();
+  size_t shape_size = bias_param->DataSize();
 
   // set bias quant param
   std::vector<schema::QuantParamT> quant_params;
@@ -667,17 +667,16 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const Primitiv
   // quant bias data
   std::vector<int32_t> quant_datas(shape_size);
 
-  auto *raw_datas = static_cast<float *>(bias_param->tensor_addr());
+  auto *raw_datas = static_cast<float *>(bias_param->data_c());
   if (ComputeBiasDataAndQuantParam(bias_scales, input_scales, raw_datas, quant_param_holder, &quant_params,
                                    &quant_datas) != RET_OK) {
     MS_LOG(ERROR) << "compute bias data failed.";
     return RET_ERROR;
   }
   quant_param_holder->AddInputQuantParam(quant_params);
-  auto ret =
-    memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas.data(), shape_size * sizeof(int32_t));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed.";
+  auto ret = SetTensorData(bias_param, quant_datas.data(), shape_size * sizeof(int32_t));
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "set tensor data failed.";
     return RET_ERROR;
   }
   // set dtype
@@ -1133,11 +1132,11 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, con
     auto bias = cnode->input(3);
     auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
     auto bias_default_param = bias_parameter_ptr->default_param();
-    auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
-    int *bias_datas = static_cast<int *>(bias_param->tensor_addr());
+    auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
+    int *bias_datas = static_cast<int *>(bias_param->data_c());
 
-    if (static_cast<size_t>(bias_param->tensor_shape_size()) != bias_diff.size()) {
-      MS_LOG(DEBUG) << "unexpected bias data count: " << bias_param->tensor_shape_size()
+    if (static_cast<size_t>(bias_param->DataSize()) != bias_diff.size()) {
+      MS_LOG(DEBUG) << "unexpected bias data count: " << bias_param->DataSize()
                     << " not the same as bias_diff: " << bias_diff.size();
       return RET_ERROR;
     }
@@ -1146,7 +1145,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, con
                     << " not the same as bias_diff: " << bias_diff.size();
       return RET_ERROR;
     }
-    for (int i = 0; i < bias_param->tensor_shape_size(); i++) {
+    for (int i = 0; i < bias_param->DataSize(); i++) {
       auto scale = bias_quant_params[i].scale;
       if (fabs(scale) <= 0.0f) {
         MS_LOG(ERROR) << "divisor 'scale' cannot be 0.";
@@ -1177,36 +1176,20 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, con
     }
     ShapeVector shape;
     shape.push_back(bias_diff.size());
-    auto type_ptr = TypeIdToType(kNumberTypeFloat32);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
-    parameter->set_abstract(abstract_tensor);
-    parameter->set_name("added_" + op_name + "_bias");
 
-    ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-    MS_ASSERT(param_value != nullptr);
-    std::vector<int32_t> shape_vector;
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                         [](const int64_t &value) { return static_cast<int32_t>(value); });
-    param_value->set_tensor_shape(shape_vector);
-    param_value->set_tensor_type(kNumberTypeFloat32);
-
-    auto size = sizeof(float) * bias_diff.size();
-    char *tensor_data = new (std::nothrow) char[size];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new char[] failed";
-      return RET_MEMORY_FAILED;
-    }
-    STATUS status = memcpy_s(tensor_data, size * sizeof(char), bias_diff.data(), size * sizeof(char));
-    if (status != EOK) {
-      MS_LOG(ERROR) << "memcpy_s error: " << status;
-      delete[] tensor_data;
+    auto tensor_info = CreateTensorInfo(bias_diff.data(), sizeof(float) * bias_diff.size(), shape, kNumberTypeFloat32);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "create tensor info failed.";
       return RET_ERROR;
     }
-    param_value->SetTensorData(tensor_data, size);
-    parameter->set_default_param(param_value);
+    auto status = InitParameterFromTensorInfo(parameter, tensor_info);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "init parameter from tensor info failed";
+      return RET_ERROR;
+    }
+    parameter->set_name("added_" + op_name + "_bias");
     cnode->add_input(parameter);
     DoBiasQuant(parameter, primitive);
-    delete[] tensor_data;
   } else {
     MS_LOG(ERROR) << "unexpected input_quant_params size: " << input_quant_params.size();
   }

@@ -20,12 +20,14 @@
 #include <cmath>
 #include <unordered_map>
 #include <memory>
+#include <algorithm>
 #include <utility>
 #include <string>
 #include <vector>
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
+#include "ir/tensor.h"
 #include "src/common/utils.h"
 
 namespace mindspore {
@@ -40,6 +42,18 @@ using schema::Format::Format_NCHW;
 using schema::Format::Format_NHWC;
 
 std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor);
+
+tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std::vector<int64_t> &shape,
+                                   TypeId data_type);
+
+int SetTensorData(const tensor::TensorPtr &tensor_info, const void *data, size_t data_size);
+
+std::unique_ptr<schema::TensorT> CreateTensorTFromTensorInfo(const tensor::TensorPtr &tensor_info,
+                                                             const std::string &tensor_name = "");
+
+int UpdateTensorTFromTensorInfo(const tensor::TensorPtr &src_tensor, std::unique_ptr<schema::TensorT> *dst_tensor);
+
+int InitParameterFromTensorInfo(const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info);
 
 size_t GetElementSize(const TensorT &tensor);
 

@@ -31,7 +31,6 @@
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 #include "proto/onnx.pb.h"
-#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -44,8 +43,8 @@ class OnnxModelParser : public ModelParser {
   FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
                      const QuantType &quant_type) override;
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
-  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_value,
-                                   const ParamValueLitePtr &param_value_lite);
+  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,
+                                   const tensor::TensorPtr &param_value_lite);
 
  private:
   STATUS InitOriginModel(const std::string &model_file);

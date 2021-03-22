@@ -106,12 +106,12 @@ STATUS TfliteInputsAdjustPass::ReplaceInt64ParameterNode(const FuncGraphPtr &fun
       MS_LOG(ERROR) << "default data is nullptr.";
       return lite::RET_NULL_PTR;
     }
-    auto param_value = default_value->cast<ParamValueLitePtr>();
-    if (param_value == nullptr) {
-      MS_LOG(ERROR) << "default data is not paramvaluelite.";
+    auto tensor_info = default_value->cast<tensor::TensorPtr>();
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = BuildParameterNode(func_graph, param_node, param_value);
+    auto param_node_new = BuildParameterNode(func_graph, param_node, tensor_info);
     manager->Replace(param_node, param_node_new);
   } else {
     // set graph input

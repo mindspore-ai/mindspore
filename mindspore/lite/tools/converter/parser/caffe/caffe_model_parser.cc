@@ -15,7 +15,6 @@
  */
 #include "tools/converter/parser/caffe/caffe_model_parser.h"
 #include <vector>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <algorithm>
@@ -23,7 +22,7 @@
 #include "tools/converter/parser/caffe/caffe_inspector.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
-#include "src/param_value_lite.h"
+#include "tools/common/tensor_util.h"
 #include "ops/return.h"
 #include "ops/make_tuple.h"
 #include "ops/tuple_get_item.h"
@@ -350,8 +349,6 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
     std::vector<int64_t> shape_vector;
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-    parameter->set_abstract(abstract_tensor);
     if (layer.type() == "Convolution" || layer.type() == "Deconvolution") {
       if (i == 0) {
         parameter->set_name(layer.name() + "/weight");
@@ -361,40 +358,34 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
     } else {
       parameter->set_name(layer.name() + "/input-" + std::to_string(i + layer.top_size()));
     }
-    ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-    MS_ASSERT(param_value != nullptr);
-    param_value->set_tensor_shape(shape);
-    param_value->set_tensor_type(TypeId::kNumberTypeFloat32);
-    param_value->set_format(schema::Format::Format_NCHW);
 
     int count = 0;
+    tensor::TensorPtr tensor_info = nullptr;
     if (layer.blobs(i).double_data_size() > 0) {
       count = layer.blobs(i).double_data_size();
       auto buf = std::make_unique<float[]>(count);
       for (int j = 0; j < count; ++j) {
         buf[j] = layer.blobs(j).double_data(j);
       }
-      param_value->set_tensor_addr(buf.release());
+      tensor_info = CreateTensorInfo(buf.get(), count * sizeof(float), shape_vector, TypeId::kNumberTypeFloat32);
     } else {
       count = layer.blobs(i).data_size();
-      auto buf = std::make_unique<float[]>(count);
-      if (buf == nullptr) {
-        MS_LOG(INFO) << "new buffer failed";
-        return RET_NULL_PTR;
-      }
       const float *data_ptr = layer.blobs(i).data().data();
       if (data_ptr == nullptr) {
         MS_LOG(INFO) << "data of origin layer is nullptr";
         return RET_NULL_PTR;
       }
-      if (EOK != ::memcpy_s(buf.get(), count * sizeof(float), data_ptr, count * sizeof(float))) {
-        MS_LOG(ERROR) << "memcpy_s failed.";
-        return RET_ERROR;
-      }
-      param_value->set_tensor_addr(buf.release());
+      tensor_info = CreateTensorInfo(data_ptr, count * sizeof(float), shape_vector, TypeId::kNumberTypeFloat32);
     }
-    param_value->set_tensor_size(count * sizeof(float));
-    parameter->set_default_param(param_value);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "create tensor info failed";
+      return RET_NULL_PTR;
+    }
+    auto status = InitParameterFromTensorInfo(parameter, tensor_info);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "init parameter from tensor info failed";
+      return RET_ERROR;
+    }
     const_parameters->emplace_back(parameter);
   }
   return RET_OK;

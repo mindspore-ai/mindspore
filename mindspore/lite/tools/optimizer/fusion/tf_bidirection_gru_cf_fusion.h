@@ -21,7 +21,6 @@
 #include <string>
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
 #include "schema/inner/model_generated.h"
-#include "src/param_value_lite.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "utils/utils.h"
 #include "include/errorcode.h"

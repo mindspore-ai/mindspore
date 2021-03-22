@@ -29,7 +29,6 @@
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/log_adapter.h"
-#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -58,7 +57,7 @@ class HuffmanEncode {
 
   ~HuffmanEncode();
 
-  STATUS DoHuffmanEncode(const ParamValueLitePtr &weight, const PrimitivePtr &primitive, void *quant_datas,
+  STATUS DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
                          const size_t &bit_num);
 
  private:
