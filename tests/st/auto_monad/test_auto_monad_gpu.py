@@ -399,7 +399,6 @@ class MixControlNet(Cell):
                            kernel_size=1, stride=1, has_bias=False,
                            weight_init='ones', pad_mode='same')
         self.bn = BatchNorm2d(num_features=in_channel)
-        self.controldepend = P.ControlDepend()
         self.assignadd = P.AssignAdd()
         self.assign = P.Assign()
         self.relu = ReLU()
@@ -428,9 +427,8 @@ class MixControlNet(Cell):
             if x < 20:
                 out = self.biasadd(out, self.bias)
                 if x % 2 == 0:
+                    self.assignadd(self.bias, self.value)
                     out = self.biasadd(out, self.bias)
-                    assign = self.assignadd(self.bias, self.value)
-                    self.controldepend(assign, out)
                     out = self.bn(out)
                 else:
                     out = self.conv(out)
