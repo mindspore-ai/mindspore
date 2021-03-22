@@ -24,12 +24,12 @@ from mindspore.common.initializer import initializer
 
 def bias_init_zeros(shape):
     """Bias init method."""
-    return Tensor(np.array(np.zeros(shape).astype(np.float32)).astype(np.float16))
+    return Tensor(np.array(np.zeros(shape).astype(np.float32)), dtype=mstype.float32)
 
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float16)
+    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32)
     shape_bias = (out_channels,)
     biass = bias_init_zeros(shape_bias)
     return nn.Conv2d(in_channels, out_channels,
@@ -76,8 +76,10 @@ class FeatPyramidNeck(nn.Cell):
         self.fpn_convs_ = []
 
         for _, channel in enumerate(in_channels):
-            l_conv = _conv(channel, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='valid')
-            fpn_conv = _conv(out_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='same')
+            l_conv = _conv(channel, out_channels, kernel_size=1, stride=1,
+                           padding=0, pad_mode='valid').to_float(mstype.float16)
+            fpn_conv = _conv(out_channels, out_channels, kernel_size=3, stride=1,
+                             padding=0, pad_mode='same').to_float(mstype.float16)
             self.lateral_convs_list_.append(l_conv)
             self.fpn_convs_.append(fpn_conv)
         self.lateral_convs_list = nn.layer.CellList(self.lateral_convs_list_)
