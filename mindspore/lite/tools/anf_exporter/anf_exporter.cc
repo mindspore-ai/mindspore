@@ -98,7 +98,7 @@ void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
       MS_LOG(ERROR) << "value node is invalid.";
       return;
     }
-    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTuple) ||
+    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(make_tuple_node, prim::kPrimMakeTuple) ||
                                            opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTupleV2))) {
       has_make_tuple = true;
       for (size_t j = 1; j < make_tuple_node->inputs().size(); ++j) {
@@ -372,7 +372,7 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       ret = RET_MEMORY_FAILED;
       break;
     }
-    if (opt::CheckPrimitiveType(cnode, opt::kPrimReturn)) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn)) {
       node->name = mindspore::ops::kNameReturn;
       ret = SetGraphoutputIndex(cnode, subgraph_index, meta_graphT, sub_graphT, node.get());
       if (ret != RET_OK) {

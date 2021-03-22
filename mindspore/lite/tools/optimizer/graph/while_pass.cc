@@ -81,7 +81,7 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
 
     // concat body to cond
     std::vector<AnfNodePtr> body_to_cond_inputs{cond_vnode};
-    if (CheckPrimitiveType(body_output_cnode, kPrimMakeTuple)) {
+    if (CheckPrimitiveType(body_output_cnode, prim::kPrimMakeTuple)) {
       for (size_t i = 1; i < body_output_cnode->inputs().size(); ++i) {
         body_to_cond_inputs.emplace_back(body_output_cnode->input(i));
       }

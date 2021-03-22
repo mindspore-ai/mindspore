@@ -17,7 +17,6 @@
 #include <memory>
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
-#include "ops/rsqrt.h"
 #include "mindspore/core/ops/instance_norm.h"
 #include "src/param_value_lite.h"
 #include "utils/utils.h"
@@ -27,60 +26,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-inline bool IsAddNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimAddFusion);
-  }
-  return false;
-}
-
-inline bool IsSquaredDifferenceNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSquaredDifference);
-  }
-  return false;
-}
-
-inline bool IsRsqrtNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimRsqrt);
-  }
-  return false;
-}
-
-inline bool IsMulNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
-  }
-  return false;
-}
-
-inline bool IsSubNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSubFusion);
-  }
-  return false;
-}
-inline bool IsPowNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimPowFusion);
-  }
-  return false;
-}
-inline bool IsSqrtNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSqrt);
-  }
-  return false;
-}
-inline bool IsDivNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimDiv) ||
-           CheckPrimitiveType(utils::cast<AnfNodePtr>(n), std::make_shared<Primitive>("DivFusion"));
-  }
-  return false;
-}
-
 STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
   MS_ASSERT(node != nullptr);
   if (utils::isa<ParameterPtr>(n)) {
@@ -195,7 +140,7 @@ bool NormFusion::GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vect
     }
   }
   if (mean_axes.back() >= 0 && mean_axes.back() + 1 != static_cast<int>(shape.size())) {
-    MS_LOG(DEBUG) << "mean node is not reduce to last axis";
+    MS_LOG(DEBUG) << "mean node is not reduce to last axis.";
     return false;
   }
 
@@ -318,37 +263,41 @@ const AnfNodePtr NormFusion::Process(const FuncGraphPtr &func_graph, const AnfNo
 
 const BaseRef TfNormFusion::DefinePattern() const {
   VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
-  auto squared_diffference1 = std::make_shared<CondVar>(IsSquaredDifferenceNode);
+  auto squared_diffference1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSquaredDifference>);
   VectorRef squared_diffference1_ref = VectorRef({squared_diffference1, input_, mean1_ref});
-  auto mul1 = std::make_shared<CondVar>(IsMulNode);
+  auto mul1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
   VectorRef mean2_ref = VectorRef({mean2_, squared_diffference1_ref, mean2_axes_});
-  auto add1 = std::make_shared<CondVar>(IsAddNode);
+  auto add1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
   VectorRef add1_ref = VectorRef({add1, mean2_ref, epsilon_});
-  auto rsqrt1 = std::make_shared<CondVar>(IsRsqrtNode);
+  auto rsqrt1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimRsqrt>);
   VectorRef rsqrt1_ref = VectorRef({rsqrt1, add1_ref});
-  auto mul2 = std::make_shared<CondVar>(IsMulNode);
+  auto mul2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
   VectorRef mul2_ref = VectorRef({mul2, rsqrt1_ref, gamma_});
   VectorRef mul1_ref = VectorRef({mul1, input_, mul2_ref});
-  auto mul3 = std::make_shared<CondVar>(IsMulNode);
+  auto mul3 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
   VectorRef mul3_ref = VectorRef({mul3, mean1_ref, mul2_ref});
-  auto sub1 = std::make_shared<CondVar>(IsSubNode);
+  auto sub1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>);
   VectorRef sub1_ref = VectorRef({sub1, beta_, mul3_ref});
-  auto add2 = std::make_shared<CondVar>(IsAddNode);
+  auto add2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
   VectorRef add2_ref = VectorRef({add2, mul1_ref, sub1_ref});
   return add2_ref;
 }
 
 const BaseRef OnnxLayerNormFusion::DefinePattern() const {
   VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
-  VectorRef sub1_ref = VectorRef({std::make_shared<CondVar>(IsSubNode), input_, mean1_ref});
-  VectorRef sub2_ref = VectorRef({std::make_shared<CondVar>(IsSubNode), input_, mean1_ref});
-  VectorRef pow_ref = VectorRef({std::make_shared<CondVar>(IsPowNode), sub2_ref, std::make_shared<Var>()});
+  VectorRef sub1_ref =
+    VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>), input_, mean1_ref});
+  VectorRef sub2_ref =
+    VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>), input_, mean1_ref});
+  VectorRef pow_ref =
+    VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPowFusion>), sub2_ref, std::make_shared<Var>()});
   VectorRef mean2_ref = VectorRef({mean2_, pow_ref, mean2_axes_});
-  VectorRef add1_ref = VectorRef({std::make_shared<CondVar>(IsAddNode), mean2_ref, epsilon_});
-  VectorRef sqrt_ref = VectorRef({std::make_shared<CondVar>(IsSqrtNode), add1_ref});
-  VectorRef div_ref = VectorRef({std::make_shared<CondVar>(IsDivNode), sub1_ref, sqrt_ref});
-  VectorRef mul_ref = VectorRef({std::make_shared<CondVar>(IsMulNode), gamma_, div_ref});
-  VectorRef add2_ref = VectorRef({std::make_shared<CondVar>(IsAddNode), mul_ref, beta_});
+  VectorRef add1_ref =
+    VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), mean2_ref, epsilon_});
+  VectorRef sqrt_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqrt>), add1_ref});
+  VectorRef div_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&kPrimDivFusion>), sub1_ref, sqrt_ref});
+  VectorRef mul_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), gamma_, div_ref});
+  VectorRef add2_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), mul_ref, beta_});
   return add2_ref;
 }
 }  // namespace opt

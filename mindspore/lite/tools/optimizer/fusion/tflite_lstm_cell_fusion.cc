@@ -116,7 +116,7 @@ AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &p
   auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
   auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
   auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLogicalAnd));
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
   VectorRef less1_ref = VectorRef({is_less1, is_parameter1, is_parameter2});
   VectorRef less2_ref = VectorRef({is_less2, is_parameter3, is_parameter4});
   VectorRef logicaland_ref = VectorRef({is_logical_and, less1_ref, less2_ref});
@@ -174,11 +174,11 @@ AnfNodePtr TfliteLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &p
 
   VectorRef set_item = VectorRef({std::make_shared<Var>("SetItem"), placeholders[3], placeholders[2], output});
 
-  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimMakeTuple));
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMakeTuple));
   std::vector<BaseRef> outputs = {is_make_tuple, add3, placeholders[1], add2, set_item, cell_output, hidden_output};
   outputs.insert(outputs.end(), placeholders.begin() + 6, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
   VarPtr fg = std::make_shared<Var>("RootG");

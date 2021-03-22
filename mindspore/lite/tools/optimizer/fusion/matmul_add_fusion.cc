@@ -20,19 +20,19 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t AddInputSize = 3;
-constexpr size_t MatMulInputSize = 3;
+constexpr size_t kAddInputSize = 3;
+constexpr size_t kMatMulInputSize = 3;
 bool CheckAndGetMatMulIndex(const CNodePtr &cnode, size_t *index) {
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(index != nullptr);
-  if (cnode->size() != AddInputSize) {
+  if (cnode->size() != kAddInputSize) {
     return false;
   }
   size_t matmul_index = 0;
   for (size_t i = 1; i < cnode->size(); ++i) {
     if (CheckPrimitiveType(cnode->input(i), prim::kPrimMatMul)) {
       auto matmul_cnode = cnode->input(i)->cast<CNodePtr>();
-      if (matmul_cnode->size() > MatMulInputSize) {
+      if (matmul_cnode->size() > kMatMulInputSize) {
         continue;
       }
       matmul_index = i;
@@ -63,7 +63,7 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto matmul_cnode = cnode->input(index)->cast<CNodePtr>();
-    auto bias_node = cnode->input(AddInputSize - index);
+    auto bias_node = cnode->input(kAddInputSize - index);
     if (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param()) {
       continue;
     }

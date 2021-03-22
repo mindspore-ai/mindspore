@@ -37,6 +37,8 @@
 #include "tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include "tools/optimizer/graph/primitive_adjust_pass.h"
+#include "tools/optimizer/fusion/tf_gelu_fusion.h"
+#include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
@@ -88,6 +90,8 @@ int AnfTransform::AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &opti
     fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());
     fusion_pm->AddPass(std::make_shared<opt::TfLstmCellFusion>());
     fusion_pm->AddPass(std::make_shared<opt::TfBidirectionGruFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfGeLUFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
   }
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();

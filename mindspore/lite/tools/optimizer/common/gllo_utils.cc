@@ -54,10 +54,10 @@ bool IsRealKernel(const AnfNodePtr &node) {
   auto input = cnode->inputs()[0];
   bool is_virtual_node = IsPrimitive(input, prim::kPrimImageSummary) || IsPrimitive(input, prim::kPrimScalarSummary) ||
                          IsPrimitive(input, prim::kPrimTensorSummary) ||
-                         IsPrimitive(input, prim::kPrimHistogramSummary) || IsPrimitive(input, kPrimMakeTuple) ||
+                         IsPrimitive(input, prim::kPrimHistogramSummary) || IsPrimitive(input, prim::kPrimMakeTuple) ||
                          IsPrimitive(input, prim::kPrimStateSetItem) || IsPrimitive(input, prim::kPrimDepend) ||
                          IsPrimitive(input, prim::kPrimTupleGetItem) || IsPrimitive(input, prim::kPrimControlDepend) ||
-                         IsPrimitive(input, kPrimReturn) || IsPrimitive(input, prim::kPrimPartial);
+                         IsPrimitive(input, prim::kPrimReturn) || IsPrimitive(input, prim::kPrimPartial);
   return !is_virtual_node;
 }
 
@@ -335,7 +335,7 @@ bool IsRealCNodeKernel(const AnfNodePtr &node) {
     return false;
   }
   // return considered as a real node
-  if (CheckPrimitiveType(node, kPrimReturn)) {
+  if (CheckPrimitiveType(node, prim::kPrimReturn)) {
     return true;
   }
   return IsRealKernel(node);
