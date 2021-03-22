@@ -32,6 +32,9 @@ class MeanSurfaceDistance(Metric):
                           if sets ``symmetric = True``, the average symmetric surface distance between these two inputs
                           will be returned. Defaults: False.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))
         >>> y = Tensor(np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]]))

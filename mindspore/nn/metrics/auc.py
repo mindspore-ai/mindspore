@@ -32,14 +32,18 @@ def auc(x, y, reorder=False):
     Returns:
         area (float): Compute result.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> y_pred = np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]])
         >>> y = np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]])
-        >>> metric = ROC(pos_label=2)
+        >>> metric = nn.ROC(pos_label=2)
         >>> metric.clear()
         >>> metric.update(y_pred, y)
         >>> fpr, tpr, thre = metric.eval()
         >>> output = auc(fpr, tpr)
+        >>> print(output)
         0.5357142857142857
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):

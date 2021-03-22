@@ -32,6 +32,9 @@ class Dice(Metric):
         smooth (float): A term added to the denominator to improve numerical stability. Should be greater than 0.
                         Default: 1e-5.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]))

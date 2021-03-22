@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """OcclusionSensitivity."""
-from collections.abc import Sequence
 import numpy as np
 from mindspore import nn
 from mindspore.common.tensor import Tensor
@@ -47,16 +46,19 @@ class OcclusionSensitivity(Metric):
                           as the input image. If a bounding box is used, the output image will be cropped to this size.
                           Default: None.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Example:
         >>> class DenseNet(nn.Cell):
-        >>>     def init(self):
-        >>>         super(DenseNet, self).init()
-        >>>         w = np.array([[0.1, 0.8, 0.1, 0.1],[1, 1, 1, 1]]).astype(np.float32)
-        >>>         b = np.array([0.3, 0.6]).astype(np.float32)
-        >>>         self.dense = nn.Dense(4, 2, weight_init=Tensor(w), bias_init=Tensor(b))
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.dense(x)
+        ...     def init(self):
+        ...         super(DenseNet, self).init()
+        ...         w = np.array([[0.1, 0.8, 0.1, 0.1],[1, 1, 1, 1]]).astype(np.float32)
+        ...         b = np.array([0.3, 0.6]).astype(np.float32)
+        ...         self.dense = nn.Dense(4, 2, weight_init=Tensor(w), bias_init=Tensor(b))
+        ...
+        ...     def construct(self, x):
+        ...         return self.dense(x)
         >>>
         >>> model = DenseNet()
         >>> test_data = np.array([[0.1, 0.2, 0.3, 0.4]]).astype(np.float32)
@@ -65,6 +67,7 @@ class OcclusionSensitivity(Metric):
         >>> metric.clear()
         >>> metric.update(model, test_data, label)
         >>> score = metric.eval()
+        >>> print(score)
         [0.29999995    0.6    1    0.9]
     """
     def __init__(self, pad_val=0.0, margin=2, n_batch=128, b_box=None):
