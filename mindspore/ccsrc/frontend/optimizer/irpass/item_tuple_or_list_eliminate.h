@@ -370,7 +370,10 @@ class GetitemDependReorder : public AnfVisitor {
     int64_t idx = idx_value->value();
     if (abs->isa<abstract::AbstractTuple>()) {
       auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
-      if (LongToSize(idx) >= abs_tuple->elements().size() || idx < 0) {
+      if (idx < 0) {
+        idx += abs_tuple->elements().size();
+      }
+      if (idx < 0 || LongToSize(idx) >= abs_tuple->elements().size()) {
         MS_LOG(EXCEPTION) << "The idx value " << idx << " of tuple_getitem node " << c_->DebugString()
                           << " is out of range.";
       }
