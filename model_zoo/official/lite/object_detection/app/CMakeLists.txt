@@ -57,12 +57,10 @@ add_library( # Sets the name of the library.
 # you want to add. CMake verifies that the library exists before
 # completing its build.
 
-find_library( # Sets the name of the path variable.
-        log-lib
-
-        # Specifies the name of the NDK library that
-        # you want CMake to locate.
-        log )
+# Sets the name of the path variable.
+# Specifies the name of the NDK library that
+# you want CMake to locate.
+find_library(log-lib log)
 
 
 find_library( jnigraphics-lib jnig·raphics )

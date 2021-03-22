@@ -14,5 +14,6 @@ else()
         )
 endif()
 
-set_property(SOURCE ${_COMMON_ALL_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_COMMON)
+set_property(SOURCE ${_COMMON_ALL_SRC_FILES} PROPERTY COMPILE_DEFINITIONS
+  SUBMODULE_ID=mindspore::SubModuleId::SM_COMMON)
 add_library(_mindspore_common_obj OBJECT ${_COMMON_ALL_SRC_FILES})
