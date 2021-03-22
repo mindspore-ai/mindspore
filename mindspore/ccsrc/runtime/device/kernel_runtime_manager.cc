@@ -125,6 +125,11 @@ void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, 
   if (runtime == nullptr) {
     return;
   }
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    ps::ps_cache_instance.SyncEmbeddingTable();
+  }
+#endif
   runtime->ReleaseDeviceRes();
   runtime_map_.erase(runtime_iter);
 }
