@@ -36,7 +36,7 @@ class AscendGraphImpl : public GraphCell::GraphImpl {
   ~AscendGraphImpl() override;
 
   Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
-  Status Load() override;
+  Status Load(uint32_t device_id) override;
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
 

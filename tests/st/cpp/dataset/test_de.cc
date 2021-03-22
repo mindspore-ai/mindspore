@@ -98,6 +98,12 @@ TEST_F(TestDE, TestDvpp) {
   ASSERT_TRUE(rc.IsOk());
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
   */
+  auto context = ContextAutoSet();
+  ASSERT_TRUE(context != nullptr);
+  ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  ASSERT_TRUE(ascend310_info != nullptr);
+  auto device_id = ascend310_info->GetDeviceID();
 
   auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
@@ -105,7 +111,7 @@ TEST_F(TestDE, TestDvpp) {
   std::vector<uint32_t> crop_paras = {224, 224};
   std::vector<uint32_t> resize_paras = {256, 256};
   std::shared_ptr<TensorTransform> decode_resize_crop(new vision::DvppDecodeResizeCropJpeg(crop_paras, resize_paras));
-  mindspore::dataset::Execute Transform(decode_resize_crop, MapTargetDevice::kAscend310);
+  mindspore::dataset::Execute Transform(decode_resize_crop, MapTargetDevice::kAscend310, device_id);
 
   // Apply transform on images
   Status rc = Transform(image, &image);
@@ -145,6 +151,13 @@ TEST_F(TestDE, TestDvpp) {
 
 TEST_F(TestDE, TestDvppSinkMode) {
 #ifdef ENABLE_ACL
+  auto context = ContextAutoSet();
+  ASSERT_TRUE(context != nullptr);
+  ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  ASSERT_TRUE(ascend310_info != nullptr);
+  auto device_id = ascend310_info->GetDeviceID();
+
   // Read images from target directory
   auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
@@ -155,7 +168,7 @@ TEST_F(TestDE, TestDvppSinkMode) {
   std::shared_ptr<TensorTransform> resize(new vision::Resize(resize_paras));
   std::shared_ptr<TensorTransform> centercrop(new vision::CenterCrop(crop_paras));
   std::vector<std::shared_ptr<TensorTransform>> trans_list = {decode, resize, centercrop};
-  mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310);
+  mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310, device_id);
 
   // Apply transform on images
   Status rc = Transform(image, &image);
@@ -186,6 +199,13 @@ TEST_F(TestDE, TestDvppSinkMode) {
 
 TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
 #ifdef ENABLE_ACL
+  auto context = ContextAutoSet();
+  ASSERT_TRUE(context != nullptr);
+  ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<Ascend310DeviceInfo>();
+  ASSERT_TRUE(ascend310_info != nullptr);
+  auto device_id = ascend310_info->GetDeviceID();
+
   auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
   // Define dvpp transform
@@ -200,7 +220,7 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
   std::shared_ptr<TensorTransform> normalize(new vision::Normalize(mean, std));
 
   std::vector<std::shared_ptr<TensorTransform>> trans_list = {decode, resize, centercrop, normalize};
-  mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310);
+  mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310, device_id);
 
   std::string aipp_cfg = Transform.AippCfgGenerator();
   ASSERT_EQ(aipp_cfg, "./aipp.cfg");

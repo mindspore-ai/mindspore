@@ -58,8 +58,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   Tensor(TypeId data_type, std::vector<int> shape, const schema::Format &format = schema::Format::Format_NHWC,
          Category category = VAR);
 
-  Tensor(const std::string &name, enum TypeId type, const std::vector<int32_t> &shape, const void *data);
-
   Tensor(const Tensor &tensor) = delete;
 
   Tensor(Tensor &&other) = delete;
@@ -86,9 +84,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   std::vector<int> shape() const override { return shape_; }
 
-  void set_shape(const std::vector<int> &shape) { shape_ = shape; }
+  void set_shape(const std::vector<int> &shape) override { shape_ = shape; }
 
-  int DimensionSize(size_t index) const override;
+  int DimensionSize(size_t index) const;
 
   int ElementsNum() const override;
 
@@ -104,15 +102,17 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   size_t Size() const override;
 
-  void set_allocator(mindspore::lite::Allocator *allocator) { allocator_ = allocator; }
+  void set_allocator(mindspore::Allocator *allocator) { allocator_ = allocator; }
 
-  mindspore::lite::Allocator *allocator() const { return this->allocator_; }
+  mindspore::Allocator *allocator() const { return this->allocator_; }
 
-  virtual int MallocData(const mindspore::lite::Allocator *allocator = nullptr);
+  virtual int MallocData(const mindspore::Allocator *allocator = nullptr);
 
   virtual void FreeData();
 
   void *MutableData() override;
+
+  void *data() override { return this->data_; }
 
   virtual void *data_c() const {
     if (this->root_tensor_ != nullptr) {
@@ -206,7 +206,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   size_t init_ref_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
-  mindspore::lite::Allocator *allocator_ = nullptr;
+  mindspore::Allocator *allocator_ = nullptr;
   Tensor *root_tensor_ = nullptr;
   bool enable_huffman_code_ = false;
 };

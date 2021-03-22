@@ -15,7 +15,7 @@
  */
 #include <limits.h>
 #include <vector>
-#include "src/tensor.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 
 namespace mindspore {
 
+Graph::Graph() : graph_data_(nullptr) {}
+
 Graph::Graph(const std::shared_ptr<GraphData> &graph_data) : graph_data_(graph_data) {}
 
 Graph::Graph(std::shared_ptr<GraphData> &&graph_data) : graph_data_(graph_data) {}
@@ -29,6 +31,8 @@ Graph::~Graph() {}
 Graph::Graph(std::nullptr_t) : graph_data_(nullptr) {}
 
 bool Graph::operator==(std::nullptr_t) const { return graph_data_ == nullptr; }
+
+bool Graph::operator!=(std::nullptr_t) const { return graph_data_ != nullptr; }
 
 ModelType Graph::ModelType() const { return kMindIR; }
 }  // namespace mindspore

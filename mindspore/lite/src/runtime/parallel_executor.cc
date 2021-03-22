@@ -48,7 +48,7 @@ static int RunKernel(void *data, int index) {
 }
 
 int ParallelExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                          const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
+                          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                           const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   for (auto &inTensor : in_tensors) {

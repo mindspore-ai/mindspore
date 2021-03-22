@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@
 #include <utility>
 #include <unordered_map>
 #include "include/api/model.h"
-#include "include/api/lite_context.h"
+#include "include/api/context.h"
 #include "include/api/cell.h"
 #include "include/lite_session.h"
 
 namespace mindspore {
 class ModelImpl {
  public:
-  ModelImpl() : graph_cell_(nullptr), session_(nullptr), context_(nullptr) {}
+  ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
   ~ModelImpl() = default;
 
   Status Build();
@@ -40,15 +40,19 @@ class ModelImpl {
 
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
+  MSTensor GetInputByTensorName(const std::string &name);
+  std::vector<std::string> GetOutputTensorNames();
+  MSTensor GetOutputByTensorName(const std::string &name);
+  std::vector<MSTensor> GetOutputsByNodeName(const std::string &name);
 
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
 
  private:
   friend class Model;
-  std::shared_ptr<GraphCell> graph_cell_;
+  std::shared_ptr<Graph> graph_;
   std::shared_ptr<session::LiteSession> session_;
   std::shared_ptr<Context> context_;
-  void SetGraphCell(const std::shared_ptr<GraphCell> &graph_cell) { graph_cell_ = graph_cell; }
+  void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
 };
 }  // namespace mindspore

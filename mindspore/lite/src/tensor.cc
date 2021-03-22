@@ -29,11 +29,6 @@ namespace lite {
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::Format &format, Category category)
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
-Tensor::Tensor(const std::string &name, enum TypeId type, const std::vector<int32_t> &shape, const void *data)
-    : tensor_name_(name), data_type_(type), shape_(std::move(shape)), category_(VAR) {
-  data_ = const_cast<void *>(data);
-}
-
 int Tensor::CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor) {
   if (dst_tensor == nullptr) {
     MS_LOG(ERROR) << "dst_tensor is nullptr";
@@ -298,12 +293,12 @@ int Tensor::set_root_tensor(Tensor *tensor) {
   return RET_OK;
 }
 
-int Tensor::MallocData(const mindspore::lite::Allocator *allocator) {
+int Tensor::MallocData(const mindspore::Allocator *allocator) {
   if (nullptr != this->data_) {
     return RET_OK;
   }
   if (allocator != nullptr) {
-    allocator_ = const_cast<mindspore::lite::Allocator *>(allocator);
+    allocator_ = const_cast<mindspore::Allocator *>(allocator);
   }
   if (allocator_ == nullptr) {
     this->data_ = malloc(this->Size());
@@ -380,5 +375,21 @@ std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &sr
   std::transform(src.begin(), src.end(), target.begin(), [](Tensor *t) { return dynamic_cast<tensor::MSTensor *>(t); });
   return target;
 }
+
 }  // namespace lite
+
+tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape,
+                                                 const void *data, size_t data_len) {
+  auto tensor = new (std::nothrow) lite::Tensor();
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Failed to allocate tensor.";
+    return nullptr;
+  }
+  tensor->set_data(const_cast<void *>(data));
+  tensor->set_shape(shape);
+  tensor->set_tensor_name(name);
+  tensor->set_data_type(type);
+  return tensor;
+}
+
 }  // namespace mindspore

@@ -21,15 +21,17 @@
 #include <memory>
 #include "include/ms_tensor.h"
 
-namespace mindspore::schema {
-struct Tensor;
-}  // namespace mindspore::schema
+namespace mindspore {
+class Allocator;
 
-namespace mindspore::lite {
+namespace schema {
+struct Tensor;
+}  // namespace schema
+
+namespace lite {
 /// \brief Allocator defined a memory pool for malloc memory and free memory dynamically.
 ///
 /// \note List public class and interface for reference.
-class Allocator;
 
 /// \brief DeviceContext defined a device context.
 struct DeviceContext;
@@ -52,5 +54,6 @@ int MS_API StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MST
 /// \param[in] MSTensor.
 /// \return string vector.
 std::vector<std::string> MS_API MSTensorToStrings(const tensor::MSTensor *tensor);
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

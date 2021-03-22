@@ -39,7 +39,7 @@ AscendGraphImpl::AscendGraphImpl()
     : session_impl_(nullptr),
       graph_id_(0),
       device_type_("Ascend"),
-      device_id_(GlobalContext::GetGlobalDeviceID()),
+      device_id_(0),
       context_(nullptr),
       inputs_info_(),
       outputs_info_(),
@@ -142,7 +142,7 @@ Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::
 
 std::vector<MSTensor> AscendGraphImpl::GetInputs() {
   if (!load_flag_) {
-    Status ret = Load();
+    Status ret = Load(device_id_);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return {};
@@ -166,7 +166,7 @@ std::vector<MSTensor> AscendGraphImpl::GetInputs() {
 
 std::vector<MSTensor> AscendGraphImpl::GetOutputs() {
   if (!load_flag_) {
-    Status ret = Load();
+    Status ret = Load(device_id_);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return {};
@@ -188,7 +188,7 @@ std::vector<MSTensor> AscendGraphImpl::GetOutputs() {
   return result;
 }
 
-Status AscendGraphImpl::Load() {
+Status AscendGraphImpl::Load(uint32_t device_id) {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
@@ -200,6 +200,7 @@ Status AscendGraphImpl::Load() {
   auto func_graph = graph_data->GetFuncGraph();
 
   // init
+  device_id_ = device_id;
   Status ret = InitEnv();
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";
@@ -247,7 +248,7 @@ Status AscendGraphImpl::Load() {
 Status AscendGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
-    Status ret = Load();
+    Status ret = Load(device_id_);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return ret;

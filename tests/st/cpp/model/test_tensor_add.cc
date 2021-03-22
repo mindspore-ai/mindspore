@@ -32,11 +32,12 @@ class TestAdd : public ST::Common {
 };
 
 TEST_F(TestAdd, InferMindIR) {
-  ContextAutoSet();
+  auto context = ContextAutoSet();
 
-  auto graph = Serialization::LoadModel(tensor_add_file, ModelType::kMindIR);
-  Model tensor_add((GraphCell(graph)));
-  ASSERT_TRUE(tensor_add.Build() == kSuccess);
+  Graph graph;
+  ASSERT_TRUE(Serialization::Load(tensor_add_file, ModelType::kMindIR, &graph));
+  Model tensor_add;
+  ASSERT_TRUE(tensor_add.Build(GraphCell(graph), context) == kSuccess);
 
   // get model inputs
   std::vector<MSTensor> origin_inputs = tensor_add.GetInputs();

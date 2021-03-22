@@ -76,12 +76,13 @@ TEST_F(TestCxxApiTypes, test_tensor_ref_SUCCESS) {
 TEST_F(TestCxxApiTypes, test_tensor_clone_SUCCESS) {
   std::vector<int32_t> data = {1, 2, 3, 4};
   MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
-  MSTensor tensor2 = tensor.Clone();
-  auto value = tensor2.Data();
+  MSTensor *tensor2 = tensor.Clone();
+  auto value = tensor2->Data();
   int32_t *p = (int32_t *)value.get();
   for (size_t i = 0; i < data.size(); ++i) {
     ASSERT_EQ(p[i], data[i]);
   }
+  MSTensor::DestroyTensorPtr(tensor2);
 }
 
 TEST_F(TestCxxApiTypes, test_tensor_ref_modified_SUCCESS) {
@@ -101,37 +102,76 @@ TEST_F(TestCxxApiTypes, test_tensor_clone_modified_SUCCESS) {
   std::vector<int32_t> data = {1, 2, 3, 4};
   std::vector<int32_t> data_modified = {2, 3, 4, 5};
   MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
-  MSTensor tensor2 = tensor.Clone();
+  MSTensor *tensor2 = tensor.Clone();
+  ASSERT_TRUE(tensor2 != nullptr);
   (void)memcpy(tensor.MutableData(), data_modified.data(), data_modified.size() * sizeof(int32_t));
-  auto value = tensor2.Data();
+  auto value = tensor2->Data();
   int32_t *p = (int32_t *)value.get();
   for (size_t i = 0; i < data.size(); ++i) {
     ASSERT_EQ(p[i], data[i]);
   }
+  MSTensor::DestroyTensorPtr(tensor2);
 }
 
 TEST_F(TestCxxApiTypes, test_tensor_ref_creator_function_SUCCESS) {
   std::vector<int32_t> data = {1, 2, 3, 4};
-  MSTensor tensor =
+  MSTensor *tensor =
     MSTensor::CreateRefTensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  ASSERT_TRUE(tensor != nullptr);
   data = {3, 4, 5, 6};
-  auto value = tensor.Data();
+  auto value = tensor->Data();
   int32_t *p = (int32_t *)value.get();
   for (size_t i = 0; i < data.size(); ++i) {
     ASSERT_EQ(p[i], data[i]);
   }
+  MSTensor::DestroyTensorPtr(tensor);
 }
 
 TEST_F(TestCxxApiTypes, test_tensor_creator_function_SUCCESS) {
   std::vector<int32_t> data = {1, 2, 3, 4};
-  MSTensor tensor =
+  MSTensor *tensor =
     MSTensor::CreateTensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  ASSERT_TRUE(tensor != nullptr);
   data = {3, 4, 5, 6};
-  auto value = tensor.Data();
+  auto value = tensor->Data();
   int32_t *p = (int32_t *)value.get();
   for (size_t i = 0; i < data.size(); ++i) {
     ASSERT_NE(p[i], data[i]);
   }
+  MSTensor::DestroyTensorPtr(tensor);
+}
+
+TEST_F(TestCxxApiTypes, test_tensor_string_tensor_SUCCESS) {
+  std::string tensor_name = "tensor_name";
+  std::vector<std::string> origin_strs;
+  origin_strs.emplace_back("qwe");
+  origin_strs.emplace_back("asd");
+  origin_strs.emplace_back("");
+  origin_strs.emplace_back("zxc");
+  auto tensor = MSTensor::StringsToTensor(tensor_name, origin_strs);
+  ASSERT_TRUE(tensor != nullptr);
+  ASSERT_EQ(tensor->Name(), tensor_name);
+  auto new_strs = MSTensor::TensorToStrings(*tensor);
+  ASSERT_EQ(new_strs.size(), origin_strs.size());
+  for (size_t i = 0; i < new_strs.size(); ++i) {
+    ASSERT_EQ(new_strs[i], origin_strs[i]);
+  }
+}
+
+TEST_F(TestCxxApiTypes, test_tensor_empty_string_tensor_SUCCESS) {
+  std::string tensor_name = "tensor_name";
+  std::vector<std::string> origin_strs;
+  auto tensor = MSTensor::StringsToTensor(tensor_name, origin_strs);
+  ASSERT_TRUE(tensor != nullptr);
+  ASSERT_EQ(tensor->Name(), tensor_name);
+  auto new_strs = MSTensor::TensorToStrings(*tensor);
+  ASSERT_EQ(new_strs.size(), origin_strs.size());
+}
+
+TEST_F(TestCxxApiTypes, test_tensor_string_tensor_invalid_type_FAILED) {
+  MSTensor tensor("", DataType::kNumberTypeInt32, {1}, nullptr, sizeof(int32_t));
+  auto new_strs = MSTensor::TensorToStrings(tensor);
+  ASSERT_TRUE(new_strs.empty());
 }
 
 TEST_F(TestCxxApiTypes, test_buffer_data_ref_and_copy_SUCCESS) {

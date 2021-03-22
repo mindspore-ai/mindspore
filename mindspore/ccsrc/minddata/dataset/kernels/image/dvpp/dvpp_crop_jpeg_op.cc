@@ -78,7 +78,7 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
     imageinfo.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     ResourceInfo resource;
     resource.aclConfigPath = "";
-    resource.deviceIds.insert(mindspore::GlobalContext::GetGlobalDeviceID());
+    resource.deviceIds.insert(0);
     std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
     APP_ERROR ret = instance->InitResource(resource);
     if (ret != APP_ERR_OK) {

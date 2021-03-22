@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include <queue>
 #include <set>
 #include "include/api/graph.h"
-#include "include/api/lite_context.h"
+#include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/model.h"
 #include "include/ms_tensor.h"
@@ -28,28 +28,28 @@
 
 namespace mindspore {
 
-Graph Serialization::LoadModel(const void *model_data, size_t data_size, ModelType model_type) {
+Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph) {
   if (model_type != kMindIR) {
     MS_LOG(ERROR) << "Unsupported IR.";
-    return Graph(nullptr);
+    return kLiteInputParamInvalid;
   }
   auto model = std::shared_ptr<lite::Model>(lite::Model::Import(static_cast<const char *>(model_data), data_size));
   if (model == nullptr) {
     MS_LOG(ERROR) << "New model failed.";
-    return Graph(nullptr);
+    return kLiteNullptr;
   }
   auto graph_data = std::shared_ptr<Graph::GraphData>(new (std::nothrow) Graph::GraphData(model));
   if (graph_data == nullptr) {
     MS_LOG(ERROR) << "New graph data failed.";
-    return Graph(nullptr);
+    return kLiteMemoryFailed;
   }
-  Graph graph = Graph(graph_data);
-  return graph;
+  *graph = Graph(graph_data);
+  return kSuccess;
 }
 
-Graph Serialization::LoadModel(const std::vector<char> &file, ModelType model_type) {
+Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph) {
   MS_LOG(ERROR) << "Unsupported Feature.";
-  return Graph(nullptr);
+  return kLiteError;
 }
 
 Status Serialization::LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters) {

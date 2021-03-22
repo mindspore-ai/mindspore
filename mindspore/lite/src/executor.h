@@ -31,7 +31,7 @@ class Executor {
   virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
 
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+                  const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  protected:
@@ -44,7 +44,7 @@ class CpuExecutor : public Executor {
   virtual ~CpuExecutor() = default;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-          const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
           const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 };
 

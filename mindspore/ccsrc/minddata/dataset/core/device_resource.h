@@ -33,7 +33,7 @@ class DeviceResource {
 
   virtual ~DeviceResource() = default;
 
-  virtual Status InitResource();
+  virtual Status InitResource(uint32_t device_id);
 
   virtual Status FinalizeResource();
 
