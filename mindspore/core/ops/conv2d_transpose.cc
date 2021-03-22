@@ -111,7 +111,7 @@ void Conv2dTranspose::set_pad_mode(const PadMode &pad_mode) {
 
 void Conv2dTranspose::set_pad(const std::vector<int64_t> &pad) {
   CheckAndConvertUtils::CheckInteger("pad_size", pad.size(), kEqual, 4, name());
-  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name(), true, true)));
+  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2dTranspose::set_mode(int64_t mode) {

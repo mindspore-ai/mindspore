@@ -105,11 +105,11 @@ void Conv2DBackpropInput::set_kernel_size(const std::vector<int64_t> &kernel_siz
 }
 
 void Conv2DBackpropInput::set_stride(const std::vector<int64_t> &stride) {
-  AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name(), true, true)));
+  AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
 }
 
 void Conv2DBackpropInput::set_dilation(const std::vector<int64_t> &dilation) {
-  AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name(), true, true)));
+  AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
 }
 
 void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
@@ -127,7 +127,7 @@ void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
 
 void Conv2DBackpropInput::set_pad(const std::vector<int64_t> &pad) {
   CheckAndConvertUtils::CheckInteger("pad_size", pad.size(), kEqual, 4, name());
-  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name(), true, true)));
+  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2DBackpropInput::set_mode(int64_t mode) {

@@ -93,8 +93,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     w_out = floor(w_out);
   }
   CheckAndConvertUtils::CheckInteger("pad_size", pad_list.size(), kEqual, 4, prim_name);
-  primitive->AddAttr(kPadList,
-                     MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad_list, prim_name, true, true)));
+  primitive->AddAttr(kPadList, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad_list, prim_name)));
   std::vector<int64_t> out_shape = {x_shape[0], out_channel, h_out, w_out};
   if (format == NHWC) {
     out_shape = {x_shape[0], h_out, w_out, out_channel};
@@ -144,11 +143,11 @@ void Conv2D::set_kernel_size(const std::vector<int64_t> &kernel_size) {
 }
 
 void Conv2D::set_stride(const std::vector<int64_t> &stride) {
-  AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name(), true, true)));
+  AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
 }
 
 void Conv2D::set_dilation(const std::vector<int64_t> &dilation) {
-  AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name(), true, true)));
+  AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
 }
 
 void Conv2D::set_pad_mode(const PadMode &pad_mode) {
@@ -166,7 +165,7 @@ void Conv2D::set_pad_mode(const PadMode &pad_mode) {
 
 void Conv2D::set_pad(const std::vector<int64_t> &pad) {
   CheckAndConvertUtils::CheckInteger("pad_size", pad.size(), kEqual, 4, name());
-  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name(), true, true)));
+  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2D::set_mode(int64_t mode) {

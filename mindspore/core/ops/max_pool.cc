@@ -36,8 +36,8 @@ PadMode MaxPool::get_pad_mode() const {
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 void MaxPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  this->AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name(),
-                                                                                 false, true)));
+  this->AddAttr(kKernelSize,
+                MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
 }
 
 std::vector<int64_t> MaxPool::get_kernel_size() const {
@@ -45,8 +45,7 @@ std::vector<int64_t> MaxPool::get_kernel_size() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 void MaxPool::set_strides(const std::vector<int64_t> &strides) {
-  this->AddAttr(kStrides,
-                MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name(), false, true)));
+  this->AddAttr(kStrides, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
 }
 
 std::vector<int64_t> MaxPool::get_strides() const {
