@@ -34,7 +34,8 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
   ofs << "    weight.c.o\n"
       << "    net.c.o\n"
       << "    session.cc.o\n"
-      << "    tensor.cc.o\n";
+      << "    tensor.cc.o\n"
+      << "    string.cc.o\n";
   if (config->debug_mode()) {
     ofs << "    debug_utils.c.o\n";
   }

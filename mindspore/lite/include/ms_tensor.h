@@ -17,20 +17,8 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 #define MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
+#include "include/lite_utils.h"
 #include "ir/dtype/type_id.h"
-
-#ifndef MS_API
-#ifdef _WIN32
-#define MS_API __declspec(dllexport)
-#else
-#define MS_API __attribute__((visibility("default")))
-#endif
-#endif
 
 namespace mindspore {
 namespace tensor {
@@ -48,7 +36,7 @@ class MS_API MSTensor {
   /// \brief Create a MSTensor.
   ///
   /// \return Pointer to an instance of MindSpore Lite MSTensor.
-  static MSTensor *CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape, const void *data,
+  static MSTensor *CreateTensor(const String &name, TypeId type, const Vector<int> &shape, const void *data,
                                 size_t data_len);
 
   /// \brief Get data type of the MindSpore Lite MSTensor.
@@ -62,10 +50,10 @@ class MS_API MSTensor {
   /// \brief Get shape of the MindSpore Lite MSTensor.
   ///
   /// \return A vector of int as the shape of the MindSpore Lite MSTensor.
-  virtual std::vector<int> shape() const = 0;
+  virtual Vector<int> shape() const = 0;
 
   /// \brief Set the shape of MSTensor.
-  virtual void set_shape(const std::vector<int> &name) = 0;
+  virtual void set_shape(const Vector<int> &name) = 0;
 
   /// \brief Get number of element in MSTensor.
   ///
@@ -80,10 +68,10 @@ class MS_API MSTensor {
   /// \brief Get the name of MSTensor.
   ///
   /// \return the name of MSTensor.
-  virtual std::string tensor_name() const = 0;
+  virtual String tensor_name() const = 0;
 
   /// \brief Set the name of MSTensor.
-  virtual void set_tensor_name(const std::string name) = 0;
+  virtual void set_tensor_name(const String name) = 0;
 
   /// \brief Get the pointer of data in MSTensor.
   ///
@@ -105,18 +93,5 @@ class MS_API MSTensor {
   virtual void set_data(void *data) = 0;
 };
 }  // namespace tensor
-/// \brief CallBackParam defined input arguments for callBack function.
-struct CallBackParam {
-  std::string node_name; /**< node name argument */
-  std::string node_type; /**< node type argument */
-};
-
-struct GPUCallBackParam : CallBackParam {
-  double execute_time{-1.f};
-};
-
-/// \brief KernelCallBack defined the function pointer for callBack.
-using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
-                                          std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
