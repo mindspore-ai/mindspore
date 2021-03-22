@@ -31,6 +31,7 @@ namespace dataset {
 constexpr char kComposeOperation[] = "Compose";
 constexpr char kConcatenateOperation[] = "Concatenate";
 constexpr char kDuplicateOperation[] = "Duplicate";
+constexpr char kFillOperation[] = "Fill";
 constexpr char kMaskOperation[] = "Mask";
 constexpr char kOneHotOperation[] = "OneHot";
 constexpr char kPadEndOperation[] = "PadEnd";
@@ -91,6 +92,24 @@ class DuplicateOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kDuplicateOperation; }
+};
+
+class FillOperation : public TensorOperation {
+ public:
+  explicit FillOperation(std::shared_ptr<Tensor> fill_value);
+
+  ~FillOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kFillOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+ private:
+  std::shared_ptr<Tensor> fill_value_;
 };
 
 class MaskOperation : public TensorOperation {

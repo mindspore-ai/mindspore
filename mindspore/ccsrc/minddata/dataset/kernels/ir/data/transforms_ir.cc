@@ -26,6 +26,7 @@
 #endif
 #include "minddata/dataset/kernels/data/duplicate_op.h"
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/data/fill_op.h"
 #include "minddata/dataset/kernels/data/mask_op.h"
 #endif
 #include "minddata/dataset/kernels/data/one_hot_op.h"
@@ -111,6 +112,29 @@ Status DuplicateOperation::ValidateParams() { return Status::OK(); }
 std::shared_ptr<TensorOp> DuplicateOperation::Build() { return std::make_shared<DuplicateOp>(); }
 
 #ifndef ENABLE_ANDROID
+
+// FillOperation
+FillOperation::FillOperation(std::shared_ptr<Tensor> fill_value) : fill_value_(fill_value) {}
+
+Status FillOperation::ValidateParams() {
+  if (fill_value_->shape() != TensorShape::CreateScalar()) {
+    std::string err_msg = "Fill: fill_value is not a scalar tensor.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> FillOperation::Build() { return std::make_shared<FillOp>(fill_value_); }
+
+Status FillOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["fill_value"] = fill_value_->ToString();
+  *out_json = args;
+  return Status::OK();
+}
+
 // MaskOperation
 MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype)
     : op_(op), constant_(constant), dtype_(dtype) {}

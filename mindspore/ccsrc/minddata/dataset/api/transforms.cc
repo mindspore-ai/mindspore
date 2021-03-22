@@ -85,6 +85,20 @@ Duplicate::Duplicate() {}
 std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<DuplicateOperation>(); }
 
 #ifndef ENABLE_ANDROID
+// Constructor to Fill
+struct Fill::Data {
+  explicit Data(MSTensor fill_value) : fill_value_(fill_value) {}
+  MSTensor fill_value_;
+};
+
+Fill::Fill(MSTensor fill_value) : data_(std::make_shared<Data>(fill_value)) {}
+
+std::shared_ptr<TensorOperation> Fill::Parse() {
+  std::shared_ptr<Tensor> out_fill_value;
+  Tensor::CreateFromMSTensor(data_->fill_value_, &out_fill_value);
+  return std::make_shared<FillOperation>(out_fill_value);
+}
+
 // Constructor to Mask
 struct Mask::Data {
   explicit Data(RelationalOp op, MSTensor constant, mindspore::DataType ms_type)

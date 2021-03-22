@@ -73,6 +73,19 @@ def test_fillop_string():
         np.testing.assert_array_equal(data_row[0], expected)
 
 
+def test_fillop_bytes():
+    def gen():
+        yield (np.array(["A", "B", "C"], dtype='S'),)
+
+    data = ds.GeneratorDataset(gen, column_names=["col"])
+    fill_op = data_trans.Fill(b'abc')
+
+    data = data.map(operations=fill_op, input_columns=["col"])
+    expected = np.array([b'abc', b'abc', b'abc'], dtype='S')
+    for data_row in data.create_tuple_iterator(output_numpy=True):
+        np.testing.assert_array_equal(data_row[0], expected)
+
+
 def test_fillop_error_handling():
     def gen():
         yield (np.array([4, 4, 4, 4]),)
@@ -92,4 +105,5 @@ if __name__ == "__main__":
     test_fillop_up_type_cast()
     test_fillop_down_type_cast()
     test_fillop_string()
+    test_fillop_bytes()
     test_fillop_error_handling()

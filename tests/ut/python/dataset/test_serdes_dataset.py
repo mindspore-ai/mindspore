@@ -145,90 +145,6 @@ def test_serdes_mnist_dataset(remove_json_files=True):
         delete_json_files()
 
 
-def test_serdes_zip_dataset(remove_json_files=True):
-    """
-    Test serdes on zip dataset pipeline.
-    """
-    files = ["../data/dataset/testTFTestAllTypes/test.data"]
-    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
-    ds.config.set_seed(1)
-
-    ds0 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.GLOBAL)
-    data1 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.GLOBAL)
-    data2 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.FILES)
-    data2 = data2.shuffle(10000)
-    data2 = data2.rename(input_columns=["col_sint16", "col_sint32", "col_sint64", "col_float",
-                                        "col_1d", "col_2d", "col_3d", "col_binary"],
-                         output_columns=["column_sint16", "column_sint32", "column_sint64", "column_float",
-                                         "column_1d", "column_2d", "column_3d", "column_binary"])
-    data3 = ds.zip((data1, data2))
-    ds.serialize(data3, "zip_dataset_pipeline.json")
-    assert validate_jsonfile("zip_dataset_pipeline.json") is True
-    assert validate_jsonfile("zip_dataset_pipeline_typo.json") is False
-
-    data4 = ds.deserialize(json_filepath="zip_dataset_pipeline.json")
-    ds.serialize(data4, "zip_dataset_pipeline_1.json")
-    assert validate_jsonfile("zip_dataset_pipeline_1.json") is True
-    assert filecmp.cmp('zip_dataset_pipeline.json', 'zip_dataset_pipeline_1.json')
-
-    rows = 0
-    for d0, d3, d4 in zip(ds0.create_tuple_iterator(output_numpy=True), data3.create_tuple_iterator(output_numpy=True),
-                          data4.create_tuple_iterator(output_numpy=True)):
-        num_cols = len(d0)
-        offset = 0
-        for t1 in d0:
-            np.testing.assert_array_equal(t1, d3[offset])
-            np.testing.assert_array_equal(t1, d3[offset + num_cols])
-            np.testing.assert_array_equal(t1, d4[offset])
-            np.testing.assert_array_equal(t1, d4[offset + num_cols])
-            offset += 1
-        rows += 1
-    assert rows == 12
-
-    if remove_json_files:
-        delete_json_files()
-
-
-def test_serdes_random_crop():
-    """
-    Test serdes on RandomCrop pipeline.
-    """
-    logger.info("test_random_crop")
-    DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
-    SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
-    original_seed = config_get_set_seed(1)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
-    decode_op = vision.Decode()
-    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    data1 = data1.map(operations=decode_op, input_columns="image")
-    data1 = data1.map(operations=random_crop_op, input_columns="image")
-
-    # Serializing into python dictionary
-    ds1_dict = ds.serialize(data1)
-    # Serializing into json object
-    _ = json.dumps(ds1_dict, indent=2)
-
-    # Reconstruct dataset pipeline from its serialized form
-    data1_1 = ds.deserialize(input_dict=ds1_dict)
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
-    data2 = data2.map(operations=decode_op, input_columns="image")
-
-    for item1, item1_1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                                     data1_1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                                     data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        np.testing.assert_array_equal(item1['image'], item1_1['image'])
-        _ = item2["image"]
-
-    # Restore configuration num_parallel_workers
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
-
-
 def test_serdes_cifar10_dataset(remove_json_files=True):
     """
     Test serdes on Cifar10 dataset pipeline
@@ -351,6 +267,90 @@ def test_serdes_voc_dataset(remove_json_files=True):
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
+def test_serdes_zip_dataset(remove_json_files=True):
+    """
+    Test serdes on zip dataset pipeline.
+    """
+    files = ["../data/dataset/testTFTestAllTypes/test.data"]
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
+    ds.config.set_seed(1)
+
+    ds0 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.GLOBAL)
+    data1 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.GLOBAL)
+    data2 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.FILES)
+    data2 = data2.shuffle(10000)
+    data2 = data2.rename(input_columns=["col_sint16", "col_sint32", "col_sint64", "col_float",
+                                        "col_1d", "col_2d", "col_3d", "col_binary"],
+                         output_columns=["column_sint16", "column_sint32", "column_sint64", "column_float",
+                                         "column_1d", "column_2d", "column_3d", "column_binary"])
+    data3 = ds.zip((data1, data2))
+    ds.serialize(data3, "zip_dataset_pipeline.json")
+    assert validate_jsonfile("zip_dataset_pipeline.json") is True
+    assert validate_jsonfile("zip_dataset_pipeline_typo.json") is False
+
+    data4 = ds.deserialize(json_filepath="zip_dataset_pipeline.json")
+    ds.serialize(data4, "zip_dataset_pipeline_1.json")
+    assert validate_jsonfile("zip_dataset_pipeline_1.json") is True
+    assert filecmp.cmp('zip_dataset_pipeline.json', 'zip_dataset_pipeline_1.json')
+
+    rows = 0
+    for d0, d3, d4 in zip(ds0.create_tuple_iterator(output_numpy=True), data3.create_tuple_iterator(output_numpy=True),
+                          data4.create_tuple_iterator(output_numpy=True)):
+        num_cols = len(d0)
+        offset = 0
+        for t1 in d0:
+            np.testing.assert_array_equal(t1, d3[offset])
+            np.testing.assert_array_equal(t1, d3[offset + num_cols])
+            np.testing.assert_array_equal(t1, d4[offset])
+            np.testing.assert_array_equal(t1, d4[offset + num_cols])
+            offset += 1
+        rows += 1
+    assert rows == 12
+
+    if remove_json_files:
+        delete_json_files()
+
+
+def test_serdes_random_crop():
+    """
+    Test serdes on RandomCrop pipeline.
+    """
+    logger.info("test_random_crop")
+    DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+    original_seed = config_get_set_seed(1)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    decode_op = vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    data1 = data1.map(operations=decode_op, input_columns="image")
+    data1 = data1.map(operations=random_crop_op, input_columns="image")
+
+    # Serializing into python dictionary
+    ds1_dict = ds.serialize(data1)
+    # Serializing into json object
+    _ = json.dumps(ds1_dict, indent=2)
+
+    # Reconstruct dataset pipeline from its serialized form
+    data1_1 = ds.deserialize(input_dict=ds1_dict)
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data2 = data2.map(operations=decode_op, input_columns="image")
+
+    for item1, item1_1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                     data1_1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                     data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_array_equal(item1['image'], item1_1['image'])
+        _ = item2["image"]
+
+    # Restore configuration num_parallel_workers
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
 def test_serdes_to_device(remove_json_files=True):
     """
     Test serdes on transfer dataset pipeline.
@@ -403,6 +403,25 @@ def test_serdes_uniform_augment(remove_json_files=True):
                       vision.UniformAugment(transforms=transforms_ua, num_ops=5)]
     data = data.map(operations=transforms_all, input_columns="image", num_parallel_workers=1)
     util_check_serialize_deserialize_file(data, "uniform_augment_pipeline", remove_json_files)
+
+
+def skip_test_serdes_fill(remove_json_files=True):
+    """
+    Test serdes on Fill data transform.
+    """
+    def gen():
+        yield (np.array([4, 5, 6, 7], dtype=np.int32),)
+
+    data = ds.GeneratorDataset(gen, column_names=["col"])
+    fill_op = c.Fill(3)
+
+    data = data.map(operations=fill_op, input_columns=["col"])
+    expected = np.array([3, 3, 3, 3], dtype=np.int32)
+    for data_row in data:
+        np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
+
+    # FIXME - need proper serdes support for Fill's fill_value parameter
+    util_check_serialize_deserialize_file(data, "fill_pipeline", remove_json_files)
 
 
 def test_serdes_exception():
@@ -465,7 +484,7 @@ def delete_json_files():
 
 
 # Test save load minddataset
-def skip_test_minddataset(add_and_remove_cv_file):
+def skip_test_minddataset(add_and_remove_cv_file=True):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -504,4 +523,9 @@ if __name__ == '__main__':
     test_serdes_voc_dataset()
     test_serdes_zip_dataset()
     test_serdes_random_crop()
+    test_serdes_to_device()
+    test_serdes_pyvision()
+    test_serdes_uniform_augment()
+    skip_test_serdes_fill()
     test_serdes_exception()
+    skip_test_minddataset()
