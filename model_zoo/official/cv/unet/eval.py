@@ -16,41 +16,30 @@
 import os
 import argparse
 import logging
+import cv2
 import numpy as np
-import mindspore
 import mindspore.nn as nn
 import mindspore.ops.operations as F
 from mindspore import context, Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.nn.loss.loss import _Loss
 
 from src.data_loader import create_dataset, create_cell_nuclei_dataset
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet
-
-from scipy.special import softmax
+from src.utils import UnetEval
 
 device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
 
 
-class CrossEntropyWithLogits(_Loss):
+class TempLoss(nn.Cell):
+    """A temp loss cell."""
     def __init__(self):
-        super(CrossEntropyWithLogits, self).__init__()
-        self.transpose_fn = F.Transpose()
-        self.reshape_fn = F.Reshape()
-        self.softmax_cross_entropy_loss = nn.SoftmaxCrossEntropyWithLogits()
-        self.cast = F.Cast()
+        super(TempLoss, self).__init__()
+        self.identity = F.identity()
     def construct(self, logits, label):
-        # NCHW->NHWC
-        logits = self.transpose_fn(logits, (0, 2, 3, 1))
-        logits = self.cast(logits, mindspore.float32)
-        label = self.transpose_fn(label, (0, 2, 3, 1))
-
-        loss = self.reduce_mean(self.softmax_cross_entropy_loss(self.reshape_fn(logits, (-1, 2)),
-                                                                self.reshape_fn(label, (-1, 2))))
-        return self.get_loss(loss)
+        return self.identity(logits)
 
 
 class dice_coeff(nn.Metric):
@@ -64,16 +53,35 @@ class dice_coeff(nn.Metric):
 
     def update(self, *inputs):
         if len(inputs) != 2:
-            raise ValueError('Mean dice coefficient need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
-
-        y_pred = self._convert_data(inputs[0])
+            raise ValueError('Need 2 inputs ((y_softmax, y_argmax), y), but got {}'.format(len(inputs)))
         y = self._convert_data(inputs[1])
-
         self._samples_num += y.shape[0]
-        y_pred = y_pred.transpose(0, 2, 3, 1)
         y = y.transpose(0, 2, 3, 1)
-        y_pred = softmax(y_pred, axis=3)
-
+        b, h, w, c = y.shape
+        if b != 1:
+            raise ValueError('Batch size should be 1 when in evaluation.')
+        y = y.reshape((h, w, c))
+        if cfg_unet["eval_activate"].lower() == "softmax":
+            y_softmax = np.squeeze(self._convert_data(inputs[0][0]), axis=0)
+            if cfg_unet["eval_resize"]:
+                y_pred = []
+                for i in range(cfg_unet["num_classes"]):
+                    y_pred.append(cv2.resize(np.uint8(y_softmax[:, :, i] * 255), (w, h)) / 255)
+                y_pred = np.stack(y_pred, axis=-1)
+            else:
+                y_pred = y_softmax
+        elif cfg_unet["eval_activate"].lower() == "argmax":
+            y_argmax = np.squeeze(self._convert_data(inputs[0][1]), axis=0)
+            y_pred = []
+            for i in range(cfg_unet["num_classes"]):
+                if cfg_unet["eval_resize"]:
+                    y_pred.append(cv2.resize(np.uint8(y_argmax == i), (w, h), interpolation=cv2.INTER_NEAREST))
+                else:
+                    y_pred.append(np.float32(y_argmax == i))
+            y_pred = np.stack(y_pred, axis=-1)
+        else:
+            raise ValueError('config eval_activate should be softmax or argmax.')
+        y_pred = y_pred.astype(np.float32)
         inter = np.dot(y_pred.flatten(), y.flatten())
         union = np.dot(y_pred.flatten(), y_pred.flatten()) + np.dot(y.flatten(), y.flatten())
 
@@ -104,14 +112,14 @@ def test_net(data_dir,
         raise ValueError("Unsupported model: {}".format(cfg['model']))
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
-
-    criterion = CrossEntropyWithLogits()
+    net = UnetEval(net)
     if 'dataset' in cfg and cfg['dataset'] == "Cell_nuclei":
-        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False, split=0.8)
+        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False,
+                                                   eval_resize=cfg["eval_resize"], split=0.8)
     else:
         _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
                                           do_crop=cfg['crop'], img_size=cfg['img_size'])
-    model = Model(net, loss_fn=criterion, metrics={"dice_coeff": dice_coeff()})
+    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff()})
 
     print("============== Starting Evaluating ============")
     eval_score = model.eval(valid_dataset, dataset_sink_mode=False)["dice_coeff"]

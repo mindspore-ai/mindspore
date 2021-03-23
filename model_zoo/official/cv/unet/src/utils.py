@@ -16,8 +16,28 @@
 import time
 import numpy as np
 from PIL import Image
+from mindspore import nn
+from mindspore.ops import operations as ops
 from mindspore.train.callback import Callback
 from mindspore.common.tensor import Tensor
+
+class UnetEval(nn.Cell):
+    """
+    Add Unet evaluation activation.
+    """
+    def __init__(self, net):
+        super(UnetEval, self).__init__()
+        self.net = net
+        self.transpose = ops.Transpose()
+        self.softmax = ops.Softmax(axis=-1)
+        self.argmax = ops.Argmax(axis=-1)
+
+    def construct(self, x):
+        out = self.net(x)
+        out = self.transpose(out, (0, 2, 3, 1))
+        softmax_out = self.softmax(out)
+        argmax_out = self.argmax(out)
+        return (softmax_out, argmax_out)
 
 class StepLossTimeMonitor(Callback):
 
