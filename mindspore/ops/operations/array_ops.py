@@ -3558,15 +3558,25 @@ class ScatterNdUpdate(_ScatterNdOp):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
-        >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
-        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
-        >>> op = ops.ScatterNdUpdate()
-        >>> output = op(input_x, indices, updates)
+        >>> # Example 1: Scatter [9, 0, 7, 3] by indices [3, 4, 1, 8] in a 1-D tensor
+        >>> op = ops.ScatterNd()
+        >>> indices = Tensor(np.array([3, 4, 1, 8]), mindspore.int32)
+        >>> updates = Tensor(np.array([8, 9, 7, 3]), mindspore.int32)
+        >>> shape = (10, )
+        >>> output = op(indices, updates, shape)
         >>> print(output)
-        [[ 1.   0.3  3.6]
-         [ 0.4  2.2 -3.2]]
+        [0 7 0 8 9 0 0 0 3 0]
+
+        >>> # Example 2: Scatter [3.2, 1.1] by indices [[0, 1], [1, 1]] in a 2-D tensor
+        >>> op = ops.ScatterNd()
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
+        >>> shape = (3, 3)
+        >>> output = op(indices, updates, shape)
+        >>> print(output)
+        [[0.  3.2 0. ]
+         [0.  1.1 0. ]
+         [0.  0.  0. ]]
     """
 
     @prim_attr_register
