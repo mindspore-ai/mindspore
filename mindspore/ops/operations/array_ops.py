@@ -2546,8 +2546,7 @@ class Unstack(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
         >>> output = unstack(input_x)
         >>> print(output)
-        (Tensor(shape=[4], dtype=Int32, value= [1, 1, 1, 1]),
-         Tensor(shape=[4], dtype=Int32, value= [2, 2, 2, 2]))
+        (Tensor(shape=[4], dtype=Int64, value= [1, 1, 1, 1]), Tensor(shape=[4], dtype=Int64, value= [2, 2, 2, 2]))
     """
 
     @prim_attr_register
@@ -2599,8 +2598,8 @@ class Slice(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor): The target tensor.
-        - **begin** (tuple, list): The beginning of the slice. Only constant value is allowed.
-        - **size** (tuple, list): The size of the slice. Only constant value is allowed.
+        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value is allowed.
+        - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
     Outputs:
         Tensor, the shape is : input `size`, the data type is the same as `input_x`.
@@ -5230,6 +5229,9 @@ class Range(PrimitiveWithCheck):
     Outputs:
        A 1-D Tensor, with the same type as the inputs.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> start = Tensor(0, mstype.int32)
         >>> limit = Tensor(10, mstype.int32)
@@ -5237,9 +5239,6 @@ class Range(PrimitiveWithCheck):
         >>> output = ops.Range()(start, limit, delta)
         >>> print(output)
         [0, 4, 8]
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
