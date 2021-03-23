@@ -64,8 +64,6 @@
 #include "backend/optimizer/ascend/ir_fusion/derelu_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/batchnorm_to_bninfer.h"
 #include "backend/optimizer/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
-#include "backend/optimizer/ascend/ir_fusion/batchnorm_to_batchnorm3d.h"
-#include "backend/optimizer/ascend/ir_fusion/batchnorm_grad_to_batchnorm3d_grad.h"
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
@@ -278,8 +276,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BatchNorm3D>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BatchNorm3DGRAD>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
@@ -325,8 +321,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BatchNorm3D>());
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BatchNorm3DGRAD>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
