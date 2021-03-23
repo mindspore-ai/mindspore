@@ -20,7 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context, load_checkpoint, export
 
-from src.crnn import CRNN
+from src.crnn import crnn
 from src.config import config1 as config
 
 parser = argparse.ArgumentParser(description="CRNN_export")
@@ -37,7 +37,7 @@ if args.device_target == "Ascend":
 
 if __name__ == "__main__":
     config.batch_size = 1
-    net = CRNN(config)
+    net = crnn(config)
 
     load_checkpoint(args.ckpt_file, net=net)
     net.set_train(False)

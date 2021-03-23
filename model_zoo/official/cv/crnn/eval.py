@@ -22,7 +22,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.loss import CTCLoss
 from src.dataset import create_dataset
-from src.crnn import CRNN
+from src.crnn import crnn
 from src.metric import CRNNAccuracy
 
 set_seed(1)
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     loss = CTCLoss(max_sequence_length=config.num_step,
                    max_label_length=max_text_length,
                    batch_size=config.batch_size)
-    net = CRNN(config)
+    net = crnn(config)
     # load checkpoint
     param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(net, param_dict)
