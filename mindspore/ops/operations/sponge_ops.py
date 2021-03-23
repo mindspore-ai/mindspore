@@ -23,11 +23,8 @@ from ...common import dtype as mstype
 
 class BondForce(PrimitiveWithInfer):
     """
-    BondForce:
-
-    Calculate the force exerted by the simple harmonic bond on the
-    corresponding atoms. Assume the number of harmonic bonds is M and
-    the number of atoms is N.
+    Calculate the force exerted by the simple harmonic bond on the corresponding atoms.
+    Assume the number of harmonic bonds is M and the number of atoms is N.
 
     .. math::
 
@@ -90,8 +87,6 @@ class BondForce(PrimitiveWithInfer):
 
 class BondEnergy(PrimitiveWithInfer):
     """
-    BondEnergy:
-
     Calculate the harmonic potential energy between each bonded atom pair.
     Assume our system has N atoms and M harmonic bonds.
 
@@ -101,15 +96,17 @@ class BondEnergy(PrimitiveWithInfer):
         E = k*(|dr| - r_0)^2
 
     Args:
-        Same as operator BondForce().
+        atom_numbers(int32): the number of atoms N.
+        bond_numbers(int32): the number of harmonic bonds M.
 
     Inputs:
-        Same as operator BondForce().
-
-        .. math::
-
-            dr = (x_1-x_2, y_1-y_2, z_1-z_2)
-            E = k*(|dr| - r_0)^2
+        - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the first atom index of each bond.
+        - **atom_b** (Tensor, int32) - [M,], the second atom index of each bond.
+        - **bond_k** (Tensor, float32) - [M,], the force constant of each bond.
+        - **bond_r0** (Tensor, float32) - [M,], the equlibrium length of each bond.
 
     Outputs:
         - **bond_ene** (Tensor, float32) - [M,], the harmonic potential energy for each bond.
@@ -155,18 +152,23 @@ class BondEnergy(PrimitiveWithInfer):
 
 class BondAtomEnergy(PrimitiveWithInfer):
     """
-    BondAtomEnergy:
-
     Add the potential energy caused by simple harmonic bonds to the total
     potential energy of each atom.
 
     The calculation formula is the same as operator BondEnergy().
 
     Args:
-        Same as operator BondForce().
+        atom_numbers(int32): the number of atoms N.
+        bond_numbers(int32): the number of harmonic bonds M.
 
     Inputs:
-        Same as operator BondForce().
+        - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the first atom index of each bond.
+        - **atom_b** (Tensor, int32) - [M,], the second atom index of each bond.
+        - **bond_k** (Tensor, float32) - [M,], the force constant of each bond.
+        - **bond_r0** (Tensor, float32) - [M,], the equlibrium length of each bond.
 
     Outputs:
         - **atom_ene** (Tensor, float32) - [N,], the accumulated potential energy for each atom.
@@ -211,17 +213,22 @@ class BondAtomEnergy(PrimitiveWithInfer):
 
 class BondForceWithAtomEnergy(PrimitiveWithInfer):
     """
-    BondForceWithAtomEnergy:
-
     Calculate bond force and harmonic potential energy together.
 
     The calculation formula is the same as operator BondForce() and BondEnergy().
 
     Args:
-        Same as operator BondForce().
+        atom_numbers(int32): the number of atoms N.
+        bond_numbers(int32): the number of harmonic bonds M.
 
     Inputs:
-        Same as operator BondForce().
+        - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the first atom index of each bond.
+        - **atom_b** (Tensor, int32) - [M,], the second atom index of each bond.
+        - **bond_k** (Tensor, float32) - [M,], the force constant of each bond.
+        - **bond_r0** (Tensor, float32) - [M,], the equlibrium length of each bond.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator BondForce().
@@ -270,8 +277,6 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
 class BondForceWithAtomVirial(PrimitiveWithInfer):
     """
-    BondForceWithAtomVirial:
-
     Calculate bond force and the virial coefficient caused by simple harmonic
     bond for each atom together.
 
@@ -284,10 +289,17 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         virial = |dr|*(|dr| - r_0)*k
 
     Args:
-        Same as operator BondForce().
+        atom_numbers(int32): the number of atoms N.
+        bond_numbers(int32): the number of harmonic bonds M.
 
     Inputs:
-        Same as operator BondForce()
+        - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+          between the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the first atom index of each bond.
+        - **atom_b** (Tensor, int32) - [M,], the second atom index of each bond.
+        - **bond_k** (Tensor, float32) - [M,], the force constant of each bond.
+        - **bond_r0** (Tensor, float32) - [M,], the equlibrium length of each bond.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator BondForce().
@@ -336,8 +348,6 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
 
 class DihedralForce(PrimitiveWithInfer):
     """
-    DihedralForce:
-
     Calculate the force exerted by the dihedral term which made of 4-atoms
     on the corresponding atoms. Assume the number of dihedral terms is M and
     the number of atoms is N.
@@ -438,8 +448,6 @@ class DihedralForce(PrimitiveWithInfer):
 
 class DihedralEnergy(PrimitiveWithInfer):
     """
-    DihedralEnergy:
-
     Calculate the potential energy caused by dihedral terms for each 4-atom pair.
     Assume our system has N atoms and M dihedral terms.
 
@@ -448,10 +456,24 @@ class DihedralEnergy(PrimitiveWithInfer):
         E = k(1 + cos(n*phi - phi_0))
 
     Args:
-        Same as operator DihedralForce().
+        dihedral_numbers(int32): the number of dihedral terms M.
 
     Inputs:
-        Same as operator DihedralForce().
+        - **dihedral_numbers** (int32) - the number of dihedral terms M.
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinates
+          value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each dihedral.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd atom index of each dihedral.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each dihedral.
+        - **atom_d** (Tensor, int32) - [M,], the 4th atom index of each dihedral.
+          4 atoms are connected in the form a-b-c-d.
+        - **ipn** (Tensor, int32) - [M,], the period of dihedral angle of each dihedral.
+        - **pk** (Tensor, float32) - [M,], the force constant of each dihedral.
+        - **gamc** (Tensor, float32) - [M,], k*cos(phi_0) of each dihedral.
+        - **gams** (Tensor, float32) - [M,], k*sin(phi_0) of each dihedral.
+        - **pn** (Tensor, float32) - [M,], the floating point form of ipn.
 
     Outputs:
         - **ene** (Tensor, float32) - [M,], the potential energy for each
@@ -506,18 +528,30 @@ class DihedralEnergy(PrimitiveWithInfer):
 
 class DihedralAtomEnergy(PrimitiveWithInfer):
     """
-    DihedralAtomEnergy:
-
     Add the potential energy caused by dihedral terms to the total potential
     energy of each atom.
 
     The calculation formula is the same as operator DihedralEnergy().
 
     Args:
-        Same as operator DihedralEnergy().
+        dihedral_numbers(int32): the number of dihedral terms M.
 
     Inputs:
-        Same as operator DihedralEnergy().
+        - **dihedral_numbers** (int32) - the number of dihedral terms M.
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinates
+          value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each dihedral.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd atom index of each dihedral.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each dihedral.
+        - **atom_d** (Tensor, int32) - [M,], the 4th atom index of each dihedral.
+          4 atoms are connected in the form a-b-c-d.
+        - **ipn** (Tensor, int32) - [M,], the period of dihedral angle of each dihedral.
+        - **pk** (Tensor, float32) - [M,], the force constant of each dihedral.
+        - **gamc** (Tensor, float32) - [M,], k*cos(phi_0) of each dihedral.
+        - **gams** (Tensor, float32) - [M,], k*sin(phi_0) of each dihedral.
+        - **pn** (Tensor, float32) - [M,], the floating point form of ipn.
 
     Outputs:
         - **ene** (Tensor, float32) - [N,], the accumulated potential
@@ -573,17 +607,29 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 
 class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
     """
-    DihedralForceWithAtomEnergy:
-
     Calculate dihedral force and potential energy together.
 
     The calculation formula is the same as operator DihedralForce() and DihedralEnergy().
 
     Args:
-        Same as operator DihedralForce().
+        dihedral_numbers(int32): the number of dihedral terms M.
 
     Inputs:
-        Same as operator DihedralForce().
+        - **dihedral_numbers** (int32) - the number of dihedral terms M.
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinates
+          value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each dihedral.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd atom index of each dihedral.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each dihedral.
+        - **atom_d** (Tensor, int32) - [M,], the 4th atom index of each dihedral.
+          4 atoms are connected in the form a-b-c-d.
+        - **ipn** (Tensor, int32) - [M,], the period of dihedral angle of each dihedral.
+        - **pk** (Tensor, float32) - [M,], the force constant of each dihedral.
+        - **gamc** (Tensor, float32) - [M,], k*cos(phi_0) of each dihedral.
+        - **gams** (Tensor, float32) - [M,], k*sin(phi_0) of each dihedral.
+        - **pn** (Tensor, float32) - [M,], the floating point form of ipn.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator DihedralForce().
@@ -639,8 +685,6 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
 class AngleForce(PrimitiveWithInfer):
     """
-    AngleForce:
-
     Calculate the force exerted by angles made of 3 atoms on the
     corresponding atoms. Assume the number of angles is M and the
     number of atoms is N.
@@ -712,8 +756,6 @@ class AngleForce(PrimitiveWithInfer):
 
 class AngleEnergy(PrimitiveWithInfer):
     """
-    AngleEnergy:
-
     Calculate the energy caused by 3-atoms angle term.
 
     .. math::
@@ -724,10 +766,17 @@ class AngleEnergy(PrimitiveWithInfer):
         E = k*(theta - theta_0)^2
 
     Args:
-        Same as operator AngleForce().
+        angle_numbers(int32): the number of angles M.
 
     Inputs:
-        Same as operator AngleForce().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each angle.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd and the central atom index of each angle.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each angle.
+        - **angle_k** (Tensor, float32) - [M,], the force constant for each angle.
+        - **angle_theta0** (Tensor, float32) - [M,], the equilibrium position value for each angle.
 
     Outputs:
         - **ene** (Tensor, float32) - [M,], the potential energy for each angle term.
@@ -772,18 +821,23 @@ class AngleEnergy(PrimitiveWithInfer):
 
 class AngleAtomEnergy(PrimitiveWithInfer):
     """
-    AngleAtomEnergy:
-
     Add the potential energy caused by angle terms to the total potential
     energy of each atom.
 
     The calculation formula is the same as operator AngleEnergy().
 
     Args:
-        Same as operator AngleForce().
+        angle_numbers(int32): the number of angles M.
 
     Inputs:
-        Same as operator AngleForce().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each angle.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd and the central atom index of each angle.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each angle.
+        - **angle_k** (Tensor, float32) - [M,], the force constant for each angle.
+        - **angle_theta0** (Tensor, float32) - [M,], the equilibrium position value for each angle.
 
     Outputs:
         - **ene** (Tensor, float32) - [N,], the accumulated potential energy for each atom.
@@ -829,17 +883,22 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
 class AngleForceWithAtomEnergy(PrimitiveWithInfer):
     """
-    AngleForceWithAtomEnergy:
-
     Calculate angle force and potential energy together.
 
     The calculation formula is the same as operator AngleForce() and AngleEnergy().
 
     Args:
-        Same as operator AngleForce().
+        angle_numbers(int32): the number of angles M.
 
     Inputs:
-        Same as operator AngleForce().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M,], the 1st atom index of each angle.
+        - **atom_b** (Tensor, int32) - [M,], the 2nd and the central atom index of each angle.
+        - **atom_c** (Tensor, int32) - [M,], the 3rd atom index of each angle.
+        - **angle_k** (Tensor, float32) - [M,], the force constant for each angle.
+        - **angle_theta0** (Tensor, float32) - [M,], the equilibrium position value for each angle.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], same as operator AngleForce().
@@ -886,11 +945,10 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
 class Dihedral14LJForce(PrimitiveWithInfer):
     """
-    Dihedral14LJForce:
+    Calculate the Lennard-Jones part of 1,4 dihedral force correction
+    for each necessary dihedral terms on the corresponding atoms.
 
-    Calculate the Lennard-Jones part of 1,4 dihedral force correction for
-    each necessary dihedral terms on the corresponding atoms. Assume the
-    number of necessary dihedral 1,4 terms is M, the number of atoms is N,
+    Assume the number of necessary dihedral 1,4 terms is M, the number of atoms is N,
     and the number of Lennard-Jones types for all atoms is P, which means
     there will be Q = P*(P+1)/2 types of possible Lennard-Jones interactions
     for all kinds of atom pairs.
@@ -901,7 +959,7 @@ class Dihedral14LJForce(PrimitiveWithInfer):
         F = k*(-12*A/|dr|^{14} + 6*B/|dr|^{8})*dr
 
     Args:
-        dihedral_14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
         atom_numbers (int32): the number of atoms N.
 
     Inputs:
@@ -958,8 +1016,6 @@ class Dihedral14LJForce(PrimitiveWithInfer):
 
 class Dihedral14LJEnergy(PrimitiveWithInfer):
     """
-    Dihedral14LJEnergy:
-
     Calculate the Lennard-Jones part of 1,4 dihedral energy correction for
     each necessary dihedral terms on the corresponding atoms.
 
@@ -969,10 +1025,20 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
         E = k*(A/|dr|^{12} - B/|dr|^{6})
 
     Args:
-        Same as operator Dihedral14LJForce().
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
-        Same as operator Dihedral14LJForce().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge of each atom.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
+        - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
+          Lennard-Jones part of force correction of each dihedral 1,4 term.
+        - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+        - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
 
     Outputs:
         - **ene** (Tensor, float32) - [M,], the Lennard-Jones potential
@@ -1017,8 +1083,6 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
 class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
     """
-    Dihedral14LJForceWithDirectCF:
-
     Calculate the Lennard-Jones part and the Coulomb part of force correction
     for each necessary dihedral 1,4 terms.
 
@@ -1031,13 +1095,22 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
         F = -k*q_a*q_b/|r|^3*dr
 
     Args:
-        Same as operator Dihedral14LJForce().
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge of each atom.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
+        - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
+          Lennard-Jones part of force correction of each dihedral 1,4 term.
         - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-
-          The rest of the inputs is the same as operator Dihedral14LJForce().
+        - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+        - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
 
     Outputs:
         - **frc_f** (Tensor, float) - [N, 3], the force felt by each atom.
@@ -1083,8 +1156,6 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
 class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
     """
-    Dihedral14LJCFForceWithAtomEnergy:
-
     Calculate the Lennard-Jones and Coulumb energy correction and force correction
     for each necessary dihedral 1,4 terms together and add them to the total force
     and potential energy for each atom.
@@ -1094,10 +1165,22 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
     as operator Dihedral14LJEnergy() and Dihedral14CFEnergy().
 
     Args:
-        Same as operator Dihedral14LJForce().
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
-        Same as operator Dihedral14LJForceWithdirectCF().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge of each atom.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
+        - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
+          Lennard-Jones part of force correction of each dihedral 1,4 term.
+        - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
+          Coulomb part of force correction for each dihedral 1,4 terms.
+        - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+        - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
@@ -1144,18 +1227,26 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
 class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
     """
-    Dihedral14LJAtomEnergy:
-
     Add the potenrial energy caused by Lennard-Jones energy correction for each
     necessary dihedral 1,4 terms to the total potential energy of each atom.
 
     The calculation formula is the same as operator Dihedral14LJEnergy().
 
     Args:
-        Same as operator Dihedral14LJForce().
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
-        Same as operator Dihedral14LJForce().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge of each atom.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
+        - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
+          Lennard-Jones part of force correction of each dihedral 1,4 term.
+        - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+        - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
 
     Outputs:
         - **ene** (Tensor, float32) - [N,], the accumulated potential energy of each atom.
@@ -1200,8 +1291,6 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
 class Dihedral14CFEnergy(PrimitiveWithInfer):
     """
-    Dihedral14CFEnergy:
-
     Calculate the Coulumb part of 1,4 dihedral energy correction for
     each necessary dihedral terms on the corresponding atoms.
 
@@ -1211,10 +1300,18 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
         E = k*q_a*q_b/|dr|
 
     Args:
-        Same as operator Dihedral14LJForce().
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
-        The meaning and type of each input is the same as that of operator Dihedral14LJForceWithDirectCF().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge of each atom.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
+        - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
+          Coulomb part of force correction for each dihedral 1,4 terms.
 
     Outputs:
         - **ene** (Tensor, float32) - [M,], the accumulated potential energy of each atom.
@@ -1256,18 +1353,24 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
 class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
     """
-    Dihedral14CFAtomEnergy:
-
     Add the potential energy caused by Coulumb energy correction for each
     necessary dihedral 1,4 terms to the total potential energy of each atom.
 
     The calculation formula is the same as operator Dihedral14CFEnergy().
 
     Args:
-        Same as operator Dihedral14LJForce().
+        nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
+        atom_numbers (int32): the number of atoms N.
 
     Inputs:
-        The meaning and type of each input is the same as that of operator Dihedral14LJForceWithDirectCF().
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJ_type** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge of each atom.
+        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
+        - **a_14** (Tensor, int32) - [M,], the first atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor, int32) - [M,], the second atom index of each dihedral 1,4 term.
+        - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
+          Coulomb part of force correction for each dihedral 1,4 terms.
 
     Outputs:
         - **ene** (Tensor, float32) - [N,], the accumulated potential energy of each atom.
@@ -1310,8 +1413,6 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
 class MDIterationLeapFrog(PrimitiveWithInfer):
     """
-    MDIterationLeapFrog:
-
     One step of classical leap frog algorithm to solve the finite difference
     Hamiltonian equations of motion for certain system, using Langevin dynamics
     with Liu's thermostat scheme. Assume the number of atoms is N and the target
@@ -1387,8 +1488,6 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
 class PMEReciprocalForce(PrimitiveWithInfer):
     """
-    PMEReciprocalForce:
-
     Calculate the reciprocal part of long-range Coulumb force using
     PME(Particle Meshed Ewald) method. Assume the number of atoms is N.
 
@@ -1413,7 +1512,7 @@ class PMEReciprocalForce(PrimitiveWithInfer):
         - **force** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
-        ```GPU```
+        ``GPU``
     """
 
     @prim_attr_register
@@ -1448,8 +1547,6 @@ class PMEReciprocalForce(PrimitiveWithInfer):
 
 class PMEExcludedForce(PrimitiveWithInfer):
     """
-    PMEExcludedForce:
-
     Calculate the excluded  part of long-range Coulumb force using
     PME(Particle Meshed Ewald) method. Assume the number of atoms is
     N, and the length of excluded list is E.
@@ -1460,22 +1557,22 @@ class PMEExcludedForce(PrimitiveWithInfer):
           non-bond cutoff value and simulation precision tolerance.
 
     Inputs:
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates value of each atom.
         - **scaler** (Tensor, float32) - [3,], the scale factor between real space
           coordinates and its unsigned int value.
+        - **charge** (Tensor, float32) - [N,], the charge carried by each atom.
         - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index
-          in excluded list for each atom.
-        - **excluded_numbers** (Tensor, int32) - [N,], the number of atom excluded
           in excluded list for each atom.
         - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
           list of each atom.
-
-        The rest of the input is the same as that of operator PMEReciprocalForce().
+        - **excluded_atom_numbers** (Tensor, int32) - [N,], the number of atom excluded
+          in excluded list for each atom.
 
     Outputs:
         - **force** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
-        ```GPU```
+        ``GPU``
     """
 
     @prim_attr_register
@@ -1510,8 +1607,6 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
 class PMEEnergy(PrimitiveWithInfer):
     """
-    PMEEnergy:
-
     Calculate the Coulumb energy of the system using PME method.
 
     .. math::
@@ -1519,11 +1614,27 @@ class PMEEnergy(PrimitiveWithInfer):
         E = sum_{ij} q_iq_j/r_{ij}
 
     Args:
-        same as operator PMEReciprocalForce().
+        atom_numbers(int32): the number of atoms, N.
+        beta(float32): the PME beta parameter, determined by the
+                       non-bond cutoff value and simulation precision tolerance.
+        fftx(int32): the number of points for Fourier transform in dimension X.
+        ffty(int32): the number of points for Fourier transform in dimension Y.
+        fftz(int32): the number of points for Fourier transform in dimension Z.
 
     Inputs:
-        Same as operator PMEReciprocalForce(), PMEExcludedForce()
-        and PMEDirectAtomEnergy().
+        - **boxlength** (Tensor, float32) - [3,], the length of simulation box in 3 dimensions.
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates value of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge carried by each atom.
+        - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
+        - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
+        - **scaler** (Tensor, float32) - [3,], the scale factor between real space
+          coordinates and its unsigned int value.
+        - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index
+          in excluded list for each atom.
+        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
+          list of each atom.
+        - **excluded_atom_numbers** (Tensor, int32) - [N,], the number of atom excluded
+          in excluded list for each atom.
 
     Outputs:
         - **reciprocal_ene** (float32) - the reciprocal term of PME energy.
@@ -1532,7 +1643,7 @@ class PMEEnergy(PrimitiveWithInfer):
         - **correction_ene** (float32) - the correction term of PME energy.
 
     Supported Platforms:
-        ```GPU``
+        ``GPU``
     """
 
     @prim_attr_register
@@ -1580,8 +1691,6 @@ class PMEEnergy(PrimitiveWithInfer):
 
 class LJEnergy(PrimitiveWithInfer):
     """
-    LJEnergy:
-
     Calculate the Van der Waals interaction energy described by Lennard-Jones
     potential for each atom. Assume the number of atoms is N, and the number
     of Lennard-Jones types for all atoms is P, which means there will be
@@ -1614,7 +1723,7 @@ class LJEnergy(PrimitiveWithInfer):
         - **d_LJ_energy_sum** (float32), the sum of Lennard-Jones potential energy of each atom.
 
     Supported Platforms:
-        ```GPU```
+        ``GPU``
     """
 
     @prim_attr_register
@@ -1646,8 +1755,6 @@ class LJEnergy(PrimitiveWithInfer):
 
 class LJForce(PrimitiveWithInfer):
     """
-    LJForce:
-
     Calculate the Van der Waals interaction force described by Lennard-Jones
     potential energy for each atom.
 
@@ -1656,17 +1763,26 @@ class LJForce(PrimitiveWithInfer):
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
         F = (-12*A/|dr|^{14} + 6*B/|dr|^{8}) * dr
 
-    Args:
-        Same as operator LJEnergy().
+    Agrs:
+        atom_numbers(int32): the number of atoms, N.
+        cutoff_square(float32): the square value of cutoff.
 
     Inputs:
-        Same as operator LJEnergy().
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJtype** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge carried by each atom.
+        - **scaler** (Tensor, float32) - [3,], the scale factor between real
+          space coordinate and its unsigned int value.
+        - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
+        - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
+        - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient of each kind of atom pair.
+        - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient of each kind of atom pair.
 
     outputs:
         - **frc** (Tensor, float32) - [N, 3], the force felt by each atom.
 
     Supported Platforms:
-        ```GPU```
+        ``GPU``
     """
 
     @prim_attr_register
@@ -1698,25 +1814,32 @@ class LJForce(PrimitiveWithInfer):
 
 class LJForceWithPMEDirectForce(PrimitiveWithInfer):
     """
-    LJForceWithPMEDirectForce:
-
     Calculate the Lennard-Jones force and PME direct force together.
 
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
 
-    Args:
+    Agrs:
+        atom_numbers(int32): the number of atoms, N.
+        cutoff_square(float32): the square value of cutoff.
         pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
-        The rest is same as operator LJEnergy().
 
     Inputs:
-        same as operator LJForce().
+        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinate value of each atom.
+        - **LJtype** (Tensor, int32) - [N,], the Lennard-Jones type of each atom.
+        - **charge** (Tensor, float32) - [N,], the charge carried by each atom.
+        - **scaler** (Tensor, float32) - [3,], the scale factor between real
+          space coordinate and its unsigned int value.
+        - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
+        - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
+        - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient of each kind of atom pair.
+        - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient of each kind of atom pair.
 
     Outputs:
         - **frc** (Tensor, float32), [N, 3], the force felt by each atom.
 
     Supported Platforms:
-        ```GPU```
+        ``GPU``
     """
 
     @prim_attr_register
@@ -1751,7 +1874,7 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
 
 class GetCenterOfGeometry(PrimitiveWithInfer):
     """
-    GetCenterOfGeometry:
+    Get Center Of Geometry.
 
     Supported Platforms:
         ``GPU``
@@ -1784,7 +1907,7 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
 
 class MDTemperature(PrimitiveWithInfer):
     """
-    MDTemperature:
+    Calculate the MD Temperature.
 
     Calculate the temperature.
 
@@ -1828,8 +1951,6 @@ class MDTemperature(PrimitiveWithInfer):
 
 class NeighborListUpdate(PrimitiveWithInfer):
     """
-    NeighborListUpdate
-
     Update (or construct if first time) the Verlet neighbor list for the
     calculation of short-ranged force. Assume the number of atoms is N,
     the number of grids divided is G, the maximum number of atoms in one
@@ -1882,7 +2003,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         - **res** (float32)
 
     Supported Platforms:
-        ```GPU```
+        ``GPU``
     """
 
     @prim_attr_register
@@ -2019,8 +2140,6 @@ class NeighborListUpdate(PrimitiveWithInfer):
 
 class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
     """
-    MDIterationLeapFrog:
-
     One step of classical leap frog algorithm to solve the finite difference
     Hamiltonian equations of motion for certain system, using Langevin dynamics
     with Liu's thermostat scheme. Assume the number of atoms is N and the target
