@@ -30,8 +30,8 @@ constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequ
 
 struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
-  int32_t thread_num;
-  std::shared_ptr<Allocator> allocator;
+  int32_t thread_num = 2;
+  std::shared_ptr<Allocator> allocator = nullptr;
 };
 
 struct DeviceInfoContext::Data {

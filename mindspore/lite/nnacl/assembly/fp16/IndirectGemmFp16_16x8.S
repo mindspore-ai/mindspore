@@ -334,353 +334,301 @@ IndirectGemmStart:
                 add x0, x0, #2
                 b WriteEnd
             Write2:
-                str s16, [x15]
-                add x15, x15, x7
-                str s17, [x15]
-                add x15, x15, x7
-                str s18, [x15]
-                add x15, x15, x7
-                str s19, [x15]
-                add x15, x15, x7
-                str s20, [x15]
-                add x15, x15, x7
-                str s21, [x15]
-                add x15, x15, x7
-                str s22, [x15]
-                add x15, x15, x7
-                str s23, [x15]
-                add x15, x15, x7
-                str s24, [x15]
-                add x15, x15, x7
-                str s25, [x15]
-                add x15, x15, x7
-                str s26, [x15]
-                add x15, x15, x7
-                str s27, [x15]
-                add x15, x15, x7
-                str s28, [x15]
-                add x15, x15, x7
-                str s29, [x15]
-                add x15, x15, x7
-                str s30, [x15]
-                add x15, x15, x7
-                str s31, [x15]
+                add x17, x15, #2
+                st1 {v16.h}[0], [x15], x7
+                st1 {v16.h}[1], [x17], x7
+                st1 {v17.h}[0], [x15], x7
+                st1 {v17.h}[1], [x17], x7
+                st1 {v18.h}[0], [x15], x7
+                st1 {v18.h}[1], [x17], x7
+                st1 {v19.h}[0], [x15], x7
+                st1 {v19.h}[1], [x17], x7
+                st1 {v20.h}[0], [x15], x7
+                st1 {v20.h}[1], [x17], x7
+                st1 {v21.h}[0], [x15], x7
+                st1 {v21.h}[1], [x17], x7
+                st1 {v22.h}[0], [x15], x7
+                st1 {v22.h}[1], [x17], x7
+                st1 {v23.h}[0], [x15], x7
+                st1 {v23.h}[1], [x17], x7
+                st1 {v24.h}[0], [x15], x7
+                st1 {v24.h}[1], [x17], x7
+                st1 {v25.h}[0], [x15], x7
+                st1 {v25.h}[1], [x17], x7
+                st1 {v26.h}[0], [x15], x7
+                st1 {v26.h}[1], [x17], x7
+                st1 {v27.h}[0], [x15], x7
+                st1 {v27.h}[1], [x17], x7
+                st1 {v28.h}[0], [x15], x7
+                st1 {v28.h}[1], [x17], x7
+                st1 {v29.h}[0], [x15], x7
+                st1 {v29.h}[1], [x17], x7
+                st1 {v30.h}[0], [x15], x7
+                st1 {v30.h}[1], [x17], x7
+                st1 {v31.h}[0], [x15]
+                st1 {v31.h}[1], [x17]
                 add x0, x0, #4
                 b WriteEnd
             Write3:
                 add x17, x15, #4
-                str s16, [x15]
-                add x15, x15, x7
+                add x16, x15, #2
+                st1 {v16.h}[0], [x15], x7
+                st1 {v16.h}[1], [x16], x7
                 st1 {v16.h}[2], [x17], x7
-                str s17, [x15]
-                add x15, x15, x7
+                st1 {v17.h}[0], [x15], x7
+                st1 {v17.h}[1], [x16], x7
                 st1 {v17.h}[2], [x17], x7
-                str s18, [x15]
-                add x15, x15, x7
+                st1 {v18.h}[0], [x15], x7
+                st1 {v18.h}[1], [x16], x7
                 st1 {v18.h}[2], [x17], x7
-                str s19, [x15]
-                add x15, x15, x7
+                st1 {v19.h}[0], [x15], x7
+                st1 {v19.h}[1], [x16], x7
                 st1 {v19.h}[2], [x17], x7
-                str s20, [x15]
-                add x15, x15, x7
+                st1 {v20.h}[0], [x15], x7
+                st1 {v20.h}[1], [x16], x7
                 st1 {v20.h}[2], [x17], x7
-                str s21, [x15]
-                add x15, x15, x7
+                st1 {v21.h}[0], [x15], x7
+                st1 {v21.h}[1], [x16], x7
                 st1 {v21.h}[2], [x17], x7
-                str s22, [x15]
-                add x15, x15, x7
+                st1 {v22.h}[0], [x15], x7
+                st1 {v22.h}[1], [x16], x7
                 st1 {v22.h}[2], [x17], x7
-                str s23, [x15]
-                add x15, x15, x7
+                st1 {v23.h}[0], [x15], x7
+                st1 {v23.h}[1], [x16], x7
                 st1 {v23.h}[2], [x17], x7
-                str s24, [x15]
-                add x15, x15, x7
+                st1 {v24.h}[0], [x15], x7
+                st1 {v24.h}[1], [x16], x7
                 st1 {v24.h}[2], [x17], x7
-                str s25, [x15]
-                add x15, x15, x7
+                st1 {v25.h}[0], [x15], x7
+                st1 {v25.h}[1], [x16], x7
                 st1 {v25.h}[2], [x17], x7
-                str s26, [x15]
-                add x15, x15, x7
+                st1 {v26.h}[0], [x15], x7
+                st1 {v26.h}[1], [x16], x7
                 st1 {v26.h}[2], [x17], x7
-                str s27, [x15]
-                add x15, x15, x7
+                st1 {v27.h}[0], [x15], x7
+                st1 {v27.h}[1], [x16], x7
                 st1 {v27.h}[2], [x17], x7
-                str s28, [x15]
-                add x15, x15, x7
+                st1 {v28.h}[0], [x15], x7
+                st1 {v28.h}[1], [x16], x7
                 st1 {v28.h}[2], [x17], x7
-                str s29, [x15]
-                add x15, x15, x7
+                st1 {v29.h}[0], [x15], x7
+                st1 {v29.h}[1], [x16], x7
                 st1 {v29.h}[2], [x17], x7
-                str s30, [x15]
-                add x15, x15, x7
+                st1 {v30.h}[0], [x15], x7
+                st1 {v30.h}[1], [x16], x7
                 st1 {v30.h}[2], [x17], x7
-                str s31, [x15]
+                st1 {v31.h}[0], [x15]
+                st1 {v31.h}[1], [x16]
                 st1 {v31.h}[2], [x17]
                 add x0, x0, #6
                 b WriteEnd
             Write4:
-                str d16, [x15]
-                add x15, x15, x7
-                str d17, [x15]
-                add x15, x15, x7
-                str d18, [x15]
-                add x15, x15, x7
-                str d19, [x15]
-                add x15, x15, x7
-                str d20, [x15]
-                add x15, x15, x7
-                str d21, [x15]
-                add x15, x15, x7
-                str d22, [x15]
-                add x15, x15, x7
-                str d23, [x15]
-                add x15, x15, x7
-                str d24, [x15]
-                add x15, x15, x7
-                str d25, [x15]
-                add x15, x15, x7
-                str d26, [x15]
-                add x15, x15, x7
-                str d27, [x15]
-                add x15, x15, x7
-                str d28, [x15]
-                add x15, x15, x7
-                str d29, [x15]
-                add x15, x15, x7
-                str d30, [x15]
-                add x15, x15, x7
-                str d31, [x15]
+                st1 {v16.4h}, [x15], x7
+                st1 {v17.4h}, [x15], x7
+                st1 {v18.4h}, [x15], x7
+                st1 {v19.4h}, [x15], x7
+                st1 {v20.4h}, [x15], x7
+                st1 {v21.4h}, [x15], x7
+                st1 {v22.4h}, [x15], x7
+                st1 {v23.4h}, [x15], x7
+                st1 {v24.4h}, [x15], x7
+                st1 {v25.4h}, [x15], x7
+                st1 {v26.4h}, [x15], x7
+                st1 {v27.4h}, [x15], x7
+                st1 {v28.4h}, [x15], x7
+                st1 {v29.4h}, [x15], x7
+                st1 {v30.4h}, [x15], x7
+                st1 {v31.4h}, [x15]
                 add x0, x0, #8
                 b WriteEnd
             Write5:
                 add x17, x15, #8
-                str d16, [x15]
-                add x15, x15, x7
+                st1 {v16.4h}, [x15], x7
                 st1 {v16.h}[4], [x17], x7
-                str d17, [x15]
-                add x15, x15, x7
+                st1 {v17.4h}, [x15], x7
                 st1 {v17.h}[4], [x17], x7
-                str d18, [x15]
-                add x15, x15, x7
+                st1 {v18.4h}, [x15], x7
                 st1 {v18.h}[4], [x17], x7
-                str d19, [x15]
-                add x15, x15, x7
+                st1 {v19.4h}, [x15], x7
                 st1 {v19.h}[4], [x17], x7
-                str d20, [x15]
-                add x15, x15, x7
+                st1 {v20.4h}, [x15], x7
                 st1 {v20.h}[4], [x17], x7
-                str d21, [x15]
-                add x15, x15, x7
+                st1 {v21.4h}, [x15], x7
                 st1 {v21.h}[4], [x17], x7
-                str d22, [x15]
-                add x15, x15, x7
+                st1 {v22.4h}, [x15], x7
                 st1 {v22.h}[4], [x17], x7
-                str d23, [x15]
-                add x15, x15, x7
+                st1 {v23.4h}, [x15], x7
                 st1 {v23.h}[4], [x17], x7
-                str d24, [x15]
-                add x15, x15, x7
+                st1 {v24.4h}, [x15], x7
                 st1 {v24.h}[4], [x17], x7
-                str d25, [x15]
-                add x15, x15, x7
+                st1 {v25.4h}, [x15], x7
                 st1 {v25.h}[4], [x17], x7
-                str d26, [x15]
-                add x15, x15, x7
+                st1 {v26.4h}, [x15], x7
                 st1 {v26.h}[4], [x17], x7
-                str d27, [x15]
-                add x15, x15, x7
+                st1 {v27.4h}, [x15], x7
                 st1 {v27.h}[4], [x17], x7
-                str d28, [x15]
-                add x15, x15, x7
+                st1 {v28.4h}, [x15], x7
                 st1 {v28.h}[4], [x17], x7
-                str d29, [x15]
-                add x15, x15, x7
+                st1 {v29.4h}, [x15], x7
                 st1 {v29.h}[4], [x17], x7
-                str d30, [x15]
-                add x15, x15, x7
+                st1 {v30.4h}, [x15], x7
                 st1 {v30.h}[4], [x17], x7
-                str d31, [x15]
+                st1 {v31.4h}, [x15]
                 st1 {v31.h}[4], [x17]
                 add x0, x0, #10
                 b WriteEnd
             Write6:
                 add x17, x15, #8
-                str d16, [x15]
-                add x15, x15, x7
+                add x16, x15, #10
+                st1 {v16.4h}, [x15], x7
                 ins v0.s[0], v16.s[2]
-                str s0, [x17]
-                add x17, x17, x7
-                str d17, [x15]
-                add x15, x15, x7
+                st1 {v0.h}[0], [x17], x7
+                st1 {v0.h}[1], [x16], x7
+                st1 {v17.4h}, [x15], x7
                 ins v1.s[0], v17.s[2]
-                str s1, [x17]
-                add x17, x17, x7
-                str d18, [x15]
-                add x15, x15, x7
+                st1 {v1.h}[0], [x17], x7
+                st1 {v1.h}[1], [x16], x7
+                st1 {v18.4h}, [x15], x7
                 ins v2.s[0], v18.s[2]
-                str s2, [x17]
-                add x17, x17, x7
-                str d19, [x15]
-                add x15, x15, x7
+                st1 {v2.h}[0], [x17], x7
+                st1 {v2.h}[1], [x16], x7
+                st1 {v19.4h}, [x15], x7
                 ins v3.s[0], v19.s[2]
-                str s3, [x17]
-                add x17, x17, x7
-                str d20, [x15]
-                add x15, x15, x7
+                st1 {v3.h}[0], [x17], x7
+                st1 {v3.h}[1], [x16], x7
+                st1 {v20.4h}, [x15], x7
                 ins v4.s[0], v20.s[2]
-                str s4, [x17]
-                add x17, x17, x7
-                str d21, [x15]
-                add x15, x15, x7
+                st1 {v4.h}[0], [x17], x7
+                st1 {v4.h}[1], [x16], x7
+                st1 {v21.4h}, [x15], x7
                 ins v5.s[0], v21.s[2]
-                str s5, [x17]
-                add x17, x17, x7
-                str d22, [x15]
-                add x15, x15, x7
+                st1 {v5.h}[0], [x17], x7
+                st1 {v5.h}[1], [x16], x7
+                st1 {v22.4h}, [x15], x7
                 ins v6.s[0], v22.s[2]
-                str s6, [x17]
-                add x17, x17, x7
-                str d23, [x15]
-                add x15, x15, x7
+                st1 {v6.h}[0], [x17], x7
+                st1 {v6.h}[1], [x16], x7
+                st1 {v23.4h}, [x15], x7
                 ins v7.s[0], v23.s[2]
-                str s7, [x17]
-                add x17, x17, x7
-                str d24, [x15]
-                add x15, x15, x7
+                st1 {v7.h}[0], [x17], x7
+                st1 {v7.h}[1], [x16], x7
+                st1 {v24.4h}, [x15], x7
                 ins v8.s[0], v24.s[2]
-                str s8, [x17]
-                add x17, x17, x7
-                str d25, [x15]
-                add x15, x15, x7
+                st1 {v8.h}[0], [x17], x7
+                st1 {v8.h}[1], [x16], x7
+                st1 {v25.4h}, [x15], x7
                 ins v9.s[0], v25.s[2]
-                str s9, [x17]
-                add x17, x17, x7
-                str d26, [x15]
-                add x15, x15, x7
+                st1 {v9.h}[0], [x17], x7
+                st1 {v9.h}[1], [x16], x7
+                st1 {v26.4h}, [x15], x7
                 ins v10.s[0], v26.s[2]
-                str s10, [x17]
-                add x17, x17, x7
-                str d27, [x15]
-                add x15, x15, x7
+                st1 {v10.h}[0], [x17], x7
+                st1 {v10.h}[1], [x16], x7
+                st1 {v27.4h}, [x15], x7
                 ins v11.s[0], v27.s[2]
-                str s11, [x17]
-                add x17, x17, x7
-                str d28, [x15]
-                add x15, x15, x7
+                st1 {v11.h}[0], [x17], x7
+                st1 {v11.h}[1], [x16], x7
+                st1 {v28.4h}, [x15], x7
                 ins v12.s[0], v28.s[2]
-                str s12, [x17]
-                add x17, x17, x7
-                str d29, [x15]
-                add x15, x15, x7
+                st1 {v12.h}[0], [x17], x7
+                st1 {v12.h}[1], [x16], x7
+                st1 {v29.4h}, [x15], x7
                 ins v13.s[0], v29.s[2]
-                str s13, [x17]
-                add x17, x17, x7
-                str d30, [x15]
-                add x15, x15, x7
+                st1 {v13.h}[0], [x17], x7
+                st1 {v13.h}[1], [x16], x7
+                st1 {v30.4h}, [x15], x7
                 ins v14.s[0], v30.s[2]
-                str s14, [x17]
-                add x17, x17, x7
-                str d31, [x15]
+                st1 {v14.h}[0], [x17], x7
+                st1 {v14.h}[1], [x16], x7
+                st1 {v31.4h}, [x15]
                 ins v15.s[0], v31.s[2]
-                str s15, [x17]
+                st1 {v14.h}[0], [x17]
+                st1 {v14.h}[1], [x16]
                 add x0, x0, #12
                 b WriteEnd
             Write7:
                 add x17, x15, #8
+                add x18, x15, #10
                 add x16, x15, #12
-                str d16, [x15]
-                add x15, x15, x7
+                st1 {v16.4h}, [x15], x7
                 ins v0.s[0], v16.s[2]
-                str s0, [x17]
-                add x17, x17, x7
+                st1 {v0.h}[0], [x17], x7
+                st1 {v0.h}[1], [x18], x7
                 st1 {v16.h}[6], [x16], x7
-                str d17, [x15]
-                add x15, x15, x7
+                st1 {v17.4h}, [x15], x7
                 ins v1.s[0], v17.s[2]
-                str s1, [x17]
-                add x17, x17, x7
+                st1 {v1.h}[0], [x17], x7
+                st1 {v1.h}[1], [x18], x7
                 st1 {v17.h}[6], [x16], x7
-                str d18, [x15]
-                add x15, x15, x7
+                st1 {v18.4h}, [x15], x7
                 ins v2.s[0], v18.s[2]
-                str s2, [x17]
-                add x17, x17, x7
+                st1 {v2.h}[0], [x17], x7
+                st1 {v2.h}[1], [x18], x7
                 st1 {v18.h}[6], [x16], x7
-                str d19, [x15]
-                add x15, x15, x7
+                st1 {v19.4h}, [x15], x7
                 ins v3.s[0], v19.s[2]
-                str s3, [x17]
-                add x17, x17, x7
+                st1 {v3.h}[0], [x17], x7
+                st1 {v3.h}[1], [x18], x7
                 st1 {v19.h}[6], [x16], x7
-                str d20, [x15]
-                add x15, x15, x7
+                st1 {v20.4h}, [x15], x7
                 ins v4.s[0], v20.s[2]
-                str s4, [x17]
-                add x17, x17, x7
+                st1 {v4.h}[0], [x17], x7
+                st1 {v4.h}[1], [x18], x7
                 st1 {v20.h}[6], [x16], x7
-                str d21, [x15]
-                add x15, x15, x7
+                st1 {v21.4h}, [x15], x7
                 ins v5.s[0], v21.s[2]
-                str s5, [x17]
-                add x17, x17, x7
+                st1 {v5.h}[0], [x17], x7
+                st1 {v5.h}[1], [x18], x7
                 st1 {v21.h}[6], [x16], x7
-                str d22, [x15]
-                add x15, x15, x7
+                st1 {v22.4h}, [x15], x7
                 ins v6.s[0], v22.s[2]
-                str s6, [x17]
-                add x17, x17, x7
+                st1 {v6.h}[0], [x17], x7
+                st1 {v6.h}[1], [x18], x7
                 st1 {v22.h}[6], [x16], x7
-                str d23, [x15]
-                add x15, x15, x7
+                st1 {v23.4h}, [x15], x7
                 ins v7.s[0], v23.s[2]
-                str s7, [x17]
-                add x17, x17, x7
+                st1 {v7.h}[0], [x17], x7
+                st1 {v7.h}[1], [x18], x7
                 st1 {v23.h}[6], [x16], x7
-                str d24, [x15]
-                add x15, x15, x7
+                st1 {v24.4h}, [x15], x7
                 ins v8.s[0], v24.s[2]
-                str s8, [x17]
-                add x17, x17, x7
+                st1 {v8.h}[0], [x17], x7
+                st1 {v8.h}[1], [x18], x7
                 st1 {v24.h}[6], [x16], x7
-                str d25, [x15]
-                add x15, x15, x7
+                st1 {v25.4h}, [x15], x7
                 ins v9.s[0], v25.s[2]
-                str s9, [x17]
-                add x17, x17, x7
+                st1 {v9.h}[0], [x17], x7
+                st1 {v9.h}[1], [x18], x7
                 st1 {v25.h}[6], [x16], x7
-                str d26, [x15]
-                add x15, x15, x7
+                st1 {v26.4h}, [x15], x7
                 ins v10.s[0], v26.s[2]
-                str s10, [x17]
-                add x17, x17, x7
+                st1 {v10.h}[0], [x17], x7
+                st1 {v10.h}[1], [x18], x7
                 st1 {v26.h}[6], [x16], x7
-                str d27, [x15]
-                add x15, x15, x7
+                st1 {v27.4h}, [x15], x7
                 ins v11.s[0], v27.s[2]
-                str s11, [x17]
-                add x17, x17, x7
+                st1 {v11.h}[0], [x17], x7
+                st1 {v11.h}[1], [x18], x7
                 st1 {v27.h}[6], [x16], x7
-                str d28, [x15]
-                add x15, x15, x7
+                st1 {v28.4h}, [x15], x7
                 ins v12.s[0], v28.s[2]
-                str s12, [x17]
-                add x17, x17, x7
+                st1 {v12.h}[0], [x17], x7
+                st1 {v12.h}[1], [x18], x7
                 st1 {v28.h}[6], [x16], x7
-                str d29, [x15]
-                add x15, x15, x7
+                st1 {v29.4h}, [x15], x7
                 ins v13.s[0], v29.s[2]
-                str s13, [x17]
-                add x17, x17, x7
+                st1 {v13.h}[0], [x17], x7
+                st1 {v13.h}[1], [x18], x7
                 st1 {v29.h}[6], [x16], x7
-                str d30, [x15]
-                add x15, x15, x7
+                st1 {v30.4h}, [x15], x7
                 ins v14.s[0], v30.s[2]
-                str s14, [x17]
-                add x17, x17, x7
+                st1 {v14.h}[0], [x17], x7
+                st1 {v14.h}[1], [x18], x7
                 st1 {v30.h}[6], [x16], x7
-                str d31, [x15]
+                st1 {v31.4h}, [x15]
                 ins v15.s[0], v31.s[2]
-                str s15, [x17]
+                st1 {v15.h}[0], [x17]
+                st1 {v15.h}[1], [x18]
                 st1 {v31.h}[6], [x16]
                 add x0, x0, #14
                 b WriteEnd

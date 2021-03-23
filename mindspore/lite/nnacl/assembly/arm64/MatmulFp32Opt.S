@@ -740,115 +740,91 @@ LoopRow4:
             b WriteEnd
         Write2:
             add x2, x2, #8
-            str d8, [x11]
+            st1 {v8.2s}, [x11], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str d10, [x11]
+            st1 {v10.2s}, [x11], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str d12, [x11]
+            st1 {v12.2s}, [x11], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str d14, [x11]
+            st1 {v14.2s}, [x11], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str d16, [x11]
+            st1 {v16.2s}, [x11], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str d18, [x11]
+            st1 {v18.2s}, [x11], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str d20, [x11]
+            st1 {v20.2s}, [x11], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str d22, [x11]
+            st1 {v22.2s}, [x11], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str d24, [x11]
+            st1 {v24.2s}, [x11], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str d26, [x11]
+            st1 {v26.2s}, [x11], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str d28, [x11]
+            st1 {v28.2s}, [x11], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str d30, [x11]
-            add x11, x11, x8
+            st1 {v30.2s}, [x11], x8
             add x11, x11, #8
             b WriteEnd
         Write3:
             add x2, x2, #12
             add x19, x11, #8
-            str d8, [x11]
+            st1 {v8.2s}, [x11], x8
             st1 {v8.s}[2], [x19], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str d10, [x11]
+            st1 {v10.2s}, [x11], x8
             st1 {v10.s}[2], [x19], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str d12, [x11]
+            st1 {v12.2s}, [x11], x8
             st1 {v12.s}[2], [x19], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str d14, [x11]
+            st1 {v14.2s}, [x11], x8
             st1 {v14.s}[2], [x19], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str d16, [x11]
+            st1 {v16.2s}, [x11], x8
             st1 {v16.s}[2], [x19], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str d18, [x11]
+            st1 {v18.2s}, [x11], x8
             st1 {v18.s}[2], [x19], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str d20, [x11]
+            st1 {v20.2s}, [x11], x8
             st1 {v20.s}[2], [x19], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str d22, [x11]
+            st1 {v22.2s}, [x11], x8
             st1 {v22.s}[2], [x19], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str d24, [x11]
+            st1 {v24.2s}, [x11], x8
             st1 {v24.s}[2], [x19], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str d26, [x11]
+            st1 {v26.2s}, [x11], x8
             st1 {v26.s}[2], [x19], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str d28, [x11]
+            st1 {v28.2s}, [x11], x8
             st1 {v28.s}[2], [x19], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str d30, [x11]
+            st1 {v30.2s}, [x11], x8
             st1 {v30.s}[2], [x19]
-            add x11, x11, x8
             add x11, x11, #12
             b WriteEnd
         Write4:
@@ -955,62 +931,51 @@ LoopRow4:
             add x2, x2, #24
             add x19, x11, #16
             st1 {v8.4s}, [x11], x8
-            str d9, [x19]
+            st1 {v9.2s}, [x19], x8
             cmp x6, #1
             beq WriteEnd
-            add x19, x19, x8
             st1 {v10.4s}, [x11], x8
-            str d11, [x19]
+            st1 {v11.2s}, [x19], x8
             cmp x6, #2
             beq WriteEnd
-            add x19, x19, x8
             st1 {v12.4s}, [x11], x8
-            str d13, [x19]
+            st1 {v13.2s}, [x19], x8
             cmp x6, #3
             beq WriteEnd
-            add x19, x19, x8
             st1 {v14.4s}, [x11], x8
-            str d15, [x19]
+            st1 {v15.2s}, [x19], x8
             cmp x6, #4
             beq WriteEnd
-            add x19, x19, x8
             st1 {v16.4s}, [x11], x8
-            str d17, [x19]
+            st1 {v17.2s}, [x19], x8
             cmp x6, #5
             beq WriteEnd
-            add x19, x19, x8
             st1 {v18.4s}, [x11], x8
-            str d19, [x19]
+            st1 {v19.2s}, [x19], x8
             cmp x6, #6
             beq WriteEnd
-            add x19, x19, x8
             st1 {v20.4s}, [x11], x8
-            str d21, [x19]
+            st1 {v21.2s}, [x19], x8
             cmp x6, #7
             beq WriteEnd
-            add x19, x19, x8
             st1 {v22.4s}, [x11], x8
-            str d23, [x19]
+            st1 {v23.2s}, [x19], x8
             cmp x6, #8
             beq WriteEnd
-            add x19, x19, x8
             st1 {v24.4s}, [x11], x8
-            str d25, [x19]
+            st1 {v25.2s}, [x19], x8
             cmp x6, #9
             beq WriteEnd
-            add x19, x19, x8
             st1 {v26.4s}, [x11], x8
-            str d27, [x19]
+            st1 {v27.2s}, [x19], x8
             cmp x6, #10
             beq WriteEnd
-            add x19, x19, x8
             st1 {v28.4s}, [x11], x8
-            str d29, [x19]
+            st1 {v29.2s}, [x19], x8
             cmp x6, #11
             beq WriteEnd
-            add x19, x19, x8
             st1 {v30.4s}, [x11], x8
-            str d31, [x19]
+            st1 {v31.2s}, [x19]
             add x11, x11, #24
             b WriteEnd
         Write7:
@@ -1018,75 +983,63 @@ LoopRow4:
             add x19, x11, #16
             add x20, x11, #24
             st1 {v8.4s}, [x11], x8
-            str d9, [x19]
+            st1 {v9.2s}, [x19], x8
             st1 {v9.s}[2], [x20], x8
             cmp x6, #1
             beq WriteEnd
-            add x19, x19, x8
             st1 {v10.4s}, [x11], x8
-            str d11, [x19]
+            st1 {v11.2s}, [x19], x8
             st1 {v11.s}[2], [x20], x8
             cmp x6, #2
             beq WriteEnd
-            add x19, x19, x8
             st1 {v12.4s}, [x11], x8
-            str d13, [x19]
+            st1 {v13.2s}, [x19], x8
             st1 {v13.s}[2], [x20], x8
             cmp x6, #3
             beq WriteEnd
-            add x19, x19, x8
             st1 {v14.4s}, [x11], x8
-            str d15, [x19]
+            st1 {v15.2s}, [x19], x8
             st1 {v15.s}[2], [x20], x8
             cmp x6, #4
             beq WriteEnd
-            add x19, x19, x8
             st1 {v16.4s}, [x11], x8
-            str d17, [x19]
+            st1 {v17.2s}, [x19], x8
             st1 {v17.s}[2], [x20], x8
             cmp x6, #5
             beq WriteEnd
-            add x19, x19, x8
             st1 {v18.4s}, [x11], x8
-            str d19, [x19]
+            st1 {v19.2s}, [x19], x8
             st1 {v19.s}[2], [x20], x8
             cmp x6, #6
             beq WriteEnd
-            add x19, x19, x8
             st1 {v20.4s}, [x11], x8
-            str d21, [x19]
+            st1 {v21.2s}, [x19], x8
             st1 {v21.s}[2], [x20], x8
             cmp x6, #7
             beq WriteEnd
-            add x19, x19, x8
             st1 {v22.4s}, [x11], x8
-            str d23, [x19]
+            st1 {v23.2s}, [x19], x8
             st1 {v23.s}[2], [x20], x8
             cmp x6, #8
             beq WriteEnd
-            add x19, x19, x8
             st1 {v24.4s}, [x11], x8
-            str d25, [x19]
+            st1 {v25.2s}, [x19], x8
             st1 {v25.s}[2], [x20], x8
             cmp x6, #9
             beq WriteEnd
-            add x19, x19, x8
             st1 {v26.4s}, [x11], x8
-            str d27, [x19]
+            st1 {v27.2s}, [x19], x8
             st1 {v27.s}[2], [x20], x8
             cmp x6, #10
             beq WriteEnd
-            add x19, x19, x8
             st1 {v28.4s}, [x11], x8
-            str d29, [x19]
+            st1 {v29.2s}, [x19], x8
             st1 {v29.s}[2], [x20], x8
             cmp x6, #11
             beq WriteEnd
-            add x19, x19, x8
             st1 {v30.4s}, [x11], x8
-            str d31, [x19]
-            add x19, x19, x8
-            st1 {v31.s}[2], [x20], x8
+            st1 {v31.2s}, [x19]
+            st1 {v31.s}[2], [x20]
             add x11, x11, #28
             b WriteEnd
         WriteC8:

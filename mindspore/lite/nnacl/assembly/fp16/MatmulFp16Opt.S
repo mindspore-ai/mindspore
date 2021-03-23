@@ -677,400 +677,354 @@ LoopRow:
             b WriteEnd
         Write2:
             add x2, x2, #4
-            str s16, [x11]
+            add x19, x11, #2
+            st1 {v16.h}[0], [x11], x8
+            st1 {v16.h}[1], [x19], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str s17, [x11]
+            st1 {v17.h}[0], [x11], x8
+            st1 {v17.h}[1], [x19], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str s18, [x11]
+            st1 {v18.h}[0], [x11], x8
+            st1 {v18.h}[1], [x19], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str s19, [x11]
+            st1 {v19.h}[0], [x11], x8
+            st1 {v19.h}[1], [x19], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str s20, [x11]
+            st1 {v20.h}[0], [x11], x8
+            st1 {v20.h}[1], [x19], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str s21, [x11]
+            st1 {v21.h}[0], [x11], x8
+            st1 {v21.h}[1], [x19], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str s22, [x11]
+            st1 {v22.h}[0], [x11], x8
+            st1 {v22.h}[1], [x19], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str s23, [x11]
+            st1 {v23.h}[0], [x11], x8
+            st1 {v23.h}[1], [x19], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str s24, [x11]
+            st1 {v24.h}[0], [x11], x8
+            st1 {v24.h}[1], [x19], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str s25, [x11]
+            st1 {v25.h}[0], [x11], x8
+            st1 {v25.h}[1], [x19], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str s26, [x11]
+            st1 {v26.h}[0], [x11], x8
+            st1 {v26.h}[1], [x19], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str s27, [x11]
+            st1 {v27.h}[0], [x11], x8
+            st1 {v27.h}[1], [x19], x8
             cmp x6, #12
             beq WriteEnd
-            add x11, x11, x8
-            str s28, [x11]
+            st1 {v28.h}[0], [x11], x8
+            st1 {v28.h}[1], [x19], x8
             cmp x6, #13
             beq WriteEnd
-            add x11, x11, x8
-            str s29, [x11]
+            st1 {v29.h}[0], [x11], x8
+            st1 {v29.h}[1], [x19], x8
             cmp x6, #14
             beq WriteEnd
-            add x11, x11, x8
-            str s30, [x11]
+            st1 {v30.h}[0], [x11], x8
+            st1 {v30.h}[1], [x19], x8
             cmp x6, #15
             beq WriteEnd
-            add x11, x11, x8
-            str s31, [x11]
-            add x11, x11, x8
+            st1 {v31.h}[0], [x11], x8
+            st1 {v31.h}[1], [x19]
             add x11, x11, #4
             b WriteEnd
         Write3:
             add x2, x2, #6
             add x19, x11, #4
-            str s16, [x11]
+            add x20, x11, #2
+            st1 {v16.h}[0], [x11], x8
+            st1 {v16.h}[1], [x20], x8
             st1 {v16.h}[2], [x19], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str s17, [x11]
+            st1 {v17.h}[0], [x11], x8
+            st1 {v17.h}[1], [x20], x8
             st1 {v17.h}[2], [x19], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str s18, [x11]
+            st1 {v18.h}[0], [x11], x8
+            st1 {v18.h}[1], [x20], x8
             st1 {v18.h}[2], [x19], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str s19, [x11]
+            st1 {v19.h}[0], [x11], x8
+            st1 {v19.h}[1], [x20], x8
             st1 {v19.h}[2], [x19], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str s20, [x11]
+            st1 {v20.h}[0], [x11], x8
+            st1 {v20.h}[1], [x20], x8
             st1 {v20.h}[2], [x19], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str s21, [x11]
+            st1 {v21.h}[0], [x11], x8
+            st1 {v21.h}[1], [x20], x8
             st1 {v21.h}[2], [x19], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str s22, [x11]
+            st1 {v22.h}[0], [x11], x8
+            st1 {v22.h}[1], [x20], x8
             st1 {v22.h}[2], [x19], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str s23, [x11]
+            st1 {v23.h}[0], [x11], x8
+            st1 {v23.h}[1], [x20], x8
             st1 {v23.h}[2], [x19], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str s24, [x11]
+            st1 {v24.h}[0], [x11], x8
+            st1 {v24.h}[1], [x20], x8
             st1 {v24.h}[2], [x19], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str s25, [x11]
+            st1 {v25.h}[0], [x11], x8
+            st1 {v25.h}[1], [x20], x8
             st1 {v25.h}[2], [x19], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str s26, [x11]
+            st1 {v26.h}[0], [x11], x8
+            st1 {v26.h}[1], [x20], x8
             st1 {v26.h}[2], [x19], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str s27, [x11]
+            st1 {v27.h}[0], [x11], x8
+            st1 {v27.h}[1], [x20], x8
             st1 {v27.h}[2], [x19], x8
             cmp x6, #12
             beq WriteEnd
-            add x11, x11, x8
-            str s28, [x11]
+            st1 {v28.h}[0], [x11], x8
+            st1 {v28.h}[1], [x20], x8
             st1 {v28.h}[2], [x19], x8
             cmp x6, #13
             beq WriteEnd
-            add x11, x11, x8
-            str s29, [x11]
+            st1 {v29.h}[0], [x11], x8
+            st1 {v29.h}[1], [x20], x8
             st1 {v29.h}[2], [x19], x8
             cmp x6, #14
             beq WriteEnd
-            add x11, x11, x8
-            str s30, [x11]
+            st1 {v30.h}[0], [x11], x8
+            st1 {v30.h}[1], [x20], x8
             st1 {v30.h}[2], [x19], x8
             cmp x6, #15
             beq WriteEnd
-            add x11, x11, x8
-            str s31, [x11]
+            st1 {v31.h}[0], [x11], x8
+            st1 {v31.h}[1], [x20]
             st1 {v31.h}[2], [x19]
-            add x11, x11, x8
             add x11, x11, #6
             b WriteEnd
         Write4:
             add x2, x2, #8
-            str d16, [x11]
+            st1 {v16.4h}, [x11], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str d17, [x11]
+            st1 {v17.4h}, [x11], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str d18, [x11]
+            st1 {v18.4h}, [x11], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str d19, [x11]
+            st1 {v19.4h}, [x11], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str d20, [x11]
+            st1 {v20.4h}, [x11], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str d21, [x11]
+            st1 {v21.4h}, [x11], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str d22, [x11]
+            st1 {v22.4h}, [x11], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str d23, [x11]
+            st1 {v23.4h}, [x11], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str d24, [x11]
+            st1 {v24.4h}, [x11], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str d25, [x11]
+            st1 {v25.4h}, [x11], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str d26, [x11]
+            st1 {v26.4h}, [x11], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str d27, [x11]
+            st1 {v27.4h}, [x11], x8
             cmp x6, #12
             beq WriteEnd
-            add x11, x11, x8
-            str d28, [x11]
+            st1 {v28.4h}, [x11], x8
             cmp x6, #13
             beq WriteEnd
-            add x11, x11, x8
-            str d29, [x11]
+            st1 {v29.4h}, [x11], x8
             cmp x6, #14
             beq WriteEnd
-            add x11, x11, x8
-            str d30, [x11]
+            st1 {v30.4h}, [x11], x8
             cmp x6, #15
             beq WriteEnd
-            add x11, x11, x8
-            str d31, [x11]
-            add x11, x11, x8
+            st1 {v31.4h}, [x11], x8
             add x11, x11, #8
             b WriteEnd
         Write5:
             add x2, x2, #10
             add x19, x11, #8
-            str d16, [x11]
+            st1 {v16.4h}, [x11], x8
             st1 {v16.h}[4], [x19], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str d17, [x11]
+            st1 {v17.4h}, [x11], x8
             st1 {v17.h}[4], [x19], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str d18, [x11]
+            st1 {v18.4h}, [x11], x8
             st1 {v18.h}[4], [x19], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str d19, [x11]
+            st1 {v19.4h}, [x11], x8
             st1 {v19.h}[4], [x19], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str d20, [x11]
+            st1 {v20.4h}, [x11], x8
             st1 {v20.h}[4], [x19], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str d21, [x11]
+            st1 {v21.4h}, [x11], x8
             st1 {v21.h}[4], [x19], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str d22, [x11]
+            st1 {v22.4h}, [x11], x8
             st1 {v22.h}[4], [x19], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str d23, [x11]
+            st1 {v23.4h}, [x11], x8
             st1 {v23.h}[4], [x19], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str d24, [x11]
+            st1 {v24.4h}, [x11], x8
             st1 {v24.h}[4], [x19], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str d25, [x11]
+            st1 {v25.4h}, [x11], x8
             st1 {v25.h}[4], [x19], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str d26, [x11]
+            st1 {v26.4h}, [x11], x8
             st1 {v26.h}[4], [x19], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str d27, [x11]
+            st1 {v27.4h}, [x11], x8
             st1 {v27.h}[4], [x19], x8
             cmp x6, #12
             beq WriteEnd
-            add x11, x11, x8
-            str d28, [x11]
+            st1 {v28.4h}, [x11], x8
             st1 {v28.h}[4], [x19], x8
             cmp x6, #13
             beq WriteEnd
-            add x11, x11, x8
-            str d29, [x11]
+            st1 {v29.4h}, [x11], x8
             st1 {v29.h}[4], [x19], x8
             cmp x6, #14
             beq WriteEnd
-            add x11, x11, x8
-            str d30, [x11]
+            st1 {v30.4h}, [x11], x8
             st1 {v30.h}[4], [x19], x8
             cmp x6, #15
             beq WriteEnd
-            add x11, x11, x8
-            str d31, [x11]
+            st1 {v31.4h}, [x11], x8
             st1 {v31.h}[4], [x19]
-            add x11, x11, x8
             add x11, x11, #10
             b WriteEnd
         Write6:
             add x2, x2, #12
             add x19, x11, #8
             add x20, x11, #10
-            str d16, [x11]
+            st1 {v16.4h}, [x11], x8
             st1 {v16.h}[4], [x19], x8
             st1 {v16.h}[5], [x20], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str d17, [x11]
+            st1 {v17.4h}, [x11], x8
             st1 {v17.h}[4], [x19], x8
             st1 {v17.h}[5], [x20], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str d18, [x11]
+            st1 {v18.4h}, [x11], x8
             st1 {v18.h}[4], [x19], x8
             st1 {v18.h}[5], [x20], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str d19, [x11]
+            st1 {v19.4h}, [x11], x8
             st1 {v19.h}[4], [x19], x8
             st1 {v19.h}[5], [x20], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str d20, [x11]
+            st1 {v20.4h}, [x11], x8
             st1 {v20.h}[4], [x19], x8
             st1 {v20.h}[5], [x20], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str d21, [x11]
+            st1 {v21.4h}, [x11], x8
             st1 {v21.h}[4], [x19], x8
             st1 {v21.h}[5], [x20], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str d22, [x11]
+            st1 {v22.4h}, [x11], x8
             st1 {v22.h}[4], [x19], x8
             st1 {v22.h}[5], [x20], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str d23, [x11]
+            st1 {v23.4h}, [x11], x8
             st1 {v23.h}[4], [x19], x8
             st1 {v23.h}[5], [x20], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str d24, [x11]
+            st1 {v24.4h}, [x11], x8
             st1 {v24.h}[4], [x19], x8
             st1 {v24.h}[5], [x20], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str d25, [x11]
+            st1 {v25.4h}, [x11], x8
             st1 {v25.h}[4], [x19], x8
             st1 {v25.h}[5], [x20], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str d26, [x11]
+            st1 {v26.4h}, [x11], x8
             st1 {v26.h}[4], [x19], x8
             st1 {v26.h}[5], [x20], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str d27, [x11]
+            st1 {v27.4h}, [x11], x8
             st1 {v27.h}[4], [x19], x8
             st1 {v27.h}[5], [x20], x8
             cmp x6, #12
             beq WriteEnd
-            add x11, x11, x8
-            str d28, [x11]
+            st1 {v28.4h}, [x11], x8
             st1 {v28.h}[4], [x19], x8
             st1 {v28.h}[5], [x20], x8
             cmp x6, #13
             beq WriteEnd
-            add x11, x11, x8
-            str d29, [x11]
+            st1 {v29.4h}, [x11], x8
             st1 {v29.h}[4], [x19], x8
             st1 {v29.h}[5], [x20], x8
             cmp x6, #14
             beq WriteEnd
-            add x11, x11, x8
-            str d30, [x11]
+            st1 {v30.4h}, [x11], x8
             st1 {v30.h}[4], [x19], x8
             st1 {v30.h}[5], [x20], x8
             cmp x6, #15
             beq WriteEnd
-            add x11, x11, x8
-            str d31, [x11]
+            st1 {v31.4h}, [x11], x8
             st1 {v31.h}[4], [x19]
             st1 {v31.h}[5], [x20]
-            add x11, x11, x8
             add x11, x11, #12
             b WriteEnd
         Write7:
@@ -1078,116 +1032,100 @@ LoopRow:
             add x19, x11, #8
             add x20, x11, #10
             add x10, x11, #12
-            str d16, [x11]
+            st1 {v16.4h}, [x11], x8
             st1 {v16.h}[4], [x19], x8
             st1 {v16.h}[5], [x20], x8
             st1 {v16.h}[6], [x10], x8
             cmp x6, #1
             beq WriteEnd
-            add x11, x11, x8
-            str d17, [x11]
+            st1 {v17.4h}, [x11], x8
             st1 {v17.h}[4], [x19], x8
             st1 {v17.h}[5], [x20], x8
             st1 {v17.h}[6], [x10], x8
             cmp x6, #2
             beq WriteEnd
-            add x11, x11, x8
-            str d18, [x11]
+            st1 {v18.4h}, [x11], x8
             st1 {v18.h}[4], [x19], x8
             st1 {v18.h}[5], [x20], x8
             st1 {v18.h}[6], [x10], x8
             cmp x6, #3
             beq WriteEnd
-            add x11, x11, x8
-            str d19, [x11]
+            st1 {v19.4h}, [x11], x8
             st1 {v19.h}[4], [x19], x8
             st1 {v19.h}[5], [x20], x8
             st1 {v19.h}[6], [x10], x8
             cmp x6, #4
             beq WriteEnd
-            add x11, x11, x8
-            str d20, [x11]
+            st1 {v20.4h}, [x11], x8
             st1 {v20.h}[4], [x19], x8
             st1 {v20.h}[5], [x20], x8
             st1 {v20.h}[6], [x10], x8
             cmp x6, #5
             beq WriteEnd
-            add x11, x11, x8
-            str d21, [x11]
+            st1 {v21.4h}, [x11], x8
             st1 {v21.h}[4], [x19], x8
             st1 {v21.h}[5], [x20], x8
             st1 {v21.h}[6], [x10], x8
             cmp x6, #6
             beq WriteEnd
-            add x11, x11, x8
-            str d22, [x11]
+            st1 {v22.4h}, [x11], x8
             st1 {v22.h}[4], [x19], x8
             st1 {v22.h}[5], [x20], x8
             st1 {v22.h}[6], [x10], x8
             cmp x6, #7
             beq WriteEnd
-            add x11, x11, x8
-            str d23, [x11]
+            st1 {v23.4h}, [x11], x8
             st1 {v23.h}[4], [x19], x8
             st1 {v23.h}[5], [x20], x8
             st1 {v23.h}[6], [x10], x8
             cmp x6, #8
             beq WriteEnd
-            add x11, x11, x8
-            str d24, [x11]
+            st1 {v24.4h}, [x11], x8
             st1 {v24.h}[4], [x19], x8
             st1 {v24.h}[5], [x20], x8
             st1 {v24.h}[6], [x10], x8
             cmp x6, #9
             beq WriteEnd
-            add x11, x11, x8
-            str d25, [x11]
+            st1 {v25.4h}, [x11], x8
             st1 {v25.h}[4], [x19], x8
             st1 {v25.h}[5], [x20], x8
             st1 {v25.h}[6], [x10], x8
             cmp x6, #10
             beq WriteEnd
-            add x11, x11, x8
-            str d26, [x11]
+            st1 {v26.4h}, [x11], x8
             st1 {v26.h}[4], [x19], x8
             st1 {v26.h}[5], [x20], x8
             st1 {v26.h}[6], [x10], x8
             cmp x6, #11
             beq WriteEnd
-            add x11, x11, x8
-            str d27, [x11]
+            st1 {v27.4h}, [x11], x8
             st1 {v27.h}[4], [x19], x8
             st1 {v27.h}[5], [x20], x8
             st1 {v27.h}[6], [x10], x8
             cmp x6, #12
             beq WriteEnd
-            add x11, x11, x8
-            str d28, [x11]
+            st1 {v28.4h}, [x11], x8
             st1 {v28.h}[4], [x19], x8
             st1 {v28.h}[5], [x20], x8
             st1 {v28.h}[6], [x10], x8
             cmp x6, #13
             beq WriteEnd
-            add x11, x11, x8
-            str d29, [x11]
+            st1 {v29.4h}, [x11], x8
             st1 {v29.h}[4], [x19], x8
             st1 {v29.h}[5], [x20], x8
             st1 {v29.h}[6], [x10], x8
             cmp x6, #14
             beq WriteEnd
-            add x11, x11, x8
-            str d30, [x11]
+            st1 {v30.4h}, [x11], x8
             st1 {v30.h}[4], [x19], x8
             st1 {v30.h}[5], [x20], x8
             st1 {v30.h}[6], [x10], x8
             cmp x6, #15
             beq WriteEnd
-            add x11, x11, x8
-            str d31, [x11]
+            st1 {v31.4h}, [x11], x8
             st1 {v31.h}[4], [x19]
             st1 {v31.h}[5], [x20]
             st1 {v31.h}[6], [x10]
-            add x11, x11, x8
             add x11, x11, #14
             b WriteEnd
         WriteC8:
