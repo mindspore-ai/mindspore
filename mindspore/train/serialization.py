@@ -575,6 +575,10 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     """
     Export the MindSpore prediction model to a file in the specified format.
 
+    Notes:
+        When exporting to AIR format, the size of a single tensor can not exceed 2GB.
+        Otherwise, a small wrong air file will be exported.
+
     Args:
         net (Cell): MindSpore network.
         inputs (Tensor): Inputs of the `net`.
