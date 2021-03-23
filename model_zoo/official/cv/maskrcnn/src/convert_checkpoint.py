@@ -60,5 +60,5 @@ def load_weights(model_path, use_fp16_weight):
     return param_list
 
 if __name__ == "__main__":
-    parameter_list = load_weights(args_opt.ckpt_file, use_fp16_weight=True)
+    parameter_list = load_weights(args_opt.ckpt_file, use_fp16_weight=False)
     save_checkpoint(parameter_list, "resnet50_backbone.ckpt")
