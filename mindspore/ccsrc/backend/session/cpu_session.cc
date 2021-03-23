@@ -229,6 +229,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
 
   std::vector<tensor::TensorPtr> output_tensors;
   SetOutputFlags(*outputs, &output_tensors);
+  runtime_.RunOpClearMemory(kernel_graph.get());
   MS_LOG(INFO) << "Run Op end";
 }
 
