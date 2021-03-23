@@ -29,15 +29,7 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::lite::micro {
 
-int ReshapeBaseCoder::Prepare(CoderContext *const context) {
-  bool is_next_conv = std::any_of(output_ops().begin(), output_ops().end(), [](OperatorCoder *next_op) {
-    return next_op->type() == schema::PrimitiveType_Conv2DFusion;
-  });
-  if (is_next_conv && output_tensor_->shape().size() == 4 && output_tensor_->format() == schema::Format::Format_NCHW) {
-    output_tensor_->set_format(schema::Format::Format_NHWC);
-  }
-  return RET_OK;
-}
+int ReshapeBaseCoder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int ReshapeBaseCoder::DoCode(CoderContext *const context) {
   Serializer coder;

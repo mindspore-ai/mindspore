@@ -134,7 +134,8 @@ int Generator::CodeWeightFile() {
   MS_LOG(INFO) << "write " << cfile;
   cofs << g_hwLicense;
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
-  cofs << "unsigned char * " << ctx_->buffer_name() << " = 0 ; \n";
+  cofs << "int  " << gThreadNum << " = 1; \n";
+  cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
 
   if (config_->target() != kARM32M) {
     std::string net_file = net_src_file_path_ + "net.bin";
