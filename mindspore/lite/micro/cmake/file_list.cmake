@@ -233,7 +233,7 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/lsh_projection_infer.c
         ${LITE_DIR}/nnacl/infer/lstm_infer.c
         ${LITE_DIR}/nnacl/infer/matmul_infer.c
-        ${LITE_DIR}/nnacl/infer/maximum_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/max_min_grad_infer.c
         ${LITE_DIR}/nnacl/infer/mean_infer.c
         ${LITE_DIR}/nnacl/infer/pooling_grad_infer.c
         ${LITE_DIR}/nnacl/infer/pooling_infer.c

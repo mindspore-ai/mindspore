@@ -103,4 +103,3 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
 
 REG_INFER(DivGrad, PrimType_DivGrad, ArithmeticGradInferShape)
 REG_INFER(MulGrad, PrimType_MulGrad, ArithmeticGradInferShape)
-REG_INFER(MinimumGrad, PrimType_MinimumGrad, ArithmeticGradInferShape)
