@@ -38,6 +38,7 @@ class Net(nn.Cell):
 
 def check_initializer_weight_slice(init_name="Uniform"):
     def get_slice(rank):
+        Tensor.delta_seed = 0
         hccl = Hccl()
         rank_save = hccl.rank_id
         hccl.rank_id = rank
