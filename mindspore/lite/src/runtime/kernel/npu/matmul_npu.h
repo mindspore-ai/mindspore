@@ -39,6 +39,8 @@ class MatMulNPUKernel : public NPUKernel {
 
  private:
   hiai::op::MatMul *op_ = nullptr;
+  hiai::op::Add *add_op_ = nullptr;
+  hiai::op::Const *bias_ = nullptr;
   MatMulParameter *matmul_parameter_;
 };
 }  // namespace mindspore::kernel

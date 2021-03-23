@@ -35,6 +35,7 @@
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
 #include "tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.h"
+#include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include "tools/optimizer/graph/primitive_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
@@ -107,6 +108,9 @@ int AnfTransform::AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &opti
     fusion_pm->AddPass(remove_unused_transpose_pass);
   }
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
+  if (!config->trainModel) {
+    fusion_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
+  }
   optimizer->AddPassManager(fusion_pm);
   return RET_OK;
 }
