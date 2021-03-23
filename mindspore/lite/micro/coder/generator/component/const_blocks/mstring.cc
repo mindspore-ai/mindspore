@@ -14,6 +14,28 @@
  * limitations under the License.
  */
 
+#include "coder/generator/component/const_blocks/mstring.h"
+
+namespace mindspore::lite::micro {
+
+const char *string_source = R"RAW(
+
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifdef NOT_USE_STL
 #include <stdlib.h>
 #include <string.h>
@@ -273,17 +295,21 @@ int String::compare(const char *str) const { return strcmp(buffer_, str); }
 
 String String::substr(size_t pos, size_t count) const { return String(*this, pos, count); }
 
-String operator+(const String &str1, const char *str2) {
-  String str = str1;
-  str += str2;
+String operator+(const String &lhs, const char *rhs) {
+  String str = lhs;
+  str += rhs;
   return str;
 }
 
-String operator+(const char *str1, const String &str2) {
-  String str = str2;
-  str += str1;
+String operator+(const char *lhs, const String &rhs) {
+  String str = rhs;
+  str += lhs;
   return str;
 }
+
+bool operator==(const String &lhs, const String &rhs) { return lhs.compare(rhs) == 0; }
+bool operator==(const String &lhs, const char *rhs) { return lhs.compare(rhs) == 0; }
+bool operator==(const char *lhs, const String &rhs) { return rhs.compare(lhs) == 0; }
 
 String to_String(int32_t value) {
   char tmp[sizeof(int32_t) * 4];
@@ -298,3 +324,6 @@ String to_String(float value) {
 }
 }  // namespace mindspore
 #endif  // NOT_USE_STL
+)RAW";
+
+}  // namespace mindspore::lite::micro

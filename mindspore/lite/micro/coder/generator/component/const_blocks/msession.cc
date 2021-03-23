@@ -166,7 +166,14 @@ Vector<String> LiteSession::GetOutputTensorNames() const {
   return output_names;
 }
 
-mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &tensor_name) const { return nullptr; }
+mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &tensor_name) const {
+  for (const auto &output : outputs_) {
+    if (output->tensor_name() == tensor_name) {
+      return output;
+    }
+  }
+  return nullptr;
+}
 
 }  // namespace lite
 
@@ -178,21 +185,6 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
   session->InitRuntimeBuffer();
   return session;
 }
-
-session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, size_t size,
-                                                          const lite::Context *context) {
-  session::LiteSession *session = CreateSession(context);
-  if (session == nullptr) {
-    return nullptr;
-  }
-  int ret = session->CompileGraph(nullptr);
-  if (ret != lite::RET_OK) {
-    return nullptr;
-  }
-  Init(const_cast<char *>(net_buf), size);
-  return session;
-}
-}  // namespace mindspore
 )RAW";
 
 }  // namespace mindspore::lite::micro

@@ -28,7 +28,7 @@ namespace mindspore::lite::micro {
 void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   auto array_tostring = [&ofs](const std::vector<int> &array, const std::string &name) {
     size_t num = array.size();
-    ofs << "  Vector<int> " << name << ";\n";
+    ofs << "  Vector<int32_t> " << name << ";\n";
     ofs << "  " << name << ".resize(" << num << ");\n";
     for (size_t i = 0; i < num; ++i) {
       ofs << "  " << name << "[" << i << "] = " << array[i] << ";\n";
@@ -61,6 +61,25 @@ void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderCont
   }
   ofs << "  return RET_OK;\n";
   ofs << "}\n\n";
+}
+
+void CodeCreateSessionImplement(std::ofstream &ofs, Target target) {
+  ofs << "session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, size_t size,\n"
+         "                                                          const lite::Context *context) {\n"
+         "  session::LiteSession *session = CreateSession(context);\n"
+         "  if (session == nullptr) {\n"
+         "    return nullptr;\n"
+         "  }\n"
+         "  int ret = session->CompileGraph(nullptr);\n"
+         "  if (ret != lite::RET_OK) {\n"
+         "    return nullptr;\n"
+         "  }\n";
+  if (target != kARM32M) {
+    ofs << "  Init(const_cast<char *>(net_buf), size);\n";
+  }
+  ofs << "  return session;\n"
+         "}\n"
+         "}  // namespace mindspore\n\n";
 }
 
 void CodeCopyOutputsState(std::ofstream &ofs) { ofs << "int CopyOutputsData(void **outputs, int num);\n\n"; }
