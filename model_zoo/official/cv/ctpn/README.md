@@ -1,8 +1,8 @@
-![](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
-
-<!-- TOC -->
+![logo](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
 
 # CTPN for Ascend
+
+<!-- TOC -->
 
 - [CTPN Description](#CTPN-description)
 - [Model Architecture](#model-architecture)
@@ -57,7 +57,7 @@ Here we used 6 datasets for training, and 1 datasets for Evaluation.
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：

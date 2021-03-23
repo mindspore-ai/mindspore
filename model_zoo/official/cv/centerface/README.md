@@ -82,7 +82,7 @@ other datasets need to use the same format as WiderFace.
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -229,53 +229,53 @@ sh eval_all.sh
 
 1. train scripts parameters
 
-the command is: python train.py [train parameters]
-Major parameters train.py as follows:
+    the command is: python train.py [train parameters]
+    Major parameters train.py as follows:
 
-```text
---lr: learning rate
---per_batch_size: batch size on each device
---is_distributed: multi-device or not
---t_max: for cosine lr_scheduler
---max_epoch: training epochs
---warmup_epochs: warmup_epochs, not needed for adam, needed for sgd
---lr scheduler: learning rate scheduler, default is multistep
---lr_epochs: decrease lr steps
---lr_gamma: decrease lr by a factor
---weight_decay: weight decay
---loss_scale: mix precision training
---pretrained_backbone: pretrained mobilenet_v2 model path
---data_dir: data dir
---annot_path: annotations path
---img_dir: img dir in data_dir
-```
+    ```text
+    --lr: learning rate
+    --per_batch_size: batch size on each device
+    --is_distributed: multi-device or not
+    --t_max: for cosine lr_scheduler
+    --max_epoch: training epochs
+    --warmup_epochs: warmup_epochs, not needed for adam, needed for sgd
+    --lr scheduler: learning rate scheduler, default is multistep
+    --lr_epochs: decrease lr steps
+    --lr_gamma: decrease lr by a factor
+    --weight_decay: weight decay
+    --loss_scale: mix precision training
+    --pretrained_backbone: pretrained mobilenet_v2 model path
+    --data_dir: data dir
+    --annot_path: annotations path
+    --img_dir: img dir in data_dir
+    ```
 
 2. centerface unique configs: in config.py; not recommend user to change
 
 3. test scripts parameters:
 
-the command is: python test.py [test parameters]
-Major parameters test.py as follows:
+    the command is: python test.py [test parameters]
+    Major parameters test.py as follows:
 
-```python
-test_script_path: test.py path;
---is_distributed: multi-device or not
---data_dir: img dir
---test_model: test model dir
---ground_truth_mat: ground_truth file, mat type
---save_dir: save_path for evaluate
---rank: use device id
---ckpt_name: test model name
-# blow are used for calculate ckpt/model name
-# model/ckpt name is "0-" + str(ckpt_num) + "_" + str(steps_per_epoch*ckpt_num) + ".ckpt";
-# ckpt_num is epoch number, can be calculated by device_num
-# detail can be found in "test.py"
-# if ckpt is specified not need below 4 parameter
---device_num: training device number
---steps_per_epoch: steps for each epoch
---start: start loop number, used to calculate first epoch number
---end: end loop number, used to calculate last epoch number
-```
+    ```python
+    test_script_path: test.py path;
+    --is_distributed: multi-device or not
+    --data_dir: img dir
+    --test_model: test model dir
+    --ground_truth_mat: ground_truth file, mat type
+    --save_dir: save_path for evaluate
+    --rank: use device id
+    --ckpt_name: test model name
+    # blow are used for calculate ckpt/model name
+    # model/ckpt name is "0-" + str(ckpt_num) + "_" + str(steps_per_epoch*ckpt_num) + ".ckpt";
+    # ckpt_num is epoch number, can be calculated by device_num
+    # detail can be found in "test.py"
+    # if ckpt is specified not need below 4 parameter
+    --device_num: training device number
+    --steps_per_epoch: steps for each epoch
+    --start: start loop number, used to calculate first epoch number
+    --end: end loop number, used to calculate last epoch number
+    ```
 
 4. eval scripts parameters:
 
@@ -384,18 +384,18 @@ mkdir [SAVE_PATH]
 
 1. test a single ckpt file
 
-```python
-# you need to change the parameter in test.sh
-# or use symbolic link as quick start
-# or use the command as follow:
-#   MODEL_PATH: ckpt path saved during training
-#   DATASET: img dir
-#   GROUND_TRUTH_MAT: ground_truth file, mat type
-#   SAVE_PATH: save_path for evaluate
-#   DEVICE_ID: use device id
-#   CKPT: test model name
-sh test.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
-```
+    ```python
+    # you need to change the parameter in test.sh
+    # or use symbolic link as quick start
+    # or use the command as follow:
+    #   MODEL_PATH: ckpt path saved during training
+    #   DATASET: img dir
+    #   GROUND_TRUTH_MAT: ground_truth file, mat type
+    #   SAVE_PATH: save_path for evaluate
+    #   DEVICE_ID: use device id
+    #   CKPT: test model name
+    sh test.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
+    ```
 
 2. test many out ckpt for user to choose the best one
 
@@ -433,19 +433,19 @@ cd ../../../scripts;
 
 1. eval a single testing output
 
-```python
-# you need to change the parameter in eval.sh
-# default eval the ckpt saved in ./scripts/output/centerface/999
-sh eval.sh
-```
+    ```python
+    # you need to change the parameter in eval.sh
+    # default eval the ckpt saved in ./scripts/output/centerface/999
+    sh eval.sh
+    ```
 
 2. eval many testing output for user to choose the best one
 
-```python
-# you need to change the parameter in eval_all.sh
-# default eval the ckpt saved in ./scripts/output/centerface/[89-140]
-sh eval_all.sh
-```
+    ```python
+    # you need to change the parameter in eval_all.sh
+    # default eval the ckpt saved in ./scripts/output/centerface/[89-140]
+    sh eval_all.sh
+    ```
 
 3. test+eval
 
