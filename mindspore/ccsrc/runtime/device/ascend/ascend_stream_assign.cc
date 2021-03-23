@@ -541,6 +541,9 @@ void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelG
 
   vector<CNodePtr> subgraph_cnodes;
   while (pos < cnode_ptr_list.end() && AnfAlgo::GetGraphId((*pos).get()) == subgraph_id) {
+    if (AnfAlgo::GetCNodeName(*pos) == kLabelGotoOpName) {
+      break;
+    }
     if (*pos != first_output_ptr) {
       subgraph_cnodes.emplace_back(*pos);
     } else {
