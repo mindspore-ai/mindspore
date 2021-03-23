@@ -129,7 +129,7 @@ asm_function ConvDwFp32Indirect3x3
                 tbnz w11, #1, Write2
                 tbnz w11, #0, Write1
             Write2:
-                str d29, [x0], #8
+                st1 {v29.2s}, [x0], #8
                 ext v29.16b, v29.16b, v29.16b, #8
                 tbz w11, #0, NextPixel
             Write1:
