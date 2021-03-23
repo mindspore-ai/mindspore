@@ -1,4 +1,7 @@
-set(glog_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+set(glog_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 ${SECURE_CXX_FLAGS}")
+if(NOT ENABLE_GLIBCXX)
+    set(glog_CXXFLAGS "${glog_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+endif()
 set(glog_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/glog/repository/archive/v0.4.0.tar.gz")

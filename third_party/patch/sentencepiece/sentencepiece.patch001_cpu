@@ -1,0 +1,91 @@
+diff -Npur sentencepiece-0.1.92/src/CMakeLists.txt sentencepiece-0.1.92_bak/src/CMakeLists.txt
+--- sentencepiece-0.1.92/src/CMakeLists.txt	2020-06-08 16:25:01.000000000 +0800
++++ sentencepiece-0.1.92_bak/src/CMakeLists.txt	2020-07-02 17:42:33.306933546 +0800
+@@ -11,6 +11,46 @@
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.!
++
++
++
++function(protobuf_generate c_var h_var)
++  if(NOT ARGN)
++    message(SEND_ERROR "Error: ms_protobuf_generate() called without any proto files")
++    return()
++  endif()
++
++  set(${c_var})
++  set(${h_var})
++
++  find_program(PROTOC_EXE  NAMES "protoc" PATHS ${PROTOBUF_INC}/../bin NO_DEFAULT_PATH)
++
++  foreach(file ${ARGN})
++    get_filename_component(abs_file ${file} ABSOLUTE)
++    get_filename_component(file_name ${file} NAME_WE)
++    get_filename_component(file_dir ${abs_file} PATH)
++    file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_SOURCE_DIR} ${file_dir})
++
++    list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/${file_name}.pb.cc")
++    list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/${file_name}.pb.h")
++
++    add_custom_command(
++            OUTPUT "${CMAKE_BINARY_DIR}/${file_name}.pb.cc"
++            "${CMAKE_BINARY_DIR}/${file_name}.pb.h"
++            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
++            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}"
++            COMMAND ${PROTOC_EXE} -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR} ${abs_file}
++            DEPENDS ${PROTOC_EXE} ${abs_file}
++            COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
++  endforeach()
++
++  set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)
++  set(${c_var} ${${c_var}} PARENT_SCOPE)
++  set(${h_var} ${${h_var}} PARENT_SCOPE)
++
++endfunction()
++
++
+ 
+ if (SPM_USE_BUILTIN_PROTOBUF)
+   set(SPM_PROTO_HDRS builtin_pb/sentencepiece.pb.h)
+@@ -52,12 +92,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
+   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/protobuf-lite)
+   include_directories(builtin_pb)
+ else()
+-  find_package(Protobuf REQUIRED)
+-  include_directories(${Protobuf_INCLUDE_DIRS})
+-  protobuf_generate_cpp(SPM_PROTO_SRCS SPM_PROTO_HDRS sentencepiece.proto)
+-  protobuf_generate_cpp(SPM_MODEL_PROTO_SRCS SPM_MODEL_PROTO_HDRS sentencepiece_model.proto)
+-  set(PROTOBUF_LITE_SRCS "")
+-  include_directories(${PROTOBUF_INCLUDE_DIR})
++  include_directories(${PROTOBUF_INC})
++  protobuf_generate(SPM_PROTO_SRCS  SPM_PROTO_HDRS sentencepiece.proto)
++  protobuf_generate(SPM_MODEL_PROTO_SRCS  SPM_MODEL_PROTO_HDRS sentencepiece_model.proto)
+ endif()
+ 
+ include_directories(${CMAKE_CURRENT_BINARY_DIR})
+@@ -191,11 +228,13 @@ endif()
+ add_library(sentencepiece-static STATIC ${SPM_SRCS})
+ add_library(sentencepiece_train-static STATIC ${SPM_TRAIN_SRCS})
+ 
+-target_link_libraries(sentencepiece-static INTERFACE ${SPM_LIBS})
++find_library(PROTO_LIB NAMES "libprotobuf.a" PATHS ${PROTOBUF_INC}/../lib NO_DEFAULT_PATH)
++
++target_link_libraries(sentencepiece-static INTERFACE ${PROTO_LIB} ${SPM_LIBS})
+ target_link_libraries(sentencepiece_train-static INTERFACE sentencepiece-static ${SPM_LIBS})
+ 
+ if (SPM_ENABLE_SHARED)
+-  target_link_libraries(sentencepiece ${SPM_LIBS})
++  target_link_libraries(sentencepiece ${SPM_LIBS} ${PROTO_LIB})
+   target_link_libraries(sentencepiece_train ${SPM_LIBS} sentencepiece)
+   set(SPM_INSTALLTARGETS sentencepiece sentencepiece_train sentencepiece-static sentencepiece_train-static)
+   set_target_properties(sentencepiece sentencepiece_train PROPERTIES SOVERSION 0 VERSION 0.0.0)
+@@ -265,7 +304,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+-install(FILES sentencepiece_trainer.h sentencepiece_processor.h
++install(FILES sentencepiece_trainer.h sentencepiece_processor.h "${CMAKE_BINARY_DIR}/sentencepiece_model.pb.h"
+   DESTINATION ${CMAKE_INSTALL_INCDIR})
+ 
+ file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" data_dir)
