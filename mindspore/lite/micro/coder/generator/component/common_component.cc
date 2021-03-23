@@ -63,19 +63,25 @@ void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderCont
   ofs << "}\n\n";
 }
 
-void CodeCreateSessionImplement(std::ofstream &ofs, Target target) {
+void CodeCreateSessionImplement(std::ofstream &ofs, const Configurator *config) {
   ofs << "session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, size_t size,\n"
          "                                                          const lite::Context *context) {\n"
          "  session::LiteSession *session = CreateSession(context);\n"
-         "  if (session == nullptr) {\n"
-         "    return nullptr;\n"
-         "  }\n"
+         "  MS_NULLPTR_IF_NULL(session);\n"
          "  int ret = session->CompileGraph(nullptr);\n"
-         "  if (ret != lite::RET_OK) {\n"
-         "    return nullptr;\n"
-         "  }\n";
-  if (target != kARM32M) {
-    ofs << "  Init(const_cast<char *>(net_buf), size);\n";
+         "  MS_NULLPTR_IF_ERROR(ret);\n";
+  if (config->support_parallel()) {
+    ofs << "  MS_NULLPTR_IF_NULL(context);\n"
+           "  struct ThreadPool *thread_pool =\n"
+           "    CreateThreadPool(context->thread_num_, "
+           "context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);\n"
+           "  MS_NULLPTR_IF_NULL(thread_pool);\n"
+           "  ret = SetThreadPool(thread_pool);\n"
+           "  MS_NULLPTR_IF_ERROR(ret);\n";
+  }
+  if (config->target() != kARM32M) {
+    ofs << "  ret = Init(const_cast<char *>(net_buf), size);\n"
+           "  MS_NULLPTR_IF_ERROR(ret);\n";
   }
   ofs << "  return session;\n"
          "}\n"

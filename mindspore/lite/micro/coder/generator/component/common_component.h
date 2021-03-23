@@ -28,7 +28,7 @@
 
 namespace mindspore::lite::micro {
 void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
-void CodeCreateSessionImplement(std::ofstream &ofs, Target target);
+void CodeCreateSessionImplement(std::ofstream &ofs, const Configurator *config);
 
 void CodeCopyOutputsState(std::ofstream &ofs);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);

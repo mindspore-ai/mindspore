@@ -58,9 +58,6 @@ void usage() {
     "args[5]: runtime thread bind mode\n\n");
 }
 
-#define LOG_INFO(content, args...) \
-  { printf("[INFO] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
-
 template <typename T>
 void PrintData(void *data, size_t data_number) {
   if (data == nullptr) {
@@ -121,9 +118,22 @@ int main(int argc, const char **argv) {
   if (argc >= 3) {
     model_buffer = static_cast<const char *>(ReadInputData(argv[2], &model_size));
   }
-  session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, nullptr);
+
+  lite::Context *context = nullptr;
+  if (argc >= 5) {
+    // config benchmark context
+    context = new (std::nothrow) lite::Context();
+    if (context == nullptr) {
+      return lite::RET_ERROR;
+    }
+    context->thread_num_ = atoi(argv[4]);
+    context->device_list_.resize(1);
+    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[4]))}}};
+  }
+
+  session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, context);
   if (session == nullptr) {
-    std::cerr << "create lite session failed" << std::endl;
+    printf("create lite session failed\n");
     return lite::RET_ERROR;
   }
 
@@ -156,8 +166,14 @@ int main(int argc, const char **argv) {
   }
   printf("========run success=======\n");
   delete session;
+  session = nullptr;
+  if (context != nullptr) {
+    delete context;
+    context = nullptr;
+  }
   for (size_t i = 0; i < inputs_num; ++i) {
     free(inputs_binbuf[i]);
+    inputs_binbuf[i] = nullptr;
   }
   return lite::RET_OK;
 }
