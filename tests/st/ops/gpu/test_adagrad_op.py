@@ -36,8 +36,8 @@ class Net(nn.Cell):
         self.accum = Parameter(Tensor(accum_np), name="accum")
 
     def construct(self, lr, grad):
-        self.apply_adagrad(self.var, self.accum, lr, grad)
-        return self.var, self.accum
+        z = self.apply_adagrad(self.var, self.accum, lr, grad)
+        return z
 
 
 @pytest.mark.level0
