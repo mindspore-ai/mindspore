@@ -83,6 +83,7 @@ class _ThreadLocalInfo(threading.local):
     def __init__(self):
         super(_ThreadLocalInfo, self).__init__()
         self._reserve_class_name_in_scope = True
+        self.debug_runtime = False
 
     @property
     def reserve_class_name_in_scope(self):
