@@ -24,6 +24,119 @@ The FusedBatchNorm and FusedBatchNormEx interface has been deleted. Please use t
 
 The MetaTensor interface has been deleted. The function of MetaTensor has been integrated into tensor.
 
+###### `mindspore.numpy.array()`, `mindspore.numpy.asarray()`, `mindspore.numpy.asfarray()`, `mindspore.numpy.copy()` now support GRAPH mode, but cannot accept `numpy.ndarray` as input arguments anymore([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
+
+Previously, these interfaces can accept numpy.ndarray as arguments and convert numpy.ndarray to Tensor, but cannot be used in GRAPH mode.
+However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To support these interfaces in graph mode, we have to remove `numpy.ndarray` support. With that being said, users can still use `Tensor` to convert `numpy.ndarray` to tensors.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.2.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.numpy as mnp
+>>> import numpy
+>>>
+>>> nd_array = numpy.array([1,2,3])
+>>> tensor = mnp.asarray(nd_array) # this line cannot be parsed in GRAPH mode
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.numpy as mnp
+>>> import numpy
+>>>
+>>> tensor = mnp.asarray([1,2,3]) # this line can be parsed in GRAPH mode
+```
+
+</td>
+</tr>
+</table>
+
+###### mindspore.numpy interfaces remove support for keyword arguments `out` and `where`([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
+
+Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.2.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.numpy as np
+>>>
+>>> a = np.ones((3,3))
+>>> b = np.ones((3,3))
+>>> out = np.zeros((3,3))
+>>> where = np.asarray([[True, False, True],[False, False, True],[True, True, True]])
+>>> res = np.add(a, b, out=out, where=where) # `out` cannot be used as a reference, therefore it is misleading
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.numpy as np
+>>>
+>>> a = np.ones((3,3))
+>>> b = np.ones((3,3))
+>>> out = np.zeros((3,3))
+>>> where = np.asarray([[True, False, True],[False, False, True],[True, True, True]])
+>>> res = np.add(a, b)
+>>> out = np.where(where, x=res, y=out) # instead of np.add(a, b, out=out, where=where)
+```
+
+</td>
+</tr>
+</table>
+
+#### Deprecations
+
+##### Python API
+
+###### `nn.MatMul` is now deprecated in favor of `ops.matmul` ([!12817](https://gitee.com/mindspore/mindspore/pulls/12817))
+
+[ops.matmul](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.2.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import numpy as np
+>>> from mindspore import Tensor, nn
+>>>
+>>> x = Tensor(np.ones((2, 3)).astype(onp.float32)
+>>> y = Tensor(np.ones((3, 4)).astype(onp.float32)
+>>> nn.MatMul()(x, y)
+```
+
+</td>
+<td>
+
+```python
+>>> import numpy as np
+>>> from mindspore import Tensor, ops
+>>>
+>>> x = Tensor(np.ones((2, 3)).astype(onp.float32)
+>>> y = Tensor(np.ones((3, 4)).astype(onp.float32)
+>>> ops.matmul(x, y)
+```
+
+</td>
+</tr>
+</table>
+
 # MindSpore 1.1.1 Release Notes
 
 ## MindSpore

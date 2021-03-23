@@ -451,6 +451,7 @@ def _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis):
         dtype = _check_dtype(dtype)
     else:
         dtype = mstype.float32
+    start, stop = broadcast_arrays(start, stop)
     axis = _canonicalize_axis(axis, start.ndim+1)
     return start, stop, num, endpoint, dtype, axis
 
@@ -499,8 +500,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
     start, stop, num, endpoint, dtype, axis = _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis)
     if not isinstance(retstep, bool):
         _raise_type_error("retstep should be an boolean, but got ", retstep)
-    start, stop = broadcast_arrays(start, stop)
-    axis = _canonicalize_axis(axis, start.ndim+1)
     bounds_shape = start.shape
     bounds_shape = _tuple_slice(bounds_shape, None, axis) + (1,) + _tuple_slice(bounds_shape, axis, None)
     iota_shape = _list_comprehensions(start.ndim+1, 1, True)
