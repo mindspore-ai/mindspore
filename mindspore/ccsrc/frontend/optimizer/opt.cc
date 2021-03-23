@@ -172,8 +172,8 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
 
   auto &all_nodes = manager->all_nodes();
   size_t node_idx = 0;
-  while (!todo.empty()) {
-    AnfNodePtr& node = todo[node_idx];
+  while (node_idx < todo.size()) {
+    AnfNodePtr node = todo[node_idx];
     node_idx++;
 
     if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {
@@ -216,7 +216,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   auto &all_nodes = manager->all_nodes();
   size_t node_idx = 0;
   while (node_idx < todo.size()) {
-    AnfNodePtr& node = todo[node_idx];
+    AnfNodePtr node = todo[node_idx];
     node_idx++;
 
     if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {

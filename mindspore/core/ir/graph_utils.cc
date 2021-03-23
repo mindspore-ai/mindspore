@@ -102,7 +102,7 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &s
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
   while (top_idx < todo.size()) {
-    CNodePtr& top = todo[top_idx];
+    CNodePtr top = todo[top_idx];
     top_idx++;
     sorted_nodes.push_back(top);
     auto inputs = top->inputs();
@@ -128,7 +128,7 @@ CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const Matc
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
   while (top_idx < todo.size()) {
-    CNodePtr& top = todo[top_idx];
+    CNodePtr top = todo[top_idx];
     top_idx++;
     if (match_predicate(top)) {
       return top;
@@ -157,7 +157,7 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
   while (top_idx < todo.size()) {
-    FuncGraphPtr &top = todo[top_idx];
+    FuncGraphPtr top = todo[top_idx];
     top_idx++;
     sorted.push_back(top);
     auto used = top->func_graphs_used();
