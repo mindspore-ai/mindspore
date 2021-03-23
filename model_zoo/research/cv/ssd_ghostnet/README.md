@@ -22,7 +22,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
-    - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -59,7 +59,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         ```
 
     2. If your own dataset is used. **Select dataset to other when run script.**
-        Organize the dataset infomation into a TXT file, each row in the file is as follows:
+        Organize the dataset information into a TXT file, each row in the file is as follows:
 
         ```python
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2

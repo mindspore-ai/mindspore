@@ -25,9 +25,9 @@
 # [FastText](#contents)
 
 FastText is a fast text classification algorithm, which is simple and efficient. It was proposed by Armand
-Joulin, Tomas Mikolov etc. in the artical "Bag of Tricks for Efficient Text Classification" in 2016. It is similar to
+Joulin, Tomas Mikolov etc. in the article "Bag of Tricks for Efficient Text Classification" in 2016. It is similar to
 CBOW in model architecture, where the middle word is replace by a label. FastText adopts ngram feature as addition feature
-to get some information about words. It speeds up training and testing while maintaining high percision, and widly used
+to get some information about words. It speeds up training and testing while maintaining high precision, and widly used
 in various tasks of text classification.
 
 [Paper](https://arxiv.org/pdf/1607.01759.pdf): "Bag of Tricks for Efficient Text Classification", 2016, A. Joulin, E. Grave, P. Bojanowski, and T. Mikolov
@@ -50,7 +50,7 @@ architecture. In the following sections, we will introduce how to run the script
 # [Environment Requirements](#content)
 
 - Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend processor.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：

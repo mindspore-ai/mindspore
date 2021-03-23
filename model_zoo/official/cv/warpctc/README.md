@@ -12,10 +12,10 @@
         - [Parameters Configuration](#parameters-configuration)
     - [Dataset Preparation](#dataset-preparation)
     - [Training Process](#training-process)
-      - [Training](#training)
-      - [Distributed Training](#distributed-training)
+        - [Training](#training)
+        - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
-      - [Evaluation](#evaluation)
+        - [Evaluation](#evaluation)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
@@ -38,24 +38,23 @@ The dataset is self-generated using a third-party library called [captcha](https
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
-  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. You will be able to have access to related resources once approved. 
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
-  - [MindSpore](https://gitee.com/mindspore/mindspore)
+    - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
 - Generate dataset.
 
     Run the script `scripts/run_process_data.sh` to generate a dataset. By default, the shell script will generate 10000 test images and 50000 train images separately.
- 
-    ```
+
+    ```bash
      $ cd scripts
      $ sh run_process_data.sh
-     
+
      # after execution, you will find the dataset like the follows:
      .  
      └─warpctc
@@ -67,31 +66,33 @@ The dataset is self-generated using a third-party library called [captcha](https
 - After the dataset is prepared, you may start running the training or the evaluation scripts as follows:
 
     - Running on Ascend
-    ```
+
+    ```bash
     # distribute training example in Ascend
     $ bash run_distribute_train.sh rank_table.json ../data/train
-  
+
     # evaluation example in Ascend
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt Ascend
-    
+
     # standalone training example in Ascend
     $ bash run_standalone_train.sh ../data/train Ascend
     ```
+
     For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
     Please follow the instructions in the link below:
 
-    https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
-    
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
+
     - Running on GPU
-    
-    ```
+
+    ```bash
     # distribute training example in GPU
     $ bash run_distribute_train_for_gpu.sh 8 ../data/train
-    
+
     # standalone training example in GPU
     $ bash run_standalone_train.sh ../data/train GPU
-  
+
     # evaluation example in GPU
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
     ```
@@ -127,7 +128,8 @@ The dataset is self-generated using a third-party library called [captcha](https
 ## [Script Parameters](#contents)
 
 ### Training Script Parameters
-```
+
+```bash
 # distributed training in Ascend
 Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
 
@@ -142,8 +144,8 @@ Usage: bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 
 Parameters for both training and evaluation can be set in config.py.
 
-```
-"max_captcha_digits": 4,                    # max number of digits in each 
+```bash
+"max_captcha_digits": 4,                    # max number of digits in each
 "captcha_width": 160,                       # width of captcha images
 "captcha_height": 64,                       # height of capthca images
 "batch_size": 64,                           # batch size of input tensor
@@ -158,36 +160,41 @@ Parameters for both training and evaluation can be set in config.py.
 ```
 
 ## [Dataset Preparation](#contents)
+
 - You may refer to "Generate dataset" in [Quick Start](#quick-start) to automatically generate a dataset, or you may choose to generate a captcha dataset by yourself.
 
 ## [Training Process](#contents)
 
 - Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
-   
+
 ### [Training](#contents)
+
 - Run `run_standalone_train.sh` for non-distributed training of WarpCTC model, either on Ascend or on GPU.
 
 ``` bash
 bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 ```
-      
+
 ### [Distributed Training](#contents)
+
 - Run `run_distribute_train.sh` for distributed training of WarpCTC model on Ascend.
 
 ``` bash
 bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
 ```
 
-
 - Run `run_distribute_train_gpu.sh` for distributed training of WarpCTC model on GPU.
+
 ``` bash
 bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
 ```
 
 ## [Evaluation Process](#contents)
+
 ### [Evaluation](#contents)
 
 - Run `run_eval.sh` for evaluation.
+
 ``` bash
 bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 ```
@@ -216,7 +223,6 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | Checkpoint for Fine tuning | 20.3M (.ckpt file)                            | 20.3M (.ckpt file) |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc) |
 
-
 ### [Evaluation Performance](#contents)
 
 | Parameters          | WarpCTC                     |
@@ -232,7 +238,9 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | Model for inference | 20.3M (.ckpt file)          |
 
 # [Description of Random Situation](#contents)
+
 In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py for weight initialization.
 
 # [ModelZoo Homepage](#contents)
+
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

@@ -1,4 +1,4 @@
-# ResNext101-64x4d for MindSpore
+# ResNext101-64x4d
 
 本仓库提供了ResNeXt101-64x4d模型的训练脚本和超参配置，以达到论文中的准确性。
 
@@ -26,7 +26,7 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
 
 ### 默认设置
 
-以下各节介绍ResNext50模型的默认配置和超参数。
+以下各节介绍ResNext101模型的默认配置和超参数。
 
 #### 优化器
 
@@ -65,7 +65,7 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
 
 ## 快速入门指南
 
-目录说明，代码参考了Modelzoo上的[ResNext50_for_MindSpore](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext50)
+目录说明，代码参考了Modelzoo上的[ResNext50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext50)
 
 ```path
 .

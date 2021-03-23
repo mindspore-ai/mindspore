@@ -58,7 +58,7 @@ MSCOCO2017
 ## [环境要求](#content)
 
 - 硬件（Ascend）
-    - 使用Ascend处理器准备硬件环境。如果您想使用Ascend，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com。一旦获得批准，您就可以获取资源。
+    - 使用Ascend处理器准备硬件环境。
 - 架构
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 想要获取更多信息，请检查以下资源：

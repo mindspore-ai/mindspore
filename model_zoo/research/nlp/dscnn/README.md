@@ -57,7 +57,7 @@ Dataset used: [Speech commands dataset version 2](https://arxiv.org/abs/1804.032
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
-    - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - Third party open source package（if have）
@@ -204,8 +204,8 @@ Parameters for both training and evaluation can be set in config.py.
   for shell script:
 
   ```python
-  # sh srcipts/run_train_ascend.sh [device_id]
-  sh srcipts/run_train_ascend.sh 0
+  # sh scripts/run_train_ascend.sh [device_id]
+  sh scripts/run_train_ascend.sh 0
   ```
 
   for python script:
@@ -284,7 +284,6 @@ Parameters for both training and evaluation can be set in config.py.
 | Total time                 | 4 mins                                                       |
 | Parameters (K)             |  500K                                                        |
 | Checkpoint for Fine tuning |  3.3M (.ckpt file)                                           |
-| Script                     | [Link]() | [Link]() |
 
 ### Inference Performance
 

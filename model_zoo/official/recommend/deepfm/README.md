@@ -38,7 +38,7 @@ The FM and deep component share the same input raw feature vector, which enables
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU/CPU）
-    - Prepare hardware environment with Ascend, GPU, or CPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend, GPU, or CPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -49,7 +49,7 @@ The FM and deep component share the same input raw feature vector, which enables
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- runing on Ascend
+- running on Ascend
 
   ```shell
   # run training example
