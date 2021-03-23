@@ -38,8 +38,9 @@ class Primitive(Primitive_):
         >>> class Add(Primitive):
         ...     @prim_attr_register
         ...     def __init__(self, attr1, attr2):
-        ...         # check attr1 and attr2 or do some initializations
-        >>> # init a Primitive obj with attr1=1 and attr2=2
+        ...         '''init for add'''
+        ...     # check attr1 and attr2 or do some initializations
+        ...     # init a Primitive obj with attr1=1 and attr2=2
         >>> add = Add(attr1=1, attr2=2)
     """
     _repr_ignore_list = ['input_names', 'output_names']
