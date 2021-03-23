@@ -105,10 +105,13 @@ class Model_Thor(Model):
     """
 
     def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
-                 eval_indexes=None, amp_level="O0", frequency=834, **kwargs):
+                 eval_indexes=None, amp_level="O0", frequency=834, use_dynamic_frequency=False,
+                 first_stage_steps=5, **kwargs):
         super(Model_Thor, self).__init__(network, loss_fn, optimizer, metrics, eval_network,
                                          eval_indexes, amp_level, **kwargs)
         self._frequency = frequency
+        self._use_dynamic_frequency = use_dynamic_frequency
+        self._first_stage_steps = first_stage_steps
         self._train_network = self._build_train_network()
 
     def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1,
@@ -127,6 +130,25 @@ class Model_Thor(Model):
             network.set_auto_parallel()
 
         return dataset_helper, network
+
+    def _get_iter_second_steps(self, cb_params, sink_size):
+        """get first stage steps for second order."""
+        iter_second_steps = 1
+        if self._use_dynamic_frequency:
+            global_steps = (cb_params.cur_epoch_num - 1) * sink_size + cb_params.cur_step_num
+            if global_steps <= self._first_stage_steps:
+                iter_second_steps = self._first_stage_steps
+        return iter_second_steps
+
+    def _get_ascend_sink_count(self, cb_params, dataset_helper, sink_size, iter_first_order, ori_sink_count):
+        """get ascend sink count for each epoch."""
+        if context.get_context("device_target") == "Ascend":
+            if self._use_dynamic_frequency and cb_params.cur_epoch_num == 1:
+                fix_fre_sink_size = sink_size - self._first_stage_steps - iter_first_order
+                first_epoch_sink_count = math.ceil(fix_fre_sink_size / self._frequency) * 2 + 2
+                dataset_helper.iter.sink_count = first_epoch_sink_count
+            else:
+                dataset_helper.iter.sink_count = ori_sink_count
 
     def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None, sink_size=-1):
         """
@@ -174,9 +196,12 @@ class Model_Thor(Model):
         train_network_init_flag = True
         has_do_dataset_init = False
 
+        ori_sink_count = dataset_helper.iter.sink_count
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
             list_callback.epoch_begin(run_context)
+            self._get_ascend_sink_count(cb_params, dataset_helper, sink_size, iter_first_order, ori_sink_count)
+
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
                 if _need_to_full() and context.get_context("device_target") == "GPU":
@@ -188,10 +213,15 @@ class Model_Thor(Model):
                         if train_network_init_flag:
                             self._train_network.add_flags_recursive(thor=True)
                         self._train_network.phase = 'train0'
-                        switch_branch_one = not switch_branch_one
                         outputs = self._train_network(*inputs)
                         cb_params.net_outputs = outputs
-                        list_callback.step_end(run_context)
+                        is_first_stage = self._use_dynamic_frequency and cb_params.cur_epoch_num == 1 \
+                                         and cb_params.cur_step_num < self._first_stage_steps
+                        if is_first_stage:
+                            continue
+                        else:
+                            switch_branch_one = not switch_branch_one
+                            list_callback.step_end(run_context)
                     else:
                         cb_params.cur_step_num += 1
                         if train_network_init_flag:
@@ -207,7 +237,7 @@ class Model_Thor(Model):
                             list_callback.step_end(run_context)
                 else:
                     if switch_branch_one:
-                        cb_params.cur_step_num += 1
+                        cb_params.cur_step_num += self._get_iter_second_steps(cb_params, sink_size)
                         if train_network_init_flag:
                             self._train_network.add_flags_recursive(thor=True)
                         self._train_network.phase = 'train0'
