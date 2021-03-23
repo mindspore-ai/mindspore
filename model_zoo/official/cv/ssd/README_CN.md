@@ -17,6 +17,10 @@
     - [评估过程](#评估过程)
         - [Ascend处理器环境评估](#ascend处理器环境评估)
         - [GPU处理器环境评估](#gpu处理器环境评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -310,6 +314,49 @@ Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
 ========================================
 
 mAP: 0.2244936111705981
+```
+
+## 推理过程
+
+### [导出MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+目前仅支持batch_Size为1的推理。精度计算过程需要70G+的内存，否则进程将会因为超出内存被系统终止。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。需要注意的是ssd_vgg16执行推理的图片尺寸为[300, 300]，由于DVPP硬件限制宽为16整除，高为2整除，因此，这个网络需要通过CPU算子对图像进行前处理。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.339
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.521
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.370
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.168
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.386
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.461
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.310
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.481
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.515
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.293
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.659
+mAP: 0.33880018942412393
 ```
 
 # 模型描述
