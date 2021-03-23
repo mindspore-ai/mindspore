@@ -41,8 +41,8 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     return res;
   }
   size_t seen = NewSeenGeneration();
-  std::deque<AnfNodePtr> todo(1024);
-  todo.clear();
+  std::vector<AnfNodePtr> todo;
+  todo.reserve(1024);
   todo.push_back(root);
 
   while (!todo.empty()) {
@@ -95,14 +95,15 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
 
 // search the cnodes inside this graph only
 std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &starts) {
-  std::deque<CNodePtr> todo(1024);
-  todo.clear();
+  std::vector<CNodePtr> todo;
+  todo.reserve(1024);
   todo.insert(todo.end(), starts.begin(), starts.end());
   std::vector<CNodePtr> sorted_nodes;
   auto seen = NewSeenGeneration();
-  while (!todo.empty()) {
-    CNodePtr top = todo.front();
-    todo.pop_front();
+  size_t top_idx = 0;
+  while (top_idx < todo.size()) {
+    CNodePtr& top = todo[top_idx];
+    top_idx++;
     sorted_nodes.push_back(top);
     auto inputs = top->inputs();
     for (auto &item : inputs) {
@@ -121,13 +122,14 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &s
 
 // search the cnode match the predicate inside this graph only
 CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate) {
-  std::deque<CNodePtr> todo(1024);
-  todo.clear();
+  std::vector<CNodePtr> todo;
+  todo.reserve(1024);
   todo.insert(todo.end(), starts.begin(), starts.end());
   auto seen = NewSeenGeneration();
-  while (!todo.empty()) {
-    CNodePtr top = todo.front();
-    todo.pop_front();
+  size_t top_idx = 0;
+  while (top_idx < todo.size()) {
+    CNodePtr& top = todo[top_idx];
+    top_idx++;
     if (match_predicate(top)) {
       return top;
     }
@@ -147,13 +149,16 @@ CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const Matc
 }
 
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
-  std::deque<FuncGraphPtr> todo;
+  std::vector<FuncGraphPtr> todo;
+  todo.reserve(128);
   todo.push_back(root);
   std::vector<FuncGraphPtr> sorted;
+  sorted.reserve(128);
   auto seen = NewSeenGeneration();
-  while (!todo.empty()) {
-    FuncGraphPtr top = todo.front();
-    todo.pop_front();
+  size_t top_idx = 0;
+  while (top_idx < todo.size()) {
+    FuncGraphPtr &top = todo[top_idx];
+    top_idx++;
     sorted.push_back(top);
     auto used = top->func_graphs_used();
     for (auto &item : used) {

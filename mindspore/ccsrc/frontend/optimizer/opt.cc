@@ -126,14 +126,14 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
   return nullptr;
 }
 
-static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodePtr &node, std::deque<AnfNodePtr> *todo,
-                                   bool change, size_t seen) {
+static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodePtr &node,
+                                          std::vector<AnfNodePtr> &todo, bool change, size_t seen) {
   if (IsValueNode<FuncGraph>(node)) {
-    (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
+    todo.emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
   }
   if (node->isa<CNode>()) {
     auto &inputs = node->cast<CNodePtr>()->inputs();
-    (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
+    (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(todo));
   }
 
   if (!change) {
@@ -151,7 +151,7 @@ static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodeP
     if (use_node == nullptr) {
       continue;
     }
-    (*todo).emplace_back(use_node);
+    todo.emplace_back(use_node);
     if (use_node->seen_ == seen) {
       use_node->seen_--;
     }
@@ -164,16 +164,17 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
 #endif
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
-  // 1024 is for the initial capacity of deque
-  std::deque<AnfNodePtr> todo(1024);
-  todo.clear();
+  // 1024 is for the initial capacity of vector
+  std::vector<AnfNodePtr> todo;
+  todo.reserve(1024);
   todo.emplace_back(func_graph->output());
   bool changes = false;
 
   auto &all_nodes = manager->all_nodes();
+  size_t node_idx = 0;
   while (!todo.empty()) {
-    AnfNodePtr node = todo.front();
-    todo.pop_front();
+    AnfNodePtr& node = todo[node_idx];
+    node_idx++;
 
     if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {
       continue;
@@ -191,7 +192,7 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
         break;
       }
     }
-    UpdateTransformingList(optimizer, node, &todo, change, seen);
+    UpdateTransformingList(optimizer, node, todo, change, seen);
   }
 #ifdef ENABLE_PROFILE
   MsProfile::StatTime("opt.transforms." + optimizer->name(), GetTime() - start);
@@ -206,16 +207,17 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
 #endif
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
-  // 1024 is for the initial capacity of deque
-  std::deque<AnfNodePtr> todo(1024);
-  todo.clear();
+  // 1024 is for the initial capacity of vector
+  std::vector<AnfNodePtr> todo(0);
+  todo.reserve(1024);
   todo.emplace_back(root_node);
   bool changes = false;
 
   auto &all_nodes = manager->all_nodes();
-  while (!todo.empty()) {
-    AnfNodePtr node = todo.front();
-    todo.pop_front();
+  size_t node_idx = 0;
+  while (node_idx < todo.size()) {
+    AnfNodePtr& node = todo[node_idx];
+    node_idx++;
 
     if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {
       continue;
@@ -229,7 +231,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
       changes = true;
       node = res;
     }
-    UpdateTransformingList(optimizer, node, &todo, change, seen);
+    UpdateTransformingList(optimizer, node, todo, change, seen);
   }
 
 #ifdef ENABLE_PROFILE
