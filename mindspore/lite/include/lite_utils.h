@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <new>
 #endif  // NOT_USE_STL
 
 #ifndef MS_API
@@ -126,22 +127,21 @@ class Vector {
     size_ = size;
     elem_size_ = sizeof(T);
     capacity_ = (size == 0 ? DEFAULT_CAPACITY : size);
-    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    data_ = new (std::nothrow) T[capacity_];
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
-    memset(data_, 0, capacity_ * elem_size_);
   }
 
   Vector(size_t size, const T &value) {
     size_ = size;
     elem_size_ = sizeof(T);
     capacity_ = (size == 0 ? DEFAULT_CAPACITY : size);
-    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    data_ = new (std::nothrow) T[capacity_];
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
-    for (int i = 0; i < size; ++i) {
+    for (int i = 0; i < static_cast<int>(size_); ++i) {
       data_[i] = value;
     }
   }
@@ -150,30 +150,32 @@ class Vector {
     size_ = vec.size_;
     elem_size_ = sizeof(T);
     capacity_ = vec.capacity_;
-    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    data_ = new (std::nothrow) T[capacity_];
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
-    memcpy(data_, vec.data_, size_ * elem_size_);
+    for (int i = 0; i < static_cast<int>(size_); ++i) {
+      data_[i] = vec.data_[i];
+    }
   }
 
   ~Vector() {
     if (data_ != nullptr) {
-      free(data_);
+      delete[] data_;
     }
   }
 
   void clear() {
     size_ = 0;
     if (data_ != nullptr) {
-      free(data_);
+      delete[] data_;
       data_ = nullptr;
     }
   }
 
   void push_back(const T &elem) {
     if (data_ == nullptr) {
-      data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+      data_ = new (std::nothrow) T[capacity_];
       if (data_ == nullptr) {
         MS_C_EXCEPTION("malloc data failed");
       }
@@ -187,7 +189,7 @@ class Vector {
 
   void push_back(T &&elem) {
     if (data_ == nullptr) {
-      data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+      data_ = new (std::nothrow) T[capacity_];
       if (data_ == nullptr) {
         MS_C_EXCEPTION("malloc data failed");
       }
@@ -216,7 +218,9 @@ class Vector {
       if (index == size_ - 1) {
         push_back(elem);
       } else {
-        memmove(data_ + index + 1, data_ + index, (size_ - index - 1) * elem_size_);
+        for (int i = static_cast<int>(size_) - 1; i > static_cast<int>(index); --i) {
+          data_[i + 1] = data_[i];
+        }
         data_[index] = elem;
       }
     } else {
@@ -302,7 +306,9 @@ class Vector {
     if (index == size_ - 1) {
       --size_;
     } else if (index < size_) {
-      memmove(data_ + index, data_ + index + 1, (size_ - index - 1) * elem_size_);
+      for (int i = index; i < static_cast<int>(size_); ++i) {
+        data_[i] = data_[i + 1];
+      }
       --size_;
     } else {
       MS_C_EXCEPTION("Input index is out of range!");
@@ -314,13 +320,15 @@ class Vector {
       capacity_ *= 2;
     }
     T *tmp = data_;
-    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    data_ = new (std::nothrow) T[capacity_];
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
-    memcpy(data_, tmp, MIN(size, size_) * elem_size_);
+    for (int i = 0; i < MIN(static_cast<int>(size), static_cast<int>(size_)); ++i) {
+      data_[i] = tmp[i];
+    }
     size_ = size;
-    free(tmp);
+    delete[] tmp;
   }
 
   void reserve(size_t capacity) {
@@ -336,11 +344,13 @@ class Vector {
     size_ = vec.size_;
     elem_size_ = sizeof(T);
     capacity_ = vec.capacity_;
-    data_ = reinterpret_cast<T *>(malloc(capacity_ * elem_size_));
+    data_ = new (std::nothrow) T[capacity_];
     if (data_ == nullptr) {
       MS_C_EXCEPTION("malloc data failed");
     }
-    memcpy(data_, vec.data_, size_ * elem_size_);
+    for (int i = 0; i < static_cast<int>(size_); ++i) {
+      data_[i] = vec.data_[i];
+    }
     return *this;
   }
 

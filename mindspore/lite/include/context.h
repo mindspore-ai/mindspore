@@ -39,11 +39,19 @@ typedef struct {
 } NpuDeviceInfo;
 
 /// \brief DeviceInfo defined for backend's configuration information.
+#ifdef NOT_USE_STL
+// DeviceInfo() is implicitly deleted because
+// the default definition of union struct would be ill-formed
+struct DeviceInfo {
+  CpuDeviceInfo cpu_device_info_;
+};
+#else
 union DeviceInfo {
   CpuDeviceInfo cpu_device_info_;
   GpuDeviceInfo gpu_device_info_;
   NpuDeviceInfo npu_device_info_;
 };
+#endif  // NOT_USE_STL
 
 /// \brief DeviceContext defined for holding backend's configuration information.
 struct DeviceContext {
