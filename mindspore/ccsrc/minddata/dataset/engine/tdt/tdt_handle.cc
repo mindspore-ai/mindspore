@@ -14,31 +14,37 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
+
 namespace mindspore {
+extern std::set<void **> acl_handle_set;
 namespace dataset {
 
-std::vector<acltdtChannelHandle *> TdtHandle::acl_handle = std::vector<acltdtChannelHandle *>();
-
-void TdtHandle::AddHandle(acltdtChannelHandle *handle) {
-  if (handle != nullptr) {
-    acl_handle.emplace_back(handle);
+void TdtHandle::AddHandle(acltdtChannelHandle **handle) {
+  if (*handle != nullptr) {
+    acl_handle_set.insert(reinterpret_cast<void **>(handle));
   }
+}
+
+void TdtHandle::DelHandle(acltdtChannelHandle **handle) {
+  void **void_handle = reinterpret_cast<void **>(handle);
+  acl_handle_set.erase(void_handle);
 }
 
 bool TdtHandle::DestroyHandle() {
   bool destroy_all = true;
-  for (auto &handle : acl_handle) {
-    if (handle != nullptr) {
-      if (acltdtDestroyChannel(handle) != ACL_SUCCESS) {
+  for (auto it = acl_handle_set.begin(); it != acl_handle_set.end(); it++) {
+    acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(*it);
+    if (*handle != nullptr) {
+      acltdtStopChannel(*handle);
+      if (acltdtDestroyChannel(*handle) != ACL_SUCCESS) {
         destroy_all = false;
       } else {
-        handle = nullptr;
+        *handle = nullptr;
       }
     }
   }
   return destroy_all;
 }
 
-std::vector<acltdtChannelHandle *> TdtHandle::GetHandle() { return acl_handle; }
 }  // namespace dataset
 }  // namespace mindspore

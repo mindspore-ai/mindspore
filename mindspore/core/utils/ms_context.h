@@ -25,9 +25,15 @@
 #include <utility>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#ifdef ENABLE_TDTQUE
+#include "pybind11/pybind11.h"
+#include "mindspore/ccsrc/minddata/dataset/engine/tdt/tdt_handle.h"
+using mindspore::dataset::TdtHandle;
+#endif
 #ifndef NO_DLIB
 #include "acl/acl_tdt.h"
 #endif
+
 namespace mindspore {
 enum MsBackendPolicy {
   kMsBackendGeOnly = 0,
@@ -137,7 +143,8 @@ class MsContext {
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
 #ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *get_acl_tdt_channel_handle();
+  acltdtChannelHandle *CreateAclTdtChannelHandle();
+  void DestroyAclTdtChannelHandle();
 #endif
   static void device_seter(DeviceSeter device) { seter_ = device; }
   static void device_type_seter(DeviceTypeSeter device_type) { device_type_seter_ = device_type; }
@@ -175,10 +182,9 @@ class MsContext {
   uint32_t uint32_params_[MsCtxParam::NUM_UINT32_PARAMS];
   float float_params_[MsCtxParam::NUM_FLOAT_PARAMS];
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
-
   MsBackendPolicy backend_policy_;
 #ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *acl_handle = nullptr;
+  acltdtChannelHandle *acl_handle_ = nullptr;
 #endif
 };
 
