@@ -67,7 +67,7 @@ class MTensor : public mindspore::tensor::MSTensor {
   int ElementsNum() const override;
   size_t Size() const override;
   String tensor_name() const override { return tensor_name_; }
-  void set_tensor_name(const String name) override { tensor_name_ = name; }
+  void set_tensor_name(const String &name) override { tensor_name_ = name; }
   void *MutableData() override;
   void *data() override { return data_; }
   void set_data(void *data) override { data_ = data; }

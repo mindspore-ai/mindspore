@@ -27,11 +27,13 @@ do
 done
 
 BASEPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-MINDSPORE_ROOT_DIR=${${BASEPATH}%%/mindspore/lite/micro/example/mnist}
+MINDSPORE_ROOT_DIR=${${BASEPATH}%%/mindspore/lite/micro/example/mnist_x86}
 
 echo "current dir is: ${BASEPATH}"
 
 INPUT_BIN=${BASEPATH}/mnist_input.bin
+MNIST_NAME=mnist
+MNIST_FILE=${MNIST_NAME}.ms
 BENCHMARK_PATH=${BASEPATH}
 
 get_version() {
@@ -43,7 +45,7 @@ get_version() {
 }
 
 download_inference() {
-    local MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-inference-linux-x64"
+    MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-inference-linux-x64"
     local MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
     local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
 
@@ -57,8 +59,6 @@ download_inference() {
 }
 
 download_mnist() {
-    MNIST_NAME=mnist
-    MNIST_FILE=${MNIST_NAME}.ms
     local MNIST_DOWNLOAD_URL=https://download.mindspore.cn/model_zoo/official/lite/mnist_lite/${MNIST_FILE}
 
     if [ ! -e ${BASEPATH}/build/${MNIST_FILE} ]; then
@@ -76,7 +76,7 @@ mkdir -p build
 get_version
 download_inference
 
-if [ "${GEN}" == "ON" ]; then
+if [[ "${GEN}" == "ON" ]]; then
     echo "downloading mnist.ms!"
     download_mnist
     echo "generating mnist"
