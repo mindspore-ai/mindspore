@@ -30,6 +30,7 @@
 #include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
 int WriteContentToFile(const std::string &file, const std::string &content) {
@@ -62,9 +63,7 @@ void Generator::CodeNetRunFunc(std::ofstream &ofs) {
   // generate net inference code
   ofs << "void Inference() {\n";
   if (config_->support_parallel()) {
-    ofs << "  const int g_thread_num = GetCurrentThreadNum(g_thread_pool);\n";
-  } else {
-    ofs << "  const int g_thread_num = 1;\n";
+    ofs << gThreadNum << " = GetCurrentThreadNum(" << gThreadPool << ");\n ";
   }
   for (const auto &block : ctx_->code_blocks()) {
     ofs << "  {\n" << block << "  }\n";
