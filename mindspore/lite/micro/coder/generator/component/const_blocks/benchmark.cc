@@ -19,7 +19,6 @@
 namespace mindspore::lite::micro {
 
 const char *benchmark_source = R"RAW(
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -59,6 +58,9 @@ void usage() {
     "args[5]: runtime thread bind mode\n\n");
 }
 
+#define LOG_INFO(content, args...) \
+  { printf("[INFO] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
+
 template <typename T>
 void PrintData(void *data, size_t data_number) {
   if (data == nullptr) {
@@ -66,19 +68,20 @@ void PrintData(void *data, size_t data_number) {
   }
   auto casted_data = static_cast<T *>(data);
   for (size_t i = 0; i < 10 && i < data_number; i++) {
-    std::cout << std::to_string(casted_data[i]) << ", ";
+    printf("%s,", std::to_string(casted_data[i]).c_str());
   }
-  std::cout << std::endl;
+  printf("\n");
 }
 
 void TensorToString(tensor::MSTensor *tensor) {
-  std::cout << ", DataType: " << tensor->data_type();
-  std::cout << ", Size: " << tensor->Size();
-  std::cout << ", Shape:";
+  printf("name: %s, ", tensor->tensor_name().c_str());
+  printf(", DataType: %d", tensor->data_type());
+  printf(", Size: %lu", tensor->Size());
+  printf(", Shape: ");
   for (auto &dim : tensor->shape()) {
-    std::cout << " " << dim;
+    printf("%d ", dim);
   }
-  std::cout << ", Data:" << std::endl;
+  printf(", Data: \n");
   switch (tensor->data_type()) {
     case kNumberTypeFloat32: {
       PrintData<float>(tensor->MutableData(), tensor->ElementsNum());
@@ -106,11 +109,11 @@ void TensorToString(tensor::MSTensor *tensor) {
 
 int main(int argc, const char **argv) {
   if (argc < 2) {
-    std::cout << "input command is invalid\n" << std::endl;
+    printf("input command is invalid\n");
     usage();
     return lite::RET_ERROR;
   }
-  std::cout << "start run benchmark" << std::endl;
+  printf("=======run benchmark======\n");
 
   const char *model_buffer = nullptr;
   int model_size = 0;
@@ -146,14 +149,18 @@ int main(int argc, const char **argv) {
     return lite::RET_ERROR;
   }
 
-  std::cout << "run benchmark success" << std::endl;
+  Vector<String> outputs_name = session->GetOutputTensorNames();
+  for (const auto &name : outputs_name) {
+    auto output = session->GetOutputByTensorName(name);
+    TensorToString(output);
+  }
+  printf("========run success=======\n");
   delete session;
   for (size_t i = 0; i < inputs_num; ++i) {
     free(inputs_binbuf[i]);
   }
   return lite::RET_OK;
 }
-
 )RAW";
 
 }  // namespace mindspore::lite::micro
