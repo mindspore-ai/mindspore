@@ -39,7 +39,6 @@ class PadNPUKernel : public NPUKernel {
  private:
   hiai::op::PadV2 *op_ = nullptr;
   PadParameter *param_;
-  std::vector<int> paddings_;
   hiai::op::Const *hiai_paddings_ = nullptr;
   hiai::op::Const *hiai_constant_ = nullptr;
 };

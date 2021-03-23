@@ -31,7 +31,7 @@ int PadNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std
   }
   if (inputs.size() >= 2 && inputs[1]->data_c() != nullptr) {
     for (int i = 0; i < inputs[1]->ElementsNum(); i++) {
-      paddings_.push_back(static_cast<int *>(inputs[1]->data_c())[i]);
+      param_->paddings_[i] = static_cast<int *>(inputs[1]->data_c())[i];
     }
   } else {
     MS_LOG(WARNING) << "NPU axis is attribute.";
@@ -50,7 +50,7 @@ int PadNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const 
   int size = static_cast<int>(param_->padding_length / 2);
   ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
-  padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_.data()), 2 * size * sizeof(int));
+  padding_tensor->SetData(reinterpret_cast<uint8_t *>(param_->paddings_), 2 * size * sizeof(int));
   hiai_paddings_ = new hiai::op::Const(name_ + "paddings");
   hiai_paddings_->set_attr_value(padding_tensor);
 
