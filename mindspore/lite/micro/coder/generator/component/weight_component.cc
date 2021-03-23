@@ -36,7 +36,7 @@ void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext
          "  RET_ERROR = 1,\n"
          "};\n\n";
   // set a global var for thread_pool
-  ofs << "static int" << gThreadNum << " = 1;\n";
+  ofs << "extern int " << gThreadNum << ";\n";
 }
 
 void CodeModelParamsState(std::ofstream &ofs, const std::map<std::string, Tensor *> &weights) {
