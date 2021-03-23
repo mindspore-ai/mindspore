@@ -26,7 +26,7 @@ from mindspore.communication.management import init, get_group_size, get_rank
 
 from src.loss import CTCLoss
 from src.dataset import create_dataset
-from src.crnn import CRNN
+from src.crnn import crnn
 from src.crnn_for_train import TrainOneStepCellWithGradClip
 
 set_seed(1)
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     loss = CTCLoss(max_sequence_length=config.num_step,
                    max_label_length=max_text_length,
                    batch_size=config.batch_size)
-    net = CRNN(config)
+    net = crnn(config)
     opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum, nesterov=config.nesterov)
 
     net = WithLossCell(net, loss)
