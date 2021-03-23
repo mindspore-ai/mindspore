@@ -146,8 +146,8 @@ def _get_parameter_broadcast():
     parameter_broadcast = auto_parallel_context().get_parameter_broadcast()
 
     if parallel_mode in ("data_parallel", "hybrid_parallel") and parameter_broadcast is False and get_seed is None:
-        logger.warning("You are suggested to use mindspore.common.set_seed() to share"
-                       " parameters among devices.")
+        logger.warning("You are suggested to use mindspore.context.set_auto_parallel_context(parameter_broadcast=True)"
+                       " or mindspore.common.set_seed() to share parameters among multi-devices.")
 
     return parameter_broadcast
 
