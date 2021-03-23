@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_INCLUDE_VERSION_H_
 #define MINDSPORE_LITE_INCLUDE_VERSION_H_
 
-#include <string>
+#include "include/lite_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -28,11 +28,11 @@ const int ms_version_revision = 0;
 /// \brief Global method to get a version string.
 ///
 /// \return The version string of MindSpore Lite.
-inline std::string Version() {
-  return "MindSpore Lite " + std::to_string(ms_version_major) + "." + std::to_string(ms_version_minor) + "." +
-         std::to_string(ms_version_revision);
+inline String Version() {
+  return "MindSpore Lite " + to_string(ms_version_major) + "." + to_string(ms_version_minor) + "." +
+         to_string(ms_version_revision);
 }
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_VERSION_H
+#endif  // MINDSPORE_LITE_INCLUDE_VERSION_H_

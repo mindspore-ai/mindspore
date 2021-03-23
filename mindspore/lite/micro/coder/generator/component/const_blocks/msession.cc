@@ -63,31 +63,25 @@ class LiteSession : public session::LiteSession {
 
   int CompileGraph(lite::Model *model) override;
 
-  std::vector<tensor::MSTensor *> GetInputs() const override;
+  Vector<tensor::MSTensor *> GetInputs() const override;
 
-  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override { return nullptr; }
+  mindspore::tensor::MSTensor *GetInputsByTensorName(const String &tensor_name) const override { return nullptr; }
 
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
-  std::vector<tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
+  Vector<tensor::MSTensor *> GetOutputsByNodeName(const String &node_name) const override;
 
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
+  Vector<String> GetOutputTensorNames() const override;
 
-  std::vector<std::string> GetOutputTensorNames() const override;
+  mindspore::tensor::MSTensor *GetOutputByTensorName(const String &tensor_name) const override;
 
-  mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
-
-  int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
+  int Resize(const Vector<tensor::MSTensor *> &inputs, const Vector<Vector<int>> &dims) override { return RET_ERROR; }
 
   int InitRuntimeBuffer();
 
  private:
-  int SetInputsData(const std::vector<MTensor *> &inputs) const;
-  std::vector<MTensor *> inputs_;
-  std::vector<MTensor *> outputs_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_node_map_;
-
+  Vector<MTensor *> inputs_;
+  Vector<MTensor *> outputs_;
   void *runtime_buffer_;
 };
 
@@ -95,7 +89,6 @@ class LiteSession : public session::LiteSession {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_SESSION_H_
-
 )RAW";
 
 const char *session_source = R"RAW(
@@ -130,8 +123,7 @@ LiteSession::~LiteSession() {
     delete input;
     input = nullptr;
   }
-  for (auto &item : output_tensor_map_) {
-    auto output = item.second;
+  for (auto &output : outputs_) {
     if (output == nullptr) {
       continue;
     }
@@ -153,46 +145,28 @@ int LiteSession::InitRuntimeBuffer() {
   return RET_OK;
 }
 
-std::vector<tensor::MSTensor *> LiteSession::GetInputs() const {
-  std::vector<tensor::MSTensor *> inputs;
-  inputs.insert(inputs.begin(), inputs_.begin(), inputs_.end());
+Vector<tensor::MSTensor *> LiteSession::GetInputs() const {
+  Vector<tensor::MSTensor *> inputs;
+  for (const auto &input : inputs_) {
+    inputs.push_back(input);
+  }
   return inputs;
 }
 
-std::vector<tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const std::string &node_name) const {
-  auto iter = output_node_map_.find(node_name);
-  if (iter == output_node_map_.end()) {
-    std::vector<tensor::MSTensor *> empty;
-    return empty;
-  }
-  return iter->second;
+Vector<tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const String &node_name) const {
+  Vector<tensor::MSTensor *> outputs;
+  return outputs;
 }
 
-std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
-  return output_tensor_map_;
-}
-
-std::vector<std::string> LiteSession::GetOutputTensorNames() const {
-  std::vector<std::string> output_names;
-  for (const auto &item : output_node_map_) {
-    for (const auto &output : item.second) {
-      output_names.emplace_back(output->tensor_name());
-    }
+Vector<String> LiteSession::GetOutputTensorNames() const {
+  Vector<String> output_names;
+  for (const auto &output : outputs_) {
+    output_names.push_back(output->tensor_name());
   }
   return output_names;
 }
 
-mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::string &tensor_name) const {
-  auto item = output_tensor_map_.find(tensor_name);
-  if (item == output_tensor_map_.end()) {
-    return nullptr;
-  }
-  return item->second;
-}
-
-int LiteSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) {
-  return RET_OK;
-}
+mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &tensor_name) const { return nullptr; }
 
 }  // namespace lite
 
@@ -219,7 +193,6 @@ session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, s
   return session;
 }
 }  // namespace mindspore
-
 )RAW";
 
 }  // namespace mindspore::lite::micro

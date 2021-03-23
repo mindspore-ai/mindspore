@@ -15,7 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_INCLUDE_MODEL_H_
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
-#include <vector>
+
 #include "include/lite_utils.h"
 
 namespace mindspore::lite {
@@ -28,7 +28,7 @@ struct MS_API Model {
     Uint32Vector output_indices_;
     int quant_type_;
   };
-  using NodePtrVector = std::vector<Node *>;
+  using NodePtrVector = Vector<Node *>;
   struct SubGraph {
     String name_;
     Uint32Vector input_indices_;
@@ -36,7 +36,7 @@ struct MS_API Model {
     Uint32Vector node_indices_;
     Uint32Vector tensor_indices_;
   };
-  using SubGraphPtrVector = std::vector<SubGraph *>;
+  using SubGraphPtrVector = Vector<SubGraph *>;
   String name_;
   String version_;
   TensorPtrVector all_tensors_;

@@ -60,4 +60,5 @@ endif()
 
 # generate static library
 add_library(ops STATIC ${OP_FILES})
+target_compile_definitions(ops PRIVATE NOT_USE_STL)
 install(TARGETS ops ARCHIVE DESTINATION ${LIB_PATH})
