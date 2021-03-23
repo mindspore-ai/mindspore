@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -15,22 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
-#define MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
+#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MSTRING_H_
+#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MSTRING_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace mindspore::lite::micro {
 
-void *ReadInputData(const char *real_input_path, int *size);
+extern const char *string_source;
 
-void SaveOutputData(char *final_name, unsigned char *output_data, unsigned int out_size);
+}  // namespace mindspore::lite::micro
 
-int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int inputs_num);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_
-
+#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MSTRING_H_

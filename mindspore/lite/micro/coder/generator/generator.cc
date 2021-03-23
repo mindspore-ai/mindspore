@@ -26,6 +26,7 @@
 #include "coder/generator/component/const_blocks/load_input.h"
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
+#include "coder/generator/component/const_blocks/mstring.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/log.h"
@@ -89,7 +90,8 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
     {net_src_file_path_ + "session.h", session_header},
     {net_src_file_path_ + "tensor.h", tensor_header},
-    {net_src_file_path_ + "tensor.cc", tensor_source}};
+    {net_src_file_path_ + "tensor.cc", tensor_source},
+    {net_src_file_path_ + "string.cc", string_source}};
   if (config_->debug_mode()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
@@ -113,6 +115,7 @@ int Generator::CodeSessionImplement() {
   ofs << "#include <new>\n\n";
   CodeSessionCompileGraph(ofs, ctx_);
   ofs << session_source;
+  CodeCreateSessionImplement(ofs, config_->target());
   return RET_OK;
 }
 
