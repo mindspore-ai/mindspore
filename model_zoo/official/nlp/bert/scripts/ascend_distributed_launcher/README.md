@@ -1,18 +1,20 @@
 # Run distribute pretrain
 
-## description
+## Description
+
 The number of Ascend accelerators can be automatically allocated based on the device_num set in hccl config file, You don not need to specify that.
 
+## How to use
 
-## how to use
 For example, if we want to generate the launch command of the distributed training of Bert model on Ascend accelerators, we can run the following command in `/bert/` dir:
-```
+
+```python
 python ./scripts/ascend_distributed_launcher/get_distribute_pretrain_cmd.py --run_script_dir ./run_pretrain.py --hyper_parameter_config_dir ./scripts/ascend_distributed_launcher/hyper_parameter_config.ini --data_dir /path/dataset/ --hccl_config_dir model_zoo/utils/hccl_tools/hccl_2p_56_x.x.x.x.json
 ```
 
 output:
 
-```
+```python
 hccl_config_dir: model_zoo/utils/hccl_tools/hccl_2p_56_x.x.x.x.json
 the number of logical core: 192
 avg_core_per_rank: 96

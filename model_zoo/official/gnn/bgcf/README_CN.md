@@ -24,17 +24,17 @@
 
 <!-- /TOC -->
 
-# 贝叶斯图协同过滤
+## 贝叶斯图协同过滤
 
 贝叶斯图协同过滤（BGCF）是Sun J、Guo W、Zhang D等人于2020年提出的。通过结合用户与物品交互图中的不确定性，显示了Amazon推荐数据集的优异性能。使用MindSpore中的Amazon-Beauty数据集对BGCF进行训练。更重要的是，这是BGCF的第一个开源版本。
 
 [论文](https://dl.acm.org/doi/pdf/10.1145/3394486.3403254): Sun J, Guo W, Zhang D, et al.A Framework for Recommending Accurate and Diverse Items Using Bayesian Graph Convolutional Neural Networks[C]//Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining.2020: 2030-2039.
 
-# 模型架构
+## 模型架构
 
 BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的样本图。另一个为聚合节点的邻居采样，节点包含平均聚合器和注意力聚合器。
 
-# 数据集
+## 数据集
 
 - 数据集大小：
 
@@ -80,13 +80,13 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```
 
-# 特性
+## 特性
 
-## 混合精度
+### 混合精度
 
 为了充分利用Ascend芯片强大的运算能力，加快训练过程，此处采用混合训练方法。MindSpore能够处理FP32输入和FP16操作符。在BGCF示例中，除损失计算部分外，模型设置为FP16模式。
 
-# 环境要求
+## 环境要求
 
 - 硬件（Ascend/GPU）
 - 框架
@@ -95,7 +95,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
 通过官方网站安装MindSpore，并正确生成数据集后，您可以按照如下步骤进行训练和评估：
 
@@ -123,9 +123,9 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```
 
-# 脚本说明
+## 脚本说明
 
-## 脚本及样例代码
+### 脚本及样例代码
 
 ```shell
 
@@ -151,7 +151,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
 ```
 
-## 脚本参数
+### 脚本参数
 
 在config.py中可以同时配置训练参数和评估参数。
 
@@ -173,9 +173,9 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   在config.py中以获取更多配置。
 
-## 训练过程
+### 训练过程
 
-### 训练
+#### 训练
 
 - Ascend处理器环境运行
 
@@ -221,9 +221,9 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```
 
-## 评估过程
+### 评估过程
 
-### 评估
+#### 评估
 
 - Ascend评估
 
@@ -271,9 +271,9 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```
 
-# 模型描述
+## 模型描述
 
-## 性能
+### 性能
 
 | 参数                       | BGCF Ascend                                | BGCF GPU                                   |
 | -------------------------- | ------------------------------------------ | ------------------------------------------ |
@@ -289,10 +289,10 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 | 训练成本                   | 25min                                      | 60min                                      |
 | 脚本                       | [bgcf脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf) | [bgcf脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf) |
 
-# 随机情况说明
+## 随机情况说明
 
 BGCF模型中有很多的dropout操作，如果想关闭dropout，可以在src/config.py中将neighbor_dropout设置为[0.0, 0.0, 0.0] 。
 
-# ModelZoo主页
+## ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。

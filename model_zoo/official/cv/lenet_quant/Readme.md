@@ -17,8 +17,7 @@
         - [Evaluation Performance](#evaluation-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
-# [LeNet Description](#contents)
+## [LeNet Description](#contents)
 
 LeNet was proposed in 1998, a typical convolutional neural network. It was used for digit recognition and got big success.
 
@@ -26,23 +25,23 @@ LeNet was proposed in 1998, a typical convolutional neural network. It was used 
 
 This is the quantitative network of LeNet.
 
-# [Model Architecture](#contents)
+## [Model Architecture](#contents)
 
 LeNet is very simple, which contains 5 layers. The layer composition consists of 2 convolutional layers and 3 fully connected layers.
 
-# [Dataset](#contents)
+## [Dataset](#contents)
 
 Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>)
 
 - Dataset size 52.4M 60,000 28*28 in 10 classes
-  - Train 60,000 images
-  - Test 10,000 images
+    - Train 60,000 images
+    - Test 10,000 images
 - Data format binary files
-  - Note Data will be processed in dataset.py
+    - Note Data will be processed in dataset.py
 
 - The directory structure is as follows:
 
-```
+```bash
 └─Data
     ├─test
     │      t10k-images.idx3-ubyte
@@ -53,17 +52,17 @@ Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>)
            train-labels.idx1-ubyte
 ```
 
-# [Environment Requirements](#contents)
+## [Environment Requirements](#contents)
 
 - Hardware:Ascend
-  - Prepare hardware environment with Ascend
+    - Prepare hardware environment with Ascend
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
-# [Quick Start](#contents)
+## [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
@@ -76,11 +75,11 @@ python train.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT
 python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
 ```
 
-# [Script Description](#contents)
+## [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
 
-```
+```bash
 ├── model_zoo
     ├── README.md                        // descriptions about all the models
     ├── lenet_quant
@@ -117,13 +116,13 @@ Major parameters in train.py and config.py as follows:
 
 ### Training
 
-```
+```bash
 python train.py --device_target=Ascend --dataset_path=/home/datasets/MNIST --dataset_sink_mode=True > log.txt 2>&1 &
 ```
 
 After training, the loss value will be achieved as follows:
 
-```
+```bash
 # grep "Epoch " log.txt
 Epoch: [ 1/ 10], step: [ 937/ 937], loss: [0.0081], avg loss: [0.0081], time: [11268.6832ms]
 Epoch time: 11269.352, per step time: 12.027, avg loss: 0.008
@@ -142,22 +141,22 @@ The model checkpoint will be saved in the current directory.
 
 Before running the command below, please check the checkpoint path used for evaluation.
 
-```
+```bash
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_937.ckpt > log.txt 2>&1 &
 ```
 
 You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:
 
-```
+```bash
 # grep "Accuracy: " log.txt
 'Accuracy': 0.9842
 ```
 
-# [Model Description](#contents)
+## [Model Description](#contents)
 
-## [Performance](#contents)
+### [Performance](#contents)
 
-### Evaluation Performance
+#### Evaluation Performance
 
 | Parameters                 | LeNet                                                       |
 | -------------------------- | ----------------------------------------------------------- |
@@ -175,9 +174,10 @@ You can view the results through the file "log.txt". The accuracy of the test da
 | Checkpoint for Fine tuning | 482k (.ckpt file)                                           |
 | Scripts                    | [scripts](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet) |
 
-# [Description of Random Situation](#contents)
+## [Description of Random Situation](#contents)
 
 In dataset.py, we set the seed inside “create_dataset" function.
 
-# [ModelZoo Homepage](#contents)
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+## [ModelZoo Homepage](#contents)
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

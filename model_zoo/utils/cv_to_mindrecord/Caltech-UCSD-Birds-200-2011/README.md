@@ -8,16 +8,15 @@
     - [Generate MindRecord](#generate-mindrecord)
     - [Create MindDataset By MindRecord](#create-minddataset-by-mindrecord)
 
-
 <!-- /TOC -->
 
 ## What does the example do
 
 This example is used to read data from Caltech-UCSD Birds-200-2011 dataset and generate mindrecord. It just transfers the Caltech-UCSD Birds-200-2011 dataset to mindrecord without any data preprocessing. You can modify the example or follow the example to implement your own example.
 
-1.  run.sh: generate MindRecord entry script.
+1. run.sh: generate MindRecord entry script.
     - gen_mindrecord.py : read the Caltech-UCSD Birds-200-2011 data and transfer it to mindrecord.
-2.  run_read.py: create MindDataset by MindRecord entry script.
+2. run_read.py: create MindDataset by MindRecord entry script.
     - create_dataset.py: use MindDataset to read MindRecord to generate dataset.
 
 ## How to use the example to generate MindRecord
@@ -32,25 +31,30 @@ Download Caltech-UCSD Birds-200-2011 dataset, transfer it to mindrecord, use Min
     > **2) -> Download -> Segmentations**  
 
 2. Unzip the training data to dir example/nlp_to_mindrecord/Caltech-UCSD-Birds-200-2011/data.
-    ```
+
+```bash
     tar -zxvf CUB_200_2011.tgz -C {your-mindspore}/example/cv_to_mindrecord/Caltech-UCSD-Birds-200-2011/data/
     tar -zxvf segmentations.tgz -C {your-mindspore}/example/cv_to_mindrecord/Caltech-UCSD-Birds-200-2011/data/
-    ```
-    - The unzip should like this:
-    ```
+```
+
+ The unzip should like this:
+
+```bash
     $ ls {your-mindspore}/example/cv_to_mindrecord/Caltech-UCSD-Birds-200-2011/data/
     attributes.txt  CUB_200_2011  README.md  segmentations
-    ```
+```
 
 ### Generate MindRecord
 
-1. Run the run.sh script.
-    ```bash
-    bash run.sh
-    ```
+1.Run the run.sh script.
 
-2. Output like this:
-    ```
+```bash
+    bash run.sh
+```
+
+2.Output like this:
+
+```bash
     ...
     >> begin generate mindrecord
     >> sample id: 1, filename: data/CUB_200_2011/images/001.Black_footed_Albatross/Black_Footed_Albatross_0046_18.jpg, bbox: [60.0, 27.0, 325.0, 304.0], label: 1, seg_filename: data/segmentations/001.Black_footed_Albatross/Black_Footed_Albatross_0046_18.png, class: 001.Black_footed_Albatross
@@ -72,10 +76,11 @@ Download Caltech-UCSD Birds-200-2011 dataset, transfer it to mindrecord, use Min
     [INFO] MD(11253,python):2020-05-20-16:22:21.964.034 [mindspore/ccsrc/mindrecord/io/shard_index_generator.cc:549] ExecuteTransaction] Insert 11788 rows to index db.
     [INFO] MD(11253,python):2020-05-20-16:22:21.978.087 [mindspore/ccsrc/mindrecord/io/shard_index_generator.cc:620] DatabaseWriter] Generate index db for shard: 0 successfully.
     [INFO] ME(11253:139923799271232,MainProcess):2020-05-20-16:22:21.979.634 [mindspore/mindrecord/filewriter.py:313] The list of mindrecord files created are: ['output/CUB_200_2011.mindrecord'], and the list of index files are: ['output/CUB_200_2011.mindrecord.db']
-    ```
+```
 
-3. Generate mindrecord files
-    ```
+3.Generate mindrecord files
+
+```bash
     $ ls output/
     CUB_200_2011.mindrecord  CUB_200_2011.mindrecord.db  README.md
     ```
@@ -83,11 +88,13 @@ Download Caltech-UCSD Birds-200-2011 dataset, transfer it to mindrecord, use Min
 ### Create MindDataset By MindRecord
 
 1. Run the run_read.sh script.
+
     ```bash
     bash run_read.sh
     ```
 
 2. Output like this:
+
     ```
     [INFO] MD(12469,python):2020-05-20-16:26:38.308.797 [mindspore/ccsrc/dataset/util/task.cc:31] operator()] Op launched, OperatorId:0 Thread ID 139702598620928 Started.
     [INFO] MD(12469,python):2020-05-20-16:26:38.322.433 [mindspore/ccsrc/mindrecord/io/shard_reader.cc:343] ReadAllRowsInShard] Get 11788 records from shard 0 index.
@@ -123,6 +130,7 @@ Download Caltech-UCSD Birds-200-2011 dataset, transfer it to mindrecord, use Min
     >> total rows: 11788
     [INFO] MD(12469,python):2020-05-20-16:26:49.582.298 [mindspore/ccsrc/dataset/util/task.cc:128] Join] Watchdog Thread ID 139702607013632 Stopped.
     ```
+
     - bbox : coordinate value of the bounding box in the picture.
     - image: the image bytes which is from like "data/CUB_200_2011/images/001.Black_footed_Albatross/Black_Footed_Albatross_0001_796111.jpg".
     - image_filename: the image name which is like "Black_Footed_Albatross_0001_796111.jpg"

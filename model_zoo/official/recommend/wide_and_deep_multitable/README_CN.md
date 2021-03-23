@@ -23,19 +23,19 @@
 
 <!-- /TOC -->
 
-# Wide&Deep概述
+## Wide&Deep概述
 
 Wide&Deep模型是推荐和点击预测领域的经典模型。  [Wide&Deep推荐系统学习](https://arxiv.org/pdf/1606.07792.pdf)论文中描述了如何实现Wide&Deep。
 
-# 模型架构
+## 模型架构
 
 Wide&Deep模型训练了宽线性模型和深度学习神经网络，结合了推荐系统的记忆和泛化的优点。
 
-# 数据集
+## 数据集
 
 - [1]点击预测中使用的数据集
 
-# 环境要求
+## 环境要求
 
 - 硬件（Ascend或GPU）
     - 准备Ascend或GPU处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，申请通过即可获得资源。
@@ -45,19 +45,19 @@ Wide&Deep模型训练了宽线性模型和深度学习神经网络，结合了�
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
-1. 克隆代码。
+1.克隆代码。
 
 ```bash
     git clone https://gitee.com/mindspore/mindspore.git
     cd mindspore/model_zoo/official/recommend/wide_and_deep_multitable
 ```
 
-2. 下载数据集。
-
+2.下载数据集。
     > 请参考[1]获取下载链接和预处理数据。
-3. 开始训练。
+
+3.开始训练。
    数据集准备就绪后，即可在Ascend上单机训练和评估模型。
 
 ```bash
@@ -129,7 +129,7 @@ optional arguments:
   --is_tf_dataset IS_TF_DATASET       Whether the input is tfrecords. (Default:True)
   --dropout_flag                      Enable dropout.(Default:0)
   --output_path OUTPUT_PATH           Deprecated
-  --ckpt_path CKPT_PATH               The location of the checkpoint file.(Defalut:./checkpoints/)
+  --ckpt_path CKPT_PATH               The location of the checkpoint file.(Default:./checkpoints/)
   --eval_file_name EVAL_FILE_NAME     Eval output file.(Default:eval.og)
   --loss_file_name LOSS_FILE_NAME     Loss output file.(Default:loss.log)
 ```
@@ -161,11 +161,11 @@ bash run_multinpu_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE
 python eval.py
 ```
 
-# 模型描述
+## 模型描述
 
-## 性能
+### 性能
 
-### 训练性能
+#### 训练性能
 
 | 参数 | 单Ascend | 数据并行-8卡 |
 | ------------------------ | ------------------------------- | ------------------------------- |
@@ -185,7 +185,7 @@ python eval.py
 
 所有可执行脚本参见[这里](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/wide_and_deep/script)。
 
-### 评估性能
+#### 评估性能
 
 | 参数        | Wide&Deep                   |
 | ----------------- | --------------------------- |

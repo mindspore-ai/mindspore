@@ -1,38 +1,44 @@
+# Contents
+
 <!--TOC -->
 
 - [Graph Attention Networks Description](#graph-attention-networks-description)
 - [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
-  - [Mixed Precision](#mixed-precision)
+    - [Mixed Precision](#mixed-precision)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
 - [Script Description](#script-description)
-  - [Script and Sample Code](#script-and-sample-code)
-  - [Script Parameters](#script-parameters)
-  - [Training Process](#training-process)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training Process](#training-process)
     - [Training](#training)
 - [Model Description](#model-description)
-  - [Performance](#performance)
-    - [Evaluation Performance](#evaluation-performance)
-    - [Inference Performance](#evaluation-performance)
+    - [Performance](#performance)
+        - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#evaluation-performance)
 - [Description of random situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
+
 <!--TOC -->
-# [Graph Attention Networks Description](#contents)
- 
+
+## [Graph Attention Networks Description](#contents)
+
 Graph Attention Networks(GAT) was proposed in 2017 by Petar Veličković et al. By leveraging masked self-attentional layers to address shortcomings of prior graph based method, GAT achieved or matched state of the art performance on both transductive datasets like Cora and inductive dataset like PPI. This is an example of training GAT with Cora dataset in MindSpore.
 
 [Paper](https://arxiv.org/abs/1710.10903): Veličković, P., Cucurull, G., Casanova, A., Romero, A., Lio, P., & Bengio, Y. (2017). Graph attention networks. arXiv preprint arXiv:1710.10903.
 
-# [Model architecture](#contents)
+## [Model architecture](#contents)
 
 Note that according to whether this attention layer is the output layer of the network or not, the node update function can be concatenate or average.
 
-# [Dataset](#contents)
+## [Dataset](#contents)
+
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 - Dataset size:
-  Statistics of dataset used are summerized as below:
+  Statistics of dataset used are summarized as below:
 
   |                    |           Cora |       Citeseer |
   | ------------------ | -------------: | -------------: |
@@ -46,9 +52,9 @@ Note that you can run the scripts based on the dataset mentioned in original pap
   | # Test Nodes       |           1000 |           1000 |
 
 - Data Preparation
-  - Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
- 
-  ```
+    - Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
+
+```bash
   .
   └─data
       ├─ind.cora.allx
@@ -61,58 +67,60 @@ Note that you can run the scripts based on the dataset mentioned in original pap
       └─ind.cora.y
   ```
 
-  - Generate dataset in mindrecord format for cora or citeseer.
-  ```buildoutcfg
-  cd ./scripts
-  # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
-  sh run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
-  ```
+- Generate dataset in mindrecord format for cora or citeseer.
 
-    - Launch
-  ```
-  #Generate dataset in mindrecord format for cora
-  ./run_process_data_ascend.sh ./data cora
-  #Generate dataset in mindrecord format for citeseer
-  ./run_process_data_ascend.sh ./data citeseer
-  ```
+    ```buildoutcfg
+    cd ./scripts
+    # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
+    sh run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
+    ```
 
-# [Features](#contents)
+- Launch
 
-## Mixed Precision
+    ```bash
+    #Generate dataset in mindrecord format for cora
+    ./run_process_data_ascend.sh ./data cora
+    #Generate dataset in mindrecord format for citeseer
+    ./run_process_data_ascend.sh ./data citeseer
+    ```
+
+## [Features](#contents)
+
+### Mixed Precision
 
 To ultilize the strong computation power of Ascend chip, and accelerate the training process, the mixed training method is used. MindSpore is able to cope with FP32 inputs and FP16 operators. In GAT example, the model is set to FP16 mode except for the loss calculation part.
 
-# [Environment Requirements](#contents)
+## [Environment Requirements](#contents)
 
-- Hardward (Ascend)
+- Hardware (Ascend)
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below:
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
-# [Quick Start](#contents)
+## [Quick Start](#contents)
 
 After installing MindSpore via the official website and Dataset is correctly generated, you can start training and evaluation as follows.
 
 - running on Ascend
 
-  ```
+  ```bash
   # run training example with cora dataset, DATASET_NAME is cora
   sh run_train_ascend.sh [DATASET_NAME]
   ```
 
-# [Script Description](#contents)
+## [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
- 
+
 ```shell
 .
-└─gat      
+└─gat
   ├─README.md
-  ├─scripts 
+  ├─scripts
   | ├─run_process_data_ascend.sh  # Generate dataset in mindrecord format
-  | └─run_train_ascend.sh         # Launch training   
+  | └─run_train_ascend.sh         # Launch training
   |
   ├─src
   | ├─config.py            # Training configurations
@@ -122,12 +130,12 @@ After installing MindSpore via the official website and Dataset is correctly gen
   |
   └─train.py               # Train net
 ```
- 
+
 ## [Script Parameters](#contents)
- 
+
 Parameters for both training and evaluation can be set in config.py.
 
-- config for GAT, CORA dataset 
+- config for GAT, CORA dataset
 
   ```python
   "learning_rate": 0.005,            # Learning rate
@@ -146,11 +154,11 @@ Parameters for both training and evaluation can be set in config.py.
 
 - running on Ascend
 
-  ```python 
+  ```python
   sh run_train_ascend.sh [DATASET_NAME]
   ```
 
-  Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the 
+  Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the
   followings in log.
 
   ```python
@@ -169,8 +177,9 @@ Parameters for both training and evaluation can be set in config.py.
   ...
   ```
 
-# [Model Description](#contents)
-## [Performance](#contents)
+## [Model Description](#contents)
+
+### [Performance](#contents)
 
 | Parameter                            | GAT                                       |
 | ------------------------------------ | ----------------------------------------- |
@@ -184,12 +193,12 @@ Parameters for both training and evaluation can be set in config.py.
 | Accuracy                             | 83.0/72.5                                 |
 | Speed                                | 0.195s/epoch                              |
 | Total time                           | 39s                                       |
-| Scripts                              | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gat  |
+| Scripts                              | [GAT Script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gat)  |
 
-# [Description of random situation](#contents)
+## [Description of random situation](#contents)
 
 GAT model contains lots of dropout operations, if you want to disable dropout, set the attn_dropout and feature_dropout to 0 in src/config.py. Note that this operation will cause the accuracy drop to approximately 80%.
 
-# [ModelZoo Homepage](#contents)
+## [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](http://gitee.com/mindspore/mindspore/tree/master/model_zoo).
