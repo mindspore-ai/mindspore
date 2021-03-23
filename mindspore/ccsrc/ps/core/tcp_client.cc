@@ -141,17 +141,9 @@ void TcpClient::StartWithDelay(int seconds) {
 void TcpClient::Stop() {
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp client!";
-  if (event_base_got_break(event_base_)) {
-    MS_LOG(DEBUG) << "The event base has stopped!";
-    is_stop_ = true;
-    return;
-  }
-  if (!is_stop_.load()) {
-    is_stop_ = true;
-    int ret = event_base_loopbreak(event_base_);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "Event base loop break failed!";
-    }
+  int ret = event_base_loopbreak(event_base_);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Event base loop break failed!";
   }
 }
 
