@@ -1982,26 +1982,13 @@ while getopts "r:m:d:e:" opt; do
     esac
 done
 
-mkdir train
-arm64_path=${release_path}/android_aarch64
-mv ${arm64_path}/*train-android-aarch64* ./train
-file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
-IFS="-" read -r -a file_name_array <<< "$file_name"
-version=${file_name_array[2]}
-
-arm32_path=${release_path}/android_aarch32
-mv ${arm32_path}/*train-android-aarch32* ./train
-file_name=$(ls ${arm32_path}/*inference-android-aarch32.tar.gz)
-IFS="-" read -r -a file_name_array <<< "$file_name"
+# mkdir train
 
 x86_path=${release_path}/ubuntu_x86
-mv ${x86_path}/*train-linux-x64* ./train
+# mv ${x86_path}/*train-linux-x64* ./train
 file_name=$(ls ${x86_path}/*inference-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
-
-x86_path=${release_path}/ubuntu_x86
-file_name=$(ls ${x86_path}/*inference-linux-x64-sse.tar.gz)
-IFS="-" read -r -a file_name_array <<< "$file_name"
+version=${file_name_array[2]}
 
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
@@ -2097,21 +2084,21 @@ cp -a ${models_path}/compatibility_test/*.ms ${benchmark_test_path} || exit 1
 backend=${backend:-"all"}
 isFailed=0
 
-if [[ $backend == "all" || $backend == "x86" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
     # Run on x86
     echo "start Run x86 ..."
     Run_x86 &
     Run_x86_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "x86-sse" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
     # Run on x86-sse
     echo "start Run x86 sse ..."
     Run_x86_sse &
     Run_x86_sse_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "x86-avx" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
     # Run on x86-avx
     echo "start Run x86 avx ..."
     Run_x86_avx &
@@ -2119,46 +2106,76 @@ if [[ $backend == "all" || $backend == "x86-avx" ]]; then
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "arm64_fp32" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp32" ]]; then
     # Run on arm64
+    arm64_path=${release_path}/android_aarch64
+    # mv ${arm64_path}/*train-android-aarch64* ./train
+    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
     echo "start Run arm64 ..."
     Run_arm64
     Run_arm64_fp32_status=$?
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "arm64_fp16" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp16" ]]; then
     # Run on arm64-fp16
+    arm64_path=${release_path}/android_aarch64
+    # mv ${arm64_path}/*train-android-aarch64* ./train
+    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
     echo "start Run arm64-fp16 ..."
     Run_arm64_fp16
     Run_arm64_fp16_status=$?
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "arm32" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32" ]]; then
     # Run on arm32
+    arm32_path=${release_path}/android_aarch32
+    # mv ${arm32_path}/*train-android-aarch32* ./train
+    file_name=$(ls ${arm32_path}/*inference-android-aarch32.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
     echo "start Run arm32 ..."
     Run_arm32
     Run_arm32_status=$?
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "gpu" ]]; then
+if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "gpu" ]]; then
     # Run on gpu
+    arm64_path=${release_path}/android_aarch64
+    # mv ${arm64_path}/*train-android-aarch64* ./train
+    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
     echo "start Run gpu ..."
     Run_gpu
     Run_gpu_status=$?
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "npu" ]]; then
+if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
     # Run on npu
+    arm64_path=${release_path}/android_aarch64
+    # mv ${arm64_path}/*train-android-aarch64* ./train
+    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
     echo "start Run npu ..."
     Run_npu
     Run_npu_status=$?
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "x86" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
     wait ${Run_x86_PID}
     Run_x86_status=$?
 
@@ -2169,7 +2186,7 @@ if [[ $backend == "all" || $backend == "x86" ]]; then
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "x86-sse" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
     wait ${Run_x86_sse_PID}
     Run_x86_sse_status=$?
 
@@ -2179,7 +2196,7 @@ if [[ $backend == "all" || $backend == "x86-sse" ]]; then
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "x86-avx" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
     wait ${Run_x86_avx_PID}
     Run_x86_avx_status=$?
 
@@ -2190,35 +2207,35 @@ if [[ $backend == "all" || $backend == "x86-avx" ]]; then
     fi
 fi
 
-if [[ $backend == "all" || $backend == "arm64_fp32" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp32" ]]; then
     if [[ ${Run_arm64_fp32_status} != 0 ]];then
         echo "Run_arm64_fp32 failed"
         cat ${run_arm64_fp32_log_file}
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "arm64_fp16" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp16" ]]; then
     if [[ ${Run_arm64_fp16_status} != 0 ]];then
         echo "Run_arm64_fp16 failed"
         cat ${run_arm64_fp16_log_file}
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "arm32" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32" ]]; then
     if [[ ${Run_arm32_status} != 0 ]];then
         echo "Run_arm32 failed"
         cat ${run_arm32_log_file}
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "gpu" ]]; then
+if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "gpu" ]]; then
     if [[ ${Run_gpu_status} != 0 ]];then
         echo "Run_gpu failed"
         cat ${run_gpu_log_file}
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "npu" ]]; then
+if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
     if [[ ${Run_npu_status} != 0 ]];then
         echo "Run_npu failed"
         cat ${run_npu_log_file}
