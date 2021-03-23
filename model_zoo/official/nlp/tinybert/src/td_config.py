@@ -60,7 +60,7 @@ eval_cfg = edict({
 '''
 Including two kinds of network: \
 teacher network: The BERT-base network with finetune.
-student network: The model which is producted by GD phase.
+student network: The model which is produced by GD phase.
 '''
 td_teacher_net_cfg = BertConfig(
     seq_length=128,

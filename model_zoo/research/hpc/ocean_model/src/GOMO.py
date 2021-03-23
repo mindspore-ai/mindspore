@@ -668,7 +668,7 @@ class GOMO(nn.Cell):
             el: the surface elevation as used in the external mode (m).
 
         Returns:
-            tuple[Tensor], update varibles of external mode
+            tuple[Tensor], update variables of external mode
         """
         adx2d = self.reduce_sum(advx * self.dz, 2)
         ady2d = self.reduce_sum(advy * self.dz, 2)
@@ -836,7 +836,7 @@ class GOMO(nn.Cell):
             utf, vtf: ua, va time averaged over the interval, DT = dti(ms-1)
 
         Returns:
-            tuple[Tensor], update varibles of external mode
+            tuple[Tensor], update variables of external mode
         """
         vamax = P.ReduceMax()(P.Abs()(vaf))
         if iext == (self.isplit - 2):

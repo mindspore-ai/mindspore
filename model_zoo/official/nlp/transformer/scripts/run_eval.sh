@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_eval.sh DEVICE_TARGET DEVICE_ID"
 echo "for example: sh run_eval.sh Ascend 0"
 echo "Note: set the checkpoint and dataset path in src/eval_config.py"

@@ -54,7 +54,7 @@ def get_rouge_score(result, vocab):
         "target", "prediction" and "prediction_prob".
         Dictionary, dict instance.
 
-    retur:
+    return:
         Str, rouge score.
     """
 

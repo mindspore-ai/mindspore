@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash script/pre_process.sh \"INPUT_GLOB\" DATASET_TYPE OUTPUT_FILE"
 echo "for example: bash script/pre_process.sh \"dataset/*.output\" openwebtext ./output/openwebtext.mindrecord"
 echo "=============================================================================================================="

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     elif args.dataset_name == "imagenet":
         cfg = alexnet_imagenet_cfg
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     device_target = args.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     elif args.dataset_name == "imagenet":
         ds_train = create_dataset_imagenet(args.data_path, cfg.batch_size)
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     if ds_train.get_dataset_size() == 0:
         raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
             loss_scale_manager = FixedLossScaleManager(cfg.loss_scale, drop_overflow_update=False)
 
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     if device_target == "Ascend":
         model = Model(network, loss_fn=loss, optimizer=opt, metrics=metrics, amp_level="O2", keep_batchnorm_fp32=False,

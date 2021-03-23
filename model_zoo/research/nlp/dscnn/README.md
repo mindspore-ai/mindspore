@@ -204,8 +204,8 @@ Parameters for both training and evaluation can be set in config.py.
   for shell script:
 
   ```python
-  # sh srcipts/run_train_ascend.sh [device_id]
-  sh srcipts/run_train_ascend.sh 0
+  # sh scripts/run_train_ascend.sh [device_id]
+  sh scripts/run_train_ascend.sh 0
   ```
 
   for python script:

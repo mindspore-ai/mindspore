@@ -76,7 +76,7 @@ if __name__ == "__main__":
         model = Model(network, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
 
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     if ds_eval.get_dataset_size() == 0:
         raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")

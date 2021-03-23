@@ -51,7 +51,7 @@ Dataset used: [Movie Review Data](<http://www.cs.cornell.edu/people/pabo/movie-r
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- runing on Ascend
+- running on Ascend
 
   ```python
   # run training example

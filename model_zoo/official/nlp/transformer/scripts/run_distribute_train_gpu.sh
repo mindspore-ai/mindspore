@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_distribute_pretrain_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_PATH"
 echo "for example: sh run_distribute_pretrain.sh 8 55 /path/ende-l128-mindrecord00"
 echo "It is better to use absolute path."

@@ -292,7 +292,7 @@ def _get_vocab_size(target_column_number, worker_size, total_vocab_size, multipl
 
     index_offsets = [0]
 
-    # The gold feature numbers ared used to caculate the offset
+    # The gold feature numbers ared used to calculate the offset
     features = [item for item in new_vocab_size]
 
     # According to the per_vocab_size, maxize the vocab size

@@ -56,7 +56,7 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
             data_set = ds.MindDataset(
                 dataset_path, num_parallel_workers=8, shuffle=False)
     else:
-        raise ValueError("Unsupport platform.")
+        raise ValueError("Unsupported platform.")
 
     resize_height = config.image_height
     buffer_size = 1000

@@ -34,7 +34,7 @@ def parse_args():
         >>> parse_args()
     """
     parser = ArgumentParser(description="mindspore distributed training launch "
-                                        "helper utilty that will generate hccl"
+                                        "helper utility that will generate hccl"
                                         " config file")
     parser.add_argument("--device_num", type=str, default="[0,8)",
                         help="The number of the Ascend accelerators used. please note that the Ascend accelerators"

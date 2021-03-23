@@ -48,7 +48,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
 # [Quick Start](#contents)
 
-- runing on Ascend
+- running on Ascend
 
   ```bash
   # run training example
@@ -58,7 +58,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
   bash run_eval_ascend.sh 0 ./preprocess lstm-20_390.ckpt
   ```
 
-- runing on GPU
+- running on GPU
 
   ```bash
   # run training example
@@ -68,7 +68,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
   bash run_eval_gpu.sh 0 ./aclimdb ./glove_dir lstm-20_390.ckpt
   ```
 
-- runing on CPU
+- running on CPU
 
   ```bash
   # run training example
@@ -200,7 +200,7 @@ Ascend:
 
 - Set options in `config.py`, including learning rate and network hyperparameters.
 
-- runing on Ascend
+- running on Ascend
 
   Run `sh run_train_ascend.sh` for training.
 
@@ -217,7 +217,7 @@ Ascend:
   ...
   ```
 
-- runing on GPU
+- running on GPU
 
   Run `sh run_train_gpu.sh` for training.
 
@@ -234,7 +234,7 @@ Ascend:
   ...
   ```
 
-- runing on CPU
+- running on CPU
 
   Run `sh run_train_cpu.sh` for training.
 

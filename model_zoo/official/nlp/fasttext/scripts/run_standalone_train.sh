@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_standalone_train.sh DATASET_PATH"
 echo "for example: sh run_standalone_train.sh /home/workspace/ag"
 echo "It is better to use absolute path."

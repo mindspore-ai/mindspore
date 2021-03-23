@@ -25,9 +25,9 @@
 # [FastText](#contents)
 
 FastText is a fast text classification algorithm, which is simple and efficient. It was proposed by Armand
-Joulin, Tomas Mikolov etc. in the artical "Bag of Tricks for Efficient Text Classification" in 2016. It is similar to
+Joulin, Tomas Mikolov etc. in the article "Bag of Tricks for Efficient Text Classification" in 2016. It is similar to
 CBOW in model architecture, where the middle word is replace by a label. FastText adopts ngram feature as addition feature
-to get some information about words. It speeds up training and testing while maintaining high percision, and widly used
+to get some information about words. It speeds up training and testing while maintaining high precision, and widly used
 in various tasks of text classification.
 
 [Paper](https://arxiv.org/pdf/1607.01759.pdf): "Bag of Tricks for Efficient Text Classification", 2016, A. Joulin, E. Grave, P. Bojanowski, and T. Mikolov
