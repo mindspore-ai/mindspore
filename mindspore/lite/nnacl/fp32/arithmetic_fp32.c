@@ -28,7 +28,9 @@ int ElementFloorMod(const float *in0, const float *in1, float *out, int size) {
 
 int ElementFloorModInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
-    out[i] = in0[i] - (in0[i] / in1[i]) * in1[i];
+    NNACL_ASSERT(in1[i] != 0);
+    int remainder = in0[i] - (in0[i] / in1[i]) * in1[i];
+    out[i] = (remainder != 0) && ((in0[i] > 0) != (in1[i] > 0)) ? remainder + in1[i] : remainder;
   }
   return NNACL_OK;
 }
