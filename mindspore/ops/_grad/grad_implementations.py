@@ -261,12 +261,6 @@ def bprop_bool_and(x, y, out, dout):
     return C.zeros_like(x), C.zeros_like(y)
 
 
-@bprops.register("ControlDepend")
-def bprop_control_depend(x, y, out, dout):
-    """Backpropagator for primitive `Control_depend`."""
-    return C.zeros_like(x), C.zeros_like(y)
-
-
 @bprops.register("Switch")
 def bprop_switch(cond, tb, fb, out, dout):
     """Backpropagator for primitive `switch`."""

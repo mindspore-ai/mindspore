@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore.ops.operations import NPUGetFloatStatus, NPUAllocFloatStatus, NPUClearFloatStatus, ReduceSum, \
-    LessEqual, ControlDepend
+    LessEqual
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore import Tensor
@@ -25,7 +25,7 @@ from mindspore.context import ParallelMode
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.common.parameter import ParameterTuple
+from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import dtype as mstype
 
 
@@ -69,7 +69,6 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         self.base = Tensor(1, mstype.float32)
         self.reducer_flag = False
         self.less_equal = LessEqual()
-        self.depend_parameter_use = ControlDepend(depend_mode=1)
         self.allreduce = P.AllReduce()
         self.parallel_mode = _get_parallel_mode()
         self.grad_reducer = None
