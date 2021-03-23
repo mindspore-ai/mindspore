@@ -195,7 +195,7 @@ class BatchNormGrad(PrimitiveWithInfer):
     def __init__(self, is_training=False, epsilon=1e-5, data_format='NCHW'):
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
-        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC', "NCDHW"], 'format', self.name)
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
 
     def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape, reserve):
         validator.check("BatchNorm y_backprop_shape", y_backprop_shape, "BatchNorm x_shape", x_shape)
