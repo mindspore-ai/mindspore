@@ -80,6 +80,8 @@ class TopCellInfo {
   bool is_init_kpynative() const { return is_init_kpynative_; }
   void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
   bool is_topest() const { return is_topest_; }
+  bool is_dynamic() const { return is_dynamic_; }
+  void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   bool vm_compiled() const { return vm_compiled_; }
   void set_vm_compiled(bool vm_compiled) { vm_compiled_ = vm_compiled; }
   bool forward_already_run() const { return forward_already_run_; }
@@ -91,10 +93,12 @@ class TopCellInfo {
   std::string &cell_id() { return cell_id_; }
   std::string &input_args_id() { return input_args_id_; }
   std::string all_op_info() const { return all_op_info_; }
-  void set_all_op_info(std::string &all_op_info) { all_op_info_ = all_op_info; }
+  void set_all_op_info(std::string all_op_info) { all_op_info_ = all_op_info; }
   void set_input_args_id(std::string input_args_id) { input_args_id_ = std::move(input_args_id); }
   std::string &bprop_cell_id() { return bprop_cell_id_; }
   void set_bprop_cell_id(std::string &bprop_cell_id) { bprop_cell_id_ = bprop_cell_id; }
+  std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
+  bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
   void set_graph_info_map(const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map) {
     graph_info_map_ = graph_info_map;
@@ -109,6 +113,7 @@ class TopCellInfo {
 
  private:
   bool is_topest_{false};
+  bool is_dynamic_{false};
   bool vm_compiled_{false};
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
@@ -120,6 +125,7 @@ class TopCellInfo {
   std::string bprop_cell_id_;
   std::string input_args_id_;
   std::string all_op_info_;
+  std::unordered_set<std::string> sub_cell_list_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
@@ -164,7 +170,6 @@ class GradExecutor {
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
   TopCellInfoPtr top_cell_direct() const { return top_cell_; }
-  bool TopCellIsDynamic();
   bool NeedCompileGraph();
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   bool grad_flag() const { return grad_flag_; }
@@ -172,15 +177,15 @@ class GradExecutor {
   bool in_grad_process() const { return in_grad_process_; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
+  std::stack<std::string> &cell_stack() { return cell_stack_; }
+  std::vector<TopCellInfoPtr> &top_cell_list() { return top_cell_list_; }
+  bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out);
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args, const py::object &phase);
-  bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
-  std::stack<std::string> &cell_stack() { return cell_stack_; }
-  std::vector<TopCellInfoPtr> &top_cell_list() { return top_cell_list_; }
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
   void ClearGrad(const py::object &cell, const py::args &args);
   void ClearRes();
@@ -215,6 +220,7 @@ class GradExecutor {
   void UpdateBpropCellGraph(const py::object &cell, const std::string &cell_id);
   void UpdateTopCellInfo(const std::string &cell_id, bool vm_compiled);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
+  void InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args);
   void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest);
   void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);

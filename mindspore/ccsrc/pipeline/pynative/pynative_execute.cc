@@ -40,6 +40,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/parse/parse_dynamic.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
@@ -580,16 +581,29 @@ py::tuple ConvertArgs(const py::tuple &args) {
   return res;
 }
 
-void SaveOpInfo(TopCellInfoPtr &top_cell, std::string &op_info, std::vector<tensor::TensorPtr> &op_out_tensors) {
+void ResetTopCellInfo(const TopCellInfoPtr &top_cell, const py::args &args) {
+  MS_EXCEPTION_IF_NULL(top_cell);
+  top_cell->set_op_num(0);
+  top_cell->set_all_op_info("");
+  top_cell->set_forward_already_run(true);
+  std::string input_args_id;
+  for (size_t i = 0; i < args.size(); ++i) {
+    input_args_id = input_args_id + GetId(args[i]) + "_";
+  }
+  top_cell->set_input_args_id(input_args_id);
+}
+
+void SaveOpInfo(const TopCellInfoPtr &top_cell, const std::string &op_info,
+                const std::vector<tensor::TensorPtr> &op_out_tensors) {
   MS_EXCEPTION_IF_NULL(top_cell);
   auto &op_info_with_tensor_id = top_cell->op_info_with_tensor_id();
   if (op_info_with_tensor_id.find(op_info) != op_info_with_tensor_id.end()) {
-    MS_LOG(EXCEPTION) << "Top cell: " << top_cell.get() << " has never been created, but get op info " << op_info
-                      << " in op_info_with_tensor_id map";
+    MS_LOG(EXCEPTION) << "Top cell: " << top_cell.get() << " records op info with tensor id, but get op info "
+                      << op_info << " in op_info_with_tensor_id map";
   }
   // Record the relationship between the forward op and its output tensor id
   std::for_each(op_out_tensors.begin(), op_out_tensors.end(),
-                [&](tensor::TensorPtr &tensor) { op_info_with_tensor_id[op_info].emplace_back(tensor->id()); });
+                [&](const tensor::TensorPtr &tensor) { op_info_with_tensor_id[op_info].emplace_back(tensor->id()); });
 }
 
 void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<tensor::TensorPtr> &pre_tensors) {
@@ -653,7 +667,19 @@ GradExecutorPtr ForwardExecutor::grad() const {
   return grad_executor;
 }
 
+bool TopCellInfo::IsSubCell(const std::string &cell_id) const {
+  if (sub_cell_list_.empty()) {
+    MS_LOG(DEBUG) << "The sub cell list is empty, there is no sub cell";
+    return false;
+  }
+  if (sub_cell_list_.find(cell_id) != sub_cell_list_.end()) {
+    return true;
+  }
+  return false;
+}
+
 void TopCellInfo::clear() {
+  is_dynamic_ = false;
   vm_compiled_ = false;
   is_init_kpynative_ = false;
   forward_already_run_ = false;
@@ -666,6 +692,7 @@ void TopCellInfo::clear() {
   resource_->Clean();
   resource_ = nullptr;
   graph_info_map_.clear();
+  sub_cell_list_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
 }
@@ -726,11 +753,11 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
   }
 
   // Save cnode info and build grad graph
-  if (grad()->grad_flag() && grad()->in_grad_process()) {
+  if (grad()->need_construct_graph()) {
     grad()->SaveOutputNodeMap(obj_id, out_real, cnode);
     grad()->DoOpGrad(op_exec_info, cnode, out_real);
-    grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real);
   }
+  grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real);
   *ret = out_real;
 }
 
@@ -751,7 +778,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   op_exec_info->py_primitive = prim;
   op_exec_info->op_inputs = args[PY_INPUTS];
   // Record op info for judge whther the construct of cell has been changed
-  if (grad()->need_construct_graph()) {
+  if (grad()->grad_flag()) {
     size_t curr_op_num = grad()->top_cell()->op_num();
     op_exec_info->op_info = op_name + "-" + std::to_string(curr_op_num);
     std::string curr_op_info = grad()->top_cell()->all_op_info() + "_" + op_exec_info->op_info;
@@ -814,8 +841,6 @@ AnfNodePtr ForwardExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::ve
   MS_EXCEPTION_IF_NULL(op_exec_info);
 
   auto prim = op_exec_info->py_primitive;
-  std::vector<AnfNodePtr> inputs;
-  inputs.emplace_back(NewValueNode(prim));
 
   const auto &signature = prim->signatures();
   auto sig_size = signature.size();
@@ -834,6 +859,9 @@ AnfNodePtr ForwardExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::ve
   if (op_exec_info->op_name != prim::kPrimCast->name()) {
     RunParameterAutoMixPrecisionCast(op_exec_info);
   }
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.emplace_back(NewValueNode(prim));
   MS_LOG(DEBUG) << "Get op " << op_exec_info->op_name << " grad_flag " << grad()->grad_flag();
   GetArgsSpec(op_exec_info, op_masks, &inputs, args_spec_list);
 
@@ -956,9 +984,9 @@ py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::obj
         cast_struct->op_inputs[0] = obj;
         auto grad = this->grad();
         MS_EXCEPTION_IF_NULL(grad);
-        if (grad->need_construct_graph()) {
+        if (grad->grad_flag()) {
           size_t curr_op_num = grad->top_cell()->op_num();
-          cast_struct->op_info = cast_struct->op_name + "_" + std::to_string(curr_op_num);
+          cast_struct->op_info = cast_struct->op_name + "-" + std::to_string(curr_op_num);
           std::string curr_op_info = grad->top_cell()->all_op_info() + "_" + cast_struct->op_info;
           grad->top_cell()->set_all_op_info(curr_op_info);
           grad->top_cell()->set_op_num(curr_op_num + 1);
@@ -1289,23 +1317,28 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
   // Get output tensors
   TensorValueToTensor(parse::data_converter::PyDataToValue(out_real), &all_op_tensors);
   // Save all tensors info of current op
-  SaveOpInfo(top_cell_, op_exec_info->op_info, all_op_tensors);
+  if (need_construct_graph()) {
+    SaveOpInfo(top_cell_, op_exec_info->op_info, all_op_tensors);
+  }
 
   if (already_run_top_cell_.find(top_cell_->cell_id()) == already_run_top_cell_.end()) {
     // First run
     MS_LOG(DEBUG) << "Top cell " << top_cell_->cell_id() << " run firstly";
+    if (!need_construct_graph()) {
+      MS_LOG(EXCEPTION) << "The cell stack is empty";
+    }
     return;
   }
   // Non-first run
-  auto pre_top_cell = already_run_top_cell_.at(top_cell_->cell_id());
+  const auto &pre_top_cell = already_run_top_cell_.at(top_cell_->cell_id());
   MS_EXCEPTION_IF_NULL(pre_top_cell);
-  auto &pre_op_tensor_id = pre_top_cell->op_info_with_tensor_id().at(op_exec_info->op_info);
+  const auto &pre_op_tensor_id = pre_top_cell->op_info_with_tensor_id().at(op_exec_info->op_info);
   if (pre_op_tensor_id.size() != all_op_tensors.size()) {
     MS_LOG(EXCEPTION) << "The size of pre op tensor id: " << pre_op_tensor_id.size()
-                      << " is not equal to the size of current all output tensors " << all_op_tensors.size();
+                      << " is not equal to the size of all tensors of current op " << all_op_tensors.size();
   }
   // Update new output tensor info in bprop graph
-  auto &pre_tensor_id_with_tensor_object = pre_top_cell->tensor_id_with_tensor_object();
+  const auto &pre_tensor_id_with_tensor_object = pre_top_cell->tensor_id_with_tensor_object();
   for (size_t i = 0; i < pre_op_tensor_id.size(); ++i) {
     auto pre_id = pre_op_tensor_id[i];
     if (pre_tensor_id_with_tensor_object.find(pre_id) == pre_tensor_id_with_tensor_object.end()) {
@@ -1320,13 +1353,12 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
 void GradExecutor::SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   // Get all tensors id belong to forward op
-  std::set<std::string> forward_op_tensor_id;
+  std::unordered_set<std::string> forward_op_tensor_id;
   const auto &op_info_with_tensor_id = top_cell()->op_info_with_tensor_id();
   for (const auto &elem : op_info_with_tensor_id) {
     std::for_each(elem.second.begin(), elem.second.end(),
                   [&](const std::string &tensor_id) { forward_op_tensor_id.emplace(tensor_id); });
   }
-  // Save all tensors used by forward op
   auto &tensor_id_with_tensor_object_ = top_cell()->tensor_id_with_tensor_object();
   if (!tensor_id_with_tensor_object_.empty()) {
     MS_LOG(EXCEPTION) << "When compile a new graph, the map tensor_id_with_tensor_object should be empty. Top cell "
@@ -1334,21 +1366,21 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource
   }
   const auto &bprop_graph = resource->func_graph();
   const auto &value_node_list = bprop_graph->value_nodes();
+  std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
   for (const auto &elem : value_node_list) {
     auto value_node = elem.first->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
     TensorValueToTensor(value_node->value(), &tensors_in_bprop_graph);
-    for (const auto &tensor : tensors_in_bprop_graph) {
-      if (tensor->device_address() == nullptr ||
-          forward_op_tensor_id.find(tensor->id()) == forward_op_tensor_id.end()) {
-        continue;
-      }
-      tensor_id_with_tensor_object_[tensor->id()].emplace_back(tensor);
-      MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
-                    << " device address: " << tensor->device_address()->GetMutablePtr() << " shape and dtype "
-                    << tensor->GetShapeAndDataTypeInfo();
+  }
+  // Save tensor info in bprop graph
+  for (const auto &tensor : tensors_in_bprop_graph) {
+    if (tensor->device_address() == nullptr || forward_op_tensor_id.find(tensor->id()) == forward_op_tensor_id.end()) {
+      continue;
     }
+    tensor_id_with_tensor_object_[tensor->id()].emplace_back(tensor);
+    MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
+                  << " device address: " << tensor->device_address()->GetMutablePtr() << " shape and dtype "
+                  << tensor->GetShapeAndDataTypeInfo();
   }
 }
 
@@ -1700,10 +1732,7 @@ ResourcePtr GradExecutor::GetResource(const std::string &cell_id) {
   return nullptr;
 }
 
-void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const py::args &args) {
-  auto cell_id = GetCellId(cell, args);
-  MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
-  // Init resource for resoure and df_builder
+void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args) {
   if (cell_stack_.empty()) {
     if (IsBpropGraph(cell_id)) {
       in_grad_process_ = true;
@@ -1730,6 +1759,9 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
     for (size_t i = 0; i < args.size(); ++i) {
       auto param = args[i];
       auto new_param = curr_g_->add_parameter();
+      ValuePtr param_value = PyAttrValue(param);
+      MS_EXCEPTION_IF_NULL(param_value);
+      new_param->set_abstract(param_value->ToAbstract()->Broaden());
       std::string param_id = GetId(param);
       SetTupleArgsToGraphInfoMap(curr_g_, param, new_param, true);
       SetNodeMapInGraphInfoMap(curr_g_, param_id, new_param);
@@ -1737,7 +1769,40 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
     }
     top_cell()->set_k_pynative_cell_ptr(ad::GradPynativeCellBegin(curr_g_->parameters()));
     top_cell()->set_init_kpynative(true);
+  } else {
+    // Non-top cell
+    top_cell()->sub_cell_list().emplace(cell_id);
   }
+}
+
+void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const py::args &args) {
+  auto cell_id = GetCellId(cell, args);
+  MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
+  if (cell_stack_.empty() && top_cell_ != nullptr) {
+    // non-first step
+    if (!top_cell()->IsSubCell(cell_id) && already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
+      // top cell
+      const auto &pre_top_cell = already_run_top_cell_.at(cell_id);
+      if (!pre_top_cell->is_dynamic()) {
+        MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic, no need to run NewGraphInner again";
+        ResetTopCellInfo(pre_top_cell, args);
+        set_top_cell(pre_top_cell);
+        return;
+      }
+    } else if (top_cell()->IsSubCell(cell_id) && !top_cell()->is_dynamic()) {
+      // non-top cell
+      MS_LOG(DEBUG) << "no need to run NewGraphInner again";
+      return;
+    }
+  }
+  // Init resource for resoure and df_builder
+  InitResourceAndDfBuilder(cell_id, args);
+  // Check whether cell has dynamic construct
+  bool is_dynamic = parse::DynamicAnalysis::IsDynamicCell(cell);
+  if (is_dynamic) {
+    MS_LOG(DEBUG) << "Current cell " << py::cast<CellPtr>(cell)->ToString() << " has dynamic construct";
+  }
+  top_cell()->set_is_dynamic(is_dynamic);
 }
 
 void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest) {
@@ -1811,6 +1876,14 @@ void GradExecutor::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const p
 void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args) {
   const auto &cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "EndGraphInner start " << args.size() << " " << cell_id;
+  if (!need_construct_graph()) {
+    MS_LOG(DEBUG) << "Current cell " << cell_id << " no need to run EndGraphInner again";
+    if (cell_id == top_cell()->cell_id()) {
+      set_grad_flag(false);
+    }
+    return;
+  }
+
   auto out_id = GetId(out);
   // x =op1, y =op2, return (x, y)
   auto graph_info = top_cell()->graph_info_map().at(curr_g_);
@@ -2055,8 +2128,12 @@ bool GradExecutor::NeedCompileGraph() {
   bool ret = true;
   std::string top_cell_id = top_cell_->cell_id();
   if (already_run_top_cell_.find(top_cell_id) == already_run_top_cell_.end()) {
-    MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has never been ran, Need compile graph";
+    MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has never been ran, need compile graph";
     already_run_top_cell_[top_cell_id] = top_cell_;
+  } else if (!top_cell()->is_dynamic()) {
+    MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has been ran";
+    MS_LOG(DEBUG) << "Top cell " << top_cell_id << " is not dynamic, no need to compile graph again";
+    ret = false;
   } else {
     MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has been ran";
     auto pre_all_op_info = already_run_top_cell_.at(top_cell_id)->all_op_info();
@@ -2188,7 +2265,6 @@ void GradExecutor::ClearGrad(const py::object &cell, const py::args &args) {
   const auto &cell_id = GetCellId(cell, args);
   if (IsTopGraph(cell_id)) {
     in_grad_process_ = false;
-    top_cell_ = nullptr;
   }
   in_bprop_process_ = false;
   SubNestedGradOrder();
@@ -2237,9 +2313,7 @@ ForwardExecutorPtr PynativeExecutor::forward_executor() {
   return forward_executor_;
 }
 
-void PynativeExecutor::set_grad_flag(bool flag) {
-  grad_executor()->set_grad_flag(flag);
-}
+void PynativeExecutor::set_grad_flag(bool flag) { grad_executor()->set_grad_flag(flag); }
 
 bool PynativeExecutor::GetIsDynamicCell() {
   if (grad_executor_ == nullptr) {
