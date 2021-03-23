@@ -34,12 +34,12 @@
 #include "include/api/serialization.h"
 #include "include/api/context.h"
 
-using mindspore::GlobalContext;
 using mindspore::Serialization;
 using mindspore::Model;
-using mindspore::ModelContext;
+using mindspore::Context;
 using mindspore::Status;
 using mindspore::ModelType;
+using mindspore::Graph;
 using mindspore::GraphCell;
 using mindspore::kSuccess;
 using mindspore::MSTensor;
@@ -71,17 +71,26 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    GlobalContext::SetGlobalDeviceTarget(FLAGS_device_target);
-    GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
+    auto context = std::make_shared<Context>();
+    auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+    ascend310_info->SetDeviceID(FLAGS_device_id);
+    context->MutableDeviceInfo().push_back(ascend310_info);
 
-    auto graph = Serialization::LoadModel(FLAGS_model_path, ModelType::kMindIR);
-
-    Model model((GraphCell(graph)));
-    Status ret = model.Build();
+    Graph graph;
+    Status ret = Serialization::Load(FLAGS_model_path, ModelType::kMindIR, &graph);
     if (ret != kSuccess) {
-        std::cout << "ERROR Build failed." << std::endl;
+        std::cout << "Load model failed." << std::endl;
         return 1;
     }
+
+    Model model;
+    ret = model.Build(GraphCell(graph), context);
+    if (ret != kSuccess) {
+        std::cout << "ERROR: Build failed." << std::endl;
+        return 1;
+    }
+
+    std::vector<MSTensor> modelInputs = model.GetInputs();
 
     auto all_files = GetAllFiles(FLAGS_dataset_path);
     if (all_files.empty()) {
@@ -118,7 +127,8 @@ int main(int argc, char **argv) {
         transform(image, &image);
         transformCast(image, &image);
 
-        inputs.emplace_back(image);
+        inputs.emplace_back(modelInputs[0].Name(), modelInputs[0].DataType(), modelInputs[0].Shape(),
+                            image.Data().get(), image.DataSize());
 
         gettimeofday(&start, NULL);
         model.Predict(inputs, &outputs);
