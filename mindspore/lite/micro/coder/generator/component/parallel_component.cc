@@ -16,6 +16,7 @@
 
 #include "coder/generator/component/parallel_component.h"
 #include <string>
+#include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
 
@@ -51,13 +52,14 @@ void CodeSetGlobalThreadPoolState(std::ofstream &ofs) {
 }
 
 void CodeSetGlobalThreadPoolImplement(std::ofstream &ofs) {
-  ofs << "struct ThreadPool *g_thread_pool = NULL;\n"
+  ofs << "struct ThreadPool *" << gThreadPool << " = NULL;\n"
       << "int "
       << "SetThreadPool(struct ThreadPool *thread_pool) {\n"
       << "  if (thread_pool == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n"
-         "  g_thread_pool = thread_pool;\n"
+      << gThreadPool
+      << " = thread_pool;\n"
          "  return RET_OK;\n"
          "}\n";
 }

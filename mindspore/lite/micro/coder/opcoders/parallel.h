@@ -19,22 +19,22 @@
 
 namespace mindspore::lite::micro {
 
-constexpr int kDefaultTaskId = 0;
+constexpr auto kDefaultTaskId = 0;
 
-constexpr int kMaxThreadNumSupported = 4;
+constexpr auto kMaxThreadNumSupported = 4;
 
 // ParallelLaunch is defined in thread_pool
-extern const char *kParallelLaunch;
+constexpr auto kParallelLaunch = "ParallelLaunch";
 
 // g_thread_pool and g_thread_num are global variable,
 // assign g_thread_pool by CreateThreadPool,
 // and g_thread_num is equal to GetCurrentThreadNum
-extern const char *gThreadNum;
-extern const char *gThreadPool;
+constexpr auto gThreadNum = "g_thread_num";
+constexpr auto gThreadPool = "g_thread_pool";
 
 // args represents the parameters required for operator to run
-extern const char *kRunArgs;
-extern const char *kRunArgsAddr;
+constexpr auto kRunArgs = "args";
+constexpr auto kRunArgsAddr = "&args";
 
 }  // namespace mindspore::lite::micro
 
