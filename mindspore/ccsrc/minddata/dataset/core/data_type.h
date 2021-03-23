@@ -257,10 +257,12 @@ inline DataType DataType::FromCType<float>() {
   return DataType(DataType::DE_FLOAT32);
 }
 
+#ifndef ENABLE_MD_LITE_X86_64
 template <>
 inline DataType DataType::FromCType<float16>() {
   return DataType(DataType::DE_FLOAT16);
 }
+#endif
 
 template <>
 inline DataType DataType::FromCType<int64_t>() {
@@ -327,10 +329,12 @@ inline bool DataType::IsLooselyCompatible<float>() const {
   return type_ == DataType::DE_FLOAT32;
 }
 
+#ifndef ENABLE_MD_LITE_X86_64
 template <>
 inline bool DataType::IsLooselyCompatible<float16>() const {
   return type_ == DataType::DE_FLOAT16;
 }
+#endif
 
 template <>
 inline bool DataType::IsLooselyCompatible<int64_t>() const {

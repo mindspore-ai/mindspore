@@ -396,9 +396,9 @@ void Tensor::PrintItemAt(const std::vector<dsize_t> &index, std::ostream &out) c
     CASE_PRINT(DataType::DE_INT64, int64_t)
 
     CASE_PRINT(DataType::DE_UINT64, uint64_t)
-
+#ifndef ENABLE_MD_LITE_X86_64
     CASE_PRINT(DataType::DE_FLOAT16, float16)
-
+#endif
     CASE_PRINT(DataType::DE_FLOAT32, float)
 
     CASE_PRINT(DataType::DE_FLOAT64, double)
@@ -825,12 +825,14 @@ Status Tensor::GetFloatAt(T *o, const std::vector<dsize_t> &index) const {
     RETURN_STATUS_UNEXPECTED(err);
   }
   switch (type_.value()) {
+#ifndef ENABLE_MD_LITE_X86_64
     case DataType::DE_FLOAT16: {
       float16 *ptr = nullptr;
       RETURN_IF_NOT_OK(GetItemPtr<float16>(&ptr, index));
       *o = static_cast<T>(*ptr);
       break;
     }
+#endif
     case DataType::DE_FLOAT32: {
       float *ptr = nullptr;
       RETURN_IF_NOT_OK(GetItemPtr<float>(&ptr, index));

@@ -260,6 +260,9 @@ endif()
 
 if(BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
     add_compile_definitions(ENABLE_ANDROID)
+    if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
+        add_compile_definitions(ENABLE_MD_LITE_X86_64)
+    endif()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
 endif()
 
