@@ -205,7 +205,7 @@ inline bool CheckNullInput(std::vector<size_t> input_shape) {
   {                                                                                           \
     curandStatus_t status = (expression);                                                     \
     if (status != CURAND_STATUS_SUCCESS) {                                                    \
-      MS_LOG(EXCEPTION) << "CUAD curand Error: " << message << " | curandStatus: " << status; \
+      MS_LOG(EXCEPTION) << "CUDA curand Error: " << message << " | curandStatus: " << status; \
     }                                                                                         \
   }
 }  // namespace gpu
