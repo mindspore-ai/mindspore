@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "src/runtime/agent/npu/optimizer/npu_transform_pass.h"
-#include <set>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/agent/npu/npu_manager.h"
@@ -22,7 +21,7 @@
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
 
-static std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
+std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
   schema::PrimitiveType_Conv2DFusion,  schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Resize,
   schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,         schema::PrimitiveType_ScaleFusion};
 

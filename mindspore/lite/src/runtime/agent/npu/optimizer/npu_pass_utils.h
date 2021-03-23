@@ -17,9 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
 #include <vector>
+#include <set>
 #include <string>
+#include <unordered_map>
 #include "src/lite_kernel.h"
 namespace mindspore::lite {
+extern std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index;
 class NPUPassUtils {
  public:
   static kernel::LiteKernel *CreateNchw2NhwcKernel(const std::vector<Tensor *> &in_tensors,
@@ -52,8 +55,11 @@ class NPUPassUtils {
   static bool IsNhwc2Nchw(const kernel::LiteKernel *kernel);
 
   static bool IsNchw2Nhwc(const kernel::LiteKernel *kernel);
-  static kernel::LiteKernel *KernelInputFromKernel(const kernel::LiteKernel *kernel, size_t in_tensor_index);
+  static kernel::LiteKernel *KernelInputFromKernel(const kernel::LiteKernel *kernel, Tensor *in_tensor);
+  static std::vector<Tensor *> GetNonConstInputs(kernel::LiteKernel *kernel);
   static bool Scale4dCase(const kernel::LiteKernel *kernel);
+  static void AssistDataNHWC2NCHW(int *data, size_t unit_size);
+  static int MaskDataNHWC2NCHW(int mask);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_

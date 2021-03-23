@@ -39,6 +39,9 @@ class NPUFusionPass : public NPUBasePass {
   int CommonFusion(kernel::LiteKernel *kernel);
   int ConcatFusion(kernel::LiteKernel *kernel);
   int FormatFusion(kernel::LiteKernel *kernel);
+  int SplitFusion(kernel::LiteKernel *kernel);
+  int PadFusion(kernel::LiteKernel *kernel);
+  int StridedSliceFusion(kernel::LiteKernel *kernel);
 
  private:
   std::vector<kernel::LiteKernel *> *kernels;
