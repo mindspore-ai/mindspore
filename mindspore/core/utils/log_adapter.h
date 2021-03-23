@@ -22,6 +22,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
+#include <set>
 #include <functional>
 #include "utils/overload.h"
 #include "./securec.h"
@@ -41,6 +42,7 @@ static constexpr size_t GetRelPathPos() noexcept {
 }
 
 namespace mindspore {
+extern std::set<void **> acl_handle_set __attribute__((visibility("default")));
 #define FILE_NAME                                                                             \
   (sizeof(__FILE__) > GetRelPathPos() ? static_cast<const char *>(__FILE__) + GetRelPathPos() \
                                       : static_cast<const char *>(__FILE__))

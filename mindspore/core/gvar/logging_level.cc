@@ -17,6 +17,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
+std::set<void **> acl_handle_set = std::set<void **>();
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
 }  // namespace mindspore

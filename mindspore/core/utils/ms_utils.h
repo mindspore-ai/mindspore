@@ -19,6 +19,8 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include <vector>
+#include <atomic>
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
   ClassType(const ClassType &) = delete;   \

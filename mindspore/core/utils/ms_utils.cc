@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "utils/ms_utils.h"
-#include <string>
-#include <vector>
-#include <atomic>
 
 namespace mindspore {
 namespace common {
