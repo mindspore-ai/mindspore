@@ -149,6 +149,8 @@ class MSTensor::Impl {
 
   void set_own_data(bool own_data) { own_data_ = own_data; }
 
+  void set_from_session(bool from_session) { from_session_ = from_session; }
+
  private:
   tensor::MSTensor *lite_tensor_ = nullptr;
   std::string tensor_name_ = "";

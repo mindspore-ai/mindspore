@@ -45,12 +45,12 @@ MSTensor::Impl *MSTensor::Impl::CreateTensorImpl(const std::string &name, enum D
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
     return nullptr;
   }
-  auto impl = new (std::nothrow) Impl();
+  auto impl = new (std::nothrow) Impl(lite_tensor);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
   }
-  impl->set_lite_tensor(lite_tensor);
+  impl->set_from_session(false);
   return impl;
 }
 
