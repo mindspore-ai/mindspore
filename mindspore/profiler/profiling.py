@@ -341,7 +341,7 @@ class Profiler:
             # whether keep the first step
             skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
             point_info = framework_parser.point_info
-            # recognize inference or traning mode
+            # recognize inference or training mode
             is_traning_mode_flag = framework_parser.check_op_name("Gradients")
             # parser the step trace files and save the result to disk
             source_path = validate_and_normalize_path(source_path)

@@ -426,7 +426,7 @@ def _convert_image_format(np_tensor, input_format, out_format='HWC'):
 
 def _make_canvas_for_imgs(tensor, col_imgs=8):
     """
-    Expand the N, show imgs on a canvs.
+    Expand the N, show imgs on a canvas.
 
     Args:
         tensor (Tensor): The canvas value.
