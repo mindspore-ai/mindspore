@@ -100,13 +100,22 @@ FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
   return BasicClone(specialized_add_fg);
 }
 
-AnfNodePtr BuildZerosLikeDout(const FuncGraphPtr &tape, const ValuePtr &out) {
+AnfNodePtr BuildZerosLikeNode(const FuncGraphPtr &tape, const AnfNodePtr &node) {
+  // Build zeros_like(node) as dout
+  abstract::AbstractBasePtrList args_spec{node->abstract()->Broaden()};
+  auto zeros_like_fg = GetZerosLike(args_spec);
+  auto zeros_like_node = tape->NewCNode({NewValueNode(zeros_like_fg), node});
+  zeros_like_node->set_abstract(zeros_like_fg->output()->abstract());
+  return zeros_like_node;
+}
+
+AnfNodePtr BuildZerosLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
   // Build zeros_like(out) as dout
   abstract::AbstractBasePtrList args_spec{out->ToAbstract()->Broaden()};
   auto zeros_like_fg = GetZerosLike(args_spec);
-  auto zeros_like_dout = tape->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out)});
-  zeros_like_dout->set_abstract(zeros_like_fg->output()->abstract());
-  return zeros_like_dout;
+  auto zeros_like_value = tape->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out)});
+  zeros_like_value->set_abstract(zeros_like_fg->output()->abstract());
+  return zeros_like_value;
 }
 }  // namespace
 
@@ -124,7 +133,7 @@ class PynativeAdjoint {
     if (dout_ != nullptr) {
       return dout_;
     }
-    return BuildZerosLikeDout(tape_, out_);
+    return BuildZerosLikeValue(tape_, out_);
   }
 
   void AccumulateDout(const AnfNodePtr &dout_factor) {
@@ -198,6 +207,11 @@ class KPynativeCellImpl : public KPynativeCell {
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
 KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs) {
+  auto abstract_are_set = std::all_of(cell_inputs.cbegin(), cell_inputs.cend(),
+                                      [](const AnfNodePtr &node) { return node->abstract() != nullptr; });
+  if (!abstract_are_set) {
+    MS_LOG(EXCEPTION) << "Not all abstract_value in cell_inputs are set";
+  }
   return std::make_shared<KPynativeCellImpl>(cell_inputs);
 }
 
@@ -238,9 +252,13 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
     for (auto input : cell_inputs_) {
       auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
       if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-        MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << input->ToString();
+        // If input is not used in the network, just return zeros_like() as dout;
+        MS_LOG(WARNING) << "Input is not used in network, input: " << input->ToString();
+        auto dout = BuildZerosLikeNode(tape_, input);
+        node_list.push_back(dout);
+      } else {
+        node_list.push_back(input_adjoint_iter->second->RealDout());
       }
-      node_list.push_back(input_adjoint_iter->second->RealDout());
     }
   }
   if (grad_weights) {
@@ -253,7 +271,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
         MS_EXCEPTION_IF_NULL(input_w);
         auto default_param = input_w->default_param();
         MS_EXCEPTION_IF_NULL(default_param);
-        auto dout = BuildZerosLikeDout(tape_, default_param);
+        auto dout = BuildZerosLikeValue(tape_, default_param);
         node_list.push_back(dout);
       } else {
         node_list.push_back(input_adjoint_iter->second->RealDout());
@@ -546,9 +564,10 @@ bool KPynativeCellImpl::BackPropagate() {
       MS_LOG(DEBUG) << "Bypass backpropagate for cnode with stop_gradient flag: " << cnode->ToString();
       continue;
     }
+    MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->ToString();
     auto bprop_fg = iter->second->bprop_fg();
     MS_EXCEPTION_IF_NULL(bprop_fg);
-    // Optimize the bprop_fg based on value.
+
     AnfNodePtrList node_list{NewValueNode(bprop_fg)};
     std::transform(iter->second->op_args().begin(), iter->second->op_args().end(), std::back_inserter(node_list),
                    [](const ValuePtr &value) { return NewValueNode(value); });
