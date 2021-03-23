@@ -820,8 +820,6 @@ build_java() {
 
     cd ${JAVA_PATH}/java/app/build
     zip -r mindspore-lite-maven-${VERSION_STR}.zip mindspore
-    # copy output
-    cp mindspore-lite-maven-${VERSION_STR}.zip ${BASEPATH}/output/
 
     # build linux x86 jar
     check_java_home
@@ -842,6 +840,7 @@ build_java() {
     mkdir -p ${JAVA_PATH}/java/linux_x86/build/mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
     tar czvf mindspore-lite-${VERSION_STR}-inference-linux-x64-jar.tar.gz ./mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
     # copy output
+    cp ${JAVA_PATH}/java/app/build/mindspore-lite-maven-${VERSION_STR}.zip ${BASEPATH}/output
     cp mindspore-lite-${VERSION_STR}-inference-linux-x64-jar.tar.gz ${BASEPATH}/output
     cd ${BASEPATH}/output
     [ -n "${VERSION_STR}" ] && rm -rf ${BASEPATH}/mindspore/lite/build/java/mindspore-lite-${VERSION_STR}-inference-linux-x64
