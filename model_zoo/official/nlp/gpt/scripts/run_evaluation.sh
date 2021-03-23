@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash scripts/run_evaluation.sh TASK_TYPE CKPT_PATH DATA_PATH METRICS"
 echo "for example: bash scripts/run_evaluation.sh lambada /your/ckpt /your/data acc"
 echo "=============================================================================================================="

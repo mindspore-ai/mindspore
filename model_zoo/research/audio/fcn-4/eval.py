@@ -133,5 +133,5 @@ if __name__ == "__main__":
     auc_val = validation(network, cfg.checkpoint_path + "/" + cfg.model_name, cfg.data_dir,
                          cfg.val_filename, cfg.num_consumer, cfg.batch_size)
 
-    print("=" * 10 + "Validation Peformance" + "=" * 10)
+    print("=" * 10 + "Validation Performance" + "=" * 10)
     print("AUC: {:.5f}".format(auc_val))

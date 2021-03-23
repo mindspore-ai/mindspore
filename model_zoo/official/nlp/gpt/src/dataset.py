@@ -14,7 +14,7 @@
 # ============================================================================
 
 """
-Create dataset for training and evaluting
+Create dataset for training and evaluating
 """
 
 import os

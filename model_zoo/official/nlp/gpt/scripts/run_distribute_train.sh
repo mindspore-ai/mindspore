@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash run_distributed_pretrain_ascend.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM"
 echo "for example: bash run_distributed_pretrain_ascend.sh /path/dataset /path/hccl.json 8"
 echo "It is better to use absolute path."

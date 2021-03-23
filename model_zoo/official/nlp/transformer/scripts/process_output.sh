@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE"
 echo "for example: sh process_output.sh /path/newstest2014.tok.de /path/eval_output_file /path/vocab.bpe.32000"
 echo "It is better to use absolute path."

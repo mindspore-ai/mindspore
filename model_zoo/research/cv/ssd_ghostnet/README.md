@@ -59,7 +59,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         ```
 
     2. If your own dataset is used. **Select dataset to other when run script.**
-        Organize the dataset infomation into a TXT file, each row in the file is as follows:
+        Organize the dataset information into a TXT file, each row in the file is as follows:
 
         ```python
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2

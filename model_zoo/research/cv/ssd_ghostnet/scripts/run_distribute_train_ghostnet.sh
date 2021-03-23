@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_distribute_train_ghostnet.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
 echo "for example: sh run_distribute_train_ghostnet.sh 8 500 0.2 coco /data/hccl.json /opt/ssd-300.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
@@ -33,7 +33,7 @@ BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 cd $BASE_PATH/../ || exit
 python train.py --only_create_dataset=True
 
-echo "After running the scipt, the network runs in the background. The log will be generated in LOGx/log.txt"
+echo "After running the script, the network runs in the background. The log will be generated in LOGx/log.txt"
 
 export RANK_SIZE=$1
 EPOCH_SIZE=$2

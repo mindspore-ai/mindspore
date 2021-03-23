@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash run_distributed_gd_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR TEACHER_CKPT_PATH"
 echo "for example: bash run_distributed_gd_gpu.sh 8 3 /path/data/ /path/datasetSchema.json /path/bert_base.ckpt"
 echo "It is better to use absolute path."

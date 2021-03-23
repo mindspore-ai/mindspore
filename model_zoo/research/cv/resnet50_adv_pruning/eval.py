@@ -49,7 +49,7 @@ if __name__ == '__main__':
         context.set_context(mode=context.GRAPH_MODE,
                             device_target="GPU", save_graphs=False)
     else:
-        raise ValueError("Unsupport platform.")
+        raise ValueError("Unsupported platform.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 

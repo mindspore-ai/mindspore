@@ -340,7 +340,7 @@ GPU:
 sh run_gpu.sh [--options]
 ```
 
-The usage of `run_ascend.sh` is shown as bellow:
+The usage of `run_ascend.sh` is shown as below:
 
 ```text
 Usage: run_ascend.sh [-h, --help] [-t, --task <CHAR>] [-n, --device_num <N>]
@@ -362,7 +362,7 @@ options:
 
 Notes: Be sure to assign the hccl_json file while running a distributed-training.
 
-The usage of `run_gpu.sh` is shown as bellow:
+The usage of `run_gpu.sh` is shown as below:
 
 ```text
 Usage: run_gpu.sh [-h, --help] [-t, --task <CHAR>] [-n, --device_num <N>]

@@ -62,7 +62,7 @@ class FastText(nn.Cell):
         embeding = self.realdiv(embeding, src_token_length)
 
         embeding = self.cast(embeding, mstype.float16)
-        classifer = self.fc(embeding)
-        classifer = self.cast(classifer, mstype.float32)
+        classifier = self.fc(embeding)
+        classifier = self.cast(classifier, mstype.float32)
 
-        return classifer
+        return classifier

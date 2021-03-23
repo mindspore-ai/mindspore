@@ -49,7 +49,7 @@ The FM and deep component share the same input raw feature vector, which enables
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- runing on Ascend
+- running on Ascend
 
   ```shell
   # run training example

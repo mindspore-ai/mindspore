@@ -184,7 +184,7 @@ def train_paralle(input_file_path):
         input_file_path: preprocessed dataset path
     """
     set_parallel_env()
-    print("Starting traning on mutiple devices. |~ _ ~| |~ _ ~| |~ _ ~| |~ _ ~|")
+    print("Starting traning on multiple devices. |~ _ ~| |~ _ ~| |~ _ ~| |~ _ ~|")
     preprocessed_data = load_dataset(dataset_path=input_file_path,
                                      batch_size=config.batch_size,
                                      epoch_count=config.epoch_count,

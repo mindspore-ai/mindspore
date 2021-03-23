@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh create_dataset.sh SOURCE_DATASET_PATH DATASET_NAME"
 echo "for example: sh create_dataset.sh /home/workspace/ag_news_csv ag"
 echo "DATASET_NAME including ag, dbpedia, and yelp_p"

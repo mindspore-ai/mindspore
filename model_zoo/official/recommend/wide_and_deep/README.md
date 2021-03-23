@@ -168,7 +168,7 @@ optional arguments:
                                       is a slice of weight, multiple checkpoint files need to be
                                       transferred. Use ';' to separate them and sort them in sequence
                                       like "./checkpoints/0.ckpt;./checkpoints/1.ckpt".
-                                      (Defalut:./checkpoints/)
+                                      (Default:./checkpoints/)
   --eval_file_name                    Eval output file.(Default:eval.og)
   --loss_file_name                    Loss output file.(Default:loss.log)
   --host_device_mix                   Enable host device mode or not.(Default:0)
@@ -326,7 +326,7 @@ python eval.py
 | AUC Score                | 0.80937                         | 0.80971                         | 0.80862                         | 0.80834                         |
 | Speed                    | 20.906 ms/step                  | 24.465 ms/step                  | 27.388 ms/step                  | 236.506 ms/step                 |
 | Loss                     | wide:0.433,deep:0.444           | wide:0.444, deep:0.456          | wide:0.437, deep: 0.448         | wide:0.444, deep:0.444          |
-| Parms(M)                 | 75.84                           | 75.84                           | 75.84                           | 75.84                           |
+| Params(M)                | 75.84                           | 75.84                           | 75.84                           | 75.84                           |
 | Checkpoint for inference | 233MB(.ckpt file)               | 230MB(.ckpt)                    | 233MB(.ckpt file)               | 233MB(.ckpt file)               |
 
 All executable scripts can be found in [here](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/wide_and_deep/script)

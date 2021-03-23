@@ -15,7 +15,7 @@
 
 ## Description
 
-Generalized Operator Modelling of the Ocean (GOMO) is a three-dimensional ocean model based on OpenArray which is a simple operator library for the decoupling of ocean modelling and parallel computing (Xiaomeng Huang et al, 2019). GOMO is a numerical solution model using finite differential algorithm to solve PDE equations. With MindSpore and GPU, we can achieve great improvments in solving those PDE equations compared with CPU.
+Generalized Operator Modelling of the Ocean (GOMO) is a three-dimensional ocean model based on OpenArray which is a simple operator library for the decoupling of ocean modelling and parallel computing (Xiaomeng Huang et al, 2019). GOMO is a numerical solution model using finite differential algorithm to solve PDE equations. With MindSpore and GPU, we can achieve great improvements in solving those PDE equations compared with CPU.
 This is an example of training GOMO Model with MindSpore on GPU.
 
 ## Model Architecture

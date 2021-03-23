@@ -170,7 +170,7 @@ optional arguments:
                                       is a slice of weight, multiple checkpoint files need to be
                                       transferred. Use ';' to separate them and sort them in sequence
                                       like "./checkpoints/0.ckpt;./checkpoints/1.ckpt".
-                                      (Defalut:./checkpoints/)
+                                      (Default:./checkpoints/)
   --eval_file_name                    Eval output file.(Default:eval.og)
   --loss_file_name                    Loss output file.(Default:loss.log)
   --host_device_mix                   Enable host device mode or not.(Default:0)

@@ -15,9 +15,9 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
-echo "bash scipts/run_standalone_td.sh"
-echo "for example: bash scipts/run_standalone_td.sh"
+echo "Please run the script as: "
+echo "bash scripts/run_standalone_td.sh"
+echo "for example: bash scripts/run_standalone_td.sh"
 echo "=============================================================================================================="
 
 mkdir -p ms_log

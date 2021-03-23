@@ -16,7 +16,7 @@
 
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_distribute_eval.sh DEVICE_NUM RANK_TABLE_FILE DATASET CKPT_PATH"
 echo "for example: sh run_eval.sh [RANK_TABLE_FILE] /path/to/dataset /path/to/ckpt device_id"
 echo "It is better to use absolute path."

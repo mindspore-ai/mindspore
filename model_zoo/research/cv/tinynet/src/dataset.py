@@ -50,7 +50,7 @@ def split_imgs_and_labels(imgs, labels, batchInfo):
 
 def create_dataset(batch_size, train_data_url='', workers=8, distributed=False,
                    input_size=224, color_jitter=0.4):
-    """Creat ImageNet training dataset"""
+    """Create ImageNet training dataset"""
     if not os.path.exists(train_data_url):
         raise ValueError('Path not exists')
     decode_op = py_vision.Decode()
@@ -102,7 +102,7 @@ def create_dataset(batch_size, train_data_url='', workers=8, distributed=False,
 
 def create_dataset_val(batch_size=128, val_data_url='', workers=8, distributed=False,
                        input_size=224):
-    """Creat ImageNet validation dataset"""
+    """Create ImageNet validation dataset"""
     if not os.path.exists(val_data_url):
         raise ValueError('Path not exists')
     rank_id = get_rank() if distributed else 0

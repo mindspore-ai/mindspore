@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_distributed_train.sh DATASET_PATH RANK_TABLE_PATH"
 echo "for example: sh run_distributed_train.sh /home/workspace/ag /home/workspace/rank_table_file.json"
 echo "It is better to use absolute path."

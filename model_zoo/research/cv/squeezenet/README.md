@@ -74,7 +74,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- runing on Ascend
+- running on Ascend
 
   ```bash
   # distributed training
