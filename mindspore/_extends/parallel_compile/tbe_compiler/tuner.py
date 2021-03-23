@@ -296,7 +296,7 @@ class TbeTuner:
         # todo build with build_single_op_from_c
         base_kernel = './kernel_meta/' + kernel_name + '.o'
         job_type = RL_COMPILE
-        compile_info = "{}"
+        compile_info = None
         try:
             compile_info, op_args, op_module_name = build_op(OP_BUILD, json.dumps(json_info), tune_mode)
         # pylint: disable=broad-except
@@ -317,7 +317,7 @@ class TbeTuner:
 
         self.module_list[op_module_name] = 1
         self.fusion_need_sync += 1
-        return ret, job_type, json.dumps(compile_info)
+        return ret, job_type, compile_info
 
     def fusion_rl_tune(self, task_id, json_info):
         """
@@ -334,6 +334,7 @@ class TbeTuner:
         converted_json = fusion_to_fusion(json.dumps(json_info), tune_mode="RL")
         job_type = RL_COMPILE
         base_kernel = './kernel_meta/' + kernel_name + '.o'
+        compile_info = None
         try:
             fusion_op(converted_json)
         # pylint: disable=broad-except
@@ -341,7 +342,7 @@ class TbeTuner:
             exc_type, exc_value, _ = sys.exc_info()
             log.error(
                 "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
-            return False, job_type
+            return False, job_type, compile_info
         if self.offline_tune:
             job_type = RL_OFFLINE
             dump_fusion_json(converted_json, self.offline_dump_path)
@@ -351,7 +352,7 @@ class TbeTuner:
         l1size = 0
         ret = dispatch_fusion_tune_task(graph_id, task_id, l1size, base_kernel, kernel_name, full_name,
                                         converted_json)
-        return ret, job_type
+        return ret, job_type, compile_info
 
     def fusion_ga_tune(self, task_id, json_info):
         """

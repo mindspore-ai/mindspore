@@ -331,6 +331,8 @@ class TbeProcess:
 
             if tune_mode == RL_TUNE:
                 ret, job_type, compile_info = self.__tuner.rl_tune(task_id, op_json)
+                if isinstance(compile_info, dict):
+                    compile_info = json.dumps(compile_info)
                 if job_type is RL_OFFLINE or job_type is RL_ONLINE:
                     if not ret:
                         # offline and online hit will return false
@@ -388,7 +390,7 @@ class TbeProcess:
                     for item in ret:
                         task_id = item['task_id']
                         status_code = item['status_code']
-                        compile_info = item["op_res"] if "op_res" in item else "{}"
+                        compile_info = json.dumps(item["op_res"] if "op_res" in item else None)
                         res = None
                         if status_code == 0:
                             res = task_id, "Success", compile_info

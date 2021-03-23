@@ -128,7 +128,7 @@ def build_op(build_type, json_str, tune_mode=None):
         else:
             res = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
             if tune_mode is not None:
-                return res, (inputs_args, outputs_args, attrs_args), op_module_name
+                return None, (inputs_args, outputs_args, attrs_args), op_module_name
             return res
 
     except Exception as e:

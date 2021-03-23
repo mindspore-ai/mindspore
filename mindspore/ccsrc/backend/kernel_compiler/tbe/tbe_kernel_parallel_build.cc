@@ -289,7 +289,6 @@ void ParallelBuildManager::ResetTaskInfo() {
   }
   task_map_.clear();
   same_op_list_.clear();
-  AscendKernelBuildClient::Instance().TbeReset();
 }
 
 AnfNodePtr ParallelBuildManager::GetAnfNodeByTaskID(int32_t task_id) {
