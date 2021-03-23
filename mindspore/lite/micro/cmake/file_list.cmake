@@ -42,7 +42,6 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/op_coder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_builder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_register.cc
-        ${MICRO_DIR}/coder/opcoders/parallel.cc
         #### serializer
         ${MICRO_DIR}/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.cc
         ${MICRO_DIR}/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.cc
