@@ -1,4 +1,4 @@
-## define customized find fucntions, print customized error messages
+## define customized find functions, print customized error messages
 function(find_required_package pkg_name)
     find_package(${pkg_name})
     if(NOT ${pkg_name}_FOUND)
@@ -24,7 +24,7 @@ if(Python3_FOUND)
     message("Python3 library path: ${Python3_LIBRARY}")
     message("Python3 interpreter: ${Python3_EXECUTABLE}")
 elseif(Python3_LIBRARY AND Python3_EXECUTABLE AND
-        ${Python3_VERSION} VERSION_GREATER_EQUAL "3.7.0" AND ${Python3_VERSION} VERSION_LESS "3.8.9")
+        ${Python3_VERSION} VERSION_GREATER_EQUAL "3.7.0" AND ${Python3_VERSION} VERSION_LESS "3.9.9")
     message(WARNING "Maybe python3 environment is broken.")
     message("Python3 library path: ${Python3_LIBRARY}")
     message("Python3 interpreter: ${Python3_EXECUTABLE}")
