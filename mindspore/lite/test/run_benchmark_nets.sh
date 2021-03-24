@@ -1976,6 +1976,38 @@ function Run_npu() {
     done < ${models_npu_config}
 }
 
+# Run on x86 java platform:
+function Run_x86_java() {
+    cd ${x86_java_path} || exit 1
+    tar -zxf mindspore-lite-${version}-inference-linux-x64-jar.tar.gz || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar
+    # compile benchmark
+    echo "javac -cp ${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar ${basepath}/st/java/src/main/java/Benchmark.java -d ."
+    javac -cp ${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar ${basepath}/st/java/src/main/java/Benchmark.java -d .
+
+    count=0
+    # Run tflite converted models:
+    while read line; do
+        # only run top5.
+        count=`expr ${count}+1`
+        if [[ ${count} -gt 5 ]]; then
+            break
+        fi
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_x86_java_log_file}"
+        echo "java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out 1
+        if [ $? = 0 ]; then
+            run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tflite_config}
+}
+
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
@@ -2112,6 +2144,9 @@ echo 'run x86 sse logs: ' > ${run_x86_sse_log_file}
 run_x86_avx_log_file=${basepath}/run_x86_avx_log.txt
 echo 'run x86 avx logs: ' > ${run_x86_avx_log_file}
 
+run_x86_java_log_file=${basepath}/run_x86_java_log.txt
+echo 'run x86 java logs: ' > ${run_x86_java_log_file}
+
 run_arm64_fp32_log_file=${basepath}/run_arm64_fp32_log.txt
 echo 'run arm64_fp32 logs: ' > ${run_arm64_fp32_log_file}
 
@@ -2158,6 +2193,15 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; th
     echo "start Run x86 avx ..."
     Run_x86_avx &
     Run_x86_avx_PID=$!
+    sleep 1
+fi
+
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
+    # Run on x86-java
+    echo "start Run x86 java ..."
+    x86_java_path=${release_path}/aar
+    Run_x86_java`` &
+    Run_x86_java_PID=$!
     sleep 1
 fi
 
@@ -2259,6 +2303,16 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
     if [[ ${Run_x86_status} != 0 ]];then
         echo "Run_x86 failed"
         cat ${run_x86_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
+    wait ${Run_x86_java_PID}
+    Run_x86_java_status=$?
+
+    if [[ ${Run_x86_java_status} != 0 ]];then
+        echo "Run_x86 java failed"
+        cat ${run_x86_java_log_file}
         isFailed=1
     fi
 fi
