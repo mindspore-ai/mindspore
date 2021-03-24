@@ -30,7 +30,7 @@ typedef void (*PowerFunFp16)(const float16_t *, const float16_t *, float16_t *, 
 #ifdef __cplusplus
 extern "C" {
 #endif
-inline bool CheckInteger(float16_t f) { return floorf(f) == f; }
+static inline bool CheckInteger(float16_t f) { return floorf(f) == f; }
 
 static inline float16_t StdPowerScalarFp16(float16_t x, const void *exponent) {
   return powf(x, *(float16_t *)exponent);
