@@ -776,7 +776,7 @@ class AscendAutoMonadConverter {
     if (last_monad_ != nullptr) {
       return last_monad_;
     }
-    return GetMonadValue();
+    return GetMonad();
   }
 
   // Make a assign cnode.
