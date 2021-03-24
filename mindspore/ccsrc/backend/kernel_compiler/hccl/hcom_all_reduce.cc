@@ -25,8 +25,8 @@ namespace kernel {
 bool HcomAllReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_LOG(INFO) << "HcclAllReduce launch";
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "AllReduce input output size must be 1";
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "Invalid AllReduce input output size(" << inputs.size() << ", " << outputs.size() << ").";
     return false;
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
