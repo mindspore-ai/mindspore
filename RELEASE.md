@@ -31,7 +31,7 @@ However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To 
 
 <table>
 <tr>
-<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.2.0 </td>
+<td style="text-align:center"> 1.1.1 </td> <td style="text-align:center"> 1.2.0-rc1 </td>
 </tr>
 <tr>
 <td>
@@ -64,7 +64,7 @@ Previously, we have incomplete support for keyword arguments `out` and `where` i
 
 <table>
 <tr>
-<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.2.0 </td>
+<td style="text-align:center"> 1.1.1 </td> <td style="text-align:center"> 1.2.0-rc1 </td>
 </tr>
 <tr>
 <td>
@@ -107,7 +107,7 @@ Previously, we have incomplete support for keyword arguments `out` and `where` i
 
 <table>
 <tr>
-<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.2.0 </td>
+<td style="text-align:center"> 1.1.1 </td> <td style="text-align:center"> 1.2.0-rc1 </td>
 </tr>
 <tr>
 <td>
