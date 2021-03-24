@@ -315,6 +315,22 @@ function Run_Converter() {
         fi
     done < ${models_with_multiple_inputs_config}
 
+    while read line; do
+      fp16_line_info=${line}
+      if [[ $fp16_line_info == \#* ]]; then
+        continue
+      fi
+      model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+      model_name=${model_info%%;*}
+      echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+      cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+      if [ $? = 0 ]; then
+          converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+      else
+          converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+      fi
+    done < ${models_multiple_inputs_fp16_config}
+
     # Convert models which does not need to be cared about the accuracy:
     while read line; do
         if [[ $line == \#* ]]; then
@@ -1778,6 +1794,44 @@ function Run_arm64_fp16() {
             run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_fp16_config}
+
+    # Run converted models which has multiple inputs in fp16 mode:
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue-
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        model_name=`echo ${model_info}|awk -F ';' '{print $1}'`
+        input_num=`echo ${model_info} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        input_files=''
+        output_file=''
+        data_path="/data/local/tmp/input_output/"
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+        done
+        output_file=${data_path}'output/'${model_name}'.ms.out'
+        if [[ ${model_name##*.} == "caffemodel" ]]; then
+          model_name=${model_name%.*}
+        fi
+        echo "---------------------------------------------------------" >> "${run_arm64_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} '--enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_multiple_inputs_fp16_config}
 }
 # Run on gpu platform:
 function Run_gpu() {
@@ -2002,6 +2056,7 @@ models_onnx_config=${basepath}/models_onnx.cfg
 models_onnx_fp16_config=${basepath}/models_onnx_fp16.cfg
 models_caffe_fp16_config=${basepath}/models_caffe_fp16.cfg
 models_tflite_fp16_config=${basepath}/models_tflite_fp16.cfg
+models_multiple_inputs_fp16_config=${basepath}/models_with_multiple_inputs_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/models_mindspore_train.cfg
 models_mindspore_mixbit_config=${basepath}/models_mindspore_mixbit.cfg
@@ -2175,17 +2230,6 @@ if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
-    wait ${Run_x86_PID}
-    Run_x86_status=$?
-
-    # Check benchmark result and return value
-    if [[ ${Run_x86_status} != 0 ]];then
-        echo "Run_x86 failed"
-        cat ${run_x86_log_file}
-        isFailed=1
-    fi
-fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
     wait ${Run_x86_sse_PID}
     Run_x86_sse_status=$?
@@ -2203,6 +2247,18 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; th
     if [[ ${Run_x86_avx_status} != 0 ]];then
         echo "Run_x86 avx failed"
         cat ${run_x86_avx_log_file}
+        isFailed=1
+    fi
+fi
+
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
+    wait ${Run_x86_PID}
+    Run_x86_status=$?
+
+    # Check benchmark result and return value
+    if [[ ${Run_x86_status} != 0 ]];then
+        echo "Run_x86 failed"
+        cat ${run_x86_log_file}
         isFailed=1
     fi
 fi
