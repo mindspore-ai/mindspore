@@ -33,7 +33,9 @@ cfg_unet_medical = {
     'resume': False,
     'resume_ckpt': './',
     'transfer_training': False,
-    'filter_weight': ['outc.weight', 'outc.bias']
+    'filter_weight': ['outc.weight', 'outc.bias'],
+    'eval_activate': 'Softmax',
+    'eval_resize': False
 }
 
 cfg_unet_nested = {
@@ -59,7 +61,9 @@ cfg_unet_nested = {
     'resume': False,
     'resume_ckpt': './',
     'transfer_training': False,
-    'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']
+    'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight'],
+    'eval_activate': 'Softmax',
+    'eval_resize': False
 }
 
 cfg_unet_nested_cell = {
@@ -86,7 +90,9 @@ cfg_unet_nested_cell = {
     'resume': False,
     'resume_ckpt': './',
     'transfer_training': False,
-    'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']
+    'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight'],
+    'eval_activate': 'Softmax',
+    'eval_resize': False
 }
 
 cfg_unet_simple = {
@@ -109,7 +115,12 @@ cfg_unet_simple = {
     'resume': False,
     'resume_ckpt': './',
     'transfer_training': False,
-    'filter_weight': ["final.weight"]
+    'filter_weight': ["final.weight"],
+    'eval_activate': 'Softmax',
+    'eval_resize': False
 }
 
 cfg_unet = cfg_unet_medical
+if not ('dataset' in cfg_unet and cfg_unet['dataset'] == 'Cell_nuclei') and cfg_unet['eval_resize']:
+    print("ISBI dataset not support resize to original image size when in evaluation.")
+    cfg_unet['eval_resize'] = False
