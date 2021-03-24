@@ -63,6 +63,9 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const sessio
   auto profiling_option = GetContextProfilingOption();
 
   ProfilingTraceInfo profiling_trace;
+  if (cnode_exec_order.empty()) {
+    return profiling_trace;
+  }
   profiling_trace.trace_begin = GetTraceBegin(cnode_exec_order, profiling_option);
   profiling_trace.trace_bp_end = GetTraceBpEnd(cnode_exec_order, profiling_option);
   profiling_trace.trace_netoutput = GetTraceNetoutput(cnode_exec_order, profiling_option);
