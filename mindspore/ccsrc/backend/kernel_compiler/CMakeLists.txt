@@ -53,7 +53,7 @@ if(ENABLE_CPU)
         set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
             SUBMODULE_ID=mindspore::SubModuleId::SM_MINDQUANTUM)
         set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_DEFINITIONS INTRIN)
-        set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_OPTIONS -fopenmp -march=native -ffast-math)
+        set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_OPTIONS -fopenmp -mavx -ffast-math)
     else()
         message("not compiled quantum kernel_compiler")
         set(QUANTUM_SRC_LIST "")
