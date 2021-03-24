@@ -14,7 +14,6 @@
 # ============================================================================
 """Provide random seed api."""
 import numpy as np
-import mindspore.dataset as de
 from mindspore._checkparam import Validator
 
 # constants
@@ -62,7 +61,7 @@ def set_seed(seed):
         >>> from mindspore import Tensor
         >>>
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
-        >>> # (2) Becasuse Composite-level ops need parameters to be Tensors, for below examples,
+        >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,
         >>> # when using C.uniform operator, minval and maxval are initialised as:
         >>> minval = Tensor(1.0, ms.float32)
         >>> maxval = Tensor(2.0, ms.float32)
@@ -72,7 +71,7 @@ def set_seed(seed):
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
-        >>> # Rerun the program will get diferent results:
+        >>> # Rerun the program will get different results:
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A3
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A4
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W3
@@ -100,7 +99,7 @@ def set_seed(seed):
         >>> c2 = C.uniform((1, 4), minval, maxval) # C4
         >>>
         >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.composite.random_ops and
-        >>> # mindspore.nn.probability.distribution will caculate a seed according to global seed and
+        >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
         >>> # default op seed. Each call will change the default op seed, thus each call get different
         >>> # results.
         >>> set_seed(1234)
@@ -112,7 +111,7 @@ def set_seed(seed):
         >>> c2 = C.uniform((1, 4), minval, maxval) # C2
         >>>
         >>> # 5. If both global seed and op seed are set, mindspore.ops.composite.random_ops and
-        >>> # mindspore.nn.probability.distribution will caculate a seed according to global seed and
+        >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
         >>> # op seed counter. Each call will change the op seed counter, thus each call get different
         >>> # results.
         >>> set_seed(1234)
@@ -144,6 +143,8 @@ def set_seed(seed):
     if not isinstance(seed, int):
         raise TypeError("The seed must be type of int.")
     Validator.check_non_negative_int(seed, "seed", "global_seed")
+    # We put import here to solve an ut/cpp core issue
+    import mindspore.dataset as de
     np.random.seed(seed)
     de.config.set_seed(seed)
     _reset_op_seed()
@@ -232,7 +233,7 @@ def _get_graph_seed(op_seed, kernel_name):
           print(C.uniform((1, 4), minval, maxval, seed=1))  # generates 'A2'
 
     Returns:
-        Interger. The current graph-level seed.
+        Integer. The current graph-level seed.
 
     Examples:
         >>> print(_get_graph_seed(0, 'normal'))
