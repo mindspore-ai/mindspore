@@ -1293,14 +1293,14 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         >>> y = np.linspace(0, 1, 2)
         >>> xv, yv = np.meshgrid(x, y)
         >>> print(xv)
-        [[0. , 0.5, 1. ],
-        [0. , 0.5, 1. ]]
+        [[0.  0.5 1. ]
+        [0.  0.5 1. ]]
         >>> print(yv)
-        [[0.,  0.,  0.],
-        [1.,  1.,  1.]]
+        [[0.  0.  0.],
+        [1.  1.  1.]]
         >>> xv, yv = np.meshgrid(x, y, sparse=True)
         >>> print(xv)
-        [[0. ,  0.5,  1. ]]
+        [[0.  0.5  1. ]]
         >>> print(yv)
         [[0.],
         [1.]
@@ -1426,19 +1426,19 @@ class mGridClass(nd_grid):
         >>> from mindspore.numpy import mgrid
         >>> output = mgrid[0:5, 0:5]
         >>> print(output)
-        [[[0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1],
-        [2, 2, 2, 2, 2],
-        [3, 3, 3, 3, 3],
-        [4, 4, 4, 4, 4]],
-        [[0, 1, 2, 3, 4],
-        [0, 1, 2, 3, 4],
-        [0, 1, 2, 3, 4],
-        [0, 1, 2, 3, 4],
-        [0, 1, 2, 3, 4]]]
+        [[[0 0 0 0 0]
+        [1 1 1 1 1]
+        [2 2 2 2 2]
+        [3 3 3 3 3]
+        [4 4 4 4 4]]
+        [[0 1 2 3 4]
+        [0 1 2 3 4]
+        [0 1 2 3 4]
+        [0 1 2 3 4]
+        [0 1 2 3 4]]]
         >>> output = mgrid[-1:1:5j]
         >>> print(output)
-        [-1. , -0.5,  0. ,  0.5,  1. ]
+        [-1.  -0.5  0.   0.5  1. ]
     """
     def __init__(self):
         super(mGridClass, self).__init__(sparse=False)
@@ -1473,13 +1473,13 @@ class oGridClass(nd_grid):
         [Tensor(shape=[5, 1], dtype=Int32, value=
         [[0],
         [1],
-        [2],
+        [2]
         [3],
         [4]]), Tensor(shape=[1, 5], dtype=Int32, value=
         [[0, 1, 2, 3, 4]])]
         >>> output = ogrid[-1:1:5j]
         >>> print(output)
-        [-1. , -0.5,  0. ,  0.5,  1. ]
+        [-1.  -0.5  0.   0.5  1. ]
     """
     def __init__(self):
         super(oGridClass, self).__init__(sparse=True)
@@ -1684,10 +1684,10 @@ def ix_(*args):
         >>> import mindspore.numpy as np
         >>> ixgrid = np.ix_(np.array([0, 1]), np.array([2, 4]))
         >>> print(ixgrid)
-        [Tensor(shape=[2, 1], dtype=Int32, value=
+        (Tensor(shape=[2, 1], dtype=Int32, value=
         [[0],
         [1]]), Tensor(shape=[1, 2], dtype=Int32, value=
-        [[2, 4]])]
+        [[2, 4]]))
     """
     # TODO boolean mask
     _check_input_tensor(*args)
@@ -1784,8 +1784,9 @@ def indices(dimensions, dtype=mstype.int32, sparse=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> grid = np.indices((2, 3))
-        >>> print(indices)
+        >>> print(grid)
         [Tensor(shape=[2, 3], dtype=Int32, value=
         [[0, 0, 0],
         [1, 1, 1]]), Tensor(shape=[2, 3], dtype=Int32, value=
