@@ -308,7 +308,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
       return;
     }
     task_end = (task_id + 1) == thread_count ? plane : MSMIN(plane, task_start + offset_hw);
-    hw8 = task_start + (task_end - task_start) > offset_hw ? offset_hw : 0;
+    hw8 = task_start + (task_end - task_start) >= offset_hw ? offset_hw : 0;
   } else {
     hw8 *= C8NUM;
   }
