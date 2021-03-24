@@ -44,7 +44,7 @@ class Momentum(Optimizer):
     .. math::
             p_{t} =  p_{t-1} - (grad \ast lr + v_{t} \ast u \ast lr)
 
-    If use_nesterov is Flase:
+    If use_nesterov is False:
 
     .. math::
             p_{t} = p_{t-1} - lr \ast v_{t}
