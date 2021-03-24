@@ -15,7 +15,7 @@
  */
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/tensorlist_fromtensor_fp32.h"
+#include "src/runtime/kernel/arm/base/tensorlist_fromtensor.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -52,14 +52,7 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
   return RET_OK;
 }
 
-int TensorListFromTensorCPUKernel::Init() {
-#ifdef ENABLE_FP16
-  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
-    dtype_ = kNumberTypeFloat16;
-  }
-#endif
-  return RET_OK;
-}
+int TensorListFromTensorCPUKernel::Init() { return RET_OK; }
 
 int TensorListFromTensorCPUKernel::ReSize() { return RET_OK; }
 
@@ -71,6 +64,7 @@ int TensorListFromTensorCPUKernel::Run() {
     MS_LOG(ERROR) << "IsNotCompatibleShape!";
     return RET_ERROR;
   }
+  dtype_ = in_tensors_[0]->data_type();
   if (input0_->shape().size() == 0) {
     MS_LOG(ERROR) << "input0_->shape().size():" << input0_->shape().size() << " must be greater than 0";
   }
@@ -97,9 +91,10 @@ int TensorListFromTensorCPUKernel::Run() {
                     << " must be euqal to devision_dim0:" << devision_dim0;
       return RET_ERROR;
     }
-    auto out_data = out_ptr->MutableData();
+    auto out_data = out_ptr->data_c();
     MS_ASSERT(out_data != nullptr);
     memcpy(out_data, in_data, data_offset);
+    out_ptr->set_data_type(dtype_);
     in_data += data_offset;
   }
   output0->set_tensors_data_type(dtype_);

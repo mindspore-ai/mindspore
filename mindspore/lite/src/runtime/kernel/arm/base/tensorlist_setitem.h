@@ -28,8 +28,7 @@ class TensorListSetItemCPUKernel : public LiteKernel {
  public:
   TensorListSetItemCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx),
-        dtype_(static_cast<TypeId>(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_)) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~TensorListSetItemCPUKernel() = default;
 
   int Init() override;
@@ -43,7 +42,6 @@ class TensorListSetItemCPUKernel : public LiteKernel {
   lite::Tensor *input2_ = nullptr;
   lite::TensorList *output0_ = nullptr;
   int index_ = 0;
-  TypeId dtype_ = kTypeUnknown;
 };
 }  // namespace mindspore::kernel
 

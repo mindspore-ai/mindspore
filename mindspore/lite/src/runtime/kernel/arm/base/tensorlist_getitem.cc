@@ -16,7 +16,7 @@
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/tensorlist_getitem_fp32.h"
+#include "src/runtime/kernel/arm/base/tensorlist_getitem.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -28,16 +28,7 @@ using mindspore::schema::PrimitiveType_TensorListGetItem;
 
 namespace mindspore::kernel {
 
-int TensorListGetItemCPUKernel::Init() {
-  MS_ASSERT(in_tensors_.size() >= 2);
-  MS_ASSERT(in_tensors_.at(0) != nullptr);
-#ifdef ENABLE_FP16
-  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
-    dtype_ = kNumberTypeFloat16;
-  }
-#endif
-  return RET_OK;
-}
+int TensorListGetItemCPUKernel::Init() { return RET_OK; }
 
 int TensorListGetItemCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() >= 2);
@@ -48,10 +39,7 @@ int TensorListGetItemCPUKernel::Run() {
   if (input0->root_tensor() != nullptr) {
     input0 = reinterpret_cast<lite::TensorList *>(input0->root_tensor());
   }
-  if (dtype_ != input0->tensors_data_type()) {
-    MS_LOG(ERROR) << "op dtype: " << dtype_ << " is not equal in_tensor[0] dtype: " << input0->tensors_data_type();
-    return RET_ERROR;
-  }
+  dtype_ = input0->tensors_data_type();
   MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
   index_ = reinterpret_cast<int *>(in_tensors_.at(1)->data_c())[0];
   int dim0 = input0->ElementsNum() - 1;
