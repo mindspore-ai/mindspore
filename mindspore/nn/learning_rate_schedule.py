@@ -280,8 +280,8 @@ class CosineDecayLR(LearningRateSchedule):
         ValueError: If `min_lr` is less than 0 or `decay_steps` is less than 1.
         ValueError: If `max_lr` is less than or equal to 0.
 
-        Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> min_lr = 0.01
@@ -357,7 +357,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         ValueError: If `learning_rate` or `power` is less than or equal to 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> learning_rate = 0.1
@@ -436,7 +436,7 @@ class WarmUpLR(LearningRateSchedule):
         ValueError: If `learning_rate` is less than or equal to 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> learning_rate = 0.1
