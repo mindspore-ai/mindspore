@@ -454,8 +454,6 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     if (inputs.size() == 3 && !IsPrimitiveCNode(inputs[1], prim::kPrimMakeTuple)) {
       return GetCNodeTarget(inputs[1]);
     }
-  } else if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
-    return GetCNodeTarget(cnode->input(1));
   } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     return GetMaketupleNodeTarget(cnode);
   } else if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
