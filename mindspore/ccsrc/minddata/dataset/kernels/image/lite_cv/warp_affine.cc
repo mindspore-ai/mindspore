@@ -355,6 +355,10 @@ static void Remap(const LiteMat &src, LiteMat &dst, LiteMat &map1, const LiteMat
 
 bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,  // NOLINT
                         PaddBorderType borderType, std::vector<uint8_t> &borderValue) {            // NOLINT
+  if (dst_w <= 0 || dst_h <= 0) {
+    return false;
+  }
+
   if (!(M.height_ == 2 && M.width_ == 3)) {
     return false;
   }
@@ -471,6 +475,9 @@ static void PerspectiveInvert(double *src, double *dst) {
 
 bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,  // NOLINT
                              PaddBorderType borderType, std::vector<uint8_t> &borderValue) {            // NOLINT
+  if (dst_w <= 0 || dst_h <= 0) {
+    return false;
+  }
   if (!(M.height_ == 3 && M.width_ == 3)) {
     return false;
   }
