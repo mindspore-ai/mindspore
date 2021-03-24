@@ -66,8 +66,8 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
   Collect(context, headers, cFiles);
 
   nnacl::NNaclInt8Serializer code;
-  code.CodeArray("input_shape", input_tensor_->shape().data(), input_tensor_->shape().size(), false);
-  code.CodeArray("output_shape", output_tensor_->shape().data(), output_tensor_->shape().size(), false);
+  code.CodeArray("input_shape", input_tensor_->shape().data(), input_tensor_->shape().size(), true);
+  code.CodeArray("output_shape", output_tensor_->shape().data(), output_tensor_->shape().size(), true);
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
       MS_LOG(ERROR) << "unsupported: " << schema::EnumNameResizeMethod(static_cast<schema::ResizeMethod>(method_));
@@ -78,7 +78,7 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
       bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
       if (same_zp && same_scale) {
-        code.CodeBaseStruct("ResizeInt8Args", kRunArgs, input_tensor_, output_tensor_, "&input_shape", "&output_shape",
+        code.CodeBaseStruct("ResizeInt8Args", kRunArgs, input_tensor_, output_tensor_, "input_shape", "output_shape",
                             align_corners, gThreadNum);
         if (support_parallel_) {
           code.CodeFunction(kParallelLaunch, gThreadPool, "ResizeInt8Run", kRunArgsAddr, gThreadNum);
