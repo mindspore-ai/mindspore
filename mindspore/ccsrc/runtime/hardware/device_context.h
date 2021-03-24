@@ -63,17 +63,23 @@ class DeviceContext {
     return true;
   }
 
-  // Optimize the kernel graph according to different devices.
-  virtual void OptimizeGraph(const KernelGraphPtr &graph) const {}
+  // The two functions below will be merged to one in the future.
+  // General graph optimezer ignore device data type and format.
+  virtual void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {}
+  // Optimize the kernel graph according to device data type and format.
+  virtual void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {}
+
+  // Optimize the single operator graph for PyNative mode.
+  virtual void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {}
 
   // Select the matching backend kernels according to the data type and format of input and output for all
   // execution operators, and set final device data type and format information for backend kernels, device
   // data type and format which replace original data type and format will use for executing kernels.
-  virtual void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {}
+  virtual void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const = 0;
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
-  virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
+  virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,

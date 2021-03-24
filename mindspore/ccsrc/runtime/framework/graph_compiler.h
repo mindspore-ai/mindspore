@@ -45,7 +45,7 @@ class GraphCompiler {
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
 
   // Construct single op kernel graph, compile and run the kernel graph in PyNative mode.
-  void CompileAndRunGraph(OpRunInfo *op_run_info, const GraphInfo &graph_info,
+  void CompileAndRunGraph(session::OpRunInfo *op_run_info, const GraphInfo &graph_info,
                           std::vector<tensor::TensorPtr> *input_tensors, const std::vector<int64_t> &tensors_mask,
                           VectorRef *outputs);
 
@@ -61,7 +61,7 @@ class GraphCompiler {
   device::DeviceContext *device_context_{nullptr};
 
   // Single op kernel graph cache for PyNative mode.
-  std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
+  std::unordered_map<GraphInfo, KernelGraphPtr> run_op_graphs_;
 
   // The member variable 'session_' will be removed after removing session module.
   session::SessionPtr session_{nullptr};

@@ -27,14 +27,29 @@
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/gpu_common.h"
+#include "runtime/hardware/gpu/optimizer.h"
+#include "common/trans.h"
+#include "utils/context/graph_kernel_flags.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
 bool GPUDeviceContext::Initialize() {
   if (initialized_ == true) {
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SetDevice(UintToInt(device_context_key_.device_id_)),
+                             "Failed to set device id");
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
+  }
+
+  // Set device id
+  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
+  bool collective_inited = CollectiveInitializer::instance().collective_inited();
+  if (collective_inited && collective_handle_ != nullptr) {
+    auto get_local_rank_funcptr =
+      reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
+    MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
+    device_context_key_.device_id_ = IntToUint((*get_local_rank_funcptr)());
   }
 
   // Set device id and initialize device resource.
@@ -50,8 +65,6 @@ bool GPUDeviceContext::Initialize() {
   mem_manager_->MallocDeviceMemory();
 
   // Initialize NCCL.
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  bool collective_inited = CollectiveInitializer::instance().collective_inited();
   if (collective_inited && collective_handle_ != nullptr) {
     auto init_nccl_comm_funcptr =
       reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle_), "InitNCCLComm"));
@@ -150,6 +163,97 @@ bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddress 
     addr_list[i]->from_mem_pool_ = true;
   }
   return true;
+}
+
+void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  // Operator fusion optimization.
+  FuseOperators(graph);
+
+  device::gpu::AssignGpuStream(graph);
+
+  // Update Graph Dynamic Shape Attr.
+  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+  // Hide NopOp from execution graph in graph mode
+  if (!pynative_mode) {
+    opt::HideNopNode(graph.get());
+  }
+}
+
+void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
+  // Graph optimization relevant to device data format
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
+  pm->AddPass(std::make_shared<opt::PostBatchNormAddReluFusion>());
+  pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
+  pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
+  pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
+  pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
+  pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
+  pm->AddPass(std::make_shared<opt::ReluV2Pass>());
+  pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
+  pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
+  pm->AddPass(std::make_shared<opt::AllReduceFusion>());
+  pm->AddPass(std::make_shared<opt::GetitemTuple>());
+  pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+}
+
+void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
+  pm->AddPass(std::make_shared<opt::AdamFusion>());
+  pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
+  pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
+  pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+    pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
+  }
+  pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
+  pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
+  pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
+  pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+
+  // Graph kernel fusion optimization
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    return;
+  }
+  opt::GraphKernelOptimize(graph);
+  graph->SetExecOrderByDefault();
+}
+
+void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const {
+  for (const auto &cnode : graph->execution_order()) {
+    if (AnfAlgo::IsNodeDynamicShape(cnode)) {
+      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cnode);
+      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    }
+  }
+  graph->UpdateGraphDynamicAttr();
+}
+
+void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
 }
 
 void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
