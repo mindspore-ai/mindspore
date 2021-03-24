@@ -1193,11 +1193,9 @@ class BatchNorm(PrimitiveWithInfer):
         validator.check_value_type('is_training', is_training, (bool,), self.name)
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC', "NCDHW"], 'format', self.name)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
-        if context.get_context("device_target") != "Ascend" and self.format == "NCDHW":
-            raise ValueError("NCDHW format only support in Ascend target.")
         self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
