@@ -58,6 +58,17 @@ void usage() {
     "args[5]: runtime thread bind mode\n\n");
 }
 
+uint64_t GetTimeUs() {
+  const int USEC = 1000000;
+  const int MSEC = 1000;
+  struct timespec ts = {0, 0};
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+    return 0;
+  }
+  uint64_t retval = (uint64_t)((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
+  return retval;
+}
+
 template <typename T>
 void PrintData(void *data, size_t data_number) {
   if (data == nullptr) {
@@ -65,7 +76,7 @@ void PrintData(void *data, size_t data_number) {
   }
   auto casted_data = static_cast<T *>(data);
   for (size_t i = 0; i < 10 && i < data_number; i++) {
-    printf("%s,", std::to_string(casted_data[i]).c_str());
+    printf("%s, ", std::to_string(casted_data[i]).c_str());
   }
   printf("\n");
 }
@@ -73,12 +84,12 @@ void PrintData(void *data, size_t data_number) {
 void TensorToString(tensor::MSTensor *tensor) {
   printf("name: %s, ", tensor->tensor_name().c_str());
   printf(", DataType: %d", tensor->data_type());
-  printf(", Size: %lu", tensor->Size());
-  printf(", Shape: ");
+  printf(", Elements: %d", tensor->ElementsNum());
+  printf(", Shape: [");
   for (auto &dim : tensor->shape()) {
     printf("%d ", dim);
   }
-  printf(", Data: \n");
+  printf("], Data: \n");
   switch (tensor->data_type()) {
     case kNumberTypeFloat32: {
       PrintData<float>(tensor->MutableData(), tensor->ElementsNum());
@@ -128,7 +139,9 @@ int main(int argc, const char **argv) {
     }
     context->thread_num_ = atoi(argv[4]);
     context->device_list_.resize(1);
-    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[4]))}}};
+    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[5]))}}};
+    printf("context: ThreadNum: %d, BindMode: %d\n", context->thread_num_,
+           context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
   }
 
   session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, context);
@@ -136,6 +149,7 @@ int main(int argc, const char **argv) {
     printf("create lite session failed\n");
     return lite::RET_ERROR;
   }
+  delete[] model_buffer;
 
   // set model inputs tensor data
   Vector<tensor::MSTensor *> inputs = session->GetInputs();
@@ -154,12 +168,27 @@ int main(int argc, const char **argv) {
     memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
   }
 
+  if (argc >= 4) {
+    int loop_count = atoi(argv[3]);
+    printf("\nloop count: %d\n", loop_count);
+    uint64_t start_time = GetTimeUs();
+    for (int i = 0; i < loop_count; ++i) {
+      ret = session->RunGraph();
+      if (ret != lite::RET_OK) {
+        return lite::RET_ERROR;
+      }
+    }
+    uint64_t end_time = GetTimeUs();
+    float total_time = (float)(end_time - start_time) / 1000.0f;
+    printf("total time: %.5fms, per time: %.5fms\n", total_time, total_time / loop_count);
+  }
   ret = session->RunGraph();
   if (ret != lite::RET_OK) {
     return lite::RET_ERROR;
   }
 
   Vector<String> outputs_name = session->GetOutputTensorNames();
+  printf("\noutputs: \n");
   for (const auto &name : outputs_name) {
     auto output = session->GetOutputByTensorName(name);
     TensorToString(output);
