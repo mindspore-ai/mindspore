@@ -1221,9 +1221,13 @@ class AutoMonadConverter {
   }
 
   CNodePtr MakeLoad(const CNodePtr &cnode, const AnfNodePtr &ref, const AnfNodePtr &u) {
+    static const std::string primitive_target = "primitive_target";
     // Create Load cnode.
     auto load_prim = NewValueNode(prim::kPrimLoad);
     auto load_cnode = func_graph_->NewCNode({load_prim, ref, u});
+    // Set device target for Load CNode.
+    std::string target = GetCNodeTarget(cnode);
+    load_cnode->set_user_data(primitive_target, std::make_shared<std::string>(target));
     // Set load_cnode abstract to Tensor according the input Ref[Tensor].
     auto ref_abs = dyn_cast<abstract::AbstractRef>(ref->abstract());
     MS_EXCEPTION_IF_NULL(ref_abs);
