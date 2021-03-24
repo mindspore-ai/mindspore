@@ -3791,15 +3791,16 @@ class NMSWithMask(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> bbox = np.array([[0.4, 0.2, 0.4, 0.3, 0.1], [0.4, 0.3, 0.6, 0.8, 0.7]])
+        >>> bbox = np.array([[100.0, 100.0, 50.0, 68.0, 0.63], [150.0, 75.0, 165.0, 115.0, 0.55],
+        [12.0, 190.0, 288.0, 200.0, 0.9], [28.0, 130.0, 106.0, 172.0, 0.3]])
         >>> bbox[:, 2] += bbox[:, 0]
         >>> bbox[:, 3] += bbox[:, 1]
         >>> inputs = Tensor(bbox, mindspore.float32)
-        >>> nms = ops.NMSWithMask(0.5)
+        >>> nms = ops.NMSWithMask(0.1)
         >>> output_boxes, indices, mask = nms(inputs)
         >>> indices_np = indices.asnumpy()
         >>> print(indices_np[mask.asnumpy()])
-        [0 1]
+        [0 1 2]
     """
 
     @prim_attr_register
