@@ -36,7 +36,7 @@
 bash mobilenetv2.sh
 ```
 
-codegen编译MobileNetv2模型，生成对应的模型推理代码。具体命令如下：
+codegen编译[MobileNetv2模型](https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_imagenet/r1.2/mobilenetv2.ms)，生成对应的模型推理代码。具体命令如下：
 
 ```bash
 ./codegen --codePath=. --modelPath=mobilenetv2.ms --target=ARM64
@@ -85,13 +85,30 @@ mkdir mobilenetv2/build && cd mobilenetv2/build
 开始编译
 
 ```bash
-cmake -DPKG_PATH={path to}/mindspore-lite-{version}-inference-linux-x64 ..
+cmake -DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_TOOLCHAIN_FILE="${ANDRIOD_NDK}/build/cmake/android.toolchain.cmake" \
+-DANDROID_ABI="arm64-v8a" \
+-DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
+-DANDROID_NATIVE_API_LEVEL="19" \
+-DMICRO_BUILD_ARM64=ON \
+-DPKG_PATH={path to}/mindspore-lite-{version}-inference-android ..
 make
 ```
 
-`{path to}`和`{version}`需要用户根据实际情况填写。
+`{path to}`和`{version}`需要用户根据实际情况填写。若用户需要编译安卓arm32环境，则使用:
 
-此时在`mnist/build/src/`目录下生成了`libnet.a`，推理执行库，在`mnist/build`目录下生成了`benchmark`可执行文件。而对应的模型参数文件net.bin在生成的代码src目录下。
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_TOOLCHAIN_FILE="${ANDRIOD_NDK}/build/cmake/android.toolchain.cmake" \
+-DANDROID_ABI="armeabi-v7a" \
+-DANDROID_TOOLCHAIN_NAME="clang" \
+-DANDROID_NATIVE_API_LEVEL="19" \
+-DMICRO_BUILD_ARM32=ON \
+-DPKG_PATH={path to}/mindspore-lite-{version}-inference-android ..
+make
+```
+
+此时在`mobilenetv2/build/src/`目录下生成了`libnet.a`，推理执行库，在`mobilenetv2/build`目录下生成了`benchmark`可执行文件。而对应的模型参数文件net.bin在生成的代码src目录下。
 
 ### 工程部署
 
