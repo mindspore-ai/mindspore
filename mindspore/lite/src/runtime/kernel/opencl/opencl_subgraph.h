@@ -36,6 +36,9 @@ class OpenCLSubGraph : public SubGraphKernel {
     subgraph_type_ = kGpuSubGraph;
     this->name_ = "GpuSubGraph";
     nodes_set_.insert(nodes.begin(), nodes.end());
+    all_kernels_infer_done_ = std::all_of(nodes_.begin(), nodes_.end(), [](const kernel::LiteKernel *kernel) {
+      return kernel && kernel->op_parameter() && kernel->op_parameter()->infer_flag_;
+    });
   }
   ~OpenCLSubGraph() override;
 
@@ -48,7 +51,6 @@ class OpenCLSubGraph : public SubGraphKernel {
   int Run() override;
   int Run(const KernelCallBack &before, const KernelCallBack &after) override;
   int InsertOpsPass();
-  bool IsSubGraphInferShapeDone();
 
  private:
   void UnInit();
@@ -83,6 +85,7 @@ class OpenCLSubGraph : public SubGraphKernel {
   std::set<LiteKernel *> nodes_set_;
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
+  bool all_kernels_infer_done_ = false;
 };
 }  // namespace mindspore::kernel
 

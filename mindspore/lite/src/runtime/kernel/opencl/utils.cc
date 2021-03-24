@@ -296,4 +296,27 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
   return RET_OK;
 }
 
+static std::set<void *> tmp_weights;
+
+void StoreTmpWeight(lite::Tensor *tensor) {
+  MS_LOG(WARNING) << "store weight when kernel don't infer shape!";
+  if (tensor && tensor->data_c() && tensor->Size()) {
+    void *new_data = malloc(tensor->Size());
+    MS_ASSERT(new_data);
+    if (new_data == nullptr) {
+      return;
+    }
+    memcpy(new_data, tensor->data_c(), tensor->Size());
+    tensor->set_data(new_data);
+    tmp_weights.insert(new_data);
+  }
+}
+
+void FreeTmpWeight(void *data) {
+  if (tmp_weights.count(data)) {
+    free(data);
+    tmp_weights.erase(data);
+  }
+}
+
 }  // namespace mindspore::kernel

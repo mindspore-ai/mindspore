@@ -71,8 +71,20 @@ int StackOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << " only support input size = 2 and output size = 1";
     return RET_ERROR;
   }
+  for (auto &tensor : in_tensors_) {
+    if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << " only support fp32/fp16 input";
+      return RET_ERROR;
+    }
+  }
+  for (auto &tensor : out_tensors_) {
+    if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << " only support fp32/fp16 output";
+      return RET_ERROR;
+    }
+  }
   if (in_tensors_[0]->shape().size() > 4 || in_tensors_[0]->shape().size() <= 0) {
-    MS_LOG(ERROR) << " only support dim <= 4 ";
+    MS_LOG(ERROR) << " only support 0<dim<=4";
     return RET_ERROR;
   }
   axis_ = axis_ < 0 ? axis_ + in_tensors_[0]->shape().size() : axis_;

@@ -224,7 +224,7 @@ int32_t Tensor::ElementsC4Num() const {
   if (this->category_ == CONST_SCALAR) {
     return 1;
   }
-  int32_t result = 0;
+  int32_t result = 1;
   if (this->shape_.size() == 4) {
     result = Batch() * Height() * Width() * ((Channel() + 3) / 4 * 4);
   } else if (this->shape_.size() == 2) {

@@ -34,6 +34,7 @@ class ResizeOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int PreProcess() override;
 
  private:
   float getResizeScaleFactor(int input_size, int output_size);
