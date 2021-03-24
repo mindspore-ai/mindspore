@@ -672,7 +672,7 @@ STATUS WeightQuantizer::DoMixedQuant(FuncGraphPtr func_graph) {
 STATUS WeightQuantizer::DoFixedQuant(FuncGraphPtr func_graph) {
   MS_ASSERT(func_graph != nullptr);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
     if (primitive == nullptr) {
       MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
       continue;
