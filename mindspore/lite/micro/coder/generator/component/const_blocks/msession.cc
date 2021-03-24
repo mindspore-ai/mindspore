@@ -53,6 +53,20 @@ namespace lite {
     }                                    \
   } while (0)
 
+#define MS_NULLPTR_IF_NULL(ptr) \
+  do {                          \
+    if ((ptr) == nullptr) {     \
+      return nullptr;           \
+    }                           \
+  } while (0)
+
+#define MS_NULLPTR_IF_ERROR(ptr)            \
+  do {                                      \
+    if ((ptr) != mindspore::lite::RET_OK) { \
+      return nullptr;                       \
+    }                                       \
+  } while (0)
+
 class LiteSession : public session::LiteSession {
  public:
   LiteSession() = default;
@@ -176,15 +190,6 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &te
 }
 
 }  // namespace lite
-
-session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
-  auto *session = new (std::nothrow) lite::LiteSession();
-  if (session == nullptr) {
-    return nullptr;
-  }
-  session->InitRuntimeBuffer();
-  return session;
-}
 )RAW";
 
 }  // namespace mindspore::lite::micro

@@ -27,6 +27,8 @@
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
 #include "coder/generator/component/const_blocks/mstring.h"
+#include "coder/generator/component/const_blocks/model.h"
+#include "coder/generator/component/const_blocks/thread_pool.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/log.h"
@@ -91,7 +93,11 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "session.h", session_header},
     {net_src_file_path_ + "tensor.h", tensor_header},
     {net_src_file_path_ + "tensor.cc", tensor_source},
-    {net_src_file_path_ + "string.cc", string_source}};
+    {net_src_file_path_ + "string.cc", string_source},
+    {net_src_file_path_ + "model.h", model_header}};
+  if (config_->support_parallel()) {
+    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "thread_pool.h", thread_header));
+  }
   if (config_->debug_mode()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
@@ -111,11 +117,12 @@ int Generator::CodeSessionImplement() {
   MS_LOG(INFO) << "write " << cfile;
   ofs << g_hwLicense;
   ofs << "#include \"session.h\"\n";
-  ofs << "#include \"net.h\"\n\n";
+  ofs << "#include \"model.h\"\n";
+  ofs << "#include \"net.h\"\n";
   ofs << "#include <new>\n\n";
-  CodeSessionCompileGraph(ofs, ctx_);
+  CodeSessionCompileGraph(ofs, ctx_, config_);
   ofs << session_source;
-  CodeCreateSessionImplement(ofs, config_->target());
+  CodeCreateSessionImplement(ofs, config_);
   return RET_OK;
 }
 
@@ -134,8 +141,8 @@ int Generator::CodeWeightFile() {
   MS_LOG(INFO) << "write " << cfile;
   cofs << g_hwLicense;
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
-  cofs << "int " << gThreadNum << " = 1;\n";
-  cofs << "unsigned char * " << ctx_->buffer_name() << " = 0;\n";
+  cofs << "int  " << gThreadNum << " = 1; \n";
+  cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
 
   if (config_->target() != kARM32M) {
     std::string net_file = net_src_file_path_ + "net.bin";
