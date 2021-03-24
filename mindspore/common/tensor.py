@@ -73,7 +73,7 @@ class Tensor(Tensor_):
         >>> assert t3.shape == (1, 3)
         >>> assert t3.dtype == ms.float32
     """
-
+    delta_seed = 0
     def __init__(self, input_data=None, dtype=None, shape=None, init=None):
         self.init_finished = False
         # If input data is numpy number, convert it to np array
@@ -640,8 +640,9 @@ class Tensor(Tensor_):
             def __enter__(self):
                 if self.need_set_seed:
                     self.seed = self.init.seed
-                    np.random.seed(slice_index)
-                    self.init.seed = slice_index
+                    np.random.seed(slice_index + Tensor.delta_seed)
+                    self.init.seed = slice_index + Tensor.delta_seed
+                    Tensor.delta_seed += 1
 
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:

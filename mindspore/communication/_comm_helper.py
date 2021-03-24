@@ -77,6 +77,13 @@ class Backend:
             raise ValueError("Invalid backend: '{}'".format(name))
         return value
 
+DEFAULT_BACKEND = Backend("hccl")
+
+class GlobalComm:
+    """World communication information."""
+    BACKEND = DEFAULT_BACKEND
+    WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
+    INITED = False
 
 def is_hccl_available():
     """
@@ -114,6 +121,8 @@ def check_parameter_available(func):
     def wrapper(*args, **kargs):
         if _is_role_pserver() or _is_role_sched():
             return func(*args, **kargs)
+        if not GlobalComm.INITED:
+            raise RuntimeError("Distributed Communication has not been inited")
         group = None
         if "group" in kargs.keys():
             group = kargs.get("group")
