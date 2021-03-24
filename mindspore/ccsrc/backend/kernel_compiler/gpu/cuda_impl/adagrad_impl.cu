@@ -32,16 +32,12 @@ __global__ void ApplyAdagradKernel(const size_t size,
                                    const S *learning_rate,
                                    const G *gradient,
                                    T *variable,
-                                   T *accumulation,
-                                   T *variable_out,
-                                   T *accumulation_out) {
+                                   T *accumulation) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     if (update_slots) {
       accumulation[i] += gradient[i] * gradient[i];
-      accumulation_out[i] = accumulation[i];
     }
     variable[i] -= learning_rate[0] * gradient[i] / SqrtFunc(accumulation[i]);
-    variable_out[i] = variable[i];
   }
 }
 
@@ -51,16 +47,12 @@ __global__ void ApplyAdagradKernel(const size_t size,
                                    const float *learning_rate,
                                    const half *gradient,
                                    half *variable,
-                                   half *accumulation,
-                                   half *variable_out,
-                                   half *accumulation_out) {
+                                   half *accumulation) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     if (update_slots) {
       accumulation[i] += gradient[i] * gradient[i];
-      accumulation_out[i] = accumulation[i];
     }
     variable[i] -= __float2half(learning_rate[0]) * gradient[i] / SqrtFunc(accumulation[i]);
-    variable_out[i] = variable[i];
   }
 }
 
@@ -70,16 +62,12 @@ __global__ void ApplyAdagradKernel(const size_t size,
                                    const float *learning_rate,
                                    const half *gradient,
                                    float *variable,
-                                   float *accumulation,
-                                   float *variable_out,
-                                   float *accumulation_out) {
+                                   float *accumulation) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     if (update_slots) {
       accumulation[i] += __half2float(gradient[i]) * __half2float(gradient[i]);
-      accumulation_out[i] = accumulation[i];
     }
     variable[i] -= learning_rate[0] * __half2float(gradient[i]) / SqrtFunc(accumulation[i]);
-    variable_out[i] = variable[i];
   }
 }
 
@@ -89,16 +77,12 @@ __global__ void ApplyAdagradKernel(const size_t size,
                                    const half *learning_rate,
                                    const float *gradient,
                                    float *variable,
-                                   float *accumulation,
-                                   float *variable_out,
-                                   float *accumulation_out) {
+                                   float *accumulation) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     if (update_slots) {
       accumulation[i] += gradient[i] * gradient[i];
-      accumulation_out[i] = accumulation[i];
     }
     variable[i] -= __half2float(learning_rate[0]) * gradient[i] / SqrtFunc(accumulation[i]);
-    variable_out[i] = variable[i];
   }
 }
 
@@ -108,16 +92,12 @@ __global__ void ApplyAdagradKernel(const size_t size,
                                    const float *learning_rate,
                                    const float *gradient,
                                    half *variable,
-                                   half *accumulation,
-                                   half *variable_out,
-                                   half *accumulation_out) {
+                                   half *accumulation) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     if (update_slots) {
       accumulation[i] += __float2half(gradient[i]) * __float2half(gradient[i]);
-      accumulation_out[i] = accumulation[i];
     }
     variable[i] -= __float2half(learning_rate[0]) * __float2half(gradient[i]) / SqrtFunc(accumulation[i]);
-    variable_out[i] = variable[i];
   }
 }
 
@@ -128,11 +108,9 @@ void ApplyAdagrad(const size_t size,
                   const G *gradient,
                   T *variable,
                   T *accumulation,
-                  T *variable_out,
-                  T *accumulation_out,
                   cudaStream_t cuda_stream) {
   ApplyAdagradKernel<<< GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-          size, update_slots, learning_rate, gradient, variable, accumulation, variable_out, accumulation_out);
+          size, update_slots, learning_rate, gradient, variable, accumulation);
 }
 
 template void ApplyAdagrad<float, float, float>(const size_t size,
@@ -141,8 +119,6 @@ template void ApplyAdagrad<float, float, float>(const size_t size,
                                   const float *gradient,
                                   float *variable,
                                   float *accumulation,
-                                  float *variable_out,
-                                  float *accumulation_out,
                                   cudaStream_t cuda_stream);
 
 template void ApplyAdagrad<half, half, half>(const size_t size,
@@ -151,8 +127,6 @@ template void ApplyAdagrad<half, half, half>(const size_t size,
                                  const half *gradient,
                                  half *variable,
                                  half *accumulation,
-                                 half *variable_out,
-                                 half *accumulation_out,
                                  cudaStream_t cuda_stream);
 
 template void ApplyAdagrad<half, float, half>(const size_t size,
@@ -161,8 +135,6 @@ template void ApplyAdagrad<half, float, half>(const size_t size,
                                  const half *gradient,
                                  half *variable,
                                  half *accumulation,
-                                 half *variable_out,
-                                 half *accumulation_out,
                                  cudaStream_t cuda_stream);
 
 template void ApplyAdagrad<float, float, half>(const size_t size,
@@ -171,8 +143,6 @@ template void ApplyAdagrad<float, float, half>(const size_t size,
                                  const half *gradient,
                                  float *variable,
                                  float *accumulation,
-                                 float *variable_out,
-                                 float *accumulation_out,
                                  cudaStream_t cuda_stream);
 
 template void ApplyAdagrad<float, half, float>(const size_t size,
@@ -181,8 +151,6 @@ template void ApplyAdagrad<float, half, float>(const size_t size,
                                  const float *gradient,
                                  float *variable,
                                  float *accumulation,
-                                 float *variable_out,
-                                 float *accumulation_out,
                                  cudaStream_t cuda_stream);
 
 template void ApplyAdagrad<half, float, float>(const size_t size,
@@ -191,6 +159,4 @@ template void ApplyAdagrad<half, float, float>(const size_t size,
                                  const float *gradient,
                                  half *variable,
                                  half *accumulation,
-                                 half *variable_out,
-                                 half *accumulation_out,
                                  cudaStream_t cuda_stream);
