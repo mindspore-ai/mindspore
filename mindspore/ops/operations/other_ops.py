@@ -423,9 +423,9 @@ class Depend(Primitive):
     In order to ensure that operator A is executed before operator B, it is recommended to
     insert the Depend operator between operators A and B. The usage method is as follows::
 
-        out_a = A(in_a)
-        in_b = Depend(in_b, out_a)
-        out_b = B(in_b)
+        a = A(x)                --->        a = A(x)
+        b = B(y)                --->        y = Depend(y, a)
+                                --->        b = B(y)
 
     Inputs:
         - **value** (Tensor) - the real value to return for depend operator.
