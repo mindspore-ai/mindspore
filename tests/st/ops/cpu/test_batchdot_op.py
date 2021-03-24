@@ -211,17 +211,3 @@ def test_batch_dot_fp32():
     ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
     tf_result = _reference_batch_dot(x1, x2, axes)
     assert np.allclose(ms_result_np, tf_result)
-
-    # case 10
-    shape_x1 = (4, 3, 2, 1, 7, 5)
-    shape_x2 = (4, 5, 7, 1)
-    axes = -2
-    x1 = np.ones(shape=shape_x1).astype(np.float16)
-    x2 = np.ones(shape=shape_x2).astype(np.float16)
-    x1_tensor = Tensor(x1, dtype=mindspore.float16)
-    x2_tensor = Tensor(x2, dtype=mindspore.float16)
-
-    network = NetBatchDot(axes)
-    ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
-    tf_result = _reference_batch_dot(x1, x2, axes)
-    assert np.allclose(ms_result_np, tf_result)
