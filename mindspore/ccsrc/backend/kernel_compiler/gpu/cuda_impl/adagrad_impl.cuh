@@ -25,8 +25,6 @@ void ApplyAdagrad(const size_t size,
                   const G *gradient,
                   T *variable,
                   T *accumulation,
-                  T *variable_out,
-                  T *accumulation_out,
                   cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAGRAD_IMPL_H_

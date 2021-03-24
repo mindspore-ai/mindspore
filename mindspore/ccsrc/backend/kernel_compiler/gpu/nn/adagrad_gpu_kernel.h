@@ -45,7 +45,17 @@ class AdagradGpuKernel : public GpuKernel {
     T *variable_out = GetDeviceAddress<T>(outputs, 0);
     T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
     ApplyAdagrad(inputs[0]->size / sizeof(T), update_slots, learning_rate, gradient, variable, accumulation,
-                 variable_out, accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(&variable_out[0], &variable[0], variable_size_, cudaMemcpyDeviceToDevice,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaMemcpyAsync output failed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(&accumulation_out[0], &accumulation[0], accumulation_size_,
+                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaMemcpyAsync output failed");
+
     return true;
   }
 
@@ -61,17 +71,17 @@ class AdagradGpuKernel : public GpuKernel {
     learning_rate_size_ = sizeof(S);
     gradient_size_ = sizeof(G);
 
-    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < variable_shape.size(); i++) {
       variable_size_ *= variable_shape[i];
     }
 
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < accumulation_shape.size(); i++) {
       accumulation_size_ *= accumulation_shape[i];
     }
 
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     for (size_t i = 0; i < gradient_shape.size(); i++) {
       gradient_size_ *= gradient_shape[i];
     }
