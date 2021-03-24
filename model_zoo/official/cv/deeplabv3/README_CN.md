@@ -71,7 +71,7 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 
 - 配置并运行build_data.sh，将数据集转换为MindRecords。scripts/build_data.sh中的参数：
 
-     ```
+     ```bash
      --data_root                 训练数据的根路径
      --data_lst                  训练数据列表（如上准备）
      --dst_path                  MindRecord所在路径
@@ -89,7 +89,7 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 # 环境要求
 
 - 硬件（Ascend）
-    - 准备Ascend处理器搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 准备Ascend处理器搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
@@ -98,7 +98,7 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 - 安装requirements.txt中的python包。
 - 生成config json文件用于8卡训练。
 
-     ```
+     ```bash
      # 从项目根目录进入
      cd src/tools/
      python3 get_multicards_json.py 10.111.*.*
@@ -123,47 +123,47 @@ run_standalone_train.sh
 
 1. 使用VOCaug数据集训练s16，微调ResNet-101预训练模型。脚本如下：
 
-```bash
-run_distribute_train_s16_r1.sh
-```
+    ```bash
+    run_distribute_train_s16_r1.sh
+    ```
 
 2. 使用VOCaug数据集训练s8，微调上一步的模型。脚本如下：
 
-```bash
-run_distribute_train_s8_r1.sh
-```
+    ```bash
+    run_distribute_train_s8_r1.sh
+    ```
 
 3. 使用VOCtrain数据集训练s8，微调上一步的模型。脚本如下：
 
-```bash
-run_distribute_train_s8_r2.sh
-```
+    ```bash
+    run_distribute_train_s8_r2.sh
+    ```
 
 评估步骤如下：
 
 1. 使用voc val数据集评估s16。评估脚本如下：
 
-```bash
-run_eval_s16.sh
-```
+    ```bash
+    run_eval_s16.sh
+    ```
 
 2. 使用voc val数据集评估s8。评估脚本如下：
 
-```bash
-run_eval_s8.sh
-```
+    ```bash
+    run_eval_s8.sh
+    ```
 
 3. 使用voc val数据集评估多尺度s8。评估脚本如下：
 
-```bash
-run_eval_s8_multiscale.sh
-```
+    ```bash
+    run_eval_s8_multiscale.sh
+    ```
 
 4. 使用voc val数据集评估多尺度和翻转s8。评估脚本如下：
 
-```bash
-run_eval_s8_multiscale_flip.sh
-```
+    ```bash
+    run_eval_s8_multiscale_flip.sh
+    ```
 
 # 脚本说明
 

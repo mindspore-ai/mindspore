@@ -41,7 +41,7 @@ Dataset used:
 # [环境要求](#contents)
 
 - 硬件（Ascend/GPU）
-    - 需要准备具有Ascend或GPU处理能力的硬件环境. 如需使用Ascend，可以发送 [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) 到ascend@huawei.com。一旦批准，你就可以使用此资源
+    - 需要准备具有Ascend或GPU处理能力的硬件环境.
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需获取更多信息，请查看如下链接：

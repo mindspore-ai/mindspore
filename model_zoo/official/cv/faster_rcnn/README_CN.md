@@ -49,7 +49,7 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 # 环境要求
 
 - 硬件（Ascend/GPU）
-    - 使用Ascend处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 使用Ascend处理器来搭建硬件环境。
 
 - 获取基础镜像
     - [Ascend Hub](https://ascend.huawei.com/ascendhub/#/home)

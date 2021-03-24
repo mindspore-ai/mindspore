@@ -74,7 +74,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-- Prepare hardware environment with Ascend. If you want to try Ascend , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+- Prepare hardware environment with Ascend.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -83,7 +83,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 - Install python packages in requirements.txt
 - Generate config json file for 8pcs training
 
-     ```
+     ```bash
      # From the root of this project
      cd src/tools/
      python3 get_multicards_json.py 10.111.*.*
@@ -108,47 +108,47 @@ For 8 devices training, training steps are as follows:
 
 1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is:
 
-```shell
-run_distribute_train_s16_r1.sh
-```
+    ```shell
+    run_distribute_train_s16_r1.sh
+    ```
 
 2. Train s8 with vocaug dataset, finetuning from model in previous step, training script is:
 
-```shell
-run_distribute_train_s8_r1.sh
-```
+    ```shell
+    run_distribute_train_s8_r1.sh
+    ```
 
 3. Train s8 with voctrain dataset, finetuning from model in previous step, training script is:
 
-```shell
-run_distribute_train_s8_r2.sh
-```
+    ```shell
+    run_distribute_train_s8_r2.sh
+    ```
 
 For evaluation, evaluating steps are as follows:
 
 1. Eval s16 with voc val dataset, eval script is:
 
-```shell
-run_eval_s16.sh
-```
+    ```shell
+    run_eval_s16.sh
+    ```
 
 2. Eval s8 with voc val dataset, eval script is:
 
-```shell
-run_eval_s8.sh
-```
+    ```shell
+    run_eval_s8.sh
+    ```
 
 3. Eval s8 multiscale with voc val dataset, eval script is:
 
-```shell
-run_eval_s8_multiscale.sh
-```
+    ```shell
+    run_eval_s8_multiscale.sh
+    ```
 
 4. Eval s8 multiscale and flip with voc val dataset, eval script is:
 
-```shell
-run_eval_s8_multiscale_flip.sh
-```
+    ```shell
+    run_eval_s8_multiscale_flip.sh
+    ```
 
 # [Script Description](#contents)
 
@@ -245,64 +245,64 @@ For 8 devices training, training steps are as follows:
 
 1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is as follows:
 
-```shell
-# run_distribute_train_s16_r1.sh
-for((i=0;i<=$RANK_SIZE-1;i++));
-do
-    export RANK_ID=${i}
-    export DEVICE_ID=$((i + RANK_START_ID))
-    echo 'start rank='${i}', device id='${DEVICE_ID}'...'
-    mkdir ${train_path}/device${DEVICE_ID}
-    cd ${train_path}/device${DEVICE_ID} || exit
-    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
-                                               --data_file=/PATH/TO/MINDRECORD_NAME  \
-                                               --train_epochs=300  \
-                                               --batch_size=32  \
-                                               --crop_size=513  \
-                                               --base_lr=0.08  \
-                                               --lr_type=cos  \
-                                               --min_scale=0.5  \
-                                               --max_scale=2.0  \
-                                               --ignore_label=255  \
-                                               --num_classes=21  \
-                                               --model=deeplab_v3_s16  \
-                                               --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
-                                               --is_distributed  \
-                                               --save_steps=410  \
-                                               --keep_checkpoint_max=200 >log 2>&1 &
-done
-```
+    ```shell
+    # run_distribute_train_s16_r1.sh
+    for((i=0;i<=$RANK_SIZE-1;i++));
+    do
+        export RANK_ID=${i}
+        export DEVICE_ID=$((i + RANK_START_ID))
+        echo 'start rank='${i}', device id='${DEVICE_ID}'...'
+        mkdir ${train_path}/device${DEVICE_ID}
+        cd ${train_path}/device${DEVICE_ID} || exit
+        python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
+                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
+                                                --train_epochs=300  \
+                                                --batch_size=32  \
+                                                --crop_size=513  \
+                                                --base_lr=0.08  \
+                                                --lr_type=cos  \
+                                                --min_scale=0.5  \
+                                                --max_scale=2.0  \
+                                                --ignore_label=255  \
+                                                --num_classes=21  \
+                                                --model=deeplab_v3_s16  \
+                                                --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                                                --is_distributed  \
+                                                --save_steps=410  \
+                                                --keep_checkpoint_max=200 >log 2>&1 &
+    done
+    ```
 
 2. Train s8 with vocaug dataset, finetuning from model in previous step, training script is as follows:
 
-```shell
-# run_distribute_train_s8_r1.sh
-for((i=0;i<=$RANK_SIZE-1;i++));
-do
-    export RANK_ID=${i}
-    export DEVICE_ID=$((i + RANK_START_ID))
-    echo 'start rank='${i}', device id='${DEVICE_ID}'...'
-    mkdir ${train_path}/device${DEVICE_ID}
-    cd ${train_path}/device${DEVICE_ID} || exit
-    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
-                                               --data_file=/PATH/TO/MINDRECORD_NAME  \
-                                               --train_epochs=800  \
-                                               --batch_size=16  \
-                                               --crop_size=513  \
-                                               --base_lr=0.02  \
-                                               --lr_type=cos  \
-                                               --min_scale=0.5  \
-                                               --max_scale=2.0  \
-                                               --ignore_label=255  \
-                                               --num_classes=21  \
-                                               --model=deeplab_v3_s8  \
-                                               --loss_scale=2048  \
-                                               --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
-                                               --is_distributed  \
-                                               --save_steps=820  \
-                                               --keep_checkpoint_max=200 >log 2>&1 &
-done
-```
+    ```shell
+    # run_distribute_train_s8_r1.sh
+    for((i=0;i<=$RANK_SIZE-1;i++));
+    do
+        export RANK_ID=${i}
+        export DEVICE_ID=$((i + RANK_START_ID))
+        echo 'start rank='${i}', device id='${DEVICE_ID}'...'
+        mkdir ${train_path}/device${DEVICE_ID}
+        cd ${train_path}/device${DEVICE_ID} || exit
+        python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
+                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
+                                                --train_epochs=800  \
+                                                --batch_size=16  \
+                                                --crop_size=513  \
+                                                --base_lr=0.02  \
+                                                --lr_type=cos  \
+                                                --min_scale=0.5  \
+                                                --max_scale=2.0  \
+                                                --ignore_label=255  \
+                                                --num_classes=21  \
+                                                --model=deeplab_v3_s8  \
+                                                --loss_scale=2048  \
+                                                --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                                                --is_distributed  \
+                                                --save_steps=820  \
+                                                --keep_checkpoint_max=200 >log 2>&1 &
+    done
+    ```
 
 3. Train s8 with voctrain dataset, finetuning from model in previous step, training script is as follows:
 
@@ -566,4 +566,4 @@ In dataset.py, we set the seed inside "create_dataset" function. We also use ran
 
 # [ModelZoo Homepage](#contents)
 
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
