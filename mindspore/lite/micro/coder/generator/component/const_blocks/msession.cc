@@ -190,14 +190,6 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &te
 }
 
 }  // namespace lite
-
-session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
-  auto *session = new (std::nothrow) lite::LiteSession();
-  MS_NULLPTR_IF_NULL(session);
-  int ret = session->InitRuntimeBuffer();
-  MS_NULLPTR_IF_ERROR(ret);
-  return session;
-}
 )RAW";
 
 }  // namespace mindspore::lite::micro
