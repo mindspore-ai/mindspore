@@ -7765,7 +7765,7 @@ class Conv3D(PrimitiveWithInfer):
                                       for each sampling location. Its value must be greater or equal to 1 and
                                       bounded by the height and width of the input. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
-            divisible by the number of groups. Default: 1.
+            divisible by the number of groups. Default: 1. Only 1 is currently supported.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
@@ -7814,10 +7814,9 @@ class Conv3D(PrimitiveWithInfer):
         """Initialize Conv3D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True,
-                                             ret_five=True)
+        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False, ret_five=True)
         self.add_prim_attr('strides', self.stride)
-        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True,
+        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=False,
                                                ret_five=True, third_one=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
@@ -7854,7 +7853,7 @@ class Conv3D(PrimitiveWithInfer):
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
-        self.group = validator.check_positive_int(group, 'group', self.name)
+        self.group = validator.check_equal_int(group, 1, 'group', self.name)
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_x', 0)
 
@@ -8074,8 +8073,17 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         return out
 
 
+def _deconv_output_length(input_length, kernel_size, stride_size, dilation_size):
+    filter_size = kernel_size + (kernel_size - 1) * (dilation_size - 1)
+    if filter_size - stride_size > 0:
+        length = input_length * stride_size + filter_size - stride_size
+    else:
+        length = input_length * stride_size
+    return length
+
+
 class Conv3DTranspose(PrimitiveWithInfer):
-    """
+    r"""
     Compute a 3D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
 
@@ -8091,24 +8099,38 @@ class Conv3DTranspose(PrimitiveWithInfer):
         (\text{kernel_size_h} - 1) + \text{output_padding_h} + 1
 
         W_{out} = (W_{in} - 1) \times \text{stride_w} - 2 \times \text{padding_w} + \text{dilation_w} \times
-        (\text{kernel_size_w} - 1) + 1
+        (\text{kernel_size_w} - 1) + \text{output_padding_w} + 1
 
     Args:
         in_channel (int): The channel of the input x.
         out_channel (int): The channel of the weight x.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
         mode (int): Modes for different convolutions. Default is 1. Not currently used.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid", "pad". Default: "valid".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
+              the input. The total number of padding will be calculated in depth, horizontal and vertical
+              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
+              If this mode is set, `pad` and `output_padding` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              and `output_padding` must be 0.
+
+            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
+              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
              head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
              the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
              and pad[5] correspondingly.
         stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
         dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
-        group (int): Splits input into groups. Default: 1.
+        group (int): Splits input into groups. Default: 1. Only 1 is currently supported.
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
         data_format (str): The optional value for data format. Currently only support 'NCDHW'.
-        input_size (tuple[int]): A tuple describes the shape of the input which conforms to the format
-          :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Not currently used.
 
     Inputs:
         - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
@@ -8127,7 +8149,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
     Raise:
         TypeError: If `in_channel`, `out_channel` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `pad` , `dilation` or `output_padding` is neither an int not a tuple.
         ValueError: If `in_channel`, `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
@@ -8152,6 +8174,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
                  out_channel,
                  kernel_size,
                  mode=1,
+                 pad_mode='valid',
                  pad=0,
                  stride=1,
                  dilation=1,
@@ -8165,10 +8188,10 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.add_prim_attr('out_channel', self.out_channel)
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True,
+        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False,
                                              ret_five=True)
         self.add_prim_attr('strides', self.stride)
-        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True,
+        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=False,
                                                ret_five=True, third_one=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
@@ -8178,8 +8201,15 @@ class Conv3DTranspose(PrimitiveWithInfer):
             raise ValueError(f"For `conv3d` attr 'pad' should be an positive int number or a tuple of "
                              f"six positive int numbers, but got `{len(pad)}`.")
         self.pad_list = pad
-        for item in self.pad_list:
-            validator.check_non_negative_int(item, 'pad item', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.add_prim_attr('pad_mode', self.pad_mode)
+
+        if self.pad_mode != 'pad' and pad != (0, 0, 0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+
+        if self.pad_mode == 'pad':
+            for item in self.pad_list:
+                validator.check_non_negative_int(item, 'pad item', self.name)
         validator.check_int_range(self.pad_list[0], 0, self.kernel_size[0], Rel.INC_LEFT,
                                   'pad_d belonging [0, kernel_size_d)', self.name)
         validator.check_int_range(self.pad_list[1], 0, self.kernel_size[0], Rel.INC_LEFT,
@@ -8194,13 +8224,16 @@ class Conv3DTranspose(PrimitiveWithInfer):
                                   'pad_w belonging [0, kernel_size_w)', self.name)
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('mode', self.mode)
-        self.group = validator.check_positive_int(group, 'group', self.name)
+        self.mode = validator.check_equal_int(group, 1, 'group', self.name)
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
 
         self.output_padding = _check_3d_int_or_tuple('output_padding', output_padding, self.name,
-                                                     allow_five=True, ret_five=True, greater_zero=False)
+                                                     allow_five=False, ret_five=True, greater_zero=False)
+        output_padding = (self.output_padding[2], self.output_padding[3], self.output_padding[4])
+        if self.pad_mode != 'pad' and output_padding != (0, 0, 0):
+            raise ValueError(f"For '{self.name}', when output_padding is not 0, pad_mode should be set as 'pad'.")
         validator.check_int_range(self.kernel_size[0]*self.kernel_size[1]*self.kernel_size[2], 1, 343, Rel.INC_BOTH,
                                   'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
         validator.check_int_range(self.stride[0]*self.stride[1]*self.stride[2], 1, 343, Rel.INC_BOTH,
@@ -8213,7 +8246,6 @@ class Conv3DTranspose(PrimitiveWithInfer):
                                   'output_padding_h belonging [0, max(stride_h,dilation_h))', self.name)
         validator.check_int_range(self.output_padding[4], 0, max(self.dilation[4], self.stride[4]), Rel.INC_LEFT,
                                   'output_padding_w belonging [0, max(stride_w,dilation_w))', self.name)
-        self.add_prim_attr('output_padding', self.output_padding)
 
     def __infer__(self, x, w, b=None):
         args = {'x': x['dtype'], 'w': w['dtype']}
@@ -8230,14 +8262,47 @@ class Conv3DTranspose(PrimitiveWithInfer):
         validator.check("filter's batch", w_shape[0], "input x's channel",
                         x_shape[1], Rel.EQ, self.name)
 
+        kernel_d, kernel_h, kernel_w = self.kernel_size
+        _, _, stride_d, stride_h, stride_w = self.stride
+        _, _, dilation_d, dilation_h, dilation_w = self.dilation
+
+        if self.pad_mode == "valid":
+            d_out = _deconv_output_length(x_shape[2], kernel_d, stride_d, dilation_d)
+            h_out = _deconv_output_length(x_shape[3], kernel_h, stride_h, dilation_h)
+            w_out = _deconv_output_length(x_shape[4], kernel_w, stride_w, dilation_w)
+            self.pad_list = (0, 0, 0, 0, 0, 0)
+            self.output_padding = (0, 0, 0, 0, 0)
+
+        elif self.pad_mode == "same":
+            d_out = x_shape[2] * stride_d
+            h_out = x_shape[3] * stride_h
+            w_out = x_shape[4] * stride_w
+
+            pad_needed_d = max(0, (x_shape[2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - d_out)
+            pad_head = math.floor(pad_needed_d / 2)
+            pad_tail = pad_needed_d - pad_head
+
+            pad_needed_h = max(0, (x_shape[3] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - h_out)
+            pad_top = math.floor(pad_needed_h / 2)
+            pad_bottom = pad_needed_h - pad_top
+
+            pad_needed_w = max(0, (x_shape[4] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - w_out)
+            pad_left = math.floor(pad_needed_w / 2)
+            pad_right = pad_needed_w - pad_left
+            self.pad_list = (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right)
+            self.output_padding = (0, 0, 0, 0, 0)
+
+        elif self.pad_mode == 'pad':
+            pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = self.pad_list
+            d_out = (x_shape[2] - 1) * self.stride[2] - (pad_head + pad_tail) + self.dilation[2] * \
+                    (self.kernel_size[0] - 1) + self.output_padding[2] + 1
+            h_out = (x_shape[3] - 1) * self.stride[3] - (pad_top + pad_bottom) + self.dilation[3] * \
+                    (self.kernel_size[1] - 1) + self.output_padding[3] + 1
+            w_out = (x_shape[4] - 1) * self.stride[4] - (pad_left + pad_right) + self.dilation[4] * \
+                    (self.kernel_size[2] - 1) + self.output_padding[4] + 1
+
         self.add_prim_attr('pad_list', self.pad_list)
-        pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = self.pad_list
-        d_out = (x_shape[2] - 1) * self.stride[2] - (pad_head + pad_tail) + self.dilation[2] * \
-                (self.kernel_size[0] - 1) + self.output_padding[2] + 1
-        h_out = (x_shape[3] - 1) * self.stride[3] - (pad_top + pad_bottom) + self.dilation[3] * \
-                (self.kernel_size[1] - 1) + self.output_padding[3] + 1
-        w_out = (x_shape[4] - 1) * self.stride[4] - (pad_left + pad_right) + self.dilation[4] * \
-                (self.kernel_size[2] - 1) + self.output_padding[4] + 1
+        self.add_prim_attr('output_padding', self.output_padding)
         output_shape = (x_shape[0], w_shape[1]*self.group, d_out, h_out, w_out)
         self.add_prim_attr('input_size', output_shape)
         out = {
