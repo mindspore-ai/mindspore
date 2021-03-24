@@ -64,32 +64,22 @@ void ToFormatOpenCLKernel::SetGlobalLocal() {
 }
 
 int ToFormatOpenCLKernel::Prepare() {
-  std::map<TypeId, std::string> dtype_str{
-    {kNumberTypeFloat32, "float"}, {kNumberTypeFloat16, "half"}, {kNumberTypeInt32, "float"}};
-  std::string kernel_name;
-  if (out_mem_type_ == MemType::IMG) {
-    kernel_name = "to_format_NHWC_to_NHWC4_IMG_" + dtype_str[in_tensors_.front()->data_type()];
-  } else {
-    kernel_name = "to_format_NHWC4_to_NHWC_BUF_" + dtype_str[out_tensors_.front()->data_type()];
-  }
+  static std::map<TypeId, std::string> dtype_str{{kNumberTypeFloat32, "float32"},
+                                                 {kNumberTypeFloat16, "float16"},
+                                                 {kNumberTypeInt32, "int32"},
+                                                 {kNumberTypeUInt32, "uint32"}};
+  auto in_tensor = in_tensors_.front();
+  auto out_tensor = out_tensors_.front();
+  std::string kernel_name = out_mem_type_ == MemType::IMG ? "BUF_to_IMG_" : "IMG_to_BUF_";
+  kernel_name += dtype_str[in_tensor->data_type()] + "_" + dtype_str[out_tensor->data_type()];
   this->set_name(kernel_name);
 
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string program_name = "to_format";
   std::string source = to_format_source;
   ocl_runtime_->LoadSource(program_name, source);
-  std::vector<std::string> ext_build_opt;
-  if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    ext_build_opt.push_back("-DREAD_IMAGEIN=read_imagef");
-  } else {
-    ext_build_opt.push_back("-DREAD_IMAGEIN=read_imageh");
-  }
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, ext_build_opt);
-#endif
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
-  auto output = GpuTensorInfo(out_tensors_.front());
+  auto output = GpuTensorInfo(out_tensor);
   N_ = output.N;
   H_ = output.H;
   W_ = output.W;
@@ -112,15 +102,8 @@ int ToFormatOpenCLKernel::Run() {
 }
 
 int ToFormatOpenCLKernel::InferShape() {
-  if (infer_shape_flag_) {
-    return RET_OK;
-  }
-  if (in_tensors_[0]->shape().size() == 0 || in_tensors_[0]->ElementsNum() < 0) {
-    MS_LOG(ERROR) << "to_format op in tensor shape is 0, infer shape failed!";
-    return RET_ERROR;
-  }
   out_tensors_[0]->set_shape(in_tensors_[0]->shape());
-  infer_shape_flag_ = true;
+  op_parameter_->infer_flag_ = false;
   return RET_OK;
 }
 

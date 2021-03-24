@@ -97,7 +97,7 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
 }
 
 void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
-  printf("%-30s", name().c_str());
+  printf("%-30s ", name().c_str());
   if (out_tensors().empty()) {
     return;
   }
@@ -134,7 +134,9 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
 
   auto total_num = mem_type == lite::opencl::MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
   for (int i = 0; i < print_num && i < total_num; ++i) {
-    if (tensor->data_type() == kNumberTypeFloat16) {
+    if (tensor->data_type() == kNumberTypeInt32) {
+      printf("%d %7d | ", i, reinterpret_cast<int32_t *>(data.data())[i]);
+    } else if (tensor->data_type() == kNumberTypeFloat16) {
       printf("%d %7.3f | ", i, reinterpret_cast<float16_t *>(data.data())[i]);
     } else {
       printf("%d %7.3f | ", i, reinterpret_cast<float *>(data.data())[i]);
@@ -191,7 +193,7 @@ int OpenCLKernel::PostProcess() {
 }
 
 int OpenCLKernel::InferShape() {
-  if (infer_shape_flag_) {
+  if (op_parameter_->infer_flag_) {
     return RET_OK;
   }
   op_parameter_->infer_flag_ = true;
@@ -202,12 +204,11 @@ int OpenCLKernel::InferShape() {
     op_parameter_->infer_flag_ = false;
     return ret;
   }
-  infer_shape_flag_ = true;
   return RET_OK;
 }
 
 int OpenCLKernel::ReSize() {
-  if (infer_shape_flag_) {
+  if (op_parameter_->infer_flag_) {
     return RET_OK;
   }
   auto ret = InferShape();
