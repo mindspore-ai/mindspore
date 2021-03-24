@@ -125,12 +125,10 @@ int main(void) {
       if (output_tensor == nullptr) {
         return -1;
       }
-      SEGGER_RTT_printf(0, "***********mnist test start5.2***********\n");
       float *casted_data = static_cast<float *>(output_tensor->MutableData());
       if (casted_data == nullptr) {
         return -1;
       }
-      SEGGER_RTT_printf(0, "***********mnist test start5.3***********\n");
       for (size_t j = 0; j < 10 && j < output_tensor->ElementsNum(); j++) {
         SEGGER_RTT_printf(0, "output: [%d] is : [%d]/100\n", i, casted_data[i] * 100);
       }

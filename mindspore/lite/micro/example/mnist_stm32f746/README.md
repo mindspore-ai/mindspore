@@ -1,3 +1,5 @@
+
+
 # Arm Cortex-M编译部署
 
  `Linux` `Cortex-M`  `IOT` `C/C++` `全流程` `模型编译` `模型代码生成` `模型部署` `推理应用` `初级` `中级` `高级`
@@ -9,8 +11,8 @@
     - [STM32F746构建](#STM32F746构建)
     - [STM32F746工程部署](#STM32F746工程部署)
     - [更多详情](#更多详情)
-        - [Linux x86_64平台编译部署](#Linux x86_64平台编译部署)
-        - [Android平台编译部署](#STM32746平台编译部署)
+        - [Linux_x86_64编译部署](#Linux_x86_64编译部署)
+        - [Android平台编译部署](#Android平台编译部署)
 
 <!-- /TOC -->
 
@@ -30,39 +32,45 @@
 - [GCC](https://gcc.gnu.org/releases.html) >= 7.3.0
 - [CMake](https://cmake.org/download/) >= 3.18.3
 
-### STM32F746构建与运行
+### STM32F746构建
 
-首先使用codegen编译LeNet模型，生成对应的STM32F46推理代码。具体命令如下：
+首先使用codegen编译MNIST手写数字识别模型，生成对应的STM32F46推理代码。具体命令如下：
 
 ```bash
-./codegen --codePath=. --modelPath=LeNet.ms --moduleName=LeNet --target=ARM32M
+./codegen --codePath=. --modelPath=mnist.ms --target=ARM32M
 ```
 
 #### 代码工程说明
 
 ```bash
-├── LeNet
+├── MNIST
+└── include            # 模型推理对外API头文件目录
 └── operator_library
+
 ```
 
-##### 算子静态库目录说明
+##### 算子相关目录说明
 
-在编译此工程之前需要预先获取Cortex-M 平台对应的[算子库]()。
+在编译此工程之前需要预先获取对应平台所需要的算子文件，由于Cortex-M平台工程编译一般涉及到较复杂的交叉编译，此处不提供直接预编译的算子库静态库，而是用户根据模型自行组织文件，自主编译Cortex-M7 、Coretex-M4、Cortex-M3等工程。
 
 预置算子静态库的目录如下:
 
 ```bash
 ├── operator_library    # 对应平台算子库目录
     ├── include         # 对应平台算子库头文件目录
-    └── lib             # 对应平台算子库静态库目录
+    └── nnacl           # 对应mindspore团队提供的平台算子库源文件
+    └── wrapper         # 对应mindspore团队提供的平台算子库源文件
+    └── CMSIS           # 对应Arm官方提供的CMSIS平台算子库源文件
+    
 ```
 
 生成代码工程目录如下：
 
+模型推理对外API头文件可由mindspore团队发布的[Release包](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)中获取。
+
 ```bash
-├── LeNet               # 生成代码的根目录
+├── MNIST               # 生成代码的根目录
     ├── benchmark       # 生成代码的benchmark目录
-    ├── include         # 模型推理代码对外暴露头文件目录
     └── src             # 模型推理代码目录
 ```
 
@@ -81,7 +89,7 @@ make -v              # 查看make版本
 
 以上的命令均有成功返回值时，表明环境准备ok，可以继续进入下一步，否则先安装上述环境！！！
 
-##### 生成STM32F746单板初始化代码([详情示例代码]())
+##### 生成STM32F746单板初始化代码([详情示例代码](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/micro/example/mnist_stm32f746))
 
 1. 启动 STM32CubeMX，新建project，选择单板STM32F746IG
 
@@ -98,26 +106,25 @@ make -v              # 查看make版本
    arm-none-eabi-objcopy -O binary -S build/test_stm32f746.elf build/test_stm32f746.bin
    ```
 
-##### 编译生成模型静态库
+##### 编译模型
 
-1. 拷贝mindspore团队提供的cortex-m7的算子静态库以及对应头文件到STM32CubeMX生成的工程目录中。
+1. 拷贝mindspore团队提供算子文件以及对应头文件到STM32CubeMX生成的工程目录中。
 
 2. 拷贝codegen生成模型推理代码到 STM32CubeMX生成的代码工程目录中
 
    ```bash
    ├── .mxproject
-   └── build             # 工程编译目录最终的elf文件存在于此
+   └── build             # 工程编译输出目录
    └── Core
    └── Drivers
-   └── LeNet             # codegen生成的cortex-m7 模型推理代码
-   └── Makefile          # 组织工程makefile文件需要用户自己修改组织lenet && operator_library到工程目录中
-   └── operator_library  # mindspore团队提供的对应平台算子库
+   └── mnist             # codegen生成的cortex-m7 模型推理代码
+   └── Makefile          # 组织工程makefile文件需要用户自己修改组织mnist && operator_library到工程目录中
    └── startup_stm32f746xx.s
    └── STM32F746IGKx_FLASH.ld
    └── test_stm32f746.ioc
    ```
-
-3. 修改makefile文件，组织算子静态库以及模型推理代码
+   
+3. 修改makefile文件，组织算子静态库以及模型推理代码,具体makefile文件内容参见[示例](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/micro/example/mnist_stm32f746)。
 
    ```bash
    # C includes
@@ -126,17 +133,53 @@ make -v              # 查看make版本
    -IDrivers/STM32F7xx_HAL_Driver/Inc \
    -IDrivers/STM32F7xx_HAL_Driver/Inc/Legacy \
    -IDrivers/CMSIS/Device/ST/STM32F7xx/Include \
-   -Ioperator_library/include \                # 新增，指定算子库头文件目录
-   -ILeNet/include \                           # 新增，指定模型推理代码头文件
-   -ILeNet/src                                 # 新增，指定模型推理代码头文件
-   # libraries
-   LIBS = -lc -lm -lnosys -lops                # 修改，导入mindspore团队提供算子库
-   LIBDIR = -Ioperator_library/lib/arm32m      # 新增，指定算子库所在路径
+   -Imnist/operator_library/include \                # 新增，指定算子库头文件目录
+   -Imnist/include \                           	  # 新增，指定模型推理代码头文件
+   -Imnist/src                                 	  # 新增，指定模型推理代码头文件
    ```
-
+   
 4. 在工程目录的Core/Src的main.c编写模型调用代码，具体代码新增如下：
 
    ```cpp
+   while (1) {
+       /* USER CODE END WHILE */
+       SEGGER_RTT_printf(0, "***********mnist test start***********\n");
+       const char *model_buffer = nullptr;
+       int model_size = 0;
+       session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, 		     model_size, nullptr);
+       Vector<tensor::MSTensor *> inputs = session->GetInputs();
+       size_t inputs_num = inputs.size();
+       void *inputs_binbuf[inputs_num];
+       int inputs_size[inputs_num];
+       for (size_t i = 0; i < inputs_num; ++i) {
+         inputs_size[i] = inputs[i]->Size();
+       }
+       // here mnist only have one input data,just hard code to it's array;
+       inputs_binbuf[0] = mnist_inputs_data;
+       for (size_t i = 0; i < inputs_num; ++i) {
+         void *input_data = inputs[i]->MutableData();
+         memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
+       }
+       int ret = session->RunGraph();
+       if (ret != lite::RET_OK) {
+         return lite::RET_ERROR;
+       }
+       Vector<String> outputs_name = session->GetOutputTensorNames();
+       for (int i = 0; i < outputs_name.size(); ++i) {
+         tensor::MSTensor *output_tensor = session->GetOutputByTensorName(outputs_name[i]);
+         if (output_tensor == nullptr) {
+           return -1;
+         }
+         float *casted_data = static_cast<float *>(output_tensor->MutableData());
+         if (casted_data == nullptr) {
+           return -1;
+         }
+         for (size_t j = 0; j < 10 && j < output_tensor->ElementsNum(); j++) {
+           SEGGER_RTT_printf(0, "output: [%d] is : [%d]/100\n", i, casted_data[i] * 100);
+         }
+       }
+       delete session;
+       SEGGER_RTT_printf(0, "***********mnist test end***********\n");
    ```
 
 5. 在工程跟目中目录使用管理员权限打开`cmd` 执行 `make`进行编译
@@ -161,14 +204,9 @@ load                     # 加载可执行文件到单板
 c                        # 执行模型推理
 ```
 
-#### 执行结果
-
-```bash
-```
-
 ## 更多详情
 
-### [Linux x86_64平台编译部署]()
+### [Linux_x86_64平台编译部署](https://www.mindspore.cn/tutorial/lite/zh-CN/master/quick_start/quick_start_codegen.html)
 
-### [Android平台编译部署]()
+### [Android平台编译部署](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/micro/example/mobilenetv2)
 
