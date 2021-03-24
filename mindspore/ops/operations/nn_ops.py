@@ -3717,7 +3717,7 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Inputs:
         - **logits** (Tensor) - Input logits.
-        - **label** (Tensor) - Ground truth label.
+        - **label** (Tensor) - Ground truth label. With the same shape and type as `logits`.
 
     Outputs:
         Tensor, with the same shape and type as input `logits`.
