@@ -420,16 +420,12 @@ class Depend(Primitive):
     Depend is used for processing dependency operations.
 
     In some side-effect scenarios, we need to ensure the execution order of operators.
-    In order to ensure that operator A is executed before operator B, it is recommended
-    to insert the Depend operator between operators A and B.
-
-    Previously, the ControlDepend operator was used to control the execution order.
-    Since the ControlDepend operator is deprecated from version 1.1, it is recommended
-    to use the Depend operator instead. The replacement method is as follows::
+    In order to ensure that operator A is executed before operator B, it is recommended to
+    insert the Depend operator between operators A and B. The usage method is as follows::
 
         a = A(x)                --->        a = A(x)
         b = B(y)                --->        y = Depend(y, a)
-        ControlDepend(a, b)     --->        b = B(y)
+                                --->        b = B(y)
 
     Inputs:
         - **value** (Tensor) - the real value to return for depend operator.

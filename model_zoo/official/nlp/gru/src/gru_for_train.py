@@ -172,7 +172,6 @@ class GRUTrainOneStepWithLossScaleCell(nn.Cell):
             self.get_status = P.NPUGetFloatStatus()
             self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()

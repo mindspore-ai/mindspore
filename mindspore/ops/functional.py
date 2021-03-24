@@ -42,11 +42,6 @@ shape = P.Shape()
 rank = P.Rank()
 reshape = P.Reshape()
 
-# control_depend: represent dependency between two operators
-def control_depend(src, dst):
-    control_depend_op = P.ControlDepend()
-    return control_depend_op(src, dst)
-
 merge = P.Merge()
 geswitch = P.GeSwitch()
 addn = P.AddN()

@@ -40,7 +40,7 @@ from .comm_ops import (AllGather, AllReduce, _AlltoAll, AllSwap, ReduceScatter, 
                        _HostAllGather, _HostReduceScatter)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print, Assert)
-from .control_ops import ControlDepend, GeSwitch, Merge
+from .control_ops import GeSwitch, Merge
 from .inner_ops import ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign, MakeRefKey
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
@@ -275,7 +275,6 @@ __all__ = [
     'ScalarToArray',
     'ScalarToTensor',
     'TupleToArray',
-    'ControlDepend',
     'GeSwitch',
     'Merge',
     'SameTypeShape',

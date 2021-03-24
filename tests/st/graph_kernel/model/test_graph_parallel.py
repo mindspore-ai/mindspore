@@ -33,14 +33,6 @@ def reduce_graph(shape, reduce_axis):
         gb.emit('ReduceSum', a3, 'C', attrs={'reduce_axis': reduce_axis})
     return gb.get()[0]
 
-def control_graph(shape):
-    gb = model.GraphBuilder()
-    with gb.graph_scope('control') as _:
-        a1 = gb.tensor(shape, 'float32')
-        a2 = gb.emit('Abs', a1)
-        gb.emit('ControlDepend', a2)
-    return gb.get()[0]
-
 def block_fusion(graphs):
     gain = model.parallel_estimate(graphs)
     print("fusion = {}, bottleneck = {}, gain = {}".format(gain.fusion_type, gain.bottleneck, gain.gain))
@@ -51,4 +43,3 @@ if __name__ == "__main__":
     assert block_fusion([reduce_graph([1024, 1024], [1]), injective_graph([24, 1024])])
     assert not block_fusion([reduce_graph([1024, 1024], [1]), injective_graph([50, 1024])])
     assert not block_fusion([reduce_graph([1024, 1024], [0, 1]), injective_graph([1024, 1024])])
-    assert block_fusion([control_graph([20, 128]), injective_graph([40, 1024])])
