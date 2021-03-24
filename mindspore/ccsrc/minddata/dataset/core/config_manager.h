@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONFIG_MANAGER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONFIG_MANAGER_H_
 
+#include <atomic>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -179,6 +180,22 @@ class ConfigManager {
   int32_t monitor_sampling_interval() const { return monitor_sampling_interval_; }
 
   // setter function
+  // @param stop_profiler - The setting to apply to the config
+  void stop_dataset_profiler(bool stop_profiler);
+
+  // getter function
+  // @return The status of stop profiler
+  bool stop_profiler_status() const { return stop_profiler_; }
+
+  // setter function
+  // @param file_ready - The setting to apply to the config
+  void set_profiler_file_status(bool file_ready);
+
+  // getter function
+  // @return The status of profiler file, whether generated
+  bool get_profiler_file_status() const { return file_ready_; }
+
+  // setter function
   // @param auto_num_workers - whether assign threads to each op automatically
   void set_auto_num_workers(bool auto_num_workers) { auto_num_workers_ = auto_num_workers; }
 
@@ -223,6 +240,8 @@ class ConfigManager {
   int32_t rank_id_;
   uint32_t seed_;
   uint32_t monitor_sampling_interval_;
+  std::atomic_bool stop_profiler_;
+  std::atomic_bool file_ready_;
   uint32_t callback_timout_;
   std::string cache_host_;
   int32_t cache_port_;

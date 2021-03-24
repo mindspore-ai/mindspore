@@ -23,6 +23,7 @@ from enum import Enum
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, release, get_rank
 import mindspore._c_expression as c_expression
+from mindspore.dataset.core.config import _stop_dataset_profiler
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
 from mindspore.profiler.common.util import get_file_names, fwrite_format
@@ -189,6 +190,7 @@ class Profiler:
         Collect and analyse performance data, called after training or during training. The example shows above.
         """
         self._cpu_profiler.stop()
+        _stop_dataset_profiler()
         if self._device_target and self._device_target == "GPU":
             self._gpu_analyse()
 

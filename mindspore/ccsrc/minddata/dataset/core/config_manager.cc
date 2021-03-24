@@ -39,6 +39,8 @@ ConfigManager::ConfigManager()
       seed_(kCfgDefaultSeed),
       numa_enable_(false),
       monitor_sampling_interval_(kCfgMonitorSamplingInterval),
+      stop_profiler_(false),
+      file_ready_(true),
       callback_timout_(kCfgCallbackTimeout),
       cache_host_(kCfgDefaultCacheHost),
       cache_port_(kCfgDefaultCachePort),
@@ -138,6 +140,10 @@ void ConfigManager::set_numa_enable(bool numa_enable) { numa_enable_ = numa_enab
 void ConfigManager::set_seed(uint32_t seed) { seed_ = seed; }
 
 void ConfigManager::set_monitor_sampling_interval(uint32_t interval) { monitor_sampling_interval_ = interval; }
+
+void ConfigManager::stop_dataset_profiler(bool stop_profiler) { stop_profiler_ = stop_profiler; }
+
+void ConfigManager::set_profiler_file_status(bool file_ready) { file_ready_ = file_ready; }
 
 void ConfigManager::set_callback_timeout(uint32_t timeout) { callback_timout_ = timeout; }
 
