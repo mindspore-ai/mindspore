@@ -33,7 +33,9 @@ typedef struct {
   int8_t *packed_input_;
   int8_t *input_ptr_;
   int8_t *output_ptr_;
+  size_t thread_count_hw;
   size_t thread_stride_hw_;
+  size_t thread_count_oc;
   size_t thread_stride_oc_;
   ConvParameter *conv_param_;
   MatMulParameter *matmul_param_;
@@ -41,8 +43,15 @@ typedef struct {
   bool pre_trans_input_;
   bool support_optimize_;
   bool filter_peroc_;
+  bool parallel_by_oc_;
 } Conv1x1Args;
 
-void Conv1x1Run(int8_t *src_in, Conv1x1Args *args, int8_t *src_out);
+void Conv1x1PreRun(Conv1x1Args *args, int thread_num);
+void Pre1x1Trans(Conv1x1Args *args, int8_t *src_input, int8_t *src_output);
+int OcOptPre(void *cdata, int task_id);
+int RunArm64OptOc(void *cdata, int task_id);
+int RunArmOc(void *cdata, int task_id);
+int RunArm64OptHw(void *cdata, int task_id);
+int RunArmHw(void *cdata, int task_id);
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV1X1_RUN_H_

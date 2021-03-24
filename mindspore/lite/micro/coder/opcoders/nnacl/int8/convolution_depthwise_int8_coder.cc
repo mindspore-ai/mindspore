@@ -86,9 +86,13 @@ int ConvolutionDepthwiseINT8Coder::DoCode(CoderContext *const context) {
     {"nnacl/int8/conv_depthwise_int8.h", "nnacl/int8/pack_int8.h", "wrapper/int8/convolution_depthwise_int8_wrapper.h"},
     {"conv_depthwise_int8.c", "fixed_point.c", "pack_int8.c", "conv_int8.c", "winograd_transform.c",
      "convolution_depthwise_int8_wrapper.c"},
-    {"ConvDwInt8Row.S", "ConvDwInt8PostAlign4.S", "ConvDwInt8PostAlign4PerChannel.S", "ConvDw3x3Int8Stride2.S",
-     "ConvDw3x3Int8.S", "ConvDw3x3Int8Vertical.S", "ConvDw3x3Int8Horizontal.S", "ConvDw3x3Int8Corner.S",
-     "MatmulOptR4Int8.S", "ConvDwInt8Center.S", "DeconvDwInt8Center.S", "DeconvDwInt8Post.S", "MatmulDpInt8Opt.S"});
+    {"ConvDwInt8Row.S", "ConvDwInt8PostAlign4.S", "ConvDwInt8PostAlign4PerChannel.S", "ConvDwInt8Center.S",
+     "DeconvDwInt8Center.S", "DeconvDwInt8Post.S"});
+  if (target_ == kARM64) {
+    Collect(context, {}, {},
+            {"ConvDw3x3Int8.S", "ConvDw3x3Int8Corner.S", "ConvDw3x3Int8Horizontal.S", "ConvDw3x3Int8Stride2.S",
+             "ConvDw3x3Int8Vertical.S", "MatmulDpInt8Opt.S", "MatmulOptR4Int8.S"});
+  }
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);
   // call the op function

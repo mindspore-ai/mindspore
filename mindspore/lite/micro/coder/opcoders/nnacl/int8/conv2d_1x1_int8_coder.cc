@@ -21,6 +21,7 @@
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
@@ -43,8 +44,9 @@ int Conv2D1x1Int8Coder::Prepare(CoderContext *const context) {
 
 int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   Collect(context,
-          {"nnacl/int8/conv1x1_int8.h", "nnacl/common_func.h", "wrapper/int8/conv1x1_init_int8_wrapper.h",
-           "wrapper/int8/conv1x1_run_int8_wrapper.h"},
+          {"wrapper/int8/conv1x1_init_int8_wrapper.h", "wrapper/int8/conv1x1_run_int8_wrapper.h", "nnacl/common_func.h",
+           "nnacl/base/conv1x1_base.h", "nnacl/int8/matmul_int8.h", "nnacl/int8/pack_int8.h",
+           "nnacl/int8/conv1x1_int8.h", "nnacl/errorcode.h"},
           {"common_func.c", "pack_int8.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c",
            "conv1x1_init_int8_wrapper.c", "conv1x1_run_int8_wrapper.c", "conv1x1_base.c"},
           {"MatmulInt8Opt.S"});
@@ -54,11 +56,69 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   code.CodeStruct("conv_param", *conv_param_);
   code.CodeStruct("matmul_param", *matmul_param_);
 
-  code.CodeBaseStruct("Conv1x1Args", "args", input_sum_, filter_zp_ptr_, left_shift_, right_shift_, multiplier_,
-                      packed_weight_, bias_data_, packed_input_, nullptr, nullptr, 0, 0, "&conv_param", "&matmul_param",
-                      matmul_func_, pre_trans_input_, support_optimize_, filter_peroc_);
+  code.CodeBaseStruct<false>("Conv1x1Args", kRunArgs, input_sum_, filter_zp_ptr_, left_shift_, right_shift_,
+                             multiplier_, packed_weight_, bias_data_, packed_input_, nullptr, nullptr, 0, 0, 0, 0,
+                             "&conv_param", "&matmul_param", matmul_func_, pre_trans_input_, "GetSupportOptFlag()",
+                             filter_peroc_, false);
 
-  code.CodeFunction("Conv1x1Run", input_tensor_, "(Conv1x1Args *)&args", output_tensor_);
+  code.CodeFunction("Conv1x1PreRun", kRunArgsAddr, gThreadNum);
+  code << "for (int batch_index = 0; batch_index < " << conv_param_->input_batch_ << "; batch_index++) {\n";
+  std::string src_in = allocator_->GetRuntimeAddr(input_tensor_) + " + batch_index * " +
+                       std::to_string(conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_);
+  std::string src_out = allocator_->GetRuntimeAddr(output_tensor_) + " + batch_index * " +
+                        std::to_string(matmul_param_->row_ * matmul_param_->col_);
+  code.CodeFunction("Pre1x1Trans", kRunArgsAddr, src_in, src_out);
+  code << "if (args.parallel_by_oc_) {\n";
+  /* input transpose and input sum */
+  code << "if (GetSupportOptFlag()) {\n";
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "OcOptPre", kRunArgsAddr, "args.thread_count_hw");
+  } else {
+    code.CodeFunction("OcOptPre", kRunArgsAddr, kDefaultTaskId);
+  }
+  code << "} else {\n";
+  code << "RowMajor2Row16x4MajorInt8(args.input_ptr_, args.packed_input_, args.matmul_param_->row_, "
+          "args.matmul_param_->deep_);\n";
+  if (filter_peroc_) {
+    code << "PackInputSum16x4PerLayer(args.packed_input_, args.input_sum_, 1, args.matmul_param_->row_4_, "
+            "args.matmul_param_->deep_16_);\n";
+  } else {
+    code << "PackInputSum16x4PerLayer(args.packed_input_, "
+            "args.input_sum_,args.conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_, "
+            "args.matmul_param_->row_4_, args.matmul_param_->deep_16_);\n";
+  }
+  code << "}\n";
+  /* matmul parallel by oc */
+  code << "if (GetSupportOptFlag()) {\n";
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArm64OptOc", kRunArgsAddr, "args.thread_count_oc");
+  } else {
+    code.CodeFunction("RunArm64OptOc", kRunArgsAddr, kDefaultTaskId);
+  }
+  code << "} else {\n";
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArmOc", kRunArgsAddr, "args.thread_count_oc");
+  } else {
+    code.CodeFunction("RunArmOc", kRunArgsAddr, kDefaultTaskId);
+  }
+  code << "}\n";
+  code << "} else {\n";
+  /* matmul parallel by hw */
+  code << "if (GetSupportOptFlag()) {\n";
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArm64OptHw", kRunArgsAddr, "args.thread_count_hw");
+  } else {
+    code.CodeFunction("RunArm64OptHw", kRunArgsAddr, kDefaultTaskId);
+  }
+  code << "} else {\n";
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArmHw", kRunArgsAddr, "args.thread_count_hw");
+  } else {
+    code.CodeFunction("RunArmHw", kRunArgsAddr, kDefaultTaskId);
+  }
+  code << "}\n";
+  code << "}\n";
+  code << "}\n";
 
   context->AppendCode(code.str());
   return RET_OK;
