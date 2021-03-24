@@ -284,7 +284,7 @@ class KernelGraph : public FuncGraph {
   void ResetInFormat(const AnfNodePtr &node, const std::string &format) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node);
   void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
-                            std::unordered_set<AnfNodePtr> *visited_nodes);
+                            std::unordered_set<AnfNodePtr> *visited_nodes, bool comm_first = true);
   // update node edge list
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge or control depend
