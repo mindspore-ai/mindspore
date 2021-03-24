@@ -30,7 +30,7 @@ typedef float (*PowerScalarFun)(float x, const void *exponent);
 #ifdef __cplusplus
 extern "C" {
 #endif
-inline bool CheckInteger(float f) { return floorf(f) == f; }
+static inline bool CheckInteger(float f) { return floorf(f) == f; }
 
 static inline float StdPowerScalar(float x, const void *exponent) { return powf(x, *(float *)exponent); }
 
