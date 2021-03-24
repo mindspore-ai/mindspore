@@ -67,17 +67,6 @@ def test_tensor():
     assert isinstance(t4, ms.Tensor)
     assert t4.dtype == ms.int64
 
-def test_tensor_empty():
-    t = ms.Tensor(np.ones(0), ms.float32)
-    assert isinstance(t, ms.Tensor)
-    assert t.shape == (0,)
-
-
-def test_tensor_shape_has_zero():
-    with pytest.raises(ValueError):
-        t = ms.Tensor(np.ones((1, 0)), ms.float32)
-        print(t)
-
 
 def test_tensor_type_float16():
     t_float16 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float16))
