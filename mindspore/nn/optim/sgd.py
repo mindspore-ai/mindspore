@@ -47,7 +47,7 @@ class SGD(Optimizer):
     .. math::
             p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
 
-    If nesterov is Flase:
+    If nesterov is False:
 
     .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
