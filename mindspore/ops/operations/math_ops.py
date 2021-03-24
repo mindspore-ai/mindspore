@@ -1848,6 +1848,9 @@ class Log(PrimitiveWithInfer):
     """
     Returns the natural logarithm of a tensor element-wise.
 
+    .. math::
+        y_i = log_e(x_i)
+
     Inputs:
         - **input_x** (Tensor) - The input tensor. The value must be greater than 0.
 
@@ -3608,6 +3611,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
 class Cos(PrimitiveWithInfer):
     """
     Computes cosine of input element-wise.
+
+    .. math::
+        out_i = cos(x_i)
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
