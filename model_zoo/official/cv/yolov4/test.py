@@ -243,7 +243,7 @@ class DetectionEngine():
                     self.results[img_id][coco_clsi].append([x_lefti, y_lefti, wi, hi, confi])
 
 
-def conver_testing_shape(args_test):
+def convert_testing_shape(args_test):
     testing_shape = [int(args_test.testing_shape), int(args_test.testing_shape)]
     return testing_shape
 
@@ -296,7 +296,7 @@ def test():
 
     config = ConfigYOLOV4CspDarkNet53()
     if args.testing_shape:
-        config.test_img_shape = conver_testing_shape(args)
+        config.test_img_shape = convert_testing_shape(args)
 
     data_txt = os.path.join(args.data_dir, 'testdev2017.txt')
     ds, data_size = create_yolo_datasetv2(data_root, data_txt=data_txt, batch_size=args.per_batch_size,
