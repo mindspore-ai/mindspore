@@ -79,7 +79,7 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
       bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
       if (same_zp && same_scale) {
         code.CodeBaseStruct("ResizeInt8Args", kRunArgs, input_tensor_, output_tensor_, "&input_shape", "&output_shape",
-                            align_corners, thread_num_);
+                            align_corners, gThreadNum);
         if (support_parallel_) {
           code.CodeFunction(kParallelLaunch, gThreadPool, "ResizeInt8Run", kRunArgsAddr, gThreadNum);
         } else {
@@ -91,7 +91,7 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
         code.CodeStruct("quant_out", *quant_out_);
         code.CodeStruct("multiplier", *multiplier_);
         code.CodeFunction("ResizeNearestNeighborInt8", input_tensor_, output_tensor_, "&input_shape", "&output_shape",
-                          align_corners, "multiplier", "quant_in", "quant_out", 0, thread_num_);
+                          align_corners, "multiplier", "quant_in", "quant_out", kDefaultTaskId, gThreadNum);
       }
       break;
     }

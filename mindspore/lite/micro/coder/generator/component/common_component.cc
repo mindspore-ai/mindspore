@@ -25,7 +25,7 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite::micro {
-void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
   auto array_tostring = [&ofs](const std::vector<int> &array, const std::string &name) {
     size_t num = array.size();
     ofs << "  Vector<int32_t> " << name << ";\n";
@@ -59,25 +59,42 @@ void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderCont
         << EnumNameDataType(output->data_type()) << ", " << shape_i << ");\n";
     ofs << "  MS_ERROR_IF_NULL(outputs_[" << i << "]);\n";
   }
+  if (config->target() != kARM32M) {
+    ofs << "  int ret = Init(model->buf, dynamic_cast<MModel *>(model)->buf_size());\n"
+           "  return ret;\n"
+           "}\n\n";
+    return;
+  }
   ofs << "  return RET_OK;\n";
   ofs << "}\n\n";
 }
 
-void CodeCreateSessionImplement(std::ofstream &ofs, Target target) {
-  ofs << "session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, size_t size,\n"
-         "                                                          const lite::Context *context) {\n"
-         "  session::LiteSession *session = CreateSession(context);\n"
-         "  if (session == nullptr) {\n"
-         "    return nullptr;\n"
-         "  }\n"
-         "  int ret = session->CompileGraph(nullptr);\n"
-         "  if (ret != lite::RET_OK) {\n"
-         "    return nullptr;\n"
-         "  }\n";
-  if (target != kARM32M) {
-    ofs << "  Init(const_cast<char *>(net_buf), size);\n";
+void CodeCreateSessionImplement(std::ofstream &ofs, const Configurator *config) {
+  ofs << "session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {\n"
+         "  auto *session = new (std::nothrow) lite::LiteSession();\n"
+         "  MS_NULLPTR_IF_NULL(session);\n"
+         "  int ret = session->InitRuntimeBuffer();\n"
+         "  MS_NULLPTR_IF_ERROR(ret);\n";
+  if (config->support_parallel()) {
+    ofs << "  MS_NULLPTR_IF_NULL(context);\n"
+           "  struct ThreadPool *thread_pool =\n"
+           "    CreateThreadPool(context->thread_num_, "
+           "context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);\n"
+           "  MS_NULLPTR_IF_NULL(thread_pool);\n"
+           "  ret = SetThreadPool(thread_pool);\n"
+           "  MS_NULLPTR_IF_ERROR(ret);\n";
   }
   ofs << "  return session;\n"
+         "}\n\n";
+  ofs << "session::LiteSession *session::LiteSession::CreateSession(const char *model_buf, size_t size,\n"
+         "                                                          const lite::Context *context) {\n"
+         "  session::LiteSession *session = CreateSession(context);\n"
+         "  MS_NULLPTR_IF_NULL(session);\n"
+         "  lite::Model *model = lite::Model::Import(model_buf, size);\n"
+         "  int ret = session->CompileGraph(model);\n"
+         "  MS_NULLPTR_IF_ERROR(ret);\n"
+         "  delete model;\n"
+         "  return session;\n"
          "}\n"
          "}  // namespace mindspore\n\n";
 }

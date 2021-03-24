@@ -39,6 +39,9 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
   if (config->debug_mode()) {
     ofs << "    debug_utils.c.o\n";
   }
+  if (config->support_parallel()) {
+    ofs << "    thread_pool.c.o\n";
+  }
   ofs << ")\n";
   std::set<std::string> kernel_cmake_asm_set_files = ctx->asm_files();
   if (!kernel_cmake_asm_set_files.empty() && (config->target() == kARM32A || config->target() == kARM64)) {
