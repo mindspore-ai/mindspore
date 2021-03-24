@@ -935,7 +935,7 @@ class MatrixDiag(Cell):
         ``Ascend``
 
     Examples:
-        >>> x = Tensor(np.array([1, -1]), mstype.float32)
+        >>> x = Tensor(np.array([1, -1]), mindspore.float32)
         >>> matrix_diag = nn.MatrixDiag()
         >>> output = matrix_diag(x)
         >>> print(output)
