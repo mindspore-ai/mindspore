@@ -366,7 +366,8 @@ int CpuFp16SubGraph::PostProcess() {
         }
       }
     }
-    if (real_tensor->data_type() == kNumberTypeFloat16 && origin_input_data_.at(real_tensor) != nullptr) {
+    if (real_tensor->data_type() == kNumberTypeFloat16 &&
+        origin_input_data_.find(real_tensor) != origin_input_data_.end()) {
       auto origin_tensor_data = origin_input_data_.at(real_tensor);
       real_tensor->FreeData();
       MS_ASSERT(origin_tensor_data->data_ != nullptr);
