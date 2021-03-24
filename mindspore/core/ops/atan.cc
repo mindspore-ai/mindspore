@@ -34,15 +34,9 @@ AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 
   // Infer Type
   auto dtype = input_args[0]->BuildType();
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeInt32};
-  CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", dtype, valid_types, prim_name);
-  auto tensor_type = dtype->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto element = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(element);
-  auto infer_type = std::make_shared<TensorType>(TypeIdToType(element->type_id()));
-
-  return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};
+  auto element = CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", dtype, valid_types, prim_name);
+  return std::make_shared<abstract::AbstractTensor>(element, infer_shape->shape());
 }
 REGISTER_PRIMITIVE_C(kNameAtan, Atan);
 }  // namespace ops

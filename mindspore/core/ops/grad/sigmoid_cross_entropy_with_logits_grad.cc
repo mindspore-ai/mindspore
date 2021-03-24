@@ -44,18 +44,13 @@ AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisE
   CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "dout_shape", dout_shape, prim_name, TypeError);
 
   // Infer type
-  const std::set<TypeId> valid_types = {
-    kNumberTypeBool,    kNumberTypeInt,     kNumberTypeInt8,    kNumberTypeInt16,
-    kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt,    kNumberTypeUInt8,
-    kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,  kNumberTypeFloat,
-    kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeComplex64};
+  const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
+                                         kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
   args.emplace("x_type", input_args[0]->BuildType());
   args.emplace("y_type", input_args[1]->BuildType());
   args.emplace("dout_type", input_args[2]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
-  auto dout_type = input_args[2]->BuildType()->cast<TensorTypePtr>()->element();
-
+  auto dout_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   return std::make_shared<abstract::AbstractTensor>(dout_type, x_shape);
 }
 REGISTER_PRIMITIVE_C(kNameSigmoidCrossEntropyWithLogitsGrad, SigmoidCrossEntropyWithLogitsGrad);

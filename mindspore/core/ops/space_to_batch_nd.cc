@@ -56,8 +56,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  return infer_type;
+  return input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
 }
 }  // namespace
 

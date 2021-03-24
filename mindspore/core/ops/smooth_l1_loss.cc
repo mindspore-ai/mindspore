@@ -47,12 +47,11 @@ AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const Pri
   CheckAndConvertUtils::Check("prediction shape", prediction, kEqual, "target shape", target, prim_name, TypeError);
 
   // Infer type
-  auto prediction_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
   args.emplace("scale", input_args[0]->BuildType());
   args.emplace("bias", input_args[1]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
+  auto prediction_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   return std::make_shared<abstract::AbstractTensor>(prediction_type, prediction);
 }

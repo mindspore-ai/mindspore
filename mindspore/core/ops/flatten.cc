@@ -42,7 +42,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     MS_EXCEPTION_IF_NULL(item);
   }
   auto infer_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  const std::set<TypePtr> valid_types = {TypeIdToType(kObjectTypeTensorType)};
+  const std::set<TypePtr> valid_types = {kTensorType};
   CheckAndConvertUtils::CheckSubClass("infer type", input_args[0]->BuildType(), valid_types, prim->name());
   return infer_type;
 }

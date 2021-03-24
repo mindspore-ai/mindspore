@@ -74,9 +74,7 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, all_types, prim_name);
   auto ret_shape = element0_shape;
   ret_shape[axis] = all_shp;
-
-  return std::make_shared<abstract::AbstractTensor>(TypeIdToType(infer_type),
-                                                    std::make_shared<abstract::Shape>(ret_shape));
+  return std::make_shared<abstract::AbstractTensor>(infer_type, std::make_shared<abstract::Shape>(ret_shape));
 }
 REGISTER_PRIMITIVE_C(kNameConcat, Concat);
 }  // namespace ops

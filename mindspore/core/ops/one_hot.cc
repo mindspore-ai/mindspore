@@ -53,17 +53,11 @@ TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto OneHot_prim = prim->cast<PrimOneHotPtr>();
   MS_EXCEPTION_IF_NULL(OneHot_prim);
   auto op_name = OneHot_prim->name();
-  CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), {kNumberTypeInt32}, op_name);
-  CheckAndConvertUtils::CheckTypeSame("depth", input_args[1]->BuildType(),
-                                      {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64}, op_name);
-  auto value_type = input_args[2]->BuildType();
-  auto tensor_type = value_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto element = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(element);
-  std::map<std::string, TypePtr> args = {{"on_value", value_type}, {"off_dtype", input_args[3]->BuildType()}};
-  CheckAndConvertUtils::CheckTensorTypeSame(args, {kNumberTypeFloat16, kNumberTypeFloat32}, op_name);
-  return element;
+  CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), {kInt32}, op_name);
+  CheckAndConvertUtils::CheckTypeValid("depth", input_args[1]->BuildType(), {kInt8, kInt16, kInt32, kInt64}, op_name);
+  std::map<std::string, TypePtr> args = {{"on_value", input_args[2]->BuildType()},
+                                         {"off_dtype", input_args[3]->BuildType()}};
+  return CheckAndConvertUtils::CheckTensorTypeSame(args, {kFloat16, kFloat32}, op_name);
 }
 }  // namespace
 AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

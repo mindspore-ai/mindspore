@@ -41,16 +41,12 @@ AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEngin
   CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "y_shape", y_shape, prim_name, TypeError);
 
   // Infer type
-  auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  const std::set<TypeId> valid_types = {
-    kNumberTypeBool,    kNumberTypeInt,     kNumberTypeInt8,    kNumberTypeInt16,
-    kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt,    kNumberTypeUInt8,
-    kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,  kNumberTypeFloat,
-    kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeComplex64};
+  const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
+                                         kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
   args.emplace("x_type", input_args[0]->BuildType());
   args.emplace("y_type", input_args[1]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
+  auto x_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   return std::make_shared<abstract::AbstractTensor>(x_type, x_shape);
 }

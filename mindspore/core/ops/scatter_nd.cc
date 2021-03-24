@@ -42,11 +42,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypeId> indices_valid_types = {kNumberTypeInt32, kNumberTypeInt64};
-  const std::set<TypePtr> update_valid_types = {TypeIdToType(kObjectTypeTensorType)};
+  const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
+  const std::set<TypePtr> update_valid_types = {kTensorType};
   auto indices_type = input_args[0]->BuildType();
   auto update_type = input_args[1]->BuildType();
-  CheckAndConvertUtils::CheckSubClass("update type", update_type, update_valid_types, prim->name());
+  CheckAndConvertUtils::CheckTypeValid("update type", update_type, update_valid_types, prim->name());
   CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_valid_types, prim->name());
   return input_args[1]->BuildType();
 }

@@ -62,9 +62,6 @@ AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const Primitive
 
   // Infer type
   auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  std::set<TypePtr> template_types = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim_name);
-
   return std::make_shared<abstract::AbstractTensor>(x_dtype, std::make_shared<abstract::Shape>(out_shape));
 }
 REGISTER_PRIMITIVE_C(kNameArgMin, ArgMin);

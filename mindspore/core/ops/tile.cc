@@ -58,10 +58,8 @@ TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
-  std::set<TypePtr> template_types = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
-  auto infer_dtype = x_dtype->element()->type_id();
-  return TypeIdToType(infer_dtype);
+  std::set<TypePtr> template_types = {kTensorType};
+  return CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, template_types, prim->name());
 }
 }  // namespace
 

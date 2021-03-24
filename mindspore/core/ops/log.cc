@@ -29,10 +29,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  const std::set<TypePtr> valid_types = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("infer type", input_args[0]->BuildType(), valid_types, prim->name());
-  return infer_type;
+  const std::set<TypePtr> valid_types = {kTensorType};
+  return CheckAndConvertUtils::CheckTensorTypeValid("infer type", input_args[0]->BuildType(), valid_types,
+                                                    prim->name());
 }
 }  // namespace
 

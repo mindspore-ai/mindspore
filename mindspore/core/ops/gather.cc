@@ -27,12 +27,12 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   CheckAndConvertUtils::CheckInteger("gather_infer", input_args.size(), kEqual, 3, prim_name);
 
   // Infer type
-  auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  std::set<TypePtr> valid_x_type = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_x_type, prim_name);
-  const std::set<TypeId> valid_index_types = {kNumberTypeInt32, kNumberTypeInt64};
+  std::set<TypePtr> valid_x_type = {kTensorType};
+  auto x_type =
+    CheckAndConvertUtils::CheckTensorTypeValid("x_type", input_args[0]->BuildType(), valid_x_type, prim_name);
+  std::set<TypePtr> valid_index_types = {kInt32, kInt64};
   CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[2]->BuildType(), valid_index_types, prim_name);
-  std::set<TypePtr> valid_dim_type = {TypeIdToType(kNumberTypeInt32), TypeIdToType(kNumberTypeInt64)};
+  std::set<TypePtr> valid_dim_type = {kInt32, kInt64};
   CheckAndConvertUtils::CheckSubClass("dim_type", input_args[1]->BuildType(), valid_dim_type, prim_name);
 
   // Infer shape

@@ -39,9 +39,8 @@ AbstractBasePtr ReciprocalInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto in_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->GetShapeTrack(), prim_name);
   // infer type
-  auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  std::set<TypePtr> valid_x_type = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
+  std::set<TypePtr> valid_x_type = {kTensorType};
+  auto x_type = CheckAndConvertUtils::CheckTypeValid("x_type", input_args[0]->BuildType(), valid_x_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, in_shape);
 }
 REGISTER_PRIMITIVE_C(kNameReciprocal, Reciprocal);

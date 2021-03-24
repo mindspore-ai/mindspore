@@ -49,17 +49,13 @@ AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const
   CheckAndConvertUtils::Check("prediction shape", prediction, kEqual, "dloss", dloss, prim_name, TypeError);
 
   // Infer type
-  const std::set<TypeId> valid_types = {
-    kNumberTypeBool,    kNumberTypeInt,     kNumberTypeInt8,    kNumberTypeInt16,
-    kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt,    kNumberTypeUInt8,
-    kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,  kNumberTypeFloat,
-    kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeComplex64};
+  const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
+                                         kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
   args.emplace("prediction", input_args[0]->BuildType());
   args.emplace("target", input_args[1]->BuildType());
   args.emplace("dloss", input_args[2]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
-  auto dloss_type = input_args[2]->BuildType()->cast<TensorTypePtr>()->element();
+  auto dloss_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   return std::make_shared<abstract::AbstractTensor>(dloss_type, prediction);
 }

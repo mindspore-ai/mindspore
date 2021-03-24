@@ -68,7 +68,7 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto l_type = input_args[2]->BuildType();
   auto g_type = input_args[3]->BuildType();
   auto m_type = input_args[4]->BuildType();
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_tensor_type, valid_types, prim_name);
   CheckAndConvertUtils::CheckTensorTypeValid("a_type", a_tensor_type, valid_types, prim_name);
   std::map<std::string, TypePtr> args;

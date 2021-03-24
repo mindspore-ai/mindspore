@@ -38,11 +38,7 @@ AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("dense_shape", input_args[3]->BuildShape(), prim_name);
   // infer type
-  auto indices_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   auto values_type = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();
-  std::set<TypePtr> valid_type = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("indices_type", indices_type, valid_type, prim_name);
-  CheckAndConvertUtils::CheckSubClass("values_type", values_type, valid_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(values_type, dense_shape);
 }
 REGISTER_PRIMITIVE_C(kNameSparseToDense, SparseToDense);

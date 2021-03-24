@@ -49,8 +49,8 @@ TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   auto op_name = DropoutGrad_prim->name();
   auto mask_dtype = input_args[1]->BuildType();
   auto dy_dtype = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckSubClass("mask", mask_dtype, {TypeIdToType(kObjectTypeTensorType)}, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_dtype, {kNumberTypeFloat16, kNumberTypeFloat32}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_dtype, {kTensorType}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_dtype, {kFloat16, kFloat32}, op_name);
   auto tensor_type = dy_dtype->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto data_type = tensor_type->element();

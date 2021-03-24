@@ -56,7 +56,7 @@ AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const Primit
   // infer type
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   std::vector<TypePtr> output_types;
-  const std::set<TypeId> valid_types = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat32};
+  const std::set<TypePtr> valid_types = {kInt8, kInt32, kFloat16, kFloat32};
   for (size_t i = 0; i < input_args.size(); i++) {
     auto out_type = input_args[i]->BuildType()->cast<TensorTypePtr>()->element();
     output_types.push_back(out_type);

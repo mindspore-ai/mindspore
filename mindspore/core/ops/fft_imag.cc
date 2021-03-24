@@ -36,7 +36,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return TypeIdToType(kNumberTypeFloat32);
+  return kFloat32;
 }
 }  // namespace
 

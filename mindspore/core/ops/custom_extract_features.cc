@@ -31,8 +31,8 @@ AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, 
   // auto input = input_args[0];
 
   // Infer type
-  auto output0_type = TypeIdToType(kNumberTypeInt32);
-  auto output1_type = TypeIdToType(kNumberTypeFloat32);
+  auto output0_type = kInt32;
+  auto output1_type = kFloat32;
 
   // Infer shape
   std::vector<int64_t> out_shape;

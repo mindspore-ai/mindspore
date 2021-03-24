@@ -157,7 +157,7 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
   std::vector<int64_t> output_num_shape = {1};
 
   // Infer type
-  auto output_type = TypeIdToType(kNumberTypeFloat32);
+  auto output_type = kFloat32;
 
   auto output0 = std::make_shared<abstract::AbstractTensor>(output_type, output_boxes_shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(output_type, output_class_shape);

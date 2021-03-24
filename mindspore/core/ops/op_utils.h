@@ -230,14 +230,12 @@ constexpr auto kSpliceContext = "context";
 constexpr auto kSpliceForwardIndexes = "forward_indexes";
 constexpr auto kSpliceOutputDims = "output_dim";
 
-const std::set<TypeId> common_valid_types = {
-  kNumberTypeInt8,   kNumberTypeInt16,  kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt8,  kNumberTypeUInt16,
-  kNumberTypeUInt32, kNumberTypeUInt64, kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
+const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
+                                              kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
 
-const std::set<TypeId> all_types = {
-  kNumberTypeBool,    kNumberTypeInt,     kNumberTypeInt8,    kNumberTypeInt16,     kNumberTypeInt32,  kNumberTypeInt64,
-  kNumberTypeUInt,    kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,    kNumberTypeUInt64, kNumberTypeFloat,
-  kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeComplex64,
+const std::set<TypePtr> all_types = {
+  kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
+  kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64,
 };
 
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args);

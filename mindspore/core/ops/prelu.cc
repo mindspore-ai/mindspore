@@ -46,13 +46,10 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
-  CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("weight", input_args[1]->BuildType(), valid_types, prim->name());
-  auto tensor_type = input_args[0]->BuildType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto input_x_type = tensor_type->element();
-  return input_x_type;
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  std::map<string, TypePtr> check_map = {{"input_x", input_args[0]->BuildType()},
+                                         {"weight", input_args[1]->BuildType()}};
+  return CheckAndConvertUtils::CheckTensorTypeSame(check_map, valid_types, prim->name());
 }
 }  // namespace
 AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

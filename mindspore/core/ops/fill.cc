@@ -37,8 +37,8 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto dtype = dtype_value->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(dtype);
   auto valid_types = common_valid_types;
-  valid_types.insert(kNumberTypeBool);
-  CheckAndConvertUtils::CheckTypeSame("output datatype", dtype, valid_types, prim_name);
+  valid_types.insert(kBool);
+  (void)CheckAndConvertUtils::CheckTypeValid("output datatype", dtype, valid_types, prim_name);
   auto out_shape = GetValue<std::vector<int64_t>>(input_args[1]->BuildValue());
   auto x_type = input_args[2]->BuildType();
   auto x_type_id = x_type->type_id();

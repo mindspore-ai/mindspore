@@ -40,14 +40,10 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  const std::set<TypeId> valid_types = {kNumberTypeBool};
+  const std::set<TypePtr> valid_types = {kBool};
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("y", input_args[1]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  if (infer_type == kNumberTypeBool) {
-    return TypeIdToType(infer_type);
-  }
-  return std::make_shared<TensorType>(TypeIdToType(kNumberTypeBool));
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 
