@@ -97,6 +97,88 @@ Previously, we have incomplete support for keyword arguments `out` and `where` i
 </tr>
 </table>
 
+###### `ControlDepend` is deprecated, use `Depend` instead. The decorator `@C.add_flags(has_effect=True)` is also deprecated. ([!13793](https://gitee.com/mindspore/mindspore/pulls/13793))
+
+Previously, we used ControlDepend to control the execution order of multiple operators. In version 1.2.0, mindspore introduces the auto-monad side effects expression to ensure that the perform order of user's semantics is correct. Therefore, ControlDepend is deprecated and Depend is recommended.
+
+In most scenarios, if operators have IO side effects (such as print) or memory side effects (such as assign), they will be executed according to the user's semantics. In some scenarios, if the two operators A and B have no order dependency, and A must be executed before B, we recommend using Depend to specify their execution order. See the API documentation of the Depend operator for specific usage.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.1 </td> <td style="text-align:center"> 1.2.0-rc1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+    In some side-effect scenarios, we need to ensure the execution order of operators.
+    In order to ensure that operator A is executed before operator B, it is recommended
+    to insert the Depend operator between operators A and B.
+
+    Previously, the ControlDepend operator was used to control the execution order.
+    Since the ControlDepend operator is deprecated from version 1.1, it is recommended
+    to use the Depend operator instead. The replacement method is as follows::
+
+        a = A(x)                --->        a = A(x)
+        b = B(y)                --->        y = Depend(y, a)
+        ControlDepend(a, b)     --->        b = B(y)
+```
+
+</td>
+<td>
+
+```python
+    In most scenarios, if operators have IO side effects or memory side effects,
+    they will be executed according to the user's semantics. In some scenarios,
+    if the two operators A and B have no order dependency, and A must be executed
+    before B, we recommend using Depend to specify their execution order. The
+    usage method is as follows::
+
+        a = A(x)                --->        a = A(x)
+        b = B(y)                --->        y = Depend(y, a)
+                                --->        b = B(y)
+```
+
+</td>
+</tr>
+</table>
+
+After the introduction of the auto-monad side effect expression feature, the decorator `@C.add_flags(has_effect=True)` is also deprecated. If the decorator is used in the script, please modify. Take the overflow identification operator (without side effects) as an example, the modification method is as follows:
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.1 </td> <td style="text-align:center"> 1.2.0-rc1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+@C.add_flags(has_effect=True)
+def construct(self, *inputs):
+    ...
+    loss = self.network(*inputs)
+    init = self.allo_status()
+    self.clear_status(init)
+    ...
+```
+
+</td>
+<td>
+
+```python
+def construct(self, *inputs):
+    ...
+    loss = self.network(*inputs)
+    init = self.allo_status()
+    init = F.depend(init, loss)
+    clear_status = self.clear_status(init)
+    ...
+```
+
+</td>
+</tr>
+</table>
+
 #### Deprecations
 
 ##### Python API
