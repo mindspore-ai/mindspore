@@ -1591,7 +1591,7 @@ bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> ds
   return true;
 }
 
-bool GetAffineTransformImpl(LiteMat src, LiteMat dst) {
+bool GetAffineTransformImpl(LiteMat &src, LiteMat &dst) {
   int m = src.height_;
   int n = dst.width_;
   for (int i = 0; i < m; i++) {
@@ -1603,6 +1603,8 @@ bool GetAffineTransformImpl(LiteMat src, LiteMat dst) {
     }
 
     if (std::abs(src.ptr<double>(k)[i]) < DBL_EPSILON * 100) {
+      double x[6] = {0};
+      dst.Init(1, 6, x, LDataType(LDataType::DOUBLE));
       return false;
     }
     if (k != i) {
@@ -1669,7 +1671,7 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
   }
 
   GetAffineTransformImpl(src1, src2);
-  M.Init(3, 2, LDataType(LDataType::DOUBLE));
+  M.Init(3, 2, 1, LDataType(LDataType::DOUBLE));
   for (int i = 0; i < M.height_; i++) {
     for (int j = 0; j < M.width_; j++) {
       M.ptr<double>(i)[j] = src2.ptr<double>(i * M.width_ + j)[0];
@@ -1942,6 +1944,12 @@ int ImageWarpAffineHWC(imageToolsImage_t image, imageToolsImage_t warped_image, 
 
 bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float (*ratioShiftWShiftH)[3],
                                 float (*invM)[2][3], int img_orientation) {
+  if (src.IsEmpty() || src.channel_ != 3 || h <= 0 || w <= 0 || h > 10000 || w > 10000) {
+    return false;
+  }
+  if (ratioShiftWShiftH == nullptr || invM == nullptr) {
+    return false;
+  }
   if (dst.IsEmpty()) {
     dst.Init(w, h, src.channel_, LDataType::FLOAT32);
   }

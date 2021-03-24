@@ -1847,3 +1847,49 @@ TEST_F(MindDataImageProcess, testResizePreserveARWithFillerv) {
   cv::Mat dst_image(lite_mat_resize.height_, lite_mat_resize.width_, CV_32FC3, lite_mat_resize.data_ptr_);
   cv::imwrite("./mindspore_image.jpg", dst_image);
 }
+
+TEST_F(MindDataImageProcess, testResizePreserveARWithFillervFail) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  // The input lite_mat_rgb object is null.
+  LiteMat lite_mat_rgb;
+  LiteMat lite_mat_resize;
+  float ratioShiftWShiftH[3] = {0};
+  float invM[2][3] = {{0, 0, 0}, {0, 0, 0}};
+  int h = 1000;
+  int w = 1000;
+  bool ret = ResizePreserveARWithFiller(lite_mat_rgb, lite_mat_resize, h, w, &ratioShiftWShiftH, &invM, 0);
+  ASSERT_TRUE(ret == false);
+
+  // The channel of input lite_mat_rgb object is not 3.
+  LiteMat lite_mat_rgb1;
+  lite_mat_rgb1.Init(image.cols, image.rows, 1, image.data, LDataType::UINT8);
+  LiteMat lite_mat_resize1;
+  float ratioShiftWShiftH1[3] = {0};
+  float invM1[2][3] = {{0, 0, 0}, {0, 0, 0}};
+  int h1 = 1000;
+  int w1 = 1000;
+  bool ret1 = ResizePreserveARWithFiller(lite_mat_rgb1, lite_mat_resize1, h1, w1, &ratioShiftWShiftH1, &invM1, 0);
+  ASSERT_TRUE(ret1 == false);
+
+  // The ratioShiftWShiftH2 and invM2 is null.
+  LiteMat lite_mat_rgb2;
+  lite_mat_rgb2.Init(image.cols, image.rows, image.channels(), image.data, LDataType::UINT8);
+  LiteMat lite_mat_resize2;
+  int h2 = 1000;
+  int w2 = 1000;
+  bool ret2 = ResizePreserveARWithFiller(lite_mat_rgb2, lite_mat_resize2, h2, w2, nullptr, nullptr, 0);
+  ASSERT_TRUE(ret2 == false);
+
+  // The width and height of the output image is less than or equal to 0.
+  LiteMat lite_mat_rgb3;
+  lite_mat_rgb3.Init(image.cols, image.rows, image.channels(), image.data, LDataType::UINT8);
+  LiteMat lite_mat_resize3;
+  float ratioShiftWShiftH3[3] = {0};
+  float invM3[2][3] = {{0, 0, 0}, {0, 0, 0}};
+  int h3 = -1000;
+  int w3 = 1000;
+  bool ret3 = ResizePreserveARWithFiller(lite_mat_rgb3, lite_mat_resize3, h3, w3, &ratioShiftWShiftH3, &invM3, 0);
+  ASSERT_TRUE(ret3 == false);
+}
