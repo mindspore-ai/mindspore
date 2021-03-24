@@ -39,7 +39,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 # [Environment Requirements](#contents)
 
 - Hardware（GPU/CPU/Ascend）
-    - If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you could get the resources for trial.
+    - Prepare hardware environment with Ascend, GPU or CPU processor.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
@@ -48,7 +48,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
 # [Quick Start](#contents)
 
-- runing on Ascend
+- running on Ascend
 
   ```bash
   # run training example
@@ -58,7 +58,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
   bash run_eval_ascend.sh 0 ./preprocess lstm-20_390.ckpt
   ```
 
-- runing on GPU
+- running on GPU
 
   ```bash
   # run training example
@@ -68,7 +68,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
   bash run_eval_gpu.sh 0 ./aclimdb ./glove_dir lstm-20_390.ckpt
   ```
 
-- runing on CPU
+- running on CPU
 
   ```bash
   # run training example
@@ -200,7 +200,7 @@ Ascend:
 
 - Set options in `config.py`, including learning rate and network hyperparameters.
 
-- runing on Ascend
+- running on Ascend
 
   Run `sh run_train_ascend.sh` for training.
 
@@ -217,7 +217,7 @@ Ascend:
   ...
   ```
 
-- runing on GPU
+- running on GPU
 
   Run `sh run_train_gpu.sh` for training.
 
@@ -234,7 +234,7 @@ Ascend:
   ...
   ```
 
-- runing on CPU
+- running on CPU
 
   Run `sh run_train_cpu.sh` for training.
 

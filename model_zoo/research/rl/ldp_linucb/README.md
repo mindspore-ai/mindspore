@@ -21,7 +21,7 @@ Locally Differentially Private (LDP) LinUCB is a variant of LinUCB bandit algori
 
 # [Model Architecture](#contents)
 
-The server interacts with users in rounds. For a coming user, the server first transfers the current model parameters to the user. In the user side, the model chooses an action based on the user feature to play (e.g., choose a movie to recommend), and observes a reward (or loss) value from the user (e.g., rating of the movie). Then we perturb the data to be transfered by adding Gaussian noise. Finally, the server receives the perturbed data and updates the model. Details can be found in the [original paper](https://arxiv.org/abs/2006.00701).
+The server interacts with users in rounds. For a coming user, the server first transfers the current model parameters to the user. In the user side, the model chooses an action based on the user feature to play (e.g., choose a movie to recommend), and observes a reward (or loss) value from the user (e.g., rating of the movie). Then we perturb the data to be transferred by adding Gaussian noise. Finally, the server receives the perturbed data and updates the model. Details can be found in the [original paper](https://arxiv.org/abs/2006.00701).
 
 # [Dataset](#contents)
 
@@ -35,7 +35,7 @@ Dataset used: [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/)
 # [Environment Requirements](#contents)
 
 - Hardware (Ascend/GPU)
-    - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the[application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -54,7 +54,7 @@ Dataset used: [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/)
             ├── ldp_linucb
                 ├── README.md                    // descriptions about LDP LinUCB
                 ├── scripts
-                │   ├── run_train_eval.sh        // shell script for runing on Ascend
+                │   ├── run_train_eval.sh        // shell script for running on Ascend
                 ├── src
                 │   ├── dataset.py               // dataset for movielens
                 │   ├── linucb.py                // model
@@ -124,7 +124,7 @@ The performance compared with optimal non-private regret O(sqrt(T)):
 
 # [Description of Random Situation](#contents)
 
-In `train_eval.py`, we randomly sample a user at each round. We also add Gaussian noise to the date being transfered.
+In `train_eval.py`, we randomly sample a user at each round. We also add Gaussian noise to the date being transferred.
 
 # [ModelZoo Homepage](#contents)
 

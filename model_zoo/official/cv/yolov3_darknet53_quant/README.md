@@ -4,7 +4,7 @@
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)    
+- [Quick Start](#quick-start)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
@@ -20,13 +20,12 @@
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [YOLOv3-DarkNet53-Quant Description](#contents)
 
-You only look once (YOLO) is a state-of-the-art, real-time object detection system. YOLOv3 is extremely fast and accurate. 
+You only look once (YOLO) is a state-of-the-art, real-time object detection system. YOLOv3 is extremely fast and accurate.
 
 Prior detection systems repurpose classifiers or localizers to perform detection. They apply the model to an image at multiple locations and scales. High scoring regions of the image are considered detections.
- YOLOv3 use a totally different approach. It apply a single neural network to the full image. This network divides the image into regions and predicts bounding boxes and probabilities for each region. These bounding boxes are weighted by the predicted probabilities. 
+ YOLOv3 use a totally different approach. It apply a single neural network to the full image. This network divides the image into regions and predicts bounding boxes and probabilities for each region. These bounding boxes are weighted by the predicted probabilities.
 
 YOLOv3 uses a few tricks to improve training and increase performance, including: multi-scale predictions, a better backbone classifier, and more. The full details are in the paper!
 
@@ -35,43 +34,39 @@ In order to reduce the size of the weight and improve the low-bit computing perf
 [Paper](https://pjreddie.com/media/files/papers/YOLOv3.pdf):  YOLOv3: An Incremental Improvement. Joseph Redmon, Ali Farhadi,
 University of Washington
 
-
 # [Model Architecture](#contents)
 
 YOLOv3 use DarkNet53 for performing feature extraction, which is a hybrid approach between the network used in YOLOv2, Darknet-19, and that newfangled residual network stuff. DarkNet53 uses successive 3 × 3 and 1 × 1 convolutional layers and has some shortcut connections as well and is significantly larger. It has 53 convolutional layers.
 
-
 # [Dataset](#contents)
+
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-Dataset used: [COCO2014](https://cocodataset.org/#download) 
+Dataset used: [COCO2014](https://cocodataset.org/#download)
 
 - Dataset size: 19G, 123,287 images, 80 object categories.
-  - Train：13G, 82,783 images  
-  - Val：6GM, 40,504 images
-  - Annotations: 241M, Train/Val annotations
+    - Train：13G, 82,783 images
+    - Val：6GM, 40,504 images
+    - Annotations: 241M, Train/Val annotations
 - Data format：zip files
-  - Note：Data will be processed in yolo_dataset.py, and unzip files before uses it.
-
+    - Note：Data will be processed in yolo_dataset.py, and unzip files before uses it.
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+    - Prepare hardware environment with Ascend processor.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
-
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation in Ascend as follows: 
+After installing MindSpore via the official website, you can start training and evaluation in Ascend as follows:
 
-```
-# The yolov3_darknet53_noquant.ckpt in the follow script is got from yolov3-darknet53 training like paper. 
+```bash
+# The yolov3_darknet53_noquant.ckpt in the follow script is got from yolov3-darknet53 training like paper.
 # The parameter of resume_yolov3 is  necessary.
 # The parameter of training_shape define image shape for network, default is "".
 # It means use 10 kinds of shape as input shape, or it can be set some kind of shape.
@@ -103,17 +98,16 @@ python eval.py \
 sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
 ```
 
-
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
 
-```
+```bash
 .
-└─yolov3_darknet53_quant      
+└─yolov3_darknet53_quant
   ├─README.md
   ├─mindspore_hub_conf.md             # config for mindspore hub
-  ├─scripts      
+  ├─scripts
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
     └─run_eval.sh                     # launch evaluating in ascend
@@ -134,10 +128,9 @@ sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
   └─train.py                          # train net
 ```
 
-
 ## [Script Parameters](#contents)
 
-```
+```bash
 Major parameters in train.py as follow.
 
 optional arguments:
@@ -194,21 +187,19 @@ optional arguments:
                         Resize rate for multi-scale training. Default: None
 ```
 
-
-
 ## [Training Process](#contents)
 
-### Training on Ascend 
+### Training on Ascend
 
 ### Distributed Training
 
-```
+```bash
 sh run_distribute_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt rank_table_8p.json
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log.txt`. The loss value will be achieved as follows:
 
-```
+```bash
 # distribute training result(8p)
 epoch[0], iter[0], loss:483.341675, 0.31 imgs/sec, lr:0.0
 epoch[0], iter[100], loss:55.690952, 3.46 imgs/sec, lr:0.0
@@ -232,14 +223,13 @@ epoch[134], iter[86400], loss:35.603033, 142.23 imgs/sec, lr:1.6245529650404933e
 epoch[134], iter[86500], loss:34.303755, 145.18 imgs/sec, lr:1.6245529650404933e-06
 ```
 
-
 ## [Evaluation Process](#contents)
 
 ### Evaluation on Ascend
 
 Before running the command below.
 
-```
+```bash
 python eval.py \
     --data_dir=./dataset/coco2014 \
     --pretrained=0-130_83330.ckpt \
@@ -250,7 +240,7 @@ sh run_eval.sh dataset/coco2014/ checkpoint/0-130_83330.ckpt 0
 
 The above python command will run in the background. You can view the results through the file "log.txt". The mAP of the test dataset will be as follows:
 
-```
+```bash
 # log.txt
 =============coco eval reulst=========
 Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.310
@@ -267,8 +257,8 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.450
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 ```
 
-
 # [Model Description](#contents)
+
 ## [Performance](#contents)
 
 ### Evaluation Performance
@@ -279,7 +269,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G                                                |
 | uploaded Date              | 09/15/2020 (month/day/year)                                                                    |
 | MindSpore Version          | 1.0.0                                                                                          |
-| Dataset                    | COCO2014                                                                                       | 
+| Dataset                    | COCO2014                                                                                       |
 | Training Parameters        | epoch=135, batch_size=16, lr=0.012, momentum=0.9                                               |
 | Optimizer                  | Momentum                                                                                       |
 | Loss Function              | Sigmoid Cross Entropy with logits                                                              |
@@ -289,8 +279,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | Total time                 | 8pc: 23.5 hours                                                                                |
 | Parameters (M)             | 62.1                                                                                           |
 | Checkpoint for Fine tuning | 474M (.ckpt file)                                                                              |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53_quant |
-
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53_quant> |
 
 ### Inference Performance
 
@@ -306,11 +295,10 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | Accuracy            | 8pcs: 31.0%                 |
 | Model for inference | 474M (.ckpt file)           |
 
-
 # [Description of Random Situation](#contents)
 
-There are random seeds in distributed_sampler.py, transforms.py, yolo_dataset.py files. 
-
+There are random seeds in distributed_sampler.py, transforms.py, yolo_dataset.py files.
 
 # [ModelZoo Homepage](#contents)
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  

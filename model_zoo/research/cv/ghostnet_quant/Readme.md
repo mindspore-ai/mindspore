@@ -6,14 +6,14 @@
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Script Description](#script-description)
-  - [Script and Sample Code](#script-and-sample-code)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-      - [Evaluation](#evaluation)
+    - [Script and Sample Code](#script-and-sample-code)
+        - [Training Process](#training-process)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation](#evaluation)
 - [Model Description](#model-description)
-  - [Performance](#performance)  
-    - [Training Performance](#evaluation-performance)
-    - [Inference Performance](#evaluation-performance)
+    - [Performance](#performance)  
+        - [Training Performance](#evaluation-performance)
+        - [Inference Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -38,20 +38,20 @@ The overall network architecture of GhostNet is show below:
 Dataset used: [Oxford-IIIT Pet](https://www.robots.ox.ac.uk/~vgg/data/pets/)
 
 - Dataset size: 7049 colorful images in 1000 classes
-  - Train:  3680 images
-  - Test: 3369 images
+    - Train:  3680 images
+    - Test: 3369 images
 - Data format: RGB images.
-  - Note: Data will be processed in src/dataset.py
+    - Note: Data will be processed in src/dataset.py
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
-  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script description](#contents)
 
@@ -72,6 +72,7 @@ Dataset used: [Oxford-IIIT Pet](https://www.robots.ox.ac.uk/~vgg/data/pets/)
 ```
 
 ## [Training process](#contents)
+
 To Be Done
 
 ## [Eval process](#contents)
@@ -80,12 +81,11 @@ To Be Done
 
 After installing MindSpore via the official website, you can start evaluation as follows:
 
-
 ### Launch
 
-```
+```bash
 # infer example
-  
+
   Ascend: python eval.py --dataset_path ~/Pets/test.mindrecord --platform Ascend --checkpoint_path [CHECKPOINT_PATH]
   GPU: python eval.py --dataset_path ~/Pets/test.mindrecord --platform GPU --checkpoint_path [CHECKPOINT_PATH]
 ```
@@ -94,7 +94,7 @@ After installing MindSpore via the official website, you can start evaluation as
 
 ### Result
 
-```
+```bash
 result: {'acc': 0.825} ckpt= ./ghostnet_1x_pets_int8.ckpt
 ```
 
@@ -102,9 +102,10 @@ result: {'acc': 0.825} ckpt= ./ghostnet_1x_pets_int8.ckpt
 
 ## [Performance](#contents)
 
-#### Evaluation Performance
+### Evaluation Performance
 
-###### GhostNet on ImageNet2012
+#### GhostNet on ImageNet2012
+
 | Parameters                 |                                        |   |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | GhostNet                                             |GhostNet-int8|
@@ -115,7 +116,8 @@ result: {'acc': 0.825} ckpt= ./ghostnet_1x_pets_int8.ckpt
 | FLOPs (M) | 142 | / |
 | Accuracy (Top1) | 73.9 | w/o finetune:72.2, w finetune:73.6 |
 
-###### GhostNet on Oxford-IIIT Pet
+#### GhostNet on Oxford-IIIT Pet
+
 | Parameters                 |                                        |   |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | GhostNet                                             |GhostNet-int8|
@@ -125,7 +127,6 @@ result: {'acc': 0.825} ckpt= ./ghostnet_1x_pets_int8.ckpt
 | Parameters (M)             | 3.9                                                    | / |
 | FLOPs (M) | 140 | / |
 | Accuracy (Top1) |            82.4              | w/o finetune:81.66, w finetune:82.45 |
-
 
 # [Description of Random Situation](#contents)
 

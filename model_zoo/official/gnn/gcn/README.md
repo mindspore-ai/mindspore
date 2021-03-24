@@ -14,20 +14,18 @@
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [GCN Description](#contents)
 
 GCN(Graph Convolutional Networks) was proposed in 2016 and designed to do semi-supervised learning on graph-structured data. A scalable approach based on an efficient variant of convolutional neural networks which operate directly on graphs was presented. The model scales linearly in the number of graph edges and learns hidden layer representations that encode both local graph structure and features of nodes.
 
 [Paper](https://arxiv.org/abs/1609.02907):  Thomas N. Kipf, Max Welling. 2016. Semi-Supervised Classification with Graph Convolutional Networks. In ICLR 2016.
 
-
 # [Model Architecture](#contents)
 
-GCN contains two graph convolution layers. Each layer takes nodes features and adjacency matrix as input, nodes' features are then updated by aggregating neighbours' features. 
-
+GCN contains two graph convolution layers. Each layer takes nodes features and adjacency matrix as input, nodes' features are then updated by aggregating neighbours' features.
 
 # [Dataset](#contents)
+
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 | Dataset  | Type             | Nodes | Edges | Classes | Features | Label rate |
@@ -35,29 +33,23 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 | Cora    | Citation network | 2708  | 5429  | 7       | 1433     | 0.052      |
 | Citeseer| Citation network | 3327  | 4732  | 6       | 3703     | 0.036      |
 
-
-
-
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+    - Prepare hardware environment with Ascend processor.
 - Framework
-  - [MindSpore](https://gitee.com/mindspore/mindspore)
+    - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
-
 - Download the dataset Cora or Citeseer provided by /kimiyoung/planetoid from github.
- 
 - Place the dataset to any path you want, the folder should include files as follows(we use Cora dataset as an example):
- 
-```
+
+```bash
 .
 └─data
     ├─ind.cora.allx
@@ -71,15 +63,18 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 ```
 
 - Generate dataset in mindrecord format for cora or citeseer.
-####Usage
-```buildoutcfg
+
+## Usage
+
+```bash
 cd ./scripts
 # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
 sh run_process_data.sh [SRC_PATH] [DATASET_NAME]
 ```
 
-####Launch
-```
+## Launch
+
+```bash
 #Generate dataset in mindrecord format for cora
 sh run_process_data.sh ./data cora
 #Generate dataset in mindrecord format for citeseer
@@ -89,12 +84,12 @@ sh run_process_data.sh ./data citeseer
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
- 
+
 ```shell
 .
-└─gcn      
+└─gcn
   ├─README.md
-  ├─scripts 
+  ├─scripts
   | ├─run_process_data.sh  # Generate dataset in mindrecord format
   | └─run_train.sh         # Launch training, now only Ascend backend is supported.
   |
@@ -106,12 +101,12 @@ sh run_process_data.sh ./data citeseer
   |
   └─train.py               # Train net, evaluation is performed after every training epoch. After the verification result converges, the training stops, then testing is performed.
 ```
- 
+
 ## [Script Parameters](#contents)
- 
+
 Parameters for training can be set in config.py.
- 
-```
+
+```bash
 "learning_rate": 0.01,            # Learning rate
 "epochs": 200,                    # Epoch sizes for training
 "hidden1": 16,                    # Hidden size for the first graph convolution layer
@@ -121,26 +116,25 @@ Parameters for training can be set in config.py.
 ```
 
 ## [Training, Evaluation, Test Process](#contents)
- 
-#### Usage
 
-```
+### Usage
+
+```bash
 # run train with cora or citeseer dataset, DATASET_NAME is cora or citeseer
 sh run_train.sh [DATASET_NAME]
 ```
- 
-#### Launch
- 
+
+### Launch
+
 ```bash
 sh run_train.sh cora
 ```
- 
-#### Result
- 
+
+### Result
+
 Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the followings in log.
 
- 
-```
+```bash
 Epoch: 0001 train_loss= 1.95373 train_acc= 0.09286 val_loss= 1.95075 val_acc= 0.20200 time= 7.25737
 Epoch: 0002 train_loss= 1.94812 train_acc= 0.32857 val_loss= 1.94717 val_acc= 0.34000 time= 0.00438
 Epoch: 0003 train_loss= 1.94249 train_acc= 0.47857 val_loss= 1.94337 val_acc= 0.43000 time= 0.00428
@@ -158,6 +152,7 @@ Test set results: cost= 1.00983 accuracy= 0.81300 time= 0.39083
 ```
 
 # [Model Description](#contents)
+
 ## [Performance](#contents)
 
 | Parameters                 | GCN                                                            |
@@ -171,20 +166,17 @@ Test set results: cost= 1.00983 accuracy= 0.81300 time= 0.39083
 | Loss Function              | Softmax Cross Entropy                                          |
 | Accuracy                   | 81.5/70.3                                                      |
 | Parameters (B)             | 92160/59344                                                    |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn |
-
-
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn> |
 
 # [Description of Random Situation](#contents)
 
 There are two random situations:
+
 - Seed is set in train.py according to input argument --seed.
 - Dropout operations.
 
 Some seeds have already been set in train.py to avoid the randomness of weight initialization. If you want to disable dropout, please set the corresponding dropout_prob parameter to 0 in src/config.py.
 
-
 # [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
-
