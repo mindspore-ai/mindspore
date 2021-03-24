@@ -419,9 +419,11 @@ class Depend(Primitive):
     """
     Depend is used for processing dependency operations.
 
-    In some side-effect scenarios, we need to ensure the execution order of operators.
-    In order to ensure that operator A is executed before operator B, it is recommended to
-    insert the Depend operator between operators A and B. The usage method is as follows::
+    In most scenarios, if operators have IO side effects or memory side effects,
+    they will be executed according to the user's semantics. In some scenarios,
+    if the two operators A and B have no order dependency, and A must be executed
+    before B, we recommend using Depend to specify their execution order. The
+    usage method is as follows::
 
         a = A(x)                --->        a = A(x)
         b = B(y)                --->        y = Depend(y, a)
