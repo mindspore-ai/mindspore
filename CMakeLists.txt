@@ -51,7 +51,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include/flatbuffers)
 
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_utils.cmake)
-find_package(Python3 3.7 COMPONENTS Interpreter Development)
+find_package(Python3 COMPONENTS Interpreter Development)
 if(Python3_FOUND)
     set(PYTHON_INCLUDE_DIRS "${Python3_INCLUDE_DIRS}")
     set(PYTHON_LIBRARIES "${Python3_LIBRARIES}")
