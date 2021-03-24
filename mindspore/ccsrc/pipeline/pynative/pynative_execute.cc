@@ -1973,14 +1973,11 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
   // Get bprop graph of top cell
-  auto bprop_graph = GetBpropGraph(grad, w_args, size);
+  auto bprop_graph = GetBpropGraph(grad, w_args, size, args);
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph, true);
-  // Get the parameters items and add the value to args_spec
-  auto args_spec = GetArgsSpec(args, bprop_graph);
-  resource->set_args_spec(args_spec);
   DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   // Launch bprop graph to backend
   SaveForwardTensorInfoInBpropGraph(resource);
@@ -2064,7 +2061,7 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
 }
 
 FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std::vector<AnfNodePtr> &weights,
-                                         size_t arg_size) {
+                                         size_t arg_size, const py::args &args) {
   MS_EXCEPTION_IF_NULL(grad);
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
@@ -2076,6 +2073,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std
   ss << "grad{" << arg_size << "}";
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
+  // Get the parameters items and add the value to args_spec
+  auto args_spec = GetArgsSpec(args, bprop_graph);
 
   // Do opt for final bprop graph
   ResourcePtr resource = std::make_shared<pipeline::Resource>();
