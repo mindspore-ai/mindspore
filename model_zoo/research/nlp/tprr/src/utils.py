@@ -28,13 +28,10 @@ def normalize(text):
     return text[0].capitalize() + text[1:]
 
 
-def read_query(config):
+def read_query(config, device_id):
     """get query data"""
-    with open(config.dev_data_path, 'rb') as f:
-        temp_dic = pkl.load(f, encoding='gbk')
-        queries = []
-        for item in temp_dic:
-            queries.append(temp_dic[item]["query"])
+    with open(config.q_path + str(device_id), 'rb') as f:
+        queries = pkl.load(f, encoding='gbk')
     return queries
 
 
