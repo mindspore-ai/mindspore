@@ -51,6 +51,7 @@ class AclModelOptions {
   std::string soc_version_ = "Ascend310";
   std::string dynamic_batch_size_;
   std::string dynamic_image_size_;
+  std::string buffer_optimize_mode_;
   std::map<int, std::vector<int>> input_shape_map_;
   // other options
   uint32_t device_id_;

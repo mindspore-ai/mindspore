@@ -54,6 +54,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   fusion_switch_cfg_path_ = ascend310_info->GetFusionSwitchConfigPath();
   device_id_ = ascend310_info->GetDeviceID();
   dump_cfg_path_ = ascend310_info->GetDumpConfigPath();
+  buffer_optimize_mode_ = ascend310_info->GetBufferOptimizeMode();
 }
 
 void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {
@@ -78,7 +79,8 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
   const std::map<std::string const *, std::string> init_options_map = {
     {&op_select_impl_mode_, ge::ir_option::OP_SELECT_IMPL_MODE},
     {&soc_version_, ge::ir_option::SOC_VERSION},
-    {&fusion_switch_cfg_path_, ge::ir_option::FUSION_SWITCH_FILE}};
+    {&fusion_switch_cfg_path_, ge::ir_option::FUSION_SWITCH_FILE},
+    {&buffer_optimize_mode_, ge::ir_option::BUFFER_OPTIMIZE}};
 
   const std::map<std::string const *, std::string> build_options_map = {
     {&insert_op_cfg_path_, ge::ir_option::INSERT_OP_FILE},

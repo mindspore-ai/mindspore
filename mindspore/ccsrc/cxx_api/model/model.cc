@@ -112,7 +112,7 @@ MSTensor Model::GetInputByTensorName(const std::vector<char> &tensor_name) {
     }
   }
 
-  return MSTensor(std::shared_ptr<MSTensor::Impl>(nullptr));
+  return MSTensor(nullptr);
 }
 
 std::vector<std::vector<char>> Model::GetOutputTensorNamesChar() {
@@ -132,7 +132,7 @@ MSTensor Model::GetOutputByTensorName(const std::vector<char> &tensor_name) {
     }
   }
 
-  return MSTensor(std::shared_ptr<MSTensor::Impl>(nullptr));
+  return MSTensor(nullptr);
 }
 
 Model::Model() : impl_(nullptr) {}

@@ -85,8 +85,9 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
     grad_offset += lengths[i];
   }
   float *grad_data = const_cast<float *>(values.data()) + grad_offset;
+#define google mindspore_private
   CHECK_EQ(size, static_cast<size_t>(lengths[grad_index]));
-
+#undef google
   for (size_t i = 0; i < size; i++) {
     accum_grad_data[i] += grad_data[i];
   }
