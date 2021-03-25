@@ -27,23 +27,86 @@
 namespace mindspore {
 namespace opt {
 constexpr auto kSingleInputIndex = 1;
+constexpr auto kIsolatedDependRealInputIndex = 0;
+constexpr auto kIsolatedDependVirtualInputIndex = 1;
 namespace {
+CNodePtr CreateNewDependNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                             const std::vector<AnfNodePtr> &new_depend_inputs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+  CNodePtr new_depend = nullptr;
+  if (kernel_graph == nullptr) {
+    new_depend = func_graph->NewCNode(new_depend_inputs);
+    MS_EXCEPTION_IF_NULL(new_depend);
+    new_depend->set_abstract(cnode->abstract());
+    new_depend->set_scope(cnode->scope());
+  } else {
+    new_depend = kernel_graph->NewCNode(cnode);
+    MS_EXCEPTION_IF_NULL(new_depend);
+    new_depend->set_inputs(new_depend_inputs);
+  }
+  func_graph->manager()->Replace(cnode, new_depend);
+  return new_depend;
+}
+
+CNodePtr CheckIsolatedVirtualNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDepend->name()) {
+    return nullptr;
+  }
+  auto virtual_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependVirtualInputIndex);
+  if (!AnfAlgo::CheckPrimitiveType(virtual_input_op, prim::kPrimUpdateState)) {
+    return nullptr;
+  }
+  auto real_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependRealInputIndex);
+  if (!real_input_op->isa<CNode>()) {
+    return nullptr;
+  }
+  auto real_input_cnode = real_input_op->cast<CNodePtr>();
+  return real_input_cnode;
+}
+
+AnfNodePtr EliminateIsolatedVirtualNodeInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                             const CNodePtr &eliminate_node) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(eliminate_node);
+  auto replace_node = eliminate_node->input(kSingleInputIndex);
+  std::vector<AnfNodePtr> new_depend_inputs = cnode->inputs();
+  new_depend_inputs[kIsolatedDependRealInputIndex + 1] = replace_node;
+  auto new_cnode = CreateNewDependNode(func_graph, cnode, new_depend_inputs);
+  auto new_node = new_cnode->cast<AnfNodePtr>();
+  return new_node;
+}
+
 AnfNodePtr GetReplaceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  string op_name = AnfAlgo::GetCNodeName(cnode);
+  auto replace_cnode = cnode;
+  // Process updatestate and depend as isolated node env.
+  auto isolated_cnode = CheckIsolatedVirtualNode(replace_cnode);
+  if (isolated_cnode != nullptr) {
+    replace_cnode = isolated_cnode;
+  }
+  string op_name = AnfAlgo::GetCNodeName(replace_cnode);
   // Currently we only eliminate transdata or cast nodes.
   if (op_name != kTransDataOpName && op_name != prim::kPrimCast->name()) {
     return nullptr;
   }
-  if (!IsNotRealUsedByOthers(func_graph, cnode)) {
+  if (!IsNotRealUsedByOthers(func_graph, replace_cnode)) {
     return nullptr;
   }
-  CheckCNodeInputSize(cnode, kSingleInputIndex);
+  CheckCNodeInputSize(replace_cnode, kSingleInputIndex);
+  if (isolated_cnode != nullptr) {
+    auto new_depend_node = EliminateIsolatedVirtualNodeInput(func_graph, cnode, replace_cnode);
+    return new_depend_node;
+  }
   return cnode->input(kSingleInputIndex);
 }
 
@@ -137,20 +200,10 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
     return nullptr;
   }
   new_depend_inputs[replace_index] = replace_node;
-  // Because depend's input has been changed, so a new depend(UpdateState) node will be created to replaced the old one.
-  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
-  CNodePtr new_depend = nullptr;
-  if (kernel_graph == nullptr) {
-    new_depend = func_graph->NewCNode(new_depend_inputs);
-    MS_EXCEPTION_IF_NULL(new_depend);
-    new_depend->set_abstract(depend_cnode->abstract());
-    new_depend->set_scope(depend_cnode->scope());
-  } else {
-    new_depend = kernel_graph->NewCNode(depend_cnode);
-    MS_EXCEPTION_IF_NULL(new_depend);
-    new_depend->set_inputs(new_depend_inputs);
+  auto new_depend = CreateNewDependNode(func_graph, depend_cnode, new_depend_inputs);
+  if (new_depend == nullptr) {
+    return nullptr;
   }
-  func_graph->manager()->Replace(depend_cnode, new_depend);
   return nullptr;
 }
 
