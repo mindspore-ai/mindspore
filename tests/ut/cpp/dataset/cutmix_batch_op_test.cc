@@ -30,12 +30,15 @@ class MindDataTestCutMixBatchOp : public UT::CVOP::CVOpCommon {
 
 TEST_F(MindDataTestCutMixBatchOp, TestSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestCutMixBatchOp success1 case";
+  std::shared_ptr<Tensor> input_tensor_resized;
   std::shared_ptr<Tensor> batched_tensor;
   std::shared_ptr<Tensor> batched_labels;
-  Tensor::CreateEmpty(TensorShape({2, input_tensor_->shape()[0], input_tensor_->shape()[1], input_tensor_->shape()[2]}),
-                      input_tensor_->type(), &batched_tensor);
+  Resize(input_tensor_, &input_tensor_resized, 227, 403);
+
+  Tensor::CreateEmpty(TensorShape({2, input_tensor_resized->shape()[0], input_tensor_resized->shape()[1],
+                      input_tensor_resized->shape()[2]}), input_tensor_resized->type(), &batched_tensor);
   for (int i = 0; i < 2; i++) {
-    batched_tensor->InsertTensor({i}, input_tensor_);
+    batched_tensor->InsertTensor({i}, input_tensor_resized);
   }
   Tensor::CreateFromVector(std::vector<uint32_t>({0, 1, 1, 0}), TensorShape({2, 2}), &batched_labels);
   std::shared_ptr<CutMixBatchOp> op = std::make_shared<CutMixBatchOp>(ImageBatchFormat::kNHWC, 1.0, 1.0);
@@ -56,10 +59,13 @@ TEST_F(MindDataTestCutMixBatchOp, TestSuccess1) {
 
 TEST_F(MindDataTestCutMixBatchOp, TestSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestCutMixBatchOp success2 case";
+  std::shared_ptr<Tensor> input_tensor_resized;
   std::shared_ptr<Tensor> batched_tensor;
   std::shared_ptr<Tensor> batched_labels;
   std::shared_ptr<Tensor> chw_tensor;
-  ASSERT_TRUE(HwcToChw(input_tensor_, &chw_tensor).IsOk());
+  Resize(input_tensor_, &input_tensor_resized, 227, 403);
+
+  ASSERT_TRUE(HwcToChw(input_tensor_resized, &chw_tensor).IsOk());
   Tensor::CreateEmpty(TensorShape({2, chw_tensor->shape()[0], chw_tensor->shape()[1], chw_tensor->shape()[2]}),
                       chw_tensor->type(), &batched_tensor);
   for (int i = 0; i < 2; i++) {
