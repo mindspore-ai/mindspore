@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_LAYER_NORM_FUSION_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_LAYER_NORM_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_NORM_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_NORM_FUSION_H_
 
 #include <vector>
 #include <memory>
@@ -31,7 +31,7 @@ namespace opt {
 /// fuse layer_norm or instance_norm into one operator
 class NormFusion : public PatternProcessPass {
  public:
-  explicit NormFusion(const std::string &name = "tf_norm_fusion", bool multigraph = true)
+  explicit NormFusion(const std::string &name = "norm_fusion", bool multigraph = true)
       : PatternProcessPass(name, multigraph) {
     input_ = std::make_shared<Var>();
     mean1_ = std::make_shared<Var>();
@@ -44,7 +44,6 @@ class NormFusion : public PatternProcessPass {
   }
 
   ~NormFusion() override = default;
-  virtual const BaseRef DefinePattern() const = 0;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
@@ -70,6 +69,9 @@ class NormFusion : public PatternProcessPass {
 /// fuse tf layer_norm or instance_norm into one operator
 class TfNormFusion : public NormFusion {
  public:
+  explicit TfNormFusion(const std::string &name = "tf_norm_fusion", bool multigraph = true)
+      : NormFusion(name, multigraph) {}
+
   ~TfNormFusion() override = default;
   const BaseRef DefinePattern() const override;
 };
@@ -77,11 +79,13 @@ class TfNormFusion : public NormFusion {
 /// fuse onnx layer_norm into one operator
 class OnnxLayerNormFusion : public NormFusion {
  public:
+  explicit OnnxLayerNormFusion(const std::string &name = "onnx_layer_norm_fusion", bool multigraph = true)
+      : NormFusion(name, multigraph) {}
+
   ~OnnxLayerNormFusion() override = default;
   const BaseRef DefinePattern() const override;
 };
-
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_LAYER_NORM_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_NORM_FUSION_H_

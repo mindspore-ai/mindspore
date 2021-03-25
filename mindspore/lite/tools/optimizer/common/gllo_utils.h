@@ -35,8 +35,8 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::STATUS;
 namespace mindspore {
 namespace opt {
-inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("Return");
-inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("MakeTuple");
+inline const PrimitivePtr kPrimDivFusion = std::make_shared<Primitive>("DivFusion");
+inline const PrimitivePtr kPrimErf = std::make_shared<Primitive>("Erf");
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 std::vector<int> CastToInt(const ValuePtr &value);
@@ -145,6 +145,15 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
 
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
                                           const std::string &node_name);
+
+template <const PrimitivePtr *prim = nullptr>
+inline bool IsSpecifiedNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, *prim);
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_

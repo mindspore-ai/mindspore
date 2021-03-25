@@ -98,11 +98,11 @@ AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primi
 
   VectorRef set_item = VectorRef({std::make_shared<Var>(""), placeholders[3], placeholders[2], new_hidden});
 
-  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimMakeTuple));
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMakeTuple));
   std::vector<BaseRef> outputs = {is_make_tuple, add3, placeholders[1], add2, set_item, output_cell, output_hidden};
   outputs.insert(outputs.end(), placeholders.begin() + 6, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
   VarPtr fg = std::make_shared<Var>("RootG");

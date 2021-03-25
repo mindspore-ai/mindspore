@@ -133,7 +133,7 @@ AnfNodePtr TfBidirectionGruFusion::GetCondGraphPattern(const PrimitiveVarMapPtr 
   auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
   auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
   auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLogicalAnd));
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
   VectorRef less1_ref = VectorRef({is_less1, is_parameter1, is_parameter2});
   VectorRef less2_ref = VectorRef({is_less2, is_parameter3, is_parameter4});
   VectorRef logicaland_ref = VectorRef({is_logical_and, less1_ref, less2_ref});
@@ -183,13 +183,13 @@ AnfNodePtr TfBidirectionGruFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr 
 
   VectorRef select_hidden = VectorRef({std::make_shared<Var>("Switch"), greater_equal, placeholders[4], new_hidden});
 
-  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimMakeTuple));
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMakeTuple));
   std::vector<BaseRef> outputs = {is_make_tuple,  add1,          placeholders[1], add,
                                   output,         select_hidden, placeholders[5], placeholders[6],
                                   placeholders[7]};
   outputs.insert(outputs.end(), placeholders.begin() + 8, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReturn));
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
   VarPtr fg = std::make_shared<Var>("RootG");

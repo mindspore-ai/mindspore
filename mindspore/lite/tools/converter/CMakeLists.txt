@@ -53,6 +53,9 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/tf_bidirection_gru_fusion.cc
         ../optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
         ../optimizer/fusion/matmul_add_fusion.cc
+        ../optimizer/fusion/gelu_fusion.cc
+        ../optimizer/fusion/tf_gelu_fusion.cc
+        ../optimizer/fusion/onnx_gelu_fusion.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
         ../optimizer/graph/clip_convert_activation_pass.cc
