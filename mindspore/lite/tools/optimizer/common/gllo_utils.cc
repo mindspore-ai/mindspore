@@ -543,6 +543,12 @@ bool IsConvNode(const BaseRef &n) {
     if (prim == nullptr) {
       return false;
     }
+
+    if (prim->GetAttr(ops::kActivationType) != nullptr &&
+        GetValue<int64_t>(prim->GetAttr(ops::kActivationType)) != NO_ACTIVATION) {
+      return false;
+    }
+
     bool is_depth_wise =
       prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
     return CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion) ||
