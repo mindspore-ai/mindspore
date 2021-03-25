@@ -152,7 +152,7 @@ sh scripts/run_distribute_train_gpu.sh DATA_PATH
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `ckpt_path` by default, and training log  will be redirected to `./log.txt` like followings.
+Training result will be stored in the example path. Checkpoints will be stored at `ckpt_path` by default, and training log  will be redirected to `./log.txt` like following.
 
 - Ascend
 
@@ -209,7 +209,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`.
+Evaluation result will be stored in the example path, you can find result like the following in `eval.log`.
 
 - Ascend
 

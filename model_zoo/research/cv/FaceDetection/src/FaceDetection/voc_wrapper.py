@@ -70,8 +70,8 @@ def nms(boxes, threshold=0.5):
         intersect_area = intersect_w * intersect_h
         ovr = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
 
-        indexes = np.where(ovr <= threshold)[0]
-        order = order[indexes + 1]
+        indices = np.where(ovr <= threshold)[0]
+        order = order[indices + 1]
 
     return reserved_boxes
 
