@@ -74,6 +74,7 @@ class Tensor(Tensor_):
         >>> assert t3.dtype == ms.float32
     """
     delta_seed = 0
+
     def __init__(self, input_data=None, dtype=None, shape=None, init=None):
         self.init_finished = False
         # If input data is numpy number, convert it to np array
@@ -91,6 +92,13 @@ class Tensor(Tensor_):
 
         if isinstance(shape, numbers.Number):
             shape = (shape,)
+
+        if input_data is not None and isinstance(input_data, (tuple, list, np.ndarray)) \
+                and np.array(input_data).ndim > 1 and np.array(input_data).size == 0:
+            raise ValueError("input_data can not contain zero dimension.")
+        if shape is not None and not (hasattr(init, "__enable_zero_dim__") and init.__enable_zero_dim__):
+            if 0 in shape:
+                raise ValueError("Shape can not contain zero value.")
 
         # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
         if init is None:
