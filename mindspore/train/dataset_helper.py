@@ -180,7 +180,7 @@ class DatasetHelper:
         >>> network = Net()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         >>> network = nn.WithLossCell(network, net_loss)
-        >>> train_dataset = create_custom_dataset(sparse=True)
+        >>> train_dataset = create_custom_dataset()
         >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
         >>> for next_element in dataset_helper:
         ...     outputs = network(*next_element)

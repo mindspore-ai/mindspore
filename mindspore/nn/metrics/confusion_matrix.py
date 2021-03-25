@@ -179,7 +179,7 @@ class ConfusionMatrixMetric(Metric):
         >>> y = Tensor(np.array([[[0], [1]], [[0], [1]]]))
         >>> metric.update(x, y)
         >>> x = Tensor(np.array([[[0], [1]], [[1], [0]]]))
-        >>> y = Tensor(np.array([[[0], [1]], [[1], [1]]]))
+        >>> y = Tensor(np.array([[[0], [1]], [[1], [0]]]))
         >>> avg_output = metric.eval()
         >>> print(avg_output)
         [0.75]
