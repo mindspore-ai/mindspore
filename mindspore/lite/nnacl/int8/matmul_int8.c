@@ -32,6 +32,19 @@ void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int co
   }
 }
 
+void RowMajor2Col16x2MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+  int row16 = UP_ROUND(row, C16NUM);
+  int stride = sizeof(int8_t) * C16NUM * C2NUM;
+  for (int r = 0; r < row; ++r) {
+    for (int c = 0; c < col; ++c) {
+      int stride_idx = c / C2NUM * (row16 / C16NUM) + r / C16NUM;
+      int dst_idx = stride * stride_idx + c % C2NUM * C16NUM + r % C16NUM;
+      int src_idx = r * col + c;
+      dst_ptr[dst_idx] = src_ptr[src_idx];
+    }
+  }
+}
+
 void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   int col4 = UP_ROUND(col, C4NUM);
   for (int r = 0; r < row; r++) {
