@@ -3398,7 +3398,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
 
 
 class GatherNd(PrimitiveWithInfer):
-    """
+    r"""
     Gathers slices from a tensor by indices.
 
     Using given indices to gather slices from a tensor with a specified shape.
@@ -3407,10 +3407,10 @@ class GatherNd(PrimitiveWithInfer):
     defines a slice of `input_x`:
 
     .. math::
-        output[(i_0, ..., i_{K-2})] = input_x[indices[(i_0, ..., i_{K-2})]]
+        output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
 
     The last dimension of `indices` can not more than the rank of `input_x`:
-    :math:`indices.shape[-1] <= input_x.rank`.
+    :math:`indices.shape[-1] <= input\_x.rank`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor to gather values.

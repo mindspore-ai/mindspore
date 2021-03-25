@@ -255,17 +255,20 @@ class PrimitiveWithCheck(Primitive):
     Args:
         name (str): Name of the current Primitive.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> # init a Primitive class with check
         >>> class Flatten(PrimitiveWithCheck):
-        >>>     @prim_attr_register
-        >>>     def __init__(self):
-        >>>         pass
-        >>>     def check_shape(self, input_x):
-        >>>         validator.check_int(len(input_x), 1, Rel.GE, 'input_x rank', self.name)
+        ...     @prim_attr_register
+        ...     def __init__(self):
+        ...         pass
+        ...     def check_shape(self, input_x):
+        ...         validator.check_int(len(input_x), 1, Rel.GE, 'input_x rank', self.name)
         >>>
-        >>>     def check_dtype(self, input_x):
-        >>>         validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
+        ...     def check_dtype(self, input_x):
+        ...         validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
         >>>
         >>> # init a Primitive obj
         >>> add = Flatten()
@@ -332,18 +335,21 @@ class PrimitiveWithInfer(Primitive):
     Args:
         name (str): Name of the current Primitive.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> # init a Primitive class with infer
         >>> class Add(PrimitiveWithInfer):
-        >>>     @prim_attr_register
-        >>>     def __init__(self):
-        >>>         pass
+        ...     @prim_attr_register
+        ...     def __init__(self):
+        ...         pass
         >>>
-        >>>     def infer_shape(self, x, y):
-        >>>         return x # output shape same as first input 'x'
+        ...     def infer_shape(self, x, y):
+        ...         return x # output shape same as first input 'x'
         >>>
-        >>>     def infer_dtype(self, x, y):
-        >>>         return x # output type same as first input 'x'
+        ...     def infer_dtype(self, x, y):
+        ...         return x # output type same as first input 'x'
         >>>
         >>> # init a Primitive obj
         >>> add = Add()
