@@ -53,8 +53,15 @@ BERT的主干结构为Transformer。对于BERT_base，Transformer包含12个编�
 
 # 数据集
 
-- 下载zhwiki或enwiki数据集进行预训练，使用[WikiExtractor](https://github.com/attardi/wikiextractor)提取和整理数据集中的文本，并将数据集转换为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码仓中的create_pretraining_data.py文件。
-- 下载数据集进行微调和评估，如CLUENER、TNEWS、SQuAD v1.1等。将数据集文件从JSON格式转换为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码仓中的run_classifier.py文件。
+- 生成预训练数据集
+    - 下载[zhwiki](https://dumps.wikimedia.org/zhwiki/)或[enwiki](https://dumps.wikimedia.org/enwiki/)数据集进行预训练，
+    - 使用[WikiExtractor](https://github.com/attardi/wikiextractor)提取和整理数据集中的文本，使用步骤如下：
+        - pip install wikiextractor
+        - python -m wikiextractor.WikiExtractor -o <output file path> -b <output file size> <Wikipedia dump file>
+    - 将数据集转换为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码仓中的create_pretraining_data.py文件，同时下载对应的vocab.txt文件, 如果出现AttributeError: module 'tokenization' has no attribute 'FullTokenizer’，请安装bert-tensorflow。
+- 生成下游任务数据集
+    - 下载数据集进行微调和评估，如[CLUENER](https://github.com/CLUEbenchmark/CLUENER2020)、[TNEWS](https://github.com/CLUEbenchmark/CLUE)、[SQuAD v1.1训练集](https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json)、[SQuAD v1.1验证集](https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json)等。
+    - 将数据集文件从JSON格式转换为TFRecord格式。详见[BERT](https://github.com/google-research/bert)代码仓中的run_classifier.py文件。
 
 # 环境要求
 
