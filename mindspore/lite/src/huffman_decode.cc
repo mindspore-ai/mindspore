@@ -15,10 +15,10 @@
  */
 
 #include "src/huffman_decode.h"
+#include <queue>
 
 namespace mindspore {
 namespace lite {
-
 STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decoded_data) {
   if (decoded_data == nullptr) {
     MS_LOG(ERROR) << "decoded_data is nullptr.";
@@ -26,8 +26,7 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
   }
 
   int status;
-  std::string huffman_decoded_str = "";
-
+  std::string huffman_decoded_str;
   auto key_pos = input_str.find_first_of('#');
   auto code_pos = input_str.find_first_of('#', key_pos + 1);
   auto key = input_str.substr(0, key_pos);
@@ -60,7 +59,7 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
   size_t len = huffman_decoded_str.length();
   memcpy(decoded_data, huffman_decoded_str.c_str(), len);
 
-  delete root;
+  FreeHuffmanNodeTree(root);
   return RET_OK;
 }
 
@@ -91,7 +90,6 @@ STATUS HuffmanDecode::RebuildHuffmanTree(std::string keys, std::string codes, co
           MS_LOG(ERROR) << "new HuffmanNode failed.";
           return RET_MEMORY_FAILED;
         }
-        this->huffman_nodes_.push_back(new_node);
         new_node->left = nullptr;
         new_node->right = nullptr;
         new_node->parent = cur_node;
@@ -157,11 +155,23 @@ STATUS HuffmanDecode::DoHuffmanDecompress(HuffmanNodePtr root, std::string encod
   return RET_OK;
 }
 
-HuffmanDecode::~HuffmanDecode() {
-  for (auto &node : this->huffman_nodes_) {
-    delete node;
+void HuffmanDecode::FreeHuffmanNodeTree(HuffmanNodePtr root) {
+  if (root == nullptr) {
+    return;
   }
-  this->huffman_nodes_.resize(0);
+  std::queue<HuffmanNodePtr> node_queue;
+  node_queue.push(root);
+  while (!node_queue.empty()) {
+    auto cur_node = node_queue.front();
+    node_queue.pop();
+    if (cur_node->left != nullptr) {
+      node_queue.push(cur_node->left);
+    }
+    if (cur_node->right != nullptr) {
+      node_queue.push(cur_node->right);
+    }
+    delete (cur_node);
+  }
 }
 
 }  // namespace lite

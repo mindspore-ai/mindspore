@@ -205,7 +205,9 @@ void CpuFp16SubGraph::FreeOriginInputData() {
 }
 
 int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
+  MS_ASSERT(tensor != nullptr);
   auto float32_data = tensor->data_c();
+  auto own_data = tensor->own_data();
   if (float32_data == nullptr) {
     MS_LOG(ERROR) << "tensor data is null.";
     return lite::RET_NULL_PTR;
@@ -215,15 +217,14 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
   auto ret = tensor->MallocData();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "malloc data failed";
-    this->FreeOriginInputData();
     return RET_ERROR;
   }
   MS_ASSERT(tensor->data_c() != nullptr);
   Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
-  auto *data_store = DataStore::CreateDataStore(float32_data, tensor->allocator(), this->context_->allocator.get());
+  auto *data_store =
+    DataStore::CreateDataStore(float32_data, own_data, tensor->allocator(), this->context_->allocator.get());
   if (data_store == nullptr) {
     MS_LOG(ERROR) << "Create DataStore failed";
-    this->FreeOriginInputData();
     return RET_ERROR;
   }
   origin_input_data_[tensor] = data_store;
@@ -283,6 +284,7 @@ int CpuFp16SubGraph::PreProcess() {
       ret = Float32TensorToFloat16Tensor(real_tensor);
       if (RET_OK != ret) {
         MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
+        this->FreeOriginInputData();
         return ret;
       }
     } else if (real_tensor->data_type() == kObjectTypeTensorType) {
@@ -293,6 +295,7 @@ int CpuFp16SubGraph::PreProcess() {
           ret = Float32TensorToFloat16Tensor(inner_tensor);
           if (RET_OK != ret) {
             MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
+            this->FreeOriginInputData();
             return ret;
           }
         }
@@ -372,6 +375,7 @@ int CpuFp16SubGraph::PostProcess() {
       real_tensor->FreeData();
       MS_ASSERT(origin_tensor_data->data_ != nullptr);
       real_tensor->set_data(origin_tensor_data->data_);
+      real_tensor->set_own_data(origin_tensor_data->own_data_);
       real_tensor->set_data_type(kNumberTypeFloat32);
       origin_tensor_data->data_ = nullptr;
       tensor_count++;
@@ -385,6 +389,7 @@ int CpuFp16SubGraph::PostProcess() {
           inner_tensor->FreeData();
           MS_ASSERT(origin_tensor_data->data_ != nullptr);
           inner_tensor->set_data(origin_tensor_data->data_);
+          inner_tensor->set_own_data(origin_tensor_data->own_data_);
           inner_tensor->set_data_type(kNumberTypeFloat32);
           origin_tensor_data->data_ = nullptr;
           tensor_count++;

@@ -109,11 +109,10 @@ class TensorList : public Tensor {
 
   bool IsConst() const override;
 
-  int set_root_tensor(Tensor *tensor) override;
+  void set_root_tensor(Tensor *tensor) override;
 
  protected:
   // The following functions must be masked.
-  void set_data(void *data) override {}
   void *data_c() const override { return nullptr; }
   void *MutableData() override { return nullptr; }
   size_t Size() const override { return 0; }

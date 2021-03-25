@@ -77,14 +77,12 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
     } else {
       dst_tensor->FreeData();
       dst_tensor->set_data(src_tensor->data_c());
+      dst_tensor->set_own_data(true);
       src_tensor->set_data(nullptr);
+      src_tensor->set_own_data(true);
     }
   } else {
-    auto ret = dst_tensor->set_root_tensor(src_tensor->root_tensor());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Set root tensor for tensor(" << dst_tensor->tensor_name() << ") failed";
-      return ret;
-    }
+    dst_tensor->set_root_tensor(src_tensor->root_tensor());
   }
   return RET_OK;
 }
@@ -121,11 +119,7 @@ int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensor, lite::Tens
     src_tensor->set_tensors({});
   } else {
     dst_tensor->set_shape(src_tensor->shape());
-    auto ret = dst_tensor->set_root_tensor(src_tensor->root_tensor());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Set root tensor for tensor(" << dst_tensor->tensor_name() << ") failed";
-      return ret;
-    }
+    dst_tensor->set_root_tensor(src_tensor->root_tensor());
   }
   return RET_OK;
 }

@@ -42,20 +42,38 @@
 
 namespace mindspore {
 namespace lite {
-// this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
-static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
-#ifdef SUPPORT_TRAIN
-  return false;
-#endif
-
-  MS_ASSERT(model != nullptr);
-  auto post_node_idxes = GetLinkedPostNodeIdx(model, tensor_idx);
-  return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
-    auto node = model->all_nodes_[post_node_idx];
-    MS_ASSERT(node != nullptr);
-    return IsPackedOp(GetPrimitiveType(node->primitive_));
-  });
+namespace {
+int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(dst_tensor != nullptr);
+  bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
+                         src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
+  if (need_bit_unpack) {
+    auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
+    need_bit_unpack = ((num_bits > 0 && num_bits < 8) || (num_bits > 8 && num_bits < 16));
+  }
+  if (!src_tensor.enableHuffmanCode() && !need_bit_unpack) {
+    return RET_NO_CHANGE;
+  }
+  // huffman code and bit pack are not assumed to be performed at same time
+  STATUS ret = RET_ERROR;
+  if (src_tensor.enableHuffmanCode()) {
+    ret = DequantUtil::DecodeHuffmanCode(src_tensor, dst_tensor);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
+      return ret;
+    }
+  } else if (need_bit_unpack) {
+    ret = DequantUtil::UnPackToInt(src_tensor, dst_tensor);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
+      return ret;
+    }
+  } else {
+    ret = RET_OK;
+  }
+  return ret;
 }
+}  // namespace
 
 LiteSession::LiteSession() { this->is_running_.store(false); }
 
@@ -78,7 +96,6 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
       dst_tensor->AddQuantParam(quant_arg);
     }
   }
-  dst_tensor->set_enable_huffman_code(src_tensor->enableHuffmanCode());
   auto quant_clusters = src_tensor->quantClusters();
   if (quant_clusters != nullptr) {
     std::vector<float> clusters;
@@ -93,57 +110,23 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
                                     lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
-  auto NeedUnPack = [&src_tensor, &dst_tensor]() -> bool {
-    auto data_type = src_tensor->dataType();
-    int pack_size = src_tensor->data()->size();
-    int org_size = dst_tensor->Size();
-    return (pack_size != org_size) && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16);
-  };
   auto src_category = TensorCategory(src_tensor);
   if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
       src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
     if (src_tensor->dataType() == kObjectTypeTensorType) {
       auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
-      if (src_tensor->data() == nullptr) {
-        MS_LOG(ERROR) << "src_tensor->data() is nullptr";
-        return RET_ERROR;
-      }
       if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
+        MS_LOG(ERROR) << "Decode tensorlist data failed";
         return RET_ERROR;
       }
     } else {
-      if (WeightTensorNeedCopy(model, tensor_index)) {
-        auto dst_data = dst_tensor->MutableData();
-        if (dst_data == nullptr) {
-          MS_LOG(ERROR) << "Data from tensor is nullptr";
-          return RET_NULL_PTR;
-        }
-        if (NeedUnPack()) {
-          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data);
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << "unpack to int failed.";
-            return RET_NULL_PTR;
-          }
-        } else {
-          memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
-        }
-        copyed_tensor_idxes_.emplace_back(tensor_index);
-      } else {
-        if (NeedUnPack()) {
-          auto dst_data = dst_tensor->MutableData();
-          if (dst_data == nullptr) {
-            MS_LOG(ERROR) << "Data from tensor is nullptr";
-            return RET_ERROR;
-          }
-          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data);
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << "unpack to int failed.";
-            return RET_ERROR;
-          }
-          copyed_tensor_idxes_.emplace_back(tensor_index);
-        } else {
-          dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
-        }
+      auto ret = DecompressTensor(*src_tensor, dst_tensor);
+      if (ret == RET_NO_CHANGE) {
+        dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
+        dst_tensor->set_own_data(false);
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Decompress tensor data failed: " << ret;
+        return ret;
       }
     }
   }
@@ -176,7 +159,6 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
 
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  copyed_tensor_idxes_.clear();
   uint32_t tensor_count = model->all_tensors_.size();
   MS_ASSERT(!model->sub_graphs_.empty());
   auto model_input_indices = model->sub_graphs_.front()->input_indices_;
@@ -582,11 +564,11 @@ LiteSession::~LiteSession() {
   for (auto *kernel : kernels_) {
     delete kernel;
   }
-  for (size_t i = 0; i < tensors_.size(); i++) {
-    auto *tensor = tensors_.at(i);
+  for (auto tensor : tensors_) {
     MS_ASSERT(tensor != nullptr);
-    // data of weight tensor of node in packed_op can not be to free, we will free weight data when freeing meta_graph
-    if (tensor->IsConst() && !IsContain(this->inputs_, tensor) && !IsContain(copyed_tensor_idxes_, i)) {
+    // Data of const tensor which doesn't own data will not freed.
+    // Such as const data from meta_graph which will be freed when freeing meta_graph.
+    if (tensor->IsConst() && !tensor->own_data()) {
       tensor->set_data(nullptr);
     }
     delete tensor;

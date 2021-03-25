@@ -63,16 +63,8 @@ int MergeCPUKernel::Init() {
     MS_ASSERT(in_tensors_[i] != nullptr);
     MS_ASSERT(in_tensors_[i + stride] != nullptr);
     if (in_tensors_[i] == in_tensors_[i + stride]) {
-      auto ret = in_tensors_[i]->set_root_tensor(in_tensors_[i]);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Set root tensor for tensor(" << in_tensors_[i]->tensor_name() << ") failed";
-        return ret;
-      }
-      ret = in_tensors_[i + stride]->set_root_tensor(in_tensors_[i + stride]);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Set root tensor for tensor(" << in_tensors_[i + stride]->tensor_name() << ") failed";
-        return ret;
-      }
+      in_tensors_[i]->set_root_tensor(in_tensors_[i]);
+      in_tensors_[i + stride]->set_root_tensor(in_tensors_[i + stride]);
     }
   }
   return RET_OK;
