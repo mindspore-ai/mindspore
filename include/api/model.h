@@ -49,6 +49,7 @@ class MS_API Model {
   std::vector<MSTensor> GetOutputs();
   inline std::vector<std::string> GetOutputTensorNames();
   inline MSTensor GetOutputByTensorName(const std::string &tensor_name);
+  inline std::vector<MSTensor> GetOutputsByNodeName(const std::string &tensor_name);
 
   static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
 
@@ -70,6 +71,10 @@ std::vector<std::string> Model::GetOutputTensorNames() { return VectorCharToStri
 
 MSTensor Model::GetOutputByTensorName(const std::string &tensor_name) {
   return GetOutputByTensorName(StringToChar(tensor_name));
+}
+
+std::vector<MSTensor> Model::GetOutputsByNodeName(const std::string &tensor_name) {
+  return GetOutputsByNodeName(StringToChar(tensor_name));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H
