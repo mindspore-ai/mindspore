@@ -1851,15 +1851,15 @@ function Run_arm64_fp16() {
 
     # Run tf fp16 models
     while read line; do
-        model_name_and_input_num=${line%;*}
-        length=${#model_name_and_input_num}
-        input_shapes=${line:length+1}
-        tf_line_info=${model_name_and_input_num}
-        if [[ $model_name == \#* ]]; then
+        tf_line_info=${line}
+        if [[ $tf_line_info == \#* ]]; then
           continue
         fi
         model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
+        model_info=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
+        input_num=`echo ${model_info}|awk -F ';' '{print $1}'`
+        input_shapes=`echo ${model_info}|awk -F ';' '{print $2}'`
+        accuracy_limit=`echo ${model_info}|awk -F ';' '{print $3}'`
         input_files=''
         for i in $(seq 1 $input_num)
         do
@@ -1867,8 +1867,8 @@ function Run_arm64_fp16() {
         done
         echo ${model_name} >> "${run_arm64_fp16_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true' >> adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
         cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
         if [ $? = 0 ]; then
