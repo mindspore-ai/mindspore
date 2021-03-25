@@ -16,7 +16,7 @@
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/tensorlist_setitem_fp32.h"
+#include "src/runtime/kernel/arm/base/tensorlist_setitem.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -28,21 +28,9 @@ using mindspore::schema::PrimitiveType_TensorListSetItem;
 
 namespace mindspore::kernel {
 
-int TensorListSetItemCPUKernel::Init() {
-#ifdef ENABLE_FP16
-  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
-    dtype_ = kNumberTypeFloat16;
-  }
-#endif
-  return RET_OK;
-}
+int TensorListSetItemCPUKernel::Init() { return RET_OK; }
 
 int TensorListSetItemCPUKernel::CheckParam() {
-  if (dtype_ != kTypeUnknown && input0_->tensors_data_type() != kTypeUnknown &&
-      dtype_ != input0_->tensors_data_type()) {
-    MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0_->tensors_data_type();
-    return RET_ERROR;
-  }
   if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
     MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type() << " must be int";
     return RET_ERROR;
@@ -70,7 +58,6 @@ int TensorListSetItemCPUKernel::IncrementOutputSize(int origin_size) {
 
 int TensorListSetItemCPUKernel::Run() {
   input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
-
   if (CheckParam() != RET_OK) {
     MS_LOG(ERROR) << "check param failed.";
     return RET_ERROR;
