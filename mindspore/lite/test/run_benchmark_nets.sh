@@ -220,6 +220,7 @@ function Run_Converter() {
           continue
         fi
         model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        input_num=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
         echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
         cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
         if [ $? = 0 ]; then
@@ -1866,8 +1867,9 @@ function Run_arm64_fp16() {
         done
         echo ${model_name} >> "${run_arm64_fp16_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true' >> "${run_arm64_fp16_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true' >> adb_run_cmd.txt
+        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
