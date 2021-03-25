@@ -28,7 +28,7 @@ namespace mindspore::lite::micro {
 void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
   auto array_tostring = [&ofs](const std::vector<int> &array, const std::string &name) {
     size_t num = array.size();
-    ofs << "  Vector<int32_t> " << name << ";\n";
+    ofs << "  Vector<int> " << name << ";\n";
     ofs << "  " << name << ".resize(" << num << ");\n";
     for (size_t i = 0; i < num; ++i) {
       ofs << "  " << name << "[" << i << "] = " << array[i] << ";\n";

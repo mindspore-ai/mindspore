@@ -58,7 +58,7 @@ struct QuantArg {
 class MTensor : public mindspore::tensor::MSTensor {
  public:
   MTensor() = default;
-  MTensor(String name, TypeId type, Vector<int32_t> shape) : tensor_name_(name), data_type_(type), shape_(shape) {}
+  MTensor(String name, TypeId type, Vector<int> shape) : tensor_name_(name), data_type_(type), shape_(shape) {}
   ~MTensor() override;
 
   TypeId data_type() const override { return data_type_; }
