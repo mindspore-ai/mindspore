@@ -86,6 +86,9 @@ class HausdorffDistance(Metric):
                      here the bounding box is achieved by (y_pred | y) which represents the union set of two images.
                      Default: True.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))
         >>> y = Tensor(np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]]))

@@ -375,7 +375,7 @@ class ClipByNorm(Cell):
         TypeError: If dtype of `input` is neither float32 nor float16.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.ClipByNorm()
@@ -455,7 +455,7 @@ class Norm(Cell):
         TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.Norm(axis=0)
@@ -607,7 +607,7 @@ class Pad(Cell):
         ValueError: If `mode` is not one of 'CONSTANT', 'REFLECT', 'SYMMETRIC'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor

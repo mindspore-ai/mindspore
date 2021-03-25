@@ -268,7 +268,7 @@ class AvgPool2d(_PoolNd):
         ValueError: If length of shape of `input` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> pool = nn.AvgPool2d(kernel_size=3, stride=1)
@@ -339,7 +339,7 @@ class AvgPool1d(_PoolNd):
         ValueError: If length of shape of `input` is not equal to 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> pool = nn.AvgPool1d(kernel_size=6, stride=1)
