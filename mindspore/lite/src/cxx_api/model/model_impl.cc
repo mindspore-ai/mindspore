@@ -118,7 +118,6 @@ Status ModelImpl::Build() {
     MS_LOG(ERROR) << "Build model failed.";
     return static_cast<StatusCode>(ret);
   }
-  session->BindThread(true);
   session_.swap(session);
   model->Free();
   MS_LOG(DEBUG) << "Build model success.";
@@ -180,7 +179,9 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       }
     }
   }
+  session_->BindThread(true);
   auto ret = session_->RunGraph();
+  session_->BindThread(false);
   ResetTensorData(old_data, input_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run graph failed.";
