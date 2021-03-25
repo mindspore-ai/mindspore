@@ -205,7 +205,7 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
 
   code.CodeBaseStruct("ConvolutionInt8Args", kRunArgs, input_tensor_, packed_input_, matmul_packed_input_,
                       packed_weight_, bias_data_, output_tensor_, filter_zp_ptr_, input_sum_,
-                      "(ConvParameter *)&conv_param", matmul_func_, support_optimize_);
+                      "(ConvParameter *)&conv_param", matmul_func_, "GetSupportOptFlag()");
   if (support_parallel_) {
     code.CodeFunction(kParallelLaunch, gThreadPool, "ConvolutionInt8Run", kRunArgsAddr, gThreadNum);
   } else {
