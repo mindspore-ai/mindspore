@@ -34,7 +34,7 @@ class GPUBucket : public Bucket {
   void FreeDeviceMem(void *dev_ptr) override;
   void CopyTensorToContiguousMemory() override;
   void LaunchAllReduce() override;
-  std::shared_ptr<LaunchKernel> CreateLaunchKernel() override;
+  std::shared_ptr<LaunchKernel> CreateLaunchMul() override;
   const void *collective_handle_;
 };
 }  // namespace mindspore::device::gpu

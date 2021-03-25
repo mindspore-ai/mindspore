@@ -94,12 +94,16 @@ void Bucket::CalculateMean() {
   if (!grad_mean) {
     return;
   }
-  launch_kernel = CreateLaunchKernel();
-  MS_EXCEPTION_IF_NULL(launch_kernel);
+  if (launch_mul_ == nullptr) {
+    launch_mul_ = CreateLaunchMul();
+    MS_EXCEPTION_IF_NULL(launch_mul_);
+  }
+  // set mul input1 addr
+  launch_mul_->SetInputAddr(ar_output_addr_);
   // launch mean
-  launch_kernel->LaunchOpKernel();
+  launch_mul_->LaunchOpKernel();
   // store output tensor addr
-  auto launch_output = launch_kernel->GetKernelOutputAddr();
+  auto launch_output = launch_mul_->GetKernelOutputAddr();
   if (launch_output.size() != 1) {
     MS_LOG(ERROR) << "launch mul outputs should have one output";
   }

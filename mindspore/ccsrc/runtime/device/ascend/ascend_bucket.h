@@ -34,7 +34,9 @@ class AscendBucket : public Bucket {
   void FreeDeviceMem(void *dev_ptr) override;
   void CopyTensorToContiguousMemory() override;
   void LaunchAllReduce() override;
-  std::shared_ptr<LaunchKernel> CreateLaunchKernel() override;
+  std::shared_ptr<LaunchKernel> CreateLaunchMul() override;
+  std::shared_ptr<LaunchKernel> CreateLaunchAtomicClean();
+  void CleanAllReduceInputAddr();
 };
 }  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_BUCKET_H_

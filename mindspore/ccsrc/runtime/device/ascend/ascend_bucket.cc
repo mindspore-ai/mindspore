@@ -27,6 +27,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/ascend/ascend_event.h"
 #include "runtime/device/ascend/ascend_launch_mul.h"
+#include "runtime/device/ascend/ascend_launch_atomic_clean.h"
 #include "utils/profile.h"
 
 #define CHECK_ASCEND_RT_WITH_EXCEPTION(expression, message)    \
@@ -90,16 +91,18 @@ void AscendBucket::FreeAllDeviceMem() {
     ar_output_addr_ = nullptr;
   }
   // clear launch mul device Memory
-  if (launch_kernel != nullptr) {
-    launch_kernel->FreeLaunchDeviceMem();
+  if (launch_mul_ != nullptr) {
+    launch_mul_->FreeLaunchDeviceMem();
+  }
+  // clear launch atomic clean device Memory
+  if (launch_atomic_clean_ != nullptr) {
+    launch_atomic_clean_->FreeLaunchDeviceMem();
   }
 }
 
 void AscendBucket::CopyTensorToContiguousMemory() {
-  // Clean input addr
-  CHECK_ASCEND_RT_WITH_EXCEPTION(rtMemsetAsync(ar_input_addr_, total_size_, 0, total_size_, compute_stream_),
-                                 "Call rtMemsetAsync failed");
-
+  // clear allreduce input addr
+  CleanAllReduceInputAddr();
   for (size_t i = 0; i < bucket_size_; ++i) {
     MS_EXCEPTION_IF_NULL(memcpy_input_addrs_[i]);
     MS_EXCEPTION_IF_NULL(memcpy_output_addrs_[i]);
@@ -151,13 +154,34 @@ void AscendBucket::LaunchAllReduce() {
   }
 }
 
-std::shared_ptr<LaunchKernel> AscendBucket::CreateLaunchKernel() {
+void AscendBucket::CleanAllReduceInputAddr() {
+  if (launch_atomic_clean_ == nullptr) {
+    launch_atomic_clean_ = CreateLaunchAtomicClean();
+    MS_EXCEPTION_IF_NULL(launch_atomic_clean_);
+  }
+  // set atomic clean input addr
+  launch_atomic_clean_->SetInputAddr(ar_input_addr_);
+  // launch atomic clean
+  launch_atomic_clean_->LaunchOpKernel();
+}
+
+std::shared_ptr<LaunchKernel> AscendBucket::CreateLaunchMul() {
   if (tensor_type_list_.empty()) {
     MS_LOG(ERROR) << "tensor_type_list_ is empty";
   }
-  auto launch_mul = std::make_shared<AscendLaunchMul>(stream_, tensor_type_list_[0], total_size_, ar_output_addr_);
+  auto launch_mul = std::make_shared<AscendLaunchMul>(stream_, tensor_type_list_[0], total_size_);
   MS_EXCEPTION_IF_NULL(launch_mul);
   return launch_mul;
+}
+
+std::shared_ptr<LaunchKernel> AscendBucket::CreateLaunchAtomicClean() {
+  if (tensor_type_list_.empty()) {
+    MS_LOG(ERROR) << "tensor_type_list_ is empty";
+  }
+  auto launch_atomic_clean =
+    std::make_shared<AscendLaunchAtomicClean>(compute_stream_, tensor_type_list_[0], total_size_);
+  MS_EXCEPTION_IF_NULL(launch_atomic_clean);
+  return launch_atomic_clean;
 }
 
 void AscendBucket::Init() {

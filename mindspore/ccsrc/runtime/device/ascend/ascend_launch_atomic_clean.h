@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_MUL_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_MUL_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_ATOMIC_CLEAN_H_
+#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_ATOMIC_CLEAN_H_
 
 #include <vector>
 #include <memory>
-#include "runtime/device/launch_mul.h"
 #include "runtime/device/ascend/ascend_launch_kernel.h"
 
 namespace mindspore::device::ascend {
-class AscendLaunchMul : public AscendLaunchKernel, public LaunchMul {
+class AscendLaunchAtomicClean : public AscendLaunchKernel {
  public:
-  AscendLaunchMul(void *stream, TypeId dtype, size_t total_size)
-      : AscendLaunchKernel(stream), LaunchMul(dtype, total_size) {}
-  ~AscendLaunchMul() override = default;
+  AscendLaunchAtomicClean(void *stream, TypeId dtype, size_t total_size)
+      : AscendLaunchKernel(stream),
+        dtype_(dtype),
+        total_size_(total_size),
+        atomic_clean_graph_(nullptr),
+        input_addr_(nullptr) {}
+  ~AscendLaunchAtomicClean() override = default;
 
-  void SetInputAddr(uint8_t *input1_addr) override { input1_addr_ = input1_addr; }
+  void SetInputAddr(uint8_t *input_addr) override { input_addr_ = input_addr; }
   void FreeDeviceMem(void *addr) override;
   size_t AlignSizeForLaunchKernel(size_t size) override;
   uint8_t *AllocDeviceMem(size_t size) override;
@@ -38,8 +41,17 @@ class AscendLaunchMul : public AscendLaunchKernel, public LaunchMul {
 
   void LaunchOpKernel() override;
   void FreeLaunchDeviceMem() override;
-  void CopyHostMemToDevice(size_t origin_size, size_t dst_size) override;
+
+ protected:
+  TypeId dtype_;
+  size_t total_size_;
+  std::shared_ptr<session::KernelGraph> atomic_clean_graph_;
+  uint8_t *input_addr_;
+
+ private:
+  std::shared_ptr<session::KernelGraph> ObtainAtomicCleanKernelGraph();
+  void ConstructKernelGraphAndSetAttr();
 };
 }  // namespace mindspore::device::ascend
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_MUL_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_ATOMIC_CLEAN_H_

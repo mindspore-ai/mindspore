@@ -25,10 +25,10 @@
 namespace mindspore::device::gpu {
 class GPULaunchMul : public GPULaunchkernel, public LaunchMul {
  public:
-  GPULaunchMul(void *stream, TypeId dtype, size_t total_size, uint8_t *input1_addr)
-      : GPULaunchkernel(stream), LaunchMul(dtype, total_size, input1_addr) {}
+  GPULaunchMul(void *stream, TypeId dtype, size_t total_size) : GPULaunchkernel(stream), LaunchMul(dtype, total_size) {}
   ~GPULaunchMul() override = default;
 
+  void SetInputAddr(uint8_t *input1_addr) override { input1_addr_ = input1_addr; }
   void FreeDeviceMem(void *addr) override;
   size_t AlignSizeForLaunchKernel(size_t size) override;
   uint8_t *AllocDeviceMem(size_t size) override;
