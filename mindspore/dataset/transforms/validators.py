@@ -60,7 +60,7 @@ def check_one_hot_op(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [num_classes, smoothing_rate], _ = parse_user_args(method, *args, **kwargs)
-
+        type_check(smoothing_rate, (int, float), "smoothing_rate")
         type_check(num_classes, (int,), "num_classes")
         check_positive(num_classes)
 

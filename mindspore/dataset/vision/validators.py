@@ -44,6 +44,8 @@ def check_cut_mix_batch_c(method):
     def new_method(self, *args, **kwargs):
         [image_batch_format, alpha, prob], _ = parse_user_args(method, *args, **kwargs)
         type_check(image_batch_format, (ImageBatchFormat,), "image_batch_format")
+        type_check(alpha, (int, float), "alpha")
+        type_check(prob, (int, float), "prob")
         check_pos_float32(alpha)
         check_positive(alpha, "alpha")
         check_value(prob, [0, 1], "prob")
@@ -70,6 +72,7 @@ def check_mix_up_batch_c(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [alpha], _ = parse_user_args(method, *args, **kwargs)
+        type_check(alpha, (int, float), "alpha")
         check_positive(alpha, "alpha")
         check_pos_float32(alpha)
 
@@ -463,11 +466,11 @@ def check_mix_up(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [batch_size, alpha, is_single], _ = parse_user_args(method, *args, **kwargs)
-
+        type_check(is_single, (bool,), "is_single")
+        type_check(batch_size, (int,), "batch_size")
+        type_check(alpha, (int, float), "alpha")
         check_value(batch_size, (1, FLOAT_MAX_INTEGER))
         check_positive(alpha, "alpha")
-        type_check(is_single, (bool,), "is_single")
-
         return method(self, *args, **kwargs)
 
     return new_method
