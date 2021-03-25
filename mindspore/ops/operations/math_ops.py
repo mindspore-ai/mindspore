@@ -4565,6 +4565,10 @@ class IndexAdd(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is not one of: float64, float32, float16, int32, int16, int8, uint8.
         TypeError: If neither `indices` nor `input_y` is a Tensor.
         TypeError: If shape of `input_y` is not same as the `input_x`.
+        ValueError: If axis is out of `input_x` rank's range.
+        ValueError: If `input_x` rank is not the same as `input_y` rank.
+        ValueError: If size of `indices` is not equal to dimension of y[axis].
+        ValueError: If `input_y`'s shape is not the same as `input_x` except the `axis`th dimension.
 
     Supported Platforms:
         ``GPU``
@@ -4612,10 +4616,10 @@ class IndexAdd(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, idx_shape, y_shape):
         validator.check("x rank", len(x_shape), "y rank", len(y_shape), Rel.EQ, self.name)
+        x_rank = len(x_shape)
+        validator.check_int_range(self.axis, -x_rank - 1, x_rank, Rel.INC_NEITHER, 'axis', self.name)
         validator.check("size of indices", idx_shape[0], "dimension of y[axis]", y_shape[self.axis],
                         Rel.EQ, self.name)
-        x_rank = len(x_shape)
-        validator.check_int_range(self.axis, -x_rank - 1, x_rank, Rel.INC_BOTH, 'axis', self.name)
         axis = self.axis if self.axis >= 0 else x_rank + self.axis
         for dim in range(x_rank):
             if dim != axis:
