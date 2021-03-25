@@ -19,6 +19,7 @@
 #include "hccl/hccl.h"
 
 constexpr auto kHcclConfigFile = "MINDSPORE_HCCL_CONFIG_PATH";
+constexpr auto kHcclConfigFileOld = "RANK_TABLE_FILE";
 
 namespace mindspore {
 namespace kernel {
@@ -37,10 +38,25 @@ bool HcclContext::InitHccl() {
   }
   auto config_file = std::getenv(kHcclConfigFile);
   if (config_file == nullptr) {
-    MS_LOG(ERROR) << "Get hccl config file failed";
+    config_file = std::getenv(kHcclConfigFileOld);
+    if (config_file == nullptr) {
+      MS_LOG(ERROR) << "Get hccl rank table file failed. Please export MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+      return false;
+    }
+  }
+
+  auto rank_id = GetRankId();
+  try {
+    rank_id_ = std::stoi(rank_id);
+  } catch (std::invalid_argument &e) {
+    MS_LOG(ERROR) << "Invalid rankd id env:" << rank_id;
     return false;
   }
-  rank_id_ = std::stoi(GetRankId());
+
+  if (rank_id_ < 0 || rank_id_ > 7) {
+    MS_LOG(ERROR) << "rank_id needs to be between 0-7";
+    return false;
+  }
 
   auto hccl_result = HcclCommInitClusterInfo(config_file, rank_id_, &hccl_comm_);
   if (hccl_result != HCCL_SUCCESS) {
