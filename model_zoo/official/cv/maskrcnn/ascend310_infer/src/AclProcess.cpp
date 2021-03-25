@@ -165,6 +165,10 @@ int AclProcess::WriteResult(const std::string& imageFile) {
         std::string outFileName = homePath + "/" + fileName;
         try {
             FILE * outputFile = fopen(outFileName.c_str(), "wb");
+            if (outputFile == nullptr) {
+                std::cout << "open result file " << outFileName << " failed" << std::endl;
+                return INVALID_POINTER;
+            }
             fwrite(resHostBuf, output_size, sizeof(char), outputFile);
             fclose(outputFile);
             outputFile = nullptr;
