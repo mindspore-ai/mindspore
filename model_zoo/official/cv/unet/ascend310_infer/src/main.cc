@@ -34,8 +34,6 @@
 
 
 using mindspore::Context;
-using mindspore::GlobalContext;
-using mindspore::ModelContext;
 using mindspore::Serialization;
 using mindspore::Model;
 using mindspore::Status;
@@ -57,19 +55,21 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-  GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
-  auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
-  auto model_context = std::make_shared<Context>();
-  Model model(GraphCell(graph), model_context);
+  auto context = std::make_shared<Context>();
+  auto ascend310 = std::make_shared<mindspore::Ascend310DeviceInfo>();
+  ascend310->SetDeviceID(FLAGS_device_id);
+  context->MutableDeviceInfo().push_back(ascend310);
+  mindspore::Graph graph;
+  Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
 
-  Status ret = model.Build();
+  Model model;
+  Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
     std::cout << "EEEEEEEERROR Build failed." << std::endl;
     return 1;
   }
-  std::vector<MSTensor> model_inputs = model.GetInputs();
 
+  std::vector<MSTensor> model_inputs = model.GetInputs();
   auto all_files = GetAllFiles(FLAGS_dataset_path);
   if (all_files.empty()) {
     std::cout << "ERROR: no input data." << std::endl;
