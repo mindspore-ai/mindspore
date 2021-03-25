@@ -1061,17 +1061,10 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         [[[[ 2.73200464e+00,  2.73200464e+00],
            [ 2.73200464e+00,  2.73200464e+00]],
           [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]],
-          [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]],
-          [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value=
-           [ 2.50000000e-01,  2.50000000e-01]), Tensor(shape=[2], dtype=Float32, value=
-           [ 1.87500000e-01,  1.87500000e-01]))
+           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [9.24999952e-0.1,
+        9.24999952e-0.1]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-0.1, 9.24999952e-0.1]),
+        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-0.1, 2.50000000e-0.1]), Tensor(shape=[2], dtype=Float32,
+        value= [ 1.87500000e-0.1, 1.87500000e-0.1]))
     """
 
     @prim_attr_register
@@ -2223,8 +2216,8 @@ class NLLLoss(PrimitiveWithInfer):
 
     Examples:
         >>> input = Tensor(np.array([[0.5488135, 0.71518934],
-        >>>                          [0.60276335, 0.5448832],
-        >>>                          [0.4236548, 0.6458941]]).astype(np.float32))
+        ...                          [0.60276335, 0.5448832],
+        ...                          [0.4236548, 0.6458941]]).astype(np.float32))
         >>> target = Tensor(np.array([0, 0, 0]).astype(np.int32))
         >>> weight = Tensor(np.array([0.3834415, 0.79172504]).astype(np.float32))
         >>> nll_loss = ops.NLLLoss(reduction="mean")

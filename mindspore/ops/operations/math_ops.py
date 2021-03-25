@@ -884,46 +884,25 @@ class BatchMatMul(MatMul):
         >>> output = batmatmul(input_x, input_y)
         >>> print(output)
         [[[[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]]
-
-          [[3. 3. 3. 3.]]]
-
-
          [[[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]]]
-        >>>
         >>> input_x = Tensor(np.ones(shape=[2, 4, 3, 1]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = ops.BatchMatMul(transpose_a=True)
         >>> output = batmatmul(input_x, input_y)
         >>> print(output)
         [[[[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]]
-
-          [[3. 3. 3. 3.]]]
-
-
          [[[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]
-
           [[3. 3. 3. 3.]]]]
     """
 
