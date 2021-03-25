@@ -76,7 +76,11 @@ int ArithmeticSelfFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
 
-  input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  if (input_tensor->data_type() == kNumberTypeFloat32) {
+    input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, context_);
+  } else {
+    input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  }
   output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfRun, this, op_parameter_->thread_num_);

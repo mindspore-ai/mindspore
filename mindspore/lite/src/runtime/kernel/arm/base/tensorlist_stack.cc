@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 #include "ir/dtype/type_id.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/tensorlist_stack_fp32.h"
+#include "src/runtime/kernel/arm/base/tensorlist_stack.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -31,11 +31,6 @@ using mindspore::schema::PrimitiveType_TensorListStack;
 namespace mindspore::kernel {
 
 int TensorListStackCPUKernel::CheckParam() {
-  if (dtype_ != kTypeUnknown && input0_->tensors_data_type() != dtype_) {
-    MS_LOG(ERROR) << "in_tensors_[0].tensors_data_type:[" << input0_->tensors_data_type() << "] must be equal "
-                  << "param.data_type:[" << dtype_ << "]";
-    return RET_ERROR;
-  }
   if (num_element_ != -1 && input0_->ElementsNum() != num_element_) {
     MS_LOG(ERROR) << "in_tensors_[0].ElementsNum():[" << input0_->ElementsNum() << "] must be equal "
                   << "param.elements_num:[" << num_element_ << "]";
@@ -60,11 +55,6 @@ int TensorListStackCPUKernel::Init() {
   MS_ASSERT(input0_ != nullptr);
   output0_ = out_tensors_[0];
   MS_ASSERT(output0_ != nullptr);
-#ifdef ENABLE_FP16
-  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
-    dtype_ = kNumberTypeFloat16;
-  }
-#endif
   return RET_OK;
 }
 
@@ -146,18 +136,11 @@ int TensorListStackCPUKernel::MergeSubShape(const std::vector<int> &shape) {
 }
 
 int TensorListStackCPUKernel::Run() {
-  if (dtype_ == kTypeUnknown) {
-    dtype_ = input0_->tensors_data_type();
-#ifdef ENABLE_FP16
-    if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
-      dtype_ = kNumberTypeFloat16;
-    }
-#endif
-  }
   if (CheckParam() != RET_OK) {
     MS_LOG(ERROR) << "CheckParam failed!";
     return RET_ERROR;
   }
+  dtype_ = input0_->tensors_data_type();
   if (output0_->ElementsNum() == 0) {
     return RET_OK;
   }

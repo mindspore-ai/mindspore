@@ -195,7 +195,8 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index, bool *infer_shape_inter
 }
 
 kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
-                                                 const std::vector<Tensor *> &out_tensors, const Model::Node *node) {
+                                                 const std::vector<Tensor *> &out_tensors, const Model::Node *node,
+                                                 TypeId prefer_data_type) {
   kernel::LiteKernel *kernel = nullptr;
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
@@ -268,7 +269,8 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   }
 #endif
-  if (mindspore::lite::IsSupportFloat16() &&
+  if ((prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) &&
+      mindspore::lite::IsSupportFloat16() &&
       ((context_->IsCpuFloat16Enabled() && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16)) {
     kernel::KernelKey fp16_cpu_desc{desc.arch, kNumberTypeFloat16, desc.type};
     auto tensor_origin_data_map =
@@ -297,15 +299,17 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(DEBUG) << "Get fp16 op failed, back to fp32 op.";
     desc.data_type = kNumberTypeFloat32;
   }
-  auto tensor_origin_data_map = DequantUtil::DequantTensor(op_parameter, in_tensors, desc.data_type, need_restore);
-  auto ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, op_parameter, &kernel);
-  DequantUtil::RestoreTensorData(tensor_origin_data_map);
-  if (ret == RET_OK) {
-    return kernel;
-  } else if (ret == RET_ERROR) {
-    ret = InferNodeShape(node, &infer_shape_interrupt);
-    if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
-      MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+  if (prefer_data_type == kNumberTypeFloat32 || prefer_data_type == kTypeUnknown) {
+    auto tensor_origin_data_map = DequantUtil::DequantTensor(op_parameter, in_tensors, desc.data_type, need_restore);
+    auto ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, op_parameter, &kernel);
+    DequantUtil::RestoreTensorData(tensor_origin_data_map);
+    if (ret == RET_OK) {
+      return kernel;
+    } else if (ret == RET_ERROR) {
+      ret = InferNodeShape(node, &infer_shape_interrupt);
+      if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
+        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+      }
     }
   }
   return nullptr;
@@ -323,7 +327,7 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
   std::vector<kernel::LiteKernel *> sub_kernels;
   std::vector<lite::Tensor *> in_tensors;
   std::vector<lite::Tensor *> out_tensors;
-  auto ret = ScheduleSubGraphToKernels(sub_graph_index, &sub_kernels, &in_tensors, &out_tensors);
+  auto ret = ScheduleSubGraphToKernels(sub_graph_index, &sub_kernels, &in_tensors, &out_tensors, kNumberTypeFloat32);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule partial failed, name: " << src_node->name_;
     return nullptr;
@@ -334,11 +338,11 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
   return subgraph;
 }
 
-kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src_node) {
+kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src_node, TypeId prefer_data_type) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*src_node, &inputs, &outputs);
-  auto *kernel = this->FindBackendKernel(inputs, outputs, src_node);
+  auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
                   << ", type: " << PrimitiveTypeName(GetPrimitiveType(src_node->primitive_));
@@ -351,7 +355,7 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
 
 int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::LiteKernel *> *dst_kernels,
                                          std::vector<lite::Tensor *> *in_tensors,
-                                         std::vector<lite::Tensor *> *out_tensors) {
+                                         std::vector<lite::Tensor *> *out_tensors, TypeId prefer_data_type) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(!src_model_->sub_graphs_.empty());
   MS_ASSERT(src_model_->sub_graphs_.size() > subgraph_index);
@@ -368,7 +372,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     if (IsPartialNode(primitive)) {  // sub_graph
       kernel = SchedulePartialToKernel(node);
     } else {  // kernel
-      kernel = ScheduleNodeToKernel(node);
+      kernel = ScheduleNodeToKernel(node, prefer_data_type);
     }
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << node->name_
