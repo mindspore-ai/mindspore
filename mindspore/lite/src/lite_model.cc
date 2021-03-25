@@ -333,6 +333,9 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   model->buf_size_ = size;
   auto status = model->ConstructModel();
   if (status != RET_OK) {
+    if (take_buf) {
+      model->buf = nullptr;
+    }
     MS_LOG(ERROR) << "construct model failed.";
     delete model;
     return nullptr;
