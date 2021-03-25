@@ -5296,7 +5296,7 @@ class Range(PrimitiveWithCheck):
        A 1-D Tensor, with the same type as the inputs.
 
     Supported Platforms:
-        ``GPU`` `CPU`
+        ``GPU``
 
     Examples:
         >>> start = Tensor(0, mstype.int32)
