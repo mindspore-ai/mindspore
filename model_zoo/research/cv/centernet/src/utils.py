@@ -137,7 +137,7 @@ class GatherFeature(nn.Cell):
             self.gather_nd = ops.GatherD()
             self.expand_dims = ops.ExpandDims()
         else:
-            self.gather_nd = ops.GatherND()
+            self.gather_nd = ops.GatherNd()
 
     def construct(self, feat, ind):
         """gather by specified index"""
