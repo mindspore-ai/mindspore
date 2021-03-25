@@ -18,11 +18,12 @@
 
 #include <vector>
 #include <memory>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class TensorAddCPUKernel : public MKLCPUKernel {
+class TensorAddCPUKernel : public CPUKernel {
  public:
   TensorAddCPUKernel() = default;
   ~TensorAddCPUKernel() override = default;
@@ -33,7 +34,15 @@ class TensorAddCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  bool need_swap_{false};
+  static void NormalProcess(const float *input_a, const float *input_b, float *output, size_t size);
+  void BroadcastProcess(const float *input_a, const float *input_b, float *output, size_t size);
+  static void CalculateStrides(const std::vector<size_t> &, std::vector<size_t> *);
+  std::vector<size_t> input_shape_a_;
+  std::vector<size_t> input_shape_b_;
+  // Define follow var for Broadcast
+  std::vector<size_t> output_shape_;
+  std::vector<size_t> input_strides_a_;
+  std::vector<size_t> input_strides_b_;
 };
 
 MS_REG_CPU_KERNEL(
