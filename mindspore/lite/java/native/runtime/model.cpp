@@ -17,7 +17,6 @@
 #include <jni.h>
 #include <fstream>
 #include "common/ms_log.h"
-#include "common/jni_utils.h"
 #include "include/model.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEnv *env, jobject thiz, jobject buffer) {
@@ -38,7 +37,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEn
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModelByPath(JNIEnv *env, jobject thiz,
                                                                                  jstring model_path) {
-  auto model_path_char = JstringToChar(env, model_path);
+  auto model_path_char = env->GetStringUTFChars(model_path, JNI_FALSE);
   if (nullptr == model_path_char) {
     MS_LOGE("model_path_char is nullptr");
     return reinterpret_cast<jlong>(nullptr);
@@ -56,7 +55,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModelByPath
 
   ifs.seekg(0, std::ios::end);
   auto size = ifs.tellg();
-  std::unique_ptr<char[]> buf(new (std::nothrow) char[size]);
+  auto buf = new (std::nothrow) char[size];
   if (buf == nullptr) {
     MS_LOGE("malloc buf failed, file: %s", model_path_char);
     ifs.close();
@@ -64,10 +63,10 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModelByPath
   }
 
   ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.get(), size);
+  ifs.read(buf, size);
   ifs.close();
-  delete[](model_path_char);
-  auto model = mindspore::lite::Model::Import(buf.get(), size);
+  auto model = mindspore::lite::Model::Import(buf, size);
+  delete[] buf;
   if (model == nullptr) {
     MS_LOGE("Import model failed");
     return reinterpret_cast<jlong>(nullptr);
