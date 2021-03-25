@@ -294,6 +294,9 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
     MS_LOG(ERROR) << "The anf is not a Primitive.";
     return ret;
   }
+  if (prim->HasAttr("io_format")) {
+    return GetValue<std::string>(prim->GetAttr("io_format"));
+  }
   auto io_format_map = IOFormatMap::get();
   auto iter = io_format_map.find(prim->name());
   if (iter == io_format_map.end()) {
