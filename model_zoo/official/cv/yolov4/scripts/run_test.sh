@@ -62,5 +62,5 @@ echo "start inferring for device $DEVICE_ID"
 python test.py \
     --data_dir=$DATASET_PATH \
     --pretrained=$CHECKPOINT_PATH \
-    --testing_shape=416 > log.txt 2>&1 &
+    --testing_shape=608 > log.txt 2>&1 &
 cd ..
