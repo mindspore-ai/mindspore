@@ -174,7 +174,7 @@ def _update_seeds(op_seed, kernel_name):
     Update the seed every time when a random op is called.
 
     Args:
-        seed (int): The op-seed to be updated.
+        op_seed (int): The op-seed to be updated.
         kernel_name (string): The random op kernel.
     """
     global _KERNEL_SEED
@@ -188,7 +188,7 @@ def _get_op_seed(op_seed, kernel_name):
     If the seed does not exist, add it into the kernel's dictionary.
 
     Args:
-        seed (int): The op-seed to be updated.
+        op_seed (int): The op-seed to be updated.
         kernel_name (string): The random op kernel.
     """
     if (kernel_name, op_seed) not in _KERNEL_SEED:
