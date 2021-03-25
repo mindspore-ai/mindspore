@@ -37,6 +37,7 @@ class LaunchKernel {
   virtual void KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) = 0;
   virtual void KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) = 0;
 
+  virtual void SetInputAddr(uint8_t *input_addr) = 0;
   virtual void LaunchOpKernel() = 0;
   virtual void FreeLaunchDeviceMem() = 0;
 
@@ -46,7 +47,6 @@ class LaunchKernel {
   std::vector<uint8_t *> outputs_addr_;
   std::vector<uint8_t *> workspaces_addr_;
 
- private:
   std::vector<kernel::AddressPtr> ObtainKernelAddress(const std::vector<size_t> &list, std::vector<uint8_t *> *addr);
   std::vector<kernel::AddressPtr> ObtainKernelInputs(const std::vector<size_t> &inputs_list,
                                                      const std::vector<uint8_t *> &inputs_addr);

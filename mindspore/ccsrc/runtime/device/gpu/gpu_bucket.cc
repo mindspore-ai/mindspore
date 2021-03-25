@@ -92,8 +92,8 @@ void GPUBucket::FreeAllDeviceMem() {
     ar_output_addr_ = nullptr;
   }
   // clear launch mul device memory
-  if (launch_kernel != nullptr) {
-    launch_kernel->FreeLaunchDeviceMem();
+  if (launch_mul_ != nullptr) {
+    launch_mul_->FreeLaunchDeviceMem();
   }
   MS_LOG(INFO) << "end";
 }
@@ -156,11 +156,11 @@ void GPUBucket::LaunchAllReduce() {
   MS_LOG(INFO) << "end";
 }
 
-std::shared_ptr<LaunchKernel> GPUBucket::CreateLaunchKernel() {
+std::shared_ptr<LaunchKernel> GPUBucket::CreateLaunchMul() {
   if (tensor_type_list_.empty()) {
     MS_LOG(ERROR) << "tensor_type_list_ is empty";
   }
-  auto launch_mul = std::make_shared<GPULaunchMul>(stream_, tensor_type_list_[0], total_size_, ar_output_addr_);
+  auto launch_mul = std::make_shared<GPULaunchMul>(stream_, tensor_type_list_[0], total_size_);
   MS_EXCEPTION_IF_NULL(launch_mul);
   return launch_mul;
 }
