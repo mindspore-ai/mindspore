@@ -25,6 +25,10 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore::kernel {
 int ConvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
+  if (conv_param_->stride_h_ > inputs[0]->Height() || conv_param_->stride_w_ > inputs[0]->Width()) {
+    MS_LOG(ERROR) << "Npu convolution does not support stride greater than input size.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -108,10 +112,14 @@ kernel::LiteKernel *NpuConvKernelCreator(const std::vector<lite::Tensor *> &inpu
                                          const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
+  if (inputs[0]->Size() > NPU_MEMORY_MAX) {
+    MS_LOG(ERROR) << "Npu does not support input tensor size greater than 200MB";
+    free(op_parameter);
+    return nullptr;
+  }
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::NPUKernel *kernel = nullptr;
-
   if (conv_param->group_ == 1) {
     kernel = new (std::nothrow) kernel::ConvolutionNPUKernel(op_parameter, inputs, outputs, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
