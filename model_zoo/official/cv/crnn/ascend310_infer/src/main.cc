@@ -33,12 +33,12 @@
 
 #include "inc/utils.h"
 
-using mindspore::GlobalContext;
+using mindspore::Context;
 using mindspore::Serialization;
 using mindspore::Model;
-using mindspore::ModelContext;
 using mindspore::Status;
 using mindspore::ModelType;
+using mindspore::Graph;
 using mindspore::GraphCell;
 using mindspore::kSuccess;
 using mindspore::MSTensor;
@@ -64,20 +64,27 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-  GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
-  auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
-  auto model_context = std::make_shared<mindspore::ModelContext>();
-  if (!FLAGS_aipp_path.empty()) {
-    ModelContext::SetInsertOpConfigPath(model_context, FLAGS_aipp_path);
+  auto context = std::make_shared<Context>();
+  auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+  ascend310_info->SetDeviceID(FLAGS_device_id);
+  ascend310_info->SetInsertOpConfigPath({FLAGS_aipp_path});
+  context->MutableDeviceInfo().push_back(ascend310_info);
+
+  Graph graph;
+  Status ret = Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
+  if (ret != kSuccess) {
+    std::cout << "Load model failed." << std::endl;
+    return 1;
   }
 
-  Model model(GraphCell(graph), model_context);
-  Status ret = model.Build();
+  Model model;
+  ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
   }
+
+  std::vector<MSTensor> modelInputs = model.GetInputs();
 
   auto allFiles = GetAllFiles(FLAGS_dataset_path);
   if (allFiles.empty()) {
@@ -108,11 +115,12 @@ int main(int argc, char **argv) {
       std::cout << "wrong file format: " << allFiles[i] << std::endl;
       continue;
     }
-    auto img = std::make_shared<MSTensor>();
-    compose(ReadFileToTensor(allFiles[i]), img.get());
 
-    inputs.emplace_back(img->Name(), img->DataType(), img->Shape(),
-                        img->Data().get(), img->DataSize());
+    mindspore::MSTensor img;
+    compose(ReadFileToTensor(allFiles[i]), &img);
+
+    inputs.emplace_back(modelInputs[0].Name(), modelInputs[0].DataType(), modelInputs[0].Shape(),
+                            img.Data().get(), img.DataSize());
 
     gettimeofday(&start, NULL);
     ret = model.Predict(inputs, &outputs);

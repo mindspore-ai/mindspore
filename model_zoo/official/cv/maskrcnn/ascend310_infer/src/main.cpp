@@ -79,7 +79,11 @@ int main(int argc, char* argv[]) {
         return ret;
     }
     if (is_file(FLAGS_data_path)) {
-        aclProcess.Process(FLAGS_data_path, &costTime_map);
+        ret = aclProcess.Process(FLAGS_data_path, &costTime_map);
+        if (ret != OK) {
+            std::cout << "model process failed, errno = " << ret << std::endl;
+            return ret;
+        }
     } else if (is_dir(FLAGS_data_path)) {
         struct dirent * filename;
         DIR * dir;
@@ -93,7 +97,11 @@ int main(int argc, char* argv[]) {
                 continue;
             }
             std::string wholePath = FLAGS_data_path + "/" + filename->d_name;
-            aclProcess.Process(wholePath, &costTime_map);
+            ret = aclProcess.Process(wholePath, &costTime_map);
+            if (ret != OK) {
+                std::cout << "model process failed, errno = " << ret << std::endl;
+                return ret;
+            }
         }
     } else {
         std::cout << " input image path error" << std::endl;
