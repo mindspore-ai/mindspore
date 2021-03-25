@@ -110,3 +110,31 @@ def test_second_grad_with_j_primitive():
     second_grad = SinGradSec(first_grad)
     x = Tensor(np.array([1.0], dtype=np.float32))
     second_grad(x)
+
+
+# A CNode being used as FV is MapMorphism after MapMorphism of call-site CNode;
+def test_ad_fv_cnode_order():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        # cnode xay is not being MapMorphism when cnode second_level() is being MapMorphism and
+        # BackPropagateFv as MapMorphism is started from output node and from left to right order.
+        def construct(self, x, y):
+            def first_level():
+                xay = x + y
+
+                def second_level():
+                    return xay
+
+                return second_level() + xay
+            return first_level()
+
+    input_x = Tensor(np.array([1.0], dtype=np.float32))
+    input_y = Tensor(np.array([2.0], dtype=np.float32))
+
+    net = Net()
+    net.add_flags_recursive(defer_inline=True)
+    grad_net = grad_all(net)
+    grad_net(input_x, input_y)
