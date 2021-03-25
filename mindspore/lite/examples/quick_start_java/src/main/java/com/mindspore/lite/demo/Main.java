@@ -107,7 +107,7 @@ public class Main {
             return false;
         }
         msgSb.append(" and out data:");
-        for (int i = 0; i < 10 && i < outTensor.elementsNum(); i++) {
+        for (int i = 0; i < 50 && i < outTensor.elementsNum(); i++) {
             msgSb.append(" ").append(result[i]);
         }
         System.out.println(msgSb.toString());
