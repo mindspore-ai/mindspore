@@ -173,7 +173,7 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatParame
   CodeArray(output_shapes_name, concat_parameter.output_shapes_, out_shape, false);
 
   CodeBaseStruct<false>("ConcatParameter", name, concat_parameter.op_parameter_, quant_arg_name, concat_parameter.axis_,
-                        concat_parameter.thread_count_, concat_parameter.input_num_, input_shapes_name,
+                        concat_parameter.thread_count_, concat_parameter.input_num_, "(int **)" + input_shapes_name,
                         output_shapes_name, concat_parameter.after_axis_size, concat_parameter.count_unit_);
 }
 

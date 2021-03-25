@@ -164,7 +164,7 @@ int RunArmHw(void *cdata, int task_id) {
   return NNACL_OK;
 }
 
-void Conv1x1Run(int8_t *src_in, Conv1x1Args *args, int8_t *src_out) {
+void Conv1x1PreRun(Conv1x1Args *args, int thread_num) {
   int row_pack_count = C4NUM;
   int col_pack_count;
 
@@ -177,49 +177,16 @@ void Conv1x1Run(int8_t *src_in, Conv1x1Args *args, int8_t *src_out) {
     col_pack_count = C4NUM;
   }
 #endif
-  int thread_num = 1;
   int hw_thread_count = UP_DIV(args->matmul_param_->row_, row_pack_count);
   int oc_thread_count = UP_DIV(args->matmul_param_->col_, col_pack_count);
-  size_t thread_count_hw = MSMIN(thread_num, hw_thread_count);
-  args->thread_stride_hw_ = UP_DIV(hw_thread_count, thread_count_hw);
-  size_t thread_count_oc = MSMIN(thread_num, oc_thread_count);
-  args->thread_stride_oc_ = UP_DIV(oc_thread_count, thread_count_oc);
-  bool parallel_by_oc = oc_thread_count > thread_num;
-
-  for (int batch_index = 0; batch_index < args->conv_param_->input_batch_; batch_index++) {
-    Pre1x1Trans(args,
-                src_in + batch_index * args->conv_param_->input_h_ * args->conv_param_->input_w_ *
-                           args->conv_param_->input_channel_,
-                src_out + batch_index * args->matmul_param_->row_ * args->matmul_param_->col_);
-    if (parallel_by_oc) {
-      /* input transpose and input sum */
-      if (args->support_optimize_) {
-        OcOptPre(args, 0);
-      } else {
-        RowMajor2Row16x4MajorInt8(args->input_ptr_, args->packed_input_, args->matmul_param_->row_,
-                                  args->matmul_param_->deep_);
-        if (args->filter_peroc_) {
-          PackInputSum16x4PerLayer(args->packed_input_, args->input_sum_, 1, args->matmul_param_->row_4_,
-                                   args->matmul_param_->deep_16_);
-        } else {
-          PackInputSum16x4PerLayer(args->packed_input_, args->input_sum_,
-                                   args->conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
-                                   args->matmul_param_->row_4_, args->matmul_param_->deep_16_);
-        }
-      }
-      /* matmul parallel by oc */
-      if (args->support_optimize_) {
-        RunArm64OptOc(args, 0);
-      } else {
-        RunArmOc(args, 0);
-      }
-    } else {
-      /* matmul parallel by hw */
-      if (args->support_optimize_) {
-        RunArm64OptHw(args, 0);
-      } else {
-        RunArmHw(args, 0);
-      }
-    }
+  args->thread_count_hw = MSMIN(thread_num, hw_thread_count);
+  args->thread_stride_hw_ = UP_DIV(hw_thread_count, args->thread_count_hw);
+  args->thread_count_oc = MSMIN(thread_num, oc_thread_count);
+  args->thread_stride_oc_ = UP_DIV(oc_thread_count, args->thread_count_oc);
+  args->parallel_by_oc_ = oc_thread_count > thread_num;
+  if (!args->filter_peroc_) {
+    args->right_shift_ = args->conv_param_->conv_quant_arg_.right_shift_;
+    args->left_shift_ = args->conv_param_->conv_quant_arg_.left_shift_;
+    args->multiplier_ = args->conv_param_->conv_quant_arg_.quant_multiplier_;
   }
 }
