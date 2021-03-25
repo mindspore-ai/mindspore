@@ -343,6 +343,12 @@ bool MemSwapManager::RetreatSwapInfo() {
   if (!trigger_swap_) {
     trigger_swap_ = true;
   }
+  if (retreat_count_ > kRetreatCountMax) {
+    MS_LOG(ERROR) << "RetreatSwapInfo exceed upper bound of count";
+    return false;
+  }
+  retreat_count_++;
+
   if (swap_info_already_set_) {
     ResetSwapInfo();
     RetreatSwapThreshold();

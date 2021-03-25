@@ -36,7 +36,8 @@ class MemSwapManager {
         tensor_size_threshold_idx_(0),
         tensor_size_num_(1),
         distance_threshold_(1),
-        distance_decay_step_(1) {
+        distance_decay_step_(1),
+        retreat_count_(0) {
     mem_copy_manager_ = mem_copy_manager;
   }
 
@@ -156,6 +157,7 @@ class MemSwapManager {
   size_t tensor_size_num_;
   size_t distance_threshold_;
   size_t distance_decay_step_;
+  size_t retreat_count_;
 
   MemCopyManagerPtr mem_copy_manager_{nullptr};
   const mindspore::session::KernelGraph *kernel_graph_{nullptr};
@@ -165,6 +167,8 @@ class MemSwapManager {
 
   static constexpr size_t kDistanceInitFactor = 3;
   static constexpr size_t kDistanceLowerBound = 3;
+  // The upper bound of count for searching memory swap scheme recurrently.
+  static constexpr size_t kRetreatCountMax = 50;
 };
 using MemSwapManagerPtr = std::shared_ptr<MemSwapManager>;
 }  // namespace memswap
