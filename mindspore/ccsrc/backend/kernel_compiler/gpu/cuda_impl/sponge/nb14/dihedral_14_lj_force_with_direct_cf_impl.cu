@@ -108,7 +108,7 @@ void Dihedral14LJForceWithDirectCF(const int dihedral_14_numbers, const int atom
     atom_numbers, uint_crd, uint_crd_with_LJ, LJtype, charge);
   cudaStreamSynchronize(stream);
   VECTOR *boxlength = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(boxlength_f));
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(3 * atom_numbers, frc_f, 0.);
   VECTOR *frc = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(frc_f));
 
   Dihedral14LJForceWithDirectCFKernel<<<block_per_grid, thread_per_block, 0, stream>>>(

@@ -82,7 +82,7 @@ class NON_BOND_14(nn.Cell):
 
         self.cf_scale_type = [0] * self.dihedral_type_numbers
         self.lj_scale_type = [0] * self.dihedral_type_numbers
-
+        self.process1(context)
         self.h_atom_a = [0] * self.dihedral_numbers
         self.h_atom_b = [0] * self.dihedral_numbers
         self.h_lj_scale_factor = [0] * self.dihedral_numbers

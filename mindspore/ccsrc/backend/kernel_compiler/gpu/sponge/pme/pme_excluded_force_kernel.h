@@ -65,7 +65,7 @@ class PMEExcludedForceGpuKernel : public GpuKernel {
     input_size_list_.push_back(atom_numbers * sizeof(VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(T));
     input_size_list_.push_back(atom_numbers * sizeof(T1));
-    input_size_list_.push_back(atom_numbers * sizeof(T1));
+    input_size_list_.push_back(excluded_numbers * sizeof(T1));
     input_size_list_.push_back(atom_numbers * sizeof(T1));
 
     output_size_list_.push_back(atom_numbers * 3 * sizeof(T));
@@ -77,6 +77,7 @@ class PMEExcludedForceGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   int atom_numbers;
+  int excluded_numbers = 2719;
   float beta;
   struct VECTOR {
     float x;

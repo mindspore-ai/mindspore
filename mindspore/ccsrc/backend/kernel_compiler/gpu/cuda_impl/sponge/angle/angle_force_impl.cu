@@ -69,7 +69,7 @@ __global__ void AngleForceKernel(int angle_numbers, const UNSIGNED_INT_VECTOR *u
 void AngleForce(int angle_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
                 const int *atom_b, const int *atom_c, const float *angle_k, const float *angle_theta0, float *frc_f,
                 cudaStream_t stream) {
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(3 * atom_numbers, frc_f, 0.);
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(angle_numbers) / 128);
   UNSIGNED_INT_VECTOR *uint_crd =

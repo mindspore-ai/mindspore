@@ -64,7 +64,7 @@ class Dihedral14CFEnergyGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto uint_crd_f = GetDeviceAddress<const T1>(inputs, 0);
     auto LJtype = GetDeviceAddress<const T1>(inputs, 1);
@@ -74,9 +74,10 @@ class Dihedral14CFEnergyGpuKernel : public GpuKernel {
     auto b_14 = GetDeviceAddress<const T1>(inputs, 5);
     auto cf_scale_factor = GetDeviceAddress<T>(inputs, 6);
     auto ene = GetDeviceAddress<T>(outputs, 0);
+    auto uint_crd_with_LJ = GetDeviceAddress<T>(workspace, 0);
 
-    Dihedral14CFEnergy(dihedral_14_numbers, atom_numbers, uint_crd_f, LJtype, charge, boxlength_f, a_14, b_14,
-                       cf_scale_factor, ene, reinterpret_cast<cudaStream_t>(stream_ptr));
+    Dihedral14CFEnergy(dihedral_14_numbers, atom_numbers, uint_crd_f, LJtype, charge, uint_crd_with_LJ, boxlength_f,
+                       a_14, b_14, cf_scale_factor, ene, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;
   }
@@ -90,7 +91,7 @@ class Dihedral14CFEnergyGpuKernel : public GpuKernel {
     input_size_list_.push_back(ele_a_14 * sizeof(T1));
     input_size_list_.push_back(ele_b_14 * sizeof(T1));
     input_size_list_.push_back(ele_cf_scale_factor * sizeof(T));
-
+    workspace_size_list_.push_back(atom_numbers * sizeof(UINT_VECTOR_LJ_TYPE));
     output_size_list_.push_back(atom_numbers * sizeof(T));
   }
 
@@ -108,6 +109,13 @@ class Dihedral14CFEnergyGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
   int dihedral_14_numbers;
   int atom_numbers;
+  struct UINT_VECTOR_LJ_TYPE {
+    unsigned int uint_x;
+    unsigned int uint_y;
+    unsigned int uint_z;
+    int LJ_type;
+    float charge;
+  };
 };
 }  // namespace kernel
 }  // namespace mindspore

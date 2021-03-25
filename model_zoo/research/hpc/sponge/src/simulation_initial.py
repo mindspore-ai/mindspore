@@ -18,15 +18,15 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, nn
 
-from Langevin_Liujian_md import Langevin_Liujian
-from angle import Angle
-from bond import Bond
-from dihedral import Dihedral
-from lennard_jones import Lennard_Jones_Information
-from md_information import md_information
-from nb14 import NON_BOND_14
-from neighbor_list import nb_infomation
-from particle_mesh_ewald import Particle_Mesh_Ewald
+from .Langevin_Liujian_md import Langevin_Liujian
+from .angle import Angle
+from .bond import Bond
+from .dihedral import Dihedral
+from .lennard_jones import Lennard_Jones_Information
+from .md_information import md_information
+from .nb14 import NON_BOND_14
+from .neighbor_list import nb_infomation
+from .particle_mesh_ewald import Particle_Mesh_Ewald
 
 
 class controller:
@@ -102,7 +102,8 @@ class Simulation(nn.Cell):
         nb_info = self.nb_info
         pme_method = self.pme_method
         bond_frc, _ = self.bond.Bond_Force_With_Atom_Energy(md_info.uint_crd, md_info.uint_dr_to_dr_cof)
-        frc_t = bond_frc.asnumpy()
+        frc_t = 0
+        frc_t += bond_frc.asnumpy()
 
         angle_frc, _ = self.angle.Angle_Force_With_Atom_Energy(md_info.uint_crd, md_info.uint_dr_to_dr_cof)
         frc_t += angle_frc.asnumpy()
@@ -180,6 +181,7 @@ class Simulation(nn.Cell):
         if md_info.mode > 0 and int(control.Command_Set["thermostat"]) == 1:
             md_info.vel, md_info.crd, md_info.frc, md_info.acc = liujian_info.MD_Iteration_Leap_Frog(
                 md_info.d_mass_inverse, md_info.vel, md_info.crd, md_info.frc)
+            self.Main_After_Iteration()
 
     def Main_After_Iteration(self):
         """main after iteration"""
