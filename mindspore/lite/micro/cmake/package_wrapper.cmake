@@ -1,10 +1,7 @@
 include_directories(${LITE_DIR}/micro/coder/operator_library)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(WRAPPER_DIR ${LITE_DIR}/micro/coder/operator_library/wrapper/)
 
-set(RUNTIME_SRC
-        ${LITE_DIR}/src/runtime/thread_pool.c
-        )
+
 
 set(WRAPPER_SRC
         ${WRAPPER_DIR}/base/common_wrapper.c
@@ -24,4 +21,4 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/int8/batchnorm_int8_wrapper.c
         )
 
-list(APPEND FILE_SET ${WRAPPER_SRC} ${RUNTIME_SRC})
+list(APPEND FILE_SET ${WRAPPER_SRC})
