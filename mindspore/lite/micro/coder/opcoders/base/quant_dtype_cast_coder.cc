@@ -46,7 +46,13 @@ int QuantDTypeCastCoder::DoCode(CoderContext *const context) {
                      : input_tensor_->quant_params().at(0);
   int num_unit_thread = input_tensor_->ElementsNum();
 
-  Collect(context, {"nnacl/int8/quant_dtype_cast_int8.h"}, {"quant_dtype_cast_int8.c"});
+  Collect(context,
+          {
+            "nnacl/int8/quant_dtype_cast_int8.h",
+          },
+          {
+            "quant_dtype_cast_int8.c",
+          });
   Serializer code;
   code.precision(kPrecision);
   if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {

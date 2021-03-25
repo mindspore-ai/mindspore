@@ -40,7 +40,14 @@ int SpliceFP32Coder::DoCode(CoderContext *const context) {
     MS_LOG(ERROR) << "SpliceFP32Coder src_col not match to dst_col";
     return RET_ERROR;
   }
-  Collect(context, {"nnacl/splice_parameter.h", "nnacl/fp32/splice_fp32.h"}, {"splice_fp32.c"});
+  Collect(context,
+          {
+            "nnacl/splice_parameter.h",
+            "nnacl/fp32/splice_fp32.h",
+          },
+          {
+            "splice_fp32.c",
+          });
   NNaclFp32Serializer code;
   code.CodeStruct("splice_parameter", *splice_parameter);
   code.CodeFunction("SpliceFp32", input_tensor_, src_row, src_col, "&splice_parameter", output_tensor_, dst_row,

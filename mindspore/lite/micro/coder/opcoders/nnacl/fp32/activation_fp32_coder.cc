@@ -33,7 +33,13 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
   int stride = UP_DIV(length, thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  Collect(context, {"nnacl/fp32/activation_fp32.h"}, {"activation_fp32.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/activation_fp32.h",
+          },
+          {
+            "activation_fp32.c",
+          });
   NNaclFp32Serializer code;
   switch (activation_parameter->type_) {
     case schema::ActivationType_RELU:

@@ -38,16 +38,19 @@ int DWConvInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
 
-  std::vector<std::string> h_files;
-  std::vector<std::string> c_files;
-
-  h_files.emplace_back("CMSIS/NN/Include/arm_nnfunctions.h");
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {});
   code.CodeArray("output_shift", output_shift_, output_ch_);
   code.CodeArray("output_mult", output_mult_, output_ch_);
   switch (optimize_) {
     case Conv_3x3:
-      c_files.emplace_back("arm_depthwise_conv_3x3_s8.c");
-      Collect(context, h_files, c_files);
+      Collect(context, {},
+              {
+                "arm_depthwise_conv_3x3_s8.c",
+              });
       code.CodeFunction("arm_depthwise_conv_3x3_s8", input_tensor_, input_x_, input_y_, input_ch_, filter_tensor_,
                         output_ch_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_, output_tensor_, "output_shift",
                         "output_mult", output_x_, output_y_, output_offset_, input_offset_, output_activation_min_,
@@ -55,9 +58,11 @@ int DWConvInt8Coder::DoCode(CoderContext *const context) {
       break;
     case Conv_opt:
       // arm_depthwise_conv_s8_opt also depends on arm_depthwise_conv_s8
-      c_files.emplace_back("arm_depthwise_conv_s8.c");
-      c_files.emplace_back("arm_depthwise_conv_s8_opt.c");
-      Collect(context, h_files, c_files);
+      Collect(context, {},
+              {
+                "arm_depthwise_conv_s8.c",
+                "arm_depthwise_conv_s8_opt.c",
+              });
       code.CodeFunction("arm_depthwise_conv_s8_opt", input_tensor_, input_x_, input_y_, input_ch_, filter_tensor_,
                         output_ch_, kernel_x_, kernel_y_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_,
                         output_tensor_, "output_shift", "output_mult", output_x_, output_y_, output_offset_,
@@ -65,8 +70,10 @@ int DWConvInt8Coder::DoCode(CoderContext *const context) {
                         "NULL");
       break;
     case Basic:
-      c_files.emplace_back("arm_depthwise_conv_s8.c");
-      Collect(context, h_files, c_files);
+      Collect(context, {},
+              {
+                "arm_depthwise_conv_s8.c",
+              });
       code.CodeFunction("arm_depthwise_conv_s8", input_tensor_, input_x_, input_y_, input_ch_, filter_tensor_,
                         output_ch_, ch_mult_, kernel_x_, kernel_y_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_,
                         output_tensor_, "output_shift", "output_mult", output_x_, output_y_, output_offset_,

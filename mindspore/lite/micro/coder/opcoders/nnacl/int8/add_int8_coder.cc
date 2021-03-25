@@ -136,8 +136,16 @@ int AddInt8Coder::ReSize() {
 }
 
 int AddInt8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"wrapper/int8/add_int8_wrapper.h"},
-          {"add_int8_wrapper.c", "add_int8.c", "arithmetic_base.c", "arithmetic_int8.c"});
+  Collect(context,
+          {
+            "wrapper/int8/add_int8_wrapper.h",
+          },
+          {
+            "add_int8_wrapper.c",
+            "add_int8.c",
+            "arithmetic_base.c",
+            "arithmetic_int8.c",
+          });
 
   nnacl::NNaclInt8Serializer code;
 

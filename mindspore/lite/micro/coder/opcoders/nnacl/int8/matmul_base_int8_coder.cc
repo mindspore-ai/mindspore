@@ -168,9 +168,18 @@ int MatMulBaseInt8Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   Collect(context,
-          {"nnacl/common_func.h", "nnacl/int8/common_func_int8.h", "nnacl/int8/matmul_int8.h",
-           "wrapper/int8/matmul_int8_wrapper.h"},
-          {"common_func.c", "common_func_int8.c", "matmul_int8.c", "matmul_int8_wrapper.c"});
+          {
+            "nnacl/common_func.h",
+            "nnacl/int8/common_func_int8.h",
+            "nnacl/int8/matmul_int8.h",
+            "wrapper/int8/matmul_int8_wrapper.h",
+          },
+          {
+            "common_func.c",
+            "common_func_int8.c",
+            "matmul_int8.c",
+            "matmul_int8_wrapper.c",
+          });
   std::string value_str_end = ";\n";
   NNaclInt8Serializer init_code;
   NNaclInt8Serializer code;

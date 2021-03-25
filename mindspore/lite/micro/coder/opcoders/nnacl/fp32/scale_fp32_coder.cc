@@ -127,7 +127,15 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   Tensor *offset_tensor = input_tensors_.at(kBiasIndex);
   MS_CHECK_PTR(scale_tensor);
   MS_CHECK_PTR(offset_tensor);
-  Collect(context, {"nnacl/scale.h", "nnacl/fp32/scale.h", "nnacl/quantization/quantize.h"}, {"scale.c"});
+  Collect(context,
+          {
+            "nnacl/scale.h",
+            "nnacl/fp32/scale.h",
+            "nnacl/quantization/quantize.h",
+          },
+          {
+            "scale.c",
+          });
 
   NNaclFp32Serializer code;
   code.CodeStruct("scale_parameter", *scale_param_);

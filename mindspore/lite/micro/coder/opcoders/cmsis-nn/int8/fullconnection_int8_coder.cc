@@ -35,7 +35,14 @@ int FullConnectionInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
 
-  Collect(context, {"CMSIS/NN/Include/arm_nnfunctions.h"}, {"arm_fully_connected_s8.c", "arm_nn_vec_mat_mult_t_s8.c"});
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {
+            "arm_fully_connected_s8.c",
+            "arm_nn_vec_mat_mult_t_s8.c",
+          });
 
   code.CodeFunction("arm_fully_connected_s8", input_tensor_, filter_tensor_, col_dim_, row_dim_, nb_batches_,
                     input_offset_, filter_offset_, out_multiplier_, out_shift_, output_offset_, bias_tensor_,

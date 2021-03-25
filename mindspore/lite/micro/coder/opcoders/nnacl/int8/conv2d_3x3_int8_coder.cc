@@ -127,8 +127,17 @@ int Conv2D3x3Int8Coder::Prepare(CoderContext *const context) {
 }
 
 int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/int8/conv_int8.h", "nnacl/int8/conv3x3_int8.h"},
-          {"pack_int8.c", "conv_int8.c", "conv3x3_int8.c", "fixed_point.c"});
+  Collect(context,
+          {
+            "nnacl/int8/conv_int8.h",
+            "nnacl/int8/conv3x3_int8.h",
+          },
+          {
+            "pack_int8.c",
+            "conv_int8.c",
+            "conv3x3_int8.c",
+            "fixed_point.c",
+          });
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);
   // call the op function

@@ -34,7 +34,13 @@ int ReshapeInt8Coder::DoCode(CoderContext *const context) {
   std::vector<QuantArg> input_quant_args = input->quant_params();
   std::vector<QuantArg> output_quant_args = output->quant_params();
 
-  Collect(context, {"nnacl/int8/reshape_int8.h"}, {"reshape_int8.c"});
+  Collect(context,
+          {
+            "nnacl/int8/reshape_int8.h",
+          },
+          {
+            "reshape_int8.c",
+          });
   NNaclInt8Serializer code;
   code.precision(kPrecision);
   ReshapeQuantArg reshape_quant_arg = {

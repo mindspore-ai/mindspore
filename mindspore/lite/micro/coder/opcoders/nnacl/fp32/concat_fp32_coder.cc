@@ -35,7 +35,13 @@ int ConcatFP32Coder::ReSize() {
 }
 
 int ConcatFP32Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/fp32/concat.h"}, {"nnacl/fp32/concat.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/concat.h",
+          },
+          {
+            "nnacl/fp32/concat.c",
+          });
 
   size_t input_num = input_tensors_.size();
 

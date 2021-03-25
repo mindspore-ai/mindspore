@@ -51,7 +51,13 @@ int TileFP32Coder::Prepare(CoderContext *const context) { return Resize(); }
 
 int TileFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
-  Collect(context, {"nnacl/fp32/tile.h"}, {"nnacl/fp32/tile.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/tile.h",
+          },
+          {
+            "nnacl/fp32/tile.c",
+          });
 
   NNaclFp32Serializer code;
 

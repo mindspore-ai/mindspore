@@ -69,7 +69,14 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
     outter_size *= softmax_param_->input_shape_[i];
   }
   MS_CHECK_TRUE(softmax_param_->n_dim_ < 5, "n_dim should be less than the length of maximum value of input_shape");
-  Collect(context, {"nnacl/int8/softmax_int8.h"}, {"softmax_int8.c", "fixed_point.c"});
+  Collect(context,
+          {
+            "nnacl/int8/softmax_int8.h",
+          },
+          {
+            "softmax_int8.c",
+            "fixed_point.c",
+          });
 
   NNaclInt8Serializer code;
   code.precision(kPrecision);

@@ -38,9 +38,19 @@ int BiasAddFP32Coder::DoCode(CoderContext *ctx) {
   size_t data_size = input_tensor_->ElementsNum();
   std::string bias_str = allocator_->GetRuntimeAddr(input_tensors_.at(kWeightIndex), true);
   Collect(ctx,
-          {"nnacl/arithmetic.h", "nnacl/nnacl_utils.h", "nnacl/nnacl_common.h", "nnacl/base/arithmetic_base.h",
-           "nnacl/fp32/add_fp32.h", "nnacl/fp32/arithmetic_fp32.h"},
-          {"arithmetic_base.c", "arithmetic_fp32.c", "add_fp32.c"});
+          {
+            "nnacl/arithmetic.h",
+            "nnacl/nnacl_utils.h",
+            "nnacl/nnacl_common.h",
+            "nnacl/base/arithmetic_base.h",
+            "nnacl/fp32/add_fp32.h",
+            "nnacl/fp32/arithmetic_fp32.h",
+          },
+          {
+            "arithmetic_base.c",
+            "arithmetic_fp32.c",
+            "add_fp32.c",
+          });
   nnacl::NNaclFp32Serializer code;
   std::vector<int> dims = input_tensor_->shape();
   arithmetic_parameter_->broadcasting_ = false;

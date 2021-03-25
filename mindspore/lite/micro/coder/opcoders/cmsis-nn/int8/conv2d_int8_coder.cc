@@ -39,9 +39,11 @@ int Conv2DInt8Coder::Prepare(CoderContext *const context) {
 int Conv2DInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
-  std::vector<std::string> h_files;
-  std::vector<std::string> c_files;
-  h_files.emplace_back("CMSIS/NN/Include/arm_nnfunctions.h");
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {});
   if (opt_ != Convolve_1x1_fast) {
     code.CodeFunction("memset", buffer_, 0, buffer_size_);
   }
@@ -49,25 +51,36 @@ int Conv2DInt8Coder::DoCode(CoderContext *const context) {
   code.CodeArray("output_mult", output_mult_, output_ch_);
   switch (opt_) {
     case Basic:
-      c_files = {"arm_convolve_s8.c", "arm_nn_mat_mult_kernel_s8_s16.c", "arm_q7_to_q15_with_offset.c"};
-      Collect(context, h_files, c_files);
+      Collect(context, {},
+              {
+                "arm_convolve_s8.c",
+                "arm_nn_mat_mult_kernel_s8_s16.c",
+                "arm_q7_to_q15_with_offset.c",
+              });
       code.CodeFunction("arm_convolve_s8", input_tensor_, input_x_, input_y_, input_ch_, input_batches_, filter_tensor_,
                         output_ch_, kernel_x_, kernel_y_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_,
                         output_tensor_, "output_shift", "output_mult", out_offset_, input_offset_, out_activation_min_,
                         out_activation_max_, output_x_, output_y_, buffer_);
       break;
     case Convolve_1_x_n:
-      c_files = {"arm_convolve_1_x_n_s8.c", "arm_nn_mat_mul_core_1x_s8.c"};
-      Collect(context, h_files, c_files);
+      Collect(context, {},
+              {
+                "arm_convolve_1_x_n_s8.c",
+                "arm_nn_mat_mul_core_1x_s8.c",
+              });
       code.CodeFunction("arm_convolve_1_x_n_s8", input_tensor_, input_x_, input_ch_, input_batches_, filter_tensor_,
                         output_ch_, kernel_x_, pad_x_, stride_x_, bias_tensor_, output_tensor_, "output_shift",
                         "output_mult", out_offset_, input_offset_, out_activation_min_, out_activation_max_, output_x_,
                         buffer_);
       break;
     case Convolve_1x1_fast:
-      c_files = {"arm_convolve_1x1_s8_fast.c", "arm_nn_mat_mult_nt_t_s8.c", "arm_nn_mat_mul_core_4x_s8.c",
-                 "arm_nn_mat_mul_core_1x_s8.c"};
-      Collect(context, h_files, c_files);
+      Collect(context, {},
+              {
+                "arm_convolve_1x1_s8_fast.c",
+                "arm_nn_mat_mult_nt_t_s8.c",
+                "arm_nn_mat_mul_core_4x_s8.c",
+                "arm_nn_mat_mul_core_1x_s8.c",
+              });
       code.CodeFunction("arm_convolve_1x1_s8_fast", input_tensor_, input_x_, input_y_, input_ch_, input_batches_,
                         filter_tensor_, output_ch_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_, output_tensor_,
                         "output_shift", "output_mult", out_offset_, input_offset_, out_activation_min_,

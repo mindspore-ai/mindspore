@@ -48,7 +48,14 @@ int SoftMaxFP32Coder::Prepare(CoderContext *const context) {
 }
 
 int SoftMaxFP32Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/fp32/softmax_fp32.h"}, {"softmax_fp32.c", "exp_fp32.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/softmax_fp32.h",
+          },
+          {
+            "softmax_fp32.c",
+            "exp_fp32.c",
+          });
   NNaclFp32Serializer code;
   code.CodeStruct("softmax_parameter", *softmax_param_);
   code.CodeFunction("memset", sum_data_, "0", sum_data_size_);

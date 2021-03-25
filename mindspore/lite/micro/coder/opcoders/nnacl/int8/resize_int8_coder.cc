@@ -61,9 +61,16 @@ int ResizeInt8Coder::ReSize() {
 }
 
 int ResizeInt8Coder::DoCode(CoderContext *const context) {
-  std::vector<std::string> headers = {"nnacl/int8/resize_int8.h", "wrapper/int8/resize_int8_wrapper.h"};
-  std::vector<std::string> cFiles = {"resize_int8.c", "common_func.c", "resize_int8_wrapper.c"};
-  Collect(context, headers, cFiles);
+  Collect(context,
+          {
+            "nnacl/int8/resize_int8.h",
+            "wrapper/int8/resize_int8_wrapper.h",
+          },
+          {
+            "resize_int8.c",
+            "common_func.c",
+            "resize_int8_wrapper.c",
+          });
 
   nnacl::NNaclInt8Serializer code;
   code.CodeArray("input_shape", input_tensor_->shape().data(), input_tensor_->shape().size(), true);

@@ -78,7 +78,15 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
     return RET_OK;
   }
 
-  Collect(context, {"nnacl/transpose.h", "nnacl/fp32/transpose.h", "nnacl/errorcode.h"}, {"transpose.c"});
+  Collect(context,
+          {
+            "nnacl/transpose.h",
+            "nnacl/fp32/transpose.h",
+            "nnacl/errorcode.h",
+          },
+          {
+            "transpose.c",
+          });
 
   NNaclFp32Serializer code;
   code.CodeStruct("transpose_parameter", *transpose_parameter_);

@@ -60,7 +60,13 @@ int MulInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
 
-  Collect(context, {"CMSIS/NN/Include/arm_nnfunctions.h"}, {"arm_elementwise_mul_s8.c"});
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {
+            "arm_elementwise_mul_s8.c",
+          });
 
   code.CodeFunction("arm_elementwise_mul_s8", input1_, input2_, input_1_offset_, input_2_offset_, output_tensor_,
                     out_offset_, out_mult_, out_shift_, out_activation_min_, out_activation_max_, block_size_);

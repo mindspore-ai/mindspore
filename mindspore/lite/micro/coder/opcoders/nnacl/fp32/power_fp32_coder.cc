@@ -48,7 +48,13 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
     cur_exp_str = exp_addr;
   }
   // generate code .h .c
-  Collect(context, {"nnacl/power.h"}, {"power.c"});
+  Collect(context,
+          {
+            "nnacl/power.h",
+          },
+          {
+            "power.c",
+          });
   NNaclFp32Serializer code;
   code.CodeFunction("Power", input_tensor_, cur_exp_str, output_tensor_, len, scale_, shift_, broadcast);
   context->AppendCode(code.str());

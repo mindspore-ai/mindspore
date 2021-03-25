@@ -43,13 +43,27 @@ int DTypeCastCoder::DoCode(CoderContext *const context) {
   TypeId input_data_type = input_tensor_->data_type();
   TypeId output_data_type = output_tensor_->data_type();
 
-  std::vector<std::string> asmFiles;
+  Collect(context,
+          {
+            "nnacl/fp32/cast.h",
+          },
+          {
+            "nnacl/fp32/cast.c",
+            "nnacl/fp32/common_func.c",
+          });
   if (target_ == kARM32A) {
-    asmFiles = {"nnacl/assembly/arm32/PostFuncBiasReluC8.S", "nnacl/assembly/arm32/PostFuncBiasReluC4.S"};
+    Collect(context, {}, {},
+            {
+              "nnacl/assembly/arm32/PostFuncBiasReluC8.S",
+              "nnacl/assembly/arm32/PostFuncBiasReluC4.S",
+            });
   } else if (target_ == kARM64) {
-    asmFiles = {"nnacl/assembly/arm64/PostFuncBiasReluC8.S", "nnacl/assembly/arm64/PostFuncBiasReluC4.S"};
+    Collect(context, {}, {},
+            {
+              "nnacl/assembly/arm64/PostFuncBiasReluC8.S",
+              "nnacl/assembly/arm64/PostFuncBiasReluC4.S",
+            });
   }
-  Collect(context, {"nnacl/fp32/cast.h"}, {"nnacl/fp32/cast.c", "nnacl/fp32/common_func.c"}, asmFiles);
   Serializer code;
   if (output_data_type != kNumberTypeFloat32) {
     if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt32) {
