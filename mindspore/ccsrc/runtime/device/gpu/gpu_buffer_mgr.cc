@@ -106,7 +106,14 @@ void GpuBufferMgr::set_device_id(int device_id) { cur_dev_id_ = device_id; }
 void GpuBufferMgr::set_device() const {
   auto ret = cudaSetDevice(cur_dev_id_);
   if (ret != cudaSuccess) {
-    MS_LOG(ERROR) << "cudaSetDevice, ret[" << static_cast<int>(ret) << "]";
+    MS_LOG(ERROR)
+      << "Set device for id:" << cur_dev_id_ << " failed, ret[" << static_cast<int>(ret) << "], "
+      << cudaGetErrorString(ret)
+      << ". Please make sure that the 'device_id' set in context is in the range:[0, total number of GPU). "
+         "If the environment variable 'CUDA_VISIBLE_DEVICES' is set, the total number of GPU will be the number set "
+         "in the environment variable 'CUDA_VISIBLE_DEVICES'. For example, if export CUDA_VISIBLE_DEVICES=4,5,6, the "
+         "'device_id' can be 0,1,2 at the moment, 'device_id' starts from 0, and 'device_id'=0 means using GPU of "
+         "number 4.";
   }
 }
 

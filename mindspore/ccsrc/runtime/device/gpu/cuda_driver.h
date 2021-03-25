@@ -63,7 +63,7 @@ class CudaDriver {
 
   // Encapsulate the cuda APIs associated with device management.
   static int device_count();
-  static bool set_current_device(int index);
+  static bool SetDevice(int index);
 
  private:
   CudaDriver() = delete;

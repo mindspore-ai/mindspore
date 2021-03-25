@@ -95,7 +95,7 @@ void GPUSession::Init(uint32_t device_id) {
     MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
     device_id = IntToUint((*get_local_rank_funcptr)());
   }
-  bool ret = device::gpu::CudaDriver::set_current_device(UintToInt(device_id));
+  bool ret = device::gpu::CudaDriver::SetDevice(UintToInt(device_id));
   if (!ret) {
     MS_LOG(EXCEPTION) << "GPUSession failed to set current device id:" << device_id;
   }
