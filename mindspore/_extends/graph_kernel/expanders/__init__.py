@@ -21,6 +21,8 @@ from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .dropout_grad import DropoutGrad
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
+from .batchnorm import BatchNorm
+from .batchnorm_grad import BatchNormGrad
 from .gelu import GeLU
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
@@ -31,6 +33,8 @@ from .logsoftmax_grad import LogSoftmaxGrad
 from .maximum_grad import MaximumGrad
 from .minimum_grad import MinimumGrad
 from .reduce_mean import ReduceMean
+from .relu import ReLU
+from .relu_grad import ReluGrad
 from .softmax import Softmax
 from .sigmoid import Sigmoid
 from .sigmoid_grad import SigmoidGrad
