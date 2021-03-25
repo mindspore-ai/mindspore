@@ -106,7 +106,7 @@ void LJForceWithPMEDirectForce(const int atom_numbers, const float cutoff, const
                                const int *LJtype, const float *charge, const float *scaler_f, float *uint_crd_with_LJ,
                                int *nl_atom_numbers, int *nl_atom_serial, int *nl, const float *d_LJ_A,
                                const float *d_LJ_B, float *frc_f, cudaStream_t stream) {
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(3 * atom_numbers, frc_f, 0.);
   VECTOR *frc = reinterpret_cast<VECTOR *>(frc_f);
   VECTOR *scaler = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(scaler_f));
   int max_neighbor_numbers = 800;

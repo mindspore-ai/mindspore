@@ -97,9 +97,6 @@ void MDIterationLeapFrog(const int float4_numbers, const int atom_numbers, const
                          const float exp_gamma, const int is_max_velocity, const float max_velocity,
                          const float *d_mass_inverse, const float *d_sqrt_mass, float *vel_f, float *crd_f,
                          float *frc_f, float *acc_f, cudaStream_t stream) {
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, vel_f, 0.);
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, crd_f, 0.);
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
   Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, acc_f, 0.);
 
   VECTOR *frc = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(frc_f));
