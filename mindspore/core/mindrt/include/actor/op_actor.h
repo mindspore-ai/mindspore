@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_OP_ACTOR_H
+#define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_OP_ACTOR_H
+
 #include <list>
 #include <vector>
 #include <memory>
@@ -68,11 +71,21 @@ class OpActor : public ActorBase {
  public:
   explicit OpActor(std::string op_name) : ActorBase(op_name) {}
   virtual ~OpActor() = default;
-  virtual void OpRun(OpDataPtr<T> inputs, OpContext<T> *context = nullptr) {}
+
+  // The op actor run when receive the input data.
+  virtual void RunOpData(OpDataPtr<T> input_data, OpContext<T> *context = nullptr) {}
+
+  // The op actor run when receive the input control.
+  virtual void RunOpControl(AID *input_control, OpContext<T> *context = nullptr) {}
 
  protected:
+  // The op data.
   std::unordered_map<uuids::uuid *, std::vector<OpDataPtr<T>>> input_op_datas_;
-  std::vector<OpArrowPtr> output_op_arrow_;
+  std::vector<OpArrowPtr> output_op_arrows_;
+
+  // The op controls.
+  std::unordered_map<uuids::uuid *, std::vector<AID *>> input_op_controls_;
+  std::vector<AID> output_op_controls_;
 };
 
 template <typename T>
@@ -84,7 +97,7 @@ Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &inputData
   Future<std::list<int>> collect = mindspore::Collect<int>(futures);
 
   for (auto data : inputData) {
-    Async(data->op_id_, &mindspore::OpActor<T>::OpRun, data, context);
+    Async(data->op_id_, &mindspore::OpActor<T>::RunOpData, data, context);
   }
 
   return collect;
@@ -112,3 +125,5 @@ int MindrtRun(const std::vector<OpDataPtr<T>> &inputData, std::vector<OpDataPtr<
 }
 
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_OP_ACTOR_H
