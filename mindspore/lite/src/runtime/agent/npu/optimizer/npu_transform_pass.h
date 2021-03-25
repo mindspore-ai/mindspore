@@ -16,11 +16,14 @@
 
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_
+
+#include <set>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
 
 namespace mindspore::lite {
+extern std::set<mindspore::schema::PrimitiveType> npu_trans_nodes;
 class NPUTransformPass : public NPUBasePass {
  public:
   int Run() override;

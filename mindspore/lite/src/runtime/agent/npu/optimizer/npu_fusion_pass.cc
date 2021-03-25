@@ -18,6 +18,9 @@
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 #include "src/lite_kernel.h"
 #include "nnacl/concat_parameter.h"
+#include "nnacl/split_parameter.h"
+#include "nnacl/pad_parameter.h"
+#include "nnacl/strided_slice_parameter.h"
 
 namespace mindspore::lite {
 bool CheckFusion(kernel::LiteKernel *kernel) {
@@ -119,7 +122,7 @@ void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
 }
 
 void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
-  auto tensors_vec = cur_kernel->in_tensors();
+  auto tensors_vec = NPUPassUtils::GetNonConstInputs(cur_kernel);
   for (auto in_kernel : cur_kernel->in_kernels()) {
     lite::Tensor *cur_tensor = nullptr;
     auto in_tensor = in_kernel->in_tensors()[0];
@@ -134,6 +137,15 @@ void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
       if (tensors_vec[i] == out_tensor) {
         tensors_vec[i] = cur_tensor;
       }
+    }
+  }
+  // add constant inputs back
+  if (nodes2const_index.find(static_cast<schema::PrimitiveType>(cur_kernel->op_parameter()->type_)) !=
+      nodes2const_index.end()) {
+    tensors_vec.resize(cur_kernel->in_tensors().size());
+    auto const_index = nodes2const_index[static_cast<schema::PrimitiveType>(cur_kernel->op_parameter()->type_)];
+    for (auto index : const_index) {
+      tensors_vec[index] = cur_kernel->in_tensors()[index];
     }
   }
   cur_kernel->set_in_tensors(tensors_vec);
@@ -275,14 +287,74 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
   return RET_OK;
 }
 
+int NPUFusionPass::SplitFusion(kernel::LiteKernel *kernel) {
+  UpdateKernel(kernel);
+  auto split_param = reinterpret_cast<SplitParameter *>(kernel->op_parameter());
+  split_param->split_dim_ = TransFormAxis(split_param->split_dim_);
+  return RET_OK;
+}
+
+int NPUFusionPass::PadFusion(kernel::LiteKernel *kernel) {
+  UpdateKernel(kernel);
+  auto pad_param = reinterpret_cast<PadParameter *>(kernel->op_parameter());
+  int c1 = pad_param->paddings_[6];
+  int c2 = pad_param->paddings_[7];
+  // 0 1 2 3 4 5 6 7
+  // n n h h w w c c
+  // n n c c h h w w
+  pad_param->paddings_[6] = pad_param->paddings_[4];
+  pad_param->paddings_[7] = pad_param->paddings_[5];
+  pad_param->paddings_[4] = pad_param->paddings_[2];
+  pad_param->paddings_[5] = pad_param->paddings_[3];
+  pad_param->paddings_[2] = c1;
+  pad_param->paddings_[3] = c2;
+  return RET_OK;
+}
+
+int NPUFusionPass::StridedSliceFusion(kernel::LiteKernel *kernel) {
+  // basic requirement: input is nhwc 4d
+  UpdateKernel(kernel);
+  auto param = reinterpret_cast<StridedSliceParameter *>(kernel->op_parameter());
+  auto begin_tensor = kernel->in_tensors().at(1);
+  int *begin = reinterpret_cast<int *>(begin_tensor->data_c());
+  (void)NPUPassUtils::AssistDataNHWC2NCHW(begin, 1);
+  auto end_tensor = kernel->in_tensors().at(2);
+  int *end = reinterpret_cast<int *>(end_tensor->data_c());
+  NPUPassUtils::AssistDataNHWC2NCHW(end, 1);
+  auto stride_tensor = kernel->in_tensors().at(3);
+  if (kernel->in_tensors().size() == 5) {
+    stride_tensor = kernel->in_tensors().at(4);
+  }
+  int *stride = reinterpret_cast<int *>(stride_tensor->data_c());
+  NPUPassUtils::AssistDataNHWC2NCHW(stride, 1);
+  param->begins_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(param->begins_mask_);
+  param->ends_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(param->ends_mask_);
+  param->ellipsisMask_ = NPUPassUtils::MaskDataNHWC2NCHW(param->ellipsisMask_);
+  param->newAxisMask_ = NPUPassUtils::MaskDataNHWC2NCHW(param->newAxisMask_);
+  param->shrinkAxisMask_ = NPUPassUtils::MaskDataNHWC2NCHW(param->shrinkAxisMask_);
+  return RET_OK;
+}
+
 int NPUFusionPass::Run() {
   for (size_t i = 0; i < kernels->size(); i++) {
     auto kernel = (*kernels)[i];
     if (CheckFusion(kernel)) {
       switch (kernel->Type()) {
+        case schema::PrimitiveType_Split:
+          i -= kernel->in_kernels().size();
+          SplitFusion(kernel);
+          continue;
         case schema::PrimitiveType_Concat:
           i -= kernel->in_kernels().size();
           ConcatFusion(kernel);
+          continue;
+        case schema::PrimitiveType_PadFusion:
+          i -= kernel->in_kernels().size();
+          PadFusion(kernel);
+          continue;
+        case schema::PrimitiveType_StridedSlice:
+          i -= kernel->in_kernels().size();
+          StridedSliceFusion(kernel);
           continue;
         case schema::PrimitiveType_AddFusion:
         case schema::PrimitiveType_Activation:

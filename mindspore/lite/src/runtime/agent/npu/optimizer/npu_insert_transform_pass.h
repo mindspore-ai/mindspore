@@ -34,6 +34,7 @@ class NPUInsertTransformPass : public NPUBasePass {
   int Run() override;
 
  private:
+  int GetInsertState(kernel::LiteKernel *kernel);
   int InsertPreNodes(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *trans_kernels);
 
   int InsertPostNodes(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *trans_kernels);
