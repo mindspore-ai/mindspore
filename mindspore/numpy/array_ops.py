@@ -492,16 +492,14 @@ def column_stack(tup):
         ValueError: If `tup` is empty.
 
     Examples:
-        >>> import mindspore.numpy as mnp
-        >>> import numpy as onp
-        >>> from mindspore import Tensor
-        >>> x1 = Tensor(onp.array([1, 2, 3]).astype('int32'))
-        >>> x2 = Tensor(onp.array([4, 5, 6]).astype('int32'))
-        >>> output = mnp.column_stack((x1, x2))
+        >>> import mindspore.numpy as np
+        >>> x1 = np.array([1, 2, 3]).astype('int32')
+        >>> x2 = np.array([4, 5, 6]).astype('int32')
+        >>> output = np.column_stack((x1, x2))
         >>> print(output)
-        [[1, 4],
-         [2, 5],
-         [3, 6]]
+        [[1 4]
+         [2 5]
+         [3 6]]
     """
     if isinstance(tup, Tensor):
         return tup
@@ -541,15 +539,13 @@ def vstack(tup):
         ValueError: If `tup` is empty.
 
     Examples:
-        >>> import mindspore.numpy as mnp
-        >>> import numpy as onp
-        >>> from mindspore import Tensor
-        >>> x1 = Tensor(onp.array([1, 2, 3]).astype('int32'))
-        >>> x2 = Tensor(onp.array([4, 5, 6]).astype('int32'))
-        >>> output = mnp.vstack((x1, x2))
+        >>> import mindspore.numpy as np
+        >>> x1 = np.array([1, 2, 3]).astype('int32')
+        >>> x2 = np.array([4, 5, 6]).astype('int32')
+        >>> output = np.vstack((x1, x2))
         >>> print(output)
-        [[1, 2, 3],
-         [4, 5, 6]]
+        [[1 2 3]
+         [4 5 6]]
     """
     if isinstance(tup, Tensor):
         return tup
@@ -690,12 +686,13 @@ def where(condition, x=None, y=None):
         >>> y = np.full((2, 1, 1), 7)
         >>> output = np.where(condition, x, y)
         >>> print(output)
-        [[[7, 5],
-        [7, 5],
-        [7, 5]],
-        [[7, 5],
-        [7, 5],
-        [7, 5]]]
+        [[[7 5]
+        [7 5]
+        [7 5]]
+
+        [[7 5]
+        [7 5]
+        [7 5]]]
     """
     # type promotes input tensors
     dtype1 = F.dtype(x)
@@ -978,7 +975,7 @@ def unique(x, return_inverse=False):
         >>> input_x = np.asarray([1, 2, 2, 2, 3, 4, 5]).astype('int32')
         >>> output_x = np.unique(input_x)
         >>> print(output_x)
-        [1, 2, 3, 4, 5]
+        [1 2 3 4 5]
         >>> output_x = np.unique(input_x, return_inverse=True)
         >>> print(output_x)
         (Tensor(shape=[5], dtype=Int32, value= [ 1, 2, 3, 4, 5]), Tensor(shape=[7], dtype=Int32,
@@ -1055,7 +1052,7 @@ def roll(a, shift, axis=None):
         Tensor, with the same shape as a.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If input arguments have types not specified above.
