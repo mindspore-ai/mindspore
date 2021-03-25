@@ -60,9 +60,10 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
   if (!kernel_node->HasAttr(kAttrIsTraining)) {
-    MS_LOG(WARNING) << "LSTM has no attr is_training";
+    is_training = true;
+  } else {
+    is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
   }
-  is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
   auto prop_kind = dnnl::prop_kind::forward_training;
   if (!is_training) {
     prop_kind = dnnl::prop_kind::forward_inference;

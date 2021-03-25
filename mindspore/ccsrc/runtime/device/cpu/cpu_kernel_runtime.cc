@@ -189,6 +189,12 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
     auto shape = AnfAlgo::GetOutputInferShape(node, index);
     ShapeVector temp_shape;
     (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
+    size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
+    size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
+    if (tensor_size < address->size_) {
+      temp_shape.clear();
+      temp_shape.emplace_back(address->size_);
+    }
     tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     bool is_internal_output = kernel_graph->IsInternalOutput(node, index);
     if (is_internal_output) {
