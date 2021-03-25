@@ -49,6 +49,15 @@ int ArithmeticNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                     << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
     return RET_ERROR;
   }
+  auto type = static_cast<schema::PrimitiveType>(opParameter->type_);
+  if (type == mindspore::schema::PrimitiveType_Less && inputs[0]->shape().size() == 1) {
+    MS_LOG(WARNING) << name_ << " not support input 1d";
+    return RET_ERROR;
+  }
+  if (type == mindspore::schema::PrimitiveType_Equal && inputs[0]->shape().size() == 2) {
+    MS_LOG(WARNING) << name_ << " not support input 2d";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
