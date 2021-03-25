@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_MSG_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_MSG_H
 
+#include <utility>
+#include <string>
+
 #include "actor/aid.h"
 
 namespace mindspore {
@@ -33,7 +36,7 @@ class MessageBase {
     KTERMINATE,
   };
 
-  MessageBase(Type eType = Type::KMSG) : from(), name(), type(eType) {}
+  explicit MessageBase(Type eType = Type::KMSG) : from(), name(), type(eType) {}
 
   explicit MessageBase(const std::string &sName, Type eType = Type::KMSG) : from(), name(sName), type(eType) {}
 

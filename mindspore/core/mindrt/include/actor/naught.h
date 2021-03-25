@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_NAUGHT_H
 
 #include <memory>
+#include <string>
 
 namespace mindspore {
 

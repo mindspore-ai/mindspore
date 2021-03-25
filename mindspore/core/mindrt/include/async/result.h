@@ -19,8 +19,8 @@
 
 #include <tuple>
 
-#include "option.h"
-#include "status.h"
+#include "async/option.h"
+#include "async/status.h"
 
 namespace mindspore {
 

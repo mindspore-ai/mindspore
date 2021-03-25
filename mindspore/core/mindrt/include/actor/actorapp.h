@@ -17,6 +17,11 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_ACTORAPP_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_ACTORAPP_H
 
+#include <memory>
+#include <utility>
+#include <map>
+#include <string>
+
 #include "actor/actor.h"
 
 namespace mindspore {
@@ -33,7 +38,7 @@ class AppActor : public ActorBase {
  public:
   typedef std::function<void(std::unique_ptr<MessageBase>)> APPBehavior;
 
-  AppActor(const std::string &name) : ActorBase(name) {}
+  explicit AppActor(const std::string &name) : ActorBase(name) {}
   ~AppActor() {}
 
   inline int Send(const AID &to, std::unique_ptr<MessageBase> msg) { return ActorBase::Send(to, std::move(msg)); }
@@ -63,7 +68,8 @@ class AppActor : public ActorBase {
 
   template <typename T, typename M>
   static void BehaviorBase(T *t, void (T::*method)(const AID &, std::unique_ptr<M>), std::unique_ptr<MessageBase> msg) {
-    (t->*method)(msg->From(), std::move(std::unique_ptr<M>((M *)static_cast<MessageLocal *>(msg.get())->ptr)));
+    (t->*method)(msg->From(),
+                 std::move(std::unique_ptr<M>(reinterpret_cast<M *>(static_cast<MessageLocal *>(msg.get())->ptr))));
     return;
   }
 

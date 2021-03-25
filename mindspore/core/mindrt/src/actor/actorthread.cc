@@ -16,6 +16,8 @@
 
 #include "actor/actorthread.h"
 #include <atomic>
+#include <utility>
+#include <memory>
 
 namespace mindspore {
 constexpr int MAXTHREADNAMELEN = 12;

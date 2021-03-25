@@ -20,6 +20,8 @@
 #include <condition_variable>
 #include <list>
 #include <thread>
+#include <memory>
+#include <string>
 
 #include "actor/actor.h"
 

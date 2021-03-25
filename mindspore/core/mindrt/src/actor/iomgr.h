@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_MINDRT_SRC_ACTOR_IOMGR_H
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_IOMGR_H
 #include <memory>
+#include <string>
 #include "actor/aid.h"
 
 #include "actor/msg.h"
@@ -41,18 +42,18 @@ static const int SOCKET_KEEPINTERVAL = 5;
 // probes without getting a reply.
 static const int SOCKET_KEEPCOUNT = 3;
 
-static const std::string BUS_MAGICID = "BUS0";
+static const char BUS_MAGICID[] = "BUS0";
 
-static const std::string URL_PROTOCOL_IP_SEPARATOR = "://";
+static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
 
-static const std::string URL_IP_PORT_SEPARATOR = ":";
+static const char URL_IP_PORT_SEPARATOR[] = ":";
 
-static const std::string UDP_EVLOOP_THREADNAME = "HARES_LB_Udp";
+static const char UDP_EVLOOP_THREADNAME[] = "HARES_LB_Udp";
 
-static const std::string TCP_RECV_EVLOOP_THREADNAME = "HARES_LB_TcpR";
-static const std::string TCP_SEND_EVLOOP_THREADNAME = "HARES_LB_TcpS";
+static const char TCP_RECV_EVLOOP_THREADNAME[] = "HARES_LB_TcpR";
+static const char TCP_SEND_EVLOOP_THREADNAME[] = "HARES_LB_TcpS";
 
-static const std::string HTTP_CLIENT_EVLOOP_THREADNAME = "HARES_LB_Htp";
+static const char HTTP_CLIENT_EVLOOP_THREADNAME[] = "HARES_LB_Htp";
 
 class IOMgr {
  public:
