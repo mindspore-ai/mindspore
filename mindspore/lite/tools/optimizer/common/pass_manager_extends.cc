@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace opt {
-static size_t count = 0;
 constexpr size_t kMaxRepassTimes = 12;
 const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
 
@@ -77,6 +76,7 @@ bool PassManager::Run(const FuncGraphPtr &func_graph) const {
     return false;
   }
   bool changed = false;
+  size_t count = 0;
   // run all passes
   bool change = true;
   while (change) {
