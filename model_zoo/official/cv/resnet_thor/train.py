@@ -125,7 +125,9 @@ if __name__ == '__main__':
                config.weight_decay, config.loss_scale)
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
     model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', loss_scale_manager=loss_scale,
-                  keep_batchnorm_fp32=False, metrics={'acc'}, frequency=config.frequency)
+                  keep_batchnorm_fp32=False, metrics={'acc'}, frequency=config.frequency,
+                  use_dynamic_frequency=config.use_dynamic_frequency,
+                  first_stage_steps=config.first_stage_steps)
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)

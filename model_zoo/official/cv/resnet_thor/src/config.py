@@ -37,6 +37,8 @@ config = ed({
     "damping_init": 0.03,
     "damping_decay": 0.87,
     "frequency": 834,
+    "use_dynamic_frequency": False,
+    "first_stage_steps": 835,
 })
 
 # config for resnet50, imagenet2012, GPU
@@ -59,4 +61,6 @@ config_gpu = ed({
     "damping_init": 0.02345,
     "damping_decay": 0.5467,
     "frequency": 834,
+    "use_dynamic_frequency": False,
+    "first_stage_steps": 835,
 })
