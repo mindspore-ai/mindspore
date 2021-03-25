@@ -1,5 +1,5 @@
-set(projectq_CXXFLAGS "-fopenmp -O2 -ffast-mast -march=native -DINTRIN")
-set(projectq_CFLAGS "-fopenmp -O2 -ffast-mast -march=native -DINTRIN")
+set(projectq_CXXFLAGS "-fopenmp -O2 -ffast-mast -mavx -DINTRIN")
+set(projectq_CFLAGS "-fopenmp -O2 -ffast-mast -mavx -DINTRIN")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/ProjectQ/repository/archive/v0.5.1.tar.gz")
