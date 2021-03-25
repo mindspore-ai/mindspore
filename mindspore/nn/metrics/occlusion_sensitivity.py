@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """OcclusionSensitivity."""
-from collections.abc import Sequence
 import numpy as np
 from mindspore import nn
 from mindspore.common.tensor import Tensor
@@ -49,7 +48,7 @@ class OcclusionSensitivity(Metric):
 
     Example:
         >>> class DenseNet(nn.Cell):
-        >>>     def init(self):
+        >>>     def __init__(self):
         >>>         super(DenseNet, self).init()
         >>>         w = np.array([[0.1, 0.8, 0.1, 0.1],[1, 1, 1, 1]]).astype(np.float32)
         >>>         b = np.array([0.3, 0.6]).astype(np.float32)
