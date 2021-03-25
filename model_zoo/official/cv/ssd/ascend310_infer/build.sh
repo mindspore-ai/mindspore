@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ ! -d out ]; then
-    mkdir out
+if [ -d out ]; then
+    rm -rf out
 fi
 
-cd out
+mkdir out && cd out
 
 if [ -f "Makefile" ]; then
   make clean

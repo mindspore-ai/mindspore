@@ -32,10 +32,9 @@
 #include "include/minddata/dataset/include/vision.h"
 #include "inc/utils.h"
 
-using mindspore::GlobalContext;
+using mindspore::Context;
 using mindspore::Serialization;
 using mindspore::Model;
-using mindspore::ModelContext;
 using mindspore::Status;
 using mindspore::ModelType;
 using mindspore::GraphCell;
@@ -64,21 +63,23 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-  GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
-  auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
-  auto model_context = std::make_shared<mindspore::ModelContext>();
+  auto context = std::make_shared<Context>();
+  auto ascend310 = std::make_shared<mindspore::Ascend310DeviceInfo>();
+  ascend310->SetDeviceID(FLAGS_device_id);
+  context->MutableDeviceInfo().push_back(ascend310);
+  mindspore::Graph graph;
+  Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
   if (FLAGS_cpu_dvpp == "DVPP") {
     if (RealPath(FLAGS_aipp_path).empty()) {
       std::cout << "Invalid aipp path" << std::endl;
       return 1;
     } else {
-      ModelContext::SetInsertOpConfigPath(model_context, FLAGS_aipp_path);
+      ascend310->SetInsertOpConfigPath(FLAGS_aipp_path);
     }
   }
 
-  Model model(GraphCell(graph), model_context);
-  Status ret = model.Build();
+  Model model;
+  Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
