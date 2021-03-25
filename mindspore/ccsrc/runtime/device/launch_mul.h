@@ -24,10 +24,10 @@
 namespace mindspore::device {
 class LaunchMul {
  public:
-  LaunchMul(TypeId dtype, size_t total_size, uint8_t *input1_addr)
+  LaunchMul(TypeId dtype, size_t total_size)
       : dtype_(dtype),
         total_size_(total_size),
-        input1_addr_(input1_addr),
+        input1_addr_(nullptr),
         input2_addr_(nullptr),
         input2_value_(0),
         mul_graph_(nullptr) {}

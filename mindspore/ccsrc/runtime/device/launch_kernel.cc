@@ -83,7 +83,7 @@ void LaunchKernel::LaunchSingleKernel(const std::vector<uint8_t *> &inputs_addr)
   // launch
   auto ret_status = kernel_mod_->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret_status) {
-    MS_LOG(ERROR) << "Launch mul kernel failed.";
+    MS_LOG(ERROR) << "Launch single kernel failed.";
   }
 }
 

@@ -33,6 +33,7 @@ class AscendLaunchKernel : public LaunchKernel {
   void KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) override;
   void KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) override;
 
+  void SetInputAddr(uint8_t *input_addr) override = 0;
   void LaunchOpKernel() override = 0;
   void FreeLaunchDeviceMem() override = 0;
 };

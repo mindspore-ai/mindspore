@@ -38,7 +38,8 @@ class Bucket {
         compute_stream_(nullptr),
         pre_event_(nullptr),
         post_event_(nullptr),
-        launch_kernel(nullptr),
+        launch_mul_(nullptr),
+        launch_atomic_clean_(nullptr),
         total_size_(0),
         ar_input_addr_(nullptr),
         ar_output_addr_(nullptr) {}
@@ -60,7 +61,8 @@ class Bucket {
 
   std::shared_ptr<DeviceEvent> pre_event_;
   std::shared_ptr<DeviceEvent> post_event_;
-  std::shared_ptr<LaunchKernel> launch_kernel;
+  std::shared_ptr<LaunchKernel> launch_mul_;
+  std::shared_ptr<LaunchKernel> launch_atomic_clean_;
 
   size_t total_size_;
   uint8_t *ar_input_addr_;
@@ -77,7 +79,7 @@ class Bucket {
   virtual void AllocateAllReduceAddr() = 0;
   void UpdateTensorAddr();
   void CalculateMean();
-  virtual std::shared_ptr<LaunchKernel> CreateLaunchKernel() = 0;
+  virtual std::shared_ptr<LaunchKernel> CreateLaunchMul() = 0;
   virtual void LaunchAllReduce() = 0;
   virtual void FreeAllDeviceMem() = 0;
   virtual void FreeDeviceMem(void *dev_ptr) = 0;
