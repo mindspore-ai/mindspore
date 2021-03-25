@@ -62,31 +62,31 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter) {
-  CodeBaseStruct("MatMulParameter", name, matmul_parameter.op_parameter_, matmul_parameter.has_bias_,
-                 matmul_parameter.row_, matmul_parameter.col_, matmul_parameter.row_4_, matmul_parameter.row_6_,
-                 matmul_parameter.row_12_, matmul_parameter.row_16_, matmul_parameter.row_align_,
-                 matmul_parameter.col_4_, matmul_parameter.col_8_, matmul_parameter.col_align_, matmul_parameter.deep_,
-                 matmul_parameter.deep_4_, matmul_parameter.deep_16_, matmul_parameter.batch,
-                 matmul_parameter.a_transpose_, matmul_parameter.b_transpose_, matmul_parameter.a_const_,
-                 matmul_parameter.b_const_, matmul_parameter.act_type_);
+  CodeBaseStruct<false>("MatMulParameter", name, matmul_parameter.op_parameter_, matmul_parameter.has_bias_,
+                        matmul_parameter.row_, matmul_parameter.col_, matmul_parameter.row_4_, matmul_parameter.row_6_,
+                        matmul_parameter.row_12_, matmul_parameter.row_16_, matmul_parameter.row_align_,
+                        matmul_parameter.col_4_, matmul_parameter.col_8_, matmul_parameter.col_align_,
+                        matmul_parameter.deep_, matmul_parameter.deep_4_, matmul_parameter.deep_16_,
+                        matmul_parameter.batch, matmul_parameter.a_transpose_, matmul_parameter.b_transpose_,
+                        matmul_parameter.a_const_, matmul_parameter.b_const_, matmul_parameter.act_type_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const AddQuantParameter &add_quant_parameter) {
-  CodeBaseStruct("AddQuantParameter", name, add_quant_parameter.left_shift_, add_quant_parameter.min_,
-                 add_quant_parameter.max_, add_quant_parameter.in0_args_, add_quant_parameter.in1_args_,
-                 add_quant_parameter.out_zp_, add_quant_parameter.out_left_shift_, add_quant_parameter.out_right_shift_,
-                 add_quant_parameter.out_multiplier_);
+  CodeBaseStruct<false>("AddQuantParameter", name, add_quant_parameter.left_shift_, add_quant_parameter.min_,
+                        add_quant_parameter.max_, add_quant_parameter.in0_args_, add_quant_parameter.in1_args_,
+                        add_quant_parameter.out_zp_, add_quant_parameter.out_left_shift_,
+                        add_quant_parameter.out_right_shift_, add_quant_parameter.out_multiplier_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter) {
-  CodeBaseStruct("ArithmeticParameter", name, arithmetic_parameter.op_parameter_, arithmetic_parameter.broadcasting_,
-                 arithmetic_parameter.ndim_, arithmetic_parameter.activation_type_,
-                 ToString(arithmetic_parameter.in_shape0_), arithmetic_parameter.in_elements_num0_,
-                 ToString(arithmetic_parameter.in_shape1_), arithmetic_parameter.in_elements_num1_,
-                 ToString(arithmetic_parameter.out_shape_), arithmetic_parameter.out_elements_num_,
-                 ToString(arithmetic_parameter.in_strides0_), ToString(arithmetic_parameter.in_strides1_),
-                 ToString(arithmetic_parameter.out_strides_), ToString(arithmetic_parameter.multiples0_),
-                 ToString(arithmetic_parameter.multiples1_));
+  CodeBaseStruct<false>("ArithmeticParameter", name, arithmetic_parameter.op_parameter_,
+                        arithmetic_parameter.broadcasting_, arithmetic_parameter.ndim_,
+                        arithmetic_parameter.activation_type_, ToString(arithmetic_parameter.in_shape0_),
+                        arithmetic_parameter.in_elements_num0_, ToString(arithmetic_parameter.in_shape1_),
+                        arithmetic_parameter.in_elements_num1_, ToString(arithmetic_parameter.out_shape_),
+                        arithmetic_parameter.out_elements_num_, ToString(arithmetic_parameter.in_strides0_),
+                        ToString(arithmetic_parameter.in_strides1_), ToString(arithmetic_parameter.out_strides_),
+                        ToString(arithmetic_parameter.multiples0_), ToString(arithmetic_parameter.multiples1_));
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter) {
@@ -161,10 +161,10 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatParame
   auto get_shape_name = [&input_shapes_name](int i) { return input_shapes_name + "_" + std::to_string(i); };
   // input_shape
   for (int i = 0; i < in_tensor_count; ++i) {
-    CodeArray(get_shape_name(i), concat_parameter.input_shapes_[i], in_shape);
+    CodeArray(get_shape_name(i), concat_parameter.input_shapes_[i], in_shape, false);
   }
 
-  code << "const int *" << input_shapes_name << "[] = {";
+  code << "int *" << input_shapes_name << "[] = {";
   for (int i = 0; i < in_tensor_count; ++i) {
     code << get_shape_name(i) << " ,";
   }
@@ -172,9 +172,9 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatParame
   // output_shape
   CodeArray(output_shapes_name, concat_parameter.output_shapes_, out_shape, false);
 
-  CodeBaseStruct("ConcatParameter", name, concat_parameter.op_parameter_, quant_arg_name, concat_parameter.axis_,
-                 concat_parameter.thread_count_, concat_parameter.input_num_, input_shapes_name, output_shapes_name,
-                 concat_parameter.after_axis_size, concat_parameter.count_unit_);
+  CodeBaseStruct<false>("ConcatParameter", name, concat_parameter.op_parameter_, quant_arg_name, concat_parameter.axis_,
+                        concat_parameter.thread_count_, concat_parameter.input_num_, input_shapes_name,
+                        output_shapes_name, concat_parameter.after_axis_size, concat_parameter.count_unit_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ::QuantArg &quant_arg) {

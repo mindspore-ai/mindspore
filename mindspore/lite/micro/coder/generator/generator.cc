@@ -93,9 +93,11 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "session.h", session_header},
     {net_src_file_path_ + "tensor.h", tensor_header},
     {net_src_file_path_ + "tensor.cc", tensor_source},
-    {net_src_file_path_ + "thread_pool.h", thread_header},
     {net_src_file_path_ + "string.cc", string_source},
     {net_src_file_path_ + "model.h", model_header}};
+  if (config_->support_parallel()) {
+    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "thread_pool.h", thread_header));
+  }
   if (config_->debug_mode()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));

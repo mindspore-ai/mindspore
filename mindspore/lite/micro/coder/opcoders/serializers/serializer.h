@@ -108,7 +108,7 @@ class Serializer {
     if (is_const) {
       code << "const " << type << " " << name << "[" << length << "] = {";
     } else {
-      code << "static " << type << " " << name << "[" << length << "] = {";
+      code << type << " " << name << "[" << length << "] = {";
     }
     for (int i = 0; i < length - 1; ++i) {
       code << data[i] << ", ";

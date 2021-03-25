@@ -46,7 +46,8 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
           {"nnacl/int8/conv1x1_int8.h", "nnacl/common_func.h", "wrapper/int8/conv1x1_init_int8_wrapper.h",
            "wrapper/int8/conv1x1_run_int8_wrapper.h"},
           {"common_func.c", "pack_int8.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c",
-           "conv1x1_init_int8_wrapper.c", "conv1x1_run_int8_wrapper.c", "conv1x1_base.c"});
+           "conv1x1_init_int8_wrapper.c", "conv1x1_run_int8_wrapper.c", "conv1x1_base.c"},
+          {"MatmulInt8Opt.S"});
 
   nnacl::NNaclInt8Serializer code;
 
