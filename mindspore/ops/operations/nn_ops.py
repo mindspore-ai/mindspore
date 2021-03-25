@@ -978,14 +978,9 @@ class BNTrainingReduce(PrimitiveWithInfer):
         >>> bn_training_reduce = ops.BNTrainingReduce()
         >>> output = bn_training_reduce(input_x)
         >>> print(output)
-        (Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.73200464e+00, 2,73200464e+00],
-           [ 2.73200464e+00, 2,73200464e+00]],
-          [[ 2.73200464e+00, 2,73200464e+00],
-           [ 2.73200464e+00, 2,73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-01,
-        9.24999952e-01]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-01, 9.24999952e-01]),
-        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-01, 2.50000000e-01]), Tensor(shape=[2], dtype=Float32,
-        value= [ 1.87500000e-01, 1.87500000-01]))
+        (Tensor(shape=[3], dtype=Float32, value=
+        [ 1.22880000e+04, 1.22880000e+04, 1.22880000e+04]), Tensor(shape=[3], dtype=Float32, value=
+        [ 1.22880000e+04, 1.22880000e+04, 1.22880000e+04]))
     """
 
     @prim_attr_register
@@ -1061,17 +1056,10 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         [[[[ 2.73200464e+00,  2.73200464e+00],
            [ 2.73200464e+00,  2.73200464e+00]],
           [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]],
-          [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
-        [[[[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]],
-          [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value=
-           [ 2.50000000e-01,  2.50000000e-01]), Tensor(shape=[2], dtype=Float32, value=
-           [ 1.87500000e-01,  1.87500000e-01]))
+           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [9.24999952e-0.1,
+        9.24999952e-0.1]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-0.1, 9.24999952e-0.1]),
+        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-0.1, 2.50000000e-0.1]), Tensor(shape=[2], dtype=Float32,
+        value= [ 1.87500000e-0.1, 1.87500000e-0.1]))
     """
 
     @prim_attr_register
@@ -2223,8 +2211,8 @@ class NLLLoss(PrimitiveWithInfer):
 
     Examples:
         >>> input = Tensor(np.array([[0.5488135, 0.71518934],
-        >>>                          [0.60276335, 0.5448832],
-        >>>                          [0.4236548, 0.6458941]]).astype(np.float32))
+        ...                          [0.60276335, 0.5448832],
+        ...                          [0.4236548, 0.6458941]]).astype(np.float32))
         >>> target = Tensor(np.array([0, 0, 0]).astype(np.int32))
         >>> weight = Tensor(np.array([0.3834415, 0.79172504]).astype(np.float32))
         >>> nll_loss = ops.NLLLoss(reduction="mean")
@@ -2357,7 +2345,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         ``GPU`` ``CPU``
 
     Examples:
-        Please refer to the usage in nn.SoftmaxCrossEntropyWithLogits source code.
+        Please refer to :class:`mindspore.nn.SparseSoftmaxCrossEntropyWithLogits`
     """
 
     @prim_attr_register
@@ -4216,20 +4204,14 @@ class Adam(PrimitiveWithInfer):
         ...     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
         ...         out = self.apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
         ...                               epsilon, grad)
-        ...
         ...         return out
-        >>> np.random.seed(0)
+        ...
         >>> net = Net()
-        >>> gradient = Tensor(np.random.rand(2, 2).astype(np.float32))
-        >>> output = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 9.99697924e-01,  9.99692678e-01],
-         [ 9.99696255e-01,  9.99698043e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 9.54881310e-01,  9.71518934e-01],
-         [ 9.60276306e-01,  9.54488277e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 9.99301195e-01,  9.99511480e-01],
-         [ 9.99363303e-01,  9.99296904e-01]]))
+        >>> gradient = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
+        >>> print(net.var.asnumpy())
+        [[0.9996838 0.9996838]
+         [0.9996838 0.9996838]]
     """
 
     @prim_attr_register
@@ -4318,18 +4300,17 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as ops
-        >>>
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.adam = ops.AdamNoUpdateParam()
-        >>>         self.m = Parameter(Tensor(np.array([[0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]).astype(np.float32)),
-        >>>                            name="m")
-        >>>         self.v = Parameter(Tensor(np.array([[0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]).astype(np.float32)),
-        >>>                            name="v")
-        >>>     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
-        >>>         out = self.adam(self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.adam = ops.AdamNoUpdateParam()
+        ...         self.m = Parameter(Tensor(np.array([[0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]).astype(np.float32)),
+        ...                            name="m")
+        ...         self.v = Parameter(Tensor(np.array([[0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]).astype(np.float32)),
+        ...                            name="v")
+        ...     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+        ...         out = self.adam(self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+        ...         return out
         >>> net = Net()
         >>> beta1_power = Tensor(0.9, ms.float32)
         >>> beta2_power = Tensor(0.999, ms.float32)
@@ -4338,7 +4319,6 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         >>> beta2 = Tensor(0.999, ms.float32)
         >>> epsilon = Tensor(1e-8, ms.float32)
         >>> gradient = Tensor(np.array([[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]).astype(np.float32))
-        >>>
         >>> result = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient)
         >>> print(result)
         [[-0.00010004 -0.00010004 -0.00010004]
@@ -4459,8 +4439,11 @@ class FusedSparseAdam(PrimitiveWithInfer):
         >>> epsilon = Tensor(1e-8, mstype.float32)
         >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
         >>> indices = Tensor([0, 1], mstype.int32)
-        >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
-        >>> print(output)
+        >>> net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> print(net.var.asnumpy())
+        [[[0.9996963  0.9996977 ]]
+         [[0.99970144 0.9996992 ]]
+         [[0.99971527 0.99971527]]]
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -4604,8 +4587,11 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         >>> epsilon = Tensor(1e-8, mstype.float32)
         >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
         >>> indices = Tensor([0, 1], mstype.int32)
-        >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
-        >>> print(output)
+        >>> net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> print(net.var.asnumpy())
+        [[[0.9996866 0.9997078]]
+         [[0.9997037 0.9996869]]
+         [[1.        1.       ]]]
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
