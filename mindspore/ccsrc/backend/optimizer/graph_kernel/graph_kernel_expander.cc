@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
@@ -67,6 +68,29 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimAssignAdd,
 #endif
   };
+  auto new_prim = [](const std::string &name) { return std::make_shared<Primitive>(name); };
+  auto &flags = context::GraphKernelFlags::GetInstance();
+  auto &enable_ops_only = flags.enable_expand_ops_only;
+  if (!enable_ops_only.empty()) {
+    expand_ops.clear();
+    std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::inserter(expand_ops, expand_ops.end()),
+                   new_prim);
+  } else {
+    auto &enable_ops = flags.enable_expand_ops;
+    auto &disable_ops = flags.disable_expand_ops;
+    if (!enable_ops.empty()) {
+      std::transform(enable_ops.begin(), enable_ops.end(), std::inserter(expand_ops, expand_ops.end()), new_prim);
+    }
+    if (!disable_ops.empty()) {
+      for (auto iter = expand_ops.begin(); iter != expand_ops.end();) {
+        if (std::find(disable_ops.begin(), disable_ops.end(), (*iter)->name()) != disable_ops.end()) {
+          expand_ops.erase(iter++);
+        } else {
+          ++iter;
+        }
+      }
+    }
+  }
   return expand_ops;
 }
 }  // namespace

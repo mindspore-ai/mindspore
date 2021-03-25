@@ -17,6 +17,7 @@
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include <algorithm>
 #include <memory>
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "backend/optimizer/common/helper.h"
 
@@ -462,9 +463,7 @@ void MemReuseUtil::SetAllInfo(const KernelGraph *graph) {
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);
 #endif
 
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  enable_visit_kernel_cache_ = context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+  enable_visit_kernel_cache_ = context::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
 }
 
 uint8_t *MemReuseUtil::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const {

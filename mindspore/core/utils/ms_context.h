@@ -112,6 +112,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_PYTHON_EXE_PATH,
   MS_CTX_ENV_CONFIG_PATH,
   MS_CTX_TUNE_MODE,
+  MS_CTX_GRAPH_KERNEL_FLAGS,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type

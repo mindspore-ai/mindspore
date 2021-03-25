@@ -489,6 +489,7 @@ def _check_target_specific_cfgs(device, arg_key):
         'enable_dump': ['Ascend'],
         'save_dump_path': ['Ascend'],
         'enable_graph_kernel': ['Ascend', 'GPU'],
+        'graph_kernel_flags': ['Ascend', 'GPU'],
         'enable_reduce_precision': ['Ascend'],
         'enable_profiling': ['Ascend'],
         'profiling_options': ['Ascend'],
@@ -513,7 +514,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
-                 enable_sparse=bool, max_call_depth=int, env_config_path=str)
+                 enable_sparse=bool, max_call_depth=int, env_config_path=str, graph_kernel_flags=str)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -540,14 +541,14 @@ def set_context(**kwargs):
     ===========================  ===========================  =================
     check_bprop                  print_file_path              max_device_memory
     device_id                    enable_dump                  enable_graph_kernel
-    device_target                save_dump_path
+    device_target                save_dump_path               graph_kernel_flags
     enable_sparse                enable_graph_kernel
     max_call_depth               enable_reduce_precision
     mode                         enable_profiling
     reserve_class_name_in_scope  profiling_options
     save_graphs                  variable_memory_max_size
     save_graphs_path             auto_tune_mode
-    env_config_path
+    env_config_path              graph_kernel_flags
     grad_for_scalar
     ===========================  ===========================  =================
 
@@ -566,6 +567,7 @@ def set_context(**kwargs):
             `context.set_context(save_graphs_path="path/to/ir/files"+device_id)`.
         enable_graph_kernel (bool): Whether to enable composition of basic primitives. These primitives would be
             compiled into a fused kernel automatically. Default: False.
+        graph_kernel_flags (str): Set graph_kernel flags.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
