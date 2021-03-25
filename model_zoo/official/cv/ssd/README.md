@@ -406,7 +406,7 @@ The ckpt_file parameter is required,
 
 ### Infer on Ascend310
 
-Before performing inference, the mindir file must bu exported by export script on the 910 environment. We only provide an example of inference using MINDIR model.
+Before performing inference, the mindir file must bu exported by `export.py` script. We only provide an example of inference using MINDIR model.
 Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space, otherwise the process will be killed for execeeding memory limits.
 
 ```shell

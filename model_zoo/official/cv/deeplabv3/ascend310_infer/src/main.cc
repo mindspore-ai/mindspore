@@ -1,12 +1,12 @@
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,9 @@
 #include "include/minddata/dataset/include/execute.h"
 #include "../inc/utils.h"
 
-using mindspore::GlobalContext;
+using mindspore::Context;
 using mindspore::Serialization;
 using mindspore::Model;
-using mindspore::ModelContext;
 using mindspore::Status;
 using mindspore::ModelType;
 using mindspore::GraphCell;
@@ -127,15 +126,18 @@ int main(int argc, char **argv) {
     std::cout << "Invalid fusion switch path" << std::endl;
     return 1;
   }
-  GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-  GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
-  auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
-  auto model_context = std::make_shared<mindspore::Context>();
+  auto context = std::make_shared<Context>();
+  auto ascend310 = std::make_shared<mindspore::Ascend310DeviceInfo>();
+  ascend310->SetDeviceID(FLAGS_device_id);
+  context->MutableDeviceInfo().push_back(ascend310);
+  mindspore::Graph graph;
+  Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
+
   if (!FLAGS_fusion_switch_path.empty()) {
-    ModelContext::SetFusionSwitchConfigPath(model_context, FLAGS_fusion_switch_path);
+    ascend310->SetFusionSwitchConfigPath(FLAGS_fusion_switch_path);
   }
-  Model model(GraphCell(graph), model_context);
-  Status ret = model.Build();
+  Model model;
+  Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;

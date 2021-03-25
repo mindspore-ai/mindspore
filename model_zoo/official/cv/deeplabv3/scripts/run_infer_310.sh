@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [[ $# -lt 4 || $# -gt 5 ]]; then
-    echo "Usage: sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_ID]
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_ID]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
