@@ -69,6 +69,14 @@ def test_slice2():
     output = slice_op(x)
     assert (output.asnumpy() == expect).all()
 
+def test_slice_float64():
+    data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
+                            [[3, 3, 3], [4, 4, 4]],
+                            [[5, 5, 5], [6, 6, 6]]]).astype(np.float64))
+    slice_op = P.Slice()
+    output = slice_op(data, (1, 0, 0), (1, 1, 3))
+    expect = [[[3.0, 3.0, 3.0]]]
+    assert (output.asnumpy() == expect).all()
 
 class Slice3(nn.Cell):
     def __init__(self):

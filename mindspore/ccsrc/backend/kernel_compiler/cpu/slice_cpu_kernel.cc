@@ -102,8 +102,10 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     ret = LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeBool) {
     ret = LaunchKernel<bool>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    ret = LaunchKernel<double>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "Slice op only support input_x int32 and float32";
+    MS_LOG(ERROR) << "Slice op only support input_x bool,int32,float32 and float64";
     return false;
   }
   return ret;
