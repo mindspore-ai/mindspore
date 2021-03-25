@@ -221,6 +221,7 @@ class PynativeAdjoint {
  private:
   const FuncGraphPtr tape_;
   AnfNodePtr dout_{nullptr};
+  // Used by whoes
   AnfNodePtrList users_;
   // cache these arguments from ad caller.
   const ValuePtrList op_args_;
@@ -612,7 +613,7 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &c
   if (IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
     cnode_out = std::make_shared<ValueList>(op_args);
   }
-
+  // op_args is real inputs find by prev cnode outputs
   auto built = KPynativeOp(cnode, op_args, cnode_out);
   if (!built) {
     MS_LOG(EXCEPTION) << "Build Adjoint for MakeTuple/MakeList node failed, CNode: " << cnode->DebugString();

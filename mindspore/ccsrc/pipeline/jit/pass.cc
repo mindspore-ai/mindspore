@@ -41,6 +41,7 @@
 #include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
+#include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #if (ENABLE_CPU && !_WIN32)
@@ -191,8 +192,12 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     irpass.item_tuple_or_list_eliminate_,
     irpass.depend_value_elim_,
     irpass.reshape_eliminate_,
+    irpass.switch_simplify_,
   });
   OptPassGroupMap map({{"ad_final_opt_", bg_final_opt_}});
+  if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
+    map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+  }
 
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
   FuncGraphPtr func_graph = res->func_graph();

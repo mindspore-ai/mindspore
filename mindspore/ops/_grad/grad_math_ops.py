@@ -491,7 +491,7 @@ def get_bprop_log(self):
     def bprop(x, out, dout):
         g = reciprocal(x)
         dx = g * dout
-        return dx, 0
+        return (dx,)
 
     return bprop
 
@@ -505,7 +505,7 @@ def get_bprop_log1p(self):
         x_1p = x + 1
         g = reciprocal(x_1p)
         dx = g * dout
-        return dx, 0
+        return (dx,)
 
     return bprop
 

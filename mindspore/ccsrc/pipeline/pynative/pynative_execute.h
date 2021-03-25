@@ -74,12 +74,17 @@ class TopCellInfo {
  public:
   TopCellInfo() = default;
   ~TopCellInfo() = default;
-  TopCellInfo(bool topest, ResourcePtr r, FuncGraphPtr df, std::string cellid)
-      : is_topest_(topest), resource_(std::move(r)), df_builder_(std::move(df)), cell_id_(std::move(cellid)) {}
+  TopCellInfo(bool topest, size_t grad_order, ResourcePtr r, FuncGraphPtr df, std::string cellid)
+      : is_topest_(topest),
+        grad_order_(grad_order),
+        resource_(std::move(r)),
+        df_builder_(std::move(df)),
+        cell_id_(std::move(cellid)) {}
 
   bool is_init_kpynative() const { return is_init_kpynative_; }
   void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
   bool is_topest() const { return is_topest_; }
+  size_t grad_order() const { return grad_order_; }
   bool is_dynamic() const { return is_dynamic_; }
   void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   bool vm_compiled() const { return vm_compiled_; }
@@ -95,10 +100,8 @@ class TopCellInfo {
   std::string &cell_id() { return cell_id_; }
   std::string &input_args_id() { return input_args_id_; }
   std::string all_op_info() const { return all_op_info_; }
-  void set_all_op_info(std::string all_op_info) { all_op_info_ = all_op_info; }
+  void set_all_op_info(std::string all_op_info) { all_op_info_ = std::move(all_op_info); }
   void set_input_args_id(std::string input_args_id) { input_args_id_ = std::move(input_args_id); }
-  std::string &bprop_cell_id() { return bprop_cell_id_; }
-  void set_bprop_cell_id(const std::string &bprop_cell_id) { bprop_cell_id_ = bprop_cell_id; }
   std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
@@ -118,11 +121,11 @@ class TopCellInfo {
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
   size_t op_num_{0};
+  size_t grad_order_{0};
   ResourcePtr resource_{nullptr};
   FuncGraphPtr df_builder_{nullptr};
   ad::KPynativeCellPtr k_pynative_cell_ptr_{nullptr};
   std::string cell_id_;
-  std::string bprop_cell_id_;
   std::string input_args_id_;
   std::string all_op_info_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
@@ -169,18 +172,18 @@ class GradExecutor {
 
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
-  TopCellInfoPtr top_cell_direct() const { return top_cell_; }
   bool CheckNeedCompileGraph();
+  TopCellInfoPtr GetTopCell(const string &cell_id) const;
+  bool need_renormalize() const { return need_renormalize_; }
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
-  bool in_grad_process() const { return in_grad_process_; }
+  bool grad_is_running() const { return grad_is_running_; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
   std::stack<std::string> &cell_stack() { return cell_stack_; }
   std::vector<TopCellInfoPtr> &top_cell_list() { return top_cell_list_; }
-  TopCellInfoPtr GetTopCell(std::string cell_id) const;
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
@@ -196,38 +199,33 @@ class GradExecutor {
 
  private:
   ForwardExecutorPtr forward() const;
-  bool grad_running() const { return grad_is_running_; }
-  void set_grad_runing(bool grad_runing) { grad_is_running_ = grad_runing; }
 
   // Higher derivative
   bool IsNestedGrad() const;
-  size_t cell_nums() const { return cell_nums_; }
-  void set_cell_nums(size_t cell_nums) { cell_nums_ = cell_nums; }
-  void AddNestedGradOrder() { ++grad_order_; }
-  void SubNestedGradOrder();
-  void MakeNestedCnode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
-                       const py::object &out, bool has_sens);
-  bool MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id);
+  void MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::args &forward_args,
+                       const ResourcePtr &resource, const py::object &out);
   void PushCellStack(const std::string &cell_id);
   void PopCellStack();
+  void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
+  TopCellInfoPtr PopHighOrderGraphStack();
 
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");
   ResourcePtr GetResource(const std::string &cell_id = "");
   bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id);
   bool IsTopGraph(const std::string &cell_id);
   bool IsBpropGraph(const std::string &cell_id);
-  void UpdateBpropCellGraph(const py::object &cell, const std::string &cell_id);
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args);
   void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest);
   void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
-  std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
+  std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args,
+                            py::args *forward_args = nullptr);
   void GradNetInner(py::object *ret, const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                     const py::args &args);
-  FuncGraphPtr GetBpropGraph(const GradOperationPtr &grad, const std::vector<AnfNodePtr> &weights, size_t arg_size,
-                             const py::args &args);
+  FuncGraphPtr GetBpropGraph(const GradOperationPtr &grad, const py::object &cell,
+                             const std::vector<AnfNodePtr> &weights, size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
   abstract::AbstractBasePtrList GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph);
   void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
@@ -248,25 +246,27 @@ class GradExecutor {
                                 const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
-  void SetMakeTupleAsOutputNode(const TopCellInfoPtr &top_cell, const FuncGraphPtr &curr_g, const py::object &out);
+  void SetMakeTupleAsOutputNode(const std::string &cell_id, const FuncGraphPtr &curr_g, const py::object &out);
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
 
  private:
   bool grad_flag_{false};
-  bool in_bprop_process_{false};
-  bool in_grad_process_{false};
+  bool need_renormalize_{false};
   bool grad_is_running_{false};
   int custom_bprop_cell_count_{0};
   size_t grad_order_{0};
-  size_t cell_nums_{0};
 
+  // Only set in high grad
   FuncGraphPtr curr_g_{nullptr};
   // For clear pre top res
   TopCellInfoPtr top_cell_{nullptr};
   // Records forwrad cell, the bottom is top cell
   std::stack<std::string> cell_stack_;
+  // For high grad of bprop
+  std::stack<bool> bprop_grad_stack_;
+  std::vector<std::string> bprop_cell_list_;
   // For high grad order
-  std::stack<FuncGraphPtr> high_order_stack_;
+  std::stack<std::pair<FuncGraphPtr, TopCellInfoPtr>> high_order_stack_;
   // Use vector for keep order
   std::vector<TopCellInfoPtr> top_cell_list_;
   // Record all top cell which has been ran

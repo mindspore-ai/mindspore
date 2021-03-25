@@ -23,6 +23,7 @@ namespace mindspore {
 namespace pipeline {
 
 void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out) {
+  // args_value_using_info_ contains out
   if (args_value_using_info_.size() != op_args.size() + 1) {
     MS_LOG(EXCEPTION) << "param size :" << args_value_using_info_.size()
                       << " of bp_graph:" << opt_func_graph_->ToString()
