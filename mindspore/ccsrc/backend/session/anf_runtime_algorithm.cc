@@ -1259,6 +1259,23 @@ bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   return false;
 }
 
+bool AnfRuntimeAlgorithm::IsFusedCommunicationOp(const AnfNodePtr &node) {
+  if (!IsCommunicationOp(node)) {
+    return false;
+  }
+  auto primitive = AnfAlgo::GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  ValuePtr attr_fusion = primitive->GetAttr(kAttrFusion);
+  if (attr_fusion == nullptr) {
+    return false;
+  }
+  auto fusion = GetValue<int64_t>(attr_fusion);
+  if (fusion == 0) {
+    return false;
+  }
+  return true;
+}
+
 bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
   auto kernel_name = AnfAlgo::GetCNodeName(node);
   return kernel_name == kGetNextOpName;
