@@ -257,6 +257,8 @@ class KPynativeCellImpl : public KPynativeCell {
   FuncGraphPtr BuildBpropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode);
   // Back propagate for MakeList or MakeTuple is generated from MetaFuncGraph.
   FuncGraphPtr BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode);
+  // Set return node according to grad flag
+  void SetReturnNodeByGradFlag(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -294,67 +296,40 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
     auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out());
     last_node_adjoint_iter->second->AccumulateDout(sens_node);
   }
-
-  for (size_t i = 0; i < weights.size(); ++i) {
-    TraceGuard trace_guard(std::make_shared<TraceCopy>(weights[i]->debug_info()));
+  // Add weights parameter
+  for (const auto &weight : weights) {
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(weight->debug_info()));
     auto p = tape_->add_parameter();
-    auto input_w = weights[i]->cast<ParameterPtr>();
+    auto input_w = weight->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(input_w);
     p->set_default_param(input_w->default_param());
   }
 
   // BackPropagate sensitivity;
   BackPropagate();
-
   // Return the gradient;
-  AnfNodePtrList node_list{NewValueNode(prim::kPrimMakeTuple)};
-  if (grad_inputs) {
-    for (auto input : cell_inputs_) {
-      auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
-      if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-        // If input is not used in the network, just return zeros_like() as dout;
-        MS_LOG(WARNING) << "Input is not used in network, input: " << input->ToString();
-        auto dout = BuildZerosLikeNode(tape_, input);
-        node_list.push_back(dout);
-      } else {
-        node_list.push_back(input_adjoint_iter->second->RealDout());
-      }
-    }
-  }
-  if (grad_weights) {
-    for (auto weight : weights) {
-      auto input_adjoint_iter = anfnode_to_adjoin_.find(weight);
-      if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-        // If weight is not used in the network, just return zeros_like() as dout;
-        MS_LOG(WARNING) << "Weight is not used in network, weight: " << weight->ToString();
-        auto input_w = weight->cast<ParameterPtr>();
-        MS_EXCEPTION_IF_NULL(input_w);
-        auto default_param = input_w->default_param();
-        MS_EXCEPTION_IF_NULL(default_param);
-        auto dout = BuildZerosLikeValue(tape_, default_param);
-        node_list.push_back(dout);
-      } else {
-        node_list.push_back(input_adjoint_iter->second->RealDout());
-      }
-    }
-  }
-  auto tape_output = tape_->NewCNode(node_list);
-  tape_->set_output(tape_output);
+  SetReturnNodeByGradFlag(weights, grad_inputs, grad_weights);
   // Replace AnfNode with parameter of tape_;
   auto mng = MakeManager({tape_}, false);
   auto tr = mng->Transact();
   const auto &parameters = tape_->parameters();
-  for (size_t i = 0; i < cell_inputs_.size(); ++i) {
+  auto cell_inputs_size = cell_inputs_.size();
+  for (size_t i = 0; i < cell_inputs_size; ++i) {
     tr.Replace(cell_inputs_[i], parameters[i]);
   }
-  // (Inputs, sens, weights)
-  size_t weight_offset = cell_inputs_.size() + 1;
+  // (Inputs, sens, weights) or (Inputs, weights)
+  size_t weight_offset = cell_inputs_size;
+  if (has_sens_arg) {
+    weight_offset = weight_offset + 1;
+  }
   for (size_t i = 0; i < weights.size(); ++i) {
     tr.Replace(weights[i], parameters[weight_offset + i]);
   }
   tr.Commit();
 
-  DumpIR("before_final_opt.ir", tape_);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("before_final_opt.ir", tape_);
+  }
   return tape_;
 }
 
@@ -768,6 +743,66 @@ FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim,
 
   bprop_func_graph_cache[key] = b;
   return b;
+}
+
+void KPynativeCellImpl::SetReturnNodeByGradFlag(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights) {
+  AnfNodePtrList grad_inputs_list{NewValueNode(prim::kPrimMakeTuple)};
+  if (grad_inputs) {
+    for (const auto &input : cell_inputs_) {
+      MS_EXCEPTION_IF_NULL(input);
+      auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
+      if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+        // If input is not used in the network, just return zeros_like() as dout;
+        MS_LOG(WARNING) << "Input is not used in network, input: " << input->ToString();
+        auto dout = BuildZerosLikeNode(tape_, input);
+        grad_inputs_list.push_back(dout);
+      } else {
+        grad_inputs_list.push_back(input_adjoint_iter->second->RealDout());
+      }
+    }
+  }
+
+  AnfNodePtrList grad_weights_list{NewValueNode(prim::kPrimMakeTuple)};
+  if (grad_weights) {
+    for (const auto &weight : weights) {
+      MS_EXCEPTION_IF_NULL(weight);
+      auto input_adjoint_iter = anfnode_to_adjoin_.find(weight);
+      if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+        // If weight is not used in the network, just return zeros_like() as dout;
+        MS_LOG(WARNING) << "Weight is not used in network, weight: " << weight->ToString();
+        auto input_w = weight->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(input_w);
+        auto default_param = input_w->default_param();
+        MS_EXCEPTION_IF_NULL(default_param);
+        auto dout = BuildZerosLikeValue(tape_, default_param);
+        grad_weights_list.push_back(dout);
+      } else {
+        grad_weights_list.push_back(input_adjoint_iter->second->RealDout());
+      }
+    }
+  }
+
+  AnfNodePtr tape_output;
+  if (grad_inputs && grad_weights) {
+    tape_output = tape_->NewCNode(
+      {NewValueNode(prim::kPrimMakeTuple), tape_->NewCNode(grad_inputs_list), tape_->NewCNode(grad_weights_list)});
+  } else if (grad_inputs) {
+    tape_output = tape_->NewCNode(grad_inputs_list);
+  } else if (grad_weights) {
+    tape_output = tape_->NewCNode(grad_weights_list);
+  } else if (cell_inputs_.empty()) {
+    tape_output = tape_->NewCNode(grad_inputs_list);
+  } else {
+    auto input_adjoint_iter = anfnode_to_adjoin_.find(cell_inputs_[0]);
+    if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+      // If input is not used in the network, just return zeros_like() as dout;
+      MS_LOG(WARNING) << "Input is not used in network, input: " << cell_inputs_[0]->ToString();
+      tape_output = BuildZerosLikeNode(tape_, cell_inputs_[0]);
+    } else {
+      tape_output = input_adjoint_iter->second->RealDout();
+    }
+  }
+  tape_->set_output(tape_output);
 }
 }  // namespace ad
 }  // namespace mindspore

@@ -75,6 +75,24 @@ bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   return true;
 }
 
+bool TransformTopGraphPass(const ResourcePtr &res) {
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "Transform top graph error.";
+  }
+  FuncGraphPtr func_graph = res->func_graph();
+  if (opt::FuncGraphHasTupleInput(func_graph)) {
+    opt::GraphTupleParamTransform graph_trans;
+    func_graph = graph_trans(func_graph, res->manager());
+    res->set_func_graph(func_graph);
+    AbstractBasePtrList abs_spec_list;
+    auto &params = func_graph->parameters();
+    std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
+                   [](AnfNodePtr node) { return node->abstract(); });
+    res->set_args_spec(abs_spec_list);
+  }
+  return true;
+}
+
 bool CleanAfterOptAPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
 
@@ -162,6 +180,9 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
 
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
+  if (!TransformTopGraphPass(res)) {
+    MS_LOG(EXCEPTION) << "Run TransformTopGraphPass failed";
+  }
 
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig bg_final_opt_ = opt::OptPassConfig({
@@ -170,7 +191,6 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     irpass.depend_value_elim_,
     irpass.reshape_eliminate_,
   });
-
   OptPassGroupMap map({{"ad_final_opt_", bg_final_opt_}});
 
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
@@ -178,6 +198,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
   };
+
   return func_graph;
 }
 
@@ -557,24 +578,6 @@ bool CconvPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   FuncGraphPtr new_fg = LiftingClone(func_graph);
   res->set_func_graph(new_fg);
-  return true;
-}
-
-bool TransformTopGraphPass(const ResourcePtr &res) {
-  if (res->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Transform top graph error.";
-  }
-  FuncGraphPtr func_graph = res->func_graph();
-  if (opt::FuncGraphHasTupleInput(func_graph)) {
-    opt::GraphTupleParamTransform graph_trans;
-    func_graph = graph_trans(func_graph, res->manager());
-    res->set_func_graph(func_graph);
-    AbstractBasePtrList abs_spec_list;
-    auto &params = func_graph->parameters();
-    std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
-                   [](AnfNodePtr node) { return node->abstract(); });
-    res->set_args_spec(abs_spec_list);
-  }
   return true;
 }
 

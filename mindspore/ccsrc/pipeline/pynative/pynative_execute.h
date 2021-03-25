@@ -175,7 +175,7 @@ class GradExecutor {
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   bool in_grad_process() const { return in_grad_process_; }
-  bool in_cell_with_custom_bprop_() const {return custom_bprop_cell_count_ > 0;}
+  bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
   std::stack<std::string> &cell_stack() { return cell_stack_; }
@@ -230,7 +230,8 @@ class GradExecutor {
                     const py::args &args);
   FuncGraphPtr GetBpropGraph(const GradOperationPtr &grad, const std::vector<AnfNodePtr> &weights, size_t arg_size,
                              const py::args &args);
-  std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
+  std::vector<AnfNodePtr> GetWeightsArgs(const GradOperationPtr &grad, const py::object &weights,
+                                         const FuncGraphPtr &df_builder);
   abstract::AbstractBasePtrList GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph);
   void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
                                       const std::vector<int64_t> &index_sequence, bool is_param = false);
