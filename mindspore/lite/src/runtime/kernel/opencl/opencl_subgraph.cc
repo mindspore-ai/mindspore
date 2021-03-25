@@ -121,8 +121,6 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
 
   for (size_t i = 0; i < in_tensors.size(); ++i) {
     auto *in_tensor = in_tensors.at(i);
-    auto dst_format = (mem_type == MemType::IMG) ? schema::Format::Format_NHWC4 : schema::Format::Format_NHWC;
-    auto src_format = (mem_type == MemType::IMG) ? schema::Format::Format_NHWC : schema::Format::Format_NHWC4;
     auto *new_tensor = new (std::nothrow)
       lite::Tensor(in_tensor->data_type(), in_tensor->shape(), in_tensor->format(), lite::Tensor::VAR);
     MS_ASSERT(new_tensor);
@@ -130,20 +128,9 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       MS_LOG(ERROR) << "OpenCLSubGraph new tensor failed!";
       return RET_ERROR;
     }
-    if (mem_type == MemType::IMG) {
-      new_tensor->set_format(dst_format);
-      in_tensor->set_format(src_format);
-    } else {
-      new_tensor->set_format(src_format);
-      in_tensor->set_format(dst_format);
-    }
 
     out_tensors->emplace_back(new_tensor);
     KernelKey desc{kGPU, kNumberTypeFloat32, PRIM_TO_FORMAT};
-    if (mem_type == MemType::IMG && ocl_runtime_->GetFp16Enable()) {
-      desc.data_type = kNumberTypeFloat16;
-      new_tensor->set_data_type(kNumberTypeFloat16);
-    }
     auto *parameter = static_cast<OpenCLToFormatParameter *>(malloc(sizeof(OpenCLToFormatParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
@@ -153,16 +140,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
     parameter->op_parameter.type_ = PRIM_TO_FORMAT;
-    bool output_shape_setted = true;
-    for (auto output : *out_tensors) {
-      if (output->shape().empty() || output->ElementsNum() < 0) {
-        output_shape_setted = false;
-        break;
-      }
-    }
-    parameter->op_parameter.infer_flag_ = output_shape_setted;
-    parameter->src_format = src_format;
-    parameter->dst_format = dst_format;
+    parameter->op_parameter.infer_flag_ = false;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
@@ -255,8 +233,7 @@ int OpenCLSubGraph::Init() {
 
 int OpenCLSubGraph::UpdateTensorDataTypePass() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
-  MS_ASSERT(in_tensors_[0]);
-  if (is_fp16 && (in_tensors_[0]->data_type() == kNumberTypeFloat32)) {
+  if (is_fp16) {
     std::set<lite::Tensor *> out_set;
     out_set.insert(in_tensors_.begin(), in_tensors_.end());
     out_set.insert(out_tensors_.begin(), out_tensors_.end());
@@ -330,16 +307,6 @@ void OpenCLSubGraph::GetInOutNodes() {
   }
 }
 
-bool OpenCLSubGraph::IsSubGraphInferShapeDone() {
-  for (auto node : this->nodes_) {
-    auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(node);
-    if (!opencl_kernel->GetInferShapeFlag()) {
-      return false;
-    }
-  }
-  return true;
-}
-
 int OpenCLSubGraph::Prepare() {
   for (const auto tensor : in_tensors_) {
     MS_ASSERT(tensor);
@@ -354,7 +321,6 @@ int OpenCLSubGraph::Prepare() {
     MS_LOG(ERROR) << "Create OpenCLExecutor fail";
     return RET_ERROR;
   }
-  auto ret = RET_OK;
   for (auto node : this->nodes_) {
     if (node == nullptr) {
       MS_LOG(ERROR) << "node in Subgraph is nullptr";
@@ -363,26 +329,28 @@ int OpenCLSubGraph::Prepare() {
     auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(node);
     std::set<int> pre_init_weight_list = {schema::PrimitiveType_MatMul, schema::PrimitiveType_BiasAdd};
     if (pre_init_weight_list.find(opencl_kernel->Type()) != pre_init_weight_list.end()) {
-      ret = opencl_kernel->InitWeights();
+      auto ret = opencl_kernel->InitWeights();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "init weights " << node->name() << " failed";
         return ret;
       }
     }
-    if (opencl_kernel->GetInferShapeFlag()) {
-      ret = node->Prepare();
+    if (opencl_kernel->op_parameter()->infer_flag_) {
+      auto ret = node->Prepare();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "prepare node " << node->name() << " failed";
         return ret;
       }
     }
   }
-  auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
-  // If tuning_mode is DEFAULT, just malloc memory for reuse.
-  ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
-    return ret;
+  if (all_kernels_infer_done_) {
+    auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
+    // If tuning_mode is DEFAULT, just malloc memory for reuse.
+    auto ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -423,7 +391,7 @@ int OpenCLSubGraph::ReSize(bool interrupt) {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    opencl_kernel->SetInferShapeFlag(false);
+    opencl_kernel->op_parameter()->infer_flag_ = false;
   }
   for (auto kernel : nodes_) {
     auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
