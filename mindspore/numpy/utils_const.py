@@ -220,6 +220,7 @@ def _raise_runtime_error(info, param=None):
     raise RuntimeError(info + f"{param}")
 
 
+@constexpr
 def _raise_unimplemented_error(info, param=None):
     """
     Raise NotImplementedError in both graph/pynative mode
