@@ -512,7 +512,7 @@ class MultiClassDiceLoss(_Loss):
         >>> y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
         >>> output = loss(y_pred, y)
         >>> print(output)
-        [0.3283009]
+        0.3283009
     """
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
         super(MultiClassDiceLoss, self).__init__()
