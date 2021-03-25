@@ -49,11 +49,15 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs);
 // weights: weights parameters used in this cell.
 // grad_inputs: return sensitivity for input parameters;
 // grad_weights: return sensitivity for weights;
+// has_sens_arg: caller will pass sens args;
 // return: the returned funcgraph will have prototype:
+// if has_sens_arg is true
 // (sens_input1, sens_input2, ..., sens_weight0, sens_weight1, ) bprop_fg(input1, input2, ..., weight0, weight1, ...,
 // sens_out)
+// else:
+// (sens_input1, sens_input2, ..., sens_weight0, sens_weight1, ) bprop_fg(input1, input2, ..., weight0, weight1, ...)
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
-                                 bool grad_weights);
+                                 bool grad_weights, bool has_sens_arg = false);
 
 // Grad for each operation.
 // c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.

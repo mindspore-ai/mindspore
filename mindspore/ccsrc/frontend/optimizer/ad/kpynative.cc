@@ -117,6 +117,38 @@ AnfNodePtr BuildZerosLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
   zeros_like_value->set_abstract(zeros_like_fg->output()->abstract());
   return zeros_like_value;
 }
+
+FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_spec) {
+  static ValuePtr ones_like_ops = prim::GetPythonOps("ones_like");
+  static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                            abstract::AbstractBasePtrListEqual>
+    ones_like_funcgraph_cache;
+  auto iter = ones_like_funcgraph_cache.find(args_spec);
+  if (iter != ones_like_funcgraph_cache.end()) {
+    MS_LOG(DEBUG) << "Cache hit for ones_like: " << mindspore::ToString(args_spec);
+    return BasicClone(iter->second);
+  }
+  if (!ones_like_ops->isa<MetaFuncGraph>()) {
+    MS_LOG(EXCEPTION) << "ones_like is not a MetaFuncGraph";
+  }
+  auto ones_like = ones_like_ops->cast<MetaFuncGraphPtr>();
+  auto ones_like_fg = ones_like->GenerateFuncGraph(args_spec);
+  MS_EXCEPTION_IF_NULL(ones_like_fg);
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  auto specialized_ones_like_fg = pipeline::Renormalize(resource, ones_like_fg, args_spec);
+  MS_EXCEPTION_IF_NULL(specialized_ones_like_fg);
+  ones_like_funcgraph_cache[args_spec] = specialized_ones_like_fg;
+  return BasicClone(specialized_ones_like_fg);
+}
+
+AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
+  // Build ones_like(out) as dout
+  abstract::AbstractBasePtrList args_spec{out->ToAbstract()->Broaden()};
+  auto ones_like_fg = GetOnesLike(args_spec);
+  auto ones_like_value = tape->NewCNode({NewValueNode(ones_like_fg), NewValueNode(out)});
+  ones_like_value->set_abstract(ones_like_fg->output()->abstract());
+  return ones_like_value;
+}
 }  // namespace
 
 class PynativeAdjoint {
@@ -178,7 +210,7 @@ class KPynativeCellImpl : public KPynativeCell {
   bool KPynativeOp(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out);
   bool KPynativeWithBProp(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                           const FuncGraphPtr &bprop_fg);
-  FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
+  FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights, bool has_sens_arg);
 
  private:
   FuncGraphPtr tape_;
@@ -216,24 +248,30 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs) {
 }
 
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
-                                 bool grad_weights) {
+                                 bool grad_weights, bool has_sens_arg) {
   auto k_cell_impl = std::dynamic_pointer_cast<KPynativeCellImpl>(k_cell);
-  return k_cell_impl->Finish(weights, grad_inputs, grad_weights);
+  return k_cell_impl->Finish(weights, grad_inputs, grad_weights, has_sens_arg);
 }
 
-FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights) {
+FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights,
+                                       bool has_sens_arg) {
   // propagate stop_gradient flag to cnode before back propagate;
   PropagateStopGradient();
 
-  // sens parameter;
-  auto sens_param = tape_->add_parameter();
-  sens_param->debug_info()->set_name("sens");
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
     MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
   }
-  // Set dout of last node to sens;
-  last_node_adjoint_iter->second->AccumulateDout(sens_param);
+  if (has_sens_arg) {
+    // sens parameter;
+    auto sens_param = tape_->add_parameter();
+    sens_param->debug_info()->set_name("sens");
+    // Set dout of last node to sens;
+    last_node_adjoint_iter->second->AccumulateDout(sens_param);
+  } else {
+    auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out());
+    last_node_adjoint_iter->second->AccumulateDout(sens_node);
+  }
 
   for (size_t i = 0; i < weights.size(); ++i) {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(weights[i]->debug_info()));
