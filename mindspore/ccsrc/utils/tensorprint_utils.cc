@@ -256,6 +256,7 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
       }
 
       tensor->set_tensor_type(parse_type);
+      acl_data = const_cast<char *>(reinterpret_cast<std::string *>(acl_data)->c_str());
       std::string data(reinterpret_cast<const char *>(acl_data), acl_data_size);
       tensor->set_tensor_content(data);
     }
