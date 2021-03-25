@@ -34,7 +34,7 @@ constexpr auto gThreadPool = "g_thread_pool";
 
 // args represents the parameters required for operator to run
 constexpr auto kRunArgs = "args";
-constexpr auto kRunArgsAddr = "&args";
+constexpr auto kRunArgsAddr = "(void *)&args";
 
 }  // namespace mindspore::lite::micro
 
