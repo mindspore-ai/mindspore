@@ -106,6 +106,7 @@ class TrtLogger : public nvinfer1::ILogger {
   // Redirect Tensor-RT inner log to GLOG
   void log(Severity severity, const char *msg) override {
 #ifdef USE_GLOG
+#define google mindspore_private
     static std::map<Severity, std::tuple<MsLogLevel, int, std::string>> logger_map = {
       {Severity::kVERBOSE, {MsLogLevel::DEBUG, google::GLOG_INFO, "VERBOSE"}},
       {Severity::kINFO, {MsLogLevel::INFO, google::GLOG_INFO, "INFO"}},
@@ -127,6 +128,7 @@ class TrtLogger : public nvinfer1::ILogger {
 
     google::LogMessage("", 0, std::get<1>(level)).stream()
       << "[TensorRT " << std::get<2>(level) << "] " << msg << std::endl;
+#undef google
 #endif  // USE_GLOG
   }
 
