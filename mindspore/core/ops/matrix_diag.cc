@@ -59,19 +59,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypeId> valid_types = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeFloat16,
-                                        kNumberTypeFloat32};
+  const std::set<TypePtr> valid_types = {kInt8, kInt32, kUInt8, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("assist", input_args[1]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  auto type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  auto tensor_type = type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(data_type);
-  return data_type;
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 

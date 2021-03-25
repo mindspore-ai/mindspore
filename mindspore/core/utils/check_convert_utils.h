@@ -22,6 +22,8 @@
 #include <set>
 #include <utility>
 #include <typeinfo>
+#include <memory>
+#include "abstract/param_validator.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
@@ -270,17 +272,34 @@ class CheckAndConvertUtils {
     MS_EXCEPTION(exception_type) << buffer.str();
   }
 
-  static TypeId CheckTensorTypeSame(const std::map<std::string, TypePtr> &types, const std::set<TypeId> &check_list,
-                                    const std::string &prim_name);
-  static void CheckTensorTypeValid(const std::string &type_name, const TypePtr type, const std::set<TypeId> &check_list,
-                                   const std::string &prim_name);
-  static void CheckSubClass(const std::string &type_name, const TypePtr type, const std::set<TypePtr> &template_types,
-                            const std::string &prim_name);
-  static void CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
-                                           const std::set<TypeId> &valid_values, const std::string &prim_name,
-                                           bool allow_mix = false);
-  static TypeId CheckTypeSame(const std::string &arg_name, const TypePtr arg_type, const std::set<TypeId> &valid_type,
-                              const std::string &prim_name);
+  template <typename T>
+  static std::shared_ptr<T> CheckArgs(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index) {
+    if (index >= args_spec_list.size()) {
+      MS_EXCEPTION(ValueError) << op << " evaluator args list index out of bound, size " << args_spec_list.size()
+                               << ", index " << index;
+    }
+    auto args_spec = args_spec_list[index];
+    MS_EXCEPTION_IF_NULL(args_spec);
+    auto arg = dyn_cast<T>(args_spec);
+    if (arg == nullptr) {
+      MS_EXCEPTION(TypeError) << "Operator " << op << " input[" << index << "] should be "
+                              << abstract::ReportNameTraits<T>::name << ", but got "
+                              << args_spec_list[index]->BuildType()->ToString() << ".";
+    }
+    return arg;
+  }
+
+  static TypePtr CheckTensorTypeSame(const std::map<std::string, TypePtr> &types, const std::set<TypePtr> &check_list,
+                                     const std::string &prim_name);
+  static TypePtr CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
+                                      const std::set<TypePtr> &check_list, const std::string &prim_name);
+  static TypePtr CheckSubClass(const std::string &type_name, const TypePtr &type,
+                               const std::set<TypePtr> &template_types, const std::string &prim_name);
+  static TypePtr CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
+                                              const std::set<TypePtr> &valid_values, const std::string &prim_name,
+                                              bool allow_mix = false);
+  static TypePtr CheckTypeValid(const std::string &arg_name, const TypePtr &arg_type,
+                                const std::set<TypePtr> &valid_type, const std::string &prim_name);
   static bool ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static bool ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static void ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
@@ -292,12 +311,8 @@ class CheckAndConvertUtils {
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
-  static std::map<std::string, TypePtr> _CheckArgumentType(const std::map<std::string, TypePtr> &arg,
-                                                           const std::set<TypeId> &valid_values,
-                                                           const std::string &prim_name);
-  static std::map<std::string, TypePtr> _CheckTypeSame(const std::map<std::string, TypePtr> &arg1,
-                                                       const std::map<std::string, TypePtr> &arg2,
-                                                       const std::string &prim_name, const bool allow_mix);
+  static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
+                                const bool allow_mix);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_

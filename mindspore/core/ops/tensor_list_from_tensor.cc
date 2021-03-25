@@ -48,11 +48,7 @@ abstract::ShapePtr TensorListFromTensorInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr TensorListFromTensorInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  TypeId infer_type = kObjectTypeTensorType;
-  return TypeIdToType(infer_type);
+  return kTensorType;
 }
 }  // namespace
 

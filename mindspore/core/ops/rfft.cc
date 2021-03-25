@@ -39,7 +39,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return TypeIdToType(kNumberTypeComplex64);
+  return kComplex64;
 }
 }  // namespace
 

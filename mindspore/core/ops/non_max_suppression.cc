@@ -36,7 +36,7 @@ AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, cons
   auto non_max_suppression_prim = primitive->cast<PrimNonMaxSuppressionPtr>();
   MS_EXCEPTION_IF_NULL(non_max_suppression_prim);
   MS_LOG(INFO) << "NonMaxSuppression infer shape in runtime.";
-  return std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), std::vector<int64_t>{});
+  return std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>{});
 }
 REGISTER_PRIMITIVE_C(kNameNonMaxSuppression, NonMaxSuppression);
 }  // namespace ops

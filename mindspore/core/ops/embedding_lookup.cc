@@ -45,14 +45,9 @@ AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const 
   MS_EXCEPTION_IF_NULL(params);
   auto indices = input_args[1]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(indices);
-  const std::set<TypeId> int_valid_types = {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices->BuildType(), int_valid_types, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[2]->BuildType());
-  auto offset_type = input_args[2]->BuildType()->type_id();
-  if (int_valid_types.find(offset_type) == int_valid_types.end()) {
-    MS_LOG(EXCEPTION) << "offset must be int.";
-  }
-
+  const std::set<TypePtr> int_valid_types = {kInt8, kInt16, kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices->BuildType(), int_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offset", input_args[2]->BuildType(), int_valid_types, prim_name);
   MS_EXCEPTION_IF_NULL(params->shape());
   auto params_shp = params->shape()->shape();
   MS_EXCEPTION_IF_NULL(indices->shape());

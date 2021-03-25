@@ -33,13 +33,9 @@ AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), "Ceil");
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto infer_type = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("x type", infer_type, valid_types, primitive->name());
-  MS_EXCEPTION_IF_NULL(infer_type);
-  auto tensor_type = infer_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
+  auto data_type = CheckAndConvertUtils::CheckTensorTypeValid("x type", infer_type, valid_types, primitive->name());
   MS_EXCEPTION_IF_NULL(data_type);
   return std::make_shared<abstract::AbstractTensor>(data_type, x_shape);
 }

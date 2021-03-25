@@ -48,7 +48,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
@@ -56,8 +56,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("min", input_args[1]->BuildType());
   types.emplace("max", input_args[2]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return TypeIdToType(infer_type);
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 void FakeQuantWithMinMaxVars::Init(const bool narrow_range, const int64_t num_bits) {

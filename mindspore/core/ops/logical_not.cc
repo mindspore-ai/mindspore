@@ -37,12 +37,8 @@ TypePtr LogicalNotInferType(const PrimitivePtr &prim, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(LogicalNot_prim);
   auto op_name = LogicalNot_prim->name();
   auto infer_dtype = input_args[0]->BuildType();
-  std::set<TypeId> local_bool = {kNumberTypeBool};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);
-  auto tensor_type = infer_dtype->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto element = tensor_type->element();
-  return element;
+  std::set<TypePtr> local_bool = {kBool};
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);
 }
 }  // namespace
 AbstractBasePtr LogicalNotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

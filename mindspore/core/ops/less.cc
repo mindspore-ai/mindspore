@@ -41,7 +41,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("y", input_args[1]->BuildType());
   CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return TypeIdToType(kNumberTypeBool);
+  return kBool;
 }
 }  // namespace
 

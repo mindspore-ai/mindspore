@@ -37,10 +37,10 @@ AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   CheckAndConvertUtils::CheckInteger("top_k_infer", input_args.size(), kEqual, 2, prim_name);
 
   // Infer dtype
-  auto output0_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  auto output1_type = TypeIdToType(kNumberTypeInt32);
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
-  CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
+  auto output1_type = kInt32;
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto output0_type =
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
 
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);

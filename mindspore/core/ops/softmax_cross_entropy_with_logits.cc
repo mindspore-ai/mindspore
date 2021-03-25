@@ -46,12 +46,11 @@ AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEngin
   auto dlogits_shape = logits_shape;
 
   // Infer type
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
   args.emplace("logits_type", input_args[0]->BuildType());
   args.emplace("labels_type", input_args[1]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
-  auto logits_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
+  auto logits_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   auto output0 = std::make_shared<abstract::AbstractTensor>(logits_type, loss_shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(logits_type, dlogits_shape);

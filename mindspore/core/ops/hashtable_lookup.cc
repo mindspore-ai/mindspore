@@ -41,7 +41,7 @@ AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const 
   auto data_type = tensor_type->element();
   std::vector<int64_t> value_shape;
   auto output = std::make_shared<abstract::AbstractTensor>(data_type, value_shape);
-  auto hits = std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt8), hits_shape);
+  auto hits = std::make_shared<abstract::AbstractTensor>(kInt8, hits_shape);
   AbstractBasePtrList output1 = {output, hits};
 
   if (input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c() == nullptr) {

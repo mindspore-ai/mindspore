@@ -28,7 +28,7 @@ AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, co
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
-  for (auto item : input_args) {
+  for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto doutput = input_args[0];

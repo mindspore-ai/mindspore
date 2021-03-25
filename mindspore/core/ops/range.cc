@@ -100,12 +100,11 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
     int64_t start = prim->get_start();
     int64_t limit = prim->get_limit();
     int64_t delta = prim->get_delta();
-    dtype = kNumberTypeInt32;
     shape_size =
       std::max(static_cast<int64_t>(std::ceil(LongToDouble(limit - start) / delta)), static_cast<int64_t>(0));
   }
   return std::make_shared<abstract::AbstractTensor>(
-    TypeIdToType(dtype), std::make_shared<abstract::Shape>(std::vector<int64_t>{shape_size}));
+    kInt32, std::make_shared<abstract::Shape>(std::vector<int64_t>{shape_size}));
 }
 REGISTER_PRIMITIVE_C(kNameRange, Range);
 }  // namespace ops

@@ -47,14 +47,14 @@ AbstractBasePtr CustomPredictInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto CustomPredict_prim = primitive->cast<PrimCustomPredictPtr>();
   MS_EXCEPTION_IF_NULL(CustomPredict_prim);
-  for (auto input : input_args) {
+  for (const auto &input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
   std::vector<int64_t> shape;
   shape.push_back(CustomPredict_prim->get_output_num());
 
-  auto output0 = std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), shape);
-  auto output1 = std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeFloat32), shape);
+  auto output0 = std::make_shared<abstract::AbstractTensor>(kInt32, shape);
+  auto output1 = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   AbstractBasePtrList output = {output0, output1};
   return std::make_shared<abstract::AbstractTuple>(output);
 }

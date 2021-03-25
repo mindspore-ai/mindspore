@@ -55,8 +55,7 @@ TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   std::map<std::string, TypePtr> types;
   types.emplace("input_x", input_args[0]->BuildType());
   types.emplace("bias", input_args[1]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return TypeIdToType(infer_type);
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
 }
 }  // namespace
 void BiasAdd::set_format(const Format &format) {

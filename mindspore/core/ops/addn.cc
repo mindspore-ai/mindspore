@@ -56,12 +56,10 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     }
     types.emplace(elementi, elements[i]->BuildType());
   }
-  std::set<TypeId> valid_types = common_valid_types;
-  valid_types.insert(kNumberTypeBool);
+  std::set<TypePtr> valid_types = common_valid_types;
+  valid_types.insert(kBool);
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-
-  return std::make_shared<abstract::AbstractTensor>(TypeIdToType(infer_type),
-                                                    std::make_shared<abstract::Shape>(element0_shape));
+  return std::make_shared<abstract::AbstractTensor>(infer_type, std::make_shared<abstract::Shape>(element0_shape));
 }
 REGISTER_PRIMITIVE_C(kNameAddN, AddN);
 }  // namespace ops

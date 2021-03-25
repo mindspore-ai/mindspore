@@ -63,12 +63,9 @@ AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const P
   out_shape.insert(out_shape.end(), size.begin(), size.end());
 
   // Infer type
-  auto input_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
-  CheckAndConvertUtils::CheckTensorTypeValid("input_type", input_type, valid_types, prim_name);
-  auto out_type = TypeIdToType(kNumberTypeFloat32);
-
-  return std::make_shared<abstract::AbstractTensor>(out_type, out_shape);
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_type", input_args[0]->BuildType(), valid_types, prim_name);
+  return std::make_shared<abstract::AbstractTensor>(kFloat32, out_shape);
 }
 REGISTER_PRIMITIVE_C(kNameResizeBilinear, ResizeBilinear);
 }  // namespace ops

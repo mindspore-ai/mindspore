@@ -38,8 +38,7 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("w", input_args[1]->BuildType());
   // check_scalar_or_tensor_types_same
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "AssignAdd");
-  return TypeIdToType(infer_type);
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "AssignAdd");
 }
 }  // namespace
 AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

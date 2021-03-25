@@ -216,10 +216,10 @@ TypePtr DepthWiseConv2DInferType(const PrimitivePtr &prim, const std::vector<Abs
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("w", input_args[1]->BuildType());
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  if (infer_type == kNumberTypeInt8) {
-    return std::make_shared<TensorType>(TypeIdToType(kNumberTypeInt32));
+  if (*infer_type == *kInt8) {
+    return kInt32;
   }
-  return TypeIdToType(infer_type);
+  return infer_type;
 }
 
 AbstractBasePtr DepthWiseConv2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

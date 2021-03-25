@@ -420,49 +420,23 @@ void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, Comp
                                << " but got " << arg_value;
 }
 
-TypeId CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypePtr> &types,
-                                                 const std::set<TypeId> &check_list, const std::string &prim_name) {
+TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypePtr> &types,
+                                                  const std::set<TypePtr> &check_list, const std::string &prim_name) {
   if (types.empty()) {
     MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty types map!";
   }
-  std::set<TypeId> types_id;
-  std::ostringstream buffer;
-  buffer << "For " << prim_name;
-  for (const auto &type : types) {
-    MS_EXCEPTION_IF_NULL(type.second);
-    if (!type.second->isa<TensorType>()) {
-      MS_EXCEPTION(TypeError) << "The " << prim_name << "'s" << type.first << " input must be tensor type but got "
-                              << type.second->ToString();
-    }
-    auto tensor_type = type.second->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(tensor_type);
-    auto element = tensor_type->element();
-    MS_EXCEPTION_IF_NULL(element);
-    types_id.emplace(element->type_id());
+  auto type = types.begin()->second;
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s" << types.begin()->first << " input must be a tensor but got "
+                            << type->ToString();
   }
-  if (types_id.size() > 1) {
-    buffer << "'s input type is not same : ";
-    for (const auto &item : types) {
-      buffer << "[ name : " << item.first << " ,type : " << item.second->ToString() << "]";
-    }
-    MS_EXCEPTION(TypeError) << buffer.str();
-  }
-  if (check_list.find(*types_id.begin()) == check_list.end()) {
-    buffer << " type of ";
-    for (const auto &elem : types) {
-      buffer << elem.first << " should be in [";
-      for (auto type_elem : check_list) {
-        buffer << TypeIdToType(type_elem)->ToString() << " ,";
-      }
-      buffer << "] , but got " << types.begin()->second->ToString();
-    }
-    MS_EXCEPTION(TypeError) << buffer.str();
-  }
-  return *types_id.begin();
+  TypePtr check_type = _CheckTypeSame(types, prim_name, false);
+  return CheckTypeValid(types.begin()->first, check_type, check_list, prim_name);
 }
 
-void CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, const TypePtr type,
-                                                const std::set<TypeId> &check_list, const std::string &prim_name) {
+TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
+                                                   const std::set<TypePtr> &check_list, const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "The " << prim_name << "'s " << type_name << " input must be tensor type but got "
@@ -472,37 +446,28 @@ void CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, co
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto element = tensor_type->element();
   MS_EXCEPTION_IF_NULL(element);
-  std::ostringstream buffer;
-  if (check_list.find(element->type_id()) == check_list.end()) {
-    buffer << "type of " << type_name << " should be in [";
-    for (auto type_elem : check_list) {
-      buffer << TypeIdToType(type_elem)->ToString() << " ,";
+  for (const TypePtr &item : check_list) {
+    if (item->isa<TensorType>()) {
+      auto item_tensor_type = item->cast<TensorTypePtr>();
+      if (item_tensor_type->element() == nullptr) {
+        return element;
+      }
     }
-    buffer << "], but got " << type->ToString();
-    MS_EXCEPTION(TypeError) << buffer.str();
   }
+  return CheckSubClass(type_name, element, check_list, prim_name);
 }
 
-void CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const TypePtr type_,
-                                         const std::set<TypePtr> &template_types, const std::string &prim_name) {
-  MS_EXCEPTION_IF_NULL(type_);
-  bool hit = false;
-  for (auto template_type : template_types) {
-    if (type_->isa<Type>()) {
-      if (IsIdentidityOrSubclass(type_, template_type)) {
-        hit = true;
-        break;
-      }
-    } else if (type_->type_id() == template_type->type_id()) {
-      hit = true;
-      break;
-    }
-  }
-  if (!hit) {
+TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const TypePtr &type_,
+                                            const std::set<TypePtr> &template_types, const std::string &prim_name) {
+  bool ok = std::any_of(template_types.begin(), template_types.end(),
+                        [type_](const TypePtr &accept) -> bool { return IsIdentidityOrSubclass(type_, accept); });
+  if (ok) {
+    return type_;
+  } else {
     std::string type_str = type_->ToString();
     std::ostringstream buffer;
     buffer << "For '" << prim_name << "', the type of `" << type_name << "` should be subclass of ";
-    for (auto template_type : template_types) {
+    for (const auto &template_type : template_types) {
       buffer << template_type->ToString() << ",";
     }
     buffer << " but got " << type_str << ".";
@@ -510,103 +475,71 @@ void CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const Typ
   }
 }
 
-void CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
-                                                        const std::set<TypeId> &valid_values,
-                                                        const std::string &prim_name, const bool allow_mix) {
-  std::vector<std::map<std::string, TypePtr>> check_results;
-  for (auto &iter : args) {
-    std::map<std::string, TypePtr> arg = {{iter.first, iter.second}};
-    check_results.push_back(_CheckArgumentType(arg, valid_values, prim_name));
-  }
-
-  std::map<std::string, TypePtr> &arg_ = check_results[0];
-  int64_t size = check_results.size();
-  for (int64_t it = 1; it != size; it++) {
-    arg_ = _CheckTypeSame(arg_, check_results[it], prim_name, allow_mix);
-  }
+TypePtr CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
+                                                           const std::set<TypePtr> &valid_values,
+                                                           const std::string &prim_name, const bool allow_mix) {
+  auto arg_ = _CheckTypeSame(args, prim_name, allow_mix);
+  return CheckTypeValid(args.begin()->first, arg_, valid_values, prim_name);
 }
 
-std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckArgumentType(const std::map<std::string, TypePtr> &arg,
-                                                                        const std::set<TypeId> &valid_values,
-                                                                        const std::string &prim_name) {
-  std::string arg_key = arg.begin()->first;
-  TypePtr arg_val = arg.begin()->second;
-
-  if (arg_val->isa<TensorType>()) {
-    auto arg_val_ = std::static_pointer_cast<TensorType>(arg_val);
-    arg_val = arg_val_->element();
+TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
+                                             const bool allow_mix) {
+  if (args.empty()) {
+    MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty types map!";
   }
-
-  auto it = valid_values.find(arg_val->type_id());
-  if (it == valid_values.end()) {
-    std::ostringstream buffer;
-    buffer << "For '" << prim_name << "' , the `" << arg_key << "` should be in { ";
-    for (auto valid_value : valid_values) {
-      buffer << TypeIdToType(valid_value)->ToString() << ",";
+  std::ostringstream buffer;
+  TypePtr return_type = nullptr;
+  buffer << "For " << prim_name;
+  auto first_type = args.begin()->second;
+  MS_EXCEPTION_IF_NULL(first_type);
+  bool tensor_flag = first_type->isa<TensorType>();
+  std::set<TypeId> types_id;
+  for (const auto &elem : args) {
+    auto type = elem.second;
+    MS_EXCEPTION_IF_NULL(type);
+    if (!allow_mix) {
+      // input must be all tensor or all other type
+      if (!(tensor_flag ^ type->isa<TensorType>())) {
+        buffer << "For " << prim_name << "'s "
+               << "type is not same";
+        for (const auto &error_elem : args) {
+          buffer << " [ name :" << error_elem.first << ", type : " << error_elem.second->ToString() << "]";
+        }
+        MS_EXCEPTION(TypeError) << buffer.str();
+      }
     }
-    buffer << " },";
-    buffer << "but `" << arg_key << "`"
-           << "is" << arg_val->ToString() << ".";
-    MS_EXCEPTION(TypeError) << buffer.str();
+    if (type->isa<TensorType>()) {
+      auto tensor_type = type->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_type);
+      auto element = tensor_type->element();
+      return_type = element->DeepCopy();
+      MS_EXCEPTION_IF_NULL(element);
+      types_id.emplace(element->type_id());
+    } else {
+      types_id.emplace(type->type_id());
+      return_type = type->DeepCopy();
+    }
+    if (types_id.size() > 1) {
+      buffer << "'s input type is not same : ";
+      for (const auto &item : args) {
+        buffer << "[ name : " << item.first << " ,type : " << item.second->ToString() << "]";
+      }
+      MS_EXCEPTION(TypeError) << buffer.str();
+    }
   }
-  return arg;
+  return return_type;
 }
 
-std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr> &arg1,
-                                                                    const std::map<std::string, TypePtr> &arg2,
-                                                                    const std::string &prim_name,
-                                                                    const bool allow_mix) {
-  std::string arg1_name = arg1.begin()->first;
-  TypePtr arg1_type = arg1.begin()->second;
-  std::string arg2_name = arg2.begin()->first;
-  TypePtr arg2_type = arg2.begin()->second;
-  bool except_flag = false;
-
-  if (arg1_type->isa<TensorType>() && arg2_type->isa<TensorType>()) {
-    arg1_type = std::static_pointer_cast<TensorType>(arg1_type)->element();
-    arg2_type = std::static_pointer_cast<TensorType>(arg2_type)->element();
-  } else if (allow_mix) {
-    arg1_type = arg1_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg1_type)->element() : arg1_type;
-    arg2_type = arg2_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg2_type)->element() : arg2_type;
-  } else {
-    except_flag = true;
-  }
-
-  if (except_flag || arg1_type->type_id() != arg2_type->type_id()) {
-    std::ostringstream buffer;
-    buffer << "For '" << prim_name << "'"
-           << "type of "
-           << "`" << arg2_name << "` should be same as "
-           << "`" << arg1_name << "`,";
-    buffer << "but `" << arg1_name << "` is " << arg1_type->ToString() << "and `" << arg2_name << "` is "
-           << arg2_type->ToString() << ".";
-    MS_EXCEPTION(TypeError) << buffer.str();
-  }
-  return arg1;
-}
-
-TypeId CheckAndConvertUtils::CheckTypeSame(const std::string &arg_name, const TypePtr arg_type,
-                                           const std::set<TypeId> &valid_type, const std::string &prim_name) {
+TypePtr CheckAndConvertUtils::CheckTypeValid(const std::string &arg_name, const TypePtr &arg_type,
+                                             const std::set<TypePtr> &valid_type, const std::string &prim_name) {
   if (valid_type.empty()) {
     MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty valid_type!";
   }
-  // std::set<TypeId> types_id;
-  std::ostringstream buffer;
-  TypeId arg_type_;
-  arg_type_ = arg_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg_type)->generic_type_id()
-                                          : arg_type->type_id();
-
-  auto it = valid_type.find(arg_type_);
-  if (it == valid_type.end()) {
-    buffer << "For" << prim_name << ", the '" << arg_name << "' should be {' one of '" << valid_type.size() << "'}";
-    for (auto type : valid_type) {
-      buffer << "{" << TypeIdLabel(type);
-    }
-    buffer << "},";
-    buffer << "but got " << arg_type->ToString() << ".";
-    MS_EXCEPTION(TypeError) << buffer.str();
+  MS_EXCEPTION_IF_NULL(arg_type);
+  if (arg_type->isa<TensorType>()) {
+    return CheckTensorTypeValid(arg_name, arg_type, valid_type, prim_name);
   }
-  return arg_type_;
+  return CheckSubClass(arg_name, arg_type, valid_type, prim_name);
 }
 
 bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name,

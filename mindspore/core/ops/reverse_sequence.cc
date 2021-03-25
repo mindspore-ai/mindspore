@@ -62,15 +62,14 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
   CheckAndConvertUtils::CheckInteger("seq_lengths vector size", seq_lengths[0], kEqual, input_shape[batch_dim],
                                      prim_name);
   // infer type
-  std::set<TypeId> tmp(common_valid_types);
-  tmp.insert(kNumberTypeBool);
-  const std::set<TypeId> valid_x_types(tmp);
-  const std::set<TypeId> valid_seq_types = {kNumberTypeInt32, kNumberTypeInt64};
+  std::set<TypePtr> valid_x_types(common_valid_types);
+  valid_x_types.emplace(kBool);
+  const std::set<TypePtr> valid_seq_types = {kInt32, kInt64};
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   auto seq_type = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();
-  CheckAndConvertUtils::CheckTensorTypeValid("x_type", x_type, valid_x_types, prim_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("seq_type", seq_type, valid_seq_types, prim_name);
-  return std::make_shared<abstract::AbstractTensor>(x_type, input_shape);
+  auto infered_type = CheckAndConvertUtils::CheckTensorTypeValid("x_type", x_type, valid_x_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_type", seq_type, valid_seq_types, prim_name);
+  return std::make_shared<abstract::AbstractTensor>(infered_type, input_shape);
 }
 REGISTER_PRIMITIVE_C(kNameReverseSequence, ReverseSequence);
 }  // namespace ops

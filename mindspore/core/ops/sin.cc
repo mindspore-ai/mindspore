@@ -39,9 +39,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  CheckAndConvertUtils::CheckTensorTypeValid("x type", input_args[0]->BuildType(), common_valid_types, prim->name());
-  return infer_type;
+  return CheckAndConvertUtils::CheckTensorTypeValid("x type", input_args[0]->BuildType(), common_valid_types,
+                                                    prim->name());
 }
 }  // namespace
 

@@ -37,13 +37,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  //  const std::set<TypeId> valid_types = {kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,  kNumberTypeInt64,
-  //                                        kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,
-  //                                        kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64,
-  //                                        kNumberTypeBool};
   auto infer_type = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, common_valid_types, "OnesLike");
-  return infer_type;
+  return CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, common_valid_types, "OnesLike");
 }
 }  // namespace
 AbstractBasePtr OnesLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -143,7 +143,7 @@ AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto input = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   int64_t h = input[0] * input[1] * num_priors_box * 4;
   std::vector<int64_t> output_shape{1, h, 1, 2};
-  return std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeFloat32), output_shape);
+  return std::make_shared<abstract::AbstractTensor>(kFloat32, output_shape);
 }
 REGISTER_PRIMITIVE_C(kNamePriorBox, PriorBox);
 }  // namespace ops

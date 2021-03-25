@@ -34,13 +34,6 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
 
   // Infer type
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  auto num_segments_type = input_args[2]->BuildType();
-  auto num_segments_v = 4;
-  std::set<TypePtr> valid_x_type = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), valid_x_type, prim_name);
-  std::set<TypePtr> valid_segment_ids_type = {TypeIdToType(kObjectTypeTensorType)};
-  CheckAndConvertUtils::CheckSubClass("segment_ids", input_args[1]->BuildType(), valid_segment_ids_type, prim_name);
-
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   CheckAndConvertUtils::CheckInteger("x_shape", x_shape.size(), kGreaterThan, 0, prim_name);
@@ -59,19 +52,9 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
     }
   }
 
-  const std::set<TypePtr> valid_segments_types = {TypeIdToType(kObjectTypeTensorType)};
-  for (const auto &valid_segments_type : valid_segments_types) {
-    if (IsIdentidityOrSubclass(num_segments_type, valid_segments_type)) {
-      const std::set<TypeId> valid_num_segments_types = {kNumberTypeInt32, kNumberTypeInt64};
-      CheckAndConvertUtils::CheckTensorTypeValid("num_segments", input_args[2]->BuildType(), valid_num_segments_types,
-                                                 prim_name);
-      shp = {-1};
-    } else {
-      CheckAndConvertUtils::CheckInteger("num_segments", num_segments_v, kGreaterThan, 0, prim_name);
-      shp = {num_segments_v};
-    }
-  }
-
+  const std::set<TypePtr> valid_num_segments_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("num_segments", input_args[2]->BuildType(), valid_num_segments_types,
+                                                   prim_name);
   int64_t size_segment_ids_shp = segment_ids_shape.size();
   int64_t size_x_shpe = x_shape.size();
   for (int64_t i = size_segment_ids_shp; i < size_x_shpe; ++i) {

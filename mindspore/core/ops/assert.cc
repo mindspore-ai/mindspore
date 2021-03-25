@@ -61,15 +61,15 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
     condition = input_args[0]->BuildType();
   }
   std::vector<int64_t> output_shape = {1};
-  std::set<TypeId> local_bool = {kNumberTypeBool};
+  std::set<TypePtr> local_bool = {kBool};
   std::map<std::string, TypePtr> args = {{"condition", condition}};
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, local_bool, op_name);
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, local_bool, op_name);
   auto inputs_type = input_args[1]->BuildType()->cast<TuplePtr>()->elements();
   for (auto dtype : inputs_type) {
-    std::set<TypePtr> template_types = {TypeIdToType(kObjectTypeTensorType)};
+    std::set<TypePtr> template_types = {kTensorType};
     CheckAndConvertUtils::CheckSubClass("input", dtype, template_types, op_name);
   }
-  return std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), output_shape);
+  return std::make_shared<abstract::AbstractTensor>(kInt32, output_shape);
 }
 REGISTER_PRIMITIVE_C(kNameAssert, Assert);
 }  // namespace ops

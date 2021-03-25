@@ -61,8 +61,7 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
       out_shape.push_back(input0[0] * input0[1]);
       break;
   }
-  TypePtr infer_type = TypeIdToType(kNumberTypeInt32);
-  return std::make_shared<abstract::AbstractTensor>(infer_type, out_shape);
+  return std::make_shared<abstract::AbstractTensor>(kInt32, out_shape);
 }
 REGISTER_PRIMITIVE_C(kNameLshProjection, LshProjection);
 }  // namespace ops

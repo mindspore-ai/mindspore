@@ -31,8 +31,6 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto unstack_prim = primitive->cast<PrimUnstackPtr>();
   MS_EXCEPTION_IF_NULL(unstack_prim);
   auto prim_name = unstack_prim->name();
-  CheckAndConvertUtils::CheckSubClass("x", input_args[0]->BuildType(), {TypeIdToType(kObjectTypeTensorType)},
-                                      prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   int64_t dim = x_shape.size();
   int64_t axis = unstack_prim->get_axis();

@@ -29,13 +29,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, common_valid_types, prim->name());
-  MS_EXCEPTION_IF_NULL(infer_type);
-  auto tensor_type = infer_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(data_type);
-  return data_type;
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, common_valid_types, prim->name());
 }
 }  // namespace
 
