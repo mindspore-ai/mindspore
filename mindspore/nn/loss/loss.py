@@ -110,7 +110,7 @@ class L1Loss(_Loss):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.L1Loss()
@@ -158,7 +158,7 @@ class MSELoss(_Loss):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.MSELoss()
@@ -194,7 +194,7 @@ class RMSELoss(_Loss):
         Tensor, weighted loss float tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.RMSELoss()
@@ -241,7 +241,7 @@ class MAELoss(_Loss):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.MAELoss()

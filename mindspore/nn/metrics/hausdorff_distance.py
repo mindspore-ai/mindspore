@@ -87,7 +87,7 @@ class HausdorffDistance(Metric):
                      Default: True.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))

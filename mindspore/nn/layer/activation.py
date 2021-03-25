@@ -305,7 +305,7 @@ class LeakyReLU(Cell):
         TypeError: If `alpha` is not a float or an int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -609,7 +609,7 @@ class HSwish(Cell):
         TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
@@ -650,7 +650,7 @@ class HSigmoid(Cell):
         TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)

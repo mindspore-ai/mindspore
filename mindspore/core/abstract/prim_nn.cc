@@ -719,6 +719,5 @@ AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const 
   AbstractBasePtrList elements = {indices, indices, weights};
   return std::make_shared<AbstractTuple>(elements);
 }
-
 }  // namespace abstract
 }  // namespace mindspore
