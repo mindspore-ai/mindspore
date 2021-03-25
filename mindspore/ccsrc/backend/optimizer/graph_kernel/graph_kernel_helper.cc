@@ -575,7 +575,7 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
     prim::kPrimExpandDims, prim::kPrimMul,        prim::kPrimMinimum, prim::kPrimMaximum, prim::kPrimLog,
     prim::kPrimPow,        prim::kPrimSub,        prim::kPrimRsqrt,   prim::kPrimSqrt,    prim::kPrimAddN,
     prim::kPrimEqual,      prim::kPrimReciprocal, prim::kPrimTanh,    prim::kPrimReshape, prim::kPrimTranspose,
-    prim::kPrimCast,       prim::kPrimRealDiv};
+    prim::kPrimCast,       prim::kPrimRealDiv,    prim::kPrimMatMul};
 #elif ENABLE_GPU
   std::vector<PrimitivePtr> fusible_basic_ops = {
     prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,       prim::kPrimExp,     prim::kPrimAdd,

@@ -88,8 +88,7 @@ class PrimLib:
     ELEMWISE = 2
     BROADCAST = 3
     REDUCE = 4
-    TRANSFORM = 5
-    CONTROL = 6
+    OPAQUE = 5
 
     class Prim:
         """Prim"""
@@ -146,7 +145,6 @@ class PrimLib:
             default_elemwise_broadcast_relation,
             default_reduce_relation,
             unknown_relation,
-            unknown_relation,
         ]
 
     primtives = {
@@ -176,7 +174,6 @@ class PrimLib:
         'ReduceSum': Prim(REDUCE),
         'ReduceMax': Prim(REDUCE),
         'ReduceMin': Prim(REDUCE),
-        'MakeTuple': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),
         'ExpandDims': Prim(RESHAPE),
@@ -186,9 +183,10 @@ class PrimLib:
         'Squeeze': Prim(RESHAPE),
         'Flatten': Prim(RESHAPE),
         'FlattenGrad': Prim(RESHAPE),
-        'Transpose': Prim(TRANSFORM),
+        'Transpose': Prim(OPAQUE),
         'Tile': Prim(BROADCAST),
         'BroadcastTo': Prim(BROADCAST),
+        'MatMul': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
@@ -509,7 +507,7 @@ class AddControlBuddy(GraphVisitor):
         self.buddies = {}  # {op : [ctrl_op]}
 
     def visit(self, op):
-        if PrimLib.iter_type(op) == PrimLib.CONTROL:
+        if op.prim == "MakeTuple":
             assert len(op.output.to_ops) == 1
             owner = op.output.to_ops[0]
             if owner in self.buddies:
