@@ -38,7 +38,6 @@ namespace dataset {
 
 // Transform operations for computer vision.
 namespace vision {
-#ifndef ENABLE_ANDROID
 // CONSTRUCTORS FOR API CLASSES TO CREATE VISION TENSOR TRANSFORM OPERATIONS
 // (In alphabetical order)
 
@@ -69,6 +68,7 @@ std::shared_ptr<TensorOperation> Affine::Parse() {
                                            data_->interpolation_, data_->fill_value_);
 }
 
+#ifndef ENABLE_ANDROID
 // AutoContrast Transform Operation.
 struct AutoContrast::Data {
   Data(float cutoff, const std::vector<uint32_t> &ignore) : cutoff_(cutoff), ignore_(ignore) {}
@@ -290,7 +290,7 @@ std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
   if (env == MapTargetDevice::kAscend310) {
 #ifdef ENABLE_ACL
     return std::make_shared<DvppNormalizeOperation>(data_->mean_, data_->std_);
-#endif
+#endif  // ENABLE_ACL
   }
   return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_);
 }
@@ -328,6 +328,7 @@ Pad::Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderTy
 std::shared_ptr<TensorOperation> Pad::Parse() {
   return std::make_shared<PadOperation>(data_->padding_, data_->fill_value_, data_->padding_mode_);
 }
+#endif  // not ENABLE_ANDROID
 
 // RandomAffine Transform Operation.
 struct RandomAffine::Data {
@@ -358,6 +359,7 @@ std::shared_ptr<TensorOperation> RandomAffine::Parse() {
                                                  data_->shear_ranges_, data_->interpolation_, data_->fill_value_);
 }
 
+#ifndef ENABLE_ANDROID
 // RandomColor Transform Operation.
 struct RandomColor::Data {
   Data(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
