@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-    echo "Usage: sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [ANN_FILE]
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [ANN_FILE]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -64,7 +64,7 @@ function compile_app()
     if [ -f "Makefile" ]; then
         make clean
     fi
-    sh build.sh &> build.log
+    bash build.sh &> build.log
 }
 
 function infer()
