@@ -27,7 +27,7 @@ do
 done
 
 BASEPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-MINDSPORE_ROOT_DIR=${${BASEPATH}%%/mindspore/lite/micro/example/mnist_x86}
+MINDSPORE_ROOT_DIR=${BASEPATH%%/mindspore/lite/micro/example/mnist_x86}
 
 echo "current dir is: ${BASEPATH}"
 

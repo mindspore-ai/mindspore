@@ -1,5 +1,4 @@
 
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -20,8 +19,6 @@
 #define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 
 #include "include/ms_tensor.h"
-#include <utility>
-#include <vector>
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +28,7 @@ struct QuantArg {
   float var_corr{1};
   float mean_corr{0};
   bool inited;
-  std::vector<float> clusters{};
+  Vector<float> clusters{};
   int bitNum;
   int roundType;
   int multiplier;
@@ -41,31 +38,29 @@ struct QuantArg {
 class MTensor : public mindspore::tensor::MSTensor {
  public:
   MTensor() = default;
-  MTensor(std::string name, enum TypeId type, std::vector<int32_t> shape)
-      : tensor_name_(std::move(name)), data_type_(type), shape_(std::move(shape)) {}
+  MTensor(String name, TypeId type, Vector<int32_t> shape) : tensor_name_(name), data_type_(type), shape_(shape) {}
   ~MTensor() override;
 
   TypeId data_type() const override { return data_type_; }
-  std::vector<int> shape() const override { return shape_; }
-  int DimensionSize(size_t index) const override;
+  Vector<int> shape() const override { return shape_; }
+  void set_shape(const Vector<int> &shape) override { shape_ = shape; }
   int ElementsNum() const override;
   size_t Size() const override;
+  String tensor_name() const override { return tensor_name_; }
+  void set_tensor_name(const String &name) override { tensor_name_ = name; }
   void *MutableData() override;
-  std::string tensor_name() const override { return tensor_name_; }
-  void set_tensor_name(const std::string name) override { tensor_name_ = name; }
+  void *data() override { return data_; }
   void set_data(void *data) override { data_ = data; }
 
  private:
-  std::string tensor_name_;
+  String tensor_name_;
   TypeId data_type_;
-  std::vector<int> shape_;
+  Vector<int> shape_;
   void *data_ = nullptr;
-  std::vector<QuantArg> quant_params_;
+  Vector<QuantArg> quant_params_;
 };
 
 }  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
-
-
