@@ -25,7 +25,10 @@
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kNPU;
-
+std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index{
+  {schema::PrimitiveType_Split, {1}},
+  {schema::PrimitiveType_PadFusion, {1}},
+  {schema::PrimitiveType_StridedSlice, {1, 2, 3}}};
 kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor *> &in_tensors,
                                                         const std::vector<Tensor *> &out_tensors,
                                                         const InnerContext *ctx, const std::string &name) {
@@ -106,6 +109,9 @@ void NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel,
       break;
     }
   }
+  if (out_kernels.empty()) {
+    out_kernels.push_back(trans_kernel);
+  }
   pre_kernel->set_out_kernels(out_kernels);
 }
 
@@ -122,8 +128,8 @@ void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel,
   }
   std::copy(trans_kernels.begin(), trans_kernels.end(), std::back_inserter(cur_out_kernels));
   pre_kernel->set_out_kernels(cur_out_kernels);
-  // For kernel before trans, the output tensor is used for output tensor of trans, so replace the output tensor with
-  // the input tensor of trans.
+  // For kernel before trans, the output tensor is used for output tensor of trans, so replace the output tensor
+  // with the input tensor of trans.
   pre_kernel->set_out_tensors({trans_kernels.at(0)->in_tensors().at(0)});
 }
 
@@ -155,7 +161,7 @@ void NPUPassUtils::UpdateNC2NHTransNodePostKernel(kernel::LiteKernel *kernel, ke
   Tensor *old_in_tensor = nullptr;
   // find out which input tensor of post_kernel should be updated
   for (size_t i = 0; i < post_in_tensors.size(); ++i) {
-    if (KernelInputFromKernel(post_kernel, i) == kernel) {
+    if (KernelInputFromKernel(post_kernel, post_in_tensors.at(i)) == kernel) {
       old_in_tensor = post_in_tensors.at(i);
       break;
     }
@@ -216,17 +222,16 @@ bool NPUPassUtils::IsNchw2Nhwc(const kernel::LiteKernel *kernel) {
   }
   return false;
 }
-kernel::LiteKernel *NPUPassUtils::KernelInputFromKernel(const kernel::LiteKernel *kernel, size_t in_tensor_index) {
+kernel::LiteKernel *NPUPassUtils::KernelInputFromKernel(const kernel::LiteKernel *kernel, Tensor *in_tensor) {
   // given kernel and input tensor index, get which kernel output this tensor.
   // If input tensor is graph input, return nullptr.
   if (kernel == nullptr) {
     return nullptr;
   }
-  auto tensor = kernel->in_tensors().at(in_tensor_index);
   auto in_kernels = kernel->in_kernels();
-  auto output_contain = [tensor](const kernel::LiteKernel *kernel) {
+  auto output_contain = [in_tensor](const kernel::LiteKernel *kernel) {
     auto out_tensors = kernel->out_tensors();
-    return std::find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end();
+    return std::find(out_tensors.begin(), out_tensors.end(), in_tensor) != out_tensors.end();
   };
   auto it = std::find_if(in_kernels.begin(), in_kernels.end(), output_contain);
   if (it == in_kernels.end()) {
@@ -235,10 +240,57 @@ kernel::LiteKernel *NPUPassUtils::KernelInputFromKernel(const kernel::LiteKernel
   return *it;
 }
 
+std::vector<Tensor *> NPUPassUtils::GetNonConstInputs(kernel::LiteKernel *kernel) {
+  if (kernel == nullptr) {
+    return std::vector<Tensor *>{};
+  }
+  auto type = static_cast<schema::PrimitiveType>(kernel->op_parameter()->type_);
+  auto it = nodes2const_index.find(type);
+  if (it != nodes2const_index.end()) {
+    auto const_input_indices = it->second;
+    std::vector<Tensor *> non_const_in_tensors;
+    auto in_tensors = kernel->in_tensors();
+    for (auto i = 0; i < in_tensors.size(); ++i) {
+      if (const_input_indices.find(i) == const_input_indices.end()) {
+        non_const_in_tensors.push_back(in_tensors[i]);
+      }
+    }
+    return non_const_in_tensors;
+  }
+  return kernel->in_tensors();
+}
+
 bool NPUPassUtils::Scale4dCase(const kernel::LiteKernel *kernel) {
   MS_ASSERT(kernel != nullptr && kernel->op_parameter() != nullptr);
   auto scale_param = reinterpret_cast<ScaleParameter *>(kernel->op_parameter());
   auto in_tensor = kernel->in_tensors().at(1);
   return in_tensor->shape().size() == 1 && (scale_param->axis_ == 3 || scale_param->axis_ == -1);
+}
+
+void NPUPassUtils::AssistDataNHWC2NCHW(int *data, size_t unit_size) {
+  MS_ASSERT(data != nullptr);
+  for (size_t i = 0; i < unit_size; ++i) {
+    int c = data[3 * unit_size + i];
+    // n h w c
+    // n c h w
+    data[3 * unit_size + i] = data[2 * unit_size + i];
+    data[2 * unit_size + i] = data[unit_size + i];
+    data[unit_size + i] = c;
+  }
+}
+
+int NPUPassUtils::MaskDataNHWC2NCHW(int mask) {
+  int mask_vec[4];
+  for (int i = 0; i < 4; ++i) {
+    mask_vec[i] = (uint32_t)(mask) & (1 << i);
+  }
+  AssistDataNHWC2NCHW(mask_vec, 1);
+  int ret = 0;
+  for (int i = 0; i < 4; ++i) {
+    if (mask_vec[i]) {
+      ret += 1 << i;
+    }
+  }
+  return ret;
 }
 }  // namespace mindspore::lite
