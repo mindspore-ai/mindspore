@@ -62,8 +62,8 @@ int ResizeBaseCPUKernel::CheckParameters() {
       if (InferShapeDone()) {
         new_height_ = out_tensors_.at(0)->shape().at(1);
         new_width_ = out_tensors_.at(0)->shape().at(2);
+        const_shape_ = true;
       }
-      const_shape_ = true;
     }
   }
   coordinate_transform_mode_ = parameter->coordinate_transform_mode_;

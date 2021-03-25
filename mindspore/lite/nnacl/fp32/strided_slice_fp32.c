@@ -84,7 +84,6 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
   if (param->num_axes_ < DIMENSION_6D) {
     PadStridedSliceParameterTo6D(param);
   }
-  ChangeNegToPositive(param);
 
   size_t dim_offset[DIMENSION_6D - 1];
   dim_offset[4] = in_shape[5];
