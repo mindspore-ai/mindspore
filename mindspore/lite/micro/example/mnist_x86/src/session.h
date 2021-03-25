@@ -33,6 +33,20 @@ namespace lite {
     }                                    \
   } while (0)
 
+#define MS_NULLPTR_IF_NULL(ptr) \
+  do {                          \
+    if ((ptr) == nullptr) {     \
+      return nullptr;           \
+    }                           \
+  } while (0)
+
+#define MS_NULLPTR_IF_ERROR(ptr)            \
+  do {                                      \
+    if ((ptr) != mindspore::lite::RET_OK) { \
+      return nullptr;                       \
+    }                                       \
+  } while (0)
+
 class LiteSession : public session::LiteSession {
  public:
   LiteSession() = default;
@@ -43,31 +57,25 @@ class LiteSession : public session::LiteSession {
 
   int CompileGraph(lite::Model *model) override;
 
-  std::vector<tensor::MSTensor *> GetInputs() const override;
+  Vector<tensor::MSTensor *> GetInputs() const override;
 
-  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override { return nullptr; }
+  mindspore::tensor::MSTensor *GetInputsByTensorName(const String &tensor_name) const override { return nullptr; }
 
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
-  std::vector<tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
+  Vector<tensor::MSTensor *> GetOutputsByNodeName(const String &node_name) const override;
 
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
+  Vector<String> GetOutputTensorNames() const override;
 
-  std::vector<std::string> GetOutputTensorNames() const override;
+  mindspore::tensor::MSTensor *GetOutputByTensorName(const String &tensor_name) const override;
 
-  mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
-
-  int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
+  int Resize(const Vector<tensor::MSTensor *> &inputs, const Vector<Vector<int>> &dims) override { return RET_ERROR; }
 
   int InitRuntimeBuffer();
 
  private:
-  int SetInputsData(const std::vector<MTensor *> &inputs) const;
-  std::vector<MTensor *> inputs_;
-  std::vector<MTensor *> outputs_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_node_map_;
-
+  Vector<MTensor *> inputs_;
+  Vector<MTensor *> outputs_;
   void *runtime_buffer_;
 };
 
@@ -75,4 +83,3 @@ class LiteSession : public session::LiteSession {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_SESSION_H_
-
