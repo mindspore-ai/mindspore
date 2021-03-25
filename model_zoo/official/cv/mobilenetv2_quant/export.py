@@ -26,6 +26,7 @@ from src.config import config_quant
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
+parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
 parser.add_argument('--device_target', type=str, default=None, help='Run device target')
 args_opt = parser.parse_args()
 
@@ -46,5 +47,9 @@ if __name__ == '__main__':
     # export network
     print("============== Starting export ==============")
     inputs = Tensor(np.ones([1, 3, cfg.image_height, cfg.image_width]), mindspore.float32)
-    export(network, inputs, file_name="mobilenet_quant", file_format='MINDIR', quant_mode='AUTO')
+    if args_opt.file_format == 'MINDIR':
+        export(network, inputs, file_name="mobilenet_quant", file_format='MINDIR', quant_mode='AUTO')
+    else:
+        export(network, inputs, file_name="mobilenet_quant", file_format='AIR',
+               quant_mode='AUTO', mean=0., std_dev=48.106)
     print("============== End export ==============")
