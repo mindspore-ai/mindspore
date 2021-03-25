@@ -83,7 +83,7 @@ class Conv2dBnAct(Cell):
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='relu')

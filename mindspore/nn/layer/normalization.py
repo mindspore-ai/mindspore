@@ -1035,7 +1035,7 @@ class GroupNorm(Cell):
         ValueError: If `num_channels` is not divided by `num_groups`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> goup_norm_op = nn.GroupNorm(2, 2)
