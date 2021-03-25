@@ -258,9 +258,9 @@ def add(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.add(x1, x2)
         >>> print(output)
-        [[4, 6],
-        [4, 6],
-        [4, 6]]
+        [[4 6]
+        [4 6]
+        [4 6]]
     """
     # broadcast is not fully supported in tensor_add on CPU,
     # so we use tensor_sub as a substitute solution
@@ -297,9 +297,9 @@ def subtract(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.subtract(x1, x2)
         >>> print(output)
-        [[-2, -2],
-        [-2, -2],
-        [-2, -2]]
+        [[-2 -2]
+        [-2 -2]
+        [-2 -2]]
     """
     return _apply_tensor_op(F.tensor_sub, x1, x2, dtype=dtype)
 
@@ -331,9 +331,9 @@ def multiply(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.multiply(x1, x2)
         >>> print(output)
-        [[3, 8],
-        [3, 8],
-        [3, 8]]
+        [[3 8]
+        [3 8]
+        [3 8]]
     """
     if _get_device() == 'CPU':
         _check_input_tensor(x1, x2)
@@ -374,9 +374,9 @@ def divide(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.divide(x1, x2)
         >>> print(output)
-        [[0.33333333, 0.5],
-        [0.33333333, 0.5],
-        [0.33333333, 0.5]]
+        [[0.33333334 0.5       ]
+        [0.33333334 0.5       ]
+        [0.33333334 0.5       ]]
     """
     if not _check_is_float(F.dtype(x1)) and not _check_is_float(F.dtype(x2)):
         x1 = F.cast(x1, mstype.float32)
@@ -413,9 +413,9 @@ def true_divide(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.true_divide(x1, x2)
         >>> print(output)
-        [[0.33333333, 0.5],
-        [0.33333333, 0.5],
-        [0.33333333, 0.5]]
+        [[0.33333334 0.5       ]
+        [0.33333334 0.5       ]
+        [0.33333334 0.5       ]]
     """
     return divide(x1, x2, dtype=dtype)
 
@@ -450,9 +450,9 @@ def power(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4]).astype('float32')
         >>> output = np.power(x1, x2)
         >>> print(output)
-        [[ 1, 16],
-        [ 1, 16],
-        [ 1, 16]]
+        [[ 1 16]
+        [ 1 16]
+        [ 1 16]]
     """
     return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
 
@@ -708,8 +708,8 @@ def dot(a, b):
         >>> b = np.full((2, 3, 4), 5).astype('float32')
         >>> output = np.dot(a, b)
         >>> print(output)
-        [[[105, 105, 105, 105],
-        [105, 105, 105, 105]]]
+        [[[105. 105. 105. 105.]
+        [105. 105. 105. 105.]]]
     """
     ndim_a, ndim_b = F.rank(a), F.rank(b)
     if ndim_a > 0 and ndim_b >= 2:
@@ -760,13 +760,13 @@ def outer(a, b):
         >>> b = np.full(4, 3).astype('float32')
         >>> output = np.outer(a, b)
         >>> print(output)
-        [[6, 6, 6, 6],
-        [6, 6, 6, 6],
-        [6, 6, 6, 6],
-        [6, 6, 6, 6],
-        [6, 6, 6, 6],
-        [6, 6, 6, 6],
-        [6, 6, 6, 6]]
+        [[6. 6. 6. 6.]
+        [6. 6. 6. 6.]
+        [6. 6. 6. 6.]
+        [6. 6. 6. 6.]
+        [6. 6. 6. 6.]
+        [6. 6. 6. 6.]
+        [6. 6. 6. 6.]]
     """
     _check_input_tensor(a, b)
     if F.rank(a) != 1:
@@ -1478,7 +1478,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         [0. 1.]
         >>> output = np.amin(a, axis=1)
         >>> print(output)
-        [0, 2]
+        [0. 2.]
         >>> output = np.amin(a, where=np.array([False, True]), initial=10, axis=0)
         >>> print(output)
         [10.  1.]
@@ -3733,7 +3733,7 @@ def promote_types(type1, type2):
         >>> import mindspore.numpy as np
         >>> output = np.promote_types(np.float32, np.float64)
         >>> print(output)
-        np.float64
+        Float64
     """
     type1 = _check_dtype(type1)
     type2 = _check_dtype(type2)

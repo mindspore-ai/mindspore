@@ -57,8 +57,8 @@ def not_equal(x1, x2, dtype=None):
         >>> a = np.asarray([1, 2])
         >>> b = np.asarray([[1, 3],[1, 4]])
         >>> print(np.not_equal(a, b))
-        >>> [[False  True]
-             [False  True]]
+        [[False  True]
+        [False  True]]
     """
     _check_input_tensor(x1, x2)
     return _apply_tensor_op(F.not_equal, x1, x2, dtype=dtype)
@@ -253,9 +253,6 @@ def isfinite(x, dtype=None):
         >>> output = np.isfinite(np.array([np.inf, 1., np.nan]).astype('float32'))
         >>> print(output)
         [False  True False]
-        >>> output = np.isfinite(np.log(np.array(-1.).astype('float32')))
-        >>> print(output)
-        False
     """
     return _apply_tensor_op(F.isfinite, x, dtype=dtype)
 
