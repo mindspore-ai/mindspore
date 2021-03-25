@@ -107,7 +107,7 @@ Status AlbumOp::PrescanEntry() {
   Path folder(folder_path_);
   dirname_offset_ = folder_path_.length();
   std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
-  if (folder.Exists() == false || dirItr == nullptr) {
+  if (!folder.Exists() || dirItr == nullptr) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_path_);
   }
   MS_LOG(INFO) << "Album folder Path found: " << folder_path_ << ".";
