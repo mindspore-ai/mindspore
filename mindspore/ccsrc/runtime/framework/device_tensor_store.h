@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include "utils/ms_utils.h"
 #include "runtime/device/device_address.h"
 
 namespace mindspore {
@@ -32,9 +33,6 @@ using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 // so they are more suitable for store and can be obtained when they are used by actor.
 class DeviceTensorStore {
  public:
-  DeviceTensorStore() = default;
-  virtual ~DeviceTensorStore() = default;
-
   static DeviceTensorStore &GetInstance() {
     static DeviceTensorStore instance;
     return instance;
@@ -60,6 +58,10 @@ class DeviceTensorStore {
   }
 
  private:
+  DeviceTensorStore() = default;
+  ~DeviceTensorStore() = default;
+  DISABLE_COPY_AND_ASSIGN(DeviceTensorStore);
+
   // The data storage of device tensor, key is anfNode ptr.
   std::unordered_map<void *, DeviceTensorPtr> device_tensors_;
 };

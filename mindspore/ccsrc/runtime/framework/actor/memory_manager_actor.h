@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "mindrt/include/actor/actor.h"
+#include "mindrt/include/actor/op_actor.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 
@@ -33,12 +33,7 @@ using mindspore::device::DeviceContext;
 class MemoryManagerActor : public ActorBase {
  public:
   MemoryManagerActor() : ActorBase("MemoryManagerActor") {}
-  virtual ~MemoryManagerActor() = default;
-
-  static std::shared_ptr<MemoryManagerActor> &GetInstance() {
-    static std::shared_ptr<MemoryManagerActor> instance;
-    return instance;
-  }
+  ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
   bool AllocateMemory(std::vector<DeviceTensorPtr> alloc_list, const DeviceContext *device_context,

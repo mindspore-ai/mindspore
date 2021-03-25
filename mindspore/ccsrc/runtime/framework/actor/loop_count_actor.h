@@ -30,7 +30,8 @@ namespace runtime {
 // and decide whether to loop execution by loop count.
 class LoopCountActor : public OpActor<DeviceTensor> {
  public:
-  LoopCountActor(std::string name, size_t loop_count) : OpActor(name), loop_count_(loop_count), current_count_(0) {}
+  LoopCountActor(std::string name, size_t loop_count)
+      : OpActor(name), loop_count_(loop_count), current_count_(0), input_controls_num_(0) {}
   virtual ~LoopCountActor() = default;
 
   // The loop count actor run when receive the input control.
