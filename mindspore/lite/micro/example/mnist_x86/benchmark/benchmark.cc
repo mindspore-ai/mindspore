@@ -1,5 +1,4 @@
 
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -39,6 +38,17 @@ void usage() {
     "args[5]: runtime thread bind mode\n\n");
 }
 
+uint64_t GetTimeUs() {
+  const int USEC = 1000000;
+  const int MSEC = 1000;
+  struct timespec ts = {0, 0};
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+    return 0;
+  }
+  uint64_t retval = (uint64_t)((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
+  return retval;
+}
+
 template <typename T>
 void PrintData(void *data, size_t data_number) {
   if (data == nullptr) {
@@ -46,23 +56,20 @@ void PrintData(void *data, size_t data_number) {
   }
   auto casted_data = static_cast<T *>(data);
   for (size_t i = 0; i < 10 && i < data_number; i++) {
-    std::cout << std::to_string(casted_data[i]) << ", ";
+    printf("%s, ", std::to_string(casted_data[i]).c_str());
   }
-  std::cout << std::endl;
+  printf("\n");
 }
 
 void TensorToString(tensor::MSTensor *tensor) {
-  uint8_t i = 0;
-  std::cout << "uint8: " << i << std::endl;
-
-  std::cout << "Name: " << tensor->tensor_name();
-  std::cout << ", DataType: " << tensor->data_type();
-  std::cout << ", Size: " << tensor->Size();
-  std::cout << ", Shape:";
+  printf("name: %s, ", tensor->tensor_name().c_str());
+  printf("DataType: %d, ", tensor->data_type());
+  printf("Elements: %d, ", tensor->ElementsNum());
+  printf("Shape: [");
   for (auto &dim : tensor->shape()) {
-    std::cout << " " << dim;
+    printf("%d ", dim);
   }
-  std::cout << ", Data:" << std::endl;
+  printf("], Data: \n");
   switch (tensor->data_type()) {
     case kNumberTypeFloat32: {
       PrintData<float>(tensor->MutableData(), tensor->ElementsNum());
@@ -90,26 +97,42 @@ void TensorToString(tensor::MSTensor *tensor) {
 
 int main(int argc, const char **argv) {
   if (argc < 2) {
-    std::cout << "input command is invalid\n" << std::endl;
+    printf("input command is invalid\n");
     usage();
     return lite::RET_ERROR;
   }
-  std::cout << "start run benchmark" << std::endl;
+  printf("=======run benchmark======\n");
 
   const char *model_buffer = nullptr;
   int model_size = 0;
-  // read .net file by ReadBinaryFile;
+  // read .bin file by ReadBinaryFile;
   if (argc >= 3) {
     model_buffer = static_cast<const char *>(ReadInputData(argv[2], &model_size));
   }
-  session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, nullptr);
-  if (session == nullptr) {
-    std::cerr << "create lite session failed" << std::endl;
-    return lite::RET_ERROR;
+
+  lite::Context *context = nullptr;
+  if (argc >= 5) {
+    // config benchmark context
+    context = new (std::nothrow) lite::Context();
+    if (context == nullptr) {
+      return lite::RET_ERROR;
+    }
+    context->thread_num_ = atoi(argv[4]);
+    context->device_list_.resize(1);
+    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[5]))}}};
+    printf("context: ThreadNum: %d, BindMode: %d\n", context->thread_num_,
+           context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
   }
 
+  session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, context);
+  if (session == nullptr) {
+    printf("create lite session failed\n");
+    return lite::RET_ERROR;
+  }
+  delete[] model_buffer;
+
   // set model inputs tensor data
-  std::vector<tensor::MSTensor *> inputs = session->GetInputs();
+  Vector<tensor::MSTensor *> inputs = session->GetInputs();
   size_t inputs_num = inputs.size();
   void *inputs_binbuf[inputs_num];
   int inputs_size[inputs_num];
@@ -125,23 +148,41 @@ int main(int argc, const char **argv) {
     memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
   }
 
+  if (argc >= 4) {
+    int loop_count = atoi(argv[3]);
+    printf("\nloop count: %d\n", loop_count);
+    uint64_t start_time = GetTimeUs();
+    for (int i = 0; i < loop_count; ++i) {
+      ret = session->RunGraph();
+      if (ret != lite::RET_OK) {
+        return lite::RET_ERROR;
+      }
+    }
+    uint64_t end_time = GetTimeUs();
+    float total_time = (float)(end_time - start_time) / 1000.0f;
+    printf("total time: %.5fms, per time: %.5fms\n", total_time, total_time / loop_count);
+  }
   ret = session->RunGraph();
   if (ret != lite::RET_OK) {
     return lite::RET_ERROR;
   }
 
-  auto outputs = session->GetOutputs();
-  std::cout << "output size: " << outputs.size() << std::endl;
-  for (const auto &item : outputs) {
-    auto output = item.second;
+  Vector<String> outputs_name = session->GetOutputTensorNames();
+  printf("\noutputs: \n");
+  for (const auto &name : outputs_name) {
+    auto output = session->GetOutputByTensorName(name);
     TensorToString(output);
   }
-
-  std::cout << "run benchmark success" << std::endl;
+  printf("========run success=======\n");
   delete session;
+  session = nullptr;
+  if (context != nullptr) {
+    delete context;
+    context = nullptr;
+  }
   for (size_t i = 0; i < inputs_num; ++i) {
     free(inputs_binbuf[i]);
+    inputs_binbuf[i] = nullptr;
   }
   return lite::RET_OK;
 }
-

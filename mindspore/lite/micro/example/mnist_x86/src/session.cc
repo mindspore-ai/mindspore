@@ -16,21 +16,31 @@
  */
 
 #include "session.h"
+#include "model.h"
 #include "net.h"
+#include <new>
 
 namespace mindspore {
 namespace lite {
 int LiteSession::CompileGraph(lite::Model *model) {
   inputs_.resize(1);
-  inputs_[0] = new (std::nothrow) MTensor("graph_input-0", kNumberTypeFloat32, {1, 28, 28, 1, });
+  Vector<int32_t> in_shape_0;
+  in_shape_0.resize(4);
+  in_shape_0[0] = 1;
+  in_shape_0[1] = 28;
+  in_shape_0[2] = 28;
+  in_shape_0[3] = 1;
+  inputs_[0] = new (std::nothrow) MTensor(String("graph_input-0"), kNumberTypeFloat32, in_shape_0);
   MS_ERROR_IF_NULL(inputs_[0]);
   outputs_.resize(1);
-  outputs_[0] = new (std::nothrow) MTensor("Softmax-7", kNumberTypeFloat32, {1, 10, });
+  Vector<int32_t> out_shape_0;
+  out_shape_0.resize(2);
+  out_shape_0[0] = 1;
+  out_shape_0[1] = 10;
+  outputs_[0] = new (std::nothrow) MTensor(String("Softmax-7"), kNumberTypeFloat32, out_shape_0);
   MS_ERROR_IF_NULL(outputs_[0]);
-  for (const auto &output: outputs_) {
-    output_tensor_map_[output->tensor_name()] = output;
-  }
-  return RET_OK;
+  int ret = Init(model->buf, dynamic_cast<MModel *>(model)->buf_size());
+  return ret;
 }
 
 
@@ -65,8 +75,7 @@ LiteSession::~LiteSession() {
     delete input;
     input = nullptr;
   }
-  for (auto &item : output_tensor_map_) {
-    auto output = item.second;
+  for (auto &output : outputs_) {
     if (output == nullptr) {
       continue;
     }
@@ -88,69 +97,53 @@ int LiteSession::InitRuntimeBuffer() {
   return RET_OK;
 }
 
-std::vector<tensor::MSTensor *> LiteSession::GetInputs() const {
-  std::vector<tensor::MSTensor *> inputs;
-  inputs.insert(inputs.begin(), inputs_.begin(), inputs_.end());
+Vector<tensor::MSTensor *> LiteSession::GetInputs() const {
+  Vector<tensor::MSTensor *> inputs;
+  for (const auto &input : inputs_) {
+    inputs.push_back(input);
+  }
   return inputs;
 }
 
-std::vector<tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const std::string &node_name) const {
-  auto iter = output_node_map_.find(node_name);
-  if (iter == output_node_map_.end()) {
-    std::vector<tensor::MSTensor *> empty;
-    return empty;
-  }
-  return iter->second;
+Vector<tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const String &node_name) const {
+  Vector<tensor::MSTensor *> outputs;
+  return outputs;
 }
 
-std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
-  return output_tensor_map_;
-}
-
-std::vector<std::string> LiteSession::GetOutputTensorNames() const {
-  std::vector<std::string> output_names;
-  for (const auto &item : output_node_map_) {
-    for (const auto &output : item.second) {
-      output_names.emplace_back(output->tensor_name());
-    }
+Vector<String> LiteSession::GetOutputTensorNames() const {
+  Vector<String> output_names;
+  for (const auto &output : outputs_) {
+    output_names.push_back(output->tensor_name());
   }
   return output_names;
 }
 
-mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::string &tensor_name) const {
-  auto item = output_tensor_map_.find(tensor_name);
-  if (item == output_tensor_map_.end()) {
-    return nullptr;
+mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &tensor_name) const {
+  for (const auto &output : outputs_) {
+    if (output->tensor_name() == tensor_name) {
+      return output;
+    }
   }
-  return item->second;
-}
-
-int LiteSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) {
-  return RET_OK;
+  return nullptr;
 }
 
 }  // namespace lite
-
 session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
   auto *session = new (std::nothrow) lite::LiteSession();
-  if (session == nullptr) {
-    return nullptr;
-  }
-  session->InitRuntimeBuffer();
+  MS_NULLPTR_IF_NULL(session);
+  int ret = session->InitRuntimeBuffer();
+  MS_NULLPTR_IF_ERROR(ret);
   return session;
 }
 
-session::LiteSession *session::LiteSession::CreateSession(const char *net_buf, size_t size,
+session::LiteSession *session::LiteSession::CreateSession(const char *model_buf, size_t size,
                                                           const lite::Context *context) {
   session::LiteSession *session = CreateSession(context);
-  if (session == nullptr) {
-    return nullptr;
-  }
-  int ret = session->CompileGraph(nullptr);
-  if (ret != lite::RET_OK) {
-    return nullptr;
-  }
-  Init(const_cast<char *>(net_buf), size);
+  MS_NULLPTR_IF_NULL(session);
+  lite::Model *model = lite::Model::Import(model_buf, size);
+  int ret = session->CompileGraph(model);
+  MS_NULLPTR_IF_ERROR(ret);
+  delete model;
   return session;
 }
 }  // namespace mindspore

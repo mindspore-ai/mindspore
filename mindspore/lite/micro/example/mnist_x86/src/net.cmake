@@ -17,6 +17,7 @@ set(OP_SRC
     net.c.o
     session.cc.o
     tensor.cc.o
+    string.cc.o
 )
 file(GLOB NET_SRC
      ${CMAKE_CURRENT_SOURCE_DIR}/*.cc

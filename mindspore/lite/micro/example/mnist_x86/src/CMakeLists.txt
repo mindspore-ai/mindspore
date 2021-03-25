@@ -1,5 +1,4 @@
 
-
 cmake_minimum_required(VERSION 3.14)
 project(net)
 
@@ -16,7 +15,8 @@ set(HEADER_PATH ${PKG_PATH}/inference)
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
+add_compile_definitions(NOT_USE_STL)
+
 include_directories(${OP_HEADER_PATH})
 include_directories(${HEADER_PATH})
 
@@ -43,15 +43,19 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    message(STATUS "build net library with debug info")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 else()
+    message(STATUS "build net library release version")
     set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O3 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REPLACE "-g" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
 function(create_library)
@@ -80,4 +84,3 @@ function(create_library)
 endfunction(create_library)
 string(CONCAT library_name "lib" net ".a")
 create_library()
-

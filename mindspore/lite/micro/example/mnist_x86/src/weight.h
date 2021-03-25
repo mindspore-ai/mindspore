@@ -34,6 +34,7 @@ enum STATUS {
   RET_ERROR = 1,
 };
 
+extern int g_thread_num;
 extern int16_t g_Weight10[];
 extern int32_t g_Weight11[];
 extern int16_t g_Weight12[];

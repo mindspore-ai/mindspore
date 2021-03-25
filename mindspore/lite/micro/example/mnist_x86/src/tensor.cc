@@ -1,5 +1,4 @@
 
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -61,14 +60,6 @@ MTensor::~MTensor() {
   }
 }
 
-int MTensor::DimensionSize(const size_t index) const {
-  int dim_size = -1;
-  if (index < shape_.size()) {
-    dim_size = shape_[index];
-  }
-  return dim_size;
-}
-
 int MTensor::ElementsNum() const {
   int elements = 1;
   for (int i : shape_) {
@@ -90,4 +81,3 @@ void *MTensor::MutableData() {
 }
 }  // namespace lite
 }  // namespace mindspore
-

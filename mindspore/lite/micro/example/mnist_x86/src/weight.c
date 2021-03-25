@@ -17,7 +17,8 @@
 
 #include "weight.h"
 
-unsigned char * g_Buffer = 0 ; 
+int  g_thread_num = 1; 
+unsigned char * g_Buffer = 0; 
 int16_t g_Weight10[1536];
 int32_t g_Weight11[12];
 int16_t g_Weight12[3072];
@@ -33,7 +34,6 @@ int Init(void *weight_buffer, int weight_size) {
   if (weight_buffer == NULL) {
     return RET_ERROR;
   }
-
   struct ModelParameter {
     void *addr;
     size_t size;
@@ -74,7 +74,7 @@ if (g_Weight15 == NULL) {
   return RET_ERROR;
 }
 memset(g_Weight15, 0, 6080);
-static int init_filter_zp[20] = {1, 12, 3, 2, -10, -5, -11, 5, 12, 22, 16, 1, -5, 15, 13, 5, -10, -5, -6, 0};
+int init_filter_zp[20] = {1, 12, 3, 2, -10, -5, -11, 5, 12, 22, 16, 1, -5, 15, 13, 5, -10, -5, -6, 0};
 InitInt8MatrixB(g_Weight6, g_Weight16, g_Weight15, 1, 300, 20, 20, 304, 0, init_filter_zp, g_Weight14, true, true);
 }
 {
@@ -94,7 +94,7 @@ if (g_Weight18 == NULL) {
   return RET_ERROR;
 }
 memset(g_Weight18, 0, 384);
-static int init_filter_zp[10] = {7, -2, 9, 2, -6, 21, 16, 10, -19, 8};
+int init_filter_zp[10] = {7, -2, 9, 2, -6, 21, 16, 10, -19, 8};
 InitInt8MatrixB(g_Weight8, g_Weight19, g_Weight18, 1, 20, 10, 12, 32, 0, init_filter_zp, g_Weight17, true, true);
 }
   return RET_OK;
