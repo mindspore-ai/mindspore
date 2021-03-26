@@ -113,8 +113,8 @@ def _partial_init(cls_or_self, **kwargs):
 
     Examples:
         >>> class Foo:
-        ...     def __init__(self, a, b, answer):
-        ...         pass
+        >>>     def __init__(self, a, b, answer):
+        >>>         pass
         >>> Foo.partial_init = classmethod(_partial_init)
         >>> foo_builder = Foo.partial_init(a=3, b=4).partial_init(answer=42)
         >>> foo_instance1 = foo_builder()
