@@ -62,7 +62,7 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, U
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler)
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum, BatchNorm,
-                     BiasAdd, Conv2D,
+                     BiasAdd, Conv2D, Conv3D, Conv3DTranspose,
                      DepthwiseConv2dNative,
                      DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      InstanceNorm, BNTrainingReduce, BNTrainingUpdate,
@@ -139,6 +139,8 @@ __all__ = [
     'Xdivy',
     'Xlogy',
     'Conv2D',
+    'Conv3D',
+    'Conv3DTranspose',
     'Flatten',
     'MaxPoolWithArgmax',
     'BNTrainingReduce',
