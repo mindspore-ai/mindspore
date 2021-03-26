@@ -16,19 +16,22 @@
 
 #include "backend/kernel_compiler/cpu/transpose_cpu_kernel.h"
 #include <algorithm>
+#include <vector>
+#include <unordered_set>
 #include "runtime/device/cpu/cpu_device_address.h"
+
 namespace mindspore {
 namespace kernel {
-const size_t kMaxDim = 100;
+namespace {
+const size_t kMaxDim = 10;
+}
+
 void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> axis_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
-  (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis_),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  if (shape_.size() != axis_.size()) {
-    MS_LOG(EXCEPTION) << "The size of input shape and transpose axis shape must be equal.";
-  }
+  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  axes_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+  CheckParameter();
   dtype_ = AnfAlgo ::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
   if (dtype_ == kTypeUnknown) {
     dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
@@ -53,39 +56,6 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-template <typename T>
-void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t size = IntToSize(inputs[0]->size / sizeof(T));
-  size_t shape_size = IntToSize(shape_.size());
-  if (shape_size > kMaxDim) {
-    MS_LOG(EXCEPTION) << "Input is " << shape_size << "-D, but transpose supports max " << kMaxDim << "-D inputs.";
-  }
-  size_t pos_array[kMaxDim];
-  size_t size_offset[kMaxDim];
-  size_offset[0] = size / shape_[0];
-  for (size_t i = 1; i < shape_size; i++) {
-    size_offset[i] = size_offset[SizeToInt(i) - 1] / shape_[i];
-  }
-  for (size_t position = 0; position < size; position += 1) {
-    size_t temp_position = position;
-    pos_array[0] = temp_position / size_offset[0];
-    for (size_t i = 1; i < shape_size; i++) {
-      temp_position -= pos_array[SizeToInt(i) - 1] * size_offset[i - 1];
-      pos_array[i] = temp_position / size_offset[i];
-    }
-    size_t new_position = pos_array[axis_[SizeToInt(shape_size) - 1]];
-    size_t new_position_size = 1;
-    for (int j = shape_size - 2; j >= 0; j--) {
-      new_position_size *= shape_[axis_[j + 1]];
-      new_position += pos_array[axis_[j]] * new_position_size;
-    }
-    output[new_position] = input[position];
-  }
-}
-
 bool TransposeCPUFwdKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
                                    const std::vector<kernel::AddressPtr> &outputs) {
@@ -93,5 +63,77 @@ bool TransposeCPUFwdKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
   return true;
 }
 
+void TransposeCPUFwdKernel::CheckParameter() const {
+  if (input_shape_.size() > kMaxDim) {
+    MS_LOG(EXCEPTION) << "Input tensor is " << input_shape_.size() << ", out of bound max dimension 10";
+  }
+
+  if (input_shape_.empty()) {
+    MS_LOG(EXCEPTION) << "Input tensor is empty";
+  }
+
+  if (input_shape_.size() != axes_.size()) {
+    MS_LOG(EXCEPTION) << "Input perm size is not equal with input shape";
+  }
+
+  // Input axes include the same axis
+  std::unordered_set<int64_t> unique_axes{axes_.begin(), axes_.end()};
+  if (unique_axes.size() != axes_.size()) {
+    MS_LOG(EXCEPTION) << "Input perm is illegal, it has the same axis";
+  }
+
+  // Input axes not in ture range(input_shape_.size())
+  int64_t shape_size = input_shape_.size();
+  for (auto &axis : axes_) {
+    if (axis < 0 || axis >= shape_size) {
+      MS_LOG(EXCEPTION) << "Input perm axis is out of bound input shape size";
+    }
+  }
+}
+
+template <typename T>
+void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
+  int dimension = input_shape_.size();
+  // Calculate input tensor strides
+  std::array<uint32_t, kMaxDim> input_strides{0};
+  input_strides[dimension - 1] = 1;
+  for (int i = dimension - 2; i >= 0; --i) {
+    input_strides[i] = input_shape_[i + 1] * input_strides[i + 1];
+  }
+
+  // Calculate output strides and back strides
+  std::array<uint32_t, kMaxDim> strides{0};
+  std::array<uint32_t, kMaxDim> back_strides{0};
+  for (int i = dimension - 1; i >= 0; --i) {
+    strides[i] = input_strides[axes_[i]];
+    back_strides[i] = (output_shape_[i] - 1) * strides[i];
+  }
+
+  std::array<uint32_t, kMaxDim> coordinates{0};
+  auto get_next_pos = [&coordinates, &strides, &back_strides, &dimension, this](int curr_pos) {
+    for (int i = dimension - 1; i >= 0; --i) {
+      if (coordinates[i] + 1 == output_shape_[i]) {
+        coordinates[i] = 0;
+        curr_pos -= back_strides[i];
+      } else {
+        coordinates[i]++;
+        curr_pos += strides[i];
+        break;
+      }
+    }
+    return curr_pos;
+  };
+
+  auto input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t size = IntToSize(inputs[0]->size / sizeof(T));
+  output[0] = input[0];
+  int pos = 0;
+  for (size_t i = 1; i < size; ++i) {
+    pos = get_next_pos(pos);
+    output[i] = input[pos];
+  }
+}
 }  // namespace kernel
 }  // namespace mindspore
