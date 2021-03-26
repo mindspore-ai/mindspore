@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
   auto context = std::make_shared<Context>();
   auto ascend310 = std::make_shared<mindspore::Ascend310DeviceInfo>();
   ascend310->SetDeviceID(FLAGS_device_id);
+  ascend310->SetBufferOptimizeMode("off_optimize");
   context->MutableDeviceInfo().push_back(ascend310);
   mindspore::Graph graph;
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
