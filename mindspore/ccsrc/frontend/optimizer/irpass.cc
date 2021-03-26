@@ -29,7 +29,6 @@
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/incorporate_getitem.h"
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
-#include "frontend/optimizer/irpass/mark_interface_fusion.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/accumulaten_eliminate.h"
 #include "frontend/optimizer/irpass/minmax_grad.h"
@@ -197,10 +196,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // AddN eliminate
   addn_eliminate_ = MakeSubstitution(std::make_shared<AddNEliminater>(), "addn_eliminate", IsCNodeGraphKernel);
-
-  // Mark interface fusion
-  mark_interface_fusion_ =
-    MakeSubstitution(std::make_shared<MarkInterfaceFusion>(), "mark_interface_fusion", prim::kPrimSelect);
 
   // RowTensor Eliminate
   row_tensor_eliminate_ = MakeSubstitution(

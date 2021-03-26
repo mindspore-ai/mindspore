@@ -29,7 +29,6 @@
 #include "pipeline/jit/remove_value_node_dup.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/cse_pass.h"
-#include "frontend/optimizer/graph_kernel_reuse.h"
 #include "frontend/optimizer/clean.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
@@ -261,12 +260,7 @@ OptPassGroupMap GetOptPassesPynativeElim(const opt::irpass::OptimizeIRPassLib &i
 }
 
 OptPassGroupMap GetOptPassesGraphKernelA(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig interface_fusion = opt::OptPassConfig({
-    irpass.mark_interface_fusion_,
-  });
   OptPassGroupMap map({
-    {"graph_kernel_reuse", opt::OptPassConfig(opt::GraphKernelReuse())},
-    {"interface_fusion", interface_fusion},
     {"renormalize", opt::OptPassConfig::Renormalize()},
     {"cse", opt::OptPassConfig(opt::CSEPass(false))},
   });

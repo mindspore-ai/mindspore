@@ -123,7 +123,7 @@ class GraphSplitByPattern:
                 self.output_excluded.update(area.output_excluded)
             self.update_stitch_info(area.stitch_info)
 
-        def check_circle(self, to):
+        def check_acyclic(self, to):
             """Check circle. It returns false if circle exists"""
             def _reached(area, to):
                 for out, _ in area.out_relations.items():
@@ -215,6 +215,10 @@ class GraphSplitByPattern:
             with open(filename, 'w') as f:
                 f.write(subgraphs_str)
 
+    def do_split(self):
+        """Split graph by pattern"""
+        raise Exception("do_split() is not implemented in {}".format(self.__class__.__name__))
+
     def split(self):
         """Split graph by pattern"""
         self.do_split()
@@ -270,11 +274,11 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return None
             min_area, forward_fuse = None, False
             for a, _ in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and dom.check_circle(a) and \
+                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
                         (min_area is None or a.pattern < min_area.pattern):
                     min_area = a
             for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_circle(dom) and \
+                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
                    len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
                    (min_area is None or a.pattern < min_area.pattern):
                     min_area, forward_fuse = a, True
@@ -294,7 +298,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return None
             fused = []
             for a, r in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_circle(dom) and \
+                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
                         a.dom_op().output.shape == dom.dom_op().output.shape:
                     fused.append(a)
             return fused, True
@@ -319,7 +323,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return None
             fused = []
             for a, r in dom.out_relations.items():
-                if _broadcast_pat_exclude(dom, a, r) or not dom.check_circle(a) or \
+                if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a) or \
                         (fused and fused[0].dom_op().output.shape != a.dom_op().output.shape):
                     return None
                 fused.append(a)
@@ -341,7 +345,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     return True
             return False
 
-        def _reduce_pat_exclude(dom, a, r):
+        def _reduce_pat_exclude(_, a, r):
             if len(a.ops) > self.REDUCE_FUSE_DEPTH:
                 return True
             if use_poly_reduce:
@@ -373,7 +377,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                         _is_atomic_add_available(dom):
                     # to evade the precision problem.
                     continue
-                if not _reduce_pat_exclude(dom, a, r) and a.check_circle(dom):
+                if not _reduce_pat_exclude(dom, a, r) and a.check_acyclic(dom):
                     fused.append(a)
             return fused, True
 
@@ -415,7 +419,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             fused = []
             for a, r in dom.out_relations.items():
                 if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.BROADCAST and \
-                        dom.check_circle(a) and not dom.reduce_out_exclude(a):
+                        dom.check_acyclic(a) and not dom.reduce_out_exclude(a):
                     fused.append(a)
             return fused, False
 
@@ -429,7 +433,7 @@ class GraphSplitGpu(GraphSplitByPattern):
 
             fused = []
             for a, r in dom.out_relations.items():
-                if a.pattern <= PrimLib.REDUCE and r <= PrimLib.BROADCAST and dom.check_circle(a):
+                if a.pattern <= PrimLib.REDUCE and r <= PrimLib.BROADCAST and dom.check_acyclic(a):
                     if _reduce_nums(a.ops) < 2:
                         # softmax
                         if len(a.ops) > 4 and len(a.ops[0].inputs[0].shape) == 4:
@@ -442,7 +446,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return None
             fused = []
             for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_circle(dom):
+                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom):
                     fused.append(a)
             return fused, True
 
@@ -490,11 +494,11 @@ class GraphSplitAscend(GraphSplitByPattern):
                 return None
             min_area, forward_fuse = None, False
             for a, _ in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and dom.check_circle(a) and \
+                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
                         (min_area is None or a.pattern < min_area.pattern):
                     min_area = a
             for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_circle(dom) and \
+                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
                    len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
                    (min_area is None or a.pattern < min_area.pattern):
                     min_area, forward_fuse = a, True
@@ -514,7 +518,7 @@ class GraphSplitAscend(GraphSplitByPattern):
                 return None
             fused = []
             for a, r in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_circle(dom) and \
+                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
                         a.dom_op().output.shape == dom.dom_op().output.shape:
                     fused.append(a)
             return fused, True
@@ -537,7 +541,7 @@ class GraphSplitAscend(GraphSplitByPattern):
                 return None
             fused = []
             for a, r in dom.out_relations.items():
-                if _broadcast_pat_exclude(dom, a, r) or not dom.check_circle(a) or \
+                if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a) or \
                         (fused and fused[0].dom_op().output.shape != a.dom_op().output.shape):
                     return None
                 fused.append(a)
@@ -564,7 +568,7 @@ class GraphSplitAscend(GraphSplitByPattern):
                 return None
             fused = []
             for a, r in dom.in_relations.items():
-                if not _reduce_pat_exclude(dom, a, r) and a.check_circle(dom):
+                if not _reduce_pat_exclude(dom, a, r) and a.check_acyclic(dom):
                     fused.append(a)
             return fused, True
 
