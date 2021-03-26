@@ -1751,10 +1751,11 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
   PushCellStack(cell_id);
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
-    auto graph_info = std::make_shared<GraphInfo>(cell_id);
-    top_cell()->graph_info_map()[curr_g_] = graph_info;
+    auto graph_info_cg = std::make_shared<GraphInfo>(cell_id);
+    top_cell()->graph_info_map()[curr_g_] = graph_info_cg;
     auto df_builder = GetDfbuilder(cell_id);
-    top_cell()->graph_info_map()[df_builder] = graph_info;
+    auto graph_info_df = std::make_shared<GraphInfo>(cell_id);
+    top_cell()->graph_info_map()[df_builder] = graph_info_df;
     // Init paramter info for make cnode and curr_g
     for (size_t i = 0; i < args.size(); ++i) {
       auto param = args[i];
@@ -2110,7 +2111,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std
   MS_EXCEPTION_IF_NULL(grad);
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-  auto bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_);
+  auto bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_,
+    grad->sens_param_);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << arg_size;
