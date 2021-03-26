@@ -926,3 +926,40 @@ class BertModelCLS(nn.Cell):
         if self._phase == 'train' or self.phase_type == "teacher":
             return seq_output, att_output, logits, log_probs
         return log_probs
+
+class BertModelNER(nn.Cell):
+    """
+    This class is responsible for sequence labeling task evaluation, i.e. NER(num_labels=11).
+    The returned output represents the final logits as the results of log_softmax is proportional to that of softmax.
+    """
+    def __init__(self, config, is_training, num_labels=11, dropout_prob=0.0,
+                 use_one_hot_embeddings=False, phase_type="student"):
+        super(BertModelNER, self).__init__()
+        if not is_training:
+            config.hidden_dropout_prob = 0.0
+            config.hidden_probs_dropout_prob = 0.0
+        self.bert = BertModel(config, is_training, use_one_hot_embeddings)
+        self.cast = P.Cast()
+        self.weight_init = TruncatedNormal(config.initializer_range)
+        self.log_softmax = P.LogSoftmax(axis=-1)
+        self.dtype = config.dtype
+        self.num_labels = num_labels
+        self.dense_1 = nn.Dense(config.hidden_size, self.num_labels, weight_init=self.weight_init,
+                                has_bias=True).to_float(config.compute_type)
+        self.dropout = nn.ReLU()
+        self.reshape = P.Reshape()
+        self.shape = (-1, config.hidden_size)
+        self.origin_shape = (-1, config.seq_length, self.num_labels)
+
+    def construct(self, input_ids, input_mask, token_type_id):
+        """Return the final logits as the results of log_softmax."""
+        sequence_output, _, _, encoder_outputs, attention_outputs = \
+            self.bert(input_ids, token_type_id, input_mask)
+        seq = self.dropout(sequence_output)
+        seq = self.reshape(seq, self.shape)
+        logits = self.dense_1(seq)
+        logits = self.cast(logits, self.dtype)
+        return_value = self.log_softmax(logits)
+        if self._phase == 'train' or self.phase_type == "teacher":
+            return encoder_outputs, attention_outputs, logits, return_value
+        return return_value

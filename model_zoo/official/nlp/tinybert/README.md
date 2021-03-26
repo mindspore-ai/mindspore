@@ -1,4 +1,4 @@
-# Contents
+﻿# Contents
 
 - [Contents](#contents)
 - [TinyBERT Description](#tinybert-description)
@@ -197,8 +197,9 @@ usage: run_general_task.py  [--device_target DEVICE_TARGET] [--do_train DO_TRAIN
                             [--load_gd_ckpt_path LOAD_GD_CKPT_PATH]
                             [--load_td1_ckpt_path LOAD_TD1_CKPT_PATH]
                             [--train_data_dir TRAIN_DATA_DIR]
-                            [--eval_data_dir EVAL_DATA_DIR]
+                            [--eval_data_dir EVAL_DATA_DIR] [--task_type TASK_TYPE]
                             [--task_name TASK_NAME] [--schema_dir SCHEMA_DIR] [--dataset_type DATASET_TYPE]
+                            [--assessment_method ASSESSMENT_METHOD]
 
 options:
     --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
@@ -217,7 +218,9 @@ options:
     --load_td1_ckpt_path       path to load checkpoint files which produced by task distill phase 1: PATH, default is ""
     --train_data_dir           path to train dataset directory: PATH, default is ""
     --eval_data_dir            path to eval dataset directory: PATH, default is ""
-    --task_name                classification task: "SST-2" | "QNLI" | "MNLI", default is ""
+    --task_type                task type: "classification" | "ner", default is "classification"
+    --task_name                classification or ner task: "SST-2" | "QNLI" | "MNLI" | "TNEWS", "CLUENER", default is ""
+    --assessment_method        assessment method to do evaluation: acc | f1
     --schema_dir               path to schema.json file, PATH, default is ""
     --dataset_type             the dataset type which can be tfrecord/mindrecord, default is tfrecord
 ```
@@ -249,6 +252,7 @@ Parameters for optimizer:
 Parameters for bert network:
     seq_length                      length of input sequence: N, default is 128
     vocab_size                      size of each embedding vector: N, must be consistent with the dataset you use. Default is 30522
+                                    Usually, we use 21128 for CN vocabs and 30522 for EN vocabs according to the origin paper. Default is 30522
     hidden_size                     size of bert encoder layers: N
     num_hidden_layers               number of hidden layers: N
     num_attention_heads             number of attention heads: N, default is 12
