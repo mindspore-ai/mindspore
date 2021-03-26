@@ -73,6 +73,18 @@ GraphCell::GraphCell(const std::shared_ptr<Graph> &graph) : graph_(graph) { MS_E
 
 GraphCell::GraphCell(Graph &&graph) : graph_(std::make_shared<Graph>(graph)) { MS_EXCEPTION_IF_NULL(graph_); }
 
+void GraphCell::SetContext(const std::shared_ptr<Context> &context) {
+  if (executor_ == nullptr) {
+    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    if (executor_ == nullptr) {
+      MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
+      return;
+    }
+    executor_->SetGraph(graph_);
+  }
+  executor_->SetContext(context);
+}
+
 Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   if (executor_ == nullptr) {
     executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
