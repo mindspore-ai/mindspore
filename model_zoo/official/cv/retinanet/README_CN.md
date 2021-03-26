@@ -165,11 +165,11 @@ MSCOCO2017
 # 八卡并行训练示例：
 
 创建 RANK_TABLE_FILE
-sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 # 单卡训练示例：
 
-sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+sh run_single_train.sh DEVICE_ID EPOCH_SIZE LR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 ```
 
@@ -182,6 +182,9 @@ sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional)
 ```运行
 # 训练示例
 
+  训练前，先创建MindRecord文件，以COCO数据集为例
+    python create_data.py --dataset coco
+
   python:
     data和存储mindrecord文件的路径在config里设置
 
@@ -193,12 +196,12 @@ sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional)
 
       # 八卡并行训练示例(在retinanet目录下运行)：
 
-      sh scripts/run_distribute_train.sh 8 500 0.1 coco RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
-      例如：sh scripts/run_distribute_train.sh 8 500 0.1 coco scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
+      sh scripts/run_distribute_train.sh 8 500 0.1 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
+      例如：sh scripts/run_distribute_train.sh 8 500 0.1 scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
 
       # 单卡训练示例(在retinanet目录下运行)：
 
-      sh scripts/run_single_train.sh 0 500 0.1 coco /dataset/retinanet-322_458.ckpt 322
+      sh scripts/run_single_train.sh 0 500 0.1 /dataset/retinanet-322_458.ckpt 322
 ```
 
 #### 结果
