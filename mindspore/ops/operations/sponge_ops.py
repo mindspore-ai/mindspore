@@ -29,6 +29,9 @@ class BondForce(PrimitiveWithInfer):
     .. math::
 
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+
+    .. math::
+
         F = (F_x, F_y, F_z) = 2*k*(1 - r_0/|dr|)*dr
 
     Args:
@@ -53,8 +56,8 @@ class BondForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        assert isinstance(bond_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -66,8 +69,8 @@ class BondForce(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -93,6 +96,9 @@ class BondEnergy(PrimitiveWithInfer):
     .. math::
 
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+
+    .. math::
+
         E = k*(|dr| - r_0)^2
 
     Args:
@@ -117,8 +123,8 @@ class BondEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        assert isinstance(bond_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -130,8 +136,8 @@ class BondEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -179,8 +185,8 @@ class BondAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        assert isinstance(bond_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -192,8 +198,8 @@ class BondAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -240,8 +246,8 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        assert isinstance(bond_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -253,8 +259,8 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -286,6 +292,9 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
     .. math::
 
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+
+    .. math::
+
         virial = |dr|*(|dr| - r_0)*k
 
     Args:
@@ -311,8 +320,8 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        assert isinstance(bond_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -324,8 +333,8 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         cls_name = self.name
         N = self.atom_numbers
         M = self.bond_numbers
-        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f", cls_name)
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "uint_crd_f", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -355,25 +364,36 @@ class DihedralForce(PrimitiveWithInfer):
     .. math::
 
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
+    .. math::
         dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
+    .. math::
         dr_{cd} = (x_d-x_c, y_d-y_c, z_d-z_c)
-
+    .. math::
         r1 = dr_{ab}*dr_{cb}
+    .. math::
         r2 = dr_{cd}*dr_{cb}
-
+    .. math::
         phi = pi - sign(inner_product(r1*r2), dr_{cb})
             * arccos(inner_product(r1, r2)/|r1|/|r2|)
+    .. math::
         dEdphi = n*phi*(k*cos(phi_0)*sin(n*phi) - k*sin(phi_0)*cos(n*phi))/sin(phi)
+    .. math::
         dphidr1 = r2/|r1|/|r2| + cos(phi)/|r1|^2*r1
+    .. math::
         dphidr2 = r1/|r1|/|r2| + cos(phi)/|r2|^2*r2
-
+    .. math::
         dEdra = dEdphi * dr_{cb} * dphidr1
+    .. math::
         dEdrd = dEdphi * dphi_dr2 * dr_{cb}
+    .. math::
         dEdrjpart = dEdphi * ((dr_{ab} * dphidr1) + (dr_{cd} * dphidr2))
-
+    .. math::
         F_a = dEdri
+    .. math::
         F_b = dEdrjpart - dEdri
+    .. math::
         F_c = - dEdrl - dEdrjpart
+    .. math::
         F_d = dEdrl
 
     Args:
@@ -405,7 +425,7 @@ class DihedralForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        assert isinstance(dihedral_numbers, int)
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -415,8 +435,8 @@ class DihedralForce(PrimitiveWithInfer):
     def infer_shape(self, uint_crd_f_shape, scaler_f_shape, atom_a_shape, atom_b_shape, atom_c_shape, atom_d_shape,
                     ipn_shape, pk_shape, gamc_shape, gams_shape, pn_shape):
         cls_name = self.name
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.dihedral_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -485,7 +505,7 @@ class DihedralEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        assert isinstance(dihedral_numbers, int)
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -495,8 +515,8 @@ class DihedralEnergy(PrimitiveWithInfer):
     def infer_shape(self, uint_crd_f_shape, scaler_f_shape, atom_a_shape, atom_b_shape, atom_c_shape, atom_d_shape,
                     ipn_shape, pk_shape, gamc_shape, gams_shape, pn_shape):
         cls_name = self.name
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.dihedral_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -563,7 +583,7 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        assert isinstance(dihedral_numbers, int)
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -574,8 +594,8 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
                     ipn_shape, pk_shape, gamc_shape, gams_shape, pn_shape):
         cls_name = self.name
         N = uint_crd_f_shape[0]
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.dihedral_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -641,7 +661,7 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        assert isinstance(dihedral_numbers, int)
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -652,8 +672,8 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
                     ipn_shape, pk_shape, gamc_shape, gams_shape, pn_shape):
         cls_name = self.name
         N = uint_crd_f_shape[0]
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.dihedral_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -690,14 +710,18 @@ class AngleForce(PrimitiveWithInfer):
     number of atoms is N.
 
     .. math::
-
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
+    .. math::
         dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
+    .. math::
         theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
+    .. math::
         F_a = -2*k*(theta-theta_0)/sin(theta)*[cos(theta)/|dr_{ab}|^2*dr_{ab}
             - 1/|dr_{ab}|/|dr_{cb}|*dr_{cb}]
+    .. math::
         F_c = -2*k*(theta-theta_0)/sin(theta)*[cos(theta)/|dr_{cb}|^2*dr_{cb}
-             - 1/|dr_{cb}|/|dr_{ab}|*dr_{ab}]
+            - 1/|dr_{cb}|/|dr_{ab}|*dr_{ab}]
+    .. math::
         F_b = -F_a - F_c
 
     Args:
@@ -722,7 +746,7 @@ class AngleForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        assert isinstance(angle_numbers, int)
+        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -732,8 +756,8 @@ class AngleForce(PrimitiveWithInfer):
     def infer_shape(self, uint_crd_f_shape, scaler_f_shape, atom_a_shape, atom_b_shape, atom_c_shape, angle_k_shape,
                     angle_theta0_shape):
         cls_name = self.name
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.angle_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -756,13 +780,16 @@ class AngleForce(PrimitiveWithInfer):
 
 class AngleEnergy(PrimitiveWithInfer):
     """
-    Calculate the energy caused by 3-atoms angle term.
+    Calculate the energy caused by 3-atoms angle term. Assume the number of angles is M and the
+    number of atoms is N.
 
     .. math::
-
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
+    .. math::
         dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
+    .. math::
         theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
+    .. math::
         E = k*(theta - theta_0)^2
 
     Args:
@@ -787,7 +814,7 @@ class AngleEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        assert isinstance(angle_numbers, int)
+        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -797,8 +824,8 @@ class AngleEnergy(PrimitiveWithInfer):
     def infer_shape(self, uint_crd_f_shape, scaler_f_shape, atom_a_shape, atom_b_shape, atom_c_shape, angle_k_shape,
                     angle_theta0_shape):
         cls_name = self.name
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.angle_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -822,7 +849,8 @@ class AngleEnergy(PrimitiveWithInfer):
 class AngleAtomEnergy(PrimitiveWithInfer):
     """
     Add the potential energy caused by angle terms to the total potential
-    energy of each atom.
+    energy of each atom. Assume the number of angles is M and the
+    number of atoms is N.
 
     The calculation formula is the same as operator AngleEnergy().
 
@@ -848,7 +876,7 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        assert isinstance(angle_numbers, int)
+        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -859,8 +887,8 @@ class AngleAtomEnergy(PrimitiveWithInfer):
                     angle_theta0_shape):
         cls_name = self.name
         N = uint_crd_f_shape[0]
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.angle_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -883,7 +911,8 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
 class AngleForceWithAtomEnergy(PrimitiveWithInfer):
     """
-    Calculate angle force and potential energy together.
+    Calculate angle force and potential energy together. Assume the number of angles is M and the
+    number of atoms is N.
 
     The calculation formula is the same as operator AngleForce() and AngleEnergy().
 
@@ -910,7 +939,7 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        assert isinstance(angle_numbers, int)
+        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -921,8 +950,8 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
                     angle_theta0_shape):
         cls_name = self.name
         N = uint_crd_f_shape[0]
-        M = atom_a_shape[0]
-        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f", cls_name)
+        M = self.angle_numbers
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
         validator.check_int(scaler_f_shape[0], 3, Rel.EQ, "scaler_f", cls_name)
         validator.check_int(atom_a_shape[0], M, Rel.EQ, "atom_a", cls_name)
         validator.check_int(atom_b_shape[0], M, Rel.EQ, "atom_b", cls_name)
@@ -954,8 +983,8 @@ class Dihedral14LJForce(PrimitiveWithInfer):
     for all kinds of atom pairs.
 
     .. math::
-
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
+    .. math::
         F = k*(-12*A/|dr|^{14} + 6*B/|dr|^{8})*dr
 
     Args:
@@ -972,7 +1001,9 @@ class Dihedral14LJForce(PrimitiveWithInfer):
         - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
         - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+          Q is the number of atom pair.
         - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
+          Q is the number of atom pair.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
@@ -983,8 +1014,8 @@ class Dihedral14LJForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
         self.init_prim_io_names(
@@ -996,6 +1027,19 @@ class Dihedral14LJForce(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     lj_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        Q = LJ_type_A_shape[0]
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(lj_scale_factor_shape[0], M, Rel.EQ, "lj_scale_factor", cls_name)
+        validator.check_int(LJ_type_B_shape[0], Q, Rel.EQ, "LJ_type_B", cls_name)
         return uint_crd_f_shape
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1019,9 +1063,9 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
     Calculate the Lennard-Jones part of 1,4 dihedral energy correction for
     each necessary dihedral terms on the corresponding atoms.
 
-    .. math:, the :
-
+    .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z-b)
+    .. math::
         E = k*(A/|dr|^{12} - B/|dr|^{6})
 
     Args:
@@ -1038,7 +1082,9 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
         - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
         - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+          Q is the number of atom pair.
         - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
+          Q is the number of atom pair.
 
     Outputs:
         - **ene** (Tensor, float32) - [M,], the Lennard-Jones potential
@@ -1050,8 +1096,8 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1064,6 +1110,19 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     lj_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        Q = LJ_type_A_shape[0]
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(lj_scale_factor_shape[0], M, Rel.EQ, "lj_scale_factor", cls_name)
+        validator.check_int(LJ_type_B_shape[0], Q, Rel.EQ, "LJ_type_B", cls_name)
         return [self.dihedral_14_numbers,]
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1090,9 +1149,9 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
     Dihedral14LJForce(), and the Coulomb part is as follows:
 
     .. math::
-
-        dr = (x_a-x_b, y_a-y_b, z_a-z_b)
-        F = -k*q_a*q_b/|r|^3*dr
+            dr = (x_a-x_b, y_a-y_b, z_a-z_b)
+    .. math::
+            F = -k*q_a*q_b/|r|^3*dr
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
@@ -1110,7 +1169,9 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
         - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
         - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+          Q is the number of atom pair.
         - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
+          Q is the number of atom pair.
 
     Outputs:
         - **frc_f** (Tensor, float) - [N, 3], the force felt by each atom.
@@ -1121,8 +1182,8 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1136,6 +1197,20 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     lj_scale_factor_shape, cf_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        Q = LJ_type_A_shape[0]
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(lj_scale_factor_shape[0], M, Rel.EQ, "lj_scale_factor", cls_name)
+        validator.check_int(cf_scale_factor_shape[0], M, Rel.EQ, "cf_scale_factor", cls_name)
+        validator.check_int(LJ_type_B_shape[0], Q, Rel.EQ, "LJ_type_B", cls_name)
         return [self.atom_numbers, 3]
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1180,7 +1255,9 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
         - **cf_scale_factor** (Tensor, float) - [M,], the scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
         - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+          Q is the number of atom pair.
         - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
+          Q is the number of atom pair.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
@@ -1192,8 +1269,8 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1207,6 +1284,20 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     lj_scale_factor_shape, cf_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        Q = LJ_type_A_shape[0]
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(lj_scale_factor_shape[0], M, Rel.EQ, "lj_scale_factor", cls_name)
+        validator.check_int(cf_scale_factor_shape[0], M, Rel.EQ, "cf_scale_factor", cls_name)
+        validator.check_int(LJ_type_B_shape[0], Q, Rel.EQ, "LJ_type_B", cls_name)
         return uint_crd_f_shape, charge_shape
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1246,7 +1337,9 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
         - **lj_scale_factor** (Tensor, float32) - [M,], the scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
         - **LJ_type_A** (Tensor, float32) - [Q,], the A parameter in Lennard-Jones scheme of each atom pair type.
+          Q is the number of atom pair.
         - **LJ_type_B** (Tensor, float32) - [Q,], the B parameter in Lennard-Jones shceme of each atom pair type.
+          Q is the number of atom pair.
 
     Outputs:
         - **ene** (Tensor, float32) - [N,], the accumulated potential energy of each atom.
@@ -1257,8 +1350,8 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1271,6 +1364,19 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     lj_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        Q = LJ_type_A_shape[0]
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(lj_scale_factor_shape[0], M, Rel.EQ, "lj_scale_factor", cls_name)
+        validator.check_int(LJ_type_B_shape[0], Q, Rel.EQ, "LJ_type_B", cls_name)
         return LJtype_shape
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1297,6 +1403,8 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
     .. math::
 
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
+
+    .. math::
         E = k*q_a*q_b/|dr|
 
     Args:
@@ -1322,8 +1430,8 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1335,6 +1443,17 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     cf_scale_factor_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(cf_scale_factor_shape[0], M, Rel.EQ, "cf_scale_factor", cls_name)
         return [self.dihedral_14_numbers,]
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1382,8 +1501,8 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        assert isinstance(nb14_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1395,6 +1514,17 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_f_shape, LJtype_shape, charge_shape, boxlength_f_shape, a_14_shape, b_14_shape,
                     cf_scale_factor_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        M = self.dihedral_14_numbers
+        validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f[0]", cls_name)
+        validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f[1]", cls_name)
+        validator.check_int(LJtype_shape[0], 3, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge_shape[0], M, Rel.EQ, "charge", cls_name)
+        validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f", cls_name)
+        validator.check_int(a_14_shape[0], M, Rel.EQ, "a_14", cls_name)
+        validator.check_int(b_14_shape[0], M, Rel.EQ, "b_14", cls_name)
+        validator.check_int(cf_scale_factor_shape[0], M, Rel.EQ, "cf_scale_factor", cls_name)
         return LJtype_shape
 
     def infer_dtype(self, uint_crd_f_dtype, LJtype_dtype, charge_dtype, boxlength_f_type, a_14_type, b_14_type,
@@ -1450,13 +1580,13 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, float4_numbers, atom_numbers, half_dt, dt, exp_gamma, is_max_velocity, max_velocity):
-        assert isinstance(float4_numbers, int)
-        assert isinstance(atom_numbers, int)
-        assert isinstance(half_dt, float)
-        assert isinstance(dt, float)
-        assert isinstance(exp_gamma, float)
-        assert isinstance(is_max_velocity, int)
-        assert isinstance(max_velocity, float)
+        validator.check_value_type('float4_numbers', float4_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('half_dt', half_dt, (float), self.name)
+        validator.check_value_type('dt', dt, (float), self.name)
+        validator.check_value_type('exp_gamma', exp_gamma, (float), self.name)
+        validator.check_value_type('is_max_velocity', is_max_velocity, (int), self.name)
+        validator.check_value_type('max_velocity', max_velocity, (float), self.name)
         self.float4_numbers = float4_numbers
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt
@@ -1477,6 +1607,10 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
         self.add_prim_attr('max_velocity', self.max_velocity)
 
     def infer_shape(self, mass_inverse_shape, sqrt_mass_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        validator.check_int(mass_inverse_shape[0], N, Rel.EQ, "mass_inverse", cls_name)
+        validator.check_int(sqrt_mass_shape[0], N, Rel.EQ, "sqrt_mass", cls_name)
         return [self.atom_numbers, 3], [self.atom_numbers, 3], [self.atom_numbers, 3], [self.atom_numbers, 3]
 
     def infer_dtype(self, mass_inverse_dtype, sqrt_mass_dtype):
@@ -1517,11 +1651,11 @@ class PMEReciprocalForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta, fftx, ffty, fftz):
-        assert isinstance(atom_numbers, int)
-        assert isinstance(beta, float)
-        assert isinstance(fftx, int)
-        assert isinstance(ffty, int)
-        assert isinstance(fftz, int)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('beta', beta, (float), self.name)
+        validator.check_value_type('fftx', fftx, (int), self.name)
+        validator.check_value_type('ffty', ffty, (int), self.name)
+        validator.check_value_type('fftz', fftz, (int), self.name)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -1536,6 +1670,12 @@ class PMEReciprocalForce(PrimitiveWithInfer):
         self.add_prim_attr('fftz', self.fftz)
 
     def infer_shape(self, boxlength_shape, uint_crd_shape, charge_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        validator.check_int(uint_crd_shape[0], N, Rel.EQ, "uint_crd[0]", cls_name)
+        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd[1]", cls_name)
+        validator.check_int(boxlength_shape[0], 3, Rel.EQ, "boxlength", cls_name)
+        validator.check_int(charge_shape[0], N, Rel.EQ, "charge", cls_name)
         return uint_crd_shape
 
     def infer_dtype(self, boxlength_type, uint_crd_type, charge_type):
@@ -1564,7 +1704,7 @@ class PMEExcludedForce(PrimitiveWithInfer):
         - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index
           in excluded list for each atom.
         - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-          list of each atom.
+          list of each atom. E is the number of excluded atoms.
         - **excluded_atom_numbers** (Tensor, int32) - [N,], the number of atom excluded
           in excluded list for each atom.
 
@@ -1577,8 +1717,8 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta):
-        assert isinstance(atom_numbers, int)
-        assert isinstance(beta, float)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('beta', beta, (float), self.name)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.init_prim_io_names(
@@ -1589,6 +1729,14 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     def infer_shape(self, uint_crd_shape, sacler_shape, charge_shape, excluded_list_start_shape, excluded_list_shape,
                     excluded_atom_numbers_shape):
+        cls_name = self.name
+        N = self.atom_numbers
+        validator.check_int(uint_crd_shape[0], N, Rel.EQ, "uint_crd[0]", cls_name)
+        validator.check_int(uint_crd_shape[1], 3, Rel.EQ, "uint_crd[1]", cls_name)
+        validator.check_int(sacler_shape[0], 3, Rel.EQ, "sacler", cls_name)
+        validator.check_int(charge_shape[0], N, Rel.EQ, "charge", cls_name)
+        validator.check_int(excluded_list_start_shape[0], N, Rel.EQ, "excluded_list_start", cls_name)
+        validator.check_int(excluded_atom_numbers_shape[0], N, Rel.EQ, "excluded_atom_numbers", cls_name)
         return uint_crd_shape
 
     def infer_dtype(self, uint_crd_type, sacler_type, charge_type, excluded_list_start_type, excluded_list_type,
@@ -1632,7 +1780,7 @@ class PMEEnergy(PrimitiveWithInfer):
         - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index
           in excluded list for each atom.
         - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-          list of each atom.
+          list of each atom. E is the number of excluded atoms.
         - **excluded_atom_numbers** (Tensor, int32) - [N,], the number of atom excluded
           in excluded list for each atom.
 
@@ -1648,11 +1796,11 @@ class PMEEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta, fftx, ffty, fftz):
-        assert isinstance(atom_numbers, int)
-        assert isinstance(beta, float)
-        assert isinstance(fftx, int)
-        assert isinstance(ffty, int)
-        assert isinstance(fftz, int)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('beta', beta, (float), self.name)
+        validator.check_value_type('fftx', fftx, (int), self.name)
+        validator.check_value_type('ffty', ffty, (int), self.name)
+        validator.check_value_type('fftz', fftz, (int), self.name)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -1670,6 +1818,18 @@ class PMEEnergy(PrimitiveWithInfer):
 
     def infer_shape(self, box_length, uint_crd, charge, nl_numbers, nl_serial, scaler, excluded_list_start,
                     excluded_list, excluded_atom_numbers):
+        cls_name = self.name
+        N = self.atom_numbers
+        validator.check_int(uint_crd[0], N, Rel.EQ, "uint_crd[0]", cls_name)
+        validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd[1]", cls_name)
+        validator.check_int(box_length[0], 3, Rel.EQ, "box_length", cls_name)
+        validator.check_int(charge[0], N, Rel.EQ, "charge", cls_name)
+        validator.check_int(nl_numbers[0], N, Rel.EQ, "nl_numbers[0]", cls_name)
+        validator.check_int(nl_serial[0], N, Rel.LE, "nl_serial[0]", cls_name)
+        validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial[1]", cls_name)
+        validator.check_int(excluded_list_start[0], N, Rel.EQ, "excluded_list_start", cls_name)
+        validator.check_int(excluded_atom_numbers[0], N, Rel.EQ, "excluded_atom_numbers", cls_name)
+        validator.check_int(excluded_list[0], 0, Rel.GE, "excluded_list", cls_name)
         return (1,), (1,), (1,), (1,)
 
     def infer_dtype(self, box_length, uint_crd, charge, nl_numbers, nl_serial, scaler, excluded_list_start,
@@ -1701,6 +1861,8 @@ class LJEnergy(PrimitiveWithInfer):
     .. math::
 
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
+
+    .. math::
         E = A/|dr|^{12} - B/|dr|^{6}
 
     Agrs:
@@ -1716,7 +1878,9 @@ class LJEnergy(PrimitiveWithInfer):
         - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
         - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
         - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient of each kind of atom pair.
+          Q is the number of atom pair.
         - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient of each kind of atom pair.
+          Q is the number of atom pair.
 
     Outputs:
         - **d_LJ_energy_atom** (Tensor, float32) - [N,], the Lennard-Jones potential energy of each atom.
@@ -1728,8 +1892,8 @@ class LJEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff_square):
-        assert isinstance(atom_numbers, int)
-        assert isinstance(cutoff_square, float)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('cutoff_square', cutoff_square, (float), self.name)
         self.atom_numbers = atom_numbers
         self.cutoff_square = cutoff_square
         self.init_prim_io_names(
@@ -1739,6 +1903,19 @@ class LJEnergy(PrimitiveWithInfer):
         self.add_prim_attr('cutoff_square', self.cutoff_square)
 
     def infer_shape(self, uint_crd, LJtype, charge, scaler, nl_numbers, nl_serial, d_LJ_A, d_LJ_B):
+        cls_name = self.name
+        N = self.atom_numbers
+        Q = d_LJ_A[0]
+        validator.check_int(uint_crd[0], N, Rel.EQ, "uint_crd[0]", cls_name)
+        validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd[1]", cls_name)
+        validator.check_int(LJtype[0], N, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge[0], 3, Rel.EQ, "charge", cls_name)
+        validator.check_int(scaler[0], 3, Rel.EQ, "scaler", cls_name)
+        validator.check_int(nl_numbers[0], N, Rel.EQ, "nl_numbers", cls_name)
+        validator.check_int(nl_serial[0], N, Rel.EQ, "nl_serial[0]", cls_name)
+        validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial[1]", cls_name)
+        validator.check_int(scaler[0], 3, Rel.EQ, "scaler", cls_name)
+        validator.check_int(d_LJ_B[0], Q, Rel.EQ, "d_LJ_B[0]", cls_name)
         return charge
 
     def infer_dtype(self, uint_crd, LJtype, charge, scaler, nl_numbers, nl_serial, d_LJ_A, d_LJ_B):
@@ -1761,6 +1938,9 @@ class LJForce(PrimitiveWithInfer):
     .. math::
 
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
+
+    .. math::
+
         F = (-12*A/|dr|^{14} + 6*B/|dr|^{8}) * dr
 
     Agrs:
@@ -1776,7 +1956,9 @@ class LJForce(PrimitiveWithInfer):
         - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
         - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
         - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient of each kind of atom pair.
+          Q is the number of atom pair.
         - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient of each kind of atom pair.
+          Q is the number of atom pair.
 
     outputs:
         - **frc** (Tensor, float32) - [N, 3], the force felt by each atom.
@@ -1787,8 +1969,8 @@ class LJForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff_square):
-        assert isinstance(atom_numbers, int)
-        assert isinstance(cutoff_square, float)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('cutoff_square', cutoff_square, (float), self.name)
         self.atom_numbers = atom_numbers
         self.cutoff_square = cutoff_square
         self.init_prim_io_names(
@@ -1798,6 +1980,19 @@ class LJForce(PrimitiveWithInfer):
         self.add_prim_attr('cutoff_square', self.cutoff_square)
 
     def infer_shape(self, uint_crd, LJtype, charge, scaler, nl_numbers, nl_serial, d_LJ_A, d_LJ_B):
+        cls_name = self.name
+        N = self.atom_numbers
+        Q = d_LJ_A[0]
+        validator.check_int(uint_crd[0], N, Rel.EQ, "uint_crd[0]", cls_name)
+        validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd[1]", cls_name)
+        validator.check_int(LJtype[0], N, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge[0], 3, Rel.EQ, "charge", cls_name)
+        validator.check_int(scaler[0], 3, Rel.EQ, "scaler", cls_name)
+        validator.check_int(nl_numbers[0], N, Rel.EQ, "nl_numbers", cls_name)
+        validator.check_int(nl_serial[0], N, Rel.EQ, "nl_serial[0]", cls_name)
+        validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial[1]", cls_name)
+        validator.check_int(scaler[0], 3, Rel.EQ, "scaler", cls_name)
+        validator.check_int(d_LJ_B[0], Q, Rel.EQ, "d_LJ_B[0]", cls_name)
         return uint_crd
 
     def infer_dtype(self, uint_crd, LJtype, charge, scaler, nl_numbers, nl_serial, d_LJ_A, d_LJ_B):
@@ -1833,7 +2028,9 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         - **nl_numbers** - (Tensor, int32) - [N,], the each atom.
         - **nl_serial** - (Tensor, int32) - [N, 800], the neighbor list of each atom, the max number is 800.
         - **d_LJ_A** (Tensor, float32) - [Q,], the Lennard-Jones A coefficient of each kind of atom pair.
+          Q is the number of atom pair.
         - **d_LJ_B** (Tensor, float32) - [Q,], the Lennard-Jones B coefficient of each kind of atom pair.
+          Q is the number of atom pair.
 
     Outputs:
         - **frc** (Tensor, float32), [N, 3], the force felt by each atom.
@@ -1844,9 +2041,9 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff, pme_beta):
-        assert isinstance(atom_numbers, int)
-        assert isinstance(cutoff, float)
-        assert isinstance(pme_beta, float)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('cutoff', cutoff, (float), self.name)
+        validator.check_value_type('pme_beta', pme_beta, (float), self.name)
         self.atom_numbers = atom_numbers
         self.cutoff = cutoff
         self.pme_beta = pme_beta
@@ -1858,6 +2055,19 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         self.add_prim_attr('pme_beta', self.pme_beta)
 
     def infer_shape(self, uint_crd, LJtype, charge, scaler, nl_numbers, nl_serial, d_LJ_A, d_LJ_B):
+        cls_name = self.name
+        N = self.atom_numbers
+        Q = d_LJ_A[0]
+        validator.check_int(uint_crd[0], N, Rel.EQ, "uint_crd[0]", cls_name)
+        validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd[1]", cls_name)
+        validator.check_int(LJtype[0], N, Rel.EQ, "LJtype", cls_name)
+        validator.check_int(charge[0], 3, Rel.EQ, "charge", cls_name)
+        validator.check_int(scaler[0], 3, Rel.EQ, "scaler", cls_name)
+        validator.check_int(nl_numbers[0], N, Rel.EQ, "nl_numbers", cls_name)
+        validator.check_int(nl_serial[0], N, Rel.EQ, "nl_serial[0]", cls_name)
+        validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial[1]", cls_name)
+        validator.check_int(scaler[0], 3, Rel.EQ, "scaler", cls_name)
+        validator.check_int(d_LJ_B[0], Q, Rel.EQ, "d_LJ_B[0]", cls_name)
         return uint_crd
 
     def infer_dtype(self, uint_crd, LJtype, charge, scaler, nl_numbers, nl_serial, d_LJ_A, d_LJ_B):
@@ -1882,6 +2092,8 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, center_numbers, center_numbers_inverse):
+        validator.check_value_type('center_numbers', center_numbers, (int), self.name)
+        validator.check_value_type('center_numbers_inverse', center_numbers_inverse, (float), self.name)
         self.center_numbers = center_numbers
         self.center_numbers_inverse = center_numbers_inverse
         self.add_prim_attr('center_numbers', self.center_numbers)
@@ -1894,8 +2106,8 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
         cls_name = self.name
         N = self.center_numbers
         validator.check_int(center_atoms_shape[0], N, Rel.EQ, "center_atoms", cls_name)
-        validator.check_int(crd_f_shape[0], N, Rel.EQ, "crd_f", cls_name)
-        validator.check_int(crd_f_shape[1], 3, Rel.EQ, "crd_f", cls_name)
+        validator.check_int(crd_f_shape[0], N, Rel.EQ, "crd_f[0]", cls_name)
+        validator.check_int(crd_f_shape[1], 3, Rel.EQ, "crd_f[1]", cls_name)
         return [3,]
 
     def infer_dtype(self, center_atoms_dtype, crd_f_dtype):
@@ -1990,6 +2202,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
           between the unsigned int value and the real space coordinates.
         - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates value fo each atom.
         - **gpointer** (Tensor, int32) - [G, 125], the 125 nearest neighbor grids (including self) of each grid.
+          G is the number of nearest neighbor grids.
         - **nl_atom_numbers** (Tensor, int32) - [N,], the number of atoms in neighbor list of each atom.
         - **nl_atom_serial** (Tensor, int32) - [N, L], the indices of atoms in neighbor list of each atom.
         - **uint_dr_to_dr_cof** (Tensor, float32) - [3,], the scale factor between
@@ -2182,13 +2395,13 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, float4_numbers, atom_numbers, half_dt, dt, exp_gamma, is_max_velocity, max_velocity):
-        assert isinstance(float4_numbers, int)
-        assert isinstance(atom_numbers, int)
-        assert isinstance(half_dt, float)
-        assert isinstance(dt, float)
-        assert isinstance(exp_gamma, float)
-        assert isinstance(is_max_velocity, int)
-        assert isinstance(max_velocity, float)
+        validator.check_value_type('float4_numbers', float4_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        validator.check_value_type('half_dt', half_dt, (float), self.name)
+        validator.check_value_type('dt', dt, (float), self.name)
+        validator.check_value_type('exp_gamma', exp_gamma, (float), self.name)
+        validator.check_value_type('is_max_velocity', is_max_velocity, (int), self.name)
+        validator.check_value_type('max_velocity', max_velocity, (float), self.name)
         self.float4_numbers = float4_numbers
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt

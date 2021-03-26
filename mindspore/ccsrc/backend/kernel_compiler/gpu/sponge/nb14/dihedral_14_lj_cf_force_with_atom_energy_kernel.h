@@ -70,7 +70,7 @@ class Dihedral14LJCFForceWithAtomEnergyGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto uint_crd_f = GetDeviceAddress<const T1>(inputs, 0);
     auto LJtype = GetDeviceAddress<const T1>(inputs, 1);
@@ -85,9 +85,11 @@ class Dihedral14LJCFForceWithAtomEnergyGpuKernel : public GpuKernel {
     auto frc_f = GetDeviceAddress<T>(outputs, 0);
     auto atom_energy = GetDeviceAddress<T>(outputs, 1);
 
-    Dihedral14LJCFForceWithAtomEnergy(dihedral_14_numbers, atom_numbers, uint_crd_f, LJtype, charge, boxlength_f, a_14,
-                                      b_14, lj_scale_factor, cf_scale_factor, LJ_type_A, LJ_type_B, frc_f, atom_energy,
-                                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto uint_crd_with_LJ = GetDeviceAddress<T>(workspace, 0);
+
+    Dihedral14LJCFForceWithAtomEnergy(dihedral_14_numbers, atom_numbers, uint_crd_f, LJtype, charge, uint_crd_with_LJ,
+                                      boxlength_f, a_14, b_14, lj_scale_factor, cf_scale_factor, LJ_type_A, LJ_type_B,
+                                      frc_f, atom_energy, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;
   }
@@ -104,6 +106,7 @@ class Dihedral14LJCFForceWithAtomEnergyGpuKernel : public GpuKernel {
     input_size_list_.push_back(ele_cf_scale_factor * sizeof(T));
     input_size_list_.push_back(ele_LJ_type_A * sizeof(T));
     input_size_list_.push_back(ele_LJ_type_B * sizeof(T));
+    workspace_size_list_.push_back(atom_numbers * sizeof(UINT_VECTOR_LJ_TYPE));
 
     output_size_list_.push_back(3 * atom_numbers * sizeof(T));
     output_size_list_.push_back(atom_numbers * sizeof(T));
@@ -126,6 +129,13 @@ class Dihedral14LJCFForceWithAtomEnergyGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
   int dihedral_14_numbers;
   int atom_numbers;
+  struct UINT_VECTOR_LJ_TYPE {
+    unsigned int uint_x;
+    unsigned int uint_y;
+    unsigned int uint_z;
+    int LJ_type;
+    float charge;
+  };
 };
 }  // namespace kernel
 }  // namespace mindspore

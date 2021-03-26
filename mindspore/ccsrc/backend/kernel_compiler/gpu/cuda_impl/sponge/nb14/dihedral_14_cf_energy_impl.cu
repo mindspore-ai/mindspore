@@ -52,21 +52,20 @@ __global__ void Dihedral14CFEnergyKernel(const int dihedral_14_numbers, const UI
 }
 
 void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f, const int *LJtype,
-                        const float *charge, const float *boxlength_f, const int *a_14, const int *b_14,
-                        const float *cf_scale_factor, float *ene, cudaStream_t stream) {
+                        const float *charge, float *uint_crd_with_LJ_f, const float *boxlength_f, const int *a_14,
+                        const int *b_14, const float *cf_scale_factor, float *ene, cudaStream_t stream) {
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(atom_numbers) / 128);
-  UINT_VECTOR_LJ_TYPE *uint_crd_with_LJ = NULL;
-  Cuda_Malloc_Safely(reinterpret_cast<void **>(&uint_crd_with_LJ), sizeof(UINT_VECTOR_LJ_TYPE) * atom_numbers);
-
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
+
+  UINT_VECTOR_LJ_TYPE *uint_crd_with_LJ = reinterpret_cast<UINT_VECTOR_LJ_TYPE *>(uint_crd_with_LJ_f);
 
   Copy_Crd_To_New_Crd_Start<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(
     atom_numbers, uint_crd, uint_crd_with_LJ, LJtype, charge);
 
   VECTOR *boxlength = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(boxlength_f));
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(atom_numbers, ene, 0.);
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(atom_numbers, ene, 0.);
   Dihedral14CFEnergyKernel<<<block_per_grid, thread_per_block, 0, stream>>>(
     dihedral_14_numbers, uint_crd_with_LJ, boxlength, a_14, b_14, cf_scale_factor, ene);
 
@@ -76,5 +75,5 @@ void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, c
 }
 
 void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f, const int *LJtype,
-                        const float *charge, const float *boxlength_f, const int *a_14, const int *b_14,
-                        const float *cf_scale_factor, float *ene, cudaStream_t stream);
+                        const float *charge, float *uint_crd_with_LJ_f, const float *boxlength_f, const int *a_14,
+                        const int *b_14, const float *cf_scale_factor, float *ene, cudaStream_t stream);

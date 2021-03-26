@@ -105,22 +105,23 @@ __global__ void Dihedral14LJCFForceWithAtomEnergyKernel(const int dihedral_14_nu
 }
 
 void Dihedral14LJCFForceWithAtomEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f,
-                                       const int *LJtype, const float *charge, const float *boxlength_f,
-                                       const int *a_14, const int *b_14, const float *lj_scale_factor,
-                                       const float *cf_scale_factor, const float *LJ_type_A, const float *LJ_type_B,
-                                       float *frc_f, float *atom_energy, cudaStream_t stream) {
+                                       const int *LJtype, const float *charge, float *uint_crd_with_LJ_f,
+                                       const float *boxlength_f, const int *a_14, const int *b_14,
+                                       const float *lj_scale_factor, const float *cf_scale_factor,
+                                       const float *LJ_type_A, const float *LJ_type_B, float *frc_f, float *atom_energy,
+                                       cudaStream_t stream) {
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(atom_numbers) / 128);
-  UINT_VECTOR_LJ_TYPE *uint_crd_with_LJ = NULL;
-  Cuda_Malloc_Safely(reinterpret_cast<void **>(&uint_crd_with_LJ), sizeof(UINT_VECTOR_LJ_TYPE) * atom_numbers);
-
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
 
+  UINT_VECTOR_LJ_TYPE *uint_crd_with_LJ = reinterpret_cast<UINT_VECTOR_LJ_TYPE *>(uint_crd_with_LJ_f);
+
   Copy_Crd_To_New_Crd_Start<<<ceilf(static_cast<float>(atom_numbers) / 32), 32, 0, stream>>>(
     atom_numbers, uint_crd, uint_crd_with_LJ, LJtype, charge);
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(atom_numbers, atom_energy, 0.);
+
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(3 * atom_numbers, frc_f, 0.);
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(atom_numbers, atom_energy, 0.);
   VECTOR *boxlength = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(boxlength_f));
   VECTOR *frc = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(frc_f));
 
@@ -133,8 +134,9 @@ void Dihedral14LJCFForceWithAtomEnergy(const int dihedral_14_numbers, const int 
   return;
 }
 
-void Dihedral14LJForceWithDirectCF(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f,
-                                   const int *LJtype, const float *charge, const float *boxlength_f, const int *a_14,
-                                   const int *b_14, const float *lj_scale_factor, const float *cf_scale_factor,
-                                   const float *LJ_type_A, const float *LJ_type_B, float *frc, float *atom_energy,
-                                   cudaStream_t stream);
+void Dihedral14LJCFForceWithAtomEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f,
+                                       const int *LJtype, const float *charge, float *uint_crd_with_LJ_f,
+                                       const float *boxlength_f, const int *a_14, const int *b_14,
+                                       const float *lj_scale_factor, const float *cf_scale_factor,
+                                       const float *LJ_type_A, const float *LJ_type_B, float *frc_f, float *atom_energy,
+                                       cudaStream_t stream);
