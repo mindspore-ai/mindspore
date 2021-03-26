@@ -119,18 +119,19 @@ class Particle_Mesh_Ewald(nn.Cell):
             tempi += 4
 
     def PME_Energy(self, uint_crd, charge, nl_atom_numbers, nl_atom_serial, uint_dr_to_dr_cof, excluded_list_start,
-                   excluded_list, excluded_numbers):
+                   excluded_list, excluded_numbers, excluded_atom_numbers):
         """PME_Energy"""
-        self.pmee = P.PMEEnergy(self.atom_numbers, self.beta, self.fftx, self.ffty, self.fftz)
+        self.pmee = P.PMEEnergy(self.atom_numbers, excluded_atom_numbers, self.beta, self.fftx, self.ffty, self.fftz)
         self.reciprocal_energy, self.self_energy, self.direct_energy, self.correction_energy = \
             self.pmee(self.box_length, uint_crd, charge, nl_atom_numbers, nl_atom_serial, uint_dr_to_dr_cof,
                       excluded_list_start, excluded_list, excluded_numbers)
         return self.reciprocal_energy, self.self_energy, self.direct_energy, self.correction_energy
 
     def PME_Excluded_Force(self, uint_crd, scaler, charge, excluded_list_start, excluded_list,
-                           excluded_numbers):
+                           excluded_numbers, excluded_atom_numbers):
         """PME Excluded Force"""
-        self.pmeef = P.PMEExcludedForce(atom_numbers=self.atom_numbers, beta=self.beta)
+        self.pmeef = P.PMEExcludedForce(atom_numbers=self.atom_numbers, excluded_numbers=excluded_atom_numbers,
+                                        beta=self.beta)
         self.frc = self.pmeef(uint_crd, scaler, charge, excluded_list_start, excluded_list, excluded_numbers)
         return self.frc
 
