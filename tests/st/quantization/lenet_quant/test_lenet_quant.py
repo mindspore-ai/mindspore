@@ -150,7 +150,7 @@ def export_lenet():
     export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lenet_quant():
