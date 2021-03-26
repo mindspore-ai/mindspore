@@ -23,6 +23,10 @@
 namespace mindspore {
 
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context) {
+  if (impl_ != nullptr) {
+    MS_LOG(DEBUG) << "Model has been already built.";
+    return kSuccess;
+  }
   impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";

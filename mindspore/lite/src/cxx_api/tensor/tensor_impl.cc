@@ -67,14 +67,14 @@ MSTensor::Impl *MSTensor::Impl::StringsToTensorImpl(const std::string &name, con
     delete lite_tensor;
     return nullptr;
   }
-  auto impl = new (std::nothrow) Impl();
+  auto impl = new (std::nothrow) Impl(lite_tensor);
   if (impl == nullptr) {
     delete lite_tensor;
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
   }
-  impl->set_lite_tensor(lite_tensor);
   impl->set_own_data(true);
+  impl->set_from_session(false);
   return impl;
 }
 
