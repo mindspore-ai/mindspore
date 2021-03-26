@@ -34,12 +34,7 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   auto bn_grad_inputs = bn_grad_node->inputs();
-  if (AnfAlgo::CheckPrimitiveType(bn_grad_node, prim::kPrimBatchNormGrad)) {
-    CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
-  } else {
-    CheckCNodeInputSize(bn_grad_node, kSyncBNGradInputTensorNum);
-  }
-
+  CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
   std::vector<AnfNodePtr> bn_update_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)), bn_grad_inputs[1], bn_grad_inputs[2],
     bn_grad_inputs[4], bn_grad_inputs[5]};
@@ -62,11 +57,7 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   auto bn_grad_inputs = bn_grad_node->inputs();
-  if (AnfAlgo::CheckPrimitiveType(bn_grad_node, prim::kPrimBatchNormGrad)) {
-    CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
-  } else {
-    CheckCNodeInputSize(bn_grad_node, kSyncBNGradInputTensorNum);
-  }
+  CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
 
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "bn_update_grad_outputs has wrong size";
