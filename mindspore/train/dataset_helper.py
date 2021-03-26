@@ -102,6 +102,9 @@ def connect_network_with_dataset(network, dataset_helper):
         Cell, a new network wrapped with 'GetNext' in the case of running the task on Ascend in graph mode, otherwise
         it is the input network.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> from mindspore import DatasetHelper
         >>>
