@@ -31,7 +31,8 @@ message Output {
   int32 original_output_data_type = 7;
   int32 original_output_format = 8;
   uint64 size = 9;
-};
+  Shape origin_shape = 10;
+}
 
 message Input {
   int32 data_type = 1;
@@ -39,12 +40,13 @@ message Input {
   Shape shape = 3;
   uint64 address = 4;
   uint64 size = 5;
+  Shape origin_shape = 6;
 }
 
 message Op {
   string op_name = 1;
   string op_type = 2;
-};
+}
 
 message Task {
   uint32 task_id = 1;
@@ -53,7 +55,7 @@ message Task {
   repeated Output output = 4;
   bool end_graph = 5;
   repeated Input input = 6;
-};
+}
 
 message OpMappingInfo {
   string dump_path = 1;
@@ -75,4 +77,4 @@ message OpMappingInfo {
   uint32 flag = 7; // 0x01 load, 0x00 unload
   repeated Task task = 8;
   string dump_step = 9;
-};
+}
