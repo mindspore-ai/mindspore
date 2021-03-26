@@ -22,6 +22,7 @@
 #include <functional>
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 #include "backend/kernel_compiler/gpu/trt/trt_utils.h"
+#include "runtime/device/gpu/trt_loader.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,7 +49,11 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
     output_size_list_.push_back(size_in_byte);
   }
 
-  runtime_ = TrtPtr(nvinfer1::createInferRuntime(Singleton<TrtLogger>::Instance()));
+  auto trt_loader = Singleton<device::gpu::TrtLoader>::Instance();
+  if (!trt_loader.nvinfer_loaded()) {
+    MS_LOG(EXCEPTION) << "Install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}/lib:$LD_LIBRARY_PATH."
+  }
+  runtime_ = trt_loader.CreateInferRuntime(&Singleton<TrtLogger>::Instance());
   MS_EXCEPTION_IF_NULL(runtime_);
   serialize_ = GetAttr<std::string>(kernel_node, "serialize_model");
   engine_ = TrtPtr(runtime_->deserializeCudaEngine(serialize_.c_str(), serialize_.size(), nullptr));

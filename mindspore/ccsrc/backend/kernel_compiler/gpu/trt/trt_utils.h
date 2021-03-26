@@ -28,6 +28,8 @@
 #include "utils/log_adapter.h"
 #include "utils/singleton.h"
 #include "utils/convert_utils_base.h"
+#include "utils/shape_utils.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 class TrtUtils {
