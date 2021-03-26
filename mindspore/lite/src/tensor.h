@@ -121,7 +121,10 @@ class Tensor : public mindspore::tensor::MSTensor {
     return data_;
   }
 
-  void set_data(void *data) override { this->data_ = data; }
+  void set_data(void *data) override {
+    this->data_ = data;
+    this->own_data_ = true;
+  }
 
   Category category() const { return this->category_; }
 
@@ -153,10 +156,6 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
-  bool enable_huffman_code() const;
-
-  void set_enable_huffman_code(bool enable_huffman_code);
-
   virtual bool IsConst() const {
     return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->data_ != nullptr;
   }
@@ -173,13 +172,17 @@ class Tensor : public mindspore::tensor::MSTensor {
     }
   }
 
-  virtual int set_root_tensor(Tensor *tensor);
+  virtual void set_root_tensor(Tensor *tensor);
 
   Tensor *root_tensor() const { return this->root_tensor_; }
 
   bool IsReady() const {
     return this->IsConst() || (this->IsGraphInput() && this->data_ != nullptr) || this->ref_count_ >= 1;
   }
+
+  bool own_data() const { return this->own_data_; }
+
+  void set_own_data(bool own_data) { this->own_data_ = own_data; }
 
  private:
   template <typename T>
@@ -208,7 +211,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   std::vector<float> quant_clusters_;
   mindspore::Allocator *allocator_ = nullptr;
   Tensor *root_tensor_ = nullptr;
-  bool enable_huffman_code_ = false;
+  bool own_data_{false};
 };
 
 inline size_t DataTypeSize(const TypeId type) {

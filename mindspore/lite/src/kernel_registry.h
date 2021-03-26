@@ -37,7 +37,6 @@ class KernelRegistry {
   static KernelRegistry *GetInstance();
   static int Init();
   virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
-  const kernel::KernelCreator *GetCreatorArrays();
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);
   void RegKernel(kernel::KERNEL_ARCH arch, TypeId data_type, int type, kernel::KernelCreator creator);
@@ -45,6 +44,9 @@ class KernelRegistry {
   int GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                 const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter,
                 kernel::LiteKernel **kernel);
+  bool SupportKernel(const kernel::KernelKey &key);
+  kernel::LiteKernel *GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter);
 #ifdef MS_COMPILE_IOS
   void RegisterAllKernels();
 #endif

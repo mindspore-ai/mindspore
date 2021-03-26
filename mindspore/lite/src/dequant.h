@@ -29,19 +29,16 @@
 namespace mindspore::lite {
 class DequantUtil {
  public:
-  static float *DequantWeight(lite::Tensor *input_tensor, bool);
+  static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
-  static int UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
+  static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
-  static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(OpParameter *op_param,
-                                                                     const std::vector<Tensor *> &in_tensors,
-                                                                     TypeId data_type, bool need_restore = true);
-
-  static void RestoreTensorData(const std::map<Tensor *, std::pair<TypeId, void *>> &tensor_origin_data_map);
+  static Tensor *DequantTensor(Tensor *tensor, TypeId data_type, bool channel_first = true,
+                               TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename ST, typename DT = float>
   static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
-    const auto *quant_datas = static_cast<const ST *>(input_tensor->MutableData());
+    const auto *quant_datas = static_cast<const ST *>(input_tensor->data_c());
     if (quant_datas == nullptr) {
       MS_LOG(ERROR) << "Get quant tensor failed.";
       return nullptr;
@@ -138,6 +135,8 @@ class DequantUtil {
   }
 
  private:
+  static int DequantWeight(lite::Tensor *input_tensor, bool channel_first, TypeId dst_data_type = kNumberTypeFloat32);
+
   template <typename T1, typename T2>
   static void UnPackData(int origin_bit, const T2 &packed_data, std::queue<bool> *unpack_bit_data, void *unpack_int,
                          size_t *count, bool is_last) {

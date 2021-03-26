@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace lite {
-
 const int PSEUDO_EOF = 128;
 
 struct HuffmanNode {
@@ -36,23 +35,25 @@ struct HuffmanNode {
   std::string code;
   HuffmanNode *left, *right, *parent;
 };
+
 using HuffmanNodePtr = HuffmanNode *;
 
 class HuffmanDecode {
  public:
-  HuffmanDecode() = default;
+  virtual ~HuffmanDecode() = default;
 
-  ~HuffmanDecode();
-
-  STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data);
+  static STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data);
 
  private:
-  std::vector<HuffmanNodePtr> huffman_nodes_;
-  STATUS RebuildHuffmanTree(std::string key, std::string code, const HuffmanNodePtr &root);
+  HuffmanDecode() = default;
 
-  STATUS DoHuffmanDecompress(HuffmanNodePtr root, std::string encoded_data, std::string *decoded_str);
+  static void FreeHuffmanNodeTree(HuffmanNodePtr root);
 
-  std::vector<std::string> Str2Vec(std::string s) {
+  static STATUS RebuildHuffmanTree(std::string key, std::string code, const HuffmanNodePtr &root);
+
+  static STATUS DoHuffmanDecompress(HuffmanNodePtr root, std::string encoded_data, std::string *decoded_str);
+
+  static std::vector<std::string> Str2Vec(std::string s) {
     size_t i = 0;
     std::vector<std::string> vec;
     while (i < s.length()) {

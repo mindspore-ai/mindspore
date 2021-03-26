@@ -17,7 +17,6 @@
 #include "include/errorcode.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
-#include "src/common/prim_util.h"
 #include "nnacl/pooling_parameter.h"
 #include "src/reg_kernels.h"
 #ifdef ENABLE_ARM64
@@ -120,21 +119,24 @@ KernelRegistry::~KernelRegistry() {
   }
 }
 
-int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                              const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *parameter,
-                              kernel::LiteKernel **kernel) {
+bool KernelRegistry::SupportKernel(const KernelKey &key) {
+  auto kernel_creator = GetCreator(key);
+  return kernel_creator != nullptr;
+}
+
+kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors,
+                                              const std::vector<Tensor *> &out_tensors, const InnerContext *ctx,
+                                              const kernel::KernelKey &key, OpParameter *parameter) {
   MS_ASSERT(ctx != nullptr);
-  MS_ASSERT(kernel != nullptr);
   auto creator = GetCreator(key);
   if (creator != nullptr) {
-    *kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-    if (*kernel != nullptr) {
-      (*kernel)->set_desc(key);
-      return RET_OK;
+    auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+    if (kernel != nullptr) {
+      kernel->set_desc(key);
+      return kernel;
     }
-    return RET_ERROR;
   }
-  return RET_NOT_SUPPORT;
+  return nullptr;
 }
 
 #ifdef MS_COMPILE_IOS

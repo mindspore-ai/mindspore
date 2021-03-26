@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace lite {
-#define kMaxMallocSize 1024 * 1024 * 100
+#define kMaxMallocSize 1024 * 1024 * 300
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::Format &format, Category category)
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
@@ -43,16 +43,9 @@ int Tensor::CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor) {
     MS_LOG(ERROR) << "Size of dst tensor is not compatible with src tensor";
     return RET_ERROR;
   }
-  if (dst_tensor->data_ == nullptr) {
-    if (data_size > kMaxMallocSize) {
-      MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
-      return RET_ERROR;
-    }
-    dst_tensor->data_ = malloc(data_size);
-    if (dst_tensor->data_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc memory failed";
-      return RET_ERROR;
-    }
+  if (dst_tensor->MallocData() != RET_OK) {
+    MS_LOG(ERROR) << "Malloc memory failed";
+    return RET_ERROR;
   }
   memcpy(dst_tensor->data_, src_tensor.data_, data_size);
   return RET_OK;
@@ -74,12 +67,13 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
       MS_LOG(ERROR) << "CopyTensorData error";
       return nullptr;
     }
+    result->own_data_ = src_tensor.own_data_;
   }
   return result;
 }
 
 Tensor::~Tensor() {
-  if (nullptr != this->data_) {
+  if (nullptr != this->data_ && this->own_data_) {
     if (this->allocator_ != nullptr) {
       this->allocator_->Free(this->data_);
     } else {
@@ -276,13 +270,13 @@ std::string Tensor::ToString() const {
   return oss.str();
 }
 
-int Tensor::set_root_tensor(Tensor *tensor) {
+void Tensor::set_root_tensor(Tensor *tensor) {
   this->root_tensor_ = tensor;
   if (this->root_tensor_ == this) {
-    return RET_OK;
+    return;
   }
   if (this->root_tensor_ == nullptr) {
-    return RET_OK;
+    return;
   }
   this->shape_ = this->root_tensor_->shape_;
   this->format_ = this->root_tensor_->format_;
@@ -290,7 +284,6 @@ int Tensor::set_root_tensor(Tensor *tensor) {
   this->category_ = this->root_tensor_->category_;
   this->quant_params_ = this->root_tensor_->quant_params_;
   this->quant_clusters_ = this->root_tensor_->quant_clusters_;
-  return RET_OK;
 }
 
 int Tensor::MallocData(const mindspore::Allocator *allocator) {
@@ -300,21 +293,29 @@ int Tensor::MallocData(const mindspore::Allocator *allocator) {
   if (allocator != nullptr) {
     allocator_ = const_cast<mindspore::Allocator *>(allocator);
   }
-  if (allocator_ == nullptr) {
-    this->data_ = malloc(this->Size());
-  } else {
-    this->data_ = allocator_->Malloc(this->Size());
-  }
-  if (nullptr == this->data_) {
-    MS_LOG(ERROR) << "Malloc tensor data failed, size=" << this->Size();
+  auto data_size = this->Size();
+  if (data_size > kMaxMallocSize) {
+    MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
     return RET_ERROR;
   }
-
+  if (allocator_ == nullptr) {
+    this->data_ = malloc(data_size);
+  } else {
+    this->data_ = allocator_->Malloc(data_size);
+  }
+  if (nullptr == this->data_) {
+    MS_LOG(ERROR) << "Malloc tensor data failed, size=" << data_size;
+    return RET_ERROR;
+  }
+  this->own_data_ = true;
   return RET_OK;
 }
 
 void Tensor::FreeData() {
   if (nullptr == this->data_) {
+    return;
+  }
+  if (!this->own_data_) {
     return;
   }
   if (nullptr == allocator_) {
@@ -365,10 +366,6 @@ std::vector<QuantArg> Tensor::quant_params() const { return this->quant_params_;
 std::vector<float> Tensor::quant_clusters() const { return this->quant_clusters_; }
 
 void Tensor::set_quant_clusters(const std::vector<float> &clusters) { this->quant_clusters_ = clusters; }
-
-bool Tensor::enable_huffman_code() const { return enable_huffman_code_; }
-
-void Tensor::set_enable_huffman_code(bool enable_huffman_code) { this->enable_huffman_code_ = enable_huffman_code; }
 
 std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
   std::vector<tensor::MSTensor *> target(src.size());

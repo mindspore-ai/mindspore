@@ -31,6 +31,7 @@
 #include "src/common/prim_util.h"
 #include "src/runtime/infer_manager.h"
 #include "src/dequant.h"
+#include "nnacl/matmul_parameter.h"
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
@@ -43,6 +44,10 @@
 #include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
 #include "src/runtime/agent/npu/optimizer/npu_insert_transform_pass.h"
 #endif
+#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
+#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#endif
+
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kGPU;
@@ -198,46 +203,168 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index, bool *infer_shape_inter
   return RET_OK;
 }
 
+namespace {
+#ifndef SUPPORT_TRAIN
+int CopyConstTensor(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors, TypeId dst_data_type) {
+  MS_ASSERT(restored_origin_tensors != nullptr);
+  MS_ASSERT(tensor != nullptr);
+  if (dst_data_type != kNumberTypeFloat32 && dst_data_type != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Only support fp32 or fp16 as dst_data_type.";
+    return RET_PARAM_INVALID;
+  }
+  // tensorlist not support fp16 now
+  if (!tensor->IsConst() || tensor->data_type() == kObjectTypeTensorType) {
+    return RET_OK;
+  }
+  auto origin_data = tensor->data_c();
+  MS_ASSERT(origin_data != nullptr);
+  if (tensor->data_type() == kNumberTypeFloat32 && dst_data_type == kNumberTypeFloat16) {
+#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
+    auto restore_tensor = Tensor::CopyTensor(*tensor, false);
+    restore_tensor->set_data(origin_data);
+    restore_tensor->set_own_data(tensor->own_data());
+    tensor->set_data(nullptr);
+    tensor->set_data_type(kNumberTypeFloat16);
+    auto ret = tensor->MallocData();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "malloc data failed";
+      return ret;
+    }
+    auto new_tensor_data = tensor->data_c();
+    MS_ASSERT(new_tensor_data != nullptr);
+    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
+    (*restored_origin_tensors)[tensor] = restore_tensor;
+#else
+    MS_LOG(ERROR) << "Unsupported dst data type: float16";
+    return RET_ERROR;
+#endif
+  } else {
+    tensor->set_data(nullptr);
+    auto ret = tensor->MallocData();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "malloc data failed";
+      return ret;
+    }
+    auto new_data = tensor->data_c();
+    MS_ASSERT(new_data != nullptr);
+    memcpy(new_data, origin_data, tensor->Size());
+  }
+  return RET_OK;
+}
+#endif
+
+inline void RestoreTensorData(const std::map<Tensor *, Tensor *> &restored_origin_tensors) {
+  for (auto &restored_origin_tensor : restored_origin_tensors) {
+    auto *origin_tensor = restored_origin_tensor.first;
+    auto *restored_tensor = restored_origin_tensor.second;
+    MS_ASSERT(origin_tensor != nullptr);
+    MS_ASSERT(restored_tensor != nullptr);
+    origin_tensor->FreeData();
+    origin_tensor->set_data_type(restored_tensor->data_type());
+    origin_tensor->set_data(restored_tensor->data_c());
+    origin_tensor->set_own_data(restored_tensor->own_data());
+  }
+}
+
+inline void FreeRestoreTensors(std::map<Tensor *, Tensor *> *restored_origin_tensors) {
+  MS_ASSERT(restored_origin_tensors != nullptr);
+  for (auto &restored_origin_tensor : *restored_origin_tensors) {
+    restored_origin_tensor.second->set_data(nullptr);
+    delete (restored_origin_tensor.second);
+  }
+  restored_origin_tensors->clear();
+}
+
+inline bool IsChannelFirst(const std::vector<Tensor *> &in_tensors, OpParameter *op_parameter) {
+  MS_ASSERT(op_parameter != nullptr);
+  if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
+    for (size_t i = 0; i < in_tensors.size(); i++) {
+      auto tensor = in_tensors.at(i);
+      MS_ASSERT(tensor != nullptr);
+      if (tensor->shape().size() != 2) {
+        continue;
+      }
+      const auto *param = reinterpret_cast<MatMulParameter *>(op_parameter);
+      if (i == 1) {
+        return !(param->a_transpose_);
+      } else if (i == 2) {
+        return param->b_transpose_;
+      } else {
+        // not care bias data
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+
+kernel::LiteKernel *Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors,
+                                             const std::vector<Tensor *> &out_tensors, OpParameter *op_parameter,
+                                             const kernel::KernelKey &desc, TypeId kernel_data_type) {
+  MS_ASSERT(op_parameter != nullptr);
+  auto op_type = op_parameter->type_;
+  if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
+    return nullptr;
+  }
+  std::map<Tensor *, Tensor *> restored_origin_tensors;
+  for (auto &tensor : in_tensors) {
+    auto channel_first = IsChannelFirst(in_tensors, op_parameter);
+    auto *restore_tensor = DequantUtil::DequantTensor(tensor, desc.data_type, channel_first, kernel_data_type);
+    if (restore_tensor != nullptr) {
+      restored_origin_tensors[tensor] = restore_tensor;
+    } else {
+#ifndef SUPPORT_TRAIN
+      if (!IsPackedOp(op_type) && !tensor->own_data()) {  //  && op_type != schema::PrimitiveType_LSTM
+        auto ret = CopyConstTensor(tensor, &restored_origin_tensors, kernel_data_type);
+        if (ret != RET_OK) {
+          MS_LOG(DEBUG) << "CopyConstTensor failed: " << ret;
+          return nullptr;
+        }
+      }
+#endif
+    }
+  }
+  auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, op_parameter);
+  if (kernel != nullptr) {
+    MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveTypeName(op_type);
+    FreeRestoreTensors(&restored_origin_tensors);
+  } else {
+    RestoreTensorData(restored_origin_tensors);
+  }
+  return kernel;
+}
+
 kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                                  TypeId prefer_data_type) {
-  kernel::LiteKernel *kernel = nullptr;
-  TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
+  MS_ASSERT(node != nullptr);
+  bool need_dequant = node->quant_type_ == schema::QuantType_WeightQuant;
+  TypeId data_type = need_dequant ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
   }
   bool infer_shape_interrupt = !op_parameter->infer_flag_;
-  bool need_restore = true;
-  if (node->quant_type_ == schema::QuantType_WeightQuant) {
-    data_type = kNumberTypeFloat32;
-  }
-  if (!IsPackedOp(op_parameter->type_)) {
-    need_restore = false;
-  }
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 #if SUPPORT_GPU
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
     kernel::KernelKey gpu_desc{kGPU, kNumberTypeFloat32, desc.type};
     if (context_->IsGpuFloat16Enabled()) gpu_desc.data_type = kNumberTypeFloat16;
-    auto ret =
-      KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter, &kernel);
-    if (ret == RET_OK) {
+    auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter);
+    if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type) << " " << node->name_;
       return kernel;
     } else {
       MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(gpu_desc.type) << " "
                     << node->name_;
-      if (ret == RET_ERROR) {
-        ret = InferNodeShape(node, &infer_shape_interrupt);
-        if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = op_parameters_[node->output_indices_.at(0)];
-        } else {
-          MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
-          return nullptr;
-        }
+      auto ret = InferNodeShape(node, &infer_shape_interrupt);
+      if (ret == RET_INFER_INVALID || ret == RET_OK) {
+        op_parameter = op_parameters_[node->output_indices_.at(0)];
+      } else {
+        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+        return nullptr;
       }
     }
   }
@@ -253,22 +380,19 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       }
     }
     kernel::KernelKey npu_desc{kNPU, desc.data_type, desc.type};
-    auto ret =
-      KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, npu_desc, op_parameter, &kernel);
-    if (ret == RET_OK) {
+    auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, npu_desc, op_parameter);
+    if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get npu op success: " << PrimitiveCurVersionTypeName(npu_desc.type) << " " << node->name_;
       return kernel;
     } else {
       MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(npu_desc.type) << " "
                     << node->name_;
-      if (ret == RET_ERROR) {
-        ret = InferNodeShape(node, &infer_shape_interrupt);
-        if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = op_parameters_[node->output_indices_.at(0)];
-        } else {
-          MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
-          return nullptr;
-        }
+      auto ret = InferNodeShape(node, &infer_shape_interrupt);
+      if (ret == RET_INFER_INVALID || ret == RET_OK) {
+        op_parameter = op_parameters_[node->output_indices_.at(0)];
+      } else {
+        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+        return nullptr;
       }
     }
   }
@@ -277,25 +401,18 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       mindspore::lite::IsSupportFloat16() &&
       ((context_->IsCpuFloat16Enabled() && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16)) {
     kernel::KernelKey fp16_cpu_desc{desc.arch, kNumberTypeFloat16, desc.type};
-    auto tensor_origin_data_map =
-      DequantUtil::DequantTensor(op_parameter, in_tensors, fp16_cpu_desc.data_type, need_restore);
-    auto ret =
-      KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, fp16_cpu_desc, op_parameter, &kernel);
-    DequantUtil::RestoreTensorData(tensor_origin_data_map);
-    if (ret == RET_OK) {
-      MS_LOG(DEBUG) << "Get fp16 op success: " << PrimitiveCurVersionTypeName(fp16_cpu_desc.type) << " " << node->name_;
+    auto kernel = FindCpuKernel(in_tensors, out_tensors, op_parameter, fp16_cpu_desc, kNumberTypeFloat16);
+    if (kernel != nullptr) {
       return kernel;
     } else {
       MS_LOG(DEBUG) << "Get fp16 op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(fp16_cpu_desc.type)
                     << " " << node->name_;
-      if (ret == RET_ERROR) {
-        ret = InferNodeShape(node, &infer_shape_interrupt);
-        if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = op_parameters_[node->output_indices_.at(0)];
-        } else {
-          MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
-          return nullptr;
-        }
+      auto ret = InferNodeShape(node, &infer_shape_interrupt);
+      if (ret == RET_INFER_INVALID || ret == RET_OK) {
+        op_parameter = op_parameters_[node->output_indices_.at(0)];
+      } else {
+        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+        return nullptr;
       }
     }
   }
@@ -304,20 +421,20 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     desc.data_type = kNumberTypeFloat32;
   }
   if (prefer_data_type == kNumberTypeFloat32 || prefer_data_type == kTypeUnknown) {
-    auto tensor_origin_data_map = DequantUtil::DequantTensor(op_parameter, in_tensors, desc.data_type, need_restore);
-    auto ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, op_parameter, &kernel);
-    DequantUtil::RestoreTensorData(tensor_origin_data_map);
-    if (ret == RET_OK) {
+    auto kernel = FindCpuKernel(in_tensors, out_tensors, op_parameter, desc, kNumberTypeFloat32);
+    if (kernel != nullptr) {
       return kernel;
-    } else if (ret == RET_ERROR) {
-      ret = InferNodeShape(node, &infer_shape_interrupt);
+    } else {
+      auto ret = InferNodeShape(node, &infer_shape_interrupt);
       if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
-        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+        MS_LOG(ERROR)
+
+          << "Try repeat infer fail: " << node->name_;
       }
     }
   }
   return nullptr;
-}
+}  // namespace mindspore::lite
 
 kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *src_node) {
   MS_ASSERT(src_model_ != nullptr);

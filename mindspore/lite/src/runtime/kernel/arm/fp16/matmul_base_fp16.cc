@@ -71,13 +71,20 @@ int MatmulBaseFP16CPUKernel::InitBias() {
   if (in_tensors_.size() == 3) {
     auto bias_tensor = in_tensors_[2];
     int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), C8NUM);
-    bias_ptr_ = reinterpret_cast<float16_t *>(malloc(max_bias_data * sizeof(float)));
+    bias_ptr_ = reinterpret_cast<float16_t *>(malloc(max_bias_data * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias_ptr_ failed";
       return RET_ERROR;
     }
     memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, bias_tensor->ElementsNum());
+    if (in_tensors_[2]->data_type() == kNumberTypeFloat32) {
+      Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, bias_tensor->ElementsNum());
+    } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16) {
+      memcpy(bias_ptr_, in_tensors_[2]->data_c(), max_bias_data * sizeof(float16_t));
+    } else {
+      MS_LOG(ERROR) << "Unsupported bias data type : " << in_tensors_[2]->data_type();
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

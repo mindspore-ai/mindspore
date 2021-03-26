@@ -199,23 +199,15 @@ int TensorList::CheckTensorListParam() {
   return RET_OK;
 }
 
-int TensorList::set_root_tensor(Tensor *tensor) {
-  auto ret = Tensor::set_root_tensor(tensor);
-  if (ret != RET_OK) {
-    return ret;
-  }
-  if (this->data_type_ != kObjectTypeTensorType) {
-    return RET_OK;
+void TensorList::set_root_tensor(Tensor *tensor) {
+  Tensor::set_root_tensor(tensor);
+  if (this->data_type_ != kObjectTypeTensorType || tensor == nullptr) {
+    return;
   }
   auto root_tensorlist = reinterpret_cast<TensorList *>(this->root_tensor_);
-  if (root_tensorlist == nullptr) {
-    MS_LOG(ERROR) << "root_tensor of tensorlist should be a tensorlist";
-    return RET_INFER_INVALID;
-  }
   this->element_shape_ = root_tensorlist->element_shape_;
   this->max_elements_num_ = root_tensorlist->max_elements_num_;
   this->tensors_data_type_ = root_tensorlist->tensors_data_type_;
-  return RET_OK;
 }
 
 Tensor *TensorList::GetTensor(int index) {

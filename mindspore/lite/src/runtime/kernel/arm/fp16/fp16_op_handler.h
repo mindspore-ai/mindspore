@@ -25,10 +25,11 @@ extern "C" {
 extern void Float32ToFloat16(const float *input, float16_t *output, int number);
 extern void Float16ToFloat32(const float16_t *input, float *output, int number);
 
-void Float32ToFloat16_fp16_handler(const void *input, void *output, int number) {
+inline void Float32ToFloat16_fp16_handler(const void *input, void *output, int number) {
   Float32ToFloat16(reinterpret_cast<const float *>(input), reinterpret_cast<float16_t *>(output), number);
 }
-void Float16ToFloat32_fp16_handler(const void *input, void *output, int number) {
+
+inline void Float16ToFloat32_fp16_handler(const void *input, void *output, int number) {
   Float16ToFloat32(reinterpret_cast<const float16_t *>(input), reinterpret_cast<float *>(output), number);
 }
 #endif
