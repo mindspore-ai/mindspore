@@ -46,6 +46,7 @@ class GPUEnvChecker(EnvChecker):
 
     def __init__(self):
         self.version = ["10.1"]
+        self.lib_key_to_lib_name = {'libcu': 'libcuda.so'}
         # env
         self.path = os.getenv("PATH")
         self.ld_lib_path = os.getenv("LD_LIBRARY_PATH")
@@ -131,25 +132,32 @@ class GPUEnvChecker(EnvChecker):
         """Get gpu lib path by ldd command."""
         path_list = []
         current_path = os.path.split(os.path.realpath(__file__))[0]
-        ldd_result = subprocess.run(["ldd " + current_path + "/_c_expression*.so* | grep " + lib_name],
-                                    timeout=3, text=True, capture_output=True, check=False, shell=True)
-        if ldd_result.returncode:
-            logger.warning(f"{lib_name} so(need by mndspore-gpu) is not found, please confirm that "
-                           f"_c_experssion.so depend on {lib_name}, "
-                           f"and _c_expression.so in directory:{current_path}")
+        try:
+            ldd_result = subprocess.run(["ldd " + current_path + "/_c_expression*.so* | grep " + lib_name],
+                                        timeout=10, text=True, capture_output=True, check=False, shell=True)
+            if ldd_result.returncode:
+                logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
+                             f"confirm that _c_expression.so is in directory:{current_path} and the correct cuda "
+                             "version has been installed, you can refer to the installation "
+                             "guidelines: https://www.mindspore.cn/install")
+                return path_list
+            result = ldd_result.stdout
+            for i in result.split('\n'):
+                path = i.partition("=>")[2]
+                if path.lower().find("not found") > 0:
+                    logger.warning(f"Cuda {self.version} version(need by mindspore-gpu) is not found, please confirm "
+                                   "that the path of cuda is set to the env LD_LIBRARY_PATH, please refer to the "
+                                   "installation guidelines: https://www.mindspore.cn/install")
+                    continue
+                path = path.partition(lib_name)[0]
+                if path:
+                    path_list.append(os.path.abspath(path.strip() + "../"))
+            return np.unique(path_list)
+        except subprocess.TimeoutExpired:
+            logger.warning("Failed to check cuda version due to the ldd command timeout, please confirm that "
+                           "the correct cuda version has been installed, you can refer to the "
+                           "installation guidelines: https://www.mindspore.cn/install")
             return path_list
-        result = ldd_result.stdout
-        for i in result.split('\n'):
-            path = i.partition("=>")[2]
-            if path.lower().find("not found") > 0:
-                logger.warning(f"Cuda {self.version} version(need by mindspore-gpu) is not found, please confirm "
-                               "that the path of cuda is set to the env LD_LIBRARY_PATH, please refer to the "
-                               "installation guidelines: https://www.mindspore.cn/install")
-                continue
-            path = path.partition(lib_name)[0]
-            if path:
-                path_list.append(os.path.abspath(path.strip() + "../"))
-        return np.unique(path_list)
 
     def _read_version(self, file_path):
         """Get gpu version info in version.txt."""
