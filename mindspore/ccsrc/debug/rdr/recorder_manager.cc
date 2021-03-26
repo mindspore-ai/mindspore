@@ -42,7 +42,7 @@ void RecorderManager::UpdateRdrEnable() {
   updated = true;
 }
 
-bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder, const bool &replace) {
+bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
   if (!rdr_enable_) {
     return false;
   }
@@ -55,18 +55,17 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder, const bool &
   std::string name = recorder->GetName();
   std::pair<std::string, std::string> recorder_key(module, name);
   std::lock_guard<std::mutex> lock(mtx_);
-  if (replace) {
-    recorder_container_[recorder_key] = recorder;
-    return true;
-  }
-  std::unordered_map<std::pair<std::string, std::string>, BaseRecorderPtr, pair_hash>::iterator item =
-    recorder_container_.find(recorder_key);
-  if (item == recorder_container_.end()) {
-    recorder_container_[recorder_key] = recorder;
-  } else {
-    recorder_container_[recorder_key]->UpdateInfo(*recorder);
-  }
+  recorder_container_[recorder_key] = recorder;
   return true;
+}
+
+BaseRecorderPtr RecorderManager::GetRecorder(std::string module, std::string name) {
+  std::pair<std::string, std::string> recorder_key(module, name);
+  auto item = recorder_container_.find(recorder_key);
+  if (item != recorder_container_.end()) {
+    return item->second;
+  }
+  return nullptr;
 }
 
 void RecorderManager::TriggerAll() {

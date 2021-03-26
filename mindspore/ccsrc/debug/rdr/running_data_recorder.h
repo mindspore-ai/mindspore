@@ -52,8 +52,9 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
                           const std::vector<CNodePtr> &final_exec_order);
 bool RecordString(SubModuleId module, const std::string &name, const std::string &data);
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order);
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
-                          const GPUMemInfo &mem_info);
+bool RecordGPUMemAddressInfo(const SubModuleId module, const std::string &name, size_t nsize);
+bool UpdateGPUMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
+                             const GPUMemInfo &mem_info, size_t id);
 #ifdef ENABLE_D
 bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list);

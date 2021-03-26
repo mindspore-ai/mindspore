@@ -43,6 +43,7 @@
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"
 #endif
 
@@ -649,8 +650,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   auto &kernels = graph->execution_order();
   int exec_order = 1;
 #ifdef ENABLE_DUMP_IR
-  std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
-  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_KERNEL, exec_order_name, kernels);
+  std::string name = "mem_address_list";
+  mindspore::RDR::RecordGPUMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
+  size_t id = 0;
 #endif
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
@@ -694,9 +696,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     }
 #ifdef ENABLE_DUMP_IR
     GPUMemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
-    std::string name = "mem_address_list";
     std::string op_name = kernel->fullname_with_scope();
-    mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, name, op_name, mem_info);
+    mindspore::RDR::UpdateGPUMemAddressInfo(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
 #endif
     if (!mock) {
       if (!profiling) {
