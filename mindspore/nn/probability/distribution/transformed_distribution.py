@@ -58,7 +58,7 @@ class TransformedDistribution(Distribution):
         >>> import mindspore.nn.probability.bijector as msb
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
-        ...     def __init__(self, shape, dtype=dtype.float32, seed=0, name='transformed_distribution'):
+        ...     def __init__(self, shape, dtype=mindspore.float32, seed=0, name='transformed_distribution'):
         ...         super(Net, self).__init__()
         ...         # create TransformedDistribution distribution
         ...         self.exp = msb.Exp()
@@ -73,7 +73,7 @@ class TransformedDistribution(Distribution):
         >>> shape = (2, 3)
         >>> net = Net(shape=shape, name="LogNormal")
         >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
-        >>> tx = Tensor(x, dtype=dtype.float32)
+        >>> tx = Tensor(x, dtype=mindspore.float32)
         >>> cdf, sample = net(tx)
     """
 

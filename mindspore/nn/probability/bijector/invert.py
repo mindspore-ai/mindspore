@@ -43,7 +43,7 @@ class Invert(Bijector):
         ...         return self.invert.forward(x_)
         >>> forward = Net()
         >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
-        >>> ans = forward(Tensor(x, dtype=dtype.float32))
+        >>> ans = forward(Tensor(x, dtype=mindspore.float32))
     """
 
     def __init__(self,
