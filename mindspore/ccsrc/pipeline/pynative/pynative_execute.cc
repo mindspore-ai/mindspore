@@ -2091,14 +2091,14 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
       auto ptr = value->ToAbstract();
       MS_EXCEPTION_IF_NULL(ptr);
       args_spec.emplace_back(ptr);
-      param_node->set_abstract(ptr);
+      param_node->set_abstract(ptr->Broaden());
     } else {
       // update abstract info for input params
       ValuePtr input_value = parse::data_converter::PyDataToValue(args[index]);
       MS_EXCEPTION_IF_NULL(input_value);
       auto abs = abstract::FromValue(input_value, true);
       args_spec.emplace_back(abs);
-      param_node->set_abstract(abs);
+      param_node->set_abstract(abs->Broaden());
       index++;
     }
   }

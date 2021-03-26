@@ -607,19 +607,22 @@ bool KPynativeCellImpl::BackPropagate() {
     MS_EXCEPTION_IF_NULL(bprop_fg);
 
     AnfNodePtrList node_list{NewValueNode(bprop_fg)};
-    std::transform(iter->second->op_args().begin(), iter->second->op_args().end(), std::back_inserter(node_list),
-                   [](const ValuePtr &value) { return NewValueNode(value); });
-    node_list.push_back(NewValueNode(iter->second->out()));
-    node_list.push_back(iter->second->RealDout());
-    // Update abstract info of valuenode with its value
-    for (size_t i = 1; i < node_list.size() - 1; ++i) {
-      auto v_node = node_list[i]->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(v_node);
-      auto value = v_node->value();
-      if (v_node->abstract() == nullptr && value != nullptr && value->ToAbstract() != nullptr) {
-        v_node->set_abstract(value->ToAbstract()->Broaden());
+    auto &args = iter->second->op_args();
+    for (size_t idx = 0; idx < args.size(); ++idx) {
+      auto cur_arg = args[idx];
+      auto anf_node = cnode->input(idx + 1);
+      if (!anf_node->isa<Parameter>()) {
+        anf_node = NewValueNode(cur_arg);
       }
+      anf_node->set_abstract(cur_arg->ToAbstract()->Broaden());
+      node_list.push_back(anf_node);
     }
+
+    auto out_node = NewValueNode(iter->second->out());
+    out_node->set_abstract(iter->second->out()->ToAbstract()->Broaden());
+    node_list.push_back(out_node);
+    node_list.push_back(iter->second->RealDout());
+
     // Back propagate process
     auto bprop_app = tape_->NewCNode(node_list);
     BackPropagate(cnode, bprop_app);
