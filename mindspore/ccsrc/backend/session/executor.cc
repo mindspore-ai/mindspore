@@ -217,10 +217,15 @@ void Executor::OnEvent(const ExecutorEvent &event) {
   if (event == ExecutorEvent::kRunGraphFinished) {
     OnRunGraphFinished();
   } else if (event == ExecutorEvent::kClear) {
-    WorkerJoin();
+    OnClear();
   } else if (event == ExecutorEvent::kException) {
     OnException();
   }
+}
+
+void Executor::OnClear() {
+  WorkerJoin();
+  ClearDoneTasks();
 }
 
 void Executor::OnException() {
