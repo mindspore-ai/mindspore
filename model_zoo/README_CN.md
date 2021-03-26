@@ -83,6 +83,7 @@
     - [高性能计算](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc)
         - [GOMO](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/ocean_model/README.md)
         - [分子动力学](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/molecular_dynamics/README.md)
+        - [SPONGE](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge/README.md)
 
 - [社区](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/community)
 
