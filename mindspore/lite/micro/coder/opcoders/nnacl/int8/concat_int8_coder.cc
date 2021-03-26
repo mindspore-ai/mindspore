@@ -103,8 +103,8 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
   }
   code.CodeStruct("concat_param", *concat_param_, in_tensor_count, input_tensor_->shape().size(),
                   output_tensor_->shape().size());
-  code.CodeBaseStruct("ConcatInt8Args", kRunArgs, "input_data", output_tensor_, "&concat_param", axis_,
-                      before_axis_size, count_unit_);
+  code.CodeBaseStruct<false>("ConcatInt8Args", kRunArgs, "input_data", output_tensor_, "&concat_param", axis_,
+                             before_axis_size, count_unit_);
   if (support_parallel_) {
     code.CodeFunction(kParallelLaunch, gThreadPool, "ConcatInt8Run", kRunArgsAddr, gThreadNum);
   } else {

@@ -90,7 +90,7 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
         code.CodeStruct("quant_in", *quant_in_);
         code.CodeStruct("quant_out", *quant_out_);
         code.CodeStruct("multiplier", *multiplier_);
-        code.CodeFunction("ResizeNearestNeighborInt8", input_tensor_, output_tensor_, "&input_shape", "&output_shape",
+        code.CodeFunction("ResizeNearestNeighborInt8", input_tensor_, output_tensor_, "input_shape", "output_shape",
                           align_corners, "multiplier", "quant_in", "quant_out", kDefaultTaskId, gThreadNum);
       }
       break;
