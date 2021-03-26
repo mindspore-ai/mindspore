@@ -205,13 +205,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer quantNodeOptimizer;
-    auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
-    if (dTypeTransPass == nullptr) {
-      MS_LOG(ERROR) << "new dTypeTransPass failed";
-      return RET_MEMORY_FAILED;
-    }
-    dTypeTransPass->SetInputDataDType(ctx.inputDataType);
-    dTypeTransPass->SetOutputDataDType(ctx.outputDataType);
     quantNodeOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     quantNodeOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) InferShapePass());
@@ -221,6 +214,14 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       return status;
     }
     auto old_nodes2 = GetGraphNodes();
+    quantNodeOptimizer.AddPass(new (std::nothrow) InferQuantParamPass());
+    auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
+    if (dTypeTransPass == nullptr) {
+      MS_LOG(ERROR) << "new dTypeTransPass failed";
+      return RET_MEMORY_FAILED;
+    }
+    dTypeTransPass->SetInputDataDType(ctx.inputDataType);
+    dTypeTransPass->SetOutputDataDType(ctx.outputDataType);
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());

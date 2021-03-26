@@ -44,6 +44,8 @@ int CreateOperator(const std::unique_ptr<schema::PrimitiveT> &primitive, schema:
 using STATUS = int;
 STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<schema::CNodeT> &node);
 
+STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &inputs, std::vector<Tensor *> *outputs);
+
 inline schema::PrimitiveType GetCNodeTType(const schema::CNodeT &cNodeT) { return cNodeT.primitive->value.type; }
 
 inline std::string GetCNodeTTypeName(const schema::CNodeT &cNodeT) {

@@ -430,7 +430,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   MS_ASSERT(node != nullptr);
   // why we need this
   TypeId data_type =
-    (node->quant_type_ == schema::QuantType_WeightQuant) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
+    (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));

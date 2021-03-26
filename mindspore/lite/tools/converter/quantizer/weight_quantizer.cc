@@ -73,7 +73,7 @@ STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const 
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
   abstract_tensor->element()->set_type(TypeIdToType(type_id_));
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  quant_param_holder->set_quant_type(schema::QuantType_WeightQuant);
+  quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
 
   return RET_OK;
 }

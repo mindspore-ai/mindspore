@@ -31,7 +31,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr int DEFAULT_DIM_VALUE = -1;
-constexpr size_t INITIAL_SIZE = 1024;
+constexpr size_t kInitialSize = 1024;
 
 void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
   for (auto &tensor : input_tensors) {
@@ -118,7 +118,7 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
 
 STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::vector<Tensor *> &inputs,
                       std::vector<Tensor *> *outputs) {
-  flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
+  flatbuffers::FlatBufferBuilder fbb(kInitialSize);
   auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
   if (prim == nullptr) {
     MS_LOG(ERROR) << "get primitive failed.";

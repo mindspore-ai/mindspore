@@ -56,9 +56,11 @@ table Tensor {
 
 enum QuantType: int {
     QUANT_NONE,
-    AwareTraining,
-    WeightQuant,
-    PostTraining
+    AwareTraining, // deprecated, use QUANT_ALL instead
+    WeightQuant,  // deprecated, use QUANT_WEIGHT instead
+    PostTraining, // deprecated, use QUANT_ALL instead
+    QUANT_WEIGHT,
+    QUANT_ALL
 }
 
 table Primitive {

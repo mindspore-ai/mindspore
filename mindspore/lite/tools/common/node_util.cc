@@ -16,14 +16,19 @@
 
 #include "tools/common/node_util.h"
 #include <memory>
+#include <set>
 #include <vector>
+#include "src/ops/populate/populate_register.h"
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
+#include "src/runtime/infer_manager.h"
 
 namespace mindspore {
 namespace lite {
+constexpr size_t kInitialSize = 1024;
+
 static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveType_Conv2DBackpropFilterFusion,
                                                               schema::PrimitiveType_Conv2DBackpropInputFusion,
                                                               schema::PrimitiveType_AvgPoolGrad,
@@ -348,6 +353,33 @@ static int Convert2CKHW(int srcFormat) {
   if (srcFormat == schema::Format::Format_HWKC) return kHWKC2CKHW;
   if (srcFormat == schema::Format::Format_KCHW) return kKCHW2CKHW;
   return -1;
+}
+
+STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &inputs, std::vector<Tensor *> *outputs) {
+  flatbuffers::FlatBufferBuilder fbb(kInitialSize);
+  auto prim = ConvertToPrimitive(node.primitive.get(), &fbb);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "get primitive failed.";
+    fbb.Clear();
+    return RET_ERROR;
+  }
+  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
+  if (parameter_gen == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
+    return RET_ERROR;
+  }
+  auto parameter = parameter_gen(prim);
+  if (parameter == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "parameter is nullptr.";
+    return RET_ERROR;
+  }
+  parameter->infer_flag_ = true;
+  auto ret = KernelInferShape(inputs, outputs, parameter);
+  fbb.Clear();
+  free(parameter);
+  return ret;
 }
 
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {

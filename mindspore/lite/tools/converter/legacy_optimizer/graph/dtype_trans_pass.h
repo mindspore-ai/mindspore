@@ -46,6 +46,11 @@ class DTypeTransPass : public GraphPass {
   STATUS DoModelOutputDTypeTrans(schema::MetaGraphT *graph);
 
   STATUS DoNodeInoutDTypeTrans(schema::MetaGraphT *graph);
+
+  STATUS InsetDTypeTransNodeForWrongDtypeQuantOp(schema::MetaGraphT *graph, NodeIter *iter);
+
+  STATUS InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraphT *graph, NodeIter *iter);
+
   NodeIter InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
                                 int32_t inputDataType, int32_t outputDataType, STATUS *errorCode);
 

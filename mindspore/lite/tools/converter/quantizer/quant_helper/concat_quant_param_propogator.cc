@@ -1,0 +1,79 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "tools/converter/quantizer/quant_helper/concat_quant_param_propogator.h"
+#include <cfloat>
+#include <memory>
+#include <utility>
+#include "src/common/log_adapter.h"
+#include "tools/common/tensor_util.h"
+#include "tools/converter/quantizer/quantize_util.h"
+
+namespace mindspore::lite {
+STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT *graph,
+                                                        const mindspore::schema::CNodeT &node) {
+  UpdateQuantParamsNum(*graph, node);
+
+  if (input_inited_quant_params_ != node.inputIndex.size()) {
+    MS_LOG(DEBUG) << "Can not determine concat inputTensor quantParam, node " << node.name;
+    return RET_ERROR;
+  }
+
+  if (output_inited_quant_params_ != 1) {
+    MS_ASSERT(output_inited_quant_params_ == 0);
+    float min_min = FLT_MAX;
+    float max_max = FLT_MIN;
+    bool narrow_range = false;
+    int num_bits = -1;
+    for (size_t i = 0; i < node.inputIndex.size(); i++) {
+      MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
+      auto &in_tensor = graph->allTensors.at(i);
+      MS_ASSERT(in_tensor != nullptr);
+      auto in_quant_param = GetTensorQuantParam(in_tensor);
+      if (in_quant_param == nullptr || !in_quant_param->inited) {
+        return RET_ERROR;
+      }
+      if (num_bits == -1) {
+        narrow_range = in_quant_param->narrowRange;
+        num_bits = in_quant_param->numBits;
+      } else {
+        MS_ASSERT(narrow_range == quantParam->narrowRange);
+        MS_ASSERT(num_bits == quantParam->numBits);
+      }
+      if (min_min > in_quant_param->min) {
+        min_min = in_quant_param->min;
+      }
+      if (max_max < in_quant_param->max) {
+        max_max = in_quant_param->max;
+      }
+    }
+
+    MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+    auto &out_tensor = graph->allTensors.at(node.outputIndex.front());
+    MS_ASSERT(out_tensor != nullptr);
+    auto out_quant_param = std::make_unique<QuantParamT>();
+
+    auto status = quant::CalQuantizationParams(out_quant_param.get(), min_min, max_max, narrow_range, num_bits);
+    if (status != RET_OK) {
+      MS_LOG(DEBUG) << "in aware quantization run CalQuantizationParams failed!";
+      return RET_ERROR;
+    }
+    out_tensor->quantParams.emplace_back(std::move(out_quant_param));
+    output_inited_quant_params_++;
+  }
+
+  return RET_OK;
+}
+}  // namespace mindspore::lite
