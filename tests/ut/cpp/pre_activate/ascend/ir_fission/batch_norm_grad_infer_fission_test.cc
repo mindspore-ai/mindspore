@@ -15,7 +15,6 @@
  */
 
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_infer_fission.h"
-#include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 
@@ -43,7 +42,6 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_fission) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
   pm->AddPass(std::make_shared<opt::BatchNormGradInferFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
@@ -65,7 +63,6 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission1) 
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
   pm->AddPass(std::make_shared<opt::BatchNormGradInferFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
@@ -85,7 +82,6 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission2) 
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
   pm->AddPass(std::make_shared<opt::BatchNormGradInferFission>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
