@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <functional>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -33,15 +34,13 @@ class ReduceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void Transpose(const int size, const T *input, const std::vector<size_t> &input_shape,
-                 const std::vector<size_t> &input_axis, const int shape_size, T *output);
-  void ConvertDataToOutput(const T *input, T *output);
-  void CheckAxis(const CNodePtr &kernel_node);
-  size_t reduce_type_ = 0;
-  std::vector<size_t> axis_;
-  std::vector<size_t> shape_;
-  size_t left_dims_ = 1;
-  size_t stride_ = 1;
+  void CheckParameter() const;
+  void CalculateTransposeInfo(std::vector<size_t> *new_shape, std::vector<size_t> *strides,
+                              std::vector<size_t> *back_strides, size_t *stride) const;
+  std::vector<size_t> input_shape_;
+  std::vector<int64_t> axis_;
+  int reduce_type_{0};
+  std::function<void(const T *, size_t, T *)> reduce_func_;
 };
 
 MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
