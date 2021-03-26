@@ -48,14 +48,14 @@ class LogNormal(msd.TransformedDistribution):
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
-        ...     class Prob(nn.Cell):
-        ...         def __init__(self):
-        ...             super(Prob, self).__init__()
-        ...             self.ln = msd.LogNormal(np.array([0.3]), np.array([[0.2], [0.4]]), dtype=dtype.float32)
-        ...         def construct(self, x_):
-        ...             return self.ln.prob(x_)
+        >>> class Prob(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Prob, self).__init__()
+        ...         self.ln = msd.LogNormal(np.array([0.3]), np.array([[0.2], [0.4]]), dtype=mindspore.float32)
+        ...     def construct(self, x_):
+        ...         return self.ln.prob(x_)
         >>> pdf = Prob()
-        >>> output = pdf(Tensor([1.0, 2.0], dtype=dtype.float32))
+        >>> output = pdf(Tensor([1.0, 2.0], dtype=mindspore.float32))
     """
 
     def __init__(self,

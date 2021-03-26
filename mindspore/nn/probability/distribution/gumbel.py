@@ -52,13 +52,13 @@ class Gumbel(TransformedDistribution):
         >>> class Prob(nn.Cell):
         ...     def __init__(self):
         ...         super(Prob, self).__init__()
-        ...         self.gum = msd.Gumbel(np.array([0.0]), np.array([[1.0], [2.0]]), dtype=dtype.float32)
+        ...         self.gum = msd.Gumbel(np.array([0.0]), np.array([[1.0], [2.0]]), dtype=mindspore.float32)
         ...
         ...     def construct(self, x_):
         ...         return self.gum.prob(x_)
         >>> value = np.array([1.0, 2.0]).astype(np.float32)
         >>> pdf = Prob()
-        >>> output = pdf(Tensor(value, dtype=dtype.float32))
+        >>> output = pdf(Tensor(value, dtype=mindspore.float32))
     """
 
     def __init__(self,
