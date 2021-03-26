@@ -44,7 +44,7 @@ LSTM模型包含嵌入层、编码器和解码器这几个模块，编码器模�
 # 环境要求
 
 - 硬件(GPU/CPU/Ascend)
-    - 如果你想尝试Ascend，请发送[Ascend Model Zoo体验资源申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)到ascend@huawei.com申请Ascend体验资源。
+    - 准备Ascend或GPU处理器搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 更多关于Mindspore的信息，请查看以下资源：
