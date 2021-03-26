@@ -193,7 +193,7 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
     tensor::TensorPtr tensor_info;
     auto status = GetTensorInfoFromAbstract(&tensor_info, cnode, i);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "get tensor info failed.";
+      MS_LOG(DEBUG) << "get tensor info failed.";
       return RET_ERROR;
     }
     std::unique_ptr<lite::Tensor> tensor = nullptr;

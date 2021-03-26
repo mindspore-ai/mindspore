@@ -30,9 +30,6 @@ int QuantDtypeCastInferShape(const TensorC *const *inputs, size_t inputs_size, T
   TensorC *output = outputs[0];
 
   QuantDtypeCastParameter *param = (QuantDtypeCastParameter *)parameter;
-  if (input->data_type_ != param->srcT_) {
-    return NNACL_ERR;
-  }
   output->data_type_ = param->dstT_;
   output->format_ = input->format_;
   if (!parameter->infer_flag_) {

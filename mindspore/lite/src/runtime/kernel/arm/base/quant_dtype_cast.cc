@@ -44,48 +44,12 @@ int QuantDTypeCastCPUKernel::Init() {
   MS_ASSERT(out_tensor);
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
   MS_ASSERT(param);
-  if (param->srcT == kNumberTypeFloat32 && param->dstT == kNumberTypeInt8) {
-    if (in_tensor->data_type() != kNumberTypeFloat32 || out_tensor->data_type() != kNumberTypeInt8) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else if (param->srcT == kNumberTypeInt8 && param->dstT == kNumberTypeFloat32) {
-    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else if (param->srcT == kNumberTypeUInt8 && param->dstT == kNumberTypeInt8) {
-    if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeInt8) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else if (param->srcT == kNumberTypeInt8 && param->dstT == kNumberTypeInt8) {
-    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeInt8) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else if (param->srcT == kNumberTypeInt8 && param->dstT == kNumberTypeUInt8) {
-    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeUInt8) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else if (param->srcT == kNumberTypeUInt8 && param->dstT == kNumberTypeFloat32) {
-    if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else if (param->srcT == kNumberTypeFloat32 && param->dstT == kNumberTypeUInt8) {
-    if (in_tensor->data_type() != kNumberTypeFloat32 || out_tensor->data_type() != kNumberTypeUInt8) {
-      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-  } else {
-    MS_LOG(ERROR) << "param data type not supported:"
-                  << " src: " << param->srcT << " dst: " << param->dstT;
-    return RET_PARAM_INVALID;
-  }
-  src_dtype = param->srcT;
+  src_dtype = in_tensor->data_type();
   dst_dtype = param->dstT;
+  if (out_tensor->data_type() != dst_dtype) {
+    MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+    return RET_ERROR;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -149,6 +113,10 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
       ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset, output_quant_arg.scale,
                                  output_quant_arg.zeroPoint, num_unit_thread, from_uint8_src);
     }
+  } else {
+    MS_LOG(ERROR) << "param data type not supported:"
+                  << " src: " << src_dtype << " dst: " << dst_dtype;
+    return RET_PARAM_INVALID;
   }
 
   if (ret != RET_OK) {

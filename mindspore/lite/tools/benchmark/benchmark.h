@@ -113,9 +113,6 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   int num_threads_ = 2;
   bool enable_fp16_ = false;
   int warm_up_loop_count_ = 3;
-  bool time_profiling_ = false;
-  bool perf_profiling_ = false;
-  std::string perf_event_ = "CYCLE";
   // MarkAccuracy
   std::string benchmark_data_file_;
   std::string benchmark_data_type_ = "FLOAT";
@@ -125,6 +122,10 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::vector<std::vector<int>> resize_dims_;
 
   std::string device_ = "CPU";
+  bool time_profiling_ = false;
+  bool perf_profiling_ = false;
+  std::string perf_event_ = "CYCLE";
+  bool dump_profiling_ = false;
 };
 
 class MS_API Benchmark {
@@ -163,8 +164,12 @@ class MS_API Benchmark {
                                      int *total_size);
 
   int InitCallbackParameter();
+
   int InitTimeProfilingCallbackParameter();
+
   int InitPerfProfilingCallbackParameter();
+
+  int InitDumpProfilingCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
@@ -289,8 +294,8 @@ class MS_API Benchmark {
   std::map<std::string, std::pair<int, struct PerfCount>> op_perf_by_type_;
   std::map<std::string, std::pair<int, struct PerfCount>> op_perf_by_name_;
 #endif
-  KernelCallBack before_call_back_;
-  KernelCallBack after_call_back_;
+  KernelCallBack before_call_back_ = nullptr;
+  KernelCallBack after_call_back_ = nullptr;
   std::mt19937 random_engine_;
 };
 

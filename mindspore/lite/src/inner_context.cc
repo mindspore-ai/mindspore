@@ -17,6 +17,7 @@
 #include "src/inner_context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "src/common/utils.h"
 #ifdef SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #endif
@@ -85,18 +86,18 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
-  if (!IsCpuEnabled()) {
-    MS_LOG(ERROR) << "CPU is not supported.";
+  if (!IsUserSetCpu()) {
+    MS_LOG(ERROR) << "CPU context should be set.";
     return RET_NOT_SUPPORT;
   }
 #ifndef SUPPORT_GPU
-  if (IsGpuEnabled()) {
+  if (IsUserSetGpu()) {
     MS_LOG(ERROR) << "GPU is not supported.";
     return RET_NOT_SUPPORT;
   }
 #endif
 #ifndef SUPPORT_NPU
-  if (IsNpuEnabled()) {
+  if (IsUserSetNpu()) {
     MS_LOG(ERROR) << "NPU is not supported.";
     return RET_NOT_SUPPORT;
   }
@@ -108,6 +109,9 @@ bool InnerContext::IsCpuFloat16Enabled() const {
   if (!IsCpuEnabled()) {
     return false;
   }
+  if (!IsSupportFloat16()) {
+    return false;
+  }
   return GetCpuInfo().enable_float16_;
 }
 
@@ -115,31 +119,47 @@ bool InnerContext::IsGpuFloat16Enabled() const {
   if (!IsGpuEnabled()) {
     return false;
   }
+  if (!IsSupportFloat16()) {
+    return false;
+  }
   return GetGpuInfo().enable_float16_;
 }
 
-bool InnerContext::IsCpuEnabled() const {
-  return this->device_list_.end() !=
-         std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                      [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
-}
+bool InnerContext::IsCpuEnabled() const { return IsUserSetCpu(); }
 
 bool InnerContext::IsGpuEnabled() const {
-  return this->device_list_.end() !=
-         std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                      [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
+#ifdef SUPPORT_GPU
+  return IsUserSetGpu();
+#else
+  return false;
+#endif
 }
 
 bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
   MS_ASSERT(npu_manager_ != nullptr);
-  return this->device_list_.end() !=
-           std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                        [](const DeviceContext &device) { return device.device_type_ == DT_NPU; }) &&
-         npu_manager_->IsSupportNPU();
+  return IsUserSetNpu() && npu_manager_->IsSupportNPU();
 #else
   return false;
 #endif
+}
+
+bool InnerContext::IsUserSetCpu() const {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
+}
+
+bool InnerContext::IsUserSetGpu() const {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
+}
+
+bool InnerContext::IsUserSetNpu() const {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
 }
 
 CpuDeviceInfo InnerContext::GetCpuInfo() const {

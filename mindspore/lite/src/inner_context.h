@@ -58,6 +58,13 @@ struct InnerContext : public Context {
 
   virtual ~InnerContext();
 
+ private:
+  bool IsUserSetCpu() const;
+
+  bool IsUserSetGpu() const;
+
+  bool IsUserSetNpu() const;
+
 #if SUPPORT_NPU
 
  private:
