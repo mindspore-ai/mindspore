@@ -14,186 +14,171 @@
  * limitations under the License.
  */
 
+#include "backend/kernel_compiler/cpu/reduce_cpu_kernel.h"
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <map>
-#include "backend/kernel_compiler/cpu/reduce_cpu_kernel.h"
-#include "runtime/device/cpu/cpu_device_address.h"
+#include <unordered_set>
 
 namespace mindspore {
 namespace kernel {
-const size_t kReduceTypeMax = 1;
-const size_t kReduceTypeMean = 2;
-const size_t kReduceTypeSum = 3;
-const size_t kReduceTypeMin = 4;
-const size_t kMaxDim = 100;
-static std::map<std::string, int> reduce_types_map_ = {
-  {"ReduceMax", 1}, {"ReduceMean", 2}, {"ReduceSum", 3}, {"ReduceMin", 4}};
-
+namespace {
+const size_t kMaxDim = 10;
+}  // namespace
 template <typename T>
 void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
+  if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
+    axis_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
+  } else if (axis_addr->isa<Int64Imm>()) {
+    axis_.emplace_back(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+  } else {
+    MS_LOG(EXCEPTION) << "Attribute is invalid";
+  }
+  int dimension = input_shape_.size();
+  std::transform(axis_.begin(), axis_.end(), axis_.begin(),
+                 [dimension](const auto &a) { return a < 0 ? dimension + a : a; });
+  sort(axis_.begin(), axis_.end());
+  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  if (kernel_name == "ReduceMax") {
+    reduce_type_ = 1;
+    reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::max(input[pos], *out); };
+  } else if (kernel_name == "ReduceMin") {
+    reduce_type_ = 2;
+    reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::min(input[pos], *out); };
+  } else if (kernel_name == "ReduceSum") {
+    reduce_type_ = 3;
+    reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
+  } else if (kernel_name == "ReduceMean") {
+    reduce_type_ = 4;
+    reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
+  } else {
+    MS_LOG(EXCEPTION) << "unsupported reduce type: " << reduce_type_;
+  }
 
-  reduce_type_ = reduce_types_map_[kernel_name];
-  if (reduce_type_ == 0) {
-    MS_LOG(EXCEPTION) << "Array reduce kernel type " << kernel_name << " is not supported.";
-  }
-  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  CheckAxis(kernel_node);
-  if (shape_.empty()) {
-    shape_.push_back(1);
-  }
-  for (size_t i = 0; i < shape_.size(); ++i) {
-    if (shape_[i] <= 0) {
-      MS_LOG(EXCEPTION) << "shape value is invalid.";
-    }
-    left_dims_ *= shape_[i];
-  }
-  for (size_t i = 0; i < axis_.size(); ++i) {
-    stride_ *= shape_[axis_[i]];
-  }
-  if (stride_ <= 0) {
-    MS_LOG(EXCEPTION) << "stride_ must greater than zero.";
-  }
-  left_dims_ = left_dims_ / stride_;
+  CheckParameter();
 }
 
 template <typename T>
 bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> & /*workspaces*/,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  size_t out_size = left_dims_ * sizeof(T);
-  size_t in_size = stride_ * out_size;
-  if (inputs[0]->size != in_size || outputs[0]->size != out_size) {
-    MS_LOG(EXCEPTION) << "invalid input or output data size!";
-  }
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  int size = inputs[0]->size / sizeof(T);
-  std::vector<T> new_input(IntToSize(size), 0.0);
-  std::vector<size_t> transpose_axis;
-  for (size_t i = 0; i < shape_.size(); ++i) {
-    bool insert = true;
-    for (size_t j = 0; j < axis_.size(); ++j) {
-      if (axis_[j] == i) {
-        insert = false;
-        break;
+  size_t input_size = inputs[0]->size / sizeof(T);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  if (axis_.empty()) {
+    // Get one ret
+    *output_addr = input_addr[0];
+    for (size_t i = 1; i < input_size; ++i) {
+      reduce_func_(input_addr, i, output_addr);
+    }
+    if (reduce_type_ == 4) {  // 4 is reduce mean
+      *output_addr /= input_size;
+    }
+  } else {
+    // transpose->calculate strides->calculate ret
+    std::vector<size_t> out_shape;
+    std::vector<size_t> strides;
+    std::vector<size_t> back_strides;
+    size_t stride;
+    CalculateTransposeInfo(&out_shape, &strides, &back_strides, &stride);
+    int dimension = input_shape_.size();
+    std::vector<size_t> coordinates(dimension);
+    auto get_next_pos = [&coordinates, &out_shape, &strides, &back_strides, &dimension](size_t &curr_pos) {
+      for (int i = dimension - 1; i >= 0; --i) {
+        if (coordinates[i] + 1 == out_shape[i]) {
+          coordinates[i] = 0;
+          curr_pos -= back_strides[i];
+        } else {
+          coordinates[i]++;
+          curr_pos += strides[i];
+          break;
+        }
+      }
+    };
+    size_t output_size = outputs[0]->size / sizeof(T);
+    size_t pos = 0;
+    for (size_t i = 0; i < output_size; ++i) {
+      if (i != 0) {
+        get_next_pos(pos);
+      }
+      output_addr[i] = input_addr[pos];
+      for (size_t j = 1; j < stride; ++j) {
+        get_next_pos(pos);
+        reduce_func_(input_addr, pos, &output_addr[i]);
+      }
+      if (reduce_type_ == 4) {  // 4 is reduce mean
+        output_addr[i] /= stride;
       }
     }
-    if (insert) {
-      transpose_axis.push_back(i);
-    }
   }
-  (void)transpose_axis.insert(transpose_axis.end(), axis_.begin(), axis_.end());
-  Transpose(size, input, shape_, transpose_axis, SizeToInt(shape_.size()), &new_input[0]);
-  ConvertDataToOutput(&new_input[0], output);
   return true;
 }
 
 template <typename T>
-void ReduceCPUKernel<T>::CheckAxis(const CNodePtr &kernel_node) {
-  auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
-  if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
-    std::vector<int> attr_axis;
-    std::vector<int64_t> attr_axis_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
-    (void)std::transform(attr_axis_me.begin(), attr_axis_me.end(), std::back_inserter(attr_axis),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-    if (attr_axis.size() > shape_.size()) {
-      MS_LOG(EXCEPTION) << "invalid axis size: " << axis_.size();
-    } else if (attr_axis.empty()) {
-      for (size_t i = 0; i < shape_.size(); ++i) {
-        axis_.push_back(i);
-      }
+void ReduceCPUKernel<T>::CalculateTransposeInfo(std::vector<size_t> *new_shape, std::vector<size_t> *strides,
+                                                std::vector<size_t> *back_strides, size_t *stride) const {
+  int dimension = input_shape_.size();
+  std::vector<size_t> input_strides(dimension);
+  input_strides[dimension - 1] = 1;
+  for (int i = dimension - 2; i >= 0; --i) {
+    input_strides[i] = input_shape_[i + 1] * input_strides[i + 1];
+  }
+
+  // Calculate transpose axes and stride
+  std::vector<size_t> axes(dimension);
+  int j = 0;
+  int k = 0;
+  *stride = 1;
+  for (int i = 0; i < dimension; ++i) {
+    if (i != axis_[j]) {
+      axes[k] = i;
+      ++k;
     } else {
-      for (auto axis : attr_axis) {
-        while (axis < 0) {
-          axis += SizeToInt(shape_.size());
-        }
-        if (IntToSize(axis) >= (shape_.size())) {
-          MS_LOG(EXCEPTION) << "axis value is oversize.";
-        }
-        axis_.push_back(IntToSize(axis));
-      }
+      *stride *= input_shape_[i];
+      ++j;
     }
-  } else if (axis_addr->isa<Int64Imm>()) {
-    int axis = static_cast<int64_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-    while (axis < 0) {
-      axis += SizeToInt(shape_.size());
-    }
-    if (IntToSize(axis) >= shape_.size()) {
-      MS_LOG(EXCEPTION) << "axis value is oversize.";
-    }
-    axis_.push_back(IntToSize(axis));
-  } else {
-    MS_LOG(EXCEPTION) << "Attribute axis type is invalid.";
+  }
+  for (auto &it : axis_) {
+    axes[k] = it;
+    ++k;
+  }
+
+  // Calculate strides, new_shape, back strides
+  strides->resize(dimension);
+  new_shape->resize(dimension);
+  back_strides->resize(dimension);
+  for (int i = dimension - 1; i >= 0; --i) {
+    (*strides)[i] = input_strides[axes[i]];
+    (*new_shape)[i] = input_shape_[axes[i]];
+    (*back_strides)[i] = ((*new_shape)[i] - 1) * (*strides)[i];
   }
 }
 
 template <typename T>
-void ReduceCPUKernel<T>::ConvertDataToOutput(const T *new_input, T *output) {
-  if (reduce_type_ == kReduceTypeMax || reduce_type_ == kReduceTypeMin) {
-    for (size_t i = 0; i < left_dims_; ++i) {
-      T value = new_input[i * stride_];
-      for (size_t k = 0; k < stride_; ++k) {
-        if (reduce_type_ == kReduceTypeMax) {
-          if (value < new_input[i * stride_ + k]) {
-            value = new_input[i * stride_ + k];
-          }
-        } else {
-          if (value > new_input[i * stride_ + k]) {
-            value = new_input[i * stride_ + k];
-          }
-        }
-      }
-      output[i] = value;
-    }
-  } else if (reduce_type_ == kReduceTypeMean || reduce_type_ == kReduceTypeSum) {
-    for (size_t i = 0; i < left_dims_; ++i) {
-      T value = 0.0;
-      for (size_t k = 0; k < stride_; ++k) {
-        value += new_input[i * stride_ + k];
-      }
-      if (reduce_type_ == kReduceTypeMean) {
-        output[i] = value / stride_;
-      } else {
-        output[i] = value;
-      }
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Array reduce kernel type " << reduce_type_ << " is not supported.";
+void ReduceCPUKernel<T>::CheckParameter() const {
+  if (input_shape_.empty() || input_shape_.size() > kMaxDim) {
+    MS_LOG(EXCEPTION) << "Invalid input tensor of dimension: " << input_shape_.size();
   }
-}
 
-template <typename T>
-void ReduceCPUKernel<T>::Transpose(const int size, const T *input, const std::vector<size_t> &input_shape,
-                                   const std::vector<size_t> &input_axis, const int shape_size, T *output) {
-  int size_offset[kMaxDim];
-  size_offset[0] = size / SizeToInt(input_shape[0]);
-  for (int i = 1; i < shape_size; ++i) {
-    size_offset[i] = size_offset[i - 1] / SizeToInt(input_shape[i]);
+  if (axis_.empty()) {
+    MS_LOG(INFO) << "axis is empty";
+    return;
   }
-  auto task = [&](size_t start, size_t end) {
-    int pos_array[kMaxDim];
-    for (size_t position = start; position < end; position += 1) {
-      size_t temp_position = position;
-      pos_array[0] = temp_position / size_offset[0];
-      for (int i = 1; i < shape_size; ++i) {
-        temp_position -= pos_array[i - 1] * size_offset[i - 1];
-        pos_array[i] = temp_position / size_offset[i];
-      }
-      size_t new_position = pos_array[SizeToInt(input_axis[shape_size - 1])];
-      size_t new_position_size = 1;
-      for (int j = shape_size - 2; j >= 0; j--) {
-        new_position_size *= SizeToInt(input_shape[SizeToInt(input_axis[j + 1])]);
-        new_position += pos_array[SizeToInt(input_axis[j])] * new_position_size;
-      }
-      output[new_position] = input[position];
+
+  std::unordered_set<int> checker(axis_.begin(), axis_.end());
+  if (checker.size() != axis_.size()) {
+    MS_LOG(EXCEPTION) << "Duplicate value in axis";
+  }
+
+  int maxDimension = input_shape_.size();
+  for (auto &axis : axis_) {
+    if (axis >= maxDimension) {
+      MS_LOG(EXCEPTION) << "Invalid value in axis: " << axis;
     }
-  };
-  CPUKernelUtils::ParallelFor(task, size);
-  return;
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
