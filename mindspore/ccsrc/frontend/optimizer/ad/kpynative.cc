@@ -149,6 +149,28 @@ AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
   ones_like_value->set_abstract(ones_like_fg->output()->abstract());
   return ones_like_value;
 }
+
+// This Faked BProp func_graph should not be present in the final top bprop func_graph.
+// Its output is faked but not a tuple.
+FuncGraphPtr BuildFakeBProp(const PrimitivePtr &prim, size_t inputs_num) {
+  auto func_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> outputs;
+
+  auto fake_bprop = std::make_shared<Primitive>("fake_bprop");
+  (void)fake_bprop->AddAttr("info", MakeValue("Primitive " + prim->name() + "'s bprop not defined."));
+  outputs.push_back(NewValueNode(fake_bprop));
+  outputs.push_back(NewValueNode(true));
+
+  for (size_t i = 0; i < inputs_num; ++i) {
+    // Mock params for inputs
+    auto param = func_graph->add_parameter();
+  }
+  // mock params for out and dout
+  (void)func_graph->add_parameter();
+  (void)func_graph->add_parameter();
+  func_graph->set_output(func_graph->NewCNode(outputs));
+  return func_graph;
+}
 }  // namespace
 
 class PynativeAdjoint {
@@ -359,6 +381,10 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
     bprop_fg = BuildMakeSequenceBprop(prim, cnode);
   } else {
     bprop_fg = g_k_prims.GetPossibleBprop(prim);
+    if (bprop_fg == nullptr) {
+      MS_LOG(DEBUG) << "Cannot find defined bprop for cnode prim: " << cnode->DebugString();
+      bprop_fg = BuildFakeBProp(prim, cnode->size() - 1);
+    }
   }
   MS_EXCEPTION_IF_NULL(bprop_fg);
   BuildAdjoint(cnode, op_args, out, bprop_fg);
