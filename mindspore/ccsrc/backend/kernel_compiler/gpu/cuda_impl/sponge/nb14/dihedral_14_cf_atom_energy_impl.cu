@@ -66,7 +66,7 @@ void Dihedral14CFAtomEnergy(const int dihedral_14_numbers, const int atom_number
     atom_numbers, uint_crd, uint_crd_with_LJ, LJtype, charge);
 
   VECTOR *boxlength = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(boxlength_f));
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(atom_numbers, ene, 0.);
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(atom_numbers, ene, 0.);
   Dihedral14CFAtomEnergyKernel<<<block_per_grid, thread_per_block, 0, stream>>>(
     dihedral_14_numbers, uint_crd_with_LJ, boxlength, a_14, b_14, cf_scale_factor, ene);
 

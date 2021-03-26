@@ -41,7 +41,7 @@ __global__ void BondAtomEnergyCudaKernel(const int bond_numbers, const UNSIGNED_
 void BondAtomEnergy(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
                     const int *atom_b, const float *bond_k, const float *bond_r0, float *atom_ene,
                     cudaStream_t stream) {
-  Reset_List<<<ceilf(static_cast<float>(atom_numbers) / 128), 128>>>(atom_numbers, atom_ene, 0.);
+  Reset_List<<<ceilf(static_cast<float>(atom_numbers) / 128), 128, 0, stream>>>(atom_numbers, atom_ene, 0.);
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(bond_numbers) / 128);
   UNSIGNED_INT_VECTOR *uint_crd =
