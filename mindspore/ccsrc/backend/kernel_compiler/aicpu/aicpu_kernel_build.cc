@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,9 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<A
     return false;
   }
   kernel_mod_ptr->SetInputSizeList(input_size_list);
-
+  if (output_num == 1 && HasAbstractMonad(anf_node)) {
+    output_num = 0;
+  }
   for (size_t i = 0; i < output_num; i++) {
     std::vector<size_t> shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, i));
@@ -229,6 +231,9 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
   MS_EXCEPTION_IF_NULL(proto);
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  if (output_num == 1 && HasAbstractMonad(anf_node)) {
+    output_num = 0;
+  }
   if (output_num == 0) {
     MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have output. ";
     return;

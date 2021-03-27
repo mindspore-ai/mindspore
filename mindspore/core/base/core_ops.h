@@ -105,6 +105,12 @@ inline const PrimitivePtr kPrimLabelGoto = std::make_shared<Primitive>("LabelGot
 inline const PrimitivePtr kPrimLabelSwitch = std::make_shared<Primitive>("LabelSwitch");
 inline const PrimitivePtr kPrimLabelSet = std::make_shared<Primitive>("LabelSet");
 
+// Stack ops
+inline const PrimitivePtr kPrimStackInit = std::make_shared<Primitive>("StackInit");
+inline const PrimitivePtr kPrimStackDestroy = std::make_shared<Primitive>("StackDestroy");
+inline const PrimitivePtr kPrimStackPush = std::make_shared<Primitive>("StackPush");
+inline const PrimitivePtr kPrimStackPop = std::make_shared<Primitive>("StackPop");
+
 // Arrays
 inline const PrimitivePtr kPrimBroadcastTo = std::make_shared<Primitive>("BroadcastTo");
 inline const PrimitivePtr kPrimScalarToArray = std::make_shared<Primitive>("scalar_to_array");

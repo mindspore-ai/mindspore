@@ -106,6 +106,43 @@ std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
 enum ShapeType { kMaxShape, kMinShape };
 }  // namespace
 
+AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
+  return kg->NewValueNode(kUMonad->ToAbstract(), kUMonad);
+}
+
+// Convert:
+// a = former(xxx)
+// b = latter(x, xxx)
+// To:
+// a = former(xxx)
+// d1 = Depend(x, a)
+// b = latter(d1, xxx)
+// ...
+// out = Depend(out, latter)
+void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter) {
+  if (latter->isa<CNode>()) {
+    auto latter_cnode = latter->cast<CNodePtr>();
+    constexpr size_t inputsize = 2;
+    constexpr size_t kFirstDataInputIndex = 1;
+    if (latter_cnode->inputs().size() < inputsize) {
+      return;
+    }
+    auto latter_input = latter_cnode->input(kFirstDataInputIndex);
+    auto depend1 = kg->NewCNode({NewValueNode(prim::kPrimDepend), latter_input, former});
+    depend1->set_abstract(latter_input->abstract());
+    latter_cnode->set_input(kFirstDataInputIndex, depend1);
+
+    auto return_node = kg->get_return();
+    MS_EXCEPTION_IF_NULL(return_node);
+    auto depend2 = kg->NewCNode(
+      {NewValueNode(prim::kPrimDepend), return_node->cast<CNodePtr>()->input(kFirstDataInputIndex), latter});
+    depend2->set_abstract(return_node->cast<CNodePtr>()->input(kFirstDataInputIndex)->abstract());
+    kg->set_output(depend2);
+    MS_LOG(DEBUG) << "former: " << former->DebugString() << ", latter: " << latter->DebugString()
+                  << ", depend1: " << depend1->DebugString() << ", depend2: " << depend2->DebugString();
+  }
+}
+
 AnfNodePtr AnfRuntimeAlgorithm::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
   if (tuple_get_item->size() != kTupleGetItemInputSize) {
@@ -1526,6 +1563,13 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
 
   if (AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
     MS_LOG(INFO) << "GetNext should not be independent node";
+    return false;
+  }
+
+  // aicpu stack ops are not independent nodes.
+  if (AnfAlgo::GetCNodeName(node) == kStackInitOpName || AnfAlgo::GetCNodeName(node) == kStackDestroyOpName ||
+      AnfAlgo::GetCNodeName(node) == kStackPopOpName || AnfAlgo::GetCNodeName(node) == kStackPushOpName) {
+    MS_LOG(INFO) << "AICPU stack ops should not be independent node";
     return false;
   }
 

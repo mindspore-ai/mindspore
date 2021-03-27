@@ -145,6 +145,9 @@ struct CallSite {
   // Call/Switch/SwitchLayer
   CNodePtr cnode;
 
+  // CNode after transferring to LabelGoto/LabelSwitch/LabelSet.
+  CNodePtr conversion_cnode;
+
   // The last monad before call.
   AnfNodePtr last_monad = nullptr;
 
@@ -286,6 +289,12 @@ class AscendAutoMonadContext : public BaseContext {
 
   const KernelGraphPtr &TopGraph() const { return top_graph_; }
 
+  // Has already created an stack.
+  const bool HasInitedStack() const { return inited_stack_; }
+
+  // Set flag to indicate whether has already created an stack or not.
+  void SetInitedStack(bool flag) { inited_stack_ = flag; }
+
   // Map kernel_graph to its call info.
   OrderedMap<KernelGraphPtr, CallInfo> call_info_map;
 
@@ -298,6 +307,9 @@ class AscendAutoMonadContext : public BaseContext {
 
   // Current label id.
   uint32_t label_id_ = 0;
+
+  // Create an stack for multi-call and non-tail recursion.
+  bool inited_stack_ = false;
 };
 
 //
@@ -605,16 +617,22 @@ class AscendAutoMonadConverter {
 
  private:
   AscendAutoMonadConverter(const KernelGraphPtr &kg, AscendAutoMonadContext *context, CallInfo *call_info)
-      : kernel_graph_(kg), context_(*context), call_info_(*call_info) {}
+      : kernel_graph_(kg),
+        context_(*context),
+        call_info_(*call_info),
+        name_index_(0),
+        need_stackops_(call_info->recursive) {}
   ~AscendAutoMonadConverter() = default;
 
   void Run() {
+    // Create an stack
+    InitStack();
     // Setup entry label if found.
     SetupEntryLabel();
 
     // Handle call sites.
     for (auto &call_site : call_info_.call_sites) {
-      HandleCallSite(call_site);
+      HandleCallSite(&call_site);
     }
     // Handle return points.
     HandleReturnPoints();
@@ -622,20 +640,148 @@ class AscendAutoMonadConverter {
     if (monad_) {
       MakeMonadDepend();
     }
+    // Handle recursive call.
+    kernel_graph_->SetExecOrderByDefault();
+    for (auto &call_site : call_info_.call_sites) {
+      if (need_stackops_ && call_site.recursive) {
+        MS_LOG(INFO) << "graph:" << kernel_graph_->ToString() << ", loop call_site:" << call_site.cnode->DebugString();
+        InsertStackOps(call_site);
+      }
+    }
   }
 
-  void HandleCallSite(const CallSite &call_site) {
+  // Create a Stack for StackOps if needed.
+  void InitStack() {
+    if (!context_.HasInitedStack() && need_stackops_) {
+      auto top_graph = context_.TopGraph();
+      auto exec_order = top_graph->execution_order();
+      auto stack_init = StackInit(top_graph);
+      AnfAlgo::KeepOrder(top_graph, stack_init, *exec_order.begin());
+      auto stack_destroy = StackDestroy(top_graph);
+      AnfAlgo::KeepOrder(top_graph, *exec_order.rbegin(), stack_destroy);
+      top_graph->SetExecOrderByDefault();
+      context_.SetInitedStack(true);
+    }
+  }
+
+  // Insert StackOps for call_site in the recursive graph.
+  void InsertStackOps(const CallSite &call_site) {
+    auto call_point = call_site.conversion_cnode;
+    auto exec_order = kernel_graph_->execution_order();
+    std::vector<AnfNodePtr> before_nodes;
+    std::vector<CNodePtr> stack_pushs;
+    bool find_call_point = false;
+    for (auto &node : exec_order) {
+      auto node_name = AnfAlgo::GetCNodeName(node);
+      if (node == call_point) {
+        find_call_point = true;
+        continue;
+      }
+      if (!find_call_point) {
+        if (node_name == kLabelGotoOpName || node_name == kLabelSwitchOpName || node_name == kLabelSetOpName ||
+            node_name == prim::kPrimAssign->name()) {
+          MS_LOG(DEBUG) << "Ignore goto/switch/set/assign ops";
+        } else {
+          before_nodes.push_back(node);
+          MS_LOG(DEBUG) << "push back node:" << node->DebugString();
+        }
+        continue;
+      }
+      if (node->size() == 0 || node_name == kLabelGotoOpName || node_name == kLabelSetOpName ||
+          node_name == prim::kPrimAssign->name()) {
+        continue;
+      }
+      FindInputNode(before_nodes, node, &stack_pushs);
+    }
+    InsertStackPush(kernel_graph_, call_point, stack_pushs);
+  }
+
+  // Find nodes which need StackOps, and insert StackOps for node.
+  void FindInputNode(const std::vector<AnfNodePtr> &before_nodes, const CNodePtr &node,
+                     std::vector<CNodePtr> *stack_pushs) {
+    uint32_t start_index = 1;
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimAssign)) {
+      start_index = 2;
+    }
+    // auto node_inputs = node->inputs();
+    for (uint32_t i = start_index; i < node->inputs().size(); i++) {
+      auto node_input = node->input(i);
+      // not need to save monad.
+      if (HasAbstractMonad(node_input)) {
+        continue;
+      }
+      MS_LOG(DEBUG) << "check node input[" << i << "]: " << node_input->DebugString();
+      if (node_input->isa<Parameter>()) {
+        MS_LOG(DEBUG) << "node_input:" << node_input->DebugString() << " is a param";
+        CNodePtr stack_pop = InsertStackPop(kernel_graph_, node_input, stack_pushs);
+        node->set_input(i, stack_pop);
+        KeepOrderForStackPop(kernel_graph_, stack_pop, node);
+        continue;
+      }
+      auto iter = std::find_if(before_nodes.begin(), before_nodes.end(),
+                               [node_input](auto before_node) { return before_node == node_input; });
+      if (iter != before_nodes.end()) {
+        CNodePtr stack_pop = InsertStackPop(kernel_graph_, *iter, stack_pushs);
+        node->set_input(i, stack_pop);
+        KeepOrderForStackPop(kernel_graph_, stack_pop, node);
+      }
+    }
+  }
+
+  // Create StackOps for node_input.
+  CNodePtr InsertStackPop(const KernelGraphPtr &kg, const AnfNodePtr &node_input, std::vector<CNodePtr> *stack_pushs) {
+    auto stack_push = StackPush(node_input);
+    stack_pushs->emplace_back(stack_push);
+    auto stack_pop = StackPop();
+    stack_pop->set_abstract(node_input->abstract());
+    return stack_pop;
+  }
+
+  // Arrange StackPushs according to the rules of the last pop-up StackPush first,
+  // while ensuring that the last StackPush node is next to the jump_node.
+  void InsertStackPush(const KernelGraphPtr &kg, const CNodePtr &jump_node, const std::vector<CNodePtr> &stack_pushs) {
+    MS_LOG(DEBUG) << "There are " << stack_pushs.size() << " stack_push ops";
+    if (stack_pushs.size() < 1) {
+      return;
+    }
+    for (uint32_t i = 1; i < stack_pushs.size(); i++) {
+      AnfAlgo::KeepOrder(kg, stack_pushs[i], stack_pushs[i - 1]);
+    }
+    auto nodes = kg->execution_order();
+    auto node_iter = std::find(nodes.begin(), nodes.end(), jump_node);
+    AnfAlgo::KeepOrder(kg, stack_pushs[0], jump_node);
+    if (node_iter != nodes.begin()) {
+      AnfAlgo::KeepOrder(kg, *(node_iter - 1), *stack_pushs.rbegin());
+    }
+  }
+
+  // Ensure StackPop is next to the jump_node.
+  void KeepOrderForStackPop(const KernelGraphPtr &kg, const CNodePtr &pop, const CNodePtr &jump_node) {
+    auto nodes = kg->execution_order();
+    auto node_iter = std::find(nodes.cbegin(), nodes.cend(), jump_node);
+    if (node_iter == nodes.cend()) {
+      MS_LOG(EXCEPTION) << "Cannot find node: " << jump_node->DebugString();
+    }
+    // Insert between jump_node-1 and jump_node.
+    if (node_iter != nodes.begin()) {
+      CNodePtr node = *(node_iter - 1);
+      AnfAlgo::KeepOrder(kg, node, pop);
+    }
+    AnfAlgo::KeepOrder(kg, pop, jump_node);
+  }
+
+  void HandleCallSite(CallSite *call_site) {
     // Update last_monad_.
-    last_monad_ = call_site.last_monad;
+    last_monad_ = call_site->last_monad;
 
     // The call/switch/switch_layer cnode.
-    auto &cnode = call_site.cnode;
+    auto &cnode = call_site->cnode;
 
     // Get branches of the call_site.
     // for call, there is one branch;
     // for switch, the first one is true branch;
     // for switch_layer, the first one is 0 branch.
-    auto &branches = call_site.callees;
+    auto &branches = call_site->callees;
 
     // Link arguments and find labels for branches.
     std::vector<KernelGraphPtr> graphes;
@@ -664,13 +810,14 @@ class AscendAutoMonadConverter {
 
     // Create LabelGoto or LabelSwitch node.
     auto label_goto_switch = MakeLabelGotoSwitch(cnode, graphes, labels);
+    call_site->conversion_cnode = label_goto_switch;
 
     // Setup return label and output if required.
-    if (call_site.return_label != kNoLabel) {
-      auto label_node = LabelSet(call_site.return_label);
-      AnfNodePtr output = call_site.out_param;
+    if (call_site->return_label != kNoLabel) {
+      auto label_node = LabelSet(call_site->return_label);
+      AnfNodePtr output = call_site->out_param;
       MS_EXCEPTION_IF_NULL(output);
-      const bool is_single_call = call_site.label_indexes.empty();
+      const bool is_single_call = call_site->label_indexes.empty();
       if (is_single_call) {
         // For single call, let output depend on the label node,
         // this ensures the return label is set before output is used.
@@ -688,7 +835,7 @@ class AscendAutoMonadConverter {
     }
 
     // If no return label required, it should be a tail call.
-    if (!call_site.tail) {
+    if (!call_site->tail) {
       MS_LOG(EXCEPTION) << "Return label not set for non-tail call " << cnode->DebugString();
     }
     // For tail calls, replace origin call node with label_goto/label_switch.
@@ -697,8 +844,8 @@ class AscendAutoMonadConverter {
   }
 
   // Assign label indexes to label parameters for a call site.
-  void AssignLabelIndexes(const CallSite &call_site) {
-    for (auto &[label_param, label_index] : call_site.label_indexes) {
+  void AssignLabelIndexes(const CallSite *call_site) {
+    for (auto &[label_param, label_index] : call_site->label_indexes) {
       auto index_value = GetIndexValueNode(label_index);
       auto assign = Assign(label_param, index_value, false, false, false);
       monad_ = UpdateState(GetMonad(), assign);
@@ -1020,6 +1167,50 @@ class AscendAutoMonadConverter {
     AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue(graphs), node);
   }
 
+  // Make a StackInit node.
+  CNodePtr StackInit(const KernelGraphPtr &kg) {
+    auto monad = AnfAlgo::MakeMonadValueNode(kg);
+    auto stack_init = NewPrimitive(prim::kPrimStackInit);
+    auto cnode = kg->NewCNode({stack_init, monad});
+    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    cnode->set_abstract(monad->abstract());
+    return cnode;
+  }
+
+  // Make a StackDestroy node.
+  CNodePtr StackDestroy(const KernelGraphPtr &kg) {
+    auto monad = AnfAlgo::MakeMonadValueNode(kg);
+    auto stack_destroy = NewPrimitive(prim::kPrimStackDestroy);
+    auto cnode = kg->NewCNode({stack_destroy, monad});
+    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    cnode->set_abstract(monad->abstract());
+    return cnode;
+  }
+
+  // Make a StackPush node.
+  CNodePtr StackPush(const AnfNodePtr &input) {
+    auto monad = AnfAlgo::MakeMonadValueNode(kernel_graph_);
+    auto stack_push = NewPrimitive(prim::kPrimStackPush);
+    auto cnode = kernel_graph_->NewCNode({stack_push, input, monad});
+    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    auto op_name = std::to_string(kernel_graph_->graph_id()) + "_stack_push_" + std::to_string(name_index_++);
+    AnfAlgo::SetNodeAttr(kAttrStackOpName, MakeValue(op_name), cnode);
+    cnode->set_abstract(monad->abstract());
+    return cnode;
+  }
+
+  // Make a StackPop node.
+  CNodePtr StackPop() {
+    auto monad = AnfAlgo::MakeMonadValueNode(kernel_graph_);
+    auto stack_pop = NewPrimitive(prim::kPrimStackPop);
+    auto cnode = kernel_graph_->NewCNode({stack_pop, monad});
+    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    auto op_name = std::to_string(kernel_graph_->graph_id()) + "_stack_pop_" + std::to_string(name_index_++);
+    AnfAlgo::SetNodeAttr(kAttrStackOpName, MakeValue(op_name), cnode);
+    cnode->set_abstract(monad->abstract());  // need to refresh output's abstract().
+    return cnode;
+  }
+
  private:
   const KernelGraphPtr &kernel_graph_;
   AscendAutoMonadContext &context_;
@@ -1038,6 +1229,12 @@ class AscendAutoMonadConverter {
 
   // Index value node cache for reuse.
   std::map<uint32_t, ValueNodePtr> index_nodes_;
+
+  // The index of stackops name.
+  uint32_t name_index_;
+
+  // The flag which indicates to insert stackops.
+  bool need_stackops_;
 };
 
 constexpr size_t kAssignTargetIndex = 1;

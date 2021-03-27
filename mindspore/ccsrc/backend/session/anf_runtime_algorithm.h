@@ -43,6 +43,8 @@ using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
 class AnfRuntimeAlgorithm {
  public:
+  static AnfNodePtr MakeMonadValueNode(const KernelGraphPtr &kg);
+  static void KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter);
   // get real input node of tuple_get_item
   static AnfNodePtr GetTupleGetItemRealInput(const CNodePtr &tuple_get_item);
   static size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
