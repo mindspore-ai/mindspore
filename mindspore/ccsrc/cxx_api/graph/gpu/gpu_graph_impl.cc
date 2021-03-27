@@ -54,7 +54,17 @@ Status GPUGraphImpl::InitEnv() {
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kGPUDevice);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
+
+  auto &device_infos = graph_context_->MutableDeviceInfo();
+  if (device_infos.size() != 1) {
+    return kMCDeviceError;
+  }
+  auto gpu_info = device_infos[0]->Cast<NvidiaGPUDeviceInfo>();
+  if (gpu_info == nullptr) {
+    return kMCDeviceError;
+  }
+  auto enable_trt = gpu_info->GetGpuTrtInferMode();
+  ms_context->set_param<bool>(MS_CTX_ENABLE_INFER_OPT, enable_trt);
 
   session_impl_ = session::SessionFactory::Get().Create(kGpuInferenceDevice);
   if (session_impl_ == nullptr) {

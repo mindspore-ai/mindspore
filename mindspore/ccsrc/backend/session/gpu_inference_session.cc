@@ -212,6 +212,5 @@ std::string GpuInferenceSession::InputsInfo(const std::vector<ParameterPtr> &par
   }
   return graph + "   " + actual;
 }
-
 }  // namespace session
 }  // namespace mindspore
