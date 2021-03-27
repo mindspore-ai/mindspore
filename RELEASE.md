@@ -159,10 +159,11 @@ The FusedBatchNorm and FusedBatchNormEx interface has been deleted. Please use t
 
 The MetaTensor interface has been deleted. The function of MetaTensor has been integrated into tensor.
 
-###### `mindspore.numpy.array()`, `mindspore.numpy.asarray()`, `mindspore.numpy.asfarray()`, `mindspore.numpy.copy()` now support GRAPH mode, but cannot accept `numpy.ndarray` as input arguments anymore([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
+###### `ControlDepend` is deleted, use `Depend` instead. The decorator `@C.add_flags(has_effect=True)` does not work. ([!13793](https://gitee.com/mindspore/mindspore/pulls/13793))
 
-Previously, these interfaces can accept numpy.ndarray as arguments and convert numpy.ndarray to Tensor, but cannot be used in GRAPH mode.
-However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To support these interfaces in graph mode, we have to remove `numpy.ndarray` support. With that being said, users can still use `Tensor` to convert `numpy.ndarray` to tensors.
+Previously, we used ControlDepend to control the execution order of multiple operators. In version 1.2.0, mindspore introduces the auto-monad side effects expression to ensure that the perform order of user's semantics is correct. Therefore, ControlDepend is deleted and Depend is recommended.
+
+In most scenarios, if operators have IO side effects (such as print) or memory side effects (such as assign), they will be executed according to the user's semantics. In some scenarios, if the two operators A and B have no order dependency, and A must be executed before B, we recommend using Depend to specify their execution order. See the API documentation of the Depend operator for specific usage.
 
 <table>
 <tr>
@@ -172,30 +173,39 @@ However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To 
 <td>
 
 ```python
->>> import mindspore.numpy as mnp
->>> import numpy
->>>
->>> nd_array = numpy.array([1,2,3])
->>> tensor = mnp.asarray(nd_array) # this line cannot be parsed in GRAPH mode
+    In some side-effect scenarios, we need to ensure the execution order of operators.
+    In order to ensure that operator A is executed before operator B, it is recommended
+    to insert the Depend operator between operators A and B.
+
+    Previously, the ControlDepend operator was used to control the execution order.
+    Since the ControlDepend operator is deprecated from version 1.1, it is recommended
+    to use the Depend operator instead. The replacement method is as follows::
+
+        a = A(x)                --->        a = A(x)
+        b = B(y)                --->        y = Depend(y, a)
+        ControlDepend(a, b)     --->        b = B(y)
 ```
 
 </td>
 <td>
 
 ```python
->>> import mindspore.numpy as mnp
->>> import numpy
->>>
->>> tensor = mnp.asarray([1,2,3]) # this line can be parsed in GRAPH mode
+    In most scenarios, if operators have IO side effects or memory side effects,
+    they will be executed according to the user's semantics. In some scenarios,
+    if the two operators A and B have no order dependency, and A must be executed
+    before B, we recommend using Depend to specify their execution order. The
+    usage method is as follows::
+
+        a = A(x)                --->        a = A(x)
+        b = B(y)                --->        y = Depend(y, a)
+                                --->        b = B(y)
 ```
 
 </td>
 </tr>
 </table>
 
-###### mindspore.numpy interfaces remove support for keyword arguments `out` and `where`([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
-
-Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
+After the introduction of the auto-monad side effect expression feature, the decorator `@C.add_flags(has_effect=True)` does not work. If the decorator is used in the script, please modify. Take the overflow identification operator (without side effects) as an example, the modification method is as follows:
 
 <table>
 <tr>
@@ -205,27 +215,26 @@ Previously, we have incomplete support for keyword arguments `out` and `where` i
 <td>
 
 ```python
->>> import mindspore.numpy as np
->>>
->>> a = np.ones((3,3))
->>> b = np.ones((3,3))
->>> out = np.zeros((3,3))
->>> where = np.asarray([[True, False, True],[False, False, True],[True, True, True]])
->>> res = np.add(a, b, out=out, where=where) # `out` cannot be used as a reference, therefore it is misleading
+@C.add_flags(has_effect=True)
+def construct(self, *inputs):
+    ...
+    loss = self.network(*inputs)
+    init = self.allo_status()
+    self.clear_status(init)
+    ...
 ```
 
 </td>
 <td>
 
 ```python
->>> import mindspore.numpy as np
->>>
->>> a = np.ones((3,3))
->>> b = np.ones((3,3))
->>> out = np.zeros((3,3))
->>> where = np.asarray([[True, False, True],[False, False, True],[True, True, True]])
->>> res = np.add(a, b)
->>> out = np.where(where, x=res, y=out) # instead of np.add(a, b, out=out, where=where)
+def construct(self, *inputs):
+    ...
+    loss = self.network(*inputs)
+    init = self.allo_status()
+    init = F.depend(init, loss)
+    clear_status = self.clear_status(init)
+    ...
 ```
 
 </td>
@@ -442,6 +451,12 @@ MSTensor::DestroyTensorPtr(tensor);
 - fix executor pending task not execute in some heterogeneous cases.([!13465](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/13465))
 - add passes to support frontend IR unification, including following operations: SliceGrad([!11783](https://gitee.com/mindspore/mindspore/pulls/11783)), ApplyFtrl, ApplyMomentum, ApplyRMSProp, CenteredRMSProp([!11895](https://gitee.com/mindspore/mindspore/pulls/11895)), AvgPoolGrad([!12813](https://gitee.com/mindspore/mindspore/pulls/12813)), BatchNorm([!12115](https://gitee.com/mindspore/mindspore/pulls/12115))
 
+#### Dataset
+
+- Fix getter functions(e.g. GetDatasetSize) terminated abnormally when use python multi-processing. ([!13571](https://gitee.com/mindspore/mindspore/pulls/13571), [!13823](https://gitee.com/mindspore/mindspore/pulls/13823))
+- Fix unclear error log of data augmentation operators. ([!12398](https://gitee.com/mindspore/mindspore/pulls/12398), [!12883](https://gitee.com/mindspore/mindspore/pulls/12883), [!13176](https://gitee.com/mindspore/mindspore/pulls/13176))
+- Fix profiling performs abnormally when sink_size = False, as saving data is later than profiling analysis. ([!13944](https://gitee.com/mindspore/mindspore/pulls/13944))
+
 ## MindSpore Lite
 
 ### Major Features and Improvements
@@ -655,9 +670,6 @@ class Allocator;
 1. Fix the bug that the array in kernel registrar is not initialized.
 2. Fix segment fault caused by releasing of OpParameter in Crop kernel in mistake.
 3. Fix the bug that the MINDIR aware-training model is finally interpreted as weight-quant model.
-4. Fix getter functions(e.g. GetDatasetSize) terminated abnormally when use python multi-processing. ([!13571](https://gitee.com/mindspore/mindspore/pulls/13571), [!13823](https://gitee.com/mindspore/mindspore/pulls/13823))
-5. Fix unclear error log of data augmentation operators. ([!12398](https://gitee.com/mindspore/mindspore/pulls/12398), [!12883](https://gitee.com/mindspore/mindspore/pulls/12883), [!13176](https://gitee.com/mindspore/mindspore/pulls/13176))
-6. Fix profiling performs abnormally when sink_size = False, as saving data is later than profiling analysis. ([!13944](https://gitee.com/mindspore/mindspore/pulls/13944))
 
 ## Contributors
 
