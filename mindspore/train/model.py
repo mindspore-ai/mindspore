@@ -809,12 +809,15 @@ class Model:
             Dict, Parameter layout dictionary used for load distributed checkpoint
 
         Examples:
+            >>> # This example should be run with multiple devices. Refer to the tutorial > Distributed Training on
+            >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import Model, context, Tensor
             >>> from mindspore.context import ParallelMode
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
+            >>> init()
             >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), ms.float32)
             >>> model = Model(Net())
