@@ -26,3 +26,5 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
 }
 
 CUresult cuModuleUnload(CUmodule hmod) { return CUDA_SUCCESS; }
+
+CUresult cuGetErrorName(CUresult error, const char **pStr) { return CUDA_SUCCESS; }

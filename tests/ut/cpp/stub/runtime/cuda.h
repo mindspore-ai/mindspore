@@ -46,5 +46,5 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
                         unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ,
                         unsigned int sharedMemBytes, CUstream hStream, void **kernelParams, void **extra);
 CUresult cuModuleUnload(CUmodule hmod);
-
+CUresult cuGetErrorName(CUresult error, const char **pStr);
 #endif  // TESTS_UT_STUB_RUNTIME_INCLUDE_CUDA_H_

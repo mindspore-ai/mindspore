@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "debug/anf_ir_dump.h"
+#include "utils/context/graph_kernel_flags.h"
 
 namespace mindspore {
 namespace opt {
@@ -572,17 +573,19 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
 
     // call costmodel split function.
     auto json_desc_str = json_desc.dump();
-    MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json:\n" << json_desc_str;
-    auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str);
+    auto flags_str = CollectSplitFlags();
+    MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json: " << json_desc_str
+                  << ". flag: " << flags_str;
+    auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str, flags_str);
     if (py::isinstance<py::none>(ret)) {
       MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
-                    << json_desc_str;
+                    << json_desc_str << ". flag: " << flags_str;
       return false;
     }
     std::string split_graphs_str = py::cast<std::string>(ret);
     if (split_graphs_str.empty()) {
       MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
-                    << json_desc_str;
+                    << json_desc_str << ". flag: " << flags_str;
       return false;
     }
 
@@ -711,6 +714,13 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
         MS_LOG(WARNING) << cnode->fullname_with_scope() << " is ungrouped.";
       }
     }
+  }
+
+  virtual std::string CollectSplitFlags() {
+    const auto &flags = context::GraphKernelFlags::GetInstance();
+    nlohmann::json flag_json;
+    flag_json["dump_as_text"] = flags.dump_as_text;
+    return flag_json.dump();
   }
 
   std::shared_ptr<FuncGraph> func_graph_;
