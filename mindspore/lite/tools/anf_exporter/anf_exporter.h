@@ -30,7 +30,6 @@ using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 
-constexpr const int kPartialMinSize = 3;
 constexpr const int kMainGraphIndex = 0;
 
 class AnfExporter {
@@ -74,28 +73,27 @@ class AnfExporter {
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const size_t &subgraph_index);
   int SetGraphoutputIndex(const CNodePtr &cnode, size_t subgraph_index,
-                          const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-                          const std::unique_ptr<schema::SubGraphT> &sub_graphT, schema::CNodeT *return_node);
+                          const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *return_node);
   static int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                const std::shared_ptr<mindspore::Primitive> &primitive,
                                const std::unique_ptr<schema::CNodeT> &dst_node);
   int Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-             const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive,
-             const std::unique_ptr<schema::SubGraphT> &sub_graphT);
+             const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive);
   int ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-                     const size_t &subgraph_index, bool keep_graph, bool copy_primitive,
-                     const std::shared_ptr<AnfNode> &partial_anode = nullptr);
+                     bool keep_graph, bool copy_primitive, const std::shared_ptr<AnfNode> &partial_anode = nullptr);
   static ValueNodePtr GetPartialAnfPrim();
   static CNodePtr CreatePartialCnode(const FuncGraphPtr &fg, AnfNodePtr cnode);
   static std::vector<schema::CNodeT *> GetSubgraphNodes(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                                         const size_t &subgraph_index);
+  bool HasExported(const FuncGraphPtr &func_graph);
 
  private:
   std::map<std::string, int> node_id_map_;
   std::vector<schema::CNodeT *> graph_input_nodes_;
-  std::map<FuncGraphPtr, int> fg_subgraph_map;
-  uint32_t node_idx = 0;
-  bool train_flag = false;
+  // The first item is FuncGraph which has been exported, the second item is the subgraph index in meta_graph
+  std::map<FuncGraphPtr, int> fg_subgraph_map_;
+  uint32_t node_idx_ = 0;
+  bool train_flag_ = false;
 };
 // by default, copy_primitive is false, which means that the MetaGraph and func_graph share the same schema::PrimitiveT.
 // but in PostQuantization, the func_graph need to transfer to MetaGraph first and do MetaGraph pass, which may modify
