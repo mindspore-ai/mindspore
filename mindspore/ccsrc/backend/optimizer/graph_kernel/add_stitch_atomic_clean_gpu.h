@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
+#include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/session/kernel_graph.h"
 
 namespace mindspore {

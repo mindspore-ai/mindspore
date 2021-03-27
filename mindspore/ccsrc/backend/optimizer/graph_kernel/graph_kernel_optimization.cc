@@ -22,7 +22,6 @@
 #include "ir/func_graph.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
-#include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
@@ -132,11 +131,9 @@ PassManagerPtr GraphKernelOptimizer::Split() {
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage5_highlevelopt2");
   // Enable atomic add
+  pm->AddPass(std::make_shared<AtomicCleanInsertter>());
   if (is_gpu) {
-    pm->AddPass(std::make_shared<AtomicCleanInsertter>());
     pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>());
-  } else /* if (is_ascend) */ {
-    pm->AddPass(std::make_shared<CleanAddAtomic>());
   }
   return pm;
 }
