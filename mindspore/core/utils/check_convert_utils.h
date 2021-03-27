@@ -308,6 +308,9 @@ class CheckAndConvertUtils {
   static bool GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value);
   static void GetPadModEnumValue(const ValuePtr &value, int64_t *enum_value, bool is_upper = false);
   static bool CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
+  static void CheckSummaryParam(const AbstractBasePtr &name, const AbstractBasePtr &value,
+                                const std::string &class_name);
+  static void CheckMode(const std::string &class_name);
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
