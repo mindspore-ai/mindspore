@@ -19,6 +19,7 @@ import argparse
 import time
 import numpy as np
 from pycocotools.coco import COCO
+import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed, Parameter
@@ -51,7 +52,11 @@ def fasterrcnn_eval(dataset_path, ckpt_path, ann_file):
             tensor = value.asnumpy().astype(np.float32)
             param_dict[key] = Parameter(tensor, key)
     load_param_into_net(net, param_dict)
+
     net.set_train(False)
+    device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
+    if device_type == "Ascend":
+        net.to_float(mstype.float16)
 
     eval_iter = 0
     total = ds.get_dataset_size()
