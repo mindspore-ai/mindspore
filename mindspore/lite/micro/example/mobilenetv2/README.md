@@ -86,7 +86,7 @@ mkdir mobilenetv2/build && cd mobilenetv2/build
 
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release \
--DCMAKE_TOOLCHAIN_FILE="${ANDRIOD_NDK}/build/cmake/android.toolchain.cmake" \
+-DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
 -DANDROID_ABI="arm64-v8a" \
 -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
 -DANDROID_NATIVE_API_LEVEL="19" \
@@ -99,7 +99,7 @@ make
 
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release \
--DCMAKE_TOOLCHAIN_FILE="${ANDRIOD_NDK}/build/cmake/android.toolchain.cmake" \
+-DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
 -DANDROID_ABI="armeabi-v7a" \
 -DANDROID_TOOLCHAIN_NAME="clang" \
 -DANDROID_NATIVE_API_LEVEL="19" \

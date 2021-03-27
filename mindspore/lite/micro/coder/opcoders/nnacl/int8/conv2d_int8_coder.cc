@@ -203,9 +203,16 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("memset", matmul_packed_input_, 0, matmul_packed_input_size_);
   code.CodeStruct("conv_param", *conv_param_);
 
-  code.CodeBaseStruct("ConvolutionInt8Args", kRunArgs, input_tensor_, packed_input_, matmul_packed_input_,
-                      packed_weight_, bias_data_, output_tensor_, filter_zp_ptr_, input_sum_,
-                      "(ConvParameter *)&conv_param", matmul_func_, support_optimize_);
+  if (target_ == kARM64) {
+    code.CodeBaseStruct("ConvolutionInt8Args", kRunArgs, input_tensor_, packed_input_, matmul_packed_input_,
+                        packed_weight_, bias_data_, output_tensor_, filter_zp_ptr_, input_sum_,
+                        "(ConvParameter *)&conv_param", matmul_func_, "GetSupportOptFlag()");
+  } else {
+    code.CodeBaseStruct("ConvolutionInt8Args", kRunArgs, input_tensor_, packed_input_, matmul_packed_input_,
+                        packed_weight_, bias_data_, output_tensor_, filter_zp_ptr_, input_sum_,
+                        "(ConvParameter *)&conv_param", matmul_func_, support_optimize_);
+  }
+
   if (support_parallel_) {
     code.CodeFunction(kParallelLaunch, gThreadPool, "ConvolutionInt8Run", kRunArgsAddr, gThreadNum);
   } else {

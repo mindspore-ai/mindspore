@@ -64,6 +64,8 @@
     
 ```
 
+  > 在使用过程中，我们注意到引入Softmax相关的CMSIS算子文件时，头文件中需要加入`arm_nnfunctions.h`,使用者可以稍作注意。
+
 生成代码工程目录如下：
 
 模型推理对外API头文件可由mindspore团队发布的[Release包](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)中获取。
