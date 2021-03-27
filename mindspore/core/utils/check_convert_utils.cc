@@ -35,7 +35,7 @@ static std::map<std::string, int64_t> DataFormatToEnumMap = {
   {"CKHW", Format::CKHW},   {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
   {"HW", Format::HW},       {"HW4", Format::HW4},       {"NC", Format::NC},
   {"NC4", Format::NC4},     {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
-  {"NCDHW", Format::NCDHW},
+  {"NCDHW", Format::NCDHW}, {"NWC", Format::NWC},       {"NCW", Format::NCW},
 };
 
 static std::map<int64_t, std::string> DataFormatToStrMap = {
@@ -44,7 +44,7 @@ static std::map<int64_t, std::string> DataFormatToStrMap = {
   {Format::CKHW, "CKHW"},   {Format::KHWC, "KHWC"},     {Format::CHWK, "CHWK"},
   {Format::HW, "HW"},       {Format::HW4, "HW4"},       {Format::NC, "NC"},
   {Format::NC4, "NC4"},     {Format::NC4HW4, "NC4HW4"}, {Format::NUM_OF_FORMAT, "NUM_OF_FORMAT"},
-  {Format::NCDHW, "NCDHW"},
+  {Format::NCDHW, "NCDHW"}, {Format::NWC, "NWC"},       {Format::NCW, "NCW"},
 };
 
 static std::map<std::string, int64_t> ReductionToEnumMap = {

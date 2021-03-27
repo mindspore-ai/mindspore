@@ -34,7 +34,7 @@ class OnnxConvParser : public OnnxNodeParser {
 };
 
 STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels, std::vector<int64_t> *strides,
-                    std::vector<int64_t> *dilation, std::vector<int64_t> *pads);
+                    std::vector<int64_t> *dilation, std::vector<int64_t> *pads, bool *conv1d);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_CONV_PARSER_H

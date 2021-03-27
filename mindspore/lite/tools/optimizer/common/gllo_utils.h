@@ -78,6 +78,8 @@ bool IsQuantNode(const BaseRef &n);
 
 bool IsActivationNode(const BaseRef &n);
 
+bool IsSqueezeNode(const BaseRef &n);
+
 bool CheckIsAllInputsParam(const AnfNodePtr &node);
 
 size_t GetOutputTensorNum(const AnfNodePtr &node);
