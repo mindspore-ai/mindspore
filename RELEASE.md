@@ -159,9 +159,9 @@ The FusedBatchNorm and FusedBatchNormEx interface has been deleted. Please use t
 
 The MetaTensor interface has been deleted. The function of MetaTensor has been integrated into tensor.
 
-###### `ControlDepend` is deprecated, use `Depend` instead. The decorator `@C.add_flags(has_effect=True)` is also deprecated. ([!13793](https://gitee.com/mindspore/mindspore/pulls/13793))
+###### `ControlDepend` is deleted, use `Depend` instead. The decorator `@C.add_flags(has_effect=True)` does not work. ([!13793](https://gitee.com/mindspore/mindspore/pulls/13793))
 
-Previously, we used ControlDepend to control the execution order of multiple operators. In version 1.2.0, mindspore introduces the auto-monad side effects expression to ensure that the perform order of user's semantics is correct. Therefore, ControlDepend is deprecated and Depend is recommended.
+Previously, we used ControlDepend to control the execution order of multiple operators. In version 1.2.0, mindspore introduces the auto-monad side effects expression to ensure that the perform order of user's semantics is correct. Therefore, ControlDepend is deleted and Depend is recommended.
 
 In most scenarios, if operators have IO side effects (such as print) or memory side effects (such as assign), they will be executed according to the user's semantics. In some scenarios, if the two operators A and B have no order dependency, and A must be executed before B, we recommend using Depend to specify their execution order. See the API documentation of the Depend operator for specific usage.
 
@@ -205,7 +205,7 @@ In most scenarios, if operators have IO side effects (such as print) or memory s
 </tr>
 </table>
 
-After the introduction of the auto-monad side effect expression feature, the decorator `@C.add_flags(has_effect=True)` is also deprecated. If the decorator is used in the script, please modify. Take the overflow identification operator (without side effects) as an example, the modification method is as follows:
+After the introduction of the auto-monad side effect expression feature, the decorator `@C.add_flags(has_effect=True)` does not work. If the decorator is used in the script, please modify. Take the overflow identification operator (without side effects) as an example, the modification method is as follows:
 
 <table>
 <tr>
@@ -451,6 +451,12 @@ MSTensor::DestroyTensorPtr(tensor);
 - fix executor pending task not execute in some heterogeneous cases.([!13465](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/13465))
 - add passes to support frontend IR unification, including following operations: SliceGrad([!11783](https://gitee.com/mindspore/mindspore/pulls/11783)), ApplyFtrl, ApplyMomentum, ApplyRMSProp, CenteredRMSProp([!11895](https://gitee.com/mindspore/mindspore/pulls/11895)), AvgPoolGrad([!12813](https://gitee.com/mindspore/mindspore/pulls/12813)), BatchNorm([!12115](https://gitee.com/mindspore/mindspore/pulls/12115))
 
+#### Dataset
+
+- Fix getter functions(e.g. GetDatasetSize) terminated abnormally when use python multi-processing. ([!13571](https://gitee.com/mindspore/mindspore/pulls/13571), [!13823](https://gitee.com/mindspore/mindspore/pulls/13823))
+- Fix unclear error log of data augmentation operators. ([!12398](https://gitee.com/mindspore/mindspore/pulls/12398), [!12883](https://gitee.com/mindspore/mindspore/pulls/12883), [!13176](https://gitee.com/mindspore/mindspore/pulls/13176))
+- Fix profiling performs abnormally when sink_size = False, as saving data is later than profiling analysis. ([!13944](https://gitee.com/mindspore/mindspore/pulls/13944))
+
 ## MindSpore Lite
 
 ### Major Features and Improvements
@@ -664,9 +670,6 @@ class Allocator;
 1. Fix the bug that the array in kernel registrar is not initialized.
 2. Fix segment fault caused by releasing of OpParameter in Crop kernel in mistake.
 3. Fix the bug that the MINDIR aware-training model is finally interpreted as weight-quant model.
-4. Fix getter functions(e.g. GetDatasetSize) terminated abnormally when use python multi-processing. ([!13571](https://gitee.com/mindspore/mindspore/pulls/13571), [!13823](https://gitee.com/mindspore/mindspore/pulls/13823))
-5. Fix unclear error log of data augmentation operators. ([!12398](https://gitee.com/mindspore/mindspore/pulls/12398), [!12883](https://gitee.com/mindspore/mindspore/pulls/12883), [!13176](https://gitee.com/mindspore/mindspore/pulls/13176))
-6. Fix profiling performs abnormally when sink_size = False, as saving data is later than profiling analysis. ([!13944](https://gitee.com/mindspore/mindspore/pulls/13944))
 
 ## Contributors
 
