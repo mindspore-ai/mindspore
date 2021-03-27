@@ -146,7 +146,7 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
       //   input, without Depend node.
       // 2. If the `cnode` has another path to the getitem_user, it's unnecessary to add update_state and load node to
       // keep exec_order.
-      if (!AnfAlgo::IsRealKernel(getitem_user) || HasPathToParamUser(cnode, getitem_user, getitem)) {
+      if (HasPathToParamUser(cnode, getitem_user, getitem)) {
         mng->Replace(getitem, assign_to);
         continue;
       }
