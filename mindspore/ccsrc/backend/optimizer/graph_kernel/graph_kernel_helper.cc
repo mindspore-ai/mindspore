@@ -32,6 +32,7 @@
 #include "ir/func_graph.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/action.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "vm/segment_runner.h"
 #if ENABLE_GPU
 #include "runtime/device/gpu/kernel_info_setter.h"
@@ -587,6 +588,8 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
 #else
   std::vector<PrimitivePtr> fusible_basic_ops;
 #endif
+  const auto &flags = context::GraphKernelFlags::GetInstance();
+  OpListFilter(&fusible_basic_ops, flags.enable_cluster_ops_only, flags.enable_cluster_ops, flags.disable_cluster_ops);
   return fusible_basic_ops;
 }
 
@@ -900,6 +903,25 @@ bool IsKeepBasicNode(const AnfNodePtr &node) {
   }
 
   return false;
+}
+
+void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string> &enable_ops_only,
+                  const std::vector<std::string> &enable_ops, const std::vector<std::string> &disable_ops) {
+  auto new_prim = [](const std::string &name) { return std::make_shared<Primitive>(name); };
+  if (!enable_ops_only.empty()) {
+    ops->clear();
+    std::transform(enable_ops_only.begin(), enable_ops_only.end(), std::back_inserter(*ops), new_prim);
+  } else {
+    if (!enable_ops.empty()) {
+      std::transform(enable_ops.begin(), enable_ops.end(), std::back_inserter(*ops), new_prim);
+    }
+    if (!disable_ops.empty()) {
+      auto iter = std::remove_if(ops->begin(), ops->end(), [&disable_ops](const PrimitivePtr &p) {
+        return std::find(disable_ops.begin(), disable_ops.end(), p->name()) != disable_ops.end();
+      });
+      ops->erase(iter, ops->end());
+    }
+  }
 }
 }  // namespace opt
 }  // namespace mindspore

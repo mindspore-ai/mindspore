@@ -30,13 +30,11 @@
 #include "runtime/device/kernel_info.h"
 
 namespace mindspore {
+namespace prim {
+inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
+}  // namespace prim
 namespace opt {
-unsigned int SubstituteDropout::seed_ = time(NULL);
-
-const BaseRef SubstituteDropout::DefinePattern() const {
-  VarPtr Xs = std::make_shared<Var>();
-  return VectorRef({prim::kPrimDropout, Xs});
-}
+unsigned int DropoutExpander::seed_ = time(NULL);
 
 void SetNewKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> inputs_format;
@@ -66,8 +64,7 @@ void SetNewKernelInfo(const CNodePtr &kernel_node) {
   AnfAlgo::SetSelectKernelBuildInfo(cnode_selected_info, kernel_node.get());
 }
 
-const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                            const EquivPtr &) const {
+AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -115,6 +112,11 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
   new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   SetNewKernelInfo(new_node);
   return new_node;
+}
+
+AnfNodePtr DropoutExpander::Run(const AnfNodePtr &node) {
+  auto gkdropout_node = PreProcess(node->func_graph(), node);
+  return DefaultExpander::Run(gkdropout_node);
 }
 }  // namespace opt
 }  // namespace mindspore

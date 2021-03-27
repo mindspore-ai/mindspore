@@ -33,9 +33,6 @@
 #include <nlohmann/json.hpp>
 
 namespace mindspore {
-namespace prim {
-inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
-}  // namespace prim
 namespace opt {
 using kernel::DumpOption;
 
@@ -91,7 +88,8 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
 bool IsKeepBasicNode(const AnfNodePtr &node);
-
+void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string> &enable_ops_only,
+                  const std::vector<std::string> &enable_ops, const std::vector<std::string> &disable_ops);
 template <typename T>
 ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
   // Create tensor value.

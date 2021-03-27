@@ -16,18 +16,16 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SUBSTITUTE_DROPOUT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SUBSTITUTE_DROPOUT_H_
 
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 
 namespace mindspore {
 namespace opt {
-class SubstituteDropout : public PatternProcessPass {
+class DropoutExpander : public DefaultExpander {
  public:
-  explicit SubstituteDropout(bool multigraph = true) : PatternProcessPass("substitute_dropout", multigraph) {}
-  ~SubstituteDropout() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
  private:
+  AnfNodePtr PreProcess(const FuncGraphPtr &, const AnfNodePtr &);
   static unsigned int seed_;
 };
 }  // namespace opt
