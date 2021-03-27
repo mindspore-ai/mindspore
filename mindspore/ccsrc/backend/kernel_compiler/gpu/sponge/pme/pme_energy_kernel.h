@@ -35,6 +35,7 @@ class PMEEnergyGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
+    excluded_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "excluded_numbers"));
     beta = static_cast<float>(GetAttr<float_t>(kernel_node, "beta"));
     fftx = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftx"));
     ffty = static_cast<int>(GetAttr<int64_t>(kernel_node, "ffty"));
@@ -90,7 +91,7 @@ class PMEEnergyGpuKernel : public GpuKernel {
     input_size_list_.push_back(atom_numbers * sizeof(VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(T1));
     input_size_list_.push_back(max_nl_numbers * sizeof(T1));
-    input_size_list_.push_back(atom_numbers * sizeof(VECTOR));
+    input_size_list_.push_back(sizeof(VECTOR));
 
     input_size_list_.push_back(atom_numbers * sizeof(T1));
     input_size_list_.push_back(excluded_numbers * sizeof(T1));
@@ -118,7 +119,7 @@ class PMEEnergyGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   int atom_numbers;
-  int excluded_numbers = 2719;
+  int excluded_numbers;
   int max_nl_numbers = 800;
   int fftx;
   int ffty;

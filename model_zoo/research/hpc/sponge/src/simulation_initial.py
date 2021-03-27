@@ -124,7 +124,7 @@ class Simulation(nn.Cell):
         pme_excluded_frc = pme_method.PME_Excluded_Force(
             md_info.uint_crd, md_info.uint_dr_to_dr_cof, md_info.charge,
             nb_info.excluded_list_start, nb_info.excluded_list,
-            nb_info.excluded_numbers)
+            nb_info.excluded_numbers, nb_info.excluded_atom_numbers)
         frc_t += pme_excluded_frc.asnumpy()
 
         pme_reciprocal_frc = pme_method.PME_Reciprocal_Force(md_info.uint_crd, md_info.charge)
@@ -149,7 +149,7 @@ class Simulation(nn.Cell):
         _ = self.pme_method.PME_Energy(
             self.md_info.uint_crd, self.md_info.charge, self.nb_info.nl_atom_numbers, self.nb_info.nl_atom_serial,
             self.md_info.uint_dr_to_dr_cof, self.nb_info.excluded_list_start, self.nb_info.excluded_list,
-            self.nb_info.excluded_numbers)
+            self.nb_info.excluded_numbers, self.nb_info.excluded_atom_numbers)
         _ = self.pme_method.Energy_Device_To_Host()
 
     def Main_After_Calculate_Energy(self):

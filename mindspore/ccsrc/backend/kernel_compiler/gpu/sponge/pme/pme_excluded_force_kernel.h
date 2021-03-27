@@ -35,6 +35,7 @@ class PMEExcludedForceGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
+    excluded_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "excluded_numbers"));
     beta = static_cast<float>(GetAttr<float_t>(kernel_node, "beta"));
     InitSizeLists();
     return true;
@@ -62,7 +63,7 @@ class PMEExcludedForceGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(atom_numbers * sizeof(UNSIGNED_INT_VECTOR));
-    input_size_list_.push_back(atom_numbers * sizeof(VECTOR));
+    input_size_list_.push_back(sizeof(VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(T));
     input_size_list_.push_back(atom_numbers * sizeof(T1));
     input_size_list_.push_back(excluded_numbers * sizeof(T1));
@@ -77,7 +78,7 @@ class PMEExcludedForceGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   int atom_numbers;
-  int excluded_numbers = 2719;
+  int excluded_numbers;
   float beta;
   struct VECTOR {
     float x;
