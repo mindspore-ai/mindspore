@@ -104,33 +104,34 @@ constexpr std::ostream &operator<<(std::ostream &stream, const T &value) {
 enum MsLogLevel : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 
 enum SubModuleId : int {
-  SM_UNKNOWN = 0,  // unknown submodule
-  SM_CORE,         // core
-  SM_ANALYZER,     // static analyzer
-  SM_COMMON,       // common
-  SM_DEBUG,        // debug
-  SM_DEVICE,       // device
-  SM_GE_ADPT,      // ge adapter
-  SM_IR,           // IR
-  SM_KERNEL,       // kernel
-  SM_MD,           // MindData
-  SM_ME,           // MindExpression
-  SM_EXPRESS,      // EXPRESS_IR
-  SM_OPTIMIZER,    // optimzer
-  SM_PARALLEL,     // parallel
-  SM_PARSER,       // parser
-  SM_PIPELINE,     // ME pipeline
-  SM_PRE_ACT,      // pre-activate
-  SM_PYNATIVE,     // PyNative
-  SM_SESSION,      // session
-  SM_UTILS,        // utils
-  SM_VM,           // VM
-  SM_PROFILER,     // profiler
-  SM_PS,           // Parameter Server
-  SM_LITE,         // LITE
-  SM_HCCL_ADPT,    // Hccl Adapter
-  SM_MINDQUANTUM,  // MindQuantum
-  NUM_SUBMODUES    // number of submodules
+  SM_UNKNOWN = 0,        // unknown submodule
+  SM_CORE,               // core
+  SM_ANALYZER,           // static analyzer
+  SM_COMMON,             // common
+  SM_DEBUG,              // debug
+  SM_DEVICE,             // device
+  SM_GE_ADPT,            // ge adapter
+  SM_IR,                 // IR
+  SM_KERNEL,             // kernel
+  SM_MD,                 // MindData
+  SM_ME,                 // MindExpression
+  SM_EXPRESS,            // EXPRESS_IR
+  SM_OPTIMIZER,          // optimzer
+  SM_PARALLEL,           // parallel
+  SM_PARSER,             // parser
+  SM_PIPELINE,           // ME pipeline
+  SM_PRE_ACT,            // pre-activate
+  SM_PYNATIVE,           // PyNative
+  SM_SESSION,            // session
+  SM_UTILS,              // utils
+  SM_VM,                 // VM
+  SM_PROFILER,           // profiler
+  SM_PS,                 // Parameter Server
+  SM_LITE,               // LITE
+  SM_HCCL_ADPT,          // Hccl Adapter
+  SM_MINDQUANTUM,        // MindQuantum
+  SM_RUNTIME_FRAMEWORK,  // Runtime framework
+  NUM_SUBMODUES          // number of submodules
 };
 
 #ifndef SUBMODULE_ID
