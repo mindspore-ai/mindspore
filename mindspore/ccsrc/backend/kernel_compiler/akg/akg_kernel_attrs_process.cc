@@ -177,6 +177,18 @@ void SetAkgAttrsForBN2Relu(const AnfNodePtr &anf_node) {
   AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(bn2_output_names), anf_node);
 }
 
+void SetAkgAttrsForMatMul(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::string dst_type;
+  TypeId output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, 0);
+  dst_type = TypeId2String(output_type);
+  AnfAlgo::SetNodeAttr("dst_type", MakeValue(dst_type), anf_node);
+  auto left_format = AnfAlgo::GetInputFormat(anf_node, 0);
+  auto right_format = AnfAlgo::GetInputFormat(anf_node, 1);
+  AnfAlgo::SetNodeAttr("left_format", MakeValue(left_format), anf_node);
+  AnfAlgo::SetNodeAttr("right_format", MakeValue(right_format), anf_node);
+}
+
 const std::unordered_map<std::string, std::function<void(const AnfNodePtr &anf_node)>> kAkgKernelAttrsProcessMap = {
   {kFour2FiveOpName, SetAkgAttrsForFour2Five},
   {kFive2FourOpName, SetAkgAttrsForFive2Four},
@@ -190,6 +202,7 @@ const std::unordered_map<std::string, std::function<void(const AnfNodePtr &anf_n
   {kConvBN1OpName, SetAkgAttrsForConvBN1},
   {kBN2AddReluOpName, SetAkgAttrsForBN2AddRelu},
   {kBN2ReLUOpName, SetAkgAttrsForBN2Relu},
+  {kMatMulOpName, SetAkgAttrsForMatMul},
 };
 }  // namespace
 
