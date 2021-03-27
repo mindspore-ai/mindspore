@@ -190,14 +190,14 @@
     - 加载模型文件并构建用于推理的计算图
 
         ```java
-        // Complile graph.
+        // Compile graph.
         if (!session.compileGraph(model)) {
             Log.e("MS_LITE", "Compile graph failed");
             model.freeBuffer();
             return false;
         }
 
-        // Note: when use model.freeBuffer(), the model can not be complile graph again.
+        // Note: when use model.freeBuffer(), the model can not be compile graph again.
         model.freeBuffer();
         ```
 
