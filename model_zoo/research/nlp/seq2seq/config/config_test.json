@@ -1,0 +1,50 @@
+{
+  "dataset_config": {
+    "random_seed": 50,
+    "epochs": 8,
+    "batch_size": 128,
+    "pre_train_dataset": null,
+    "fine_tune_dataset": null,
+    "test_dataset":  "dataset_menu/newstest2014.en.mindrecord",
+    "valid_dataset": null,
+    "dataset_sink_mode": true
+  },
+  "model_config": {
+    "seq_length": 86,
+    "vocab_size": 32130,
+    "hidden_size": 1024,
+    "num_hidden_layers": 4,
+    "intermediate_size": 4096,
+    "hidden_dropout_prob": 0.2,
+    "attention_dropout_prob": 0.2,
+    "initializer_range": 0.1,
+    "label_smoothing": 0.1,
+    "beam_width": 2,
+    "length_penalty_weight": 0.6,
+    "max_decode_length": 80
+  },
+  "loss_scale_config": {
+    "init_loss_scale": 65536,
+    "loss_scale_factor": 2,
+    "scale_window": 1000
+  },
+  "learn_rate_config": {
+    "optimizer": "adam",
+    "lr": 2e-3,
+    "lr_scheduler": "WarmupMultiStepLR",
+    "lr_scheduler_power": 0.5,
+    "warmup_lr_remain_steps": 0.666,
+    "warmup_lr_decay_interval": -1,
+    "decay_steps": 4,
+    "decay_start_step": -1,
+    "warmup_steps": 200,
+    "min_lr": 1e-6
+  },
+  "checkpoint_options": {
+    "existed_ckpt": " ",
+    "save_ckpt_steps": 3452,
+    "keep_ckpt_max": 6,
+    "ckpt_prefix": "seq2seq",
+    "ckpt_path": "text_translation"
+  }
+}
