@@ -91,7 +91,7 @@ def laplace(shape, mean, lambda_param, seed=None):
         The dtype is float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> from mindspore import Tensor
