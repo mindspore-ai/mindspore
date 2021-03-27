@@ -319,7 +319,10 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         overflow = self.process_loss_scale(cond)
         # if there is no overflow, do optimize
         if not overflow:
-            loss = F.depend(loss, self.optimizer(grads))
+            if self.use_grad_accumulation:
+                loss = self.grad_accumulation(loss, grads)
+            else:
+                loss = F.depend(loss, self.optimizer(grads))
         return loss, cond, scaling_sens
 
     def set_sense_scale(self, sens):
