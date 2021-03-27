@@ -169,6 +169,9 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
     return MakeResolveClassMember(bits_str);
   }
   py::tuple namespace_var = parser_.ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
+  if (namespace_var[0].is_none()) {
+    MS_EXCEPTION(NameError) << "The name \'" << value << "\' is not defined.";
+  }
 
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
@@ -193,6 +196,7 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 
 // Add input for the block's phi parameter
 void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(phi->debug_info()));
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " set phi " << phi->ToString() << " for var " << var;
   auto removable = CollectRemovablePhi(phi);
@@ -205,7 +209,6 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
     MS_EXCEPTION_IF_NULL(pred);
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " pred_blocks_ " << pred->func_graph_->ToString();
     AnfNodePtr arg_node = pred->ReadVariable(var);
-    arg_node->set_debug_info(phi->debug_info());
     CNodePtr jump = pred->jumps_[this];
     jump->add_input(arg_node);
   }
@@ -264,7 +267,6 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   }
   AnfNodePtr arg_node = SearchReplaceNode(var, phi);
   if (arg_node != nullptr) {
-    arg_node->set_debug_info(phi->debug_info());
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " phi " << phi->ToString() << " can be replaced with "
                   << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
@@ -417,7 +419,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (auto &node : isolated_nodes_) {
     MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
-    if (node->func_graph() == func_graph() || node->isa<Parameter>()) {
+    if (node->func_graph() == func_graph()) {
       states.emplace_back(node);
     } else {
       MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
