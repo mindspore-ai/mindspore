@@ -39,6 +39,11 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
                                                   const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto is_train = AnfAlgo::GetCNodePrimitive(node)->GetAttr("is_training");
+  MS_EXCEPTION_IF_NULL(is_train);
+  if (!GetValue<bool>(is_train)) {
+    return nullptr;
+  }
   auto format_attr = AnfAlgo::GetCNodePrimitive(node)->GetAttr("format");
   MS_EXCEPTION_IF_NULL(format_attr);
   auto format = GetValue<std::string>(format_attr);

@@ -56,8 +56,7 @@ constexpr size_t kBN1OutputNum = 2;
 constexpr size_t kBN2OutputNum = 3;
 constexpr size_t kBN3OutputNum = 1;
 
-constexpr size_t kBNGradInputTensorNum = 6;
-constexpr size_t kSyncBNGradInputTensorNum = 5;
+constexpr size_t kBNGradInputTensorNum = 5;
 constexpr size_t kBNGradOutputNum = 3;
 
 constexpr size_t kBNGrad1OutputNum = 3;

@@ -183,7 +183,11 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(batch_norm);
   auto bias = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
   MS_EXCEPTION_IF_NULL(bias);
-
+  auto is_train = AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
+  MS_EXCEPTION_IF_NULL(is_train);
+  if (!GetValue<bool>(is_train)) {
+    return nullptr;
+  }
   auto prim = std::make_shared<Primitive>(kBatchNormGradWithAddAndActivation);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
