@@ -355,6 +355,12 @@ void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, voi
   }
 }
 
+void SetDumpShape(const std::vector<size_t> &ms_shape, NotNull<aicpu::dump::Shape *> dump_shape) {
+  for (auto &dim : ms_shape) {
+    dump_shape->add_dim(dim);
+  }
+}
+
 void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
   if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
     MS_LOG(INFO) << "Skip dump output";
@@ -368,14 +374,14 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     auto data_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel, i);
+    auto output_origin_shape = AnfAlgo::GetOutputInferShape(kernel, i);
 
     aicpu::dump::Output output;
     output.set_data_type(GeTypesConvert::GetGeDataType(data_type));
     output.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
-    MS_EXCEPTION_IF_NULL(output.mutable_shape());
-    for (auto dim : output_shape) {
-      output.mutable_shape()->add_dim(dim);
-    }
+    SetDumpShape(output_shape, NOT_NULL(output.mutable_shape()));
+    SetDumpShape(output_origin_shape, NOT_NULL(output.mutable_origin_shape()));
+
     output.set_original_output_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
     output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
     // device address data size
@@ -409,13 +415,13 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
       output_type = AnfAlgo::GetOutputInferDataType(input_node, input_index);
     }
     auto output_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
+    auto output_origin_shape = AnfAlgo::GetOutputInferShape(input_node, input_index);
 
     input.set_data_type(GeTypesConvert::GetGeDataType(output_type));
     input.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
-    MS_EXCEPTION_IF_NULL(input.mutable_shape());
-    for (auto dim : output_shape) {
-      input.mutable_shape()->add_dim(dim);
-    }
+    SetDumpShape(output_shape, NOT_NULL(input.mutable_shape()));
+    SetDumpShape(output_origin_shape, NOT_NULL(input.mutable_origin_shape()));
+
     input.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
     // device  address data size
     auto address = AnfAlgo::GetPrevNodeOutputAddr(kernel, i);
