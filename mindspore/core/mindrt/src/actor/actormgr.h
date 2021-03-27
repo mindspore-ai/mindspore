@@ -18,6 +18,11 @@
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORMGR_H
 
 #include <set>
+#include <utility>
+#include <map>
+#include <memory>
+#include <string>
+
 #include "actor/actorthread.h"
 
 namespace mindspore {
@@ -78,7 +83,6 @@ class ActorMgr {
   std::string delegate;
   static std::shared_ptr<ActorMgr> actorMgr;
   static std::map<std::string, std::shared_ptr<IOMgr> > ioMgrs;
-
 };  // end of class ActorMgr
 
 };  // end of namespace mindspore

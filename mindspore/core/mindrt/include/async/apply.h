@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_APPLY_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_APPLY_H
 
+#include <utility>
+
 namespace mindspore {
 
 template <typename T, T... Ints>

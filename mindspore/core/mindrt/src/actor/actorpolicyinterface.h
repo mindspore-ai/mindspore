@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORPOLICYINTERFACE_H
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORPOLICYINTERFACE_H
 
+#include <list>
+#include <memory>
+
 namespace mindspore {
 
 class ActorPolicy {
@@ -26,8 +29,8 @@ class ActorPolicy {
     dequeMailbox = &mailbox2;
     msgCount = 0;
     start = false;
-  };
-  virtual ~ActorPolicy(){};
+  }
+  virtual ~ActorPolicy() {}
   inline void SwapMailbox() {
     std::list<std::unique_ptr<MessageBase>> *temp;
     temp = enqueMailbox;

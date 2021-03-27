@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <map>
+#include <list>
+#include <string>
+#include <memory>
+#include <utility>
 
 #include "actor/actormgr.h"
 #include "actor/actorpolicy.h"

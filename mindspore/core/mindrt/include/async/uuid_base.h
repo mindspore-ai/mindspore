@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include "async/option.h"
 
 namespace mindspore {
@@ -88,7 +89,7 @@ std::basic_ostream<T, F> &operator<<(std::basic_ostream<T, F> &s, const struct u
 
   int i = 0;
   for (const uint8_t *ptr = outputUuid.BeginAddress(); ptr < outputUuid.EndAddress(); ++ptr, ++i) {
-    s << std::setw(UUID_WIDTH) << (int)(*ptr);
+    s << std::setw(UUID_WIDTH) << static_cast<int>(*ptr);
     if (i == FIRST_DELIM_OFFSET || i == SECOND_DELIM_OFFSET || i == THIRD_DELIM_OFFSET || i == FOURTH_DELIM_OFFSET) {
       s << '-';
     }

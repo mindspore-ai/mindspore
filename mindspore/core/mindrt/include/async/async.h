@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_ASYNC_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_ASYNC_H
 
+#include <tuple>
+#include <memory>
+#include <utility>
+
 #include "actor/actor.h"
 #include "actor/buslog.h"
 

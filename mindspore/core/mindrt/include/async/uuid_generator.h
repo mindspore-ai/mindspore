@@ -17,7 +17,8 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_UUID_GENERATOR_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_UUID_GENERATOR_H
 
-#include "uuid_base.h"
+#include <string>
+#include "async/uuid_base.h"
 
 namespace mindspore {
 
