@@ -24,12 +24,10 @@ class ClipByNormNoDivSum(Expander):
         input_x0, input_x1, input_x2, input_x3 = self.inputs
 
         # cal result
-        greater_res = graph_builder.emit('Greater', [input_x0, input_x1], attrs={'fusion': 'SelectGT_000'})
-        select_res0 = graph_builder.emit('Select', [greater_res, input_x0, input_x2],
-                                         attrs={'fusion': 'SelectGT_000_end'})
+        greater_res = graph_builder.emit('Greater', [input_x0, input_x1])
+        select_res0 = graph_builder.emit('Select', [greater_res, input_x0, input_x2])
         sqrt_res = graph_builder.emit('Sqrt', [select_res0])
-        select_res1 = graph_builder.emit('Select', [greater_res, sqrt_res, input_x0],
-                                         attrs={'fusion': 'SelectGT_000_end'})
+        select_res1 = graph_builder.emit('Select', [greater_res, sqrt_res, input_x0])
         result = graph_builder.emit('Maximum', [select_res1, input_x3])
 
         return result

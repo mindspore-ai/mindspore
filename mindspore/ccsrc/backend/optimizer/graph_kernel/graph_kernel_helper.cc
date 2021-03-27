@@ -207,7 +207,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
   MS_EXCEPTION_IF_NULL(inputs_ptr);
   auto nodes = TopoSort(fg->get_return());
 
-  OrderedMap<ValuePtr, AnfNodePtrList> vmap;
+  std::vector<std::pair<tensor::TensorPtr, AnfNodePtrList>> v_replace;
   std::vector<AnfNodePtr> scalar_tensors;
   for (const auto &node : nodes) {
     if (!node->isa<CNode>()) {
@@ -223,14 +223,21 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
       if (TensorElementAllTheSame(tensor)) {
         scalar_tensors.emplace_back(tnode);
       } else {
-        vmap[GetValueNode(tnode)].push_back(tnode);
+        auto tensor_iter = std::find_if(
+          v_replace.begin(), v_replace.end(),
+          [&tensor](const std::pair<tensor::TensorPtr, AnfNodePtrList> &vl) { return vl.first->ValueEqual(*tensor); });
+        if (tensor_iter == v_replace.end()) {
+          v_replace.emplace_back(tensor, AnfNodePtrList{tnode});
+        } else {
+          tensor_iter->second.push_back(tnode);
+        }
       }
     }
   }
 
   ReplaceTensorWithScalar(fg, scalar_tensors);
 
-  if (vmap.empty()) {
+  if (v_replace.empty()) {
     return false;
   }
 
@@ -241,7 +248,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
   }
 
   auto &inputs = *inputs_ptr;
-  for (auto iter : vmap) {
+  for (auto iter : v_replace) {
     auto value_nodes = iter.second;
     if (value_nodes.empty()) {
       MS_LOG(EXCEPTION) << "Invalid value in map!";

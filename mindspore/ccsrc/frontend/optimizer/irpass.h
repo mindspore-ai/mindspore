@@ -124,9 +124,6 @@ class OptimizeIRPassLib {
   // AddN eliminate
   SubstitutionPtr addn_eliminate_;
 
-  // Fusion
-  SubstitutionPtr mark_interface_fusion_;
-
   // RowTensor Eliminate
   SubstitutionPtr row_tensor_eliminate_;
 

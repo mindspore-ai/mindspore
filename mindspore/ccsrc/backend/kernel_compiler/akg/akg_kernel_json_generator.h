@@ -49,7 +49,6 @@ constexpr auto kJsonKeyPtrAddress = "ptr_address";
 constexpr auto kJsonKeyCompositeGraph = "composite_graph";
 constexpr auto kJsonKeyPlatform = "platform";
 constexpr auto kJsonKeyOpFullName = "op_full_name";
-constexpr auto kJsonKeyFusion = "fusion";
 constexpr auto kJsonKeyParallelFusion = "parallel_fusion";
 constexpr auto kJsonKeyFusionType = "fusion_type";
 constexpr auto kJsonKeySubGraph = "sub_graph";

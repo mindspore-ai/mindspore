@@ -665,10 +665,6 @@ bool AkgKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_n
     auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
     MS_EXCEPTION_IF_NULL(primitive);
 
-    if (primitive->GetAttr("fusion") != nullptr) {
-      node_json["fusion"] = primitive->GetAttr("fusion")->ToString();
-    }
-
     (*node_json_map)[anf_node] = node_json;
   }
   return true;
