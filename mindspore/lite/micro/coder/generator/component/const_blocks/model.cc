@@ -66,12 +66,11 @@ class MModel : public Model {
 
 Model *Model::Import(const char *model_buf, size_t size) {
   MS_NULLPTR_IF_NULL(model_buf);
-  MModel *model = new (std::nothrow) MModel();
-  MS_NULLPTR_IF_NULL(model);
   if (size == 0) {
-    delete model;
     return nullptr;
   }
+  MModel *model = new (std::nothrow) MModel();
+  MS_NULLPTR_IF_NULL(model);
   model->buf = reinterpret_cast<char *>(malloc(size));
   if (model->buf == nullptr) {
     delete model;

@@ -69,7 +69,7 @@ int PoolingInt8Coder::SetParameters() {
   dim_src_height_ = input_tensor_->Height();
   dim_src_width_ = input_tensor_->Width();
   dim_dst_height_ = output_tensor_->DimensionSize(1);
-  dim_src_width_ = output_tensor_->DimensionSize(2);
+  dim_dst_width_ = output_tensor_->DimensionSize(2);
   ch_src_ = input_tensor_->Channel();
 
   stride_height_ = pooling_parameter_->stride_h_;

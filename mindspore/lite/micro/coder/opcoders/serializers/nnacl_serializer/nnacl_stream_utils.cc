@@ -31,9 +31,10 @@ std::ostream &operator<<(std::ostream &code, const ::QuantArg &quant_arg) {
   return code;
 }
 
-std::ostream &operator<<(std::ostream &code, const OpParameter &tile) {
+std::ostream &operator<<(std::ostream &code, const OpParameter &parameter) {
   code << "{ \"\""
-       << ", " << tile.type_ << ", " << gThreadNum << "}";
+       << ", " << std::boolalpha << parameter.infer_flag_ << ", " << parameter.type_ << ", " << gThreadNum << ", "
+       << parameter.quant_type_ << "}";
   return code;
 }
 

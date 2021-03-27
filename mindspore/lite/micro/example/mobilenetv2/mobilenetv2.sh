@@ -15,111 +15,132 @@
 # ============================================================================
 set -e
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-MINDSPORE_ROOT_DIR=${${CURRENT_DIR}%%/mindspore/lite/micro/example/mobilenetv2}
-
-OUTPUT_DIR=${1:-${MINDSPORE_ROOT_DIR}/output}
-THREAD_NUM=${2:-32}
-MODULE_NAME=mobilenetv2
-OUTPUT_IR=Reshape-64.ir
-CALIB_OUT=${CURRENT_DIR}/Reshape-64.out
-
-echo "current dir is: ${CURRENT_DIR}"
-echo "packed output dir is :${OUTPUT_DIR}"
-
-if [ ! -d "${OUTPUT_DIR}" ]; then
-  echo "folder ${OUTPUT_DIR} does not exist"
-  return 1
-fi
-
-# rm if already exist
-WORKSPACE=${CURRENT_DIR}/build
-rm -rf ${WORKSPACE}
-mkdir ${WORKSPACE} || exit 1
-PROJECT_DIR=${WORKSPACE}/${MODULE_NAME}
-
-compare_output() {
-  local OUTPUT_FILE=$1
-  local CALIB_FILE=$2
-  if [[ ! -f "${OUTPUT_FILE}" || ! -f "${CALIB_FILE}" ]]; then
-    echo "file ${OUTPUT_FILE}, ${CALIB_FILE} does not exist, pwd $(pwd)"
-    exit 1
-  fi
-  lines=$(cat ${CALIB_FILE} | wc -l)
-  for ((i = 1; i <= $lines; i++)); do
-    line1=$(awk 'NR=="'${i}'"{print $0}' ${CALIB_FILE})
-    line2=$(awk 'NR=="'${i}'"{print $0}' ${OUTPUT_FILE})
-    if [[ "${line1}" != "${line2}" ]]; then
-      echo -e "file ${OUTPUT_FILE}, ${CALIB_FILE}, compare failed! line: ${i}"
-      exit 1
-    fi
-  done
-  echo -e "compare success, ${OUTPUT_FILE}, ${CALIB_FILE}"
+usage()
+{
+  echo "Usage:"
+  echo "bash build.sh [-I arm64|arm32]"
+  echo "Options:"
+  echo "    -I download and build for arm64 or arm32, default arm64"
 }
 
-# cp oplib and codegen
-cp ${OUTPUT_DIR}/mindspore-lite-*-codegen-linux-x64.tar.gz ${WORKSPACE}/ || exit 1
-cd ${WORKSPACE} || exit 1
-tar -zxf mindspore-lite-*-codegen-linux-x64.tar.gz || exit 1
-cd mindspore-lite-*-codegen-linux-x64 || exit 1
-mv operator_library/ ${WORKSPACE}/ || exit 1
-mv codegen ${WORKSPACE}/ || exit 1
-cd -
-rm -r mindspore-lite-*-codegen-linux-x64 || exit 1
-rm mindspore-lite-*-codegen-linux-x64.tar.gz || exit 1
+LITE_PLATFORM="arm64"
+while getopts 'I:' OPT
+do
+    OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
+    case $OPT in
+        I)
+            if [[ "$OPTARG" == "arm64" ]]; then
+              LITE_PLATFORM="arm64"
+            elif [[ "$OPTARG" == "arm32" ]]; then
+              LITE_PLATFORM="arm32"
+            else
+              echo "-I parameter must be arm64 or arm32"
+              exit 1
+            fi
+            ;;
+        *)
+            echo "Unknown option ${opt}!"
+            usage
+            exit 1
+    esac
+done
 
-# convert model
-cp ${OUTPUT_DIR}/mindspore-lite-*-converter-linux-x64.tar.gz ${WORKSPACE}/ || exit 1
-cd ${WORKSPACE} || exit 1
-tar -zxf mindspore-lite-*-converter-linux-x64.tar.gz || exit 1
-rm mindspore-lite-*-converter-linux-x64.tar.gz || exit 1
-cd mindspore-lite-*-converter-linux-x64 || exit 1
-export LD_LIBRARY_PATH=./lib/:./third_party/protobuf/lib:./third_party/flatbuffers/lib:./third_party/glog/lib
-converter/converter_lite --fmk=TFLITE \
-                         --modelFile=${CURRENT_DIR}/mobilenet_v2_1.0_224_quant.tflite \
-                         --outputFile=${WORKSPACE}/mobilenet_v2
-cd -
-rm -rf mindspore-lite-*-converter-linux-x64 || exit 1
+BASEPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+MINDSPORE_ROOT_DIR=${BASEPATH%%/mindspore/lite/micro/example/mobilenetv2}
 
-# generate code
-${WORKSPACE}/codegen --modelPath=${WORKSPACE}/mobilenet_v2.ms \
-                     --moduleName=${MODULE_NAME} \
-                     --isWeightFile=true \
-                     --debugMode=true
-rm codegen
+echo "current dir is: ${BASEPATH}"
 
-if [ ! -d "${PROJECT_DIR}" ]; then
-  echo "folder ${PROJECT_DIR} does not exist"
-  return 1
-fi
-cd ${PROJECT_DIR} || exit 1
+MOBILE_NAME=mobilenetv2
+MOBILE_FILE=${MOBILE_NAME}.ms
 
-# 1. build static lib.a
-echo -e "building static library"
-mkdir -p src/build && cd src/build || exit 1
-OP_HEADER_PATH=${WORKSPACE}/operator_library/include
-OP_LIB=${WORKSPACE}/operator_library/lib/x86/libops.a
-echo "Head Path: ${OP_HEADER_PATH}"
-echo "Lib Path: ${OP_LIB}"
-cmake -DCMAKE_BUILD_TYPE=Debug       \
-      -DOP_LIB=${OP_LIB}             \
-      -DOP_HEADER_PATH=${OP_HEADER_PATH} ..
-make -j${THREAD_NUM}
+get_version() {
+    local VERSION_HEADER=${MINDSPORE_ROOT_DIR}/mindspore/lite/include/version.h
+    local VERSION_MAJOR=$(grep "const int ms_version_major =" ${VERSION_HEADER} | tr -dc "[0-9]")
+    local VERSION_MINOR=$(grep "const int ms_version_minor =" ${VERSION_HEADER} | tr -dc "[0-9]")
+    local VERSION_REVISION=$(grep "const int ms_version_revision =" ${VERSION_HEADER} | tr -dc "[0-9]")
+    VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
+}
 
-# 2. build benchmark
-cd ${PROJECT_DIR}/benchmark && mkdir -p build && cd build || exit 1
-cmake -DMODEL_LIB="${PROJECT_DIR}/src/build/libnet.a" ..
-make -j${THREAD_NUM}
+download_inference() {
+    if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+        local ARM_NAME=aarch64
+    else
+        local ARM_NAME=aarch32
+    fi
+    MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-inference-android-${ARM_NAME}"
+    local MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
+    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
 
-echo "net file: ${PROJECT_DIR}/src/${MODULE_NAME}.net"
-# 3. run benchmark
-./benchmark ${CURRENT_DIR}/input_1_224_224_3_uint8.bin ${PROJECT_DIR}/src/${MODULE_NAME}.net
-compare_output ${OUTPUT_IR} ${CALIB_OUT}
+    if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
+      wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
+    fi
 
-RET=$?
-if [[ "${RET}" -eq 0 ]]; then
-  echo -e "run benchmark success: ${MODULE_NAME}"
+    tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/ || exit 1
+    rm ${BASEPATH}/build/${MINDSPORE_FILE} || exit 1
+    PKG_PATH=${BASEPATH}/build/${MINDSPORE_FILE_NAME}
+}
+
+download_mobile() {
+    local MOBILE_DOWNLOAD_URL=https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_imagenet/r1.2/${MOBILE_FILE}
+
+    if [ ! -e ${BASEPATH}/build/${MOBILE_FILE} ]; then
+      wget -c -O ${BASEPATH}/build/${MOBILE_FILE} --no-check-certificate ${MOBILE_DOWNLOAD_URL}
+    fi
+}
+
+gen_mobile() {
+    local CODEGEN_FILE_NAME="mindspore-lite-${VERSION_STR}-inference-linux-x64"
+    local CODEGEN_FILE="${CODEGEN_FILE_NAME}.tar.gz"
+    local CODEGEN_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${CODEGEN_FILE}"
+
+#    if [ ! -e ${BASEPATH}/build/${CODEGEN_FILE} ]; then
+#      wget -c -O ${BASEPATH}/build/${CODEGEN_FILE} --no-check-certificate ${CODEGEN_LITE_DOWNLOAD_URL}
+#    fi
+
+    cp ${OUTPUT_DIR}/${CODEGEN_FILE} ${BASEPATH}/build || exit 1
+
+    tar xzvf ${BASEPATH}/build/${CODEGEN_FILE} -C ${BASEPATH}/build/ || exit 1
+    rm ${BASEPATH}/build/${CODEGEN_FILE} || exit 1
+    CODEGEN_PATH=${BASEPATH}/build/${CODEGEN_FILE_NAME}/tools/codegen
+    if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+        local TARGET=ARM64
+    else
+        local TARGET=ARM32A
+    fi
+    ${CODEGEN_PATH}/codegen --codePath=${BASEPATH}/build --modelPath=${BASEPATH}/build/${MOBILE_FILE} --target=${TARGET}
+}
+
+mkdir -p ${BASEPATH}/build
+
+get_version
+download_inference
+
+echo "downloading ${MOBILE_FILE}!"
+download_mobile
+echo "generating mobilenetv2"
+gen_mobile
+BENCHMARK_PATH=${BASEPATH}/build/${MOBILE_NAME}
+
+# build benchmark
+rm -rf ${BASEPATH}/build/benchmark
+mkdir -p ${BASEPATH}/build/benchmark && cd ${BASEPATH}/build/benchmark || exit 1
+
+if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+    echo "making arm64"
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI="arm64-v8a" \
+          -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
+          -DANDROID_NATIVE_API_LEVEL="19" \
+          -DMICRO_BUILD_ARM64=ON \
+          -DPKG_PATH=${PKG_PATH} ${BENCHMARK_PATH}
 else
-  echo -e "run benchmark failed: ${MODULE_NAME}"
-  exit 1
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI="armeabi-v7a" \
+          -DANDROID_TOOLCHAIN_NAME="clang" \
+          -DANDROID_NATIVE_API_LEVEL="19" \
+          -DMICRO_BUILD_ARM32=ON \
+          -DPKG_PATH=${PKG_PATH} ${BENCHMARK_PATH}
 fi
+make
