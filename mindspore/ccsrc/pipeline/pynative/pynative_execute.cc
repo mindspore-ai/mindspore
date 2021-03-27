@@ -283,6 +283,8 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info,
     });
     (void)graph_info.append(std::to_string(input_tensors[index]->data_type()));
     graph_info += "_";
+    (void)graph_info.append(input_tensors[index]->padding_type());
+    graph_info += "_";
     auto tensor_addr = input_tensors[index]->device_address();
     if (tensor_addr != nullptr) {
       (void)graph_info.append(std::to_string(std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr)->type_id()));
