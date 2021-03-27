@@ -238,11 +238,11 @@ class ForwardValueAndGrad(Cell):
         >>> labels = Tensor(np.zeros([1, 2]).astype(np.float32))
         >>> result = train_network(inputs, labels)
         >>> print(result)
-        (Tensor(shape=[1], dtype=Float32, value=[0]), ((Tensor(shape=[1, 2], dtype=Float32, value=
-        [[1, 1]]), Tensor(shape=[1, 2], dtype=Float32, value=
-        [[0, 0]])), (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[0.5, 0.5],
-         [0.5, 0.5]]),)))
+        (Tensor(shape=[1], dtype=Float32, value=[0.00000000e+00]), ((Tensor(shape=[1, 2], dtype=Float32, value=
+        [[1.00000000e+00, 1.00000000e+00]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[0.00000000e+00, 0.00000000e+00]])), (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[5.00000000e-01, 5.00000000e-01],
+         [5.00000000e-01, 5.00000000e-01]]),)))
     """
 
     def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False):
