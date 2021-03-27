@@ -190,6 +190,7 @@ generateOpsList
 getCommonFile
 # get src/ops
 getOpsFile "Registry\(schema::PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
+getOpsFile "REG_POPULATE\(PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
 getOpsFile "REG_INFER\(.*?, PrimType_" "${MINDSPORE_HOME}/mindspore/lite/nnacl/infer" "prototype" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat32" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat16" &
