@@ -95,6 +95,7 @@ ResNet-50总体网络架构如下：
   │   ├──crossentropy.py # 定义ResNet-50-Quant的交叉熵
   ├── train.py # 训练脚本
   ├── eval.py # 评估脚本
+  ├── export.py # 导出脚本
 
 ```
 
