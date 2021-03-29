@@ -391,7 +391,13 @@ Status DeviceQueueOp::PushDataToGPU() {
       break;
     }
     if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
-      RETURN_IF_NOT_OK(gpu_item_connector_->Pop(0, &items));
+      auto rc = gpu_item_connector_->Pop(0, &items);
+      // If the batches send by dataset are more than gpu calculate, gpu will core for no signal notify.
+      if (rc.IsError()) {
+        GpuBufferMgr::GetInstance().Close(handle);
+        GpuBufferMgr::GetInstance().CloseConfirm();
+        return rc;
+      }
     } else {
       break;
     }
