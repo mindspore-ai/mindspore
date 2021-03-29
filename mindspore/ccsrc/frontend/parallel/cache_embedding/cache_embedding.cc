@@ -714,6 +714,11 @@ void AddCacheEmbedding(const FuncGraphPtr &graph, bool is_pipe) {
   if (!CheckHostCacheParamSize(param_cache_enable_set)) {
     return;
   }
+  for (auto &node : cnodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimNPUAllocFloatStatus)) {
+      MS_LOG(EXCEPTION) << "Cache embedding haven't support loss scale yet.";
+    }
+  }
   auto unique_cache_enable = FindUniqueCacheEnable(cnodes);
   if (unique_cache_enable.empty()) {
     MS_LOG(WARNING) << "Parameters have cache enable, but not find Unique op cache enable.";
