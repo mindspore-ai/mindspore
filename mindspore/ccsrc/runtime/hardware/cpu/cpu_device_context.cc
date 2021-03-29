@@ -35,12 +35,12 @@ bool CPUDeviceContext::Initialize() {
   return true;
 }
 
-bool CPUDeviceContext::AllocateMemory(const DeviceAddressPtr &address, size_t size) const {
+bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(size);
   return true;
 }
 
-void CPUDeviceContext::FreeMemory(const DeviceAddressPtr &address) const {
+void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   static_cast<CPUMemoryManager *>(mem_manager_.get())->MemFree(address->ptr_);
   address->ptr_ = nullptr;
 }

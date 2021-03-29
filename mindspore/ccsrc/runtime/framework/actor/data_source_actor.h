@@ -22,43 +22,73 @@
 #include <memory>
 #include <unordered_map>
 #include <queue>
-#include "mindrt/include/actor/op_actor.h"
-#include "mindrt/include/async/future.h"
+#include <utility>
+#include "runtime/framework/actor/actor_common.h"
+#include "runtime/framework/actor/memory_interface_actor.h"
+#include "runtime/hardware/device_context.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/host_tensor_queue.h"
 #include "base/base.h"
 
 namespace mindspore {
 namespace runtime {
-// The data source actor is used to fetch data and process them into device tensors,
-// and then send them to kernel actor.
-class DataSourceActor : public ActorBase {
+using mindspore::device::DeviceContext;
+
+// The data source actor is used to fetch data from data source and process them into device tensors,
+// and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> AllocateMemory
+// -> OnMemoryAllocFinish -> SendOutput -> FreeMemory.
+class DataSourceActor : public MemoryInterfaceActor {
  public:
-  DataSourceActor(std::string name, size_t buffer_capacity) : ActorBase(name), buffer_capacity_(buffer_capacity) {}
+  DataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
+                  const AID memory_manager_aid)
+      : MemoryInterfaceActor(name),
+        buffer_capacity_(buffer_capacity),
+        device_context_(device_context),
+        memory_manager_aid_(memory_manager_aid) {}
   virtual ~DataSourceActor() = default;
 
   // The process entry of data processing.
-  virtual void FetchData(OpContext<DeviceTensor> *context) = 0;
+  void FetchData(OpContext<DeviceTensor> *context);
+
+  // The memory related operation interface.
+  void AllocateMemory(OpContext<DeviceTensor> *context) override;
+  void FreeMemory(OpContext<DeviceTensor> *context) override;
+  // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override{};
 
  protected:
+  // Construct the device tensors and fill to device tensor buffer from the member nodes during the data fetching.
+  virtual void FillDataBuffer() = 0;
+
+  // Send output to downstream actors to trigger computing after fetching data finished.
+  void SendOutput(OpContext<DeviceTensor> *context);
+
   // To trigger kernel actors running by op arrows.
   std::vector<OpArrowPtr> output_op_arrows_;
 
-  // The buffers store the data.
-  std::queue<std::vector<DeviceTensorPtr>> buffers_;
+  // The buffers store the device tensors.
+  std::queue<std::vector<DeviceTensor *>> buffers_;
   size_t buffer_capacity_;
 
-  // The sequential number of corresponding batch data.
-  std::queue<uuids::uuid *> sequential_nums_;
+  // The device interface of data copy.
+  const DeviceContext *device_context_;
+
+  // The id of memory manager actor. Send message to it for alloc and free memory during the data processing.
+  const AID memory_manager_aid_;
 };
 
 // The class represents that the data source is device queue.
 class DeviceQueueDataSourceActor : public DataSourceActor {
  public:
-  DeviceQueueDataSourceActor(std::string name, size_t buffer_capacity) : DataSourceActor(name, buffer_capacity) {}
-  virtual ~DeviceQueueDataSourceActor() = default;
+  DeviceQueueDataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
+                             const AID memory_manager_aid)
+      : DataSourceActor(name, buffer_capacity, device_context, memory_manager_aid) {}
+  ~DeviceQueueDataSourceActor() override = default;
 
-  void FetchData(OpContext<DeviceTensor> *context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+
+ protected:
+  void FillDataBuffer() override;
 
  private:
   friend class GraphScheduler;
@@ -70,11 +100,15 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 // The class represents that the data source is host queue.
 class HostQueueDataSourceActor : public DataSourceActor {
  public:
-  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, HostTensorQueuePtr host_queue)
-      : DataSourceActor(name, buffer_capacity), host_queue_(host_queue) {}
-  virtual ~HostQueueDataSourceActor() = default;
+  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
+                           const AID memory_manager_aid, HostTensorQueuePtr host_queue)
+      : DataSourceActor(name, buffer_capacity, device_context, memory_manager_aid), host_queue_(host_queue) {}
+  ~HostQueueDataSourceActor() override = default;
 
-  void FetchData(OpContext<DeviceTensor> *context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+
+ protected:
+  void FillDataBuffer() override;
 
  private:
   friend class GraphScheduler;

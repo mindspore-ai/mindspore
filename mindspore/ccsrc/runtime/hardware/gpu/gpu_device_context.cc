@@ -115,15 +115,41 @@ void GPUDeviceContext::Destroy() {
   }
 }
 
-bool GPUDeviceContext::AllocateMemory(const DeviceAddressPtr &address, size_t size) const {
-  return mem_manager_->MallocMemFromMemPool(address, size);
+bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
+  MS_EXCEPTION_IF_NULL(address);
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
+  if (!device_ptr) {
+    return false;
+  }
+  address->ptr_ = device_ptr;
+  address->size_ = size;
+  address->from_mem_pool_ = true;
+  return true;
 }
 
-void GPUDeviceContext::FreeMemory(const DeviceAddressPtr &address) const { mem_manager_->FreeMemFromMemPool(address); }
+void GPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(address->ptr_);
+  mem_manager_->FreeMemFromMemPool(address->ptr_);
+  address->ptr_ = nullptr;
+}
 
-bool GPUDeviceContext::AllocateContinuousMemory(const DeviceAddressPtrList &addr_list, size_t total_size,
+bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
                                                 const std::vector<size_t> &size_list) const {
-  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  auto device_ptr_list = mem_manager_->MallocContinuousMemFromMemPool(total_size, size_list);
+  if (device_ptr_list.size() == 0) {
+    return false;
+  }
+  if (addr_list.size() != device_ptr_list.size()) {
+    MS_LOG(EXCEPTION) << "The size of device list is not equal to the size of address list.";
+  }
+  for (size_t i = 0; i < addr_list.size(); i++) {
+    MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
+    MS_EXCEPTION_IF_NULL(addr_list[i]);
+    addr_list[i]->ptr_ = device_ptr_list[i];
+    addr_list[i]->from_mem_pool_ = true;
+  }
+  return true;
 }
 
 void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {

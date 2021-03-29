@@ -33,8 +33,8 @@ class CPUDeviceContext : public DeviceContext {
 
   bool Initialize() override;
 
-  bool AllocateMemory(const DeviceAddressPtr &address, size_t size) const override;
-  void FreeMemory(const DeviceAddressPtr &address) const override;
+  bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
+  void FreeMemory(DeviceAddress *const &address) const override;
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;

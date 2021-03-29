@@ -58,11 +58,19 @@ struct OpContext {
   std::vector<Promise<int>> *results_;
   const void *kernel_call_back_before_;
   const void *kernel_call_back_after_;
+
   void SetFailed(int32_t code) {
     for (auto promise : *results_) {
       promise.SetFailed(code);
     }
   }
+
+  void SetSuccess(int32_t code) {
+    for (auto promise : *results_) {
+      promise.SetValue(code);
+    }
+  }
+
   void SetResult(size_t index, int value) { results_->at(index).SetValue(value); }
 };
 
