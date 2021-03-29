@@ -2255,14 +2255,17 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     r"""
     Gets the softmax cross-entropy value between logits and labels with one-hot encoding.
 
-    Note:
-        Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
+    The updating formulas of SoftmaxCrossEntropyWithLogits algorithm are as follows,
 
-        .. math::
-            p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
-
-        .. math::
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)} \\
             loss_{ij} = -\sum_j{Y_{ij} * ln(p_{ij})}
+        \end{array}
+
+    where :math:`X` represents `logits`.
+    :math:`Y` represents `label`.
+    :math:`loss` represents `output`.
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type must be float16 or float32.
@@ -2450,12 +2453,15 @@ class SmoothL1Loss(PrimitiveWithInfer):
     SmoothL1Loss is a Loss similar to MSELoss but less sensitive to outliers as described in the
     `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ by Ross Girshick.
 
-    Note:
-        Sets input prediction as `X`, input target as `Y`, output as `loss`. Then,
+    The updating formulas of SmoothL1Loss algorithm are as follows,
 
-        .. math::
-            \text{SmoothL1Loss} = \begin{cases} \frac{0.5 x^{2}}{\text{beta}}, &if \left |x \right | < \text{beta} \cr
-            \left |x \right|-0.5 \text{beta}, &\text{otherwise}\end{cases}
+    .. math::
+        \text{SmoothL1Loss} = \begin{cases} \frac{0.5 x^{2}}{\text{beta}}, &if \left |x \right | < \text{beta} \cr
+        \left |x \right|-0.5 \text{beta}, &\text{otherwise}\end{cases}
+
+    where :math:`X` represents `prediction`.
+    :math:`Y` represents `target`.
+    :math:`loss` represents `output`.
 
     Args:
         beta (float): A parameter used to control the point where the function will change from
@@ -2739,28 +2745,25 @@ class SGD(PrimitiveWithCheck):
 
 
 class ApplyRMSProp(PrimitiveWithInfer):
-    """
+    r"""
     Optimizer that implements the Root Mean Square prop(RMSProp) algorithm.
     Please refer to the usage in source code of `nn.RMSProp`.
 
-    Note:
-        Update `var` according to the RMSProp algorithm.
+    The updating formulas of ApplyRMSProp algorithm are as follows,
 
-        ..  math::
-            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
-
-        ..  math::
-            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} + \\epsilon}} \\nabla Q_{i}(w)
-
-        ..  math::
+    .. math::
+        \begin{array}{ll} \\
+            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2 \\
+            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} + \\epsilon}} \\nabla Q_{i}(w) \\
             w = w - m_{t}
+        \end{array}
 
-        where :math:`w` represents `var`, which will be updated.
-        :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
-        :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
-        :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
-        :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
-        :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
+    where :math:`w` represents `var`, which will be updated.
+    :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
+    :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
+    :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
+    :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
+    :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
@@ -2838,32 +2841,27 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
 
 class ApplyCenteredRMSProp(PrimitiveWithInfer):
-    """
+    r"""
     Optimizer that implements the centered RMSProp algorithm.
     Please refer to the usage in source code of `nn.RMSProp`.
 
-    Note:
-        Update `var` according to the centered RMSProp algorithm.
+    The updating formulas of ApplyCenteredRMSProp algorithm are as follows,
 
-        ..  math::
-            g_{t} = \\rho g_{t-1} + (1 - \\rho)\\nabla Q_{i}(w)
-
-        ..  math::
-            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
-
-        ..  math::
-            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} - g_{t}^2 + \\epsilon}} \\nabla Q_{i}(w)
-
-        ..  math::
+    .. math::
+        /begin{array}{ll} \\
+            g_{t} = \\rho g_{t-1} + (1 - \\rho)\\nabla Q_{i}(w) \\
+            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2 \\
+            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} - g_{t}^2 + \\epsilon}} \\nabla Q_{i}(w) \\
             w = w - m_{t}
+        /end{array}
 
-        where :math:`w` represents `var`, which will be updated.
-        :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
-        :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
-        :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
-        :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
-        :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
-        :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
+    where :math:`w` represents `var`, which will be updated.
+    :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
+    :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
+    :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
+    :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
+    :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
+    :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
@@ -3020,7 +3018,7 @@ class L2Normalize(PrimitiveWithInfer):
 
     Args:
         axis (Union[list(int), tuple(int), int]): The starting axis for the input to apply the L2 normalization.
-        Default: 0.
+                                                  Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
@@ -4865,22 +4863,24 @@ class KLDivLoss(PrimitiveWithInfer):
     r"""
     Computes the Kullback-Leibler divergence between the target and the output.
 
-    Note:
-        Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.
-        Let,
+    The updating formulas of KLDivLoss algorithm are as follows,
 
-        .. math::
-            L = \{l_1,\dots,l_N\}^\top, \quad
-            l_n = y_n \cdot (\log y_n - x_n)
+    .. math::
+        L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = y_n \cdot (\log y_n - x_n)
 
         Then,
 
-        .. math::
-            \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{'none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
-            \end{cases}
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    where :math:`x` represents `input`.
+    :math:`y` represents `label`.
+    :math:`\ell(x, y)` represents `output`.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.

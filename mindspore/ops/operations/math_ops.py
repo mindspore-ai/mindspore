@@ -3864,11 +3864,10 @@ class Sign(PrimitiveWithInfer):
     r"""
     Performs sign on the tensor element-wise.
 
-    Note:
-        .. math::
-            sign(x) = \begin{cases} -1, &if\ x < 0 \cr
-            0, &if\ x = 0 \cr
-            1, &if\ x > 0\end{cases}
+    .. math::
+        sign(x) = \begin{cases} -1, &if\ x < 0 \cr
+        0, &if\ x = 0 \cr
+        1, &if\ x > 0\end{cases}
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
