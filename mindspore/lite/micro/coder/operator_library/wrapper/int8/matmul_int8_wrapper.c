@@ -38,10 +38,18 @@ void InitInt8MatrixB(int8_t *weight_ptr, int32_t *weight_bias_sums_batch_, int8_
     int8_t *cur_b_pack = dst_ptr + i * col_align * deep_16;
     int32_t *cur_sums = weight_bias_sums_batch_ + i * col_align;
     if (b_transpose) {
+#ifdef ENABLE_ARM32
+      RowMajor2Row2x16MajorInt8(cur_b, cur_b_pack, col, deep);
+#else
       RowMajor2Row16x4MajorInt8(cur_b, cur_b_pack, col, deep);
+#endif
       CalcWeightBiasSums(cur_b, deep, col, input_zp, weight_zp, bias_ptr, cur_sums, ColMajor, filter_per_channel);
     } else {
+#ifdef ENABLE_ARM32
+      RowMajor2Col16x2MajorInt8(cur_b, cur_b_pack, deep, col);
+#else
       RowMajor2Col16x4MajorInt8(cur_b, deep, col, cur_b_pack);
+#endif
       CalcWeightBiasSums(cur_b, deep, col, input_zp, weight_zp, bias_ptr, cur_sums, RowMajor, false);
     }
   }
