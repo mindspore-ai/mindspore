@@ -34,8 +34,6 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::STATUS;
 namespace mindspore {
 namespace opt {
-inline const PrimitivePtr kPrimDivFusion = std::make_shared<Primitive>("DivFusion");
-inline const PrimitivePtr kPrimErf = std::make_shared<Primitive>("Erf");
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 constexpr auto kWeightFormat = "weight_format";

@@ -297,7 +297,8 @@ const BaseRef OnnxLayerNormFusion::DefinePattern() const {
   VectorRef add1_ref =
     VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), mean2_ref, epsilon_});
   VectorRef sqrt_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqrt>), add1_ref});
-  VectorRef div_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&kPrimDivFusion>), sub1_ref, sqrt_ref});
+  VectorRef div_ref =
+    VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>), sub1_ref, sqrt_ref});
   VectorRef mul_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>), gamma_, div_ref});
   VectorRef add2_ref = VectorRef({std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>), mul_ref, beta_});
   return add2_ref;
