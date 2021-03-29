@@ -74,10 +74,12 @@ class RISE(PerturbationAttribution):
         >>> targets = 5
         >>> saliency = rise(inputs, targets)
         >>> print(saliency.shape)
+        (2, 1, 32, 32)
         >>> # `targets` can also be a 2D tensor
         >>> targets = ms.Tensor([[5], [1]], ms.int32)
         >>> saliency = rise(inputs, targets)
         >>> print(saliency.shape)
+        (2, 1, 32, 32)
 """
 
     def __init__(self,
