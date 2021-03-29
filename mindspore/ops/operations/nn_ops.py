@@ -7693,9 +7693,9 @@ class Conv3D(PrimitiveWithInfer):
     3D convolution layer.
 
     Applies a 3D convolution over an input tensor which is typically of shape
-    For input shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-     :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. where :math:`N` is batch size. :math:`C` is channel number.
-     the formula is defined as:
+    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. where :math:`N` is batch size. :math:`C` is channel number.
+    the formula is defined as:
 
     .. math::
 
@@ -7756,7 +7756,7 @@ class Conv3D(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
-                               Currently input data type only support float16 and float32.
+          Currently input data type only support float16 and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`. Currently weight data type only support float16 and float32.
         - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
@@ -8121,7 +8121,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
     Inputs:
         - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
           data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only support float16
-        and float32.
+          and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
           :math:`(C_{in}//groups, C_{out}, D_{in}, K_h, K_w)`. Currently weight data type only support float16
           and float32.
@@ -8133,7 +8133,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend``
 
-    Raise:
+    Raises:
         TypeError: If `in_channel`, `out_channel` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `pad` , `dilation` or `output_padding` is neither an int not a tuple.
         ValueError: If `in_channel`, `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.

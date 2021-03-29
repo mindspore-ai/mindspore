@@ -482,9 +482,9 @@ class Conv3d(_Conv):
     3D convolution layer.
 
     Applies a 3D convolution over an input tensor which is typically of shape
-    For input shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-     :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. where :math:`N` is batch size. :math:`C` is channel number.
-     the formula is defined as:
+    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. where :math:`N` is batch size. :math:`C` is channel number.
+    the formula is defined as:
 
     .. math::
 
@@ -731,10 +731,10 @@ class Conv3dTranspose(_Conv):
     Supported Platforms:
         ``Ascend``
 
-    Raise:
+    Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `padding` , `dilation` or `output_padding`
-            is neither an int not a tuple of three.
+                   is neither an int not a tuple of three.
         TypeError: If input data type is not float16 or float32.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
