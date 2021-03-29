@@ -54,7 +54,6 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "debug/anf_ir_utils.h"
-#include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/session/ascend_auto_monad.h"
 #include "debug/data_dump/e2e_dump_util.h"
