@@ -42,11 +42,17 @@ using mindspore::MSTensor;
 using mindspore::ModelType;
 using mindspore::GraphCell;
 using mindspore::kSuccess;
+using mindspore::dataset::vision::Decode;
+using mindspore::dataset::vision::SwapRedBlue;
+using mindspore::dataset::vision::Normalize;
+using mindspore::dataset::vision::Resize;
+using mindspore::dataset::vision::HWC2CHW;
 
 
 DEFINE_string(mindir_path, "", "mindir path");
 DEFINE_string(dataset_path, ".", "dataset path");
 DEFINE_int32(device_id, 0, "device id");
+DEFINE_string(need_preprocess, "n", "need preprocess or not");
 
 int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -78,6 +84,14 @@ int main(int argc, char **argv) {
 
   std::map<double, double> costTime_map;
   size_t size = all_files.size();
+
+  auto decode(new Decode());
+  auto swapredblue(new SwapRedBlue());
+  auto resize(new Resize({96, 96}));
+  auto normalize(new Normalize({127.5, 127.5, 127.5}, {127.5, 127.5, 127.5}));
+  auto hwc2chw(new HWC2CHW());
+  Execute preprocess({decode, swapredblue, resize, normalize, hwc2chw});
+
   for (size_t i = 0; i < size; ++i) {
     struct timeval start = {0};
     struct timeval end = {0};
@@ -86,7 +100,17 @@ int main(int argc, char **argv) {
     std::vector<MSTensor> inputs;
     std::vector<MSTensor> outputs;
     std::cout << "Start predict input files:" << all_files[i] << std::endl;
-    auto img = ReadFileToTensor(all_files[i]);
+
+    auto img = MSTensor();
+    if (FLAGS_need_preprocess == "y") {
+      ret = preprocess(ReadFileToTensor(all_files[i]), &img);
+      if (ret != kSuccess) {
+        std::cout << "preprocess " << all_files[i] << " failed." << std::endl;
+        return 1;
+      }
+    } else {
+      img = ReadFileToTensor(all_files[i]);
+    }
 
     inputs.emplace_back(model_inputs[0].Name(), model_inputs[0].DataType(), model_inputs[0].Shape(),
            img.Data().get(), img.DataSize());
