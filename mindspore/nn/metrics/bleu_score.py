@@ -24,8 +24,8 @@ class BleuScore(Metric):
     Calculates BLEU score of machine translated text with one or more references.
 
     Args:
-        n_gram (int): The n_gram value ranged from 1 to 4. Default: 4
-        smooth (bool): Whether or not to apply smoothing. Default: False
+        n_gram (int): The n_gram value ranged from 1 to 4. Default: 4.
+        smooth (bool): Whether or not to apply smoothing. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -33,7 +33,7 @@ class BleuScore(Metric):
     Example:
         >>> candidate_corpus = [['i', 'have', 'a', 'pen', 'on', 'my', 'desk']]
         >>> reference_corpus = [[['i', 'have', 'a', 'pen', 'in', 'my', 'desk'],
-        >>>                      ['there', 'is', 'a', 'pen', 'on', 'the', 'desk']]]
+        ...                      ['there', 'is', 'a', 'pen', 'on', 'the', 'desk']]]
         >>> metric = BleuScore()
         >>> metric.clear()
         >>> metric.update(candidate_corpus, reference_corpus)
