@@ -37,10 +37,6 @@ using mindspore::lite::RET_OK;
 
 Status ModelImpl::Build() {
   MS_LOG(DEBUG) << "Start build model.";
-  if (session_ != nullptr) {
-    MS_LOG(DEBUG) << "Model has been already built.";
-    return kSuccess;
-  }
   auto model = graph_->graph_data_->lite_model();
   if (graph_ == nullptr || graph_->graph_data_ == nullptr || model == nullptr) {
     MS_LOG(ERROR) << "Invalid graph.";
