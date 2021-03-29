@@ -113,7 +113,7 @@ Status DeviceCpu::ParseRunningProcess(const std::string &str) {
 Status DeviceCpu::Collect(ExecutionTree *tree) {
   std::ifstream file("/proc/stat");
   if (!file.is_open()) {
-    MS_LOG(WARNING) << "Open CPU file failed when collect CPU information";
+    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
     return Status::OK();
   }
   bool first_line = true;
@@ -214,7 +214,7 @@ Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
 
   std::ifstream file(stat_path);
   if (!file.is_open()) {
-    MS_LOG(WARNING) << "Open CPU file failed when collect CPU information";
+    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
     return Status::OK();
   }
   std::string str;
@@ -236,7 +236,7 @@ Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
 Status OperatorCpu::GetTotalCpuTime(uint64_t *total_stat) {
   std::ifstream file("/proc/stat");
   if (!file.is_open()) {
-    MS_LOG(WARNING) << "Open CPU file failed when collect CPU information";
+    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
     return Status::OK();
   }
   std::string str;
@@ -443,7 +443,7 @@ Status ProcessCpu::ParseCpuInfo() {
 
     std::ifstream file(stat_path);
     if (!file.is_open()) {
-      MS_LOG(WARNING) << "Open CPU file failed when collect CPU information";
+      MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
       continue;
     }
     std::string str;
@@ -479,7 +479,7 @@ Status ProcessCpu::ParseCpuInfo() {
 Status ProcessCpu::GetTotalCpuTime(uint64_t *total_stat) {
   std::ifstream file("/proc/stat");
   if (!file.is_open()) {
-    MS_LOG(WARNING) << "Open CPU file failed when collect CPU information";
+    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
     return Status::OK();
   }
   std::string str;

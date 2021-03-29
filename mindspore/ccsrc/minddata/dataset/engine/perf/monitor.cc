@@ -29,11 +29,13 @@ Monitor::Monitor(ExecutionTree *tree) : tree_(tree) {
 Status Monitor::operator()() {
   // Register this thread with TaskManager to receive proper interrupt signal.
   TaskManager::FindMe()->Post();
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  cfg->set_profiler_file_status(false);
 
   // Keep sampling if
   // 1) Monitor Task is not interrupted by TaskManager AND
   // 2) Iterator has not received EOF
-  while (!this_thread::is_interrupted() && !(tree_->isFinished())) {
+  while (!this_thread::is_interrupted() && !(tree_->isFinished()) && !(cfg->stop_profiler_status())) {
     if (tree_->IsEpochEnd()) {
       RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
       tree_->SetExecuting();
@@ -48,6 +50,8 @@ Status Monitor::operator()() {
   RETURN_IF_NOT_OK(tree_->GetProfilingManager()->Analyze());
   RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
   RETURN_IF_NOT_OK(tree_->GetProfilingManager()->ChangeFileMode());
+
+  cfg->set_profiler_file_status(true);
   return Status::OK();
 }
 

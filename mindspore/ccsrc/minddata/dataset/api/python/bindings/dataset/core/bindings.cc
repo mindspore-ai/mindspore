@@ -50,6 +50,8 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("set_auto_worker_config", &ConfigManager::set_auto_worker_config_)
                     .def("set_callback_timeout", &ConfigManager::set_callback_timeout)
                     .def("set_monitor_sampling_interval", &ConfigManager::set_monitor_sampling_interval)
+                    .def("stop_dataset_profiler", &ConfigManager::stop_dataset_profiler)
+                    .def("get_profiler_file_status", &ConfigManager::get_profiler_file_status)
                     .def("set_num_parallel_workers", &ConfigManager::set_num_parallel_workers)
                     .def("set_op_connector_size", &ConfigManager::set_op_connector_size)
                     .def("set_rows_per_buffer", &ConfigManager::set_rows_per_buffer)
