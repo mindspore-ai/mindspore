@@ -207,6 +207,7 @@ union PrimitiveType {
     ResizeGrad,
     Splice,
     LogSoftmax,
+    Call,
 }
 
 table Abs {
@@ -1098,4 +1099,7 @@ table Splice {
 
 table LogSoftmax {
     axis: long;
+}
+
+table Call {
 }

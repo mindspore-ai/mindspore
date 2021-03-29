@@ -244,6 +244,7 @@
 #include "ops/grad/abs_grad.h"
 #include "ops/splice.h"
 #include "ops/log_softmax.h"
+#include "ops/call.h"
 
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP)                                        \
   namespace mindspore::lite::ops {                                            \
@@ -457,5 +458,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LayerNormGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(ResizeGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(Splice);
 FUNC_MSOP2SCHEMAOP_DECLARE(LogSoftmax);
+FUNC_MSOP2SCHEMAOP_DECLARE(Call);
 #endif
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_

@@ -755,6 +755,11 @@ schema::PrimitiveT *LogSoftmaxPrimitiveCreator(const AnfNodePtr &node) {
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
+schema::PrimitiveT *CallPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Call>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
 RegistryMSOps g_activationPrimitiveCreatorRegistry("Activation", ActivationPrimitiveCreator);
@@ -969,6 +974,7 @@ RegistryMSOps g_zerosLikePrimitiveCreatorRegistry("ZerosLike", ZerosLikePrimitiv
 RegistryMSOps g_erfPrimitiveCreatorRegistry("Erf", ErfPrimitiveCreator);
 RegistryMSOps g_SplicePrimitiveCreatorRegistry("Splice", SplicePrimitiveCreator);
 RegistryMSOps g_LogSoftmaxPrimitiveCreatorRegistry("LogSoftmax", LogSoftmaxPrimitiveCreator);
+RegistryMSOps g_CallPrimitiveCreatorRegistry("call", CallPrimitiveCreator);
 }  // namespace lite
 }  // namespace mindspore
 
