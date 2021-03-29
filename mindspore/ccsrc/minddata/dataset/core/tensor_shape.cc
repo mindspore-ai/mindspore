@@ -232,7 +232,8 @@ std::vector<dsize_t> TensorShape::Strides() const { return std::vector<dsize_t>{
 Status TensorShape::ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const {
   *flat_index = 0;
   for (size_t k = 0; k < index.size(); k++) {
-    *flat_index += index[k] * strides_[k + 1];  // skip the first element of strides_ which is numOfElements
+    *flat_index +=
+      (index[k] == 0) ? 0 : index[k] * strides_[k + 1];  // skip the first element of strides_ which is numOfElements
   }
   CHECK_FAIL_RETURN_UNEXPECTED(*flat_index < NumOfElements(), "Not a valid index");
   return Status::OK();

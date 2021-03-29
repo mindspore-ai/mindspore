@@ -394,8 +394,10 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   }
   try {
     TensorShape shape{h, w};
-    int num_channels = input_cv->shape()[2];
-    if (input_cv->Rank() == 3) shape = shape.AppendDim(num_channels);
+    if (input_cv->Rank() == 3) {
+      int num_channels = input_cv->shape()[2];
+      shape = shape.AppendDim(num_channels);
+    }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(shape, input_cv->type(), &output_cv));
     cv::Rect roi(x, y, w, h);
