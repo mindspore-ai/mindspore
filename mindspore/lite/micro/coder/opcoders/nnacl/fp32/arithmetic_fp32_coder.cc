@@ -19,6 +19,7 @@
 #include <type_traits>
 #include "coder/opcoders/file_collector.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
@@ -245,8 +246,7 @@ int ArithmeticFP32Coder::Prepare(CoderContext *const context) {
   return RET_OK;
 }
 
-int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
-  int task_id = 0;
+void ArithmeticFP32Coder::ComputeInOutStrides() {
   if (arithmetic_parameter_->broadcasting_) {
     outside_ = 1;
     for (auto i = arithmetic_parameter_->ndim_ - 1; i >= 0; --i) {
@@ -263,11 +263,15 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
     ComputeStrides(arithmetic_parameter_->out_shape_, arithmetic_parameter_->out_strides_,
                    arithmetic_parameter_->ndim_);
   }
+}
+
+int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
+  ComputeInOutStrides();
 
   int element_num = output_tensor_->ElementsNum();
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(element_num, thread_num_);
-  int count = MSMIN(stride, element_num - stride * task_id);
+  int count = MSMIN(stride, element_num - stride * kDefaultTaskId);
   MS_CHECK_TRUE(!arithmetic_run_.empty(), "arithmetic_run function is nullptr!");
   NNaclFp32Serializer code;
   /**
@@ -275,22 +279,55 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
    * this solution is not suitable for micro, for the size of package.
    * */
   if (arithmetic_opt_run_ == "ElementOptSub" || arithmetic_run_ == "ElementSub") {
-    Collect(context, {"nnacl/fp32/sub_fp32.h"}, {"sub_fp32.c"});
+    Collect(context,
+            {
+              "nnacl/fp32/sub_fp32.h",
+            },
+            {
+              "sub_fp32.c",
+            });
   } else if (arithmetic_opt_run_ == "ElementOptAdd" || arithmetic_run_ == "ElementAdd") {
-    Collect(context, {"nnacl/fp32/add_fp32.h"}, {"add_fp32.c", "arithmetic_fp32.c", "arithmetic_base.c"});
+    Collect(context,
+            {
+              "nnacl/fp32/add_fp32.h",
+            },
+            {
+              "add_fp32.c",
+              "arithmetic_fp32.c",
+              "arithmetic_base.c",
+            });
   } else if (arithmetic_opt_run_ == "ElementOptMul" || arithmetic_run_ == "ElementMul") {
-    Collect(context, {"nnacl/fp32/mul_fp32.h"}, {"mul_fp32.c"});
+    Collect(context,
+            {
+              "nnacl/fp32/mul_fp32.h",
+            },
+            {
+              "mul_fp32.c",
+            });
   } else if (arithmetic_run_ == "ElementAddRelu") {
-    Collect(context, {"nnacl/fp32/add_relu_fp32.h"}, {"add_relu_fp32.c"});
+    Collect(context,
+            {
+              "nnacl/fp32/add_relu_fp32.h",
+            },
+            {
+              "add_relu_fp32.c",
+            });
   } else {
-    Collect(context, {"nnacl/arithmetic_common.h", "nnacl/fp32/arithmetic_fp32.h"},
-            {"arithmetic_common.c", "arithmetic_fp32.c"});
+    Collect(context,
+            {
+              "nnacl/arithmetic_common.h",
+              "nnacl/fp32/arithmetic_fp32.h",
+            },
+            {
+              "arithmetic_common.c",
+              "arithmetic_fp32.c",
+            });
   }
 
   if (arithmetic_parameter_->broadcasting_) {
     stride = UP_DIV(outside_, thread_num_);
-    out_count_ = MSMIN(stride, outside_ - stride * task_id);
-    out_thread_stride_ = stride * task_id;
+    out_count_ = MSMIN(stride, outside_ - stride * kDefaultTaskId);
+    out_thread_stride_ = stride * kDefaultTaskId;
     std::string input0_str = allocator_->GetRuntimeAddr(input_tensor_);
     std::string input1_str = allocator_->GetRuntimeAddr(filter_tensor_);
     std::string output_str = allocator_->GetRuntimeAddr(output_tensor_);

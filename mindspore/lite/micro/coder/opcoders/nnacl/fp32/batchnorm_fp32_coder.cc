@@ -54,7 +54,13 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(input_tensors_.size() == 3, "inputs size is not equal to three");
   Tensor *mean_tensor = input_tensors_.at(1);
   Tensor *var_tensor = input_tensors_.at(2);
-  Collect(context, {"nnacl/fp32/batchnorm.h"}, {"nnacl/fp32/batchnorm.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/batchnorm.h",
+          },
+          {
+            "nnacl/fp32/batchnorm.c",
+          });
   NNaclFp32Serializer code;
   code.CodeStruct("bn_parameter", *bn_parameter);
   code.CodeFunction("BatchNormFp32", input_tensor_, mean_tensor, var_tensor, "&bn_parameter", task_id, output_tensor_);

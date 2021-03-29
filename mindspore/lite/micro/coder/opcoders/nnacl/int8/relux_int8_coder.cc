@@ -40,7 +40,13 @@ int ReluxInt8Coder::Prepare(CoderContext *const context) {
 }
 
 int ReluxInt8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/int8/relux_int8.h"}, {"relux_int8.c"});
+  Collect(context,
+          {
+            "nnacl/int8/relux_int8.h",
+          },
+          {
+            "relux_int8.c",
+          });
 
   NNaclInt8Serializer code;
 

@@ -90,8 +90,15 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
   count_unit_ = thread_num_ > 1 ? UP_DIV(before_axis_size, thread_num_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;
 
-  Collect(context, {"nnacl/int8/concat_int8.h", "wrapper/int8/concat_int8_wrapper.h"},
-          {"concat_int8.c", "concat_int8_wrapper.c"});
+  Collect(context,
+          {
+            "nnacl/int8/concat_int8.h",
+            "wrapper/int8/concat_int8_wrapper.h",
+          },
+          {
+            "concat_int8.c",
+            "concat_int8_wrapper.c",
+          });
   NNaclInt8Serializer code;
 
   int in_tensor_count = input_tensors().size();

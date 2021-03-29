@@ -124,19 +124,39 @@ int MatMulFP32BaseCoder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // generate code .h .c
-  std::vector<std::string> asm_files;
+  Collect(context,
+          {
+            "nnacl/fp32/matmul_fp32.h",
+            "wrapper/fp32/matmul_fp32_wrapper.h",
+          },
+          {
+            "matmul_fp32.c",
+            "matmul_fp32_wrapper.c",
+          });
   if (target_ == kARM32A) {
-    asm_files = {"MatmulFp32.S", "MatmulFp32Opt.S", "MatmulFp32Opt12x4.S"};
+    Collect(context, {}, {},
+            {
+              "MatmulFp32.S",
+              "MatmulFp32Opt.S",
+              "MatmulFp32Opt12x4.S",
+            });
   } else if (target_ == kARM64) {
-    asm_files = {"MatmulFp32.S", "MatmulFp32Opt.S", "MatVecMulFp32.S"};
+    Collect(context, {}, {},
+            {
+              "MatmulFp32.S",
+              "MatmulFp32Opt.S",
+              "MatVecMulFp32.S",
+            });
   }
-  std::vector<std::string> h_files = {"nnacl/fp32/matmul_fp32.h", "wrapper/fp32/matmul_fp32_wrapper.h"};
-  std::vector<std::string> c_files = {"matmul_fp32.c", "matmul_fp32_wrapper.c"};
   if (de_quant_flag_) {
-    h_files.emplace_back("wrapper/fp32/dequant_int8_to_fp32_wrapper.h");
-    c_files.emplace_back("dequant_int8_to_fp32_wrapper.c");
+    Collect(context,
+            {
+              "wrapper/fp32/dequant_int8_to_fp32_wrapper.h",
+            },
+            {
+              "dequant_int8_to_fp32_wrapper.c",
+            });
   }
-  Collect(context, h_files, c_files, asm_files);
   NNaclFp32Serializer code;
   NNaclFp32Serializer init_code;
   code.CodeStruct("mat_mul_parameter", *params_);

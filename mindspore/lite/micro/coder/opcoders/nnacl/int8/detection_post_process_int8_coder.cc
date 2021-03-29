@@ -43,7 +43,13 @@ int DetectionPostProcessInt8Coder::GetInputData(CoderContext *const context, Ser
   MS_CHECK_TRUE(boxes->data_type() == kNumberTypeInt8, "Input data type error");
   MS_CHECK_TRUE(scores->data_type() == kNumberTypeInt8, "Input data type error");
 
-  Collect(context, {"nnacl/int8/quant_dtype_cast_int8.h"}, {"quant_dtype_cast_int8.c"});
+  Collect(context,
+          {
+            "nnacl/int8/quant_dtype_cast_int8.h",
+          },
+          {
+            "quant_dtype_cast_int8.c",
+          });
   code->CodeFunction("DoDequantizeInt8ToFp32", boxes, input_boxes_, boxes_quant_param.scale,
                      boxes_quant_param.zeroPoint, boxes->ElementsNum());
   code->CodeFunction("DoDequantizeInt8ToFp32", scores, input_scores_, scores_quant_param.scale,

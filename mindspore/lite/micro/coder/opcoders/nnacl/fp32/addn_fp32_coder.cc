@@ -28,7 +28,15 @@ int AddNFP32Coder::DoCode(CoderContext *const context) {
   int elements_num = input0->ElementsNum();
 
   // Get Tensor Pointer
-  Collect(context, {"nnacl/kernel/fp32/add_fp32.h"}, {"add_fp32.c", "arithmetic_fp32.c", "arithmetic_base.c"});
+  Collect(context,
+          {
+            "nnacl/kernel/fp32/add_fp32.h",
+          },
+          {
+            "add_fp32.c",
+            "arithmetic_fp32.c",
+            "arithmetic_base.c",
+          });
   NNaclFp32Serializer code;
   code.CodeFunction("ElementAdd", input0, input1, output_tensor_, elements_num);
   if (input_tensors_.size() > 2) {

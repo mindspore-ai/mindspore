@@ -80,7 +80,14 @@ int PadFP32Coder::ExtendPaddings(int *paddings, int length, const int *ori_paddi
 
 int PadFP32Coder::DoCode(CoderContext *const context) {
   int task_id = thread_num_ - 1;
-  Collect(context, {"nnacl/fp32/pad.h", "nnacl/pad_parameter.h"}, {"nnacl/fp32/pad.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/pad.h",
+            "nnacl/pad_parameter.h",
+          },
+          {
+            "nnacl/fp32/pad.c",
+          });
 
   NNaclFp32Serializer code;
   code.CodeArray("in_", in_, DEFAULT_PAD_NDIMS);

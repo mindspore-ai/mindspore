@@ -81,17 +81,39 @@ int ConvolutionDepthwiseINT8Coder::InitWeightBias(CoderContext *const context) {
 int ConvolutionDepthwiseINT8Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(conv_param_->input_channel_ == conv_param_->output_channel_,
                 "Only support input channel equals output channel.");
-  Collect(
-    context,
-    {"nnacl/int8/conv_depthwise_int8.h", "nnacl/int8/pack_int8.h", "wrapper/int8/convolution_depthwise_int8_wrapper.h"},
-    {"conv_depthwise_int8.c", "fixed_point.c", "pack_int8.c", "conv_int8.c", "winograd_transform.c",
-     "convolution_depthwise_int8_wrapper.c"},
-    {"ConvDwInt8Row.S", "ConvDwInt8PostAlign4.S", "ConvDwInt8PostAlign4PerChannel.S", "ConvDwInt8Center.S",
-     "DeconvDwInt8Center.S", "DeconvDwInt8Post.S"});
+  Collect(context,
+          {
+            "nnacl/int8/conv_depthwise_int8.h",
+            "nnacl/int8/pack_int8.h",
+            "wrapper/int8/convolution_depthwise_int8_wrapper.h",
+          },
+          {
+            "conv_depthwise_int8.c",
+            "fixed_point.c",
+            "pack_int8.c",
+            "conv_int8.c",
+            "winograd_transform.c",
+            "convolution_depthwise_int8_wrapper.c",
+          },
+          {
+            "ConvDwInt8Row.S",
+            "ConvDwInt8PostAlign4.S",
+            "ConvDwInt8PostAlign4PerChannel.S",
+            "ConvDwInt8Center.S",
+            "DeconvDwInt8Center.S",
+            "DeconvDwInt8Post.S",
+          });
   if (target_ == kARM64) {
     Collect(context, {}, {},
-            {"ConvDw3x3Int8.S", "ConvDw3x3Int8Corner.S", "ConvDw3x3Int8Horizontal.S", "ConvDw3x3Int8Stride2.S",
-             "ConvDw3x3Int8Vertical.S", "MatmulDpInt8Opt.S", "MatmulOptR4Int8.S"});
+            {
+              "ConvDw3x3Int8.S",
+              "ConvDw3x3Int8Corner.S",
+              "ConvDw3x3Int8Horizontal.S",
+              "ConvDw3x3Int8Stride2.S",
+              "ConvDw3x3Int8Vertical.S",
+              "MatmulDpInt8Opt.S",
+              "MatmulOptR4Int8.S",
+            });
   }
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);

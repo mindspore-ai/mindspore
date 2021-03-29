@@ -49,14 +49,18 @@ int BatchNormInt8Coder::Prepare(CoderContext *const context) {
   return RET_OK;
 }
 int BatchNormInt8Coder::DoCode(CoderContext *context) {
-  std::vector<std::string> headers = {"nnacl/slice_parameter.h"};
-  std::vector<std::string> cFiles = {"batchnorm_int8.c"};
   NNaclInt8Serializer code;
 
   code.CodeStruct("param", *batchnorm_param_);
   code.CodeFunction("BatchNormInt8", output_tensor_, input_tensor_, alpha_addr_, beta_addr_, kDefaultTaskId, "&param");
 
-  Collect(context, headers, cFiles);
+  Collect(context,
+          {
+            "nnacl/slice_parameter.h",
+          },
+          {
+            "batchnorm_int8.c",
+          });
   context->AppendCode(code.str());
 
   return RET_OK;

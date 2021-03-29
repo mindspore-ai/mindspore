@@ -80,6 +80,8 @@ class ArithmeticFP32Coder final : public OperatorCoder {
  private:
   int Init(CoderContext *const context);
 
+  void ComputeInOutStrides();
+
   int BroadcastRun(const std::string &input0, const std::string &input1, const std::string &output, int dim,
                    int out_count, int out_thread_stride, NNaclFp32Serializer *const code);
 

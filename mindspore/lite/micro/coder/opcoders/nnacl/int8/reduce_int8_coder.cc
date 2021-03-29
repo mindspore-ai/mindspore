@@ -192,7 +192,14 @@ int ReduceInt8Coder::DoCode(CoderContext *const context) {
   MS_LOG(DEBUG) << "*****Reduce code start*****";
   int task_id = 0;
   NNaclInt8Serializer code;
-  Collect(context, {"nnacl/int8/reduce_int8.h"}, {"reduce_int8.c", "fixed_point.c"});
+  Collect(context,
+          {
+            "nnacl/int8/reduce_int8.h",
+          },
+          {
+            "reduce_int8.c",
+            "fixed_point.c",
+          });
   std::string src_addr = allocator_->GetRuntimeAddr(input_tensor_);
   std::string dst_addr;
   std::string begin_src_data_src = allocator_->GetRuntimeAddr(begin_src_data_);

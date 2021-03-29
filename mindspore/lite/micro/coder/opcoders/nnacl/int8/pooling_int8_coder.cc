@@ -47,7 +47,14 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   // get quant params
   std::vector<QuantArg> in_quant_args = in_tensor->quant_params();
   std::vector<QuantArg> out_quant_args = out_tensor->quant_params();
-  Collect(context, {"nnacl/int8/pooling_int8.h", "nnacl/errorcode.h"}, {"pooling_int8.c"});
+  Collect(context,
+          {
+            "nnacl/int8/pooling_int8.h",
+            "nnacl/errorcode.h",
+          },
+          {
+            "pooling_int8.c",
+          });
   NNaclInt8Serializer code;
   code.precision(kPrecision);
   // code op parameter

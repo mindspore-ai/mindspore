@@ -69,7 +69,13 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
 
-  Collect(context, {"CMSIS/NN/Include/arm_nnfunctions.h"}, {"arm_softmax_s8.c"});
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {
+            "arm_softmax_s8.c",
+          });
   code.CodeFunction("arm_softmax_s8", input_tensor_, num_rows_, row_size_, mult_, shift_, diff_min_, output_tensor_);
 
   MS_LOG(INFO) << "SoftMaxInt8Coder has been called";

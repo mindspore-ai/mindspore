@@ -123,7 +123,15 @@ int DeconvolutionInt8Coder::InitRunBuf(CoderContext *const context) {
 }
 
 int DeconvolutionInt8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/int8/deconv.h"}, {"int8/deconv.c", "pack_int8.c", "quantization/fixed_point.c"});
+  Collect(context,
+          {
+            "nnacl/int8/deconv.h",
+          },
+          {
+            "int8/deconv.c",
+            "pack_int8.c",
+            "quantization/fixed_point.c",
+          });
 
   nnacl::NNaclInt8Serializer code;
   code.CodeFunction("memset", input_ptr_, 0, input_ptr_size_);

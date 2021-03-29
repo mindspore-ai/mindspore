@@ -66,7 +66,14 @@ int ArithmeticSelfFP32Coder::DoCode(CoderContext *const context) {
 
   MS_CHECK_TRUE(!arithmetic_self_run_.empty(), "arithmetic_run function is nullptr!");
 
-  Collect(context, {"nnacl/arithmetic_common.h", "nnacl/fp32/arithmetic_self.h"}, {"nnacl/fp32/arithmetic_self.c"});
+  Collect(context,
+          {
+            "nnacl/arithmetic_common.h",
+            "nnacl/fp32/arithmetic_self.h",
+          },
+          {
+            "nnacl/fp32/arithmetic_self.c",
+          });
   NNaclFp32Serializer code;
   code.CodeFunction(arithmetic_self_run_, input_tensor_, output_tensor_, size);
 

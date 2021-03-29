@@ -42,18 +42,27 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   // init struct PoolingParameters
   std::string pooling_func;
 
-  std::vector<std::string> cFiles;
   if (pooling_parameter_->pool_mode_ == PoolMode_AvgPool) {
-    cFiles = {"arm_avgpool_s8.c"};
+    Collect(context, {},
+            {
+              "arm_avgpool_s8.c",
+            });
     pooling_func = "arm_avgpool_s8";
   } else if (pooling_parameter_->pool_mode_ == PoolMode_MaxPool) {
-    cFiles = {"arm_max_pool_s8.c"};
+    Collect(context, {},
+            {
+              "arm_max_pool_s8.c",
+            });
     pooling_func = "arm_max_pool_s8";
   } else {
     MS_LOG(ERROR) << "unsupported pad mode";
     return RET_ERROR;
   }
-  Collect(context, {"CMSIS/NN/Include/arm_nnfunctions.h"}, cFiles);
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {});
 
   Serializer code;
   code.precision(kPrecision);

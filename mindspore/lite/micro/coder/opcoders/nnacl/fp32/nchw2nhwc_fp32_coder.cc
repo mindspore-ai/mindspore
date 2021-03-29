@@ -27,7 +27,13 @@ int Nchw2NhwcFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int Nchw2NhwcFP32Coder::DoCode(CoderContext *context) {
   // generate code .h .c
-  Collect(context, {"nnacl/pack.h"}, {"nnacl/pack.c"});
+  Collect(context,
+          {
+            "nnacl/pack.h",
+          },
+          {
+            "nnacl/pack.c",
+          });
   NNaclFp32Serializer code;
   if (input_tensor_->shape().size() == 4) {
     if (input_tensor_->data_type() == kNumberTypeFloat32) {

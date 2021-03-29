@@ -75,7 +75,13 @@ int AddInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
 
-  Collect(context, {"CMSIS/NN/Include/arm_nnfunctions.h"}, {"arm_elementwise_add_s8.c"});
+  Collect(context,
+          {
+            "CMSIS/NN/Include/arm_nnfunctions.h",
+          },
+          {
+            "arm_elementwise_add_s8.c",
+          });
 
   code.CodeFunction("arm_elementwise_add_s8", input1_, input2, input_1_offset_, input_1_mult_, input_1_shift_,
                     input_2_offset_, input_2_mult_, input_2_shift_, left_shift_, output_tensor_, out_offset_, out_mult_,

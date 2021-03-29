@@ -182,19 +182,43 @@ int Conv2DINT8Coder::Resize() {
 }
 
 int Conv2DINT8Coder::DoCode(CoderContext *const context) {
-  std::vector<std::string> asm_files;
   if (target_ == kARM32A) {
-    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8.S"};
+    Collect(context, {}, {},
+            {
+              "PreSum4x16Int8Peroc.S",
+              "PreSum4x16Int8Pert.S",
+              "MatmulInt8.S",
+            });
   } else if (target_ == kARM64) {
-    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8.S", "MatmulDpInt8.S"};
+    Collect(context, {}, {},
+            {
+              "PreSum4x16Int8Peroc.S",
+              "PreSum4x16Int8Pert.S",
+              "MatmulInt8.S",
+              "MatmulDpInt8.S",
+            });
   }
   Collect(context,
-          {"nnacl/int8/conv_int8.h", "nnacl/common_func.h", "wrapper/int8/convolution_int8_wrapper.h",
-           "wrapper/int8/conv_init_int8_wrapper.h", "wrapper/base/common_wrapper.h",
-           "wrapper/base/optimize_handler_wrapper.h"},
-          {"common_func.c", "pack_int8.c", "conv_int8.c", "winograd_transform.c", "matmul_int8.c", "fixed_point.c",
-           "convolution_int8_wrapper.c", "conv_init_int8_wrapper.c", "common_wrapper.c", "optimize_handler_wrapper.c"},
-          asm_files);
+          {
+            "nnacl/int8/conv_int8.h",
+            "nnacl/common_func.h",
+            "wrapper/int8/convolution_int8_wrapper.h",
+            "wrapper/base/common_wrapper.h",
+            "wrapper/base/optimize_handler_wrapper.h",
+            "wrapper/int8/conv_init_int8_wrapper.h",
+          },
+          {
+            "common_func.c",
+            "pack_int8.c",
+            "conv_int8.c",
+            "winograd_transform.c",
+            "matmul_int8.c",
+            "fixed_point.c",
+            "convolution_int8_wrapper.c",
+            "conv_init_int8_wrapper.c",
+            "common_wrapper.c",
+            "optimize_handler_wrapper.c",
+          });
   // call the op function
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);

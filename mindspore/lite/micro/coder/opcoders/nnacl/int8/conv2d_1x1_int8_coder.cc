@@ -44,12 +44,29 @@ int Conv2D1x1Int8Coder::Prepare(CoderContext *const context) {
 
 int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   Collect(context,
-          {"wrapper/int8/conv1x1_init_int8_wrapper.h", "wrapper/int8/conv1x1_run_int8_wrapper.h", "nnacl/common_func.h",
-           "nnacl/base/conv1x1_base.h", "nnacl/int8/matmul_int8.h", "nnacl/int8/pack_int8.h",
-           "nnacl/int8/conv1x1_int8.h", "nnacl/errorcode.h"},
-          {"common_func.c", "pack_int8.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c",
-           "conv1x1_init_int8_wrapper.c", "conv1x1_run_int8_wrapper.c", "conv1x1_base.c"},
-          {"MatmulInt8Opt.S"});
+          {
+            "wrapper/int8/conv1x1_init_int8_wrapper.h",
+            "wrapper/int8/conv1x1_run_int8_wrapper.h",
+            "nnacl/common_func.h",
+            "nnacl/base/conv1x1_base.h",
+            "nnacl/int8/matmul_int8.h",
+            "nnacl/int8/pack_int8.h",
+            "nnacl/int8/conv1x1_int8.h",
+            "nnacl/errorcode.h",
+          },
+          {
+            "common_func.c",
+            "pack_int8.c",
+            "conv1x1_int8.c",
+            "matmul_int8.c",
+            "fixed_point.c",
+            "conv1x1_init_int8_wrapper.c",
+            "conv1x1_run_int8_wrapper.c",
+            "conv1x1_base.c",
+          },
+          {
+            "MatmulInt8Opt.S",
+          });
 
   nnacl::NNaclInt8Serializer code;
 

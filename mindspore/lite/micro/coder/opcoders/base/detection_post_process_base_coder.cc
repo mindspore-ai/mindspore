@@ -112,9 +112,15 @@ int DetectionPostProcessBaseCoder::AllocateBuffer() {
 
 int DetectionPostProcessBaseCoder::DoCode(CoderContext *const context) {
   Collect(context,
-          {"nnacl/detection_post_process_parameter.h", "nnacl/fp32/detection_post_process_fp32.h",
-           "wrapper/base/detection_post_process_base_wrapper.h"},
-          {"detection_post_process_fp32.c", "detection_post_process_base_wrapper.c"});
+          {
+            "nnacl/detection_post_process_parameter.h",
+            "nnacl/fp32/detection_post_process_fp32.h",
+            "wrapper/base/detection_post_process_base_wrapper.h",
+          },
+          {
+            "detection_post_process_fp32.c",
+            "detection_post_process_base_wrapper.c",
+          });
 
   Serializer code;
   MS_CHECK_RET_CODE(GetInputData(context, &code), "GetInputData failed");

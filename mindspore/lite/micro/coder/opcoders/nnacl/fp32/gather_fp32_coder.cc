@@ -32,7 +32,13 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   Tensor *input1 = input_tensors_.at(1);
 
   // generate code .h .c
-  Collect(context, {"nnacl/fp32/gather.h"}, {"nnacl/fp32/gather.c"});
+  Collect(context,
+          {
+            "nnacl/fp32/gather.h",
+          },
+          {
+            "nnacl/fp32/gather.c",
+          });
 
   NNaclFp32Serializer code;
   std::vector<int> in_shape = input0->shape();

@@ -19,12 +19,10 @@
 #include <string>
 #include <vector>
 #include "coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.h"
-#include "coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.h"
 #include "nnacl/fp32/winograd_utils.h"
-#include "src/ops/populate/populate_register.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
-#include "src/common/prim_util.h"
+#include "coder/opcoders/parallel.h"
 #include "src/common/version_manager.h"
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
 
@@ -109,37 +107,60 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
 }
 
 int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
-  {
-    std::vector<std::string> asmFiles;
-    if (target_ == kARM32A) {
-      asmFiles = {"MatmulFp32.S",
-                  "MatmulFp32Opt.S",
-                  "PreSum4x16Int8Peroc.S",
-                  "PreSum4x16Int8Pert.S",
-                  "IndirectGemmInt16to32_8x4.S",
-                  "MatmulInt8.S",
-                  "MatmulFp32Opt12x4.S"};
-    } else if (target_ == kARM64) {
-      asmFiles = {"MatmulFp32.S",          "MatmulFp32Opt.S",      "PreSum4x16Int8Peroc.S",       "MatVecMulFp32.S",
-                  "PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "IndirectGemmInt16to32_8x4.S", "MatmulInt8.S"};
-    }
-    std::vector<std::string> h_files = {"nnacl/fp32/conv_common_fp32.h", "nnacl/fp32/matmul_fp32.h",
-                                        "nnacl/conv_parameter.h", "nnacl/op_base.h"};
-    std::vector<std::string> c_files = {"common_func.c", "conv_common_fp32.c", "matmul_fp32.c", "pack_fp32.c"};
-    if (de_quant_flag_) {
-      h_files.emplace_back("wrapper/fp32/dequant_int8_to_fp32_wrapper.h");
-      c_files.emplace_back("dequant_int8_to_fp32_wrapper.c");
-    }
-    Collect(context, h_files, c_files, asmFiles);
+  Collect(context,
+          {
+            "nnacl/fp32/conv_common_fp32.h",
+            "nnacl/fp32/matmul_fp32.h",
+            "nnacl/conv_parameter.h",
+            "nnacl/op_base.h",
+          },
+          {
+            "common_func.c",
+            "conv_common_fp32.c",
+            "matmul_fp32.c",
+            "pack_fp32.c",
+          });
+  if (de_quant_flag_) {
+    Collect(context,
+            {
+              "wrapper/fp32/dequant_int8_to_fp32_wrapper.h",
+            },
+            {
+              "dequant_int8_to_fp32_wrapper.c",
+            });
   }
+  if (target_ == kARM32A) {
+    Collect(context, {}, {},
+            {
+              "MatmulFp32.S",
+              "MatmulFp32Opt.S",
+              "PreSum4x16Int8Peroc.S",
+              "PreSum4x16Int8Pert.S",
+              "IndirectGemmInt16to32_8x4.S",
+              "MatmulInt8.S",
+              "MatmulFp32Opt12x4.S",
+            });
+  } else if (target_ == kARM64) {
+    Collect(context, {}, {},
+            {
+              "MatmulFp32.S",
+              "MatmulFp32Opt.S",
+              "PreSum4x16Int8Peroc.S",
+              "MatVecMulFp32.S",
+              "PreSum4x16Int8Peroc.S",
+              "PreSum4x16Int8Pert.S",
+              "IndirectGemmInt16to32_8x4.S",
+              "MatmulInt8.S",
+            });
+  }
+
   NNaclFp32Serializer code;
   // call the op function
   code.CodeFunction("memset", packed_input_, "0", packed_input_size_);
   code.CodeFunction("memset", col_major_input_, "0", col_major_input_size_);
   code.CodeStruct("conv_parameter", *conv_param_);
-  int task_id = 0;
   code.CodeFunction("ConvFp32", input_tensor_, packed_input_, packed_weight_, bias_data_, col_major_input_,
-                    output_tensor_, task_id, "(ConvParameter *)&conv_parameter");
+                    output_tensor_, kDefaultTaskId, "&conv_parameter");
 
   context->AppendCode(code.str());
   return RET_OK;
