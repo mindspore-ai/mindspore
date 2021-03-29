@@ -475,7 +475,8 @@ bool TaskEmitAction(const ResourcePtr &res) {
   auto context_ptr = MsContext::GetInstance();
   std::string backend = MsContext::GetInstance()->backend_policy();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (func_graph->ContainMultiTarget()) {
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  if (func_graph->ContainMultiTarget() || !task_sink) {
     bc_ptr->set_is_multi_graph_sink(false);
     context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);

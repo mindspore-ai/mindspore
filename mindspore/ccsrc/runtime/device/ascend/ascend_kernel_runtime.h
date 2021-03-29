@@ -67,6 +67,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
   void KernelLaunchProfiling(const std::string &kernel_name) override;
+  void GenKernelEvents(const session::KernelGraph *graph) override;
 
  private:
   bool InitDevice();

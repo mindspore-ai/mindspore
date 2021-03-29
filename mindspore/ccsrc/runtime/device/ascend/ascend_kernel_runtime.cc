@@ -35,6 +35,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "runtime/device/ascend/ascend_memory_manager.h"
+#include "runtime/device/ascend/ascend_event.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
@@ -154,7 +155,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   DumpJsonParser::GetInstance().PrintUnusedKernel();
 
   graph_dynamic_kernel_map_.clear();
-
+  graph_kernel_events_map_.clear();
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
     auto ret = ModelRunner::Instance().UnloadModel(iter.first);
@@ -186,7 +187,10 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
     MS_LOG(DEBUG) << "Start Clear graph:" << graph_id << " dynamic kernel";
     graph_dynamic_kernel_map_.erase(dynamic_kernel_iter);
   }
-
+  auto events_iter = graph_kernel_events_map_.find(graph_id);
+  if (events_iter != graph_kernel_events_map_.end()) {
+    graph_kernel_events_map_.erase(events_iter);
+  }
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
   if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
     MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
@@ -340,9 +344,9 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
 
 bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   if (!is_task_sink) {
+    GenKernelEvents(graph);
     return true;
   }
-
   // Do HcomExecutorInitialize
   if (graph->is_dynamic_shape() && !HcclExecutorManager::GetInstance().Initialize()) {
     MS_LOG(ERROR) << "Init Hccl Executor Failed";
@@ -355,6 +359,58 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
     return false;
   }
   return true;
+}
+
+void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto &kernels = graph->execution_order();
+  if (kernels.empty()) {
+    return;
+  }
+  auto kernel_events =
+    std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>();
+  auto &kernel_pre_run_events = kernel_events.first;
+  auto &kernel_post_run_events = kernel_events.second;
+  kernel_pre_run_events.resize(kernels.size());
+  kernel_post_run_events.resize(kernels.size());
+  for (size_t i = 0; i < kernels.size(); ++i) {
+    auto &kernel = kernels[i];
+    if (!AnfAlgo::IsCommunicationOp(kernel)) {
+      continue;
+    }
+    auto pre_event = std::make_shared<AscendEvent>();
+    auto post_event = std::make_shared<AscendEvent>();
+    pre_event->set_wait_stream(communication_stream_);
+    pre_event->set_record_stream(stream_);
+    post_event->set_wait_stream(stream_);
+    post_event->set_record_stream(communication_stream_);
+    kernel_pre_run_events[i].emplace_back([pre_event]() {
+      pre_event->RecordEvent();
+      pre_event->WaitEvent();
+    });
+    kernel_post_run_events[i].emplace_back([post_event]() { post_event->RecordEvent(); });
+    bool found_nearest_child = false;
+    for (size_t j = i + 1; j < kernels.size(); ++j) {
+      auto &child = kernels[j];
+      MS_EXCEPTION_IF_NULL(child);
+      auto input_size = child->inputs().size() - 1;
+      for (size_t k = 0; k < input_size; ++k) {
+        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
+        if (kernel_index.first == kernel) {
+          found_nearest_child = true;
+          break;
+        }
+      }
+      if (found_nearest_child) {
+        kernel_pre_run_events[j].emplace_back([post_event]() { post_event->WaitEvent(); });
+        break;
+      }
+    }
+    if (!found_nearest_child) {
+      kernel_post_run_events[i].emplace_back([post_event]() { post_event->WaitEvent(); });
+    }
+  }
+  graph_kernel_events_map_[graph->graph_id()] = std::move(kernel_events);
 }
 
 bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
@@ -374,7 +430,7 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
     dynamic_kernel->Initialize();
     dynamic_kernels.emplace_back(dynamic_kernel);
   }
-  graph_dynamic_kernel_map_[graph->graph_id()] = dynamic_kernels;
+  graph_dynamic_kernel_map_[graph->graph_id()] = std::move(dynamic_kernels);
   MS_LOG(INFO) << "GenDynamicKernel end";
   return true;
 }
@@ -852,8 +908,9 @@ bool AscendKernelRuntime::HcclInit() {
     MS_LOG(ERROR) << "Hcom init failed.";
     return false;
   }
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(INFO) << "PyNative hccl init";
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode || !task_sink) {
+    MS_LOG(INFO) << "Hccl comm init.";
     return kernel::HcclContext::GetInstance().InitHccl();
   }
   return true;

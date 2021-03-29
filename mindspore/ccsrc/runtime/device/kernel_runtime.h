@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <utility>
 #include <unordered_set>
 #include "runtime/device/device_address.h"
 #include "ir/tensor.h"
@@ -132,10 +133,12 @@ class KernelRuntime {
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
 
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
+  virtual void GenKernelEvents(const session::KernelGraph *graph) {}
 
  private:
   void AssignStaticMemoryOutput(const session::KernelGraph *graph);
   bool LaunchKernelMod(const session::KernelGraph &graph);
+  void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index);
   static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs);
   size_t CountNodeDeviceMemorySize(const AnfNodePtr &node, size_t output_index);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
@@ -160,6 +163,9 @@ class KernelRuntime {
   void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
+  std::map<uint32_t,
+           std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>>
+    graph_kernel_events_map_;
   std::vector<std::shared_ptr<char[]>> buffer_ptrs_ = {};
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;

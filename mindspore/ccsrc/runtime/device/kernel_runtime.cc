@@ -31,6 +31,7 @@
 #include "utils/shape_utils.h"
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
+
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -920,6 +921,16 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   }
 }
 
+void KernelRuntime::LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &kernel_events,
+                                      size_t index) {
+  if (index >= kernel_events.size()) {
+    return;
+  }
+  for (auto &event : kernel_events[index]) {
+    event();
+  }
+}
+
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
@@ -931,12 +942,21 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
     MS_LOG(EXCEPTION) << "The size of dynamic kernels " << dynamic_kernel_list.size()
                       << " should be equal to the size of kernels " << kernels.size();
   }
+  std::vector<std::vector<std::function<void()>>> kernel_pre_run_events;
+  std::vector<std::vector<std::function<void()>>> kernel_post_run_events;
+  auto events_iter = graph_kernel_events_map_.find(graph.graph_id());
+  if (events_iter != graph_kernel_events_map_.end()) {
+    kernel_pre_run_events = events_iter->second.first;
+    kernel_post_run_events = events_iter->second.second;
+  }
   for (size_t i = 0; i < kernels.size(); ++i) {
+    LaunchKernelEvent(kernel_pre_run_events, i);
     if (!dynamic_kernel_list.empty() && dynamic_kernel_list[i] != nullptr &&
         dynamic_kernel_list[i]->is_dynamic_shape()) {
       dynamic_kernel_list[i]->InferShape();
       dynamic_kernel_list[i]->UpdateArgs();
       dynamic_kernel_list[i]->Execute();
+
       if (!SyncStream()) {
         MS_LOG(ERROR) << "SyncStream failed";
         return false;
@@ -958,20 +978,23 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
         }
         continue;
       }
-
       AddressPtrList kernel_inputs;
       AddressPtrList kernel_workspaces;
       AddressPtrList kernel_outputs;
       GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-
-      auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+      bool ret;
+      if (AnfAlgo::IsCommunicationOp(kernel)) {
+        ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
+      } else {
+        ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+      }
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
       }
-
       KernelLaunchProfiling(kernels[i]->fullname_with_scope());
     }
+    LaunchKernelEvent(kernel_post_run_events, i);
   }
   return true;
 }
