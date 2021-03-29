@@ -214,7 +214,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                          const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
-  std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
+  AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
   virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
