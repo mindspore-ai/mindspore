@@ -18,8 +18,10 @@ configuration parameters, and read a configuration file.
 """
 import os
 import random
+import time
 import numpy
 import mindspore._c_dataengine as cde
+from mindspore import log as logger
 
 __all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'set_num_parallel_workers',
            'get_num_parallel_workers', 'set_monitor_sampling_interval', 'get_monitor_sampling_interval', 'load',
@@ -357,3 +359,17 @@ def load(file):
         >>> ds.config.load(config_file)
     """
     _config.load(file)
+
+
+def _stop_dataset_profiler():
+    """
+    Mainly for stop dataset profiler.
+
+    Returns:
+        bool, whether the profiler file has generated.
+    """
+
+    while not _config.get_profiler_file_status():
+        _config.stop_dataset_profiler(True)
+        logger.warning("Profiling: waiting for dataset part profiling stop.")
+        time.sleep(1)
