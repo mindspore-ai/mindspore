@@ -116,38 +116,28 @@ if __name__ == '__main__':
         else:
             no_decayed_params.append(param)
 
-    group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
-                    {'params': no_decayed_params},
-                    {'order_params': net.trainable_params()}]
-    opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
-    # define loss, model
     if target == "Ascend":
-        if args_opt.dataset == "imagenet2012":
-            if not config.use_label_smooth:
-                config.label_smooth_factor = 0.0
-            loss = CrossEntropySmooth(sparse=True, reduction="mean",
-                                      smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-        loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+        group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
+                        {'params': no_decayed_params},
+                        {'order_params': net.trainable_params()}]
+        opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
+    else:
+        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay,
+                       config.loss_scale)
+    # define loss, model
+    if args_opt.dataset == "imagenet2012":
+        if not config.use_label_smooth:
+            config.label_smooth_factor = 0.0
+        loss = CrossEntropySmooth(sparse=True, reduction="mean",
+                                  smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+    else:
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+    if target != "CPU":
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
                       amp_level="O2", keep_batchnorm_fp32=False)
     else:
-        # GPU target
-        if args_opt.dataset == "imagenet2012":
-            if not config.use_label_smooth:
-                config.label_smooth_factor = 0.0
-            loss = CrossEntropySmooth(sparse=True, reduction="mean",
-                                      smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay,
-                       config.loss_scale)
-        loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        # Mixed precision
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                      amp_level="O2", keep_batchnorm_fp32=False)
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
