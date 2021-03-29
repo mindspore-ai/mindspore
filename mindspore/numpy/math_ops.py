@@ -450,9 +450,9 @@ def power(x1, x2, dtype=None):
         >>> x2 = np.full((3, 2), [3, 4]).astype('float32')
         >>> output = np.power(x1, x2)
         >>> print(output)
-        [[ 1 16]
-        [ 1 16]
-        [ 1 16]]
+        [[ 1. 16.]
+        [ 1. 16.]
+        [ 1. 16.]]
     """
     return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
 
