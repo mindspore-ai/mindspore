@@ -23,45 +23,87 @@
 
 namespace mindspore::lite {
 STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels, std::vector<int64_t> *strides,
-                    std::vector<int64_t> *dilation, std::vector<int64_t> *pads) {
+                    std::vector<int64_t> *dilation, std::vector<int64_t> *pads, bool *conv1d) {
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "dilations") {
-      if (onnx_node_attr.ints().size() != 2) {
-        MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+      switch (onnx_node_attr.ints().size()) {
+        case 1:
+          *conv1d = true;
+          dilation->push_back(1);
+          dilation->push_back(onnx_node_attr.ints(0));
+          break;
+        case 2:
+          dilation->push_back(onnx_node_attr.ints(0));
+          dilation->push_back(onnx_node_attr.ints(1));
+          break;
+        default:
+          MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+          return RET_ERROR;
       }
-      dilation->push_back(onnx_node_attr.ints(0));
-      dilation->push_back(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "kernels") {
-      if (onnx_node_attr.ints().size() != 2) {
-        MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+      switch (onnx_node_attr.ints().size()) {
+        case 1:
+          *conv1d = true;
+          kernels->push_back(1);
+          kernels->push_back(onnx_node_attr.ints(0));
+          break;
+        case 2:
+          kernels->push_back(onnx_node_attr.ints(0));
+          kernels->push_back(onnx_node_attr.ints(1));
+          break;
+        default:
+          MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+          return RET_ERROR;
       }
-      kernels->push_back(onnx_node_attr.ints(0));
-      kernels->push_back(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "kernel_shape") {
-      if (onnx_node_attr.ints().size() != 2) {
-        MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+      switch (onnx_node_attr.ints().size()) {
+        case 1:
+          *conv1d = true;
+          kernels->push_back(1);
+          kernels->push_back(onnx_node_attr.ints(0));
+          break;
+        case 2:
+          kernels->push_back(onnx_node_attr.ints(0));
+          kernels->push_back(onnx_node_attr.ints(1));
+          break;
+        default:
+          MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+          return RET_ERROR;
       }
-      kernels->push_back(onnx_node_attr.ints(0));
-      kernels->push_back(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "pads") {
-      if (onnx_node_attr.ints().size() != 4) {
-        MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 4";
-        return RET_ERROR;
+      switch (onnx_node_attr.ints().size()) {
+        case 2:
+          *conv1d = true;
+          pads->push_back(0);
+          pads->push_back(0);
+          pads->push_back(onnx_node_attr.ints(0));
+          pads->push_back(onnx_node_attr.ints(1));
+          break;
+        case 4:
+          pads->push_back(onnx_node_attr.ints(0));
+          pads->push_back(onnx_node_attr.ints(2));
+          pads->push_back(onnx_node_attr.ints(1));
+          pads->push_back(onnx_node_attr.ints(3));
+          break;
+        default:
+          MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 2 or 4";
+          return RET_ERROR;
       }
-      pads->push_back(onnx_node_attr.ints(0));
-      pads->push_back(onnx_node_attr.ints(2));
-      pads->push_back(onnx_node_attr.ints(1));
-      pads->push_back(onnx_node_attr.ints(3));
     } else if (onnx_node_attr.name() == "strides") {
-      if (onnx_node_attr.ints().size() != 2) {
-        MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+      switch (onnx_node_attr.ints().size()) {
+        case 1:
+          *conv1d = true;
+          strides->push_back(1);
+          strides->push_back(onnx_node_attr.ints(0));
+          break;
+        case 2:
+          strides->push_back(onnx_node_attr.ints(0));
+          strides->push_back(onnx_node_attr.ints(1));
+          break;
+        default:
+          MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+          return RET_ERROR;
       }
-      strides->push_back(onnx_node_attr.ints(0));
-      strides->push_back(onnx_node_attr.ints(1));
     }
   }
   return RET_OK;
@@ -140,8 +182,12 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   prim->set_pad_mode(pad_mode);
   prim->set_group(group);
 
-  if (ParseVecAttr(onnx_node, &kernels, &strides, &dilation, &pads) != RET_OK) {
+  bool conv1d = false;
+  if (ParseVecAttr(onnx_node, &kernels, &strides, &dilation, &pads, &conv1d) != RET_OK) {
     return nullptr;
+  }
+  if (conv1d) {
+    prim->set_format(mindspore::Format::NCW);
   }
   if (dilation.empty()) {
     prim->set_dilation({1, 1});

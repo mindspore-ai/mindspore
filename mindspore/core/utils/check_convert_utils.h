@@ -62,7 +62,9 @@ enum Format : int64_t {
   NC4 = 12,
   NC4HW4 = 13,
   NUM_OF_FORMAT = 14,
-  NCDHW = 15
+  NCDHW = 15,
+  NWC = 16,
+  NCW = 17
 };
 enum ActivationType : int64_t {
   NO_ACTIVATION = 0,

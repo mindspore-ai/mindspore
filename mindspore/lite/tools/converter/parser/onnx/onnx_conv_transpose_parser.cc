@@ -49,8 +49,12 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
   prim->set_group(group);
   prim->set_pad_mode(pad_mode);
 
-  if (ParseVecAttr(onnx_node, &kernel, &stride, &dilate, &pads) != RET_OK) {
+  bool conv1d = false;
+  if (ParseVecAttr(onnx_node, &kernel, &stride, &dilate, &pads, &conv1d) != RET_OK) {
     return nullptr;
+  }
+  if (conv1d) {
+    prim->set_format(mindspore::Format::NCW);
   }
   if (!dilate.empty()) {
     prim->set_dilation(dilate);

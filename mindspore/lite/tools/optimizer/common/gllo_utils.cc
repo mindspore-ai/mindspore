@@ -583,6 +583,14 @@ bool IsQuantNode(const BaseRef &n) {
   return false;
 }
 
+bool IsSqueezeNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSqueeze) ||
+           CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimUnsqueeze);
+  }
+  return false;
+}
+
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);

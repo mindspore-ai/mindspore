@@ -39,10 +39,13 @@
 #include "tools/optimizer/graph/primitive_adjust_pass.h"
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
+#include "tools/optimizer/fusion/squeeze_fusion.h"
+#include "tools/optimizer/graph/conv1d_inout_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
+#include "tools/optimizer/graph/conv1d_weight_expanding_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
 #include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
@@ -131,6 +134,8 @@ int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optim
   weight_format_hardcode_pass->SetFmkType(config->fmk);
   weight_format_hardcode_pass->SetQuantType(config->quantType);
   graph_pm->AddPass(weight_format_hardcode_pass);
+  auto conv1d_weight_expanding_pass = std::make_shared<opt::Conv1DWeightExpandingPass>();
+  graph_pm->AddPass(conv1d_weight_expanding_pass);
   auto weight_format_transform_pass = std::make_shared<opt::WeightFormatTransformPass>();
   weight_format_transform_pass->SetFmkType(config->fmk);
   weight_format_transform_pass->SetQuantType(config->quantType);
@@ -196,6 +201,15 @@ int AnfTransform::RunAdjustPass(const FuncGraphPtr &old_graph, const converter::
     default:
       return RET_OK;
   }
+}
+
+int AnfTransform::AddConv1DAdjustPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer,
+                                      const converter::Flags *config) {
+  auto conv1d_pm = std::make_shared<opt::PassManager>("conv1d adjust pass manager", true);
+  conv1d_pm->AddPass(std::make_shared<opt::Conv1DInOutAdjustPass>());
+  conv1d_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
+  optimizer->AddPassManager(conv1d_pm);
+  return RET_OK;
 }
 
 int AnfTransform::RunMindirAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
@@ -338,6 +352,12 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   status = AddGraphPass(optimizer, config);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Add graph pass failed.";
+    return nullptr;
+  }
+
+  status = AddConv1DAdjustPass(optimizer, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Add conv1d adjust pass failed.";
     return nullptr;
   }
 
