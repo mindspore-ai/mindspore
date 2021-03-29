@@ -65,6 +65,8 @@ class MatMulBaseInt8Coder : public OperatorCoder {
 
  private:
   int weight_quant_num_{0};
+  int row_tile_{C4NUM};
+  int col_tile_{C4NUM};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_INT8_MATMUL_BASE_INT8_CODER_H_

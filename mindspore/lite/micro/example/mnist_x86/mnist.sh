@@ -71,7 +71,7 @@ gen_mnist() {
     ${CODEGEN_PATH}/codegen --codePath=${BASEPATH}/build --modelPath=${BASEPATH}/build/${MNIST_FILE}
 }
 
-mkdir -p build
+mkdir -p ${BASEPATH}/build
 
 get_version
 download_inference
@@ -85,6 +85,7 @@ if [[ "${GEN}" == "ON" ]]; then
 fi
 
 # 1. build benchmark
+rm -rf ${BASEPATH}/build/benchmark
 mkdir -p ${BASEPATH}/build/benchmark && cd ${BASEPATH}/build/benchmark || exit 1
 cmake -DPKG_PATH=${PKG_PATH} ${BENCHMARK_PATH}
 make
