@@ -62,6 +62,7 @@ class Gradient(Attribution):
         >>> label = 5
         >>> saliency = gradient(inputs, label)
         >>> print(saliency.shape)
+        (1, 1, 32, 32)
     """
 
     def __init__(self, network):

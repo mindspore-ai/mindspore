@@ -89,6 +89,7 @@ class ImageClassificationRunner:
         >>> # Load the checkpoint
         >>> param_dict = load_checkpoint("/path/to/checkpoint")
         >>> load_param_into_net(net, param_dict)
+        []
         >>>
         >>> # Prepare the dataset for explaining and evaluation.
         >>> # The detail of create_dataset_cifar10 method is shown in model_zoo.official.cv.alexnet.src.dataset.py
@@ -105,8 +106,6 @@ class ImageClassificationRunner:
         >>>
         >>> runner = ImageClassificationRunner("./summary_dir", (dataset, labels), net, activation_fn)
         >>> runner.register_saliency(explainers=explainers, benchmarkers=benchmarkers)
-        >>> runner.register_uncertainty()
-        >>> runner.register_hierarchical_occlusion()
         >>> runner.run()
     """
 

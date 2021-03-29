@@ -45,13 +45,6 @@ class ModifiedReLU(Gradient):
 
         Returns:
             Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
-
-        Examples:
-            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> label = 5
-            >>> # explainer is a "Deconvolution" or "GuidedBackprop" object, parse data and the target label to be
-            >>> # explained and get the attribution
-            >>> saliency = explainer(inputs, label)
         """
 
         self._verify_data(inputs, targets)
@@ -117,6 +110,7 @@ class Deconvolution(ModifiedReLU):
         >>> label = 5
         >>> saliency = deconvolution(inputs, label)
         >>> print(saliency.shape)
+        (1, 1, 32, 32)
     """
 
     def __init__(self, network):
@@ -161,6 +155,7 @@ class GuidedBackprop(ModifiedReLU):
         >>> label = 5
         >>> saliency = gbp(inputs, label)
         >>> print(saliency.shape)
+        (1, 1, 32, 32)
     """
 
     def __init__(self, network):

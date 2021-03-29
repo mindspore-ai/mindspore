@@ -87,6 +87,7 @@ class GradCAM(IntermediateLayerAttribution):
         >>> label = 5
         >>> saliency = gradcam(inputs, label)
         >>> print(saliency.shape)
+        (1, 1, 32, 32)
     """
 
     def __init__(self, network, layer=""):
