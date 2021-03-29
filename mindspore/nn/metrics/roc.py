@@ -38,9 +38,9 @@ class ROC(Metric):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> fpr, tpr, thresholds = metric.eval()
-        [0., 0., 0.33333333, 0.6666667, 1.]
-        [0., 1, 1., 1., 1.]
-        [5, 4, 3, 2, 1]
+        [0. 0. 0.33333333 0.6666667 1.]
+        [0. 1. 1. 1. 1.]
+        [5 4 3 2 1]
         >>>
         >>> # 2) multiclass classification example
         >>> x = Tensor(np.array([[0.28, 0.55, 0.15, 0.05], [0.10, 0.20, 0.05, 0.05], [0.20, 0.05, 0.15, 0.05],

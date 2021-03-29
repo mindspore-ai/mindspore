@@ -35,7 +35,7 @@ def auc(x, y, reorder=False):
     Examples:
         >>> y_pred = np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]])
         >>> y = np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]])
-        >>> metric = ROC(pos_label=2)
+        >>> metric = nn.ROC(pos_label=2)
         >>> metric.clear()
         >>> metric.update(y_pred, y)
         >>> fpr, tpr, thre = metric.eval()
