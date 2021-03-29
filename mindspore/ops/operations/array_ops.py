@@ -2069,16 +2069,16 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     """
     Computes the minimum of a tensor along segments.
 
+    Note:
+        If the segment_id i is absent in the segment_ids, then output[i] will be filled with
+        the maximum value of the input_x's type.
+
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           The data type must be float16, float32 or int32.
         - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
           The data type must be int32.
         - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
-
-    Note:
-        If the segment_id i is absent in the segment_ids, then output[i] will be filled with
-        the maximum value of the input_x's type.
 
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
@@ -2128,16 +2128,16 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
     """
     Computes the maximum along segments of a tensor.
 
+    Note:
+        If the segment_id i is absent in the segment_ids, then output[i] will be filled with
+        the minimum value of the input_x's type.
+
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           The data type must be float16, float32 or int32.
         - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
           The data type must be int32.
         - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
-
-    Note:
-        If the segment_id i is absent in the segment_ids, then output[i] will be filled with
-        the minimum value of the input_x's type.
 
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
@@ -4618,8 +4618,8 @@ class BroadcastTo(PrimitiveWithInfer):
     Raises:
         TypeError: If `shape` is not a tuple.
         ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
-            such as one that does not have a opposing dimension in an input tensor; or if the target and
-            input shapes are incompatible.
+                    such as one that does not have a opposing dimension in an input tensor; or if the target and
+                    input shapes are incompatible.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -5154,6 +5154,9 @@ class GatherD(PrimitiveWithInfer):
     Gathers values along an axis specified by dim.
 
     For a 3-D tensor, the output is:
+
+    .. code-block::
+
         output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
 
         output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
