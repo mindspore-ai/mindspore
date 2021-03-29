@@ -1319,7 +1319,6 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
                     lj_scale_factor_shape, cf_scale_factor_shape, LJ_type_A_shape, LJ_type_B_shape):
         cls_name = self.name
         N = self.atom_numbers
-        M = self.dihedral_14_numbers
         Q = LJ_type_A_shape[0]
         validator.check_int(len(uint_crd_f_shape), 2, Rel.EQ, "uint_crd_f_dim", cls_name)
         validator.check_int(len(LJtype_shape), 1, Rel.EQ, "LJtype_dim", cls_name)
@@ -1334,7 +1333,7 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
         validator.check_int(uint_crd_f_shape[0], N, Rel.EQ, "uint_crd_f_shape[0]", cls_name)
         validator.check_int(uint_crd_f_shape[1], 3, Rel.EQ, "uint_crd_f_shape[1]", cls_name)
         validator.check_int(LJtype_shape[0], N, Rel.EQ, "LJtype_shape", cls_name)
-        validator.check_int(charge_shape[0], M, Rel.EQ, "charge_shape", cls_name)
+        validator.check_int(charge_shape[0], N, Rel.EQ, "charge_shape", cls_name)
         validator.check_int(boxlength_f_shape[0], 3, Rel.EQ, "boxlength_f_shape", cls_name)
         validator.check_int(LJ_type_B_shape[0], Q, Rel.EQ, "LJ_type_B_shape", cls_name)
         return [self.atom_numbers, 3]
