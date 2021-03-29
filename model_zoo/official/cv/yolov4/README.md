@@ -2,6 +2,7 @@
 
 - [YOLOv4 Description](#YOLOv4-description)
 - [Model Architecture](#model-architecture)
+- [Pretrain Model](#pretrain-model)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
@@ -33,10 +34,20 @@ Bochkovskiy A, Wang C Y, Liao H Y M. YOLOv4: Optimal Speed and Accuracy of Objec
 
 YOLOv4 choose CSPDarknet53 backbone, SPP additional module, PANet path-aggregation neck, and YOLOv4 (anchor based) head as the architecture of YOLOv4.
 
+# [Pretrain Model](#contents)
+
+YOLOv4 needs a CSPDarknet53 backbone to extract image features for detection. You could get CSPDarknet53 train script from our modelzoo and modify the backbone structure according to CSPDarknet53 in ```./src.cspdarknet53```, Final train it on imagenet2012 to get CSPDarknet53 pretrain model.
+Steps:
+
+1. Get resnet50 train script from our modelzoo.
+2. Modify the network architecture according to CSPDarknet53 in ```./src.cspdarknet53```
+3. Train CSPDarknet53 on imagenet2012.
+
 # [Dataset](#contents)
 
-Dataset support: [MS COCO] or datasetd with the same format as MS COCO
-Annotation support: [MS COCO] or annotation as the same format as MS COCO
+Dataset used: [COCO2017](https://cocodataset.org/#download)
+Dataset support: [COCO2017] or datasetd with the same format as MS COCO
+Annotation support: [COCO2017] or annotation as the same format as MS COCO
 
 - The directory structure is as follows, the name of directory and file is user define:
 
@@ -71,10 +82,18 @@ other datasets need to use the same format as MS COCO.
 
 # [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation as follows:
+- After installing MindSpore via the official website, you can start training and evaluation as follows:
+- Prepare the CSPDarknet53.ckpt and hccl_8p.json files, before run network.
+    - Please refer to [Pretrain Model]
+
+    - Genatating hccl_8p.json, Run the script of model_zoo/utils/hccl_tools/hccl_tools.py.
+      The following parameter "[0-8)" indicates that the hccl_8p.json file of cards 0 to 7 is generated.
+
+      ```
+      python hccl_tools.py --device_num "[0,8)"
+      ```
 
 ```text
-# The cspdarknet53_backbone.ckpt in the follow script is got from cspdarknet53 training like paper.
 # The parameter of training_shape define image shape for network, default is
                    [416, 416],
                    [448, 448],
@@ -91,7 +110,7 @@ After installing MindSpore via the official website, you can start training and 
 ```
 
 ```bash
-#run training example(1p) by python command
+#run training example(1p) by python command (Training with a single scale)
 python train.py \
     --data_dir=./dataset/xxx \
     --pretrained_backbone=cspdarknet53_backbone.ckpt \
@@ -105,12 +124,12 @@ python train.py \
 ```
 
 ```bash
-# standalone training example(1p) by shell script
+# standalone training example(1p) by shell script (Training with a single scale)
 sh run_standalone_train.sh dataset/xxx cspdarknet53_backbone.ckpt
 ```
 
 ```bash
-# For Ascend device, distributed training example(8p) by shell script
+# For Ascend device, distributed training example(8p) by shell script (Training with multi scale)
 sh run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.json
 ```
 
@@ -119,7 +138,7 @@ sh run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.
 python eval.py \
     --data_dir=./dataset/xxx \
     --pretrained=yolov4.ckpt \
-    --testing_shape=416 > log.txt 2>&1 &
+    --testing_shape=608 > log.txt 2>&1 &
 ```
 
 ```bash
@@ -281,27 +300,6 @@ sh run_distribute_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt rank_tabl
 The above shell script will run distribute training in the background. You can view the results through the file train_parallel[X]/log.txt. The loss value will be achieved as follows:
 
 ```text
-# distribute training result(8p, shape=416)
-...
-2020-10-16 14:58:25,142:INFO:epoch[0], iter[1000], loss:242.509259, 388.73 imgs/sec, lr:0.00032783843926154077
-2020-10-16 14:58:41,320:INFO:epoch[0], iter[1100], loss:228.137516, 395.61 imgs/sec, lr:0.0003605895326472819
-2020-10-16 14:58:57,607:INFO:epoch[0], iter[1200], loss:219.689884, 392.94 imgs/sec, lr:0.00039334059692919254
-2020-10-16 14:59:13,787:INFO:epoch[0], iter[1300], loss:216.173309, 395.56 imgs/sec, lr:0.00042609169031493366
-2020-10-16 14:59:29,969:INFO:epoch[0], iter[1400], loss:234.500610, 395.54 imgs/sec, lr:0.00045884278370067477
-2020-10-16 14:59:46,132:INFO:epoch[0], iter[1500], loss:209.420913, 396.00 imgs/sec, lr:0.0004915939061902463
-2020-10-16 15:00:02,416:INFO:epoch[0], iter[1600], loss:210.953930, 393.04 imgs/sec, lr:0.000524344970472157
-2020-10-16 15:00:18,651:INFO:epoch[0], iter[1700], loss:197.171296, 394.20 imgs/sec, lr:0.0005570960929617286
-2020-10-16 15:00:34,056:INFO:epoch[0], iter[1800], loss:203.928903, 415.47 imgs/sec, lr:0.0005898471572436392
-2020-10-16 15:00:53,680:INFO:epoch[1], iter[1900], loss:191.693561, 326.14 imgs/sec, lr:0.0006225982797332108
-2020-10-16 15:01:10,442:INFO:epoch[1], iter[2000], loss:196.632004, 381.82 imgs/sec, lr:0.0006553493440151215
-2020-10-16 15:01:27,180:INFO:epoch[1], iter[2100], loss:193.813570, 382.43 imgs/sec, lr:0.0006881004082970321
-2020-10-16 15:01:43,736:INFO:epoch[1], iter[2200], loss:176.996778, 386.59 imgs/sec, lr:0.0007208515307866037
-2020-10-16 15:02:00,294:INFO:epoch[1], iter[2300], loss:185.858901, 386.55 imgs/sec, lr:0.0007536025950685143
-...
-
-```
-
-```text
 # distribute training result(8p, dynamic shape)
 ...
 2020-10-16 20:40:17,148:INFO:epoch[0], iter[800], loss:283.765033, 248.93 imgs/sec, lr:0.00026233625249005854
@@ -450,7 +448,7 @@ YOLOv4 on 118K images(The annotation and data format must be the same as coco201
 
 | Parameters                 | YOLOv4                                                      |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G; System, Euleros 2.8;|
 | uploaded Date              | 10/16/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0-alpha                                                 |
 | Dataset                    | 118K images                                                 |
