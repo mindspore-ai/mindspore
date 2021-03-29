@@ -65,6 +65,7 @@ inline static float32x4_t vrecp(float32x4_t v) {
 // Note: Compared with X86, the vbslq_f32 parameters are the opposite with _mm_blendv_f32
 #define MS_BLENDQ_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
 #define MS_BLENDQ_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
+#define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
 #endif
 
 #if defined(ENABLE_AVX)
@@ -97,6 +98,7 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_CMPGT256_EPI32(src1, src2) _mm256_cmpgt_epi32(src1, src2)
 #define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)
+#define MS_CAST256_F32_S32(src) _mm256_castsi256_ps(src)
 #endif
 
 #if defined(ENABLE_SSE)
@@ -129,6 +131,7 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_CMPGTQ_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
 #define MS_BLENDQ_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLENDQ_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
+#define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #endif
 
 #define LOAD256X8_F32(src, input_ptr, num)                 \
