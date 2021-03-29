@@ -443,12 +443,12 @@ MSTensor::DestroyTensorPtr(tensor);
 
 #### FrontEnd
 
-- fix the null pointer problem of evaluator in control flow.([!13312](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/13312))
+- fix the null pointer problem of evaluator in control flow.([!13312](https://gitee.com/mindspore/mindspore/pulls/13312))
 - fix parameter naming conflict bug for CellList and SequentialCell. ([!13260](https://gitee.com/mindspore/mindspore/pulls/13260))
 
 #### Executor
 
-- fix executor pending task not execute in some heterogeneous cases.([!13465](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/13465))
+- fix executor pending task not execute in some heterogeneous cases.([!13465](https://gitee.com/mindspore/mindspore/pulls/13465))
 - add passes to support frontend IR unification, including following operations: SliceGrad([!11783](https://gitee.com/mindspore/mindspore/pulls/11783)), ApplyFtrl, ApplyMomentum, ApplyRMSProp, CenteredRMSProp([!11895](https://gitee.com/mindspore/mindspore/pulls/11895)), AvgPoolGrad([!12813](https://gitee.com/mindspore/mindspore/pulls/12813)), BatchNorm([!12115](https://gitee.com/mindspore/mindspore/pulls/12115))
 
 #### Dataset
