@@ -812,8 +812,8 @@ abstract::AbstractBasePtr ForwardExecutor::CheckConstValue(const PrimitivePyPtr 
       MS_EXCEPTION_IF_NULL(new_abs);
       new_abs = new_abs->Broaden(config);
       MS_LOG(DEBUG) << "Broaden for " << prim->ToString() << " " << config;
+      node_abs_map_[id] = new_abs;
     }
-    node_abs_map_[id] = new_abs;
   }
   return new_abs;
 }
