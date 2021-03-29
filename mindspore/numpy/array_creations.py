@@ -1296,13 +1296,13 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         [[0.  0.5 1. ]
         [0.  0.5 1. ]]
         >>> print(yv)
-        [[0.  0.  0.],
+        [[0.  0.  0.]
         [1.  1.  1.]]
         >>> xv, yv = np.meshgrid(x, y, sparse=True)
         >>> print(xv)
         [[0.  0.5  1. ]]
         >>> print(yv)
-        [[0.],
+        [[0.]
         [1.]
     """
     _check_input_tensor(*xi)
@@ -1409,6 +1409,7 @@ class mGridClass(nd_grid):
     stop values, where the stop value is inclusive.
 
     Note:
+        Not supported in graph mode.
         Unlike Numpy, if the step length is a complex number with a real
         component, the step length is handled as equivalent to
         ``int(abs(step))``.
@@ -1456,6 +1457,7 @@ class oGridClass(nd_grid):
     stop values, where the stop value is inclusive.
 
     Note:
+        Not supported in graph mode.
         Unlike Numpy, if the step length is a complex number with a real
         component, the step length is handled as equivalent to
         ``int(abs(step))``.
