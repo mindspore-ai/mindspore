@@ -145,6 +145,14 @@ int ElementLogicalOr(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
+int ElementLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size) {
+  int index = 0;
+  for (; index < size; index++) {
+    out[index] = (in0[index]) | (in1[index]);
+  }
+  return NNACL_OK;
+}
+
 int ElementMaximum(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
 #ifdef ENABLE_NEON
