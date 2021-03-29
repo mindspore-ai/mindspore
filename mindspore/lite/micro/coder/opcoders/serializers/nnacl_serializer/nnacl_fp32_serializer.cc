@@ -108,6 +108,14 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransposePar
                  transpose_parameter.data_size_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const LstmParameter &lstm_parameter) {
+  CodeBaseStruct("LstmParameter", name, lstm_parameter.op_parameter_, lstm_parameter.input_size_,
+                 lstm_parameter.hidden_size_, lstm_parameter.seq_len_, lstm_parameter.batch_,
+                 lstm_parameter.output_step_, lstm_parameter.bidirectional_, lstm_parameter.zoneout_cell_,
+                 lstm_parameter.zoneout_hidden_, lstm_parameter.input_row_align_, lstm_parameter.input_col_align_,
+                 lstm_parameter.state_row_align_, lstm_parameter.state_col_align_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg) {
   // this clusters is meaningless which will be supported in future
   CodeBaseStruct("DeQuantArg", name, de_quant_arg.scale, de_quant_arg.zeroPoint, de_quant_arg.var_corr,

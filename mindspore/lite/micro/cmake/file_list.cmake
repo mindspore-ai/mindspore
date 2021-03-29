@@ -84,6 +84,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/full_connection_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/gather_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/lstm_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/pad_fp32_coder.cc
