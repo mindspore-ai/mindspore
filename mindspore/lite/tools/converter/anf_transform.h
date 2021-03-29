@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <set>
 #include "backend/optimizer/common/optimizer.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/storage.h"
@@ -37,8 +38,6 @@ class AnfTransform {
 
  private:
   std::unique_ptr<quant::Quantizer> m_quantizer_ = nullptr;
-
-  STATUS GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphVector *subgraphs, std::vector<ValueNodePtr> *vnodes);
 
   FuncGraphPtr TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
@@ -61,6 +60,10 @@ class AnfTransform {
   static int RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config, const FuncGraphPtr &new_graph);
+
+  void GetAllFuncGraph(const FuncGraphPtr &func_graph);
+
+  std::set<FuncGraphPtr> func_graphs_{};
 };
 }  // namespace lite
 }  // namespace mindspore
