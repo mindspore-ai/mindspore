@@ -82,7 +82,7 @@ MindSpore提供跨多个后端的构建选项：
 1. 请从[MindSpore下载页面](https://www.mindspore.cn/versions)下载并安装whl包。
 
     ```bash
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/cpu/ubuntu_x86/mindspore-1.1.0-cp37-cp37m-linux_x86_64.whl
+    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.2.0-rc1/MindSpore/cpu/ubuntu_x86/mindspore-1.2.0rc1-cp37-cp37m-linux_x86_64.whl
     ```
 
 2. 执行以下命令，验证安装结果。
