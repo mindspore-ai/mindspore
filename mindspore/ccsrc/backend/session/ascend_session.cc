@@ -42,6 +42,7 @@
 #include "backend/optimizer/ascend/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/slice_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/avg_pool_grad_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -249,6 +250,7 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   }
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
