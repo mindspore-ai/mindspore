@@ -689,7 +689,6 @@ def where(condition, x=None, y=None):
         [[[7 5]
         [7 5]
         [7 5]]
-
         [[7 5]
         [7 5]
         [7 5]]]
