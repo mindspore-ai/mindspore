@@ -35,11 +35,9 @@ class PReluCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);
-  int ProcessShareChannelInput();
 
  private:
   PReluParameter *prelu_param_;
-  float *ori_input_ = nullptr;
   float *input_data_ = nullptr;
   float *output_data_ = nullptr;
 };
