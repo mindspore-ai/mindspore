@@ -30,7 +30,7 @@ parser.add_argument('--width', type=int, default=256, help='input width')
 parser.add_argument('--height', type=int, default=256, help='input height')
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
 parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target(default: Ascend)")
+                    choices=["Ascend", "GPU"], help="device target(default: Ascend)")
 args = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)

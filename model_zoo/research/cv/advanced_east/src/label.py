@@ -86,14 +86,14 @@ def shrink(xy_list, ratio=cfg.shrink_ratio):
     new_xy_list = np.copy(temp_new_xy_list)
     shrink_edge(temp_new_xy_list, new_xy_list, short_edge, r, theta, ratio)
     shrink_edge(temp_new_xy_list, new_xy_list, short_edge + 2, r, theta, ratio)
-    return temp_new_xy_list, new_xy_list, long_edge  # 缩短后的长边，缩短后的短边，长边下标
+    return temp_new_xy_list, new_xy_list, long_edge
 
 
 def shrink_edge(xy_list, new_xy_list, edge, r, theta, ratio=cfg.shrink_ratio):
     """shrink edge"""
     if ratio == 0.0:
         return
-    start_point = edge  # 边的起始点下标（0或1）
+    start_point = edge
     end_point = (edge + 1) % 4
     long_start_sign_x = np.sign(
         xy_list[end_point, 0] - xy_list[start_point, 0])

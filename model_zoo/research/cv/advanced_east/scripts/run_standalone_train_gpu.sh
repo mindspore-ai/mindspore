@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,3 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+echo "=============================================================================================================="
+echo "Please run the script as: "
+echo "bash run_standalone_train_gpu.sh"
+echo "for example: bash run_standalone_train_gpu.sh"
+echo "=============================================================================================================="
+
+  python train.py  \
+    --device_target="GPU" > output.train.log 2>&1 &

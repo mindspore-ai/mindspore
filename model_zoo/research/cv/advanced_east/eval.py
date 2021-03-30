@@ -21,25 +21,26 @@ import os
 
 import numpy as np
 from PIL import Image
+from tqdm import tqdm
 from mindspore import Tensor
 from mindspore import context
 from mindspore.common import set_seed
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_param_into_net, load_checkpoint
+
 from src.logger import get_logger
 from src.predict import predict
 from src.score import eval_pre_rec_f1
-
 from src.config import config as cfg
 from src.dataset import load_adEAST_dataset
 from src.model import get_AdvancedEast_net, AdvancedEast
-from src.preprocess import resize_image
+
 
 set_seed(1)
 
 
-def parse_args(cloud_args=None):
+def parse_args():
     """parameters"""
     parser = argparse.ArgumentParser('adveast evaling')
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
@@ -78,11 +79,11 @@ def parse_args(cloud_args=None):
     return args_opt
 
 
-def eval_loss(arg):
+def eval_loss(eval_arg):
     """get network and init"""
-    loss_net, train_net = get_AdvancedEast_net()
-    print(os.path.join(arg.saved_model_file_path, arg.ckpt))
-    load_param_into_net(train_net, load_checkpoint(os.path.join(arg.saved_model_file_path, arg.ckpt)))
+    loss_net, train_net = get_AdvancedEast_net(eval_arg)
+    print(os.path.join(eval_arg.saved_model_file_path, eval_arg.ckpt))
+    load_param_into_net(train_net, load_checkpoint(os.path.join(eval_arg.saved_model_file_path, eval_arg.ckpt)))
     train_net.set_train(False)
     loss = 0
     idx = 0
@@ -92,36 +93,36 @@ def eval_loss(arg):
     print(loss / idx)
 
 
-def eval_score(arg):
+def eval_score(eval_arg):
     """get network and init"""
-    net = AdvancedEast()
-    load_param_into_net(net, load_checkpoint(os.path.join(arg.saved_model_file_path, arg.ckpt)))
+    net = AdvancedEast(eval_arg)
+    load_param_into_net(net, load_checkpoint(os.path.join(eval_arg.saved_model_file_path, eval_arg.ckpt)))
     net.set_train(False)
     obj = eval_pre_rec_f1()
-    with open(os.path.join(arg.data_dir, arg.val_fname), 'r') as f_val:
+    with open(os.path.join(eval_arg.data_dir, eval_arg.val_fname), 'r') as f_val:
         f_list = f_val.readlines()
 
-    img_h, img_w = arg.max_predict_img_size, arg.max_predict_img_size
-    x = np.zeros((arg.batch_size, 3, img_h, img_w), dtype=np.float32)
-    batch_list = np.arange(0, len(f_list), arg.batch_size)
-    for idx in batch_list:
+    img_h, img_w = eval_arg.max_predict_img_size, eval_arg.max_predict_img_size
+    x = np.zeros((eval_arg.batch_size, 3, img_h, img_w), dtype=np.float32)
+    batch_list = np.arange(0, len(f_list), eval_arg.batch_size)
+    for idx in tqdm(batch_list):
         gt_list = []
-        for i in range(idx, min(idx + arg.batch_size, len(f_list))):
+        for i in range(idx, min(idx + eval_arg.batch_size, len(f_list))):
             item = f_list[i]
             img_filename = str(item).strip().split(',')[0][:-4]
-            img_path = os.path.join(arg.train_image_dir_name, img_filename) + '.jpg'
+            img_path = os.path.join(eval_arg.train_image_dir_name, img_filename) + '.jpg'
+
             img = Image.open(img_path)
-            d_wight, d_height = resize_image(img, arg.max_predict_img_size)
-            img = img.resize((d_wight, d_height), Image.NEAREST).convert('RGB')
+            img = img.resize((img_w, img_h), Image.NEAREST).convert('RGB')
             img = np.asarray(img)
             img = img / 1.
             mean = np.array((123.68, 116.779, 103.939)).reshape([1, 1, 3])
             img = ((img - mean)).astype(np.float32)
             img = img.transpose((2, 0, 1))
             x[i - idx] = img
-            # predict(east, img_path, threshold, cfg.pixel_threshold)
-            gt_list.append(np.load(os.path.join(arg.train_label_dir_name, img_filename) + '.npy'))
-        if idx + arg.batch_size >= len(f_list):
+
+            gt_list.append(np.load(os.path.join(eval_arg.train_label_dir_name, img_filename) + '.npy'))
+        if idx + eval_arg.batch_size >= len(f_list):
             x = x[:len(f_list) - idx]
         y = net(Tensor(x))
         obj.add(y, gt_list)
@@ -129,12 +130,12 @@ def eval_score(arg):
     print(obj.val())
 
 
-def pred(arg):
+def pred(eval_arg):
     """pred"""
-    img_path = arg.path
-    net = AdvancedEast()
-    load_param_into_net(net, load_checkpoint(os.path.join(arg.saved_model_file_path, arg.ckpt)))
-    predict(net, img_path, arg.pixel_threshold)
+    img_path = eval_arg.path
+    net = AdvancedEast(eval_arg)
+    load_param_into_net(net, load_checkpoint(os.path.join(eval_arg.saved_model_file_path, eval_arg.ckpt)))
+    predict(net, img_path, eval_arg.pixel_threshold)
 
 
 if __name__ == '__main__':
@@ -163,7 +164,6 @@ if __name__ == '__main__':
     args.outputs_dir = os.path.join(args.ckpt_path,
                                     datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
     args.logger = get_logger(args.outputs_dir, args.rank)
-    print(os.path.join(args.data_dir, args.mindsrecord_test_file))
     dataset, batch_num = load_adEAST_dataset(os.path.join(args.data_dir,
                                                           args.mindsrecord_test_file),
                                              batch_size=args.batch_size,

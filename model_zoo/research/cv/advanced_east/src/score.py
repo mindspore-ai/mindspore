@@ -21,9 +21,6 @@ from shapely.geometry import Polygon
 from src.config import config as cfg
 from src.nms import nms
 
-
-# from src.preprocess import resize_image
-
 class Averager():
     """Compute average for torch.Tensor, used for loss average."""
 
@@ -99,12 +96,10 @@ class eval_pre_rec_f1():
             return 0, 0, 0
         quad_flag = np.zeros(num_quads)
         gt_flag = np.zeros(num_gts)
-        # print(num_quads, '-------', num_gts)
         quad_scores_no_zero = np.array(quad_scores_no_zero)
         scores_idx = np.argsort(quad_scores_no_zero)[::-1]
         for i in range(num_quads):
             idx = scores_idx[i]
-            #  score = quad_scores_no_zero[idx]
             geo = quad_after_nms_no_zero[idx]
             for j in range(num_gts):
                 if gt_flag[j] == 0:
@@ -122,14 +117,12 @@ class eval_pre_rec_f1():
             f1_score = 0
         else:
             f1_score = 2 * pre * rec / (pre + rec)
-        # print(pre, '---', rec, '---', f1_score)
         return pre, rec, f1_score
 
     def add(self, out, gt_xy_list):
         """`add`"""
         self.img_num += len(gt_xy_list)
         ys = out.asnumpy()  # (N, 7, 64, 64)
-        print(ys.shape)
         if ys.shape[1] == 7:
             ys = ys.transpose((0, 2, 3, 1))  # NCHW->NHWC
         for y, gt_xy in zip(ys, gt_xy_list):
@@ -137,7 +130,6 @@ class eval_pre_rec_f1():
             cond = np.greater_equal(y[:, :, 0], self.pixel_threshold)
             activation_pixels = np.where(cond)
             quad_scores, quad_after_nms = nms(y, activation_pixels)
-            print(quad_scores)
             lens = len(quad_after_nms)
             if lens == 0 or (sum(sum(quad_scores)) == 0):
                 if not cfg.quiet:
@@ -145,7 +137,6 @@ class eval_pre_rec_f1():
                 continue
             else:
                 pre, rec, f1_score = self.eval_one(quad_scores, quad_after_nms, gt_xy)
-                print(pre, rec, f1_score)
                 self.pre += pre
                 self.rec += rec
                 self.f1_score += f1_score

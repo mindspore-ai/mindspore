@@ -18,9 +18,11 @@
 import argparse
 import datetime
 import os
+import time
+import ast
 
 from mindspore import context, Model
-from mindspore.communication.management import init, get_group_size
+from mindspore.communication.management import init, get_group_size, get_rank
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_param_into_net, load_checkpoint
@@ -34,15 +36,16 @@ from src.config import config as cfg
 set_seed(1)
 
 
-def parse_args(cloud_args=None):
+def parse_args():
     """parameters"""
     parser = argparse.ArgumentParser('mindspore adveast training')
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument('--device_id', type=int, default=1, help='device id of GPU or Ascend. (Default: None)')
+    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend.')
 
     # network related
-    parser.add_argument('--pre_trained', default=False, type=bool, help='model_path, local pretrained model to load')
+    parser.add_argument('--pre_trained', default=False, type=ast.literal_eval,
+                        help='model_path, local pretrained model to load')
 
     # logging and checkpoint related
     parser.add_argument('--ckpt_path', type=str, default='outputs/', help='checkpoint save location')
@@ -55,27 +58,21 @@ def parse_args(cloud_args=None):
     parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
     args_opt = parser.parse_args()
 
-    args_opt.initial_epoch = cfg.initial_epoch
     args_opt.epoch_num = cfg.epoch_num
-    args_opt.learning_rate = cfg.learning_rate
-    args_opt.decay = cfg.decay
     args_opt.batch_size = cfg.batch_size
-    args_opt.total_train_img = cfg.total_img * (1 - cfg.validation_split_ratio)
-    args_opt.total_valid_img = cfg.total_img * cfg.validation_split_ratio
     args_opt.ckpt_save_max = cfg.ckpt_save_max
     args_opt.data_dir = cfg.data_dir
     args_opt.mindsrecord_train_file = cfg.mindsrecord_train_file
     args_opt.mindsrecord_test_file = cfg.mindsrecord_test_file
-    args_opt.train_image_dir_name = cfg.train_image_dir_name
-    args_opt.train_label_dir_name = cfg.train_label_dir_name
-    args_opt.results_dir = cfg.results_dir
     args_opt.last_model_name = cfg.last_model_name
     args_opt.saved_model_file_path = cfg.saved_model_file_path
+    args_opt.ds_sink_mode = cfg.ds_sink_mode
     return args_opt
 
 
 if __name__ == '__main__':
     args = parse_args()
+
     device_num = int(os.environ.get("DEVICE_NUM", 1))
     context.set_context(mode=context.GRAPH_MODE)
     workers = 32
@@ -86,6 +83,7 @@ if __name__ == '__main__':
         elif args.device_target == "GPU":
             context.set_context(device_target=args.device_target)
             init()
+            args.rank = get_rank()
 
         args.group_size = get_group_size()
         device_num = args.group_size
@@ -114,7 +112,7 @@ if __name__ == '__main__':
         args.rank_save_ckpt_flag = 1
 
     # get network and init
-    loss_net, train_net = get_AdvancedEast_net()
+    loss_net, train_net = get_AdvancedEast_net(args)
     loss_net.add_flags_recursive(fp32=True)
     train_net.set_train(False)
     # pre_trained
@@ -136,53 +134,81 @@ if __name__ == '__main__':
     train_dataset448, batch_num448 = load_adEAST_dataset(mindrecordfile448, batch_size=2,
                                                          device_num=device_num, rank_id=args.rank, is_training=True,
                                                          num_parallel_workers=workers)
-
-    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=cfg.learning_rate
-                                          , eps=1e-7, weight_decay=cfg.decay)
+    start = time.time()
+    learning_rate = cfg.learning_rate_ascend if args.device_target == 'Ascend' else cfg.learning_rate_gpu
+    decay = cfg.decay_ascend if args.device_target == 'Ascend' else cfg.decay_gpu
+    # train model using the images resized to 256
+    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=learning_rate
+                                          , eps=1e-7, weight_decay=decay)
     model = Model(train_net)
     time_cb = TimeMonitor(data_size=batch_num256)
     loss_cb = LossMonitor(per_print_times=batch_num256)
-    callbacks = [time_cb, loss_cb]
-    if args.rank_save_ckpt_flag:
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * batch_num256,
-                                       keep_checkpoint_max=args.ckpt_save_max)
-        save_ckpt_path = args.saved_model_file_path
-        ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=save_ckpt_path,
-                                  prefix='Epoch_A{}'.format(args.rank))
-        callbacks.append(ckpt_cb)
-    model.train(epoch=cfg.epoch_num, train_dataset=train_dataset256, callbacks=callbacks, dataset_sink_mode=False)
-    model.optimizer = AdamWeightDecay(train_net.weights, learning_rate=cfg.learning_rate
-                                      , eps=1e-7, weight_decay=cfg.decay)
+    callbacks = []
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * batch_num256,
+                                   keep_checkpoint_max=args.ckpt_save_max)
+    save_ckpt_path = args.saved_model_file_path
+    ckpt_cb = ModelCheckpoint(config=ckpt_config,
+                              directory=save_ckpt_path,
+                              prefix='Epoch_A{}'.format(args.rank))
+    if args.is_distributed & args.is_save_on_master:
+        if args.rank == 0:
+            callbacks.extend([time_cb, loss_cb, ckpt_cb])
+        model.train(args.epoch_num, train_dataset=train_dataset256,
+                    callbacks=callbacks, dataset_sink_mode=args.ds_sink_mode)
+    else:
+        callbacks.extend([time_cb, loss_cb, ckpt_cb])
+        model.train(args.epoch_num, train_dataset=train_dataset256,
+                    callbacks=callbacks, dataset_sink_mode=args.ds_sink_mode)
+    print(time.time() - start)
+    # train model using the images resized to 384
+    model.optimizer = AdamWeightDecay(train_net.weights, learning_rate=learning_rate
+                                      , eps=1e-7, weight_decay=decay)
+    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=learning_rate
+                                          , eps=1e-7, weight_decay=decay)
+    model = Model(train_net)
+
     time_cb = TimeMonitor(data_size=batch_num384)
     loss_cb = LossMonitor(per_print_times=batch_num384)
-    callbacks = [time_cb, loss_cb]
-    if args.rank_save_ckpt_flag:
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * batch_num384,
-                                       keep_checkpoint_max=args.ckpt_save_max)
-        save_ckpt_path = args.saved_model_file_path
-        ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=save_ckpt_path,
-                                  prefix='Epoch_B{}'.format(args.rank))
-        callbacks.append(ckpt_cb)
-    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=cfg.learning_rate
-                                          , eps=1e-7, weight_decay=cfg.decay)
+    callbacks = []
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * batch_num384,
+                                   keep_checkpoint_max=args.ckpt_save_max)
+    ckpt_cb = ModelCheckpoint(config=ckpt_config,
+                              directory=save_ckpt_path,
+                              prefix='Epoch_B{}'.format(args.rank))
+    if args.is_distributed & args.is_save_on_master:
+        if args.rank == 0:
+            callbacks.extend([time_cb, loss_cb, ckpt_cb])
+        model.train(args.epoch_num, train_dataset=train_dataset384,
+                    callbacks=callbacks, dataset_sink_mode=args.ds_sink_mode)
+    else:
+        callbacks.extend([time_cb, loss_cb, ckpt_cb])
+        model.train(args.epoch_num, train_dataset=train_dataset384,
+                    callbacks=callbacks, dataset_sink_mode=args.ds_sink_mode)
+    print(time.time() - start)
+
+    # train model using the images resized to 448
+    model.optimizer = AdamWeightDecay(train_net.weights, learning_rate=learning_rate
+                                      , eps=1e-7, weight_decay=decay)
+    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=learning_rate
+                                          , eps=1e-7, weight_decay=decay)
     model = Model(train_net)
-    model.train(epoch=cfg.epoch_num, train_dataset=train_dataset384, callbacks=callbacks, dataset_sink_mode=False)
-    model.optimizer = AdamWeightDecay(train_net.weights, learning_rate=cfg.learning_rate
-                                      , eps=1e-7, weight_decay=cfg.decay)
+
     time_cb = TimeMonitor(data_size=batch_num448)
     loss_cb = LossMonitor(per_print_times=batch_num448)
-    callbacks = [time_cb, loss_cb]
-    if args.rank_save_ckpt_flag:
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * batch_num448,
-                                       keep_checkpoint_max=args.ckpt_save_max)
-        save_ckpt_path = args.saved_model_file_path
-        ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=save_ckpt_path,
-                                  prefix='Epoch_C{}'.format(args.rank))
-        callbacks.append(ckpt_cb)
-    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=cfg.learning_rate
-                                          , eps=1e-7, weight_decay=cfg.decay)
-    model = Model(train_net)
-    model.train(epoch=cfg.epoch_num, train_dataset=train_dataset448, callbacks=callbacks, dataset_sink_mode=False)
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * batch_num448,
+                                   keep_checkpoint_max=args.ckpt_save_max)
+    callbacks = []
+    ckpt_cb = ModelCheckpoint(config=ckpt_config,
+                              directory=save_ckpt_path,
+                              prefix='Epoch_C{}'.format(args.rank))
+    if args.is_distributed & args.is_save_on_master:
+        if args.rank == 0:
+            callbacks.extend([time_cb, loss_cb, ckpt_cb])
+        model.train(args.epoch_num, train_dataset=train_dataset448,
+                    callbacks=callbacks, dataset_sink_mode=args.ds_sink_mode)
+    else:
+        callbacks.extend([time_cb, loss_cb, ckpt_cb])
+        model.train(args.epoch_num, train_dataset=train_dataset448,
+                    callbacks=callbacks, dataset_sink_mode=args.ds_sink_mode)
+
+    print(time.time() - start)
