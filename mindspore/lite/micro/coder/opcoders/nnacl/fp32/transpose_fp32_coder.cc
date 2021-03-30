@@ -42,10 +42,10 @@ int TransposeFp32Coder::Resize() {
   MS_CHECK_TRUE(out_shape.size() > 0, "invalid shape size");
   auto in_shape_data_size = static_cast<size_t>(in_shape.size() * sizeof(int));
   auto out_shape_data_size = static_cast<size_t>(out_shape.size() * sizeof(int));
-  in_shape_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt, in_shape_data_size, kOfflinePackWeight));
+  in_shape_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, in_shape_data_size, kOfflinePackWeight));
   MS_CHECK_PTR(in_shape_);
   out_shape_ =
-    reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt, out_shape.size() * sizeof(int), kOfflinePackWeight));
+    reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, out_shape.size() * sizeof(int), kOfflinePackWeight));
   MS_CHECK_PTR(out_shape_);
   MS_CHECK_RET_CODE(memcpy_s(in_shape_, in_shape_data_size, in_shape.data(), in_shape_data_size), "memcpy failed");
   MS_CHECK_RET_CODE(memcpy_s(out_shape_, out_shape_data_size, out_shape.data(), out_shape_data_size), "memcpy failed");

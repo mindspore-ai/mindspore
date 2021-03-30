@@ -31,6 +31,8 @@
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/splice_parameter.h"
 #include "wrapper/fp32/dequant_int8_to_fp32_wrapper.h"
+#include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/fp32/strided_slice_fp32.h"
 namespace mindspore::lite::micro::nnacl {
 
 class NNaclFp32Serializer : public Serializer {
@@ -49,6 +51,8 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter);
   void CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg);
   void CodeStruct(const std::string &name, const SpliceParameter &splice_parameter);
+  void CodeStruct(const std::string &name, const ExpParameter &exp_parameter);
+  void CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter);
 };
 
 }  // namespace mindspore::lite::micro::nnacl

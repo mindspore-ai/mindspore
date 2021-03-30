@@ -60,24 +60,25 @@ int CoderGraph::ConvertTensors() {
     // tensor dims
     std::vector<int> shape;
     if (origin_tensor->nodeType() == NodeType_ValueNode) {
-      MS_CHECK_PTR_WITH_EXE(origin_tensor->dims(), clear_tensors());
-      for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
-        MS_CHECK_PTR(origin_tensor->dims()->data());
-        int dim = static_cast<int>(origin_tensor->dims()->data()[j]);
-        MS_CHECK_RET_CODE_WITH_EXE(check_dim(dim), "parse shape failed!", clear_tensors());
-        shape.push_back(dim);
+      if (origin_tensor->dims() != nullptr) {
+        for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
+          MS_CHECK_PTR(origin_tensor->dims()->data());
+          int dim = static_cast<int>(origin_tensor->dims()->data()[j]);
+          MS_CHECK_RET_CODE_WITH_EXE(check_dim(dim), "parse shape failed!", clear_tensors());
+          shape.push_back(dim);
+        }
       }
     }
     // tensor Datatype
+    if (shape.empty()) {
+      shape.push_back(1);
+    }
     int origin_data_type = static_cast<int>(origin_tensor->dataType());
     Tensor *dstTensor = new (std::nothrow)
       lite::Tensor(TypeId(origin_data_type), shape, origin_tensor->format(), TensorCategory(origin_tensor));
     MS_CHECK_PTR(dstTensor);
     if (origin_tensor->nodeType() == NodeType_ValueNode && origin_tensor->data() != nullptr &&
         origin_tensor->data()->size() > 0) {
-      if (shape.empty()) {
-        shape.push_back(1);
-      }
       // copy data, this is weight && bias
       MS_CHECK_TRUE_WITH_EXE(origin_tensor->data()->size() > 0, "invalid meta_tensor data size.", delete dstTensor);
       auto data_size = static_cast<size_t>(origin_tensor->data()->size());
@@ -120,10 +121,8 @@ int CoderGraph::InitGraphInOutTensors() {
   std::vector<uint32_t> input_indices;
   for (auto in_node_index : graph_input_node_indexes) {
     in_node_index = static_cast<uint32_t>(in_node_index);
-    auto *in_node = model_->all_nodes_.at(in_node_index);
-    if (in_node == nullptr) {
-      return RET_ERROR;
-    }
+    auto in_node = model_->all_nodes_.at(in_node_index);
+    MS_CHECK_PTR(in_node);
     for (uint32_t i = 0; i < in_node->input_indices_.size(); i++) {
       auto in_tensor_index = size_t(in_node->input_indices_.at(i));
       bool is_graph_input = false;

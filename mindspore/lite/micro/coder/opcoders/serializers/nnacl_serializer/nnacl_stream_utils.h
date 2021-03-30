@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_
 #include <sstream>
 #include <string>
+#include "nnacl/op_base.h"
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/softmax_parameter.h"

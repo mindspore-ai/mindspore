@@ -104,7 +104,8 @@ void MemoryAllocator::RecordOriginWeightsAddr(const std::vector<std::unique_ptr<
   for (const auto &node : nodes) {
     std::vector<Tensor *> inputs = node->input_tensors();
     for (const auto &tensor : inputs) {
-      if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+      if (tensor->category() == Tensor::Category::CONST_TENSOR ||
+          tensor->category() == Tensor::Category::CONST_SCALAR) {
         std::string runtime_addr = net_weight_addr_ + std::to_string(weight_index_);
         origin_weights_addr_.insert(std::make_pair(tensor, runtime_addr));
         weight_index_++;

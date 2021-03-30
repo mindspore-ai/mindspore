@@ -119,4 +119,20 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SpliceParame
                  splice_parameter.forward_indexes_dim_, splice_parameter.src_to_dst_row_offset_, "splice_context",
                  nullptr, splice_parameter.output_dim_);
 }
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ExpParameter &exp_parameter) {
+  CodeBaseStruct("ExpParameter", name, exp_parameter.op_parameter_, exp_parameter.base_, exp_parameter.scale_,
+                 exp_parameter.shift_, exp_parameter.thread_num_, exp_parameter.in_scale_, exp_parameter.out_scale_,
+                 exp_parameter.element_num_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter) {
+  CodeBaseStruct("StridedSliceParameter", name, strided_slice_parameter.op_parameter_,
+                 ToString(strided_slice_parameter.begins_), ToString(strided_slice_parameter.ends_),
+                 ToString(strided_slice_parameter.strides_), strided_slice_parameter.isScale,
+                 strided_slice_parameter.in_shape_length_, ToString(strided_slice_parameter.in_shape_),
+                 strided_slice_parameter.num_axes_, strided_slice_parameter.data_type,
+                 strided_slice_parameter.begins_mask_, strided_slice_parameter.ellipsisMask_,
+                 strided_slice_parameter.newAxisMask_, strided_slice_parameter.shrinkAxisMask_);
+}
 }  // namespace mindspore::lite::micro::nnacl

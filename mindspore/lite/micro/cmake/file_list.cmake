@@ -59,6 +59,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/base/reshape_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/softmax_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/detection_post_process_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/base/strided_slice_base_coder.cc
         #### cmsis int8 coder
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/add_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/conv2d_base_coder.cc
@@ -95,6 +96,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/tile_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/splice_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/exp_fp32_coder.cc
         #### nnacl int8 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/activation_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/add_int8_coder.cc
@@ -146,6 +148,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/utils.cc
         ### populate operator parameter
         ${LITE_DIR}/src/ops/ops_utils.cc
+        ${LITE_DIR}/src/ops/populate/default_populate.cc
         ${LITE_DIR}/src/ops/populate/conv2d_populate.cc
         ${LITE_DIR}/src/ops/populate/arithmetic_populate.cc
         ${LITE_DIR}/src/ops/populate/add_populate.cc
@@ -166,6 +169,15 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/activation_populate.cc
         ${LITE_DIR}/src/ops/populate/softmax_populate.cc
         ${LITE_DIR}/src/ops/populate/splice_populate.cc
+        ${LITE_DIR}/src/ops/populate/transpose_populate.cc
+        ${LITE_DIR}/src/ops/populate/sub_populate.cc
+        ${LITE_DIR}/src/ops/populate/power_populate.cc
+        ${LITE_DIR}/src/ops/populate/mul_populate.cc
+        ${LITE_DIR}/src/ops/populate/arithmetic_self_populate.cc
+        ${LITE_DIR}/src/ops/populate/div_populate.cc
+        ${LITE_DIR}/src/ops/populate/erf_populate.cc
+        ${LITE_DIR}/src/ops/populate/exp_populate.cc
+        ${LITE_DIR}/src/ops/populate/strided_slice_populate.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
