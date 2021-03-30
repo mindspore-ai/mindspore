@@ -49,6 +49,9 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (perm_tensor->shape_size_ == 0) {
     return NNACL_INFER_INVALID;
   }
+  if (perms_num != 0 && perm_data == NULL) {
+    return NNACL_INFER_INVALID;
+  }
   int perm[MAX_SHAPE_SIZE];
   size_t perm_size = 0;
   for (size_t i = 0; i < perms_num; i++) {

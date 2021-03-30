@@ -42,6 +42,7 @@ int ElementLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size)
 
 /* logical or */
 int ElementLogicalOr(const float *in0, const float *in1, float *out, int size);
+int ElementLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size);
 
 /* max min */
 int ElementMaximum(const float *in0, const float *in1, float *out, int size);
