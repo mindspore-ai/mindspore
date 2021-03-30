@@ -22,17 +22,17 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
 GetNextProfiling::GetNextProfiling(const std::string &path) : profiling_path_(path) {}
 
 void GetNextProfiling::GetDeviceId() {
-  // If DEVICE_ID is not set,defult value is 0
-  device_id_ = common::GetEnv("DEVICE_ID");
-  if (device_id_.empty()) {
-    device_id_ = "0";
-  }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  device_id_ = std::to_string(device_id);
 }
 
 void GetNextProfiling::Init() {
