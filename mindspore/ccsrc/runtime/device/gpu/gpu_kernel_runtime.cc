@@ -71,6 +71,7 @@ bool GPUKernelRuntime::Init() {
   enable_relation_cache_ = context::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
 
   if (device_init_ == true) {
+    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SetDevice(UintToInt(device_id_)), "Failed to set device id");
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
   }
