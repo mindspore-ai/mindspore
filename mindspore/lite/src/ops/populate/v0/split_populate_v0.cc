@@ -34,6 +34,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   split_param->num_split_ = split_prim->numberSplit();
   if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
     MS_LOG(ERROR) << "The value of split_param->num_split_ is too big";
+    free(split_param);
     return nullptr;
   }
   int *split_sizes = reinterpret_cast<int *>(malloc(split_param->num_split_ * sizeof(int)));

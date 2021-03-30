@@ -339,7 +339,7 @@ bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num) {
          conv_param->stride_h_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
          conv_param->pad_u_ == 1 && conv_param->pad_d_ == 1 && conv_param->pad_l_ == 1 && conv_param->pad_r_ == 1 &&
          conv_param->input_channel_ == conv_param->output_channel_ &&
-         conv_param->output_h_ / thread_num >= 4;  // better had more than 4 rows for each thread
+         conv_param->output_h_ >= thread_num * 4;  // better had more than 4 rows for each thread
 }
 
 void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel) {
