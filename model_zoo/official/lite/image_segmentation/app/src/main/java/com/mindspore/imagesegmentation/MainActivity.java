@@ -286,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
              progressBar.setVisibility(View.VISIBLE);
             new Thread(() -> {
                 isRunningModel = true;
-                modelTrackingResult = trackingMobile.execut(originBitmap);
+                modelTrackingResult = trackingMobile.execute(originBitmap);
                 if (modelTrackingResult != null) {
                     isRunningModel = false;
                     lastOriginBitmap = originBitmap;

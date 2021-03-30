@@ -96,7 +96,7 @@ public class StyleTransferModelExecutor {
         msConfig.free();
 
 
-        // Complile graph.
+        // Compile graph.
         if (!Predict_session.compileGraph(style_predict_model)) {
             Log.e("MS_LITE", "Compile style_predict graph failed");
             style_predict_model.freeBuffer();
@@ -106,7 +106,7 @@ public class StyleTransferModelExecutor {
             style_transform_model.freeBuffer();
         }
 
-        // Note: when use model.freeBuffer(), the model can not be complile graph again.
+        // Note: when use model.freeBuffer(), the model can not be compile graph again.
         style_predict_model.freeBuffer();
         style_transform_model.freeBuffer();
     }
@@ -165,7 +165,7 @@ public class StyleTransferModelExecutor {
         // Get output tensor values.
         List<String> tensorNames = Predict_session.getOutputTensorNames();
         Map<String, MSTensor> outputs = Predict_session.getOutputMapByTensor();
-        Set<Map.Entry<String, MSTensor>> entrys = outputs.entrySet();
+        Set<Map.Entry<String, MSTensor>> entry = outputs.entrySet();
 
         float[] Predict_results = null;
         for (String tensorName : tensorNames) {
