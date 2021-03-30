@@ -350,6 +350,9 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
   size_t global_w = UP_DIV(OW_, block_size_.W);
   size_t global_c = UP_DIV(CO_SLICES_, block_size_.C);
   int local_max = filter_type_ == MemType::IMG ? 64 : 128;
+  if (ocl_runtime_->DeviceComputeUnits() > 16) {
+    local_max = 256;
+  }
   const int local_c_max = 16;
   const int OH_threshold = 100;
   const int OW_threshold = 100;
