@@ -38,7 +38,7 @@ class BleuScore(Metric):
         >>> metric.clear()
         >>> metric.update(candidate_corpus, reference_corpus)
         >>> bleu_score = metric.eval()
-        >>> print(output)
+        >>> print(bleu_score)
         0.5946035575013605
     """
     def __init__(self, n_gram=4, smooth=False):

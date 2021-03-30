@@ -452,7 +452,7 @@ class DiceLoss(_Loss):
         single_dice_coeff = (2 * intersection) / (unionset + self.smooth)
         dice_loss = 1 - single_dice_coeff
 
-        return dice_loss.mean()
+        return dice_loss
 
 
 @constexpr
@@ -1078,7 +1078,7 @@ class FocalLoss(_Loss):
         >>> focalloss = nn.FocalLoss(weight=Tensor([1, 2]), gamma=2.0, reduction='mean')
         >>> output = focalloss(predict, target)
         >>> print(output)
-        1.6610543
+        0.12516622
     """
 
     def __init__(self, weight=None, gamma=2.0, reduction='mean'):
