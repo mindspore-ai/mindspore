@@ -27,6 +27,7 @@
 #include "ir/dtype/type.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {
@@ -562,5 +563,27 @@ bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const
   *value = attr_func->second(*value);
   MS_LOG(DEBUG) << "convert ir attr to op attr, name: " << op_type << ", attr: " << attr_name;
   return true;
+}
+
+void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const AbstractBasePtr &value,
+                                             const std::string &class_name) {
+  MS_EXCEPTION_IF_NULL(name);
+  MS_EXCEPTION_IF_NULL(value);
+  CheckMode(class_name);
+  CheckTypeValid("name", name->BuildType(), {kString}, class_name);
+  auto s = GetValue<std::string>(name->BuildValue());
+  if (s.empty()) {
+    MS_EXCEPTION(ValueError) << "For 'name' the value should by valid string in " << class_name
+                             << ", but got an empty string.";
+  }
+  CheckTypeValid("value", value->BuildType(), {kTensorType}, class_name);
+}
+
+void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_EXCEPTION(NotSupportError) << class_name << "operator does not support PyNative mode.";
+  }
 }
 }  // namespace mindspore
