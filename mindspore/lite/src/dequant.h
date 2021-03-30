@@ -69,6 +69,7 @@ class DequantUtil {
       if (!channel_first) {
         if (input_tensor->shape().size() != 2) {
           MS_LOG(ERROR) << "unexpected shape size: " << input_tensor->shape().size();
+          free(dequant_datas);
           return nullptr;
         }
         channels = input_tensor->shape()[1];

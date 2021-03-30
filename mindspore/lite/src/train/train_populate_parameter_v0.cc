@@ -290,6 +290,7 @@ OpParameter *PopulatePoolingGradParameter(const void *primitive) {
       break;
     default:
       MS_LOG(ERROR) << "unknown pooling mode: " << poolingGrad_prim->poolingMode();
+      free(pooling_param);
       return nullptr;
   }
 
