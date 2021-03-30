@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,9 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                           thread_info[5], 0, reinterpret_cast<CUstream>(stream_ptr),
                           reinterpret_cast<void **>(&runtimeargs[0]), 0);
   if (result != CUDA_SUCCESS) {
-    MS_LOG(ERROR) << "Launch Kernel failed.";
+    const char *msg = nullptr;
+    cuGetErrorName(result, &msg);
+    MS_LOG(ERROR) << "Launch Kernel failed. error: " << msg;
     return false;
   }
   return true;

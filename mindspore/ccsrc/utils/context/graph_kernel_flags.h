@@ -49,12 +49,13 @@ class GraphKernelFlags {
 
  public:
   /**
-   * dump_as_text, unsupported now.
+   * Dump info as human-readable text.
+   * A directory "graph_kernel_dump" will be created, and all information will be dumped in this directory.
    */
   bool dump_as_text{false};
 
   /**
-   * opt_level, value from 0 to 3.
+   * Optimization level, value from 0 to 3.
    * 0: GraphKernel disabled
    * 1: GraphKernel enabled
    * 2 and 3 are not supported now.
@@ -93,17 +94,21 @@ class GraphKernelFlags {
   std::vector<std::string> disable_expand_ops;
 
   /**
-   * enable_cluster_ops, unsupported now.
+   * Additional clustering operators (case sensitive).
+   * The operators to be added into the default clustering operator list.
    */
   std::vector<std::string> enable_cluster_ops;
 
   /**
-   * enable_cluster_ops_only, unsupported now.
+   * Clustering operators to be enabled (case sensitive).
+   * Unlike the "enable_cluster_ops", the default list will be overwritten by this list.
+   * Note that the "enable_cluster_ops" and "disable_cluster_ops" will be ignored if this flag is set.
    */
   std::vector<std::string> enable_cluster_ops_only;
 
   /**
-   * disable_cluster_ops, unsupported now.
+   * Clustering operators to be disabled (case sensitive).
+   * The behavior is undefined when this list overlaps with "enable_cluster_ops".
    */
   std::vector<std::string> disable_cluster_ops;
 
