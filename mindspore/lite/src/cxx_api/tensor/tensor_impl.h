@@ -116,7 +116,7 @@ class MSTensor::Impl {
       return nullptr;
     }
 
-    return std::shared_ptr<const void>(lite_tensor_->MutableData(), [](const void *) {});
+    return std::shared_ptr<const void>(lite_tensor_->data(), [](const void *) {});
   }
 
   virtual void *MutableData() {
