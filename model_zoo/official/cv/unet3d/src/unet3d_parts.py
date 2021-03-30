@@ -16,7 +16,6 @@
 import mindspore.nn as nn
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
-from src.conv import Conv3D, Conv3DTranspose
 
 class BatchNorm3d(nn.Cell):
     def __init__(self, num_features):
@@ -39,22 +38,22 @@ class ResidualUnit(nn.Cell):
         self.down = down
         self.in_channel = in_channel
         self.out_channel = out_channel
-        self.down_conv_1 = Conv3D(in_channel, out_channel, kernel_size=(3, 3, 3), \
-                                  pad_mode="pad", stride=self.stride, pad=1)
+        self.down_conv_1 = nn.Conv3d(in_channel, out_channel, kernel_size=(3, 3, 3), \
+                                     pad_mode="pad", stride=self.stride, padding=1)
         self.is_output = is_output
         if not is_output:
             self.batchNormal1 = BatchNorm3d(num_features=self.out_channel)
             self.relu1 = nn.PReLU()
         if self.down:
-            self.down_conv_2 = Conv3D(out_channel, out_channel, kernel_size=(3, 3, 3), \
-                                      pad_mode="pad", stride=1, pad=1)
+            self.down_conv_2 = nn.Conv3d(out_channel, out_channel, kernel_size=(3, 3, 3), \
+                                         pad_mode="pad", stride=1, padding=1)
             self.relu2 = nn.PReLU()
             if kernel_size[0] == 1:
-                self.residual = Conv3D(in_channel, out_channel, kernel_size=(1, 1, 1), \
-                                       pad_mode="valid", stride=self.stride)
+                self.residual = nn.Conv3d(in_channel, out_channel, kernel_size=(1, 1, 1), \
+                                          pad_mode="valid", stride=self.stride)
             else:
-                self.residual = Conv3D(in_channel, out_channel, kernel_size=(3, 3, 3), \
-                                       pad_mode="pad", stride=self.stride, pad=1)
+                self.residual = nn.Conv3d(in_channel, out_channel, kernel_size=(3, 3, 3), \
+                                       pad_mode="pad", stride=self.stride, padding=1)
             self.batchNormal2 = BatchNorm3d(num_features=self.out_channel)
 
 
@@ -93,9 +92,10 @@ class Up(nn.Cell):
         self.down_in_channel = down_in_channel
         self.out_channel = out_channel
         self.stride = stride
-        self.conv3d_transpose = Conv3DTranspose(in_channel=self.in_channel + self.down_in_channel, \
-                                                pad=1, out_channel=self.out_channel, kernel_size=(3, 3, 3), \
-                                                stride=self.stride, output_padding=(1, 1, 1))
+        self.conv3d_transpose = nn.Conv3dTranspose(in_channels=self.in_channel + self.down_in_channel, \
+                                                   out_channels=self.out_channel, kernel_size=(3, 3, 3), \
+                                                   pad_mode="pad", stride=self.stride, \
+                                                   output_padding=(1, 1, 1), padding=1)
 
         self.concat = P.Concat(axis=1)
         self.conv = ResidualUnit(self.out_channel, self.out_channel, stride=1, down=False, \

@@ -102,7 +102,6 @@ python eval.py --data_url=/path/to/data/ --seg_url=/path/to/segment/ --ckpt_path
   │   ├──transform.py                 // handle dataset
   │   ├──convert_nifti.py             // convert dataset
   │   ├──loss.py                      // loss
-  │   ├──conv.py                      // conv components
   │   ├──utils.py                     // General components (callback function)
   │   ├──unet3d_model.py              // Unet3D model
   │   ├──unet3d_parts.py              // Unet3D part
