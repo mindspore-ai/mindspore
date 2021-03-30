@@ -389,8 +389,7 @@ std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::str
                                                                   const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::Shape>()) {
-    MS_EXCEPTION(ValueError) << "The " << arg_name << "'s shape is " << shape->ToString()
-                             << "should be a common shape!";
+    return std::vector<int64_t>();
   }
   auto shape_element = shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
@@ -500,7 +499,7 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
     MS_EXCEPTION_IF_NULL(type);
     if (!allow_mix) {
       // input must be all tensor or all other type
-      if (!(tensor_flag ^ type->isa<TensorType>())) {
+      if (tensor_flag ^ type->isa<TensorType>()) {
         buffer << "For " << prim_name << "'s "
                << "type is not same";
         for (const auto &error_elem : args) {
