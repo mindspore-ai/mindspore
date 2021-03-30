@@ -146,7 +146,7 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
     }
   }
 
-  if (kernel) {
+  if (kernel != nullptr) {
     auto ret = kernel->Init();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "conv kernel init failed.";

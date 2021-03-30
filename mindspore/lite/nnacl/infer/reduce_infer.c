@@ -68,7 +68,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   bool keep_dims = param->keep_dims_;
   int out_shape[MAX_SHAPE_SIZE];
-  size_t out_shape_size = 0;
+  const size_t out_shape_size = 0;
   // get axes from input tensor
   const TensorC *axes_input = inputs[1];
   if (axes_input->shape_size_ == 1 && axes_input->shape_[0] == 0) {

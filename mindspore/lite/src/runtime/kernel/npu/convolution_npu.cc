@@ -112,12 +112,6 @@ kernel::LiteKernel *NpuConvKernelCreator(const std::vector<lite::Tensor *> &inpu
                                          const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
-  if (inputs[0]->Size() > NPU_MEMORY_MAX) {
-    MS_LOG(ERROR) << "Npu does not support input tensor size greater than 200MB";
-    free(op_parameter);
-    return nullptr;
-  }
-
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::NPUKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
