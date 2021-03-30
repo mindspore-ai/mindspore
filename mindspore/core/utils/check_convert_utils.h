@@ -208,7 +208,7 @@ class CheckAndConvertUtils {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
     }
     if (range.first >= range.second) {
-      MS_EXCEPTION(ArgumentError) << "the check range left must be larger than right number bug got [ " << range.first
+      MS_EXCEPTION(ArgumentError) << "the check range left must be smaller than right number bug got [ " << range.first
                                   << "," << range.second;
     }
     if (iter->second(arg_value, range)) {
@@ -227,7 +227,8 @@ class CheckAndConvertUtils {
                                    << " cannot find in the compare string map";
     }
     auto range_strng = iter_to_string->second;
-    buffer << range_strng.first << range.first << "," << range_strng.second << " , but got " << arg_value;
+    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << " , but got "
+           << arg_value;
     MS_EXCEPTION(ValueError) << buffer.str();
   }
 
