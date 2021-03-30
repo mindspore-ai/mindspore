@@ -121,10 +121,8 @@ class KernelRuntime {
 
   void AssignStaticMemory(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
-  void ReuseAssignDynamicMemory(session::KernelGraph *graph);
   void AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index);
   void AssignWorkSpaceMem(MemType type, const AnfNodePtr &node);
-  void AssignReuseWorkSpaceMem(const AnfNodePtr &node);
 
   void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
 

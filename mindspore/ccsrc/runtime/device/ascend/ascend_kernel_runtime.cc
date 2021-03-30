@@ -131,7 +131,7 @@ void AscendKernelRuntime::SetContext() {
   }
 }
 
-void AscendKernelRuntime::InnerSetContext() {
+void AscendKernelRuntime::SetCurrentContext() {
   if (rt_context_ == nullptr) {
     return;
   }
@@ -142,7 +142,7 @@ void AscendKernelRuntime::InnerSetContext() {
 }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-  InnerSetContext();
+  SetCurrentContext();
   for (auto &iter : graph_data_dumper_) {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
     auto &data_dumper = iter.second;
@@ -168,7 +168,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
                                                     const std::unordered_set<ValueNodePtr> &,
                                                     const std::vector<CNodePtr> &) {
-  InnerSetContext();
+  SetCurrentContext();
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     MS_LOG(DEBUG) << "Unload dump info " << graph_id;
@@ -247,7 +247,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   if (!initialized_) {
     return;
   }
-  InnerSetContext();
+  SetCurrentContext();
   ReportProfilingData();
   // release ge runtime
   ClearGraphModelMap();
@@ -284,7 +284,7 @@ void AscendKernelRuntime::PreInit() {
 
 bool AscendKernelRuntime::Init() {
   if (initialized_) {
-    InnerSetContext();
+    SetCurrentContext();
     return true;
   }
   OpTilingCalculater::GetInstance().Init();
@@ -437,7 +437,7 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  InnerSetContext();
+  SetCurrentContext();
   if (graph->is_dynamic_shape()) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && (ConfigManager::GetInstance().iter_num() > 1)) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with sink mode.";
@@ -498,7 +498,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
 
 bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  InnerSetContext();
+  SetCurrentContext();
   if (graph->is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Skip Load Task Step";
     return true;
@@ -716,7 +716,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   current_graph_ = graph;
-  InnerSetContext();
+  SetCurrentContext();
   MS_EXCEPTION_IF_NULL(graph);
   if (graph->is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Run Task Async";
@@ -761,7 +761,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::SyncStream() {
-  InnerSetContext();
+  SetCurrentContext();
   if (stream_ == nullptr) {
     MS_LOG(ERROR) << "SyncStream failed. stream_ is nullptr";
     return false;
@@ -779,7 +779,7 @@ bool AscendKernelRuntime::SyncStream() {
 }
 
 bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
-  InnerSetContext();
+  SetCurrentContext();
   if (stream_ == nullptr) {
     MS_LOG(ERROR) << "MemcpyAsync failed. stream_ is nullptr";
     return false;
@@ -803,7 +803,7 @@ void AscendKernelRuntime::CreateContext() {
       MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
     }
   }
-  InnerSetContext();
+  SetCurrentContext();
 }
 
 bool AscendKernelRuntime::InitDevice() {
@@ -850,7 +850,7 @@ bool AscendKernelRuntime::InitDevice() {
 }
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
-  InnerSetContext();
+  SetCurrentContext();
   if (stream_ != nullptr) {
     auto ret = rtStreamDestroy(stream_);
     if (ret != RT_ERROR_NONE) {

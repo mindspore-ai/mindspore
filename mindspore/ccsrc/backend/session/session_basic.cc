@@ -118,68 +118,16 @@ ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
   return parameter->param_info();
 }
 
-tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
-                                          const KernelGraphPtr &graph) {
-  auto &node = node_output_pair.first;
-  auto &output_index = node_output_pair.second;
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(graph);
-  TypeId type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
-  if (type_id == kTypeUnknown) {
-    type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
-  }
-  tensor::TensorPtr tensor = nullptr;
-  std::vector<int64_t> temp_shape;
-  if (graph->IsUniqueTargetInternalOutput(node, output_index)) {
-    temp_shape.emplace_back(1);
-    tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
-    tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
-    tensor->set_sync_status(kNoNeedSync);
-    tensor->SetNeedWait(true);
-    tensor->SetIsGraphOutput();
-    return tensor;
-  }
-
-  tensor = graph->GetInternalOutputTensor(node, output_index);
-  if (tensor == nullptr) {
-    auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
-    (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-    tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
-    bool is_internal_output = graph->IsInternalOutput(node, output_index);
-    if (is_internal_output) {
-      graph->AddInternalOutputTensor(node, output_index, tensor);
-    }
-  }
-  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
-  // if in pynative mode,data only copied to host when user want to print data
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
-      ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
-    tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
-  } else {
-    tensor->set_sync_status(kNeedSyncDeviceToHost);
-  }
-  tensor->SetNeedWait(true);
-  tensor->SetIsGraphOutput();
-  return tensor;
-}
-
 static bool IsPynativeMode() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
 }
 
-BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
-                               const std::vector<tensor::TensorPtr> &input_tensors,
-                               std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+BaseRef GetNodeOutputTensorFromInputs(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
+                                      const std::vector<tensor::TensorPtr> &input_tensors) {
   auto &node = node_output_pair.first;
-  auto &output_index = node_output_pair.second;
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(tensor_to_node);
-  MS_LOG(INFO) << "Create tensor for output[" << node->DebugString() << "] index[" << node_output_pair.second << "]";
   if (HasAbstractMonad(node)) {
     return std::make_shared<tensor::Tensor>(int64_t(0), kBool);
   }
@@ -189,7 +137,8 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
     MS_EXCEPTION_IF_NULL(value_node);
     return value_node->value();
   }
-  bool output_addr_exist = AnfAlgo::OutputAddrExist(node, output_index);
+  MS_EXCEPTION_IF_NULL(graph);
+  bool output_addr_exist = AnfAlgo::OutputAddrExist(node, node_output_pair.second);
   if (!output_addr_exist || (CheckIfNeedCreateOutputTensor(node) && !IsPynativeMode())) {
     if (node->isa<Parameter>()) {
       for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
@@ -205,7 +154,56 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
       }
     }
   }
-  auto tensor = CreateCNodeOutputTensor(node_output_pair, graph);
+  return nullptr;
+}
+
+BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
+                               const std::vector<tensor::TensorPtr> &input_tensors,
+                               std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+  auto &node = node_output_pair.first;
+  auto &output_index = node_output_pair.second;
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Create tensor for output[" << node->DebugString() << "] index[" << output_index << "]";
+  auto tensor_from_input = GetNodeOutputTensorFromInputs(node_output_pair, graph, input_tensors);
+  if (tensor_from_input != nullptr) {
+    return tensor_from_input;
+  }
+  TypeId type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
+  if (type_id == kTypeUnknown) {
+    type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
+  }
+  tensor::TensorPtr tensor = nullptr;
+  std::vector<int64_t> temp_shape;
+  if (graph->IsUniqueTargetInternalOutput(node, output_index)) {
+    temp_shape.emplace_back(1);
+    tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+    tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
+    tensor->set_sync_status(kNoNeedSync);
+  } else {
+    tensor = graph->GetInternalOutputTensor(node, output_index);
+    if (tensor == nullptr) {
+      auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
+      (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+      tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+      bool is_internal_output = graph->IsInternalOutput(node, output_index);
+      if (is_internal_output) {
+        graph->AddInternalOutputTensor(node, output_index, tensor);
+      }
+    }
+    tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
+    // if in pynative mode,data only copied to host when user want to print data
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+        ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+      tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
+    } else {
+      tensor->set_sync_status(kNeedSyncDeviceToHost);
+    }
+  }
+  tensor->SetNeedWait(true);
+  tensor->SetIsGraphOutput();
   (*tensor_to_node)[tensor] = node_output_pair;
   return tensor;
 }
@@ -1776,43 +1774,6 @@ void SessionBasic::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::Te
 void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
   MS_EXCEPTION_IF_NULL(callback);
   summary_callback_ = callback;
-}
-
-void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) {
-  auto node_list = TopoSort(func_graph->get_return());
-  size_t tensor_index = 0;
-  for (const auto &node : node_list) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<CNode>()) {
-      AbstractBasePtrList input_abstracts;
-      size_t input_num = AnfAlgo::GetInputTensorNum(node);
-      for (size_t index = 0; index < input_num; ++index) {
-        auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), index);
-        MS_EXCEPTION_IF_NULL(input_node);
-        auto abstract = input_node->abstract();
-        MS_EXCEPTION_IF_NULL(abstract);
-        input_abstracts.emplace_back(abstract);
-      }
-      auto prim = AnfAlgo::GetCNodePrimitive(node);
-      if (prim->isa<ops::PrimitiveC>()) {
-        auto prim_c = prim->cast<std::shared_ptr<ops::PrimitiveC>>();
-        MS_EXCEPTION_IF_NULL(prim_c);
-        auto abstract = prim_c->Infer(input_abstracts);
-        node->set_abstract(abstract);
-      }
-    } else if (node->isa<Parameter>()) {
-      if (tensor_index > inputs.size()) {
-        MS_EXCEPTION(IndexError) << "Index " << tensor_index << "is out of " << inputs.size() << "tensor's size";
-      }
-      node->set_abstract(inputs[tensor_index++]->ToAbstract());
-    } else {
-      auto value_node = node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto value = value_node->value();
-      MS_EXCEPTION_IF_NULL(value);
-      value_node->set_abstract(value->ToAbstract());
-    }
-  }
 }
 
 void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
