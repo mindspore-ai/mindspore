@@ -226,7 +226,7 @@ int MatMulOpenCLKernel::Run() {
 kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
-  kernel::OpenCLKernel *kernel;
+  kernel::OpenCLKernel *kernel = nullptr;
   bool infer_shape_done = opParameter->infer_flag_;
   if (infer_shape_done && IsUseStrassenMatmul(inputs)) {
     MS_LOG(DEBUG) << "use_matmul_strassen";
