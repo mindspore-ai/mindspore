@@ -56,13 +56,7 @@ class Localization(LabelSensitiveMetric):
     Args:
         num_labels (int): Number of classes in the dataset.
         metric (str, optional): Specific metric to calculate localization capability.
-            Options: "PointingGame", "IoSR".
-            Default: "PointingGame".
-
-    Examples:
-        >>> from mindspore.explainer.benchmark import Localization
-        >>> num_labels = 10
-        >>> localization = Localization(num_labels, "PointingGame")
+            Options: "PointingGame", "IoSR". Default: "PointingGame".
     """
 
     def __init__(self,
@@ -113,6 +107,10 @@ class Localization(LabelSensitiveMetric):
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore.explainer.explanation import Gradient
+            >>> from mindspore.explainer.benchmark import Localization
+            >>>
+            >>> num_labels = 10
+            >>> localization = Localization(num_labels, "PointingGame")
             >>>
             >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
             >>> net = LeNet5(10, num_channel=3)
@@ -124,11 +122,13 @@ class Localization(LabelSensitiveMetric):
             >>> # usage 1: input the explainer and the data to be explained,
             >>> # localization is a Localization instance
             >>> res = localization.evaluate(gradient, inputs, targets, mask=masks)
-            >>> print(res)
+            >>> print(res.shape)
+            (1,)
             >>> # usage 2: input the generated saliency map
             >>> saliency = gradient(inputs, targets)
             >>> res = localization.evaluate(gradient, inputs, targets, saliency, mask=masks)
-            >>> print(res)
+            >>> print(res.shape)
+            (1,)
         """
         self._check_evaluate_param_with_mask(explainer, inputs, targets, saliency, mask)
 

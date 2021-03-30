@@ -80,6 +80,7 @@ class Occlusion(PerturbationAttribution):
         >>> label = ms.Tensor([1], ms.int32)
         >>> saliency = occlusion(input_x, label)
         >>> print(saliency.shape)
+        (1, 1, 32, 32)
     """
 
     def __init__(self, network, activation_fn, perturbation_per_eval=32):

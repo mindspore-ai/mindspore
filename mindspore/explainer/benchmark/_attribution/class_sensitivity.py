@@ -57,7 +57,8 @@ class ClassSensitivity(LabelAgnosticMetric):
             >>> input_x = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
             >>> class_sensitivity = ClassSensitivity()
             >>> res = class_sensitivity.evaluate(gradient, input_x)
-            >>> print(res)
+            >>> print(res.shape)
+            (1,)
         """
         self._check_evaluate_param(explainer, inputs)
 
