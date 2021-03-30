@@ -56,7 +56,7 @@ static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
   MS_FLOAT32X4 decimal_exp =
     param[5] +
     decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  MS_STQ_F32(dst, decimal_exp * MS_LDQ_F32((float *)(&int_exp)));
+  MS_STQ_F32(dst, decimal_exp * MS_CAST_F32_S32(int_exp));
 }
 #endif
 
@@ -78,20 +78,23 @@ static inline void simd_exp_avx(MS_FLOAT32X8 input, float *dst) {
   MS_FLOAT32X8 decimal_exp =
     param[5] +
     decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  MS_ST256_F32(dst, decimal_exp * MS_LD256_F32((float *)(&int_exp)));
+  MS_ST256_F32(dst, decimal_exp * MS_CAST256_F32_S32(int_exp));
 }
 #endif
 
 static inline void single_exp(float src, float *dst) {
+  typedef union {
+    float f;
+    int i;
+  } fi;
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // log(2.0f)
   src = MSMAX(-88.0f, MSMIN(88.0f, src));
   int integer = src / param[0];
   float decimal = src - integer * param[0];
-  int int_exp = (integer + 127) << 23;
+  fi int_exp = {.i = (integer + 127) << 23};
   float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  float *ptr = (float *)&int_exp;
-  *dst = *ptr * decimal_exp;
+  *dst = int_exp.f * decimal_exp;
 }
 #ifdef __cplusplus
 }
