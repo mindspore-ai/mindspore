@@ -380,5 +380,12 @@ TEST_F(TestParser, TestParseGraphCallVargs) {
   bool ret_ = ResolveAll(manager);
   ASSERT_TRUE(ret_);
 }
+
+TEST_F(TestParser, TestParserUndefinedVar) {
+  py::function fn_ = python_adapter::GetPyFn("gtest_input.pipeline.parse.parser_test", "test_parse_undefined_var");
+
+  // parse undefined var
+  EXPECT_THROW({ ParsePythonCode(fn_); }, std::runtime_error);
+}
 }  // namespace parse
 }  // namespace mindspore

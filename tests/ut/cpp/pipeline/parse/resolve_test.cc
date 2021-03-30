@@ -86,18 +86,5 @@ TEST_F(TestResolve, TestParseGraphTestClosureResolve) {
     i++;
   }
 }
-TEST_F(TestResolve, TestResolveFail) {
-  py::function fn_ = python_adapter::GetPyFn("gtest_input.pipeline.parse.parser_test", "test_resolvefail");
-
-  // parse graph
-  FuncGraphPtr func_graph = ParsePythonCode(fn_);
-  ASSERT_FALSE(nullptr == func_graph);
-
-  // save the func_graph to manager
-  std::shared_ptr<FuncGraphManager> manager = Manage(func_graph);
-
-  // call resolve
-  EXPECT_THROW({ ResolveAll(manager); }, std::runtime_error);
-}
 }  // namespace parse
 }  // namespace mindspore

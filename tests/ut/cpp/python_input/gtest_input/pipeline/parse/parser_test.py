@@ -298,7 +298,7 @@ def test_augassign(x, y):
     return y
 
 
-def test_resolvefail(x, y):
+def test_parse_undefined_var(x, y):
     a = x + y + Undef
     return a
 
