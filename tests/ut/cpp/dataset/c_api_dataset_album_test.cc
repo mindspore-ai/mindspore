@@ -123,11 +123,20 @@ TEST_F(MindDataTestPipeline, TestAlbumGetters) {
 
   int64_t num_classes = ds->GetNumClasses();
   EXPECT_EQ(num_classes, -1);
+  int64_t num_samples = ds->GetDatasetSize();
+  EXPECT_EQ(num_samples, 7);
+
   int64_t batch_size = ds->GetBatchSize();
   EXPECT_EQ(batch_size, 1);
   int64_t repeat_count = ds->GetRepeatCount();
   EXPECT_EQ(repeat_count, 1);
   EXPECT_EQ(ds->GetColumnNames(), column_names);
+
+  // Test get dataset size with num_samples > files in dataset 
+  auto sampler = std::make_shared<SequentialSampler>(0, 12);
+  std::shared_ptr<Dataset> ds2 = Album(folder_path, schema_file, column_names, false, sampler);
+  num_samples = ds->GetDatasetSize();
+  EXPECT_EQ(num_samples, 7);
 }
 
 TEST_F(MindDataTestPipeline, TestAlbumDecode) {

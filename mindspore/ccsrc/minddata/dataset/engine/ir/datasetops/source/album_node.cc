@@ -70,7 +70,7 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
   RETURN_IF_NOT_OK(schema->LoadSchemaFile(schema_path_, column_names_));
 
   // Argument that is not exposed to user in the API.
-  std::set<std::string> extensions = {};
+  std::set<std::string> extensions = {".json", ".JSON"};
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
@@ -86,6 +86,42 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 Status AlbumNode::GetShardId(int32_t *shard_id) {
   *shard_id = sampler_->ShardId();
 
+  return Status::OK();
+}
+
+// Get Dataset size
+Status AlbumNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                 int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t sample_size = -1;
+  int64_t num_rows = 0;
+  // iterate over the files in the directory and count files to initiate num_rows
+  Path folder(dataset_dir_);
+  std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
+  if (!folder.Exists() || dirItr == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + dataset_dir_);
+  }
+  std::set<std::string> extensions = {".json", ".JSON"};
+
+  while (dirItr->hasNext()) {
+    Path file = dirItr->next();
+    if (extensions.empty() || extensions.find(file.Extension()) != extensions.end()) {
+      num_rows += 1;
+    }
+  }
+  // give sampler the total number of files and check if num_samples is smaller
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  sample_size = sampler_rt->CalculateNumSamples(num_rows);
+  if (sample_size == -1) {
+    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), &sample_size));
+  }
+  *dataset_size = sample_size;
+  // We cache dataset size so as to not duplicated run
+  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 
