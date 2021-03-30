@@ -125,23 +125,14 @@ set(CODER_OPCODERS_SRC
 set(LITE_SRC
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/graph_util.cc
-        ${LITE_DIR}/src/common/string_util.cc
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/tensor_util.cc
-        ${LITE_DIR}/src/runtime/allocator.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
-        ${LITE_DIR}/src/runtime/runtime_api.cc
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/tensor.cc
-        ${LITE_DIR}/src/scheduler.cc
-        ${LITE_DIR}/src/inner_context.cc
         ${LITE_DIR}/src/dequant.cc
-        ${LITE_DIR}/src/kernel_registry.cc
-        ${LITE_DIR}/src/lite_kernel.cc
-        ${LITE_DIR}/src/sub_graph_kernel.cc
         ${LITE_DIR}/src/huffman_decode.cc
-        ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/common/log_adapter.cc
         ${LITE_DIR}/src/common/utils.cc
         ### populate operator parameter

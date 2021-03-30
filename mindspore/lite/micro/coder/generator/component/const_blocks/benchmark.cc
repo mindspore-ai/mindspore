@@ -131,7 +131,7 @@ int main(int argc, const char **argv) {
   }
 
   lite::Context *context = nullptr;
-  if (argc >= 5) {
+  if (argc >= 6) {
     // config benchmark context
     context = new (std::nothrow) lite::Context();
     if (context == nullptr) {
