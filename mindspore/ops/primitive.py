@@ -142,10 +142,10 @@ class Primitive(Primitive_):
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
         """
-        if context.get_auto_parallel_context("parallel_mode") not in [context.ParallelMode.AUTO_PARALLEL,
-                                                                      context.ParallelMode.SEMI_AUTO_PARALLEL]:
-            logger.warning("Shard strategy is not valid in ", context.get_auto_parallel_context("parallel_mode"),
-                           " mode. Please use semi auto or auto parallel mode.")
+        mode = context.get_auto_parallel_context("parallel_mode")
+        if mode not in [context.ParallelMode.AUTO_PARALLEL, context.ParallelMode.SEMI_AUTO_PARALLEL]:
+            logger.warning(f"The shard strategy {strategy} of {self.name} is not valid in {mode}. "
+                           f"Please use semi auto or auto parallel mode.")
         self.add_prim_attr("strategy", strategy)
         return self
 
