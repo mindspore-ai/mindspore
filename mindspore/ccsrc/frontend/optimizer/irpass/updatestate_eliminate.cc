@@ -201,7 +201,7 @@ AnfNodePtr EliminateMakeTupleWithDeadNode(const CNodePtr &update_state, const CN
   return new_update_state;
 }
 
-// Return true if the function is only used by make_tuple.
+// Return true if the func is only used by MakeTuple.
 bool OnlyMakeTupleUseFunc(const CNodePtr &make_tuple, const AnfNodePtr &func_node) {
   auto mgr = GetManager(make_tuple);
   if (mgr == nullptr) {
@@ -222,18 +222,30 @@ bool OnlyMakeTupleUseFunc(const CNodePtr &make_tuple, const AnfNodePtr &func_nod
 //   u2 = UpdateState(u1, t)
 // To:
 //   t = make_tuple(input, Function) or t = make_tuple(Function, input)
-//   u2 = u1
+//   u2 = UpdateState(u1, input)
 AnfNodePtr EliminateUpdateStateWithMakeTupleFunc(const CNodePtr &update_state, const CNodePtr &make_tuple) {
   if (make_tuple->size() != kMakeTupleSize) {
     return nullptr;
   }
+
+  // Get the other node that is not FuncGraph.
+  AnfNodePtr input_node = nullptr;
   auto &first_input = make_tuple->input(kInputIndex);
-  if (IsValueNode<FuncGraph>(first_input) && OnlyMakeTupleUseFunc(make_tuple, first_input)) {
-    return update_state->input(1);
-  }
   auto &second_input = make_tuple->input(kAttachIndex);
-  if (IsValueNode<FuncGraph>(second_input) && OnlyMakeTupleUseFunc(make_tuple, second_input)) {
-    return update_state->input(1);
+  if (IsValueNode<FuncGraph>(first_input) && OnlyMakeTupleUseFunc(make_tuple, first_input)) {
+    input_node = make_tuple->input(kAttachIndex);
+  } else if (IsValueNode<FuncGraph>(second_input) && OnlyMakeTupleUseFunc(make_tuple, second_input)) {
+    input_node = make_tuple->input(kInputIndex);
+  }
+
+  // Create the new UpdateState node with `node_input`, replace the old UpdateStateNode.
+  if (input_node != nullptr) {
+    auto update_state_op = NewValueNode(prim::kPrimUpdateState);
+    auto fg = update_state->func_graph();
+    auto new_update_state = fg->NewCNode({update_state_op, update_state->input(kInputIndex), input_node});
+    new_update_state->set_abstract(update_state->abstract());
+    new_update_state->set_scope(update_state->scope());
+    return new_update_state;
   }
   return nullptr;
 }
