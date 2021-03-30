@@ -40,7 +40,7 @@ class DenseNoTranpose(nn.Cell):
         if self.device_type == "Ascend":
             x = self.cast(x, mstype.float16)
             weight = self.cast(self.weight, mstype.float16)
-            output = self.bias_add(self.cast(self.matmul(x, weight), mstype.float32), self.bias)
+            output = self.bias_add(self.matmul(x, weight), self.bias)
         else:
             output = self.bias_add(self.matmul(x, self.weight), self.bias)
         return output
