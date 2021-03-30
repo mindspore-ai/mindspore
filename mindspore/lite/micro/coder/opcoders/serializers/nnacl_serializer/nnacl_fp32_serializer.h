@@ -30,6 +30,7 @@
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/splice_parameter.h"
+#include "nnacl/lstm_parameter.h"
 #include "wrapper/fp32/dequant_int8_to_fp32_wrapper.h"
 namespace mindspore::lite::micro::nnacl {
 
@@ -43,6 +44,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
   void CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter);
+  void CodeStruct(const std::string &name, const LstmParameter &lstm_parameter);
   void CodeStruct(const std::string &name, const ScaleParameter &scale_parameter);
   void CodeStruct(const std::string &name, const SliceParameter &slice_parameter);
   void CodeStruct(const std::string &name, const TileParameter &tile_parameter);
