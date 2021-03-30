@@ -87,6 +87,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   │   ├──crossentropy.py     # define the crossentropy of resnet50-quant
   ├── train.py      # training script
   ├── eval.py       # evaluation script
+  ├── export.py     # export script
 
 ```
 

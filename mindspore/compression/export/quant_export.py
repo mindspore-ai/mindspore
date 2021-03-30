@@ -228,9 +228,16 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
     __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
-        super(ExportManualQuantNetwork, self).__init__(network, mean, std_dev, *inputs, is_mindir)
+        super(ExportManualQuantNetwork, self).__init__(network, mean, std_dev, *inputs, is_mindir=is_mindir)
         self.upcell = None
         self.upname = None
+
+    def _add_output_min_max_for_op(self, origin_op, fake_quant_cell):
+        if self.is_mindir:
+            np_type = mstype.dtype_to_nptype(self.data_type)
+            _, _, maxq, minq = quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_cell, np_type)
+            origin_op.add_prim_attr('output_maxq', Tensor(maxq))
+            origin_op.add_prim_attr('output_minq', Tensor(minq))
 
     def _convert_quant2deploy(self, network):
         """Convert network's all quant subcell to deploy subcell."""
@@ -247,18 +254,31 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
             elif isinstance(subcell, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant,
                                       quant.Conv2dQuant, quant.DenseQuant)):
                 network, change = self._convert_subcell(network, change, name, subcell, core=False)
-            elif isinstance(subcell, quant.FakeQuantWithMinMaxObserver) and self.upcell:
-                np_type = mstype.dtype_to_nptype(self.data_type)
-                _, _, maxq, minq = quant_utils.scale_zp_max_min_from_fake_quant_cell(subcell, np_type)
-                self.upcell.core_op.add_prim_attr('output_maxq', Tensor(maxq))
-                self.upcell.core_op.add_prim_attr('output_minq', Tensor(minq))
-                network.insert_child_to_cell(self.upname, self.upcell)
+            elif isinstance(subcell, nn.ActQuant) and hasattr(subcell, "get_origin"):
+                if self.upcell:
+                    self._add_output_min_max_for_op(self.upcell.core_op, subcell.fake_quant_act)
+                activation = subcell.get_origin()
+                network.insert_child_to_cell(name, activation)
+                change = True
+            elif isinstance(subcell, nn.TensorAddQuant):
+                if isinstance(subcell.add, _AddFakeQuantAfterSubCell):
+                    add_op = subcell.add.subcell
+                    subcell.__delattr__("add")
+                    subcell.__setattr__("add", add_op)
+                add_op = subcell.add
+                if add_op:
+                    self._add_output_min_max_for_op(add_op, subcell.fake_quant_act)
+                subcell.__delattr__("fake_quant_act")
+                subcell.__setattr__("fake_quant_act", P.identity())
+            elif isinstance(subcell, quant.FakeQuantWithMinMaxObserver):
+                if self.upcell:
+                    self._add_output_min_max_for_op(self.upcell.core_op, subcell)
+                network.__delattr__(name)
+                network.__setattr__(name, P.identity())
             elif isinstance(subcell, _AddFakeQuantAfterSubCell):
                 op = subcell.subcell
                 if op.name in QuantizationAwareTraining.__quant_op_name__ and isinstance(op, ops.Primitive):
-                    if self.is_mindir:
-                        op.add_prim_attr('output_maxq', Tensor(subcell.fake_quant_act.maxq.data.asnumpy()))
-                        op.add_prim_attr('output_minq', Tensor(subcell.fake_quant_act.minq.data.asnumpy()))
+                    self._add_output_min_max_for_op(op, subcell.fake_quant_act)
                     network.__delattr__(name)
                     network.__setattr__(name, op)
                     change = True
@@ -271,15 +291,18 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
 
     def _convert_subcell(self, network, change, name, subcell, core=True, conv=True):
         """Convert subcell to ant subcell."""
+        new_subcell = None
         if core:
             cell_core = subcell.conv if conv else subcell.dense
             activation = subcell.activation
-            fake_quant_act = activation.fake_quant_act
+            if hasattr(activation, 'fake_quant_act'):
+                fake_quant_act = activation.fake_quant_act
+                new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
         else:
             cell_core = subcell
             activation = None
             fake_quant_act = None
-        new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
+            new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
         if new_subcell:
             prefix = subcell.param_prefix
             new_subcell.update_parameters_name(prefix + '.')
