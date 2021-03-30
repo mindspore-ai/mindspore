@@ -102,6 +102,8 @@ void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<An
 bool IsWeightBoundary(const AnfNodePtr &node);
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode);
 std::string GetProcessorStr(const AnfNodePtr &anf_node);
+Processor GetProcessorFromContext();
+std::string GetStrProcessorFromContext();
 float Scaling(size_t in_size, size_t out_size, bool align_corners);
 float ScaleGrid(const int x, const float scale);
 struct CachedInterpolation {
@@ -130,7 +132,6 @@ inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x
   T bottom = bottom_left + (bottom_right - bottom_left) * x_lerp;
   return top + (bottom - top) * y_lerp;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
 

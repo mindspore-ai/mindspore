@@ -34,7 +34,6 @@
 #include "pipeline/jit/action.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "vm/segment_runner.h"
-#include "utils/ms_context.h"
 #if ENABLE_GPU
 #include "runtime/device/gpu/kernel_info_setter.h"
 #endif
@@ -306,7 +305,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(
 }
 
 void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
-                      const AnfNodePtrList &outputs, kernel::Processor processor) {
+                      const AnfNodePtrList &outputs) {
   std::vector<std::string> graph_input_format;
   std::vector<TypeId> graph_input_type;
   std::vector<std::string> graph_output_format;
@@ -339,7 +338,7 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
   graph_info_builder.SetInputsDeviceType(graph_input_type);
   graph_info_builder.SetOutputsFormat(graph_output_format);
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
-  graph_info_builder.SetProcessor(processor);
+  graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
   graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   auto graph_selected_info = graph_info_builder.Build();
@@ -443,7 +442,7 @@ std::tuple<AnfNodePtr, AnfNodePtrList> FuseNodesToSubGraph(const std::vector<Anf
 
   std::tie(fg, inputs, outputs) = MixedNodesTransToGraph(fuse_nodes, &src_outputs);
   auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs);
-  SetNewKernelInfo(fuse_new_node, fg, inputs, outputs, AnfAlgo::GetProcessor(fuse_nodes[0]));
+  SetNewKernelInfo(fuse_new_node, fg, inputs, outputs);
   // Handle get-item probleam.
   ReplaceNewFuseCNode(kernel_graph, fuse_new_node, src_outputs);
 
@@ -807,19 +806,6 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
   return axis;
 }
 
-kernel::Processor GetProcessorFromContext() {
-  kernel::Processor processor = kernel::Processor::UNKNOWN;
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto device_info = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_info == kGPUDevice) {
-    processor = kernel::Processor::CUDA;
-  } else if (device_info == kAscendDevice) {
-    processor = kernel::Processor::AICORE;
-  }
-  return processor;
-}
-
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info) {
   // Limitation: 1. Node's attributes should be set out of this function; 2. only one output.
   MS_EXCEPTION_IF_NULL(out_info.type);
@@ -876,7 +862,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   info_builder.SetInputsDeviceType(input_types);
   info_builder.SetOutputsFormat(output_formats);
   info_builder.SetOutputsDeviceType(output_types);
-  info_builder.SetProcessor(GetProcessorFromContext());
+  info_builder.SetProcessor(kernel::GetProcessorFromContext());
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
   info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   auto selected_info = info_builder.Build();

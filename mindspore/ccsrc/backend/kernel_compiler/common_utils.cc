@@ -29,6 +29,7 @@
 #include "ir/meta_tensor.h"
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -801,6 +802,30 @@ std::string GetProcessorStr(const AnfNodePtr &anf_node) {
   }
 
   return processor;
+}
+
+Processor GetProcessorFromContext() {
+  kernel::Processor processor = kernel::Processor::UNKNOWN;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto device_info = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_info == kGPUDevice) {
+    processor = kernel::Processor::CUDA;
+  } else if (device_info == kAscendDevice) {
+    processor = kernel::Processor::AICORE;
+  }
+  return processor;
+}
+
+std::string GetStrProcessorFromContext() {
+  auto processor = GetProcessorFromContext();
+  string str_processor = kernel::kProcessorUnknown;
+  if (processor == kernel::Processor::CUDA) {
+    str_processor = kernel::kProcessorCuda;
+  } else if (processor == kernel::Processor::AICORE) {
+    str_processor = kernel::kProcessorAiCore;
+  }
+  return str_processor;
 }
 
 float Scaling(size_t in_size, size_t out_size, bool align_corners) {

@@ -260,7 +260,7 @@ AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, cons
   AnfNodePtrList outputs;
   kernel::GetFuncGraphOutputNodes(func_graph, &outputs);
   auto graph_kernel_node = CreateNewFuseCNode(node->func_graph(), func_graph, inputs, outputs);
-  SetNewKernelInfo(graph_kernel_node, func_graph, inputs, outputs, AnfAlgo::GetProcessor(node));
+  SetNewKernelInfo(graph_kernel_node, func_graph, inputs, outputs);
   return graph_kernel_node;
 }
 

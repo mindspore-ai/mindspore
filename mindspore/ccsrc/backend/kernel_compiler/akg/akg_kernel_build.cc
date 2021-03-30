@@ -44,7 +44,7 @@ std::vector<std::string> AkgKernelBuilder::GetNotCachedKernelJsons(const std::ve
     auto kernel_name = json_generator.kernel_name();
     MS_LOG(DEBUG) << "Akg start compile op: " << kernel_name;
 
-    auto cached_kernel_pack = AkgSearchCache(kernel_name, GetProcessorStr(anf_node));
+    auto cached_kernel_pack = AkgSearchCache(kernel_name);
     if (cached_kernel_pack != nullptr) {
       MS_LOG(DEBUG) << "Use cached kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";
@@ -67,7 +67,7 @@ std::vector<std::string> AkgKernelBuilder::GetNotCachedKernelJsons(const std::ve
 bool AkgKernelBuilder::InsertToCache(const std::vector<JsonNodePair> &build_args) {
   for (const auto &[json_generator, anf_node] : build_args) {
     auto kernel_name = json_generator.kernel_name();
-    auto new_kernel_pack = AkgInsertCache(kernel_name, GetProcessorStr(anf_node));
+    auto new_kernel_pack = AkgInsertCache(kernel_name);
     if (new_kernel_pack == nullptr) {
       MS_LOG(ERROR) << "Insert to cache failed, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";
@@ -82,7 +82,7 @@ bool AkgKernelBuilder::InsertToCache(const std::vector<JsonNodePair> &build_args
 bool AkgKernelBuilder::HandleRepeatNodes() {
   for (const auto &[json_generator, anf_node] : repeat_nodes_) {
     auto kernel_name = json_generator.kernel_name();
-    auto cached_kernel_pack = AkgSearchCache(kernel_name, GetProcessorStr(anf_node));
+    auto cached_kernel_pack = AkgSearchCache(kernel_name);
     if (cached_kernel_pack == nullptr) {
       MS_LOG(ERROR) << "Use cached kernel failed, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";

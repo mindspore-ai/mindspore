@@ -57,7 +57,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(const AnfNodePtrList &fuse_nodes,
                                                                                 AnfNodePtrList *src_outputs = nullptr);
 void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
-                      const AnfNodePtrList &outputs, kernel::Processor processor);
+                      const AnfNodePtrList &outputs);
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &kernel_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                               const AnfNodePtrList &outputs);
 void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new_fuse_cnode,
@@ -84,7 +84,6 @@ TypePtr GetType(const AnfNodePtr &node);
 ShapeVector GetShape(const AnfNodePtr &node);
 ShapeVector GetDeviceShape(const AnfNodePtr &node);
 std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
-kernel::Processor GetProcessorFromContext();
 
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
