@@ -16,7 +16,7 @@
 #include "nnacl/fp32/prelu_fp32.h"
 
 #ifdef ENABLE_ARM64
-inline void PRelu4x16(const float *in, float *out, float *cur_slope, size_t step) {
+static inline void PRelu4x16(const float *in, float *out, float *cur_slope, size_t step) {
   asm volatile(
     "mov x10, %[in]\n"
     "mov x11, %[out]\n"

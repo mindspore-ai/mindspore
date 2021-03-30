@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "include/api/model.h"
 #include "include/api/types.h"
 #include "include/api/context.h"
@@ -21,7 +22,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context) {
   if (impl_ != nullptr) {
     MS_LOG(DEBUG) << "Model has been already built.";

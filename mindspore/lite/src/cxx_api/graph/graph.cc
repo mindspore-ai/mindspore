@@ -19,7 +19,6 @@
 #include "src/cxx_api/graph/graph_data.h"
 
 namespace mindspore {
-
 Graph::Graph() : graph_data_(nullptr) {}
 
 Graph::Graph(const std::shared_ptr<GraphData> &graph_data) : graph_data_(graph_data) {}

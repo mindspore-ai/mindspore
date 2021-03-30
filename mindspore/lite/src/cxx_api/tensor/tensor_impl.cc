@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <cstddef>
 #include <numeric>
 #include <memory>
@@ -33,8 +34,9 @@
 namespace mindspore {
 using mindspore::lite::RET_OK;
 
-MSTensor::Impl *MSTensor::Impl::CreateTensorImpl(const std::string &name, enum DataType type,
-                                                 const std::vector<int64_t> &shape, const void *data, size_t data_len) {
+std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::string &name, enum DataType type,
+                                                                 const std::vector<int64_t> &shape, const void *data,
+                                                                 size_t data_len) {
   std::vector<int32_t> truncated_shape = TruncateShape(shape, static_cast<enum TypeId>(type), data_len, true);
   if (truncated_shape.empty() && !(shape.empty())) {
     MS_LOG(ERROR) << "Invalid shape for creating tensor.";
@@ -45,7 +47,7 @@ MSTensor::Impl *MSTensor::Impl::CreateTensorImpl(const std::string &name, enum D
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
     return nullptr;
   }
-  auto impl = new (std::nothrow) Impl(lite_tensor);
+  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
@@ -54,7 +56,8 @@ MSTensor::Impl *MSTensor::Impl::CreateTensorImpl(const std::string &name, enum D
   return impl;
 }
 
-MSTensor::Impl *MSTensor::Impl::StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str) {
+std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::string &name,
+                                                                    const std::vector<std::string> &str) {
   auto lite_tensor = new (std::nothrow) lite::Tensor();
   if (lite_tensor == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
@@ -67,7 +70,7 @@ MSTensor::Impl *MSTensor::Impl::StringsToTensorImpl(const std::string &name, con
     delete lite_tensor;
     return nullptr;
   }
-  auto impl = new (std::nothrow) Impl(lite_tensor);
+  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
   if (impl == nullptr) {
     delete lite_tensor;
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
@@ -77,5 +80,4 @@ MSTensor::Impl *MSTensor::Impl::StringsToTensorImpl(const std::string &name, con
   impl->set_from_session(false);
   return impl;
 }
-
 }  // namespace mindspore

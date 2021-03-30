@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H
+#define MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H
+
 #include <cstddef>
 #include <numeric>
 #include <memory>
@@ -53,10 +57,10 @@ class MSTensor::Impl {
     }
   }
 
-  static Impl *CreateTensorImpl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
-                                const void *data, size_t data_len);
+  static std::shared_ptr<Impl> CreateTensorImpl(const std::string &name, enum DataType type,
+                                                const std::vector<int64_t> &shape, const void *data, size_t data_len);
 
-  static Impl *StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
+  static std::shared_ptr<Impl> StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
 
   static std::vector<std::string> TensorImplToStrings(const std::shared_ptr<Impl> &impl) {
     std::vector<std::string> empty;
@@ -116,7 +120,7 @@ class MSTensor::Impl {
       return nullptr;
     }
 
-    return std::shared_ptr<const void>(lite_tensor_->MutableData(), [](const void *) {});
+    return std::shared_ptr<const void>(lite_tensor_->data(), [](const void *) {});
   }
 
   virtual void *MutableData() {
@@ -158,5 +162,6 @@ class MSTensor::Impl {
   bool own_data_ = false;
   bool from_session_ = false;
 };
-
 }  // namespace mindspore
+
+#endif  // MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H

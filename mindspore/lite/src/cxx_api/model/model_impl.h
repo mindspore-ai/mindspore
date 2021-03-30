@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H
 #define MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H
+
 #include <functional>
 #include <map>
 #include <string>
