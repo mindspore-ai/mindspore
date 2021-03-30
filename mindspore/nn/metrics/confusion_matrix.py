@@ -182,7 +182,7 @@ class ConfusionMatrixMetric(Metric):
         >>> y = Tensor(np.array([[[0], [1]], [[1], [0]]]))
         >>> avg_output = metric.eval()
         >>> print(avg_output)
-        [0.75]
+        [0.5]
     """
     def __init__(self,
                  skip_channel=True,
