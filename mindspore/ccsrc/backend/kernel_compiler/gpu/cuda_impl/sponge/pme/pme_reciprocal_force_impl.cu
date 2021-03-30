@@ -28,7 +28,7 @@ __global__ void PME_BCFQ(cufftComplex *PME_FQ, float *PME_BC, int PME_Nfft) {
 
 __global__ void PME_Final(int *PME_atom_near, const float *charge, const float *PME_Q, VECTOR *force,
                           const VECTOR *PME_frxyz, const UNSIGNED_INT_VECTOR *PME_kxyz,
-                          const VECTOR PME_inverse_box_vector, const int atom_numbers) {
+                          const _VECTOR PME_inverse_box_vector, const int atom_numbers) {
   int atom = blockDim.x * blockIdx.x + threadIdx.x;
   if (atom < atom_numbers) {
     int k, kx;
@@ -73,8 +73,9 @@ __global__ void PME_Final(int *PME_atom_near, const float *charge, const float *
 
 void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
                         float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
-                        const float *box_length_f, const int *uint_crd_f, const float *charge, float *force,
-                        cudaStream_t stream) {
+                        const int *uint_crd_f, const float *charge, float *force, int PME_Nin, int PME_Nall,
+                        int PME_Nfft, const cufftHandle &PME_plan_r2c, const cufftHandle &PME_plan_c2r,
+                        const _VECTOR &PME_inverse_box_vector, cudaStream_t stream) {
   Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(3 * atom_numbers, force, 0.);
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
@@ -86,97 +87,7 @@ void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float be
   VECTOR *PME_frxyz = reinterpret_cast<VECTOR *>(pme_frxyz);
   VECTOR *frc = reinterpret_cast<VECTOR *>(force);
 
-  std::vector<float> h_box_length(3);
-  cudaMemcpyAsync(h_box_length.data(), box_length_f, sizeof(float) * h_box_length.size(), cudaMemcpyDeviceToHost,
-                  stream);
-  cudaStreamSynchronize(stream);
-  VECTOR *box_length = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(h_box_length.data()));
   cufftComplex *PME_FQ = reinterpret_cast<cufftComplex *>(pme_fq);
-
-  VECTOR PME_inverse_box_vector;
-  PME_inverse_box_vector.x = static_cast<float>(fftx) / box_length[0].x;
-  PME_inverse_box_vector.y = static_cast<float>(ffty) / box_length[0].y;
-  PME_inverse_box_vector.z = static_cast<float>(fftz) / box_length[0].z;
-  cufftHandle PME_plan_r2c;
-  cufftHandle PME_plan_c2r;
-  cufftPlan3d(&PME_plan_r2c, fftx, ffty, fftz, CUFFT_R2C);
-  cufftPlan3d(&PME_plan_c2r, fftx, ffty, fftz, CUFFT_C2R);
-  cufftSetStream(PME_plan_r2c, stream);
-  cufftSetStream(PME_plan_c2r, stream);
-  thread_PME.x = 8;
-  thread_PME.y = 8;
-  int PME_Nin = ffty * fftz;
-  int PME_Nfft = fftx * ffty * (fftz / 2 + 1);
-  int PME_Nall = fftx * ffty * fftz;
-  float volume = box_length[0].x * box_length[0].y * box_length[0].z;
-
-  UNSIGNED_INT_VECTOR *PME_kxyz_cpu;
-  Malloc_Safely(reinterpret_cast<void **>(&PME_kxyz_cpu), sizeof(UNSIGNED_INT_VECTOR) * 64);
-
-  int kx, ky, kz, kxrp, kyrp, kzrp, index;
-  for (kx = 0; kx < 4; kx++) {
-    for (ky = 0; ky < 4; ky++) {
-      for (kz = 0; kz < 4; kz++) {
-        index = kx * 16 + ky * 4 + kz;
-        PME_kxyz_cpu[index].uint_x = kx;
-        PME_kxyz_cpu[index].uint_y = ky;
-        PME_kxyz_cpu[index].uint_z = kz;
-      }
-    }
-  }
-  cudaMemcpyAsync(PME_kxyz, PME_kxyz_cpu, sizeof(UNSIGNED_INT_VECTOR) * 64, cudaMemcpyHostToDevice, stream);
-  cudaStreamSynchronize(stream);
-  free(PME_kxyz_cpu);
-
-  // initial start
-  float *B1, *B2, *B3, *PME_BC0;
-  B1 = reinterpret_cast<float *>(malloc(sizeof(float) * fftx));
-  B2 = reinterpret_cast<float *>(malloc(sizeof(float) * ffty));
-  B3 = reinterpret_cast<float *>(malloc(sizeof(float) * fftz));
-  PME_BC0 = reinterpret_cast<float *>(malloc(sizeof(float) * PME_Nfft));
-
-  for (kx = 0; kx < fftx; kx++) {
-    B1[kx] = getb(kx, fftx, 4);
-  }
-
-  for (ky = 0; ky < ffty; ky++) {
-    B2[ky] = getb(ky, ffty, 4);
-  }
-
-  for (kz = 0; kz < fftz; kz++) {
-    B3[kz] = getb(kz, fftz, 4);
-  }
-  float mprefactor = PI * PI / -beta / beta;
-  float msq;
-  for (kx = 0; kx < fftx; kx++) {
-    kxrp = kx;
-    if (kx > fftx / 2) kxrp = fftx - kx;
-    for (ky = 0; ky < ffty; ky++) {
-      kyrp = ky;
-      if (ky > ffty / 2) kyrp = ffty - ky;
-      for (kz = 0; kz <= fftz / 2; kz++) {
-        kzrp = kz;
-
-        msq = kxrp * kxrp / box_length[0].x / box_length[0].x + kyrp * kyrp / box_length[0].y / box_length[0].y +
-              kzrp * kzrp / box_length[0].z / box_length[0].z;
-        index = kx * ffty * (fftz / 2 + 1) + ky * (fftz / 2 + 1) + kz;
-        if ((kx + ky + kz) == 0) {
-          PME_BC0[index] = 0;
-        } else {
-          PME_BC0[index] = 1.0 / PI / msq * exp(mprefactor * msq) / volume;
-        }
-
-        PME_BC0[index] *= B1[kx] * B2[ky] * B3[kz];
-      }
-    }
-  }
-
-  cudaMemcpyAsync(PME_BC, PME_BC0, sizeof(float) * PME_Nfft, cudaMemcpyHostToDevice, stream);
-  cudaStreamSynchronize(stream);
-  free(B1);
-  free(B2);
-  free(B3);
-  free(PME_BC0);
 
   // initial end
   Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(
@@ -198,8 +109,3 @@ void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float be
                                                                         PME_kxyz, PME_inverse_box_vector, atom_numbers);
   return;
 }
-
-void PMEReciprocalForce(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
-                        float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
-                        const float *box_length_f, const int *uint_crd_f, const float *charge, float *force,
-                        cudaStream_t stream);

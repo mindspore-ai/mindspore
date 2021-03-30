@@ -45,14 +45,6 @@ class MDIterationLeapFrogGpuKernel : public GpuKernel {
     is_max_velocity = static_cast<int>(GetAttr<int64_t>(kernel_node, "is_max_velocity"));
     max_velocity = static_cast<float>(GetAttr<float>(kernel_node, "max_velocity"));
 
-    // printf("float4_numbers: %d", float4_numbers);
-    // printf("atom_numbers: %d", atom_numbers);
-    // printf("half_dt: %f", half_dt);
-    // printf("dt: %f", dt);
-    // printf("exp_gamma: %f", exp_gamma);
-    // printf("is_max_velocity: %d", is_max_velocity);
-    // printf("max_velocity: %f", max_velocity);
-
     auto shape_mass_inverse = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape_qrt_mass = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 

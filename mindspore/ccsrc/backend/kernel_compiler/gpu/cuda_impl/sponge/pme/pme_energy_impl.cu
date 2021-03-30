@@ -93,12 +93,13 @@ __global__ void PME_Excluded_Energy_Correction(const int atom_numbers, const UNS
   }
 }
 
-void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *box_length_f, float *PME_BC,
-               int *pme_uxyz, float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
-               const int *uint_crd_f, const float *charge, int *nl_atom_numbers, int *nl_atom_serial, int *nl,
-               const float *scaler_f, const int *excluded_list_start, const int *excluded_list,
-               const int *excluded_atom_numbers, float *d_reciprocal_ene, float *d_self_ene, float *d_direct_ene,
-               float *d_correction_ene, cudaStream_t stream) {
+void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
+               float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz, const int *uint_crd_f,
+               const float *charge, int *nl_atom_numbers, int *nl_atom_serial, int *nl, const float *scaler_f,
+               const int *excluded_list_start, const int *excluded_list, const int *excluded_atom_numbers,
+               float *d_reciprocal_ene, float *d_self_ene, float *d_direct_ene, float *d_correction_ene,
+               dim3 thread_PME, int PME_Nin, int PME_Nfft, int PME_Nall, const cufftHandle &PME_plan_r2c,
+               const cufftHandle &PME_plan_c2r, cudaStream_t stream) {
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
   VECTOR *scaler = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(scaler_f));
@@ -106,97 +107,11 @@ void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float
   NEIGHBOR_LIST *nl_a = reinterpret_cast<NEIGHBOR_LIST *>(nl);
   construct_neighbor_list_kernel<<<ceilf(static_cast<float>(atom_numbers) / 128), 128, 0, stream>>>(
     atom_numbers, max_neighbor_numbers, nl_atom_numbers, nl_atom_serial, nl_a);
-  std::vector<float> h_box_length(3);
-  cudaMemcpyAsync(h_box_length.data(), box_length_f, sizeof(float) * h_box_length.size(), cudaMemcpyDeviceToHost,
-                  stream);
-  cudaStreamSynchronize(stream);
-  VECTOR *box_length = reinterpret_cast<VECTOR *>(h_box_length.data());
 
   UNSIGNED_INT_VECTOR *PME_uxyz = reinterpret_cast<UNSIGNED_INT_VECTOR *>(pme_uxyz);
   UNSIGNED_INT_VECTOR *PME_kxyz = reinterpret_cast<UNSIGNED_INT_VECTOR *>(pme_kxyz);
   VECTOR *PME_frxyz = reinterpret_cast<VECTOR *>(pme_frxyz);
   cufftComplex *PME_FQ = reinterpret_cast<cufftComplex *>(pme_fq);
-  cufftHandle PME_plan_r2c;
-  cufftHandle PME_plan_c2r;
-  cufftPlan3d(&PME_plan_r2c, fftx, ffty, fftz, CUFFT_R2C);
-  cufftPlan3d(&PME_plan_c2r, fftx, ffty, fftz, CUFFT_C2R);
-  cufftSetStream(PME_plan_r2c, stream);
-  cufftSetStream(PME_plan_c2r, stream);
-  thread_PME.x = 8;
-  thread_PME.y = 8;
-  int PME_Nin = ffty * fftz;
-  int PME_Nfft = fftx * ffty * (fftz / 2 + 1);
-  int PME_Nall = fftx * ffty * fftz;
-  float volume = box_length[0].x * box_length[0].y * box_length[0].z;
-
-  UNSIGNED_INT_VECTOR *PME_kxyz_cpu;
-  Malloc_Safely(reinterpret_cast<void **>(&PME_kxyz_cpu), sizeof(UNSIGNED_INT_VECTOR) * 64);
-
-  int kx, ky, kz, kxrp, kyrp, kzrp, index;
-  for (kx = 0; kx < 4; kx++) {
-    for (ky = 0; ky < 4; ky++) {
-      for (kz = 0; kz < 4; kz++) {
-        index = kx * 16 + ky * 4 + kz;
-        PME_kxyz_cpu[index].uint_x = kx;
-        PME_kxyz_cpu[index].uint_y = ky;
-        PME_kxyz_cpu[index].uint_z = kz;
-      }
-    }
-  }
-  cudaMemcpyAsync(PME_kxyz, PME_kxyz_cpu, sizeof(UNSIGNED_INT_VECTOR) * 64, cudaMemcpyHostToDevice, stream);
-  cudaStreamSynchronize(stream);
-  free(PME_kxyz_cpu);
-
-  // initial start
-  float *B1, *B2, *B3, *PME_BC0;
-  B1 = reinterpret_cast<float *>(malloc(sizeof(float) * fftx));
-  B2 = reinterpret_cast<float *>(malloc(sizeof(float) * ffty));
-  B3 = reinterpret_cast<float *>(malloc(sizeof(float) * fftz));
-  PME_BC0 = reinterpret_cast<float *>(malloc(sizeof(float) * PME_Nfft));
-
-  for (kx = 0; kx < fftx; kx++) {
-    B1[kx] = getb(kx, fftx, 4);
-  }
-
-  for (ky = 0; ky < ffty; ky++) {
-    B2[ky] = getb(ky, ffty, 4);
-  }
-
-  for (kz = 0; kz < fftz; kz++) {
-    B3[kz] = getb(kz, fftz, 4);
-  }
-  float mprefactor = PI * PI / -beta / beta;
-
-  float msq;
-  for (kx = 0; kx < fftx; kx++) {
-    kxrp = kx;
-    if (kx > fftx / 2) kxrp = fftx - kx;
-    for (ky = 0; ky < ffty; ky++) {
-      kyrp = ky;
-      if (ky > ffty / 2) kyrp = ffty - ky;
-      for (kz = 0; kz <= fftz / 2; kz++) {
-        kzrp = kz;
-
-        msq = kxrp * kxrp / box_length[0].x / box_length[0].x + kyrp * kyrp / box_length[0].y / box_length[0].y +
-              kzrp * kzrp / box_length[0].z / box_length[0].z;
-        index = kx * ffty * (fftz / 2 + 1) + ky * (fftz / 2 + 1) + kz;
-        if ((kx + ky + kz) == 0) {
-          PME_BC0[index] = 0;
-        } else {
-          PME_BC0[index] = 1.0 / PI / msq * exp(mprefactor * msq) / volume;
-        }
-
-        PME_BC0[index] *= B1[kx] * B2[ky] * B3[kz];
-      }
-    }
-  }
-
-  cudaMemcpyAsync(PME_BC, PME_BC0, sizeof(float) * PME_Nfft, cudaMemcpyHostToDevice, stream);
-  cudaStreamSynchronize(stream);
-  free(B1);
-  free(B2);
-  free(B3);
-  free(PME_BC0);
 
   Reset_List<<<3 * atom_numbers / 32 + 1, 32, 0, stream>>>(3 * atom_numbers, reinterpret_cast<int *>(PME_uxyz),
                                                            1 << 30);
@@ -226,9 +141,3 @@ void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float
     d_correction_ene);
   return;
 }
-void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *box_length_f, float *PME_BC,
-               int *pme_uxyz, float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
-               const int *uint_crd_f, const float *charge, int *nl_atom_numbers, int *nl_atom_serial, int *nl,
-               const float *scaler_f, const int *excluded_list_start, const int *excluded_list,
-               const int *excluded_atom_numbers, float *d_reciprocal_ene, float *d_self_ene, float *d_direct_ene,
-               float *d_correction_ene, cudaStream_t stream);
