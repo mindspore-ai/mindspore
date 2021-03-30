@@ -154,6 +154,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/map_op/cpu_map_job.cc
         ${MINDDATA_DIR}/engine/datasetops/source/album_op.cc
         ${MINDDATA_DIR}/engine/datasetops/source/mnist_op.cc
+        ${MINDDATA_DIR}/engine/datasetops/source/mappable_leaf_op.cc
 
         ${MINDDATA_DIR}/engine/datasetops/source/io_block.cc
         ${MINDDATA_DIR}/engine/opt/pre/getter_pass.cc

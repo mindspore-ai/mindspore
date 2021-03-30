@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/queue.h"
@@ -41,7 +42,7 @@ class Queue;
 
 using MnistLabelPair = std::pair<std::shared_ptr<Tensor>, uint32_t>;
 
-class MnistOp : public ParallelOp, public RandomAccessOp {
+class MnistOp : public MappableLeafOp {
  public:
   class Builder {
    public:
@@ -131,17 +132,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // Destructor.
   ~MnistOp() = default;
 
-  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
-  // @param int32_t worker_id - id of each worker
-  // @return Status The status code returned
-  Status WorkerEntry(int32_t worker_id) override;
-
-  // Main Loop of MnistOp
-  // Master thread: Fill IOBlockQueue, then goes to sleep
-  // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status The status code returned
-  Status operator()() override;
-
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
   // @return Status The status code returned
@@ -163,27 +153,12 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   std::string Name() const override { return "MnistOp"; }
 
  private:
-  // Initialize Sampler, calls sampler->Init() within
-  // @return Status The status code returned
-  Status InitSampler();
-
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *row);
-
-  // @param const std::vector<int64_t> &keys - keys in ioblock
-  // @param std::unique_ptr<DataBuffer> db
-  // @return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
-
-  // Iterate through all members in sampleIds and fill them into IOBlock.
-  // @param std::shared_ptr<Tensor> sample_ids -
-  // @param std::vector<int64_t> *keys - keys in ioblock
-  // @return Status The status code returned
-  Status TraversalSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys);
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
   // Check image file stream.
   // @param const std::string *file_name - image file name
@@ -226,20 +201,13 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
 
   // Called first when function is called
   // @return Status The status code returned
-  Status LaunchThreadsAndInitOp();
-
-  // reset Op
-  // @return Status The status code returned
-  Status Reset() override;
+  Status LaunchThreadsAndInitOp() override;
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
-  int64_t buf_cnt_;
-  int64_t row_cnt_;
   std::string folder_path_;  // directory of image folder
-  int32_t rows_per_buffer_;
   const std::string usage_;  // can only be either "train" or "test"
   std::unique_ptr<DataSchema> data_schema_;
   std::vector<MnistLabelPair> image_label_pairs_;

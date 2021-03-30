@@ -67,80 +67,16 @@ Status ManifestOp::Builder::SanityCheck() {
 ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
                        const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
                        std::shared_ptr<SamplerRT> sampler, std::string usage)
-    : ParallelOp(num_works, queue_size, std::move(sampler)),
-      rows_per_buffer_(rows_per_buffer),
+    : MappableLeafOp(num_works, queue_size, std::move(sampler), rows_per_buffer),
       io_block_pushed_(0),
-      row_cnt_(0),
       sampler_ind_(0),
       data_schema_(std::move(data_schema)),
       file_(file),
       class_index_(class_index),
       decode_(decode),
-      usage_(usage),
-      buf_cnt_(0) {
+      usage_(usage) {
   io_block_queues_.Init(num_workers_, queue_size);
   (void)std::transform(usage_.begin(), usage_.end(), usage_.begin(), ::tolower);
-}
-
-// Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
-Status ManifestOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-  return AddIoBlock(&sampler_buffer);
-}
-
-Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
-  while (true) {  // each iterator is 1 epoch
-    std::vector<int64_t> keys;
-    keys.reserve(rows_per_buffer_);
-    while (!(*sampler_buffer)->eoe()) {
-      TensorRow sample_row;
-      RETURN_IF_NOT_OK((*sampler_buffer)->PopRow(&sample_row));
-      std::shared_ptr<Tensor> sample_ids = sample_row[0];
-      for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
-        keys.push_back(*itr);
-        row_cnt_++;
-        if (row_cnt_ % rows_per_buffer_ == 0) {
-          RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
-            std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-          keys.clear();
-        }
-      }
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(sampler_buffer));
-    }
-    if (keys.empty() == false) {
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-    }
-    if (IsLastIteration()) {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
-      for (int32_t i = 0; i < num_workers_; i++) {
-        RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(sampler_buffer));
-    }
-    UpdateRepeatAndEpochCounter();
-  }
 }
 
 Status ManifestOp::LaunchThreadsAndInitOp() {
@@ -159,44 +95,9 @@ Status ManifestOp::LaunchThreadsAndInitOp() {
   return Status::OK();
 }
 
-// contains the main logic of pulling a IOBlock from IOBlockQueue, load a buffer and push the buffer to out_connector_
-// IMPORTANT: 1 IOBlock produces 1 DataBuffer
-Status ManifestOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  int64_t buffer_id = worker_id;
-  std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  while (io_block != nullptr) {
-    if (io_block->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (io_block->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-      buffer_id = worker_id;
-    } else if (io_block->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
-    } else {
-      std::vector<int64_t> keys;
-      RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-      if (keys.empty()) {
-        return Status::OK();  // empty key is a quit signal for workers
-      }
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
-    }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
-}
-
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
-Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<std::string>> &data,
-                                 TensorRow *trow) {
+Status ManifestOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  std::pair<std::string, std::vector<std::string>> data = image_labelname_[static_cast<size_t>(row_id)];
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;
   std::vector<int32_t> label_index(data.second.size());
@@ -222,18 +123,6 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string
   return Status::OK();
 }
 
-// Looping over LoadTensorRow to make 1 DataBuffer. 1 function call produces 1 buffer
-Status ManifestOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
-  for (const auto &key : keys) {
-    TensorRow trow;
-    RETURN_IF_NOT_OK(LoadTensorRow(key, image_labelname_[static_cast<size_t>(key)], &trow));
-    deq->push_back(std::move(trow));
-  }
-  (*db)->set_tensor_table(std::move(deq));
-  return Status::OK();
-}
-
 void ManifestOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
@@ -247,20 +136,6 @@ void ManifestOp::Print(std::ostream &out, bool show_all) const {
     out << "\nNumber of rows:" << num_rows_ << "\nManifest file: " << file_ << "\nDecode: " << (decode_ ? "yes" : "no")
         << "\n\n";
   }
-}
-
-// Reset Sampler and wakeup Master thread (functor)
-Status ManifestOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(sampler_->ResetSampler());
-  row_cnt_ = 0;
-  return Status::OK();
-}
-
-// hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
-Status ManifestOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
 }
 
 // Derived from RandomAccessOp

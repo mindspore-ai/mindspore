@@ -75,117 +75,18 @@ Status MnistOp::Builder::SanityCheck() {
 
 MnistOp::MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per_buffer, std::string folder_path,
                  int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_workers, queue_size, std::move(sampler)),
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
       usage_(usage),
-      buf_cnt_(0),
-      row_cnt_(0),
       folder_path_(folder_path),
-      rows_per_buffer_(rows_per_buffer),
       image_path_({}),
       label_path_({}),
       data_schema_(std::move(data_schema)) {
   io_block_queues_.Init(num_workers, queue_size);
 }
 
-Status MnistOp::TraversalSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys) {
-  for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-    if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
-    keys->push_back(*itr);
-    row_cnt_++;
-    if (row_cnt_ % rows_per_buffer_ == 0) {
-      RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(*keys, IOBlock::kDeIoBlockNone))));
-      keys->clear();
-    }
-  }
-  return Status::OK();
-}
-
-// functor that contains the main logic of MNIST op
-Status MnistOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-  while (true) {  // each iterator is 1 epoch
-    std::vector<int64_t> keys;
-    keys.reserve(rows_per_buffer_);
-    while (sampler_buffer->eoe() == false) {
-      std::shared_ptr<Tensor> sample_ids;
-      RETURN_IF_NOT_OK(sampler_buffer->GetTensor(&sample_ids, 0, 0));
-      if (sample_ids->type() != DataType(DataType::DE_INT64)) {
-        RETURN_STATUS_UNEXPECTED("Invalid parameter, data type of Sampler Tensor isn't int64, got " +
-                                 sample_ids->type().ToString());
-      }
-      RETURN_IF_NOT_OK(TraversalSampleIds(sample_ids, &keys));
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    if (keys.empty() == false) {
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-    }
-    if (IsLastIteration()) {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
-      for (int32_t i = 0; i < num_workers_; ++i) {
-        RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-}
-
-// contains the logic of pulling a IOBlock from IOBlockQueue, load a buffer and push the buffer to out_connector_
-Status MnistOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  int64_t buffer_id = worker_id;
-  std::unique_ptr<IOBlock> iOBlock;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&iOBlock));
-  while (iOBlock != nullptr) {
-    if (iOBlock->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (iOBlock->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-      buffer_id = worker_id;
-    } else if (iOBlock->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
-    } else {
-      std::vector<int64_t> keys;
-      RETURN_IF_NOT_OK(iOBlock->GetKeys(&keys));
-      if (keys.empty() == true) return Status::OK();  // empty key is a quit signal for workers
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
-    }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&iOBlock));
-  }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
-}
-
 // Load 1 TensorRow (image,label) using 1 MnistLabelPair.
-Status MnistOp::LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *trow) {
+Status MnistOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  MnistLabelPair mnist_pair = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
   // make a copy of cached tensor
   RETURN_IF_NOT_OK(Tensor::CreateFromTensor(mnist_pair.first, &image));
@@ -193,18 +94,6 @@ Status MnistOp::LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pa
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
   trow->setPath({image_path_[row_id], label_path_[row_id]});
-  return Status::OK();
-}
-
-// Looping over LoadTensorRow to make 1 DataBuffer. 1 function call produces 1 buffer
-Status MnistOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
-  TensorRow trow;
-  for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_label_pairs_[key], &trow));
-    deq->push_back(std::move(trow));
-  }
-  (*db)->set_tensor_table(std::move(deq));
   return Status::OK();
 }
 
@@ -220,20 +109,6 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
     // Then show any custom derived-internal stuff
     out << "\nNumber of rows:" << num_rows_ << "\nMNIST Directory: " << folder_path_ << "\n\n";
   }
-}
-
-// Reset Sampler and wakeup Master thread (functor)
-Status MnistOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(sampler_->ResetSampler());
-  row_cnt_ = 0;
-  return Status::OK();
-}
-
-// hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
-Status MnistOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
 }
 
 // Derived from RandomAccessOp

@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/queue.h"
@@ -35,7 +36,7 @@
 
 namespace mindspore {
 namespace dataset {
-class ManifestOp : public ParallelOp, public RandomAccessOp {
+class ManifestOp : public MappableLeafOp {
  public:
   class Builder {
    public:
@@ -143,17 +144,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // Destructor.
   ~ManifestOp() = default;
 
-  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
-  // @param int32_t worker_id - id of each worker
-  // @return Status The status code returned
-  Status WorkerEntry(int32_t worker_id) override;
-
-  // Main Loop of ManifestOp
-  // Master thread: Fill IOBlockQueue, then goes to sleep
-  // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status The status code returned
-  Status operator()() override;
-
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
   // @return Status The status code returned
@@ -194,27 +184,12 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
 
  private:
-  // Initialize Sampler, calls sampler->Init() within
-  // @return Status The status code returned
-  Status InitSampler();
-
-  // Method in operator(), to fill IOBlockQueue
-  // @param std::unique_ptr<DataBuffer> sampler_buffer - to fill IOBlockQueue
-  // @return Status The status code returned
-  Status AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer);
-
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param std::pair<std::string, std::vector<std::string>> - <imagefile, <label1, label2...>>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<std::string>> &data,
-                       TensorRow *row);
-
-  // @param const std::vector<int64_t> &keys - keys in ioblock
-  // @param std::unique_ptr<DataBuffer> db
-  // @return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
   // Parse manifest file to get image path and label and so on.
   // @return Status The status code returned
@@ -222,11 +197,7 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
 
   // Called first when function is called
   // @return Status The status code returned
-  Status LaunchThreadsAndInitOp();
-
-  // reset Op
-  // @return Status The status code returned
-  Status Reset() override;
+  Status LaunchThreadsAndInitOp() override;
 
   // Check if image ia valid.Only support JPEG/PNG/GIF/BMP
   // @return
@@ -240,16 +211,13 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @return - Status
   Status ComputeColMap() override;
 
-  int32_t rows_per_buffer_;
   int64_t io_block_pushed_;
-  int64_t row_cnt_;
   int64_t sampler_ind_;
   std::unique_ptr<DataSchema> data_schema_;
   std::string file_;  // file that store the information of images
   std::map<std::string, int32_t> class_index_;
   bool decode_;
   std::string usage_;
-  int64_t buf_cnt_;
 
   std::map<std::string, int32_t> label_index_;
   std::vector<std::pair<std::string, std::vector<std::string>>> image_labelname_;

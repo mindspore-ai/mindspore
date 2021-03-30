@@ -68,16 +68,13 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
                              bool recursive, bool do_decode, const std::set<std::string> &exts,
                              const std::map<std::string, int32_t> &map, std::unique_ptr<DataSchema> data_schema,
                              std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_wkrs, queue_size, std::move(sampler)),
-      rows_per_buffer_(rows_per_buffer),
+    : MappableLeafOp(num_wkrs, queue_size, std::move(sampler), rows_per_buffer),
       folder_path_(file_dir),
       recursive_(recursive),
       decode_(do_decode),
       extensions_(exts),
       class_index_(map),
       data_schema_(std::move(data_schema)),
-      row_cnt_(0),
-      buf_cnt_(0),
       sampler_ind_(0),
       dirname_offset_(0) {
   folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
@@ -125,98 +122,9 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   return Status::OK();
 }
 
-// Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
-Status ImageFolderOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-  while (true) {  // each iterator is 1 epoch
-    std::vector<int64_t> keys;
-    keys.reserve(rows_per_buffer_);
-    while (sampler_buffer->eoe() == false) {
-      TensorRow sample_row;
-      RETURN_IF_NOT_OK(sampler_buffer->PopRow(&sample_row));
-      std::shared_ptr<Tensor> sample_ids = sample_row[0];
-      for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
-        keys.push_back(*itr);
-        row_cnt_++;
-        if (row_cnt_ % rows_per_buffer_ == 0) {
-          RETURN_IF_NOT_OK(
-            io_block_queues_[buf_cnt_++ % num_workers_]->Add(std::make_unique<IOBlock>(keys, IOBlock::kDeIoBlockNone)));
-          keys.clear();
-        }
-      }
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    if (keys.empty() == false) {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(keys, IOBlock::kDeIoBlockNone)));
-    }
-    if (IsLastIteration()) {
-      std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
-      std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eoe_block)));
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eof_block)));
-      for (int32_t i = 0; i < num_workers_; ++i) {
-        RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {  // not the last repeat.
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-}
-
-// contains the main logic of pulling a IOBlock from IOBlockQueue, load a buffer and push the buffer to out_connector_
-// IMPORTANT: 1 IOBlock produces 1 DataBuffer
-Status ImageFolderOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  int64_t buffer_id = worker_id;
-  std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  while (io_block != nullptr) {
-    if (io_block->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (io_block->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-      buffer_id = worker_id;
-    } else if (io_block->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
-    } else {
-      std::vector<int64_t> keys;
-      RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-      if (keys.empty() == true) return Status::OK();  // empty key is a quit signal for workers
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
-    }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
-}
-
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
-Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, TensorRow *trow) {
+Status ImageFolderOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  ImageLabelPair pairPtr = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(pairPtr->second, &label));
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(folder_path_ + (pairPtr->first), &image));
@@ -233,18 +141,6 @@ Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, 
   return Status::OK();
 }
 
-// Looping over LoadTensorRow to make 1 DataBuffer. 1 function call produces 1 buffer
-Status ImageFolderOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
-  TensorRow trow;
-  for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_label_pairs_[key], &trow));
-    deq->push_back(std::move(trow));
-  }
-  (*db)->set_tensor_table(std::move(deq));
-  return Status::OK();
-}
-
 void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
@@ -258,20 +154,6 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
     out << "\nNumber of rows:" << num_rows_ << "\nImageFolder directory: " << folder_path_
         << "\nDecode: " << (decode_ ? "yes" : "no") << "\n\n";
   }
-}
-
-// Reset Sampler and wakeup Master thread (functor)
-Status ImageFolderOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(sampler_->ResetSampler());
-  row_cnt_ = 0;
-  return Status::OK();
-}
-
-// hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
-Status ImageFolderOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
 }
 
 // Derived from RandomAccessOp

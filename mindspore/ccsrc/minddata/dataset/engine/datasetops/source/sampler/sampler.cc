@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
   // after it has interacted with it's storage layers.
   // Here, it is just a getter method to return the value.  However, it is invalid if there is
   // not a value set for this count, so generate a failure if that is the case.
-  if (num == nullptr || num_rows_ == 0) {
+  if (num == nullptr || num_rows_ == -1) {
     RETURN_STATUS_UNEXPECTED("RandomAccessOp has not computed its num rows yet.");
   }
   (*num) = num_rows_;
@@ -70,9 +70,6 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
 }
 
 Status SamplerRT::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements) {
-  if (num_elements == 0) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, num of elements cannot be 0.");
-  }
   if (col_desc_ == nullptr) {
     // a ColDescriptor for Tensor that holds SampleIds
     col_desc_ = std::make_unique<ColDescriptor>("sampleIds", DataType(DataType::DE_INT64), TensorImpl::kFlexible, 1);

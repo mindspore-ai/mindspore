@@ -72,17 +72,15 @@ Status AlbumOp::Builder::SanityCheck() {
 AlbumOp::AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool do_decode,
                  const std::set<std::string> &exts, std::unique_ptr<DataSchema> data_schema,
                  std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_wkrs, queue_size, std::move(sampler)),
-      rows_per_buffer_(rows_per_buffer),
+    : MappableLeafOp(num_wkrs, queue_size, std::move(sampler), rows_per_buffer),
       folder_path_(file_dir),
       decode_(do_decode),
       extensions_(exts),
       data_schema_(std::move(data_schema)),
-      row_cnt_(0),
-      buf_cnt_(0),
       sampler_ind_(0),
       dirname_offset_(0),
-      sample_ids_(nullptr) {
+      sample_ids_(nullptr),
+      curr_row_(0) {
   // Set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
     column_name_id_map_[data_schema_->column(i).name()] = i;
@@ -129,97 +127,6 @@ Status AlbumOp::PrescanEntry() {
       "Invalid data, no valid data matching the dataset API AlbumDataset. Please check file path or dataset API.");
   }
   return Status::OK();
-}
-
-// Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
-Status AlbumOp::operator()() {
-  RETURN_IF_NOT_OK(this->PrescanEntry());
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-  while (true) {  // each iterator is 1 epoch
-    std::vector<int64_t> keys;
-    keys.reserve(rows_per_buffer_);
-    while (sampler_buffer->eoe() == false) {
-      TensorRow sample_row;
-      RETURN_IF_NOT_OK(sampler_buffer->PopRow(&sample_row));
-      TensorPtr sample_ids = sample_row[0];
-      for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
-        keys.push_back(*itr);
-        row_cnt_++;
-        if (row_cnt_ % rows_per_buffer_ == 0) {
-          RETURN_IF_NOT_OK(
-            io_block_queues_[buf_cnt_++ % num_workers_]->Add(std::make_unique<IOBlock>(keys, IOBlock::kDeIoBlockNone)));
-          keys.clear();
-        }
-      }
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    if (keys.empty() == false) {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(keys, IOBlock::kDeIoBlockNone)));
-    }
-    if (IsLastIteration()) {
-      std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
-      std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eoe_block)));
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eof_block)));
-      for (int32_t i = 0; i < num_workers_; ++i) {
-        RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {  // not the last repeat.
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-}
-
-// contains the main logic of pulling a IOBlock from IOBlockQueue, load a buffer and push the buffer to out_connector_
-// IMPORTANT: 1 IOBlock produces 1 DataBuffer
-Status AlbumOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  int64_t buffer_id = worker_id;
-  std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  while (io_block != nullptr) {
-    if (io_block->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (io_block->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-      buffer_id = worker_id;
-    } else if (io_block->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
-    } else {
-      std::vector<int64_t> keys;
-      RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-      if (keys.empty() == true) return Status::OK();  // empty key is a quit signal for workers
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
-    }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
 // Only support JPEG/PNG/GIF/BMP
@@ -443,7 +350,8 @@ Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, 
 // to take a reference to a column descriptor?
 // the design of this class is to make the code more readable, forgoing minor performance gain like
 // getting rid of duplicated checks
-Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file, TensorRow *row) {
+Status AlbumOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
+  std::string file = image_rows_[row_id];
   // testing here is to just print out file path
   (*row) = TensorRow(row_id, {});
   MS_LOG(INFO) << "Image row file: " << file << ".";
@@ -531,19 +439,6 @@ Status AlbumOp::loadColumnData(const std::string &file, int32_t index, nlohmann:
   }
 }
 
-// Looping over LoadTensorRow to make 1 DataBuffer. 1 function call produces 1 buffer
-Status AlbumOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
-  TensorRow trow;
-
-  for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_rows_[key], &trow));
-    deq->push_back(std::move(trow));
-  }
-  (*db)->set_tensor_table(std::move(deq));
-  return Status::OK();
-}
-
 void AlbumOp::Print(std::ostream &out, bool show_all) const {
   // Always show the id and name as first line regardless if this summary or detailed print
   out << "(" << std::setw(2) << operator_id_ << ") <AlbumOp>:";
@@ -561,24 +456,12 @@ void AlbumOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-// Reset Sampler and wakeup Master thread (functor)
-Status AlbumOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(sampler_->ResetSampler());
-  row_cnt_ = 0;
-  return Status::OK();
-}
-
-// hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
-Status AlbumOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
-}
-
 Status AlbumOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
   }
+  RETURN_IF_NOT_OK(this->PrescanEntry());
+
   // registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
@@ -612,13 +495,13 @@ Status AlbumOp::GetNextRow(TensorRow *row) {
     RETURN_IF_NOT_OK(sample_buffer->PopRow(&sample_row));
     sample_ids_ = sample_row[0];
   }
-  if (row_cnt_ + 1 > sample_ids_->Size()) {
+  if (curr_row_ + 1 > sample_ids_->Size()) {
     return Status::OK();
   }
   int64_t key;
-  sample_ids_->GetItemAt(&key, {row_cnt_});
-  RETURN_IF_NOT_OK(LoadTensorRow(key, image_rows_[key], row));
-  row_cnt_++;
+  RETURN_IF_NOT_OK(sample_ids_->GetItemAt(&key, {curr_row_}));
+  RETURN_IF_NOT_OK(LoadTensorRow(key, row));
+  curr_row_++;
   return Status::OK();
 }
 }  // namespace dataset

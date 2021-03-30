@@ -27,6 +27,7 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
@@ -41,7 +42,7 @@
 
 namespace mindspore {
 namespace dataset {
-class CelebAOp : public ParallelOp, RandomAccessOp {
+class CelebAOp : public MappableLeafOp {
  public:
   class Builder {
    public:
@@ -148,26 +149,10 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
 
   ~CelebAOp() override = default;
 
-  // Main Loop of CelebAOp
-  // Master thread: Fill IOBlockQueue, then goes to sleep
-  // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status The status code returned
-  Status operator()() override;
-
-  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
-  // @param int32_t worker_id - id of each worker
-  // @return Status The status code returned
-  Status WorkerEntry(int32_t worker_id) override;
-
   // A print method typically used for debugging
   // @param out
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
-
-  // Method in operator(), to fill IOBlockQueue
-  // @param std::unique_ptr<DataBuffer> sampler_buffer - to fill IOBlockQueue
-  // @return Status The status code returned
-  Status AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer);
 
   // Op name getter
   // @return Name of the current Op
@@ -176,7 +161,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
  private:
   // Called first when function is called
   // @return
-  Status LaunchThreadsAndInitOp();
+  Status LaunchThreadsAndInitOp() override;
 
   // Parse attribute file
   // @return
@@ -191,32 +176,21 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // @return std::vector<std::string> - string after split
   std::vector<std::string> Split(const std::string &line);
 
-  // @param const std::vector<int64_t> &keys - keys in ioblock
-  // @param std::unique_ptr<DataBuffer> db
-  // @return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
-
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param std::pair - <image_file,<label>>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<int32_t>> &image_label,
-                       TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
   // Check if need read according to dataset type
   // @return bool - if need read
   bool CheckDatasetTypeValid();
 
-  // reset Op
-  // @return Status The status code returned
-  Status Reset() override;
-
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
-  int32_t rows_per_buffer_;
   std::string folder_path_;  // directory of celeba folder
   bool decode_;
   std::set<std::string> extensions_;  // extensions allowed
