@@ -1141,7 +1141,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
   MS_EXCEPTION_IF_NULL(addr);
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
-  if (type == kObjectTypeUMonad) {
+  if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeIOMonad) {
     return;
   }
   auto format = kOpFormat_DEFAULT;
@@ -1206,7 +1206,7 @@ void Debugger::LoadGraphOutputs() {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
       MS_EXCEPTION_IF_NULL(addr);
       auto type = AnfAlgo::GetOutputInferDataType(node, j);
-      if (type == kObjectTypeUMonad) {
+      if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeIOMonad) {
         continue;
       }
       auto format = kOpFormat_DEFAULT;
