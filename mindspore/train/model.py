@@ -815,11 +815,12 @@ class Model:
             >>> import mindspore as ms
             >>> from mindspore import Model, context, Tensor
             >>> from mindspore.context import ParallelMode
+            >>> from mindspore.communication import init
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
             >>> init()
             >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), ms.float32)
+            >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
             >>> model = Model(Net())
             >>> model.infer_predict_layout(input_data)
         """
