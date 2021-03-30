@@ -136,7 +136,8 @@ Status DeviceCpu::Collect(ExecutionTree *tree) {
   return Status::OK();
 }
 Status DeviceCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
-  *name = std::string("device_info");
+  name->clear();
+  name->append("device_info");
   int total_samples = cpu_util_.size();
   int sum = 0;
   // Only analyze the middle half of the samples
@@ -357,7 +358,7 @@ Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string 
   // Starting and ending may be impacted by startup or ending pipeline activities
   int start_analyze = total_samples / 4;
   int end_analyze = total_samples - start_analyze;
-  double op_util;
+  double op_util = 0;
   *utilization = 0;
 
   // start loop from 0 was as don't want to analyze op -1
@@ -373,7 +374,8 @@ Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string 
     }
     if (op_util > *utilization) {
       *utilization = op_util;
-      *name = op_name[op_id];
+      name->clear();
+      name->append(op_name[op_id]);
     }
     extra_message->append(op_name[op_id] + " utiliization per thread: " + std::to_string(op_util) + "% (" +
                           std::to_string(op_parallel_workers[op_id]) + " parallel_workers);  ");
@@ -508,7 +510,8 @@ Status ProcessCpu::Collect(ExecutionTree *tree) {
 }
 
 Status ProcessCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
-  *name = std::string("process_info");
+  name->clear();
+  name->append("process_info");
   int total_samples = process_util_.size();
   int sum = 0;
   // Only analyze the middle half of the samples
