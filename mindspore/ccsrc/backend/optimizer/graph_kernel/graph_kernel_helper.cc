@@ -627,6 +627,20 @@ bool IsBasicFuseOp(const AnfNodePtr &node) {
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
+bool IsFusibleOp(const AnfNodePtr &node) {
+#if ENABLE_D
+  const std::set<std::string> graph_kernel_black_list = {"BNTrainingUpdateSum", "ApplyMomentum", "LayerNormForward",
+                                                         "LambNextMV", "LambUpdateWithLR"};
+  if (AnfAlgo::IsGraphKernel(node)) {
+    auto fg_attr = AnfAlgo::GetCNodeFuncGraphPtr(node)->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+    if (fg_attr != nullptr) {
+      return graph_kernel_black_list.count(GetValue<std::string>(fg_attr)) == 0;
+    }
+  }
+#endif
+  return IsBasicFuseOp(node) || AnfAlgo::IsGraphKernel(node);
+}
+
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);

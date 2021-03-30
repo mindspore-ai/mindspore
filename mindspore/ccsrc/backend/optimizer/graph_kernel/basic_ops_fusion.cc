@@ -39,20 +39,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool IsFusibleOp(const AnfNodePtr &node) {
-#if ENABLE_D
-  const std::set<std::string> graph_kernel_black_list = {"BNTrainingUpdateSum", "ApplyMomentum", "LayerNormForward",
-                                                         "LambNextMV", "LambUpdateWithLR"};
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto fg_attr = AnfAlgo::GetCNodeFuncGraphPtr(node)->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-    if (fg_attr != nullptr) {
-      return graph_kernel_black_list.count(GetValue<std::string>(fg_attr)) == 0;
-    }
-  }
-#endif
-  return IsBasicFuseOp(node) || AnfAlgo::IsGraphKernel(node);
-}
-
 IncludeType IncludeFusedBasicOpForward(const AnfNodePtr &cur_node, const AnfNodePtr &node) {
   if (cur_node == node) {
     return FOLLOW;

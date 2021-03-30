@@ -30,7 +30,7 @@
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
-#include "backend/optimizer/graph_kernel/optimize_matmul.h"
+#include "backend/optimizer/graph_kernel/cast_matmul_fusion.h"
 #include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
@@ -52,7 +52,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() {
 
   if (is_ascend) {
     // Remove redundant Cast(bias, fp16) for Matmul input
-    pm->AddPass(std::make_shared<OptimizeMatmul>());
+    pm->AddPass(std::make_shared<CastMatmulFusion>());
 
     // Reorder TransData-Cast to Cast-TransData
     pm->AddPass(std::make_shared<ReorderOps>());
