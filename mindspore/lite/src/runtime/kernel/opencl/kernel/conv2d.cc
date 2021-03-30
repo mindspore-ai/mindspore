@@ -286,6 +286,7 @@ void Conv2DOpenCLKernel::InitFilter() {
   }
 
   FreeDequantedWeight();
+  FreeTmpWeight(in_tensors_.at(kWeightIndex)->data_c());
 }
 
 void Conv2DOpenCLKernel::InitBias() {
@@ -322,6 +323,7 @@ void Conv2DOpenCLKernel::InitBias() {
     }
   }
   allocator->UnmapBuffer(packed_bias_);
+  FreeTmpWeight(in_tensors_.at(kBiasIndex)->data_c());
 }
 
 void Conv2DOpenCLKernel::SetConstArgs() {
@@ -480,11 +482,9 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);
-  MS_ASSERT(inputs.front()->shape().size() == 4);
-  MS_ASSERT(outputs.front()->shape().size() == 4);
   auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  int input_channel = inputs.front()->shape().at(3);
-  int output_channel = outputs.front()->shape().at(3);
+  int input_channel = conv_param->input_channel_;
+  int output_channel = conv_param->output_channel_;
   int group = conv_param->group_;
 
   // case 1: depthwise conv2d
@@ -529,6 +529,10 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
     }
   }
   if (!infer_shape_done) {
+    StoreTmpWeight(inputs.at(kWeightIndex));
+    if (inputs.size() > kBiasIndex) {
+      StoreTmpWeight(inputs.at(kBiasIndex));
+    }
     MS_LOG(WARNING) << "kernel don't infer shape yet!";
     return kernel;
   }

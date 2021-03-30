@@ -27,6 +27,7 @@
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/dequant.h"
 #include "src/runtime/kernel/opencl/utils.h"
+#include "nnacl/resize_parameter.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -35,15 +36,15 @@ namespace mindspore::kernel {
 
 struct OpenCLToFormatParameter {
   OpParameter op_parameter{};
-  schema::Format src_format{schema::Format::Format_NHWC};
-  schema::Format dst_format{schema::Format::Format_NHWC4};
   lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};
 };
 
 template <typename SrcT, typename DstT>
 void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   MS_ASSERT(dst);
-  MS_ASSERT(src);
+  if (src == nullptr || src_num <= 0) {
+    return;
+  }
   auto *N = dst;
   auto *H = dst + 1;
   auto *W = dst + 2;
@@ -70,9 +71,11 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
 template <typename SrcT, typename DstT>
 void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_value) {
   MS_ASSERT(dst);
-  MS_ASSERT(src);
   for (int i = 0; i < 4; ++i) {
     dst[i] = default_value;
+  }
+  if (src == nullptr || src_num <= 0) {
+    return;
   }
   Broadcast2GpuShape(dst, src, src_num);
 }
@@ -92,6 +95,10 @@ struct GpuTensorInfo {
     H = shape.s[1];
     W = shape.s[2];
     C = shape.s[3];
+    MS_ASSERT(N > 0);
+    MS_ASSERT(H > 0);
+    MS_ASSERT(W > 0);
+    MS_ASSERT(C > 0);
     Slice = UP_DIV(C, C4NUM);
 
     FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
@@ -167,7 +174,6 @@ class OpenCLKernel : public LiteKernel {
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
-    infer_shape_flag_ = parameter->infer_flag_;
   }
   ~OpenCLKernel() override = default;
   int AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local);
@@ -199,8 +205,6 @@ class OpenCLKernel : public LiteKernel {
   int DequantWeight();
   void FreeDequantedWeight();
   virtual int InferShape();
-  bool GetInferShapeFlag() { return infer_shape_flag_; }
-  void SetInferShapeFlag(bool flag) { infer_shape_flag_ = flag; }
 
  protected:
   static std::set<size_t> GenerateLocalByGlobal(size_t global_i);
@@ -225,7 +229,6 @@ class OpenCLKernel : public LiteKernel {
   cl::Event event_;
   void *restore_quant_data_{nullptr};
   bool dequant_flag_{false};
-  bool infer_shape_flag_{false};
 
  private:
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
@@ -241,7 +244,7 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
     free(opParameter);
     return nullptr;
   }
-  if (!reinterpret_cast<kernel::OpenCLKernel *>(kernel)->GetInferShapeFlag()) {
+  if (!opParameter->infer_flag_) {
     MS_LOG(WARNING) << "kernel don't infer shape yet!";
     return kernel;
   }

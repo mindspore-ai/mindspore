@@ -68,12 +68,14 @@ void *OpenCLAllocator::MinimumFit(MemType mem_type, size_t size, const ImageSize
 void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer) {
   cl_int ret = CL_SUCCESS;
   MS_ASSERT(buffer);
+  MS_ASSERT(size > 0);
   *buffer = new (std::nothrow) cl::Buffer(*ocl_runtime_->Context(), static_cast<cl_mem_flags>(flags), size, data, &ret);
   if (*buffer == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
     return nullptr;
   }
   void *host_ptr = ocl_runtime_->MapBuffer(**buffer, CL_MAP_READ | CL_MAP_WRITE, size);
+  MS_ASSERT(host_ptr);
   if (host_ptr == nullptr) {
     delete *buffer;
     MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << *buffer << ", host_ptr=" << host_ptr;
