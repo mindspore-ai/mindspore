@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/maximum_grad_infer.h"
+#include "mindspore/lite/nnacl/infer/max_min_grad_infer.h"
 #include "mindspore/lite/nnacl/arithmetic.h"
 
 namespace mindspore {
 
-class MaximumGradInferTest : public mindspore::CommonTest {
+class MaxMinGradInferTest : public mindspore::CommonTest {
  public:
-  MaximumGradInferTest() {}
+  MaxMinGradInferTest() {}
 };
 
-TEST_F(MaximumGradInferTest, MaximumGradInferTest0) {
+TEST_F(MaxMinGradInferTest, MaxMinGradInferTest0) {
   size_t inputs_size = 3;
   std::vector<TensorC *> inputs(inputs_size, NULL);
   inputs[0] = new TensorC;
@@ -47,8 +47,8 @@ TEST_F(MaximumGradInferTest, MaximumGradInferTest0) {
   outputs[1] = new TensorC;
   ArithmeticParameter *parameter = new ArithmeticParameter;
   parameter->op_parameter_.infer_flag_ = true;
-  int ret = MaximumGradInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
-                                  reinterpret_cast<OpParameter *>(parameter));
+  int ret = MaxMinGradInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
+                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
   ASSERT_EQ(outputs[0]->shape_[0], 4);

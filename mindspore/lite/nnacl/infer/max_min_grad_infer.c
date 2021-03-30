@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/maximum_grad_infer.h"
+#include "nnacl/infer/max_min_grad_infer.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/infer/infer_register.h"
 
-int MaximumGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                          OpParameter *parameter) {
+int MaxMinGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                         OpParameter *parameter) {
 #ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 2);
   if (check_ret != NNACL_OK) {
@@ -60,4 +60,5 @@ int MaximumGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   return NNACL_OK;
 }
 
-REG_INFER(MaximumGrad, PrimType_MaximumGrad, MaximumGradInferShape)
+REG_INFER(MaximumGrad, PrimType_MaximumGrad, MaxMinGradInferShape)
+REG_INFER(MinimumGrad, PrimType_MinimumGrad, MaxMinGradInferShape)
