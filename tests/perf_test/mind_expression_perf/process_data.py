@@ -15,9 +15,9 @@
 import os
 import sys
 import json
-import openpyxl as opx
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
+import openpyxl as opx
 
 
 def parse_arguments():

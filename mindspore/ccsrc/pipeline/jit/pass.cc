@@ -112,8 +112,18 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.replace_applicator_,
 
     // Miscellaneous
-    irpass.item_tuple_or_list_eliminate_,
+    irpass.tuple_list_get_item_eliminator_,
+    irpass.tuple_list_get_item_const_eliminator_,
+    irpass.tuple_list_set_item_eliminator_,
+    irpass.tuple_list_get_set_item_eliminator_,
+    irpass.tuple_list_get_item_depend_reorder_,
+    irpass.tuple_list_convert_item_index_to_positive_,
+
     irpass.env_get_item_eliminate_,
+    irpass.env_get_item_add_eliminate_,
+    irpass.env_get_set_item_eliminate_,
+    irpass.env_get_item_depend_swap_,
+
     irpass.cast_eliminate_,
     irpass.reshape_eliminate_,
     irpass.reduce_eliminate_,
@@ -146,7 +156,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.incorporate_call_switch_,
       irpass.incorporate_env_getitem_bypass_recursive_,
       irpass.incorporate_env_getitem_switch_,
-      irpass.new_env_get_item_,
+      irpass.env_get_item_eliminate_,
       irpass.depend_value_elim_,
       irpass.all_reduce_const_elim_,
     },
@@ -218,7 +228,10 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
 OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig d_1 =
     opt::OptPassConfig({// Safe inlining
-                        irpass.call_graph_tuple_transform_, irpass.item_tuple_or_list_eliminate_});
+                        irpass.call_graph_tuple_transform_, irpass.tuple_list_get_item_eliminator_,
+                        irpass.tuple_list_get_item_const_eliminator_, irpass.tuple_list_set_item_eliminator_,
+                        irpass.tuple_list_get_set_item_eliminator_, irpass.tuple_list_get_item_depend_reorder_,
+                        irpass.tuple_list_convert_item_index_to_positive_});
 
   OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
@@ -226,13 +239,31 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
 }
 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig b_1 = opt::OptPassConfig(
-    {irpass.zero_like_fill_zero_, irpass.item_tuple_or_list_eliminate_, irpass.float_tuple_getitem_switch_,
-     irpass.reset_defer_inline_, irpass.inline_, irpass.updatestate_eliminater_, irpass.load_eliminater_,
-     irpass.stopgrad_eliminater_, irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_,
-     irpass.incorporate_env_getitem_, irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
-     irpass.incorporate_env_getitem_switch_layer_, irpass.value_based_eliminate_, irpass.receive_eliminate_},
-    false, true);
+  opt::OptPassConfig b_1 = opt::OptPassConfig({irpass.zero_like_fill_zero_,
+                                               irpass.tuple_list_get_item_eliminator_,
+                                               irpass.tuple_list_get_item_const_eliminator_,
+                                               irpass.tuple_list_set_item_eliminator_,
+                                               irpass.tuple_list_get_set_item_eliminator_,
+                                               irpass.tuple_list_get_item_depend_reorder_,
+                                               irpass.tuple_list_convert_item_index_to_positive_,
+                                               irpass.float_tuple_getitem_switch_,
+                                               irpass.reset_defer_inline_,
+                                               irpass.inline_,
+                                               irpass.updatestate_eliminater_,
+                                               irpass.load_eliminater_,
+                                               irpass.stopgrad_eliminater_,
+                                               irpass.special_op_eliminate_,
+                                               irpass.get_make_ref_eliminate_,
+                                               irpass.incorporate_env_getitem_,
+                                               irpass.incorporate_env_getitem_switch_,
+                                               irpass.env_get_item_eliminate_,
+                                               irpass.env_get_item_add_eliminate_,
+                                               irpass.env_get_set_item_eliminate_,
+                                               irpass.env_get_item_depend_swap_,
+                                               irpass.incorporate_env_getitem_switch_layer_,
+                                               irpass.value_based_eliminate_,
+                                               irpass.receive_eliminate_},
+                                              false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,
     irpass.make_ref_eliminate_,

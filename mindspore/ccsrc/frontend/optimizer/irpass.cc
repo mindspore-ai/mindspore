@@ -70,9 +70,25 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   float_depend_g_call_ = MakeSubstitution(std::make_shared<FloatDependGCall>(), "float_depend_g_call", IsCNodeDup);
 
   // ops eliminate
-  item_tuple_or_list_eliminate_ = MakeSubstitution(
-    std::make_shared<ItemTupleOrListEliminator>(), "item_tuple_or_list_eliminate",
+  tuple_list_get_item_eliminator_ =
+    MakeSubstitution(std::make_shared<TupleListGetitemEliminator>(), "tuple_list_get_item_eliminator",
+                     {prim::kPrimTupleGetItem, prim::kPrimListGetItem});
+  tuple_list_get_item_const_eliminator_ =
+    MakeSubstitution(std::make_shared<TupleListGetitemConstEliminator>(), "tuple_list_get_item_const_eliminator",
+                     {prim::kPrimTupleGetItem, prim::kPrimListGetItem});
+  tuple_list_set_item_eliminator_ =
+    MakeSubstitution(std::make_shared<TupleListSetitemEliminator>(), "tuple_list_set_item_eliminator",
+                     {prim::kPrimTupleSetItem, prim::kPrimListSetItem});
+  tuple_list_get_set_item_eliminator_ =
+    MakeSubstitution(std::make_shared<TupleListGetSetitemEliminator>(), "tuple_list_get_set_item_eliminator",
+                     {prim::kPrimTupleGetItem, prim::kPrimListGetItem});
+  tuple_list_get_item_depend_reorder_ =
+    MakeSubstitution(std::make_shared<TupleListGetitemDependReorder>(), "tuple_list_get_item_depend_reorder",
+                     {prim::kPrimTupleGetItem, prim::kPrimListGetItem});
+  tuple_list_convert_item_index_to_positive_ = MakeSubstitution(
+    std::make_shared<TupleListConvertItemIndexToPositive>(), "tuple_list_convert_item_index_to_positive",
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
+
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileEliminater>(), "tile_eliminate", prim::kPrimTile);
   cast_eliminate_ = MakeSubstitution(std::make_shared<CastEliminater>(), "cast_eliminate", prim::kPrimCast);
   reshape_eliminate_ = MakeSubstitution(std::make_shared<ReshapeEliminater>(), "reshape_eliminate", prim::kPrimReshape);
@@ -99,7 +115,13 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Env Item Eliminate
   env_get_item_eliminate_ =
     MakeSubstitution(std::make_shared<EnvGetItemEliminater>(), "env_get_item_eliminate", prim::kPrimEnvGetItem);
-  new_env_get_item_ = MakeSubstitution(std::make_shared<NewEnvGetItem>(), "new_env_get_item", prim::kPrimEnvGetItem);
+  env_get_item_add_eliminate_ =
+    MakeSubstitution(std::make_shared<EnvGetItemAddEliminater>(), "env_get_item_add_eliminate_", prim::kPrimEnvGetItem);
+  env_get_set_item_eliminate_ =
+    MakeSubstitution(std::make_shared<EnvGetSetItemEliminater>(), "env_get_set_item_eliminate", prim::kPrimEnvGetItem);
+  env_get_item_depend_swap_ =
+    MakeSubstitution(std::make_shared<EnvGetItemDependSwap>(), "env_get_item_depend_swap", prim::kPrimEnvGetItem);
+
   incorporate_env_getitem_bypass_recursive_ =
     MakeSubstitution(std::make_shared<IncorporateEnvGetitem>(true), "incorporate_env_get_item", prim::kPrimEnvGetItem);
   incorporate_env_getitem_switch_ = MakeSubstitution(std::make_shared<IncorporateEnvGetitemSwitch>(),
