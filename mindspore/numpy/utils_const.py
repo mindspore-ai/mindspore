@@ -450,6 +450,8 @@ def _tuple_setitem(tup, idx, value):
 def _iota(dtype, num, increasing=True):
     """Creates a 1-D tensor with value: [0,1,...num-1] and dtype."""
     # TODO: Change to P.Linspace when the kernel is implemented on CPU.
+    if num <= 0:
+        raise ValueError("zero shape Tensor is not currently supported.")
     if increasing:
         return Tensor(list(range(int(num))), dtype)
     return Tensor(list(range(int(num)-1, -1, -1)), dtype)
