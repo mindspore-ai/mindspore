@@ -1712,7 +1712,7 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
       if (already_run_top_cell_.find(top_cell_id) != already_run_top_cell_.end()) {
         (void)already_run_top_cell_.erase(top_cell_id);
       }
-      MS_LOG(ERROR) << "Clear top cell resource. Top cell id " << top_cell_id;
+      MS_LOG(DEBUG) << "Clear top cell resource. Top cell id " << top_cell_id;
       continue;
     }
     it++;
@@ -1821,8 +1821,8 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   bool is_dynamic = parse::DynamicAnalysis::IsDynamicCell(cell);
   if (is_dynamic) {
     MS_LOG(DEBUG) << "Current cell " << py::cast<CellPtr>(cell)->ToString() << " has dynamic construct";
+    top_cell()->set_is_dynamic(is_dynamic);
   }
-  top_cell()->set_is_dynamic(is_dynamic);
 }
 
 void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest) {
