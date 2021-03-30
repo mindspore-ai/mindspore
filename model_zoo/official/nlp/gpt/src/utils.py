@@ -17,6 +17,7 @@
 network config setting, gradient clip function and dynamic learning rate function
 """
 
+import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
@@ -24,7 +25,6 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR, CosineDecayLR
-import numpy as np
 
 
 class GPTConfig:
