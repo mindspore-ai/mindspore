@@ -48,6 +48,7 @@ int ArithmeticSelfFP32Coder::Prepare(CoderContext *const context) {
     {PrimitiveType_Ceil, [this]() { arithmetic_self_run_ = "ElementCeil"; }},
     {PrimitiveType_Round, [this]() { arithmetic_self_run_ = "ElementRound"; }},
     {PrimitiveType_Neg, [this]() { arithmetic_self_run_ = "ElementNegative"; }},
+    {PrimitiveType_Erf, [this]() { arithmetic_self_run_ = "ElementErf"; }},
   };
   auto iter = type_setters.find(parameter_->type_);
   if (iter != type_setters.end()) {
@@ -107,5 +108,7 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Ceil, CPUOpCod
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Round, CPUOpCoderCreator<ArithmeticSelfFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Neg, CPUOpCoderCreator<ArithmeticSelfFP32Coder>)
+
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Erf, CPUOpCoderCreator<ArithmeticSelfFP32Coder>)
 
 }  // namespace mindspore::lite::micro::nnacl

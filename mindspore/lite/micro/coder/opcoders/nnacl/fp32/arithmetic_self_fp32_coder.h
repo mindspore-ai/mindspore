@@ -87,6 +87,8 @@ using mindspore::schema::PrimitiveType_Sin;
 
 using mindspore::schema::PrimitiveType_Square;
 
+using mindspore::schema::PrimitiveType_Erf;
+
 class ArithmeticSelfFP32Coder final : public OperatorCoder {
  public:
   ArithmeticSelfFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
