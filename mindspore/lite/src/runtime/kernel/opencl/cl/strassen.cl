@@ -44,7 +44,7 @@ __kernel void MatMul_BUF_Add_Sub_2(__global FLT4 *input, __global FLT4 *output, 
     return;
   }
   int ci_co_4 = shape.w;
-  int origin_shape = 2 * ci_co_4;
+  const int origin_shape = 2 * ci_co_4;
   int index_1 = (gidx + offset.x) * origin_shape + gidy + offset.y;
   int index_2 = (gidx + offset.z) * origin_shape + gidy + offset.w;
   FLT4 result1 = input[index_1];
@@ -121,7 +121,7 @@ __kernel void MatMul_BUF_Filled(__global FLT4 *input, __global FLT4 *output, int
   }
   int stride_out = shape.z * shape.w;
   int index_out = gidx * stride_out + gidy;
-  int stride_origin = 2 * stride_out;
+  const int stride_origin = 2 * stride_out;
   int index_in = (gidx + offset.x) * stride_origin + gidy + offset.y;
   FLT4 result = input[index_in];
   output[index_out] = result;

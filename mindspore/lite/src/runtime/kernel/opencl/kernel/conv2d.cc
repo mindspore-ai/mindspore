@@ -500,7 +500,7 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   }
 
   // case 3: common conv2d
-  kernel::OpenCLKernel *kernel;
+  kernel::OpenCLKernel *kernel = nullptr;
   bool infer_shape_done = opParameter->infer_flag_;
   if (infer_shape_done && UseFcReplaceConv(inputs, outputs, conv_param)) {
     auto *fc_param = CreateFcParam(conv_param, inputs);
