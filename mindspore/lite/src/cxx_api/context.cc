@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "include/api/context.h"
 #include <string>
 #include <memory>
@@ -262,5 +263,4 @@ enum DataType Ascend310DeviceInfo::GetOutputType() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return DataType::kTypeUnknown;
 }
-
 }  // namespace mindspore

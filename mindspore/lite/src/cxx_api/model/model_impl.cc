@@ -384,5 +384,4 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   auto ret = session_->Resize(inner_input, truncated_shape);
   return static_cast<StatusCode>(ret);
 }
-
 }  // namespace mindspore

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "include/api/types.h"
 #include <string.h>
 #include <limits.h>
@@ -25,7 +26,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 class Buffer::Impl {
  public:
   Impl() : data_() { MS_LOG(ERROR) << "Unsupported feature."; }
@@ -64,7 +64,7 @@ MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) {}
 MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                    const void *data, size_t data_len)
-    : impl_(std::shared_ptr<Impl>(Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len))) {}
+    : impl_(Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len)) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
@@ -79,7 +79,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
     return nullptr;
   }
   ::memcpy(new_data, data, data_len);
-  auto impl = std::shared_ptr<Impl>(Impl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len));
+  auto impl = Impl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     free(new_data);
@@ -97,7 +97,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
 
 MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,
                                     const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
-  auto impl = std::shared_ptr<Impl>(Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len));
+  auto impl = Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return nullptr;
@@ -111,7 +111,7 @@ MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType
 }
 
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
-  auto impl = std::shared_ptr<Impl>(Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs)));
+  auto impl = Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs));
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return nullptr;
@@ -148,8 +148,7 @@ MSTensor *MSTensor::Clone() const {
     MS_LOG(ERROR) << "Allocate data failed.";
     return nullptr;
   }
-  auto impl =
-    std::shared_ptr<Impl>(Impl::CreateTensorImpl(this->Name(), this->DataType(), this->Shape(), new_data, data_len));
+  auto impl = Impl::CreateTensorImpl(this->Name(), this->DataType(), this->Shape(), new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     free(new_data);
