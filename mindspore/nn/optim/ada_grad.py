@@ -36,12 +36,22 @@ def _check_param_value(accum, update_slots, prim_name=None):
 
 
 class Adagrad(Optimizer):
-    """
+    r"""
     Implements the Adagrad algorithm with ApplyAdagrad Operator.
 
     Adagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_.
+    The updating formulas are as follows,
+
+    .. math::
+        \begin{array}{ll} \\
+            h_{t} = h_{t-1} + g\\
+            w_{t} = w_{t-1} - lr*\frac{1}{\sqrt{h_{t}}}*g
+        \end{array}
+
+    :math:`h` represents the cumulative sum of gradient squared, :math:`g` represents `gradients`.
+    :math:`lr` represents `learning_rate`, :math:`w` represents `params`.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
