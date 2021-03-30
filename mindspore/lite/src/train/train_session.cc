@@ -74,7 +74,9 @@ std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size)
     return std::unique_ptr<char[]>(nullptr);
   }
   ifs.close();
-  if (size) *size = fsize;
+  if (size != nullptr) {
+    *size = fsize;
+  }
   return buf;
 }
 

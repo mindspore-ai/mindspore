@@ -71,7 +71,7 @@ class TransferSession : public lite::TrainSession {
   bool is_valid_ = false;
 
  private:
-  bool CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask);
+  bool CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask, size_t mask_len);
   bool nchw2nhwc_ = false;
 };
 }  // namespace lite
