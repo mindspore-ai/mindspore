@@ -27,7 +27,7 @@
 #include "include/version.h"
 
 std::string RealPath(const char *path) {
-  size_t max = 4096;
+  const size_t max = 4096;
   if (path == nullptr) {
     std::cerr << "path is nullptr" << std::endl;
     return "";
@@ -553,7 +553,6 @@ int RunWithSharedMemoryPool(const char *model_path) {
     return -1;
   }
   auto session1 = mindspore::session::LiteSession::CreateSession(context1.get());
-
   if (session1 == nullptr) {
     delete model;
     std::cerr << "CreateSession failed while running." << std::endl;

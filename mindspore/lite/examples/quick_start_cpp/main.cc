@@ -25,7 +25,7 @@
 #include "include/lite_session.h"
 
 std::string RealPath(const char *path) {
-  size_t max = 4096;
+  const size_t max = 4096;
   if (path == nullptr) {
     std::cerr << "path is nullptr" << std::endl;
     return "";
