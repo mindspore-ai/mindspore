@@ -16,6 +16,7 @@
 
 import numpy as np
 import mindspore.nn as nn
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
@@ -144,6 +145,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 
         # Init tensor
         self.init_tensor(config)
+        self.device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
 
     def roi_init(self, config):
         self.roi_align = SingleRoIExtractor(config,
@@ -267,6 +269,8 @@ class Faster_Rcnn_Resnet50(nn.Cell):
                 bboxes_all = self.concat(bboxes_tuple)
             else:
                 bboxes_all = bboxes_tuple[0]
+            if self.device_type == "Ascend":
+                bboxes_all = self.cast(bboxes_all, mstype.float16)
             rois = self.concat_1((self.roi_align_index_test_tensor, bboxes_all))
 
         rois = self.cast(rois, mstype.float32)
