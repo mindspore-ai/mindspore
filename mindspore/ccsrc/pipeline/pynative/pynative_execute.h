@@ -84,6 +84,8 @@ class TopCellInfo {
   void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   bool vm_compiled() const { return vm_compiled_; }
   void set_vm_compiled(bool vm_compiled) { vm_compiled_ = vm_compiled; }
+  bool need_compile_graph() const { return need_compile_graph_; }
+  void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
   bool forward_already_run() const { return forward_already_run_; }
   void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
   ResourcePtr resource() { return resource_; }
@@ -100,9 +102,6 @@ class TopCellInfo {
   std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
-  void set_graph_info_map(const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map) {
-    graph_info_map_ = graph_info_map;
-  }
   OpInfoWithTensorId &op_info_with_tensor_id() { return op_info_with_tensor_id_; }
   TensorIdWithTensorObject &tensor_id_with_tensor_object() { return tensor_id_with_tensor_object_; }
   ad::KPynativeCellPtr k_pynative_cell_ptr() const { return k_pynative_cell_ptr_; }
@@ -117,6 +116,7 @@ class TopCellInfo {
   bool vm_compiled_{false};
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
+  bool need_compile_graph_{false};
   size_t op_num_{0};
   ResourcePtr resource_{nullptr};
   FuncGraphPtr df_builder_{nullptr};
@@ -125,8 +125,8 @@ class TopCellInfo {
   std::string bprop_cell_id_;
   std::string input_args_id_;
   std::string all_op_info_;
-  std::unordered_set<std::string> sub_cell_list_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
+  std::unordered_set<std::string> sub_cell_list_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
 };
@@ -170,7 +170,7 @@ class GradExecutor {
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
   TopCellInfoPtr top_cell_direct() const { return top_cell_; }
-  bool NeedCompileGraph();
+  bool CheckNeedCompileGraph();
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
@@ -192,8 +192,6 @@ class GradExecutor {
   void ClearRes();
   void ClearCellRes(const std::string &cell_id = "");
 
-  void InitGradForPrimBpOpt();
-
  private:
   ForwardExecutorPtr forward() const;
   bool grad_running() const { return grad_is_running_; }
@@ -210,8 +208,6 @@ class GradExecutor {
   bool MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id);
   void PushCellStack(const std::string &cell_id);
   void PopCellStack();
-  void PushGraphStack();
-  void PopGraphStack();
 
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");
   ResourcePtr GetResource(const std::string &cell_id = "");
@@ -219,7 +215,7 @@ class GradExecutor {
   bool IsTopGraph(const std::string &cell_id);
   bool IsBpropGraph(const std::string &cell_id);
   void UpdateBpropCellGraph(const py::object &cell, const std::string &cell_id);
-  void UpdateTopCellInfo(const std::string &cell_id, bool vm_compiled);
+  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args);
   void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
@@ -251,16 +247,17 @@ class GradExecutor {
                                 const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
+  void SetMakeTupleAsOutputNode(const TopCellInfoPtr &top_cell, const FuncGraphPtr &curr_g, const py::object &out);
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
 
  private:
-  size_t grad_order_{0};
-  size_t cell_nums_{0};
   bool grad_flag_{false};
   bool in_bprop_process_{false};
   bool in_grad_process_{false};
-  int custom_bprop_cell_count_{0};
   bool grad_is_running_{false};
+  int custom_bprop_cell_count_{0};
+  size_t grad_order_{0};
+  size_t cell_nums_{0};
 
   FuncGraphPtr curr_g_{nullptr};
   // For clear pre top res
