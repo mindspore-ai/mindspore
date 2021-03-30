@@ -19,7 +19,7 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "utils/log_adapter.h"
 
-constexpr size_t kReportMaxLen = 2048;
+constexpr size_t kReportMaxLen = 1024;
 
 namespace mindspore {
 namespace device {
