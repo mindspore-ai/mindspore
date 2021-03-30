@@ -172,7 +172,10 @@ void SetLastNodeStrategy(const StrategyPtr strategyPtr);
 
 bool CreateGroupsByCkptFile(const std::string &file);
 
-void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, std::vector<std::string> *unique_ids);
+void FindLastNodesUniqueId(const FuncGraphPtr &root, std::vector<std::string> *unique_ids,
+                           std::vector<size_t> *indexes);
+
+void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
 }  // namespace parallel
 }  // namespace mindspore
 

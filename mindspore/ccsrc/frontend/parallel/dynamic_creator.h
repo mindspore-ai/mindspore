@@ -195,6 +195,7 @@ REGISTER(SelectInfo);
 REGISTER(GatherNdInfo);
 REGISTER(TopKInfo);
 REGISTER(ScatterUpdateInfo);
+REGISTER(VirtualOutputInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

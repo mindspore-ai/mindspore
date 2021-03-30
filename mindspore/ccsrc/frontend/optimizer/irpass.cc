@@ -201,6 +201,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Virtual Dataset
   virtual_dataset_eliminate_ = MakeSubstitution(std::make_shared<VirtualDatasetEliminater>(),
                                                 "virtual_dataset_eliminate", prim::kPrimVirtualDataset);
+  // Virtual Dataset
+  virtual_output_eliminate_ =
+    MakeSubstitution(std::make_shared<VirtualOutputEliminater>(), "virtual_output_eliminate", prim::kPrimVirtualOutput);
 
   // Receive
   receive_eliminate_ = MakeSubstitution(std::make_shared<ReceiveEliminater>(), "receive_eliminate", prim::kPrimReceive);

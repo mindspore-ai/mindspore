@@ -218,6 +218,7 @@ constexpr char ASSIGN_SUB[] = "AssignSub";
 constexpr char GREATER[] = "Greater";
 constexpr char UNIFORM_CANDIDATE_SAMPLER[] = "UniformCandidateSampler";
 constexpr char VIRTUAL_DATA_SET[] = "_VirtualDataset";
+constexpr char VIRTUAL_OUTPUT[] = "_VirtualOutput";
 constexpr char VIRTUAL_DATA_SET_INFO[] = "VirtualDatasetInfo";
 constexpr char SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS[] = "SparseSoftmaxCrossEntropyWithLogits";
 constexpr char RELU[] = "ReLU";

@@ -625,7 +625,7 @@ bool IsParallelCareNode(const CNodePtr &cnode) {
     return false;
   }
   // get_next is not in the forward graph, we need mark the get_next as the forward node
-  if (prim->name() == GET_NEXT) {
+  if (prim->name() == GET_NEXT || prim->name() == VIRTUAL_OUTPUT) {
     return true;
   }
   if ((prim->name() == CAST) && !cnode->has_user_data<OperatorInfo>()) {
@@ -1001,6 +1001,55 @@ void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node
       InsertNode(virtual_div_op[pos], node, index, node->input(index), func_graph, instance_name);
     }
     MS_LOG(INFO) << "insert div op for input index  " << index << "  of node";
+  }
+}
+
+void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+  vector<std::string> last_forward_node_ids;
+  vector<size_t> last_indexs;
+  FindLastNodesUniqueId(root, &last_forward_node_ids, &last_indexs);
+  MS_LOG(INFO) << "there are " << last_forward_node_ids.size() << " output nodes in eval/predict";
+  for (auto &node : all_nodes) {
+    // here insert virtualoutput node
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      continue;
+    }
+    auto last_node_iter = std::find(last_forward_node_ids.begin(), last_forward_node_ids.end(), cnode->UniqueId());
+    if (last_node_iter == last_forward_node_ids.end()) {
+      continue;
+    }
+    for (size_t last_node_index = 0; last_node_index < last_forward_node_ids.size(); ++last_node_index) {
+      if (last_forward_node_ids[last_node_index] != cnode->UniqueId()) {
+        continue;
+      }
+      MS_LOG(INFO) << "find last node: " << cnode->fullname_with_scope() << ", the parallel care node is: "
+                   << cnode->input(last_indexs[last_node_index])->fullname_with_scope();
+      if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+        FuncGraphManagerPtr manager = cnode->func_graph()->manager();
+        MS_EXCEPTION_IF_NULL(manager);
+        auto node_pair = manager->node_users()[cnode].front();
+        if (!node_pair.first->isa<CNode>()) {
+          MS_LOG(EXCEPTION) << "the output of tuple_get_item is not a cnode";
+        }
+        cnode = node_pair.first->cast<CNodePtr>();
+        last_indexs[last_node_index] = size_t(node_pair.second);
+      }
+      FuncGraphPtr func_graph = node->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      OperatorParams params;
+      OperatorAttrs attrs;
+      OperatorArgs args = std::make_pair(attrs, params);
+      Operator op = std::make_pair(VIRTUAL_OUTPUT, args);
+      auto pre_node = cnode->input(last_indexs[last_node_index]);
+      Shapes shape_outputs = GetNodeShape(pre_node);
+      InsertNode(op, cnode, last_indexs[last_node_index], pre_node, func_graph, VIRTUAL_OUTPUT);
+      auto virtual_output_node = cnode->input(last_indexs[last_node_index]);
+      AbstractBasePtr virtual_output_abstract = pre_node->abstract()->Clone();
+      std::shared_ptr<abstract::BaseShape> virtual_output_shape = std::make_shared<abstract::Shape>(shape_outputs[0]);
+      virtual_output_abstract->set_shape(virtual_output_shape);
+      virtual_output_node->set_abstract(virtual_output_abstract);
+    }
   }
 }
 
@@ -1826,7 +1875,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
 
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
-  if (prim->name() == VIRTUAL_DATA_SET) {
+  if (prim->name() == VIRTUAL_DATA_SET || prim->name() == VIRTUAL_OUTPUT) {
     CheckGlobalDeviceManager();
     int64_t dev_num;
     if (full_batch) {
@@ -1856,32 +1905,36 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
   }
 }
 
-// find previous parallel care node.
-bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids) {
+// find previous parallel care node's next node.
+bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids, vector<size_t> *indexes) {
   MS_EXCEPTION_IF_NULL(unique_ids);
-  // if previous node is a parameter, handle it in the outsize.
-  if (node->isa<Parameter>()) {
-    return false;
-  }
+  MS_EXCEPTION_IF_NULL(indexes);
   if (!node->isa<CNode>()) {
     return false;
   }
-  CNodePtr cnode = node->cast<CNodePtr>();
-  if (!IsValueNode<Primitive>(cnode->input(0))) {
+  CNodePtr pre_cnode = node->cast<CNodePtr>();
+  if (!IsValueNode<Primitive>(pre_cnode->input(0))) {
     return false;
   }
-  ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
-  PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (IsParallelCareNode(cnode) && prim->name() != MAKE_TUPLE && prim->name() != MAKE_LIST) {
-    unique_ids->push_back(cnode->UniqueId());
-    return true;
-  }
   bool find = false;
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
-    if (prim->name() == DEPEND && index != 1) {
+  for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
+    auto next_node = pre_cnode->inputs()[index];
+    if (!next_node->isa<CNode>() || next_node->isa<Parameter>()) {
+      return false;
+    }
+    CNodePtr cnode = next_node->cast<CNodePtr>();
+    if (!IsValueNode<Primitive>(cnode->input(0))) {
+      return false;
+    }
+    ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
+    PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
+    if (IsParallelCareNode(cnode) && prim->name() != MAKE_TUPLE && prim->name() != MAKE_LIST) {
+      unique_ids->push_back(pre_cnode->UniqueId());
+      indexes->push_back(index);
+      find = true;
       continue;
     }
-    if (FindPreNodes(cnode->inputs()[index], unique_ids)) {
+    if (FindPreNodes(cnode, unique_ids, indexes)) {
       find = true;
       continue;
     }
@@ -1889,20 +1942,12 @@ bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids) {
   return find;
 }
 
-void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, std::vector<std::string> *unique_ids) {
+void FindLastNodesUniqueId(const FuncGraphPtr &root, std::vector<std::string> *unique_ids,
+                           std::vector<size_t> *indexes) {
   MS_EXCEPTION_IF_NULL(unique_ids);
-  for (auto &node : all_nodes) {
-    auto cnode = node->cast<CNodePtr>();
-    if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
-      continue;
-    }
-    ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
-    PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    if (prim->name() == RETURN) {
-      if (!FindPreNodes(cnode, unique_ids)) {
-        MS_LOG(WARNING) << "cannot find the last parallel care node in eval graph";
-      }
-    }
+  CNodePtr cnode = root->get_return();
+  if (!FindPreNodes(cnode, unique_ids, indexes)) {
+    MS_LOG(WARNING) << "cannot find the last parallel care node in eval graph";
   }
 }
 
@@ -1924,16 +1969,6 @@ StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const
   (void)prim->SetAttrs(attrs);
   MS_LOG(INFO) << "prim " << prim->name() << " batch parallel strategy is " << attrs[GEN_STRATEGY]->ToString();
   return strategyPtr;
-}
-
-void SetLastNodeStrategy(const StrategyPtr strategyPtr) {
-  auto strategys = strategyPtr->GetInputDim();
-  for (size_t i = 0; i < strategys.size(); ++i) {
-    for (size_t j = 0; j < strategys[i].size(); ++j) {
-      strategys[i][j] = 1;
-    }
-  }
-  strategyPtr->ResetInputs(strategys);
 }
 
 static bool CheckExtractInfomation(const CNodePtr &cnode) {
@@ -1959,11 +1994,6 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn() &&
       (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS)) {
     MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
-  }
-  vector<std::string> last_forward_node_ids;
-  if (!is_training) {
-    FindLastNodesUniqueId(all_nodes, &last_forward_node_ids);
-    MS_LOG(INFO) << "there are " << last_forward_node_ids.size() << " output nodes in eval/predict";
   }
 
   for (auto &node : all_nodes) {
@@ -2012,10 +2042,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     }
     bool load_strategy_from_ckpt =
       StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-    bool is_last_nodes = std::find(last_forward_node_ids.begin(), last_forward_node_ids.end(), cnode->UniqueId()) !=
-                         last_forward_node_ids.end();
-    bool full_batch = ParallelContext::GetInstance()->full_batch();
-    if ((is_last_nodes && !full_batch) || (!StrategyFound(attrs) && !load_strategy_from_ckpt)) {
+    if ((!StrategyFound(attrs) && !load_strategy_from_ckpt)) {
       MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                    << " is empty, using batch parallel";
       strategyPtr = GenerateBatchParallelStrategy(operator_, prim);
@@ -2026,9 +2053,6 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     }
 
     MS_EXCEPTION_IF_NULL(strategyPtr);
-    if (is_last_nodes && full_batch) {
-      SetLastNodeStrategy(strategyPtr);
-    }
     if (operator_->Init(strategyPtr) == FAILED) {
       MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed";
     }
@@ -3535,6 +3559,14 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
     if (FindCommunicationOp(all_nodes)) {
       MS_LOG(EXCEPTION) << "The graph contain communication op";
+    }
+
+    if (!root->has_flag(TRAINING)) {
+      InsertVirtualOutput(root, all_nodes);
+      AnfNodePtr ret_after = root->get_return();
+      MS_EXCEPTION_IF_NULL(ret_after);
+      all_nodes = DeepScopedGraphSearch(ret_after);
+      std::reverse(all_nodes.begin(), all_nodes.end());
     }
 
     // extract shape and strategy, set operator_info

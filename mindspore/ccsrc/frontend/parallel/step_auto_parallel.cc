@@ -69,6 +69,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
       root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
     return changes;
   }
+
   // check whether strategy_search_mode is valid
   std::string strategy_search_mode = ParallelContext::GetInstance()->strategy_search_mode();
   if ((strategy_search_mode != DYNAMIC_PROGRAMMING) && (strategy_search_mode != RECURSIVE_PROGRAMMING)) {
@@ -87,14 +88,17 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   TOTAL_OPS = 0;
   AnfNodePtr ret = root->get_return();
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
-
   if (ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
   }
-
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
-
+  if (!root->has_flag(TRAINING)) {
+    InsertVirtualOutput(root, all_nodes);
+    AnfNodePtr ret_after = root->get_return();
+    MS_EXCEPTION_IF_NULL(ret_after);
+    all_nodes = DeepScopedGraphSearch(ret_after);
+  }
   if (FindCommunicationOp(all_nodes)) {
     MS_LOG(EXCEPTION) << "The graph contain communication op";
   }
@@ -163,7 +167,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      BESSELI0E, BESSELI1E, FLOORMOD, ASSIGN, ASSIGN_ADD, ATAN2, DIVNONAN, LOGICALAND, LOGICALOR, ELU, RELU6, RELUV2,
      SOFTPLUS, SOFTSIGN, GREATEREQUAL, LESSEQUAL, LESS, APPROXIMATEEQUAL, MOD, UNIQUE, UNSORTED_SEGMENT_SUM,
      UNSORTED_SEGMENT_MIN, REPEAT_ELEMENTS, TENSOR_DOT, RANGE, UNIFORM_CANDIDATE_SAMPLER, SLICE, SELECT,
-     UNSORTED_SEGMENT_MAX, GATHER_ND, TOPK, SCATTER_UPDATE};
+     UNSORTED_SEGMENT_MAX, GATHER_ND, TOPK, SCATTER_UPDATE, VIRTUAL_OUTPUT};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
@@ -239,13 +243,7 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
                            StrategyMap *stra_map, const std::string &strategy_key_name) {
   // In this case, the configured strategy should be extracted to help setting cost
   StrategyPtr strategyPtr;
-  if (is_last_nodes) {
-    bool full_batch = ParallelContext::GetInstance()->full_batch();
-    strategyPtr = GenerateBatchParallelStrategy(operator_info, prim);
-    if (full_batch) {
-      SetLastNodeStrategy(strategyPtr);
-    }
-  } else if (StrategyFound(attrs)) {
+  if (StrategyFound(attrs)) {
     strategyPtr = parallel::ExtractStrategy(attrs);
   } else {
     strategyPtr = (*stra_map)[strategy_key_name];
@@ -332,10 +330,9 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   bool load_strategy_from_ckpt =
     StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map->find(strategy_key_name) != stra_map->end();
   // If no strategy has been configured for this operator, then candidate strategies are generated for
-  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy;
-  // if strategy is set to load from checkpoint, it is preferred to load strategy from checkpoint.
-  bool is_gen_stra = (!StrategyFound(attrs) || prim->name() == CAST) && (!load_strategy_from_ckpt) && (!is_last_nodes);
-  if (is_gen_stra) {
+  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy.
+  // if strategy is set to load from checkpoint, it is prefer to load strategy from checkpoint .
+  if ((!StrategyFound(attrs) || prim->name() == CAST) && !load_strategy_from_ckpt) {
     // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
     // BatchParallelInfo operator
     operator_info->ComputeBatchSplitFlagList();
@@ -370,11 +367,6 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     if (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
     }
-  }
-  std::vector<std::string> last_forward_node_ids;
-  if (!root->has_flag(TRAINING)) {
-    FindLastNodesUniqueId(all_nodes, &last_forward_node_ids);
-    MS_LOG(INFO) << "there are " << last_forward_node_ids.size() << " output nodes in eval/predict";
   }
 
   for (auto &node : all_nodes) {
@@ -421,8 +413,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
         (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), current_op_ptr));
         continue;
       }
-      bool is_last_nodes = std::find(last_forward_node_ids.begin(), last_forward_node_ids.end(), cnode->UniqueId()) !=
-                           last_forward_node_ids.end();
+      bool is_last_nodes = IsPrimitiveCNode(cnode, prim::kPrimVirtualOutput);
       auto operator_info = CreateTheOperatorInfo(prim, cnode, is_last_nodes, &stra_map);
       if (operator_info == nullptr) {
         return FAILED;
@@ -496,11 +487,6 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
       StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
   }
-  std::vector<std::string> last_forward_node_ids;
-  if (!root->has_flag(TRAINING)) {
-    FindLastNodesUniqueId(all_nodes, &last_forward_node_ids);
-    MS_LOG(INFO) << "there are " << last_forward_node_ids.size() << " output nodes in eval/predict";
-  }
   for (auto &node : all_nodes) {
     // NOTE: we only care about splittable Primitive operators
     auto cnode = node->cast<CNodePtr>();
@@ -546,8 +532,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
         continue;
       }
       // In this case, the corresponding OperatorInfo is not created, create the new one.
-      bool is_last_nodes = std::find(last_forward_node_ids.begin(), last_forward_node_ids.end(), cnode->UniqueId()) !=
-                           last_forward_node_ids.end();
+      bool is_last_nodes = IsPrimitiveCNode(cnode, prim::kPrimVirtualOutput);
       auto operator_info = CreateTheOperatorInfo(prim, cnode, is_last_nodes, &stra_map);
       MS_EXCEPTION_IF_NULL(operator_info);
 
