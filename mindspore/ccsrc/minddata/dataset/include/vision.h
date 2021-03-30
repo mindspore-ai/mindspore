@@ -648,16 +648,17 @@ class RandomSelectSubpolicy final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers
-  explicit RandomSelectSubpolicy(std::vector<std::vector<std::pair<TensorTransform *, double>>> policy);
+  explicit RandomSelectSubpolicy(const std::vector<std::vector<std::pair<TensorTransform *, double>>> &policy);
 
   /// \brief Constructor.
   /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are shared pointers
-  explicit RandomSelectSubpolicy(std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> policy);
+  explicit RandomSelectSubpolicy(
+    const std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> &policy);
 
   /// \brief Constructor.
   /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are object pointers
   explicit RandomSelectSubpolicy(
-    std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> policy);
+    const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy);
 
   /// \brief Destructor.
   ~RandomSelectSubpolicy() = default;

@@ -61,7 +61,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
  protected:
   /// \brief Pure virtual function to convert a Sampler class into an IR Sampler object.
   /// \return shared pointer to the newly created TensorOperation.
-  virtual std::shared_ptr<SamplerObj> Parse() = 0;
+  virtual std::shared_ptr<SamplerObj> Parse() const = 0;
 
   std::vector<std::shared_ptr<Sampler>> children_;
 };
@@ -89,7 +89,7 @@ class DistributedSampler final : public Sampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 
  private:
   int64_t num_shards_;
@@ -120,7 +120,7 @@ class PKSampler final : public Sampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 
  private:
   int64_t num_val_;
@@ -145,7 +145,7 @@ class RandomSampler final : public Sampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 
  private:
   bool replacement_;
@@ -169,7 +169,7 @@ class SequentialSampler final : public Sampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 
  private:
   int64_t start_index_;
@@ -193,7 +193,7 @@ class SubsetSampler : public Sampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 
   std::vector<int64_t> indices_;
   int64_t num_samples_;
@@ -216,7 +216,7 @@ class SubsetRandomSampler final : public SubsetSampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 };
 
 /// \brief A class to represent a Weighted Random Sampler in the data pipeline.
@@ -238,7 +238,7 @@ class WeightedRandomSampler final : public Sampler {
  protected:
   /// \brief Function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
-  std::shared_ptr<SamplerObj> Parse() override;
+  std::shared_ptr<SamplerObj> Parse() const override;
 
  private:
   std::vector<double> weights_;

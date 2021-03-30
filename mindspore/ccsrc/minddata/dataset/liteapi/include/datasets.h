@@ -456,7 +456,7 @@ class AlbumDataset : public Dataset {
                const std::vector<std::vector<char>> &column_names, bool decode, const std::shared_ptr<Sampler> &sampler,
                const std::shared_ptr<DatasetCache> &cache);
   AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
-               const std::vector<std::vector<char>> &column_names, bool decode, Sampler *sampler,
+               const std::vector<std::vector<char>> &column_names, bool decode, const Sampler *sampler,
                const std::shared_ptr<DatasetCache> &cache);
   AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
                const std::vector<std::vector<char>> &column_names, bool decode,
@@ -493,7 +493,8 @@ inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
-                                           const std::vector<std::string> &column_names, bool decode, Sampler *sampler,
+                                           const std::vector<std::string> &column_names, bool decode,
+                                           const Sampler *sampler,
                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
                                         VectorStringToChar(column_names), decode, sampler, cache);
@@ -519,7 +520,7 @@ class MnistDataset : public Dataset {
  public:
   explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, Sampler *sampler,
+  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
                         const std::shared_ptr<DatasetCache> &cache);
   explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
@@ -548,7 +549,8 @@ inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MnistDataset
-inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
+                                           const Sampler *sampler,
                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
