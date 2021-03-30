@@ -195,7 +195,7 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
     int C8 = UP_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       float16x8_t in = vld1q_f16(src + i);
-      float16x8_t res = 0.5 * in * (1.0 + MS_ERFX8_F16(in / (float16_t)1.4142135623730951f));
+      const float16x8_t res = 0.5 * in * (1.0 + MS_ERFX8_F16(in / (float16_t)1.4142135623730951f));
       vst1q_f16(dst + i, res);
     }
 #endif
