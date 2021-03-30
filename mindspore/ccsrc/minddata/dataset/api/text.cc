@@ -244,7 +244,6 @@ struct SentencePieceTokenizer::Data {
       : vocab_path_(CharToString(vocab_path)), out_type_(out_type) {}
   std::shared_ptr<SentencePieceVocab> vocab_;
   std::string vocab_path_;
-  SPieceTokenizerLoadType load_type_;
   SPieceTokenizerOutType out_type_;
 };
 

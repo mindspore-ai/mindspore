@@ -800,7 +800,7 @@ AlbumDataset::AlbumDataset(const std::vector<char> &dataset_dir, const std::vect
 }
 
 AlbumDataset::AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
-                           const std::vector<std::vector<char>> &column_names, bool decode, Sampler *sampler,
+                           const std::vector<std::vector<char>> &column_names, bool decode, const Sampler *sampler,
                            const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<AlbumNode>(CharToString(dataset_dir), CharToString(data_schema),
@@ -826,8 +826,8 @@ CelebADataset::CelebADataset(const std::vector<char> &dataset_dir, const std::ve
                                          SetCharToString(extensions), cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
-CelebADataset::CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, Sampler *sampler,
-                             bool decode, const std::set<std::vector<char>> &extensions,
+CelebADataset::CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                             const Sampler *sampler, bool decode, const std::set<std::vector<char>> &extensions,
                              const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<CelebANode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, decode,
@@ -850,8 +850,8 @@ Cifar10Dataset::Cifar10Dataset(const std::vector<char> &dataset_dir, const std::
   auto ds = std::make_shared<Cifar10Node>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
-Cifar10Dataset::Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, Sampler *sampler,
-                               const std::shared_ptr<DatasetCache> &cache) {
+Cifar10Dataset::Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                               const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<Cifar10Node>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -870,8 +870,8 @@ Cifar100Dataset::Cifar100Dataset(const std::vector<char> &dataset_dir, const std
   auto ds = std::make_shared<Cifar100Node>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
-Cifar100Dataset::Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, Sampler *sampler,
-                                 const std::shared_ptr<DatasetCache> &cache) {
+Cifar100Dataset::Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                 const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<Cifar100Node>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -901,7 +901,7 @@ CocoDataset::CocoDataset(const std::vector<char> &dataset_dir, const std::vector
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 CocoDataset::CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
-                         const std::vector<char> &task, const bool &decode, Sampler *sampler,
+                         const std::vector<char> &task, const bool &decode, const Sampler *sampler,
                          const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<CocoNode>(CharToString(dataset_dir), CharToString(annotation_file), CharToString(task),
@@ -942,7 +942,7 @@ ImageFolderDataset::ImageFolderDataset(const std::vector<char> &dataset_dir, boo
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
-ImageFolderDataset::ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, Sampler *sampler,
+ImageFolderDataset::ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
                                        const std::set<std::vector<char>> &extensions,
                                        const std::map<std::vector<char>, int32_t> &class_indexing,
                                        const std::shared_ptr<DatasetCache> &cache) {
@@ -981,7 +981,7 @@ ManifestDataset::ManifestDataset(const std::vector<char> &dataset_file, const st
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 ManifestDataset::ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
-                                 Sampler *sampler, const std::map<std::vector<char>, int32_t> &class_indexing,
+                                 const Sampler *sampler, const std::map<std::vector<char>, int32_t> &class_indexing,
                                  bool decode, const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<ManifestNode>(CharToString(dataset_file), CharToString(usage), sampler_obj,
@@ -1000,7 +1000,7 @@ ManifestDataset::ManifestDataset(const std::vector<char> &dataset_file, const st
 
 MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json *padded_sample,
+                                 const std::shared_ptr<Sampler> &sampler, const nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   nlohmann::json sample = nullptr;
@@ -1012,8 +1012,8 @@ MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
-                                 const std::vector<std::vector<char>> &columns_list, Sampler *sampler,
-                                 nlohmann::json *padded_sample, int64_t num_padded) {
+                                 const std::vector<std::vector<char>> &columns_list, const Sampler *sampler,
+                                 const nlohmann::json *padded_sample, int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   nlohmann::json sample = nullptr;
   if (padded_sample) {
@@ -1025,7 +1025,7 @@ MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
 }
 MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json *padded_sample,
+                                 const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler.get().Parse();
   nlohmann::json sample = nullptr;
@@ -1039,7 +1039,7 @@ MindDataDataset::MindDataDataset(const std::vector<char> &dataset_file,
 }
 MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json *padded_sample,
+                                 const std::shared_ptr<Sampler> &sampler, const nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   nlohmann::json sample = nullptr;
@@ -1052,8 +1052,8 @@ MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_f
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
-                                 const std::vector<std::vector<char>> &columns_list, Sampler *sampler,
-                                 nlohmann::json *padded_sample, int64_t num_padded) {
+                                 const std::vector<std::vector<char>> &columns_list, const Sampler *sampler,
+                                 const nlohmann::json *padded_sample, int64_t num_padded) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   nlohmann::json sample = nullptr;
   if (padded_sample) {
@@ -1066,7 +1066,7 @@ MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_f
 }
 MindDataDataset::MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                                  const std::vector<std::vector<char>> &columns_list,
-                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json *padded_sample,
+                                 const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
                                  int64_t num_padded) {
   auto sampler_obj = sampler.get().Parse();
   nlohmann::json sample = nullptr;
@@ -1085,7 +1085,7 @@ MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vect
   auto ds = std::make_shared<MnistNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
-MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, Sampler *sampler,
+MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
                            const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<MnistNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
@@ -1118,7 +1118,7 @@ VOCDataset::VOCDataset(const std::vector<char> &dataset_dir, const std::vector<c
 }
 VOCDataset::VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                        const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                       bool decode, Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+                       bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<VOCNode>(CharToString(dataset_dir), CharToString(task), CharToString(usage),
                                       MapCharToString(class_indexing), decode, sampler_obj, cache);

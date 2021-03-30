@@ -31,7 +31,7 @@ DistributedSampler::DistributedSampler(int64_t num_shards, int64_t shard_id, boo
       offset_(offset),
       even_dist_(even_dist) {}
 
-std::shared_ptr<SamplerObj> DistributedSampler::Parse() {
+std::shared_ptr<SamplerObj> DistributedSampler::Parse() const {
   return std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_,
                                                  even_dist_);
 }
@@ -40,7 +40,7 @@ std::shared_ptr<SamplerObj> DistributedSampler::Parse() {
 PKSampler::PKSampler(int64_t num_val, bool shuffle, int64_t num_samples)
     : num_val_(num_val), shuffle_(shuffle), num_samples_(num_samples) {}
 
-std::shared_ptr<SamplerObj> PKSampler::Parse() {
+std::shared_ptr<SamplerObj> PKSampler::Parse() const {
   return std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
 }
 
@@ -48,7 +48,7 @@ std::shared_ptr<SamplerObj> PKSampler::Parse() {
 RandomSampler::RandomSampler(bool replacement, int64_t num_samples)
     : replacement_(replacement), num_samples_(num_samples) {}
 
-std::shared_ptr<SamplerObj> RandomSampler::Parse() {
+std::shared_ptr<SamplerObj> RandomSampler::Parse() const {
   return std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
 }
 
@@ -56,7 +56,7 @@ std::shared_ptr<SamplerObj> RandomSampler::Parse() {
 SequentialSampler::SequentialSampler(int64_t start_index, int64_t num_samples)
     : start_index_(start_index), num_samples_(num_samples) {}
 
-std::shared_ptr<SamplerObj> SequentialSampler::Parse() {
+std::shared_ptr<SamplerObj> SequentialSampler::Parse() const {
   return std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
 }
 
@@ -64,7 +64,7 @@ std::shared_ptr<SamplerObj> SequentialSampler::Parse() {
 SubsetSampler::SubsetSampler(std::vector<int64_t> indices, int64_t num_samples)
     : indices_(indices), num_samples_(num_samples) {}
 
-std::shared_ptr<SamplerObj> SubsetSampler::Parse() {
+std::shared_ptr<SamplerObj> SubsetSampler::Parse() const {
   return std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
 }
 
@@ -72,7 +72,7 @@ std::shared_ptr<SamplerObj> SubsetSampler::Parse() {
 SubsetRandomSampler::SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples)
     : SubsetSampler(indices, num_samples) {}
 
-std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() {
+std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() const {
   return std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
 }
 
@@ -80,7 +80,7 @@ std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() {
 WeightedRandomSampler::WeightedRandomSampler(std::vector<double> weights, int64_t num_samples, bool replacement)
     : weights_(weights), num_samples_(num_samples), replacement_(replacement) {}
 
-std::shared_ptr<SamplerObj> WeightedRandomSampler::Parse() {
+std::shared_ptr<SamplerObj> WeightedRandomSampler::Parse() const {
   return std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
 }
 
