@@ -474,6 +474,7 @@ Status PadOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+#endif
 
 // RandomAffineOperation
 RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees,
@@ -586,6 +587,7 @@ Status RandomAffineOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+#ifndef ENABLE_ANDROID
 // RandomColorOperation.
 RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) { random_op_ = true; }
 

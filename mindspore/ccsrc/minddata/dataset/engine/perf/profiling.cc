@@ -207,7 +207,7 @@ uint64_t ProfilingTime::GetCurMilliSecond() {
   using std::chrono::duration_cast;
   using std::chrono::milliseconds;
   using std::chrono::steady_clock;
-  return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+  return static_cast<uint64_t>(duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
 }
 }  // namespace dataset
 }  // namespace mindspore

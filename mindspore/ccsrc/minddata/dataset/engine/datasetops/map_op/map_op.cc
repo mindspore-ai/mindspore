@@ -115,7 +115,7 @@ Status MapOp::FetchNextWork(uint32_t worker_id, std::unique_ptr<DataBuffer> *db,
 
 Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job) {
   std::shared_ptr<MapJob> map_job = nullptr;
-  MapTargetDevice prev_target;
+  MapTargetDevice prev_target = MapTargetDevice::kCpu;
   for (size_t i = 0; i < tfuncs_.size(); i++) {
     // Currently we only have CPU as the device target
     // In the future, we will have heuristic or control from user to select target device
