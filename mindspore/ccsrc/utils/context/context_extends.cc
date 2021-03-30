@@ -78,7 +78,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 #ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *acl_handle = ms_context_ptr->get_acl_tdt_channel_handle();
+  acltdtChannelHandle *acl_handle = ms_context_ptr->CreateAclTdtChannelHandle();
   if (acl_handle == nullptr) {
     MS_LOG(EXCEPTION) << "Get acltdt handle failed";
     return false;
@@ -92,7 +92,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
 
 bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
   if (ms_context_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "ms_context_prt is nullptr";
   }
   if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     return true;
@@ -102,22 +102,8 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
 
 #ifdef ENABLE_TDTQUE
-    acltdtChannelHandle *acl_handle = ms_context_ptr->get_acl_tdt_channel_handle();
-    aclError stopStatus = acltdtStopChannel(acl_handle);
-    if (stopStatus != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Failed stop acl data channel for host queue ";
-    } else {
-      MS_LOG(INFO) << "Succeed stop acl data channel for host queue ";
-    }
-    MS_LOG(INFO) << "Succeed run cancellation callback of out-feed dequeue op ";
-
+    ms_context_ptr->DestroyAclTdtChannelHandle();
     py::gil_scoped_release gil_release;
-    aclError destrodStatus = acltdtDestroyChannel(acl_handle);
-    if (destrodStatus != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Failed destroy acl channel for out-feed dequeue op ";
-    } else {
-      MS_LOG(INFO) << "Succeed destroy acl channel for out-feed dequeue op ";
-    }
     try {
       if (ms_context_ptr->acl_tdt_print.joinable()) {
         MS_LOG(INFO) << "join acl tdt host receive process";
