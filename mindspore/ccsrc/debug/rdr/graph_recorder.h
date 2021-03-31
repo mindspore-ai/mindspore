@@ -44,7 +44,7 @@ class GraphRecorder : public BaseRecorder {
  private:
   FuncGraphPtr func_graph_;
   std::string graph_type_;
-  DumpGraphParams dump_graph_info_;
+  DumpGraphParams dump_graph_info_{false, 0};
 };
 using GraphRecorderPtr = std::shared_ptr<GraphRecorder>;
 }  // namespace mindspore

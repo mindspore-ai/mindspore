@@ -50,7 +50,7 @@ class ExecNode {
   uint32_t logic_id_;
   uint32_t stream_id_;
   std::string node_info_;
-  uint32_t event_id_;
+  uint32_t event_id_{0};
   std::vector<uint32_t> label_ids_;
   std::vector<uint32_t> active_stream_ids_;
 };

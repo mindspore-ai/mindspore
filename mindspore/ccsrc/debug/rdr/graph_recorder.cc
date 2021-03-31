@@ -79,7 +79,7 @@ void GraphRecorder::Export() {
       LocDumpMode dump_mode = LocDumpMode(dump_graph_info_.dump_mode);
       DumpIRForRDR(realpath_ir, func_graph_, dump_graph_info_.dump_full_name, dump_mode);
     } else {
-      MS_LOG(WARNING) << "Unknown save graph LocDumoMode: " << dump_graph_info_.dump_mode
+      MS_LOG(WARNING) << "Unknown save graph LocDumpMode: " << dump_graph_info_.dump_mode
                       << ", it must be in the range [0,2].";
     }
   }
