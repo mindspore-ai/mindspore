@@ -4437,7 +4437,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
         >>> epsilon = Tensor(1e-8, mstype.float32)
         >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
         >>> indices = Tensor([0, 1], mstype.int32)
-        >>> net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
         >>> print(net.var.asnumpy())
         [[[0.9996963  0.9996977 ]]
          [[0.99970144 0.9996992 ]]
@@ -4585,7 +4585,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         >>> epsilon = Tensor(1e-8, mstype.float32)
         >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
         >>> indices = Tensor([0, 1], mstype.int32)
-        >>> net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
         >>> print(net.var.asnumpy())
         [[[0.9996866 0.9997078]]
          [[0.9997037 0.9996869]]
