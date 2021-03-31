@@ -52,13 +52,13 @@ class DeviceContext {
   virtual void Destroy() {}
 
   // Relevant function to allocate and free device memory.
-  virtual bool AllocateMemory(const DeviceAddressPtr &address, size_t size) const = 0;
-  virtual void FreeMemory(const DeviceAddressPtr &address) const = 0;
+  virtual bool AllocateMemory(DeviceAddress *const &address, size_t size) const = 0;
+  virtual void FreeMemory(DeviceAddress *const &address) const = 0;
 
   // Allocate continuous device memory end to end into 'addr_list'.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.
-  virtual bool AllocateContinuousMemory(const DeviceAddressPtrList &addr_list, size_t total_size,
+  virtual bool AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
                                         const std::vector<size_t> &size_list) const {
     return true;
   }

@@ -44,6 +44,7 @@ class TaskGenerator;
 namespace gpu {
 class GPUKernelRuntime;
 class GPUMemoryManager;
+class GPUDeviceContext;
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
@@ -107,6 +108,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class mindspore::device::cpu::CPUDeviceContext;
   friend class mindspore::device::gpu::GPUKernelRuntime;
   friend class mindspore::device::gpu::GPUMemoryManager;
+  friend class mindspore::device::gpu::GPUDeviceContext;
   friend class mindspore::device::ascend::AscendKernelRuntime;
   friend class mindspore::device::ascend::AscendMemoryManager;
   friend class mindspore::device::ascend::DataDumper;

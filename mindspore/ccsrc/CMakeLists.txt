@@ -214,6 +214,7 @@ set(SUB_COMP
         backend/kernel_compiler
         backend/session
         runtime/device
+        runtime/framework
         runtime/hardware
         runtime/hccl_adapter
         frontend/optimizer

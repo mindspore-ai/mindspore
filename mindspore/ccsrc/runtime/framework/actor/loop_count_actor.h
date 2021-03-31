@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include "mindrt/include/actor/op_actor.h"
+#include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 
 namespace mindspore {
@@ -32,7 +32,7 @@ class LoopCountActor : public OpActor<DeviceTensor> {
  public:
   LoopCountActor(std::string name, size_t loop_count)
       : OpActor(name), loop_count_(loop_count), current_count_(0), input_controls_num_(0) {}
-  virtual ~LoopCountActor() = default;
+  ~LoopCountActor() override = default;
 
   // The loop count actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;

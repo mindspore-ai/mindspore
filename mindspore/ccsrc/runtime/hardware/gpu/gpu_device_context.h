@@ -38,9 +38,9 @@ class GPUDeviceContext : public DeviceContext {
   // Release device memory, stream, cudnn and cublas handle, etc.
   void Destroy() override;
 
-  bool AllocateMemory(const DeviceAddressPtr &address, size_t size) const override;
-  void FreeMemory(const DeviceAddressPtr &address) const override;
-  bool AllocateContinuousMemory(const DeviceAddressPtrList &addr_list, size_t total_size,
+  bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
+  void FreeMemory(DeviceAddress *const &address) const override;
+  bool AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
                                 const std::vector<size_t> &size_list) const override;
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;

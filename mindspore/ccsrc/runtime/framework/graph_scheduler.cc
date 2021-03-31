@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/graph_scheduler.h"
+#include "runtime/framework/actor/memory_manager_actor.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -101,6 +102,23 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx) {
   device_tensor->ResetRefCountUsed();
 }
 }  // namespace
+
+void GraphScheduler::Initialize() {
+  if (init_) {
+    return;
+  }
+  init_ = true;
+
+  // Create memory manager actor.
+  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  MS_EXCEPTION_IF_NULL(memory_manager_actor);
+  memory_manager_aid_ = memory_manager_actor->GetAID();
+  // Schedule memory manager actor, bind single thread to response to memory alloc and free quickly.
+  auto base_actor = static_cast<ActorReference>(memory_manager_actor);
+  auto actorMgr = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actorMgr);
+  (void)actorMgr->Spawn(base_actor, false);
+}
 
 ActorSet *GraphScheduler::Transform(const KernelGraphPtr &graph, const DeviceContext *device_context,
                                     const std::vector<tensor::TensorPtr> *input_tensors,
@@ -191,7 +209,7 @@ ActorSetPtr GraphScheduler::Build(const KernelGraphPtr &graph, const DeviceConte
   auto actor_set = std::make_shared<ActorSet>();
   MS_EXCEPTION_IF_NULL(actor_set);
 
-  auto data_source_actors = BuildDataSourceActor(graph);
+  auto data_source_actors = BuildDataSourceActor(graph, device_context);
   actor_set->data_source_actors_.swap(data_source_actors);
 
   auto kernel_actors = BuildKernelActor(graph, device_context);
@@ -251,7 +269,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const KernelGraphPtr &graph, Grap
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), graph);
 }
 
-std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const KernelGraphPtr &graph) {
+std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const KernelGraphPtr &graph,
+                                                                     const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<DataSourceActorPtr> data_source_actors;
 
@@ -265,7 +284,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Kerne
         MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
         auto host_queue = std::make_shared<HostTensorQueue>();
         graph_to_host_queue_.emplace(graph, host_queue);
-        host_queue_ds_actor = std::make_shared<HostQueueDataSourceActor>(actor_name, 1, host_queue);
+        host_queue_ds_actor =
+          std::make_shared<HostQueueDataSourceActor>(actor_name, 1, device_context, memory_manager_aid_, host_queue);
         data_source_actors.emplace_back(host_queue_ds_actor);
       }
       host_queue_ds_actor->data_nodes_.emplace_back(input_node);
@@ -279,7 +299,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Kerne
   if (iter != execution_order.end()) {
     auto actor_name = graph->ToString() + "_" + "DeviceQueueDataSourceActor";
     MS_LOG(INFO) << "Create queue data source actor: " << actor_name;
-    auto device_queue_ds_actor = std::make_shared<DeviceQueueDataSourceActor>(actor_name, 1);
+    auto device_queue_ds_actor =
+      std::make_shared<DeviceQueueDataSourceActor>(actor_name, 1, device_context, memory_manager_aid_);
     MS_EXCEPTION_IF_NULL(device_queue_ds_actor);
     data_source_actors.emplace_back(device_queue_ds_actor);
     device_queue_ds_actor->data_kernel_ = *iter;
@@ -295,7 +316,8 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const KernelGraphPt
   auto execution_order = graph->execution_order();
   for (auto &kernel : execution_order) {
     if (IsKernelActor(kernel)) {
-      auto kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context);
+      auto kernel_actor =
+        std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_);
       MS_EXCEPTION_IF_NULL(kernel_actor);
       kernel_actors.emplace_back(kernel_actor);
     }

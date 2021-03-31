@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "mindrt/include/actor/op_actor.h"
+#include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 
@@ -36,10 +36,10 @@ class MemoryManagerActor : public ActorBase {
   ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
-  bool AllocateMemory(std::vector<DeviceTensorPtr> alloc_list, const DeviceContext *device_context,
-                      OpContext<DeviceTensor> *op_context);
+  void AllocateMemory(std::vector<DeviceTensor *> alloc_list, const DeviceContext *device_context,
+                      OpContext<DeviceTensor> *op_context, const AID from_aid);
   // The process entry of memory free.
-  void FreeMemory(std::vector<DeviceTensorPtr> free_list, const DeviceContext *device_context,
+  void FreeMemory(std::vector<DeviceTensor *> free_list, const DeviceContext *device_context,
                   OpContext<DeviceTensor> *op_context);
 };
 }  // namespace runtime

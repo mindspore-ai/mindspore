@@ -61,6 +61,9 @@ class GraphScheduler {
     return instance;
   }
 
+  // The memory manager creating and scheduling.
+  void Initialize();
+
   // Transform graph to actor DAG, contains build and link.
   ActorSet *Transform(const KernelGraphPtr &graph, const DeviceContext *device_context,
                       const std::vector<tensor::TensorPtr> *input_tensors = nullptr,
@@ -87,7 +90,8 @@ class GraphScheduler {
   void Link(ActorSet *actor_set, const KernelGraphPtr &graph, GraphExecutionStrategy strategy);
 
   // The processing of actors build.
-  std::vector<DataSourceActorPtr> BuildDataSourceActor(const KernelGraphPtr &graph);
+  std::vector<DataSourceActorPtr> BuildDataSourceActor(const KernelGraphPtr &graph,
+                                                       const DeviceContext *device_context);
   std::vector<KernelActorPtr> BuildKernelActor(const KernelGraphPtr &graph, const DeviceContext *device_context);
   std::vector<KernelActorPtr> BuildNoInputKernelActor(const KernelGraphPtr &graph);
   LoopCountActorPtr BuildLoopCountActor(const KernelGraphPtr &graph);
@@ -114,6 +118,11 @@ class GraphScheduler {
 
   // The second element of pair represents the output index of kernel actor corresponding to the device tensor.
   std::unordered_map<DeviceTensorPtr, std::pair<KernelActorPtr, int>> device_address_to_actor_;
+
+  // The id of memory manager actor.
+  AID memory_manager_aid_;
+
+  bool init_{false};
 };
 }  // namespace runtime
 }  // namespace mindspore
