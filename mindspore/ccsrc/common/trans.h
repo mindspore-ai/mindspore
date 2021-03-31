@@ -97,7 +97,6 @@ const std::map<std::string, FormatTransfer> kTransFormatMapOfHostToDevice{
   {kOpFormat_NC1HWC0, NchwToNc1hwc0},        {kOpFormat_C1HWNCoC0, NchwToC1hwncoc0},
   {kOpFormat_FRACTAL_Z_C04, NchwToFracZc04}, {kOpFormat_NC1HWC0_C04, NchwToNc1hwc04},
   {kOpFormat_NDC1HWC0, NcdhwToNdc1hwc0},     {kOpFormat_FRACTAL_Z_3D, NcdhwToFracZ3D}};
-
 }  // namespace trans
 }  // namespace mindspore
 
