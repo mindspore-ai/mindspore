@@ -26,9 +26,16 @@ using mindspore::schema::PrimitiveType_Reshape;
 namespace mindspore::kernel {
 int ReshapeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
-  if (reshape_param_->shape_dim_ == 0) {
-    MS_LOG(ERROR) << "Npu reshape op only supports const shape.";
+  if (inputs.size() == 1 && reshape_param_->shape_dim_ == 0) {
+    MS_LOG(WARNING) << "Npu reshape op only supports const shape.";
     return RET_ERROR;
+  }
+  if (inputs.size() > 1) {
+    auto shape_tensor = inputs.at(1);
+    if (!shape_tensor->IsConst()) {
+      MS_LOG(WARNING) << "Npu reshape op only supports const shape.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

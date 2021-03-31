@@ -246,7 +246,7 @@ void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const te
                                              int kernel_num, const float *trans_scale) const {
   MS_ASSERT(weight_data != nullptr);
   MS_ASSERT(trans_scale != nullptr);
-  if (weight_tensor->shape().size() != 4) {
+  if (weight_tensor->shape().size() > 4) {
     MS_LOG(ERROR) << "weight tensor shape error";
     return;
   }
