@@ -16,9 +16,10 @@
 
 #include <string>
 #include "coder/opcoders/op_coder.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/opcoders/base/dtype_cast_coder.h"
-#include "micro/coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/base/dtype_cast_coder.h"
+#include "coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/parallel.h"
 
 using mindspore::schema::PrimitiveType_Cast;
 namespace mindspore::lite::micro {
@@ -35,8 +36,7 @@ int DTypeCastCoder::Prepare(CoderContext *const context) {
 }
 
 int DTypeCastCoder::DoCode(CoderContext *const context) {
-  int task_id = 0;
-  int data_num = MSMIN(stride_, data_num_ - task_id * stride_);
+  int data_num = MSMIN(stride_, data_num_ - kDefaultTaskId * stride_);
   if (data_num <= 0) {
     return RET_OK;
   }

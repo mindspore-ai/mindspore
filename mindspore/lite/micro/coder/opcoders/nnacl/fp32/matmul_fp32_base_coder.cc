@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "nnacl/fp32/matmul_fp32.h"
@@ -182,9 +183,8 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     code.CodeFunction("InitMatrixB", filter_tensor_, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
 
-  int task_id = 0;
   int current_stride_oc = thread_stride_ * col_tile_;
-  int current_rest_oc = params_->col_ - task_id * thread_stride_ * col_tile_;
+  int current_rest_oc = params_->col_ - kDefaultTaskId * thread_stride_ * col_tile_;
   int cur_oc = MSMIN(current_stride_oc, current_rest_oc);
   if (cur_oc <= 0) {
     return RET_OK;

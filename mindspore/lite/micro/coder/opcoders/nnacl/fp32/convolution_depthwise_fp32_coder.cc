@@ -17,6 +17,7 @@
 #include "coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.h"
 #include <string>
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
@@ -39,11 +40,10 @@ int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
   MS_CHECK_PTR(packed_weight_);
   MS_CHECK_RET_CODE(memset_s(packed_weight_, packed_weight_data_size, 0, packed_weight_data_size),
                     "memset packed weight failed!");
-  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, filter_tensor_->Height() * filter_tensor_->Width(), channel, 0,
-                     0);
+  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, filter_tensor_->Height() * filter_tensor_->Width(), channel,
+                     kDefaultTaskId, 0);
 
-  auto channel_size = static_cast<size_t>(channel);
-  auto bias_size = static_cast<size_t>(channel_size * sizeof(float));
+  auto bias_size = static_cast<size_t>(channel * sizeof(float));
   bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, bias_size, kOfflinePackWeight));
   MS_CHECK_PTR(bias_);
   MS_CHECK_RET_CODE(memset_s(bias_, bias_size, 0, bias_size), "memset bias failed!");
@@ -51,9 +51,7 @@ int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
   if (input_tensors_.size() == kInputSize2) {
     auto *ori_bias = reinterpret_cast<float *>(bias_tensor_->data_c());
     MS_CHECK_TRUE(bias_tensor_->ElementsNum() > 0, "invalid bias length");
-    MS_CHECK_RET_CODE(memcpy_s(bias_, static_cast<size_t>(bias_tensor_->ElementsNum() * sizeof(float)), ori_bias,
-                               static_cast<size_t>(bias_tensor_->ElementsNum() * sizeof(float))),
-                      "memcpy_s bias failed!");
+    MS_CHECK_RET_CODE(memcpy_s(bias_, bias_size, ori_bias, bias_tensor_->Size()), "memcpy_s bias failed!");
   }
   return RET_OK;
 }
@@ -67,8 +65,7 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
   nnacl::NNaclFp32Serializer code;
   // call the op function
   code.CodeStruct("conv_parameter", *conv_param_);
-  int task_id = 0;
-  code.CodeFunction("ConvDw", output_tensor_, input_tensor_, packed_weight_, bias_, "&conv_parameter", task_id);
+  code.CodeFunction("ConvDw", output_tensor_, input_tensor_, packed_weight_, bias_, "&conv_parameter", kDefaultTaskId);
   context->AppendCode(code.str());
   return RET_OK;
 }

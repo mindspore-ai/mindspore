@@ -83,7 +83,7 @@ int CoderGraph::ConvertTensors() {
       auto data_size = static_cast<size_t>(origin_tensor->data()->size());
       MS_CHECK_RET_CODE_WITH_EXE(dstTensor->MallocData(), "dst tensor malloc data failed!", delete dstTensor);
       void *dst_data = dstTensor->data_c();
-      MS_CHECK_RET_CODE_WITH_EXE(memcpy_s(dst_data, data_size, origin_tensor->data()->data(), data_size),
+      MS_CHECK_RET_CODE_WITH_EXE(memcpy_s(dst_data, dstTensor->Size(), origin_tensor->data()->data(), data_size),
                                  "memcpy_s copy data failed!", delete dstTensor);
       dstTensor->set_data(dst_data);
     }

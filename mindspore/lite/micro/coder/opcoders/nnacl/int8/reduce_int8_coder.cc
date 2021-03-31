@@ -18,6 +18,7 @@
 #include <string>
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 using mindspore::schema::PrimitiveType_ReduceFusion;
@@ -190,7 +191,6 @@ int ReduceInt8Coder::Prepare(CoderContext *const context) {
 
 int ReduceInt8Coder::DoCode(CoderContext *const context) {
   MS_LOG(DEBUG) << "*****Reduce code start*****";
-  int task_id = 0;
   NNaclInt8Serializer code;
   Collect(context, {"nnacl/int8/reduce_int8.h"}, {"reduce_int8.c", "fixed_point.c"});
   std::string src_addr = allocator_->GetRuntimeAddr(input_tensor_);
@@ -219,10 +219,10 @@ int ReduceInt8Coder::DoCode(CoderContext *const context) {
     axis_size_ = axis_sizes_.at(i);
     if (!is_last_axis) {
       code.CodeFunction(reducer_, outer_size_, inner_size_, axis_size_, begin_src_data_src, dst_addr, ptr_quan_arg_i,
-                        task_id, thread_num_);
+                        kDefaultTaskId, thread_num_);
     } else {
       code.CodeFunction(last_reducer_, outer_size_, inner_size_, axis_size_, begin_src_data_src, dst_addr,
-                        ptr_quan_arg_i, task_id, thread_num_);
+                        ptr_quan_arg_i, kDefaultTaskId, thread_num_);
     }
     begin_src_data_src = dst_addr;
   }

@@ -15,11 +15,10 @@
  */
 
 #include "coder/opcoders/base/detection_post_process_base_coder.h"
-
 #include "nnacl/int8/quant_dtype_cast_int8.h"
-
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "include/errorcode.h"
 
 namespace mindspore::lite::micro {
@@ -137,10 +136,9 @@ int DetectionPostProcessBaseCoder::DoCode(CoderContext *const context) {
     code.CodeFunction("DetectionPostProcessRegular", num_boxes_, num_classes_with_bg_, input_scores_, output_boxes,
                       output_classes, output_scores, output_num, "PartialArgSort", "&params");
   } else {
-    int task_id = 0;
     int thread_num = 1;
     code.CodeFunction("NmsMultiClassesFastCore", num_boxes_, num_classes_with_bg_, input_scores_, "PartialArgSort",
-                      "&params", task_id, thread_num);
+                      "&params", kDefaultTaskId, thread_num);
 
     code.CodeFunction("DetectionPostProcessFast", num_boxes_, num_classes_with_bg_, input_scores_,
                       "(float *)(params.decoded_boxes_)", output_boxes, output_classes, output_scores, output_num,

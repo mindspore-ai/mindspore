@@ -19,6 +19,7 @@
 #include "nnacl/fp32/pooling_fp32.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_AvgPoolFusion;
@@ -29,7 +30,6 @@ namespace mindspore::lite::micro::nnacl {
 int PoolingFP32Coder::DoCode(CoderContext *const context) {
   // attribute
   auto pooling_parameter = reinterpret_cast<PoolingParameter *>(parameter_);
-  int task_id = 0;
   // init struct PoolingParameters
   pooling_parameter->input_batch_ = input_tensor_->Batch();
   pooling_parameter->input_channel_ = input_tensor_->Channel();
@@ -64,7 +64,7 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
       }
     }
 
-    code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", task_id, minf, maxf);
+    code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
   } else {
     Collect(context, {"nnacl/fp32/pooling_fp32.h"}, {"pooling_fp32.c"});
     switch (pooling_parameter->act_type_) {
@@ -82,7 +82,7 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
         break;
       }
     }
-    code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", task_id, minf, maxf);
+    code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
   }
 
   MS_LOG(INFO) << "PoolingFp32Code has been called";
