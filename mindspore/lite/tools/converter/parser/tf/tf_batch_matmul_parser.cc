@@ -47,5 +47,6 @@ ops::PrimitiveC *TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
   return prim.release();
 }
 TFNodeRegistrar g_tfBatchMatMulParser("BatchMatMul", new TFBatchMatMulParser());
+TFNodeRegistrar g_tfBatchMatMulV2Parser("BatchMatMulV2", new TFBatchMatMulParser());
 }  // namespace lite
 }  // namespace mindspore
