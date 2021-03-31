@@ -20,6 +20,7 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -61,8 +62,7 @@ int ArithmeticSelfFP32Coder::Prepare(CoderContext *const context) {
 }
 
 int ArithmeticSelfFP32Coder::DoCode(CoderContext *const context) {
-  int task_id = 0;
-  int size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - task_id * thread_sz_stride_));
+  int size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - kDefaultTaskId * thread_sz_stride_));
 
   MS_CHECK_TRUE(!arithmetic_self_run_.empty(), "arithmetic_run function is nullptr!");
 

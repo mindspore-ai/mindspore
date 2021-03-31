@@ -19,6 +19,7 @@
 #include <string>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 namespace mindspore::lite::micro::nnacl {
 
 int MatMulBaseInt8Coder::ReSize(CoderContext *const context) {
@@ -200,7 +201,6 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
                       param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_, "init_filter_zp",
                       bias_ptr_, param_->b_transpose_, filter_per_channel_);
   }
-  int task_id = 0;
   std::string a_ptr_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string c_ptr_str = allocator_->GetRuntimeAddr(output_tensor_);
   std::string pack_b_ptr_str = allocator_->GetRuntimeAddr(pack_b_ptr_);
@@ -224,7 +224,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
     std::string batch_c_ptr_str = c_ptr_str + "+" + std::to_string(i * param_->row_ * param_->col_);
 
     int stride = thread_stride_ * col_tile_;
-    int cur_stride = task_id * stride;
+    int cur_stride = kDefaultTaskId * stride;
     int res_stride = param_->col_ - cur_stride;
     int cur_oc = MSMIN(stride, res_stride);
     if (cur_oc <= 0) {
