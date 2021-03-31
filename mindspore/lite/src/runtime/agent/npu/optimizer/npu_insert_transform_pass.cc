@@ -23,9 +23,9 @@ namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
 enum InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
-  schema::PrimitiveType_Concat,       schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
-  schema::PrimitiveType_Activation,   schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
-  schema::PrimitiveType_StridedSlice, schema::PrimitiveType_Activation};
+  schema::PrimitiveType_Concat,      schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
+  schema::PrimitiveType_Activation,  schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
+  schema::PrimitiveType_StridedSlice};
 
 // this pass goal is to minimize subgraphs generated
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
