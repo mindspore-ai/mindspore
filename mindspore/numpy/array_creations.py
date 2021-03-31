@@ -1303,7 +1303,7 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         [[0.  0.5  1. ]]
         >>> print(yv)
         [[0.]
-        [1.]
+        [1.]]
     """
     _check_input_tensor(*xi)
     if not isinstance(sparse, bool):
