@@ -51,7 +51,8 @@ from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPi
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
     check_wordpiece_tokenizer, check_regex_replace, check_regex_tokenizer, check_basic_tokenizer, check_ngram, \
-    check_pair_truncate, check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
+    check_pair_truncate, check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow, \
+    check_sentence_piece_tokenizer
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..transforms.c_transforms import TensorOperation
@@ -325,7 +326,7 @@ class SentencePieceTokenizer(TextTensorOperation):
     Args:
         mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string.
             If the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
-        out_type (Union[str, int]): The type of output.
+        out_type (SPieceTokenizerOutType): The type of output, the type is int or string
 
     Examples:
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
@@ -335,7 +336,7 @@ class SentencePieceTokenizer(TextTensorOperation):
         >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer)
     """
-
+    @check_sentence_piece_tokenizer
     def __init__(self, mode, out_type):
         self.mode = mode
         self.out_type = out_type
