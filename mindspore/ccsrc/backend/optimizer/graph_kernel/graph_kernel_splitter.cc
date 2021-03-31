@@ -484,7 +484,7 @@ class Splitter {
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
       AnfNodePtrList outputs;
       kernel::GetFuncGraphOutputNodes(sub_func_graph, &outputs);
-      SetNewKernelInfo(cnode, sub_func_graph, inputs, outputs, AnfAlgo::GetProcessor(old_subgraph_cnode_));
+      SetNewKernelInfo(cnode, sub_func_graph, inputs, outputs);
     }
   }
 

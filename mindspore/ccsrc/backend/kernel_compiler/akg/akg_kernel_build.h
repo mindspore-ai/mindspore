@@ -36,8 +36,8 @@ class AkgKernelBuilder {
   ~AkgKernelBuilder() = default;
 
   virtual KernelBuildClient *GetClient() = 0;
-  virtual KernelPackPtr AkgSearchCache(const std::string &kernel_name, const std::string &processor) = 0;
-  virtual KernelPackPtr AkgInsertCache(const std::string &kernel_name, const std::string &processor) = 0;
+  virtual KernelPackPtr AkgSearchCache(const std::string &kernel_name) = 0;
+  virtual KernelPackPtr AkgInsertCache(const std::string &kernel_name) = 0;
   virtual void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
                                const AnfNodePtr &anf_node) = 0;
   virtual void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) = 0;

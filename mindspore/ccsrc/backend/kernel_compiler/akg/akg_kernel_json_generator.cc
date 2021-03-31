@@ -544,7 +544,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   (*kernel_json)[kJsonKeyId] = GetOpCntInc();
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_node);
+  (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();  // GetProcessorStr(anf_node);
   (*kernel_json)[kJsonKeyComposite] = false;
 
   if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
@@ -632,7 +632,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyId] = GetOpCntInc();
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_nodes[0]);
+  (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString() + "." + fg->debug_info()->get_id();
 
@@ -765,7 +765,7 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
   }
 
   if (!sub_graphs_info.empty()) {
-    auto processor = GetProcessorStr(anf_nodes[0]);
+    auto processor = GetStrProcessorFromContext();  // GetProcessorStr(anf_nodes[0]);
     if (processor != kProcessorCuda) {
       MS_LOG(EXCEPTION) << "Parallel fusion not support " << processor << " now.";
     }

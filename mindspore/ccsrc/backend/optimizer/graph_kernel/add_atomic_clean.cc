@@ -32,6 +32,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "debug/anf_ir_dump.h"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -85,7 +86,7 @@ inline int64_t CalNewIndex(int64_t old_index, int64_t reduce_index) {
 }
 }  // namespace
 std::shared_ptr<AtomicAddChecker> AtomicAddChecker::Init() {
-  auto processor = GetProcessorFromContext();
+  auto processor = kernel::GetProcessorFromContext();
   if (processor == kernel::Processor::AICORE) {
     return std::make_shared<AtomicAddCheckerAscend>();
   } else if (processor == kernel::Processor::CUDA) {
@@ -401,8 +402,7 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
   new_sub_graph->set_output(broadcast_to_node_inner);
   auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
   broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
-  SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner},
-                   AnfAlgo::GetProcessor(atomic_add_node_));
+  SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner});
   auto graph_attr = ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "atomic_clean");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
   new_sub_graph->set_attr("composite_type", MakeValue("atomic_clean"));
