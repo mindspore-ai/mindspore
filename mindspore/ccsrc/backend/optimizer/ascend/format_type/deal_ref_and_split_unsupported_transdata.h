@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_TRANS_AND_CAST_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_TRANS_AND_CAST_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_AND_SPLIT_UNSUPPORTED_TRANSADATA_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_AND_SPLIT_UNSUPPORTED_TRANSADATA_H_
 #include <memory>
 #include "ir/anf.h"
 #include "backend/optimizer/common/optimizer.h"
@@ -25,10 +25,11 @@
 
 namespace mindspore {
 namespace opt {
-class DealRefTransAndCast : public TransDataSplit {
+class DealRefAndSpiltUnSupportedTransdata : public TransDataSplit {
  public:
-  explicit DealRefTransAndCast(bool multigraph = true) : TransDataSplit(multigraph, "deal_ref_trans_and_cast") {}
-  ~DealRefTransAndCast() override = default;
+  explicit DealRefAndSpiltUnSupportedTransdata(bool multigraph = true)
+      : TransDataSplit(multigraph, "deal_ref_and_transdata_spilt") {}
+  ~DealRefAndSpiltUnSupportedTransdata() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
@@ -52,4 +53,4 @@ class DealRefTransAndCast : public TransDataSplit {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_TRANS_AND_CAST_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_AND_SPLIT_UNSUPPORTED_TRANSADATA_H_
