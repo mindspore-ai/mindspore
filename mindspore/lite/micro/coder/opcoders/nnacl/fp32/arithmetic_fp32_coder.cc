@@ -265,15 +265,7 @@ void ArithmeticFP32Coder::ComputeInOutStrides() {
   }
 }
 
-int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
-  ComputeInOutStrides();
-
-  int element_num = output_tensor_->ElementsNum();
-  MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
-  int stride = UP_DIV(element_num, thread_num_);
-  int count = MSMIN(stride, element_num - stride * kDefaultTaskId);
-  MS_CHECK_TRUE(!arithmetic_run_.empty(), "arithmetic_run function is nullptr!");
-  NNaclFp32Serializer code;
+void ArithmeticFP32Coder::CollectFilesForFnc(CoderContext *const context) {
   /**
    * for nnacl's operator combine all arithmetic to nnalc/arithmetic.c
    * this solution is not suitable for micro, for the size of package.
@@ -312,18 +304,34 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
             {
               "add_relu_fp32.c",
             });
+  } else if (arithmetic_run_ == "ElementDivRelu6" || arithmetic_run_ == "ElementDivRelu" ||
+             arithmetic_run_ == "ElementDiv") {
+    Collect(context,
+            {
+              "nnacl/fp32/div_fp32.h",
+            },
+            {
+              "div_fp32.c",
+            });
   } else {
     Collect(context,
             {
-              "nnacl/arithmetic_common.h",
               "nnacl/fp32/arithmetic_fp32.h",
             },
             {
-              "arithmetic_common.c",
               "arithmetic_fp32.c",
             });
   }
+}
 
+int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
+  ComputeInOutStrides();
+  int element_num = output_tensor_->ElementsNum();
+  MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ is less than zero");
+  int stride = UP_DIV(element_num, thread_num_);
+  int count = MSMIN(stride, element_num - stride * kDefaultTaskId);
+  MS_CHECK_TRUE(!arithmetic_run_.empty(), "arithmetic_run function is nullptr!");
+  NNaclFp32Serializer code;
   if (arithmetic_parameter_->broadcasting_) {
     stride = UP_DIV(outside_, thread_num_);
     out_count_ = MSMIN(stride, outside_ - stride * kDefaultTaskId);

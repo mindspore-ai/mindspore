@@ -37,10 +37,10 @@ int ConcatFP32Coder::ReSize() {
 int ConcatFP32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
-            "nnacl/fp32/concat.h",
+            "nnacl/base/concat_base.h",
           },
           {
-            "nnacl/fp32/concat.c",
+            "concat_base.c",
           });
 
   size_t input_num = input_tensors_.size();
@@ -74,7 +74,7 @@ int ConcatFP32Coder::DoCode(CoderContext *const context) {
   code << "};\n";
 
   code.CodeFunction("Concat", "inputs_addr", input_num, axis_, "inputs_output_shape", output_tensor_->shape().size(),
-                    output_tensor_, 0, thread_num_);
+                    output_tensor_, 0, thread_num_, sizeof(float));
   context->AppendCode(code.str());
   return RET_OK;
 }

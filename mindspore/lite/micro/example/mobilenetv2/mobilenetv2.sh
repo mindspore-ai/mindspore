@@ -93,11 +93,9 @@ gen_mobile() {
     local CODEGEN_FILE="${CODEGEN_FILE_NAME}.tar.gz"
     local CODEGEN_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${CODEGEN_FILE}"
 
-#    if [ ! -e ${BASEPATH}/build/${CODEGEN_FILE} ]; then
-#      wget -c -O ${BASEPATH}/build/${CODEGEN_FILE} --no-check-certificate ${CODEGEN_LITE_DOWNLOAD_URL}
-#    fi
-
-    cp ${OUTPUT_DIR}/${CODEGEN_FILE} ${BASEPATH}/build || exit 1
+    if [ ! -e ${BASEPATH}/build/${CODEGEN_FILE} ]; then
+      wget -c -O ${BASEPATH}/build/${CODEGEN_FILE} --no-check-certificate ${CODEGEN_LITE_DOWNLOAD_URL}
+    fi
 
     tar xzvf ${BASEPATH}/build/${CODEGEN_FILE} -C ${BASEPATH}/build/ || exit 1
     rm ${BASEPATH}/build/${CODEGEN_FILE} || exit 1

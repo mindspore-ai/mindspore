@@ -109,10 +109,12 @@ int StridedSliceBaseCoder::DoFastCode(CoderContext *ctx) {
     if (cur_outer > cal_num_per_thread_) {
       cur_outer = cal_num_per_thread_;
     }
-    code << "uint8_t *cur_in_ptr = " << input_ptr_str << " + "
-         << (caled_num * in_shape[split_axis_] + begin_index) * inner_size_ << ";\n";
-    code << " uint8_t *cur_out_ptr = " << output_ptr_str << " + " << caled_num * out_shape[split_axis_] * inner_size_
-         << ";\n";
+    code << "uint8_t *cur_in_ptr = "
+         << "(uint8_t *)(" << input_ptr_str << ")"
+         << " + " << (caled_num * in_shape[split_axis_] + begin_index) * inner_size_ << ";\n";
+    code << " uint8_t *cur_out_ptr = "
+         << "(uint8_t *)(" << output_ptr_str << ")"
+         << " + " << caled_num * out_shape[split_axis_] * inner_size_ << ";\n";
     code.CodeFunction("FastStride", "cur_in_ptr", "cur_out_ptr", out_shape.at(split_axis_),
                       strided_slice_parameter_->strides_[split_axis_], cur_outer, inner_size_,
                       in_shape.at(split_axis_) * inner_size_);
@@ -124,9 +126,12 @@ int StridedSliceBaseCoder::DoFastCode(CoderContext *ctx) {
     if (cal_axis_num > cal_num_per_thread_) {
       cal_axis_num = cal_num_per_thread_;
     }
-    code << "uint8_t *cur_in_ptr = " << input_ptr_str << " + "
-         << (caled_num * strided_slice_parameter_->strides_[split_axis_] + begin_index) * inner_size_ << ";\n";
-    code << "uint8_t *cur_out_ptr = " << output_ptr_str << " + " << caled_num * inner_size_ << ";\n";
+    code << "uint8_t *cur_in_ptr = "
+         << "(uint8_t *)(" << input_ptr_str << ")"
+         << " + " << (caled_num * strided_slice_parameter_->strides_[split_axis_] + begin_index) * inner_size_ << ";\n";
+    code << "uint8_t *cur_out_ptr = "
+         << "(uint8_t *)(" << output_ptr_str << ")"
+         << " + " << caled_num * inner_size_ << ";\n";
     code.CodeFunction("FastStride", "cur_in_ptr", "cur_out_ptr", cal_axis_num,
                       strided_slice_parameter_->strides_[split_axis_], 1, inner_size_, 0);
   }

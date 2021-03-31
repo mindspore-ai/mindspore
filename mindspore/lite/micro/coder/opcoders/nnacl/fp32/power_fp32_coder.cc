@@ -38,7 +38,7 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   std::string exp_addr;
   bool broadcast = true;
   if (input_tensors_.size() == 2) {
-    exp_addr = allocator_->GetRuntimeAddr(filter_tensor);
+    exp_addr = allocator_->GetRuntimeAddr(filter_tensor, true);
     broadcast = !(input_tensor_->shape() == filter_tensor->shape());
   }
   std::string cur_exp_str;
@@ -50,10 +50,11 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
   Collect(context,
           {
-            "nnacl/power.h",
+            "nnacl/power_parameter.h",
+            "nnacl/fp32/power_fp32.h",
           },
           {
-            "power.c",
+            "power_fp32.c",
           });
   NNaclFp32Serializer code;
   code.CodeFunction("Power", input_tensor_, cur_exp_str, output_tensor_, len, scale_, shift_, broadcast);

@@ -43,7 +43,7 @@ void CodeModelParamsState(std::ofstream &ofs, const std::map<std::string, Tensor
   for (auto &item : weights) {
     std::string name = item.first;
     Tensor *tensor = item.second;
-    if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+    if (CheckConstantTensor(tensor)) {
       if (tensor->data_c() == nullptr) {
         continue;
       }
@@ -56,7 +56,7 @@ void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor 
   for (auto &item : weights) {
     std::string name = item.first;
     Tensor *tensor = item.second;
-    if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+    if (CheckConstantTensor(tensor)) {
       if (tensor->data_c() == nullptr) {
         continue;
       }
@@ -78,7 +78,7 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
     if (tensor->data_c() == nullptr) {
       continue;
     }
-    if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+    if (CheckConstantTensor(tensor)) {
       hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
       cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
     } else if (tensor->category() == Tensor::Category::VAR) {
@@ -114,7 +114,7 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   for (const auto &item : ctx->saved_weights()) {
     std::string name = item.first;
     Tensor *tensor = item.second;
-    if (tensor->category() != Tensor::Category::CONST_TENSOR) {
+    if (!CheckConstantTensor(tensor)) {
       continue;
     }
     std::map<Tensor *, std::string> ctx_tensor_map = ctx->tensors_map();
@@ -152,7 +152,7 @@ void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const s
   for (auto &item : saved_weights) {
     std::string name = item.first;
     Tensor *tensor = item.second;
-    if (tensor->category() == Tensor::Category::CONST_TENSOR && tensor->data_c() != nullptr) {
+    if ((CheckConstantTensor(tensor)) && tensor->data_c() != nullptr) {
       net.write(reinterpret_cast<const char *>(tensor->data_c()), tensor->Size());
     }
   }
