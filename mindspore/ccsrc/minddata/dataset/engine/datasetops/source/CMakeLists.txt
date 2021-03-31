@@ -15,6 +15,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     csv_op.cc
     album_op.cc
     mappable_leaf_op.cc
+    nonmappable_leaf_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

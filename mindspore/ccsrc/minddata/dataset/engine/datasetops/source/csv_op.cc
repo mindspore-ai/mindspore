@@ -71,25 +71,13 @@ CsvOp::CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
              const std::vector<std::shared_ptr<BaseRecord>> &column_default,
              const std::vector<std::string> &column_name, int32_t num_workers, int64_t rows_per_buffer,
              int64_t num_samples, int32_t worker_connector_size, int32_t op_connector_size, bool shuffle_files,
-             int32_t num_device, int32_t device_id)
-    : ParallelOp(num_workers, op_connector_size),
+             int32_t num_devices, int32_t device_id)
+    : NonMappableLeafOp(num_workers, worker_connector_size, rows_per_buffer, num_samples, op_connector_size,
+                        shuffle_files, num_devices, device_id),
       csv_files_list_(std::move(csv_files_list)),
       field_delim_(field_delim),
       column_default_list_(column_default),
-      column_name_list_(column_name),
-      rows_per_buffer_(rows_per_buffer),
-      num_rows_per_shard_(0),
-      all_num_rows_(0),
-      num_samples_(num_samples),
-      filename_index_(std::make_unique<StringIndex>()),
-      load_jagged_connector_(true),
-      shuffle_files_(shuffle_files),
-      finished_reading_dataset_(false),
-      num_devices_(num_device),
-      device_id_(device_id),
-      load_io_block_queue_(true) {
-  worker_connector_size_ = worker_connector_size;
-}
+      column_name_list_(column_name) {}
 
 Status CsvOp::Init() {
   RETURN_IF_NOT_OK(filename_index_->insert(csv_files_list_));
@@ -98,14 +86,13 @@ Status CsvOp::Init() {
   io_block_queues_.Init(num_workers_, safe_queue_size);
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
-  jagged_buffer_connector_ = std::make_shared<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   return Status::OK();
 }
 
-CsvOp::CsvParser::CsvParser(int32_t worker_id, std::shared_ptr<JaggedConnector> connector, int64_t rows_per_buffer,
-                            char field_delim, std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default,
-                            std::string file_path)
+CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, int64_t rows_per_buffer, char field_delim,
+                            std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default, std::string file_path)
     : worker_id_(worker_id),
       buffer_connector_(connector),
       csv_rows_per_buffer_(rows_per_buffer),
@@ -221,6 +208,7 @@ int CsvOp::CsvParser::PutRow(int c) {
 
   if (cur_row_ == csv_rows_per_buffer_) {
     cur_buffer_->set_tensor_table(std::move(tensor_table_));
+
     buffer_connector_->Add(worker_id_, std::move(cur_buffer_));
 
     cur_buffer_ = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
@@ -499,19 +487,9 @@ Status CsvOp::CsvParser::InitCsvParser() {
   return Status::OK();
 }
 
-Status CsvOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  load_jagged_connector_ = true;
-  load_io_block_queue_ = true;
-
-  RETURN_IF_NOT_OK(ParallelOp::Reset());
-  NotifyToFillIOBlockQueue();
-  return Status::OK();
-}
-
-Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, const int64_t end_offset,
-                       const int32_t worker_id) {
-  CsvParser csv_parser(worker_id, jagged_buffer_connector_, rows_per_buffer_, field_delim_, column_default_list_, file);
+Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
+  CsvParser csv_parser(worker_id, jagged_buffer_connector_.get(), rows_per_buffer_, field_delim_, column_default_list_,
+                       file);
   csv_parser.SetStartOffset(start_offset);
   csv_parser.SetEndOffset(end_offset);
   std::ifstream ifs;
@@ -546,93 +524,6 @@ Status CsvOp::LoadFile(const std::string &file, const int64_t start_offset, cons
   return Status::OK();
 }
 
-Status CsvOp::operator()() {
-  RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
-
-  // Move register to the front of launching thread, this will fix the problem
-  // when thread exit unnormally register will failed occasionally.
-  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
-
-  // launch one thread, responsible for filling IoBlockQueue
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&CsvOp::WaitToFillIOBlockQueue, this), "", id()));
-
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CsvOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-
-  // must be called after launching workers.
-  TaskManager::FindMe()->Post();
-  NotifyToFillIOBlockQueue();
-
-  while (!finished_reading_dataset_) {
-    int64_t buffer_id = 0;
-    int32_t workers_done = 0;
-    int64_t rows_read = 0;
-    load_io_block_queue_ = true;
-
-    while (workers_done < num_workers_) {
-      std::unique_ptr<DataBuffer> buffer;
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &buffer));
-      if (buffer->eoe()) {
-        workers_done++;
-      } else if (num_samples_ == 0 || rows_read < num_samples_) {
-        if ((num_samples_ > 0) && (rows_read + buffer->NumRows() > num_samples_)) {
-          int64_t rowsToRemove = buffer->NumRows() - (num_samples_ - rows_read);
-          RETURN_IF_NOT_OK(buffer->SliceOff(rowsToRemove));
-        }
-        rows_read += buffer->NumRows();
-        buffer->set_id(buffer_id++);
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buffer)));
-      } else {
-        // end of epoch
-        load_jagged_connector_ = false;
-        load_io_block_queue_ = false;
-      }
-    }
-
-    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
-
-    if (IsLastIteration()) {
-      finished_reading_dataset_ = true;
-      NotifyToFillIOBlockQueue();
-    } else {
-      jagged_buffer_connector_->DoReset();
-      buffer_id = 0;
-      // Self-reset to start a new iteration
-      RETURN_IF_NOT_OK(Reset());
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
-
-  RETURN_IF_NOT_OK(PostEndOfData());
-  return Status::OK();
-}
-
-Status CsvOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  std::unique_ptr<FilenameBlock> io_block;
-  RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));
-  while (!io_block->eof()) {
-    if (!io_block->eoe()) {
-      if (load_jagged_connector_) {
-        std::string filename;
-        RETURN_IF_NOT_OK(io_block->GetFilename(&filename, *filename_index_));
-        int64_t start_offset = io_block->GetStartOffset();
-        int64_t end_offset = io_block->GetEndOffset();
-        RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
-      }
-    } else {
-      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe_buffer)));
-    }
-
-    RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));
-  }
-  return Status::OK();
-}
-
 // A print method typically used for debugging
 void CsvOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -644,7 +535,7 @@ void CsvOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << num_samples_
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << total_rows_
         << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
         << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nCsv files list:\n";
     for (int i = 0; i < csv_files_list_.size(); ++i) {
@@ -652,52 +543,6 @@ void CsvOp::Print(std::ostream &out, bool show_all) const {
     }
     out << "\n\n";
   }
-}
-
-// Pops an element from a queue in io_block_queues
-Status CsvOp::PopIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> *out_block) {
-  RETURN_IF_NOT_OK(io_block_queues_[index]->PopFront(out_block));
-
-  return Status::OK();
-}
-
-// Pushes an element to a queue in io_block_queues
-Status CsvOp::PushIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> &&io_block) {
-  RETURN_IF_NOT_OK(io_block_queues_[index]->Add(std::move(io_block)));
-
-  return Status::OK();
-}
-
-static void ShuffleKeys(std::vector<int64_t> *i_keys, uint32_t seed) {
-  std::mt19937 rng(seed);
-  std::shuffle(i_keys->begin(), i_keys->end(), rng);
-}
-
-Status CsvOp::WaitToFillIOBlockQueue() {
-  // must be called first if called by worker spanwed by taskgroup
-  TaskManager::FindMe()->Post();
-
-  std::vector<int64_t> i_keys;
-  if (shuffle_files_) {
-    for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
-      i_keys.push_back(it.key());
-    }
-  }
-  uint32_t seed = 0;
-  while (true) {
-    RETURN_IF_NOT_OK(io_block_queue_wait_post_.Wait());
-    io_block_queue_wait_post_.Clear();
-
-    if (finished_reading_dataset_) {
-      break;
-    }
-
-    if (shuffle_files_) {
-      ShuffleKeys(&i_keys, num_devices_ == 1 ? GetSeed() : ++seed);
-    }
-    RETURN_IF_NOT_OK(FillIOBlockQueue(i_keys));
-  }
-  return Status::OK();
 }
 
 Status CsvOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
@@ -749,72 +594,24 @@ Status CsvOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
   return Status::OK();
 }
 
-void CsvOp::NotifyToFillIOBlockQueue() { io_block_queue_wait_post_.Set(); }
-
-bool CsvOp::NeedPushFileToBlockQueue(const std::string &file_name, int64_t *start_offset, int64_t *end_offset,
-                                     const int64_t &pre_count) {
-  *start_offset = 0;
-  *end_offset = 0;
-  bool push = false;
-  int64_t start_index = device_id_ * num_rows_per_shard_;
-  if (device_id_ + 1 < 0) {
-    MS_LOG(ERROR) << "Device id is invalid";
-    return false;
-  }
-
-  int64_t end_index = (static_cast<int64_t>(device_id_) + 1) * num_rows_per_shard_;
-  if (pre_count <= start_index && pre_count + filename_numrows_[file_name] > start_index) {
-    *start_offset = start_index - pre_count;
-    push = true;
-    if (pre_count < end_index && pre_count + filename_numrows_[file_name] >= end_index) {
-      *end_offset = end_index - pre_count;
-    } else {
-      *end_offset = filename_numrows_[file_name];
-    }
-  }
-
-  if (pre_count >= start_index && pre_count < end_index) {
-    *start_offset = 0;
-    push = true;
-    if (pre_count + filename_numrows_[file_name] >= end_index) {
-      *end_offset = end_index - pre_count;
-    } else {
-      *end_offset = filename_numrows_[file_name];
-    }
-  }
-
-  return push;
-}
-
-// Pushes a control indicator onto the IOBlockQueue for each worker to consume. When the worker
-// pops this control indicator, it will wait until the next epoch starts and then resume execution.
-Status CsvOp::PostEndOfEpoch(int32_t queue_index) {
-  for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eoe = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
-    RETURN_IF_NOT_OK(PushIoBlockQueue((queue_index + i) % num_workers_, std::move(eoe)));
-  }
-
-  return Status::OK();
-}
-
 Status CsvOp::CalculateNumRowsPerShard() {
   for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
     int64_t count = CountTotalRows(it.value());
     filename_numrows_[it.value()] = count;
-    all_num_rows_ += count;
+    num_rows_ += count;
   }
-  if (all_num_rows_ == 0) {
+  if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
       "Invalid data, no valid data matching the dataset API CsvDataset. Please check file path or CSV format.");
   }
 
-  num_rows_per_shard_ = static_cast<int64_t>(std::ceil(all_num_rows_ * 1.0 / num_devices_));
+  num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
   MS_LOG(DEBUG) << "Number rows per shard is " << num_rows_per_shard_;
   return Status::OK();
 }
 
 int64_t CsvOp::CountTotalRows(const std::string &file) {
-  CsvParser csv_parser(0, jagged_buffer_connector_, rows_per_buffer_, field_delim_, column_default_list_, file);
+  CsvParser csv_parser(0, jagged_buffer_connector_.get(), rows_per_buffer_, field_delim_, column_default_list_, file);
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
   if (!ifs.is_open()) {
@@ -833,17 +630,6 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
   }
 
   return csv_parser.GetTotalRows();
-}
-
-// Pushes a control indicator onto the IOBlockQueue for each worker to consume.
-// When the worker pops this control indicator, it will shut itself down gracefully.
-Status CsvOp::PostEndOfData() {
-  for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eof = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
-    RETURN_IF_NOT_OK(PushIoBlockQueue(i, std::move(eof)));
-  }
-
-  return Status::OK();
 }
 
 Status CsvOp::CountAllFileRows(const std::vector<std::string> &files, bool csv_header, int64_t *count) {
