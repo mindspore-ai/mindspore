@@ -581,6 +581,9 @@ AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &nod
   } else if (py::isinstance<py::none>(obj)) {
     MS_LOG(INFO) << "The Constant is none:" << (std::string)py::str(obj);
     return NewValueNode(kNone);
+  } else if (py::isinstance<py::ellipsis>(obj)) {
+    MS_LOG(INFO) << "The Constance is ellipsis:" << (std::string)py::str(obj);
+    return NewValueNode(kEllipsis);
   } else {
     // no else actually
     MS_EXCEPTION(TypeError) << "Unsupported Constant type : " << (std::string)py::str(obj);
