@@ -30,9 +30,8 @@ else()
 endif()
 message("grpc using absl_DIR : " ${_FINDPACKAGE_ABSL_CONFIG_DIR})
 
-set(_CMAKE_ARGS_OPENSSL_ROOT_DIR "")
-if(OPENSSL_ROOT_DIR)
-  set(_CMAKE_ARGS_OPENSSL_ROOT_DIR "-DOPENSSL_ROOT_DIR:PATH=${OPENSSL_ROOT_DIR}")
+if(EXISTS ${openssl_ROOT})
+  set(_CMAKE_ARGS_OPENSSL_ROOT_DIR "-DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT}")
 endif()
 
 if(ENABLE_GITEE)
@@ -77,10 +76,7 @@ target_link_libraries(grpc::grpc++ INTERFACE mindspore::z)
 target_link_libraries(grpc::grpc++ INTERFACE mindspore::cares)
 target_link_libraries(grpc::grpc++ INTERFACE mindspore::absl_strings mindspore::absl_throw_delegate
                       mindspore::absl_raw_logging_internal mindspore::absl_int128 mindspore::absl_bad_optional_access)
-
-# link system openssl
-find_package(OpenSSL REQUIRED)
-target_link_libraries(grpc::grpc++ INTERFACE OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(grpc::grpc++ INTERFACE mindspore::ssl mindspore::crypto)
 
 
 function(ms_grpc_generate c_var h_var)

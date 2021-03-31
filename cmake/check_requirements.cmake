@@ -56,10 +56,6 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         find_required_program(tclsh)
     endif()
 
-    if(MS_BUILD_GRPC)
-        find_required_package(OpenSSL)
-    endif()
-
     ## packages used in GPU mode only
     if(ENABLE_GPU)
         find_library(gmp_LIB gmp)

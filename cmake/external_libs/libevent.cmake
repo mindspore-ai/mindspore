@@ -12,12 +12,14 @@ else()
     set(MD5 "b5333f021f880fe76490d8a799cd79f4")
 endif()
 
+message("libevent using openssl stub dir: " ${openssl_ROOT})
+
 mindspore_add_pkg(libevent
         VER 2.1.12
         LIBS event event_pthreads event_core
         URL ${REQ_URL}
         MD5 ${MD5}
-        CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF)
+        CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF -DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT})
 
 include_directories(${libevent_INC})
 
