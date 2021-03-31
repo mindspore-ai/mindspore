@@ -75,6 +75,9 @@ int CalNewShape(const TensorC *in_tensor, int *out_shape, size_t out_shape_size)
 
 int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_shape, size_t *out_shape_size) {
   const TensorC *shape_tensor = inputs[1];
+  if (shape_size == 0) {
+    return NNACL_ERR;
+  }
   switch (shape_tensor->data_type_) {
     case kNumberTypeInt8: {
       int8_t *data = (int8_t *)(shape_tensor->data_);

@@ -31,6 +31,7 @@ OpParameter *PopulateSoftmaxParameter(const void *prim) {
   auto prim_softmax = primitive->value_as_Softmax();
   if (prim_softmax->axis()->size() != 1) {
     MS_LOG(ERROR) << "axis number invalid!number: " << prim_softmax->axis()->size();
+    free(softmax_param);
     return nullptr;
   }
   softmax_param->axis_ = prim_softmax->axis()->data()[0];

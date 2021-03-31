@@ -18,6 +18,9 @@
 
 int UnsortedSegmentSum(const float *input, int unit_num, int input_dim1, const int *indices, float *output,
                        int output_dim0, int output_dim1) {
+  if (input_dim1 == 0) {
+    return NNACL_ERR;
+  }
   for (int i = 0; i < unit_num; ++i) {
     int j = i / input_dim1;
     int k = i % input_dim1;

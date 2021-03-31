@@ -368,6 +368,9 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
 }
 
 int VectorCInit(VectorC *vc, size_t per_malloc_size) {
+  if (per_malloc_size == 0) {
+    return NNACL_ERR;
+  }
   vc->data_ = (int *)malloc(per_malloc_size * sizeof(int));
   if (vc->data_ == NULL) {
     return NNACL_ERR;

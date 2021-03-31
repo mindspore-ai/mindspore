@@ -51,7 +51,7 @@ inline ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
 
 inline void FreeMemory(ConvParameter *conv_param, const std::vector<lite::Tensor *> &new_inputs,
                        const std::vector<lite::Tensor *> &new_outputs) {
-  if (conv_param) {
+  if (conv_param != nullptr) {
     free(conv_param);
   }
   for (auto &in_tensor : new_inputs) {
