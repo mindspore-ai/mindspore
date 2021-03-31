@@ -90,6 +90,8 @@ class TFModelParser : public ModelParser {
   std::map<std::string, AnfNodePtr> function_while_map_;  // tf function name->while_node_name
   std::map<std::string, AnfNodePtr> function_if_map_;     // tf function name->if_node
   std::vector<std::pair<CNodePtr, std::vector<std::string>>> nodes_with_null_input_{};
+  std::vector<std::string> while_cond_branch_name_;
+  std::vector<std::string> if_then_branch_name_;
 };
 }  // namespace lite
 }  // namespace mindspore
