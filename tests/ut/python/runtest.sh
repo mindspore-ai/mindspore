@@ -40,8 +40,15 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
         fi
 
     elif [ $1 == "stage2" ]; then
-        echo "run python parallel, nn"
-        pytest -v -n 2 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/nn
+        echo "run python parallel, train, nn"
+        pytest -v -n 2 --dist=loadfile $CURRPATH/parallel
+
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
+
+        pytest -v -n 2 --dist=loadfile $CURRPATH/train $CURRPATH/nn
 
         RET=$?
         if [ ${RET} -ne 0 ]; then
@@ -74,7 +81,13 @@ else
         exit ${RET}
     fi
 
-    pytest -v -n 2 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train $CURRPATH/nn
+    pytest -v -n 2 --dist=loadfile $CURRPATH/parallel
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+
+    pytest -v -n 2 --dist=loadfile $CURRPATH/train $CURRPATH/nn
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
