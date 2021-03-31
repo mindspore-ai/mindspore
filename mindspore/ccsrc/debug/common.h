@@ -32,10 +32,8 @@ class Common {
   static std::optional<std::string> GetRealPath(const std::string &input_path);
   static std::optional<std::string> GetConfigFile(const std::string &env);
   static std::optional<std::string> GetEnvConfigFile();
-  static bool IsStrLengthValid(const std::string &str, const int &length_limit, const std::string &error_message = "",
-                               const bool &print_str = true);
-  static bool IsPathValid(const std::string &path, const int &length_limit, const std::string &error_message = "",
-                          const bool &print_str = true);
+  static bool IsStrLengthValid(const std::string &str, const int &length_limit, const std::string &error_message = "");
+  static bool IsPathValid(const std::string &path, const int &length_limit, const std::string &error_message = "");
   static bool IsFilenameValid(const std::string &filename, const int &length_limit,
                               const std::string &error_message = "");
   static bool CreateNotExistDirs(const std::string &path);
