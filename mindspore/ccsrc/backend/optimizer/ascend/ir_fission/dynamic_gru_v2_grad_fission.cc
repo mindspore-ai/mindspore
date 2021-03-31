@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace opt {
-
 namespace {
 constexpr size_t kDynamicGRUV2GradInputNum = 12;
 constexpr size_t kDynamicGRUV2GradOutputNum = 6;

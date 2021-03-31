@@ -100,7 +100,7 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 
     def _raise_message(third_one_flag=False, three_input_flag=False):
         if third_one_flag:
-            raise ValueError(f"For '{prim_name}' the depth of attr '{arg_name}' should be 1, but got {arg_value[-3]}")
+            raise ValueError(f"For '{prim_name}' the depth of attr '{arg_name}' should be 1, but got {ret_value[-3]}")
         if three_input_flag:
             raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of "
                              f"three positive int numbers, but got {arg_value}")
@@ -110,8 +110,6 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
     def _get_return_value():
         if isinstance(arg_value, int):
             ret = (1, 1, arg_value, arg_value, arg_value) if ret_five else (arg_value, arg_value, arg_value)
-            if third_one:
-                ret = (1, 1, 1, arg_value, arg_value) if ret_five else (1, arg_value, arg_value)
         elif len(arg_value) == 3:
             ret = (1, 1, arg_value[0], arg_value[1], arg_value[2]) if ret_five else arg_value
         elif len(arg_value) == 5:

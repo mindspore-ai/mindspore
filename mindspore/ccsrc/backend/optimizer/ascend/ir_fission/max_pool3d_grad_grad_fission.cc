@@ -21,7 +21,8 @@
 #include "frontend/optimizer/opt.h"
 #include "backend/optimizer/common/helper.h"
 
-namespace mindspore::opt {
+namespace mindspore {
+namespace opt {
 constexpr size_t kInputNum = 3;
 constexpr size_t kFloat16Len = 2;  // size of float16;
 namespace {
@@ -117,4 +118,5 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
   }
   return new_cnode;
 }
-}  // namespace mindspore::opt
+}  // namespace opt
+}  // namespace mindspore
