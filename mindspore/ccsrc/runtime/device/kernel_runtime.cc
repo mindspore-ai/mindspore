@@ -680,7 +680,14 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_LOG(INFO) << "AssignStaticMemoryValueNode start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  for (auto &value_node : graph->graph_value_nodes()) {
+  // order the value nodes
+  std::map<std::string, ValueNodePtr> value_nodes_map;
+  for (auto &node : graph->graph_value_nodes()) {
+    value_nodes_map[node->fullname_with_scope()] = node;
+  }
+
+  for (auto &item : value_nodes_map) {
+    auto value_node = item.second;
     MS_EXCEPTION_IF_NULL(value_node);
     if (NodeOutputDeviceAddressExist(value_node, 0)) {
       MS_LOG(DEBUG) << "value_node[" << value_node->DebugString() << "] address already exist";
