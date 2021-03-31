@@ -1581,13 +1581,11 @@ bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> ds
     n[i + 4] = dst_point[i].y;
   }
 
-  double x[9] = {0};
-  LiteMat dst(1, 8, x, LDataType(LDataType::DOUBLE));
+  M.Init(3, 3, LDataType(LDataType::DOUBLE));
+  LiteMat dst(1, 8, M.data_ptr_, LDataType(LDataType::DOUBLE));
 
   GetPerspectiveTransformImpl(src1, src2, dst);
   dst.ptr<double>(8)[0] = 1;
-  M.Init(3, 3, dst.data_ptr_, dst.data_type_);
-
   return true;
 }
 

@@ -239,8 +239,7 @@ TEST_F(MindDataImageProcess, testNV21ToBGR) {
   bool ret = ReadYUV(filename, w, h, &yuv_data);
   ASSERT_TRUE(ret == true);
 
-  cv::Mat yuvimg(h * 3 / 2, w, CV_8UC1);
-  memcpy(yuvimg.data, yuv_data, w * h * 3 / 2);
+  cv::Mat yuvimg(h * 3 / 2, w, CV_8UC1, yuv_data);
   cv::Mat rgbimage;
 
   cv::cvtColor(yuvimg, rgbimage, cv::COLOR_YUV2BGR_NV21);
@@ -250,6 +249,7 @@ TEST_F(MindDataImageProcess, testNV21ToBGR) {
   ret = InitFromPixel(yuv_data, LPixelType::NV212BGR, LDataType::UINT8, w, h, lite_mat_bgr);
   ASSERT_TRUE(ret == true);
   cv::Mat dst_image(lite_mat_bgr.height_, lite_mat_bgr.width_, CV_8UC3, lite_mat_bgr.data_ptr_);
+  free(yuv_data);
 }
 
 TEST_F(MindDataImageProcess, testNV12ToBGR) {
@@ -270,6 +270,7 @@ TEST_F(MindDataImageProcess, testNV12ToBGR) {
   ret = InitFromPixel(yuv_data, LPixelType::NV122BGR, LDataType::UINT8, w, h, lite_mat_bgr);
   ASSERT_TRUE(ret == true);
   cv::Mat dst_image(lite_mat_bgr.height_, lite_mat_bgr.width_, CV_8UC3, lite_mat_bgr.data_ptr_);
+  free(yuv_data);
 }
 
 TEST_F(MindDataImageProcess, testExtractChannel) {

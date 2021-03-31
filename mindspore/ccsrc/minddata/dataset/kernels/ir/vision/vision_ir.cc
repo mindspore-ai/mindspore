@@ -1129,12 +1129,12 @@ Status RandomRotationOperation::ValidateParams() {
     MS_LOG(ERROR) << "RandomRotation: degrees must be a vector of one or two values, got: " << degrees_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if ((degrees_[1] < degrees_[0]) && (degrees_.size() == 2)) {
+  if ((degrees_.size() == 2) && (degrees_[1] < degrees_[0])) {
     std::string err_msg = "RandomRotation: degrees must be in the format of (min, max), got: (" +
                           std::to_string(degrees_[0]) + ", " + std::to_string(degrees_[1]) + ")";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  } else if ((degrees_[0] < 0) && degrees_.size() == 1) {
+  } else if ((degrees_.size() == 1) && (degrees_[0] < 0)) {
     std::string err_msg =
       "RandomRotation: if degrees only has one value, it must be greater than or equal to 0, got: " +
       std::to_string(degrees_[0]);
