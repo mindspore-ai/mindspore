@@ -637,6 +637,14 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
         anfnode_build_map_[value_node_name] = new_value_node;
         break;
       }
+      if ((value_pos = ref_attr_name.find("Tuple[]")) != std::string::npos) {
+        MS_LOG(INFO) << "Build Tuple() ValueNode for primitive.";
+        ValuePtr res = MakeValue(std::vector<ValuePtr>{});
+        new_value_node = NewValueNode(res);
+        new_value_node->set_abstract(res->ToAbstract());
+        anfnode_build_map_[value_node_name] = new_value_node;
+        break;
+      }
       ObtainCNodeAttrInScalarForm(attr_proto, &multi_value_map);
       break;
     }
