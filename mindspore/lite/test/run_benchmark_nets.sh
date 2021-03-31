@@ -15,12 +15,10 @@ function Run_Converter() {
 
     # Convert tf models:
     while read line; do
-        tf_line_info=${line}
-        if [[ $tf_line_info == \#* ]]; then
+        model_name=${line%;*}
+        if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_converter_log_file}"
         echo './converter_lite  --fmk=TF --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
         ./converter_lite  --fmk=TF --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}
@@ -398,31 +396,15 @@ function Run_x86() {
 
     # Run tf converted models:
     while read line; do
-        model_name_and_input_num=${line%;*}
-        length=${#model_name_and_input_num}
+        model_name=${line%;*}
+        length=${#model_name}
         input_shapes=${line:length+1}
-        tf_line_info=${model_name_and_input_num}
-        if [[ $tf_line_info == \#* ]]; then
+        if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
-        input_files=''
-        for i in $(seq 1 $input_num)
-        do
-          input_files=$input_files'/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'$model_name'.ms_'$i'.bin,'
-        done
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-        # run benchmark test with input data
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --inputShapes='${input_shapes} >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1296,34 +1278,27 @@ function Run_arm64() {
 
     # Run tf converted models:
     while read line; do
-        model_name_and_input_num=${line%;*}
-        length=${#model_name_and_input_num}
+        model_name=${line%;*}
+        length=${#model_name}
         input_shapes=${line:length+1}
-        tf_line_info=${model_name_and_input_num}
-        if [[ $tf_line_info == \#* ]]; then
+        if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
-        input_files=''
-        for i in $(seq 1 $input_num)
-        do
-          input_files=$input_files'/data/local/tmp/input_output/input/'$model_name'.ms_'$i'.bin,'
-        done
         echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        # run benchmark test with input data
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -1627,6 +1602,17 @@ function Run_arm64() {
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes} ' --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes} ' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
     done < ${models_with_multiple_inputs_config}
 
     # Run converted models which does not need to be cared about the accuracy:
@@ -1845,7 +1831,7 @@ function Run_arm64_fp16() {
     while read line; do
         fp16_line_info=${line}
         if [[ $fp16_line_info == \#* ]]; then
-          continue-
+          continue
         fi
         model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
