@@ -114,13 +114,21 @@ class LstmGradWeightGpuKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetDropoutDescriptor(dropout_desc_, handle_, dropout_, nullptr, 0, 0),
                                 "set dropout_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetRNNDescriptor(handle_, rnn_desc_, hidden_size_, num_layers_, dropout_desc_,
-                                                      input_mode, direction, rnn_mode, algo, cudnn_data_type_),
-                                "set rnn_desc failed");
     cudnnRNNBiasMode_t bias_mode = has_bias_ ? CUDNN_RNN_DOUBLE_BIAS : CUDNN_RNN_NO_BIAS;
+#if CUDNN_VERSION < 8000
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnSetRNNDescriptor_v6(handle_, rnn_desc_, hidden_size_, num_layers_, dropout_desc_,
+                                                         input_mode, direction, rnn_mode, algo, cudnn_data_type_),
+                                "set rnn_desc failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetRNNBiasMode(rnn_desc_, bias_mode), "set bias_mode failed");
-
+#else
+    cudnnMathType_t math_type = (cudnn_data_type_ == CUDNN_DATA_HALF) ? CUDNN_TENSOR_OP_MATH : CUDNN_FMA_MATH;
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnSetRNNDescriptor_v8(rnn_desc_, algo, rnn_mode, bias_mode, direction, input_mode,
+                                                         cudnn_data_type_, cudnn_data_type_, math_type, input_size_,
+                                                         hidden_size_, hidden_size_, num_layers_, dropout_desc_, 0),
+                                "set rnn_desc failed");
+#endif
     auto weight_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[2] * sizeof(T);
 

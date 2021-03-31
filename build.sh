@@ -357,13 +357,9 @@ checkopts()
     if [[ "X$DEVICE_VERSION" == "X" ]]; then
       DEVICE_VERSION=10.1
     fi
-    if [[ "X$DEVICE_VERSION" != "X9.2" && "X$DEVICE_VERSION" != "X10.1" ]]; then
+    if [[ "X$DEVICE_VERSION" != "X11.1" && "X$DEVICE_VERSION" != "X10.1" ]]; then
       echo "Invalid value ${DEVICE_VERSION} for option -V"
       usage
-      exit 1
-    fi
-    if [[ "X$DEVICE_VERSION" == "X9.2" ]]; then
-      echo "Unsupported CUDA version 9.2"
       exit 1
     fi
     CUDA_VERSION="$DEVICE_VERSION"

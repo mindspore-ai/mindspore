@@ -45,7 +45,7 @@ class GPUEnvChecker(EnvChecker):
     """GPU environment check."""
 
     def __init__(self):
-        self.version = ["10.1"]
+        self.version = ["10.1", "11.1"]
         self.lib_key_to_lib_name = {'libcu': 'libcuda.so'}
         # env
         self.path = os.getenv("PATH")
