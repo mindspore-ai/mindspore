@@ -102,8 +102,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   auto pad_mode_value = (primitive->GetAttr(kPadMode));
-  PadMode pad_mode = PAD;
-  pad_mode = PadMode(GetValue<int64_t>(pad_mode_value));
+  PadMode pad_mode = PadMode(GetValue<int64_t>(pad_mode_value));
   auto batch = in_shape[0];
   auto channel = in_shape[1];
   auto in_h = in_shape[2];

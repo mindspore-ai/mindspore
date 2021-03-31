@@ -23,32 +23,8 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto doutput = input_args[0];
-  auto x_size = input_args[2];
-  auto x_size_value = x_size->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(x_size);
-  auto x_size_v = GetValue<std::vector<int64_t>>(x_size_value);
-  // infer dtype
-  auto dtype = doutput->BuildType();
-  if (!dtype->isa<TensorType>()) {
-    MS_LOG(EXCEPTION) << "Conv2DBackpropInputInfer doutput must be tensor but got" << dtype->ToString();
-  }
-  auto input_tensor_type = dtype->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor_type);
-  auto element = input_tensor_type->element();
-  // infer shape
-  auto dout_shape = doutput->BuildShape();
-  MS_EXCEPTION_IF_NULL(doutput);
-  auto dout_shapeptr = dout_shape->cast<abstract::ShapePtr>();
-  auto dout_shape_norm = dout_shapeptr->shape();
+void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
+                const std::vector<int64_t> &x_size_v) {
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   auto stride = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
   auto dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
@@ -76,6 +52,34 @@ AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, co
     pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
   }
   primitive->AddAttr(kPadList, MakeValue(pad_list));
+}
+AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto doutput = input_args[0];
+  auto x_size = input_args[2];
+  auto x_size_value = x_size->GetValueTrack();
+  MS_EXCEPTION_IF_NULL(x_size);
+  auto x_size_v = GetValue<std::vector<int64_t>>(x_size_value);
+  // infer dtype
+  auto dtype = doutput->BuildType();
+  if (!dtype->isa<TensorType>()) {
+    MS_LOG(EXCEPTION) << "Conv2DBackpropInputInfer doutput must be tensor but got" << dtype->ToString();
+  }
+  auto input_tensor_type = dtype->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor_type);
+  auto element = input_tensor_type->element();
+  // infer shape
+  auto dout_shape = doutput->BuildShape();
+  MS_EXCEPTION_IF_NULL(doutput);
+  auto dout_shapeptr = dout_shape->cast<abstract::ShapePtr>();
+  auto dout_shape_norm = dout_shapeptr->shape();
+  SetPadList(primitive, dout_shape_norm, x_size_v);
   return std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(x_size_v));
 }
 

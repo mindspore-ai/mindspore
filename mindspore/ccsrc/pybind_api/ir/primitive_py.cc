@@ -182,32 +182,36 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
   }
 }
 
+BaseRef PrimitivePy::RunBpropHookFunction(const py::tuple &py_args) const {
+  SyncData(py_args);
+  auto size = py_args.size();
+  py::tuple input_args(size - 2);
+  for (size_t i = 0; i < size - 2; ++i) {
+    input_args[i] = py_args[i];
+  }
+  py::tuple convert_args(py_args.size());
+  ConvertCTensorToPyTensor(py_args, &convert_args);
+  auto inst = pynative::PynativeExecutor::GetInstance();
+  MS_EXCEPTION_IF_NULL(inst);
+  try {
+    MS_LOG(DEBUG) << "Run bprop function start";
+    inst->NewGraph(hook_, input_args.cast<py::args>());
+    py::object grads_obj = hook_(*convert_args);
+    py::tuple grads = check_bprop_out(grads_obj, py_args);
+    inst->EndGraph(hook_, grads_obj, input_args.cast<py::args>());
+    MS_LOG(DEBUG) << "Run bprop function end";
+    return std::make_shared<PyObjectRef>(grads);
+  } catch (std::exception &bt) {
+    inst->ClearRes();
+    std::rethrow_exception(std::current_exception());
+  }
+}
+
 BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
   py::tuple py_args = ConvertDatatoPyTuple(args);
   bool is_bprop = this->HasAttr(kBpropAttrName);
   if (is_bprop) {
-    SyncData(py_args);
-    auto size = py_args.size();
-    py::tuple input_args(size - 2);
-    for (size_t i = 0; i < size - 2; ++i) {
-      input_args[i] = py_args[i];
-    }
-    py::tuple convert_args(py_args.size());
-    ConvertCTensorToPyTensor(py_args, &convert_args);
-    auto inst = pynative::PynativeExecutor::GetInstance();
-    MS_EXCEPTION_IF_NULL(inst);
-    try {
-      MS_LOG(DEBUG) << "Run bprop function start";
-      inst->NewGraph(hook_, input_args.cast<py::args>());
-      py::object grads_obj = hook_(*convert_args);
-      py::tuple grads = check_bprop_out(grads_obj, py_args);
-      inst->EndGraph(hook_, grads_obj, input_args.cast<py::args>());
-      MS_LOG(DEBUG) << "Run bprop function end";
-      return std::make_shared<PyObjectRef>(grads);
-    } catch (std::exception &bt) {
-      inst->ClearRes();
-      std::rethrow_exception(std::current_exception());
-    }
+    return RunBpropHookFunction(py_args);
   }
   SyncData(py_args[2]);
   bool is_cell = this->HasAttr(kCellHookAttrName);
