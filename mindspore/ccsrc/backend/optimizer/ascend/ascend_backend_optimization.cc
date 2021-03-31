@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
+#include <vector>
 #include <algorithm>
 #include <list>
 #include <memory>
