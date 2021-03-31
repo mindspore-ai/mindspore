@@ -3747,8 +3747,14 @@ class Asin(PrimitiveWithInfer):
 
 
 class NMSWithMask(PrimitiveWithInfer):
-    """
-    Selects some bounding boxes in descending order of score.
+    r"""
+    When object detection problem is performed in the computer vision field, object detection algorithm generates
+    a plurality of bounding boxes. Selects some bounding boxes in descending order of score. Use the box with the
+    highest score calculate the overlap between other boxes and the current box, and delete the box based on a
+    certain threshold(IOU). The IOU is as follows,
+
+    .. math::
+        \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
 
     Args:
         iou_threshold (float): Specifies the threshold of overlap boxes with respect to
@@ -3781,7 +3787,7 @@ class NMSWithMask(PrimitiveWithInfer):
 
     Examples:
         >>> bbox = np.array([[100.0, 100.0, 50.0, 68.0, 0.63], [150.0, 75.0, 165.0, 115.0, 0.55],
-        [12.0, 190.0, 288.0, 200.0, 0.9], [28.0, 130.0, 106.0, 172.0, 0.3]])
+        ...                  [12.0, 190.0, 288.0, 200.0, 0.9], [28.0, 130.0, 106.0, 172.0, 0.3]])
         >>> bbox[:, 2] += bbox[:, 0]
         >>> bbox[:, 3] += bbox[:, 1]
         >>> inputs = Tensor(bbox, mindspore.float32)
