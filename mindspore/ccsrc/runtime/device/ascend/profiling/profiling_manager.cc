@@ -110,10 +110,10 @@ void ProfilingManager::PluginUnInit() const {
   }
 }
 
-Status ProfilingManager::GetProfConf(NotNull<MsprofGeOptions *> prof) {
+Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
   string job_id = std::to_string(GetJobId());
 
-  if (memcpy_s(prof->jobId, sizeof(prof->jobId), job_id.c_str(), sizeof(job_id.c_str())) != EOK) {
+  if (memcpy_s(prof->jobId, sizeof(prof->jobId), job_id.c_str(), strlen(job_id.c_str())) != EOK) {
     MS_LOG(ERROR) << "Copy job_id failed.";
     return PROF_FAILED;
   }
@@ -168,7 +168,7 @@ uint32_t GetCurrentDeviceId() {
   return context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 }
 
-bool ProfilingManager::ProfStartUp(NotNull<MsprofGeOptions *> prof_conf) {
+bool ProfilingManager::ProfStartUp(const NotNull<MsprofGeOptions *> prof_conf) const {
   MS_LOG(INFO) << "Prof start up. ";
 
   if (prof_cb_.msprofCtrlCallback == nullptr) {
@@ -223,7 +223,7 @@ bool ProfilingManager::StopProfiling() {
   return true;
 }
 
-Status ProfilingManager::CallMsprofReport(NotNull<ReporterData *> reporter_data) const {
+Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {
   if (prof_cb_.msprofReporterCallback == nullptr) {
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
     return PROF_FAILED;
