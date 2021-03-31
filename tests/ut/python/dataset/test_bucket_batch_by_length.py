@@ -65,7 +65,7 @@ def test_bucket_batch_invalid_input():
 
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(invalid_column_names, bucket_boundaries, bucket_batch_sizes)
-    assert "Argument column_names[0] with value 1 is not of type (<class 'str'>,)." in str(info.value)
+    assert "Argument column_names[0] with value 1 is not of type [<class 'str'>]." in str(info.value)
 
     with pytest.raises(ValueError) as info:
         _ = dataset.bucket_batch_by_length(column_names, empty_bucket_boundaries, bucket_batch_sizes)
@@ -110,12 +110,12 @@ def test_bucket_batch_invalid_input():
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes,
                                            None, None, invalid_type_pad_to_bucket_boundary)
-    assert "Argument pad_to_bucket_boundary with value \"\" is not of type (<class \'bool\'>,)." in str(info.value)
+    assert "Argument pad_to_bucket_boundary with value \"\" is not of type [<class \'bool\'>]." in str(info.value)
 
     with pytest.raises(TypeError) as info:
         _ = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes,
                                            None, None, False, invalid_type_drop_remainder)
-    assert "Argument drop_remainder with value \"\" is not of type (<class 'bool'>,)." in str(info.value)
+    assert "Argument drop_remainder with value \"\" is not of type [<class 'bool'>]." in str(info.value)
 
 
 def test_bucket_batch_multi_bucket_no_padding():

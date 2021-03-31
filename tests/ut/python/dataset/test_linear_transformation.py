@@ -132,7 +132,7 @@ def test_linear_transformation_exception_01():
         data1 = data1.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument transformation_matrix with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
+        assert "Argument transformation_matrix with value None is not of type [<class 'numpy.ndarray'>]" in str(e)
 
 
 def test_linear_transformation_exception_02():
@@ -161,7 +161,7 @@ def test_linear_transformation_exception_02():
         data1 = data1.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument mean_vector with value None is not of type (<class 'numpy.ndarray'>,)" in str(e)
+        assert "Argument mean_vector with value None is not of type [<class 'numpy.ndarray'>]" in str(e)
 
 
 def test_linear_transformation_exception_03():

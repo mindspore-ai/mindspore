@@ -395,7 +395,7 @@ def test_random_crop_and_resize_06():
         data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument scale with value \"\" is not of type (<class 'tuple'>,)" in str(e)
+        assert "Argument scale with value \"\" is not of type [<class 'tuple'>, <class 'list'>]" in str(e)
 
     try:
         random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), scale=(1, "2"), ratio=(1, 0.5))
@@ -403,7 +403,7 @@ def test_random_crop_and_resize_06():
         data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument scale[1] with value 2 is not of type (<class 'float'>, <class 'int'>)." in str(e)
+        assert "Argument scale[1] with value 2 is not of type [<class 'float'>, <class 'int'>]." in str(e)
 
 
 if __name__ == "__main__":

@@ -306,8 +306,8 @@ def test_random_affine_exception_translate_size():
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(
-            e) == "Argument translate with value 0.1 is not of type (<class 'list'>," \
-                  " <class 'tuple'>)."
+            e) == "Argument translate with value 0.1 is not of type [<class 'list'>," \
+                  " <class 'tuple'>]."
 
 
 def test_random_affine_exception_scale_size():
@@ -320,8 +320,8 @@ def test_random_affine_exception_scale_size():
         _ = py_vision.RandomAffine(degrees=15, scale=(0.5))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Argument scale with value 0.5 is not of type (<class 'tuple'>," \
-                         " <class 'list'>)."
+        assert str(e) == "Argument scale with value 0.5 is not of type [<class 'tuple'>," \
+                         " <class 'list'>]."
 
 
 def test_random_affine_exception_shear_size():

@@ -299,12 +299,12 @@ def test_slice_exceptions():
     with pytest.raises(TypeError) as info:
         slice_compare([b"1", b"2", b"3", b"4", b"5"], [[[0, 1]]], [b"1", b"2", b"3", b"4", b"5"])
     assert "Argument slice_option[0] with value [0, 1] is not of type " \
-           "(<class 'int'>,)." in str(info.value)
+           "[<class 'int'>]." in str(info.value)
 
     with pytest.raises(TypeError) as info:
         slice_compare([b"1", b"2", b"3", b"4", b"5"], [[slice(3)]], [b"1", b"2", b"3", b"4", b"5"])
     assert "Argument slice_option[0] with value slice(None, 3, None) is not of type " \
-           "(<class 'int'>,)." in str(info.value)
+           "[<class 'int'>]." in str(info.value)
 
 
 if __name__ == "__main__":

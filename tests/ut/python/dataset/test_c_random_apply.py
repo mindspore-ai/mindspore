@@ -38,10 +38,10 @@ def test_random_apply():
     assert test_config([[0, 1, 2]], [ops.Compose([ops.Duplicate(), ops.Concatenate(), ops.Slice([0, 1, 2])])]) == [
         [0, 1, 2]]
     # test exception
-    assert "is not of type (<class 'list'>" in test_config([1, 0], ops.TypeCast(mstype.int32))
+    assert "is not of type [<class 'list'>]" in test_config([1, 0], ops.TypeCast(mstype.int32))
     assert "Input prob is not within the required interval" in test_config([0, 1], [ops.Slice([0, 1])], 1.1)
-    assert "is not of type (<class 'float'>" in test_config([1, 0], [ops.TypeCast(mstype.int32)], None)
-    assert "op_list with value None is not of type (<class 'list'>" in test_config([1, 0], None)
+    assert "is not of type [<class 'float'>, <class 'int'>]" in test_config([1, 0], [ops.TypeCast(mstype.int32)], None)
+    assert "op_list with value None is not of type [<class 'list'>]" in test_config([1, 0], None)
 
 
 if __name__ == "__main__":

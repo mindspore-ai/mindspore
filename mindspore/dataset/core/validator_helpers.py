@@ -267,7 +267,7 @@ def type_check(arg, types, arg_name):
         if isinstance(arg, bool):
             raise TypeError("Argument {0} with value {1} is not of type {2}.".format(arg_name, print_value, types))
     if not isinstance(arg, types):
-        raise TypeError("Argument {0} with value {1} is not of type {2}.".format(arg_name, print_value, types))
+        raise TypeError("Argument {0} with value {1} is not of type {2}.".format(arg_name, print_value, list(types)))
 
 
 def check_filename(path):

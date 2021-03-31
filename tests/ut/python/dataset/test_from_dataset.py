@@ -133,8 +133,8 @@ def test_from_dataset_exceptions():
 
     test_config("text", (), 1, "freq_range needs to be a tuple of 2 integers or an int and a None.")
     test_config("text", (2, 3), 1.2345,
-                "Argument top_k with value 1.2345 is not of type (<class 'int'>, <class 'NoneType'>)")
-    test_config(23, (2, 3), 1.2345, "Argument col[0] with value 23 is not of type (<class 'str'>,)")
+                "Argument top_k with value 1.2345 is not of type [<class 'int'>, <class 'NoneType'>]")
+    test_config(23, (2, 3), 1.2345, "Argument col[0] with value 23 is not of type [<class 'str'>]")
     test_config("text", (100, 1), 12, "frequency range [a,b] should be 0 <= a <= b (a,b are inclusive)")
     test_config("text", (2, 3), 0, "top_k must be greater than 0")
     test_config([123], (2, 3), -1, "top_k must be greater than 0")

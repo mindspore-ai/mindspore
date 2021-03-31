@@ -114,7 +114,7 @@ def test_random_solarize_errors():
 
     with pytest.raises(TypeError) as error_info:
         vision.RandomSolarize((122.1, 140))
-    assert "Argument threshold[0] with value 122.1 is not of type (<class 'int'>,)." in str(error_info.value)
+    assert "Argument threshold[0] with value 122.1 is not of type [<class 'int'>]." in str(error_info.value)
 
     with pytest.raises(ValueError) as error_info:
         vision.RandomSolarize((122, 100, 30))

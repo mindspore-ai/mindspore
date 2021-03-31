@@ -111,7 +111,7 @@ def test_corner_cases():
     # test left pad != right pad
     assert test_config("Lone Star", 4, ("The", 1), ("State", 1)) == ['The Lone Star State']
     # test invalid n
-    assert "gram[1] with value [1] is not of type (<class 'int'>,)" in test_config("Yours to Discover", [1, [1]])
+    assert "gram[1] with value [1] is not of type [<class 'int'>]" in test_config("Yours to Discover", [1, [1]])
     assert "n needs to be a non-empty list" in test_config("Yours to Discover", [])
     # test invalid pad
     assert "padding width need to be positive numbers" in test_config("Yours to Discover", [1], ("str", -1))

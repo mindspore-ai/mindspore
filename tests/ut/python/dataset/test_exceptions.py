@@ -30,7 +30,7 @@ def test_exception_01():
     data = ds.TFRecordDataset(DATA_DIR, columns_list=["image"])
     with pytest.raises(TypeError) as info:
         data.map(operations=vision.Resize(100, 100), input_columns=["image"])
-    assert "Argument interpolation with value 100 is not of type (<enum 'Inter'>,)" in str(info.value)
+    assert "Argument interpolation with value 100 is not of type [<enum 'Inter'>]" in str(info.value)
 
 
 def test_exception_02():

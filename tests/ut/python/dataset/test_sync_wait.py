@@ -282,7 +282,7 @@ def test_sync_exception_06():
     # try to create dataset with batch_size < 0
     with pytest.raises(TypeError) as e:
         dataset.sync_wait(condition_name="every batch", num_batch="123", callback=aug.update)
-    assert "is not of type (<class 'int'>" in str(e.value)
+    assert "is not of type [<class 'int'>]" in str(e.value)
 
 
 if __name__ == "__main__":
