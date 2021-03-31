@@ -76,7 +76,7 @@ class AscendKernelRuntime : public KernelRuntime {
   static bool NeedDestroyHccl();
   static bool DestroyHccl();
   static bool DestroySingleOpHccl();
-  void InnerSetContext();
+  void SetCurrentContext();
 
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;

@@ -32,7 +32,7 @@ namespace {
 void UpdateOutputTensors(const VectorRef *outputs,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
   MS_EXCEPTION_IF_NULL(outputs);
-  for (auto item : *outputs) {
+  for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
       UpdateOutputTensors(&vector_ref, tensor_to_node);
@@ -45,7 +45,6 @@ void UpdateOutputTensors(const VectorRef *outputs,
         auto &output_index = iter->second.second;
         auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         tensor->set_device_address(address);
-
         if (AnfAlgo::IsDynamicShape(node)) {
           auto updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
           ShapeVector int_shape;
@@ -62,12 +61,12 @@ void UpdateOutputTensors(const VectorRef *outputs,
   }
 }
 
-void NotifyOutputTensors(const VectorRef *outputs) {
+void SetOutputTensorsWaitStatus(const VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
-  for (auto item : *outputs) {
+  for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
-      NotifyOutputTensors(&vector_ref);
+      SetOutputTensorsWaitStatus(&vector_ref);
     } else if (utils::isa<tensor::TensorPtr>(item)) {
       auto tensor = utils::cast<tensor::TensorPtr>(item);
       MS_EXCEPTION_IF_NULL(tensor);
@@ -78,7 +77,7 @@ void NotifyOutputTensors(const VectorRef *outputs) {
 
 bool TensorInVector(const VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
-  for (auto item : *outputs) {
+  for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
       if (TensorInVector(&vector_ref)) {
@@ -89,6 +88,50 @@ bool TensorInVector(const VectorRef *outputs) {
     }
   }
   return false;
+}
+
+bool IsTaskReady(const std::shared_ptr<RunGraphTask> &task) {
+  MS_EXCEPTION_IF_NULL(task);
+  for (auto &input : task->input_need_wait_tensors_) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->NeedWait()) {
+      return false;
+    }
+  }
+  auto session = task->session_;
+  MS_EXCEPTION_IF_NULL(session);
+  auto graph = session->GetGraph(task->graph_id_);
+  if (graph != nullptr) {
+    return graph->IsPreGraphFinished();
+  }
+  return true;
+}
+
+void WaitLockedInputs(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task) {
+  bool need_lock = false;
+  for (auto &tensor : task->input_tensors_) {
+    if (tensor->NeedWait()) {
+      if (tensor->IsGraphOutput()) {
+        task->input_need_wait_tensors_.emplace_back(tensor);
+      } else {
+        need_lock = true;
+      }
+    }
+  }
+  if (need_lock) {
+    mindspore::ScopedLongRunning long_running;
+    for (auto &tensor : task->input_tensors_) {
+      if (tensor->NeedWait() && !tensor->IsGraphOutput()) {
+        MsException::Instance().CheckException();
+        tensor->Wait();
+      }
+    }
+    MsException::Instance().CheckException();
+  }
+  // need lock input parameters for optimizer
+  for (auto &tensor : task->input_need_lock_tensors_) {
+    tensor->SetNeedWait(true);
+  }
 }
 }  // namespace
 
@@ -129,7 +172,7 @@ void RunGraphTask::Run() {
   for (auto &tensor : input_need_lock_tensors_) {
     tensor->SetNeedWait(false);
   }
-  NotifyOutputTensors(&outputs_);
+  SetOutputTensorsWaitStatus(&outputs_);
   ExecutorManager::Instance().OnEvent(ExecutorEvent::kRunGraphFinished);
 }
 
@@ -198,7 +241,7 @@ void Executor::WorkerLoop() {
   }
 }
 
-std::vector<std::shared_ptr<RunGraphTask>> Executor::GetNewReadyTasks() {
+std::vector<std::shared_ptr<RunGraphTask>> Executor::GetReadyTasksFromPendingList() {
   std::vector<std::shared_ptr<RunGraphTask>> new_ready_tasks;
   std::lock_guard<std::mutex> lock(pending_task_mutex_);
   for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end();) {
@@ -249,7 +292,7 @@ void Executor::OnException() {
 }
 
 void Executor::OnRunGraphFinished() {
-  auto new_ready_tasks = GetNewReadyTasks();
+  auto new_ready_tasks = GetReadyTasksFromPendingList();
   std::lock_guard<std::mutex> lock(task_mutex_);
   for (auto &task : new_ready_tasks) {
     ready_tasks_.push(task);
@@ -258,23 +301,6 @@ void Executor::OnRunGraphFinished() {
     task_cond_var_.notify_all();
   }
   reenter_cond_var_.notify_all();
-}
-
-bool Executor::IsTaskReady(const std::shared_ptr<RunGraphTask> &task) {
-  MS_EXCEPTION_IF_NULL(task);
-  for (auto &input : task->input_need_wait_tensors_) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->NeedWait()) {
-      return false;
-    }
-  }
-  auto session = task->session_;
-  MS_EXCEPTION_IF_NULL(session);
-  auto graph = session->GetGraph(task->graph_id_);
-  if (graph != nullptr) {
-    return graph->IsPreGraphFinished();
-  }
-  return true;
 }
 
 void Executor::ClearDoneTasks() {
@@ -339,33 +365,6 @@ void Executor::RunGraph(const SessionPtr &session, const GraphId &graph_id,
   task->outputs_ = *outputs;
   task->sync_run_ = true;
   RunTask(task, true, true);
-}
-
-void Executor::WaitLockedInputs(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task) {
-  bool need_lock = false;
-  for (auto &tensor : task->input_tensors_) {
-    if (tensor->NeedWait()) {
-      if (tensor->IsGraphOutput()) {
-        task->input_need_wait_tensors_.emplace_back(tensor);
-      } else {
-        need_lock = true;
-      }
-    }
-  }
-  if (need_lock) {
-    mindspore::ScopedLongRunning long_running;
-    for (auto &tensor : task->input_tensors_) {
-      if (tensor->NeedWait() && !tensor->IsGraphOutput()) {
-        MsException::Instance().CheckException();
-        tensor->Wait();
-      }
-    }
-    MsException::Instance().CheckException();
-  }
-  // need lock input parameters for optimizer
-  for (auto &tensor : task->input_need_lock_tensors_) {
-    tensor->SetNeedWait(true);
-  }
 }
 
 void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,

@@ -1517,11 +1517,6 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
   }
 }
 
-GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const vector<tensor::TensorPtr> &inputs) {
-  RunInfer(func_graph, inputs);
-  return CompileGraphImpl(func_graph);
-}
-
 void AscendSession::SyncStream() {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);

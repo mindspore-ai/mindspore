@@ -49,7 +49,6 @@ class AscendSession : public SessionBasic {
   void UnifyMindIR(const KernelGraphPtr &graph) override;
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
-  GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) override;
   bool IsSupportSummary() override;
   void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildGraphImpl(GraphId) override;

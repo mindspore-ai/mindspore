@@ -166,9 +166,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void UnifyMindIR(const KernelGraphPtr &graph) = 0;
   virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
   virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
-  virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) {
-    MS_EXCEPTION(NotExistsError) << "Call an empty function";
-  }
   virtual void BuildGraphImpl(GraphId) {}
   virtual void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                             VectorRef *outputs) = 0;
@@ -182,8 +179,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
                                const std::vector<tensor::TensorPtr> &graph_inputs,
                                const std::map<KernelWithIndex, size_t> &cnode_refcount) {}
-  void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
-
   virtual void SetSummaryNodes(KernelGraph *graph);
 
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
