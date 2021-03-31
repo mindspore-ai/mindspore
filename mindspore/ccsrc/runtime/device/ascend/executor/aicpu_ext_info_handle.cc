@@ -37,7 +37,10 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
   ext_info_.reset(new (std::nothrow) uint8_t[ext_info_len_]);
   MS_EXCEPTION_IF_NULL(ext_info_);
 
-  (void)memcpy_s(ext_info_.get(), ext_info_len_, ext_info.c_str(), ext_info.size());
+  auto ret = memcpy_s(ext_info_.get(), ext_info_len_, ext_info.c_str(), ext_info.size());
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "The memcpy_s failed, errorno(" << ret << ")";
+  }
 
   input_shape_and_type_.clear();
   output_shape_and_type_.clear();

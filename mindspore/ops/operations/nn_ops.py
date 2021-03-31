@@ -1124,6 +1124,7 @@ class BatchNorm(PrimitiveWithInfer):
 
     Inputs:
         If `is_training` is False, inputs are Tensors.
+
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
         - **scale** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
         - **bias** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
@@ -1131,6 +1132,7 @@ class BatchNorm(PrimitiveWithInfer):
         - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `mean`.
 
         If `is_training` is True, `scale`, `bias`, `mean` and `variance` are Parameters.
+
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
         - **scale** (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
         - **bias** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.

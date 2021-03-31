@@ -24,7 +24,6 @@
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
-#include "runtime/device/executor/executor_callback.h"
 
 namespace mindspore {
 namespace device {
