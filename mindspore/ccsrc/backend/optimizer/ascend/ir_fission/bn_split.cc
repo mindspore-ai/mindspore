@@ -216,8 +216,9 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   // use SyncBatchNorm's opid as AllReduce's fusion attr
   auto sync_bn_opname = sync_bn_cnode->fullname_with_scope();
   auto opid_pos = sync_bn_opname.rfind("-op");
-  if (opid_pos == std::string::npos) {
+  if (opid_pos == std::string::npos || opid_pos + 3 >= sync_bn_opname.size()) {
     MS_LOG(EXCEPTION) << "op[" << sync_bn_cnode->DebugString() << "] has no opid.";
+    return nullptr;
   }
   int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + 3));
   // user defined fusion should be greater than 1
