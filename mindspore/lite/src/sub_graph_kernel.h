@@ -94,7 +94,7 @@ class SubGraphKernel : public LiteKernel {
   // called before Run
   int PreProcess() override { return mindspore::lite::RET_OK; }
 
-  int Run() override;
+  int Run() override { return Run(nullptr, nullptr); }
 
   int Run(const KernelCallBack &before, const KernelCallBack &after) override;
   // called after Run
@@ -134,10 +134,8 @@ class CpuSubGraph : public SubGraphKernel {
   int Prepare() override;
   int Init() override { return SubGraphKernel::Init(); }
   int PreProcess() override { return SubGraphKernel::PreProcess(); }
-  int Run() override { return SubGraphKernel::Run(); }
-  int Run(const KernelCallBack &before, const KernelCallBack &after) override {
-    return SubGraphKernel::Run(before, after);
-  };
+  int Run() override { return Run(nullptr, nullptr); }
+  int Run(const KernelCallBack &before, const KernelCallBack &after) override;
   int PostProcess() override { return SubGraphKernel::PostProcess(); }
 };
 

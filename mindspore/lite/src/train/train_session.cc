@@ -35,6 +35,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "src/runtime/kernel/arm/fp32/batchnorm_fp32.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -188,16 +189,32 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     return lite::RET_NULL_PTR;
   }
   auto run_kernel = (train_mode_) ? train_kernels_ : inference_kernels_;
-  lite::CpuExecutor executor;
-  auto ret = RET_OK;
-  if (before == nullptr && after == nullptr) {
-    ret = executor.Run(this->inputs_, this->outputs_, run_kernel, this->context_->allocator.get());
-  } else {
-    ret = executor.Run(this->inputs_, this->outputs_, run_kernel, this->context_->allocator.get(), before, after);
-  }
+
+  auto ret = CheckTensorsInvalid(inputs_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "failed to run model";
+    MS_LOG(ERROR) << "CheckInputs failed";
     return ret;
+  }
+  for (auto out_tensor : outputs_) {  // increase RefCount of output tensors, such that Run will not free them
+    out_tensor->set_ref_count(out_tensor->ref_count() + 1);
+  }
+  for (auto *kernel : run_kernel) {
+    MS_ASSERT(nullptr != kernel);
+    ret = kernel->PreProcess();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
+      return ret;
+    }
+    ret = kernel->Run(before, after);
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+      return ret;
+    }
+    ret = kernel->PostProcess();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
+      return ret;
+    }
   }
 
   if (train_mode_ && virtual_batch_multiplier_) {

@@ -22,6 +22,7 @@
 #endif
 #include "src/common/version_manager.h"
 #include "src/runtime/infer_manager.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -68,19 +69,6 @@ std::string SubGraphKernel::ToString() const {
     oss << " " << kernel->name();
   }
   return oss.str();
-}
-
-int SubGraphKernel::Run() {
-  if (this->executor_ == nullptr) {
-    MS_LOG(ERROR) << "executor is nullptr";
-    return RET_ERROR;
-  }
-  auto ret = executor_->Run(this->in_tensors_, this->out_tensors_, this->nodes_, this->context_->allocator.get());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run sub graph failed: " << ret;
-    return ret;
-  }
-  return RET_OK;
 }
 
 int SubGraphKernel::Run(const KernelCallBack &before, const KernelCallBack &after) {
@@ -165,15 +153,42 @@ int CpuSubGraph::Prepare() {
       tensor->set_allocator(this->context_->allocator.get());
     }
   }
-  this->executor_ = new (std::nothrow) mindspore::lite::CpuExecutor;
-  if (this->executor_ == nullptr) {
-    MS_LOG(ERROR) << "new CpuExecutor failed";
-    return RET_ERROR;
+  return RET_OK;
+}
+
+int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) {
+  MS_ASSERT(nullptr != this->context_->allocator.get());
+  if (nodes_.front()->Type() != schema::PrimitiveType_Merge) {
+    auto ret = CheckTensorsInvalid(in_tensors_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "CheckInputs failed";
+      return ret;
+    }
   }
-  ret = this->executor_->Prepare(this->nodes_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare CpuExecutor failed";
-    return ret;
+
+#ifdef SUPPORT_TRAIN
+  for (auto out_tensor : out_tensors_) {  // increase RefCount of output tensors, such that Run will not free them
+    out_tensor->set_ref_count(out_tensor->ref_count() + 1);
+  }
+#endif
+
+  for (auto *kernel : nodes_) {
+    MS_ASSERT(nullptr != kernel);
+    auto ret = kernel->PreProcess();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
+      return ret;
+    }
+    ret = kernel->Run(before, after);
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+      return ret;
+    }
+    ret = kernel->PostProcess();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
+      return ret;
+    }
   }
   return RET_OK;
 }

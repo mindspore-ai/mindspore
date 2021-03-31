@@ -18,6 +18,7 @@
 #include "src/mindrt_executor.h"
 #include "src/lite_mindrt.h"
 #include "include/errorcode.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore::lite {
 
@@ -62,7 +63,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
                         const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   if (kernels.front()->Type() != schema::PrimitiveType_Merge) {
-    auto ret = this->CheckInputs(in_tensors);
+    auto ret = CheckTensorsInvalid(in_tensors);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "CheckInputs failed";
       return ret;

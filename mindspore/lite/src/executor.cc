@@ -17,34 +17,14 @@
 #include "src/executor.h"
 #include <queue>
 #include "include/errorcode.h"
+#include "src/common/tensor_util.h"
 
 namespace mindspore::lite {
-int Executor::CheckInputs(const std::vector<Tensor *> &in_tensors) {
-  for (auto &inTensor : in_tensors) {
-    if (inTensor == nullptr) {
-      MS_LOG(ERROR) << "Graph input tensor is nullptr";
-      return RET_ERROR;
-    }
-    if (inTensor->data_type() != kObjectTypeTensorType && inTensor->data_c() == nullptr) {
-      MS_LOG(ERROR) << "Graph input tensor data is nullptr " << in_tensors;
-      return RET_ERROR;
-    }
-    auto shape = inTensor->shape();
-    bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i >= 0; });
-    if (!valid) {
-      MS_LOG(ERROR) << "The shape of input tensor contains negative dimension,"
-                    << "check the model and assign the input shape with method Resize().";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
 int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                   const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
-  auto ret = this->CheckInputs(in_tensors);
+  auto ret = CheckTensorsInvalid(in_tensors);
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "CheckInputs failed";
     return ret;
@@ -84,44 +64,6 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
       if (out_kernel->IsReady(out_kernel->in_tensors())) {
         kernel_queue.push(out_kernel);
       }
-    }
-  }
-  return RET_OK;
-}
-
-int CpuExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                     const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
-                     const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
-  //  not check input for merge. too hard
-  if (kernels.front()->Type() != schema::PrimitiveType_Merge) {
-    auto ret = this->CheckInputs(in_tensors);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "CheckInputs failed";
-      return ret;
-    }
-  }
-#ifdef SUPPORT_TRAIN
-  for (auto out_tensor : out_tensors) {  // increase RefCount of output tensors, such that Run will not free them
-    out_tensor->set_ref_count(out_tensor->ref_count() + 1);
-  }
-#endif
-  for (auto *kernel : kernels) {
-    MS_ASSERT(nullptr != kernel);
-    auto ret = kernel->PreProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
-      return ret;
-    }
-    ret = kernel->Run(before, after);
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
-      return ret;
-    }
-    ret = kernel->PostProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
-      return ret;
     }
   }
   return RET_OK;
