@@ -57,7 +57,6 @@ void AiCoreDynamicKernel::Execute() {
                                                   args_size, l2ctrl, stream_, kernel_info.c_str())) {
       MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunchWithHandle error.";
     }
-
   } else {
     if (RT_ERROR_NONE != rtKernelLaunch(stub_func_, block_dim_, runtime_args_.data(), args_size, l2ctrl, stream_)) {
       MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunch error.";
