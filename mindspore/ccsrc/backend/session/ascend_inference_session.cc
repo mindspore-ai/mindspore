@@ -212,6 +212,5 @@ std::string AscendInferenceSession::InputsInfo(const std::vector<ParameterPtr> &
   }
   return graph + "   " + actual;
 }
-
 }  // namespace session
 }  // namespace mindspore

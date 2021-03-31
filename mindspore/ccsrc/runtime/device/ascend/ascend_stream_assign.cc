@@ -63,7 +63,6 @@ bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
 
 string DoGetHcomGroup(const string &original_group) {
   string communi_parallel_mode = parallel::ParallelContext::GetInstance()->communi_parallel_mode();
-
   if (communi_parallel_mode == parallel::ALL_GROUP_PARALLEL) {
     return original_group;
   }

@@ -89,7 +89,6 @@ class MatrixInverseGpuKernel : public GpuKernel {
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-
     if (input_shape.empty() || input_shape.size() < 2) {
       MS_LOG(EXCEPTION) << "The dim entered needs to be greater than 2, but " << input_shape.size() << " was taken";
     }

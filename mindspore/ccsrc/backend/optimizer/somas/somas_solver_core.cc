@@ -33,7 +33,6 @@ using std::vector;
 
 namespace mindspore {
 namespace somas {
-
 Status SomasSolverCore::MemoryAllocationSolver() {
   auto start = std::chrono::system_clock::now();
   Status retval = SUCCESS;
