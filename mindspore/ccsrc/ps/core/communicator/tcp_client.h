@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_TCP_CLIENT_H_
-#define MINDSPORE_CCSRC_PS_CORE_TCP_CLIENT_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_CLIENT_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_CLIENT_H_
 
-#include "ps/core/tcp_message_handler.h"
+#include "ps/core/communicator/tcp_message_handler.h"
 
 #include <event2/event.h>
 #include <event2/bufferevent.h>
@@ -103,4 +103,4 @@ class TcpClient {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_CORE_TCP_CLIENT_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_CLIENT_H_

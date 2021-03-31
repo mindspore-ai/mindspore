@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_TCP_SERVER_H_
-#define MINDSPORE_CCSRC_PS_CORE_TCP_SERVER_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_SERVER_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_SERVER_H_
 
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
@@ -34,7 +34,7 @@
 #include <thread>
 #include <atomic>
 
-#include "ps/core/tcp_message_handler.h"
+#include "ps/core/communicator/tcp_message_handler.h"
 #include "ps/core/cluster_metadata.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/comm_util.h"
@@ -140,4 +140,4 @@ class TcpServer {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_CORE_TCP_SERVER_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_SERVER_H_

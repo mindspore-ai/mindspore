@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/core/tcp_message_handler.h"
+#include "ps/core/communicator/tcp_message_handler.h"
 #include "common/common_test.h"
 
 #include <memory>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ps/core/tcp_client.h"
-#include "ps/core/tcp_server.h"
+#include "ps/core/communicator/tcp_client.h"
+#include "ps/core/communicator/tcp_server.h"
 #include "common/common_test.h"
 
 #include <memory>

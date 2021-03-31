@@ -25,7 +25,7 @@
 #include <unordered_map>
 
 #include "ps/core/node.h"
-#include "ps/core/message.h"
+#include "ps/core/communicator/message.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {

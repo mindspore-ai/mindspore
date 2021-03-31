@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/core/http_client.h"
+#include "ps/core/communicator/http_client.h"
 
 namespace mindspore {
 namespace ps {

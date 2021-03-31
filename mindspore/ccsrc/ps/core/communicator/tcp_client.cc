@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/core/tcp_client.h"
+#include "ps/core/communicator/tcp_client.h"
 
 #include <arpa/inet.h>
 #include <event2/buffer.h>
