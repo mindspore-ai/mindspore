@@ -139,7 +139,7 @@ AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   TraceGuard trace_guard(parser_.GetLocation(op));
-  py::tuple namespace_var = ast->CallParserObjMethod(PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL, op);
+  py::tuple namespace_var = ast->CallParseModFunction(PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL, op);
   if (namespace_var.size() != 2) {
     MS_LOG(EXCEPTION) << "Resolve ast op failed, get namespace tuple size=" << namespace_var.size();
   }
@@ -170,6 +170,9 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
   }
   py::tuple namespace_var = parser_.ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
   if (namespace_var[0].is_none()) {
+    if (namespace_var.size() >= 3) {
+      MS_EXCEPTION(NameError) << namespace_var[2].cast<std::string>();
+    }
     MS_EXCEPTION(NameError) << "The name \'" << value << "\' is not defined.";
   }
 
@@ -179,7 +182,7 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
 }
 
 AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
-  py::tuple namespace_var = parser_.ast()->CallParserObjMethod(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
+  py::tuple namespace_var = parser_.ast()->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_COMMON_OPS, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
   return MakeResolve(name_space, symbol);

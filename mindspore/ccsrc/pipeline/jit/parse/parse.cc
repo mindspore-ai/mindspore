@@ -619,7 +619,7 @@ AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &arg
     father_class = py::none();
   } else if (args.size() == 2) {
     father_class = args[0];
-    auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, args[1])));
+    auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, args[1])));
     if (arg_type != AST_SUB_TYPE_NAME || py::cast<std::string>(python_adapter::GetPyObjAttr(args[1], "id")) != "self") {
       MS_EXCEPTION(ArgumentError) << "When call 'super', the second arg should be 'self'.";
     }
@@ -641,7 +641,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   py::list args = python_adapter::GetPyObjAttr(node, "args");
 
   auto arg_type =
-    AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
+    AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
   if (arg_type == AST_SUB_TYPE_NAME) {
     auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
     if (name_id == "super") {
@@ -694,7 +694,7 @@ bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args
                              std::vector<AnfNodePtr> *packed_arguments, std::vector<AnfNodePtr> *group_arguments) {
   bool need_unpack = false;
   for (size_t i = 0; i < args.size(); i++) {
-    auto arg_node = AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, args[i])));
+    auto arg_node = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, args[i])));
     if (arg_node == AST_SUB_TYPE_STARRED) {
       if (!group_arguments->empty()) {
         packed_arguments->push_back(GenerateMakeTuple(block, *group_arguments));
@@ -1058,7 +1058,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   AnfNodePtr target_node = nullptr;
   AnfNodePtr op_node = block->MakeResolveAstOp(op_obj);
   AnfNodePtr value_node = ParseExprNode(block, value_obj);
-  auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, target_obj)));
+  auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, target_obj)));
 
   if (ast_type == AST_SUB_TYPE_NAME) {
     target_node = ParseName(block, target_obj);
@@ -1575,7 +1575,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     block->WriteVariable(var_name, setitem_app);
     return;
   }
-  if (AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, value_obj))) ==
+  if (AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, value_obj))) ==
       AST_SUB_TYPE_SUBSCRIPT) {
     HandleAssignSubscript(block, value_obj, setitem_app);
     return;
@@ -1590,7 +1590,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
 void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(value_node);
   MS_LOG(DEBUG) << "Process WriteAssignVars";
-  auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, targ)));
+  auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, targ)));
   if (ast_type == AST_SUB_TYPE_NAME) {
     HandleAssignName(block, targ, value_node);
   } else if (ast_type == AST_SUB_TYPE_TUPLE) {
@@ -1778,17 +1778,17 @@ py::object ParseAst::GetAstNode() {
 }
 
 py::list ParseAst::GetArgs(const py::object &func_node) {
-  py::list ret = python_adapter::CallPyObjMethod(parser_, PYTHON_PARSE_GET_ARGS, func_node);
+  py::list ret = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_ARGS, func_node);
   return ret;
 }
 
 py::list ParseAst::GetArgsDefaultValues(const py::object &func_node) {
-  py::list ret = python_adapter::CallPyObjMethod(parser_, PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES, func_node);
+  py::list ret = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES, func_node);
   return ret;
 }
 
 AstNodeTypePtr ParseAst::GetNodeType(const py::object &node) {
-  py::list list_value = python_adapter::CallPyObjMethod(parser_, PYTHON_PARSE_GET_NODE_TYPE, node);
+  py::list list_value = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_NODE_TYPE, node);
   if (list_value.size() < 2) {
     MS_LOG(ERROR) << "The node of python method must has 2 values.";
     return nullptr;
@@ -1799,7 +1799,7 @@ AstNodeTypePtr ParseAst::GetNodeType(const py::object &node) {
 }
 
 AstSubType ParseAst::GetOpType(const py::object &node) {
-  auto op_type = AstSubType(python_adapter::CallPyObjMethod(parser_, PYTHON_PARSE_GET_AST_TYPE, node).cast<int32_t>());
+  auto op_type = AstSubType(python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_AST_TYPE, node).cast<int32_t>());
   return op_type;
 }
 
