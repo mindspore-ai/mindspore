@@ -189,10 +189,10 @@ setup(
     author='The MindSpore Authors',
     author_email='contact@mindspore.cn',
     url='https://www.mindspore.cn',
-    download_url='https://gitee.com/mindspore/mindspore/tags',
+    download_url='https://github.com/mindspore-ai/mindspore/tags',
     project_urls={
-        'Sources': 'https://gitee.com/mindspore/mindspore',
-        'Issue Tracker': 'https://gitee.com/mindspore/mindspore/issues',
+        'Sources': 'https://github.com/mindspore-ai/mindspore',
+        'Issue Tracker': 'https://github.com/mindspore-ai/mindspore/issues',
     },
     description='MindSpore is a new open source deep learning training/inference '
     'framework that could be used for mobile, edge and cloud scenarios.',
