@@ -119,7 +119,10 @@ private:
 
   void TryFreeOneValue(const ValuePtrList &op_args, const std::vector<ParamUsingInfo> &param_info_vec);
 
-private:
+  void AalysisForTupleGetItem(const NodeUsersMap &node_users, const std::shared_ptr<AnfNode> &param,
+                              ParamUsingInfo &arg_info, const AnfNodePtr &user_node) const;
+
+ private:
   // the level2 opt func_graph
   FuncGraphPtr opt_func_graph_;
   // to indicate arguments value using or not, if not using should free device memory

@@ -94,16 +94,24 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
     arg_info.using_flg_ = true;
     MS_LOG(DEBUG) << "param:" << param->ToString() << " used by node:" << user_node->ToString();
     if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) {
-      MS_LOG(EXCEPTION) << "tuple param:" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
-                        << " unexpect used by node:" << user_node->ToString();
+      for (auto &sub_info : arg_info.sub_using_info_) {
+        sub_info.using_flg_ = true;
+      }
+    } else {
+      AalysisForTupleGetItem(node_users, param, arg_info, user_node);
     }
-    auto cnode = user_node->cast<CNodePtr>();
-    if (cnode->size() != 3) {
-      MS_LOG(EXCEPTION) << "TupleGetItem Node:" << user_node->ToString() << " of bp_graph:"
-                        << opt_func_graph_->ToString()
-                        << "input size is:" << cnode->size();
-    }
-    auto idx_node = cnode->input(2);
+  }
+}
+void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &node_users,
+                                                         const std::shared_ptr<AnfNode> &param,
+                                                         ParamUsingInfo &arg_info,
+                                                         const AnfNodePtr &user_node) const {
+  auto cnode = user_node->cast<CNodePtr>();
+  if (cnode->size() != 3) {
+    MS_LOG(EXCEPTION) << "TupleGetItem Node:" << user_node->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
+                      << "input size is:" << cnode->size();
+  }
+  auto idx_node = cnode->input(2);
     if (!idx_node->isa<ValueNode>()) {
       MS_LOG(EXCEPTION) << "tuple :" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
                         << " unexpect used by node:" << user_node->ToString() << " TupleGetItem idx node:"
@@ -125,7 +133,6 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
     if (arg_info.tuple_flg_) {
       AnalysisNodeUsingInfo(node_users, cnode, arg_info.sub_using_info_[idx]);
     }
-  }
 }
 
 void PrimBpropOptGraphLevel2Info::ArgInfoRefresh(
