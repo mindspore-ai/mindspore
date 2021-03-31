@@ -20,6 +20,7 @@
 #include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
 using mindspore::schema::PrimitiveType_PadFusion;
 
@@ -79,7 +80,6 @@ int PadFP32Coder::ExtendPaddings(int *paddings, int length, const int *ori_paddi
 }
 
 int PadFP32Coder::DoCode(CoderContext *const context) {
-  int task_id = thread_num_ - 1;
   Collect(context,
           {
             "nnacl/fp32/pad.h",
@@ -101,7 +101,7 @@ int PadFP32Coder::DoCode(CoderContext *const context) {
     std::vector<float> constant_values(output_size, pad_param_->constant_value_);
     code.CodeArray("output_tensor_", constant_values.data(), output_size);
   }
-  code.CodeFunction("Pad", input_tensor_, output_tensor_, "in_", "out_", "padding_", task_id, thread_num_);
+  code.CodeFunction("Pad", input_tensor_, output_tensor_, "in_", "out_", "padding_", kDefaultTaskId, thread_num_);
   context->AppendCode(code.str());
   return RET_OK;
 }

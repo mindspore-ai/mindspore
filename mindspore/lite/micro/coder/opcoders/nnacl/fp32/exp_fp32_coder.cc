@@ -18,6 +18,7 @@
 #include <math.h>
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/parallel.h"
 using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore::lite::micro::nnacl {
@@ -48,9 +49,8 @@ int ExpFP32Coder::DoCode(CoderContext *ctx) {
             "exp_fp32.c",
           });
   nnacl::NNaclFp32Serializer code;
-  int task_id = 0;
   code.CodeStruct("exp_parameter", *exp_parameter_);
-  code.CodeFunction("Exp", input_tensor_, "(ExpParameter *)&exp_parameter", task_id);
+  code.CodeFunction("Exp", input_tensor_, "(ExpParameter *)&exp_parameter", kDefaultTaskId);
   ctx->AppendCode(code.str());
   return RET_OK;
 }

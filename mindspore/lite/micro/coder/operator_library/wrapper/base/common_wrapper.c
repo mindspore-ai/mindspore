@@ -25,7 +25,7 @@ bool GetSupportOptFlag() {
 #ifdef ENABLE_ARM64
   int hwcap_type = 16;
   // getHwCap
-  uint32_t hwcap = getauxval(hwcap_type);
+  const uint32_t hwcap = getauxval(hwcap_type);
   if (hwcap & HWCAP_ASIMDDP) {
     status = true;
   } else {

@@ -19,6 +19,9 @@
 #include <string.h>
 void DequantDataPerChannel(const int8_t *quant_src, const DeQuantArg **de_quant_args, size_t de_quant_nums,
                            size_t per_batch_size, float *de_quant_dst) {
+  if (per_batch_size == 0) {
+    return;
+  }
   size_t matrix_size = de_quant_nums / per_batch_size;
   for (int i = 0; i < per_batch_size; i++) {
     const DeQuantArg *de_quant_arg = de_quant_args[i];
@@ -32,6 +35,9 @@ void DequantDataPerChannel(const int8_t *quant_src, const DeQuantArg **de_quant_
 
 void DequantData(const int8_t *quant_src, const DeQuantArg **de_quant_args, size_t de_quant_nums, size_t channels,
                  float *de_quant_dst) {
+  if (channels == 0) {
+    return;
+  }
   size_t per_channel_size = de_quant_nums / channels;
   for (size_t i = 0; i < channels; i++) {
     const DeQuantArg *de_quant_arg = de_quant_args[i];
@@ -57,7 +63,7 @@ void DequantDataPerTensor(const int8_t *quant_src, const DeQuantArg **de_quant_a
   int32_t zero_point = de_quant_arg->zeroPoint;
   for (int j = 0; j < de_quant_nums; j++) {
     int8_t quant_data = quant_src[j];
-    if (quant_clusters) {
+    if (quant_clusters != NULL) {
       if (quant_data > INT8_MAX || quant_data < INT8_MIN) {
         return;
       }

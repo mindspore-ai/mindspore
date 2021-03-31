@@ -19,6 +19,7 @@
 #include <string>
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/parallel.h"
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::lite::micro {
@@ -95,9 +96,8 @@ int StridedSliceBaseCoder::Prepare(CoderContext *context) {
 int StridedSliceBaseCoder::DoFastCode(CoderContext *ctx) {
   std::vector<int> in_shape = input_tensor_->shape();
   std::vector<int> out_shape = output_tensor_->shape();
-  int task_id = 0;
   int begin_index = strided_slice_parameter_->begins_[split_axis_];
-  int caled_num = task_id * cal_num_per_thread_;
+  int caled_num = kDefaultTaskId * cal_num_per_thread_;
   nnacl::NNaclFp32Serializer code;
   std::string input_ptr_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string output_ptr_str = allocator_->GetRuntimeAddr(output_tensor_);

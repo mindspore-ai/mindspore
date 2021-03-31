@@ -60,7 +60,7 @@ void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderCont
     ofs << "  MS_ERROR_IF_NULL(outputs_[" << i << "]);\n";
   }
   if (config->target() != kARM32M) {
-    ofs << "  int ret = Init(model->buf, dynamic_cast<MModel *>(model)->buf_size());\n"
+    ofs << "  int ret = Init(model->buf, static_cast<MModel *>(model)->buf_size());\n"
            "  return ret;\n"
            "}\n\n";
     return;

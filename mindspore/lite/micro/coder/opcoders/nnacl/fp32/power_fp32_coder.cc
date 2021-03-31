@@ -19,6 +19,7 @@
 #include <vector>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
 using mindspore::schema::PrimitiveType_PowFusion;
 
@@ -31,10 +32,9 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   Tensor *filter_tensor = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor);
   int size = input_tensor_->ElementsNum();
-  int task_id = 0;
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(size, thread_num_);
-  int len = MSMIN(stride, size - stride * task_id);
+  int len = MSMIN(stride, size - stride * kDefaultTaskId);
   std::string exp_addr;
   bool broadcast = true;
   if (input_tensors_.size() == 2) {

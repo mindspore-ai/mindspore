@@ -19,6 +19,7 @@
 #include <string>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
 using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::lite::micro::nnacl {
@@ -72,8 +73,7 @@ int TransposeFp32Coder::Prepare(CoderContext *const context) {
 }
 
 int TransposeFp32Coder::DoCode(CoderContext *const context) {
-  int task_id = 0;
-  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
+  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - kDefaultTaskId * thread_h_stride_);
   if (num_unit_thread <= 0) {
     return RET_OK;
   }
@@ -92,7 +92,8 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   code.CodeStruct("transpose_parameter", *transpose_parameter_);
 
   code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, in_shape_, out_shape_,
-                    "(TransposeParameter *)&transpose_parameter", task_id, num_unit_thread, dim_size_, position_);
+                    "(TransposeParameter *)&transpose_parameter", kDefaultTaskId, num_unit_thread, dim_size_,
+                    position_);
 
   context->AppendCode(code.str());
   return RET_OK;
