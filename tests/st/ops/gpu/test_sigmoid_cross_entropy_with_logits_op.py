@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,30 +31,41 @@ class NetSigmoidCrossEntropyWithLogits(nn.Cell):
         return self.loss(logits, labels)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sigmoid_cross_entropy_with_logits():
+def sigmoid_cross_entropy_with_logits(nptype):
     logits = Tensor(np.array([[1, 1, 2],
                               [1, 2, 1],
-                              [2, 1, 1]]).astype(np.float32))
+                              [2, 1, 1]]).astype(nptype))
     labels = Tensor(np.array([[0, 0, 1],
                               [0, 1, 0],
-                              [1, 0, 0]]).astype(np.float32))
+                              [1, 0, 0]]).astype(nptype))
     expect_loss = np.array([[1.313262, 1.313262, 0.126928],
                             [1.313262, 0.126928, 1.313262],
-                            [0.126928, 1.313262, 1.313262]]).astype(np.float32)
+                            [0.126928, 1.313262, 1.313262]]).astype(nptype)
 
     error = np.ones(shape=[3, 3]) * 1.0e-6
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    sigmoid_cross_entropy_with_logits = NetSigmoidCrossEntropyWithLogits()
-    output = sigmoid_cross_entropy_with_logits(logits, labels)
+    net = NetSigmoidCrossEntropyWithLogits()
+    output = net(logits, labels)
     diff = output.asnumpy() - expect_loss
     assert np.all(abs(diff) < error)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
-    sigmoid_cross_entropy_with_logits = NetSigmoidCrossEntropyWithLogits()
-    output = sigmoid_cross_entropy_with_logits(logits, labels)
+    net = NetSigmoidCrossEntropyWithLogits()
+    output = net(logits, labels)
     diff = output.asnumpy() - expect_loss
     assert np.all(abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sigmoid_cross_entropy_with_logits_float32():
+    sigmoid_cross_entropy_with_logits(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sigmoid_cross_entropy_with_logits_float64():
+    sigmoid_cross_entropy_with_logits(np.float64)
