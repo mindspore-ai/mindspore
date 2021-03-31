@@ -37,7 +37,8 @@ int ToFormatOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto data_type = in_tensors_.front()->data_type();
-  if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16 && data_type != kNumberTypeInt32) {
+  if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16 && data_type != kNumberTypeInt32 &&
+      data_type != kNumberTypeInt8) {
     MS_LOG(ERROR) << "Unsupported data type " << data_type;
     return RET_ERROR;
   }
@@ -64,10 +65,10 @@ void ToFormatOpenCLKernel::SetGlobalLocal() {
 }
 
 int ToFormatOpenCLKernel::Prepare() {
-  static std::map<TypeId, std::string> dtype_str{{kNumberTypeFloat32, "float32"},
-                                                 {kNumberTypeFloat16, "float16"},
-                                                 {kNumberTypeInt32, "int32"},
-                                                 {kNumberTypeUInt32, "uint32"}};
+  static std::map<TypeId, std::string> dtype_str{
+    {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat16, "float16"}, {kNumberTypeInt32, "int32"},
+    {kNumberTypeUInt32, "uint32"},   {kNumberTypeInt8, "int8"},
+  };
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
   std::string kernel_name = out_mem_type_ == MemType::IMG ? "BUF_to_IMG_" : "IMG_to_BUF_";

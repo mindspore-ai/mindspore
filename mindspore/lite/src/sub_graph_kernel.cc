@@ -171,6 +171,14 @@ int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) 
     out_tensor->set_ref_count(out_tensor->ref_count() + 1);
   }
 #endif
+#ifdef SUPPORT_GPU
+  // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
+  if (context_->IsGpuEnabled()) {
+    for (auto tensor : this->in_tensors()) {
+      tensor->MutableData();
+    }
+  }
+#endif
 
   for (auto *kernel : nodes_) {
     MS_ASSERT(nullptr != kernel);

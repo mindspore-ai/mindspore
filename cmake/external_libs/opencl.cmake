@@ -22,11 +22,11 @@ function(gene_opencl BASEPATH)
     if(NOT EXISTS ${CL_SRC_DIR})
         return()
     endif()
-    file(GLOB_RECURSE CL_LIST ${CL_SRC_DIR}/*.cl)
+    file(GLOB_RECURSE CL_LIST ${CL_SRC_DIR}/*.cl ${CL_SRC_DIR}/int8/*.cl)
     foreach(file_path ${CL_LIST})
         file(REMOVE ${file_path}.inc)
         string(REGEX REPLACE ".+/(.+)\\..*" "\\1" kernel_name "${file_path}")
-        set(inc_file_ex "${kernel_name}.cl.inc")
+        set(inc_file_ex "${file_path}.inc")
         execute_process(
                 COMMAND bash -c "sed 's/\\\\/\\\\\\\\/g' "
                 COMMAND bash -c "sed 's/\\\"/\\\\\\\"/g' "

@@ -49,16 +49,16 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   auto *H = dst + 1;
   auto *W = dst + 2;
   auto *C = dst + 3;
-  if (src_num == 1) {
+  if (src_num == 1) {  // 1 1 1 C
     *C = src[0];
-  } else if (src_num == 2) {
+  } else if (src_num == 2) {  // N 1 1 C
     *N = src[0];
     *C = src[1];
-  } else if (src_num == 3) {
+  } else if (src_num == 3) {  // N 1 W C
     *N = src[0];
     *W = src[1];
     *C = src[2];
-  } else if (src_num == 4) {
+  } else if (src_num == 4) {  // N H W C
     *N = src[0];
     *H = src[1];
     *W = src[2];
