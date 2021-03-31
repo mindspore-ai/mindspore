@@ -44,7 +44,6 @@ class Squeeze : public PrimitiveC {
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
 using PrimSqueezePtr = std::shared_ptr<Squeeze>;
-
 }  // namespace ops
 }  // namespace mindspore
 

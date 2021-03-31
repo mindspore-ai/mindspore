@@ -621,7 +621,7 @@ void TbeKernelJsonCreator::ParseAttrDefaultValue(const std::string &type, const 
   } else if (type == kVTypeStr) {
     (*attr_obj)[kJValue] = value;
   } else if (type == kVTypeBool) {
-    bool attr_value;
+    bool attr_value = false;
     std::istringstream(value) >> std::boolalpha >> attr_value;
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeFloat) {

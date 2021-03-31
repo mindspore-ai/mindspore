@@ -61,7 +61,7 @@ class AiCoreDynamicKernel : public DynamicKernel {
   void ParseCompileJson();
 
  private:
-  const void *stub_func_;
+  const void *stub_func_{nullptr};
   void *handle_{nullptr};
   uint32_t block_dim_;
   void *tiling_data_ptr_;  // device ptr
