@@ -4482,7 +4482,7 @@ class LinSpace(PrimitiveWithInfer):
 class MatrixInverse(PrimitiveWithInfer):
     """
     Returns the inverse of the input matrix. If the matrix is irreversible, an error may be reported or an unknown
-    result may be returned
+    result may be returned.
 
     Note:
         The parameter 'adjoint' is only supporting False right now. Because complex number is not supported at present.
@@ -4496,6 +4496,10 @@ class MatrixInverse(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
+
+    Raises:
+        TypeError: If `adjoint` is not a bool.
+        TypeError: If dtype of `x` is neither float32 nor double.
 
     Supported Platforms:
         ``GPU``
