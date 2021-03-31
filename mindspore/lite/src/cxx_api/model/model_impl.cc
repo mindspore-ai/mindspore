@@ -150,6 +150,11 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
                     << ".";
       return kLiteInputTensorError;
     }
+    if (user_input.Data() == nullptr) {
+      ResetTensorData(old_data, input_tensors);
+      MS_LOG(ERROR) << "Tensor " << user_input.Name() << " has no data.";
+      return kLiteInputTensorError;
+    }
     if (user_input.Name() != input->tensor_name()) {
       MS_LOG(WARNING) << "Tensor " << user_input.Name() << " has a different name from input" << input->tensor_name()
                       << ".";
