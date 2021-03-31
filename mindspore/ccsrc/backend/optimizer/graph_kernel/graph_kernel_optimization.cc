@@ -26,7 +26,6 @@
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/clean_all_in_once.h"
-#include "backend/optimizer/graph_kernel/depend_formater.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
@@ -49,9 +48,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage1_preprocess");
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
   pm->AddPass(std::make_shared<SplitAssign>());
-
-  // Move the Depend nodes to the bottom of graph
-  pm->AddPass(std::make_shared<DependFormater>());
 
   // Reorder TransData-Cast to Cast-TransData,
   if (is_ascend) {
@@ -142,8 +138,6 @@ PassManagerPtr GraphKernelOptimizer::Combine() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage6_combine");
   // Enable parallel fusion
   if (is_gpu) {
-    // Prevent fake loop in parallel fusion
-    pm->AddPass(std::make_shared<DependFormater>());
     // Do parallel fusion for gpu device
     pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)));
   }

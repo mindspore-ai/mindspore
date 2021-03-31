@@ -142,10 +142,9 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
 
     for (const auto &getitem_user_iter : getitem_users) {
       auto getitem_user = getitem_user_iter.first;
-      // 1. A previous pass `DependFormater` has ensured that all data users are directly link to its
-      //   input, without Depend node.
+      // 1. Data users may not link directly to its input, they may segregated by Depend node.
       // 2. If the `cnode` has another path to the getitem_user, it's unnecessary to add update_state and load node to
-      // keep exec_order.
+      //    keep exec_order.
       if (HasPathToParamUser(cnode, getitem_user, getitem)) {
         mng->Replace(getitem, assign_to);
         continue;

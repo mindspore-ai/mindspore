@@ -95,33 +95,6 @@ void ProcessThroughPassCNode(std::function<bool(const AnfNodePtr &)> pass_fn,
   }
 }
 
-void ProcessDependCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
-  OrderedSet<AnfNodePtr> to_be_through_pass;
-  for (auto &[node, node_rel] : (*node_rels)) {
-    if (!IsPrimitiveCNode(node, prim::kPrimDepend) ||
-        HasAbstractMonad(node->cast<CNodePtr>()->input(kDependAttachNodeIndex))) {
-      continue;
-    }
-
-    // Make attached nodes deattach with node.
-    auto cnode = node->cast<CNodePtr>();
-    for (size_t id = kDependAttachNodeIndex; id < cnode->inputs().size(); ++id) {
-      auto attach_node = cnode->input(id);
-      if (auto iter = node_rels->find(attach_node); iter != node_rels->end()) {
-        iter->second.nexts.erase(node);
-      }
-      if (auto &cnode_pres = node_rel.pres; cnode_pres.count(attach_node) != 0) {
-        cnode_pres.erase(attach_node);
-      }
-    }
-    to_be_through_pass.insert(node);
-  }
-
-  // Eliminate depend node of node relations.
-  ProcessThroughPassCNode([&to_be_through_pass](const AnfNodePtr &node) { return to_be_through_pass.count(node) > 0; },
-                          node_rels);
-}
-
 void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
   AnfNodePtrList latter_to_be_erased;
   for (auto &[node, node_rel] : (*node_rels)) {
@@ -441,8 +414,7 @@ OrderedMap<AnfNodePtr, NodeRelation> ParallelOpFusion::GenAnalysisGraph(const An
 
     auto prior_node = get_info(node);
     for (const auto &input : (node->cast<CNodePtr>())->inputs()) {
-      // Parameter for ControlDepend when depend mode is 1.
-      if (!input->isa<CNode>() && !input->isa<Parameter>()) {
+      if (!input->isa<CNode>()) {
         continue;
       }
       auto behind_node = get_info(input);
@@ -451,13 +423,11 @@ OrderedMap<AnfNodePtr, NodeRelation> ParallelOpFusion::GenAnalysisGraph(const An
     }
   }
 
-  ProcessDependCNode(&node_rels);
   ProcessThroughPassCNode(
     [](const AnfNodePtr &node) {
       return IsOneOf(node, {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimSqueeze, prim::kPrimTupleGetItem});
     },
     &node_rels);
-  ProcessThroughPassCNode([](const AnfNodePtr &node) { return node->isa<Parameter>(); }, &node_rels);
   ProcessTailMakeTupleCNode(&node_rels);
   ProcessLocalStructure(&node_rels, &virtual_noout_nodes_, &ignore_noin_nodes_);
 
@@ -707,51 +677,6 @@ void ParallelOpFusion::SetFusedParallelOpAttrToReturnNode(const ParallelInfo &pa
   SetFusionInfoAttrToNode(attach_node, parallel_info);
 }
 
-void PostProcessForNewSubGraphCNode(const AnfNodePtr &node, const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  auto mng = kernel_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(kernel_graph, true);
-    kernel_graph->set_manager(mng);
-  }
-
-  const auto &users = mng->node_users()[node];
-  std::vector<std::pair<AnfNodePtr, int>> sons;
-  for (const auto &[user, index] : users) {
-    if (!IsPrimitiveCNode(user, prim::kPrimTupleGetItem)) {
-      sons.emplace_back(user, index);
-      continue;
-    }
-    auto &[fake_first_grad_son, grad_index] = *((mng->node_users()[user]).begin());
-    sons.emplace_back(fake_first_grad_son, grad_index);
-  }
-
-  AnfNodePtrList latter_to_delete;
-  for (const auto &[son, index] : sons) {
-    if (!IsPrimitiveCNode(son, prim::kPrimDepend) || index != kDependAttachNodeIndex) {
-      continue;
-    }
-
-    latter_to_delete.push_back(son);
-  }
-
-  if (latter_to_delete.empty()) {
-    return;
-  }
-
-  std::vector<AnfNodePtr>::iterator delete_begin = latter_to_delete.begin();
-  if (latter_to_delete.size() == sons.size()) {
-    // Left one Depend node relation and delete others!
-    ++delete_begin;
-  }
-  for (; delete_begin != latter_to_delete.end(); ++delete_begin) {
-    auto depend_anfnode = *delete_begin;
-    auto depend_cnode = depend_anfnode->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(depend_cnode);
-    auto depend_prior_node = depend_cnode->input(kRealInputIndexInDepend);
-    mng->Replace(depend_anfnode, depend_prior_node);
-  }
-}
-
 void ParallelOpFusion::SetFusionInfoAttrToNode(const AnfNodePtr &node, const ParallelInfo &parallel_info) {
   auto fusion_type = parallel_info.fusion_info()->FusionType();
   AnfAlgo::SetNodeAttr(kAttrParallelFusionType, MakeValue<std::string>(fusion_type), node);
@@ -776,7 +701,6 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
     SetFusedParallelOpAttrToReturnNode(parallel_infos[i]);
     AnfNodePtr sg_node;
     std::tie(sg_node, std::ignore) = FuseNodesToSubGraph(fuse_nodes, kernel_graph, "parallel");
-    PostProcessForNewSubGraphCNode(sg_node, kernel_graph);
     AnfAlgo::SetNodeAttr(kAttrCompositeType, MakeValue("parallel_fusion"), sg_node);
     DumpParallelFusionDetail(fuse_nodes, sg_node);
   }
