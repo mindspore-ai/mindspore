@@ -133,7 +133,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
       continue;
     }
     if (tensor->quantParams.size() != 1) {  // perchannel
-      MS_LOG(ERROR) << "perchannel doquant is not supported yet";
+      MS_LOG(ERROR) << "perchannel do quant is not supported yet";
       return RET_ERROR;
     }
     // perlayer

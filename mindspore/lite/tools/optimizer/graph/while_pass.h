@@ -21,7 +21,6 @@
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
 #include "backend/optimizer/common/pass.h"
-#include "src/param_value_lite.h"
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {

@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
-#include <algorithm>
 #include <vector>
 #include <string>
 #include <functional>
 #include <memory>
 #include "ops/fusion/conv2d_fusion.h"
-#include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/resize.h"
 #include "include/errorcode.h"
 
@@ -89,12 +87,12 @@ STATUS OnnxInputAdjustOpPass::ReplaceInt64ParameterNode(const FuncGraphPtr &func
       MS_LOG(ERROR) << "default data is nullptr.";
       return lite::RET_NULL_PTR;
     }
-    auto param_value = default_value->cast<ParamValueLitePtr>();
-    if (param_value == nullptr) {
-      MS_LOG(ERROR) << "default data is not paramvaluelite.";
+    auto tensor_info = default_value->cast<tensor::TensorPtr>();
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = BuildParameterNode(func_graph, param_node, param_value);
+    auto param_node_new = BuildParameterNode(func_graph, param_node, tensor_info);
     manager->Replace(param_node, param_node_new);
   } else {
     // set graph input
@@ -151,17 +149,17 @@ STATUS OnnxInputAdjustOpPass::ReplaceConstant(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "value is not primitive_c.";
     return lite::RET_ERROR;
   }
-  auto param_value = primitive_c->GetAttr("const_data");
-  if (param_value == nullptr) {
+  auto tensor_info = primitive_c->GetAttr("const_data");
+  if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "constant cnode has no data.";
     return lite::RET_ERROR;
   }
-  auto param_value_lite = param_value->cast<ParamValueLitePtr>();
-  if (param_value_lite == nullptr) {
-    MS_LOG(ERROR) << "valueptr is not paramvalueliteptr.";
+  auto tensor_info_ptr = tensor_info->cast<tensor::TensorPtr>();
+  if (tensor_info_ptr == nullptr) {
+    MS_LOG(ERROR) << "valueptr is not tensor::Tensorptr.";
     return lite::RET_ERROR;
   }
-  auto param_node = BuildParameterNode(func_graph, cnode, param_value_lite);
+  auto param_node = BuildParameterNode(func_graph, cnode, tensor_info_ptr);
   if (param_node == nullptr) {
     MS_LOG(ERROR) << "convert constant to param node failed.";
     return lite::RET_ERROR;
@@ -199,17 +197,17 @@ STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr 
   auto perm_anf = cnode->input(2);
   auto perm_param = perm_anf->cast<ParameterPtr>();
   if (perm_param == nullptr || !perm_param->has_default() ||
-      !utils::isa<ParamValueLitePtr>(perm_param->default_param())) {
+      !utils::isa<tensor::TensorPtr>(perm_param->default_param())) {
     MS_LOG(DEBUG) << "transpose second input is not parameter node.";
     return lite::RET_OK;
   }
-  auto perm_value = perm_param->default_param()->cast<ParamValueLitePtr>();
-  if (perm_value->tensor_shape().empty()) {
+  auto perm_value = perm_param->default_param()->cast<tensor::TensorPtr>();
+  if (perm_value->shape().empty()) {
     MS_LOG(ERROR) << "transpose second input is invalid.";
     return lite::RET_ERROR;
   }
-  std::vector<int> perm(perm_value->tensor_shape()[0]);
-  if (memcpy_s(perm.data(), perm_value->tensor_size(), perm_value->tensor_addr(), perm_value->tensor_size()) != EOK) {
+  std::vector<int> perm(perm_value->shape()[0]);
+  if (memcpy_s(perm.data(), perm_value->Size(), perm_value->data_c(), perm_value->Size()) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     return lite::RET_ERROR;
   }
@@ -252,12 +250,12 @@ STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph,
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
-    const auto &default_data = param_node->default_param()->cast<ParamValueLitePtr>();
+    const auto &default_data = param_node->default_param()->cast<tensor::TensorPtr>();
     if (default_data == nullptr) {
-      MS_LOG(ERROR) << "this input is not a paramValueLite.";
+      MS_LOG(ERROR) << "this input is not a tensor::Tensor";
       return lite::RET_ERROR;
     }
-    auto shape = default_data->tensor_shape();
+    auto shape = default_data->shape();
     size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
     break;
   }

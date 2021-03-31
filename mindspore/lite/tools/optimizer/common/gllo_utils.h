@@ -26,7 +26,6 @@
 #include "src/common/utils.h"
 #include "backend/optimizer/common/pattern_engine.h"
 #include "schema/inner/model_generated.h"
-#include "src/param_value_lite.h"
 #include "tools/converter/converter_context.h"
 
 using PrimitiveCPtr = std::shared_ptr<mindspore::ops::PrimitiveC>;
@@ -39,6 +38,7 @@ inline const PrimitivePtr kPrimDivFusion = std::make_shared<Primitive>("DivFusio
 inline const PrimitivePtr kPrimErf = std::make_shared<Primitive>("Erf");
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
+constexpr auto kWeightFormat = "weight_format";
 std::vector<int> CastToInt(const ValuePtr &value);
 
 std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value);
@@ -66,7 +66,7 @@ int CheckIfNodeIsParam(const AnfNodePtr &node);
 int CheckLeastInputSize(const CNodePtr &node, int size);
 
 ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
-                            const ParamValueLitePtr &weight_tensor);
+                            const tensor::TensorPtr &weight_tensor);
 
 bool IsParamNode(const BaseRef &n);
 
@@ -88,7 +88,7 @@ bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
-ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node);
+tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node);
 
 AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);
 
@@ -118,23 +118,23 @@ enum kTransFilterType {
   kHWKC2KHWC
 };
 
-STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
-                    int32_t *filterH, int32_t *filterW);
+STATUS GetFilterDim(const std::vector<int64_t> &oriDims, kTransFilterType type, int64_t *filterK, int64_t *filterC,
+                    int64_t *filterH, int64_t *filterW);
 
-STATUS SetFilterDim(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+STATUS SetFilterDim(const tensor::TensorPtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                     int32_t filterH, int32_t filterW);
 
 template <typename T>
-static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
+static STATUS TransFilterData(const tensor::TensorPtr &tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                               int32_t filterH, int32_t filterW);
 
 template <typename T>
-static lite::STATUS TransFilterFormat(const ParamValueLitePtr &tensor, kTransFilterType type);
+static lite::STATUS TransFilterFormat(const tensor::TensorPtr &tensor, kTransFilterType type);
 
-STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_format);
+STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_format, schema::Format dst_format);
 
 ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                const ParamValueLitePtr &param_value);
+                                const tensor::TensorPtr &tensor_info);
 
 ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
                                         const std::string &node_name);

@@ -20,7 +20,6 @@
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
 #include "tools/converter/converter_flags.h"
-#include "src/param_value_lite.h"
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
@@ -33,7 +32,7 @@ class ConvTransformFusion : public PatternProcessPass {
   void GenTransParam(const CNodePtr &, int, float *, float *) const;
   virtual void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
   void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
-  void CalNewWeightTensor(const CNodePtr &, const ParamValueLitePtr &, int, const float *) const;
+  void CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;
   void CalNewBiasTensor(float *, int, bool, const float *, const float *) const;
   void SetFmkType(FmkType type) { this->fmk_type_ = type; }
 

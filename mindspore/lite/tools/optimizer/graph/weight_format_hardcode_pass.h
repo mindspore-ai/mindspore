@@ -20,7 +20,6 @@
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
 #include "backend/optimizer/common/pass.h"
-#include "src/param_value_lite.h"
 
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::QuantType;
@@ -34,11 +33,11 @@ class WeightFormatHardCodePass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  lite::STATUS HardCodeCAFFE(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeONNX(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeMS(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeTFLITE(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeTF(const CNodePtr &conv_node, const ParamValueLitePtr &param_value) const;
+  lite::STATUS HardCodeCAFFE(const CNodePtr &node, const tensor::TensorPtr &tensor_info) const;
+  lite::STATUS HardCodeONNX(const CNodePtr &node, const tensor::TensorPtr &tensor_info) const;
+  lite::STATUS HardCodeMS(const CNodePtr &node, const tensor::TensorPtr &tensor_info) const;
+  lite::STATUS HardCodeTFLITE(const CNodePtr &node, const tensor::TensorPtr &tensor_info) const;
+  lite::STATUS HardCodeTF(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info) const;
 
  private:
   QuantType quant_type = schema::QuantType_QUANT_NONE;

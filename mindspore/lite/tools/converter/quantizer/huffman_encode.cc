@@ -15,21 +15,20 @@
  */
 
 #include "tools/converter/quantizer/huffman_encode.h"
-#include <utility>
 #include "src/dequant.h"
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore {
 namespace lite {
-STATUS HuffmanEncode::DoHuffmanEncode(const ParamValueLitePtr &weight, const PrimitivePtr &primitive, void *quant_datas,
+STATUS HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, void *quant_datas,
                                       const size_t &bit_num) {
   if (quant_datas == nullptr) {
     MS_LOG(ERROR) << "quant data is nullptr";
     return RET_ERROR;
   }
   auto *raw_datas = static_cast<int8_t *>(quant_datas);
-  size_t elem_count = weight->tensor_shape_size();
-  size_t packed_size = elem_count * bit_num;
+  size_t elem_count = weight->DataSize();
+  int packed_size = elem_count * bit_num;
 
   HuffmanPriorityQueue pq;
   auto status = GetHuffmanPriorityQueue(raw_datas, elem_count, &pq);
@@ -47,19 +46,16 @@ STATUS HuffmanEncode::DoHuffmanEncode(const ParamValueLitePtr &weight, const Pri
     MS_LOG(ERROR) << "DoHuffmanCompress failed";
     return status;
   }
-  size_t ch_size = huffman_encoded_str_.length();
+  int ch_size = huffman_encoded_str_.length();
   if (ch_size < packed_size) {
-    auto encode_data = new (std::nothrow) char[ch_size];
-    if (encode_data == nullptr) {
-      MS_LOG(ERROR) << "new char[] failed.";
-      return RET_MEMORY_FAILED;
+    if (ch_size != weight->data().nbytes()) {
+      MS_LOG(ERROR) << "Data size of weight is error.";
+      return RET_ERROR;
     }
-    if (memcpy_s(encode_data, ch_size, huffman_encoded_str_.c_str(), ch_size) != EOK) {
+    if (memcpy_s(weight->data_c(), weight->data().nbytes(), huffman_encoded_str_.c_str(), ch_size) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed.";
-      delete[] encode_data;
       return RET_MEMORY_FAILED;
     }
-    weight->SetTensorData(encode_data, ch_size);
     auto quant_param_holder = quant::GetCNodeQuantHolder(primitive);
     MS_ASSERT(quant_param_holder != nullptr);
     quant_param_holder->set_enable_huffman_code(true);

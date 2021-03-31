@@ -18,7 +18,7 @@
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
-#include "src/param_value_lite.h"
+#include "tools/common/tensor_util.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -102,9 +102,9 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
     return lite::RET_INVALID_OP_ATTR;
   }
   auto add_weight_param = bias_add_weight->cast<ParameterPtr>()->default_param();
-  auto add_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(add_weight_param);
-  auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->tensor_addr());
-  auto add_weight_shape = add_weight_tensor->tensor_shape();
+  auto add_weight_tensor = std::dynamic_pointer_cast<tensor::Tensor>(add_weight_param);
+  auto add_weight_data = reinterpret_cast<float *>(add_weight_tensor->data_c());
+  auto add_weight_shape = add_weight_tensor->shape();
   if (add_weight_shape.empty() || (add_weight_shape.size() == 1 && add_weight_shape[0] == 1)) {
     for (int i = 0; i < kernel_nums; i++) {
       add_bias_data[i] = *add_weight_data;
@@ -122,20 +122,20 @@ int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, co
       return lite::RET_INVALID_OP_ATTR;
     }
     auto conv_bias_param = conv_bias_node->cast<ParameterPtr>()->default_param();
-    auto conv_bias_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_bias_param);
-    if (conv_bias_tensor->tensor_shape().empty() || conv_bias_tensor->tensor_shape()[0] != kernel_nums) {
+    auto conv_bias_tensor = std::dynamic_pointer_cast<tensor::Tensor>(conv_bias_param);
+    if (conv_bias_tensor->shape().empty() || conv_bias_tensor->shape()[0] != kernel_nums) {
       MS_LOG(ERROR) << "conv_bias_node shape error";
       delete[] add_bias_data;
       return lite::RET_INVALID_OP_ATTR;
     }
-    auto conv_bias_data = reinterpret_cast<float *>(conv_bias_tensor->tensor_addr());
+    auto conv_bias_data = reinterpret_cast<float *>(conv_bias_tensor->data_c());
     for (int i = 0; i < kernel_nums; i++) {
       conv_bias_data[i] += add_bias_data[i];
     }
     delete[] add_bias_data;
   } else {
     auto conv_weight_param = conv_weight_node->cast<ParameterPtr>()->default_param();
-    auto conv_weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(conv_weight_param);
+    auto conv_weight_tensor = std::dynamic_pointer_cast<tensor::Tensor>(conv_weight_param);
     auto conv_new_bias = AddNewBiasNode(add_bias_data, func_graph, kernel_nums, conv_weight_tensor);
     conv_new_bias->set_name(conv_node->fullname_with_scope() + "_bias");
     conv_node->add_input(conv_new_bias);

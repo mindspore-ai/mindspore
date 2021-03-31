@@ -20,7 +20,6 @@
 #include <set>
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
-#include "src/param_value_lite.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
@@ -29,6 +28,7 @@
 #include "ops/make_tuple.h"
 #include "ops/tuple_get_item.h"
 #include "ir/anf.h"
+#include "abstract/utils.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore {
@@ -85,12 +85,30 @@ STATUS CheckStrView(std::string_view str_view, uint64_t *scratch) {
   return RET_OK;
 }
 
-STATUS GetFloatValue(const tensorflow::TensorProto &tensor_proto, const tensorflow::TensorShapeProto &tensor_shape,
-                     ParamValueLitePtr param_value, int shape_size) {
-  auto tensor_data = new (std::nothrow) float[shape_size];
+int GetShapeSize(const tensorflow::TensorProto &tensor_proto) {
+  auto &tensor_shape = tensor_proto.tensor_shape();
+  int shape_size = 1;
+  for (int i = 0; i < tensor_shape.dim_size(); i++) {
+    shape_size *= tensor_shape.dim(i).size();
+  }
+  return shape_size;
+}
+
+STATUS SetFloatTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
+  auto shape_size = GetShapeSize(tensor_proto);
+  auto &tensor_shape = tensor_proto.tensor_shape();
+  ShapeVector shape_vector{};
+  for (int i = 0; i < tensor_shape.dim_size(); i++) {
+    shape_vector.push_back(tensor_shape.dim(i).size());
+  }
+  *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeFloat32);
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor data failed.";
+    return RET_ERROR;
+  }
+  auto tensor_data = reinterpret_cast<float *>((*tensor_info)->data_c());
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "new data failed";
-    delete[] tensor_data;
     return RET_ERROR;
   }
 
@@ -107,17 +125,25 @@ STATUS GetFloatValue(const tensorflow::TensorProto &tensor_proto, const tensorfl
       return RET_ERROR;
     }
   }
-  auto tensor_size = shape_size * sizeof(float);
-  param_value->SetTensorData(tensor_data, tensor_size);
+
   return RET_OK;
 }
 
-STATUS GetInt32Value(const tensorflow::TensorProto &tensor_proto, const tensorflow::TensorShapeProto &tensor_shape,
-                     ParamValueLitePtr param_value, int shape_size) {
-  auto tensor_data = new (std::nothrow) int[shape_size];
+STATUS SetInt32TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
+  auto shape_size = GetShapeSize(tensor_proto);
+  auto &tensor_shape = tensor_proto.tensor_shape();
+  ShapeVector shape_vector{};
+  for (int i = 0; i < tensor_shape.dim_size(); i++) {
+    shape_vector.push_back(tensor_shape.dim(i).size());
+  }
+  *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeInt32);
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor data failed.";
+    return RET_ERROR;
+  }
+  auto tensor_data = reinterpret_cast<int *>((*tensor_info)->data_c());
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "new data failed";
-    delete[] tensor_data;
     return RET_ERROR;
   }
 
@@ -134,21 +160,29 @@ STATUS GetInt32Value(const tensorflow::TensorProto &tensor_proto, const tensorfl
       return RET_ERROR;
     }
   }
-  auto tensor_size = shape_size * sizeof(int);
-  param_value->SetTensorData(tensor_data, tensor_size);
+
   return RET_OK;
 }
 
-STATUS GetInt64Value(const tensorflow::TensorProto &tensor_proto, const tensorflow::TensorShapeProto &tensor_shape,
-                     ParamValueLitePtr param_value, int shape_size) {
-  param_value->set_tensor_type(kNumberTypeInt32);
-  auto *tensor_data = new (std::nothrow) int[shape_size];
+STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
+  auto shape_size = GetShapeSize(tensor_proto);
+  auto &tensor_shape = tensor_proto.tensor_shape();
+  ShapeVector shape_vector{};
+  for (int i = 0; i < tensor_shape.dim_size(); i++) {
+    shape_vector.push_back(tensor_shape.dim(i).size());
+  }
+  *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeInt32);
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor data failed.";
+    return RET_ERROR;
+  }
+  auto tensor_data = reinterpret_cast<int *>((*tensor_info)->data_c());
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "new data failed";
     delete[] tensor_data;
     return RET_ERROR;
   }
-  if (tensor_shape.dim_size() == 0) {  // scalar
+  if (tensor_proto.tensor_shape().dim_size() == 0) {  // scalar
     const auto &origin_data = tensor_proto.int64_val();
     for (int i = 0; i < tensor_proto.int64_val_size(); ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
@@ -170,14 +204,84 @@ STATUS GetInt64Value(const tensorflow::TensorProto &tensor_proto, const tensorfl
       }
     }
   }
-  param_value->SetTensorData(tensor_data, shape_size * sizeof(int32_t));
+
+  return RET_OK;
+}
+
+STATUS SetBoolTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
+  auto shape_size = GetShapeSize(tensor_proto);
+  auto &tensor_shape = tensor_proto.tensor_shape();
+  ShapeVector shape_vector{};
+  for (int i = 0; i < tensor_shape.dim_size(); i++) {
+    shape_vector.push_back(tensor_shape.dim(i).size());
+  }
+  *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeBool);
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor data failed.";
+    return RET_ERROR;
+  }
+  auto tensor_data = reinterpret_cast<bool *>((*tensor_info)->data_c());
+  if (tensor_data == nullptr) {
+    MS_LOG(ERROR) << "new data failed";
+    delete[] tensor_data;
+    return RET_ERROR;
+  }
+
+  if (tensor_proto.bool_val_size() == 1) {
+    int value = tensor_proto.bool_val(0);
+    for (int i = 0; i < shape_size; i++) {
+      tensor_data[i] = value;
+    }
+  }
+
+  return RET_OK;
+}
+
+STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
+  auto &tensor_shape = tensor_proto.tensor_shape();
+  ShapeVector shape_vector{};
+  for (int i = 0; i < tensor_shape.dim_size(); i++) {
+    shape_vector.push_back(tensor_shape.dim(i).size());
+  }
+  std::string shape_str;
+  shape_str += std::to_string(shape_vector.size()) + ",";
+  for (auto &dim : shape_vector) {
+    shape_str += std::to_string(dim) + ",";
+  }
+
+  auto tensor_data = new (std::nothrow) string;
+  if (tensor_proto.string_val_size() == 1) {
+    *tensor_data = tensor_proto.string_val(0);
+  } else {
+    MS_LOG(ERROR) << "string size bigger than one, not support.";
+    delete tensor_data;
+    return RET_ERROR;
+  }
+
+  shape_vector = {static_cast<int64_t>(shape_str.size() + (*tensor_data).size())};
+  *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kObjectTypeString);
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
+    return RET_ERROR;
+  }
+  auto tensor_info_data = reinterpret_cast<uint8_t *>((*tensor_info)->data_c());
+  if (memcpy_s(tensor_info_data, shape_str.size(), shape_str.data(), shape_str.size()) != EOK) {
+    MS_LOG(ERROR) << "memcpy failed.";
+    return RET_ERROR;
+  }
+  if (memcpy_s(tensor_info_data + shape_str.size(), (*tensor_data).size(), (*tensor_data).data(),
+               (*tensor_data).size()) != EOK) {
+    MS_LOG(ERROR) << "memcpy failed.";
+    return RET_ERROR;
+  }
+
+  delete tensor_data;
   return RET_OK;
 }
 
 }  // namespace
 
-STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_proto,
-                                          const ParamValueLitePtr &param_value) {
+STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
   if (tensor_proto.variant_val_size() != 1) {
     MS_LOG(ERROR) << "only support variant_val_size == 1 now";
     return RET_ERROR;
@@ -211,23 +315,6 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
   tensorflow::TensorShapeProto element_shape_proto;
   element_shape_proto.ParseFromString(std::string(str_view.data(), str_view.size()));
   auto dim_size = element_shape_proto.dim_size();
-  auto tensor_data = new (std::nothrow) int[dim_size + 2];  // encode element_dtype,shape.size,shape[i]... into data
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "tensor_data is nullptr";
-    return RET_ERROR;
-  }
-  tensor_data[0] = TensorFlowUtils::GetTFDataType(tensorflow::DataType(element_dtype));
-  tensor_data[1] = element_shape_proto.dim_size();
-  for (int i = 0; i < dim_size; ++i) {
-    auto dim = element_shape_proto.dim(i).size();
-    if (dim > static_cast<int64_t>(INT32_MAX) || dim < static_cast<int64_t>(INT32_MIN)) {
-      MS_LOG(ERROR) << "int64 data " << dim << " too big to fit into int32";
-      delete[] tensor_data;
-      return RET_ERROR;
-    } else {
-      tensor_data[i + 2] = static_cast<int>(dim);
-    }
-  }
   std::vector<int> tensor_list_data(dim_size + 2);
   tensor_list_data[0] = TensorFlowUtils::GetTFDataType(tensorflow::DataType(element_dtype));
   tensor_list_data[1] = element_shape_proto.dim_size();
@@ -235,7 +322,6 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
     auto dim = element_shape_proto.dim(i).size();
     if (dim > static_cast<int64_t>(INT32_MAX) || dim < static_cast<int64_t>(INT32_MIN)) {
       MS_LOG(ERROR) << "int64 data " << dim << " too big to fit into int32";
-      delete[] tensor_data;
       return RET_ERROR;
     } else {
       tensor_list_data[i + 2] = static_cast<int>(dim);
@@ -250,51 +336,30 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
     }
     tensor_list_data.insert(tensor_list_data.end(), single_tensor_data.begin(), single_tensor_data.end());
   }
-  auto tensor_data_ptr = new (std::nothrow) int[tensor_list_data.size()];
-  if (tensor_data_ptr == nullptr) {
-    MS_LOG(ERROR) << "tensor_data is nullptr";
-    return RET_NULL_PTR;
+  *tensor_info = CreateTensorInfo(tensor_list_data.data(), tensor_list_data.size() * sizeof(int),
+                                  {static_cast<int64_t>(tensor_list_data.size())}, kObjectTypeTensorType);
+  if (*tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor data failed.";
+    return RET_ERROR;
   }
-  if (EOK != ::memcpy_s(tensor_data_ptr, tensor_list_data.size() * sizeof(int), tensor_list_data.data(),
-                        tensor_list_data.size() * sizeof(int))) {
-    MS_LOG(ERROR) << "memcpy_s failed";
-    return RET_NULL_PTR;
-  }
-  param_value->SetTensorData(tensor_data_ptr, tensor_list_data.size() * sizeof(int));
   return RET_OK;
 }
 
-STATUS TFModelParser::GetValueFromType(const tensorflow::TensorProto &tensor_proto,
-                                       const tensorflow::TensorShapeProto &tensor_shape, ParamValueLitePtr param_value,
-                                       const TypeId &type, int shape_size) {
+STATUS TFModelParser::SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto,
+                                            tensor::TensorPtr *tensor_info) {
+  auto type = (*tensor_info)->data_type();
   if (type == kNumberTypeFloat32 || type == kNumberTypeFloat) {
-    return GetFloatValue(tensor_proto, tensor_shape, param_value, shape_size);
+    return SetFloatTensorInfo(tensor_proto, tensor_info);
   } else if (type == kNumberTypeInt32 || type == kNumberTypeInt) {
-    return GetInt32Value(tensor_proto, tensor_shape, param_value, shape_size);
+    return SetInt32TensorInfo(tensor_proto, tensor_info);
   } else if (type == kNumberTypeInt64) {
-    return GetInt64Value(tensor_proto, tensor_shape, param_value, shape_size);
+    return SetInt64TensorInfo(tensor_proto, tensor_info);
   } else if (type == kNumberTypeBool) {
-    auto tensor_data = new (std::nothrow) int[shape_size];
-    if (tensor_proto.bool_val_size() == 1) {
-      int value = tensor_proto.bool_val(0);
-      for (int i = 0; i < shape_size; i++) {
-        tensor_data[i] = value;
-      }
-    }
-    auto tensor_size = shape_size * sizeof(int);
-    param_value->SetTensorData(tensor_data, tensor_size);
+    return SetBoolTensorInfo(tensor_proto, tensor_info);
   } else if (type == kObjectTypeTensorType) {
-    return ConvertConstVariant(tensor_proto, param_value);
+    return ConvertConstVariant(tensor_proto, tensor_info);
   } else if (type == kObjectTypeString) {
-    auto tensor_data = new (std::nothrow) string;
-    if (tensor_proto.string_val_size() == 1) {
-      *tensor_data = tensor_proto.string_val(0);
-    } else {
-      MS_LOG(ERROR) << "string size bigger than one, not support.";
-      return RET_ERROR;
-    }
-    auto tensor_size = (*tensor_data).size();
-    param_value->SetTensorData(tensor_data, tensor_size);
+    return SetStringTensorInfo(tensor_proto, tensor_info);
   } else {
     MS_LOG(ERROR) << "Unsupported dataType: " << type;
     return RET_ERROR;
@@ -309,35 +374,25 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
   MS_ASSERT(shape_vector != nullptr);
   const tensorflow::TensorProto &tensor_proto = attr_value.tensor();
   const tensorflow::TensorShapeProto &tensor_shape = tensor_proto.tensor_shape();
-  int shape_size = 1;
   shape_vector->clear();
   for (int i = 0; i < tensor_shape.dim_size(); i++) {
     shape_vector->push_back(tensor_shape.dim(i).size());
-    shape_size *= tensor_shape.dim(i).size();
   }
-
-  auto param_value = std::make_shared<ParamValueLite>();
-  if (param_value == nullptr) {
-    MS_LOG(ERROR) << "param_value is nullptr";
+  auto tensor_info = std::make_shared<tensor::Tensor>(type, *shape_vector);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "tensor info is nullptr";
     return RET_ERROR;
   }
-  param_value->set_tensor_type(type);
-  if (GetValueFromType(tensor_proto, tensor_shape, param_value, type, shape_size) != RET_OK) {
-    MS_LOG(ERROR) << "get value from type failed.";
+  auto status = SetTensorInfoFromType(tensor_proto, &tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "set tensor data from type failed.";
     return RET_ERROR;
   }
-  std::vector<int> param_shape(shape_vector->begin(), shape_vector->end());
-  param_value->set_tensor_shape(param_shape);
-  if (TensorFlowUtils::FindAttrValue(node_def, "data_format", const_cast<tensorflow::AttrValue *>(&attr_value))) {
-    auto format = mindspore::lite::TensorFlowUtils::ParseNodeFormat(node_def);
-    if (format == mindspore::Format::NUM_OF_FORMAT) {
-      MS_LOG(ERROR) << "Do not support data format: " << attr_value.s();
-    }
-    param_value->set_format(format);
-  } else {
-    param_value->set_format(schema::Format::Format_NHWC);
+  status = InitParameterFromTensorInfo(parameter, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed.";
+    return RET_ERROR;
   }
-  parameter->set_default_param(param_value);
   return RET_OK;
 }
 
@@ -365,6 +420,7 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
     MS_LOG(INFO) << "Found value attr, means it has default value";
     auto status = ConvertConstTensor(node, attr_value, type, parameter, &shape_vector);
     if (status != RET_OK) {
+      MS_LOG(ERROR) << "convert const tensor failed.";
       return status;
     }
   } else {

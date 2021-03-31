@@ -21,7 +21,6 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "schema/inner/model_generated.h"
-#include "src/param_value_lite.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "utils/utils.h"
 #include "include/errorcode.h"
@@ -48,7 +47,7 @@ class TfBidirectionGruFusion : public PatternProcessPass {
  private:
   AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
 
-  ParamValueLitePtr GetDefaultParamValue(const AnfNodePtr &parameter_anf) const;
+  tensor::TensorPtr GetDefaultTensorInfo(const AnfNodePtr &parameter_anf) const;
   lite::STATUS GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf, const AnfNodePtr &bw_cand_kernel_anf,
                                      int *input_size, int *hidden_size) const;
   ParameterPtr AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,

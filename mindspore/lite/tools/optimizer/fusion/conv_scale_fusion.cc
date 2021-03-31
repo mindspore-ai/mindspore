@@ -16,7 +16,6 @@
 
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include <memory>
-#include "src/param_value_lite.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
@@ -70,8 +69,8 @@ void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num,
     return;
   }
   auto scale_weight_param = scale_weight_node->cast<ParameterPtr>()->default_param();
-  auto weight_value = std::dynamic_pointer_cast<ParamValueLite>(scale_weight_param);
-  auto weight_data = reinterpret_cast<const float *>(weight_value->tensor_addr());
+  auto weight_value = std::dynamic_pointer_cast<tensor::Tensor>(scale_weight_param);
+  auto weight_data = reinterpret_cast<const float *>(weight_value->data_c());
 
   if (EOK != memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, kernel_num * sizeof(float))) {
     MS_LOG(ERROR) << "memcpy_s transScale failed";
@@ -81,8 +80,8 @@ void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num,
 
   if (scale_bias_node != nullptr) {
     auto scale_bias_param = scale_bias_node->cast<ParameterPtr>()->default_param();
-    auto bias_value = std::dynamic_pointer_cast<ParamValueLite>(scale_bias_param);
-    auto bias_data = reinterpret_cast<const float *>(bias_value->tensor_addr());
+    auto bias_value = std::dynamic_pointer_cast<tensor::Tensor>(scale_bias_param);
+    auto bias_data = reinterpret_cast<const float *>(bias_value->data_c());
     if (EOK != memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, kernel_num * sizeof(float))) {
       MS_LOG(ERROR) << "memcpy_s transScale failed";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);

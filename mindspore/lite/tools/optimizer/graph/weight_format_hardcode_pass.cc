@@ -36,14 +36,19 @@ const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(
 void WeightFormatHardCodePass::SetQuantType(QuantType type) { this->quant_type = type; }
 void WeightFormatHardCodePass::SetFmkType(FmkType type) { this->fmk_type = type; }
 lite::STATUS WeightFormatHardCodePass::HardCodeCAFFE(const CNodePtr &conv_node,
-                                                     const ParamValueLitePtr &param_value) const {
+                                                     const tensor::TensorPtr &tensor_info) const {
   MS_ASSERT(conv_cnode != nullptr);
-  MS_ASSERT(param_value != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
+  auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
+    return lite::RET_ERROR;
+  }
   switch (quant_type) {
     case schema::QuantType_PostTraining:
     case QuantType_WeightQuant:
     case QuantType_QUANT_NONE:
-      param_value->set_format(schema::Format::Format_KCHW);
+      prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KCHW));
       break;
     default: {
       MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type)
@@ -55,9 +60,9 @@ lite::STATUS WeightFormatHardCodePass::HardCodeCAFFE(const CNodePtr &conv_node,
 }
 
 lite::STATUS WeightFormatHardCodePass::HardCodeONNX(const CNodePtr &conv_node,
-                                                    const ParamValueLitePtr &param_value) const {
+                                                    const tensor::TensorPtr &tensor_info) const {
   MS_ASSERT(conv_cnode != nullptr);
-  MS_ASSERT(param_value != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
   if (prim == nullptr) {
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
@@ -70,12 +75,12 @@ lite::STATUS WeightFormatHardCodePass::HardCodeONNX(const CNodePtr &conv_node,
       // sum up from current onnx quant models
       if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
         if (!is_depth_wise) {
-          param_value->set_format(schema::Format::Format_KHWC);
+          prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KHWC));
         } else {
-          param_value->set_format(schema::Format::Format_CHWK);
+          prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::CHWK));
         }
       } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-        param_value->set_format(schema::Format::Format_KCHW);
+        prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KCHW));
       } else {
         MS_LOG(ERROR) << "Unsupported op: " << conv_node->fullname_with_scope();
         return lite::RET_ERROR;
@@ -91,9 +96,9 @@ lite::STATUS WeightFormatHardCodePass::HardCodeONNX(const CNodePtr &conv_node,
       if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion) ||
           CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion)) {
         if (format == schema::Format::Format_NHWC) {
-          param_value->set_format(schema::Format::Format_KHWC);
+          prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KHWC));
         } else {
-          param_value->set_format(schema::Format::Format_KCHW);
+          prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KCHW));
         }
       }
     } break;
@@ -107,9 +112,9 @@ lite::STATUS WeightFormatHardCodePass::HardCodeONNX(const CNodePtr &conv_node,
 }
 
 lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
-                                                  const ParamValueLitePtr &param_value) const {
+                                                  const tensor::TensorPtr &tensor_info) const {
   MS_ASSERT(conv_cnode != nullptr);
-  MS_ASSERT(param_value != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
   if (prim == nullptr) {
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
@@ -122,7 +127,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
     case QuantType_WeightQuant:
     case QuantType_QUANT_NONE: {
       // sum up from current ms quant models
-      param_value->set_format(schema::Format::Format_KCHW);
+      prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KCHW));
     } break;
     default: {
       MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type)
@@ -134,9 +139,9 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
 }
 
 lite::STATUS WeightFormatHardCodePass::HardCodeTFLITE(const CNodePtr &conv_node,
-                                                      const ParamValueLitePtr &param_value) const {
+                                                      const tensor::TensorPtr &tensor_info) const {
   MS_ASSERT(conv_cnode != nullptr);
-  MS_ASSERT(param_value != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
   if (prim == nullptr) {
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
@@ -150,12 +155,12 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTFLITE(const CNodePtr &conv_node,
     case QuantType_QUANT_NONE: {
       if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
         if (!is_depth_wise) {
-          param_value->set_format(schema::Format::Format_KHWC);
+          prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KHWC));
         } else {
-          param_value->set_format(schema::Format::Format_CHWK);
+          prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::CHWK));
         }
       } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-        param_value->set_format(schema::Format::Format_CHWK);
+        prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::CHWK));
       }
     } break;
     default: {
@@ -167,9 +172,9 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTFLITE(const CNodePtr &conv_node,
 }
 
 lite::STATUS WeightFormatHardCodePass::HardCodeTF(const CNodePtr &conv_node,
-                                                  const ParamValueLitePtr &param_value) const {
+                                                  const tensor::TensorPtr &tensor_info) const {
   MS_ASSERT(conv_cnode != nullptr);
-  MS_ASSERT(param_value != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
   if (prim == nullptr) {
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
@@ -179,13 +184,13 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTF(const CNodePtr &conv_node,
   if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
     {
       if (!is_depth_wise) {
-        param_value->set_format(schema::Format::Format_HWCK);
+        prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::HWCK));
       } else {
-        param_value->set_format(schema::Format::Format_HWKC);
+        prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::HWKC));
       }
     }
   } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-    param_value->set_format(schema::Format::Format_HWCK);
+    prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::HWCK));
   }
   return lite::RET_OK;
 }
@@ -206,27 +211,27 @@ bool WeightFormatHardCodePass::Run(const FuncGraphPtr &graph) {
     MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
     auto weight_node = conv_cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
-    auto param_value = GetLiteParamValue(weight_node);
-    if (param_value == nullptr) {
+    auto tensor_info = GetTensorInfo(weight_node);
+    if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "weight node must param value";
       return false;
     }
     lite::STATUS status;
     switch (fmk_type) {
       case FmkType_CAFFE:
-        status = HardCodeCAFFE(conv_cnode, param_value);
+        status = HardCodeCAFFE(conv_cnode, tensor_info);
         break;
       case FmkType_TFLITE:
-        status = HardCodeTFLITE(conv_cnode, param_value);
+        status = HardCodeTFLITE(conv_cnode, tensor_info);
         break;
       case FmkType_TF:
-        status = HardCodeTF(conv_cnode, param_value);
+        status = HardCodeTF(conv_cnode, tensor_info);
         break;
       case FmkType_ONNX:
-        status = HardCodeONNX(conv_cnode, param_value);
+        status = HardCodeONNX(conv_cnode, tensor_info);
         break;
       case FmkType_MS:
-        status = HardCodeMS(conv_cnode, param_value);
+        status = HardCodeMS(conv_cnode, tensor_info);
         break;
       default:
         MS_LOG(ERROR) << "Unsupported fmkType: " << fmk_type << ", node: " << node->fullname_with_scope();

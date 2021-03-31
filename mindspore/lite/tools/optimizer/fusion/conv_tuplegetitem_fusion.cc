@@ -15,7 +15,6 @@
  */
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include <memory>
-#include "src/param_value_lite.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 

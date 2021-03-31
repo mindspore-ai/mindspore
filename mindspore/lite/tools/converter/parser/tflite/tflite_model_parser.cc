@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <utility>
 #include "tools/converter/converter_flags.h"
-#include "src/param_value_lite.h"
 #include "src/common/file_utils.h"
 #include "ops/return.h"
 #include "ops/make_tuple.h"
@@ -160,7 +159,7 @@ STATUS TfliteModelParser::ConvertOps() {
         tensor_name = GetTensorName(i, tflite_op_type, op_name);
       }
       auto parameter = func_graph_->add_parameter();
-      status = ConvertConstTensor(input_tensor.get(), parameter.get(), tensor_name);
+      status = ConvertConstTensor(input_tensor.get(), parameter, tensor_name);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "convert " << op_name << " node: " << input_idx << " const node failed.";
         continue;
@@ -354,7 +353,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
   return RET_OK;
 }
 
-STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, Parameter *parameter,
+STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, const ParameterPtr &parameter,
                                              const std::string &tensor_name) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null, get const tensor failed.";
@@ -366,31 +365,53 @@ STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, Para
     return RET_NULL_PTR;
   }
   const auto &tflite_model_buffers = tflite_model_->buffers;
-  auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
+  auto type_id = GetTfliteDataType(tensor->type);
   std::vector<int64_t> shape_vector;
-  (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  parameter->set_abstract(abstract_tensor);
-  parameter->set_name(tensor_name);
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_shape(tensor->shape);
-  param_value->set_tensor_type(GetTfliteDataType(tensor->type));
-  param_value->set_format(schema::Format::Format_NHWC);
   const auto &data = tflite_model_buffers.at(tensor->buffer)->data;
-  if (!data.empty()) {
-    auto size = data.size();
-    char *tensor_data = new (std::nothrow) char[size];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new char[] failed";
-      return RET_MEMORY_FAILED;
+  std::string shape_str;
+  if (data.empty()) {
+    shape_vector = {};
+  } else if (type_id == kObjectTypeString) {
+    shape_str += std::to_string(tensor->shape.size()) + ",";
+    for (auto &dim : tensor->shape) {
+      shape_str += std::to_string(dim) + ",";
     }
-    std::memcpy(tensor_data, data.data(), size);
-    param_value->SetTensorData(tensor_data, size);
+    shape_vector = {static_cast<int64_t>(shape_str.size() + data.size())};
+  } else {
+    (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
+                         [](const int32_t &value) { return static_cast<int64_t>(value); });
   }
-  parameter->set_default_param(param_value);
+
+  auto tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, type_id);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "init tensor info failed";
+    return RET_NULL_PTR;
+  }
+  if (!data.empty()) {
+    auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+    if (type_id == kObjectTypeString) {
+      if (memcpy_s(tensor_data, shape_str.size(), shape_str.data(), shape_str.size()) != EOK) {
+        MS_LOG(ERROR) << "memcpy failed.";
+        return RET_ERROR;
+      }
+      if (memcpy_s(tensor_data + shape_str.size(), data.size(), data.data(), data.size()) != EOK) {
+        MS_LOG(ERROR) << "memcpy failed.";
+        return RET_ERROR;
+      }
+    } else {
+      if (memcpy_s(tensor_data, tensor_info->Size(), data.data(), data.size()) != EOK) {
+        MS_LOG(ERROR) << "memcpy failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+  auto status = InitParameterFromTensorInfo(parameter, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed.";
+    return RET_ERROR;
+  }
+  parameter->set_name(tensor_name);
   return RET_OK;
 }
 

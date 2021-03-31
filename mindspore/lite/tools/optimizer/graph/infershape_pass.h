@@ -39,7 +39,6 @@ class InferShapePass : public Pass {
   abstract::AbstractTensorPtr ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor);
   STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *input_tensors);
   STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *output_tensors);
-  STATUS SetParameterAbstract(const ParameterPtr &parameter);
   STATUS SetCNodeAbstract(const std::vector<lite::Tensor *> &output_tensors, const std::shared_ptr<CNode> &cnode);
   int StrIsContain(const std::vector<std::string> &total, const std::string &aim);
   int SetSubGraphInputsAbstract(const CNodePtr &cnode, const FuncGraphPtr &func_graph);

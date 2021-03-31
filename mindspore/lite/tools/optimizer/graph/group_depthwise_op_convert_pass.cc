@@ -81,7 +81,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
       auto weight_node = conv_cnode->input(kConvWeightIndex);
       MS_ASSERT(weight_node != nullptr);
-      auto weight_value = GetLiteParamValue(weight_node);
+      auto weight_value = GetTensorInfo(weight_node);
       if (weight_value == nullptr) {
         MS_LOG(ERROR) << "weight node must param value";
         return false;
@@ -89,19 +89,20 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_ASSERT(weight_value->tensor_type() == TypeId::kNumberTypeFloat32 ||
                 weight_value->tensor_type() == TypeId::kNumberTypeInt8);
       lite::STATUS status;
-      schema::Format weight_dst_format = schema::Format::Format_CHWK;
-      weight_value->set_format(schema::Format_KHWC);
-      status = TransFilterFormat(weight_value, weight_dst_format);
+      auto weight_src_format = schema::Format::Format_KHWC;
+      auto weight_dst_format = schema::Format::Format_CHWK;
+
+      status = TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
       if (status == RET_OK) {
-        weight_value->set_format(weight_dst_format);
+        conv2d_fusion->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(weight_dst_format));
       } else {
-        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_value->format()]) << "To"
+        MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
                       << EnumNameFormat(weight_dst_format) << " failed, node : " << node->fullname_with_scope();
         return false;
       }
-      auto type_id = static_cast<TypeId>(weight_value->tensor_type());
+      auto type_id = static_cast<TypeId>(weight_value->data_type());
       auto type_ptr = TypeIdToType(type_id);
-      auto shape = weight_value->tensor_shape();
+      auto shape = weight_value->shape();
       std::vector<int64_t> shape_vector;
       (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                            [](const int32_t &value) { return static_cast<int64_t>(value); });

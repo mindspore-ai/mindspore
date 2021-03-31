@@ -44,12 +44,12 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
   if (!perm_param->has_default() || perm_param->default_param() == nullptr) {
     return perm;
   }
-  auto perm_value = perm_param->default_param()->cast<ParamValueLitePtr>();
+  auto perm_value = perm_param->default_param()->cast<tensor::TensorPtr>();
   if (perm_value == nullptr) {
     return perm;
   }
-  perm.resize(perm_value->tensor_shape()[0]);
-  if (memcpy_s(perm.data(), perm_value->tensor_size(), perm_value->tensor_addr(), perm_value->tensor_size()) != EOK) {
+  perm.resize(perm_value->shape()[0]);
+  if (memcpy_s(perm.data(), perm_value->Size(), perm_value->data_c(), perm_value->Size()) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     return {};
   }

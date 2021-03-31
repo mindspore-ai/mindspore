@@ -41,10 +41,10 @@ class WeightQuantizer : public Quantizer {
   ~WeightQuantizer();
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
-  STATUS DoConvQuantize(CNodePtr);
-  STATUS DoMulQuantize(CNodePtr);
-  STATUS DoLstmQuantize(CNodePtr cnode);
-  STATUS DoGatherQuantize(CNodePtr cnode);
+  STATUS DoConvQuantize(const CNodePtr &);
+  STATUS DoMulQuantize(const CNodePtr &);
+  STATUS DoLstmQuantize(const CNodePtr &cnode);
+  STATUS DoGatherQuantize(const CNodePtr &cnode);
 
   STATUS ProcessLstmWeightByIndex(const CNodePtr &cnode, const PrimitivePtr &primitive, const int &index);
 
@@ -61,16 +61,17 @@ class WeightQuantizer : public Quantizer {
   std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
 
-  STATUS DoMixedQuant(FuncGraphPtr);
-  STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, const PrimitivePtr &primitive);
-  STATUS DoFixedQuant(FuncGraphPtr);
-  STATUS RunFp32Graph(FuncGraphPtr);
+  STATUS DoMixedQuant(const FuncGraphPtr &);
+  STATUS SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
+                     const PrimitivePtr &primitive);
+  STATUS DoFixedQuant(const FuncGraphPtr &);
+  STATUS RunFp32Graph(const FuncGraphPtr &);
 
   STATUS DoMixedQuantize(const FuncGraphPtr &func_graph);
   STATUS CheckImageCnt();
   STATUS GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
-                              ParameterPtr *param_node, ParamValueLitePtr *param_value);
-  STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const ParamValueLitePtr &param_value,
+                              ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
+  STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info,
                   const PrimitivePtr &primitive);
   STATUS DoQuantSearch(const FuncGraphPtr &func_graph);
 };

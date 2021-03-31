@@ -22,7 +22,6 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "utils/utils.h"
-#include "src/param_value_lite.h"
 #include "include/errorcode.h"
 
 namespace mindspore {
@@ -40,7 +39,7 @@ class TfLstmCellFusion : public TfliteLstmCellFusion {
 
   lite::STATUS SplitWeights(const AnfNodePtr &weight, const ParameterPtr &weight_i, const ParameterPtr &weight_c,
                             int hidden_size) const;
-  lite::STATUS SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int> &shape,
+  lite::STATUS SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int64_t> &shape,
                                            const float *const data_ptr, const int hidden_size) const;
   lite::STATUS PopulateBiasNode(const EquivPtr &body_equiv, const ParameterPtr &new_bias, const AnfNodePtr &old_bias,
                                 const int hidden_size) const;

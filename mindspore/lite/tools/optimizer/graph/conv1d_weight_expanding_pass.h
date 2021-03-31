@@ -22,7 +22,6 @@
 #include "backend/optimizer/common/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::ParamValueLitePtr;
 namespace mindspore::opt {
 class Conv1DWeightExpandingPass : public Pass {
  public:
@@ -31,7 +30,7 @@ class Conv1DWeightExpandingPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  lite::STATUS ExpandFilterShape(const ParamValueLitePtr &tensor);
+  lite::STATUS ExpandFilterShape(const tensor::TensorPtr &tensor, const schema::Format &format);
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV1D_WEIGHT_EXPANDING_PASS_H_

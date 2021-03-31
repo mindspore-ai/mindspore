@@ -19,70 +19,45 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include "src/param_value_lite.h"
+#include "tools/common/tensor_util.h"
 #include "ops/constant.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                                               const std::vector<int> &shape) {
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-
   int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
   if (iter == onnx_node.attribute().end()) {
     return RET_OK;
   }
+  ShapeVector shape_vector(shape.begin(), shape.end());
   size_t data_size = data_count * sizeof(int64_t) / sizeof(uint8_t);
-  char *param_data = new (std::nothrow) char[data_size];
-  if (param_data == nullptr) {
-    MS_LOG(ERROR) << "new char[] failed";
-    return RET_MEMORY_FAILED;
-  }
-  if (iter->ints().data() == nullptr) {
-    MS_LOG(ERROR) << "origin ints data in onnx is nullptr";
-    delete[] param_data;
-    return RET_NULL_PTR;
-  }
-  if (memcpy_s(param_data, data_size, iter->ints().data(), data_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] param_data;
+  auto tensor_info = CreateTensorInfo(iter->ints().data(), data_size, shape_vector, kNumberTypeInt64);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
     return RET_ERROR;
   }
-  param_value->set_tensor_shape(shape);
-  param_value->set_format(schema::Format_NUM_OF_FORMAT);
-  param_value->set_tensor_type(kNumberTypeInt64);
-  param_value->SetTensorData(param_data, data_size);
-  prim->set_attr("const_data", param_value);
+  prim->set_attr("const_data", tensor_info);
   return RET_OK;
 }
 
 STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                                            const std::vector<int> &shape) {
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-
   int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
   if (iter == onnx_node.attribute().end()) {
     return RET_OK;
   }
-  char *param_data = new (std::nothrow) char[data_count];
-  if (param_data == nullptr) {
-    MS_LOG(ERROR) << "new char[] failed";
-    return RET_MEMORY_FAILED;
-  }
-  if (memcpy_s(param_data, data_count, iter->s().data(), data_count) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] param_data;
+  ShapeVector shape_vector(shape.begin(), shape.end());
+  auto tensor_info = CreateTensorInfo(iter->s().data(), data_count, shape_vector, kNumberTypeUInt8);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
     return RET_ERROR;
   }
-  param_value->set_tensor_shape(shape);
-  param_value->set_format(schema::Format_NUM_OF_FORMAT);
-  param_value->set_tensor_type(kNumberTypeUInt8);
-  param_value->SetTensorData(param_data, data_count);
-  prim->set_attr("const_data", param_value);
+  prim->set_attr("const_data", tensor_info);
   return RET_OK;
 }
 ops::PrimitiveC *OnnxGivenTensorFillParser::Parse(const onnx::GraphProto &onnx_graph,

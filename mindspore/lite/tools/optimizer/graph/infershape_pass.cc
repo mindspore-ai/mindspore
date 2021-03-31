@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "tools/common/node_util.h"
+#include "tools/common/tensor_util.h"
 #include "src/common/common.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/ops_utils.h"
@@ -27,16 +28,17 @@
 namespace mindspore::opt {
 namespace {
 constexpr size_t INITIAL_SIZE = 1024;
-ParamValueLitePtr NewParamValueLitePtr(lite::Tensor *tensor) {
-  auto para_value_lite = std::make_shared<ParamValueLite>();
-  if (para_value_lite == nullptr) {
-    MS_LOG(ERROR) << "new ParamValueLite failed";
+tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
+  std::vector<int> shape(tensor->shape());
+  std::vector<int64_t> shape_vector;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                 [](const int32_t &value) { return static_cast<int64_t>(value); });
+  auto tensor_info = std::make_shared<tensor::Tensor>(tensor->data_type(), shape_vector);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "new tensor::Tensor failed";
     return nullptr;
   }
-  para_value_lite->set_tensor_shape(tensor->shape());
-  para_value_lite->set_tensor_type(tensor->data_type());
-  para_value_lite->set_format(tensor->format());
-  return para_value_lite;
+  return tensor_info;
 }
 
 bool IsSpecialType(const CNodePtr &cnode) {
@@ -62,9 +64,9 @@ abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(li
     return nullptr;
   }
 
-  auto para_value_lite = NewParamValueLitePtr(tensor);
-  if (para_value_lite == nullptr) {
-    MS_LOG(ERROR) << "new ParamValueLite failed";
+  auto tensor_info = NewTensorInfo(tensor);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "new tensor::Tensor failed";
     return nullptr;
   }
 
@@ -74,74 +76,21 @@ abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(li
       MS_LOG(ERROR) << "cast tensor_list failed";
       return nullptr;
     }
-    auto tensor_info = new int[tensor_list->element_shape().size() + 2];
-    tensor_info[0] = tensor_list->tensors_data_type();
-    tensor_info[1] = tensor_list->element_shape().size();
+    auto tensor_data = new int[tensor_list->element_shape().size() + 2];
+    tensor_data[0] = tensor_list->tensors_data_type();
+    tensor_data[1] = tensor_list->element_shape().size();
     for (size_t i = 0; i < tensor_list->element_shape().size(); ++i) {
-      tensor_info[i + 2] = tensor_list->element_shape()[i];
+      tensor_data[i + 2] = tensor_list->element_shape()[i];
     }
-    para_value_lite->set_tensor_addr(tensor_info);
-    para_value_lite->set_tensor_size(tensor_list->element_shape().size() + 2);
+    auto status = lite::SetTensorData(tensor_info, tensor_data, tensor_list->element_shape().size() + 2);
+    delete[] tensor_data;
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "set tensor data failed";
+      return nullptr;
+    }
   }
-
-  new_abstract->set_value(para_value_lite);
+  new_abstract->set_value(tensor_info);
   return new_abstract;
-}
-
-STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
-  MS_ASSERT(parameter != nullptr);
-  auto old_abstract = parameter->abstract();
-  if (old_abstract == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << parameter->name();
-    return RET_ERROR;
-  }
-  if (!utils::isa<abstract::AbstractTensorPtr>(old_abstract)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << parameter->name();
-    return RET_ERROR;
-  }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(old_abstract);
-
-  auto typePtr = abstract_tensor->element()->GetTypeTrack();
-  if (typePtr == nullptr) {
-    MS_LOG(ERROR) << "typePtr is nullptr";
-    return RET_ERROR;
-  }
-
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
-    MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << parameter->name();
-    return RET_ERROR;
-  }
-  auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-  std::vector<int32_t> shape;
-  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-
-  auto new_abstract = std::make_shared<abstract::AbstractTensor>(typePtr, shape_vector);
-  auto new_value = std::make_shared<ParamValueLite>();
-  new_value->set_tensor_shape(shape);  // scalar's shape is {}
-  new_value->set_tensor_type(typePtr->type_id());
-  new_value->set_format(schema::Format_NHWC);  // default format is NHWC
-  if (parameter->has_default()) {
-    auto param_value = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-    new_value->set_format(param_value->format());
-    new_value->set_tensor_size(param_value->tensor_size());
-
-    char *tensor_data = new (std::nothrow) char[new_value->tensor_size()];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new char[] failed";
-      return RET_ERROR;
-    }
-    auto ret = memcpy_s(tensor_data, new_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size());
-    if (new_value->tensor_size() != 0 && ret != EOK) {
-      MS_LOG(ERROR) << "memcpy error: " << ret;
-      delete[] tensor_data;
-      return RET_ERROR;
-    }
-    new_value->SetTensorData(tensor_data, new_value->tensor_size());
-  }
-  new_abstract->set_value(new_value);
-  parameter->set_abstract(new_abstract);
-  return RET_OK;
 }
 
 void InferShapePass::FreeTensors(std::vector<lite::Tensor *> *tensors) {
@@ -178,18 +127,18 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
       return RET_ERROR;
     }
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
-    if (!utils::isa<ParamValueLitePtr>(abstract_tensor->GetValueTrack())) {  // input node not complete infershape
-      MS_LOG(DEBUG) << "Value of abstract is not ParamValueLite, indicate that infershape has failed";
+    if (!utils::isa<tensor::TensorPtr>(abstract_tensor->GetValueTrack())) {  // input node not complete infershape
+      MS_LOG(DEBUG) << "Value of abstract is not tensor::Tensor, indicate that infershape has failed";
       return RET_ERROR;
     }
-    auto param_value_lite = utils::cast<ParamValueLitePtr>(abstract_tensor->GetValueTrack());
+    auto param_value_lite = utils::cast<tensor::TensorPtr>(abstract_tensor->GetValueTrack());
     if (param_value_lite == nullptr) {
-      MS_LOG(ERROR) << "ParamValueLite of abstract is nullptr";
+      MS_LOG(ERROR) << "tensor::Tensor of abstract is nullptr";
       return RET_ERROR;
     }
 
     std::unique_ptr<lite::Tensor> tensor = nullptr;
-    if (param_value_lite->tensor_type() != kObjectTypeTensorType) {
+    if (param_value_lite->data_type() != kObjectTypeTensorType) {
       tensor = std::make_unique<lite::Tensor>();
     } else {
       tensor = std::make_unique<lite::TensorList>();
@@ -198,29 +147,32 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
       MS_LOG(ERROR) << "new input tensor failed";
       return RET_ERROR;
     }
-    if (param_value_lite->tensor_type() != kObjectTypeTensorType) {
-      tensor->set_shape(param_value_lite->tensor_shape());
-      tensor->set_data_type(param_value_lite->tensor_type());
-      tensor->set_format(schema::Format(param_value_lite->format()));
+
+    std::vector<int> shape;
+    std::transform(param_value_lite->shape().begin(), param_value_lite->shape().end(), std::back_inserter(shape),
+                   [](const int64_t &value) { return static_cast<int32_t>(value); });
+    if (param_value_lite->data_type() != kObjectTypeTensorType) {
+      tensor->set_shape(shape);
+      tensor->set_data_type(param_value_lite->data_type());
     }
 
     if (utils::isa<ParameterPtr>(input)) {
       auto parameter = input->cast<ParameterPtr>();
       if (parameter->has_default()) {
-        auto param_value = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-        if (param_value_lite->tensor_type() != kObjectTypeTensorType) {
+        auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(parameter->default_param());
+        if (param_value_lite->data_type() != kObjectTypeTensorType) {
           auto ret = tensor->MallocData();
           if (ret != 0) {
             MS_LOG(ERROR) << "Malloc tensor data failed";
             return RET_ERROR;
           }
-          ret = memcpy_s(tensor->MutableData(), tensor->Size(), param_value->tensor_addr(), param_value->tensor_size());
+          ret = memcpy_s(tensor->MutableData(), tensor->Size(), tensor_info->data_c(), tensor_info->Size());
           if (tensor->Size() != 0 && ret != EOK) {
             MS_LOG(ERROR) << "memcpy error: " << ret;
             return RET_ERROR;
           }
         } else {
-          int *data = reinterpret_cast<int *>(param_value->tensor_addr());
+          int *data = reinterpret_cast<int *>(tensor_info->data_c());
           auto tensor_list = reinterpret_cast<lite::TensorList *>(tensor.get());
           if (tensor_list->Decode(data) != RET_OK) {
             return RET_ERROR;
@@ -349,10 +301,6 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (utils::isa<ParameterPtr>(node)) {
-      int status = SetParameterAbstract(node->cast<ParameterPtr>());
-      if (status != RET_OK) {
-        return false;
-      }
       continue;
     }
     if (!utils::isa<CNodePtr>(node)) {

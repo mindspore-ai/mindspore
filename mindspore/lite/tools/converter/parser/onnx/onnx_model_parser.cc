@@ -20,15 +20,16 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+#include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
+#include "tools/common/tensor_util.h"
 #include "ops/return.h"
 #include "ops/make_tuple.h"
 #include "ops/tensor_list_stack.h"
 #include "ops/tuple_get_item.h"
 #include "ir/func_graph.h"
-#include "src/param_value_lite.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore {
@@ -209,6 +210,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
       status = RET_ERROR;
       continue;
     }
+    primitive_c->AddAttr(mindspore::opt::kWeightFormat, MakeValue<int64_t>(Format_NCHW));
     status = ConvertOpQuantParams(onnx_node, primitive_c);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "convert " << onnx_node.op_type() << " quant param failed.";
@@ -429,25 +431,14 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
           ext_subgraph_input->set_abstract(outside_input_node->abstract());
           ext_subgraph_input->set_name(input_name);
           if (outside_input_node->isa<Parameter>()) {
-            auto param_value = outside_input_node->cast<ParameterPtr>()->default_param()->cast<ParamValueLitePtr>();
-            auto copy_param_value = std::make_shared<ParamValueLite>();
-            auto copy_data = new (std::nothrow) char[param_value->tensor_size()];
-            if (copy_data == nullptr) {
-              MS_LOG(ERROR) << "new char[] failed";
-              return RET_MEMORY_FAILED;
-            }
-            auto ret =
-              memcpy_s(copy_data, param_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size());
-            if (ret != EOK) {
-              delete[](copy_data);
-              MS_LOG(ERROR) << "memcpy error: " << ret;
+            auto tensor_info = outside_input_node->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
+            auto copy_tensor_info = CreateTensorInfo(tensor_info->data_c(), tensor_info->Size(), tensor_info->shape(),
+                                                     tensor_info->data_type());
+            if (copy_tensor_info == nullptr) {
+              MS_LOG(ERROR) << "memcpy failed.";
               return RET_ERROR;
             }
-            copy_param_value->set_tensor_shape(param_value->tensor_shape());
-            copy_param_value->set_format(param_value->format());
-            copy_param_value->set_tensor_type(param_value->tensor_type());
-            copy_param_value->SetTensorData(copy_data, param_value->tensor_size());
-            ext_subgraph_input->set_default_param(copy_param_value);
+            ext_subgraph_input->set_default_param(copy_tensor_info);
           } else {
             // output inside cnode need make extra input
             graph_inputs->emplace_back(ext_subgraph_input);
@@ -675,16 +666,16 @@ STATUS OnnxModelParser::CopyTensorQuantParam(const std::string &tensor_name, Qua
     MS_LOG(ERROR) << "quant param get failed";
     return RET_ERROR;
   }
-  auto param_value_lite = quant_parameter_node->default_param()->cast<ParamValueLitePtr>();
-  if (param_value_lite == nullptr) {
-    MS_LOG(ERROR) << "parameterNode's default param is not paramValueLite";
+  auto tensor_info = quant_parameter_node->default_param()->cast<tensor::TensorPtr>();
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "parameterNode's default param is not tensor::TensorPtr";
     return RET_ERROR;
   }
   if (scale_or_not) {
-    quant_param->scale = *reinterpret_cast<float *>(param_value_lite->tensor_addr());
+    quant_param->scale = *reinterpret_cast<float *>(tensor_info->data_c());
     quant_param->inited = true;
   } else {
-    quant_param->zeroPoint = *reinterpret_cast<int64_t *>(param_value_lite->tensor_addr());
+    quant_param->zeroPoint = *reinterpret_cast<int64_t *>(tensor_info->data_c());
     quant_param->inited = true;
   }
   return RET_OK;
@@ -704,10 +695,14 @@ ParameterPtr CreateConstParamter(const FuncGraphPtr &anf_graph, int val) {
     return nullptr;
   }
   tensor_data[0] = val;
-  auto param_value = std::make_shared<ParamValueLite>();
-  param_value->set_tensor_shape({});
-  param_value->SetTensorData(tensor_data, sizeof(int));
-  const_node->set_default_param(param_value);
+  auto tensor_info = CreateTensorInfo(tensor_data, 1 * sizeof(int), {1}, kNumberTypeInt32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
+    delete[] tensor_data;
+    return nullptr;
+  }
+  delete[] tensor_data;
+  const_node->set_default_param(tensor_info);
   return const_node;
 }
 
@@ -841,10 +836,9 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
     auto while_tensor_array_input = anf_root_graph->add_parameter();
     std::vector<int64_t> shape_vector;
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(kTensorType, shape_vector);
-    auto param_value = std::make_shared<ParamValueLite>();
-    param_value->set_tensor_type(kObjectTypeTensorType);
+    auto tensor_info = std::make_shared<tensor::Tensor>(kObjectTypeTensorType, shape_vector);
     while_tensor_array_input->set_abstract(abstract_tensor);
-    while_tensor_array_input->set_default_param(param_value);
+    while_tensor_array_input->set_default_param(tensor_info);
     while_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray");
     root_while_node->add_input(while_tensor_array_input);
 
@@ -1035,33 +1029,18 @@ STATUS OnnxModelParser::BuildParameterNodeForQuantParam(const void *data, const 
   }
   parameter_node->set_abstract(abstract_tensor);
   parameter_node->set_name(name);
-  std::vector<int> shape;
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  if (param_value == nullptr) {
-    MS_LOG(ERROR) << "new param_value failed";
-    return RET_MEMORY_FAILED;
-  }
-  param_value->set_tensor_shape(shape);
-  param_value->set_format(schema::Format_NUM_OF_FORMAT);
-  param_value->set_tensor_type(type);
   int data_size = 0;
   if (type == kNumberTypeFloat32) {
     data_size = sizeof(float);
   } else {
     data_size = sizeof(int64_t);
   }
-  auto *tensor_data = new (std::nothrow) char[data_size];
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "new char[] failed";
-    return RET_MEMORY_FAILED;
-  }
-  if (memcpy_s(tensor_data, data_size, data, data_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] tensor_data;
+  auto tensor_info = CreateTensorInfo(data, data_size, {1}, type);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
-  param_value->SetTensorData(tensor_data, data_size);
-  parameter_node->set_default_param(param_value);
+  parameter_node->set_default_param(tensor_info);
   anf_nodes_map_.emplace(name, parameter_node);
   return RET_OK;
 }
@@ -1078,26 +1057,23 @@ STATUS OnnxModelParser::BuildParameterNode(const ParameterPtr &parameter_node, c
   parameter_node->set_abstract(abstract_tensor);
   parameter_node->set_name(tensor.name());
 
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   std::vector<int> shape;
   std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
                  [](const int64_t &value) { return static_cast<int>(value); });
-  param_value->set_tensor_shape(shape);
-  param_value->set_tensor_type(data_type);
-  param_value->set_format(schema::Format::Format_NCHW);
-  auto status = CopyOnnxTensorData(tensor, param_value);
+  auto status = CopyOnnxTensorData(tensor, tensor_info);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "copy data failed.";
     return status;
   }
-  parameter_node->set_default_param(param_value);
+  parameter_node->set_default_param(tensor_info);
   return RET_OK;
 }
 
 STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,
-                                           const ParamValueLitePtr &param_value_lite) {
-  if (param_value_lite == nullptr) {
-    MS_LOG(ERROR) << "param_value_lite is nullptr.";
+                                           const tensor::TensorPtr &tensor_info) {
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "tensor_info is nullptr.";
     return RET_NULL_PTR;
   }
   size_t data_count = 1;
@@ -1150,17 +1126,11 @@ STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_t
     MS_LOG(ERROR) << "origin data in onnx model is nullptr";
     return RET_MEMORY_FAILED;
   }
-  char *param_data = new (std::nothrow) char[data_size];
-  if (param_data == nullptr) {
-    MS_LOG(ERROR) << "new char[] failed";
-    return RET_MEMORY_FAILED;
-  }
-  if (memcpy_s(static_cast<void *>(param_data), data_size, onnx_data, data_size) != EOK) {
+  auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+  if (memcpy_s(tensor_data, data_size, onnx_data, data_size) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
-    delete[] param_data;
     return RET_ERROR;
   }
-  param_value_lite->SetTensorData(param_data, data_size);
   return RET_OK;
 }
 

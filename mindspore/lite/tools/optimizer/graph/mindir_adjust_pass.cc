@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
-#include <algorithm>
 #include <vector>
 #include <memory>
 
@@ -22,15 +21,14 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
-#include "src/tensor.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kDoubleNum = 2;
 void FillDefaultInputQuantParamIfNeed(const PrimitivePtr &prim, const size_t &input_size) {
-  auto quant_param_valueptr = prim->GetAttr("quant_params");
-  if (quant_param_valueptr == nullptr) {
+  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
+  if (quant_tensor_info_ptr == nullptr) {
     prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
   }
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
@@ -63,8 +61,8 @@ void FillDefaultInputQuantParamIfNeed(const PrimitivePtr &prim, const size_t &in
 }
 
 int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
-  auto quant_param_valueptr = prim->GetAttr("quant_params");
-  if (quant_param_valueptr == nullptr) {
+  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
+  if (quant_tensor_info_ptr == nullptr) {
     prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
   }
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
@@ -123,8 +121,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
 }
 
 int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
-  auto quant_param_valueptr = prim->GetAttr("quant_params");
-  if (quant_param_valueptr == nullptr) {
+  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
+  if (quant_tensor_info_ptr == nullptr) {
     prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
   }
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
@@ -156,8 +154,8 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
 }
 
 void CheckQuantParams(const PrimitivePtr &prim) {
-  auto quant_param_valueptr = prim->GetAttr("quant_params");
-  if (quant_param_valueptr == nullptr) {
+  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
+  if (quant_tensor_info_ptr == nullptr) {
     prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
   }
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
@@ -263,61 +261,6 @@ int MindirAdjustPass::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   return lite::RET_NO_CHANGE;
 }
 
-int MindirAdjustPass::ParameterNodeConvert(AnfNodePtr anf_node) {
-  if (!utils::isa<ParameterPtr>(anf_node)) {
-    MS_LOG(INFO) << "only parameter node need to convert tensor.";
-    return lite::RET_NO_CHANGE;
-  }
-  auto param_node = anf_node->cast<ParameterPtr>();
-  if (!param_node->has_default()) {
-    MS_LOG(INFO) << "this is graph input, don't need to convert.";
-    return lite::RET_NO_CHANGE;
-  }
-  if (utils::isa<ParamValueLitePtr>(param_node->default_param())) {
-    MS_LOG(INFO) << "the tensor has been a paramvalueLite.";
-    return lite::RET_NO_CHANGE;
-  }
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  if (param_value == nullptr) {
-    MS_LOG(ERROR) << "fail to new a ParamValueLite.";
-    return lite::RET_ERROR;
-  }
-  param_node->set_name(param_node->debug_info()->name());
-  auto tensor_info = param_node->default_param()->cast<tensor::TensorPtr>();
-  if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "the node is not a tensor::TensorPtr.";
-    return lite::RET_ERROR;
-  }
-  param_value->set_tensor_size(tensor_info->Size());
-  param_value->set_tensor_type(tensor_info->data_type());
-  auto tensor_shape = tensor_info->shape();
-  std::vector<int> shape;
-  std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape),
-                 [](int64_t value) { return static_cast<int>(value); });
-  param_value->set_tensor_shape(shape);
-  auto *tensor = new (std::nothrow) lite::Tensor(tensor_info->data_type(), shape);
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "new a lite::tensor failed, get a nullptr.";
-    return lite::RET_MEMORY_FAILED;
-  }
-  auto *tensor_data_buf = tensor->MutableData();
-  if (tensor_data_buf == nullptr) {
-    MS_LOG(ERROR) << "malloc tensor data failed.";
-    delete tensor;
-    return lite::RET_MEMORY_FAILED;
-  }
-  if (memcpy_s(tensor_data_buf, tensor_info->Size(), tensor_info->data_c(), tensor_info->Size()) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error.";
-    delete tensor;
-    return lite::RET_MEMORY_FAILED;
-  }
-  tensor->set_data(nullptr);
-  param_value->set_tensor_addr(tensor_data_buf);
-  param_node->set_default_param(param_value);
-  delete tensor;
-  return lite::RET_OK;
-}
-
 int MindirAdjustPass::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(INFO) << "only cnode need to convert primitive.";
@@ -357,9 +300,7 @@ bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
   int status = lite::RET_OK;
   bool success_flag = true;
   for (auto &node : node_list) {
-    if (utils::isa<ParameterPtr>(node)) {
-      status = ParameterNodeConvert(node);
-    } else if (utils::isa<CNodePtr>(node)) {
+    if (utils::isa<CNodePtr>(node)) {
       status = ComputeQuantParams(node);
     } else if (utils::isa<ValueNodePtr>(node)) {
       status = ValueNodeInt64Convert(node);

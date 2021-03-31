@@ -44,17 +44,16 @@ std::vector<int> GetSliceBeginAndSize(const CNodePtr &cnode, const int index) {
   if (node == nullptr) {
     return content;
   }
-  auto paramter_node = node->cast<ParameterPtr>();
-  if (paramter_node == nullptr || !paramter_node->has_default() || paramter_node->default_param() == nullptr) {
+  auto param_node = node->cast<ParameterPtr>();
+  if (param_node == nullptr || !param_node->has_default() || param_node->default_param() == nullptr) {
     return content;
   }
-  auto paramter_value = paramter_node->default_param()->cast<ParamValueLitePtr>();
-  if (paramter_value == nullptr) {
+  auto tensor_info = param_node->default_param()->cast<tensor::TensorPtr>();
+  if (tensor_info == nullptr) {
     return content;
   }
-  content.resize(paramter_value->tensor_shape_size());
-  if (memcpy_s(content.data(), paramter_value->tensor_shape_size(), paramter_value->tensor_addr(),
-               paramter_value->tensor_shape_size()) != EOK) {
+  content.resize(tensor_info->DataSize());
+  if (memcpy_s(content.data(), tensor_info->Size(), tensor_info->data_c(), tensor_info->Size()) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     return {};
   }
@@ -91,12 +90,12 @@ std::vector<int64_t> GetDefaultParamShape(const ParameterPtr &param) {
     MS_LOG(ERROR) << "default_param is nullptr";
     return shape_vector;
   }
-  if (!utils::isa<ParamValueLitePtr>(default_param)) {
-    MS_LOG(ERROR) << "default_param is not ParamValueLite";
+  if (!utils::isa<tensor::TensorPtr>(default_param)) {
+    MS_LOG(ERROR) << "default_param is not tensor::Tensor";
     return shape_vector;
   }
-  auto param_value_lite = utils::cast<ParamValueLitePtr>(default_param);
-  auto shape = param_value_lite->tensor_shape();
+  auto param_value_lite = utils::cast<tensor::TensorPtr>(default_param);
+  auto shape = param_value_lite->shape();
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                  [](const int val) { return static_cast<int64_t>(val); });
   return shape_vector;
@@ -104,8 +103,8 @@ std::vector<int64_t> GetDefaultParamShape(const ParameterPtr &param) {
 
 bool IsScalarNode(const AnfNodePtr &nodePtr) {
   if (utils::isa<ParameterPtr>(nodePtr) && nodePtr->cast<ParameterPtr>()->has_default()) {
-    auto tensor = utils::cast<ParamValueLitePtr>(utils::cast<ParameterPtr>(nodePtr)->default_param());
-    auto shape = tensor->tensor_shape();
+    auto tensor = utils::cast<tensor::TensorPtr>(utils::cast<ParameterPtr>(nodePtr)->default_param());
+    auto shape = tensor->shape();
     if (shape.empty() || (shape.size() == 1 && shape[0] == 1)) {
       return true;
     }
@@ -158,12 +157,12 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
   if (!perm_param->has_default() || perm_param->default_param() == nullptr) {
     return perm;
   }
-  auto perm_value = perm_param->default_param()->cast<ParamValueLitePtr>();
+  auto perm_value = perm_param->default_param()->cast<tensor::TensorPtr>();
   if (perm_value == nullptr) {
     return perm;
   }
-  perm.resize(perm_value->tensor_shape()[0]);
-  if (memcpy_s(perm.data(), perm_value->tensor_size(), perm_value->tensor_addr(), perm_value->tensor_size()) != EOK) {
+  perm.resize(perm_value->shape()[0]);
+  if (memcpy_s(perm.data(), perm_value->Size(), perm_value->data_c(), perm_value->Size()) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     return {};
   }

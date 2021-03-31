@@ -17,7 +17,6 @@
 #include <memory>
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"
-#include "src/param_value_lite.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 

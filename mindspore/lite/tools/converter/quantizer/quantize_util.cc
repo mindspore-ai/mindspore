@@ -45,6 +45,7 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"
+#include "tools/common/tensor_util.h"
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
 
@@ -861,49 +862,39 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
     }
     auto old_cnode = old_cnode_iter->second;
     auto inputs = cnode->inputs();
-    for (size_t i = 0; i < inputs.size(); i++) {
-      auto input_node = inputs[i];
+    for (const auto &input_node : inputs) {
       if (input_node->isa<Parameter>()) {
         auto param_node = input_node->cast<ParameterPtr>();
-        if (param_node->has_default()) {
-          ParamValueLitePtr old_param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
-          auto new_param_value = std::make_shared<ParamValueLite>();
-
-          auto copyed_data = malloc(old_param_value->tensor_size());
-          if (copyed_data == nullptr) {
-            MS_LOG(ERROR) << "malloc data error, size: " << old_param_value->tensor_size();
-            return nullptr;
-          }
-          memcpy(copyed_data, old_param_value->tensor_addr(), old_param_value->tensor_size());
-
-          new_param_value->set_tensor_size(old_param_value->tensor_size());
-          new_param_value->set_tensor_addr(copyed_data);
-          new_param_value->set_tensor_shape(old_param_value->tensor_shape());
-          new_param_value->set_format(old_param_value->format());
-          new_param_value->set_tensor_type(old_param_value->tensor_type());
-
-          param_node->set_default_param(new_param_value);
-        }
-
-        auto old_abstract_base = param_node->abstract();
-        if (!utils::isa<abstract::AbstractTensorPtr>(old_abstract_base)) {
-          MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << param_node->name();
+        if (!param_node->has_default()) {
+          MS_LOG(ERROR) << "Param node has no default parameter: " << cnode_name;
           return nullptr;
         }
-        auto old_abstract = utils::cast<abstract::AbstractTensorPtr>(old_abstract_base);
-        auto new_abstract = std::make_shared<abstract::AbstractTensor>(old_abstract->element()->GetTypeTrack(),
-                                                                       old_abstract->GetShapeTrack());
-        param_node->set_abstract(new_abstract);
+        auto old_tensor_info = std::static_pointer_cast<tensor::Tensor>(param_node->default_param());
+        if (old_tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Default param of param node is not a tensor info:" << cnode_name;
+          return nullptr;
+        }
+        auto new_tensor_info = lite::CreateTensorInfo(old_tensor_info->data().data(), old_tensor_info->data().nbytes(),
+                                                      old_tensor_info->shape(), old_tensor_info->data_type());
+        if (new_tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Create tensor info failed";
+          return nullptr;
+        }
+        auto status = lite::InitParameterFromTensorInfo(param_node, new_tensor_info);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "init parameter from tensor info failed";
+          return nullptr;
+        }
       }
     }  // end inputs loop
   }    // end cnodes loop
   return new_func_graph;
 }
 
-void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamValueLitePtr *param_value) {
+void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
   MS_ASSERT(node != nullptr);
   MS_ASSERT(param_node != nullptr);
-  MS_ASSERT(param_value != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
 
   auto op_name = node->fullname_with_scope();
 
@@ -917,26 +908,22 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamVal
     return;
   }
 
-  *param_value = std::static_pointer_cast<ParamValueLite>((*param_node)->default_param());
-  if (*param_value == nullptr) {
-    MS_LOG(INFO) << "default_param can not cast to ParamValueLite";
+  *tensor_info = std::static_pointer_cast<tensor::Tensor>((*param_node)->default_param());
+  if (*tensor_info == nullptr) {
+    MS_LOG(INFO) << "default_param can not cast to tensor::Tensor";
     return;
   }
 }
 
-STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size) {
+STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_datas, int new_size, TypeId new_data_type) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(new_size > 0);
-  delete[] reinterpret_cast<char *>(weight->tensor_addr());
-  char *new_tensor_data = new (std::nothrow) char[new_size];
-  if (new_tensor_data == nullptr) {
-    MS_LOG(ERROR) << "new data error";
+  weight->set_data_type(new_data_type);
+  if (new_size != weight->data().nbytes()) {
+    MS_LOG(ERROR) << "Data size of tensor info is error.";
     return RET_ERROR;
   }
-  memcpy(new_tensor_data, quant_datas, new_size);
-
-  weight->set_tensor_size(new_size);
-  weight->set_tensor_addr(new_tensor_data);
+  memcpy(weight->data_c(), quant_datas, new_size);
   return RET_OK;
 }
 

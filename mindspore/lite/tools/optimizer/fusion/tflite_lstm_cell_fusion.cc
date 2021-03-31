@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
-#include <algorithm>
 #include <memory>
+#include <algorithm>
 #include <functional>
 #include "ops/lstm.h"
 #include "ops/squeeze.h"
 #include "ops/tuple_get_item.h"
 #include "src/common/utils.h"
-#include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
+#include "tools/common/tensor_util.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
@@ -51,36 +50,36 @@ bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
 }
 }  // namespace
 
-STATUS TfliteLstmCellFusion::GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v) const {
-  if (param_value == nullptr || v == nullptr) {
-    MS_LOG(ERROR) << "param_value or v is nullptr";
+STATUS TfliteLstmCellFusion::GetFloatScalarFromTensorInfo(const AnfNodePtr &tensor_info, float *v) const {
+  if (tensor_info == nullptr || v == nullptr) {
+    MS_LOG(ERROR) << "tensor_info or v is nullptr";
     return RET_ERROR;
   }
-  if (!utils::isa<ParameterPtr>(param_value)) {
-    MS_LOG(DEBUG) << "param_value is not ParamValueLitePtr";
+  if (!utils::isa<ParameterPtr>(tensor_info)) {
+    MS_LOG(DEBUG) << "tensor_info is not tensor::TensorPtr";
     return RET_ERROR;
   }
-  auto param_ptr = utils::cast<ParameterPtr>(param_value);
+  auto param_ptr = utils::cast<ParameterPtr>(tensor_info);
   if (!param_ptr->has_default()) {
     MS_LOG(DEBUG) << "param not have default";
     return RET_ERROR;
   }
   auto default_param = param_ptr->default_param();
-  if (!utils::isa<ParamValueLitePtr>(default_param)) {
-    MS_LOG(DEBUG) << "param_value is not ParamValueLitePtr";
+  if (!utils::isa<tensor::TensorPtr>(default_param)) {
+    MS_LOG(DEBUG) << "tensor_info is not tensor::TensorPtr";
     return RET_ERROR;
   }
-  auto default_param_ptr = utils::cast<ParamValueLitePtr>(default_param);
-  auto tensor_shape = default_param_ptr->tensor_shape();
+  auto default_param_ptr = utils::cast<tensor::TensorPtr>(default_param);
+  auto tensor_shape = default_param_ptr->shape();
   if (!(tensor_shape.size() == 0 || (tensor_shape.size() == 1 && tensor_shape[0] == 1))) {
     MS_LOG(DEBUG) << "default param is not scalar";
     return RET_ERROR;
   }
-  if (default_param_ptr->tensor_type() != kNumberTypeFloat32 && default_param_ptr->tensor_type() != kNumberTypeFloat) {
+  if (default_param_ptr->data_type() != kNumberTypeFloat32 && default_param_ptr->data_type() != kNumberTypeFloat) {
     MS_LOG(DEBUG) << "default param is not float";
     return RET_ERROR;
   }
-  *v = *(reinterpret_cast<float *>(default_param_ptr->tensor_addr()));
+  *v = *(reinterpret_cast<float *>(default_param_ptr->data_c()));
   return RET_OK;
 }
 
@@ -278,16 +277,16 @@ bool TfliteLstmCellFusion::CheckBodyGraph(const FuncGraphPtr &func_graph, const 
   MS_ASSERT(hidden_zoneout_new_node != nullptr);
 
   float cell_old, cell_new, hidden_old, hidden_new;
-  if (GetFloatScalarFromParamValueLite(cell_zoneout_old_node, &cell_old) != RET_OK) {
+  if (GetFloatScalarFromTensorInfo(cell_zoneout_old_node, &cell_old) != RET_OK) {
     return false;
   }
-  if (GetFloatScalarFromParamValueLite(cell_zoneout_new_node, &cell_new) != RET_OK) {
+  if (GetFloatScalarFromTensorInfo(cell_zoneout_new_node, &cell_new) != RET_OK) {
     return false;
   }
-  if (GetFloatScalarFromParamValueLite(hidden_zoneout_old_node, &hidden_old) != RET_OK) {
+  if (GetFloatScalarFromTensorInfo(hidden_zoneout_old_node, &hidden_old) != RET_OK) {
     return false;
   }
-  if (GetFloatScalarFromParamValueLite(hidden_zoneout_new_node, &hidden_new) != RET_OK) {
+  if (GetFloatScalarFromTensorInfo(hidden_zoneout_new_node, &hidden_new) != RET_OK) {
     return false;
   }
   if (cell_old < 0.0f || cell_old > 1.0f || cell_new < 0.0f || cell_new > 1.0f) {
@@ -313,7 +312,7 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
   MS_ASSERT(new_param != nullptr);
   MS_ASSERT(params.size() == 4);
   std::vector<float *> data_ptrs;
-  std::vector<std::vector<int>> data_shapes;
+  std::vector<std::vector<int64_t>> data_shapes;
   for (auto &param : params) {
     if (!utils::isa<ParameterPtr>(param)) {
       MS_LOG(DEBUG) << "param is not Parameter node";
@@ -324,17 +323,17 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
       MS_LOG(DEBUG) << "param not have default value";
       return RET_FAILED;
     }
-    if (!utils::isa<ParamValueLitePtr>(param_t->default_param())) {
-      MS_LOG(DEBUG) << "default value is not ParamValueLite";
+    if (!utils::isa<tensor::TensorPtr>(param_t->default_param())) {
+      MS_LOG(DEBUG) << "default value is not tensor::Tensor";
       return RET_FAILED;
     }
-    auto origin_tensor = std::dynamic_pointer_cast<ParamValueLite>(param_t->default_param());
-    if (origin_tensor->tensor_type() != kNumberTypeFloat32 && origin_tensor->tensor_type() != kNumberTypeFloat) {
+    auto origin_tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_t->default_param());
+    if (origin_tensor->data_type() != kNumberTypeFloat32 && origin_tensor->data_type() != kNumberTypeFloat) {
       MS_LOG(DEBUG) << "origin_tensor is not float32 type";
       return RET_FAILED;
     }
-    auto data_ptr = reinterpret_cast<float *>(origin_tensor->tensor_addr());
-    auto data_shape = origin_tensor->tensor_shape();
+    auto data_ptr = reinterpret_cast<float *>(origin_tensor->data_c());
+    auto data_shape = origin_tensor->shape();
     data_ptrs.push_back(data_ptr);
     data_shapes.push_back(data_shape);
   }
@@ -345,13 +344,7 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
       return RET_FAILED;
     }
   }
-  auto new_default = std::make_shared<ParamValueLite>();
-  if (new_default == nullptr) {
-    MS_LOG(ERROR) << "new_default is nullptr";
-    return RET_ERROR;
-  }
-  std::vector<int> new_shape;
-  float *tensor_data = nullptr;
+  std::vector<int64_t> new_shape;
   int step = 0;
   int data_size = 0;
   if (is_bias) {
@@ -361,23 +354,25 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
     }
     step = data_shapes[0][0];
     data_size = 8 * step;
-    new_shape = std::vector<int>({1, data_size});
+    new_shape = std::vector<int64_t>({1, data_size});
 
   } else {
     if (data_shapes[0].size() != 2) {
       MS_LOG(ERROR) << "weight data shape error";
       return RET_ERROR;
     }
-    new_shape = std::vector<int>({1, data_shapes[0][0] * 4, data_shapes[0][1]});
+    new_shape = std::vector<int64_t>({1, data_shapes[0][0] * 4, data_shapes[0][1]});
     step = data_shapes[0][0] * data_shapes[0][1];
     data_size = 4 * step;
   }
 
-  tensor_data = new (std::nothrow) float[data_size];
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "new data failed";
+  auto tensor_info = lite::CreateTensorInfo(nullptr, 0, new_shape, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
+
+  auto tensor_data = static_cast<float *>(tensor_info->data_c());
   for (int i = 0; i < data_size; ++i) {  // bias are stored into first 4*hidden_size buffer, the rest is all 0
     tensor_data[i] = 0.0f;
   }
@@ -387,23 +382,16 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
     auto ret = memcpy_s(tensor_data + i * step, step * sizeof(float), data_ptrs[i], source_len * sizeof(float));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s error";
-      delete[] tensor_data;
       return RET_ERROR;
     }
   }
-  new_default->set_tensor_shape(new_shape);
-  new_default->set_tensor_type(kNumberTypeFloat32);
-  new_default->set_format(schema::Format_NHWC);
-  new_default->SetTensorData(tensor_data, data_size * sizeof(float));
-  new_param->set_default_param(new_default);
 
-  std::vector<int64_t> shape_vector(new_shape.begin(), new_shape.end());
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
-  if (abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "abstract_tensor is nullptr";
+  auto status = lite::InitParameterFromTensorInfo(new_param, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
     return RET_ERROR;
   }
-  new_param->set_abstract(abstract_tensor);
+
   return RET_OK;
 }
 
