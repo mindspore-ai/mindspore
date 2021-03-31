@@ -589,7 +589,8 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
       dataengine::Example tf_file;
       if (!tf_file.ParseFromString(serialized_example)) {
-        std::string errMsg = "Invalid file, failed to parse tfrecord file : " + serialized_example;
+        std::string errMsg = "Invalid file, failed to parse tfrecord file : " + filename;
+        MS_LOG(DEBUG) << errMsg + ", details of string: " << serialized_example;
         RETURN_STATUS_UNEXPECTED(errMsg);
       }
       int32_t num_columns = data_schema_->NumColumns();
