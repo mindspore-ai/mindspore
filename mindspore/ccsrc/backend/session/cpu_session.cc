@@ -130,6 +130,32 @@ void CPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &ker
   runtime_.SyncValueNodeDeviceAddr(kernel_graph.get());
 }
 
+void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                               const std::vector<tensor::TensorPtr> &inputs_const) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto &input_nodes = kernel_graph->inputs();
+  if (input_nodes.size() != inputs_const.size()) {
+    MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
+  }
+  for (size_t input_idx = 0; input_idx < input_nodes.size(); ++input_idx) {
+    auto &item = input_nodes[input_idx];
+    MS_EXCEPTION_IF_NULL(item);
+    if (item->isa<Parameter>() && !HasAbstractMonad(item)) {
+      auto address = AnfAlgo::GetMutableOutputAddr(item, 0);
+      auto tensor = inputs_const[input_idx];
+      auto tensor_address = tensor->device_address();
+      MS_EXCEPTION_IF_NULL(address);
+      MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor_address != nullptr && tensor_address != address &&
+          (std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address)->DeviceType() !=
+             device::DeviceAddressType::kCPU ||
+           AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()))) {
+        tensor->data_sync(false);
+      }
+    }
+  }
+}
+
 void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                               VectorRef *outputs) {
   auto kernel_graph = GetGraph(graph_id);
