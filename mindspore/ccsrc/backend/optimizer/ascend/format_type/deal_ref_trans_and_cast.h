@@ -33,6 +33,8 @@ class DealRefTransAndCast : public TransDataSplit {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  CNodePtr MakeDependency(const CNodePtr &getitem, const CNodePtr &final_node, const CNodePtr &cnode,
+                          const FuncGraphPtr &func_graph) const;
   CNodePtr SplitTransdataIfNotSupported(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   void DealBroadCastAsRef(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   CNodePtr DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
