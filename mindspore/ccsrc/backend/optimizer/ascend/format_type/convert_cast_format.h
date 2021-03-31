@@ -17,6 +17,10 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CONVERT_CAST_FORMAT_H_
 
 #include <string>
+#include <unordered_map>
+#include <memory>
+#include <vector>
+#include <utility>
 
 #include "backend/optimizer/common/optimizer.h"
 
@@ -30,6 +34,9 @@ class ConvertCastFormat : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  std::unordered_map<string, size_t> CalculateFormat(
+    const std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> &used_cast_node_list,
+    const CNodePtr &cast_node) const;
   void ChangeCastFormat(const CNodePtr &cast_node, const FuncGraphPtr &func_graph) const;
   void SetCastFormat(const CNodePtr &cast_node, const string &format) const;
 };

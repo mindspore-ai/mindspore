@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <utility>
 
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
@@ -73,26 +75,7 @@ void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGr
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast_node);
   auto used_cast_node_list = GetRealNodeUsedList(func_graph, cast_node);
   MS_EXCEPTION_IF_NULL(used_cast_node_list);
-  std::unordered_map<string, size_t> format_counter;
-  for (const auto &node_info : *used_cast_node_list) {
-    MS_EXCEPTION_IF_NULL(node_info.first);
-    auto cast_out_node = node_info.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cast_out_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(cast_out_node);
-    for (size_t index = 0; index < input_num; ++index) {
-      if (AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cast_out_node->cast<CNodePtr>(), index), 0).first !=
-          cast_node) {
-        continue;
-      }
-      auto format = AnfAlgo::GetInputFormat(cast_out_node, index);
-      auto it = format_counter.find(format);
-      if (it == format_counter.end()) {
-        format_counter[format] = 1;
-      } else {
-        it->second++;
-      }
-    }
-  }
+  std::unordered_map<string, size_t> format_counter = CalculateFormat(used_cast_node_list, cast_node);
   auto cast_input_format = AnfAlgo::GetPrevNodeOutputFormat(cast_node, 0);
   string convert_format = kOpFormat_DEFAULT;
   if (cast_input_format == kOpFormat_DEFAULT) {
@@ -120,6 +103,34 @@ void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGr
     // change cast to default that can be more faster when it cast other hw format
     SetCastFormat(cast_node, convert_format);
   }
+}
+
+std::unordered_map<string, size_t> ConvertCastFormat::CalculateFormat(
+  const std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> &used_cast_node_list,
+  const CNodePtr &cast_node) const {
+  MS_EXCEPTION_IF_NULL(used_cast_node_list);
+  MS_EXCEPTION_IF_NULL(cast_node);
+  std::unordered_map<string, size_t> format_counter;
+  for (const auto &node_info : *used_cast_node_list) {
+    MS_EXCEPTION_IF_NULL(node_info.first);
+    auto cast_out_node = node_info.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cast_out_node);
+    size_t input_num = AnfAlgo::GetInputTensorNum(cast_out_node);
+    for (size_t index = 0; index < input_num; ++index) {
+      if (AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cast_out_node->cast<CNodePtr>(), index), 0).first !=
+          cast_node) {
+        continue;
+      }
+      auto format = AnfAlgo::GetInputFormat(cast_out_node, index);
+      auto it = format_counter.find(format);
+      if (it == format_counter.end()) {
+        format_counter[format] = 1;
+      } else {
+        it->second++;
+      }
+    }
+  }
+  return format_counter;
 }
 }  // namespace opt
 }  // namespace mindspore
