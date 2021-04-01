@@ -16,15 +16,15 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_PME_PME_ENERGY_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_PME_PME_ENERGY_IMPL_H_
 
-#include <curand_kernel.h>
-#include <vector>
+#include <cufft.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *box_length_f, float *PME_BC,
-               int *pme_uxyz, float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
-               const int *uint_crd_f, const float *charge, int *nl_atom_numbers, int *nl_atom_serial, int *nl,
-               const float *scaler_f, const int *excluded_list_start, const int *excluded_list,
-               const int *excluded_atom_numbers, float *d_reciprocal_ene, float *d_self_ene, float *d_direct_ene,
-               float *d_correction_ene, cudaStream_t stream);
+void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
+               float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz, const int *uint_crd_f,
+               const float *charge, int *nl_atom_numbers, int *nl_atom_serial, int *nl, const float *scaler_f,
+               const int *excluded_list_start, const int *excluded_list, const int *excluded_atom_numbers,
+               float *d_reciprocal_ene, float *d_self_ene, float *d_direct_ene, float *d_correction_ene,
+               dim3 thread_PME, int PME_Nin, int PME_Nfft, int PME_Nall, const cufftHandle &PME_plan_r2c,
+               const cufftHandle &PME_plan_c2r, cudaStream_t stream);
 
 #endif

@@ -105,7 +105,8 @@ from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAto
                          LJForce, LJEnergy, LJForceWithPMEDirectForce, PMEExcludedForce, PMEEnergy, Dihedral14LJForce,
                          Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
                          Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy, MDIterationLeapFrog,
-                         GetCenterOfGeometry, MDTemperature, NeighborListUpdate)
+                         GetCenterOfGeometry, MDTemperature, NeighborListUpdate, MDIterationLeapFrogLiujian,
+                         CrdToUintCrd, MDIterationSetupRandState)
 
 
 __all__ = [
@@ -465,7 +466,9 @@ __all__ = [
     "GetCenterOfGeometry",
     "MDTemperature",
     "NeighborListUpdate",
-
+    "MDIterationLeapFrogLiujian",
+    "CrdToUintCrd",
+    "MDIterationSetupRandState",
 ]
 
 __all__.sort()

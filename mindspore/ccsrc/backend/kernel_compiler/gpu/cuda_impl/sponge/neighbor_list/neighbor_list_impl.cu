@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/neighbor_list/neighbor_list_impl.cuh"
-
+#include <vector>
 __global__ void Copy_List(const int element_numbers, const int *origin_list, int *list) {
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if (i < element_numbers) {
@@ -387,7 +387,7 @@ __global__ void Mul_half(float *src, float *dst) {
   }
 }
 
-void Neighbor_List_Update(int grid_numbers, int atom_numbers, int refresh_count, int refresh_interval,
+void Neighbor_List_Update(int grid_numbers, int atom_numbers, int *d_refresh_count, int refresh_interval,
                           int not_first_time, float skin, int Nxy, float cutoff_square, float cutoff_with_skin_square,
                           int *grid_N, float *box_length, int *atom_numbers_in_grid_bucket, float *grid_length_inverse,
                           int *atom_in_grid_serial, GRID_BUCKET *bucket, float *crd, float *old_crd,
@@ -397,15 +397,22 @@ void Neighbor_List_Update(int grid_numbers, int atom_numbers, int refresh_count,
                           int *is_need_refresh_neighbor_list, cudaStream_t stream) {
   if (not_first_time) {
     if (refresh_interval > 0) {
+      std::vector<int> refresh_count_list(1);
+      cudaMemcpyAsync(refresh_count_list.data(), d_refresh_count, sizeof(int), cudaMemcpyDeviceToHost, stream);
+      cudaStreamSynchronize(stream);
+      int refresh_count = refresh_count_list[0];
+
       if (refresh_count % refresh_interval == 0) {
         Mul_half<<<1, 3, 0, stream>>>(crd_to_uint_crd_cof, half_crd_to_uint_crd_cof);
-        Refresh_Neighbor_List_No_Check(
-          grid_numbers, atom_numbers, skin, Nxy, cutoff_square, grid_N, box_length, atom_numbers_in_grid_bucket,
-          grid_length_inverse, atom_in_grid_serial, bucket, reinterpret_cast<VECTOR *>(crd),
-          reinterpret_cast<VECTOR *>(old_crd), crd_to_uint_crd_cof, reinterpret_cast<UNSIGNED_INT_VECTOR *>(uint_crd),
-          uint_dr_to_dr_cof, gpointer, d_nl, excluded_list_start, excluded_list, excluded_numbers, stream);
+        Refresh_Neighbor_List_No_Check(grid_numbers, atom_numbers, skin, Nxy, cutoff_square, grid_N, box_length,
+                                       atom_numbers_in_grid_bucket, grid_length_inverse, atom_in_grid_serial, bucket,
+                                       reinterpret_cast<VECTOR *>(crd), reinterpret_cast<VECTOR *>(old_crd),
+                                       half_crd_to_uint_crd_cof, reinterpret_cast<UNSIGNED_INT_VECTOR *>(uint_crd),
+                                       uint_dr_to_dr_cof, gpointer, d_nl, excluded_list_start, excluded_list,
+                                       excluded_numbers, stream);
       }
       refresh_count += 1;
+      cudaMemcpyAsync(d_refresh_count, &refresh_count, sizeof(int), cudaMemcpyHostToDevice, stream);
     } else {
       Is_need_refresh_neighbor_list_cuda<<<ceilf(static_cast<float>(atom_numbers) / 128), 128, 0, stream>>>(
         atom_numbers, reinterpret_cast<VECTOR *>(crd), reinterpret_cast<VECTOR *>(old_crd), half_skin_square,
