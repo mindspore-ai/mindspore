@@ -1,3 +1,6 @@
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/debug/)
+include_directories(${CMAKE_BINARY_DIR})
+
 set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_dump.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_utils.cc"
@@ -6,6 +9,14 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
+)
+
+set(_OFFLINE_SRC_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/debugger/tensor_summary.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/offline_logger.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/dbg_services.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/mi_pybind_register.cc"
 )
 
 if(ENABLE_DUMP_IR)
@@ -38,3 +49,13 @@ endif()
 set_property(SOURCE ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
     SUBMODULE_ID=mindspore::SubModuleId::SM_DEBUG)
 add_library(_mindspore_debug_obj OBJECT ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST})
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_compile_options(-Wall -DOFFLINE_DBG_MODE -fPIC -O2)
+    set_property(SOURCE ${_OFFLINE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+        SUBMODULE_ID=mindspore::SubModuleId::SM_OFFLINE_DEBUG)
+    add_library(_mindspore_offline_debug SHARED ${_OFFLINE_SRC_LIST})
+    set_target_properties(_mindspore_offline_debug PROPERTIES
+        PREFIX "${PYTHON_MODULE_PREFIX}"
+        SUFFIX "${PYTHON_MODULE_EXTENSION}"
+        )
+endif()

@@ -22,7 +22,16 @@
 #include <tuple>
 #include "debug/debugger/tensor_summary.h"
 
+#ifdef OFFLINE_DBG_MODE
+#include "Eigen/Core"
+#include "Eigen/src/Core/arch/CUDA/Half.h"
+using float16 = Eigen::half;
+#include "offline_debug/offline_logger.h"
+#endif
+
+#ifdef ONLINE_DBG_MODE
 namespace mindspore {
+#endif
 using CONDITION_TYPE = DebugServices::CONDITION_TYPE;
 
 RangeCountCalculator::RangeCountCalculator()
@@ -281,4 +290,6 @@ template class TensorSummary<float16>;
 template class TensorSummary<float>;
 template class TensorSummary<double>;
 template class TensorSummary<bool>;
+#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
+#endif

@@ -111,6 +111,7 @@ enum SubModuleId : int {
   SM_ANALYZER,           // static analyzer
   SM_COMMON,             // common
   SM_DEBUG,              // debug
+  SM_OFFLINE_DEBUG,      // offline debug
   SM_DEVICE,             // device
   SM_GE_ADPT,            // ge adapter
   SM_IR,                 // IR

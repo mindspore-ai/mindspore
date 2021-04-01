@@ -755,7 +755,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   std::vector<std::string> ret_name;
   std::vector<char *> data_ptr;
   std::vector<ssize_t> data_size;
-  std::vector<TypePtr> dtype;
+  std::vector<unsigned int> dtype;
   std::vector<std::vector<int64_t>> shape;
 
   std::transform(tensors.begin(), tensors.end(), std::back_inserter(name), GetTensorFullName);
@@ -789,7 +789,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
 
       tensor_item.set_tensor_content(data_ptr[result_index] + size_iter, chunk_size);
 
-      tensor_item.set_data_type(GetDebuggerNumberDataType(dtype[result_index]));
+      tensor_item.set_data_type((debugger::DataType)dtype[result_index]);
       for (auto &elem : shape[result_index]) {
         tensor_item.add_dims(elem);
       }
@@ -827,7 +827,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
     tensor_list = debug_services_->GetNodeTensor(kernel);
   }
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    tensor_list, initial_suspend_, watchnode.empty(), recheck);
+                                    &tensor_list, initial_suspend_, watchnode.empty(), recheck);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;

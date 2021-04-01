@@ -93,7 +93,7 @@ void GPUDeviceAddress::ClearDeviceMemory() {
 }
 
 GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
-#ifdef ENABLE_DEBUGGER
+
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot,
                                      bool keep_prev) const {
@@ -117,13 +117,16 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   auto tensor_data = std::make_shared<mindspore::TensorData>();
   tensor_data->SetName(tensor_name);
   tensor_data->SetExecutionOrder(execution_order);
-  tensor_data->SetTensor(out_tensor);
   tensor_data->SetSlot(slot);
+  tensor_data->SetTensor(out_tensor);
+  tensor_data->SetDataPtr(static_cast<char *>(out_tensor->data_c()));
+  tensor_data->SetByteSize(out_tensor->data().nbytes());
+  tensor_data->SetType((unsigned int)host_type);
+  tensor_data->SetShape(out_tensor->shape());
   ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   return ret;
 }
-#endif
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

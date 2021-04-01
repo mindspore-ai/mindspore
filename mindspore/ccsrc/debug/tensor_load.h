@@ -23,10 +23,14 @@
 #include <tuple>
 #include <string>
 #include <utility>
+#ifdef OFFLINE_DBG_MODE
+#include "debugger/offline_debug/offline_logger.h"
+#endif
 #include "debug/tensor_data.h"
+#ifdef ONLINE_DBG_MODE
 #include "debug/data_dump/dump_json_parser.h"
-#include "ir/dtype.h"
 namespace mindspore {
+#endif
 class TensorLoader {
  public:
   TensorLoader() : iter_num(-1) {}
@@ -152,9 +156,10 @@ class TensorLoader {
 
   void set_iter_num(uint32_t iter_num) { this->iter_num = iter_num; }
 
+#ifdef ONLINE_DBG_MODE
   bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId addr_type_id, const std::string &addr_format, size_t slot) const {
+                        TypeId addr_type_id, const std::string &addr_format, size_t slot) {
     if (filepath.empty()) {
       MS_LOG(ERROR) << "Dump file path is null!";
       return false;
@@ -181,21 +186,24 @@ class TensorLoader {
     auto iter = tensor_list_map.find(tensor_loader_name);
     if (iter != tensor_list_map.end()) {
       std::shared_ptr<TensorData> node = iter->second;
-      mindspore::tensor::TensorPtr out_tensor = node->GetTensor();
-      size_t host_size = out_tensor->data().nbytes();
+      size_t host_size = node->GetByteSize();
 
-      return DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size);
+      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), host_size);
     }
     MS_LOG(INFO) << "Tensor name:" << tensor_name << " not found in tensor_list_map";
     return true;
   }
+#endif
 
  private:
+  // the pair is (device_id, iteration)
   std::map<std::string, std::shared_ptr<TensorData>> tensor_list_map;
   std::multimap<std::string, std::shared_ptr<TensorData>> node_tensor_map;
   std::map<std::string, std::shared_ptr<TensorData>> prev_tensor_list_map;
   uint32_t iter_num;
   std::mutex lock_;
 };
+#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
+#endif
 #endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_LOAD_H_
