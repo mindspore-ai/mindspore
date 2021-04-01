@@ -45,7 +45,7 @@ def get_eval_result(ann_file):
         label_result_file = result_path + file_id + "_1.bin"
         mask_result_file = result_path + file_id + "_2.bin"
 
-        all_bbox = np.fromfile(bbox_result_file, dtype=np.float32).reshape(80000, 5)
+        all_bbox = np.fromfile(bbox_result_file, dtype=np.float16).reshape(80000, 5)
         all_label = np.fromfile(label_result_file, dtype=np.int32).reshape(80000, 1)
         all_mask = np.fromfile(mask_result_file, dtype=np.bool_).reshape(80000, 1)
 
