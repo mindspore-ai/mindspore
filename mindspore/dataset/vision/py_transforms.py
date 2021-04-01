@@ -33,6 +33,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
     check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast
 from .utils import Inter, Border
+from .py_transforms_util import is_pil
 
 DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
                     Inter.ANTIALIAS: Image.ANTIALIAS,
@@ -964,6 +965,8 @@ class RandomPerspective:
         Returns:
             img (PIL image), Image after being perspectively transformed randomly.
         """
+        if not is_pil(img):
+            raise ValueError("Input image should be a Pillow image.")
         if self.prob > random.random():
             start_points, end_points = util.get_perspective_params(img, self.distortion_scale)
             return util.perspective(img, start_points, end_points, self.interpolation)
