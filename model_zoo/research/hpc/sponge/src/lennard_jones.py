@@ -12,30 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""lennard jones"""
-
-import numpy as np
-import mindspore.common.dtype as mstype
-from mindspore import Tensor, nn
-from mindspore.ops import operations as P
-
-
-class Lennard_Jones_Information(nn.Cell):
-    """class Lennard Jones Information"""
-
+'''Lennard Jones'''
+class Lennard_Jones_Information:
+    '''Lennard Jones'''
     def __init__(self, controller):
-        super(Lennard_Jones_Information, self).__init__()
         if controller.amber_parm is not None:
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
-        self.atom_LJ_type = Tensor(np.asarray(self.atom_LJ_type, dtype=np.int32), mstype.int32)
-        self.LJ_A = Tensor(np.asarray(self.LJ_A, dtype=np.float32), mstype.float32)
-        self.LJ_B = Tensor(np.asarray(self.LJ_B, dtype=np.float32), mstype.float32)
-        self.LJ_energy_sum = 0
-        self.LJ_energy = 0
 
     def read_information_from_amberfile(self, file_path):
-        """read information from amberfile"""
+        '''read amber file'''
         file = open(file_path, 'r')
         context = file.readlines()
         file.close()
@@ -48,8 +34,8 @@ class Lennard_Jones_Information(nn.Cell):
                     value = list(map(int, context[start_idx].strip().split()))
                     self.atom_numbers = value[0]
                     self.atom_type_numbers = value[1]
-                    self.pair_type_numbers = int(self.atom_type_numbers * (self.atom_type_numbers + 1) / 2)
-                    print(self.pair_type_numbers)
+                    self.pair_type_numbers = int(
+                        self.atom_type_numbers * (self.atom_type_numbers + 1) / 2)  # TODO 这个地方有问题啊
                     break
         self.atom_LJ_type = [0] * self.atom_numbers
         for idx, val in enumerate(context):
@@ -102,21 +88,3 @@ class Lennard_Jones_Information(nn.Cell):
                 for i in range(self.pair_type_numbers):
                     self.LJ_B[i] = 6.0 * information[i]
                 break
-
-    def LJ_Energy(self, uint_crd_with_LJ, uint_dr_to_dr_cof, nl_atom_numbers, nl_atom_serial, cutoff_square):
-        """compute LJ energy"""
-        uint_crd, LJtype, charge = uint_crd_with_LJ
-        self.LJ_energy = P.LJEnergy(self.atom_numbers, cutoff_square) \
-            (uint_crd, LJtype, charge, uint_dr_to_dr_cof, nl_atom_numbers, nl_atom_serial, self.LJ_A, self.LJ_B)
-        self.LJ_energy_sum = P.ReduceSum()(self.LJ_energy)
-        return self.LJ_energy_sum
-
-    def LJ_Force_With_PME_Direct_Force(self, atom_numbers, uint_crd_with_LJ, uint_dr_to_dr_cof, nl_number, nl_serial,
-                                       cutoff, beta):
-        """compute LJ force with PME direct force"""
-        assert atom_numbers == self.atom_numbers
-        assert isinstance(uint_crd_with_LJ, tuple)
-        uint_crd_f, LJtype, charge = uint_crd_with_LJ
-        self.ljfd = P.LJForceWithPMEDirectForce(atom_numbers, cutoff, beta)
-        frc = self.ljfd(uint_crd_f, LJtype, charge, uint_dr_to_dr_cof, nl_number, nl_serial, self.LJ_A, self.LJ_B)
-        return frc

@@ -12,19 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""bond class"""
-
-import numpy as np
-import mindspore.common.dtype as mstype
-from mindspore import Tensor, nn
-from mindspore.ops import operations as P
-
-
-class Bond(nn.Cell):
-    """bond class"""
-
+'''Bond'''
+class Bond:
+    '''Bond'''
     def __init__(self, controller, md_info):
-        super(Bond, self).__init__()
 
         self.atom_numbers = md_info.atom_numbers
 
@@ -32,13 +23,11 @@ class Bond(nn.Cell):
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
 
-        self.atom_a = Tensor(np.asarray(self.h_atom_a, np.int32), mstype.int32)
-        self.atom_b = Tensor(np.asarray(self.h_atom_b, np.int32), mstype.int32)
-        self.bond_k = Tensor(np.asarray(self.h_k, np.float32), mstype.float32)
-        self.bond_r0 = Tensor(np.asarray(self.h_r0, np.float32), mstype.float32)
-
-    def process1(self, context):
-        """process1: read information from amberfile"""
+    def read_information_from_amberfile(self, file_path):
+        '''read amber file'''
+        file = open(file_path, 'r')
+        context = file.readlines()
+        file.close()
         for idx, val in enumerate(context):
             if idx < len(context) - 1:
                 if "%FLAG POINTERS" in val + context[idx + 1] and "%FORMAT(10I8)" in val + context[idx + 1]:
@@ -48,7 +37,6 @@ class Bond(nn.Cell):
                     self.bond_with_hydrogen = value[2]
                     self.bond_numbers = value[3]
                     self.bond_numbers += self.bond_with_hydrogen
-                    print(self.bond_numbers)
                     information = []
                     information.extend(value)
                     while count < 16:
@@ -76,13 +64,6 @@ class Bond(nn.Cell):
                 self.bond_type_k = information[:self.bond_type_numbers]
                 break
 
-    def read_information_from_amberfile(self, file_path):
-        """read information from amberfile"""
-        file = open(file_path, 'r')
-        context = file.readlines()
-        file.close()
-        self.process1(context)
-
         for idx, val in enumerate(context):
             if "%FLAG BOND_EQUIL_VALUE" in val:
                 count = 0
@@ -98,7 +79,10 @@ class Bond(nn.Cell):
                         count += len(value)
                 self.bond_type_r = information[:self.bond_type_numbers]
                 break
+        self.processor(context)
 
+    def processor(self, context):
+        '''processor'''
         for idx, val in enumerate(context):
             if "%FLAG BONDS_INC_HYDROGEN" in val:
                 self.h_atom_a = [0] * self.bond_numbers
@@ -128,6 +112,7 @@ class Bond(nn.Cell):
 
         for idx, val in enumerate(context):
             if "%FLAG BONDS_WITHOUT_HYDROGEN" in val:
+
                 count = 0
                 start_idx = idx
                 information = []
@@ -147,17 +132,3 @@ class Bond(nn.Cell):
                     self.h_k[i] = self.bond_type_k[tmpi]
                     self.h_r0[i] = self.bond_type_r[tmpi]
                 break
-
-    def Bond_Energy(self, uint_crd, uint_dr_to_dr_cof):
-        """compute bond energy"""
-        self.bond_energy = P.BondEnergy(self.bond_numbers, self.atom_numbers)(uint_crd, uint_dr_to_dr_cof, self.atom_a,
-                                                                              self.atom_b, self.bond_k, self.bond_r0)
-        self.sigma_of_bond_ene = P.ReduceSum()(self.bond_energy)
-        return self.sigma_of_bond_ene
-
-    def Bond_Force_With_Atom_Energy(self, uint_crd, scaler):
-        """compute bond force with atom energy"""
-        self.bfatomenergy = P.BondForceWithAtomEnergy(bond_numbers=self.bond_numbers,
-                                                      atom_numbers=self.atom_numbers)
-        frc, atom_energy = self.bfatomenergy(uint_crd, scaler, self.atom_a, self.atom_b, self.bond_k, self.bond_r0)
-        return frc, atom_energy

@@ -18,8 +18,6 @@
 #include <cuda_runtime_api.h>
 #include <cufft.h>
 #include <vector>
-#include <string>
-#include <map>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "runtime/device/gpu/cuda_common.h"
@@ -40,8 +38,76 @@ class PMEEnergyGpuKernel : public GpuKernel {
     fftx = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftx"));
     ffty = static_cast<int>(GetAttr<int64_t>(kernel_node, "ffty"));
     fftz = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftz"));
-    PME_Nall = fftx * ffty * fftz;
+
+    float box_length_0 = static_cast<float>(GetAttr<float_t>(kernel_node, "box_length_0"));
+    float box_length_1 = static_cast<float>(GetAttr<float_t>(kernel_node, "box_length_1"));
+    float box_length_2 = static_cast<float>(GetAttr<float_t>(kernel_node, "box_length_2"));
+    std::vector<float> h_box_length(3);
+    h_box_length[0] = box_length_0;
+    h_box_length[1] = box_length_1;
+    h_box_length[2] = box_length_2;
+    VECTOR *box_length = reinterpret_cast<VECTOR *>(h_box_length.data());
+    cufftPlan3d(&PME_plan_r2c, fftx, ffty, fftz, CUFFT_R2C);
+    cufftPlan3d(&PME_plan_c2r, fftx, ffty, fftz, CUFFT_C2R);
+    _thread_PME.x = 8;
+    _thread_PME.y = 8;
+    PME_Nin = ffty * fftz;
     PME_Nfft = fftx * ffty * (fftz / 2 + 1);
+    PME_Nall = fftx * ffty * fftz;
+    PME_kxyz_cpu.resize(64);
+    volume = box_length[0].x * box_length[0].y * box_length[0].z;
+    int kx, ky, kz, kxrp, kyrp, kzrp, index;
+    for (kx = 0; kx < 4; kx++) {
+      for (ky = 0; ky < 4; ky++) {
+        for (kz = 0; kz < 4; kz++) {
+          index = kx * 16 + ky * 4 + kz;
+          PME_kxyz_cpu[index].uint_x = kx;
+          PME_kxyz_cpu[index].uint_y = ky;
+          PME_kxyz_cpu[index].uint_z = kz;
+        }
+      }
+    }
+
+    B1.resize(fftx);
+    B2.resize(ffty);
+    B3.resize(fftz);
+    PME_BC0.resize(PME_Nfft);
+    for (kx = 0; kx < fftx; kx++) {
+      B1[kx] = getb(kx, fftx, 4);
+    }
+
+    for (ky = 0; ky < ffty; ky++) {
+      B2[ky] = getb(ky, ffty, 4);
+    }
+
+    for (kz = 0; kz < fftz; kz++) {
+      B3[kz] = getb(kz, fftz, 4);
+    }
+    float mprefactor = PI * PI / -beta / beta;
+
+    float msq;
+    for (kx = 0; kx < fftx; kx++) {
+      kxrp = kx;
+      if (kx > fftx / 2) kxrp = fftx - kx;
+      for (ky = 0; ky < ffty; ky++) {
+        kyrp = ky;
+        if (ky > ffty / 2) kyrp = ffty - ky;
+        for (kz = 0; kz <= fftz / 2; kz++) {
+          kzrp = kz;
+
+          msq = kxrp * kxrp / box_length[0].x / box_length[0].x + kyrp * kyrp / box_length[0].y / box_length[0].y +
+                kzrp * kzrp / box_length[0].z / box_length[0].z;
+          index = kx * ffty * (fftz / 2 + 1) + ky * (fftz / 2 + 1) + kz;
+          if ((kx + ky + kz) == 0) {
+            PME_BC0[index] = 0;
+          } else {
+            PME_BC0[index] = 1.0 / PI / msq * exp(mprefactor * msq) / volume;
+          }
+
+          PME_BC0[index] *= B1[kx] * B2[ky] * B3[kz];
+        }
+      }
+    }
 
     InitSizeLists();
     return true;
@@ -53,15 +119,14 @@ class PMEEnergyGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    auto boxlength = GetDeviceAddress<T>(inputs, 0);
-    auto uint_crd = GetDeviceAddress<T1>(inputs, 1);
-    auto charge = GetDeviceAddress<T>(inputs, 2);
-    auto nl_numbers = GetDeviceAddress<T1>(inputs, 3);
-    auto nl_serial = GetDeviceAddress<T1>(inputs, 4);
-    auto scaler = GetDeviceAddress<T>(inputs, 5);
-    auto excluded_list_start = GetDeviceAddress<int>(inputs, 6);
-    auto excluded_list = GetDeviceAddress<int>(inputs, 7);
-    auto excluded_atom_numbers = GetDeviceAddress<int>(inputs, 8);
+    auto uint_crd = GetDeviceAddress<T1>(inputs, 0);
+    auto charge = GetDeviceAddress<T>(inputs, 1);
+    auto nl_numbers = GetDeviceAddress<T1>(inputs, 2);
+    auto nl_serial = GetDeviceAddress<T1>(inputs, 3);
+    auto scaler = GetDeviceAddress<T>(inputs, 4);
+    auto excluded_list_start = GetDeviceAddress<int>(inputs, 5);
+    auto excluded_list = GetDeviceAddress<int>(inputs, 6);
+    auto excluded_atom_numbers = GetDeviceAddress<int>(inputs, 7);
 
     auto pme_uxyz = GetDeviceAddress<int>(workspace, 0);       // workspace
     auto pme_frxyz = GetDeviceAddress<float>(workspace, 1);    // workspace
@@ -77,16 +142,22 @@ class PMEEnergyGpuKernel : public GpuKernel {
     auto direct_ene = GetDeviceAddress<T>(outputs, 2);
     auto correction_ene = GetDeviceAddress<T>(outputs, 3);
 
-    PMEEnergy(fftx, ffty, fftz, atom_numbers, beta, boxlength, pme_bc, pme_uxyz, pme_frxyz, pme_q, pme_fq,
-              pme_atom_near, pme_kxyz, uint_crd, charge, nl_numbers, nl_serial, nl, scaler, excluded_list_start,
-              excluded_list, excluded_atom_numbers, reciprocal_ene, self_ene, direct_ene, correction_ene,
-              reinterpret_cast<cudaStream_t>(stream_ptr));
+    cufftSetStream(PME_plan_r2c, reinterpret_cast<cudaStream_t>(stream_ptr));
+    cufftSetStream(PME_plan_c2r, reinterpret_cast<cudaStream_t>(stream_ptr));
+    cudaMemcpyAsync(pme_kxyz, PME_kxyz_cpu.data(), sizeof(UNSIGNED_INT_VECTOR) * 64, cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    cudaMemcpyAsync(pme_bc, PME_BC0.data(), sizeof(float) * PME_Nfft, cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    PMEEnergy(fftx, ffty, fftz, atom_numbers, beta, pme_bc, pme_uxyz, pme_frxyz, pme_q, pme_fq, pme_atom_near, pme_kxyz,
+              uint_crd, charge, nl_numbers, nl_serial, nl, scaler, excluded_list_start, excluded_list,
+              excluded_atom_numbers, reciprocal_ene, self_ene, direct_ene, correction_ene, _thread_PME, PME_Nin,
+              PME_Nfft, PME_Nall, PME_plan_r2c, PME_plan_c2r, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(sizeof(VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(UNSIGNED_INT_VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(VECTOR));
     input_size_list_.push_back(atom_numbers * sizeof(T1));
@@ -112,12 +183,56 @@ class PMEEnergyGpuKernel : public GpuKernel {
     output_size_list_.push_back(sizeof(T));
   }
 
+  cufftComplex expc(cufftComplex z) {
+    cufftComplex res;
+    float t = expf(z.x);
+    sincosf(z.y, &res.y, &res.x);
+    res.x *= t;
+    res.y *= t;
+    return res;
+  }
+  float M_(float u, int n) {
+    if (n == 2) {
+      if (u > 2 || u < 0) return 0;
+      return 1 - abs(u - 1);
+    } else {
+      return u / (n - 1) * M_(u, n - 1) + (n - u) / (n - 1) * M_(u - 1, n - 1);
+    }
+  }
+  float getb(int k, int NFFT, int B_order) {
+    cufftComplex tempc, tempc2, res;
+    float tempf;
+    tempc2.x = 0;
+    tempc2.y = 0;
+
+    tempc.x = 0;
+    tempc.y = 2 * (B_order - 1) * PI * k / NFFT;
+    res = expc(tempc);
+
+    for (int kk = 0; kk < (B_order - 1); kk++) {
+      tempc.x = 0;
+      tempc.y = 2 * PI * k / NFFT * kk;
+      tempc = expc(tempc);
+      tempf = M_(kk + 1, B_order);
+      tempc2.x += tempf * tempc.x;
+      tempc2.y += tempf * tempc.y;
+    }
+    res = cuCdivf(res, tempc2);
+    return res.x * res.x + res.y * res.y;
+  }
+
  private:
   size_t ele_uint_crd = 1;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+
+  std::vector<float> B1;
+  std::vector<float> B2;
+  std::vector<float> B3;
+  std::vector<float> PME_BC0;
+
   int atom_numbers;
   int excluded_numbers;
   int max_nl_numbers = 800;
@@ -125,8 +240,16 @@ class PMEEnergyGpuKernel : public GpuKernel {
   int ffty;
   int fftz;
   float beta;
+  int PME_Nin;
   int PME_Nall;
   int PME_Nfft;
+  float volume;
+  float PI = 3.1415926;
+  cufftHandle PME_plan_r2c;
+  cufftHandle PME_plan_c2r;
+
+  dim3 _thread_PME;
+
   struct VECTOR {
     float x;
     float y;
@@ -138,7 +261,7 @@ class PMEEnergyGpuKernel : public GpuKernel {
     unsigned int uint_y;
     unsigned int uint_z;
   };
-
+  std::vector<UNSIGNED_INT_VECTOR> PME_kxyz_cpu;
   struct NEIGHBOR_LIST {
     int atom_numbers;
     int *atom_serial;
