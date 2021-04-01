@@ -34,13 +34,12 @@ class TransposeCPUFwdKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParameter() const;
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  std::vector<int64_t> axes_;
+  std::vector<size_t> axes_;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel =
     std::function<void(TransposeCPUFwdKernel *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;

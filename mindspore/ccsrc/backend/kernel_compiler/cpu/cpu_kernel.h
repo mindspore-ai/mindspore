@@ -145,6 +145,48 @@ class CPUKernelUtils {
   static void ParallelFor(const CTask &task, size_t count);
   static std::vector<size_t> FlatShapeByAxis(const std::vector<size_t> &shape, int axis);
 };
+
+class BroadcastIterator {
+ public:
+  BroadcastIterator(std::vector<size_t> input_shape_a, std::vector<size_t> input_shape_b,
+                    std::vector<size_t> output_shape);
+  inline size_t GetInputPosA() const { return input_pos_[0]; }
+  inline size_t GetInputPosB() const { return input_pos_[1]; }
+  void SetPos(size_t pos);
+  void GenNextPos();
+
+ private:
+  void BroadcastShape();
+  void InitStrides();
+
+  std::vector<size_t> coordinates_;
+  std::vector<size_t> input_shape_a_;
+  std::vector<size_t> input_shape_b_;
+  std::vector<size_t> output_shape_;
+  std::vector<size_t> input_strides_a_;
+  std::vector<size_t> input_strides_b_;
+  std::vector<size_t> input_back_strides_a_;
+  std::vector<size_t> input_back_strides_b_;
+  std::array<size_t, 2> input_pos_{0};
+  int output_dimension_{0};
+};
+
+class TransposeIterator {
+ public:
+  TransposeIterator(std::vector<size_t> output_shape, std::vector<size_t> axes, const std::vector<size_t> &input_shape);
+  inline size_t GetPos() const { return pos_; }
+  void SetPos(size_t pos);
+  void GenNextPos();
+
+ private:
+  int dimension_{0};
+  std::vector<size_t> coordinates_;
+  std::vector<size_t> shape_;
+  std::vector<size_t> strides_;
+  std::vector<size_t> back_strides_;
+  std::vector<size_t> axes_;
+  size_t pos_{0};
+};
 }  // namespace kernel
 }  // namespace mindspore
 
