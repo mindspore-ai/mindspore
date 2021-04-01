@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_Resize;
 namespace mindspore::kernel {
 
 int ResizeOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (!(in_tensors_.size() == 1 || in_tensors_.size() == 2) || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -120,7 +120,7 @@ int ResizeOpenCLKernel::Run() {
 }
 
 int ResizeOpenCLKernel::PreProcess() {
-  if (Type() == PrimitiveType_Resize && !op_parameter_->infer_flag_) {
+  if (Type() == PrimitiveType_Resize && !op_parameter_->infer_flag_ && in_tensors_.size() == 2) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
       ocl_runtime_->SyncCommandQueue();
