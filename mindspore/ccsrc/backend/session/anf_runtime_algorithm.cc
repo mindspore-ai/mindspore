@@ -676,7 +676,7 @@ std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, siz
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
   if (build_info->IsInputDefaultPadding()) {
-    return {};
+    return "";
   }
   return build_info->GetInputReshapeType(input_idx);
 }
@@ -696,7 +696,7 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
   if (build_info->IsOutputDefaultPadding()) {
-    return {};
+    return "";
   }
   return build_info->GetOutputReshapeType(output_idx);
 }

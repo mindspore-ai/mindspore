@@ -384,7 +384,7 @@ void TbeKernelSelect::CreateNewOpIOInfo(const mindspore::kernel::OpIOInfo &op_io
 
 std::vector<std::string> TbeKernelSelect::SplitStrToVec(const std::string &op_select_json_item) {
   const std::map<std::string, std::string> kDynamicFormatMap = {
-    {"NCHW", "DefaultFormat"}, {"ND", "DefaultFormat"}, {"FRACTAL_Z", "FracZ"}};
+    {"NCHW", "DefaultFormat"}, {"ND", "DefaultFormat"}, {"FRACTAL_Z", "FracZ"}, {"NCDHW", "DefaultFormat"}};
   if (op_select_json_item.empty()) {
     MS_LOG(EXCEPTION) << "Op select ret item is null.";
   }

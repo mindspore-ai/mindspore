@@ -144,6 +144,5 @@ MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt64),
                         RandomCategoricalGpuKernel, double, int64_t, int64_t)
-
 }  // namespace kernel
 }  // namespace mindspore

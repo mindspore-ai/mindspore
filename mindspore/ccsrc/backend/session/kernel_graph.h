@@ -281,7 +281,6 @@ class KernelGraph : public FuncGraph {
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
-  void ResetInFormat(const AnfNodePtr &node, const std::string &format) const;
   AnfNodePtr MakeValueNode(const AnfNodePtr &node);
   void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
                             std::unordered_set<AnfNodePtr> *visited_nodes, bool comm_first = true);
