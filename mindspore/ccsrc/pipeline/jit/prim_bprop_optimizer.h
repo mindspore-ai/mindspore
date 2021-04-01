@@ -45,11 +45,12 @@ using PrimBpropCache = std::unordered_map<PrimitivePtr, PrimBpropOptGraphInfoPtr
 
 using TupleListKey = std::pair<PrimitivePtr, abstract::AbstractBasePtrList>;
 
-using PrimBpropLevel2Cache = std::unordered_map<abstract::AbstractBasePtrList, PrimBpropOptGraphLevel2InfoPtr,
-  abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+using PrimBpropLevel2Cache =
+  std::unordered_map<abstract::AbstractBasePtrList, PrimBpropOptGraphLevel2InfoPtr, abstract::AbstractBasePtrListHasher,
+                     abstract::AbstractBasePtrListEqual>;
 
-using PrimTupleListCache = std::unordered_map<TupleListKey, FuncGraphPtr,
-  PrimitiveTupleListHasher, PrimitiveTupleListEqual>;
+using PrimTupleListCache =
+  std::unordered_map<TupleListKey, FuncGraphPtr, PrimitiveTupleListHasher, PrimitiveTupleListEqual>;
 
 struct PrimitiveTupleListHasher {
   bool operator()(const TupleListKey &key) const {
@@ -71,8 +72,6 @@ struct PrimitiveTupleListEqual {
   }
 };
 
-
-
 struct PrimitiveTotalEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
     MS_EXCEPTION_IF_NULL(t1);
@@ -81,9 +80,7 @@ struct PrimitiveTotalEqual {
   }
 };
 
-enum ECacheQrtRes {
-  E_NOT_FOUND, E_LEVEL_1, E_LEVEL_2
-};
+enum ECacheQrtRes { E_NOT_FOUND, E_LEVEL_1, E_LEVEL_2 };
 
 struct PrimBpropOptGraphInfo {
   // the level1 opt func_graph without infer, no shape/type info provide
@@ -100,10 +97,8 @@ struct ParamUsingInfo {
 };
 
 class PrimBpropOptGraphLevel2Info {
-public:
-  explicit PrimBpropOptGraphLevel2Info(const FuncGraphPtr &func_graph) :
-    opt_func_graph_(func_graph) {
-  }
+ public:
+  explicit PrimBpropOptGraphLevel2Info(const FuncGraphPtr &func_graph) : opt_func_graph_(func_graph) {}
 
   const FuncGraphPtr &opt_func_graph() const { return opt_func_graph_; }
 
@@ -111,7 +106,7 @@ public:
 
   void AnalysisArgUsingInfo(FuncGraphManagerPtr &manager);
 
-private:
+ private:
   void ArgInfoRefresh(const std::shared_ptr<AnfNode> &param, ParamUsingInfo &arg_info) const;
 
   void AnalysisNodeUsingInfo(const NodeUsersMap &node_users, const std::shared_ptr<AnfNode> &param,
@@ -131,7 +126,7 @@ private:
 };
 
 class PrimBpropOptimizer {
-public:
+ public:
   ~PrimBpropOptimizer();
 
   void Clear();
@@ -149,7 +144,7 @@ public:
   // do inline opt for final bprop graph
   FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res);
 
-private:
+ private:
   PrimBpropOptimizer();
 
   ECacheQrtRes GetOptBpfgFromCache(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
@@ -166,16 +161,16 @@ private:
   PrimBpropOptGraphInfoPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg);
 
   // do opt with input info
-  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(
-    const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
+  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
+                                                   abstract::AbstractBasePtrList &abs_list_input);
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
 
-  FuncGraphPtr GetOptBpropFromCache(
-    const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim);
+  FuncGraphPtr GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
+                                    PrimitivePtr &prim);
 
-  FuncGraphPtr GenSpecOptBprop(
-    const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out, PrimitivePtr &prim, bool hook_flg);
+  FuncGraphPtr GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
+                               PrimitivePtr &prim, bool hook_flg);
 
  private:
   // cache optimized bprop graph

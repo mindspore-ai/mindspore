@@ -238,7 +238,7 @@ class KPynativeCellImpl : public KPynativeCell {
   FuncGraphPtr tape_;
   OrderedMap<AnfNodePtr, PynativeAdjointPtr> anfnode_to_adjoin_;
   AnfNodePtrList cell_inputs_;
-  // Last cnode of this Cell, may be a primitve op or cell with user defined bprop.
+  // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AnfNodePtr last_node_{nullptr};
   bool need_propagate_stop_gradient_{false};
 
@@ -424,7 +424,7 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeGetItemAdjoint(const CNodePtr &cnode)
     inp_1_adjoint = inp_1_adjoint_iter->second;
   }
   if (!inp_1_adjoint->out()->isa<ValueSequeue>()) {
-    MS_LOG(EXCEPTION) << "Input of CNode should be evaluted to a ValueSequence. CNode: " << cnode->DebugString()
+    MS_LOG(EXCEPTION) << "Input of CNode should be evaluated to a ValueSequence. CNode: " << cnode->DebugString()
                       << ", out of input1: " << inp_1_adjoint->out();
   }
   auto inp_1_out = inp_1_adjoint->out()->cast<ValueSequeuePtr>();

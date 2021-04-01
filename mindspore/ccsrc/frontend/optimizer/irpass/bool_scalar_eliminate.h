@@ -26,7 +26,7 @@ namespace opt {
 namespace irpass {
 
 class BoolScalarEliminate : public OptimizerCaller {
-public:
+ public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
 };
 }  // namespace irpass

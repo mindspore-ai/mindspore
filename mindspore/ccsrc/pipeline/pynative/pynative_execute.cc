@@ -85,7 +85,7 @@ std::mutex PynativeExecutor::instance_lock_;
 constexpr auto implcast = "implcast";
 
 template <typename T, typename... Args>
-void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T *ret, const Args &... args) {
+void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T *ret, const Args &...args) {
   const auto inst = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
@@ -781,7 +781,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   }
   op_exec_info->py_primitive = prim;
   op_exec_info->op_inputs = args[PY_INPUTS];
-  // Record op info for judge whther the construct of cell has been changed
+  // Record op info for judge whether the construct of cell has been changed
   if (grad()->grad_flag()) {
     size_t curr_op_num = grad()->top_cell()->op_num();
     op_exec_info->op_info = op_name + "-" + std::to_string(curr_op_num);
@@ -1757,7 +1757,7 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
     auto df_builder = GetDfbuilder(cell_id);
     auto graph_info_df = std::make_shared<GraphInfo>(cell_id);
     top_cell()->graph_info_map()[df_builder] = graph_info_df;
-    // Init paramter info for make cnode and curr_g
+    // Init parameter info for make cnode and curr_g
     for (size_t i = 0; i < args.size(); ++i) {
       auto param = args[i];
       auto new_param = curr_g_->add_parameter();
@@ -1802,7 +1802,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
       return;
     }
   }
-  // Init resource for resoure and df_builder
+  // Init resource for resource and df_builder
   InitResourceAndDfBuilder(cell_id, args);
   // Check whether cell has dynamic construct
   bool is_dynamic = parse::DynamicAnalysis::IsDynamicCell(cell);

@@ -108,9 +108,7 @@ bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t
   return true;
 }
 
-void KernelInfo::set_kernel_mod(const kernel::KernelModPtr &kernel_mod) {
-  kernel_mod_ = kernel_mod;
-}
+void KernelInfo::set_kernel_mod(const kernel::KernelModPtr &kernel_mod) { kernel_mod_ = kernel_mod; }
 
 kernel::KernelMod *KernelInfo::MutableKernelMod() const { return kernel_mod_.get(); }
 

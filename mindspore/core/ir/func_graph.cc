@@ -362,7 +362,7 @@ const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() { return func_g
 
 void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
   const auto &users = source->func_graph_cnodes_index();
-  for (auto &user :users) {
+  for (auto &user : users) {
     // Ignore the user graph who may own itself.
     auto anfnode = user.first->first.lock();
     auto fg = anfnode->func_graph();
