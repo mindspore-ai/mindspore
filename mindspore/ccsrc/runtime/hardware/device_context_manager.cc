@@ -34,7 +34,7 @@ void DeviceContextManager::ClearDeviceContexts() {
   device_contexts_.clear();
 }
 
-DeviceContext *DeviceContextManager::CreateOrGetDeviceContext(const DeviceContextKey &device_context_key) {
+DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key) {
   std::string device_context_key_str = device_context_key.ToString();
   std::lock_guard<std::mutex> guard(lock_);
 

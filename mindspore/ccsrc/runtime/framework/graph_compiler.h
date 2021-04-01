@@ -41,13 +41,15 @@ class GraphCompiler {
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
   GraphId CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs);
 
-  // Run a graph and get the output in Graph mode.
-  void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
+  // Construct single op kernel graph and compile the kernel graph in PyNative mode.
+  GraphId CompileGraph(session::OpRunInfo *op_run_info, const GraphInfo &graph_info,
+                       std::vector<tensor::TensorPtr> *input_tensors, const std::vector<int64_t> &tensors_mask);
 
-  // Construct single op kernel graph, compile and run the kernel graph in PyNative mode.
-  void CompileAndRunGraph(session::OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                          std::vector<tensor::TensorPtr> *input_tensors, const std::vector<int64_t> &tensors_mask,
-                          VectorRef *outputs);
+  // Get graph by graph id, if not exist return nullptr, used in Graph mode.
+  KernelGraphPtr Fetch(GraphId graph_id) const;
+
+  // Get graph by graph info, if not exist return nullptr, used in PyNative mode.
+  KernelGraphPtr Fetch(const GraphInfo &graph_info) const;
 
  private:
   GraphCompiler() = default;
