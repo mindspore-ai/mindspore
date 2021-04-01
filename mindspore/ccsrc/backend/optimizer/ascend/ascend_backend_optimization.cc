@@ -99,7 +99,7 @@
 #include "backend/optimizer/ascend/buffer_fusion/conv_bnreduce_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/reduce_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
-#include "backend/optimizer/ascend/format_type/deal_ref_trans_and_cast.h"
+#include "backend/optimizer/ascend/format_type/deal_ref_and_split_unsupported_transdata.h"
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_cascade.h"
 #include "backend/optimizer/ascend/enhancer/insert_pad_for_nms_with_mask.h"
@@ -254,7 +254,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   mixed_precision_pm->AddPass(std::make_shared<OptimizeDependence>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  mixed_precision_pm->AddPass(std::make_shared<DealRefTransAndCast>());
+  mixed_precision_pm->AddPass(std::make_shared<DealRefAndSpiltUnSupportedTransdata>());
   mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
   mixed_precision_pm->AddPass(std::make_shared<LayerNormBetaGammaBackpropFusion>());
