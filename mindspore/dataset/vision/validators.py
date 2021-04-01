@@ -31,7 +31,8 @@ def check_crop_size(size):
     if isinstance(size, int):
         check_value(size, (1, FLOAT_MAX_INTEGER))
     elif isinstance(size, (tuple, list)) and len(size) == 2:
-        for value in size:
+        for index, value in enumerate(size):
+            type_check(value, (int,), "size[{}]".format(index))
             check_value(value, (1, FLOAT_MAX_INTEGER))
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
@@ -93,6 +94,8 @@ def check_normalize_c_param(mean, std):
 
 
 def check_normalize_py_param(mean, std):
+    type_check(mean, (list, tuple), "mean")
+    type_check(std, (list, tuple), "std")
     if len(mean) != len(std):
         raise ValueError("Length of mean and std must be equal.")
     for mean_value in mean:

@@ -515,3 +515,19 @@ def check_save_model(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+def check_sentence_piece_tokenizer(method):
+
+    """A wrapper that wraps a parameter checker to the original function."""
+
+    from .utils import SPieceTokenizerOutType
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mode, out_type], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(mode, (str, cde.SentencePieceVocab), "mode is not an instance of str or cde.SentencePieceVocab.")
+        type_check(out_type, (SPieceTokenizerOutType,), "out_type is not an instance of SPieceTokenizerOutType")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
