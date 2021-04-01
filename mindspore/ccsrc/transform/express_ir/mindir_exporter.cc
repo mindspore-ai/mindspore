@@ -443,6 +443,7 @@ std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::Gra
   if (node->isa<ValueNode>()) {
     // When node input is a ValueNode, need to create a Constant Node
     mind_ir::NodeProto *node_proto = graph_proto->add_node();
+    node_proto->set_name(node_name);
     node_proto->add_output(node_name);
     SetAttributeProto(node, node_proto);
   }
