@@ -132,6 +132,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
         │   ├──config.py                    // 参数配置
         │   ├──data_loader.py               // 数据处理
         │   ├──loss.py                      // 损失函数
+        │   ├─  eval_callback.py            // 训练时推理回调函数
         │   ├──utils.py                     // 通用组件（回调函数）
         │   ├──unet_medical                 // 医学图像处理Unet结构
                 ├──__init__.py
@@ -246,6 +247,10 @@ step: 2, loss is 0.6925452, fps is 56.43668656967454
 step: 299, loss is 0.20551169, fps is 58.4039329983891
 step: 300, loss is 0.18949677, fps is 57.63118508760329
 ```
+
+#### 训练时推理
+
+训练时推理需要在启动文件中添加`run_eval` 并设置为True。与此同时需要设置: `save_best_ckpt`, `eval_start_epoch`, `eval_interval`, `eval_metrics` 。
 
 ## 评估过程
 

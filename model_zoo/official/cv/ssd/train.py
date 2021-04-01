@@ -15,6 +15,7 @@
 
 """Train SSD and get checkpoint files."""
 
+import os
 import argparse
 import ast
 import mindspore.nn as nn
@@ -25,11 +26,15 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed, dtype
-from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn, ssd_vgg16
+from src.ssd import SSD300, SsdInferWithDecoder, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2,\
+    ssd_mobilenet_v1_fpn, ssd_resnet50_fpn, ssd_vgg16
 from src.config import config
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.lr_schedule import get_lr
 from src.init_params import init_net_param, filter_checkpoint_parameter_by_list
+from src.eval_callback import EvalCallBack
+from src.eval_utils import apply_eval
+from src.box_utils import default_boxes
 
 set_seed(1)
 
@@ -57,6 +62,14 @@ def get_args():
     parser.add_argument('--freeze_layer', type=str, default="none", choices=["none", "backbone"],
                         help="freeze the weights of network, support freeze the backbone's weights, "
                              "default is not freezing.")
+    parser.add_argument("--run_eval", type=ast.literal_eval, default=False,
+                        help="Run evaluation when training, default is False.")
+    parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True,
+                        help="Save best checkpoint when run_eval is True, default is True.")
+    parser.add_argument("--eval_start_epoch", type=int, default=40,
+                        help="Evaluation start epoch when run_eval is True, default is 40.")
+    parser.add_argument("--eval_interval", type=int, default=1,
+                        help="Evaluation interval when run_eval is True, default is 1.")
     args_opt = parser.parse_args()
     return args_opt
 
@@ -170,8 +183,25 @@ def main():
                           config.momentum, config.weight_decay, loss_scale)
         net = TrainingWrapper(net, opt, loss_scale)
 
-
     callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
+    if args_opt.run_eval:
+        eval_net = SsdInferWithDecoder(ssd, Tensor(default_boxes), config)
+        eval_net.set_train(False)
+        mindrecord_file = create_mindrecord(args_opt.dataset, "ssd_eval.mindrecord", False)
+        eval_dataset = create_ssd_dataset(mindrecord_file, batch_size=args_opt.batch_size, repeat_num=1,
+                                          is_training=False, use_multiprocessing=False)
+        if args_opt.dataset == "coco":
+            anno_json = os.path.join(config.coco_root, config.instances_set.format(config.val_data_type))
+        elif args_opt.dataset == "voc":
+            anno_json = os.path.join(config.voc_root, config.voc_json)
+        else:
+            raise ValueError('SSD eval only support dataset mode is coco and voc!')
+        eval_param_dict = {"net": eval_net, "dataset": eval_dataset, "anno_json": anno_json}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args_opt.eval_interval,
+                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=True,
+                               ckpt_directory=save_ckpt_path, besk_ckpt_name="best_map.ckpt",
+                               metrics_name="mAP")
+        callback.append(eval_cb)
     model = Model(net)
     dataset_sink_mode = False
     if args_opt.mode == "sink" and args_opt.run_platform != "CPU":

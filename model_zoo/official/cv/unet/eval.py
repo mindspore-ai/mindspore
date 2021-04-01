@@ -16,10 +16,6 @@
 import os
 import argparse
 import logging
-import cv2
-import numpy as np
-import mindspore.nn as nn
-import mindspore.ops.operations as F
 from mindspore import context, Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
@@ -27,75 +23,10 @@ from src.data_loader import create_dataset, create_cell_nuclei_dataset
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet
-from src.utils import UnetEval
+from src.utils import UnetEval, TempLoss, dice_coeff
 
 device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
-
-
-class TempLoss(nn.Cell):
-    """A temp loss cell."""
-    def __init__(self):
-        super(TempLoss, self).__init__()
-        self.identity = F.identity()
-    def construct(self, logits, label):
-        return self.identity(logits)
-
-
-class dice_coeff(nn.Metric):
-    def __init__(self):
-        super(dice_coeff, self).__init__()
-        self.clear()
-    def clear(self):
-        self._dice_coeff_sum = 0
-        self._iou_sum = 0
-        self._samples_num = 0
-
-    def update(self, *inputs):
-        if len(inputs) != 2:
-            raise ValueError('Need 2 inputs ((y_softmax, y_argmax), y), but got {}'.format(len(inputs)))
-        y = self._convert_data(inputs[1])
-        self._samples_num += y.shape[0]
-        y = y.transpose(0, 2, 3, 1)
-        b, h, w, c = y.shape
-        if b != 1:
-            raise ValueError('Batch size should be 1 when in evaluation.')
-        y = y.reshape((h, w, c))
-        if cfg_unet["eval_activate"].lower() == "softmax":
-            y_softmax = np.squeeze(self._convert_data(inputs[0][0]), axis=0)
-            if cfg_unet["eval_resize"]:
-                y_pred = []
-                for i in range(cfg_unet["num_classes"]):
-                    y_pred.append(cv2.resize(np.uint8(y_softmax[:, :, i] * 255), (w, h)) / 255)
-                y_pred = np.stack(y_pred, axis=-1)
-            else:
-                y_pred = y_softmax
-        elif cfg_unet["eval_activate"].lower() == "argmax":
-            y_argmax = np.squeeze(self._convert_data(inputs[0][1]), axis=0)
-            y_pred = []
-            for i in range(cfg_unet["num_classes"]):
-                if cfg_unet["eval_resize"]:
-                    y_pred.append(cv2.resize(np.uint8(y_argmax == i), (w, h), interpolation=cv2.INTER_NEAREST))
-                else:
-                    y_pred.append(np.float32(y_argmax == i))
-            y_pred = np.stack(y_pred, axis=-1)
-        else:
-            raise ValueError('config eval_activate should be softmax or argmax.')
-        y_pred = y_pred.astype(np.float32)
-        inter = np.dot(y_pred.flatten(), y.flatten())
-        union = np.dot(y_pred.flatten(), y_pred.flatten()) + np.dot(y.flatten(), y.flatten())
-
-        single_dice_coeff = 2*float(inter)/float(union+1e-6)
-        single_iou = single_dice_coeff / (2 - single_dice_coeff)
-        print("single dice coeff is: {}, IOU is: {}".format(single_dice_coeff, single_iou))
-        self._dice_coeff_sum += single_dice_coeff
-        self._iou_sum += single_iou
-
-    def eval(self):
-        if self._samples_num == 0:
-            raise RuntimeError('Total samples num must not be 0.')
-        return (self._dice_coeff_sum / float(self._samples_num), self._iou_sum / float(self._samples_num))
-
 
 def test_net(data_dir,
              ckpt_path,
@@ -119,7 +50,7 @@ def test_net(data_dir,
     else:
         _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
                                           do_crop=cfg['crop'], img_size=cfg['img_size'])
-    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff()})
+    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff(cfg_unet)})
 
     print("============== Starting Evaluating ============")
     eval_score = model.eval(valid_dataset, dataset_sink_mode=False)["dice_coeff"]

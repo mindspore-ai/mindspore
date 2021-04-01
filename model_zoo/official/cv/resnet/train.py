@@ -31,9 +31,12 @@ from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
+import mindspore.log as logger
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.config import cfg
+from src.eval_callback import EvalCallBack
+from src.metric import DistAccuracy, ClassifyCorrectCell
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--net', type=str, default=None, help='Resnet Model, resnet18, resnet50 or resnet101')
@@ -48,6 +51,15 @@ parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained ch
 parser.add_argument('--parameter_server', type=ast.literal_eval, default=False, help='Run parameter server train')
 parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
                     help="Filter head weight parameters, default is False.")
+parser.add_argument("--run_eval", type=ast.literal_eval, default=False,
+                    help="Run evaluation when training, default is False.")
+parser.add_argument('--eval_dataset_path', type=str, default=None, help='Evaluation dataset path when run_eval is True')
+parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True,
+                    help="Save best checkpoint when run_eval is True, default is True.")
+parser.add_argument("--eval_start_epoch", type=int, default=40,
+                    help="Evaluation start epoch when run_eval is True, default is 40.")
+parser.add_argument("--eval_interval", type=int, default=1,
+                    help="Evaluation interval when run_eval is True, default is 1.")
 args_opt = parser.parse_args()
 
 set_seed(1)
@@ -89,6 +101,12 @@ def filter_checkpoint_parameter_by_list(origin_dict, param_filter):
                 del origin_dict[key]
                 break
 
+def apply_eval(eval_param):
+    eval_model = eval_param["model"]
+    eval_ds = eval_param["dataset"]
+    metrics_name = eval_param["metrics_name"]
+    res = eval_model.eval(eval_ds)
+    return res[metrics_name]
 
 if __name__ == '__main__':
     target = args_opt.device_target
@@ -185,12 +203,16 @@ if __name__ == '__main__':
     else:
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                  amp_level="O2", keep_batchnorm_fp32=False)
+    dist_eval_network = ClassifyCorrectCell(net) if args_opt.run_distribute else None
+    metrics = {"acc"}
+    if args_opt.run_distribute:
+        metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=args_opt.device_num)}
+    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics=metrics,
+                  amp_level="O2", keep_batchnorm_fp32=False, eval_network=dist_eval_network)
     if (args_opt.net != "resnet101" and args_opt.net != "resnet50") or \
         args_opt.parameter_server or target == "CPU":
         ## fp32 training
-        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network)
     if cfg.optimizer == "Thor" and args_opt.dataset == "imagenet2012":
         from src.lr_generator import get_thor_damping
         damping = get_thor_damping(0, config.damping_init, config.damping_decay, 70, step_size)
@@ -201,6 +223,8 @@ if __name__ == '__main__':
                                                           loss_scale_manager=loss_scale, metrics={'acc'},
                                                           amp_level="O2", keep_batchnorm_fp32=False,
                                                           frequency=config.frequency)
+        args_opt.run_eval = False
+        logger.warning("Thor optimizer not support evaluation while training.")
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
@@ -211,7 +235,17 @@ if __name__ == '__main__':
                                      keep_checkpoint_max=config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
         cb += [ckpt_cb]
-
+    if args_opt.run_eval:
+        if args_opt.eval_dataset_path is None or (not os.path.isdir(args_opt.eval_dataset_path)):
+            raise ValueError("{} is not a existing path.".format(args_opt.eval_dataset_path))
+        eval_dataset = create_dataset(dataset_path=args_opt.eval_dataset_path, do_train=False,
+                                      batch_size=config.batch_size, target=target)
+        eval_param_dict = {"model": model, "dataset": eval_dataset, "metrics_name": "acc"}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args_opt.eval_interval,
+                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=True,
+                               ckpt_directory=ckpt_save_dir, besk_ckpt_name="best_acc.ckpt",
+                               metrics_name="acc")
+        cb += [eval_cb]
     # train model
     if args_opt.net == "se-resnet50":
         config.epoch_size = config.train_epoch_size

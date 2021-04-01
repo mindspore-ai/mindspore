@@ -16,8 +16,28 @@
 
 import json
 import numpy as np
+from mindspore import Tensor
 from .config import config
 
+def apply_eval(eval_param_dict):
+    net = eval_param_dict["net"]
+    net.set_train(False)
+    ds = eval_param_dict["dataset"]
+    anno_json = eval_param_dict["anno_json"]
+    pred_data = []
+    for data in ds.create_dict_iterator(output_numpy=True, num_epochs=1):
+        img_id = data['img_id']
+        img_np = data['image']
+        image_shape = data['image_shape']
+
+        output = net(Tensor(img_np))
+        for batch_idx in range(img_np.shape[0]):
+            pred_data.append({"boxes": output[0].asnumpy()[batch_idx],
+                              "box_scores": output[1].asnumpy()[batch_idx],
+                              "img_id": int(np.squeeze(img_id[batch_idx])),
+                              "image_shape": image_shape[batch_idx]})
+    mAP = metrics(pred_data, anno_json)
+    return mAP
 
 def apply_nms(all_boxes, all_scores, thres, max_boxes):
     """Apply NMS to bboxes."""

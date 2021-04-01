@@ -128,6 +128,7 @@ Then you can run everything just like on ascend.
         │   ├──config.py                    // parameter configuration
         │   ├──data_loader.py               // creating dataset
         │   ├──loss.py                      // loss
+        │   ├──eval_callback.py             // evaluation callback while training
         │   ├──utils.py                     // General components (callback function)
         │   ├──unet_medical                 // Unet medical architecture
                 ├──__init__.py              // init file
@@ -168,6 +169,11 @@ Parameters for both training and evaluation can be set in config.py
   'resume_ckpt': './',                # pretrain model path
   'transfer_training': False          # whether do transfer training
   'filter_weight': ["final.weight"]   # weight name to filter while doing transfer training
+  'run_eval': False                   # Run evaluation when training
+  'save_best_ckpt': True              # Save best checkpoint when run_eval is True
+  'eval_start_epoch': 0               # Evaluation start epoch when run_eval is True
+  'eval_interval': 1                  # valuation interval when run_eval is True
+
   ```
 
 - config for Unet++, cell nuclei dataset
@@ -193,6 +199,10 @@ Parameters for both training and evaluation can be set in config.py
   'resume_ckpt': './',                # pretrain model path
   'transfer_training': False          # whether do transfer training
   'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']  # weight name to filter while doing transfer training
+  'run_eval': False                   # Run evaluation when training
+  'save_best_ckpt': True              # Save best checkpoint when run_eval is True
+  'eval_start_epoch': 0               # Evaluation start epoch when run_eval is True
+  'eval_interval': 1                  # valuation interval when run_eval is True
   ```
 
 ## [Training Process](#contents)
@@ -244,6 +254,10 @@ step: 2, loss is 0.6925452, fps is 56.43668656967454
 step: 299, loss is 0.20551169, fps is 58.4039329983891
 step: 300, loss is 0.18949677, fps is 57.63118508760329
 ```
+
+#### Evaluation while training
+
+You can add `run_eval` to start shell and set it True, if you want evaluation while training. And you can set argument option: `save_best_ckpt`, `eval_start_epoch`, `eval_interval`, `eval_metrics` when `run_eval` is True.
 
 ## [Evaluation Process](#contents)
 
