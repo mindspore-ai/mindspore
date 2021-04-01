@@ -20,6 +20,7 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
+#include <memory>
 
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph.h"
@@ -104,18 +105,18 @@ class PrimBpropOptGraphLevel2Info {
 
   void TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out);
 
-  void AnalysisArgUsingInfo(FuncGraphManagerPtr &manager);
+  void AnalysisArgUsingInfo(const FuncGraphManagerPtr &manager);
 
  private:
-  void ArgInfoRefresh(const std::shared_ptr<AnfNode> &param, ParamUsingInfo &arg_info) const;
+  void ArgInfoRefresh(const std::shared_ptr<AnfNode> &param, ParamUsingInfo *arg_info) const;
 
   void AnalysisNodeUsingInfo(const NodeUsersMap &node_users, const std::shared_ptr<AnfNode> &param,
-                             ParamUsingInfo &arg_info) const;
+                             ParamUsingInfo *arg_info) const;
 
   void TryFreeOneValue(const ValuePtrList &op_args, const std::vector<ParamUsingInfo> &param_info_vec);
 
   void AalysisForTupleGetItem(const NodeUsersMap &node_users, const std::shared_ptr<AnfNode> &param,
-                              ParamUsingInfo &arg_info, const AnfNodePtr &user_node) const;
+                              ParamUsingInfo *arg_info, const AnfNodePtr &user_node) const;
 
  private:
   // the level2 opt func_graph
@@ -148,11 +149,11 @@ class PrimBpropOptimizer {
   PrimBpropOptimizer();
 
   ECacheQrtRes GetOptBpfgFromCache(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
-                                   PrimBpropOptGraphLevel2InfoPtr &level_2_graph_info,
-                                   PrimBpropOptGraphInfoPtr &level_1_graph_info);
+                                   PrimBpropOptGraphLevel2InfoPtr *level_2_graph_info,
+                                   PrimBpropOptGraphInfoPtr *level_1_graph_info);
 
   // converter tensor args to abs value;
-  void ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList &abs_list);
+  void ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList *abs_list);
 
   // add out && dout to abs list
   abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list);
@@ -162,9 +163,9 @@ class PrimBpropOptimizer {
 
   // do opt with input info
   PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
-                                                   abstract::AbstractBasePtrList &abs_list_input);
+                                                   const abstract::AbstractBasePtrList &abs_list_input);
 
-  void BindAbsToParameters(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
+  void BindAbsToParameters(const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input);
 
   FuncGraphPtr GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
                                     PrimitivePtr &prim);

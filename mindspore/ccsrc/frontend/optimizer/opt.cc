@@ -127,13 +127,13 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
 }
 
 static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodePtr &node,
-                                          std::vector<AnfNodePtr> &todo, bool change, size_t seen) {
+                                          std::vector<AnfNodePtr> *todo, bool change, size_t seen) {
   if (IsValueNode<FuncGraph>(node)) {
-    todo.emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
+    (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
   }
   if (node->isa<CNode>()) {
     auto &inputs = node->cast<CNodePtr>()->inputs();
-    (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(todo));
+    (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
   }
 
   if (!change) {
@@ -151,7 +151,7 @@ static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodeP
     if (use_node == nullptr) {
       continue;
     }
-    todo.emplace_back(use_node);
+    (*todo).emplace_back(use_node);
     if (use_node->seen_ == seen) {
       use_node->seen_--;
     }
@@ -192,7 +192,7 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
         break;
       }
     }
-    UpdateTransformingList(optimizer, node, todo, change, seen);
+    UpdateTransformingList(optimizer, node, &todo, change, seen);
   }
 #ifdef ENABLE_PROFILE
   MsProfile::StatTime("opt.transforms." + optimizer->name(), GetTime() - start);
@@ -231,7 +231,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
       changes = true;
       node = res;
     }
-    UpdateTransformingList(optimizer, node, todo, change, seen);
+    UpdateTransformingList(optimizer, node, &todo, change, seen);
   }
 
 #ifdef ENABLE_PROFILE

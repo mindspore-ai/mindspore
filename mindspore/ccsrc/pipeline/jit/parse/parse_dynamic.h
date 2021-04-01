@@ -19,6 +19,9 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_DYNAMIC_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_DYNAMIC_H_
 
+#include <vector>
+#include <memory>
+#include <string>
 #include "pipeline/jit/parse/parse.h"
 
 namespace mindspore::parse {

@@ -21,6 +21,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+#include <algorithm>
 #include "ir/anf.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
 #include "frontend/optimizer/ad/adjoint.h"
@@ -220,8 +222,8 @@ using PynativeAdjointPtr = std::shared_ptr<PynativeAdjoint>;
 
 class KPynativeCellImpl : public KPynativeCell {
  public:
-  explicit KPynativeCellImpl(const AnfNodePtrList &cell_inputs) : cell_inputs_(cell_inputs) {
-    tape_ = std::make_shared<FuncGraph>();
+  explicit KPynativeCellImpl(const AnfNodePtrList &cell_inputs)
+      : cell_inputs_(cell_inputs), tape_(std::make_shared<FuncGraph>()) {
     tape_->debug_info()->set_name("grad_top");
     for (size_t i = 0; i < cell_inputs.size(); ++i) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(cell_inputs[i]->debug_info()));
@@ -438,7 +440,7 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeGetItemAdjoint(const CNodePtr &cnode)
     MS_LOG(EXCEPTION) << "CNode input 2 should not less than 0, CNode: " << cnode->DebugString();
   }
   size_t index_value_imm = index_value->value();
-  if (index_value_imm < 0 || index_value_imm >= inp_1_out->size()) {
+  if (index_value_imm >= inp_1_out->size()) {
     MS_LOG(EXCEPTION) << "CNode input 2 should be index between [0, " << inp_1_out->size()
                       << ", but: " << index_value->ToString();
   }
@@ -701,10 +703,10 @@ FuncGraphPtr KPynativeCellImpl::BuildBpropCutFuncGraph(const PrimitivePtr &prim,
 }
 
 FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode) {
-  using KeyPair = std::pair<std::string, size_t>;
-  static std::map<KeyPair, FuncGraphPtr> bprop_func_graph_cache;
+  using CacheKey = std::pair<std::string, size_t>;
+  static std::map<CacheKey, FuncGraphPtr> bprop_func_graph_cache;
   auto inputs_num = cnode->size() - 1;
-  KeyPair key{prim->name(), inputs_num};
+  CacheKey key{prim->name(), inputs_num};
   auto bprop_func_graph_iter = bprop_func_graph_cache.find(key);
   if (bprop_func_graph_iter != bprop_func_graph_cache.end()) {
     return bprop_func_graph_iter->second;
@@ -720,6 +722,7 @@ FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim,
   }
   // out, dout
   auto p1 = b->add_parameter();
+  MS_EXCEPTION_IF_NULL(p1);
   AnfNodePtr dout = b->add_parameter();
 
   std::vector<AnfNodePtr> grads;

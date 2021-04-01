@@ -98,7 +98,7 @@ class TopCellInfo {
   void set_all_op_info(std::string all_op_info) { all_op_info_ = all_op_info; }
   void set_input_args_id(std::string input_args_id) { input_args_id_ = std::move(input_args_id); }
   std::string &bprop_cell_id() { return bprop_cell_id_; }
-  void set_bprop_cell_id(std::string &bprop_cell_id) { bprop_cell_id_ = bprop_cell_id; }
+  void set_bprop_cell_id(const std::string &bprop_cell_id) { bprop_cell_id_ = bprop_cell_id; }
   std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }

@@ -2160,7 +2160,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
   // Get the parameters items and add the value to args_spec
-  auto args_spec = GetArgsSpec(args, bprop_graph);
+  (void)GetArgsSpec(args, bprop_graph);
 
   // Do opt for final bprop graph
   ResourcePtr resource = std::make_shared<pipeline::Resource>();

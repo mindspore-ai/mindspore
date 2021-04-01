@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "bool_scalar_eliminate.h"
+#include "frontend/optimizer/irpass/bool_scalar_eliminate.h"
 #include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {

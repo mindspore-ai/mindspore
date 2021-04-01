@@ -16,6 +16,11 @@
  * limitations under the License.
  */
 
+#include <unordered_set>
+#include <set>
+#include <vector>
+#include <string>
+#include <memory>
 #include "pipeline/jit/parse/parse_dynamic.h"
 #include "mindspore/core/ir/cell.h"
 
