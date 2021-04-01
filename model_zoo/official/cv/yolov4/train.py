@@ -121,6 +121,9 @@ device_id = int(os.getenv('DEVICE_ID', '0'))
 context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
                     device_target=args.device_target, save_graphs=False, device_id=device_id)
 
+if args.need_profiler:
+    profiler = Profiler(output_path=args.outputs_dir, is_detail=True, is_show_op_path=True)
+
 # init distributed
 if args.is_distributed:
     if args.device_target == "Ascend":
@@ -163,9 +166,6 @@ class BuildTrainNetwork(nn.Cell):
 
 
 if __name__ == "__main__":
-    if args.need_profiler:
-        profiler = Profiler(output_path=args.outputs_dir, is_detail=True, is_show_op_path=True)
-
     loss_meter = AverageMeter('loss')
 
     context.reset_auto_parallel_context()
@@ -224,7 +224,7 @@ if __name__ == "__main__":
 
     if args.rank_save_ckpt_flag:
         # checkpoint save
-        ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
+        ckpt_max_num = 10
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
                                        keep_checkpoint_max=ckpt_max_num)
         save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
@@ -233,7 +233,7 @@ if __name__ == "__main__":
                                   prefix='{}'.format(args.rank))
         cb_params = _InternalCallbackParam()
         cb_params.train_network = network
-        cb_params.epoch_num = ckpt_max_num
+        cb_params.epoch_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
         cb_params.cur_epoch_num = 1
         run_context = RunContext(cb_params)
         ckpt_cb.begin(run_context)
