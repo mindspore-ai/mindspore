@@ -37,7 +37,7 @@
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 #include "backend/optimizer/graph_kernel/optimize_assign.h"
-#include "backend/optimizer/graph_kernel/split_assign.h"
+#include "backend/optimizer/graph_kernel/split_umonad.h"
 #include "backend/optimizer/graph_kernel/reorder_ops.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"

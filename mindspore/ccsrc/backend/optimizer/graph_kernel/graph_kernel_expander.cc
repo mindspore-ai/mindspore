@@ -26,6 +26,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/split_umonad.h"
 #include "backend/optimizer/graph_kernel/substitute_dropout.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "mindspore/core/ir/graph_utils.h"
@@ -37,10 +38,14 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kAssignInputIdx = 1;
+constexpr size_t kLambInputIdx = 12;
+
 std::vector<PrimitivePtr> GetExpandOps() {
   std::vector<PrimitivePtr> expand_ops = {
     prim::kPrimSquare,
     prim::kPrimGeLUGrad,
+    prim::kPrimAssignAdd,
 #if ENABLE_D
     prim::kPrimTile,
     prim::kPrimSqrtGrad,
@@ -69,7 +74,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSigmoidCrossEntropyWithLogits,
     prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
     prim::kPrimSoftmaxCrossEntropyWithLogits,
-    prim::kPrimAssignAdd,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();
@@ -167,6 +171,22 @@ AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   return graph_kernel_node;
 }
 
+ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &node) {
+  std::vector<std::pair<PrimitivePtr, ExpanderPtr>> expanders = {
+    {prim::kPrimDropout, std::make_shared<DropoutExpander>()},
+    {prim::kPrimAssignAdd, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
+    {prim::kPrimAssignSub, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
+    {prim::kLambApplyOptimizerAssign, std::make_shared<OpUMonadExpander>(kLambInputIdx)},
+  };
+
+  for (auto &e : expanders) {
+    if (IsPrimitiveCNode(node, e.first)) {
+      return e.second;
+    }
+  }
+  return std::make_shared<DefaultExpander>();
+}
+
 bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
@@ -190,18 +210,6 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
     changed = true;
   }
   return changed;
-}
-
-ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &node) {
-  std::vector<std::pair<PrimitivePtr, ExpanderPtr>> expanders = {
-    {prim::kPrimDropout, std::make_shared<DropoutExpander>()},
-  };
-  for (auto &e : expanders) {
-    if (IsPrimitiveCNode(node, e.first)) {
-      return e.second;
-    }
-  }
-  return std::make_shared<DefaultExpander>();
 }
 
 bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {

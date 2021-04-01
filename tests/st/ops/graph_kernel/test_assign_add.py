@@ -32,26 +32,38 @@ class AssignAdd(nn.Cell):
         self.add(self.var, y)
         return self.var
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_assign_add():
-    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+def get_output(x2, y2, enable_graph_kernel=False):
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
     add = AssignAdd(x2)
     result_gk_on_1 = add(y2)
     add_2 = AssignAdd(result_gk_on_1)
     result_gk_on_2 = add_2(y2)
+    output = [result_gk_on_1, result_gk_on_2]
+    return output
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
-    add_beta = AssignAdd(x2)
-    result_gk_off_1 = add_beta(y2)
-    add_beta_2 = AssignAdd(result_gk_off_1)
-    result_gk_off_2 = add_beta_2(y2)
-    assert (result_gk_on_1.asnumpy() == result_gk_off_1.asnumpy()).all()
-    assert (result_gk_on_2.asnumpy() == result_gk_off_2.asnumpy()).all()
+def assign_add():
+    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+
+    expect = get_output(x2, y2, False)
+    output = get_output(x2, y2, True)
+    e1, e2 = list(expect)
+    o1, o2 = list(output)
+
+    assert np.allclose(o1.asnumpy(), e1.asnumpy())
+    assert np.allclose(o2.asnumpy(), e2.asnumpy())
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_gpu():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    assign_add()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_assign_add_ascend():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    assign_add()

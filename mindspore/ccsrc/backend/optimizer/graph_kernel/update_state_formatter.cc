@@ -219,7 +219,9 @@ bool ExtendOutputForUpdateState::ProcessIndex(const FuncGraphPtr &func_graph, co
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   for (auto user : mng->node_users()[getitems_[index]]) {
-    user.first->cast<CNodePtr>()->set_input(user.second, new_node);
+    if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
+      user.first->cast<CNodePtr>()->set_input(user.second, new_node);
+    }
   }
   return true;
 }
