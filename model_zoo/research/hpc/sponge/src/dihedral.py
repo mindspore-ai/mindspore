@@ -12,38 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""dihedral class"""
-
+'''Dihedral'''
 import math
-import numpy as np
-
-import mindspore.common.dtype as mstype
-from mindspore import Tensor, nn
-from mindspore.ops import operations as P
 
 
-class Dihedral(nn.Cell):
-    """dihedral class"""
-
+class Dihedral:
+    '''Dihedral'''
     def __init__(self, controller):
-        super(Dihedral, self).__init__()
         self.CONSTANT_Pi = 3.1415926535897932
         if controller.amber_parm is not None:
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
-        self.atom_a = Tensor(np.asarray(self.h_atom_a, np.int32), mstype.int32)
-        self.atom_b = Tensor(np.asarray(self.h_atom_b, np.int32), mstype.int32)
-        self.atom_c = Tensor(np.asarray(self.h_atom_c, np.int32), mstype.int32)
-        self.atom_d = Tensor(np.asarray(self.h_atom_d, np.int32), mstype.int32)
 
-        self.pk = Tensor(np.asarray(self.pk, np.float32), mstype.float32)
-        self.gamc = Tensor(np.asarray(self.gamc, np.float32), mstype.float32)
-        self.gams = Tensor(np.asarray(self.gams, np.float32), mstype.float32)
-        self.pn = Tensor(np.asarray(self.pn, np.float32), mstype.float32)
-        self.ipn = Tensor(np.asarray(self.ipn, np.int32), mstype.int32)
-
-    def process1(self, context):
-        """process1: read information from amberfile"""
+    def read_information_from_amberfile(self, file_path):
+        '''read amber file'''
+        file = open(file_path, 'r')
+        context = file.readlines()
+        file.close()
         for idx, val in enumerate(context):
             if idx < len(context) - 1:
                 if "%FLAG POINTERS" in val + context[idx + 1] and "%FORMAT(10I8)" in val + context[idx + 1]:
@@ -115,15 +100,10 @@ class Dihedral(nn.Cell):
                         count += len(value)
                 self.pn_type = information[:self.dihedral_type_numbers]
                 break
+        self.processor(context)
 
-    def read_information_from_amberfile(self, file_path):
-        """read information from amberfile"""
-        file = open(file_path, 'r')
-        context = file.readlines()
-        file.close()
-
-        self.process1(context)
-
+    def processor(self, context):
+        '''processor'''
         self.h_atom_a = [0] * self.dihedral_numbers
         self.h_atom_b = [0] * self.dihedral_numbers
         self.h_atom_c = [0] * self.dihedral_numbers
@@ -204,18 +184,3 @@ class Dihedral(nn.Cell):
         for i in range(self.dihedral_numbers):
             if self.h_atom_c[i] < 0:
                 self.h_atom_c[i] *= -1
-
-    def Dihedral_Engergy(self, uint_crd, uint_dr_to_dr_cof):
-        """compute dihedral energy"""
-        self.dihedral_energy = P.DihedralEnergy(self.dihedral_numbers)(uint_crd, uint_dr_to_dr_cof, self.atom_a,
-                                                                       self.atom_b, self.atom_c, self.atom_d, self.ipn,
-                                                                       self.pk, self.gamc, self.gams, self.pn)
-        self.sigma_of_dihedral_ene = P.ReduceSum()(self.dihedral_energy)
-        return self.sigma_of_dihedral_ene
-
-    def Dihedral_Force_With_Atom_Energy(self, uint_crd, scaler):
-        """compute dihedral force and atom energy"""
-        self.dfae = P.DihedralForceWithAtomEnergy(dihedral_numbers=self.dihedral_numbers)
-        self.frc, self.ene = self.dfae(uint_crd, scaler, self.atom_a, self.atom_b, self.atom_c, self.atom_d,
-                                       self.ipn, self.pk, self.gamc, self.gams, self.pn)
-        return self.frc, self.ene

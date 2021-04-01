@@ -48,7 +48,7 @@ void Construct_Neighbor_List(int grid_numbers, int max_neighbor_numbers, int *nl
 
 void CopyNeighborListAtomNumber(int atom_numbers, NEIGHBOR_LIST *nl, int *nl_atom_numbers, cudaStream_t stream);
 
-void Neighbor_List_Update(int grid_numbers, int atom_numbers, int refresh_count, int refresh_interval,
+void Neighbor_List_Update(int grid_numbers, int atom_numbers, int* d_refresh_count, int refresh_interval,
                           int not_first_time, float skin, int Nxy, float cutoff_square, float cutoff_with_skin_square,
                           int *grid_N, float *box_length, int *atom_numbers_in_grid_bucket, float *grid_length_inverse,
                           int *atom_in_grid_serial, GRID_BUCKET *bucket, float *crd, float *old_crd,

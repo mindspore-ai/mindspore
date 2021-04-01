@@ -14,33 +14,22 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/nvtit/md_iteration_leap_frog_liujian_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
+MS_REG_GPU_KERNEL_TWO(MDIterationLeapFrogLiujian,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeUInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NeighborListUpdateGpuKernel, int, float)
+                      MDIterationLeapFrogLiujianCudaGpuKernel, float, int)
 
 }  // namespace kernel
 }  // namespace mindspore

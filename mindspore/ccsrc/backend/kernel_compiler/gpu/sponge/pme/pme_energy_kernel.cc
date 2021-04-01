@@ -19,7 +19,6 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(PMEEnergy,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
