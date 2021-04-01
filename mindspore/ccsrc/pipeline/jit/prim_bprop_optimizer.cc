@@ -15,7 +15,7 @@
  */
 
 #include <memory>
-#include <ir/func_graph_cloner.h>
+#include "ir/func_graph_cloner.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
 #include "pipeline/jit/pass.h"
 
@@ -198,7 +198,7 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
 }
 
 FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args,
-                                                      const ValuePtr &out, PrimitivePtr &prim) {
+                                                      const ValuePtr &out, const PrimitivePtr &prim) {
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, &abs_list);
 
@@ -230,7 +230,7 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
 }
 
 FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args,
-                                                 const ValuePtr &out, PrimitivePtr &prim, bool hook_flg) {
+                                                 const ValuePtr &out, const PrimitivePtr &prim, bool hook_flg) {
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, &abs_list);
   if (!hook_flg) {

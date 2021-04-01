@@ -85,7 +85,7 @@ std::mutex PynativeExecutor::instance_lock_;
 constexpr auto implcast = "implcast";
 
 template <typename T, typename... Args>
-void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T *ret, const Args &...args) {
+void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T *ret, const Args &... args) {
   const auto inst = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);

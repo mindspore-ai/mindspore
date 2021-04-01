@@ -153,7 +153,7 @@ class PrimBpropOptimizer {
                                    PrimBpropOptGraphInfoPtr *level_1_graph_info);
 
   // converter tensor args to abs value;
-  void ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList *abs_list);
+  void ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList *abs_list);
 
   // add out && dout to abs list
   abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list);
@@ -168,10 +168,10 @@ class PrimBpropOptimizer {
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input);
 
   FuncGraphPtr GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
-                                    PrimitivePtr &prim);
+                                    const PrimitivePtr &prim);
 
   FuncGraphPtr GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
-                               PrimitivePtr &prim, bool hook_flg);
+                               const PrimitivePtr &prim, bool hook_flg);
 
  private:
   // cache optimized bprop graph
