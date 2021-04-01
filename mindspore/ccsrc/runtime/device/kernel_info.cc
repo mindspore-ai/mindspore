@@ -81,6 +81,13 @@ DeviceAddressPtr KernelInfo::GetMutableWorkspaceAddr(size_t index) const {
   return workspace_address_list_[index];
 }
 
+bool KernelInfo::WorkspaceAddrExist(size_t index) const {
+  if (index >= workspace_address_list_.size()) {
+    return false;
+  }
+  return workspace_address_list_[index] != nullptr;
+}
+
 bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index) {
   if (workspace_address_list_.empty()) {
     // parameter and valuenode
