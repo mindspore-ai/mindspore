@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_TCP_MESSAGE_HANDLER_H_
-#define MINDSPORE_CCSRC_PS_CORE_TCP_MESSAGE_HANDLER_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_MESSAGE_HANDLER_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_MESSAGE_HANDLER_H_
 
 #include <functional>
 #include <iostream>
@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "utils/log_adapter.h"
-#include "ps/core/message.h"
+#include "ps/core/communicator/message.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 
@@ -58,4 +58,4 @@ class TcpMessageHandler {
 }  // namespace ps
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PS_CORE_TCP_MESSAGE_HANDLER_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_MESSAGE_HANDLER_H_

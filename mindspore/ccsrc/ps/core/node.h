@@ -32,8 +32,8 @@
 
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/node_info.h"
-#include "ps/core/tcp_client.h"
-#include "ps/core/tcp_server.h"
+#include "ps/core/communicator/tcp_client.h"
+#include "ps/core/communicator/tcp_server.h"
 
 namespace mindspore {
 namespace ps {

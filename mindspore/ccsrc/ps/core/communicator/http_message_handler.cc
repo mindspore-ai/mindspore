@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/core/http_message_handler.h"
+#include "ps/core/communicator/http_message_handler.h"
 
 #include <event2/event.h>
 #include <event2/buffer.h>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_HTTP_MESSAGE_HANDLER_H_
-#define MINDSPORE_CCSRC_PS_CORE_HTTP_MESSAGE_HANDLER_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_MESSAGE_HANDLER_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_MESSAGE_HANDLER_H_
 
 #include <event2/buffer.h>
 #include <event2/event.h>
@@ -127,4 +127,4 @@ class HttpMessageHandler {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_CORE_HTTP_MESSAGE_HANDLER_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_MESSAGE_HANDLER_H_

@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "common/common_test.h"
-#include "ps/core/tcp_client.h"
+#include "ps/core/communicator/tcp_client.h"
 
 namespace mindspore {
 namespace ps {

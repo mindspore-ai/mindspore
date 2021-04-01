@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_HTTP_CLIENT_H_
-#define MINDSPORE_CCSRC_PS_CORE_HTTP_CLIENT_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_CLIENT_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_CLIENT_H_
 
 #include <event2/buffer.h>
 #include <event2/event.h>
@@ -39,7 +39,7 @@
 #include <vector>
 #include <map>
 
-#include "ps/core/http_message_handler.h"
+#include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/comm_util.h"
 
 namespace mindspore {
@@ -93,4 +93,4 @@ class HttpClient {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_CORE_HTTP_CLIENT_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_HTTP_CLIENT_H_

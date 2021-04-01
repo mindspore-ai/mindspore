@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_MESSAGE_H_
-#define MINDSPORE_CCSRC_PS_CORE_MESSAGE_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_MESSAGE_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_MESSAGE_H_
 
 #include <string>
 #include <memory>
@@ -56,4 +56,4 @@ struct CommandMeta {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_CORE_MESSAGE_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_MESSAGE_H_
