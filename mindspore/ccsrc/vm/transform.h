@@ -131,6 +131,30 @@ class CompileGraphs {
   BackendPtr backend_;
 };
 
+// The graph compiling of using mindRT, which transforms the funcGraph to kernelGraph and returns the graph id of
+// kernelGraph.
+class GraphCompiler {
+ public:
+  GraphCompiler(const std::shared_ptr<MindRTBackend> &backend,
+                const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
+  ~GraphCompiler() = default;
+
+  // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs,
+  // the return is the kernelGraph id of the root graph. It will traverse all subgraphs to call CompileGraph.
+  uint32_t CompileGraphs(const FuncGraphPtr &root_graph);
+
+ private:
+  // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
+  // the return is the corresponding kernelGraph id of the graph.
+  uint32_t CompileGraph(const FuncGraphPtr &func_graph);
+
+  std::shared_ptr<MindRTBackend> backend_;
+  GraphPartitionPtr graph_partition_;
+};
+
+// Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
+bool IsMindRTUsed();
+
 BackendPtr CreateBackend();
 
 }  // namespace compile
