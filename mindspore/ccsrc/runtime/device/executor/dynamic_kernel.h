@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace device {
-
 class DynamicKernel {
  public:
   DynamicKernel(void *stream, const CNodePtr &cnode_ptr)
