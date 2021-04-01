@@ -36,7 +36,6 @@ def read_validateir_file(path_folder):
     filename = find_newest_validateir_file(path_folder)
     with open(os.path.join(filename), 'r') as f:
         contend = f.read()
-    clean_all_ir_files(path_folder)
     return contend
 
 
@@ -130,10 +129,12 @@ def test_sit_auto_mix_precision_model_o0():
     contend = read_validateir_file('./test_amp_o0')
     castnum = re.findall("Cast", contend)
     assert len(castnum) == 5
+    clean_all_ir_files('./test_amp_o0')
     model.predict(Tensor(input_data))
     contend = read_validateir_file('./test_amp_o0')
     castnum = re.findall("Cast", contend)
     assert len(castnum) == 11
+    clean_all_ir_files('./test_amp_o0')
 
 
 @pytest.mark.level0
@@ -164,6 +165,7 @@ def test_sit_auto_mix_precision_model_o2():
     contend = read_validateir_file('./test_amp_o2')
     castnum = re.findall("Cast", contend)
     assert len(castnum) == 14
+    clean_all_ir_files('./test_amp_o2')
     out_graph = model.predict(Tensor(input_data))
 
     # pynative mode

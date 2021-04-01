@@ -24,4 +24,5 @@ import pytest
 def test_broadcast_auto_parallel():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_broadcast_auto_parallel.sh")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/lenet_broadcast*/test_lenet_auto_parallel_broadcast_8p_log*log -C 3")
     assert ret == 0
