@@ -79,8 +79,13 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   }
   return cnodes;
 }
-ShapeVector GetShapeVectorFromTensorInfo(const tensor::TensorPtr &tensor_info, size_t *offset) {
-  ShapeVector shape_vector;
+STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, ShapeVector *shape_vector, size_t *offset) {
+  auto data_type = tensor_info->data_type();
+  if (data_type != kObjectTypeString) {
+    MS_LOG(ERROR) << "This function only used for string tensor.";
+    return RET_ERROR;
+  }
+  shape_vector->clear();
   auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   std::string shape_str;
   std::string shape_size_str;
@@ -93,11 +98,15 @@ ShapeVector GetShapeVectorFromTensorInfo(const tensor::TensorPtr &tensor_info, s
     }
     shape_size_str.push_back(tensor_data[*offset]);
   }
+  if (*offset == 0) {
+    MS_LOG(ERROR) << "string tensor's dim size not found.";
+    return RET_ERROR;
+  }
   size_t shape_size = std::stoi(shape_size_str);
   for (; *offset < tensor_info->Size(); (*offset)++) {
     if (tensor_data[*offset] == ',') {
       cnt++;
-      shape_vector.push_back(std::stoi(shape_str));
+      shape_vector->push_back(std::stoi(shape_str));
       shape_str.clear();
     } else {
       shape_str.push_back(tensor_data[*offset]);
@@ -107,8 +116,11 @@ ShapeVector GetShapeVectorFromTensorInfo(const tensor::TensorPtr &tensor_info, s
       break;
     }
   }
-
-  return shape_vector;
+  if (shape_vector->empty()) {
+    MS_LOG(ERROR) << "string tensor's shape shouldn't be empty.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 schema::Format GetFormatByFmk(int32_t fmk_type) {
   switch (fmk_type) {
@@ -123,6 +135,28 @@ schema::Format GetFormatByFmk(int32_t fmk_type) {
       MS_LOG(ERROR) << "don't support current fmk: " + fmk_type;
       return static_cast<schema::Format>(fmk_type);
   }
+}
+
+STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, ShapeVector *shape_vector) {
+  auto abstract_base = param_node->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
+    return RET_PARAM_INVALID;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
+    return RET_INPUT_TENSOR_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto typePtr = abstract_tensor->element()->GetTypeTrack();
+  MS_ASSERT(typePtr != nullptr);
+  *data_type = typePtr->type_id();
+  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+    MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
+    return RET_PARAM_INVALID;
+  }
+  *shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  return RET_OK;
 }
 }  // namespace
 
@@ -500,7 +534,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   meta_graphT->fmkType = GetValue<int>(fmk);
   int ret = ExportSubgraph(func_graph, meta_graphT, keep_graph, copy_primitive);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ExportSubgraph failed.";
+    MS_LOG(ERROR) << "Export subgraph failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
     return nullptr;
   }
@@ -613,28 +647,22 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
     return RET_ERROR;
   }
   schema_tensor->name = param_node->name();
-  auto abstract_base = param_node->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
-    return RET_PARAM_INVALID;
+  ShapeVector shape_vector;
+  TypeId data_type;
+  auto status = GetDataTypeAndShape(param_node, &data_type, &shape_vector);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "get data type and shape from param node failed.";
+    return RET_ERROR;
   }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
-    return RET_INPUT_TENSOR_ERROR;
-  }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-  auto typePtr = abstract_tensor->element()->GetTypeTrack();
-  MS_ASSERT(typePtr != nullptr);
-  schema_tensor->dataType = typePtr->type_id();
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
-    MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
-    return RET_PARAM_INVALID;
-  }
+  schema_tensor->dataType = data_type;
   auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
-  auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   size_t offset = 0;
   if (!shape_vector.empty() && schema_tensor->dataType == kObjectTypeString) {
-    shape_vector = GetShapeVectorFromTensorInfo(tensor_info, &offset);
+    status = GetShapeVectorFromStringTensor(tensor_info, &shape_vector, &offset);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "get shape vector from string tensor failed.";
+      return RET_ERROR;
+    }
   }
   std::vector<int32_t> dims;
   (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(dims),

@@ -32,9 +32,6 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
     return RET_ERROR;
   }
   std::vector<int64_t> shape_vector(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end());
-  std::vector<int> shape;
-  std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
-                 [](const int64_t &val) { return static_cast<int32_t>(val); });
   auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "new a paramValueLite failed.";
