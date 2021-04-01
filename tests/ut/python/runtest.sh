@@ -40,15 +40,8 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
         fi
 
     elif [ $1 == "stage2" ]; then
-        echo "run python parallel, train, nn"
-        pytest -v -n 2 --dist=loadfile $CURRPATH/parallel
-
-        RET=$?
-        if [ ${RET} -ne 0 ]; then
-            exit ${RET}
-        fi
-
-        pytest -v -n 2 --dist=loadfile $CURRPATH/train $CURRPATH/nn
+        echo "run python parallel"
+        pytest -v $CURRPATH/parallel
 
         RET=$?
         if [ ${RET} -ne 0 ]; then
@@ -56,7 +49,7 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
         fi
 
     elif [ $1 == "stage3" ]; then
-        echo "run python ops, pynative_mode, pipeline ut"
+        echo "run python ops, pynative_mode, pipeline, train ut"
         pytest -v $CURRPATH/ops $CURRPATH/pynative_mode
 
         RET=$?
@@ -64,9 +57,22 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
             exit ${RET}
         fi
 
+        pytest -v $CURRPATH/pipeline $CURRPATH/train
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
+
     elif [ $1 == "stage4" ]; then
         echo "run ut"
-        pytest -v --ignore=$CURRPATH/train --ignore=$CURRPATH/parallel --ignore=$CURRPATH/nn --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/dataset $IGNORE_EXEC $CURRPATH
+        pytest -v $CURRPATH/nn
+
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
+
+        pytest -v --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/pipeline --ignore=$CURRPATH/train --ignore=$CURRPATH/nn $IGNORE_EXEC $CURRPATH
 
         RET=$?
         if [ ${RET} -ne 0 ]; then
@@ -81,13 +87,7 @@ else
         exit ${RET}
     fi
 
-    pytest -v -n 2 --dist=loadfile $CURRPATH/parallel
-    RET=$?
-    if [ ${RET} -ne 0 ]; then
-        exit ${RET}
-    fi
-
-    pytest -v -n 2 --dist=loadfile $CURRPATH/train $CURRPATH/nn
+    pytest -v $CURRPATH/parallel
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
@@ -99,7 +99,19 @@ else
         exit ${RET}
     fi
 
-    pytest -v --ignore=$CURRPATH/train --ignore=$CURRPATH/parallel --ignore=$CURRPATH/nn --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/dataset $IGNORE_EXEC $CURRPATH
+    pytest -v $CURRPATH/pipeline $CURRPATH/train
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+
+    pytest -v $CURRPATH/nn
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+
+    pytest -v --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/pipeline --ignore=$CURRPATH/train --ignore=$CURRPATH/nn $IGNORE_EXEC $CURRPATH
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
