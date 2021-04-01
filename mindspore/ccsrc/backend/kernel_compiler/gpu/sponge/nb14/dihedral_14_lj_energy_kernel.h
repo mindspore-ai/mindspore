@@ -102,7 +102,7 @@ class Dihedral14LJEnergyGpuKernel : public GpuKernel {
     input_size_list_.push_back(ele_LJ_type_B * sizeof(T));
     workspace_size_list_.push_back(atom_numbers * sizeof(UINT_VECTOR_LJ_TYPE));
 
-    output_size_list_.push_back(atom_numbers * sizeof(T));
+    output_size_list_.push_back(dihedral_14_numbers * sizeof(T));
   }
 
  private:
