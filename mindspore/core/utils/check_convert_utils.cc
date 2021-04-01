@@ -396,6 +396,20 @@ std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::str
   return shape_element->shape();
 }
 
+ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  if (!shape->isa<abstract::Shape>()) {
+    return std::map<std::string, std::vector<int64_t>>();
+  }
+  auto shape_element = shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  ShapeMap shape_map;
+  shape_map[kShape] = shape_element->shape();
+  shape_map[kMinShape] = shape_element->min_shape();
+  shape_map[kMaxShape] = shape_element->max_shape();
+  return shape_map;
+}
+
 void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type,
                                  const string &value_name, int64_t value, const string &prim_name,
                                  ExceptionType exception_type) {
