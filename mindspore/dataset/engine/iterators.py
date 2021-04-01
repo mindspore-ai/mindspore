@@ -98,7 +98,6 @@ class Iterator:
         """
         Manually terminate Python iterator instead of relying on out of scope destruction.
         """
-        logger.info("Terminating Python iterator. This will also terminate C++ pipeline.")
         if hasattr(self, '_runtime_context') and self._runtime_context:
             if hasattr(self, '_iterator') and self._iterator:
                 self._runtime_context.Terminate()
