@@ -30,6 +30,7 @@
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/optimize_matmul.h"
 #include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
@@ -49,8 +50,11 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() {
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
   pm->AddPass(std::make_shared<SplitAssign>());
 
-  // Reorder TransData-Cast to Cast-TransData,
   if (is_ascend) {
+    // Remove redundant Cast(bias, fp16) for Matmul input
+    pm->AddPass(std::make_shared<OptimizeMatmul>());
+
+    // Reorder TransData-Cast to Cast-TransData
     pm->AddPass(std::make_shared<ReorderOps>());
   }
 
@@ -81,7 +85,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() {
   pm->AddPass(std::make_shared<OptimizeAssign>());
   pm->AddPass(std::make_shared<EliminateRedundantOutput>());
 
-  // Cast the input of ReduceSum from float16 to float32 for higher precision*/
+  // Cast the input of ReduceSum from float16 to float32 for higher precision
   pm->AddPass(std::make_shared<RaiseReductionPrecision>());
 
   // Universal arithmetic simplify
