@@ -157,9 +157,7 @@ MSCOCO2017
 
 #### 用法
 
-您可以使用python或shell脚本进行训练。shell脚本的用法如下:
-
-- Ascend:
+使用shell脚本进行训练。shell脚本的用法如下:
 
 ```训练
 # 八卡并行训练示例：
@@ -180,28 +178,17 @@ sh run_single_train.sh DEVICE_ID EPOCH_SIZE LR PRE_TRAINED(optional) PRE_TRAINED
 #### 运行
 
 ```运行
-# 训练示例
+训练前，先创建MindRecord文件，以COCO数据集为例
+python create_data.py --dataset coco
 
-  训练前，先创建MindRecord文件，以COCO数据集为例
-    python create_data.py --dataset coco
+Ascend:
+# 八卡并行训练示例(在retinanet目录下运行)：
+sh scripts/run_distribute_train.sh 8 500 0.09 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址，可选) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小，可选）
 
-  python:
-    data和存储mindrecord文件的路径在config里设置
+例如：sh scripts/run_distribute_train.sh 8 500 0.09 scripts/rank_table_8pcs.json
 
-      # 单卡训练示例：
-
-      python train.py
-  shell:
-      Ascend:
-
-      # 八卡并行训练示例(在retinanet目录下运行)：
-
-      sh scripts/run_distribute_train.sh 8 500 0.1 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
-      例如：sh scripts/run_distribute_train.sh 8 500 0.1 scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
-
-      # 单卡训练示例(在retinanet目录下运行)：
-
-      sh scripts/run_single_train.sh 0 500 0.1 /dataset/retinanet-322_458.ckpt 322
+# 单卡训练示例(在retinanet目录下运行)：
+sh scripts/run_single_train.sh 0 500 0.09
 ```
 
 #### 结果
@@ -227,7 +214,7 @@ Epoch time: 164531.610, per step time: 359.239
 
 #### <span id="usage">用法</span>
 
-您可以使用python或shell脚本进行训练。shell脚本的用法如下:
+使用shell脚本进行评估。shell脚本的用法如下:
 
 ```eval
 sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
@@ -236,13 +223,7 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 #### <span id="running">运行</span>
 
 ```eval运行
-# 验证示例
-
-  python:
-      Ascend: python eval.py
-  checkpoint 的路径在config里设置
-  shell:
-      Ascend: sh scripts/run_eval.sh coco 0
+sh scripts/run_eval.sh coco 0
 ```
 
 > checkpoint 可以在训练过程中产生.
@@ -279,9 +260,9 @@ mAP: 0.34747137754625645
 | 参数                        | Ascend                                |
 | -------------------------- | ------------------------------------- |
 | 模型名称                    | Retinanet                             |
-| 运行环境                    | 华为云 Modelarts                      |
+| 运行环境                    | Ascend 910; CPU 2.6GHz,192cores;Memory 755G |
 | 上传时间                    | 10/01/2021                            |
-| MindSpore 版本             | 1.0.1                                 |
+| MindSpore 版本             | 1.2.0                                 |
 | 数据集                      | 123287 张图片                          |
 | Batch_size                 | 32                                   |
 | 训练参数                    | src/config.py                         |
@@ -297,9 +278,9 @@ mAP: 0.34747137754625645
 | 参数                 | Ascend                      |
 | ------------------- | --------------------------- |
 | 模型名称             | Retinanet                |
-| 运行环境             | 华为云 Modelarts             |
+| 运行环境             | Ascend 910; CPU 2.6GHz,192cores;Memory 755G|
 | 上传时间             | 10/01/2021                  |
-| MindSpore 版本      | 1.0.1                        |
+| MindSpore 版本      | 1.2.0                        |
 | 数据集              | 5k 张图片                   |
 | Batch_size          | 32                          |
 | 精确度              | mAP[0.3475]                  |
