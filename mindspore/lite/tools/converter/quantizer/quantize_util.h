@@ -28,6 +28,7 @@
 #include <limits>
 #include <utility>
 #include "ops/mat_mul.h"
+#include "ops/lstm.h"
 #include "ops/fusion/full_connection.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "include/errorcode.h"
@@ -113,6 +114,11 @@ STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_data
 void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                          bool channel_at_first, float *desired_max, float *desired_min);
 
+int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first);
+
+void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
+                       int *channel_cnt);
+
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
@@ -169,19 +175,12 @@ template <typename T>
 STATUS DoPerChannelQuant(const tensor::TensorPtr &weight, const QuantType &quant_type,
                          std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
                          const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
-                         std::vector<float> *dequant_datas, TypeId quant_data_type, bool channel_at_first = true) {
+                         std::vector<float> *dequant_datas, TypeId quant_data_type, bool channel_at_first = true,
+                         int channel_cnt = -1) {
   auto dims = weight->shape();
   size_t elem_count = weight->DataSize();
   auto *raw_datas = static_cast<float *>(weight->data_c());
-  auto channels = dims[0];
-  if (!channel_at_first) {
-    if (dims.size() != 2) {
-      MS_LOG(ERROR) << "unexpected dims size: " << dims.size();
-      channel_at_first = true;
-    } else {
-      channels = dims[1];
-    }
-  }
+  auto channels = CalChannels(dims, channel_cnt, &channel_at_first);
   if (channels == 0) {
     MS_LOG(ERROR) << "channels is zero";
     return RET_ERROR;
@@ -358,15 +357,11 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
   int ret = RET_OK;
   if (per_channel) {
     bool channel_at_first = true;
-    if (primitive->name() == ops::kNameMatMul && weight->shape().size() == 2) {
-      auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
-      MS_ASSERT(matmul_prim != nullptr);
-      channel_at_first =
-        index != 1 || (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b());
-    }
+    int channel_cnt = -1;
+    CalQuantAssitInfo(primitive, dims, index, &channel_at_first, &channel_cnt);
     // channel at first
     ret = DoPerChannelQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data,
-                               &dequant_datas, quant_data_type, channel_at_first);
+                               &dequant_datas, quant_data_type, channel_at_first, channel_cnt);
     if (ret == RET_CONTINUE) {
       return ret;
     } else if (ret != RET_OK) {

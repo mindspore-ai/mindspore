@@ -126,71 +126,47 @@ STATUS WeightQuantizer::DoConvQuantize(const CNodePtr &cnode) {
 }
 
 STATUS WeightQuantizer::DoMulQuantize(const CNodePtr &cnode) {
-  auto already_quant = false;
-  tensor::TensorPtr tensor_info = nullptr;
-  ParameterPtr param_node = nullptr;
-  int index = 0;
   for (size_t i = 1; i < cnode->size(); i++) {
     auto inputNode = cnode->input(i);
     if (inputNode->isa<Parameter>()) {
-      param_node = inputNode->cast<ParameterPtr>();
+      auto param_node = inputNode->cast<ParameterPtr>();
       if ((param_node != nullptr) && param_node->has_default()) {
-        tensor_info = std::static_pointer_cast<tensor::Tensor>(param_node->default_param());
-        if ((tensor_info == nullptr) || (tensor_info->Size() == 0) || (tensor_info->data_c() == nullptr)) {
-          tensor_info = nullptr;
-          continue;
-        } else if (tensor_info->data_type() == mindspore::kNumberTypeInt8 ||
-                   tensor_info->data_type() == mindspore::kNumberTypeInt16) {
-          MS_LOG(INFO) << "the node: " << cnode->fullname_with_scope() << " input_i: " << i << "has been "
-                       << " quantized";
-          already_quant = true;
-          break;
-        } else if (tensor_info->data_type() != mindspore::kNumberTypeFloat32) {
-          tensor_info = nullptr;
-          continue;
-        } else {
-          index = i;
-          break;
+        auto tensor_info = std::static_pointer_cast<tensor::Tensor>(param_node->default_param());
+        if ((tensor_info != nullptr) && (tensor_info->data_type() == mindspore::kNumberTypeFloat32) &&
+            (tensor_info->Size() > 0) && (tensor_info->data_c() != nullptr)) {
+          auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+          if (primitive == nullptr) {
+            MS_LOG(ERROR) << "primitive is nullptr";
+            return RET_ERROR;
+          }
+
+          auto status = RET_ERROR;
+          auto per_channel = true;
+          if (i == 3) {
+            per_channel = false;
+          }
+          if (type_id_ == kNumberTypeInt8) {
+            status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_,
+                                         bit_num_, per_channel, type_id_, i - 1);
+          } else if (type_id_ == kNumberTypeInt16) {
+            status = QuantFilter<int16_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_,
+                                          bit_num_, per_channel, type_id_, i - 1);
+          }
+          if (status == RET_CONTINUE) {
+            continue;
+          } else if (status != RET_OK) {
+            MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << i << " QuantFilter failed : " << status;
+            return status;
+          }
+          status = SetAbstract(tensor_info, param_node, primitive);
+          if (status != RET_OK) {
+            MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << i << " SetAbstract failed : " << status;
+            return RET_ERROR;
+          }
         }
       }
     }
   }
-
-  if (already_quant) {
-    return RET_OK;
-  }
-
-  if (tensor_info == nullptr) {
-    MS_LOG(WARNING) << cnode->fullname_with_scope() << " No valid input param node !";
-    return RET_OK;
-  }
-
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_ERROR;
-  }
-
-  auto status = RET_ERROR;
-  if (type_id_ == kNumberTypeInt8) {
-    status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true,
-                                 type_id_, index - 1);
-  } else if (type_id_ == kNumberTypeInt16) {
-    status = QuantFilter<int16_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true,
-                                  type_id_, index - 1);
-  }
-  if (status == RET_CONTINUE) {
-    return RET_OK;
-  } else if (status != RET_OK) {
-    MS_LOG(ERROR) << "QuantFilter failed : " << status;
-    return status;
-  }
-  status = SetAbstract(tensor_info, param_node, primitive);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "SetAbstract failed : " << status;
-    return RET_ERROR;
-  }
-
   return RET_OK;
 }
 
@@ -290,11 +266,11 @@ STATUS WeightQuantizer::ProcessLstmWeightByIndex(const CNodePtr &cnode, const Pr
   }
   auto status = RET_ERROR;
   if (type_id_ == kNumberTypeInt8) {
-    status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, false,
+    status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true,
                                  type_id_, index - 1);
   } else if (type_id_ == kNumberTypeInt16) {
-    status = QuantFilter<int16_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
-                                  false, type_id_, index - 1);
+    status = QuantFilter<int16_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true,
+                                  type_id_, index - 1);
   }
   if (status == RET_CONTINUE) {
     return RET_OK;

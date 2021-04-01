@@ -48,36 +48,19 @@ class DequantUtil {
       MS_LOG(ERROR) << "Malloc failed.";
       return nullptr;
     }
-    if (input_tensor->shape().size() == kPerBatch &&
-        input_tensor->quant_params().size() == static_cast<size_t>(input_tensor->shape().at(0))) {  // per batch matmul
-      auto per_batch_size = input_tensor->shape().at(0);
-      auto quant_param = input_tensor->quant_params();
-      for (int i = 0; i < per_batch_size; i++) {
-        auto param = quant_param.at(i);
-        auto scale = param.scale;
-        auto zero_point = param.zeroPoint;
-        auto matrix_size = input_tensor->ElementsNum() / per_batch_size;
-        for (int64_t j = 0; j < matrix_size; j++) {
-          dequant_datas[i * matrix_size + j] = static_cast<DT>((quant_datas[i * matrix_size + j] - zero_point) * scale);
-        }
-      }
-    } else if (input_tensor->quant_params().size() != kPerTensor) {
-      auto channels = static_cast<size_t>(input_tensor->Batch());
+    auto quant_param = input_tensor->quant_params();
+    if (quant_param.size() != kPerTensor) {
+      auto shapes = input_tensor->shape();
+      auto channels = quant_param.size();
       if (!channel_first) {
-        if (input_tensor->shape().size() != 2) {
-          MS_LOG(ERROR) << "unexpected shape size: " << input_tensor->shape().size();
+        if (static_cast<int>(shapes.size()) != 2 || shapes[1] != static_cast<int>(channels)) {
+          MS_LOG(ERROR) << "shape size: " << shapes.size() << " quant params size: " << channels;
           free(dequant_datas);
           return nullptr;
         }
-        channels = input_tensor->shape()[1];
       }
-      if (input_tensor->quant_params().size() != channels) {
-        MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->quant_params().size() << channels;
-        free(dequant_datas);
-        return nullptr;
-      }
+
       size_t per_channel_size = input_tensor->ElementsNum() / channels;
-      auto quant_param = input_tensor->quant_params();
       for (size_t i = 0; i < channels; i++) {
         auto param = quant_param.at(i);
         auto scale = param.scale;
@@ -98,7 +81,6 @@ class DequantUtil {
         }
       }
     } else {
-      auto quant_param = input_tensor->quant_params();
       auto quant_clusters = input_tensor->quant_clusters();
       auto param = quant_param.front();
       auto scale = param.scale;
