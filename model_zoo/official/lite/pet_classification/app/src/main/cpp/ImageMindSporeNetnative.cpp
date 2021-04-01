@@ -29,7 +29,6 @@
 #include "MSNetWork.h"
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
-#include "mindspore-lite-1.0.1-runtime-arm64-cpu/minddata/include/lite_cv/lite_mat.h"
 
 using mindspore::dataset::LiteMat;
 using mindspore::dataset::LPixelType;

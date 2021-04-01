@@ -40,7 +40,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.mindspore.common.sp.Preferences;
 import com.mindspore.common.utils.Utils;
-import com.mindspore.customview.countdown.CountDownView;
+import com.mindspore.customview.countdown.MSCountDownView;
 import com.mindspore.himindspore.R;
 import com.mindspore.himindspore.base.BaseActivity;
 import com.mindspore.himindspore.ui.main.MainActivity;
@@ -63,7 +63,7 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
 
     private SharedPreferences prefs;
 
-    private CountDownView cdvTime;
+    private MSCountDownView cdvTime;
 
     private boolean isCheckPrivacy = false;
     private View mContentView;

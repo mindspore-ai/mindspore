@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mindspore.customview.tablayout.listener;
+package com.mindspore.himindspore.ui.view;
 
 import androidx.annotation.DrawableRes;
 
-public interface CustomTabEntity {
-    String getTabTitle();
+public interface MSTabEntity {
+    String getMSTabTitle();
 
     @DrawableRes
-    int getTabSelectedIcon();
+    int getMSTabIconChecked();
 
     @DrawableRes
-    int getTabUnselectedIcon();
+    int getMSTabIconUnchecked();
 }
