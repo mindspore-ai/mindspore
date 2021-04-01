@@ -2755,8 +2755,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2 \\
-            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} + \\epsilon}} \\nabla Q_{i}(w) \\
+            s_{t} = \rho s_{t-1} + (1 - \rho)(\nabla Q_{i}(w))^2 \\
+            m_{t} = \beta m_{t-1} + \frac{\eta} {\sqrt{s_{t} + \epsilon}} \nabla Q_{i}(w) \\
             w = w - m_{t}
         \end{array}
 
@@ -2850,12 +2850,12 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     The updating formulas of ApplyCenteredRMSProp algorithm are as follows,
 
     .. math::
-        /begin{array}{ll} \\
-            g_{t} = \\rho g_{t-1} + (1 - \\rho)\\nabla Q_{i}(w) \\
-            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2 \\
-            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} - g_{t}^2 + \\epsilon}} \\nabla Q_{i}(w) \\
+        \begin{array}{ll} \\
+            g_{t} = \rho g_{t-1} + (1 - \rho)\nabla Q_{i}(w) \\
+            s_{t} = \rho s_{t-1} + (1 - \rho)(\nabla Q_{i}(w))^2 \\
+            m_{t} = \beta m_{t-1} + \frac{\eta} {\sqrt{s_{t} - g_{t}^2 + \epsilon}} \nabla Q_{i}(w) \\
             w = w - m_{t}
-        /end{array}
+        \end{array}
 
     where :math:`w` represents `var`, which will be updated.
     :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
