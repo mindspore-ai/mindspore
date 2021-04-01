@@ -389,13 +389,6 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
     MS_LOG(ERROR) << "Do huffman encode failed.";
     return ret;
   }
-#else
-  // do bit pack
-  ret = DoBitPack(weight, bit_num, quant_data);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Do bit pack failed.";
-    return ret;
-  }
 #endif
 
   if (quant_params.empty()) {

@@ -18,6 +18,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <functional>
 #include <utility>
 #include <vector>
 #include <algorithm>
@@ -33,6 +34,7 @@
 #include "ops/tuple_get_item.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/quantizer/bitpacking.h"
 #include "src/tensor.h"
 #include "src/common/utils.h"
 #include "ops/op_utils.h"
@@ -233,6 +235,65 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
   }
 }
 
+int AnfExporter::DoBitPack(const int &bit_num, schema::TensorT *tensor_input) {
+  if (bit_num > 0 && bit_num < 8) {
+    std::vector<int8_t> origin_data(tensor_input->data.size());
+    if (memcpy_s(origin_data.data(), origin_data.size() * sizeof(int8_t), tensor_input->data.data(),
+                 tensor_input->data.size() * sizeof(uint8_t)) != EOK) {
+      MS_LOG(ERROR) << "memcpy failed.";
+      return RET_ERROR;
+    }
+    std::vector<uint8_t> pack_data{};
+    BitPack::BitPacking<int8_t, uint8_t>(bit_num, origin_data, &pack_data);
+    tensor_input->data.resize(pack_data.size() * sizeof(uint8_t));
+    if (memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
+                 pack_data.size() * sizeof(uint8_t)) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return RET_ERROR;
+    }
+  } else if (bit_num > 9 && bit_num < 16) {
+    auto shape_size =
+      std::accumulate(tensor_input->dims.begin(), tensor_input->dims.end(), size_t(1), std::multiplies<size_t>());
+    std::vector<int16_t> origin_data(shape_size);
+    if (memcpy_s(origin_data.data(), origin_data.size() * sizeof(int16_t), tensor_input->data.data(),
+                 tensor_input->data.size() * sizeof(uint8_t)) != EOK) {
+      MS_LOG(ERROR) << "memcpy failed.";
+      return RET_ERROR;
+    }
+    std::vector<uint16_t> pack_data{};
+    BitPack::BitPacking<int16_t, uint16_t>(bit_num, origin_data, &pack_data);
+    tensor_input->data.resize(pack_data.size() * sizeof(uint16_t));
+    if (memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
+                 pack_data.size() * sizeof(uint16_t)) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int AnfExporter::SetQuantOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
+                                          const std::shared_ptr<mindspore::Primitive> &primitive,
+                                          const std::unique_ptr<schema::CNodeT> &dst_node) {
+  auto first_output_index = dst_node->outputIndex[0];
+  auto first_tensor_output = meta_graph->allTensors[first_output_index].get();
+  if (dst_node->quantType == schema::QuantType_PostTraining) {
+    if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
+      first_tensor_output->dataType = kNumberTypeInt8;
+    } else {
+      auto primc = primitive->cast<std::shared_ptr<mindspore::ops::QuantDTypeCast>>();
+      if (primc == nullptr) {
+        MS_LOG(ERROR) << "primitive is nullptr.";
+        return RET_ERROR;
+      }
+      if (primc->get_dst_t() != kNumberTypeFloat32) {
+        first_tensor_output->dataType = kNumberTypeInt8;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                    const std::shared_ptr<mindspore::Primitive> &primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
@@ -268,12 +329,21 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       auto tensor_input = meta_graph->allTensors[activate_index].get();
       if (tensor_input->quantParams.empty()) {
         for (auto input_quant_param : input_quant_params[i]) {
-          std::unique_ptr<schema::QuantParamT> input_quant_param_ptr =
-            std::make_unique<schema::QuantParamT>(input_quant_param);
+          auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
           MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
                         << " zp: " << input_quant_param_ptr->zeroPoint;
           input_quant_param_ptr->dstDtype = tensor_input->dataType;
           tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
+        }
+      }
+      if (!tensor_input->quantParams.empty()) {
+        int bit_num = tensor_input->quantParams.at(0)->numBits;
+        if (bit_num != 8 && bit_num != 16) {
+          auto status = DoBitPack(bit_num, tensor_input);
+          if (status != RET_OK) {
+            MS_LOG(ERROR) << "do bit pack failed.";
+            return RET_ERROR;
+          }
         }
       }
     }
@@ -308,18 +378,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     }
   }
 
-  auto first_output_index = dst_node->outputIndex[0];
-  auto first_tensor_output = meta_graph->allTensors[first_output_index].get();
-  if (dst_node->quantType == schema::QuantType_PostTraining) {
-    if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
-      first_tensor_output->dataType = kNumberTypeInt8;
-    } else {
-      auto primc = primitive->cast<std::shared_ptr<mindspore::ops::QuantDTypeCast>>();
-      MS_ASSERT(primc != nullptr);
-      if (primc->get_dst_t() != kNumberTypeFloat32) {
-        first_tensor_output->dataType = kNumberTypeInt8;
-      }
-    }
+  auto status = SetQuantOutputTensorType(meta_graph, primitive, dst_node);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "set quant output tensor data type failed.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
