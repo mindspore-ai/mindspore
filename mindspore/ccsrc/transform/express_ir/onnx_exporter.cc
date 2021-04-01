@@ -1025,12 +1025,11 @@ size_t OnnxExporter::ExportPrimitive(const FuncGraphPtr & /*func_graph*/, std::m
   auto op_map = OpConvertRegistry::GetOpConvertMap();
   auto op_iter = op_map.find(prim->name());
   if (op_iter == op_map.end()) {
-    MS_LOG(EXCEPTION) << "Can not find key " << prim->name() << " in convert map";
+    MS_LOG(EXCEPTION) << "Can not find key " << prim->name() << " in convert map. "
+                      << "Exporting " << prim->name() << " operator is not yet supported.";
   }
   const OpNameInfo &op_convert_info = op_iter->second;
-
   auto node_idx = AllocateNodeIndex();
-
   onnx::NodeProto *node_proto = graph_proto->add_node();
   node_proto->add_output(std::to_string(node_idx));
   node_proto->set_op_type(op_convert_info.onnx_type());
