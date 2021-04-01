@@ -567,59 +567,46 @@ void Somas::InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel) 
   auto stream = node->GetStream();
   MS_EXCEPTION_IF_NULL(stream);
 
-  MS_EXCEPTION_IF_NULL(kernel->inputs()[1]);
-  auto pre_node = (kernel->inputs()[1])->cast<CNodePtr>();
-  auto iter = nodes_map_.find(pre_node.get());
-  if (iter == nodes_map_.end()) {
-    MS_LOG(EXCEPTION) << "Kernel[" << kernel->fullname_with_scope() << "]'s input [" << pre_node->fullname_with_scope()
-                      << "] is not init.";
-  }
-  auto pre_somas_node = iter->second;
-  // set clean output tensors
-  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
-    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
-    for (auto index : clean_output_indexs) {
-      if (index > pre_somas_node->output_tensors_.size()) {
-        MS_LOG(EXCEPTION) << "Output index " << index << " exceed input node [" << pre_node->fullname_with_scope()
-                          << "]'s outputs size " << pre_somas_node->output_tensors_.size();
-      }
-      auto input_somas_tensor = pre_somas_node->output_tensors_[index];
-      MS_EXCEPTION_IF_NULL(input_somas_tensor);
-      node->input_tensors_.push_back(input_somas_tensor);
-      input_somas_tensor->destinations_.insert(node);
-      input_somas_tensor->destinationStreams_.insert(stream);
-      if (input_somas_tensor->lifetime_.start_ > node->GetId()) {
-        input_somas_tensor->lifetime_.start_ = node->GetId();
-      }
-      node->ancestor_nodes_.insert(pre_somas_node);
-      auto input_tensor_stream = input_somas_tensor->GetSourceStream();
-      if (input_tensor_stream != stream) {
-        stream->ancestor_streams_.insert(input_tensor_stream);
-        input_somas_tensor->between_streams_ = true;
+  auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_tensor_num; i++) {
+    MS_EXCEPTION_IF_NULL(kernel->inputs()[i + 1]);
+    auto pre_node = kernel->input(i + 1)->cast<CNodePtr>();
+    auto iter = nodes_map_.find(pre_node.get());
+    if (iter == nodes_map_.end()) {
+      MS_LOG(EXCEPTION) << "Kernel[" << kernel->fullname_with_scope() << "]'s input ["
+                        << pre_node->fullname_with_scope() << "] is not init.";
+    }
+    auto pre_somas_node = iter->second;
+    // set clean output tensors
+    if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+      auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+      for (auto index : clean_output_indexs) {
+        if (index > pre_somas_node->output_tensors_.size()) {
+          MS_LOG(EXCEPTION) << "Output index " << index << " exceed input node [" << pre_node->fullname_with_scope()
+                            << "]'s outputs size " << pre_somas_node->output_tensors_.size();
+        }
+        auto input_somas_tensor = pre_somas_node->output_tensors_[index];
+        MS_EXCEPTION_IF_NULL(input_somas_tensor);
+        node->input_tensors_.push_back(input_somas_tensor);
+        input_somas_tensor->lifelong_value_ = kLifeLongGraphAll;
+        MS_LOG(INFO) << "Set " << node->scope_full_name_ << "'s Input node " << pre_somas_node->scope_full_name_
+                     << " 's output" << index << " to lifelong";
       }
     }
-  }
-  // set clean workspace tensors
-  if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
-    auto clean_workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
-    for (const auto &index : clean_workspace_indexs) {
-      if (index > pre_somas_node->output_tensors_.size()) {
-        MS_LOG(EXCEPTION) << "Workspace index " << index << " exceed input node [" << pre_node->fullname_with_scope()
-                          << "]'s Workspace size " << pre_somas_node->workspace_tensors_.size();
-      }
-      auto input_somas_tensor = pre_somas_node->workspace_tensors_[index];
-      MS_EXCEPTION_IF_NULL(input_somas_tensor);
-      node->input_tensors_.push_back(input_somas_tensor);
-      input_somas_tensor->destinations_.insert(node);
-      input_somas_tensor->destinationStreams_.insert(stream);
-      if (input_somas_tensor->lifetime_.start_ > node->GetId()) {
-        input_somas_tensor->lifetime_.start_ = node->GetId();
-      }
-      node->ancestor_nodes_.insert(pre_somas_node);
-      auto input_tensor_stream = input_somas_tensor->GetSourceStream();
-      if (input_tensor_stream != stream) {
-        stream->ancestor_streams_.insert(input_tensor_stream);
-        input_somas_tensor->between_streams_ = true;
+    // set clean workspace tensors
+    if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+      auto clean_workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+      for (const auto &index : clean_workspace_indexs) {
+        if (index > pre_somas_node->output_tensors_.size()) {
+          MS_LOG(EXCEPTION) << "Workspace index " << index << " exceed input node [" << pre_node->fullname_with_scope()
+                            << "]'s Workspace size " << pre_somas_node->workspace_tensors_.size();
+        }
+        auto input_somas_tensor = pre_somas_node->workspace_tensors_[index];
+        MS_EXCEPTION_IF_NULL(input_somas_tensor);
+        node->input_tensors_.push_back(input_somas_tensor);
+        input_somas_tensor->lifelong_value_ = kLifeLongGraphAll;
+        MS_LOG(INFO) << "Set " << node->scope_full_name_ << "'s Input node " << pre_somas_node->scope_full_name_
+                     << " 's workspace" << index << " to lifelong";
       }
     }
   }
