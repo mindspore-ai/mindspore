@@ -177,17 +177,6 @@ class Softmax(PrimitiveWithInfer):
         for item in self.axis:
             validator.check_value_type("item of axis", item, [int], self.name)
 
-    def infer_shape(self, logits):
-        validator.check_int(len(self.axis), 1, Rel.GE, "length of axis", self.name)
-        rank = len(logits)
-        for axis_v in self.axis:
-            validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
-        return logits
-
-    def infer_dtype(self, logits):
-        validator.check_tensor_dtype_valid("logits", logits, mstype.float_type, self.name)
-        return logits
-
 
 class LogSoftmax(PrimitiveWithInfer):
     r"""
