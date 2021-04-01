@@ -198,15 +198,15 @@ endif()
 
 if(NOT APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
     add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
-            ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
+            ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     if(NOT APPLE AND PLATFORM_ARM)
         add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
-                ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
+                ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
     elseif(NOT WIN32)
-        add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
+        add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
     endif()
 endif()
 
@@ -269,4 +269,9 @@ if(DEFINED ARCHS)
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/ir/dtype/)
     ENDFOREACH()
     target_link_libraries(mindspore_lite)
+endif()
+
+if(SUPPORT_TRAIN)
+    set_target_properties(mindspore-lite PROPERTIES OUTPUT_NAME "mindspore-lite-train")
+    set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
 endif()
