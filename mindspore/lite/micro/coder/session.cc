@@ -32,63 +32,13 @@
 #include "src/runtime/infer_manager.h"
 #include "src/scheduler.h"
 #include "include/errorcode.h"
+#include "include/model.h"
 #include "src/common/file_utils.h"
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
 
 namespace mindspore::lite::micro {
 
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
-
-int CoderSession::InferShape() {
-  const Model *model = coder_graph_->model();
-  std::vector<lite::Tensor *> all_tensors = coder_graph_->all_tensors();
-  size_t nodes_num = model->all_nodes_.size();
-  for (size_t i = 0; i < nodes_num; ++i) {
-    auto curr_node = model->all_nodes_.at(i);
-    if (!curr_node) {
-      MS_LOG(ERROR) << "model's node is null, who's index is " << i << ". InferShape failed ";
-      return RET_ERROR;
-    }
-    std::vector<Tensor *> inputs;
-    std::vector<Tensor *> outputs;
-    size_t input_nums = curr_node->input_indices_.size();
-    inputs.reserve(input_nums);
-    for (size_t j = 0; j < input_nums; ++j) {
-      inputs.push_back(all_tensors.at(curr_node->input_indices_.at(j)));
-    }
-    size_t output_nums = curr_node->output_indices_.size();
-    outputs.reserve(output_nums);
-    for (size_t j = 0; j < output_nums; ++j) {
-      outputs.push_back(all_tensors.at(curr_node->output_indices_.at(j)));
-    }
-
-    auto primitive = curr_node->primitive_;
-    MS_CHECK_PTR(primitive);
-    int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-    auto parame_gen = PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(primitive), schema_version);
-    if (parame_gen == nullptr) {
-      MS_LOG(ERROR) << "parameter generator is nullptr.";
-      return RET_NULL_PTR;
-    }
-    auto parameter = parame_gen(primitive);
-    if (parameter == nullptr) {
-      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
-      return RET_ERROR;
-    }
-    parameter->infer_flag_ = true;
-    auto ret = KernelInferShape(inputs, &outputs, parameter);
-    if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << curr_node->name_
-                   << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive)) << "flag set to false.";
-      parameter->infer_flag_ = false;
-    } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << curr_node->name_
-                    << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
 
 void CoderSession::EndCode() {
   context_->set_tensor_map(allocator_->tensors_map());
@@ -188,7 +138,6 @@ int CoderSession::Init(const std::string &model_path) {
   MS_CHECK_PTR(model);
   coder_graph_ = std::make_unique<CoderGraph>(model);
   context_ = std::make_unique<CoderContext>();
-  allocator_->RecordRuntimeAddrs(context_->input_name(), context_->buffer_name(), context_->weight_name());
   MS_LOG(INFO) << "CoderSession::Init done";
   return RET_OK;
 }
@@ -251,6 +200,29 @@ int CoderSession::InitTensorsRef() {
   return RET_OK;
 }
 
+OpParameter *CoderSession::GenParameterAndInfer(const Model::Node *node, const std::vector<lite::Tensor *> &inputs,
+                                                std::vector<lite::Tensor *> *outputs) const {
+  auto primitive = node->primitive_;
+  MS_CHECK_PTR_RET_NULL(primitive);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  auto parame_gen = PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(primitive), schema_version);
+  MS_CHECK_PTR_RET_NULL(parame_gen);
+  auto parameter = parame_gen(primitive);
+  MS_CHECK_PTR_RET_NULL(parameter);
+  parameter->infer_flag_ = true;
+  auto ret = KernelInferShape(inputs, outputs, parameter);
+  if (ret == RET_INFER_INVALID) {
+    MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name_
+                 << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive)) << "flag set to false.";
+    parameter->infer_flag_ = false;
+  } else if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
+                  << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
+    return nullptr;
+  }
+  return parameter;
+}
+
 int CoderSession::CreateOpCoders() {
   const Model *model = coder_graph_->model();
   if (model == nullptr) {
@@ -308,11 +280,13 @@ int CoderSession::CreateOpCoders() {
       MS_LOG(ERROR) << "node: " << node->name_ << "has  no outputs tensor";
       return RET_ERROR;
     }
-
+    OpParameter *parameter = GenParameterAndInfer(node, inputs, &outputs);
+    MS_CHECK_PTR(parameter);
     TypeId tensor_data_type = inputs.at(0)->data_type();
     std::unique_ptr<OperatorCoder> op_coder = builder.inputs(inputs)
                                                 .outputs(outputs)
                                                 .node(node)
+                                                .parameter(parameter)
                                                 .target(code_target)
                                                 .support_parallel(support_parallel)
                                                 .data_type(tensor_data_type)
@@ -337,7 +311,6 @@ int CoderSession::InitCodeGraph() {
 int CoderSession::CompileGraph() {
   MS_LOG(INFO) << "CompileGraph";
   MS_CHECK_RET_CODE(InitCodeGraph(), "InitGraphInOutTensors failed");
-  MS_CHECK_RET_CODE(InferShape(), "do infershape failed!");
   MS_CHECK_RET_CODE(CreateOpCoders(), "CreateOpCoders failed!");
   MS_CHECK_RET_CODE(InitTensorsRef(), "InitTensorsRefcount failed!");
   return RET_OK;

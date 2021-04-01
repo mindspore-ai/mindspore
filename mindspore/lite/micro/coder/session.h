@@ -43,12 +43,13 @@ class CoderSession {
   int GenerateCode();
 
  private:
+  OpParameter *GenParameterAndInfer(const Model::Node *node, const std::vector<lite::Tensor *> &inputs,
+                                    std::vector<lite::Tensor *> *outputs) const;
   int InitOpcodersInputsAndOutputs();
   int InitTensorsRef();
   int CreateOpCoders();
   int InitCodeGraph();
   int CompileGraph();
-  int InferShape();
   void EndCode();
 
   std::unique_ptr<CoderGraph> coder_graph_{nullptr};

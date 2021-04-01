@@ -24,8 +24,8 @@
 using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore::lite::micro::nnacl {
-constexpr int kFifthIndex = 5;
-constexpr int kSixthIndex = 6;
+constexpr int kFifthIndex = 4;
+constexpr int kSixthIndex = 5;
 
 int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   NNaclFp32Serializer init_code;
@@ -33,7 +33,7 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   MS_CHECK_PTR(weight_i);
   size_t weight_i_size = weight_batch_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float);
   weight_i_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
-  MS_CHECK_PTR(weight_h_ptr_);
+  MS_CHECK_PTR(weight_i_ptr_);
 
   init_code.CodeMallocExpression(weight_i_ptr_, weight_i_size);
   init_code.CodeFunction("memset", weight_i_ptr_, 0, weight_i_size);
@@ -168,6 +168,7 @@ int LstmFP32Coder::DoCode(CoderContext *context) {
           },
           {
             "lstm_fp32.c",
+            "mul_fp32.c",
           });
 
   Tensor *hidden_state = input_tensors_.at(kFifthIndex);
@@ -179,12 +180,18 @@ int LstmFP32Coder::DoCode(CoderContext *context) {
   Tensor *output_cell_state = output_tensors_[2];
   MS_CHECK_PTR(output_hidden_state);
 
+  std::vector<std::string> buffers_addr;
+  for (const auto &buf : buffer_) {
+    std::string addr = buf == nullptr ? "NULL" : allocator_->GetRuntimeAddr(buf);
+    buffers_addr.push_back(addr);
+  }
   NNaclFp32Serializer code;
   code.CodeStruct("lstm_param", *lstm_param_);
+  code.CodeArray("buffer", buffers_addr.data(), buffers_addr.size(), false);
   code.CodeFunction("memcpy", output_hidden_state, hidden_state, hidden_state->Size());
   code.CodeFunction("memcpy", output_cell_state, cell_state, cell_state->Size());
   code.CodeFunction("Lstm", output_tensor_, input_tensor_, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
-                    output_hidden_state, output_cell_state, buffer_, lstm_param_);
+                    output_hidden_state, output_cell_state, "buffer", "&lstm_param");
   context->AppendCode(code.str());
   return RET_OK;
 }

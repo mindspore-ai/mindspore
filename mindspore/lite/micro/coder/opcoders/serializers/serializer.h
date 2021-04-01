@@ -221,7 +221,7 @@ class Serializer {
     if (t == nullptr) {
       code << "NULL";
     } else {
-      std::string name = MemoryAllocator::GetInstance()->GetRuntimeAddr(t);
+      std::string name = MemoryAllocator::GetInstance()->GetRuntimeAddr(t, true);
       if (name.empty()) {
         MS_LOG(ERROR) << "pointer is not allocated by the allocator";
         exit(1);

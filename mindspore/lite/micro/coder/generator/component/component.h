@@ -19,6 +19,12 @@
 
 namespace mindspore::lite::micro {
 
+constexpr auto kInputPrefixName = "g_Input";
+constexpr auto kOutputPrefixName = "g_Output";
+constexpr auto kWeightPrefixName = "g_Weight";
+constexpr auto kBufferPrefixName = "g_Buffer";
+constexpr auto kBufferPrefixNameAdd = "g_Buffer + ";
+
 constexpr auto kModelName = "net";
 
 constexpr auto kSourcePath = "/src/";
@@ -39,7 +45,7 @@ constexpr auto kExternCpp =
   "extern \"C\" {\n"
   "#endif\n";
 
-constexpr char kEndExternCpp[] =
+constexpr auto kEndExternCpp =
   "#ifdef __cplusplus\n"
   "}\n"
   "#endif\n";

@@ -16,7 +16,6 @@
 
 #include "coder/opcoders/nnacl/fp32/transpose_fp32_coder.h"
 #include <vector>
-#include <string>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
@@ -25,76 +24,129 @@ using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::lite::micro::nnacl {
 
 int TransposeFp32Coder::Resize() {
-  num_unit_ = static_cast<int>(input_tensor_->shape().at(transpose_parameter_->perm_[kNHWC_H]));
-  thread_h_num_ = MSMIN(thread_num_, num_unit_);
-  MS_CHECK_TRUE(thread_h_num_ > 0, "thread_h_num_ <= 0");
-  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
-
-  std::vector<int> in_shape = input_tensor_->shape();
-  std::vector<int> out_shape = output_tensor_->shape();
-  transpose_parameter_->strides_[transpose_parameter_->num_axes_ - 1] = 1;
-  transpose_parameter_->out_strides_[transpose_parameter_->num_axes_ - 1] = 1;
-  transpose_parameter_->data_size_ = static_cast<int>(input_tensor_->Size());
-  for (int i = transpose_parameter_->num_axes_ - 2; i >= 0; i--) {
-    transpose_parameter_->strides_[i] = in_shape.at(i + 1) * transpose_parameter_->strides_[i + 1];
-    transpose_parameter_->out_strides_[i] = out_shape.at(i + 1) * transpose_parameter_->out_strides_[i + 1];
+  if (input_tensors_.size() == 2) {
+    param_->num_axes_ = input_tensors_.at(1)->ElementsNum();
   }
-  MS_CHECK_TRUE(in_shape.size() > 0, "invalid shape size");
-  MS_CHECK_TRUE(out_shape.size() > 0, "invalid shape size");
-  auto in_shape_data_size = static_cast<size_t>(in_shape.size() * sizeof(int));
-  auto out_shape_data_size = static_cast<size_t>(out_shape.size() * sizeof(int));
-  in_shape_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, in_shape_data_size, kOfflinePackWeight));
-  MS_CHECK_PTR(in_shape_);
+  if (input_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param_->num_axes_)) {
+    return RET_OK;
+  }
+  // get perm data
+  MS_ASSERT(input_tensors_.size() == 2);
+  auto perm_tensor = input_tensors_.at(1);
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  MS_ASSERT(perm_data != nullptr);
+  for (int i = 0; i < param_->num_axes_; ++i) {
+    param_->perm_[i] = perm_data[i];
+  }
+  auto in_shape = input_tensor_->shape();
+  auto out_shape = output_tensor_->shape();
+  param_->strides_[param_->num_axes_ - 1] = 1;
+  param_->out_strides_[param_->num_axes_ - 1] = 1;
+  param_->data_size_ = input_tensor_->Size();
+  for (int i = param_->num_axes_ - 2; i >= 0; i--) {
+    param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
+    param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
+  }
+
   out_shape_ =
     reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, out_shape.size() * sizeof(int), kOfflinePackWeight));
   MS_CHECK_PTR(out_shape_);
-  MS_CHECK_RET_CODE(memcpy_s(in_shape_, in_shape_data_size, in_shape.data(), in_shape_data_size), "memcpy failed");
-  MS_CHECK_RET_CODE(memcpy_s(out_shape_, out_shape_data_size, out_shape.data(), out_shape_data_size), "memcpy failed");
+  memcpy(out_shape_, out_shape.data(), in_shape.size() * sizeof(int));
   return RET_OK;
 }
 
 int TransposeFp32Coder::Init() {
-  transpose_parameter_ = reinterpret_cast<TransposeParameter *>(parameter_);
-  MS_CHECK_PTR(transpose_parameter_);
+  param_ = reinterpret_cast<TransposeParameter *>(parameter_);
+  MS_CHECK_PTR(param_);
   return Resize();
 }
 
 int TransposeFp32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(Init(), "init failed");
-  int out_dims = static_cast<int>(output_tensor_->shape().size());
-  auto out_data_dims_size = static_cast<size_t>(out_dims * thread_h_num_ * sizeof(int));
-  if (out_dims > MAX_TRANSPOSE_DIM_SIZE) {
-    dim_size_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt, out_data_dims_size, kWorkspace));
-    MS_CHECK_PTR(dim_size_);
-    position_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt, out_data_dims_size, kWorkspace));
-    MS_CHECK_PTR(position_);
-  }
   return RET_OK;
 }
 
-int TransposeFp32Coder::DoCode(CoderContext *const context) {
-  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - kDefaultTaskId * thread_h_stride_);
-  if (num_unit_thread <= 0) {
-    return RET_OK;
+void TransposeFp32Coder::GetNHNCTransposeFunc() {
+  auto out_shape = output_tensor_->shape();
+  if (input_tensor_->shape().size() == 4 && param_->perm_[0] == 0 && param_->perm_[1] == 2 && param_->perm_[2] == 3 &&
+      param_->perm_[3] == 1) {
+    nhnc_param_[0] = out_shape[0];
+    nhnc_param_[1] = out_shape[1] * out_shape[2];
+    nhnc_param_[2] = out_shape[3];
+    if (input_tensor_->data_type() == kNumberTypeFloat32) {
+      NHNCTransposeFunc_ = "PackNCHWToNHWCFp32";
+    }
   }
+  if (input_tensor_->shape().size() == 4 && param_->perm_[0] == 0 && param_->perm_[1] == 3 && param_->perm_[2] == 1 &&
+      param_->perm_[3] == 2) {
+    nhnc_param_[0] = out_shape[0];
+    nhnc_param_[1] = out_shape[2] * out_shape[3];
+    nhnc_param_[2] = out_shape[1];
+    if (input_tensor_->data_type() == kNumberTypeFloat32) {
+      NHNCTransposeFunc_ = "PackNHWCToNCHWFp32";
+    }
+  }
+}
 
+int TransposeFp32Coder::DoCode(CoderContext *const context) {
+  MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
+  MS_ASSERT(out_tensors_.size() == 1);
   Collect(context,
           {
             "nnacl/transpose.h",
-            "nnacl/fp32/transpose.h",
             "nnacl/errorcode.h",
+            "nnacl/fp32/transpose_fp32.h",
           },
           {
-            "transpose.c",
+            "transpose_fp32.c",
           });
 
   NNaclFp32Serializer code;
-  code.CodeStruct("transpose_parameter", *transpose_parameter_);
+  if (input_tensor_->shape().size() != static_cast<size_t>(param_->num_axes_)) {
+    code.CodeFunction("memcpy", output_tensor_, input_tensor_, input_tensor_->Size());
+    context->AppendCode(code.str());
+    return RET_OK;
+  }
+  if (input_tensors_.size() == 2) {
+    auto input_perm = input_tensors_.at(1);
+    MS_ASSERT(input_perm != nullptr);
+    MS_ASSERT(input_perm->data_c() != nullptr);
+    int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
+    for (int i = 0; i < input_perm->ElementsNum(); ++i) {
+      param_->perm_[i] = perm_data[i];
+    }
+    for (int i = input_perm->ElementsNum(); i < MAX_SHAPE_SIZE; ++i) {
+      param_->perm_[i] = 0;
+    }
+  }
+  GetNHNCTransposeFunc();
+  if (!NHNCTransposeFunc_.empty()) {
+    code.CodeFunction(NHNCTransposeFunc_, input_tensor_, output_tensor_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2],
+                      kDefaultTaskId, thread_num_);
+    context->AppendCode(code.str());
+    return RET_OK;
+  }
 
-  code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, in_shape_, out_shape_,
-                    "(TransposeParameter *)&transpose_parameter", kDefaultTaskId, num_unit_thread, dim_size_,
-                    position_);
-
+  code.CodeStruct("trans_param", *param_);
+  dims_ = output_tensor_->shape().size();
+  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
+    int *dim_size = reinterpret_cast<int *>(malloc(dims_ * sizeof(int)));
+    MS_CHECK_PTR(dim_size);
+    *(dim_size + dims_ - 1) = 1;
+    for (int i = dims_ - 1; i > 0; --i) {
+      *(dim_size + i - 1) = *(dim_size + i) * out_shape_[i];
+    }
+    code.CodeArray("dim_size", dim_size, dims_);
+    int *position = reinterpret_cast<int *>(malloc(dims_ * thread_num_ * sizeof(int)));
+    MS_CHECK_PTR(position);
+    code.CodeArray("position", position, dims_ * thread_num_);
+    code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, out_shape_, "dim_size", "position",
+                      "&trans_param", kDefaultTaskId, thread_num_);
+    free(dim_size);
+    free(position);
+  } else {
+    code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, out_shape_, "&trans_param");
+  }
   context->AppendCode(code.str());
   return RET_OK;
 }

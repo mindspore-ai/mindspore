@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
 #include <vector>
+#include <string>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/transpose.h"
 namespace mindspore::lite::micro::nnacl {
@@ -38,15 +39,13 @@ class TransposeFp32Coder final : public OperatorCoder {
   int Init();
 
  private:
-  TransposeParameter *transpose_parameter_ = nullptr;
-  int thread_num_{1};
-  int thread_h_stride_{0};
-  int thread_h_num_{0};
-  int num_unit_{0};
-  int *in_shape_{nullptr};
+  void GetNHNCTransposeFunc();
+
+  TransposeParameter *param_{nullptr};
   int *out_shape_{nullptr};
-  int *dim_size_{nullptr};
-  int *position_{nullptr};
+  std::string NHNCTransposeFunc_;
+  int nhnc_param_[3];
+  int dims_{0};
 };
 
 }  // namespace mindspore::lite::micro::nnacl

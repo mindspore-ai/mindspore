@@ -52,25 +52,12 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
                   << " code_target: " << target_ << " data_type: " << EnumNameDataType(data_type_);
     return op_coder;
   }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node_->primitive_), schema_version);
-  if (paramGen == nullptr) {
-    MS_LOG(ERROR) << "parameter generator is null";
-    return nullptr;
-  }
-  OpParameter *parameter = paramGen(node_->primitive_);
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
-                  << PrimitiveTypeName(GetPrimitiveType(node_->primitive_));
-    return nullptr;
-  }
   op_coder->set_input_tensor_indices(input_indices_);
   op_coder->set_output_tensor_indices(output_indices_);
   int thread_num = support_parallel_ ? kMaxThreadNumSupported : 1;
   op_coder->set_thread_num(thread_num);
-  parameter->thread_num_ = thread_num;
-  op_coder->set_parameter(parameter);
+  parameter_->thread_num_ = thread_num;
+  op_coder->set_parameter(parameter_);
   op_coder->set_type(primitive_type);
   return op_coder;
 }
@@ -87,6 +74,11 @@ OpCoderBuilder &OpCoderBuilder::outputs(const std::vector<Tensor *> &outputs) {
 
 OpCoderBuilder &OpCoderBuilder::node(const Model::Node *node) {
   this->node_ = node;
+  return *this;
+}
+
+OpCoderBuilder &OpCoderBuilder::parameter(OpParameter *parameter) {
+  this->parameter_ = parameter;
   return *this;
 }
 

@@ -15,14 +15,14 @@
  */
 
 #include "coder/context.h"
-#include "coder/allocator/allocator.h"
+#include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
 CoderContext::CoderContext() {
-  this->input_name_ = "g_Input";
-  this->output_name_ = "g_Output";
-  this->buffer_name_ = "g_Buffer";
-  this->weight_name_ = "g_Weight";
+  this->input_name_ = kInputPrefixName;
+  this->output_name_ = kOutputPrefixName;
+  this->buffer_name_ = kBufferPrefixName;
+  this->weight_name_ = kWeightPrefixName;
 }
 
 void CoderContext::AppendCode(const std::string &codeBlock) { this->code_blocks_.emplace_back(codeBlock); }
