@@ -215,5 +215,26 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
   return ret;
 }
 
+int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
+  for (auto &tensor : tensors) {
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "check tensor is nullptr";
+      return RET_ERROR;
+    }
+    if (tensor->data_type() != kObjectTypeTensorType && tensor->data_c() == nullptr) {
+      MS_LOG(ERROR) << "check tensor data is nullptr " << tensors;
+      return RET_ERROR;
+    }
+    auto shape = tensor->shape();
+    bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i >= 0; });
+    if (!valid) {
+      MS_LOG(ERROR) << "The shape of tensor contains negative dimension,"
+                    << "check the model and assign the input shape with method Resize().";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore

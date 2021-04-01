@@ -33,20 +33,6 @@ class Executor {
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
-
- protected:
-  static int CheckInputs(const std::vector<Tensor *> &in_tensors);
 };
-
-class CpuExecutor : public Executor {
- public:
-  CpuExecutor() = default;
-  virtual ~CpuExecutor() = default;
-
-  int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
-          const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
-};
-
 }  // namespace mindspore::lite
 #endif
