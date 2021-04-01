@@ -571,8 +571,6 @@ void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tens
   std::set<KernelGraphPtr> memo;
   SyncDataToExtraParams(NOT_NULL(kernel_graph), NOT_NULL(&memo));
   memo.clear();
-  // load input data from user input
-  LoadInputData(kernel_graph, inputs);
   if (debugger_) {
     debugger_->PreExecute(kernel_graph, graph_sum_);
   }

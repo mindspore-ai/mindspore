@@ -188,6 +188,13 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                const std::map<KernelWithIndex, size_t> &cnode_refcount) {}
   virtual void SetSummaryNodes(KernelGraph *graph);
 
+  void LoadInputs(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs_const) {
+    auto kernel_graph = GetGraph(graph_id);
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    MS_LOG(INFO) << "Load inputs";
+    LoadInputData(kernel_graph, inputs_const);
+  }
+
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const;
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,

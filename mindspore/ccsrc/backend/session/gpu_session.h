@@ -47,6 +47,8 @@ class GPUSession : public SessionBasic {
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
   std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
   std::string GetCommWorldGroup() override { return kNcclWorldGroup; }
+  void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -70,9 +72,6 @@ class GPUSession : public SessionBasic {
   void RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
 
   void RunOpClearMemory(KernelGraph *kernel_graph) const;
-
-  void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
-                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
 
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 

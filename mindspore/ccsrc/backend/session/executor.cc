@@ -161,6 +161,7 @@ void RunGraphTask::Run() {
   }
   graph->ResetGraphRunningStatus();
   try {
+    session_->LoadInputs(graph_id_, input_tensors_);
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
     UpdateOutputTensors(&outputs_, tensor_to_node_);
   } catch (const std::exception &e) {

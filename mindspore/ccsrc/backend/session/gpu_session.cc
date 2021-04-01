@@ -425,8 +425,6 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   MS_LOG(INFO) << "RunGraph graph_id: " << graph_id;
   // In pynative mode, device addresses of tensors in value nodes change.
   SyncValueNodeDeviceAddr(kernel_graph);
-  // Load input data from user input
-  LoadInputData(kernel_graph, inputs);
   if (debugger_) {
     debugger_->PreExecute(kernel_graph, graph_sum_);
   }
