@@ -186,6 +186,7 @@ class PrimLib:
         'Tile': Prim(BROADCAST),
         'BroadcastTo': Prim(BROADCAST),
         'MatMul': Prim(OPAQUE),
+        'TransData': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
