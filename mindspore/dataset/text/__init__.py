@@ -19,7 +19,7 @@ utils provides some general methods for NLP text processing.
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, TruncateSequencePair, \
-    ToNumber, SlidingWindow, SentencePieceTokenizer
+    ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer
 from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm, SentencePieceVocab, SentencePieceModel, \
     SPieceTokenizerOutType, SPieceTokenizerLoadType
 
@@ -33,7 +33,7 @@ __all__ = [
 
 if platform.system().lower() != 'windows':
     from .transforms import UnicodeScriptTokenizer, WhitespaceTokenizer, CaseFold, NormalizeUTF8, \
-        RegexReplace, RegexTokenizer, BasicTokenizer, BertTokenizer, PythonTokenizer
+        RegexReplace, RegexTokenizer, BasicTokenizer, BertTokenizer
 
     __all__.append(["UnicodeScriptTokenizer", "WhitespaceTokenizer", "CaseFold", "NormalizeUTF8",
                     "RegexReplace", "RegexTokenizer", "BasicTokenizer", "BertTokenizer"])
