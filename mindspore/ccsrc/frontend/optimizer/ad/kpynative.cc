@@ -223,7 +223,7 @@ using PynativeAdjointPtr = std::shared_ptr<PynativeAdjoint>;
 class KPynativeCellImpl : public KPynativeCell {
  public:
   explicit KPynativeCellImpl(const AnfNodePtrList &cell_inputs)
-      : cell_inputs_(cell_inputs), tape_(std::make_shared<FuncGraph>()) {
+      : tape_(std::make_shared<FuncGraph>()), cell_inputs_(cell_inputs) {
     tape_->debug_info()->set_name("grad_top");
     for (size_t i = 0; i < cell_inputs.size(); ++i) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(cell_inputs[i]->debug_info()));

@@ -131,7 +131,7 @@ void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &nod
   ArgInfoRefresh(cnode, &(arg_info->sub_using_info_[idx]));
 
   if (arg_info->tuple_flg_) {
-    AnalysisNodeUsingInfo(node_users, cnode, arg_info->sub_using_info_[idx]);
+    AnalysisNodeUsingInfo(node_users, cnode, &(arg_info->sub_using_info_[idx]));
   }
 }
 
