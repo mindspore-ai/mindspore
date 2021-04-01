@@ -19,18 +19,10 @@
 #include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
 #include "profiler/device/ascend/rt_callback_manager.h"
-#include "runtime/device/executor/executor_callback.h"
 #include "profiler/device/ascend/ascend_profiling.h"
 #include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "backend/kernel_compiler/host/host_kernel_metadata.h"
 #include "backend/kernel_compiler/host/host_kernel_build.h"
-
-namespace mindspore {
-namespace device {
-void ExecutorCallback::RegistCallback(const std::function<void()> &callback) {}
-void ExecutorCallback::Consume() {}
-}  // namespace device
-}  // namespace mindspore
 
 namespace mindspore {
 namespace device {

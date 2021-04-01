@@ -46,7 +46,6 @@
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #endif
 #include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
-#include "runtime/device/executor/executor_callback.h"
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 #include "utils/config_manager.h"
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
