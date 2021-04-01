@@ -56,7 +56,6 @@ class Somas {
 
   static bool NodeSort(SomasNodePtr, SomasNodePtr);
   std::vector<DynamicBitSet> reuse_matrix_;
-  std::vector<DynamicBitSet> tensor_relation;
   void ConvertToProfilingNode(uint32_t graph_id);
 
  private:

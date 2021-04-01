@@ -90,6 +90,8 @@ class DynamicBitSet {
     Reset(0x0);
   }
 
+  ~DynamicBitSet() = default;
+
   void SetBitTrue(size_t index, bool log = false) {
     if (log) {
       MS_LOG(INFO) << GetIndex(index) << " " << GetBitMask(index);
