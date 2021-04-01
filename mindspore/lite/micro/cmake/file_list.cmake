@@ -170,6 +170,8 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/erf_populate.cc
         ${LITE_DIR}/src/ops/populate/exp_populate.cc
         ${LITE_DIR}/src/ops/populate/strided_slice_populate.cc
+        ${LITE_DIR}/src/ops/populate/lstm_populate.cc
+        ${LITE_DIR}/src/ops/populate/squeeze_populate.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
         )

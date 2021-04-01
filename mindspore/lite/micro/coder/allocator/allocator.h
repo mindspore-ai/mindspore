@@ -53,11 +53,6 @@ class MemoryAllocator {
   MemoryAllocator &operator=(const MemoryAllocator &) = delete;
 
   /*
-   * Record Runtime's addrs of model
-   */
-  void RecordRuntimeAddrs(const std::string &net_input_addr, const std::string &net_buffer_addr,
-                          const std::string &net_weight_addr);
-  /*
    * assign model's input, original weights and all tensors memory addr
    */
   int Assign(const std::vector<Tensor *> &inputs, const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
@@ -76,7 +71,6 @@ class MemoryAllocator {
     if (size == 0 || size >= UINT_MAX) {
       return nullptr;
     }
-
     void *buffer = malloc(size);
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "malloc memory failed";
@@ -109,28 +103,24 @@ class MemoryAllocator {
       return type_info + wrap(item->second);
     }
 
-    auto iter = std::find_if(
-      tensors_addr_.begin(), tensors_addr_.end(),
-      [&variable](const std::pair<Tensor *, std::string> &a) { return variable == reinterpret_cast<void *>(a.first); });
-    if (iter != tensors_addr_.end()) {
-      return type_info + wrap(iter->second);
-    }
-    // find variable in weights map
-    iter =
+    auto iter =
       std::find_if(malloc_weights_addr_.begin(), malloc_weights_addr_.end(),
                    [&variable](const std::pair<Tensor *, std::string> &a) { return variable == (a.first)->data_c(); });
     if (iter != malloc_weights_addr_.end()) {
       return iter->second;
     }
-    // origin weight
-    iter = std::find_if(origin_weights_addr_.begin(), origin_weights_addr_.end(),
-                        [&variable](const std::pair<Tensor *, std::string> &a) { return variable == a.first; });
-    if (iter != origin_weights_addr_.end()) {
-      saved_weights_addr_.insert(std::make_pair(iter->second, reinterpret_cast<Tensor *>(variable)));
-      if (immutable) {
-        malloc_weights_addr_.insert({reinterpret_cast<Tensor *>(variable), iter->second});
-      }
-      return iter->second;
+
+    Tensor *tensor = reinterpret_cast<Tensor *>(t);
+    auto it = tensors_addr_.find(tensor);
+    if (it != tensors_addr_.end()) {
+      return type_info + wrap(it->second);
+    }
+
+    it = origin_weights_addr_.find(tensor);
+    if (it != origin_weights_addr_.end()) {
+      saved_weights_addr_.insert(std::make_pair(it->second, tensor));
+      if (immutable) malloc_weights_addr_.insert(std::make_pair(tensor, it->second));
+      return it->second;
     }
     MS_LOG(ERROR) << "uninitialized memory";
     return "";
@@ -153,9 +143,7 @@ class MemoryAllocator {
   void RecordOriginWeightsAddr(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
   void RecordTensorsAddr(const std::map<Tensor *, size_t> &offsets);
 
- private:
   MemoryAllocator() = default;
-
   ~MemoryAllocator() = default;
 
   std::map<void *, std::string> workspaces_addr_;
@@ -170,9 +158,6 @@ class MemoryAllocator {
   std::map<Tensor *, std::string> origin_weights_addr_;
   std::map<Tensor *, std::string> malloc_weights_addr_;
   std::map<Tensor *, std::string> tensors_addr_;
-  std::string net_input_addr_;
-  std::string net_buffer_addr_;
-  std::string net_weight_addr_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_MEMORY_ALLOCATOR_H_

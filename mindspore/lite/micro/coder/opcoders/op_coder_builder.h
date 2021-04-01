@@ -33,6 +33,8 @@ class OpCoderBuilder {
 
   OpCoderBuilder &node(const Model::Node *node);
 
+  OpCoderBuilder &parameter(OpParameter *parameter);
+
   OpCoderBuilder &data_type(TypeId data_type);
 
   OpCoderBuilder &mode(CodeMode mode);
@@ -53,6 +55,8 @@ class OpCoderBuilder {
   std::vector<Tensor *> outputs_;
 
   const mindspore::lite::Model::Node *node_ = nullptr;
+
+  OpParameter *parameter_{nullptr};
 
   size_t node_index_{0};
 

@@ -55,6 +55,7 @@ std::string GetVariableTypeName() {
                                                        {std::type_index(typeid(double)), "double"},
                                                        {std::type_index(typeid(::QuantArg)), "QuantArg"},
                                                        {std::type_index(typeid(void *)), "void *"},
+                                                       {std::type_index(typeid(std::string)), "float *"},
                                                        {std::type_index(typeid(int *)), "int *"},
                                                        {std::type_index(typeid(int32_t *)), "int32_t *"},
                                                        {std::type_index(typeid(int16_t *)), "int16_t *"},
