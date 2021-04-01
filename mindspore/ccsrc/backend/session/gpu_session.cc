@@ -425,8 +425,6 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
                               VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_LOG(INFO) << "RunGraph graph_id: " << graph_id;
-  // In pynative mode, device addresses of tensors in value nodes change.
-  SyncValueNodeDeviceAddr(kernel_graph);
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
   if (debugger_) {
@@ -449,8 +447,6 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
 #endif
     Execute(kernel_graph);
   }
-  // In pynative mode, device addresses of tensors in value nodes need be clean.
-  CleanValueNodeDeviceAddr(kernel_graph);
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -538,28 +534,6 @@ void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_gra
   if (debugger_) {
     debugger_->PostExecute();
   }
-}
-
-void GPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    return;
-  }
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->SyncValueNodeDeviceAddr(kernel_graph.get());
-}
-
-void GPUSession::CleanValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    return;
-  }
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->CleanValueNodeDeviceAddr(kernel_graph.get());
 }
 
 void GPUSession::SyncStream() {

@@ -82,10 +82,6 @@ class GPUSession : public SessionBasic {
 
   void PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
-  void SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-
-  void CleanValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-
   GraphId CompileGraphImpl(KernelGraphPtr kernel_graph);
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;

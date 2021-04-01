@@ -404,7 +404,7 @@ bool IgnoreCreateParameterForMakeTuple(const AnfNodePtr &node) {
   return true;
 }
 
-void GetParameterIndex(KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
+void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                        std::map<AnfNodePtr, size_t> *parameter_index) {
   size_t index = 0;
   for (const auto &input_node : graph->inputs()) {
@@ -512,7 +512,7 @@ void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vect
   }
 }
 
-void GetRefCount(KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) {
+void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &kernel : graph->execution_order()) {
     for (size_t i = 1; i < kernel->inputs().size(); i += 1) {
