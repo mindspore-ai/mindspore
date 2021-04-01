@@ -28,9 +28,13 @@ namespace mindspore {
 namespace abstract {
 using StandardPrimitiveEvalImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
                                                       const AbstractBasePtrList &);
+using InferValueEvalImpl = ValuePtr (*)(const PrimitivePtr &, const AbstractBasePtrList &, const AbstractBasePtr &);
+
 struct StandardPrimitiveImplReg {
-  StandardPrimitiveEvalImpl impl_;  // Implement function of Primitive.
-  bool in_white_list_;              // true if this Primitive in white list, else false.
+  StandardPrimitiveEvalImpl impl_;       // Implement function of Primitive
+  InferValueEvalImpl infer_value_func_;  // infer value of primitive
+  // true means this primitive can be executed by vm backend else will be constant folded by frontend
+  bool in_white_list_;
 };
 
 using PrimitiveEvalImplMap =
@@ -48,15 +52,17 @@ void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const Standard
 
 class RegisterStandardPrimitiveEvalHelper {
  public:
-  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const StandardPrimitiveEvalImpl &impl) {
-    const StandardPrimitiveImplReg impl_reg{impl, true};
+  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const StandardPrimitiveEvalImpl &impl,
+                                      const InferValueEvalImpl &infer_value_impl, const bool is_wight_list = true) {
+    const StandardPrimitiveImplReg impl_reg{impl, infer_value_impl, is_wight_list};
     RegisterStandardPrimitiveImpl(primitive, impl_reg);
   }
   ~RegisterStandardPrimitiveEvalHelper() = default;
 };
 
-#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, impl) \
-  static auto helper_##name = abstract::RegisterStandardPrimitiveEvalHelper(primitive, impl)
+#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, impl, infer_value_impl, is_wight_list) \
+  static auto helper_##name =                                                                \
+    abstract::RegisterStandardPrimitiveEvalHelper(primitive, impl, infer_value_impl, is_wight_list)
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

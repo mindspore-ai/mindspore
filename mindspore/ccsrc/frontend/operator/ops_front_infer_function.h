@@ -59,18 +59,6 @@ AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr
                                    const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list);
-
-class RegisterFrontendPrimitiveEvalHelper {
- public:
-  RegisterFrontendPrimitiveEvalHelper(const PrimitivePtr &primitive, const StandardPrimitiveEvalImpl &impl) {
-    const StandardPrimitiveImplReg impl_reg{impl, false};
-    RegisterStandardPrimitiveImpl(primitive, impl_reg);
-  }
-  ~RegisterFrontendPrimitiveEvalHelper() = default;
-};
-
-#define REGISTER_FRONTENT_PRIMITIVE_EVAL_IMPL(name, primitive, impl) \
-  static auto helper_##name = RegisterFrontendPrimitiveEvalHelper(primitive, impl)
 }  // namespace abstract
 }  // namespace mindspore
 

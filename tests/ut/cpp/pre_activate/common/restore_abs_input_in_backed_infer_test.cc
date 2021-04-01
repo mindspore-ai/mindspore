@@ -36,7 +36,7 @@ AbstractBasePtr InferImplAttrTest(const abstract::AnalysisEnginePtr &, const Pri
   EXPECT_EQ(args_spec_list[1]->isa<abstract::AbstractTuple>(), true);
   return args_spec_list[0];
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(TestAttr,kPrimAttrConvertTest,InferImplAttrTest);
+REGISTER_PRIMITIVE_EVAL_IMPL(TestAttr, kPrimAttrConvertTest, InferImplAttrTest, nullptr, true);
 AbstractBasePtr InferImplDynamicInputTest(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const AbstractBasePtrList &args_spec_list) {
   EXPECT_EQ(args_spec_list.size(), 3);
@@ -45,7 +45,7 @@ AbstractBasePtr InferImplDynamicInputTest(const abstract::AnalysisEnginePtr &, c
   auto item = args_spec_list[1]->cast<abstract::AbstractTuplePtr>();
   return args_spec_list[0];
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(TestDynamicInput,kPrimDynamicInputTest,InferImplDynamicInputTest);
+REGISTER_PRIMITIVE_EVAL_IMPL(TestDynamicInput, kPrimDynamicInputTest, InferImplDynamicInputTest, nullptr, true);
 class TestAttrAndDynamicBackendInfer : public UT::Common {
  public:
   TestAttrAndDynamicBackendInfer() {}
