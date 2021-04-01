@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ template <typename T, typename S>
 __global__ void SigmoidCrossEntropyWithLogitsKernel(const size_t size, const T *logits, const S *labels, T *outputs) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     const T reverse_factor = static_cast<T>(logits[i] >= 0);
-    outputs[i] = log1p(exp(logits[i] - 2 * reverse_factor * logits[i])) - logits[i] * (labels[i] - reverse_factor);
+    outputs[i] =
+      log1p(exp(logits[i] - static_cast<T>(2) * reverse_factor * logits[i])) - logits[i] * (labels[i] - reverse_factor);
   }
 }
 
@@ -32,3 +33,6 @@ void SigmoidCrossEntropyWithLogits(const size_t size, const T *logits, const S *
 
 template void SigmoidCrossEntropyWithLogits<float, float>(const size_t size, const float *logits, const float *labels,
                                                           float *outputs, cudaStream_t cuda_stream);
+template void SigmoidCrossEntropyWithLogits<double, double>(const size_t size, const double *logits,
+                                                            const double *labels, double *outputs,
+                                                            cudaStream_t cuda_stream);

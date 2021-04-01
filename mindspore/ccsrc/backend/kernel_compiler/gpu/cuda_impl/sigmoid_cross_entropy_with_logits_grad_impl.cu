@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ __global__ void SigmoidCrossEntropyWithLogitsGradKernel(const size_t size, const
                                                         const T *dout_addr, T *outputs) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     if (logits[i] >= 0) {
-      outputs[i] = (1. / (1. + exp(-logits[i])) - labels[i]) * dout_addr[i];
+      outputs[i] = (static_cast<T>(1.) / (static_cast<T>(1.) + exp(-logits[i])) - labels[i]) * dout_addr[i];
     } else {
       const T exp_val = exp(logits[i]);
-      outputs[i] = (exp_val / (1. + exp_val) - labels[i]) * dout_addr[i];
+      outputs[i] = (exp_val / (static_cast<T>(1.) + exp_val) - labels[i]) * dout_addr[i];
     }
   }
 }
@@ -39,3 +39,6 @@ void SigmoidCrossEntropyWithLogitsGrad(const size_t size, const T *logits, const
 template void SigmoidCrossEntropyWithLogitsGrad<float, float>(const size_t size, const float *logits,
                                                               const float *labels, const float *dout_addr,
                                                               float *outputs, cudaStream_t cuda_stream);
+template void SigmoidCrossEntropyWithLogitsGrad<double, double>(const size_t size, const double *logits,
+                                                                const double *labels, const double *dout_addr,
+                                                                double *outputs, cudaStream_t cuda_stream);
