@@ -448,6 +448,8 @@ def check_random_perspective(method):
     def new_method(self, *args, **kwargs):
         [distortion_scale, prob, interpolation], _ = parse_user_args(method, *args, **kwargs)
 
+        type_check(distortion_scale, (float,), "distortion_scale")
+        type_check(prob, (float,), "prob")
         check_value(distortion_scale, [0., 1.], "distortion_scale")
         check_value(prob, [0., 1.], "prob")
         type_check(interpolation, (Inter,), "interpolation")
