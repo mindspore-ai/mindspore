@@ -15,8 +15,9 @@
 """
 Sparse related transformation.
 """
-from .sparse import SparseToDense
+from .sparse import (SparseToDense, SparseTensorDenseMatmul)
 
 __all__ = [
     "SparseToDense",
+    "SparseTensorDenseMatmul",
     ]

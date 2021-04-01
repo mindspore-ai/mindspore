@@ -94,7 +94,7 @@ from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg
                         CusMatMulCubeDenseRight,
                         CusMatMulCubeFraczLeftCast, Im2Col, UpdateThorGradient, Cholesky, CholeskyTrsm, DetTriangle,
                         ProdForceSeA)
-from .sparse_ops import SparseToDense
+from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul)
 from ._embedding_cache_ops import (CacheSwapHashmap, SearchCacheIdx, CacheSwapTable, UpdateCache, MapCacheIdx,
                                    SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
@@ -429,6 +429,7 @@ __all__ = [
     "Pull",
     "ReLUV2",
     "SparseToDense",
+    "SparseTensorDenseMatmul",
     "MatrixInverse",
     "Range",
     "IndexAdd",
