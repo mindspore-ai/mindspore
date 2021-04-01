@@ -51,6 +51,9 @@ size_t GetSmallSplitSize(const AnfNodePtr &split_node, int64_t split_dim, int64_
   if (LongToSize(split_dim) >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "The split_dim value should be less than the shape size of input 0";
   }
+  if (num_split == 0) {
+    MS_LOG(EXCEPTION) << "Divisor 'num_split' should not be 0.";
+  }
   return input_shape[split_dim] / num_split;
 }
 
