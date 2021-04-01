@@ -436,7 +436,7 @@ class DiceLoss(_Loss):
         >>> y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
         >>> output = loss(y_pred, y)
         >>> print(output)
-        [0.38596618]
+        0.38596618
     """
     def __init__(self, smooth=1e-5):
         super(DiceLoss, self).__init__()
@@ -452,7 +452,7 @@ class DiceLoss(_Loss):
         single_dice_coeff = (2 * intersection) / (unionset + self.smooth)
         dice_loss = 1 - single_dice_coeff
 
-        return dice_loss.mean()
+        return dice_loss
 
 
 @constexpr
@@ -1037,7 +1037,11 @@ class FocalLoss(_Loss):
     r"""
     The loss function proposed by Kaiming team in their paper ``Focal Loss for Dense Object Detection`` improves the
     effect of image object detection. It is a loss function to solve the imbalance of categories and the difference of
-    classification difficulty.
+    classification difficulty. If you want to learn more, please refer to the paper.
+    `https://arxiv.org/pdf/1708.02002.pdf`. The function is shown as follows:
+
+    .. math::
+        FL(p_t) = -(1-p_t)^\gamma log(p_t)
 
     Args:
         gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: 2.0.
@@ -1048,19 +1052,19 @@ class FocalLoss(_Loss):
 
     Inputs:
         - **predict** (Tensor) - Tensor of shape should be (B, C) or (B, C, H) or (B, C, H, W). Where C is the number
-            of classes. Its value is greater than 1. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
-            and W should be the same as target.
+          of classes. Its value is greater than 1. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
+          and W should be the same as target.
         - **target** (Tensor) - Tensor of shape should be (B, C) or (B, C, H) or (B, C, H, W). The value of C is 1 or
-            it needs to be the same as predict's C. If C is not 1, the shape of target should be the same as that of
-            predict, where C is the number of classes. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
-            and W should be the same as predict.
+          it needs to be the same as predict's C. If C is not 1, the shape of target should be the same as that of
+          predict, where C is the number of classes. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
+          and W should be the same as predict.
 
     Outputs:
         Tensor, it's a tensor with the same shape and type as input `predict`.
 
     Raises:
         TypeError: If the data type of ``gamma`` is not float..
-        TypeError: If ``weight`` is not a Parameter.
+        TypeError: If ``weight`` is not a Tensor.
         ValueError: If ``target`` dim different from ``predict``.
         ValueError: If ``target`` channel is not 1 and ``target`` shape is different from ``predict``.
         ValueError: If ``reduction`` is not one of 'none', 'mean', 'sum'.
@@ -1074,7 +1078,7 @@ class FocalLoss(_Loss):
         >>> focalloss = nn.FocalLoss(weight=Tensor([1, 2]), gamma=2.0, reduction='mean')
         >>> output = focalloss(predict, target)
         >>> print(output)
-        1.6610543
+        0.12516622
     """
 
     def __init__(self, weight=None, gamma=2.0, reduction='mean'):

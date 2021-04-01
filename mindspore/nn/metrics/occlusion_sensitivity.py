@@ -49,7 +49,7 @@ class OcclusionSensitivity(Metric):
     Example:
         >>> class DenseNet(nn.Cell):
         >>>     def __init__(self):
-        >>>         super(DenseNet, self).init()
+        >>>         super(DenseNet, self).__init__()
         >>>         w = np.array([[0.1, 0.8, 0.1, 0.1],[1, 1, 1, 1]]).astype(np.float32)
         >>>         b = np.array([0.3, 0.6]).astype(np.float32)
         >>>         self.dense = nn.Dense(4, 2, weight_init=Tensor(w), bias_init=Tensor(b))
