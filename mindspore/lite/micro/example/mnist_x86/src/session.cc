@@ -39,7 +39,7 @@ int LiteSession::CompileGraph(lite::Model *model) {
   out_shape_0[1] = 10;
   outputs_[0] = new (std::nothrow) MTensor(String("Softmax-7"), kNumberTypeFloat32, out_shape_0);
   MS_ERROR_IF_NULL(outputs_[0]);
-  int ret = Init(model->buf, dynamic_cast<MModel *>(model)->buf_size());
+  int ret = Init(model->buf, static_cast<MModel *>(model)->buf_size());
   return ret;
 }
 

@@ -78,7 +78,6 @@ class LiteSession : public session::LiteSession {
   Vector<MTensor *> outputs_;
   void *runtime_buffer_;
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

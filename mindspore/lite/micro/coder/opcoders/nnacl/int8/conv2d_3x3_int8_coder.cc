@@ -68,9 +68,8 @@ int Conv2D3x3Int8Coder::InitWeightBias() {
   MS_CHECK_RET_CODE(memset_s(new_bias_addr_, new_bias_size, 0, new_bias_size), "memset_s new_bias_addr_ failed.");
   if (input_tensors_.size() == kInputSize2) {
     auto *ori_bias_addr = reinterpret_cast<int32_t *>(bias_tensor_->data_c());
-    MS_CHECK_RET_CODE(
-      memcpy_s(new_bias_addr_, output_channel * sizeof(int32_t), ori_bias_addr, output_channel * sizeof(int32_t)),
-      "memset_s new_bias_addr_ failed.");
+    MS_CHECK_RET_CODE(memcpy_s(new_bias_addr_, new_bias_size, ori_bias_addr, output_channel * sizeof(int32_t)),
+                      "memset_s new_bias_addr_ failed.");
   } else {
     MS_ASSERT(input_tensors_.size() == kInputSize1);
   }
@@ -157,9 +156,8 @@ int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
                         output_tensor_, tile_buffer_, block_unit_buffer_, tmp_dst_buffer_, tmp_out_, "&conv_param_");
     code.CodeFunction(kParallelLaunch, "THREAD_POOL_DEFAULT", "Conv3x3Int8Run", kRunArgsAddr, "thread_num");
   } else {
-    int task_id = 0;
     code.CodeFunction("Conv3x3Int8", c8_input_, transformed_filter_addr_, new_bias_addr_, output_tensor_, tile_buffer_,
-                      block_unit_buffer_, tmp_dst_buffer_, tmp_out_, task_id, "&conv_param_");
+                      block_unit_buffer_, tmp_dst_buffer_, tmp_out_, kDefaultTaskId, "&conv_param_");
   }
   code.CodeFunction("PackNC4HW4ToNHWCInt8", tmp_out_, output_tensor_, conv_param_->output_batch_,
                     conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);

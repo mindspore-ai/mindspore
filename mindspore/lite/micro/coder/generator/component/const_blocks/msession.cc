@@ -188,7 +188,6 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &te
   }
   return nullptr;
 }
-
 }  // namespace lite
 )RAW";
 

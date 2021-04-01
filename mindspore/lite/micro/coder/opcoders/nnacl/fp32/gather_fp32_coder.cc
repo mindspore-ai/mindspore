@@ -19,6 +19,7 @@
 #include "nnacl/gather_parameter.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Gather;
@@ -55,10 +56,9 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   for (int i = axis + 1; i < in_rank; ++i) {
     inner_size *= in_shape.at(i);
   }
-  int task_id = 0;
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(outer_size, thread_num_);
-  int count = MSMIN(stride, outer_size - stride * task_id);
+  int count = MSMIN(stride, outer_size - stride * kDefaultTaskId);
 
   // call the op function
   if (input0->data_type() == kNumberTypeInt32) {

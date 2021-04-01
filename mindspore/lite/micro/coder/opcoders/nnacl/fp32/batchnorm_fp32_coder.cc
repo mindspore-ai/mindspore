@@ -19,6 +19,7 @@
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "nnacl/op_base.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 using mindspore::schema::PrimitiveType_BatchNorm;
@@ -45,7 +46,6 @@ int BatchnormFP32Coder::Init() {
 
 int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   // attribute
-  int task_id = 0;
   auto bn_parameter = reinterpret_cast<BatchNormParameter *>(parameter_);
   if (Init() != RET_OK) {
     MS_LOG(ERROR) << "BatchnormFP32Coder Init error";
@@ -63,7 +63,8 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
           });
   NNaclFp32Serializer code;
   code.CodeStruct("bn_parameter", *bn_parameter);
-  code.CodeFunction("BatchNormFp32", input_tensor_, mean_tensor, var_tensor, "&bn_parameter", task_id, output_tensor_);
+  code.CodeFunction("BatchNormFp32", input_tensor_, mean_tensor, var_tensor, "&bn_parameter", kDefaultTaskId,
+                    output_tensor_);
   MS_LOG(INFO) << "BatchnormFP32Code has been called";
   context->AppendCode(code.str());
   return lite::RET_OK;
