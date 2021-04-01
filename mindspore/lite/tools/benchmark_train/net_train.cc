@@ -25,6 +25,7 @@
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
 #include "include/version.h"
+#include "include/model.h"
 
 namespace mindspore {
 namespace lite {
@@ -326,7 +327,14 @@ int NetTrain::RunExportedNet() {
   }
 
   context->thread_num_ = flags_->num_threads_;
-  session_ = session::TrainSession::CreateSession(flags_->export_file_.c_str(), context.get());
+
+  auto *model = mindspore::lite::Model::Import(flags_->export_file_.c_str());
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "create model for train session failed";
+    return RET_ERROR;
+  }
+
+  session_ = session::TrainSession::CreateSession(model, context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "ExportedFile CreateSession failed while running " << model_name.c_str();
     std::cout << "CreateSession failed while running " << model_name.c_str() << std::endl;
@@ -388,7 +396,13 @@ int NetTrain::RunNetTrain() {
   context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = flags_->enable_fp16_;
   layer_checksum_ = flags_->layer_checksum_;
   context->thread_num_ = flags_->num_threads_;
-  session_ = session::TrainSession::CreateSession(flags_->model_file_.c_str(), context.get());
+
+  auto *model = mindspore::lite::Model::Import(flags_->model_file_.c_str());
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "create model for train session failed";
+    return RET_ERROR;
+  }
+  session_ = session::TrainSession::CreateSession(model, context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "RunNetTrain CreateSession failed while running " << model_name.c_str();
     std::cout << "RunNetTrain CreateSession failed while running " << model_name.c_str() << std::endl;
@@ -432,7 +446,7 @@ int NetTrain::RunNetTrain() {
     }
   }
   if (!flags_->export_file_.empty()) {
-    auto ret = session_->SaveToFile(flags_->export_file_);
+    auto ret = Model::Export(model, flags_->export_file_.c_str());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SaveToFile error";
       std::cout << "Run SaveToFile error";

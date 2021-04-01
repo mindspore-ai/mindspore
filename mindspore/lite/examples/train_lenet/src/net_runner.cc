@@ -99,7 +99,13 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = 2;
 
-  session_ = mindspore::session::TrainSession::CreateSession(ms_file_, &context);
+  model_ = mindspore::lite::Model::Import(ms_file_);
+  if (model_ == nullptr) {
+    MS_LOG(ERROR) << "import model failed";
+    return nullptr;
+  }
+  session_ = mindspore::session::TrainSession::CreateSession(model_, &context, true);
+
   MS_ASSERT(nullptr != session_);
   loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_);
 
@@ -154,7 +160,6 @@ int NetRunner::InitDB() {
     std::cout << "No relevant data was found in " << data_dir_ << std::endl;
     MS_ASSERT(train_ds_->GetDatasetSize() != 0);
   }
-
   return 0;
 }
 
@@ -182,7 +187,7 @@ int NetRunner::Main() {
 
   if (epochs_ > 0) {
     auto trained_fn = ms_file_.substr(0, ms_file_.find_last_of('.')) + "_trained.ms";
-    session_->SaveToFile(trained_fn);
+    Model::Export(model_, trained_fn);
   }
   return 0;
 }

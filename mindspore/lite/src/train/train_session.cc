@@ -25,6 +25,7 @@
 #include "include/errorcode.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
+#include "src/lite_model.h"
 #include "src/train/loss_kernel.h"
 #include "src/train/optimizer_kernel.h"
 #include "src/sub_graph_kernel.h"
@@ -38,47 +39,6 @@
 
 namespace mindspore {
 namespace lite {
-
-std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size) {
-  std::ifstream ifs(filename);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "File: " << filename << " does not exist";
-    return std::unique_ptr<char[]>(nullptr);
-  }
-
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "File: " << filename << " open failed";
-    return std::unique_ptr<char[]>(nullptr);
-  }
-
-  ifs.seekg(0, std::ios::end);
-  auto tellg_ret = ifs.tellg();
-  if (tellg_ret <= 0) {
-    MS_LOG(ERROR) << "Could not read file " << filename;
-    return std::unique_ptr<char[]>(nullptr);
-  }
-  size_t fsize = static_cast<size_t>(tellg_ret);
-
-  std::unique_ptr<char[]> buf(new (std::nothrow) char[fsize]);
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "malloc buf failed, file: " << filename;
-    ifs.close();
-    return std::unique_ptr<char[]>(nullptr);
-  }
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.get(), fsize);
-  if (!ifs) {
-    MS_LOG(ERROR) << "only read " << ifs.gcount() << "bytes in " << filename;
-    ifs.close();
-    return std::unique_ptr<char[]>(nullptr);
-  }
-  ifs.close();
-  if (size != nullptr) {
-    *size = fsize;
-  }
-  return buf;
-}
 
 static size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter) {
   for (size_t i = 0; i < where.size(); i++) {
@@ -139,7 +99,7 @@ void TrainSession::AllocWorkSpace() {
 
 int TrainSession::CompileGraph(lite::Model *model) { return lite::RET_ERROR; }
 
-int TrainSession::CompileTrainGraph(mindspore::lite::TrainModel *model) {
+int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
   model_ = model;
 
   auto restore = ReplaceOps();
@@ -170,8 +130,6 @@ TrainSession::~TrainSession() {
     model_ = nullptr;
   }
 }
-
-void *TrainSession::ExportToBuf(char *buf, size_t *len) const { return model_->ExportBuf(buf, len); }
 
 int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   this->outputs_.clear();
@@ -212,25 +170,6 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     }
   }
   return RET_OK;
-}
-
-int TrainSession::SaveToFile(const std::string &filename) const {
-  size_t fb_size = 0;
-  const auto *buf = reinterpret_cast<char *>(model_->GetBuffer(&fb_size));
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "Could not Export Trained model";
-    return lite::RET_NULL_PTR;
-  }
-  std::ofstream ofs(filename);
-  if ((true != ofs.good()) || (true != ofs.is_open())) {
-    MS_LOG(ERROR) << "Could not open file \"" << filename << "\" for writing";
-    return RET_ERROR;
-  }
-
-  ofs.seekp(0, std::ios::beg);
-  ofs.write(buf, fb_size);
-  ofs.close();
-  return chmod(filename.c_str(), S_IRUSR);
 }
 
 int TrainSession::Train() {
@@ -522,14 +461,8 @@ int TrainSession::SetLossName(std::string loss_name) {
 }
 }  // namespace lite
 
-session::TrainSession *session::TrainSession::CreateSession(const char *model_buf, size_t size, lite::Context *context,
+session::TrainSession *session::TrainSession::CreateSession(mindspore::lite::Model *model, lite::Context *context,
                                                             bool train_mode) {
-  auto model = mindspore::lite::TrainModel::Import(model_buf, size);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "create model for  train session failed";
-    return nullptr;
-  }
-
   auto session = new (std::nothrow) lite::TrainSession();
   if (session == nullptr) {
     delete model;
@@ -564,15 +497,4 @@ session::TrainSession *session::TrainSession::CreateSession(const char *model_bu
 
   return session;
 }
-
-session::TrainSession *session::TrainSession::CreateSession(const std::string &filename, lite::Context *context,
-                                                            bool train_mode) {
-  size_t size = -1;
-  auto buf = lite::ReadFileToBuf(filename, &size);
-  if (buf == nullptr) {
-    return nullptr;
-  }
-  return session::TrainSession::CreateSession(buf.get(), size, context, train_mode);
-}
-
 }  // namespace mindspore

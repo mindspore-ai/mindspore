@@ -359,10 +359,14 @@ TEST_F(NetworkTest, tuning_layer) {
 
   meta_graph.reset();
   content = nullptr;
+
+  auto *model = mindspore::lite::Model::Import(content, size);
+  ASSERT_NE(nullptr, model);
+
   lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
-  auto session = session::TrainSession::CreateSession(content, size, &context);
+  auto session = session::TrainSession::CreateSession(model, &context);
   ASSERT_NE(nullptr, session);
   session->Train();
   session->Train();  // Just double check that calling Train twice does not cause a problem
@@ -513,7 +517,10 @@ TEST_F(NetworkTest, efficient_net) {
   context->thread_num_ = 1;
 
   std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
-  auto session = session::TrainSession::CreateSession(net, context, false);
+
+  auto *model = mindspore::lite::Model::Import(net.c_str());
+  ASSERT_NE(model, nullptr);
+  auto session = session::TrainSession::CreateSession(model, context, false);
   ASSERT_NE(session, nullptr);
 
   std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
@@ -530,7 +537,6 @@ TEST_F(NetworkTest, mobileface_net) {
 
   std::string net = "./test_data/nets/mobilefacenet0924.ms";
   ReadFile(net.c_str(), &net_size, &buf);
-  // auto model = lite::TrainModel::Import(buf, net_size);
   auto model = lite::Model::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
@@ -538,7 +544,6 @@ TEST_F(NetworkTest, mobileface_net) {
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
-  // auto session = session::TrainSession::CreateSession(context);
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
   auto ret = session->CompileGraph(model);
@@ -560,7 +565,10 @@ TEST_F(NetworkTest, setname) {
   lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
-  auto session = mindspore::session::TrainSession::CreateSession(net, &context);
+
+  auto *model = mindspore::lite::Model::Import(net.c_str());
+  ASSERT_NE(model, nullptr);
+  auto session = mindspore::session::TrainSession::CreateSession(model, &context);
   ASSERT_NE(session, nullptr);
 
   auto tensors_map = session->GetOutputs();
