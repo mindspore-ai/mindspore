@@ -19,13 +19,13 @@ import android.content.res.TypedArray;
 import android.util.Log;
 
 import com.mindspore.common.utils.Utils;
-import com.mindspore.customview.tablayout.listener.CustomTabEntity;
 import com.mindspore.himindspore.R;
 import com.mindspore.himindspore.base.BasePresenter;
 import com.mindspore.himindspore.bean.TabEntity;
 import com.mindspore.himindspore.net.FileDownLoadObserver;
 import com.mindspore.himindspore.net.RetrofitHelper;
 import com.mindspore.himindspore.net.UpdateInfoBean;
+import com.mindspore.himindspore.ui.view.MSTabEntity;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,15 +51,15 @@ public class MainPresenter extends BasePresenter<MainActivity> implements MainCo
 
 
     @Override
-    public ArrayList<CustomTabEntity> getTabEntity() {
-        ArrayList<CustomTabEntity> mTabEntities = new ArrayList<>();
+    public ArrayList<MSTabEntity> getTabEntity() {
+        ArrayList<MSTabEntity> mTabEntities = new ArrayList<>();
         TypedArray mIconUnSelectIds = Utils.getApp().getResources().obtainTypedArray(R.array.main_tab_un_select);
         TypedArray mIconSelectIds = Utils.getApp().getResources().obtainTypedArray(R.array.main_tab_select);
         String[] mainTitles = Utils.getApp().getResources().getStringArray(R.array.main_tab_title);
         for (int i = 0; i < mainTitles.length; i++) {
             int unSelectId = mIconUnSelectIds.getResourceId(i, R.drawable.experience_uncheck);
             int selectId = mIconSelectIds.getResourceId(i, R.drawable.experience_checked);
-            mTabEntities.add(new TabEntity(mainTitles[i],selectId , unSelectId));
+            mTabEntities.add(new TabEntity(mainTitles[i], selectId, unSelectId));
         }
         mIconUnSelectIds.recycle();
         mIconSelectIds.recycle();
