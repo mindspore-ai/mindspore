@@ -32,24 +32,8 @@
 
 namespace mindspore {
 namespace common {
-const int kCoreThreadNum = 3;
-const int kDefaultMaxThreadNum = 8;
 enum Status { FAIL = -1, SUCCESS = 0 };
 using Task = std::function<int()>;
-
-class Queue {
- public:
-  Queue() = default;
-  ~Queue() = default;
-  bool Enqueue(Task *task);
-  bool Dequeue(Task **out);
-  std::atomic_int task_size_ = {0};
-
- private:
-  std::atomic_int head_ = {0};
-  std::atomic_int tail_ = {0};
-  Task *buffer_[2]{};
-};
 
 class ThreadPool {
  public:
@@ -63,30 +47,15 @@ class ThreadPool {
 
  private:
   ThreadPool();
-  bool SetThreadPool(int config_thread_num);
-  void AddNewThread(int add_num);
-  void AddRunThread(int num);
-  void SubRunThread(int num);
-  bool CheckResult();
-  bool InnerSyncRun(const std::vector<Task> &tasks);
   void SyncRunLoop();
 
-  int cur_thread_nums_{0};
-  int cur_thread_run_nums_{0};
-  int core_thread_num_{kCoreThreadNum};
-  int max_thread_num_{kDefaultMaxThreadNum};
+  size_t max_thread_num_{1};
   std::mutex pool_mtx_;
-  std::mutex thread_mtx_;
-  std::condition_variable queue_ready_;
   std::atomic_bool exit_run_ = {false};
-  std::vector<std::atomic_bool *> activate_list_{};
-  std::vector<std::thread> thread_list_{};
-  std::vector<std::shared_ptr<Queue>> queue_list_{};
-  std::vector<std::pair<int, std::pair<bool, int>>> error_info_{};
   std::queue<Task> task_queue_;
   std::mutex task_mutex_;
   std::condition_variable task_cond_var_;
-  int task_finished_count_{0};
+  size_t task_finished_count_{0};
   std::condition_variable finished_cond_var_;
   std::vector<std::thread> sync_run_threads_{};
 };
