@@ -43,6 +43,14 @@ class GPUDeviceContext : public DeviceContext {
   bool AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
                                 const std::vector<size_t> &size_list) const override;
 
+  // General graph optimezer ignore device data type and format.
+  void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const override;
+  // Optimize the kernel graph according to device type, such format transform.
+  void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const override;
+
+  // Optimize the single operator graph for PyNative mode.
+  void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
+
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
   bool LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
@@ -53,6 +61,12 @@ class GPUDeviceContext : public DeviceContext {
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool InitDevice();
+
+  // Operator fusion optimization.
+  void FuseOperators(const KernelGraphPtr &graph) const;
+
+  // Update Graph Dynamic Shape Attr.
+  void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
 
   std::shared_ptr<MemoryManager> mem_manager_;
   std::vector<void *> streams_;

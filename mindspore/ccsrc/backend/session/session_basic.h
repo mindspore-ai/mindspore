@@ -128,6 +128,13 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // Get graph by graph id, if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;
   void ClearGraph();
+  // create a single run op graph
+  std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
+                                                      const std::vector<tensor::TensorPtr> &input_tensors,
+                                                      const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
+  void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors);
+  void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;
+  void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const;
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {
@@ -163,12 +170,12 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,
                                    std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
-  virtual void UnifyMindIR(const KernelGraphPtr &graph) = 0;
-  virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
+  virtual void UnifyMindIR(const KernelGraphPtr &graph) {}
+  virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) { return 0; }
   virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
   virtual void BuildGraphImpl(GraphId) {}
-  virtual void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                            VectorRef *outputs) = 0;
+  virtual void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+  }
   virtual void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                            const std::vector<tensor::TensorPtr> &input_tensors,
                            const std::vector<int64_t> &tensors_mask) {}
@@ -183,7 +190,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const;
-  void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors);
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
                      const std::vector<tensor::TensorPtr> &input_tensors) const;
   void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph, OpRunInfo *op_run_info) const;
@@ -191,10 +197,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // create graph output for RunOp
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph);
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
-  // create a single run op graph
-  std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
-                                                      const std::vector<tensor::TensorPtr> &input_tensors,
-                                                      const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
   // Generate graph info for a single op graph
   GraphInfo GetSingleOpGraphInfo(const CNodePtr &kernel, const std::vector<tensor::TensorPtr> &input_tensors);
   void GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info);
@@ -219,8 +221,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);
   void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph);
   void UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs);
-  void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;
-  void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const;
   virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
   void InitAllBucket(const KernelGraphPtr &graph);
   void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);

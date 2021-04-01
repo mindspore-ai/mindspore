@@ -21,6 +21,11 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "utils/trace_base.h"
+#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/cpu/insert_cast_cpu.h"
+#include "backend/optimizer/pass/replace_node_by_proxy.h"
+#include "backend/optimizer/pass/erase_visit_attr.h"
 
 namespace mindspore {
 namespace device {
@@ -43,6 +48,40 @@ bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size
 void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   static_cast<CPUMemoryManager *>(mem_manager_.get())->MemFree(address->ptr_);
   address->ptr_ = nullptr;
+}
+
+void CPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
+  // Update Graph Dynamic Shape Attr.
+  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+
+  OptimizeGraphImpl(graph);
+
+  // Remove reorder after PS feature finish adapting push/pull in auto_monad.
+  auto execution_order = graph->execution_order();
+  AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
+  graph->set_execution_order(execution_order);
+}
+
+void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const { OptimizeGraphImpl(graph); }
+
+void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertCastCPU>());
+  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+}
+
+void CPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const {
+  for (const auto &cnode : graph->execution_order()) {
+    if (AnfAlgo::IsNodeDynamicShape(cnode)) {
+      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cnode);
+      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    }
+  }
+  graph->UpdateGraphDynamicAttr();
 }
 
 void CPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {

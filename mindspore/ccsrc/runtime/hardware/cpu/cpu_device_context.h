@@ -36,15 +36,23 @@ class CPUDeviceContext : public DeviceContext {
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
 
+  void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const override;
+  void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
+
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
-
   bool LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
 
+  // Update Graph Dynamic Shape Attr.
+  void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
+
+  void OptimizeGraphImpl(const KernelGraphPtr &graph) const;
+
+  uint32_t device_id_;
   std::shared_ptr<MemoryManager> mem_manager_;
   bool initialized_;
 };
