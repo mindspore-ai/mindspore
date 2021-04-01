@@ -372,3 +372,26 @@ def test_call_unsupported_builtin_function_in_if_in_for():
     assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(364)" in \
            str(err.value)
     assert "x = divmod(x, i)" in str(err.value)
+
+
+def test_use_defined_class_obj_in_for():
+    class Test:
+        def __init__(self):
+            self.number = 1
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = [1, 2, 3]
+            self.test = Test()
+
+        def construct(self, x):
+            for i in self.value:
+                x = i + self.test.number
+            ret = x + x
+            return ret
+
+    net = Net()
+    with pytest.raises(TypeError) as err:
+        net(Tensor([1, 2, 3], mstype.float32))
+    assert "Invalid object with type" in str(err.value)
