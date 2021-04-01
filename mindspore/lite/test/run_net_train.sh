@@ -135,7 +135,7 @@ function Run_arm() {
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1
     fi
 
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libmindspore-lite.so ${benchmark_train_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libmindspore-lite-train.so ${benchmark_train_test_path}/libmindspore-lite-train.so || exit 1
     cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/tools/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
 
     # adb push all needed files to the phone
