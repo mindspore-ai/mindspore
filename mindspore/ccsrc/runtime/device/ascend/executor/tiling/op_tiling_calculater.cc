@@ -160,7 +160,7 @@ std::string GetRealOpType(const std::string &op_type) {
 
 void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode, const optiling::OpCompileInfo &op_compile_info,
                                          const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                         NotNull<optiling::OpRunInfo *> op_run_info) {
+                                         const NotNull<optiling::OpRunInfo *> op_run_info) {
   optiling::TeOpParas op_param;
   std::string op_type = AnfAlgo::GetCNodeName(cnode.get());
   MS_LOG(INFO) << "[DynamicShape] calculate tiling, op_type:" << op_type;
