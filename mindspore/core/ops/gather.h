@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ class Gather : public PrimitiveC {
   MS_DECLARE_PARENT(Gather, PrimitiveC);
   void Init() {}
 };
-AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
 using PrimGatherPtr = std::shared_ptr<Gather>;
 }  // namespace ops
 }  // namespace mindspore

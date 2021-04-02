@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-#include <set>
+#ifndef MINDSPORE_CORE_OPS_ZEROS_H_
+#define MINDSPORE_CORE_OPS_ZEROS_H_
+#include <map>
+#include <vector>
+#include <string>
 #include <memory>
-#include "ops/gather.h"
+#include "ops/primitive_c.h"
+#include "abstract/abstract_value.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameGather, Gather);
+constexpr auto kNameZeros = "Zeros";
+class Zeros : public PrimitiveC {
+ public:
+  Zeros() : PrimitiveC(kNameZeros) {}
+  ~Zeros() = default;
+  MS_DECLARE_PARENT(Zeros, PrimitiveC);
+  void Init() {}
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_ZEROS_H_

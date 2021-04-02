@@ -17,8 +17,10 @@
 #include <vector>
 #include <memory>
 namespace mindspore {
-tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std::vector<int64_t> &shape) {
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape);
+tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr type_ptr, const std::vector<int64_t> &shape) {
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto type_id = ExtractTypeId(type_ptr);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   size_t mem_size = IntToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
   char *data = reinterpret_cast<char *>(tensor_data);
@@ -28,8 +30,10 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(TypeId type, const std::vector<int64_t> &shape) {
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape);
+tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr type_ptr, const std::vector<int64_t> &shape) {
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto type_id = ExtractTypeId(type_ptr);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   size_t mem_size = IntToSize(tensor->ElementsNum());
   if (tensor->data_type() == kNumberTypeFloat32) {
     SetTensorData<float>(tensor->data_c(), 1.0, mem_size);
@@ -39,8 +43,18 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(TypeId type, const std:
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateTensor(TypeId type, const std::vector<int64_t> &shape, void *data) {
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape, data, type);
+tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr type_ptr, const std::vector<int64_t> &shape,
+                                                     void *data) {
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto type_id = ExtractTypeId(type_ptr);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape, data, type_id);
   return tensor;
+}
+
+TypeId TensorConstructUtils::ExtractTypeId(const TypePtr type_ptr) {
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto tensor_type = type_ptr->cast<TensorTypePtr>();
+  auto type_id = tensor_type->element()->type_id();
+  return type_id;
 }
 }  // namespace mindspore

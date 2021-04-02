@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-#include <set>
+#ifndef MINDSPORE_CORE_OPS_GATHER_D_H_
+#define MINDSPORE_CORE_OPS_GATHER_D_H_
+#include <map>
+#include <vector>
+#include <string>
 #include <memory>
-#include "ops/gather.h"
+#include "ops/primitive_c.h"
+#include "abstract/abstract_value.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameGather, Gather);
+constexpr auto kNameGatherD = "GatherD";
+class GatherD : public PrimitiveC {
+ public:
+  GatherD() : PrimitiveC(kNameGatherD) { InitIOName({"x", "dim", "index"}, {"output"}); }
+  ~GatherD() = default;
+  MS_DECLARE_PARENT(GatherD, PrimitiveC);
+  void Init() {}
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_GATHER_D_H_

@@ -1342,27 +1342,6 @@ class Zeros(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Zeros"""
 
-    def __infer__(self, dims, dtype):
-        if isinstance(dims['value'], int):
-            shape = (dims['value'],)
-        else:
-            shape = dims['value']
-        validator.check_value_type("shape", shape, [tuple], self.name)
-        for i, item in enumerate(shape):
-            validator.check_non_negative_int(item, shape[i], self.name)
-        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
-                       mstype.float16, mstype.float32, mstype.float64]
-        validator.check_types_same_and_valid({"value": dtype['value']}, valid_types, self.name)
-        x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        ret = np.zeros(shape, x_nptype)
-        out = {
-            'value': Tensor(ret),
-            'shape': shape,
-            'dtype': x_nptype,
-        }
-        return out
-
 
 class OnesLike(PrimitiveWithInfer):
     """
@@ -5193,30 +5172,6 @@ class GatherD(PrimitiveWithInfer):
     def __init__(self):
         """Initialize GatherD"""
         self.init_prim_io_names(inputs=['x', 'dim', 'index'], outputs=['output'])
-
-    def __infer__(self, x, dim, index):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("index", index['dtype'], [mstype.int32, mstype.int64], self.name)
-        validator.check_subclass("dim", dim['dtype'], [mstype.int32, mstype.int64], self.name)
-        x_shp = x['shape']
-        idx_shp = index['shape']
-        x_rank = len(x_shp)
-        idx_rank = len(idx_shp)
-        validator.check("x_rank, idx_rank", x_rank, "expected", idx_rank, Rel.EQ, self.name)
-        dim_v = dim['value']
-        validator.check("dim value", dim_v, "expected", -x_rank, Rel.GE, self.name)
-        validator.check("dim value", dim_v, "expected", x_rank, Rel.LT, self.name)
-        if dim_v < 0:
-            dim['value'] = dim_v + x_rank
-        for i in range(x_rank):
-            if i == dim['value']:
-                continue
-            validator.check("x_shp[{0}], idx_shp[{0}]".format(i), x_shp[i], "expected", idx_shp[i], Rel.EQ, self.name)
-
-        out = {'shape': index['shape'],
-               'dtype': x['dtype'],
-               'value': None}
-        return out
 
 
 class Identity(PrimitiveWithInfer):
