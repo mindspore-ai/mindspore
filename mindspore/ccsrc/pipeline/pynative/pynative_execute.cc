@@ -850,8 +850,8 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   MS_EXCEPTION_IF_NULL(abstract);
   auto shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
-  auto shape_info = shape->ToString();
-  if (shape_info.find("-1") != string::npos) {
+
+  if (shape->IsDynamic()) {
     op_exec_info->is_dynamic_shape = true;
   }
 }
