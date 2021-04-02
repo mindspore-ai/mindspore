@@ -53,6 +53,7 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("set_num_parallel_workers",
                          [](ConfigManager &c, int32_t num) { THROW_IF_ERROR(c.set_num_parallel_workers(num)); })
                     .def("set_op_connector_size", &ConfigManager::set_op_connector_size)
+                    .def("set_sending_batches", &ConfigManager::set_sending_batches)
                     .def("set_seed", &ConfigManager::set_seed)
                     .def("set_worker_connector_size", &ConfigManager::set_worker_connector_size)
                     .def("set_enable_shared_mem", &ConfigManager::set_enable_shared_mem)

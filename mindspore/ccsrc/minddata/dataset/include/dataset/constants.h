@@ -100,6 +100,7 @@ constexpr uint32_t kCfgRowsPerBuffer = 1;
 constexpr uint32_t kCfgParallelWorkers = 8;
 constexpr uint32_t kCfgWorkerConnectorSize = 16;
 constexpr uint32_t kCfgOpConnectorSize = 16;
+constexpr uint32_t kCfgSendingBatch = 0;
 constexpr int32_t kCfgDefaultRankId = -1;
 constexpr uint32_t kCfgDefaultSeed = std::mt19937::default_seed;
 constexpr uint32_t kCfgMonitorSamplingInterval = 1000;  // timeout value for sampling interval in milliseconds
