@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <unordered_map>
+#include <algorithm>
 #include "runtime/framework/actor/data_source_actor.h"
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
@@ -66,12 +67,19 @@ class GraphScheduler {
 
   // Transform graph to actor DAG, contains build and link.
   ActorSet *Transform(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                      const std::vector<tensor::TensorPtr> *input_tensors = nullptr,
+                      const std::vector<TensorPtr> *input_tensors = nullptr,
                       GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Schedule actors in the actor runtime. Single machine scheduling is supported currently, and distributed scheduling
   // will be supported in the future.
   void Schedule(const ActorSet *actor_set);
+
+  // The prepare processing before run:
+  // 1. Prepare the data of device tensor store(such as weights and value nodes of graph).
+  // 2. Prepare the data of host tensor queue(such as non weighted parameters of graph).
+  // 3. Prepare the output tensor of graph.
+  void PrepareRun(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                  const std::vector<TensorPtr> *input_tensors, VectorRef *const &outputs);
 
   // The processing entry of actors running.
   bool Run(const ActorSet *actor_set, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
@@ -112,6 +120,9 @@ class GraphScheduler {
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const KernelGraphPtr &graph);
+
+  // Fetch the hsot tensor queue by kernel graph.
+  HostTensorQueue *FetchHostQueue(const KernelGraphPtr &graph) const;
 
   std::unordered_map<KernelGraphPtr, ActorSetPtr> graph_to_actors_;
   std::unordered_map<KernelGraphPtr, HostTensorQueuePtr> graph_to_host_queue_;
