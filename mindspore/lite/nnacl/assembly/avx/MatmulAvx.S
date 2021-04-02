@@ -22,7 +22,7 @@
 // 24: stride
 // 32: writeNhwc/writeWino
 
-// parameters pass in win x64 platfrom: "shadow space" needs to be opened up for first four parameters ==> 32 bites
+// parameters pass in win x64 platform: "shadow space" needs to be opened up for first four parameters ==> 32 bites
 // rcx: a
 // rdx: b
 // r8: c

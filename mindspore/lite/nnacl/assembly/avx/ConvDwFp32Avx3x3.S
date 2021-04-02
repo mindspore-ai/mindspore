@@ -10,7 +10,7 @@
 
 // void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const float *bias, size_t channels, size_t output_width,
 //                       size_t input_stride, size_t relum, szie_t relu6)
-// in linux x64 platfrom:
+// in linux x64 platform:
 // rdi: output
 // rsi: input
 // rdx: weights
@@ -21,7 +21,7 @@
 // 16: relu
 // 24: relu6
 
-// in win x64 platfrom: "shadow space" needs to be opened up for first four parameters ==> 32 bites
+// in win x64 platform: "shadow space" needs to be opened up for first four parameters ==> 32 bites
 // rcx: output
 // rdx: input
 // r8: weights

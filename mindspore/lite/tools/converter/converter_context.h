@@ -57,7 +57,7 @@ class NoSupportOp {
   void PrintOps() const {
     if (!noSupportOps.empty()) {
       MS_LOG(ERROR) << "===========================================";
-      MS_LOG(ERROR) << "UNSUPPORT OP LIST:";
+      MS_LOG(ERROR) << "UNSUPPORTED OP LIST:";
       for (auto &op_name : noSupportOps) {
         MS_LOG(ERROR) << "FMKTYPE: " << fmkType << ", OP TYPE: " << op_name;
       }
