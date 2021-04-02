@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace runtime {
+using device::DeviceContext;
 class GraphCompiler {
  public:
   static GraphCompiler &GetInstance() {
@@ -35,7 +36,7 @@ class GraphCompiler {
 
   // Set device context which is initialized, the function must be called
   // before using GraphCompiler and after changing device type or device id.
-  void set_device_context(device::DeviceContext *device_context);
+  void set_device_context(DeviceContext *device_context);
 
   // Construct kernel graph from anf nodes list and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
@@ -58,9 +59,12 @@ class GraphCompiler {
 
   // The implementation of compiling graph in Graph Mode, including optimizing graph,
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
-  GraphId CompileGraphImpl(const KernelGraphPtr &graph);
+  GraphId CompileGraphImpl(const KernelGraphPtr &graph) const;
 
-  device::DeviceContext *device_context_{nullptr};
+  // Create device address for all anf nodes of graph.
+  void CreateDeviceAddress(const KernelGraphPtr &graph) const;
+
+  DeviceContext *device_context_{nullptr};
 
   // Single op kernel graph cache for PyNative mode.
   std::unordered_map<GraphInfo, KernelGraphPtr> run_op_graphs_;

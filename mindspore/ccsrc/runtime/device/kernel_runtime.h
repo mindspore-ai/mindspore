@@ -138,7 +138,6 @@ class KernelRuntime {
   bool LaunchKernelMod(const session::KernelGraph &graph);
   void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index);
   static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs);
-  size_t CountNodeDeviceMemorySize(const AnfNodePtr &node, size_t output_index);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel);
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);

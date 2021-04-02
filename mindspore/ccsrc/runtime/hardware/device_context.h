@@ -63,6 +63,13 @@ class DeviceContext {
     return true;
   }
 
+  // Create concrete device address according different device type.
+  virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                               TypeId type_id) const = 0;
+
+  // Get device address type according different device type, such GPU, Ascend.
+  virtual DeviceAddressType GetDeviceAddressType() const = 0;
+
   // The two functions below will be merged to one in the future.
   // General graph optimezer ignore device data type and format.
   virtual void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {}
@@ -89,6 +96,9 @@ class DeviceContext {
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.
   // Devices that do not need stream could ignore the implementation of this function.
   virtual bool SyncStream(size_t stream_id = 0) { return true; }
+
+  // Get device_context_key_ to obtain device name and device id.
+  const DeviceContextKey &device_context_key() const { return device_context_key_; }
 
  protected:
   DeviceContextKey device_context_key_;

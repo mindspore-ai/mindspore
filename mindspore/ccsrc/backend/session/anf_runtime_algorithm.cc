@@ -19,6 +19,8 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <functional>
+#include <numeric>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
@@ -478,6 +480,28 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
     return 0;
   }
   return 1;
+}
+
+size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_t output_index) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (output_index >= AnfAlgo::GetOutputTensorNum(node)) {
+    MS_EXCEPTION(ArgumentError) << "output index [" << output_index << "] large than the output size ["
+                                << AnfAlgo::GetOutputTensorNum(node) << "] of node!";
+  }
+  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
+  if (output_type_id == kTypeUnknown) {
+    output_type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
+  }
+  size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
+  std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
+  auto format = AnfAlgo::GetOutputFormat(node, output_index);
+  if (shape.empty() && format != kOpFormat_DEFAULT) {
+    shape = trans::PaddingShape(shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
+    shape = trans::TransShapeToDevice(shape, format);
+  }
+  // scalar's output shape is a empty vector
+  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+  return tensor_size;
 }
 
 std::vector<std::string> AnfRuntimeAlgorithm::GetAllOutputFormats(const AnfNodePtr &node) {

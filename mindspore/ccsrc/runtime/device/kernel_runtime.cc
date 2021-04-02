@@ -16,7 +16,6 @@
 
 #include "runtime/device/kernel_runtime.h"
 #include <functional>
-#include <numeric>
 #include <utility>
 #include <vector>
 #include "backend/optimizer/common/helper.h"
@@ -55,28 +54,6 @@ bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_
     return address->DeviceType() == GetTargetDeviceAddressType();
   }
   return false;
-}
-
-size_t KernelRuntime::CountNodeDeviceMemorySize(const mindspore::AnfNodePtr &node, size_t output_index) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (output_index >= AnfAlgo::GetOutputTensorNum(node)) {
-    MS_EXCEPTION(ArgumentError) << "output index [" << output_index << "] large than the output size ["
-                                << AnfAlgo::GetOutputTensorNum(node) << "] of node!";
-  }
-  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
-  if (output_type_id == kTypeUnknown) {
-    output_type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
-  }
-  size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-  std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
-  auto format = AnfAlgo::GetOutputFormat(node, output_index);
-  if (shape.empty() && format != kOpFormat_DEFAULT) {
-    shape = trans::PaddingShape(shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
-    shape = trans::TransShapeToDevice(shape, format);
-  }
-  // scalar's output shape is a empty vector
-  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-  return tensor_size;
 }
 
 void KernelRuntime::AssignMemory(session::KernelGraph *graph) {
@@ -184,7 +161,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       if (output_type_id == kTypeUnknown) {
         output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
       }
-      auto tensor_size = CountNodeDeviceMemorySize(item, index);
+      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       auto device_address =
         CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_EXCEPTION_IF_NULL(device_address);
@@ -361,7 +338,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
         continue;
       }
 #endif
-      auto tensor_size = CountNodeDeviceMemorySize(item, index);
+      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_LOG(DEBUG) << "Malloc static memory for " << item->fullname_with_scope();
       if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
@@ -656,7 +633,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
       continue;
     }
     size_t tensor_size = tensor->data().nbytes();
-    auto node_size = CountNodeDeviceMemorySize(value_node, output_idx);
+    auto node_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
     if (output_type_id == kTypeUnknown) {
       output_type_id = AnfAlgo::GetOutputInferDataType(value_node, output_idx);
