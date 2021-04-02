@@ -84,6 +84,7 @@ class Bucket {
   virtual void FreeAllDeviceMem() = 0;
   virtual void FreeDeviceMem(void *dev_ptr) = 0;
   virtual void CopyTensorToContiguousMemory() = 0;
+  void UpdateTensorOutputAddr(uint8_t *addr);
   void LazyDeleteOldAddr();
 };
 }  // namespace mindspore::device
