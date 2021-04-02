@@ -92,7 +92,7 @@ class Dihedral14CFEnergyGpuKernel : public GpuKernel {
     input_size_list_.push_back(ele_b_14 * sizeof(T1));
     input_size_list_.push_back(ele_cf_scale_factor * sizeof(T));
     workspace_size_list_.push_back(atom_numbers * sizeof(UINT_VECTOR_LJ_TYPE));
-    output_size_list_.push_back(atom_numbers * sizeof(T));
+    output_size_list_.push_back(dihedral_14_numbers * sizeof(T));
   }
 
  private:

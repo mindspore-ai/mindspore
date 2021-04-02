@@ -54,8 +54,8 @@ __global__ void Dihedral14CFEnergyKernel(const int dihedral_14_numbers, const UI
 void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f, const int *LJtype,
                         const float *charge, float *uint_crd_with_LJ_f, const float *boxlength_f, const int *a_14,
                         const int *b_14, const float *cf_scale_factor, float *ene, cudaStream_t stream) {
-  size_t thread_per_block = 128;
-  size_t block_per_grid = ceilf(static_cast<float>(atom_numbers) / 128);
+  size_t thread_per_block = 32;
+  size_t block_per_grid = ceilf(static_cast<float>(dihedral_14_numbers) / 32);
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
 
@@ -65,11 +65,8 @@ void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, c
     atom_numbers, uint_crd, uint_crd_with_LJ, LJtype, charge);
 
   VECTOR *boxlength = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(boxlength_f));
-  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128, 0, stream>>>(atom_numbers, ene, 0.);
   Dihedral14CFEnergyKernel<<<block_per_grid, thread_per_block, 0, stream>>>(
     dihedral_14_numbers, uint_crd_with_LJ, boxlength, a_14, b_14, cf_scale_factor, ene);
-
-  cudaStreamSynchronize(stream);
 
   return;
 }
