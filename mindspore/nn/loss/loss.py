@@ -436,7 +436,7 @@ class DiceLoss(_Loss):
         >>> y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
         >>> output = loss(y_pred, y)
         >>> print(output)
-        [0.38596618]
+        0.38596618
     """
     def __init__(self, smooth=1e-5):
         super(DiceLoss, self).__init__()
