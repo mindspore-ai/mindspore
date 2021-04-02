@@ -52,7 +52,7 @@ _b = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
 
 def test_train_and_eval():
-    context.set_context(save_graphs=True, mode=0)
+    context.set_context(save_graphs=False, mode=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16)
     strategy1 = ((4, 4), (4, 4))
     strategy2 = ((4, 4),)

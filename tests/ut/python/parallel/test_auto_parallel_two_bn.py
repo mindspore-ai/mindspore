@@ -68,7 +68,7 @@ def test_two_bn():
             out = self.block2(out)
             return out
 
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetWithLoss(Net())

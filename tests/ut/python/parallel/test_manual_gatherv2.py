@@ -60,7 +60,7 @@ _b = Tensor(np.ones([64, 8]), dtype=ms.float32)
 
 
 def compile_net(net):
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
@@ -106,7 +106,7 @@ def test_normal_split_with_offset():
 
 
 def test_auto_parallel_error():
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2, global_rank=0)
     net = Net()
     with pytest.raises(RuntimeError):
