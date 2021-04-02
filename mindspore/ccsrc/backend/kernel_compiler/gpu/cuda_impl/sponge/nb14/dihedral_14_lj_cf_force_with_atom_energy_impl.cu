@@ -111,7 +111,7 @@ void Dihedral14LJCFForceWithAtomEnergy(const int dihedral_14_numbers, const int 
                                        const float *LJ_type_A, const float *LJ_type_B, float *frc_f, float *atom_energy,
                                        cudaStream_t stream) {
   size_t thread_per_block = 128;
-  size_t block_per_grid = ceilf(static_cast<float>(atom_numbers) / 128);
+  size_t block_per_grid = ceilf(static_cast<float>(dihedral_14_numbers) / 128);
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
 
@@ -128,8 +128,6 @@ void Dihedral14LJCFForceWithAtomEnergy(const int dihedral_14_numbers, const int 
   Dihedral14LJCFForceWithAtomEnergyKernel<<<block_per_grid, thread_per_block, 0, stream>>>(
     dihedral_14_numbers, uint_crd_with_LJ, boxlength, a_14, b_14, lj_scale_factor, cf_scale_factor, LJ_type_A,
     LJ_type_B, frc, atom_energy);
-
-  cudaStreamSynchronize(stream);
 
   return;
 }
