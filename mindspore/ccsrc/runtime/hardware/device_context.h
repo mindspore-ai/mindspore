@@ -95,7 +95,7 @@ class DeviceContext {
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.
   // Devices that do not need stream could ignore the implementation of this function.
-  virtual bool SyncStream(size_t stream_id = 0) { return true; }
+  virtual bool SyncStream(size_t stream_id = 0) const { return true; }
 
   // Get device_context_key_ to obtain device name and device id.
   const DeviceContextKey &device_context_key() const { return device_context_key_; }

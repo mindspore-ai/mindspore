@@ -209,6 +209,7 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
 }
 
 GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context_);
   // Optimization pass which is irrelevant to device type or format.
   device_context_->OptimizeGraphWithoutDeviceInfo(graph);
@@ -224,8 +225,11 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph);
+
   // Transform graph to actor DAG, contains build and link.
-  GraphScheduler::GetInstance().Transform(graph, device_context_);
+  const auto &actor_set = GraphScheduler::GetInstance().Transform(graph, device_context_);
+  GraphScheduler::GetInstance().Schedule(actor_set);
+
   return graph->graph_id();
 }
 

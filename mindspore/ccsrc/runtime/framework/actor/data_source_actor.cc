@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace runtime {
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
+  MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
   if (buffers_.size() == buffer_capacity_) {
     // Send output to trigger computing and free memory.
@@ -54,6 +55,7 @@ void DataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
 }
 
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
+  MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") sends output data.";
   MS_EXCEPTION_IF_NULL(context);
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");

@@ -57,6 +57,8 @@ class DataSourceActor : public MemoryInterfaceActor {
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override{};
 
  protected:
+  friend class GraphScheduler;
+
   // Construct the device tensors and fill to device tensor buffer from the member nodes during the data fetching.
   virtual void FillDataBuffer() = 0;
 

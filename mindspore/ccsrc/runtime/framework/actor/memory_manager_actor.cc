@@ -29,7 +29,7 @@ void MemoryManagerActor::AllocateMemory(std::vector<DeviceTensor *> alloc_list, 
 
   for (auto &device_tensor : alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    if (device_tensor->GetPtr() != nullptr) {
+    if ((device_tensor->GetPtr() != nullptr) || (device_tensor->GetSize() == 0)) {
       continue;
     }
     // Allocate memory through the device context.
@@ -53,7 +53,9 @@ void MemoryManagerActor::FreeMemory(std::vector<DeviceTensor *> free_list, const
     device_tensor->DecreaseRefCountUsed();
     if (device_tensor->ref_count_dynamic_used() == 0) {
       // Free memory through the device context.
-      device_context->FreeMemory(device_tensor);
+      if (device_tensor->GetPtr() != nullptr) {
+        device_context->FreeMemory(device_tensor);
+      }
       device_tensor->ResetRefCountUsed();
     }
   }

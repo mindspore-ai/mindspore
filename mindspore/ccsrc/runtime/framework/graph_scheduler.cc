@@ -243,6 +243,8 @@ BaseRef CreateOutputTensor(const session::KernelWithIndex &node_output_pair, con
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, output_index);
     MS_EXCEPTION_IF_NULL(device_tensor);
     tensor->set_device_address(device_tensor);
+    device_tensor->set_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCountUsed();
     return tensor;
   }
 }
@@ -280,24 +282,40 @@ void GraphScheduler::Initialize() {
   }
   init_ = true;
 
+  auto actorMgr = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actorMgr);
+
+  // Create the thread pool of actor runtime.
+  auto max_thread_num = GetMaxThreadNum();
+  MS_LOG(INFO) << "Max available thread number: " << max_thread_num;
+  actorMgr->Initialize(max_thread_num);
+
   // Create memory manager actor.
   auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   memory_manager_aid_ = memory_manager_actor->GetAID();
   // Schedule memory manager actor, bind single thread to response to memory alloc and free quickly.
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
-  auto actorMgr = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actorMgr);
   (void)actorMgr->Spawn(base_actor, false);
 }
 
 ActorSet *GraphScheduler::Transform(const KernelGraphPtr &graph, const DeviceContext *device_context,
                                     const std::vector<tensor::TensorPtr> *input_tensors,
                                     GraphExecutionStrategy strategy) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Graph(" << graph->ToString() << ") transforms actor begin.";
+
+  Initialize();
   PersistDeviceTensor(graph);
   auto actor_set = Build(graph, device_context);
   graph_to_actors_.emplace(graph, actor_set);
   Link(actor_set.get(), graph, strategy);
+
+  if (!CheckActorValid(actor_set.get())) {
+    MS_LOG(EXCEPTION) << "The actor set of " << graph->ToString() << " is invalid.";
+  }
+
+  MS_LOG(INFO) << "Graph(" << graph->ToString() << ") transforms actor end.";
   return actor_set.get();
 }
 
@@ -327,16 +345,23 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   }
 }
 
-void GraphScheduler::PrepareRun(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                                const std::vector<TensorPtr> *input_tensors, VectorRef *const &outputs) {
+void GraphScheduler::PrepareRun(const KernelGraphPtr &graph, const std::vector<TensorPtr> *input_tensors,
+                                VectorRef *const &outputs) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(outputs);
+  // Get the device context for the first kernel actor.
+  const auto &actor_set = Fetch(graph);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &first_kernel_actor = actor_set->kernel_actors_[0];
+  MS_EXCEPTION_IF_NULL(first_kernel_actor);
+  const auto &device_context = first_kernel_actor->device_context_;
 
   // 1.Prepare the data of device tensor store(value nodes of graph).
   for (const auto &value_node : graph->graph_value_nodes()) {
-    PrepareDataForValueNode(value_node, device_context);
+    if (AnfAlgo::OutputAddrExist(value_node, 0)) {
+      PrepareDataForValueNode(value_node, device_context);
+    }
   }
 
   // 1.Prepare the data of device tensor store(weights of graph), and fill the host tensors for non weighted parameters.
@@ -372,10 +397,10 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
   MS_EXCEPTION_IF_NULL(actor_set);
   // Construct OpContext.
   OpContext<DeviceTensor> op_context;
-  auto sequential_num = uuids::RandomBasedGenerator::GenerateRandomUuid();
+  uuids::uuid sequential_num;
+  std::vector<Promise<int>> result(1);
   op_context.sequential_num_ = &sequential_num;
-  Promise<int> result;
-  op_context.results_->push_back(result);
+  op_context.results_ = &result;
 
   // Trigger no input kernel actor running.
   for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
@@ -398,11 +423,22 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
   }
 
   // Get the run result.
-  auto result_future = result.GetFuture();
+  auto result_future = result[0].GetFuture();
   result_future.Wait();
   if (!result_future.IsOK()) {
     return false;
   }
+
+  // Sync device stream.
+  const auto &first_kernel_actor = actor_set->kernel_actors_[0];
+  MS_EXCEPTION_IF_NULL(first_kernel_actor);
+  const auto &device_context = first_kernel_actor->device_context_;
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (!device_context->SyncStream()) {
+    MS_LOG(ERROR) << "Sync stream failed.";
+    return false;
+  }
+
   return true;
 }
 
@@ -453,7 +489,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const KernelGraphPtr &graph, Grap
     LinkControlArrowForKernelActor(kernel_actor, actor_set->loop_count_actor_.get(), graph, strategy);
 
     for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-      KernelWithIndex from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(kernel, i);
+      KernelWithIndex from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(kernel, i, true);
       KernelWithIndex to_kernel_with_input_idx = std::make_pair(kernel, i);
       auto from_kernel = from_kernel_with_output_idx.first;
 
@@ -557,6 +593,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const KernelGraphPtr &grap
   auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph->ToString() + "_" + "LoopCountActor";
   auto loop_count_actor = std::make_shared<LoopCountActor>(actor_name, loop_count);
+  MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
   return loop_count_actor;
 }
@@ -640,7 +677,12 @@ void GraphScheduler::LinkControlArrowForKernelActor(KernelActor *from_actor, Loo
     from_actor->input_controls_num_++;
   }
 
+  // The manager of graph member is weak ptr, so need created and used in the function IsNotRealUsedByOthers.
+  const auto &manager = Manage(graph, true);
+  MS_EXCEPTION_IF_NULL(manager);
   if (opt::IsNotRealUsedByOthers(graph, from_actor->kernel_)) {
+    MS_EXCEPTION_IF_NULL(from_actor->kernel_);
+    MS_LOG(INFO) << from_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
     auto to_aid = to_actor->GetAID();
     from_actor->output_op_controls_.emplace_back(to_aid);
     to_actor->input_controls_num_++;
@@ -667,11 +709,57 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   }
 }
 
+bool GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  // Check the data source actors.
+  for (const auto &data_source_actor : actor_set->data_source_actors_) {
+    MS_EXCEPTION_IF_NULL(data_source_actor);
+    if (data_source_actor->output_op_arrows_.size() == 0) {
+      MS_LOG(ERROR) << data_source_actor->GetAID().Name() << " has no user.";
+      return false;
+    }
+  }
+
+  // Check the kernel actors.
+  for (const auto &kernel_actor : actor_set->kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_actor);
+    if (kernel_actor->output_op_arrows_.size() + kernel_actor->output_op_controls_.size() == 0) {
+      MS_LOG(ERROR) << kernel_actor->GetAID().Name() << " has no user.";
+      return false;
+    }
+
+    auto input_num = AnfAlgo::GetInputTensorNum(kernel_actor->kernel_);
+    auto input_data_num = kernel_actor->input_datas_num_;
+    auto device_tensor_store_num = kernel_actor->device_tensor_store_keys_.size();
+    if (input_data_num + device_tensor_store_num != input_num) {
+      MS_LOG(ERROR) << "The input building of " << kernel_actor->GetAID().Name()
+                    << " is wrong, input data num: " << input_data_num
+                    << ", device tensor store num: " << device_tensor_store_num << ", total input num: " << input_num;
+      return false;
+    }
+  }
+
+  // Check the loop count actor.
+  const auto &loop_count_actor = actor_set->loop_count_actor_;
+  if (loop_count_actor != nullptr) {
+    if (loop_count_actor->input_controls_num_ == 0) {
+      MS_LOG(ERROR) << loop_count_actor->GetAID().Name() << " has no source.";
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void GraphScheduler::PersistDeviceTensor(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
   for (auto &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
+    if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
+      MS_LOG(INFO) << "The device address is not exist: " << value_node->ToString();
+      continue;
+    }
     auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0);
     DeviceTensorStore::GetInstance().Insert(value_node.get(), device_tensor);
     device_tensor->set_ref_count(SIZE_MAX);
@@ -682,6 +770,7 @@ void GraphScheduler::PersistDeviceTensor(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(input_node);
     if (IsPersistentDeviceTensor(input_node)) {
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+      MS_EXCEPTION_IF_NULL(device_tensor);
       DeviceTensorStore::GetInstance().Insert(input_node.get(), device_tensor);
       device_tensor->set_ref_count(SIZE_MAX);
       device_tensor->ResetRefCountUsed();
@@ -697,6 +786,145 @@ HostTensorQueue *GraphScheduler::FetchHostQueue(const KernelGraphPtr &graph) con
   } else {
     MS_LOG(ERROR) << "Can't find the host tensor queue map of graph: " << graph->ToString();
     return nullptr;
+  }
+}
+
+void GraphScheduler::DumpActor(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &actor_set = Fetch(graph);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  std::string filename = "./actor_set_" + graph->ToString() + ".ir";
+  std::ofstream ofs(filename);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file [" << filename << "] failed!";
+    return;
+  }
+
+  ofs << "[Data source actors]\n";
+  for (const auto &data_source_actor : actor_set->data_source_actors_) {
+    DumpDSActor(data_source_actor.get(), ofs);
+    ofs << "\n";
+  }
+
+  ofs << "\n[Kernel actors]\n";
+  for (const auto &kernel_actor : actor_set->kernel_actors_) {
+    DumpKernelActor(kernel_actor.get(), ofs);
+    ofs << "\n";
+  }
+
+  ofs << "\n[No input kernel actors]\n";
+  for (const auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
+    DumpKernelActor(no_input_kernel_actor.get(), ofs);
+    ofs << "\n";
+  }
+
+  ofs << "\n[Loop count actor]\n";
+  const auto &loop_count_actor = actor_set->loop_count_actor_;
+  if (loop_count_actor != nullptr) {
+    DumpLoopCountActor(loop_count_actor.get(), ofs);
+    ofs << "\n";
+  }
+}
+
+void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) const {
+  MS_EXCEPTION_IF_NULL(actor);
+  const auto &actor_name = actor->GetAID().Name();
+
+  MS_EXCEPTION_IF_NULL(actor->device_context_);
+  ofs << "\tactor_name:" << actor_name << "\tdevice_context:" << actor->device_context_->device_context_key().ToString()
+      << "\n";
+
+  if (actor_name.find("_DeviceQueueDataSourceActor") != string::npos) {
+    // Dump the member info of device queue data source actor.
+    const auto &device_queue_ds_actor = dynamic_cast<const DeviceQueueDataSourceActor *>(actor);
+    const auto &data_kernel = device_queue_ds_actor->data_kernel_;
+    MS_EXCEPTION_IF_NULL(data_kernel);
+    ofs << "\t\tdata_kernel_name:" << data_kernel->fullname_with_scope()
+        << "\tinput_number:" << AnfAlgo::GetInputTensorNum(data_kernel)
+        << "\toutput_number:" << AnfAlgo::GetOutputTensorNum(data_kernel) << "\n";
+    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(data_kernel); ++i) {
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_kernel, i, false);
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+          << "\tref_count:" << device_tensor->ref_count_dynamic_used() << "\n ";
+    }
+  } else if (actor_name.find("_HostQueueDataSourceActor") != string::npos) {
+    // Dump the member info of host queue data source actor.
+    const auto &host_queue_ds_actor = dynamic_cast<const HostQueueDataSourceActor *>(actor);
+    ofs << "\t\tdata_nodes:" << host_queue_ds_actor->data_nodes_.size() << "\n";
+    for (size_t i = 0; i < host_queue_ds_actor->data_nodes_.size(); ++i) {
+      const auto &data_node = host_queue_ds_actor->data_nodes_[i];
+      MS_EXCEPTION_IF_NULL(data_node);
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_node, 0, false);
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node->fullname_with_scope()
+          << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+          << "\tref_count:" << device_tensor->ref_count_dynamic_used() << "\n ";
+    }
+  }
+
+  ofs << "\t\toutput_data_arrows:" << actor->output_op_arrows_.size() << "\n ";
+  for (const auto &data_arrow : actor->output_op_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    ofs << "\t\t\tfrom_output_index:" << data_arrow->from_output_index_
+        << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
+        << "\n";
+  }
+}
+
+void GraphScheduler::DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_
+      << "\tinput_controls_num:" << actor->input_controls_num_ << "\n";
+
+  ofs << "\t\toutput_control_arrows:" << (actor->data_source_aids_.size() + actor->no_input_kernel_aids_.size())
+      << "\n ";
+  for (const auto &aid : actor->data_source_aids_) {
+    ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
+  }
+  for (const auto &aid : actor->no_input_kernel_aids_) {
+    ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
+  }
+}
+
+void GraphScheduler::DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const {
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(actor->device_context_);
+  ofs << "\tactor_name:" << actor->GetAID().Name()
+      << "\tdevice_context:" << actor->device_context_->device_context_key().ToString()
+      << "\tinput_data_num:" << actor->input_datas_num_ << "\tinput_controls_num:" << actor->input_controls_num_
+      << "\n";
+
+  const auto &kernel = actor->kernel_;
+  MS_EXCEPTION_IF_NULL(kernel);
+  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope() << "\tinput_number:" << AnfAlgo::GetInputTensorNum(kernel)
+      << "\toutput_number:" << AnfAlgo::GetOutputTensorNum(kernel) << "\n";
+  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
+    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+        << "\tref_count:" << device_tensor->ref_count_dynamic_used() << "\n ";
+  }
+
+  ofs << "\t\tdevice_tensor_stores:" << actor->device_tensor_store_keys_.size() << "\n ";
+  for (const auto &device_tensor_store_key : actor->device_tensor_store_keys_) {
+    const auto &node = reinterpret_cast<AnfNode *>(device_tensor_store_key.second);
+    MS_EXCEPTION_IF_NULL(node);
+    ofs << "\t\t\tto_input_index:" << device_tensor_store_key.first
+        << "\tfrom_node_name:" << node->fullname_with_scope() << "\n";
+  }
+
+  ofs << "\t\toutput_data_arrows:" << actor->output_op_arrows_.size() << "\n ";
+  for (const auto &data_arrow : actor->output_op_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    ofs << "\t\t\tfrom_output_index:" << data_arrow->from_output_index_
+        << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
+        << "\n";
+  }
+
+  ofs << "\t\toutput_control_arrows:" << actor->output_op_controls_.size() << "\n ";
+  for (const auto &aid : actor->output_op_controls_) {
+    ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
   }
 }
 

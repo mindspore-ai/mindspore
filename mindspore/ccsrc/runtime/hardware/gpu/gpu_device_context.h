@@ -61,7 +61,7 @@ class GPUDeviceContext : public DeviceContext {
   bool LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
-  bool SyncStream(size_t stream_id = 0) override;
+  bool SyncStream(size_t stream_id = 0) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
