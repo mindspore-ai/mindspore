@@ -21,7 +21,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator, Rel, twice, triple
+from mindspore._checkparam import Validator, Rel, twice, _check_3d_int_or_tuple
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -594,9 +594,9 @@ class Conv3d(_Conv):
                  weight_init='normal',
                  bias_init='zeros',
                  data_format='NCDHW'):
-        kernel_size = triple(kernel_size)
-        stride = triple(stride)
-        dilation = triple(dilation)
+        kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
+        stride = _check_3d_int_or_tuple("stride", stride, self.cls_name)
+        dilation = _check_3d_int_or_tuple("dilation", dilation, self.cls_name)
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
             Validator.check_equal_int(len(padding), 6, 'padding size', self.cls_name)
@@ -765,13 +765,13 @@ class Conv3dTranspose(_Conv):
                  weight_init='normal',
                  bias_init='zeros',
                  data_format='NCDHW'):
-        kernel_size = triple(kernel_size)
-        stride = triple(stride)
-        dilation = triple(dilation)
+        kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
+        stride = _check_3d_int_or_tuple("stride", stride, self.cls_name)
+        dilation = _check_3d_int_or_tuple("dilation", dilation, self.cls_name)
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
             Validator.check_equal_int(len(padding), 6, 'padding size', self.cls_name)
-        output_padding = triple(output_padding)
+        output_padding = _check_3d_int_or_tuple("output_padding", output_padding, self.cls_name, greater_zero=False)
         super(Conv3dTranspose, self).__init__(
             in_channels,
             out_channels,

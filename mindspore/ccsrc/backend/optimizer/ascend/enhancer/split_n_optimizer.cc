@@ -24,7 +24,8 @@
 #include "base/core_ops.h"
 #include "backend/optimizer/common/helper.h"
 
-namespace mindspore::opt {
+namespace mindspore {
+namespace opt {
 namespace {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 const std::set<std::string> InvalidOps = {kSplitOpName, kSplitVOpName, kConcatOpName};
@@ -211,4 +212,5 @@ const AnfNodePtr SplitOpOptimizer::Process(const FuncGraphPtr &func_graph, const
   }
   return nullptr;
 }
-}  // namespace mindspore::opt
+}  // namespace opt
+}  // namespace mindspore
