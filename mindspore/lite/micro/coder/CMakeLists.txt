@@ -24,7 +24,7 @@ include_directories(${MICRO_DIR})
 include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
 include(${MICRO_DIR}/cmake/file_list.cmake)
 include(${MICRO_DIR}/cmake/package_wrapper.cmake)
-add_subdirectory(operator_library)
+add_subdirectory(wrapper)
 
 if(ENABLE_CONVERTER)
     add_executable(codegen main.cc ${FILE_SET})
