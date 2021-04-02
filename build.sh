@@ -706,11 +706,7 @@ build_lite_java_arm32() {
 
 build_lite_java_x86() {
     # build mindspore-lite x86
-    if [[ "$X86_64_SIMD" == "sse" || "$X86_64_SIMD" == "avx" ]]; then
-          local JTARBALL=mindspore-lite-${VERSION_STR}-inference-linux-x64-${X86_64_SIMD}
-    else
-          local JTARBALL=mindspore-lite-${VERSION_STR}-inference-linux-x64
-    fi
+    local JTARBALL=mindspore-lite-${VERSION_STR}-inference-linux-x64
     if [[ "X$INC_BUILD" == "Xoff" ]] || [[ ! -f "${BASEPATH}/mindspore/lite/build/java/${JTARBALL}.tar.gz" ]]; then
       build_lite "x86_64" "off" ""
     fi
@@ -826,11 +822,6 @@ build_java() {
     zip -r mindspore-lite-maven-${VERSION_STR}.zip mindspore
 
     # build linux x86 jar
-    if [[ "$X86_64_SIMD" == "sse" || "$X86_64_SIMD" == "avx" ]]; then
-          local LINUX_X86_PACKAGE_NAME=mindspore-lite-${VERSION_STR}-inference-linux-x64-${X86_64_SIMD}-jar
-    else
-          local LINUX_X86_PACKAGE_NAME=mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
-    fi
     check_java_home
     build_lite_java_x86
     build_jni_x86_64
@@ -845,6 +836,7 @@ build_java() {
     mkdir -p ${JAVA_PATH}/java/linux_x86/build/lib
     cp ${JAVA_PATH}/java/linux_x86/libs/*.so ${JAVA_PATH}/java/linux_x86/build/lib/jar
     cd ${JAVA_PATH}/java/linux_x86/build/
+    local LINUX_X86_PACKAGE_NAME=mindspore-lite-${VERSION_STR}-inference-linux-x64-jar
     cp -r ${JAVA_PATH}/java/linux_x86/build/lib ${JAVA_PATH}/java/linux_x86/build/${LINUX_X86_PACKAGE_NAME}
     tar czvf ${LINUX_X86_PACKAGE_NAME}.tar.gz ${LINUX_X86_PACKAGE_NAME}
     # copy output
