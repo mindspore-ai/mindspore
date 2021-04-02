@@ -150,6 +150,9 @@ Status DeviceQueueOp::SendDataToAscend() {
   int32_t connector_capacity;
   bool is_break_loop = false;
 
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  int64_t sending_num = cfg->sending_batches();  // Get the current sending_num
+
   std::shared_ptr<DeviceQueueTracing> profiling_node;
   bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
   if (isProfilingEnable) {
@@ -192,6 +195,9 @@ Status DeviceQueueOp::SendDataToAscend() {
           is_break_loop = true;
           break;
         }
+
+        // wait when sending num is not 0, and sending num no larger than already sending batch
+        LimitSendingBatches(send_batch, &sending_num, cfg);
       }
       if (isProfilingEnable) {
         connector_size = ChildOpConnectorSize();
@@ -234,6 +240,18 @@ void DeviceQueueOp::WaitContinueSignal() const {
   while (stop_send_ && ascend_keep_waiting_) {
     MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
     std::this_thread::sleep_for(std::chrono::microseconds(100));
+  }
+}
+
+void DeviceQueueOp::LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg) {
+  while (send_batch >= *sending_num) {
+    *sending_num = cfg->sending_batches();
+    if (*sending_num == 0) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    MS_LOG(INFO) << "Wait for 10 milliseconds, as needed send batch is: " << *sending_num
+                 << ", and current sending batch is:" << send_batch;
   }
 }
 
