@@ -113,20 +113,10 @@ void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<
   runtime_.CreateOutputTensors(kernel_graph.get(), input_tensors, outputs, tensor_to_node);
 }
 
-void CPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    return;
-  }
-  runtime_.SyncValueNodeDeviceAddr(kernel_graph.get());
-}
-
 void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                               VectorRef *outputs) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  SyncValueNodeDeviceAddr(kernel_graph);
   MS_LOG(INFO) << "Bind input output address";
   runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
 

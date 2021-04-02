@@ -50,7 +50,6 @@ class CPUSession : public SessionBasic {
   void SetKernelInfo(const KernelGraph *kernel_graph);
   void BuildKernel(const KernelGraph *kernel_graph);
   void SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::TensorPtr> *outputs_tensors);
-  void SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph);
   device::cpu::CPUKernelRuntime runtime_;
 };
 MS_REG_SESSION(kCPUDevice, CPUSession);
