@@ -121,7 +121,7 @@ class TrainStepWarp(nn.Cell):
 
 
 def test_double_subgraphs():
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = TrainStepWarp(NetWithLoss(Net()))
     _set_multi_subgraphs()

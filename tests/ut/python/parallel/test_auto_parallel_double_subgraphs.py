@@ -105,7 +105,7 @@ class TrainStepWarp(nn.Cell):
 
 def test_double_subgraphs():
     _set_multi_subgraphs()
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = TrainStepWarp(NetWithLoss(Net()))
@@ -156,7 +156,7 @@ class DatasetLenet():
         return self
 
 def test_double_subgraphs_train():
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(device_num=1, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = TrainStepWarp(NetWithLoss(Net()))

@@ -66,7 +66,7 @@ _b = Tensor(np.ones([8, 8, 8]), dtype=ms.float32)
 
 
 def compile_net(net):
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1)
     optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
     train_net = TrainOneStepCell(net, optimizer)
@@ -113,7 +113,7 @@ def test_normal_split_with_offset():
 
 
 def test_auto_parallel_error():
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2, global_rank=0)
     net = Net()
     with pytest.raises(RuntimeError):
@@ -121,7 +121,7 @@ def test_auto_parallel_error():
 
 
 def test_auto_parallel():
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=2, global_rank=0)
     net = Net(split_string="fake")
     compile_net(net)
