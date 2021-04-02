@@ -68,7 +68,7 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-TrtKernel::ReleaseResource() {
+void TrtKernel::ReleaseResource() {
   // Make sure destroy trt object before TrtLoader destruct.
   context_.reset();
   engine_.reset();
