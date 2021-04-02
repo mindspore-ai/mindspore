@@ -41,7 +41,7 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
 
     elif [ $1 == "stage2" ]; then
         echo "run python parallel"
-        pytest -v $CURRPATH/parallel
+        pytest -s $CURRPATH/parallel/*.py
 
         RET=$?
         if [ ${RET} -ne 0 ]; then
@@ -87,7 +87,7 @@ else
         exit ${RET}
     fi
 
-    pytest -v $CURRPATH/parallel
+    pytest -s $CURRPATH/parallel/*.py
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
