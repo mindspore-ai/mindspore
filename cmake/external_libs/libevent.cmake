@@ -14,7 +14,7 @@ endif()
 
 mindspore_add_pkg(libevent
         VER 2.1.12
-        LIBS event event_pthreads event_core
+        LIBS event event_pthreads event_core event_openssl
         URL ${REQ_URL}
         MD5 ${MD5}
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF)
@@ -24,3 +24,4 @@ include_directories(${libevent_INC})
 add_library(mindspore::event ALIAS libevent::event)
 add_library(mindspore::event_pthreads ALIAS libevent::event_pthreads)
 add_library(mindspore::event_core ALIAS libevent::event_core)
+add_library(mindspore::event_openssl ALIAS libevent::event_openssl)

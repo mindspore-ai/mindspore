@@ -14,37 +14,38 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_WORKER_QUEUE_H_
-#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_WORKER_QUEUE_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_SSL_WRAPPER_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_SSL_WRAPPER_H_
 
-#include <event2/event.h>
-#include <event2/http.h>
-#include <event2/http_struct.h>
-
-#include <string>
-#include <memory>
-#include <unordered_map>
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 #include "utils/log_adapter.h"
-#include "ps/core/communicator/http_message_handler.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-using OnRequestReceive = std::function<void(std::shared_ptr<HttpMessageHandler>)>;
-class WorkerQueue {
+class SSLWrapper {
  public:
-  WorkerQueue() : evbase_(nullptr) {}
-  virtual ~WorkerQueue() = default;
-
-  bool Initialize(int fd, std::unordered_map<std::string, OnRequestReceive *> handlers);
-  void Run();
-  void Stop();
+  static SSLWrapper &GetInstance() {
+    static SSLWrapper instance;
+    return instance;
+  }
+  SSL_CTX *GetSSLCtx();
 
  private:
-  struct event_base *evbase_;
+  SSLWrapper();
+  virtual ~SSLWrapper();
+  SSLWrapper(const SSLWrapper &) = delete;
+  SSLWrapper &operator=(const SSLWrapper &) = delete;
+
+  void InitSSL();
+  void CleanSSL();
+
+  SSL_CTX *ssl_ctx_;
 };
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_WORKER_QUEUE_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_SSL_WRAPPER_H_
