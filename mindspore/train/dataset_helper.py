@@ -178,15 +178,12 @@ class DatasetHelper:
         epoch_num (int): Control the number of epoch data to send. Default: 1.
 
     Examples:
-        >>> from mindspore import nn, DatasetHelper
+        >>> from mindspore import DatasetHelper
         >>>
-        >>> network = Net()
-        >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        >>> network = nn.WithLossCell(network, net_loss)
         >>> train_dataset = create_custom_dataset()
-        >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
-        >>> for next_element in dataset_helper:
-        ...     outputs = network(*next_element)
+        >>> set_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
+        >>> for next_element in set_helper:
+        >>>     print(next_element)
     """
 
     def __init__(self, dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1):
