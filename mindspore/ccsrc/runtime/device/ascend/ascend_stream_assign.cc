@@ -1379,7 +1379,7 @@ vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraph
   }
 
   vector<CNodePtr> final_inputs;
-  uint32_t max = 0;
+  const uint32_t max = 0;
   CNodePtr max_common_cnode = nullptr;
   for (const auto &item : result) {
     if (IsHcom(item.second.first)) {
