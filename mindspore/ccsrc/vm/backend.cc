@@ -26,6 +26,9 @@
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "runtime/framework/graph_compiler.h"
+#include "runtime/framework/graph_scheduler.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
 #endif
@@ -221,8 +224,58 @@ void MsBackend::ClearSessionGraphs() {
     target_sess_->ClearGraph();
   }
 }
+
 #ifdef ENABLE_DEBUGGER
 void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 #endif
+
+MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
+    : Backend(backend_name), device_name_(device_name), device_id_(device_id) {}
+
+GraphId MindRTBackend::CompileGraph(const AnfNodePtrList &nodes) {
+  // Get and set the device context.
+  const auto &cur_device_name = GetCNodeTarget(nodes[0]);
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
+  runtime::GraphCompiler::GetInstance().set_device_context(device_context);
+
+  // Transform nodes to inputs and outputs.
+  FuncGraphPtr fg;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
+  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(nodes);
+
+  // Compile graph.
+  return runtime::GraphCompiler::GetInstance().CompileGraph(inputs, outputs);
+}
+
+VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
+  const auto &context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
+    MS_LOG(INFO) << "PrecompileOnly, stop run graph";
+    return VectorRef();
+  }
+
+  // Transform args to input tensors.
+  std::vector<tensor::TensorPtr> inputs;
+  for (const auto &arg : args) {
+    PushInputTensor(arg, &inputs);
+  }
+
+  // Fetch the kernel graph.
+  const auto &kernel_graph = runtime::GraphCompiler::GetInstance().Fetch(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  // Fetch the actor DAG.
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(kernel_graph);
+  MS_EXCEPTION_IF_NULL(actor_set);
+
+  // Run actor DAG, wait interface of GraphScheduler to create outputs.
+  VectorRef outputs;
+  runtime::GraphScheduler::GetInstance().Run(actor_set);
+
+  return outputs;
+}
 }  // namespace compile
 }  // namespace mindspore

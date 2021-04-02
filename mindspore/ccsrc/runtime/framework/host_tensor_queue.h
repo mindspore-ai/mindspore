@@ -26,7 +26,8 @@ namespace mindspore {
 namespace runtime {
 using mindspore::tensor::TensorPtr;
 
-// Host tensor queue is used to store host tensors, and its data will be fetched by the host queue data source actor.
+// Host tensor queue is used to store host tensors(such as non weighted parameters of graph), and its data will be
+// fetched by the host queue data source actor.
 class HostTensorQueue {
  public:
   HostTensorQueue() = default;

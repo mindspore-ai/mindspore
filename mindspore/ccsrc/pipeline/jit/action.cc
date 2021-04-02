@@ -50,6 +50,43 @@
 
 namespace mindspore {
 namespace pipeline {
+namespace {
+void TaskEmitActionForMindRT(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  // Get the mindRT backend.
+  auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
+  auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
+  MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
+
+  auto cut_list = compile::GetMsNonlinearOps();
+  auto mindrt_compile = std::make_shared<compile::GraphCompiler>(mindrt_bc_ptr, cut_list);
+  // The output of graph compiler is graph id.
+  res->results()[kOutput] = mindrt_compile->CompileGraphs(res->func_graph());
+}
+
+void ExecuteActionForMindRT(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  if (!res->results()[kOutput].is<GraphId>()) {
+    MS_LOG(EXCEPTION) << "Execute args error";
+  }
+  auto graph_id = res->results()[kOutput].cast<GraphId>();
+
+  // Get the mindRT backend.
+  std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
+  auto mindrt_bc_ptr = (std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr)).get();
+  MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
+
+  // Construct the graph run function ptr.
+  compile::VmEvalFuncPtr run =
+    std::make_shared<compile::VmEvalFunc>([mindrt_bc_ptr, graph_id](const VectorRef &args) -> BaseRef {
+      MS_LOG(INFO) << "Execute args size " << args.size();
+      auto outs = mindrt_bc_ptr->RunGraph(graph_id, args);
+      MS_LOG(DEBUG) << "out size " << outs.size();
+      return outs[0];
+    });
+  res->results()[kOutput] = run;
+}
+}  // namespace
 using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
@@ -488,6 +525,13 @@ bool TaskEmitAction(const ResourcePtr &res) {
     }
   }
 
+  // The graph compiling of mindRT.
+  if ((backend == kMsConvert) && compile::IsMindRTUsed()) {
+    TaskEmitActionForMindRT(res);
+    return true;
+  }
+
+  // The graph compiling of control sink.
   if (IsCtrlSink() && backend == kMsConvert) {
     res->results()[kOutput] = bc_ptr->CompileGraph(NOT_NULL(func_graph));
     return true;
@@ -510,6 +554,14 @@ bool ExecuteAction(const ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
   std::string backend = MsContext::GetInstance()->backend_policy();
+
+  // The graph running of mindRT.
+  if ((backend == kMsConvert) && compile::IsMindRTUsed()) {
+    ExecuteActionForMindRT(res);
+    return true;
+  }
+
+  // The graph running of control sink.
   if (IsCtrlSink() && backend == kMsConvert) {
     if (!res->results()[kOutput].is<GraphId>()) {
       MS_LOG(EXCEPTION) << "Execute args error";

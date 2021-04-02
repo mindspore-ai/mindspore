@@ -25,7 +25,7 @@ void KernelActor::RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<Device
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
-  // When all the input data are collected, then allocate memory and callback launch.
+  // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
@@ -38,7 +38,7 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
-  // When all the input data are collected, then allocate memory and callback launch.
+  // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();

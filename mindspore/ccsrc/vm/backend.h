@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "utils/contract.h"
 #include "ir/anf.h"
@@ -31,6 +32,8 @@
 
 namespace mindspore {
 namespace compile {
+using OpRunInfo = session::OpRunInfo;
+
 enum SwitchCondStatus {
   kCondOk = 0,
   kCondAlreadyRun,
@@ -84,6 +87,27 @@ class MsBackend : public Backend {
   std::string target_device_;
   std::string other_device_;
   std::unordered_map<GraphId, LinConvertResult> graph_id_map_;
+};
+
+class MindRTBackend : public Backend {
+ public:
+  MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id);
+  ~MindRTBackend() override = default;
+
+  // Compile kernel graph from anf nodes list in the graph mode.
+  GraphId CompileGraph(const AnfNodePtrList &nodes);
+  // Compile single op kernel graph in the pyNative mode.
+  GraphId CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
+
+  // Run Graph in the graph mode.
+  VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
+  // Run Graph in the pyNative mode.
+  VectorRef RunGraph(const GraphInfo &graph_info, const VectorRef &args);
+
+ private:
+  std::string device_name_;
+  uint32_t device_id_;
 };
 }  // namespace compile
 }  // namespace mindspore
