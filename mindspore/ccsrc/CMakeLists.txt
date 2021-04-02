@@ -123,7 +123,7 @@ if(ENABLE_GPU)
         set(ENABLE_GPU_INFER TRUE)
         add_compile_definitions(ENABLE_GPU_INFER)
         include_directories($ENV{TENSORRT_HOME}/include)
-        file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "runtime/device/gpu/trt_loader.cc")
+        list(APPEND GPU_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/runtime/device/gpu/trt_loader.cc)
     endif()
 
     set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})

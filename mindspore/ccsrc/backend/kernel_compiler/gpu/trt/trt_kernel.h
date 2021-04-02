@@ -38,6 +38,7 @@ class TrtKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   void InitSizeLists() override{};
+  void ReleaseResource() override;
 
  private:
   std::string serialize_;

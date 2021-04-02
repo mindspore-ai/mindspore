@@ -51,7 +51,7 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
 
   auto trt_loader = Singleton<device::gpu::TrtLoader>::Instance();
   if (!trt_loader.nvinfer_loaded()) {
-    MS_LOG(EXCEPTION) << "Install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}/lib:$LD_LIBRARY_PATH."
+    MS_LOG(EXCEPTION) << "Install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}/lib:$LD_LIBRARY_PATH.";
   }
   runtime_ = trt_loader.CreateInferRuntime(&Singleton<TrtLogger>::Instance());
   MS_EXCEPTION_IF_NULL(runtime_);
@@ -68,6 +68,13 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
+TrtKernel::ReleaseResource() {
+  // Make sure destroy trt object before TrtLoader destruct.
+  context_.reset();
+  engine_.reset();
+  runtime_.reset();
+}
+
 bool TrtKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                        const std::vector<AddressPtr> &outputs, void *stream) {
   MS_EXCEPTION_IF_NULL(context_);
@@ -76,8 +83,7 @@ bool TrtKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<
                  [](const AddressPtr &input) -> void * { return input->addr; });
   std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(device_buffer),
                  [](const AddressPtr &output) -> void * { return output->addr; });
-  context_->enqueue(1, device_buffer.data(), reinterpret_cast<cudaStream_t>(stream), nullptr);
-  return true;
+  return context_->enqueueV2(device_buffer.data(), reinterpret_cast<cudaStream_t>(stream), nullptr);
 }
 }  // namespace kernel
 }  // namespace mindspore
