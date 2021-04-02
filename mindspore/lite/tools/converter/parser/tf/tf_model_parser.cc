@@ -243,6 +243,16 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
   for (int i = 0; i < tensor_shape.dim_size(); i++) {
     shape_vector.push_back(tensor_shape.dim(i).size());
   }
+
+  if (shape_vector.empty()) {
+    *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kObjectTypeString);
+    if (*tensor_info == nullptr) {
+      MS_LOG(ERROR) << "create tensor info failed.";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+
   std::string shape_str;
   shape_str += std::to_string(shape_vector.size()) + ",";
   for (auto &dim : shape_vector) {
