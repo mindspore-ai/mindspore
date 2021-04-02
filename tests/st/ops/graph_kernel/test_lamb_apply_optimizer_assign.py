@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -67,6 +68,10 @@ def lamb_apply_optimizer_assign():
     assert np.allclose(o2.asnumpy(), e2.asnumpy())
     assert np.allclose(o3.asnumpy(), e3.asnumpy())
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_lamb_apply_optimizer_assign_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     lamb_apply_optimizer_assign()

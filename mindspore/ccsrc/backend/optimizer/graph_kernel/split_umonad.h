@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_ASSIGN_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_ASSIGN_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
 
 #include "backend/optimizer/common/optimizer.h"
-
+#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 namespace mindspore {
 namespace opt {
 class SplitAssign : public PatternProcessPass {
@@ -27,6 +27,16 @@ class SplitAssign : public PatternProcessPass {
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
+
+class OpUMonadExpander : public DefaultExpander {
+ public:
+  explicit OpUMonadExpander(int input_idx) : input_idx_(input_idx) {}
+  ~OpUMonadExpander() = default;
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+
+ private:
+  int input_idx_;
+};
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_ASSIGN_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
