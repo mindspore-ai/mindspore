@@ -64,8 +64,8 @@ where:
 
 - DATASET_PATH is the path to the [dataset](#dataset),
 - MINDSPORE_DOCKER is the image name of the docker that runs [MindSpore](#environment-requirements). If not provided MindSpore will be run locally
-- REALEASE.tar.gz is a pointer to the MindSpore ToD release tar ball. If not provided, the script will attempt to find MindSpore ToD compilation output
-- target is defaulted to arm64, i.e., on-device. If x86 is provided, the demo will be run locally. Note that infrastructure is not optimized for running on x86. Also, note that user needs to call "make clean" when switching betweeen targets.
+- RELEASE.tar.gz is a pointer to the MindSpore ToD release tar ball. If not provided, the script will attempt to find MindSpore ToD compilation output
+- target is defaulted to arm64, i.e., on-device. If x86 is provided, the demo will be run locally. Note that infrastructure is not optimized for running on x86. Also, note that user needs to call "make clean" when switching between targets.
 
 # Script Detailed Description
 
@@ -75,11 +75,11 @@ The provided `prepare_and_run.sh` script is performing the followings:
 - Prepare the folder that should be pushed into the device
 - Copy this folder into the device and run the scripts on the device
 
-See how to run the script and paramaters definitions in the [Quick Start Section](#quick-start)
+See how to run the script and parameters definitions in the [Quick Start Section](#quick-start)
 
 ## Preparing the model
 
-Within the model folder a `prepare_model.sh` script uses MindSpore infrastructure to export the model into a `.mindir` file. The user can specify a docker image on which MindSpore is installed. Otherwise, the pyhton script will be run locally.
+Within the model folder a `prepare_model.sh` script uses MindSpore infrastructure to export the model into a `.mindir` file. The user can specify a docker image on which MindSpore is installed. Otherwise, the python script will be run locally.
 The script then converts the `.mindir` to a `.ms` format using the MindSpore ToD converter.
 The script accepts a tar ball where the converter resides. Otherwise, the script will attempt to find the converter in the MindSpore ToD build output directory.
 
