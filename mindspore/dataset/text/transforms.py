@@ -530,6 +530,7 @@ class PythonTokenizer:
 
     @check_python_tokenizer
     def __init__(self, tokenizer):
+        self.pyfunc = tokenizer
         self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
         self.random = False
 
@@ -538,7 +539,10 @@ class PythonTokenizer:
             raise TypeError("input should be a NumPy array. Got {}.".format(type(in_array)))
         if in_array.dtype.type is np.bytes_:
             in_array = to_str(in_array)
-        tokens = self.tokenizer(in_array)
+        try:
+            tokens = self.tokenizer(in_array)
+        except Exception as e:
+            raise RuntimeError("Error occurred in Pyfunc [" + str(self.pyfunc.__name__) + "], error message: " + str(e))
         return tokens
 
 

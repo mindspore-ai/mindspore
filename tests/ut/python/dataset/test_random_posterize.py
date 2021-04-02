@@ -186,7 +186,7 @@ def test_random_posterize_exception_bit():
         _ = c_vision.RandomPosterize(1.1)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Argument bits with value 1.1 is not of type (<class 'list'>, <class 'tuple'>, <class 'int'>)."
+        assert str(e) == "Argument bits with value 1.1 is not of type [<class 'list'>, <class 'tuple'>, <class 'int'>]."
     # Test wrong number of bits
     try:
         _ = c_vision.RandomPosterize((1, 1, 1))

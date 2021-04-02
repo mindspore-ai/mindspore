@@ -29,7 +29,7 @@ from . import py_transforms_util as util
 from .c_transforms import parse_padding
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_py, check_normalizepad_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_ten_crop, check_num_channels, check_pad, \
+    check_ten_crop, check_num_channels, check_pad, check_rgb_to_hsv, check_hsv_to_rgb, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
     check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast
 from .utils import Inter, Border
@@ -497,9 +497,9 @@ class RandomResizedCrop:
         size (Union[int, sequence]): The size of the output image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range (min, max) of respective size of the original size
+        scale (list, tuple, optional): Range (min, max) of respective size of the original size
             to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped (default=(3. / 4., 4. / 3.)).
+        ratio (list, tuple, optional): Range (min, max) of aspect ratio to be cropped (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
@@ -1296,6 +1296,7 @@ class RgbToHsv:
         ...                                                 input_columns="image")
     """
 
+    @check_rgb_to_hsv
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
         self.random = False
@@ -1333,6 +1334,7 @@ class HsvToRgb:
         ...                                                 input_columns="image")
     """
 
+    @check_hsv_to_rgb
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
         self.random = False

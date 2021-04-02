@@ -416,7 +416,7 @@ def test_cifar_usage():
     assert test_config("train") == 10000
     assert test_config("all") == 10000
     assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid")
-    assert "Argument usage with value ['list'] is not of type (<class 'str'>,)" in test_config(["list"])
+    assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(["list"])
     assert "no valid data matching the dataset API Cifar10Dataset" in test_config("test")
 
     # test the usage of CIFAR10

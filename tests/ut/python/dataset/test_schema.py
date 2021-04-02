@@ -48,7 +48,7 @@ def test_schema_exception():
 
     with pytest.raises(TypeError) as info:
         ds.Schema(1)
-    assert "Argument schema_file with value 1 is not of type (<class 'str'>,)" in str(info.value)
+    assert "Argument schema_file with value 1 is not of type [<class 'str'>]" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         schema = ds.Schema(SCHEMA_FILE)

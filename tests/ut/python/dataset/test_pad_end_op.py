@@ -63,7 +63,7 @@ def test_pad_end_exceptions():
 
     with pytest.raises(TypeError) as info:
         pad_compare([1, 2], 3, -1, [1, 2, -1])
-    assert "Argument pad_end with value 3 is not of type (<class 'list'>,)" in str(info.value)
+    assert "Argument pad_end with value 3 is not of type [<class 'list'>]" in str(info.value)
 
 
 if __name__ == "__main__":

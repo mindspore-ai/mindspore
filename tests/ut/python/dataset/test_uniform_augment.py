@@ -247,7 +247,7 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
 
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument num_ops with value 2.5 is not of type (<class 'int'>,)" in str(e)
+        assert "Argument num_ops with value 2.5 is not of type [<class 'int'>]" in str(e)
 
 
 def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):

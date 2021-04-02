@@ -209,7 +209,7 @@ def test_numpy_slices_invalid_column_names_type():
 
     with pytest.raises(TypeError) as err:
         de.NumpySlicesDataset(np_data, column_names=[1], shuffle=False)
-    assert "Argument column_names[0] with value 1 is not of type (<class 'str'>,)." in str(err.value)
+    assert "Argument column_names[0] with value 1 is not of type [<class 'str'>]." in str(err.value)
 
 
 def test_numpy_slices_invalid_column_names_string():

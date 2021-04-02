@@ -221,7 +221,7 @@ def test_random_color_c_errors():
 
     with pytest.raises(TypeError) as error_info:
         vision.RandomColor(("col", 3))
-    assert "Argument degrees[0] with value col is not of type (<class 'int'>, <class 'float'>)." in str(
+    assert "Argument degrees[0] with value col is not of type [<class 'int'>, <class 'float'>]." in str(
         error_info.value)
 
     with pytest.raises(ValueError) as error_info:

@@ -272,7 +272,7 @@ def test_mnist_usage():
     assert test_config("all") == 10000
     assert " no valid data matching the dataset API MnistDataset" in test_config("train")
     assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid")
-    assert "Argument usage with value ['list'] is not of type (<class 'str'>,)" in test_config(["list"])
+    assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(["list"])
 
     # change this directory to the folder that contains all mnist files
     all_files_path = None

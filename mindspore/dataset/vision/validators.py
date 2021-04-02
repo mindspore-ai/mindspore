@@ -235,14 +235,18 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
 
     check_crop_size(size)
     if scale is not None:
-        type_check(scale, (tuple,), "scale")
+        type_check(scale, (tuple, list), "scale")
+        if len(scale) != 2:
+            raise TypeError("scale should be a list/tuple of length 2.")
         type_check_list(scale, (float, int), "scale")
         if scale[0] > scale[1]:
             raise ValueError("scale should be in (min,max) format. Got (max,min).")
         check_range(scale, [0, FLOAT_MAX_INTEGER])
         check_positive(scale[1], "scale[1]")
     if ratio is not None:
-        type_check(ratio, (tuple,), "ratio")
+        type_check(ratio, (tuple, list), "ratio")
+        if len(ratio) != 2:
+            raise TypeError("ratio should be a list/tuple of length 2.")
         type_check_list(ratio, (float, int), "ratio")
         if ratio[0] > ratio[1]:
             raise ValueError("ratio should be in (min,max) format. Got (max,min).")
@@ -476,6 +480,28 @@ def check_mix_up(method):
         check_positive(alpha, "alpha")
         return method(self, *args, **kwargs)
 
+    return new_method
+
+
+def check_rgb_to_hsv(method):
+    """Wrapper method to check the parameters of rgb_to_hsv."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [is_hwc], _ = parse_user_args(method, *args, **kwargs)
+        type_check(is_hwc, (bool,), "is_hwc")
+        return method(self, *args, **kwargs)
+    return new_method
+
+
+def check_hsv_to_rgb(method):
+    """Wrapper method to check the parameters of hsv_to_rgb."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [is_hwc], _ = parse_user_args(method, *args, **kwargs)
+        type_check(is_hwc, (bool,), "is_hwc")
+        return method(self, *args, **kwargs)
     return new_method
 
 
