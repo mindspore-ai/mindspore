@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ const AnfNodePtr BatchNormBertFission::Process(const FuncGraphPtr &func_graph, c
     (void)manager->Replace(output, bn_training_update_v2_outputs[output_index]);
     output_index++;
   }
-  // Return the new node for control depends.
+  // Return the new node.
   return bn_training_update_v2;
 }
 }  // namespace opt

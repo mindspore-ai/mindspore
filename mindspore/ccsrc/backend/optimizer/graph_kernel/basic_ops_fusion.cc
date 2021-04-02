@@ -137,9 +137,9 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
   bool changed = false;
   auto mng = kernel_graph->manager();
 
-  // depend_prior[depend] = pair(prior, controlDependNode)
+  // depend_prior[depend] = pair(prior, behind)
   std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> depend_prior;
-  InitDependPrior(todos, &depend_prior);
+  // InitDependPrior(todos, &depend_prior);
 
   for (auto iter = todos.cbegin(); iter != todos.cend(); ++iter) {
     auto node = (*iter)->cast<CNodePtr>();

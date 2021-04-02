@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -534,14 +534,17 @@ void AscendControlParser::InsertDependToGraph(NotNull<KernelGraphPtr> kg, NotNul
   return_node->set_input(kFirstDataInputIndex, depend_node);
 }
 
-void AscendControlParser::InsertControlDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> first_node,
-                                                     NotNull<AnfNodePtr> second_node) {
-  MS_LOG(INFO) << "Insert control depend at the end of graph, the first node is " << first_node->DebugString()
-               << ", the second node is " << second_node->DebugString();
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimControlDepend->name())),
-                                    first_node, second_node};
-  auto control_depend = kg->NewCNode(inputs);
-  InsertDependToGraph(kg, NOT_NULL(control_depend));
+void AscendControlParser::InsertControlDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> prior_node,
+                                                     NotNull<AnfNodePtr> behind_node) {
+  MS_LOG(INFO) << "Insert control dependence at the end of graph, the prior node is " << prior_node->DebugString()
+               << ", the behind node is " << behind_node->DebugString();
+  auto manager = kg->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimDepend), behind_node, prior_node};
+  auto depend_cnode = kg->NewCNode(inputs);
+  if (!manager->Replace(behind_node, depend_cnode)) {
+    MS_LOG(EXCEPTION) << behind_node->DebugString() << ", replace node failed.";
+  }
 }
 
 void AscendControlParser::LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,

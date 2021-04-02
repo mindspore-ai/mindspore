@@ -259,10 +259,8 @@ BaseRef CreateOutputTensors(const AnfNodePtr &output_node, const KernelGraphPtr 
     MS_EXCEPTION_IF_NULL(cnode);
     VectorRef ret;
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      if (!AnfAlgo::CheckPrimitiveType(cnode->input(i), prim::kPrimControlDepend)) {
-        auto out = CreateOutputTensors(cnode->input(i), graph, input_tensors);
-        ret.push_back(out);
-      }
+      auto out = CreateOutputTensors(cnode->input(i), graph, input_tensors);
+      ret.push_back(out);
     }
     return ret;
   }

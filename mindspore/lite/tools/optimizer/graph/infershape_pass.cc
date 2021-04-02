@@ -43,8 +43,8 @@ tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
 
 bool IsSpecialType(const CNodePtr &cnode) {
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || CheckPrimitiveType(cnode, prim::kPrimDepend) ||
-      CheckPrimitiveType(cnode, prim::kPrimControlDepend) || CheckPrimitiveType(cnode, prim::kPrimMakeTuple) ||
-      CheckPrimitiveType(cnode, prim::kPrimReturn) || CheckPrimitiveType(cnode, std::make_shared<Primitive>("While")) ||
+      CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, prim::kPrimReturn) ||
+      CheckPrimitiveType(cnode, std::make_shared<Primitive>("While")) ||
       CheckPrimitiveType(cnode, std::make_shared<Primitive>("If"))) {
     return true;
   }

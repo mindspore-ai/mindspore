@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,20 +195,6 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
             std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), inputx_shape);
           dropout_do_mask1->set_abstract(do_mask_abstract1);
           dropout_do_mask1->set_scope(dropout_node->scope());
-          (void)manager->Replace(used_node, dropout_do_mask1);
-          break;
-        }
-      }
-    }
-  }
-  if (dropout_do_mask1 != nullptr) {
-    // Dropout is used by ControlDepend in some situation, need to replace ControlDepend.
-    auto &users = manager->node_users();
-    iter = users.find(dropout_node);
-    if (iter != users.end()) {
-      for (auto &node_index : iter->second) {
-        auto used_node = node_index.first;
-        if (AnfAlgo::CheckPrimitiveType(used_node, prim::kPrimControlDepend)) {
           (void)manager->Replace(used_node, dropout_do_mask1);
           break;
         }

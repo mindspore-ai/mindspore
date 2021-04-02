@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,26 +87,7 @@ AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNo
   if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
     eqv[node] = node;
   } else if (eqv.find(node) == eqv.end()) {
-    if (IsPrimitiveCNode(node, prim::kPrimControlDepend)) {
-      eqv[node] = NewValueNode(MakeValue(0));
-      return eqv[node];
-    }
-    bool ignore_make_tuple = false;
-    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-      ignore_make_tuple = true;
-      auto cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      const auto &node_inputs = cnode->inputs();
-      for (size_t i = 1; i < node_inputs.size(); ++i) {
-        if (!IsPrimitiveCNode(node_inputs[i], prim::kPrimControlDepend)) {
-          ignore_make_tuple = false;
-          break;
-        }
-      }
-    }
-    if (!ignore_make_tuple) {
-      inputs.push_back(node);
-    }
+    inputs.push_back(node);
     eqv[node] = fg->add_parameter();
     eqv[node]->set_abstract(node->abstract());
     eqv[node]->set_kernel_info(node->kernel_info_ptr());
@@ -147,14 +128,6 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
       args.emplace_back(RefSubGraphNode(fg, inps[kRealInputIndexInDepend], &inputs, &eqv));
       for (size_t i = 2; i < inps.size(); ++i) {
         args.emplace_back(NewValueNode(MakeValue(0)));
-      }
-    } else if (IsPrimitive(fn, prim::kPrimControlDepend) && inps.size() == 3) {
-      for (size_t i = 1; i < inps.size(); ++i) {
-        if (inps[i]->isa<CNode>() && std::find(lst.begin(), lst.end(), inps[i]) == lst.end()) {
-          args.emplace_back(NewValueNode(MakeValue(static_cast<int>(i))));
-        } else {
-          args.emplace_back(RefSubGraphNode(fg, inps[i], &inputs, &eqv));
-        }
       }
     } else {
       (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args),

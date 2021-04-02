@@ -210,7 +210,7 @@ bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &suppor
 // Create a new value node of func graph,not kernel graph
 ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 
-// Transfer depend or control_depend to the new node
+// Transfer depend to the new node
 void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node);
 
 AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);

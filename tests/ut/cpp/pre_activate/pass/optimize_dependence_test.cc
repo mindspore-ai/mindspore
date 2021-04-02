@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,9 +74,9 @@ TEST_F(TestHWOptimizeDependence, test_optimize_control_dependence_with_make_tupl
   /*
    * def before(x, y, a, b):
    *    z = make_tuple(TransData(a), TransData(b))
-   *    depend_intput = control_depend(y, z)
-   *    sum = add(x, depend_intput)
-   *    return sum
+   *    depend_intput = depend(y, z)
+   *    sum_add = add(x, depend_intput)
+   *    return sum_add
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_optimize_control_dependence_with_make_tuple", "before");
 
@@ -93,11 +93,11 @@ TEST_F(TestHWOptimizeDependence, test_optimize_control_dependence_with_make_tupl
 
 TEST_F(TestHWOptimizeDependence, test_optimize_control_dependence) {
   /*
-   * def before(x, y, a, b):
-   *    z = make_tuple(TransData(a), TransData(b))
-   *    depend_intput = control_depend(y, z)
-   *    sum = add(x, depend_intput)
-   *    return sum
+   * def before(x, y, z):
+   *    new_z = TransData(z)
+   *    depend_intput = depend(y, new_z)
+   *    sum_add = add(x, depend_intput)
+   *    return sum_add
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_optimize_control_dependence", "before");
 

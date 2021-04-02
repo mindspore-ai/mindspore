@@ -339,7 +339,7 @@ void AtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_node, 
 
 void AtomicCleanInsertter::AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node,
                                      const AnfNodePtr &composite_node, const AnfNodePtr &user_node, int index) {
-  // Create depend node to hold new control depend node.
+  // Create depend node to hold execution order.
   AnfNodePtrList d_inputs = {NewValueNode(prim::kPrimDepend), clean_node, composite_node};
   auto depend_cnode = main_graph->NewCNode(d_inputs);
   depend_cnode->set_abstract(clean_node->abstract());
@@ -513,18 +513,17 @@ bool AtomicCleanInsertter::IsExistStructuralObstacle(const KernelGraphPtr &main_
                                                      const FuncGraphManagerPtr &mng) {
   auto reduce_users = FindOriginCNodeUsers(main_graph, node, mng, false);
   // If reduce user is MakeTuple and not last node, there is no cheap method to set right running order between reduce
-  // node and user node. If reduce is Depend or ControlDepend node, the origin node may be wrong!
-  return std::all_of(reduce_users.cbegin(), reduce_users.cend(),
-                     [&main_graph](const std::pair<AnfNodePtr, int> &user_info) -> bool {
-                       auto &user = user_info.first;
-                       if ((IsPrimitiveCNode(user, prim::kPrimMakeTuple) || IsPrimitiveCNode(user, prim::kPrimDepend) ||
-                            IsPrimitiveCNode(user, prim::kPrimControlDepend)) &&
-                           !(IsPrimitiveCNode(user, prim::kPrimReturn) || user == main_graph->output())) {
-                         return false;
-                       } else {
-                         return true;
-                       }
-                     });
+  // node and user node. If reduce is Depend node, the origin node may be wrong!
+  return std::all_of(
+    reduce_users.cbegin(), reduce_users.cend(), [&main_graph](const std::pair<AnfNodePtr, int> &user_info) -> bool {
+      auto &user = user_info.first;
+      if ((IsPrimitiveCNode(user, prim::kPrimMakeTuple) || IsPrimitiveCNode(user, prim::kPrimDepend)) &&
+          !(IsPrimitiveCNode(user, prim::kPrimReturn) || user == main_graph->output())) {
+        return false;
+      } else {
+        return true;
+      }
+    });
 }
 
 bool AtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {

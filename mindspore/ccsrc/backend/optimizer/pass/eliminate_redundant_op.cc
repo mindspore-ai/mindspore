@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node, size_t index, std::vector<Kern
     auto item_idx = GetValue<int64_t>(value_node->value());
     pass_vector->push_back(make_pair(cnode, IntToSize(1)));
     return GetRealPrevCNode(cnode->input(1), LongToSize(item_idx), pass_vector);
-  } else if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimControlDepend)) {
+  } else if (IsPrimitive(input0, prim::kPrimDepend)) {
     pass_vector->push_back(make_pair(cnode, IntToSize(1)));
     return GetRealPrevCNode(cnode->input(1), 0, pass_vector);
   } else if (IsPrimitive(input0, prim::kPrimUpdateState)) {
@@ -92,8 +92,7 @@ const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNode
   auto pass_size = pass_vector->size();
   for (size_t idx = 1; idx <= pass_size - 1; ++idx) {
     auto nd = (*pass_vector)[idx].first;
-    if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimDepend) ||
-        AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
+    if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimDepend)) {
       has_depend_node = true;
     }
     if (users[nd].size() >= 2) {

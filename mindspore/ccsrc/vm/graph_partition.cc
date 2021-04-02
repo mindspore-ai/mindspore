@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,88 +51,6 @@ std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   }
   return "";
 }
-bool ExtractNodes(const FuncGraphPtr &graph, const AnfNodePtr &prior_node, const AnfNodePtr &behind_node,
-                  std::vector<AnfNodePtr> *prior_nodes, std::vector<AnfNodePtr> *depend_nodes) {
-  MS_EXCEPTION_IF_NULL(prior_node);
-  MS_EXCEPTION_IF_NULL(behind_node);
-  MS_EXCEPTION_IF_NULL(graph);
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto &node_users = manager->node_users();
-  if (prior_node->isa<Parameter>()) {
-    for (auto &user : node_users[prior_node]) {
-      auto cnode = user.first->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (!IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
-        prior_nodes->emplace_back(cnode);
-      }
-    }
-  } else if (!IsPrimitiveCNode(prior_node, prim::kPrimControlDepend)) {
-    prior_nodes->emplace_back(prior_node);
-  } else {
-    return false;
-  }
-  if (behind_node->isa<Parameter>()) {
-    for (auto &user : node_users[behind_node]) {
-      auto cnode = user.first->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (!IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
-        depend_nodes->emplace_back(cnode);
-      }
-    }
-  } else if (!IsPrimitiveCNode(behind_node, prim::kPrimControlDepend)) {
-    depend_nodes->emplace_back(behind_node);
-  } else {
-    return false;
-  }
-  return true;
-}
-
-void AddControlEdge(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                    std::map<AnfNodePtr, std::vector<AnfNodePtr>> *control_edges,
-                    std::map<AnfNodePtr, size_t> *nodes_ref) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto input_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(input_cnode);
-  auto prior_node = input_cnode->input(kControlDependPriorIndex);
-  auto depend_node = input_cnode->input(kControlDependBehindIndex);
-  MS_EXCEPTION_IF_NULL(prior_node);
-  MS_EXCEPTION_IF_NULL(depend_node);
-  auto prim_ptr = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-  MS_EXCEPTION_IF_NULL(prim_ptr);
-  ValuePtr mode_ptr = prim_ptr->GetAttr("depend_mode");
-  int64_t depend_mode = 0;
-  if (mode_ptr != nullptr) {
-    depend_mode = GetValue<int64_t>(mode_ptr);
-  }
-  if ((prior_node->isa<Parameter>() || depend_node->isa<Parameter>()) && depend_mode == 0) {
-    return;
-  }
-  std::vector<AnfNodePtr> prior_nodes;
-  std::vector<AnfNodePtr> behind_nodes;
-  if (!ExtractNodes(graph, prior_node, depend_node, &prior_nodes, &behind_nodes)) {
-    return;
-  }
-  for (auto &first_node : prior_nodes) {
-    for (auto &second_node : behind_nodes) {
-      MS_EXCEPTION_IF_NULL(first_node);
-      MS_EXCEPTION_IF_NULL(second_node);
-      auto iter = control_edges->find(second_node);
-      if (iter == control_edges->end()) {
-        (void)control_edges->insert(
-          std::pair<AnfNodePtr, std::vector<AnfNodePtr>>(second_node, std::vector<AnfNodePtr>{first_node}));
-      } else {
-        iter->second.emplace_back(first_node);
-      }
-      auto ref_iter = nodes_ref->find(first_node);
-      if (ref_iter != nodes_ref->end()) {
-        ref_iter->second++;
-      } else {
-        (void)nodes_ref->insert(std::pair<AnfNodePtr, size_t>(first_node, 1));
-      }
-    }
-  }
-}
 
 void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref,
                       std::map<AnfNodePtr, std::vector<AnfNodePtr>> *control_edges) {
@@ -149,9 +67,6 @@ void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *n
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (auto &input : cnode->inputs()) {
-      if (IsPrimitiveCNode(input, prim::kPrimControlDepend)) {
-        AddControlEdge(graph, input, control_edges, nodes_ref);
-      }
       auto iter = nodes_ref->find(input);
       if (iter != nodes_ref->end()) {
         iter->second++;
@@ -479,11 +394,9 @@ void AddSegmentDependency(const FuncGraphPtr &graph, const std::string &default_
       node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
     }
     GraphSegmentPtr node_segment{nullptr};
-    if (!IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
-      auto node_iter = node_to_segment.find(node);
-      if (node_iter != node_to_segment.end()) {
-        node_segment = node_iter->second;
-      }
+    auto node_iter = node_to_segment.find(node);
+    if (node_iter != node_to_segment.end()) {
+      node_segment = node_iter->second;
     }
     for (auto &input : node_inputs) {
       if (node_segment != nullptr && !node_segment->is_cut_ && input->isa<CNode>()) {
@@ -615,18 +528,14 @@ void SplitDynamicNodeSegment(const std::vector<AnfNodePtr> &segment_nodes, std::
                              std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment,
                              const std::set<AnfNodePtr> &dynamic_nodes_set) {
   SplitDynamicNodesHelper helper;
-  bool is_last_node_dynamic = false;
   for (auto &node : segment_nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
-      helper.AddNode(node, is_last_node_dynamic);
-      continue;
-    }
     auto &inputs = cnode->inputs();
     bool has_dynamic_shape = dynamic_nodes_set.find(node) != dynamic_nodes_set.end();
     bool depend_common_node = false;
     bool depend_dynamic_node = false;
+    bool is_last_node_dynamic = false;
     for (size_t i = 1; i < inputs.size(); ++i) {
       if (dynamic_nodes_set.find(inputs[i]) != dynamic_nodes_set.end()) {
         has_dynamic_shape = true;

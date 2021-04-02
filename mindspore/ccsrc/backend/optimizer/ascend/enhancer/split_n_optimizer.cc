@@ -108,7 +108,7 @@ bool InputCheck(const AnfNodePtr &node) {
         MS_LOG(INFO) << "Data->TransData->split, can not optimizer.";
         return false;
       }
-      if (in_node_name == prim::kPrimControlDepend->name() || in_node_name == prim::kPrimDepend->name()) {
+      if (in_node_name == prim::kPrimDepend->name()) {
         return false;
       }
       if ((AnfAlgo::HasNodeAttr("non_task", in_cnode) && AnfAlgo::GetNodeAttr<bool>(in_node, "non_task")) ||
@@ -131,7 +131,7 @@ bool OutputCheck(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
     return false;
   }
   for (const auto &item : outputs) {
-    if (IsPrimitiveCNode(item, prim::kPrimControlDepend) || IsPrimitiveCNode(item, prim::kPrimDepend)) {
+    if (IsPrimitiveCNode(item, prim::kPrimDepend)) {
       MS_LOG(INFO) << "Split has control edge, can not optimizer.";
       return false;
     }
