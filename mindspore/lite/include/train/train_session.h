@@ -32,23 +32,12 @@ class TrainSession : public session::LiteSession {
 
   /// \brief Static method to create a TrainSession object
   ///
-  /// \param[in] model_buf A buffer that was read from a MS model file
-  /// \param[in] size Length of the buffer
+  /// \param[in] model A buffer that was read from a MS model file
   /// \param[in] context Defines the context of the session to be created
   /// \param[in] train_mode training mode to initialize Session with
   ///
   /// \return Pointer of MindSpore Lite TrainSession
-  static TrainSession *CreateSession(const char *model_buf, size_t size, lite::Context *context,
-                                     bool train_mode = false);
-
-  /// \brief Static method to create a TrainSession object
-  ///
-  /// \param[in] filename Filename to read flatbuffer from
-  /// \param[in] context Defines the context of the session to be created
-  /// \param[in] train_mode training mode to initialize Session with
-  ///
-  /// \return Pointer of MindSpore Lite TrainSession
-  static TrainSession *CreateSession(const std::string &filename, lite::Context *context, bool train_mode = false);
+  static TrainSession *CreateSession(mindspore::lite::Model *model, lite::Context *context, bool train_mode = false);
 
   /// \brief Static method to create a transfer lernning support TrainSession object
   ///
@@ -74,21 +63,6 @@ class TrainSession : public session::LiteSession {
   /// \return Pointer of MindSpore Lite TrainSession
   static TrainSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
                                              lite::Context *context, bool train_mode = false);
-
-  /// \brief Export the trained model into a buffer
-  ///
-  /// \param[in] buf The buffer to Export into. If equal to nullptr, buf will be allocated
-  /// \param[in,out] len Size of the pre-allocated buffer, and returned size of the exported buffer
-  ///
-  /// \return pointer to the export buffer
-  virtual void *ExportToBuf(char *buf, size_t *len) const = 0;
-
-  /// \brief Save the trained model into a flatbuffer file
-  ///
-  /// \param[in] filename Filename to save flatbuffer to
-  ///
-  /// \return 0 on success or -1 in case of error
-  virtual int SaveToFile(const std::string &filename) const = 0;
 
   /// \brief Set model to train mode
   /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h

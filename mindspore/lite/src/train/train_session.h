@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <memory>
 #include "include/train/train_session.h"
-#include "src/train/train_model.h"
 #include "src/lite_session.h"
 
 /*
@@ -52,10 +51,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;
-  virtual int CompileTrainGraph(lite::TrainModel *model);
-
-  void *ExportToBuf(char *buf, size_t *len) const override;
-  int SaveToFile(const std::string &filename) const override;
+  virtual int CompileTrainGraph(lite::Model *model);
 
   int Train() override;
   int Eval() override;
@@ -108,7 +104,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   virtual void CompileTrainOutputs();
   virtual void CompileEvalOutputs();
 
-  TrainModel *model_ = nullptr;
+  Model *model_ = nullptr;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
   std::vector<std::string> orig_output_tensor_names_;

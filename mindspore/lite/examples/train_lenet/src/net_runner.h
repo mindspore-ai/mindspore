@@ -27,6 +27,7 @@
 #include "include/train/accuracy_metrics.h"
 #include "include/ms_tensor.h"
 #include "include/datasets.h"
+#include "include/model.h"
 
 using mindspore::dataset::Dataset;
 using mindspore::lite::AccuracyMetrics;
@@ -36,6 +37,7 @@ class NetRunner {
   int Main();
   bool ReadArgs(int argc, char *argv[]);
   ~NetRunner();
+  mindspore::lite::Model *model_ = nullptr;
 
  private:
   void Usage();

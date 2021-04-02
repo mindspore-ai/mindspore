@@ -281,7 +281,6 @@ if(SUPPORT_TRAIN)
             ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
             ${LITE_DIR}/src/train/train_session.cc
             ${LITE_DIR}/src/train/transfer_session.cc
-            ${LITE_DIR}/src/train/train_model.cc
             ${LITE_DIR}/src/lite_session.cc
             )
 else()

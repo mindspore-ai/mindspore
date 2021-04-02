@@ -190,7 +190,7 @@ session::TrainSession *session::TrainSession::CreateTransferSession(const char *
     return nullptr;
   }
 
-  auto model = lite::TrainModel::Import(model_buf_head, size_head);
+  auto model = lite::Model::Import(model_buf_head, size_head);
   if (model == nullptr) {
     MS_LOG(ERROR) << "create model for head train session failed";
     delete session;

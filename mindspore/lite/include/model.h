@@ -45,12 +45,16 @@ struct MS_API Model {
   SubGraphPtrVector sub_graphs_;
 
   /// \brief Static method to create a Model pointer.
-  ///
-  /// \param[in] model_buf Define the buffer read from a model file.
-  /// \param[in] size Define bytes number of model buffer.
-  ///
-  /// \return Pointer of MindSpore Lite Model.
   static Model *Import(const char *model_buf, size_t size);
+
+  /// \brief Static method to create a Model pointer.
+  static Model *Import(const char *filename);
+
+  /// \brief  method to export model to file.
+  static int Export(Model *model, const char *filename);
+
+  /// \brief  method to export model to buffer.
+  static int Export(Model *model, char *buf, size_t *size);
 
   /// \brief Free meta graph temporary buffer
   virtual void Free() = 0;

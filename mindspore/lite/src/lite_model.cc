@@ -15,9 +15,13 @@
  */
 
 #include "src/lite_model.h"
+#include <sys/stat.h>
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include <set>
 #include <unordered_map>
+#include <memory>
 #include "src/common/prim_util.h"
 #ifdef ENABLE_V0
 #include "src/ops/compat/compat_register.h"
@@ -343,5 +347,102 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   return model;
 }
 
+std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size) {
+  std::ifstream ifs(filename);
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "File: " << filename << " does not exist";
+    return std::unique_ptr<char[]>(nullptr);
+  }
+
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "File: " << filename << " open failed";
+    return std::unique_ptr<char[]>(nullptr);
+  }
+
+  ifs.seekg(0, std::ios::end);
+  auto tellg_ret = ifs.tellg();
+  if (tellg_ret <= 0) {
+    MS_LOG(ERROR) << "Could not read file " << filename;
+    return std::unique_ptr<char[]>(nullptr);
+  }
+  size_t fsize = static_cast<size_t>(tellg_ret);
+
+  std::unique_ptr<char[]> buf(new (std::nothrow) char[fsize]);
+  if (buf == nullptr) {
+    MS_LOG(ERROR) << "malloc buf failed, file: " << filename;
+    ifs.close();
+    return std::unique_ptr<char[]>(nullptr);
+  }
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(buf.get(), fsize);
+  if (!ifs) {
+    MS_LOG(ERROR) << "only read " << ifs.gcount() << "bytes in " << filename;
+    ifs.close();
+    return std::unique_ptr<char[]>(nullptr);
+  }
+  ifs.close();
+  if (size != nullptr) {
+    *size = fsize;
+  }
+  return buf;
+}
+
 Model *Model::Import(const char *model_buf, size_t size) { return ImportFromBuffer(model_buf, size, false); }
+
+Model *Model::Import(const char *filename) {
+  size_t size = -1;
+  auto buf = ReadFileToBuf(filename, &size);
+  if (buf == nullptr) {
+    return nullptr;
+  }
+  return ImportFromBuffer(buf.get(), size, false);
+}
+
+int Model::Export(Model *model, char *buffer, size_t *len) {
+  if (len == nullptr) {
+    MS_LOG(ERROR) << "len is nullptr";
+    return RET_ERROR;
+  }
+  auto *liteModel = reinterpret_cast<LiteModel *>(model);
+
+  if (liteModel->buf_size_ == 0 || liteModel->buf == nullptr) {
+    MS_LOG(ERROR) << "model buffer is invalid";
+    return RET_ERROR;
+  }
+  if (*len < liteModel->buf_size_ && buffer != nullptr) {
+    MS_LOG(ERROR) << "Buffer is too small, Export Failed";
+    return RET_ERROR;
+  }
+  if (buffer == nullptr) {
+    buffer = reinterpret_cast<char *>(malloc(liteModel->buf_size_));
+    if (buffer == nullptr) {
+      MS_LOG(ERROR) << "allocated model buf fail!";
+      return RET_ERROR;
+    }
+  }
+  memcpy(buffer, liteModel->buf, liteModel->buf_size_);
+  *len = liteModel->buf_size_;
+  return RET_OK;
+}
+
+int Model::Export(Model *model, const char *filename) {
+  auto *liteModel = reinterpret_cast<LiteModel *>(model);
+  if (liteModel->buf_size_ == 0 || liteModel->buf == nullptr) {
+    MS_LOG(ERROR) << "model buf is invalid";
+    return RET_ERROR;
+  }
+
+  std::ofstream ofs(filename);
+  if (!ofs.good() || !ofs.is_open()) {
+    MS_LOG(ERROR) << "Could not open file \"" << filename << "\" for writing";
+    return RET_ERROR;
+  }
+
+  ofs.seekp(0, std::ios::beg);
+  ofs.write(liteModel->buf, liteModel->buf_size_);
+  ofs.close();
+  return chmod(filename, S_IRUSR);
+}
+
 }  // namespace mindspore::lite
