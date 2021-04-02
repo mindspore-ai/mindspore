@@ -1412,21 +1412,21 @@ void CalculationMatrix(int n, int m, std::vector<double> &W, LiteMat &A, LiteMat
   }
 
   for (int i = 0; i < n - 1; i++) {
-    int j = i;
-    for (int k = i + 1; k < n; k++) {
-      if (W[j] < W[k]) {
-        j = k;
+    int mid = i;
+    for (int j = i + 1; j < n; j++) {
+      if (W[mid] < W[j]) {
+        mid = j;
       }
     }
 
-    if (i != j) {
-      std::swap(W[i], W[j]);
-      for (int k = 0; k < m; k++) {
-        std::swap(A.ptr<T>(i)[k], A.ptr<T>(j)[k]);
+    if (i != mid) {
+      std::swap(W[i], W[mid]);
+      for (int j = 0; j < m; j++) {
+        std::swap(A.ptr<T>(i)[j], A.ptr<T>(mid)[j]);
       }
 
-      for (int k = 0; k < n; k++) {
-        std::swap(V.ptr<T>(i)[k], V.ptr<T>(j)[k]);
+      for (int j = 0; j < n; j++) {
+        std::swap(V.ptr<T>(i)[j], V.ptr<T>(mid)[j]);
       }
     }
   }
@@ -1451,8 +1451,8 @@ void JacobiSVD(LiteMat &A, LiteMat &_W, LiteMat &V) {
   std::uniform_int_distribution<unsigned int> dis(0, 4294967294);
 
   for (int i = 0; i < urows; i++) {
-    double sd = i < n ? W[i] : 0;
-    for (int ii = 0; ii < 100 && sd <= min_val; ii++) {
+    double mid = i < n ? W[i] : 0;
+    for (int ii = 0; ii < 100 && mid <= min_val; ii++) {
       const T val0 = (T)(1. / m);
       for (int k = 0; k < m; k++) {
         unsigned int rng = dis(gen);
@@ -1460,15 +1460,15 @@ void JacobiSVD(LiteMat &A, LiteMat &_W, LiteMat &V) {
         A.ptr<T>(i)[k] = val;
       }
 
-      for (int iter = 0; iter < 2; iter++) {
+      for (int inner = 0; inner < 2; inner++) {
         for (int j = 0; j < i; j++) {
-          sd = 0;
+          mid = 0;
           for (int k = 0; k < m; k++) {
-            sd += A.ptr<T>(i)[k] * A.ptr<T>(j)[k];
+            mid += A.ptr<T>(i)[k] * A.ptr<T>(j)[k];
           }
           T asum = 0;
           for (int k = 0; k < m; k++) {
-            T t = (T)(A.ptr<T>(i)[k] - sd * A.ptr<T>(j)[k]);
+            T t = (T)(A.ptr<T>(i)[k] - mid * A.ptr<T>(j)[k]);
             A.ptr<T>(i)[k] = t;
             asum += std::abs(t);
           }
@@ -1480,15 +1480,15 @@ void JacobiSVD(LiteMat &A, LiteMat &_W, LiteMat &V) {
         }
       }
 
-      sd = 0;
+      mid = 0;
       for (int k = 0; k < m; k++) {
         T t = A.ptr<T>(i)[k];
-        sd += static_cast<double>(t * t);
+        mid += static_cast<double>(t * t);
       }
-      sd = std::sqrt(sd);
+      mid = std::sqrt(mid);
     }
 
-    T s = (T)(sd > min_val ? 1 / sd : 0.);
+    T s = (T)(mid > min_val ? 1 / mid : 0.);
     for (int k = 0; k < m; k++) {
       A.ptr<T>(i)[k] *= s;
     }
