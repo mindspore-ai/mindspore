@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/infer/audio_spectrogram_infer.h"
+using mindspore::schema::PrimitiveType_AudioSpectrogram;
 
 namespace mindspore {
 namespace lite {
@@ -36,7 +37,6 @@ OpParameter *PopulateAudioSpectrogramParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_audioSpectrogramParameterRegistry(schema::PrimitiveType_AudioSpectrogram, PopulateAudioSpectrogramParameter,
-                                             SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_AudioSpectrogram, PopulateAudioSpectrogramParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

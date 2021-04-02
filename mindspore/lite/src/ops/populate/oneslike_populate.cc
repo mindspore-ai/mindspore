@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_OnesLike;
 
 namespace mindspore {
 namespace lite {
@@ -29,6 +30,6 @@ OpParameter *PopulateOnesLikeParameter(const void *prim) {
   return param;
 }
 
-Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, PopulateOnesLikeParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_OnesLike, PopulateOnesLikeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

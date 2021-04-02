@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Rank;
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,6 @@ OpParameter *PopulateRankParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_rankParameterRegistry(schema::PrimitiveType_Rank, PopulateRankParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Rank, PopulateRankParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

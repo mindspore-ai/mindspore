@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/resize_parameter.h"
+using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore {
 namespace lite {
@@ -39,7 +40,7 @@ OpParameter *PopulateResizeParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(resize_param);
 }
 
-Registry ResizeParameterRegistry(schema::PrimitiveType_Resize, PopulateResizeParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Resize, PopulateResizeParameter, SCHEMA_CUR)
 }  // namespace lite
 
 }  // namespace mindspore

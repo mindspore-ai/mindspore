@@ -15,6 +15,8 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/pooling_parameter.h"
+using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore {
 namespace lite {
@@ -140,7 +142,7 @@ OpParameter *PopulateMaxPoolParameter(const void *primitive) {
 }
 }  // namespace
 
-Registry g_avgPoolParameterRegistry(schema::PrimitiveType_AvgPoolFusion, PopulateAvgPoolParameter, SCHEMA_CUR);
-Registry g_maxPoolParameterRegistry(schema::PrimitiveType_MaxPoolFusion, PopulateMaxPoolParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_AvgPoolFusion, PopulateAvgPoolParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_MaxPoolFusion, PopulateMaxPoolParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

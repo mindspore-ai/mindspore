@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/crop_parameter.h"
+using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore {
 namespace lite {
@@ -43,6 +44,6 @@ OpParameter *PopulateCropParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_cropParameterRegistry(schema::PrimitiveType_Crop, PopulateCropParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Crop, PopulateCropParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

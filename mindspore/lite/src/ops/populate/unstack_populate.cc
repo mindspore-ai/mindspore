@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/unstack_parameter.h"
+using mindspore::schema::PrimitiveType_Unstack;
 
 namespace mindspore {
 namespace lite {
@@ -32,6 +33,6 @@ OpParameter *PopulateUnstackParameter(const void *prim) {
   unstack_param->axis_ = value->axis();
   return reinterpret_cast<OpParameter *>(unstack_param);
 }
-Registry UnstackParameterRegistry(schema::PrimitiveType_Unstack, PopulateUnstackParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Unstack, PopulateUnstackParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

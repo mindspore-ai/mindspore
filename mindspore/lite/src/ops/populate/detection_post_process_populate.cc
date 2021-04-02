@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/detection_post_process_parameter.h"
+using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore {
 namespace lite {
@@ -44,8 +45,7 @@ OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(detection_post_process_parameter);
 }
 }  // namespace
-Registry g_detectionPostProcessParameterRegistry(schema::PrimitiveType_DetectionPostProcess,
-                                                 PopulateDetectionPostProcessParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_DetectionPostProcess, PopulateDetectionPostProcessParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

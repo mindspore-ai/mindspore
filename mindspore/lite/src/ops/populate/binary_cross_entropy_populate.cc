@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32_grad/binary_cross_entropy.h"
+using mindspore::schema::PrimitiveType_BinaryCrossEntropy;
 
 namespace mindspore {
 namespace lite {
@@ -33,7 +34,6 @@ OpParameter *PopulateBinaryCrossEntropyParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(bce_param);
 }
 
-Registry BinaryCrossEntropyParameterRegistry(schema::PrimitiveType_BinaryCrossEntropy,
-                                             PopulateBinaryCrossEntropyParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_BinaryCrossEntropy, PopulateBinaryCrossEntropyParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

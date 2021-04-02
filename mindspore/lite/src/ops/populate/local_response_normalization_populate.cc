@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/local_response_norm_fp32.h"
+using mindspore::schema::PrimitiveType_LRN;
 
 namespace mindspore {
 namespace lite {
@@ -37,8 +38,7 @@ OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(lrn_param);
 }
 
-Registry LocalResponseNormalizationParameterRegistry(schema::PrimitiveType_LRN, PopulateLocalResponseNormParameter,
-                                                     SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_LRN, PopulateLocalResponseNormParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

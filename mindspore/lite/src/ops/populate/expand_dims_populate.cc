@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_ExpandDims;
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,6 @@ OpParameter *PopulateExpandDimsParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_expandDimsParameterRegistry(schema::PrimitiveType_ExpandDims, PopulateExpandDimsParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_ExpandDims, PopulateExpandDimsParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

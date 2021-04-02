@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/stack_parameter.h"
+using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore {
 namespace lite {
@@ -33,6 +34,6 @@ OpParameter *PopulateStackParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(stack_param);
 }
 }  // namespace
-Registry g_stackParameterRegistry(schema::PrimitiveType_Stack, PopulateStackParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Stack, PopulateStackParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

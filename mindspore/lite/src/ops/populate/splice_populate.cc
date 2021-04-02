@@ -16,6 +16,7 @@
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/op_base.h"
 #include "nnacl/splice_parameter.h"
+using mindspore::schema::PrimitiveType_Splice;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSpliceParameter(const void *prim) {
@@ -67,6 +68,6 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   splice_parameter->output_dim_ = splice_primitive->output_dim();
   return reinterpret_cast<OpParameter *>(splice_parameter);
 }
-Registry g_SpliceParameterRegistry(schema::PrimitiveType_Splice, PopulateSpliceParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Splice, PopulateSpliceParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -15,9 +15,10 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/default_populate.h"
+using mindspore::schema::PrimitiveType_IsFinite;
 
 namespace mindspore {
 namespace lite {
-Registry g_isFiniteParameterRegistry(schema::PrimitiveType_IsFinite, DefaultPopulateParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_IsFinite, DefaultPopulateParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

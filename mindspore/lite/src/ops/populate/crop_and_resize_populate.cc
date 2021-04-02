@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/resize_parameter.h"
+using mindspore::schema::PrimitiveType_CropAndResize;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -35,7 +36,6 @@ OpParameter *PopulateCropAndResizeParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_cropAndResizeParameterRegistry(schema::PrimitiveType_CropAndResize, PopulateCropAndResizeParameter,
-                                          SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_CropAndResize, PopulateCropAndResizeParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

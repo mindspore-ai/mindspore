@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/reverse_sequence_parameter.h"
+using mindspore::schema::PrimitiveType_ReverseSequence;
 
 namespace mindspore {
 namespace lite {
@@ -36,8 +37,7 @@ OpParameter *PopulateReverseSequenceParameter(const void *prim) {
 }
 }  // namespace
 
-Registry ReverseSequenceParameterRegistry(schema::PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter,
-                                          SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

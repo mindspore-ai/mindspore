@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/activation_fp32.h"
+using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore {
 namespace lite {
@@ -37,6 +38,6 @@ OpParameter *PopulateRelu6Parameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_relu6ParameterRegistry(schema::PrimitiveType_Activation, PopulateRelu6Parameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Activation, PopulateRelu6Parameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

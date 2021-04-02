@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_UnsortedSegmentSum;
 
 namespace mindspore {
 namespace lite {
@@ -29,7 +30,6 @@ OpParameter *PopulateUnsortedSegmentSumParameter(const void *prim) {
   return param;
 }
 
-Registry UnsortedSegmentSumParameterRegistry(schema::PrimitiveType_UnsortedSegmentSum,
-                                             PopulateUnsortedSegmentSumParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_UnsortedSegmentSum, PopulateUnsortedSegmentSumParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

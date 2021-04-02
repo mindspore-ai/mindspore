@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/roi_pooling_fp32.h"
+using mindspore::schema::PrimitiveType_ROIPooling;
 
 namespace mindspore {
 namespace lite {
@@ -37,6 +38,6 @@ OpParameter *PopulateROIPoolingParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_ROIPoolingParameterRegistry(schema::PrimitiveType_ROIPooling, PopulateROIPoolingParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_ROIPooling, PopulateROIPoolingParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

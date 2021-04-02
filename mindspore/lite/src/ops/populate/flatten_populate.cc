@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Flatten;
 
 namespace mindspore {
 namespace lite {
@@ -30,7 +31,6 @@ OpParameter *PopulateFlattenParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(flatten_param);
 }
 
-Registry FlattenParameterRegistry(schema::PrimitiveType_Flatten, PopulateFlattenParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_Flatten, PopulateFlattenParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

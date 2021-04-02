@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Adam;
 
 namespace mindspore {
 namespace lite {
@@ -29,6 +30,6 @@ OpParameter *PopulateAdamParameter(const void *prim) {
   return param;
 }
 
-Registry AdamParameterRegistry(schema::PrimitiveType_Adam, PopulateAdamParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Adam, PopulateAdamParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

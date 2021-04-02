@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/lstm_fp32.h"
+using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore {
 namespace lite {
@@ -41,6 +42,6 @@ OpParameter *PopulateLstmParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(lstm_param);
 }
 }  // namespace
-Registry g_lstmParameterRegistry(schema::PrimitiveType_LSTM, PopulateLstmParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_LSTM, PopulateLstmParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

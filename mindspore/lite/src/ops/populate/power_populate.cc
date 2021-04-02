@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/power_parameter.h"
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore {
 namespace lite {
@@ -35,6 +36,6 @@ OpParameter *PopulatePowerParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_powerParameterRegistry(schema::PrimitiveType_PowFusion, PopulatePowerParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_PowFusion, PopulatePowerParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

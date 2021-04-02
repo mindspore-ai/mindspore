@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/where_parameter.h"
+using mindspore::schema::PrimitiveType_Where;
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,6 @@ OpParameter *PopulateWhereParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(where_parameter);
 }
 }  // namespace
-Registry g_whereParameterRegistry(schema::PrimitiveType_Where, PopulateWhereParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Where, PopulateWhereParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

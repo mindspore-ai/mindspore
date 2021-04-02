@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Clip;
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +32,6 @@ OpParameter *PopulateClipParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_clipParameterRegistry(schema::PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

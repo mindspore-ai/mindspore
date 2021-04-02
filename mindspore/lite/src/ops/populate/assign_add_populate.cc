@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_AssignAdd;
 
 namespace mindspore {
 namespace lite {
@@ -29,6 +30,6 @@ OpParameter *PopulateAssignAddParameter(const void *prim) {
   return param;
 }
 
-Registry AssignAddParameterRegistry(schema::PrimitiveType_AssignAdd, PopulateAssignAddParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_AssignAdd, PopulateAssignAddParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

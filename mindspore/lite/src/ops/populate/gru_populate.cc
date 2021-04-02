@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/gru_fp32.h"
+using mindspore::schema::PrimitiveType_GRU;
 
 namespace mindspore {
 namespace lite {
@@ -39,6 +40,6 @@ OpParameter *PopulateGruParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_gruParameterRegistry(schema::PrimitiveType_GRU, PopulateGruParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_GRU, PopulateGruParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

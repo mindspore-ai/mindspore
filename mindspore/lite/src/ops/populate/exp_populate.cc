@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/exp_fp32.h"
+using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore {
 namespace lite {
@@ -40,6 +41,6 @@ OpParameter *PopulateExpParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(exp_parameter);
 }
 
-Registry ExpParameterRegistry(schema::PrimitiveType_ExpFusion, PopulateExpParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_ExpFusion, PopulateExpParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

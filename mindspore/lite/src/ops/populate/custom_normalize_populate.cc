@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_CustomNormalize;
 
 namespace mindspore {
 namespace lite {
@@ -29,8 +30,7 @@ OpParameter *PopulateCustomNormalizeParameter(const void *prim) {
   param->type_ = primitive->value_type();
   return param;
 }
-Registry CustomNormalizeParameterRegistry(schema::PrimitiveType_CustomNormalize, PopulateCustomNormalizeParameter,
-                                          SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_CustomNormalize, PopulateCustomNormalizeParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

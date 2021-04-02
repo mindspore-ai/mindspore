@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/prelu_parameter.h"
+using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore {
 namespace lite {
@@ -32,6 +33,6 @@ OpParameter *PopulatePReLUParameter(const void *prim) {
   param->channelShared = value->channel_shared();
   return reinterpret_cast<OpParameter *>(param);
 }
-Registry PReLUParameterRegistry(schema::PrimitiveType_PReLUFusion, PopulatePReLUParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_PReLUFusion, PopulatePReLUParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

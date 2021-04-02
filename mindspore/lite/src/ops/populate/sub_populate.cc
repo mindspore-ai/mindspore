@@ -16,6 +16,7 @@
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/arithmetic.h"
 #include "src/ops/populate/arithmetic_populate.h"
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +32,6 @@ OpParameter *PopulateSubParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
-Registry g_subParameterRegistry(schema::PrimitiveType_SubFusion, PopulateSubParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_SubFusion, PopulateSubParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -16,6 +16,7 @@
 #include "src/common/log_adapter.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/conv_parameter.h"
+using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore {
 namespace lite {
@@ -77,6 +78,6 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(conv_param);
 }
 
-Registry g_Deconv2DParameterRegistry(schema::PrimitiveType_Conv2dTransposeFusion, PopulateDeconvParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Conv2dTransposeFusion, PopulateDeconvParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore
