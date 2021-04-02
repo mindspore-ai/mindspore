@@ -235,43 +235,6 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
   }
 }
 
-int AnfExporter::DoBitPack(const int &bit_num, schema::TensorT *tensor_input) {
-  if (bit_num > 0 && bit_num < 8) {
-    std::vector<int8_t> origin_data(tensor_input->data.size());
-    if (memcpy_s(origin_data.data(), origin_data.size() * sizeof(int8_t), tensor_input->data.data(),
-                 tensor_input->data.size() * sizeof(uint8_t)) != EOK) {
-      MS_LOG(ERROR) << "memcpy failed.";
-      return RET_ERROR;
-    }
-    std::vector<uint8_t> pack_data{};
-    BitPack::BitPacking<int8_t, uint8_t>(bit_num, origin_data, &pack_data);
-    tensor_input->data.resize(pack_data.size() * sizeof(uint8_t));
-    if (memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
-                 pack_data.size() * sizeof(uint8_t)) != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed.";
-      return RET_ERROR;
-    }
-  } else if (bit_num > 9 && bit_num < 16) {
-    auto shape_size =
-      std::accumulate(tensor_input->dims.begin(), tensor_input->dims.end(), size_t(1), std::multiplies<size_t>());
-    std::vector<int16_t> origin_data(shape_size);
-    if (memcpy_s(origin_data.data(), origin_data.size() * sizeof(int16_t), tensor_input->data.data(),
-                 tensor_input->data.size() * sizeof(uint8_t)) != EOK) {
-      MS_LOG(ERROR) << "memcpy failed.";
-      return RET_ERROR;
-    }
-    std::vector<uint16_t> pack_data{};
-    BitPack::BitPacking<int16_t, uint16_t>(bit_num, origin_data, &pack_data);
-    tensor_input->data.resize(pack_data.size() * sizeof(uint16_t));
-    if (memcpy_s(tensor_input->data.data(), tensor_input->data.size() * sizeof(uint8_t), pack_data.data(),
-                 pack_data.size() * sizeof(uint16_t)) != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
 int AnfExporter::SetQuantOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                           const std::shared_ptr<mindspore::Primitive> &primitive,
                                           const std::unique_ptr<schema::CNodeT> &dst_node) {
@@ -341,7 +304,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
         if (bit_num != 8 && bit_num != 16) {
           auto status = DoBitPack(bit_num, tensor_input);
           if (status != RET_OK) {
-            MS_LOG(ERROR) << "do bit pack failed.";
+            MS_LOG(ERROR) << "do bit pack failed. " << status;
             return RET_ERROR;
           }
         }
