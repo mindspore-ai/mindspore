@@ -217,6 +217,9 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
   if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
     def_format = kOpFormat_NCDHW;
   }
+  if (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+    format = kOpFormat_NCDHW;
+  }
   if (ori_shape.empty()) {
     ori_shape.emplace_back(1);
   }
@@ -445,6 +448,9 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
     std::vector<int64_t> ori_shape;
     AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, *output_idx), NOT_NULL(&ori_shape));
     // std::vector<size_t> ori_shape = AnfAlgo::GetOutputInferShape(anf_node, *output_idx);
+    if (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+      format = kOpFormat_NCDHW;
+    }
     if (ori_shape.empty()) {
       ori_shape.emplace_back(1);
     }
@@ -621,7 +627,7 @@ void TbeKernelJsonCreator::ParseAttrDefaultValue(const std::string &type, const 
   } else if (type == kVTypeStr) {
     (*attr_obj)[kJValue] = value;
   } else if (type == kVTypeBool) {
-    bool attr_value;
+    bool attr_value = false;
     std::istringstream(value) >> std::boolalpha >> attr_value;
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeFloat) {

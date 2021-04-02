@@ -271,6 +271,7 @@ constexpr auto kBasicLSTMCellCStateGradOpName = "BasicLSTMCellCStateGrad";
 constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
 constexpr auto kMatMulOpName = "MatMul";
 constexpr auto kMatMulV2OpName = "MatMulV2";
+constexpr auto kBatchMatMulOpName = "BatchMatMul";
 constexpr auto kBroadcastToOpName = "BroadcastTo";
 constexpr auto kFusedAddReluV2Name = "FusedAddReluV2";
 constexpr auto kFusedAddReluGradV2Name = "FusedAddReluGradV2";
@@ -486,7 +487,8 @@ const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT,      kOpFormat_N
                                              kOpFormat_NDC1HWC0,     kOpFormat_NCDHW,
                                              kOpFormat_FRACTAL_Z_3D, kOpFormat_DHWNC,
                                              kOpFormat_DHWCN};
-const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
+const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
+                                                        kOpFormat_NCDHW};
 const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kApplyMomentumOpName,
                                                kApplyAdadeltaOpName,

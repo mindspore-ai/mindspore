@@ -429,31 +429,6 @@ void KernelGraph::CheckLoop() {
   }
 }
 
-void ReSetParameterValueNodeFormatAndType(const AnfNodePtr &node, const std::string &format) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::OutputAddrExist(node, 0)) {
-    return;
-  }
-  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
-  kernel_build_info_builder->SetOutputsFormat({format});
-  kernel_build_info_builder->SetOutputsDeviceType({AnfAlgo::GetOutputInferDataType(node, 0)});
-  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), node.get());
-}
-
-void KernelGraph::ResetInFormat(const AnfNodePtr &node, const std::string &format) const {
-  MS_EXCEPTION_IF_NULL(node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
-  for (size_t i = 0; i < input_num; i++) {
-    auto in_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), i);
-    MS_EXCEPTION_IF_NULL(in_node);
-    if ((in_node->isa<Parameter>() || in_node->isa<ValueNode>()) &&
-        AnfAlgo::GetOutputInferShape(in_node, 0).size() == k5dDims) {
-      ReSetParameterValueNodeFormatAndType(in_node, format);
-    }
-  }
-}
-
 CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   auto cnode = FuncGraph::NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -463,17 +438,6 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
     AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
   }
   SetKernelInfoForNode(cnode);
-  if (AnfAlgo::HasNodeAttr(kAttrFormat, cnode)) {
-    auto primitive_ptr = GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(primitive_ptr);
-    auto data_format_ptr = primitive_ptr->GetAttr(kAttrFormat);
-    MS_EXCEPTION_IF_NULL(data_format_ptr);
-    int64_t data_format;
-    bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
-    if (result && data_format == Format::NCDHW) {
-      ResetInFormat(cnode, kOpFormat_NCDHW);
-    }
-  }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
   return cnode;
 }

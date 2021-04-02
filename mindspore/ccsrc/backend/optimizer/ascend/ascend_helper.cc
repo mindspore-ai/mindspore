@@ -64,33 +64,6 @@ void SetTransNodeAttr(const CNodePtr &trans_node) {
   }
 }
 
-std::string InitDefaultFormat(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>() && AnfAlgo::HasNodeAttr(kAttrFormat, node->cast<CNodePtr>())) {
-    auto primitive_ptr = GetCNodePrimitive(node);
-    MS_EXCEPTION_IF_NULL(primitive_ptr);
-    auto data_format_ptr = primitive_ptr->GetAttr(kAttrFormat);
-    MS_EXCEPTION_IF_NULL(data_format_ptr);
-    int64_t data_format;
-    bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
-    if (result && data_format == Format::NCDHW) {
-      return kOpFormat_NCDHW;
-    }
-  } else if (AnfAlgo::IsRealKernel(node)) {
-    auto formats = AnfAlgo::GetAllOutputFormats(node);
-    if (std::any_of(formats.begin(), formats.end(),
-                    [](const std::string &format) { return k3DFormatSet.find(format) != k3DFormatSet.end(); })) {
-      return kOpFormat_NCDHW;
-    }
-  } else {
-    auto format = AnfAlgo::GetOutputFormat(node, 0);
-    if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
-      return kOpFormat_NCDHW;
-    }
-  }
-  return kOpFormat_DEFAULT;
-}
-
 void ReFreshInferShape(const AnfNodePtr &trans_node, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(trans_node);
   auto real_input_node = AnfAlgo::VisitKernelWithReturnType(node, 0).first;
@@ -183,7 +156,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   CNodePtr trans_data = nullptr;
   MS_EXCEPTION_IF_NULL(node);
   // Init
-  std::string default_format = InitDefaultFormat(node);
+  std::string default_format = kOpFormat_DEFAULT;
   AnfNodePtr input_node = is_insert_input ? AnfAlgo::GetInputNode(node->cast<CNodePtr>(), insert_index) : node;
   std::string input_format = is_insert_input ? default_format : AnfAlgo::GetOutputFormat(node, insert_index);
   std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, insert_index) : default_format;
