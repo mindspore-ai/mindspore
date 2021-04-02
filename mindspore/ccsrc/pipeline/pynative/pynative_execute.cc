@@ -717,7 +717,9 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
   abstract::AbstractBasePtrList args_spec_list;
   std::vector<int64_t> op_masks;
   auto cnode = MakeCNode(op_exec_info, &op_masks, &args_spec_list);
+  // Update op input mask and record op info
   op_exec_info->inputs_mask = op_masks;
+  grad()->RecordGradOpInfo(op_exec_info);
   // get output abstract info
   bool is_find = false;
   GetOpOutputAbstract(op_exec_info, args_spec_list, &is_find);
@@ -781,14 +783,6 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   }
   op_exec_info->py_primitive = prim;
   op_exec_info->op_inputs = args[PY_INPUTS];
-  // Record op info for judge whether the construct of cell has been changed
-  if (grad()->grad_flag()) {
-    size_t curr_op_num = grad()->top_cell()->op_num();
-    op_exec_info->op_info = op_name + "-" + std::to_string(curr_op_num);
-    std::string curr_op_info = grad()->top_cell()->all_op_info() + "_" + op_exec_info->op_info;
-    grad()->top_cell()->set_all_op_info(curr_op_info);
-    grad()->top_cell()->set_op_num(curr_op_num + 1);
-  }
   return op_exec_info;
 }
 
@@ -986,15 +980,6 @@ py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::obj
         // Update input for cast struct
         auto cast_struct = cast_struct_pair->second;
         cast_struct->op_inputs[0] = obj;
-        auto grad = this->grad();
-        MS_EXCEPTION_IF_NULL(grad);
-        if (grad->grad_flag()) {
-          size_t curr_op_num = grad->top_cell()->op_num();
-          cast_struct->op_info = cast_struct->op_name + "-" + std::to_string(curr_op_num);
-          std::string curr_op_info = grad->top_cell()->all_op_info() + "_" + cast_struct->op_info;
-          grad->top_cell()->set_all_op_info(curr_op_info);
-          grad->top_cell()->set_op_num(curr_op_num + 1);
-        }
         py::object ret = py::none();
         RunOpInner(&ret, cast_struct);
         return ret;
@@ -1258,6 +1243,30 @@ AnfNodePtr GradExecutor::MakeValueNode(const py::object &obj, const std::string 
   return node;
 }
 
+void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) {
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  // Record op info for judge whether the construct of cell has been changed
+  if (!grad_flag()) {
+    MS_LOG(DEBUG) << "grad flag is set to false, no need to record op info";
+    return;
+  }
+  // Record input args info (weight or data)
+  std::string input_args_info;
+  for (auto mask : op_exec_info->inputs_mask) {
+    if (mask) {
+      input_args_info += "w";
+      continue;
+    }
+    input_args_info += "d";
+  }
+  // Record op name and index
+  size_t curr_op_num = top_cell()->op_num();
+  op_exec_info->op_info = op_exec_info->op_name + "-" + std::to_string(curr_op_num) + "-" + input_args_info;
+  std::string curr_op_info = top_cell()->all_op_info() + "_" + op_exec_info->op_info;
+  top_cell()->set_all_op_info(curr_op_info);
+  top_cell()->set_op_num(curr_op_num + 1);
+}
+
 void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode) {
   if (cell_stack_.empty()) {
     MS_LOG(DEBUG) << "No need save output";
@@ -1314,18 +1323,24 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
   MS_EXCEPTION_IF_NULL(op_exec_info);
   auto op_info = op_exec_info->op_info;
   MS_LOG(DEBUG) << "Current op info: " << op_info;
-  // Get output tensors
+
   std::vector<tensor::TensorPtr> all_op_tensors;
+  // Get input tensors
+  for (size_t i = 0; i < op_exec_info->op_inputs.size(); ++i) {
+    TensorValueToTensor(parse::data_converter::PyDataToValue(op_exec_info->op_inputs[i]), &all_op_tensors);
+  }
+  // Get output tensors
   TensorValueToTensor(parse::data_converter::PyDataToValue(out_real), &all_op_tensors);
   // Save all tensors info of current op
   if (need_construct_graph()) {
     SaveOpInfo(top_cell_, op_info, all_op_tensors);
   }
+
   // First run top cell
   if (already_run_top_cell_.find(top_cell_->cell_id()) == already_run_top_cell_.end()) {
     MS_LOG(DEBUG) << "Top cell " << top_cell_->cell_id() << " run firstly";
     if (!need_construct_graph()) {
-      MS_LOG(EXCEPTION) << "The cell stack is empty";
+      MS_LOG(EXCEPTION) << "The cell stack is empty when running a new top cell " << top_cell_->cell_id();
     }
     return;
   }
@@ -1337,12 +1352,13 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
                   << top_cell_->cell_id();
     return;
   }
+
+  // Update new output tensor info in bprop graph
   const auto &pre_op_tensor_id = pre_top_cell->op_info_with_tensor_id().at(op_info);
   if (pre_op_tensor_id.size() != all_op_tensors.size()) {
     MS_LOG(EXCEPTION) << "The size of pre op tensor id: " << pre_op_tensor_id.size()
                       << " is not equal to the size of all tensors of current op " << all_op_tensors.size();
   }
-  // Update new output tensor info in bprop graph
   const auto &pre_tensor_id_with_tensor_object = pre_top_cell->tensor_id_with_tensor_object();
   for (size_t i = 0; i < pre_op_tensor_id.size(); ++i) {
     auto pre_id = pre_op_tensor_id[i];
@@ -1892,9 +1908,11 @@ void GradExecutor::SetMakeTupleAsOutputNode(const TopCellInfoPtr &top_cell, cons
 
   // get input node and value
   ValuePtrList input_args;
+  std::string input_args_info;
   std::vector<AnfNodePtr> inputs;
   inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (int64_t i = 0; i < tuple_size; i++) {
+    input_args_info += "d";
     inputs.emplace_back(GetInput(tuple[i], false));
     input_args.emplace_back(parse::data_converter::PyDataToValue(tuple[i]));
   }
@@ -1908,7 +1926,7 @@ void GradExecutor::SetMakeTupleAsOutputNode(const TopCellInfoPtr &top_cell, cons
   ad::GradPynativeOp(top_cell->k_pynative_cell_ptr(), cnode, input_args, out_value);
   // record op info
   size_t curr_op_num = top_cell->op_num();
-  std::string op_info = "MakeTuple-" + std::to_string(curr_op_num);
+  std::string op_info = "MakeTuple-" + std::to_string(curr_op_num) + "-" + input_args_info;
   std::string curr_op_info = top_cell->all_op_info() + "_" + op_info;
   top_cell->set_all_op_info(curr_op_info);
   top_cell->set_op_num(curr_op_num + 1);
@@ -1925,7 +1943,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     }
     return;
   }
-  // x =op1, y =op2, return (x, y)
+  // Make output node in this case: x = op1, y = op2, return (x, y)
   auto out_id = GetId(out);
   auto graph_info = top_cell()->graph_info_map().at(curr_g_);
   MS_EXCEPTION_IF_NULL(graph_info);
@@ -1937,7 +1955,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
       MakeValueNode(out, out_id);
     }
   }
-
+  // Pop cell stack
   if (IsBpropGraph(cell_id)) {
     MS_LOG(DEBUG) << "Brop cell no need construct graph";
     return;
@@ -1956,10 +1974,16 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     MS_LOG(DEBUG) << "Reset top cell when IsNestedGrad " << IsNestedGrad() << " cell stack size " << cell_stack_.size()
                   << " cell nums " << cell_nums();
   }
-
-  // Reset grad flag and checkout whether need to compile graph when top cell has ran finished
+  // Top cell run finished
   if (cell_stack_.empty() && cell_id == top_cell()->cell_id()) {
     set_grad_flag(false);
+    // Update real output node of top cell for generating bprop graph
+    AnfNodePtr output_node = GetObjNode(out, out_id);
+    MS_EXCEPTION_IF_NULL(output_node);
+    auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
+    MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
+    k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(output_node);
+    // Checkout whether need to compile graph when top cell has ran finished
     (void)CheckNeedCompileGraph();
   }
 }
@@ -2049,7 +2073,7 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
   MS_LOG(DEBUG) << "df_builder ptr " << df_builder.get() << " resource ptr " << resource.get();
 
   // Get params(weights) require derivative
-  auto w_args = GetWeightsArgs(grad, weights, df_builder);
+  auto w_args = GetWeightsArgs(weights, df_builder);
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, w_args, size, args);
   resource->set_func_graph(bprop_graph);
@@ -2069,15 +2093,10 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
   resource->Clean();
 }
 
-std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const GradOperationPtr &grad, const py::object &weights,
-                                                     const FuncGraphPtr &df_builder) {
-  MS_EXCEPTION_IF_NULL(grad);
+std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) {
   MS_EXCEPTION_IF_NULL(df_builder);
-  if (!grad->get_by_list_ && py::isinstance<py::none>(weights)) {
-    MS_LOG(DEBUG) << "The input weight is None when run GradNetInner. Return parameters of df_builder directly";
-    return df_builder->parameters();
-  } else if (!py::hasattr(weights, "__parameter_tuple__")) {
-    MS_LOG(DEBUG) << "No paramter_tuple get";
+  if (!py::hasattr(weights, "__parameter_tuple__")) {
+    MS_LOG(DEBUG) << "No parameter tuple get";
     return {};
   }
 
@@ -2087,7 +2106,12 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const GradOperationPtr &gra
   for (size_t it = 0; it < tuple.size(); ++it) {
     auto param = tuple[it];
     auto param_id = GetId(param);
-    auto graph_info = top_cell()->graph_info_map().at(df_builder);
+    auto &graph_info_map = top_cell()->graph_info_map();
+    if (graph_info_map.find(df_builder) == graph_info_map.end()) {
+      MS_LOG(EXCEPTION) << "Can not find df_builder " << df_builder.get() << " Top cell " << top_cell().get()
+                        << " cell id " << top_cell()->cell_id();
+    }
+    auto graph_info = graph_info_map.at(df_builder);
     MS_EXCEPTION_IF_NULL(graph_info);
     AnfNodePtr para_node = nullptr;
     if (graph_info->params.find(param_id) != graph_info->params.end() &&

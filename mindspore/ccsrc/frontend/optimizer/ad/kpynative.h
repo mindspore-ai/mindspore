@@ -27,6 +27,7 @@ namespace ad {
 class KPynativeCell {
  public:
   virtual ~KPynativeCell() = default;
+  virtual void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) = 0;
 };
 
 using KPynativeCellPtr = std::shared_ptr<KPynativeCell>;

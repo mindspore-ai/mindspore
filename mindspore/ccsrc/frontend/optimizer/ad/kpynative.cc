@@ -234,6 +234,7 @@ class KPynativeCellImpl : public KPynativeCell {
   bool KPynativeOp(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out);
   bool KPynativeWithBProp(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                           const FuncGraphPtr &bprop_fg);
+  void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) override;
   FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights, bool has_sens_arg);
 
  private:
@@ -283,7 +284,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
                                        bool has_sens_arg) {
   // propagate stop_gradient flag to cnode before back propagate;
   PropagateStopGradient();
-
+  MS_LOG(DEBUG) << "Last node info " << last_node_->DebugString();
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
     MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
@@ -386,6 +387,12 @@ bool KPynativeCellImpl::KPynativeWithBProp(const CNodePtr &cnode, const ValuePtr
   BuildAdjoint(cnode, op_args, out, bprop_fg);
 
   return true;
+}
+
+void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_LOG(DEBUG) << "Real output node of top cell is " << output_node->DebugString();
+  last_node_ = output_node;
 }
 
 namespace {
@@ -610,22 +617,19 @@ bool KPynativeCellImpl::BackPropagate() {
     MS_EXCEPTION_IF_NULL(bprop_fg);
 
     AnfNodePtrList node_list{NewValueNode(bprop_fg)};
-    auto &args = iter->second->op_args();
-    for (size_t idx = 0; idx < args.size(); ++idx) {
-      auto cur_arg = args[idx];
-      auto anf_node = cnode->input(idx + 1);
-      if (!anf_node->isa<Parameter>()) {
-        anf_node = NewValueNode(cur_arg);
-      }
-      anf_node->set_abstract(cur_arg->ToAbstract()->Broaden());
-      node_list.push_back(anf_node);
-    }
-
-    auto out_node = NewValueNode(iter->second->out());
-    out_node->set_abstract(iter->second->out()->ToAbstract()->Broaden());
-    node_list.push_back(out_node);
+    std::transform(iter->second->op_args().begin(), iter->second->op_args().end(), std::back_inserter(node_list),
+                   [](const ValuePtr &value) { return NewValueNode(value); });
+    node_list.push_back(NewValueNode(iter->second->out()));
     node_list.push_back(iter->second->RealDout());
-
+    // Update abstract info of valuenode with its value
+    for (size_t i = 1; i < node_list.size() - 1; ++i) {
+      auto v_node = node_list[i]->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(v_node);
+      auto value = v_node->value();
+      if (v_node->abstract() == nullptr && value != nullptr && value->ToAbstract() != nullptr) {
+        v_node->set_abstract(value->ToAbstract()->Broaden());
+      }
+    }
     // Back propagate process
     auto bprop_app = tape_->NewCNode(node_list);
     BackPropagate(cnode, bprop_app);
