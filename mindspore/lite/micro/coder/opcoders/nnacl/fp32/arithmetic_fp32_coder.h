@@ -85,6 +85,8 @@ class ArithmeticFP32Coder final : public OperatorCoder {
   int BroadcastRun(const std::string &input0, const std::string &input1, const std::string &output, int dim,
                    int out_count, int out_thread_stride, NNaclFp32Serializer *const code);
 
+  void CollectFilesForFnc(CoderContext *const context);
+
   int break_pos_{0};
 
   int outside_{0};

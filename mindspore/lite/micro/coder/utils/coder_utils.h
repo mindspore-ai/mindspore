@@ -30,6 +30,8 @@ namespace mindspore::lite::micro {
 
 constexpr int kWeightPrecision = 9;
 
+bool CheckConstantTensor(const Tensor *const tensor);
+
 std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
                                          const std::vector<std::unique_ptr<OperatorCoder>> &opcoders);
 

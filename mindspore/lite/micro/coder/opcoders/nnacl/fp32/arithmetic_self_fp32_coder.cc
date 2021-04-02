@@ -69,11 +69,10 @@ int ArithmeticSelfFP32Coder::DoCode(CoderContext *const context) {
 
   Collect(context,
           {
-            "nnacl/arithmetic_common.h",
-            "nnacl/fp32/arithmetic_self.h",
+            "nnacl/fp32/arithmetic_self_fp32.h",
           },
           {
-            "nnacl/fp32/arithmetic_self.c",
+            "arithmetic_self_fp32.c",
           });
   NNaclFp32Serializer code;
   code.CodeFunction(arithmetic_self_run_, input_tensor_, output_tensor_, size);

@@ -24,6 +24,10 @@
 #include "coder/allocator/allocator.h"
 
 namespace mindspore::lite::micro {
+bool CheckConstantTensor(const Tensor *const tensor) {
+  return tensor->category() == Tensor::Category::CONST_TENSOR || tensor->category() == Tensor::Category::CONST_SCALAR;
+}
+
 template <typename T>
 void TensorDataToFile(const lite::Tensor *tensor, std::ofstream &ofs) {
   const int NUM = 45;
@@ -79,7 +83,7 @@ std::string TensorsToString(const std::vector<Tensor *> &tensors, const std::str
   MemoryAllocator *allocator = MemoryAllocator::GetInstance();
   std::string info;
   for (const auto &tensor : tensors) {
-    if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+    if (CheckConstantTensor(tensor)) {
       continue;
     }
     info += "      {\n";

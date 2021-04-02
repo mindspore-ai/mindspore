@@ -232,7 +232,7 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   for (const auto &item : ctx->tensors_map()) {
     Tensor *tensor = item.first;
     std::string name = item.second;
-    if (tensor->data_c() != nullptr && tensor->category() != Tensor::Category::CONST_TENSOR) {
+    if (tensor->data_c() != nullptr && !(CheckConstantTensor(tensor))) {
       ofs << name << ", ";
       num++;
     }
