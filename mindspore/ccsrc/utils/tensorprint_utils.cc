@@ -169,7 +169,7 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
     tensorShape.resize(dim_num);
 
     if (acltdtGetDimsFromItem(item, tensorShape.data(), dim_num) != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "ACL failed get dim-size from acl channel data";
+      MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     }
 
     if ((tensorShape.size() == 1 && tensorShape[0] == 0) || tensorShape.size() == 0) {
@@ -234,7 +234,7 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
     tensorShape.resize(dim_num);
 
     if (acltdtGetDimsFromItem(item, tensorShape.data(), dim_num) != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "ACL failed get dim-size from acl channel data";
+      MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     }
 
     if ((tensorShape.size() == 1 && tensorShape[0] == 0) || tensorShape.size() == 0) {
@@ -280,10 +280,10 @@ void TensorPrint::operator()() {
     while (true) {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
-        MS_LOG(ERROR) << "Failed create acl dateaset.";
+        MS_LOG(ERROR) << "Failed to create acl dateaset.";
       }
       if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "Acltdt receive tensor failed";
+        MS_LOG(ERROR) << "AclHandle failed to receive tensor.";
         break;
       }
       if (ConvertDataset2Tensor(acl_dataset)) {
@@ -295,10 +295,10 @@ void TensorPrint::operator()() {
     while (true) {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
-        MS_LOG(ERROR) << "Failed create acl dateaset.";
+        MS_LOG(ERROR) << "Failed to create acl dateaset.";
       }
       if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "Acltdt receive tensor failed";
+        MS_LOG(ERROR) << "Acltdt failed to receive tensor.";
         break;
       }
       if (SaveDataset2File(acl_dataset, print_file_path, print, &output)) {
@@ -308,7 +308,7 @@ void TensorPrint::operator()() {
     output.close();
     std::string path_string = print_file_path;
     if (chmod(common::SafeCStr(path_string), S_IRUSR) == -1) {
-      MS_LOG(ERROR) << "Modify file:" << print_file_path << " to fail.";
+      MS_LOG(ERROR) << "Modify file:" << print_file_path << " fail.";
       return;
     }
   }
