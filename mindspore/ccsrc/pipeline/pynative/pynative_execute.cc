@@ -2220,7 +2220,6 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("after_final_opt.ir", optimized_bg);
   }
-  optimized_bg->ClearAllManagerInfo();
   return optimized_bg;
 }
 
