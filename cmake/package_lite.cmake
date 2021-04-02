@@ -30,25 +30,25 @@ endif()
 
 if(BUILD_MINDDATA STREQUAL "full")
     install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/liteapi/include/ DESTINATION
-    ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 
     if(PLATFORM_ARM64)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so
-        DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     elseif(PLATFORM_ARM32)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
-        ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
-        ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib
-        RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0 DESTINATION ${TURBO_DIR}/lib
-        RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 endif()
 
@@ -68,7 +68,7 @@ if(BUILD_MINDDATA STREQUAL "wrapper")
     else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib  RENAME libjpeg.so.62
+        install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib RENAME libjpeg.so.62
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0 DESTINATION ${TURBO_DIR}/lib RENAME libturbojpeg.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -153,8 +153,19 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_ROOT_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    file(GLOB NNACL_FILES GLOB ${TOP_DIR}/mindspore/lite/nnacl/*.h)
+    install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_TOOLS)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
@@ -174,8 +185,19 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_ROOT_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    file(GLOB NNACL_FILES GLOB ${TOP_DIR}/mindspore/lite/nnacl/*.h)
+    install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_TOOLS)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
@@ -240,7 +262,27 @@ else()
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
                 DESTINATION ${CONVERTER_ROOT_DIR}/third_party/glog/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_ROOT_DIR}
+        file(GLOB NNACL_FILES GLOB ${TOP_DIR}/mindspore/lite/nnacl/*.h)
+        install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        set(MICRO_CMSIS_DIR ${CMAKE_BINARY_DIR}/cmsis/CMSIS)
+        install(DIRECTORY ${MICRO_CMSIS_DIR}/Core/Include DESTINATION ${CODEGEN_ROOT_DIR}/third_party/include/CMSIS/Core
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${MICRO_CMSIS_DIR}/DSP/Include DESTINATION ${CODEGEN_ROOT_DIR}/third_party/include/CMSIS/DSP
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${MICRO_CMSIS_DIR}/NN/Include DESTINATION ${CODEGEN_ROOT_DIR}/third_party/include/CMSIS/NN
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(TARGETS cmsis_nn ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/third_party/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS codegen RUNTIME DESTINATION ${CODEGEN_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()

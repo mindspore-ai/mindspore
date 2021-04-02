@@ -30,23 +30,22 @@ get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BI
 
 set(HEADER_PATH ${PKG_PATH}/inference)
 
-option(MICRO_BUILD_ARM64 "build android arm64" OFF)
-option(MICRO_BUILD_ARM32A "build android arm32" OFF)
+option(PLATFORM_ARM64 "build android arm64" OFF)
+option(PLATFORM_ARM32 "build android arm32" OFF)
 
 add_compile_definitions(NOT_USE_STL)
 
-if(MICRO_BUILD_ARM64 OR MICRO_BUILD_ARM32A)
+if(PLATFORM_ARM64 OR PLATFORM_ARM32)
   add_compile_definitions(ENABLE_NEON)
   add_compile_definitions(ENABLE_ARM)
 endif()
 
-if(MICRO_BUILD_ARM64)
+if(PLATFORM_ARM64)
   add_compile_definitions(ENABLE_ARM64)
 endif()
 
-if(MICRO_BUILD_ARM32A)
+if(PLATFORM_ARM32)
   add_compile_definitions(ENABLE_ARM32)
-  add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
@@ -88,8 +87,9 @@ endif()
 
 get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(OP_LIB ${PKG_PATH}/tools/codegen/operator_library/lib/libops.a)
-set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/operator_library/include)
+set(OP_LIB ${PKG_PATH}/inference/lib/libmindspore-lite.a)
+set(WRAPPER_LIB ${PKG_PATH}/tools/codegen/lib/libwrapper.a)
+set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/include)
 set(HEADER_PATH ${PKG_PATH}/inference)
 
 message("operator lib path: ${OP_LIB}")
@@ -100,23 +100,29 @@ add_compile_definitions(NOT_USE_STL)
 include_directories(${OP_HEADER_PATH})
 include_directories(${HEADER_PATH})
 
+if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
+  include_directories(${PKG_PATH}/tools/codegen/third_party/include)
+  include_directories(${PKG_PATH}/tools/codegen/third_party/include/CMSIS/Core/Include)
+  include_directories(${PKG_PATH}/tools/codegen/third_party/include/CMSIS/DSP/Include)
+  include_directories(${PKG_PATH}/tools/codegen/third_party/include/CMSIS/NN/Include)
+endif()
+
 include(net.cmake)
 
-option(MICRO_BUILD_ARM64 "build android arm64" OFF)
-option(MICRO_BUILD_ARM32A "build android arm32" OFF)
+option(PLATFORM_ARM64 "build android arm64" OFF)
+option(PLATFORM_ARM32 "build android arm32" OFF)
 
-if(MICRO_BUILD_ARM64 OR MICRO_BUILD_ARM32A)
+if(PLATFORM_ARM64 OR PLATFORM_ARM32)
   add_compile_definitions(ENABLE_NEON)
   add_compile_definitions(ENABLE_ARM)
 endif()
 
-if(MICRO_BUILD_ARM64)
+if(PLATFORM_ARM64)
   add_compile_definitions(ENABLE_ARM64)
 endif()
 
-if(MICRO_BUILD_ARM32A)
+if(PLATFORM_ARM32)
   add_compile_definitions(ENABLE_ARM32)
-  add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
@@ -143,11 +149,17 @@ function(create_library)
             COMMAND rm -rf tmp
             COMMAND mkdir tmp
             COMMAND cd tmp && ar -x ${OP_LIB}
+            COMMAND cd tmp && ar -x ${WRAPPER_LIB}
             COMMAND echo "raw static library ${library_name} size:"
             COMMAND ls -lh ${library_name}
             COMMAND mv ${library_name} ./tmp && cd tmp && ar -x ${library_name}
             COMMENT "unzip raw static library ${library_name}"
             )
+    if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
+        set(CMSIS_LIB ${PKG_PATH}/tools/codegen/third_party/lib/libcmsis_nn.a)
+        add_custom_command(TARGET net POST_BUILD COMMAND cd tmp && ar -x ${CMSIS_LIB})
+    endif()
+
     foreach(object_file ${OP_SRC})
         add_custom_command(TARGET net POST_BUILD COMMAND mv ./tmp/${object_file} .)
     endforeach()
