@@ -577,5 +577,31 @@ AbstractBasePtr InferImplDType(const AnalysisEnginePtr &, const PrimitivePtr &pr
   abstract->set_value(value);
   return abstract;
 }
+
+AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  // Inputs: Ref/Tensor, universal
+  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  auto ref_abs = dyn_cast<abstract::AbstractRef>(args_spec_list[0]);
+  if (ref_abs != nullptr) {
+    // Return tensor value if input is Ref.
+    return ref_abs->CloneAsTensor();
+  }
+  return args_spec_list[0]->Broaden();
+}
+
+AbstractBasePtr InferImplAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  // Inputs: Ref, value, [universal]
+  CheckRequiredArgsSize(primitive->name(), args_spec_list, 2);
+
+  MS_LOG(DEBUG) << "InferImplAssign " << args_spec_list[0];
+  auto type = args_spec_list[0]->BuildType();
+  if (type->type_id() == kObjectTypeRefKey) {
+    return args_spec_list[1]->Broaden();
+  } else {
+    return args_spec_list[0];
+  }
+}
 }  // namespace abstract
 }  // namespace mindspore

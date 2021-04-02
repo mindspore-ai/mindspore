@@ -541,6 +541,40 @@ inline const PrimitivePtr kPrimDType = std::make_shared<Primitive>("DType");
 inline const PrimitivePtr kPrimDivFusion = std::make_shared<Primitive>("DivFusion");
 inline const PrimitivePtr kPrimErf = std::make_shared<Primitive>("Erf");
 
+// Type introspection
+inline const PrimitivePtr kPrimTypeOf = std::make_shared<Primitive>("typeof");
+inline const PrimitivePtr kPrimHasType = std::make_shared<Primitive>("hastype");
+
+inline const PrimitivePtr kPrimResolve = std::make_shared<Primitive>("resolve");
+inline const PrimitivePtr kPrimEmbed = std::make_shared<Primitive>("embed");
+inline const PrimitivePtr kPrimRefToEmbed = std::make_shared<Primitive>("RefToEmbed");
+inline const PrimitivePtr kPrimCreateInstance = std::make_shared<Primitive>("create_instance");
+
+// Other miscellaneous
+inline const PrimitivePtr kPrimGetRefOrigin = std::make_shared<Primitive>("get_ref_origin");
+inline const PrimitivePtr kPrimInsertGradientOf = std::make_shared<Primitive>("InsertGradientOf");
+inline const PrimitivePtr kPrimCheckBprop = std::make_shared<Primitive>("CheckBprop");
+inline const PrimitivePtr kPrimMixedPrecisionCast = std::make_shared<Primitive>("mixed_precision_cast");
+inline const PrimitivePtr kPrimMakeRecord = std::make_shared<Primitive>("make_record");
+
+// Structures
+inline const PrimitivePtr kPrimListMap = std::make_shared<Primitive>("list_map");
+inline const PrimitivePtr kPrimListReduce = std::make_shared<Primitive>("list_reduce");
+inline const PrimitivePtr kPrimTupleReversed = std::make_shared<Primitive>("tuple_reversed");
+inline const PrimitivePtr kPrimReducedShape = std::make_shared<Primitive>("reduced_shape");
+inline const PrimitivePtr kPrimTupleDiv = std::make_shared<Primitive>("tuple_div");
+inline const PrimitivePtr kPrimTupleToArray = std::make_shared<Primitive>("tuple_to_array");
+inline const PrimitivePtr kPrimShapeMul = std::make_shared<Primitive>("shape_mul");
+inline const PrimitivePtr kPrimTupleEqual = std::make_shared<Primitive>("tuple_equal");
+inline const PrimitivePtr kPrimListEqual = std::make_shared<Primitive>("list_equal");
+inline const PrimitivePtr kPrimMakeRange = std::make_shared<Primitive>("make_range");
+inline const PrimitivePtr kPrimStopGradient = std::make_shared<Primitive>("stop_gradient");
+inline const PrimitivePtr kPrimStringEqual = std::make_shared<Primitive>("string_equal");
+inline const PrimitivePtr kPrimStringConcat = std::make_shared<Primitive>("string_concat");
+inline const PrimitivePtr kPrimDictLen = std::make_shared<Primitive>("dict_len");
+inline const PrimitivePtr kPrimFakeBprop = std::make_shared<Primitive>("fake_bprop");
+inline const PrimitivePtr kPrimBroadcastGradientArgs = std::make_shared<Primitive>("BroadcastGradientArgs");
+
 class DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)
