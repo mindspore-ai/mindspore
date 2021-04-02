@@ -499,7 +499,7 @@ class FeedForward(nn.Cell):
 
         self.layernorm = LayerNorm(in_channels=in_channels)
         self.residual_connect = ResidualConnection(dropout_prob=hidden_dropout)
-        self.gelu_act = P.Gelu()
+        self.gelu_act = P.GeLU()
         self.dropout = nn.Dropout(1 - hidden_dropout)
         self.use_dropout = hidden_dropout > 0
         self.reshape = P.Reshape()
