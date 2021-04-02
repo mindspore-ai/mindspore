@@ -370,9 +370,7 @@ STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, cons
 
   const auto &data = tflite_model_buffers.at(tensor->buffer)->data;
   std::string shape_str;
-  if (data.empty()) {
-    shape_vector = {};
-  } else if (type_id == kObjectTypeString) {
+  if (type_id == kObjectTypeString) {
     shape_str += std::to_string(tensor->shape.size()) + ",";
     for (auto &dim : tensor->shape) {
       shape_str += std::to_string(dim) + ",";
