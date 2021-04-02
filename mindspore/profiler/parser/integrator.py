@@ -986,12 +986,11 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
         """Get timeline data from file."""
         timeline_list = self.load_cpu_op_data()
         factor_ns_to_ms = 1e6
-        factor_us_to_ms = 1e3
         start_time = 2
         duration = 3
         for idx, time_item in enumerate(timeline_list):
             time_item[start_time] = float(time_item[start_time]) / factor_ns_to_ms
-            time_item[duration] = float(time_item[duration]) / factor_us_to_ms
+            time_item[duration] = float(time_item[duration])
             timeline_list[idx] = time_item
 
         return timeline_list
