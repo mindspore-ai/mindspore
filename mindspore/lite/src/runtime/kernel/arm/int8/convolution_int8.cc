@@ -19,24 +19,13 @@
 #include "nnacl/int8/conv_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/convolution_creator_manager.h"
-#include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
-#include "src/runtime/kernel/arm/int8/group_convolution_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_3x3_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_slidewindow_int8.h"
 #include "src/runtime/runtime_api.h"
 #ifdef ENABLE_ARM64
 #include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 #endif
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2DFusion;
-using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
 void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
@@ -243,73 +232,4 @@ int ConvolutionInt8CPUKernel::Run() {
   FreeTmpBuffer();
   return RET_OK;
 }
-
-kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                  const InnerContext *ctx, int group) {
-  lite::GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, true);
-  group_conv_creator.SetShapeOfTensors();
-  if (group_conv_creator.CreatGroupConv() != RET_OK) {
-    MS_LOG(ERROR) << "Create group conv failed.";
-    return nullptr;
-  }
-  return new (std::nothrow)
-    GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator.get_group_conv(), group);
-}
-
-kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const InnerContext *ctx, const kernel::KernelKey &desc) {
-  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::LiteKernel *kernel = nullptr;
-
-  auto act_quant_size =
-    MSMAX(inputs.at(kInputIndex)->quant_params().size(), outputs.at(kOutputIndex)->quant_params().size());
-  if (act_quant_size == 1) {  // per tensor
-    if (CheckConvDwUse3X3(conv_param) && conv_param->input_channel_ % C8NUM == 0) {
-#ifdef ENABLE_ARM64
-      kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3Int8CPUKernel(op_parameter, inputs, outputs, ctx);
-#endif
-    }
-    if (kernel == nullptr) {
-      kernel = new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(op_parameter, inputs, outputs, ctx);
-    }
-  } else {  // per channel
-    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWInt8CPUKernel(op_parameter, inputs, outputs, ctx);
-  }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(op_parameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
-  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::LiteKernel *kernel = nullptr;
-
-  if (conv_param->group_ == 1) {
-    kernel = CpuConvInt8KernelSelect(inputs, outputs, op_parameter, ctx);
-  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = CpuConvDwInt8KernelCreator(inputs, outputs, op_parameter, ctx, desc);
-  } else {
-    MS_ASSERT(conv_param->group_ > 1);
-    kernel = CpuGroupConvInt8KernelCreator(inputs, outputs, op_parameter, ctx, conv_param->group_);
-  }
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(op_parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CpuConvInt8KernelCreator)
 }  // namespace mindspore::kernel

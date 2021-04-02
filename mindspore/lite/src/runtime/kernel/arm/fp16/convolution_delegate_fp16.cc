@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/fp16/convolution_delegate_fp16.h"
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/convolution_delegate_fp32.h"
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_winograd_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_1x1_fp16.h"

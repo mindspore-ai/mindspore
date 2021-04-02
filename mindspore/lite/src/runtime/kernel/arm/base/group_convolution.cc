@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
+#include "src/runtime/kernel/arm/base/group_convolution.h"
 #include "src/runtime/infer_manager.h"
 #include "include/errorcode.h"
 
@@ -139,7 +139,7 @@ void GroupConvolutionCPUKernel::SeparateInput(int group_id) {
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
   auto sub_in_data = reinterpret_cast<float *>(group_convs_.at(group_id)->in_tensors().front()->data_c());
-  float *src_ptr = ori_in_data_ + group_id * sub_in_channel;
+  float *src_ptr = reinterpret_cast<float *>(ori_in_data_) + group_id * sub_in_channel;
   float *dst_ptr = sub_in_data;
   for (int i = 0; i < in_plane; ++i) {
     memcpy(dst_ptr, src_ptr, sub_in_channel * sizeof(float));
@@ -155,7 +155,7 @@ void GroupConvolutionCPUKernel::PostConcat(int group_id) {
   int ori_out_channel = sub_out_channel * group_num_;
   auto sub_out_data = reinterpret_cast<float *>(group_convs_.at(group_id)->out_tensors().front()->data_c());
   float *src_ptr = sub_out_data;
-  float *dst_ptr = ori_out_data_ + group_id * sub_out_channel;
+  float *dst_ptr = reinterpret_cast<float *>(ori_out_data_) + group_id * sub_out_channel;
   for (int i = 0; i < out_plane; ++i) {
     memcpy(dst_ptr, src_ptr, sub_out_channel * sizeof(float));
     src_ptr += sub_out_channel;
@@ -164,8 +164,8 @@ void GroupConvolutionCPUKernel::PostConcat(int group_id) {
 }
 
 int GroupConvolutionCPUKernel::Run() {
-  ori_in_data_ = reinterpret_cast<float *>(in_tensors().front()->data_c());
-  ori_out_data_ = reinterpret_cast<float *>(out_tensors().front()->data_c());
+  ori_in_data_ = in_tensors().front()->data_c();
+  ori_out_data_ = out_tensors().front()->data_c();
   for (int i = 0; i < group_num_; ++i) {
     // first, separate group conv input into several parts. This step must be in runtime stage.
     SeparateInput(i);

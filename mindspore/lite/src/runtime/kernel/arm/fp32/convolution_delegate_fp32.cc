@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-#include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32/convolution_delegate_fp32.h"
-#include "src/runtime/kernel/arm/fp32/convolution_creator_manager.h"
+#include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32/convolution_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
+#include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 
@@ -157,6 +161,32 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
   return kernel;
 }
 
+kernel::LiteKernel *DispatchConvDw(const std::vector<lite::Tensor *> &inputs,
+                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                   const InnerContext *ctx) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  kernel::LiteKernel *kernel = nullptr;
+  if (opParameter != nullptr && opParameter->infer_flag_) {
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+    if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
+      kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
+    }
+#endif
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
+    if (kernel == nullptr && CheckConvDwUseIndirectBuffer(conv_param)) {
+      kernel = new (std::nothrow) kernel::ConvolutionDepthwiseIndirectCPUKernel(opParameter, inputs, outputs, ctx);
+    }
+#endif
+    if (kernel == nullptr && conv_param->input_channel_ < 32) {
+      kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWCPUKernel(opParameter, inputs, outputs, ctx);
+    }
+  }
+  if (kernel == nullptr) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
+  }
+  return kernel;
+}
+
 /* creator func */
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
@@ -172,7 +202,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
     kernel = DispatchConvDw(inputs, outputs, op_parameter, ctx);
   } else {
-    kernel = DispatchGroupConv(inputs, outputs, op_parameter, ctx);
+    kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, ctx);
   }
 
   if (kernel == nullptr) {

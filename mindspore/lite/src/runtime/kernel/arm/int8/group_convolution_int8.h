@@ -21,7 +21,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
-#include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
+#include "src/runtime/kernel/arm/base/group_convolution.h"
 
 namespace mindspore::kernel {
 class GroupConvolutionInt8CPUKernel : public GroupConvolutionCPUKernel {
@@ -32,14 +32,8 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionCPUKernel {
       : GroupConvolutionCPUKernel(parameter, inputs, outputs, ctx, std::move(group_convs), group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
-
-  int Run() override;
   void SeparateInput(int group_id) override;
   void PostConcat(int group_id) override;
-
- private:
-  int8_t *ori_in_data_ = nullptr;   // do not free
-  int8_t *ori_out_data_ = nullptr;  // do not free
 };
 }  // namespace mindspore::kernel
 
