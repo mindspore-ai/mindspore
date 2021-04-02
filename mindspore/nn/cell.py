@@ -1036,6 +1036,29 @@ class Cell(Cell_):
         self.add_flags_recursive(**flags)
         return self
 
+    def set_acc(self, acc_type):
+        """
+        In order to improve the network performance, configure the network auto enable to
+        accelerate the algorithm in the algorithm library.
+
+        If `acc_type is not in the algorithm library`, Please view the algorithm in the algorithm library
+        through `algorithm library`.
+
+        Note:
+            Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
+
+        Args:
+            acc_type (:str:`less_bn`): accelerate algorithm.
+
+        Raises:
+            ValueError: If acc_type is not in the algorithm library.
+        """
+        if acc_type not in ("less_bn",):
+            raise ValueError("acc_type is not in the algorithm library.")
+        flags = {"less_bn": acc_type == "less_bn"}
+        self.add_flags_recursive(**flags)
+        return self
+
     def set_grad(self, requires_grad=True):
         """
         Sets the cell flag for gradient.

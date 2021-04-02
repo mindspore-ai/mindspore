@@ -84,6 +84,9 @@ class OptimizeIRPassLib {
   // AccumulateNV2
   SubstitutionPtr accumulaten_eliminater_;
 
+  // Accelerated Algorithm
+  SubstitutionPtr less_batch_normalization_;
+
   // Gradient irpasses
   SubstitutionPtr minmaximum_grad_;
 
