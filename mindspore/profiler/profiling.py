@@ -278,11 +278,9 @@ class Profiler:
 
     def _gpu_analyse(self):
         """Collect and analyse gpu performance data"""
-        if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group" and self._dev_id != str(get_rank()):
+        self._dev_id = context.get_context("device_id")
+        if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
-            logger.error('Please check the Profiler object initialized after mindspore.context.set_auto_parallel_'
-                         'context() and mindspore.communication.management.init(). Profiler should be initialized'
-                         ' after these code.')
         self._gpu_profiler.stop()
         timeline_generator = self._generate_timeline()
 
