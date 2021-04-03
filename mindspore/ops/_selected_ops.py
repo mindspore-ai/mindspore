@@ -73,13 +73,13 @@ class Tanh:
 
 
 @op_selector
-class Gelu:
+class GeLU:
     def __call__(self, *args):
         pass
 
 
 @op_selector
-class FastGelu:
+class FastGeLU:
     def __call__(self, *args):
         pass
 
