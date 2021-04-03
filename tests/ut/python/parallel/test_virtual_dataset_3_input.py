@@ -93,7 +93,7 @@ def test_virtualdataset_cell_3_inputs():
             out = self.matmul2(out, b)
             return out
 
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(VirtualDatasetCellTriple(NetWithLoss(Net(None, None, None))))

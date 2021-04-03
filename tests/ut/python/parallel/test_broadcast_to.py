@@ -64,7 +64,7 @@ _x2 = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
 
 def compile_net(net):
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
@@ -74,7 +74,7 @@ def compile_net(net):
 
 
 def compile_net2(net):
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()

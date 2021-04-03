@@ -95,7 +95,7 @@ def test_embeddinglookup_reducescatter_false_grad():
 
 
 def test_embeddinglookup_reducescatter_true_grad():
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=False)
     shape = [8, 8]
     offset = 8
     net = GradWrap(NetWithLoss(Net(shape, offset)))
