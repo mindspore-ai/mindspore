@@ -78,27 +78,24 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 // a buffer from our child.
 // This function sets the `retryIfEoe` flag when popping from the child connector. This way,
 // this function will retry to pop the connector again and will get the non-EOE buffer if any.
-Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
+Status RepeatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, RepeatOp can't be the first op in pipeline.");
   }
 
-  std::unique_ptr<DataBuffer> buf;
-  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, true));
   // Loop until non EOE is received
-  while (buf->eoe()) {
+  while (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(worker_id));
     if (state_ == OpState::kDeOpIdle) {
-      *p_buffer = std::move(buf);
       return Status::OK();
     }
-    RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, true));
   }
   // Check if the last buf is next eof
-  if (buf->eof()) {
+  if (row->eof()) {
     RETURN_IF_NOT_OK(EofReceived(worker_id));
   }
-  *p_buffer = std::move(buf);
   return Status::OK();
 }
 

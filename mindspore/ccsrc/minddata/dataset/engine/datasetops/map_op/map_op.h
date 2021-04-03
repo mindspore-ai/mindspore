@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "minddata/dataset/callback/ds_callback.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_job.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -192,17 +193,16 @@ class MapOp : public ParallelOp {
   // A unit of job for map worker thread.
   // MapWorkerJob holds a list of MapJob where each MapJob can be a CpuMapJob, GpuMapJob or DvppMapJob.
   struct MapWorkerJob {
-    explicit MapWorkerJob(std::unique_ptr<DataBuffer> db) : databuffer(std::move(db)) {}
+    explicit MapWorkerJob(TensorRow tr) : tensor_row(std::move(tr)) {}
     std::vector<std::shared_ptr<MapJob>> jobs;
-    std::unique_ptr<DataBuffer> databuffer;
+    TensorRow tensor_row;
   };
 
   // A helper function to create jobs for workers.
   Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job);
 
   // A helper function that fetch worker map job from local queues and extract the data and map job list
-  Status FetchNextWork(uint32_t worker_id, std::unique_ptr<DataBuffer> *db,
-                       std::vector<std::shared_ptr<MapJob>> *job_list);
+  Status FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list);
 
   // Local queues where worker threads get a job from
   QueueList<std::unique_ptr<MapWorkerJob>> local_queues_;
@@ -222,6 +222,8 @@ class MapOp : public ParallelOp {
   // Indices of the columns to process.
   std::vector<size_t> to_process_indices_;
 
+  std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
+
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
   // applying a list of TensorOps to each of the data, process the results and then
@@ -234,7 +236,7 @@ class MapOp : public ParallelOp {
   // @param in_buffer A raw pointer to the DataBuffer. A raw pointer is fine because this function doesn't manage memory
   //     and is not shared with other threads.
   // @param[out] new_tensor_table A new Tensor Table to be populated in this function.
-  Status WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_table,
+  Status WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                        const std::vector<std::shared_ptr<MapJob>> &job_list);
 
   // Private function that create the final column name to index mapping and

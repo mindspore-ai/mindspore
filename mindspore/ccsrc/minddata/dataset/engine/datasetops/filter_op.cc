@@ -23,7 +23,6 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_buffer.h"
-#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -80,8 +79,8 @@ Status FilterOp::EofReceived(int32_t) { return Status::OK(); }
 Status FilterOp::EoeReceived(int32_t) { return Status::OK(); }
 
 // Validating if each of the input_columns exists in the DataBuffer.
-Status FilterOp::ValidateInColumns(const std::vector<std::string> *input_columns) {
-  for (const auto &inCol : *input_columns) {
+Status FilterOp::ValidateInColumns(const std::vector<std::string> &input_columns) {
+  for (const auto &inCol : input_columns) {
     bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
     if (!found) {
       std::string err_msg = "Invalid parameter, column name: " + inCol + " does not exist in the dataset columns.";
@@ -111,68 +110,51 @@ void FilterOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status FilterOp::WorkerEntry(int32_t worker_id) {
+  std::unique_ptr<ChildIterator> child_iterator = std::make_unique<ChildIterator>(this, worker_id, 0);
+
   // Handshake with TaskManager that thread creation is successful.
   TaskManager::FindMe()->Post();
-  std::unique_ptr<DataBuffer> in_buffer;
   bool worker_stop = false;
   while (worker_stop == false) {
-    // Getting a databuffer to work on.
-    RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&in_buffer, worker_id));
-    if (in_buffer->eoe()) {
-      filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEoe));
+    // Getting a TensorRow to work on.
+    TensorRow in_row;
+    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&in_row));
+
+    if (in_row.eoe()) {
+      RETURN_IF_NOT_OK(filter_queues_[worker_id]->EmplaceBack(std::make_pair(in_row, filterCtrl::kFilterEoe)));
       continue;
-    } else if (in_buffer->eof()) {
-      filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEof));
+    } else if (in_row.eof()) {
+      RETURN_IF_NOT_OK(filter_queues_[worker_id]->EmplaceBack(std::make_pair(in_row, filterCtrl::kFilterEof)));
       worker_stop = true;
       continue;
     }
 
-    RETURN_IF_NOT_OK(CheckColumns(in_buffer.get(), &in_columns_));
+    RETURN_IF_NOT_OK(ValidateInColumns(in_columns_));
 
-    // if the databuffer was all filtered, it is marked as kFilterEmpty.
-    // if the databuffer was partially filtered, it is marked as kFilterPartial.
-    // if the databuffer was not filtered, it is marked as kFilterFull.
-    int32_t num_rows = in_buffer->NumRows();
-    std::unique_ptr<TensorQTable> new_tensor_table;
-    RETURN_IF_NOT_OK(WorkerCompute(in_buffer.get(), &new_tensor_table));
+    bool result;
+    RETURN_IF_NOT_OK(WorkerCompute(in_row, &result));
 
-    if (new_tensor_table->empty()) {
+    if (result)
       RETURN_IF_NOT_OK(
-        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterEmpty)));
-    } else if (new_tensor_table->size() == num_rows) {
-      in_buffer->set_tensor_table(std::move(new_tensor_table));
+        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_row), filterCtrl::kFilterFull)));
+    else
       RETURN_IF_NOT_OK(
-        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterFull)));
-    } else {  // kFilterPartial
-      in_buffer->set_tensor_table(std::move(new_tensor_table));
-      RETURN_IF_NOT_OK(
-        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_buffer), filterCtrl::kFilterPartial)));
-    }
+        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_row), filterCtrl::kFilterEmpty)));
   }
   return Status::OK();
 }
 
-Status FilterOp::WorkerCompute(DataBuffer *in_buffer, std::unique_ptr<TensorQTable> *out) {
-  *out = std::make_unique<TensorQTable>();
-  int32_t num_rows = in_buffer->NumRows();
-  for (int32_t i = 0; i < num_rows; i++) {
-    TensorRow to_process;
-    TensorRow cur_row;
-    RETURN_IF_NOT_OK(in_buffer->PopRow(&cur_row));
-    if (in_columns_.empty() == true) {
-      MS_LOG(INFO) << "Input columns in filter operator is empty, will apply to the all column in the current table.";
-      to_process = cur_row;
-    } else {
-      (void)std::transform(
-        in_columns_.begin(), in_columns_.end(), std::back_inserter(to_process),
-        [&cur_row, this](const auto &it) -> std::shared_ptr<Tensor> { return cur_row[column_name_id_map_[it]]; });
-    }
-    bool predicate = true;
-    RETURN_IF_NOT_OK(InvokePredicateFunc(to_process, &predicate));
-    if (predicate) {
-      (*out)->push_back(std::move(cur_row));
-    }
+Status FilterOp::WorkerCompute(const TensorRow &in_row, bool *out_predicate) {
+  TensorRow to_process;
+  if (in_columns_.empty() == true) {
+    MS_LOG(INFO) << "Input columns in filter operator is empty, will apply to the all column in the current table.";
+    to_process = in_row;
+  } else {
+    (void)std::transform(
+      in_columns_.begin(), in_columns_.end(), std::back_inserter(to_process),
+      [&in_row, this](const auto &it) -> std::shared_ptr<Tensor> { return in_row[column_name_id_map_[it]]; });
   }
+  RETURN_IF_NOT_OK(InvokePredicateFunc(to_process, out_predicate));
   return Status::OK();
 }
 
@@ -190,37 +172,29 @@ Status FilterOp::Collector() {
   bool collector_stop = false;
   uint64_t task_id_cnt = 0;
   uint64_t out_id_cnt = 0;
-  std::pair<std::unique_ptr<DataBuffer>, filterCtrl> in_pair;
+  std::pair<TensorRow, filterCtrl> in_pair;
   while (collector_stop == false) {
     uint32_t w_id = task_id_cnt % num_workers_;
     RETURN_IF_NOT_OK(filter_queues_[w_id]->PopFront(&in_pair));
     if (in_pair.second == filterCtrl::kFilterFull || in_pair.second == filterCtrl::kFilterPartial ||
         in_pair.second == filterCtrl::kFilterEoe) {
-      if (in_pair.second == filterCtrl::kFilterEoe) UpdateRepeatAndEpochCounter();
       uint32_t out_task_id = out_id_cnt % num_workers_;
-      RETURN_IF_NOT_OK(out_connector_->Add(static_cast<int>(out_task_id), std::move(in_pair.first)));
+      if (in_pair.second == filterCtrl::kFilterEoe) {
+        UpdateRepeatAndEpochCounter();
+        RETURN_IF_NOT_OK(out_connector_->SendEOE(static_cast<int>(out_task_id)));
+      } else {
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(in_pair.first), static_cast<int>(out_task_id)));
+      }
       out_id_cnt++;
       task_id_cnt++;
     } else if (in_pair.second == filterCtrl::kFilterEof) {
       uint32_t out_task_id = out_id_cnt % num_workers_;
-      RETURN_IF_NOT_OK(out_connector_->Add(static_cast<int>(out_task_id), std::move(in_pair.first)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOF(static_cast<int>(out_task_id)));
       collector_stop = true;
     } else {  // kFilterEmpty
       task_id_cnt++;
     }
   }
-  return Status::OK();
-}
-
-// Private function for checking the column legality.
-Status FilterOp::CheckColumns(const DataBuffer *in_buf, const std::vector<std::string> *input_columns) {
-  int32_t num_rows = in_buf->NumRows();
-  int32_t num_cols = in_buf->NumCols();
-  if (num_rows == 0 || num_cols == 0) {
-    RETURN_STATUS_UNEXPECTED("FilterOp is getting an empty DataBuffer.");
-  }
-  // Check if there is invalid column name in the inColumns.
-  RETURN_IF_NOT_OK(ValidateInColumns(input_columns));
   return Status::OK();
 }
 

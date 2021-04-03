@@ -112,6 +112,7 @@ Status BuildVocabOp::operator()() {
       RETURN_IF_NOT_OK(distributor_queue_->EmplaceBack(new_row));
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no op should be after from_dataset (repeat detected)");
     eoe_warning = true;
   }
@@ -184,8 +185,8 @@ Status BuildVocabOp::CollectorThread() {
     for (const std::string &sp_tk : special_tokens_) vocab_->append_word(sp_tk);
   }
 
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
+  RETURN_IF_NOT_OK(out_connector_->SendEOE());
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   // then use std::nth_element to partial sort
   return Status::OK();
 }

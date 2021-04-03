@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace dataset {
 // DbConnector is a derived class from Connector with added logic to handle EOE and EOF.
 // The Connector class itself is responsible to ensure deterministic order on every run.
-class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
+class DbConnector : public Connector<TensorRow> {
  public:
   // Constructor of DbConnector
   // @note DbConnector will create internal N number of blocking queues, where N = nProducers.
@@ -35,7 +35,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
   // @param n_consumers The number of thread consuming data from this DbConnector.
   // @param queue_capacity The number of element (DataBuffer) for each internal queue.
   DbConnector(int32_t n_producers, int32_t n_consumers, int32_t queue_capacity)
-      : Connector<std::unique_ptr<DataBuffer>>(n_producers, n_consumers, queue_capacity), end_of_file_(false) {}
+      : Connector<TensorRow>(n_producers, n_consumers, queue_capacity), end_of_file_(false) {}
 
   // Destructor of DbConnector
   ~DbConnector() = default;
@@ -44,10 +44,19 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
   // @note The caller of this add method should use std::move to pass the ownership to DbConnector.
   // @param worker_id The id of a worker thread calling this method.
   // @param el A rvalue reference to an element to be passed/added/pushed.
-  Status Add(int32_t worker_id, std::unique_ptr<DataBuffer> &&el) noexcept {
-    return (Connector<std::unique_ptr<DataBuffer>>::Push(worker_id, std::move(el)));
+  Status Add(TensorRow &&el, int32_t worker_id = 0) noexcept {
+    return (Connector<TensorRow>::Push(worker_id, std::move(el)));
   }
 
+  Status SendEOE(int32_t worker_id = 0) noexcept {
+    TensorRow eoe = TensorRow(TensorRow::kFlagEOE);
+    return Add(std::move(eoe), worker_id);
+  }
+
+  Status SendEOF(int32_t worker_id = 0) noexcept {
+    TensorRow eof = TensorRow(TensorRow::kFlagEOF);
+    return Add(std::move(eof), worker_id);
+  }
   // Get a unique_ptr<DataBuffer> from the DbConnector.
   // @note After the first EOF Buffer is encountered, subsequent pop()s will return EOF Buffer.
   // This will provide/propagate the EOF to all consumer threads of this Connector.
@@ -56,7 +65,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
   // @param worker_id The id of a worker thread calling this method.
   // @param result The address of a unique_ptr<DataBuffer> where the popped element will be placed.
   // @param retry_if_eoe A flag to allow the same thread invoke pop() again if the current pop returns eoe buffer.
-  Status PopWithRetry(int32_t worker_id, std::unique_ptr<DataBuffer> *result, bool retry_if_eoe = false) noexcept {
+  Status PopWithRetry(int32_t worker_id, TensorRow *result, bool retry_if_eoe = false) noexcept {
     if (result == nullptr) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "[ERROR] nullptr detected when getting data from db connector");
@@ -65,21 +74,17 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
       RETURN_IF_NOT_OK(cv_.Wait(&lk, [this, worker_id]() { return (expect_consumer_ == worker_id) || end_of_file_; }));
       // Once an EOF message is encountered this flag will be set and we can return early.
       if (end_of_file_) {
-        *result = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+        *result = TensorRow(TensorRow::kFlagEOF);
       } else {
         RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
-        if (*result == nullptr) {
-          return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                        "[ERROR] nullptr detected when getting data from db connector");
-        }
         // Setting the internal flag once the first EOF is encountered.
-        if ((*result)->eof()) {
+        if (result->eof()) {
           end_of_file_ = true;
         }
         pop_from_ = (pop_from_ + 1) % num_producers_;
       }
       // Do not increment expect_consumer_ when result is eoe and retry_if_eoe is set.
-      if (!((*result)->eoe() && retry_if_eoe)) {
+      if (!(result->eoe() && retry_if_eoe)) {
         expect_consumer_ = (expect_consumer_ + 1) % num_consumers_;
       }
     }

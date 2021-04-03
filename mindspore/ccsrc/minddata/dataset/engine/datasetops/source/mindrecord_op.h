@@ -134,13 +134,12 @@ class MindRecordOp : public MappableLeafOp {
   // Constructor of the MindRecordOp.
   // @note The builder class should be used to call it
   // @param num_mind_record_workers - The number of workers for the op (run by ShardReader)
-  // @param rows_per_buffer - The requested number of rows per buffer
   // @param dataset_file - dataset files
   // @param op_connector_queue_size - The output connector queue size
   // @param columns_to_load - The list of columns to use (column name)
   // @param operators - ShardOperators for Shuffle, Category, Sample
-  MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::vector<std::string> dataset_file,
-               bool load_dataset, int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
+  MindRecordOp(int32_t num_mind_record_workers, std::vector<std::string> dataset_file, bool load_dataset,
+               int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded_,
                const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes_);
 
@@ -195,7 +194,7 @@ class MindRecordOp : public MappableLeafOp {
   std::string Name() const override { return "MindRecordOp"; }
 
  private:
-  Status GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_buffer, int64_t buffer_id, int32_t worker_id);
+  Status GetRowFromReader(TensorRow *fetched_row, int64_t row_id, int32_t worker_id);
 
   // Parses a single cell and puts the data into a tensor
   // @param tensor_row - the tensor row to put the parsed data in

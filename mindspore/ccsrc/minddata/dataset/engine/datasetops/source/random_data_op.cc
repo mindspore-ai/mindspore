@@ -46,8 +46,8 @@ RandomDataOp::Builder::Builder()
 Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
   RETURN_IF_NOT_OK(SanityCheck());
 
-  *out_op = std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_rows_per_buffer_,
-                                           builder_total_rows_, std::move(builder_data_schema_));
+  *out_op = std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_total_rows_,
+                                           std::move(builder_data_schema_));
 
   return Status::OK();
 }
@@ -61,13 +61,11 @@ Status RandomDataOp::Builder::SanityCheck() const {
 }
 
 // Constructor for RandomDataOp
-RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
+RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t total_rows,
                            std::unique_ptr<DataSchema> data_schema)
     : ParallelOp(num_workers, op_connector_size),
-      buffer_id_(0),
-      rows_per_buffer_(rows_per_buffer),
       total_rows_(total_rows),
-      epoch_buffers_sent_(0),
+      epoch_rows_sent_(0),
       guys_in_(0),
       guys_out_(num_workers_),
       eoe_worker_id_(0),
@@ -97,8 +95,7 @@ void RandomDataOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nTotal_rows: " << total_rows_ << "\nRows per buffer: " << rows_per_buffer_ << "\nSchema:\n"
-        << *data_schema_ << "\n\n";
+    out << "\nTotal_rows: " << total_rows_ << " \nSchema:\n" << *data_schema_ << "\n\n";
   }
 }
 
@@ -147,18 +144,11 @@ Status RandomDataOp::operator()() {
                                "RandomDataOp expects total_rows < num_workers. total_row=" +
                                  std::to_string(total_rows_) + ", num_workers=" + std::to_string(num_workers_) + " .");
 
-  // First, compute how many buffers we'll need to satisfy the total row count.
-  // The only reason we do this is for the purpose of throttling worker count if needed.
-  int64_t buffers_needed = total_rows_ / rows_per_buffer_;
-  if (total_rows_ % rows_per_buffer_ != 0) {
-    buffers_needed++;
-  }
-
-  // If the amount of workers we have exceeds the number of buffers to produce, then we'll have
+  // If the amount of workers we have exceeds the number of rows to produce, then we'll have
   // idle workers doing nothing.  In that case, let's throttle the worker count.
-  if (num_workers_ > buffers_needed) {
-    MS_LOG(INFO) << "RandomDataOp throttling worker count from " << num_workers_ << "to " << buffers_needed;
-    num_workers_ = buffers_needed;
+  if (num_workers_ > total_rows_) {
+    MS_LOG(INFO) << "RandomDataOp throttling worker count from " << num_workers_ << "to " << total_rows_;
+    num_workers_ = total_rows_;
     num_producers_ = num_workers_;
     guys_out_ = num_workers_;
     // The output connector was already created with a different worker count.  We have to drop and recreate
@@ -181,18 +171,15 @@ Status RandomDataOp::operator()() {
     currentWorker = (currentWorker + 1) % num_workers_;
   }
 
-  // Next, compute the total buffer count.  This stat is needed during reset logic
+  // Next, compute the total rows count.  This stat is needed during reset logic
   for (int32_t w = 0; w < num_workers_; w++) {
-    int64_t worker_buffers = 0;
-    worker_buffers = worker_max_rows_[w] / rows_per_buffer_;
-    if (worker_max_rows_[w] % rows_per_buffer_ != 0) worker_buffers++;
-    epoch_buffers_sent_ += worker_buffers;
+    epoch_rows_sent_ += worker_max_rows_[w];
   }
 
   // For the connector to work, we need to target the correct worker channel for the eoe.
   // This will initialize it for the first one.  reset() handles for the rest of the epochs.
-  eoe_worker_id_ = epoch_buffers_sent_ % num_workers_;
-  epoch_buffers_sent_++;  // Add the eoe buffer to the count for subsequent epochs
+  eoe_worker_id_ = epoch_rows_sent_ % num_workers_;
+  epoch_rows_sent_++;  // Add the eoe row to the count for subsequent epochs
 
   // RandomDataOp doesn't need the master thread to stay around.  Kick off the workers and then master exits.
   RETURN_IF_NOT_OK(
@@ -228,16 +215,14 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
     // Prepare for sync
     all_out_.Clear();
     // Always flow eoe at the end
-    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    RETURN_IF_NOT_OK(out_connector_->Add(eoe_worker_id_, std::move(eoe_buffer)));
+    RETURN_IF_NOT_OK(out_connector_->SendEOE(eoe_worker_id_));
     // If we're done then also flow the eof
     if (*quitting) {
       // The eof needs to be sent from the next sender in the round robin, so +1
       int32_t eof_worker_id = (eoe_worker_id_ + 1) % num_workers_;
       MS_LOG(INFO) << "RandomDataOp worker " << worker_id << " has no more epochs.  sending eof as worker "
                    << eof_worker_id;
-      std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-      RETURN_IF_NOT_OK(out_connector_->Add(eof_worker_id, std::move(eof_buffer)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOF(eof_worker_id));
     }
   }
 
@@ -290,21 +275,12 @@ Status RandomDataOp::WorkerEntry(int32_t worker_id) {
       RETURN_IF_NOT_OK(CreateRandomRow(worker_id, &new_row));
 
       // Add the row to our table
-      new_tensor_table->push_back(std::move(new_row));
       worker_rows_packed_[worker_id]++;
 
-      // If the tensor table is at capacity then it's time to send it to output
-      if (new_tensor_table->size() == rows_per_buffer_) {
-        RETURN_IF_NOT_OK(PackAndSend(worker_id, std::move(new_tensor_table)));
-      }
-    } else {
-      // We've reached the total row count for this worker, so it's time for epoch sync.
-      // There is likely some records built but not sent yet, so take care of those first
-      // (this buffer will be smaller than rows_per_buffer)
-      if (new_tensor_table != nullptr && new_tensor_table->size() > 0) {
-        RETURN_IF_NOT_OK(PackAndSend(worker_id, std::move(new_tensor_table)));
-      }
+      // Send new_row out
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), worker_id));
 
+    } else {
       // Now, let's enter the epoch sync
       RETURN_IF_NOT_OK(EpochSync(worker_id, &quitting));
     }
@@ -312,14 +288,6 @@ Status RandomDataOp::WorkerEntry(int32_t worker_id) {
 
   MS_LOG(INFO) << "RandomDataOp worker " << worker_id << " is now quitting.";
 
-  return Status::OK();
-}
-
-// A helper function to stuff the tensor table into a buffer and send it to output connector
-Status RandomDataOp::PackAndSend(int32_t worker_id, std::unique_ptr<TensorQTable> in_table) {
-  auto new_buffer = std::make_unique<DataBuffer>(GetNextBufferId(), DataBuffer::kDeBFlagNone);
-  new_buffer->set_tensor_table(std::move(in_table));
-  RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(new_buffer)));
   return Status::OK();
 }
 
@@ -385,7 +353,6 @@ Status RandomDataOp::Reset() {
     worker_rows_packed_[w] = 0;
     worker_max_rows_[w] = 0;
   }
-  buffer_id_ = 0;
 
   // Re-assign round robin row counts, starting from the worker after the one that gave
   // the eoe last time
@@ -396,7 +363,7 @@ Status RandomDataOp::Reset() {
   }
 
   // Compute which worker should get the eoe for the next epoch
-  eoe_worker_id_ = ((epoch_buffers_sent_ % num_workers_) + eoe_worker_id_) % num_workers_;
+  eoe_worker_id_ = ((epoch_rows_sent_ % num_workers_) + eoe_worker_id_) % num_workers_;
 
   // Wake up the workers to get them going again in a new epoch
   guys_out_ = 0;

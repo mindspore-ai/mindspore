@@ -203,8 +203,7 @@ class BatchOp : public ParallelOp {
   // @param int32_t size - batch_size
   // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @return Status The status code returned
-  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
-                          dsize_t batch_size);
+  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size);
 
   // @param table
   // @param const PadInfo &pad_info pad info
@@ -226,8 +225,7 @@ class BatchOp : public ParallelOp {
 
   // Generate buffer with batched tensors
   // @return Status The status code returned
-  Status MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
-                           std::unique_ptr<DataBuffer> *db);
+  Status MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row);
 
 #ifdef ENABLE_PYTHON
   // Function that calls pyfunc to perform map on batch
@@ -259,7 +257,7 @@ class BatchOp : public ParallelOp {
   // @return Status The status code returned
   Status LaunchThreadsAndInitOp();
 
-  Status GetNextRow(TensorRow *row) override;
+  Status GetNextRowPullMode(TensorRow *row) override;
 
 #ifdef ENABLE_PYTHON
   // Invoke batch size function with current BatchInfo to generate batch size.

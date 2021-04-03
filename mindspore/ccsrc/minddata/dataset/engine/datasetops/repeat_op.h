@@ -91,7 +91,7 @@ class RepeatOp : public PipelineOp {
   // @param worker_id - The worker id
   // @param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
   // @return Status The status code returned
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) override;
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
 
   // Base-class override for handling cases when an eoe is received.
   // @param worker_id - The worker id

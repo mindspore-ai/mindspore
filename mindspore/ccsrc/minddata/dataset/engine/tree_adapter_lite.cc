@@ -56,7 +56,7 @@ Status TreeAdapterLite::BuildTree(std::shared_ptr<DatasetNode> root_ir) {
 
 Status TreeAdapterLite::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(root_);
-  RETURN_IF_NOT_OK(root_->GetNextRow(row));
+  RETURN_IF_NOT_OK(root_->GetNextRowPullMode(row));
   return Status::OK();
 }
 

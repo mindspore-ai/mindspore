@@ -133,7 +133,6 @@ class CsvOp : public NonMappableLeafOp {
     std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_;
     State cur_state_;
     size_t pos_;
-    int cur_row_;
     int cur_col_;
     int64_t total_rows_;
     int64_t start_offset_;
@@ -141,8 +140,7 @@ class CsvOp : public NonMappableLeafOp {
     StateDiagram sd;
     StateDiagram sdl;
     std::vector<char> str_buf_;
-    std::unique_ptr<TensorQTable> tensor_table_;
-    std::unique_ptr<DataBuffer> cur_buffer_;
+    TensorRow cur_row_;
     std::string err_message_;
     std::string file_path_;
   };

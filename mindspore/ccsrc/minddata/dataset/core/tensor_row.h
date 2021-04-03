@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,14 @@ using TensorQTable = std::deque<TensorRow>;  // A different flavour of tensor ta
 class TensorRow {
  public:
   static constexpr row_id_type kDefaultRowId = -1;  // Default row id
+
+  enum TensorRowFlags : uint32_t {
+    kFlagNone = 0,
+    kFlagEOF = 1,         // The buffer is an eof end-of-data msg
+    kFlagEOE = 1u << 1,   // The buffer is an eoe end-of-epoch msg
+    kFlagWait = 1u << 2,  // The buffer is an control signal for workers to suspend operations
+    kFlagQuit = 1u << 3   // The buffer is a control signal for workers to quit
+  };
 
   // Type definitions
   using size_type = dsize_t;
@@ -222,10 +230,25 @@ class TensorRow {
 
   const_iterator end() const { return row_.end(); }
 
+  // Convenience getter functions for flag checking
+  bool eof() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagEOF)); }
+
+  bool eoe() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagEOE)); }
+
+  bool wait() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagWait)); }
+
+  bool quit() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagQuit)); }
+
+  TensorRowFlags Flags() { return tensor_row_flag_; }
+
+  explicit TensorRow(TensorRowFlags);
+
  protected:
   row_id_type id_;
   std::vector<std::string> path_;
   std::vector<std::shared_ptr<Tensor>> row_;
+
+  TensorRowFlags tensor_row_flag_;
 };
 }  // namespace dataset
 }  // namespace mindspore

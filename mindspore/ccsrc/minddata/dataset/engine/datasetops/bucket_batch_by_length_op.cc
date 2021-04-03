@@ -136,11 +136,11 @@ Status BucketBatchByLengthOp::operator()() {
     }
 
     // need to send EOE manually since we set state to idle in EoeRecieved()
-    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
+    RETURN_IF_NOT_OK(out_connector_->SendEOE());
 
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
   }
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
 
   return Status::OK();
 }
@@ -198,13 +198,11 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
   // PadColumns will change the data in bucket
   RETURN_IF_NOT_OK(BatchOp::PadColumns(bucket, pad_info_copy, column_name_id_map_));
 
-  std::unique_ptr<TensorQTable> batched_bucket = std::make_unique<TensorQTable>();
+  TensorRow batched_bucket;
   RETURN_IF_NOT_OK(BatchOp::BatchRows(bucket, &batched_bucket, batch_size));
   (*bucket)->clear();
 
-  std::unique_ptr<DataBuffer> batched_buffer = std::make_unique<DataBuffer>(batch_count_, DataBuffer::kDeBFlagNone);
-  batched_buffer->set_tensor_table(std::move(batched_bucket));
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(batched_buffer)));
+  RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket), 0));
 
   batch_count_++;
 

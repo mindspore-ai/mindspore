@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/queue.h"
@@ -133,7 +134,7 @@ class FilterOp : public ParallelOp {
   std::vector<std::string> in_columns_;
 
   // Internal queue for filter.
-  QueueList<std::pair<std::unique_ptr<DataBuffer>, filterCtrl>> filter_queues_;
+  QueueList<std::pair<TensorRow, filterCtrl>> filter_queues_;
 
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of FilterOp, getting the data from previous Op, validating user specified column names,
@@ -143,11 +144,10 @@ class FilterOp : public ParallelOp {
   Status WorkerEntry(int32_t worker_id) override;  //  In: workerId assigned by tree_
 
   // Filter the data by  predicate function .
-  // @param in_buffer input data buffer.
-  // @param to_proess_indices Indices of columns to be processed.
-  // @param out data buffer that are filtered by predicate.
+  // @param in_row input row.
+  // @param out_predicate result boolean to filter or not.
   // @return Status The status code returned
-  Status WorkerCompute(DataBuffer *in_buffer, std::unique_ptr<TensorQTable> *out);
+  Status WorkerCompute(const TensorRow &in_row, bool *out_predicate);
 
   // Collector databuffer.
   // @return Status The status code returned
@@ -167,14 +167,7 @@ class FilterOp : public ParallelOp {
   // exist in the DataBuffer.
   // @param input_columns The vector of input column names used in the current thread.
   // @return Status The status code returned
-  Status ValidateInColumns(const std::vector<std::string> *input_columns);
-
-  // Private function for checking the column legality
-  // @param in_buf A raw pointer to the DataBuffer. A raw pointer is fine because this function does not manage memory
-  //     and is not shared with other threads.
-  // @param[out] to_process_indices Indices of columns that will feed to predicate.
-  // @param input_columns The vector of input column names used in the current thread.
-  Status CheckColumns(const DataBuffer *in_buf, const std::vector<std::string> *input_columns);
+  Status ValidateInColumns(const std::vector<std::string> &input_columns);
 };
 
 }  // namespace dataset

@@ -59,32 +59,24 @@ RenameOp::~RenameOp() {}
 // main entry point for rename
 Status RenameOp::operator()() {
   TaskManager::FindMe()->Post();
-  std::unique_ptr<DataBuffer> curr_buffer;
-  RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
-  if (curr_buffer->buffer_flags() != DataBuffer::kDeBFlagNone) {
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
-    std::string err_msg = "Rename first buffer got was control signal";
-    // if 1st eoe or eof, pass it on then return
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
+  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
 
-  while (curr_buffer->eof() == false) {
-    while (curr_buffer->eoe() == false) {
-      // push the renamed input buffer
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+
+  while (!new_row.eof()) {
+    while (!new_row.eoe()) {
       MS_LOG(DEBUG) << "Rename operator pushing next buffer.";
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
-      RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
-    }  // end of while eoe loop
-
-    // we got eoe, now try again until we get eof
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
+      RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+    }
+    RETURN_IF_NOT_OK(out_connector_->SendEOE());
     MS_LOG(DEBUG) << "Rename operator EOE Received.";
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     MS_LOG(DEBUG) << "Rename operator fetching buffer after EOE.";
-    RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
-  }  // end of while eof loop
-
-  MS_LOG(DEBUG) << "Rename opeerator EOF Received.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+  }
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
+  MS_LOG(DEBUG) << "Rename operator EOF Received.";
   return Status::OK();
 }
 

@@ -136,12 +136,11 @@ class RandomDataOp : public ParallelOp {
    * @note Private constructor.  Must use builder to construct.
    * @param num_workers - The number of workers
    * @param op_connector_size - The size of the output connector
-   * @param rows_per_buffer - The number of rows in each DataBuffer
    * @param data_schema - A user-provided schema
    * @param total_rows - The total number of rows in the dataset
    * @return Builder - The modified builder by reference
    */
-  RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
+  RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t total_rows,
                std::unique_ptr<DataSchema> data_schema);
 
   /**
@@ -214,14 +213,6 @@ class RandomDataOp : public ParallelOp {
   Status EpochSync(int32_t worker_id, bool *quitting);
 
   /**
-   * A helper function to stuff the tensor table into a buffer and send it to output connector
-   * @param worker_id - The worker id
-   * @param in_table - The tensor table to pack and send
-   * @return Status The status code returned
-   */
-  Status PackAndSend(int32_t worker_id, std::unique_ptr<TensorQTable> in_table);
-
-  /**
    * A helper function to create random data for the row
    * @param worker_id - The worker id
    * @param new_row - The output row to produce
@@ -240,23 +231,12 @@ class RandomDataOp : public ParallelOp {
     return uniDist(rand_gen_);
   }
 
-  /**
-   * A quick inline for producing the next buffer id in sequence, threadsafe
-   * @return - The next buffer id.
-   */
-  inline int32_t GetNextBufferId() {
-    std::unique_lock<std::mutex> lock(buffer_id_mutex_);
-    return ++buffer_id_;
-  }
-
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
-  int32_t buffer_id_;
-  int64_t rows_per_buffer_;
   int64_t total_rows_;
-  int64_t epoch_buffers_sent_;
+  int64_t epoch_rows_sent_;
   std::atomic<int32_t> guys_in_;
   std::atomic<int32_t> guys_out_;
   int32_t eoe_worker_id_;
@@ -266,7 +246,6 @@ class RandomDataOp : public ParallelOp {
   std::mt19937 rand_gen_;
   WaitPost epoch_sync_wait_post_;
   WaitPost all_out_;
-  std::mutex buffer_id_mutex_;
 };  // class RandomDataOp
 }  // namespace dataset
 }  // namespace mindspore

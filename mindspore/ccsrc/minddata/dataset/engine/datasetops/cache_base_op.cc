@@ -174,7 +174,6 @@ Status CacheBase::FetchSamplesToWorkers() {
 }
 
 Status CacheBase::FetchFromCache(int32_t worker_id) {
-  int64_t buffer_id = worker_id;
   std::unique_ptr<IOBlock> blk;
   do {
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&blk));
@@ -185,9 +184,9 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
         wait_for_workers_post_.Set();
       }
     } else if (blk->eof()) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOF(worker_id));
     } else if (blk->eoe()) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOE(worker_id));
     } else {
       std::vector<int64_t> keys;
       RETURN_IF_NOT_OK(blk->GetKeys(&keys));
@@ -195,8 +194,6 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
         // empty key is a quit signal for workers
         break;
       }
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      std::unique_ptr<TensorQTable> que = std::make_unique<TensorQTable>();
       for (auto row_id : keys) {
         TensorRow row;
         // Block until the row shows up in the pool.
@@ -209,11 +206,8 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
             RETURN_STATUS_UNEXPECTED(errMsg);
           }
         }
-        que->push_back(std::move(row));
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(row), worker_id));
       }
-      db->set_tensor_table(std::move(que));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
     }
   } while (true);
   return Status::OK();

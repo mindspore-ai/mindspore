@@ -19,9 +19,9 @@
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/skip_op.h"
 #include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -69,57 +69,32 @@ void SkipOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-// Base-class override for handling cases when an eoe is received.
-Status SkipOp::EoeReceived(int32_t worker_id) {
-  skip_count_ = 0;
-  state_ = OpState::kDeOpIdle;
-  return Status::OK();
-}
-
 // main entry point for skip
 Status SkipOp::operator()() {
   TaskManager::FindMe()->Post();
-  std::unique_ptr<DataBuffer> curr_buffer;
-  RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
+  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
 
-  while (curr_buffer->eof() == false) {
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+  while (!new_row.eof()) {
     // Reset count
     skip_count_ = 0;
-    while (curr_buffer->eoe() == false) {
+    while (!new_row.eoe()) {
       // Drop first count rows
-      while (skip_count_ < max_skips_) {
-        if (curr_buffer->eoe() || curr_buffer->eof()) {
-          break;
-        }
-        // Consider the rows of buffer more than one
-        TensorRow drop_row;
-        int row_num = curr_buffer->NumRows();
-        int drop_num = row_num + skip_count_ < max_skips_ ? row_num : max_skips_ - skip_count_;
-        skip_count_ += drop_num;
-        for (int i = 0; i < drop_num; i++) {
-          RETURN_IF_NOT_OK(curr_buffer->PopRow(&drop_row));
-        }
-        if (curr_buffer->NumRows() == 0) {
-          RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
-        }
+      if (skip_count_ < max_skips_) {
+        skip_count_++;
+      } else {
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
       }
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
-      RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
+      RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     // we got eoe, now try again until we got eof
     MS_LOG(DEBUG) << "Skip operator EOE Received.";
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
-    RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
+    RETURN_IF_NOT_OK(out_connector_->SendEOE());
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   }
-
   MS_LOG(DEBUG) << "Skip operator EOF Received.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
-  return Status::OK();
-}
-
-// Base-class override for handling cases when an eof is received.
-Status SkipOp::EofReceived(int32_t worker_id) {
-  MS_LOG(DEBUG) << "Skip operator EOF received, do nothing now.";
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 

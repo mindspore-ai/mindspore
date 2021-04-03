@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 
@@ -111,7 +112,7 @@ class ConcatOp : public PipelineOp {
   Status GetNumClasses(int64_t *num_classes) override;
 
  private:
-  Status Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf);
+  Status Verify(int32_t id, const TensorRow &tensor_row);
 
   int32_t children_num_;                                     // The num of child of parent node.
   std::unordered_map<std::string, int32_t> column_name_id_;  // Mapping between col index and col name
@@ -120,6 +121,8 @@ class ConcatOp : public PipelineOp {
   std::shared_ptr<SamplerRT> sampler_;
   std::vector<std::pair<int, int>> children_flag_and_nums_;
   std::vector<std::pair<int, int>> children_start_end_index_;
+
+  std::vector<std::unique_ptr<ChildIterator>> children_iterators_;  // Iterator for fetching.
 };
 }  // namespace dataset
 }  // namespace mindspore

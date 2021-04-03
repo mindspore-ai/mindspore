@@ -76,30 +76,21 @@ Status CacheMergeOp::operator()() {
 // until it shows up in the pool.
 Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
-  std::shared_ptr<DatasetOp> cache_hit_stream = child_[kCacheHitChildIdx];
-  std::unique_ptr<DataBuffer> db_ptr;
-  RETURN_IF_NOT_OK(cache_hit_stream->GetNextBuffer(&db_ptr, worker_id));
-  while (!db_ptr->eof()) {
-    if (db_ptr->eoe()) {
+  TensorRow new_row;
+  auto child_iterator = std::make_unique<ChildIterator>(this, worker_id, kCacheHitChildIdx);
+  RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+  while (!new_row.eof()) {
+    if (new_row.eoe()) {
       RETURN_IF_NOT_OK(EoeReceived(worker_id));
-      db_ptr.reset();
-      RETURN_IF_NOT_OK(cache_hit_stream->GetNextBuffer(&db_ptr, worker_id));
+      RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
     } else {
-      // See if there is any missing row
-      auto tbl = std::make_unique<TensorQTable>();
-      while (db_ptr->NumRows() > 0) {
-        TensorRow row;
-        RETURN_IF_NOT_OK(db_ptr->PopRow(&row));
-        if (row.empty()) {
-          auto row_id = row.getId();
-          // Block until the row shows up in the pool.
-          RETURN_IF_NOT_OK(cache_miss_.PopFront(row_id, &row));
-        }
-        tbl->push_back(std::move(row));
+      if (new_row.empty()) {
+        auto row_id = new_row.getId();
+        // Block until the row shows up in the pool.
+        RETURN_IF_NOT_OK(cache_miss_.PopFront(row_id, &new_row));
       }
-      db_ptr->set_tensor_table(std::move(tbl));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db_ptr)));
-      RETURN_IF_NOT_OK(cache_hit_stream->GetNextBuffer(&db_ptr, worker_id));
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), worker_id));
+      RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
     }
   }
   RETURN_IF_NOT_OK(EofReceived(worker_id));
@@ -111,16 +102,16 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
   // We will simply pop TensorRow from the stream and insert them into the pool and
   // wake up any worker that is awaiting on the missing TensorRow.
   // If we see an eoe, ignore it. For eof, we exit.
-  std::shared_ptr<DatasetOp> cache_missing_stream = child_[kCacheMissChildIdx];
   // Before we start, cache the schema at the server. Pick one of the workers
   // do it. The schema should have been done at prepare time.
   if (workerId == 0) {
     RETURN_IF_NOT_OK(cache_client_->CacheSchema(column_name_id_map()));
   }
-  std::unique_ptr<DataBuffer> db_ptr;
-  RETURN_IF_NOT_OK(cache_missing_stream->GetNextBuffer(&db_ptr, workerId));
-  while (!db_ptr->eof()) {
-    if (db_ptr->eoe()) {
+  TensorRow new_row;
+  auto child_iterator = std::make_unique<ChildIterator>(this, workerId, kCacheMissChildIdx);
+  RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+  while (!new_row.eof()) {
+    if (new_row.eoe()) {
       // Ignore it.
       MS_LOG(DEBUG) << "Ignore eoe";
       // However we need to flush any left over from the async write buffer. But any error
@@ -135,36 +126,32 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
         }
       }
     } else {
-      while (db_ptr->NumRows() > 0) {
-        TensorRow row;
-        RETURN_IF_NOT_OK(db_ptr->PopRow(&row));
-        row_id_type row_id = row.getId();
-        if (row_id < 0) {
-          std::string errMsg = "Expect positive row id: " + std::to_string(row_id);
-          RETURN_STATUS_UNEXPECTED(errMsg);
-        }
-        if (cache_missing_rows_) {
-          // Technically number of this row shows up in the cache miss stream is equal to the number
-          // of P() call. However the cleaner wants it too. So we need an extra copy.
-          TensorRowCacheRequest *rq;
-          RETURN_IF_NOT_OK(GetRq(row_id, &rq));
-          if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
-            // We will send the request async. But any error we most
-            // likely ignore and continue.
-            Status rc;
-            rc = rq->AsyncSendCacheRequest(cache_client_, row);
-            if (rc.IsOk()) {
-              RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
-            } else if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
-              cache_missing_rows_ = false;
-              cache_client_->ServerRunningOutOfResources();
-            }
+      row_id_type row_id = new_row.getId();
+      if (row_id < 0) {
+        std::string errMsg = "Expect positive row id: " + std::to_string(row_id);
+        RETURN_STATUS_UNEXPECTED(errMsg);
+      }
+      if (cache_missing_rows_) {
+        // Technically number of this row shows up in the cache miss stream is equal to the number
+        // of P() call. However the cleaner wants it too. So we need an extra copy.
+        TensorRowCacheRequest *rq;
+        RETURN_IF_NOT_OK(GetRq(row_id, &rq));
+        if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
+          // We will send the request async. But any error we most
+          // likely ignore and continue.
+          Status rc;
+          rc = rq->AsyncSendCacheRequest(cache_client_, new_row);
+          if (rc.IsOk()) {
+            RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
+          } else if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
+            cache_missing_rows_ = false;
+            cache_client_->ServerRunningOutOfResources();
           }
         }
-        RETURN_IF_NOT_OK(cache_miss_.Add(row_id, std::move(row)));
       }
+      RETURN_IF_NOT_OK(cache_miss_.Add(row_id, std::move(new_row)));
     }
-    RETURN_IF_NOT_OK(cache_missing_stream->GetNextBuffer(&db_ptr, workerId));
+    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
   }
   return Status::OK();
 }
@@ -265,14 +252,14 @@ Status CacheMergeOp::Builder::Build(std::shared_ptr<CacheMergeOp> *ptr) {
 Status CacheMergeOp::EoeReceived(int32_t worker_id) {
   // Send the eoe up.
   MS_LOG(DEBUG) << "Cache merge sending eoe";
-  return DatasetOp::EoeReceived(worker_id);
+  return out_connector_->SendEOE(worker_id);
 }
 
 // Base-class override for handling cases when an eof is received.
 Status CacheMergeOp::EofReceived(int32_t worker_id) {
   // Send the eof up.
   MS_LOG(DEBUG) << "Cache merge sending eof";
-  return DatasetOp::EofReceived(worker_id);
+  return out_connector_->SendEOF(worker_id);
 }
 
 Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowCacheRequest **out) {

@@ -61,24 +61,21 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status EpochCtrlOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
+Status EpochCtrlOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("EpochCtrlOp can't be the leaf node.");
   }
 
-  std::unique_ptr<DataBuffer> buf;
-
   // `retry_if_eoe` is false because EpochCtrlOp does not eat EOE.
-  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, false));
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, false));
 
   // Only intercept EOE for EoeReceived processing, after that the EOE is forwarded to next op.
   // Other databuffers containing data or EOF will simply be forwarded.
   // EOF can simply be forwarded because this op does not spawn any thread, thus does not require clean up.
-  if (buf->eoe()) {
+  if (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(worker_id));
   }
 
-  *p_buffer = std::move(buf);
   return Status::OK();
 }
 

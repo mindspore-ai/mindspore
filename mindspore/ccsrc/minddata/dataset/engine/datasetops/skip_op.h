@@ -66,14 +66,6 @@ class SkipOp : public PipelineOp {
   // @return Status The status code returned
   Status operator()() override;
 
-  // Base-class override for handling cases when an eoe is received.
-  // @param worker_id - The worker id
-  Status EoeReceived(int32_t worker_id) override;
-
-  // Base-class override for handling cases when an eof is received.
-  // @param worker_id - The worker id
-  Status EofReceived(int32_t worker_id) override;
-
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kSkipOp; }
@@ -81,6 +73,8 @@ class SkipOp : public PipelineOp {
  private:
   int32_t max_skips_;   // The number of skips that the user requested
   int32_t skip_count_;  // A counter for the current number of executed skips
+
+  std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
 };
 }  // namespace dataset
 }  // namespace mindspore

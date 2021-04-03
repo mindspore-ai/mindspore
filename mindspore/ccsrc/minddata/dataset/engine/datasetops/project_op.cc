@@ -67,32 +67,25 @@ void ProjectOp::Print(std::ostream &out, bool show_all) const {
 }
 
 // Gets a buffer from the child operator and projects the buffer.
-Status ProjectOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
-  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(p_buffer, worker_id, retry_if_eoe));
-  if (!((*p_buffer)->eoe()) && !((*p_buffer)->eof())) {
-    RETURN_IF_NOT_OK(Project(p_buffer));
+Status ProjectOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+  if (!row->eoe() && !row->eof()) {
+    *row = Project(*row);
   }
-  if ((*p_buffer)->eoe()) {
+  if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
   }
   return Status::OK();
 }
 
-Status ProjectOp::Project(std::unique_ptr<DataBuffer> *data_buffer) {
-  std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
-  while ((*data_buffer)->NumRows() > 0) {
-    TensorRow current_row;
-    RETURN_IF_NOT_OK((*data_buffer)->PopRow(&current_row));
-    TensorRow new_row;
-    (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(),
-                         std::back_inserter(new_row), [&current_row](uint32_t x) { return current_row[x]; });
-    // Now if columns changed after map, we don't know which column we should keep,
-    // so temporarily we don't support print file_path after ProjectOp.
-    new_row.setPath({});
-    new_tensor_table->push_back(new_row);
-  }
-  (*data_buffer)->set_tensor_table(std::move(new_tensor_table));
-  return Status::OK();
+TensorRow ProjectOp::Project(const TensorRow &row) {
+  TensorRow new_row;
+  (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(), std::back_inserter(new_row),
+                       [&row](uint32_t x) { return row[x]; });
+  // Now if columns changed after map, we don't know which column we should keep,
+  // so temporarily we don't support print file_path after ProjectOp.
+  new_row.setPath({});
+  return new_row;
 }
 
 // Class functor operator () override.
@@ -152,10 +145,10 @@ Status ProjectOp::ComputeColMap() {
   return Status::OK();
 }
 
-Status ProjectOp::GetNextRow(TensorRow *row) {
+Status ProjectOp::GetNextRowPullMode(TensorRow *row) {
   ComputeColMap();
   TensorRow new_row;
-  RETURN_IF_NOT_OK(child_[0]->GetNextRow(&new_row));
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
   (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(), std::back_inserter(*row),
                        [&new_row](uint32_t x) { return new_row[x]; });
   // Now if columns changed after map, we don't know which column we should keep,

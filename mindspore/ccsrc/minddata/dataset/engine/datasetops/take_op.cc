@@ -20,6 +20,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -69,60 +70,32 @@ void TakeOp::Print(std::ostream &out, bool show_all) const {
 // Main entry point for Take
 Status TakeOp::operator()() {
   TaskManager::FindMe()->Post();
-  std::unique_ptr<DataBuffer> buf;
-  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
+  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
 
-  while (buf->eof() == false) {
-    if (take_count_ == max_takes_) {
-      // Do drain Operation
-      while (!buf->eoe() && !buf->eof()) {
-        RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+
+  while (!new_row.eof()) {
+    while (!new_row.eoe()) {
+      if (take_count_ < max_takes_) {
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
+        take_count_++;
+        RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+      }
+      if (take_count_ == max_takes_) {
+        RETURN_IF_NOT_OK(child_iterator_->Drain());
+        break;
       }
     }
-
-    // Loop until non EOE is received
-    if (buf->eoe()) {
-      UpdateRepeatAndEpochCounter();
-      take_count_ = 0;
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
-      continue;
-    }
-
-    // Get buffer and push back when take_count is still small
-    if (take_count_ < max_takes_) {
-      std::unique_ptr<DataBuffer> p_buffer;
-      RETURN_IF_NOT_OK(FillBuffer(&buf, &p_buffer));
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(p_buffer)));
-    }
-    RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
+    UpdateRepeatAndEpochCounter();
+    take_count_ = 0;
+    RETURN_IF_NOT_OK(out_connector_->SendEOE());
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   }
 
   take_count_ = 0;
   MS_LOG(DEBUG) << "Meet the end and push-back eof buffer.";
-  auto eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
-  return Status::OK();
-}
-
-// Function FillBuffer mainly prepare the buffer for returning
-Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<DataBuffer> *data_buffer) {
-  int32_t buffer_size = (*buffer)->NumRows();
-  if (take_count_ + buffer_size < max_takes_) {
-    *data_buffer = std::move(*buffer);
-    take_count_ = take_count_ + buffer_size;
-  } else {
-    MS_LOG(DEBUG) << "In last buffer: Push one buffer.";
-    std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
-    while (take_count_ < max_takes_) {
-      TensorRow new_row;
-      RETURN_IF_NOT_OK((*buffer)->PopRow(&new_row));
-      take_count_++;
-      new_tensor_table->push_back(new_row);
-    }
-    (*buffer)->set_tensor_table(std::move(new_tensor_table));
-    *data_buffer = std::move(*buffer);
-  }
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 

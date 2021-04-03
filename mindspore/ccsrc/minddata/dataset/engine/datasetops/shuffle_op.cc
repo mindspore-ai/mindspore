@@ -152,6 +152,7 @@ Status ShuffleOp::operator()() {
 
     // This is our main loop exit condition, when the iterator has no more data completely.
     if (child_iterator_->eof_handled()) {
+      RETURN_IF_NOT_OK(out_connector_->SendEOF());
       break;
     }
 
@@ -170,21 +171,11 @@ Status ShuffleOp::operator()() {
       // tensor table. We remove the data from the shuffle buffer, leaving that slot
       // in the table as an empty vector
       int64_t random_slot = rng_() % (shuffle_last_row_idx_ + 1);
-      new_buffer_table->push_back(std::move((*shuffle_buffer_)[random_slot]));
+      TensorRow random_row = std::move((*shuffle_buffer_)[random_slot]);
+      MS_LOG(DEBUG) << "Shuffle operator sending a row to output.";
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(random_row)));
 
       // Step 3)
-      // If the output tensor table is at the requested size, then create a buffer for it
-      // and send this buffer on it's way up the pipeline. Special case is if this is the
-      // last row then we also send it.
-      if (new_buffer_table->size() == rows_per_buffer_ || shuffle_last_row_idx_ == 0) {
-        auto new_buffer = std::make_unique<DataBuffer>(buffer_counter_, DataBuffer::kDeBFlagNone);
-        new_buffer->set_tensor_table(std::move(new_buffer_table));
-        buffer_counter_++;
-        MS_LOG(DEBUG) << "Shuffle operator sending a buffer to output.";
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(new_buffer)));
-      }
-
-      // Step 4)
       // Take the last row from shuffle buffer, and swap it into the row position that was
       // just vacated.  This makes the shuffle buffer contiguous, with an empty slot at the
       // tail of the shuffle buffer.
@@ -192,7 +183,7 @@ Status ShuffleOp::operator()() {
         (*shuffle_buffer_)[random_slot] = std::move((*shuffle_buffer_)[shuffle_last_row_idx_]);
       }
 
-      // Step 5)
+      // Step 4)
       // Refill the last slot of the shuffle buffer with the next row from input if we are in the
       // active state.
       // If we are in the draining state, we do not need to fetch another row to replace the one we
@@ -218,14 +209,14 @@ Status ShuffleOp::operator()() {
     // Since we overloaded eoeReceived function, we are responsible to flow the EOE up the
     // pipeline manually now that we are done draining the shuffle buffer
     MS_LOG(DEBUG) << "Shuffle operator sending EOE.";
-    auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
+    RETURN_IF_NOT_OK(out_connector_->SendEOE());
 
     // Do not wait for any reset to be flown down from operators above us.
     // Instead, manually update ourselves and then go reloop to start fetching from child operator
     // right away.  Any Reset() from the parent will still perform common reset actions.
     RETURN_IF_NOT_OK(this->SelfReset());
   }
+
   return Status::OK();
 }
 
@@ -252,6 +243,7 @@ Status ShuffleOp::InitShuffleBuffer() {
 
   if (child_iterator_->eof_handled()) {
     MS_LOG(DEBUG) << "Shuffle operator init picked up EOF. No more epochs.";
+    RETURN_IF_NOT_OK(out_connector_->SendEOF());
     return Status::OK();
   }
 

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ def test_decode_op():
 
     with pytest.raises(RuntimeError) as info:
         iter2.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -227,7 +227,7 @@ def test_generator_dict_4():
 
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -251,7 +251,7 @@ def test_generator_dict_4_1():
 
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -277,7 +277,7 @@ def test_generator_dict_4_2():
 
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -309,7 +309,7 @@ def test_generator_dict_5():
     # now iter1 has been exhausted, c++ pipeline has been shut down.
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -418,7 +418,7 @@ def test_generator_tuple_4():
 
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -450,7 +450,7 @@ def test_generator_tuple_5():
     # now iter1 has been exhausted, c++ pipeline has been shut down.
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -484,7 +484,7 @@ def test_generator_tuple_repeat_1():
     # now iter1 has been exhausted, c++ pipeline has been shut down.
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 
@@ -519,7 +519,7 @@ def test_generator_tuple_repeat_repeat_1():
     # now iter1 has been exhausted, c++ pipeline has been shut down.
     with pytest.raises(RuntimeError) as info:
         iter1.__next__()
-    err_msg = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs."
+    err_msg = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs."
     assert err_msg in str(info.value)
 
 

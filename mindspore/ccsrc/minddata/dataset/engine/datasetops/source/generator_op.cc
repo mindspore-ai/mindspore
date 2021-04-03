@@ -41,19 +41,18 @@ Status GeneratorOp::Builder::SanityCheck() {
 Status GeneratorOp::Builder::Build(std::shared_ptr<GeneratorOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   *ptr = std::make_shared<GeneratorOp>(build_generator_function_, build_column_names_, build_column_types_,
-                                       build_prefetch_size_, build_buffer_size_, build_op_connector_size_, nullptr);
+                                       build_prefetch_size_, build_op_connector_size_, nullptr);
   return (*ptr)->Init();
 }
 
 GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
-                         std::vector<DataType> column_types, int32_t prefetch_size, int32_t buffer_size,
-                         int32_t connector_size, std::shared_ptr<SamplerRT> sampler)
+                         std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
+                         std::shared_ptr<SamplerRT> sampler)
     : PipelineOp(connector_size, std::move(sampler)),
       generator_function_(generator_function),
       column_names_(column_names),
       column_types_(column_types),
       prefetch_size_(prefetch_size),
-      buffer_size_(buffer_size),
       buffer_id_(0),
       generator_counter_(0) {}
 
@@ -145,16 +144,6 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
   return Status(StatusCode::kSuccess, "");
 }
 
-Status GeneratorOp::FillBuffer(TensorQTable *tt) {
-  for (int i = 0; i < buffer_size_; i++) {
-    TensorRow row;
-    RETURN_IF_NOT_OK(PyRowToTensorRow(generator_.attr("__next__")(), &row));
-    tt->push_back(std::move(row));
-    generator_counter_++;
-  }
-  return Status::OK();
-}
-
 // Entry point for Generator, called by launch()
 // Note that this function is very easy to break because of the Python GIL mechanism
 // The master thread has the following workflow
@@ -192,23 +181,22 @@ Status GeneratorOp::operator()() {
   // Handshake with TaskManager to synchronize thread creation
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
-  std::unique_ptr<DataBuffer> fetched_buffer;
   int64_t num_rows_sampled = sampler_ ? sampler_->CalculateNumSamples(num_rows_) : num_rows_;
   RETURN_IF_NOT_OK(Init());
 
   bool eof = false;
   while (!eof) {
-    // Create new buffer each iteration
-    fetched_buffer = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
-    std::unique_ptr<TensorQTable> fetched_table = std::make_unique<TensorQTable>();
+    // Create new row each iteration
     bool eoe = false;
+    TensorRow new_row;
     {
       py::gil_scoped_acquire gil_acquire;
       if (Py_IsInitialized() == 0) {
         return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       }
       try {
-        RETURN_IF_NOT_OK(FillBuffer(fetched_table.get()));
+        RETURN_IF_NOT_OK(PyRowToTensorRow(generator_.attr("__next__")(), &new_row));
+        generator_counter_++;
       } catch (py::error_already_set &e) {
         eoe = e.matches(PyExc_StopIteration);
         // Restore exception to python
@@ -226,20 +214,18 @@ Status GeneratorOp::operator()() {
         }
       }
     }
-    if (fetched_table->size() > 0) {
-      fetched_buffer->set_tensor_table(std::move(fetched_table));
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(fetched_buffer)));
-    }
+    if (!new_row.empty()) RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
+
     if (eoe) {
       // Push out EOE upon StopIteration exception from generator
       MS_LOG(DEBUG) << "Generator operator sends out EOE.";
       std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOE());
       if (IsLastIteration()) {
         // If last repeat or not repeated, push out EOF and exit master loop
         MS_LOG(DEBUG) << "Generator operator sends out EOF.";
         std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
+        RETURN_IF_NOT_OK(out_connector_->SendEOF());
         MS_LOG(DEBUG) << "Generator operator main execution loop complete.";
         eof = true;
       } else {

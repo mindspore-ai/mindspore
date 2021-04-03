@@ -31,7 +31,6 @@ namespace dataset {
 
 // Forward declare
 class ExecutionTree;
-class DatasetIterator;
 class DatasetOp;
 class Tensor;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,6 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
-
-namespace dataengine {
-class Example;
-class Feature;
-class BytesList;
-}  // namespace dataengine
 
 namespace mindspore {
 namespace dataset {

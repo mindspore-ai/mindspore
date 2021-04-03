@@ -70,10 +70,9 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
   if (build_num_padded_ > 0) {
     sample_json = ToJson(build_sample_);
   }
-  new_mind_record_op =
-    std::make_shared<MindRecordOp>(build_num_mind_record_workers_, build_rows_per_buffer_, build_dataset_file_,
-                                   build_load_dataset_, build_op_connector_queue_size_, build_columns_to_load_,
-                                   build_operators_, build_num_padded_, sample_json, build_sample_bytes_);
+  new_mind_record_op = std::make_shared<MindRecordOp>(
+    build_num_mind_record_workers_, build_dataset_file_, build_load_dataset_, build_op_connector_queue_size_,
+    build_columns_to_load_, build_operators_, build_num_padded_, sample_json, build_sample_bytes_);
 
   RETURN_IF_NOT_OK(new_mind_record_op->Init());
   *ptr = std::move(new_mind_record_op);
@@ -111,13 +110,11 @@ mindrecord::json MindRecordOp::Builder::ToJson(const py::handle &obj) {
 }
 
 // Constructor of the MindRecordOp.
-MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer,
-                           std::vector<std::string> dataset_file, bool load_dataset, int32_t op_connector_queue_size,
-                           const std::vector<std::string> &columns_to_load,
+MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::string> dataset_file, bool load_dataset,
+                           int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
                            const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes)
-    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::make_shared<SequentialSamplerRT>(0, 0),
-                     rows_per_buffer),
+    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::make_shared<SequentialSamplerRT>(0, 0), 1),
       dataset_file_(dataset_file),
       load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),
@@ -211,8 +208,7 @@ void MindRecordOp::Print(std::ostream &out, bool show_all) const {
     for (auto &file : dataset_file_) {
       out << file << " ";
     }
-    out << "\nNumber of rows : " << num_rows_ << "\nRows per buffer : " << rows_per_buffer_
-        << "\nNumber of buffers : " << buffers_needed_
+    out << "\nNumber of rows : " << num_rows_ << "\nNumber of buffers : " << buffers_needed_
         << "\nNumber of ShardReader workers : " << num_mind_record_workers_ << "\n\n";
   }
 }
@@ -232,14 +228,12 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
       continue;
     }
     if (io_block->eoe()) {
-      RETURN_IF_NOT_OK(
-        out_connector_->Add(worker_id, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+      RETURN_IF_NOT_OK(out_connector_->SendEOE(worker_id));
       RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
     if (io_block->eof()) {
-      RETURN_IF_NOT_OK(
-        out_connector_->Add(worker_id, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+      RETURN_IF_NOT_OK(out_connector_->SendEOF(worker_id));
       RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
@@ -256,52 +250,41 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
       return Status::OK();  // empty key is a quit signal for workers
     }
 
-    const uint64_t buffer_id = keys[0];
-    std::unique_ptr<DataBuffer> fetched_buffer;
+    const uint64_t row_id = keys[0];
+    TensorRow fetched_row;
 
     // Get the next buffer. Push it up to the output connector.
-    if (buffer_id % LOG_INTERVAL == 0) {
-      MS_LOG(DEBUG) << "MindRecord operator consumed buffer " << buffer_id << " by worker " << worker_id << ".";
+    if (row_id % LOG_INTERVAL == 0) {
+      MS_LOG(DEBUG) << "MindRecord operator consumed row " << row_id << " by worker " << worker_id << ".";
     }
-    RETURN_IF_NOT_OK(GetBufferFromReader(&fetched_buffer, buffer_id, worker_id));
-    RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(fetched_buffer)));
+    RETURN_IF_NOT_OK(GetRowFromReader(&fetched_row, row_id, worker_id));
+    RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row), worker_id));
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   }
   RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
-Status MindRecordOp::GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_buffer, int64_t buffer_id,
-                                         int32_t worker_id) {
-  *fetched_buffer = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-  std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
-  for (int32_t i = 0; i < rows_per_buffer_; ++i) {
-    int32_t row_id = buffer_id * rows_per_buffer_ + i;
-    auto rc = shard_reader_->GetNextById(row_id, worker_id);
-    auto task_type = rc.first;
-    auto tupled_buffer = rc.second;
-    if (task_type == mindrecord::TaskType::kPaddedTask) {
-      TensorRow tensor_row;
-      RETURN_IF_NOT_OK(LoadTensorRow(&tensor_row, {}, mindrecord::json(), task_type));
-      std::vector<std::string> file_path(tensor_row.size(), dataset_file_[0]);
-      tensor_row.setPath(file_path);
-      tensor_table->push_back(std::move(tensor_row));
-    }
-    if (tupled_buffer.empty()) break;
-    if (task_type == mindrecord::TaskType::kCommonTask) {
-      for (const auto &tupled_row : tupled_buffer) {
-        std::vector<uint8_t> columns_blob = std::get<0>(tupled_row);
-        mindrecord::json columns_json = std::get<1>(tupled_row);
-        TensorRow tensor_row;
-        RETURN_IF_NOT_OK(LoadTensorRow(&tensor_row, columns_blob, columns_json, task_type));
-        std::vector<std::string> file_path(tensor_row.size(), dataset_file_[0]);
-        tensor_row.setPath(file_path);
-        tensor_table->push_back(std::move(tensor_row));
-      }
+Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, int64_t row_id, int32_t worker_id) {
+  *fetched_row = {};
+  auto rc = shard_reader_->GetNextById(row_id, worker_id);
+  auto task_type = rc.first;
+  auto tupled_buffer = rc.second;
+  if (task_type == mindrecord::TaskType::kPaddedTask) {
+    RETURN_IF_NOT_OK(LoadTensorRow(fetched_row, {}, mindrecord::json(), task_type));
+    std::vector<std::string> file_path(fetched_row->size(), dataset_file_[0]);
+    fetched_row->setPath(file_path);
+  }
+  if (tupled_buffer.empty()) return Status::OK();
+  if (task_type == mindrecord::TaskType::kCommonTask) {
+    for (const auto &tupled_row : tupled_buffer) {
+      std::vector<uint8_t> columns_blob = std::get<0>(tupled_row);
+      mindrecord::json columns_json = std::get<1>(tupled_row);
+      RETURN_IF_NOT_OK(LoadTensorRow(fetched_row, columns_blob, columns_json, task_type));
+      std::vector<std::string> file_path(fetched_row->size(), dataset_file_[0]);
+      fetched_row->setPath(file_path);
     }
   }
 
-  // Replace the TensorTable in DataBuffer with the new one.
-  (*fetched_buffer)->set_tensor_table(std::move(tensor_table));
   return Status::OK();
 }
 

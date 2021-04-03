@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ class BarrierOp : public PipelineOp {
 
   // Handles preprocessing of the main loop, used when starting new epoch
   // @param table - a table of tensors to be moved into a buffer
-  Status prepare(TensorQTable *const table);
+  Status prepare();
 
   // This function calls takes a table repeatedly adds rows to it.
   // @param table - a table of tensors to be moved into a buffer
@@ -152,7 +152,7 @@ class BarrierOp : public PipelineOp {
   Status blockCond();
 
  private:
-  // clean up variable to return imcomplete buffer
+  // clean up variable to return incomplete buffer
   bool clean_up_;
   // end of file state, we stop reading data and shut down
   bool eof_;

@@ -129,7 +129,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \param show_all - A bool to control if you want to show all info or just a summary
   virtual void Print(std::ostream &out, bool show_all) const;
 
-  virtual Status GetNextRow(TensorRow *row);
+  virtual Status GetNextRowPullMode(TensorRow *row);
 
   /// \brief << Stream output operator overload
   /// \notes This allows you to write the debug print info using stream operators
@@ -149,35 +149,17 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   virtual Status operator()() = 0;
 
   /// \brief Gets the next buffer from the given child
-  /// \notes See GetNextInput for similar function that has built-in message handling
-  /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
-  /// \param worker_id - The worker id
+  /// \param row[out] - Fetched TensorRow
+  /// \param worker_id[in] - The worker id, default to 0.
   /// \return Status The status code returned
-  virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id) {
-    return GetNextBuffer(p_buffer, worker_id, false);
-  }
+  virtual Status GetNextRow(TensorRow *row, int32_t worker_id = 0) { return GetNextRow(row, worker_id, false); }
 
   /// \brief Gets the next buffer from the given child
-  /// \notes See GetNextInput for similar function that has built-in message handling
-  /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
-  /// \return Status The status code returned
-  virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer) { return GetNextBuffer(p_buffer, 0, false); }
-
-  /// \brief Gets the next buffer from the given child
-  /// \notes See GetNextInput for similar function that has built-in message handling
-  /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
-  /// \param worker_id - The worker id
+  /// \param row[out] - Fetched TensorRow
+  /// \param worker_id[in] - The worker id, default to 0.
   /// \param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
   /// \return Status The status code returned
-  virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe);
-
-  /// \brief Gets the next buffer from the given child .  This function also has built-in eoe and eof
-  ///     message handling so that child classes don't have to manually code pass-through logic when
-  ///     those messages are received.
-  /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
-  /// \param worker_id - The worker id
-  /// \return Status The status code returned
-  Status GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id = 0, int32_t child_index = 0);
+  virtual Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe);
 
   /// \brief Gets the batch size
   /// \return Status - The status code return

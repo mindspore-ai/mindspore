@@ -59,7 +59,7 @@ class EpochCtrlOp : public RepeatOp {
   // Since EpochCtrlOp is derived from RepeatOp which is an inlined op, getting a buffer from us
   // will simply bounce you to get a buffer from our child.
   // Epoch Control Op does not eat the EOE, it will pass the EOE to the next op.
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) override;
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
 
   // Base-class override for handling cases when an eoe is received.
   // @param worker_id - The worker id

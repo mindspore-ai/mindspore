@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,21 @@
 namespace mindspore {
 namespace dataset {
 
-TensorRow::TensorRow() noexcept : id_(kDefaultRowId), path_({}) {}
+TensorRow::TensorRow() noexcept : id_(kDefaultRowId), path_({}), tensor_row_flag_(kFlagNone) {}
 
-TensorRow::TensorRow(size_type n, TensorRow::value_type t) noexcept : id_(kDefaultRowId), path_({}), row_(n, t) {}
+TensorRow::TensorRow(size_type n, TensorRow::value_type t) noexcept
+    : id_(kDefaultRowId), path_({}), row_(n, t), tensor_row_flag_(kFlagNone) {}
 
-TensorRow::TensorRow(const TensorRow::vector_type &v) : id_(kDefaultRowId), path_({}), row_(v) {}
+TensorRow::TensorRow(const TensorRow::vector_type &v)
+    : id_(kDefaultRowId), path_({}), row_(v), tensor_row_flag_(kFlagNone) {}
 
-TensorRow::TensorRow(row_id_type id, const std::initializer_list<value_type> &lst) : id_(id), path_({}), row_(lst) {}
+TensorRow::TensorRow(row_id_type id, const std::initializer_list<value_type> &lst)
+    : id_(id), path_({}), row_(lst), tensor_row_flag_(kFlagNone) {}
 
-TensorRow::TensorRow(const TensorRow &tr) : id_(tr.id_), path_(tr.path_), row_(tr.row_) {}
+TensorRow::TensorRow(const TensorRow &tr)
+    : id_(tr.id_), path_(tr.path_), row_(tr.row_), tensor_row_flag_(tr.tensor_row_flag_) {}
+
+TensorRow::TensorRow(TensorRow::TensorRowFlags flag) : tensor_row_flag_(flag) {}
 
 TensorRow &TensorRow::operator=(const TensorRow &tr) {
   if (this == &tr) {
@@ -38,23 +44,27 @@ TensorRow &TensorRow::operator=(const TensorRow &tr) {
   row_ = tr.row_;
   id_ = tr.id_;
   path_ = tr.path_;
+  tensor_row_flag_ = tr.tensor_row_flag_;
   return *this;
 }
 
 TensorRow &TensorRow::operator=(const std::initializer_list<TensorRow::value_type> &lst) {
   row_ = lst;
+  tensor_row_flag_ = kFlagNone;
   return *this;
 }
 
-TensorRow::TensorRow(TensorRow::vector_type &&v) noexcept : id_(kDefaultRowId), path_({}), row_(std::move(v)) {}
+TensorRow::TensorRow(TensorRow::vector_type &&v) noexcept
+    : id_(kDefaultRowId), path_({}), row_(std::move(v)), tensor_row_flag_(kFlagNone) {}
 
 TensorRow::TensorRow(row_id_type id, std::initializer_list<value_type> &&lst) noexcept
-    : id_(id), path_({}), row_(std::move(lst)) {}
+    : id_(id), path_({}), row_(std::move(lst)), tensor_row_flag_(kFlagNone) {}
 
 TensorRow::TensorRow(TensorRow &&tr) noexcept {
   id_ = tr.id_;
   path_ = std::move(tr.path_);
   row_ = std::move(tr.row_);
+  tensor_row_flag_ = tr.tensor_row_flag_;
 }
 
 TensorRow &TensorRow::operator=(TensorRow &&tr) noexcept {
@@ -65,11 +75,13 @@ TensorRow &TensorRow::operator=(TensorRow &&tr) noexcept {
   id_ = tr.id_;
   tr.id_ = kDefaultRowId;
   path_ = std::move(tr.path_);
+  tensor_row_flag_ = tr.tensor_row_flag_;
   return *this;
 }
 
 TensorRow &TensorRow::operator=(std::initializer_list<TensorRow::value_type> &&lst) noexcept {
   row_ = std::move(lst);
+  tensor_row_flag_ = kFlagNone;
   return *this;
 }
 

@@ -233,15 +233,15 @@ class TFReaderOp : public NonMappableLeafOp {
   // @param tensor_table - the tensor table to put the parsed data in.
   // @param row - the id of the row filled in the tensor table.
   // @return Status - the error code returned.
-  Status LoadExample(const dataengine::Example *tf_file, std::unique_ptr<TensorQTable> *tensor_table, int64_t row);
+  Status LoadExample(const dataengine::Example *tf_file, TensorRow *out_row);
 
   // Parses a single cell and puts the data into a tensor table.
   // @param tensor_table - the tensor table to put the parsed data in.
   // @param column_values_list - the cell to parse.
   // @param current_col - the column descriptor containing the expected shape and type of the data.
   // @return Status - the error code returned.
-  Status LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table, const dataengine::Feature &column_values_list,
-                     const ColDescriptor &current_col, int64_t row, int32_t col);
+  Status LoadFeature(TensorRow *tensor_row, const dataengine::Feature &column_values_list,
+                     const ColDescriptor &current_col, int32_t col);
 
   // Reads values from a bytes list
   // @param current_col - the column descriptor containing the expected shape and type of the data.

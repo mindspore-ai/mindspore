@@ -145,11 +145,8 @@ Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t e
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
 
-  int64_t rows_each_buffer = 0;
   int64_t rows_total = 0;
   std::string line;
-  std::unique_ptr<DataBuffer> cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
 
   while (getline(handle, line)) {
     if (line.empty()) {
@@ -177,31 +174,18 @@ Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t e
     // Add file path info
     std::vector<std::string> file_path(cols_count, file);
     tRow.setPath(file_path);
-    tensor_table->push_back(std::move(tRow));
     int cout = 0;
     for (auto &p : cols_to_keyword_) {
       std::shared_ptr<Tensor> tensor;
       RETURN_IF_NOT_OK(GetValue(js, p.second, &tensor));
-      (*tensor_table)[rows_each_buffer][cout] = std::move(tensor);
+      tRow[cout] = std::move(tensor);
       cout++;
     }
 
-    rows_each_buffer++;
     rows_total++;
-    if (rows_each_buffer == rows_per_buffer_) {
-      cur_buffer->set_tensor_table(std::move(tensor_table));
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(cur_buffer)));
-
-      cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      tensor_table = std::make_unique<TensorQTable>();
-      rows_each_buffer = 0;
-    }
+    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(tRow)));
   }
 
-  if (rows_each_buffer > 0) {
-    cur_buffer->set_tensor_table(std::move(tensor_table));
-    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(cur_buffer)));
-  }
   return Status::OK();
 }
 

@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/util/status.h"
 
@@ -125,6 +126,8 @@ class RenameOp : public PipelineOp {
 
   // Variable to store the output column names
   std::vector<std::string> out_columns_;
+
+  std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
 };
 }  // namespace dataset
 }  // namespace mindspore

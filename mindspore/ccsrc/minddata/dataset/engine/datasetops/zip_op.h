@@ -110,11 +110,7 @@ class ZipOp : public PipelineOp {
 
  private:
   // Handles preprocessing of the main loop, used when starting new epoch
-  Status prepare(TensorQTable *const table);
-
-  // This function calls takes a table repeatedly adds rows to it.
-  // @param table a table of tensors to be moved into a buffer
-  Status fillBuffer(TensorQTable *const table);
+  Status prepare();
 
   // Special handle case where an empty row has been received from child iterator
   // @note - we need to drain eoe signals from all children connectors.

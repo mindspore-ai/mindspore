@@ -277,7 +277,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   rc = CacheOp::Builder()
          .SetNumWorkers(5)
          .SetClient(myClient)
-         .SetRowsPerBuffer(4)
+         .SetRowsPerBuffer(1)
          .SetSampler(std::move(seq_sampler))
          .Build(&myCacheOp);
   ASSERT_TRUE(rc.IsOk());

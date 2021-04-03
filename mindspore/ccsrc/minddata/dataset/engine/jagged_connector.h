@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 
 namespace mindspore {
 namespace dataset {
-class JaggedConnector : public Connector<std::unique_ptr<DataBuffer>> {
+class JaggedConnector : public Connector<TensorRow> {
  public:
   JaggedConnector(int32_t num_producers, int32_t num_consumers, int32_t queue_capacity)
-      : Connector<std::unique_ptr<DataBuffer>>(num_producers, num_consumers, queue_capacity) {
+      : Connector<TensorRow>(num_producers, num_consumers, queue_capacity) {
     for (int i = 0; i < num_producers; i++) {
       is_queue_finished_.push_back(false);
     }
@@ -38,11 +38,11 @@ class JaggedConnector : public Connector<std::unique_ptr<DataBuffer>> {
 
   ~JaggedConnector() = default;
 
-  Status Add(int32_t worker_d, std::unique_ptr<DataBuffer> &&element) noexcept {
-    return Connector<std::unique_ptr<DataBuffer>>::Push(worker_d, std::move(element));
+  Status Add(int32_t worker_d, TensorRow &&element) noexcept {
+    return Connector<TensorRow>::Push(worker_d, std::move(element));
   }
 
-  Status Pop(int32_t worker_id, std::unique_ptr<DataBuffer> *result) noexcept override {
+  Status Pop(int32_t worker_id, TensorRow *result) noexcept override {
     {
       MS_ASSERT(worker_id < num_consumers_);
       std::unique_lock<std::mutex> lock(m_);
@@ -53,7 +53,7 @@ class JaggedConnector : public Connector<std::unique_ptr<DataBuffer>> {
       }
 
       RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
-      if ((*result)->eoe()) {
+      if (result->eoe()) {
         is_queue_finished_[pop_from_] = true;
       }
 
@@ -77,7 +77,7 @@ class JaggedConnector : public Connector<std::unique_ptr<DataBuffer>> {
       is_queue_finished_[i] = false;
     }
 
-    Connector<std::unique_ptr<DataBuffer>>::Reset();
+    Connector<TensorRow>::Reset();
   }
 
  private:
