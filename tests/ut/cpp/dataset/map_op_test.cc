@@ -110,7 +110,7 @@ class MindDataTestMapOp : public UT::DatasetOpTesting {
     TFReaderOp::Builder builder;
     builder.SetDatasetFilesList({dataset_path_})
       .SetColumnsToLoad({"image", "label", "A", "B"})
-      .SetRowsPerBuffer(2)
+
       .SetWorkerConnectorSize(2)
       .SetNumWorkers(2);
 
@@ -516,7 +516,7 @@ TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
   TFReaderOp::Builder sobuilder;
   sobuilder.SetDatasetFilesList({dataset_path_})
     .SetColumnsToLoad({"image", "label"})
-    .SetRowsPerBuffer(2)
+
     .SetWorkerConnectorSize(2)
     .SetNumWorkers(2);
   rc = sobuilder.Build(&my_tfreader_op);

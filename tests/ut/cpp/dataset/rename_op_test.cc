@@ -53,10 +53,10 @@ TEST_F(MindDataTestRenameOp, TestRenameOpDefault) {
   std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetRowsPerBuffer(2)
-      .SetWorkerConnectorSize(16)
-      .SetNumWorkers(1)
+         .SetDatasetFilesList({dataset_path})
+
+         .SetWorkerConnectorSize(16)
+         .SetNumWorkers(1)
       .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);

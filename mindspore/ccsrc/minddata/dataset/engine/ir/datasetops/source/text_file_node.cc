@@ -82,9 +82,9 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
 
   // Create and initialize TextFileOp
-  std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
-    num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
-    connector_que_size_, shuffle_files, num_shards_, shard_id_);
+  std::shared_ptr<TextFileOp> text_file_op =
+    std::make_shared<TextFileOp>(num_workers_, num_samples_, worker_connector_size_, std::move(schema),
+                                 sorted_dataset_files, connector_que_size_, shuffle_files, num_shards_, shard_id_);
   RETURN_IF_NOT_OK(text_file_op->Init());
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
@@ -96,8 +96,8 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     RETURN_IF_NOT_OK(TextFileOp::CountAllFileRows(sorted_dataset_files, &num_rows));
 
     // Add the shuffle op after this op
-    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                  rows_per_buffer_, &shuffle_op));
+    RETURN_IF_NOT_OK(
+      AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_, &shuffle_op));
     shuffle_op->set_total_repeats(GetTotalRepeats());
     shuffle_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(shuffle_op);

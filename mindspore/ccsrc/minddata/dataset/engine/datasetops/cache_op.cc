@@ -33,7 +33,6 @@ namespace dataset {
 CacheOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   build_num_workers_ = cfg->num_parallel_workers();
-  rows_per_buffer_ = cfg->rows_per_buffer();
   build_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -54,17 +53,16 @@ Status CacheOp::Builder::SanityCheck() const {
 // The builder "build" method creates the final object and does some init on it
 Status CacheOp::Builder::Build(std::shared_ptr<CacheOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<CacheOp>(build_num_workers_, build_op_connector_size_, rows_per_buffer_, build_cache_client_,
-                                   build_sampler_);
+  *ptr = std::make_shared<CacheOp>(build_num_workers_, build_op_connector_size_, build_cache_client_, build_sampler_);
   RETURN_IF_NOT_OK((*ptr)->InitCache());
 
   return Status::OK();
 }
 
 // Constructor of CacheOp
-CacheOp::CacheOp(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-                 std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler)
-    : CacheBase(num_workers, op_connector_size, rows_per_buf, std::move(cache_client), std::move(sampler)),
+CacheOp::CacheOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<CacheClient> cache_client,
+                 std::shared_ptr<SamplerRT> sampler)
+    : CacheBase(num_workers, op_connector_size, std::move(cache_client), std::move(sampler)),
       num_guys_in_(0),
       phase_(Phase::kBuildPhase) {}
 

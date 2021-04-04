@@ -50,7 +50,6 @@ MindRecordOp::Builder::Builder() : build_dataset_file_({}) {
 
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   build_num_mind_record_workers_ = kDefaultMindRecordWorkers;
-  build_rows_per_buffer_ = cfg->rows_per_buffer();
   build_op_connector_queue_size_ = cfg->op_connector_size();
   builder_num_workers_ = 0;
   build_load_dataset_ = false;
@@ -114,7 +113,7 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
                            int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
                            const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes)
-    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::make_shared<SequentialSamplerRT>(0, 0), 1),
+    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::make_shared<SequentialSamplerRT>(0, 0)),
       dataset_file_(dataset_file),
       load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),

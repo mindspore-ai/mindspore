@@ -31,8 +31,7 @@
 namespace mindspore {
 namespace dataset {
 ConfigManager::ConfigManager()
-    : rows_per_buffer_(kCfgRowsPerBuffer),
-      num_parallel_workers_(kCfgParallelWorkers),
+    : num_parallel_workers_(kCfgParallelWorkers),
       worker_connector_size_(kCfgWorkerConnectorSize),
       op_connector_size_(kCfgOpConnectorSize),
       rank_id_(kCfgDefaultRankId),
@@ -70,7 +69,6 @@ void ConfigManager::Print(std::ostream &out) const {
   // Don't show the test/internal ones.  Only display the main ones here.
   // fyi, boolalpha tells the output stream to write "true" and "false" for bools
   out << "\nClient config settings :"
-      << "\nDataCache Rows per buffer    : " << rows_per_buffer_
       << "\nParallelOp workers           : " << num_parallel_workers_
       << "\nParallelOp worker connector size    : " << worker_connector_size_
       << "\nSize of each Connector : " << op_connector_size_ << std::endl;
@@ -78,7 +76,6 @@ void ConfigManager::Print(std::ostream &out) const {
 
 // Private helper function that takes a nlohmann json format and populates the settings
 Status ConfigManager::FromJson(const nlohmann::json &j) {
-  set_rows_per_buffer(j.value("rowsPerBuffer", rows_per_buffer_));
   set_num_parallel_workers(j.value("numParallelWorkers", num_parallel_workers_));
   set_worker_connector_size(j.value("workerConnectorSize", worker_connector_size_));
   set_op_connector_size(j.value("opConnectorSize", op_connector_size_));
@@ -114,9 +111,6 @@ Status ConfigManager::LoadFile(const std::string &settingsFile) {
   }
   return rc;
 }
-
-// Setter function
-void ConfigManager::set_rows_per_buffer(int32_t rows_per_buffer) { rows_per_buffer_ = rows_per_buffer; }
 
 // Setter function
 void ConfigManager::set_num_parallel_workers(int32_t num_parallel_workers) {

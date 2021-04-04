@@ -42,7 +42,7 @@ using mindspore::MsLogLevel::ERROR;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false, int rows_per_buf = 2);
+std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
 std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
@@ -57,7 +57,7 @@ std::shared_ptr<MnistOp> CreateMnist(int64_t num_wrks, int64_t rows, int64_t con
   MnistOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_wrks)
                 .SetDir(path)
-                .SetRowsPerBuffer(rows)
+
                 .SetOpConnectorSize(conns)
                 .SetSampler(std::move(sampler))
                 .Build(&so);

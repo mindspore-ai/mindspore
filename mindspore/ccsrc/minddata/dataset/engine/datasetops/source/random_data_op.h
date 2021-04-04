@@ -99,16 +99,6 @@ class RandomDataOp : public ParallelOp {
 
     /**
      * Builder set method
-     * @param rows_per_buffer - The number of rows in each DataBuffer
-     * @return Builder - The modified builder by reference
-     */
-    Builder &SetRowsPerBuffer(int64_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    /**
-     * Builder set method
      * @param total_rows - The total number of rows in the dataset
      * @return Builder - The modified builder by reference
      */

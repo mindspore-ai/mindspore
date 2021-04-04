@@ -64,14 +64,6 @@ class ImageFolderOp : public MappableLeafOp {
     ~Builder() = default;
 
     // Setter method
-    // @param int32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method
     // @param int32_t size
     // @return Builder setter method returns reference to the builder.
     Builder &SetOpConnectorSize(int32_t size) {
@@ -159,13 +151,12 @@ class ImageFolderOp : public MappableLeafOp {
 
   // Constructor
   // @param int32_t num_wkrs - Num of workers reading images in parallel
-  // @param int32_t - rows_per_buffer Number of images (rows) in each buffer
   // @param std::string - dir directory of ImageNetFolder
   // @param int32_t queue_size - connector queue size
   // @param std::set<std::string> exts - set of file extensions to read, if empty, read everything under the dir
   // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
-  ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool recursive,
-                bool do_decode, const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
+  ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool recursive, bool do_decode,
+                const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
                 std::unique_ptr<DataSchema>, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor.

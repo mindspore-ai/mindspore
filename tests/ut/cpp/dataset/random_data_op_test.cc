@@ -76,11 +76,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic1) {
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   RandomDataOp::Builder builder;
 
-  rc = builder.SetRowsPerBuffer(2)
-    .SetNumWorkers(1)
-    .SetDataSchema(std::move(testSchema))
-    .SetTotalRows(25)
-    .Build(&myRandomDataOp);
+  rc = builder.SetNumWorkers(1).SetDataSchema(std::move(testSchema)).SetTotalRows(25).Build(&myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRandomDataOp);
@@ -134,9 +130,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic2) {
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   RandomDataOp::Builder builder;
 
-  rc = builder.SetRowsPerBuffer(2)
-    .SetNumWorkers(1)
-    .Build(&myRandomDataOp);
+  rc = builder.SetNumWorkers(1).Build(&myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRandomDataOp);
@@ -171,11 +165,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic3) {
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   RandomDataOp::Builder builder;
 
-  rc = builder.SetRowsPerBuffer(2)
-    .SetNumWorkers(1)
-    .SetDataSchema(std::move(testSchema))
-    .SetTotalRows(10)
-    .Build(&myRandomDataOp);
+  rc = builder.SetNumWorkers(1).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRandomDataOp);
@@ -235,11 +225,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic4) {
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   RandomDataOp::Builder builder;
 
-  rc = builder.SetRowsPerBuffer(2)
-    .SetNumWorkers(1)
-    .SetDataSchema(std::move(testSchema))
-    .SetTotalRows(10)
-    .Build(&myRandomDataOp);
+  rc = builder.SetNumWorkers(1).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRandomDataOp);
@@ -315,11 +301,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic5) {
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   RandomDataOp::Builder builder;
 
-  rc = builder.SetRowsPerBuffer(2)
-    .SetNumWorkers(4)
-    .SetDataSchema(std::move(testSchema))
-    .SetTotalRows(10)
-    .Build(&myRandomDataOp);
+  rc = builder.SetNumWorkers(4).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRandomDataOp);
@@ -395,11 +377,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpTree1) {
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   RandomDataOp::Builder builder;
 
-  rc = builder.SetRowsPerBuffer(2)
-    .SetNumWorkers(4)
-    .SetDataSchema(std::move(testSchema))
-    .SetTotalRows(10)
-    .Build(&myRandomDataOp);
+  rc = builder.SetNumWorkers(4).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRandomDataOp);
@@ -407,9 +385,9 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpTree1) {
 
   std::shared_ptr<ShuffleOp> myShuffleOp;
   rc = ShuffleOp::Builder()
-      .SetRowsPerBuffer(2)
-      .SetShuffleSize(4)
-      .Build(&myShuffleOp);
+
+         .SetShuffleSize(4)
+         .Build(&myShuffleOp);
   EXPECT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myShuffleOp);
   EXPECT_TRUE(rc.IsOk());

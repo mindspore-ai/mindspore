@@ -43,7 +43,7 @@ using mindspore::MsLogLevel::ERROR;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false, int rows_per_buf = 2);
+std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 

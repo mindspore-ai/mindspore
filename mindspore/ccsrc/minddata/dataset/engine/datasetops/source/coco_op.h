@@ -110,14 +110,6 @@ class CocoOp : public MappableLeafOp {
     }
 
     // Setter method.
-    // @param int32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method.
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
@@ -159,15 +151,14 @@ class CocoOp : public MappableLeafOp {
   // @param std::string image_folder_path - image folder path of Coco
   // @param std::string annotation_path - annotation json path of Coco
   // @param int32_t num_workers - number of workers reading images in parallel
-  // @param int32_t rows_per_buffer - number of images (rows) in each buffer
   // @param int32_t queue_size - connector queue size
   // @param int64_t num_samples - number of samples to read
   // @param bool decode - whether to decode images
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the Coco dataset
   // @param std::shared_ptr<Sampler> sampler - sampler tells CocoOp what to read
   CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
-         int32_t num_workers, int32_t rows_per_buffer, int32_t queue_size, bool decode,
-         std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
+         int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
+         std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~CocoOp() = default;

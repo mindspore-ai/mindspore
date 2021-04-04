@@ -42,7 +42,6 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_numa_enable", &ConfigManager::numa_enable)
                     .def("set_numa_enable", &ConfigManager::set_numa_enable)
                     .def("get_op_connector_size", &ConfigManager::op_connector_size)
-                    .def("get_rows_per_buffer", &ConfigManager::rows_per_buffer)
                     .def("get_seed", &ConfigManager::seed)
                     .def("set_rank_id", &ConfigManager::set_rank_id)
                     .def("get_worker_connector_size", &ConfigManager::worker_connector_size)
@@ -54,7 +53,6 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_profiler_file_status", &ConfigManager::get_profiler_file_status)
                     .def("set_num_parallel_workers", &ConfigManager::set_num_parallel_workers)
                     .def("set_op_connector_size", &ConfigManager::set_op_connector_size)
-                    .def("set_rows_per_buffer", &ConfigManager::set_rows_per_buffer)
                     .def("set_seed", &ConfigManager::set_seed)
                     .def("set_worker_connector_size", &ConfigManager::set_worker_connector_size)
                     .def("load", [](ConfigManager &c, std::string s) { THROW_IF_ERROR(c.LoadFile(s)); });

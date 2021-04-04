@@ -74,7 +74,6 @@ class CacheLookupOp : public CacheBase, public SamplerRT {
 
    private:
     int32_t build_num_workers_;
-    int32_t rows_per_buffer_;
     int32_t build_op_connector_size_;
     std::shared_ptr<CacheClient> build_cache_client_;
     std::shared_ptr<SamplerRT> build_sampler_;
@@ -86,9 +85,9 @@ class CacheLookupOp : public CacheBase, public SamplerRT {
   /// \brief Constructor
   /// \note It takes the same argument as the base class.
   /// \see CacheBase
-  CacheLookupOp(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-                std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler)
-      : CacheBase(num_workers, op_connector_size, rows_per_buf, cache_client, sampler), SamplerRT(*(sampler.get())) {}
+  CacheLookupOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<CacheClient> cache_client,
+                std::shared_ptr<SamplerRT> sampler)
+      : CacheBase(num_workers, op_connector_size, cache_client, sampler), SamplerRT(*(sampler.get())) {}
   ~CacheLookupOp() = default;
   // As a parallel op, we override these two functions
   Status operator()() override;

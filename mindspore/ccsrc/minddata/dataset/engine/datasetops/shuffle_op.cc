@@ -41,7 +41,6 @@ constexpr int32_t ShuffleOp::kShuffleStateDrain;
 ShuffleOp::Builder::Builder() : build_shuffle_size_(0), build_reshuffle_each_epoch_(true) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   build_op_connector_size_ = cfg->op_connector_size();
-  build_rows_per_buffer_ = cfg->rows_per_buffer();
   build_shuffle_seed_ = GetSeed();
 }
 
@@ -56,20 +55,17 @@ Status ShuffleOp::Builder::SanityCheck() const {
 Status ShuffleOp::Builder::Build(std::shared_ptr<ShuffleOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   *ptr = std::make_shared<ShuffleOp>(build_shuffle_size_, build_shuffle_seed_, build_op_connector_size_,
-                                     build_reshuffle_each_epoch_, build_rows_per_buffer_);
+                                     build_reshuffle_each_epoch_);
   return Status::OK();
 }
 
 // Constructor of the ShuffleOp
-ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch,
-                     int32_t rows_per_buffer)
+ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch)
     : PipelineOp(op_connector_size),
       shuffle_size_(shuffle_size),
       shuffle_seed_(shuffle_seed),
       reshuffle_each_epoch_(reset_every_epoch),
       rng_(shuffle_seed),
-      buffer_counter_(0),
-      rows_per_buffer_(rows_per_buffer),
       shuffle_buffer_(std::make_unique<TensorTable>()),
       shuffle_last_row_idx_(0),
       shuffle_buffer_state_(kShuffleStateInit) {}
@@ -87,7 +83,6 @@ Status ShuffleOp::SelfReset() {
   }
 
   shuffle_buffer_ = std::make_unique<TensorTable>();
-  buffer_counter_ = 0;
   shuffle_last_row_idx_ = 0;
   shuffle_buffer_state_ = kShuffleStateInit;
   return Status::OK();
@@ -104,8 +99,8 @@ void ShuffleOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nShuffle size: " << shuffle_size_ << "\nRows per buffer: " << rows_per_buffer_
-        << "\nShuffle buffer state: " << shuffle_buffer_state_ << "\nShuffle seed: " << shuffle_seed_ << "\n\n";
+    out << "\nShuffle size: " << shuffle_size_ << "\nShuffle buffer state: " << shuffle_buffer_state_
+        << "\nShuffle seed: " << shuffle_seed_ << "\n\n";
   }
 }
 

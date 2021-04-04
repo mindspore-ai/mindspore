@@ -45,14 +45,13 @@ Status CacheBase::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   return Status::OK();
 }
-CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-                     std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler)
+CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<CacheClient> cache_client,
+                     std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       row_cnt_(0),
       num_cache_miss_(0),
       cache_client_(std::move(cache_client)),
-      rows_per_buffer_(rows_per_buf),
-      prefetch_size_(rows_per_buffer_),
+      prefetch_size_(1),
       num_prefetchers_(num_workers_) {
   // Adjust the prefetch size based on the number of workers.
   auto prefetch_sz_per_thread = cache_client_->GetPrefetchSize() / num_prefetchers_;
@@ -92,7 +91,7 @@ Status CacheBase::FetchSamplesToWorkers() {
     row_cnt_ = 0;
     ++wait_cnt;
     std::vector<row_id_type> keys;
-    keys.reserve(rows_per_buffer_);
+    keys.reserve(1);
     std::vector<row_id_type> prefetch_keys;
     prefetch_keys.reserve(prefetch_size_);
     std::unique_ptr<DataBuffer> sampler_buffer;
@@ -107,15 +106,11 @@ Status CacheBase::FetchSamplesToWorkers() {
         // Batch enough rows for performance reason.
         if (row_cnt_ % prefetch_size_ == 0) {
           RETURN_IF_NOT_OK(send_to_que(prefetch_queues_, prefetch_cnt++ % num_prefetchers_, prefetch_keys));
-          // Now we tell the WorkerEntry to wait for them to come back. If prefetch_size_ is a multiple
-          // of rows_per_buffer_, the keys vector will always be empty. But it can be partially filled.
-          // The only requirement we set up is rows_per_buffer_ is less than or equal to prefetch_size_.
+          // Now we tell the WorkerEntry to wait for them to come back.
           for (auto row_id : prefetch_keys) {
             keys.push_back(row_id);
-            if (keys.size() == rows_per_buffer_) {
-              RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
-              keys.clear();
-            }
+            RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+            keys.clear();
           }
           prefetch_keys.clear();
         }
@@ -127,10 +122,8 @@ Status CacheBase::FetchSamplesToWorkers() {
       RETURN_IF_NOT_OK(send_to_que(prefetch_queues_, prefetch_cnt++ % num_prefetchers_, prefetch_keys));
       for (auto row_id : prefetch_keys) {
         keys.push_back(row_id);
-        if (keys.size() == rows_per_buffer_) {
-          RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
-          keys.clear();
-        }
+        RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+        keys.clear();
       }
     }
     if (!keys.empty()) {

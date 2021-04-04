@@ -54,14 +54,6 @@ class CelebAOp : public MappableLeafOp {
     ~Builder() = default;
 
     // Setter method
-    // @param int32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method
     // @param int32_t size
     // @return Builder setter method returns reference to the builder.
     Builder &SetOpConnectorSize(int32_t size) {
@@ -139,13 +131,11 @@ class CelebAOp : public MappableLeafOp {
 
   // Constructor
   // @param int32_t - num_workers - Num of workers reading images in parallel
-  // @param int32_t - rows_per_buffer Number of images (rows) in each buffer
   // @param std::string - dir directory of celeba dataset
   // @param int32_t queueSize - connector queue size
   // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
-  CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size, bool decode,
-           const std::string &usage, const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema,
-           std::shared_ptr<SamplerRT> sampler);
+  CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_size, bool decode, const std::string &usage,
+           const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler);
 
   ~CelebAOp() override = default;
 

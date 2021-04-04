@@ -40,7 +40,7 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false, int rows_per_buf = 2);
+std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
 std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
@@ -53,7 +53,7 @@ std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int6
   ImageFolderOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)
                 .SetImageFolderDir(path)
-                .SetRowsPerBuffer(rows)
+
                 .SetOpConnectorSize(conns)
                 .SetExtensions({".jpg", ".JPEG"})
                 .SetSampler(std::move(sampler))

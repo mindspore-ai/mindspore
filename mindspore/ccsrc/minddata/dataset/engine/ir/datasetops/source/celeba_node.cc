@@ -69,8 +69,8 @@ Status CelebANode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
-  auto celeba_op = std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                              decode_, usage_, extensions_, std::move(schema), std::move(sampler_rt));
+  auto celeba_op = std::make_shared<CelebAOp>(num_workers_, dataset_dir_, connector_que_size_, decode_, usage_,
+                                              extensions_, std::move(schema), std::move(sampler_rt));
   celeba_op->set_total_repeats(GetTotalRepeats());
   celeba_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(celeba_op);

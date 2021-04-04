@@ -46,7 +46,7 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromDatasetFuntions) {
 
   std::shared_ptr<TextFileOp> file_op;
   TextFileOp::Builder builder_file;
-  builder_file.SetTextFilesList({dataset_path}).SetRowsPerBuffer(1).SetNumWorkers(1).SetOpConnectorSize(2);
+  builder_file.SetTextFilesList({dataset_path}).SetNumWorkers(1).SetOpConnectorSize(2);
 
   Status rc = builder_file.Build(&file_op);
   ASSERT_TRUE(rc.IsOk());
@@ -119,7 +119,7 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceTokenizerFuntions) {
 
   std::shared_ptr<TextFileOp> file_op;
   TextFileOp::Builder builder_file;
-  builder_file.SetTextFilesList({dataset_path}).SetRowsPerBuffer(1).SetNumWorkers(1).SetOpConnectorSize(2);
+  builder_file.SetTextFilesList({dataset_path}).SetNumWorkers(1).SetOpConnectorSize(2);
 
   Status rc = builder_file.Build(&file_op);
   ASSERT_TRUE(rc.IsOk());

@@ -50,14 +50,6 @@ class CifarOp : public MappableLeafOp {
     ~Builder() = default;
 
     // Setter method
-    // @param uint32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method
     // @param uint32_t size
     // @return Builder setter method returns reference to the builder.
     Builder &SetOpConnectorSize(int32_t size) {
@@ -122,7 +114,6 @@ class CifarOp : public MappableLeafOp {
     std::string dir_;
     std::string usage_;
     int32_t num_workers_;
-    int32_t rows_per_buffer_;
     int32_t op_connect_size_;
     std::shared_ptr<SamplerRT> sampler_;
     std::unique_ptr<DataSchema> schema_;
@@ -133,13 +124,11 @@ class CifarOp : public MappableLeafOp {
   // @param CifarType type - Cifar10 or Cifar100
   // @param const std::string &usage - Usage of this dataset, can be 'train', 'test' or 'all'
   // @param uint32_t numWorks - Num of workers reading images in parallel
-  // @param uint32_t - rowsPerBuffer Number of images (rows) in each buffer
   // @param std::string - dir directory of cifar dataset
   // @param uint32_t - queueSize - connector queue size
   // @param std::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
-  CifarOp(CifarType type, const std::string &usage, int32_t num_works, int32_t rows_per_buf,
-          const std::string &file_dir, int32_t queue_size, std::unique_ptr<DataSchema> data_schema,
-          std::shared_ptr<SamplerRT> sampler);
+  CifarOp(CifarType type, const std::string &usage, int32_t num_works, const std::string &file_dir, int32_t queue_size,
+          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
   // Destructor.
   ~CifarOp() = default;
 

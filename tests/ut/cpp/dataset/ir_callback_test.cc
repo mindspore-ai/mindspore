@@ -156,7 +156,7 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(44).Build(&leaf);
+  rc = RandomDataOp::Builder().SetDataSchema(std::move(schema)).SetTotalRows(44).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
   // config mapOp
   std::shared_ptr<MapOp> map_op;
@@ -208,7 +208,7 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
+  rc = RandomDataOp::Builder().SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
   // config mapOp
   std::shared_ptr<MapOp> map_op;
@@ -273,7 +273,7 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
+  rc = RandomDataOp::Builder().SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
   // config mapOp
   std::shared_ptr<MapOp> map_op;

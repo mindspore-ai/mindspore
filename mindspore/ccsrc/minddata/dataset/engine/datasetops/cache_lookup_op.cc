@@ -31,7 +31,6 @@ namespace dataset {
 CacheLookupOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   build_num_workers_ = cfg->num_parallel_workers();
-  rows_per_buffer_ = cfg->rows_per_buffer();
   build_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -52,8 +51,8 @@ Status CacheLookupOp::Builder::SanityCheck() const {
 // The builder "build" method creates the final object and does some init on it
 Status CacheLookupOp::Builder::Build(std::shared_ptr<CacheLookupOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<CacheLookupOp>(build_num_workers_, build_op_connector_size_, rows_per_buffer_,
-                                         build_cache_client_, build_sampler_);
+  *ptr =
+    std::make_shared<CacheLookupOp>(build_num_workers_, build_op_connector_size_, build_cache_client_, build_sampler_);
   return Status::OK();
 }
 Status CacheLookupOp::operator()() {

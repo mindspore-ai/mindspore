@@ -35,7 +35,6 @@ const int32_t kMnistImageCols = 28;
 MnistOp::Builder::Builder() : builder_sampler_(nullptr), builder_usage_("") {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -52,8 +51,8 @@ Status MnistOp::Builder::Build(std::shared_ptr<MnistOp> *ptr) {
   TensorShape scalar = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(builder_schema_->AddColumn(
     ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-  *ptr = std::make_shared<MnistOp>(builder_usage_, builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
-                                   builder_op_connector_size_, std::move(builder_schema_), std::move(builder_sampler_));
+  *ptr = std::make_shared<MnistOp>(builder_usage_, builder_num_workers_, builder_dir_, builder_op_connector_size_,
+                                   std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -73,9 +72,9 @@ Status MnistOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-MnistOp::MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per_buffer, std::string folder_path,
-                 int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
-    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
+MnistOp::MnistOp(const std::string &usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
+                 std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       usage_(usage),
       folder_path_(folder_path),
       image_path_({}),

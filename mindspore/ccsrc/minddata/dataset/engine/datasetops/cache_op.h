@@ -71,14 +71,6 @@ class CacheOp : public CacheBase, public RandomAccessOp {
     }
 
     /// \brief Setter method
-    /// \param rows_per_buffer
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    /// \brief Setter method
     /// \param sampler
     /// \return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
@@ -93,7 +85,6 @@ class CacheOp : public CacheBase, public RandomAccessOp {
 
    private:
     int32_t build_num_workers_;
-    int32_t rows_per_buffer_;
     int32_t build_op_connector_size_;
     std::shared_ptr<CacheClient> build_cache_client_;
     std::shared_ptr<SamplerRT> build_sampler_;
@@ -107,8 +98,8 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   /// \note The builder class should be used to call it.
   /// \param num_workers The number of worker threads.
   /// \param op_connector_size The size of each queue in the connector.
-  CacheOp(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-          std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler);
+  CacheOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<CacheClient> cache_client,
+          std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~CacheOp();

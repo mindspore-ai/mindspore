@@ -46,9 +46,14 @@ std::shared_ptr<ManifestOp> Manifest(int32_t num_works, int32_t rows, int32_t co
                                      std::map<std::string, int32_t> map = {}, bool decode = false) {
   std::shared_ptr<ManifestOp> so;
   ManifestOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works).SetManifestFile(file).SetRowsPerBuffer(
-      rows).SetOpConnectorSize(conns).SetSampler(std::move(sampler)).SetClassIndex(map).SetDecode(decode)
-      .SetUsage(usage).Build(&so);
+  Status rc = builder.SetNumWorkers(num_works)
+                .SetManifestFile(file)
+                .SetOpConnectorSize(conns)
+                .SetSampler(std::move(sampler))
+                .SetClassIndex(map)
+                .SetDecode(decode)
+                .SetUsage(usage)
+                .Build(&so);
   return so;
 }
 

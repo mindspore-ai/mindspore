@@ -75,10 +75,6 @@ class ConfigManager {
   Status LoadFile(const std::string &settingsFile);
 
   // getter function
-  // @return The rows per buffer setting
-  int32_t rows_per_buffer() const { return rows_per_buffer_; }
-
-  // getter function
   // @return The number of workers setting
   int32_t num_parallel_workers() const { return num_parallel_workers_; }
 
@@ -111,10 +107,6 @@ class ConfigManager {
   /// getter function
   /// \return auto_num_workers_
   bool auto_num_workers() const { return auto_num_workers_; }
-
-  // setter function
-  // @param rows_per_buffer - The setting to apply to the config
-  void set_rows_per_buffer(int32_t rows_per_buffer);
 
   // setter function
   // @param num_parallel_workers - The setting to apply to the config
@@ -230,7 +222,6 @@ class ConfigManager {
   void set_auto_worker_config_(uint8_t cfg) { auto_worker_config_ = cfg; }
 
  private:
-  int32_t rows_per_buffer_;
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
   int32_t op_connector_size_;

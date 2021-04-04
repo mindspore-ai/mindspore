@@ -39,11 +39,11 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false, int rows_per_buf = 2);
+std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
@@ -61,8 +61,7 @@ TEST_F(MindDataTestVOCOp, TestVOCDetection) {
   std::string task_mode("train");
   std::shared_ptr<VOCOp> my_voc_op;
   VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode)
-                     .Build(&my_voc_op);
+  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode).Build(&my_voc_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_voc_op);
@@ -87,7 +86,7 @@ TEST_F(MindDataTestVOCOp, TestVOCDetection) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
@@ -112,8 +111,7 @@ TEST_F(MindDataTestVOCOp, TestVOCSegmentation) {
   std::string task_mode("train");
   std::shared_ptr<VOCOp> my_voc_op;
   VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode)
-                     .Build(&my_voc_op);
+  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode).Build(&my_voc_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_voc_op);
@@ -138,7 +136,7 @@ TEST_F(MindDataTestVOCOp, TestVOCSegmentation) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
@@ -168,9 +166,7 @@ TEST_F(MindDataTestVOCOp, TestVOCClassIndex) {
   std::shared_ptr<VOCOp> my_voc_op;
   VOCOp::Builder builder;
   Status rc =
-    builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode)
-                     .SetClassIndex(class_index)
-                     .Build(&my_voc_op);
+    builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode).SetClassIndex(class_index).Build(&my_voc_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_voc_op);
@@ -195,7 +191,7 @@ TEST_F(MindDataTestVOCOp, TestVOCClassIndex) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;

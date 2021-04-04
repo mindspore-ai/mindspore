@@ -49,14 +49,13 @@ class NonMappableLeafOp : public ParallelOp {
   // @note The builder class should be used to call this constructor.
   // @param num_workers - number of worker threads reading data from tf_file files.
   // @param worker_connector_size - size of each internal queue.
-  // @param rows_per_buffer - number of rows that a full buffer will contain.
   // @param total_num_rows - Number of rows to read
   // @param dataset_files_list - list of filepaths for the dataset files.
   // @param op_connector_size - size of each queue in the connector that the child operator pulls from.
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
-  NonMappableLeafOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer, int64_t total_num_rows,
+  NonMappableLeafOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
                     int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id);
 
   // Default destructor
@@ -76,9 +75,6 @@ class NonMappableLeafOp : public ParallelOp {
   // reinitializes itself so that it can be executed again, as if it was just created.
   // @return Status - the error code returned.
   Status Reset() override;
-
-  // Getter method
-  int64_t rows_per_buffer() const { return rows_per_buffer_; }
 
   // Op name getter
   // @return Name of the current Op
@@ -157,7 +153,6 @@ class NonMappableLeafOp : public ParallelOp {
   bool finished_reading_dataset_;
   int64_t total_rows_;
 
-  int64_t rows_per_buffer_;
   WaitPost io_block_queue_wait_post_;
   bool load_io_block_queue_;
   std::mutex load_io_block_queue_mutex_;

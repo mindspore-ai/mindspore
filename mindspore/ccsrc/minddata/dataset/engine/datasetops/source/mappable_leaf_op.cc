@@ -24,9 +24,8 @@
 namespace mindspore {
 namespace dataset {
 
-MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler,
-                               int32_t rows_per_buffer)
-    : ParallelOp(num_wkrs, queue_size, std::move(sampler)), rows_per_buffer_(rows_per_buffer) {}
+MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler)
+    : ParallelOp(num_wkrs, queue_size, std::move(sampler)) {}
 
 // Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
 Status MappableLeafOp::operator()() {

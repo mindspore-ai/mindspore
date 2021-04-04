@@ -33,7 +33,6 @@ ZipOp::Builder::Builder() {
   // using the various builder set methods.
 
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -41,18 +40,13 @@ Status ZipOp::Builder::SanityCheck() const { return Status::OK(); }
 
 Status ZipOp::Builder::Build(std::shared_ptr<ZipOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<ZipOp>(builder_rows_per_buffer_, builder_op_connector_size_);
+  *ptr = std::make_shared<ZipOp>(builder_op_connector_size_);
   return Status::OK();
 }
 
 // Construct ZipOp here, local variables initialized in operator due to tree construction restrictions
-ZipOp::ZipOp(int32_t rows_per_buffer, int32_t op_connector_size)
-    : PipelineOp(op_connector_size),
-      children_num_(0),
-      rows_per_buffer_(rows_per_buffer),
-      buffer_id_(0),
-      draining_(false),
-      eof_(false) {}
+ZipOp::ZipOp(int32_t op_connector_size)
+    : PipelineOp(op_connector_size), children_num_(0), draining_(false), eof_(false) {}
 
 // destructor
 ZipOp::~ZipOp() {}
