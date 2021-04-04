@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 """Reporter class."""
+
 import logging
 import os
 import time
@@ -20,10 +22,10 @@ from datetime import datetime
 from mindspore.train.serialization import save_checkpoint
 from .tools import save_image
 
+
 class Reporter(logging.Logger):
     """
     This class includes several functions that can save images/checkpoints and print/save logging information.
-
     Args:
         args (class): Option class.
     """
@@ -73,17 +75,6 @@ class Reporter(logging.Logger):
             self.info('--> %s: %s', key, args_dict[key])
         self.info('')
 
-    def important_info(self, msg, *args, **kwargs):
-        if self.logger.isEnabledFor(logging.INFO) and self.rank == 0:
-            line_width = 2
-            important_msg = '\n'
-            important_msg += ('*'*70 + '\n')*line_width
-            important_msg += ('*'*line_width + '\n')*2
-            important_msg += '*'*line_width + ' '*8 + msg + '\n'
-            important_msg += ('*'*line_width + '\n')*2
-            important_msg += ('*'*70 + '\n')*line_width
-            self.info(important_msg, *args, **kwargs)
-
     def epoch_start(self):
         self.step_start_time = time.time()
         self.epoch_start_time = time.time()
@@ -119,14 +110,14 @@ class Reporter(logging.Logger):
         self.info("Epoch [{}] total cost: {:.2f} ms, pre step: {:.2f} ms, G_loss: {:.2f}, D_loss: {:.2f}".format(
             self.epoch, epoch_cost, pre_step_time, mean_loss_G, mean_loss_D))
 
-        if self.epoch % self.save_checkpoint_epochs == 0 and self.rank == 0:
+        if self.epoch % self.save_checkpoint_epochs == 0:
             save_checkpoint(net.G.generator.G_A, os.path.join(self.ckpts_dir, f"G_A_{self.epoch}.ckpt"))
             save_checkpoint(net.G.generator.G_B, os.path.join(self.ckpts_dir, f"G_B_{self.epoch}.ckpt"))
             save_checkpoint(net.G.D_A, os.path.join(self.ckpts_dir, f"D_A_{self.epoch}.ckpt"))
             save_checkpoint(net.G.D_B, os.path.join(self.ckpts_dir, f"D_B_{self.epoch}.ckpt"))
 
     def visualizer(self, img_A, img_B, fake_A, fake_B):
-        if self.save_imgs and self.step % self.dataset_size == 0 and self.rank == 0:
+        if self.save_imgs and self.step % self.dataset_size == 0:
             save_image(img_A, os.path.join(self.imgs_dir, f"{self.epoch}_img_A.jpg"))
             save_image(img_B, os.path.join(self.imgs_dir, f"{self.epoch}_img_B.jpg"))
             save_image(fake_A, os.path.join(self.imgs_dir, f"{self.epoch}_fake_A.jpg"))

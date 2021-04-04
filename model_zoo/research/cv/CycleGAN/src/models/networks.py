@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 """Cycle GAN network."""
 
 import mindspore.nn as nn
 from mindspore.common import initializer as init
 
+
 def init_weights(net, init_type='normal', init_gain=0.02):
     """
     Initialize network weights.
-
     Parameters:
         net (Cell): Network to be initialized
         init_type (str): The name of an initialization method: normal | xavier.
         init_gain (float): Gain factor for normal and xavier.
-
     """
     for _, cell in net.cells_and_names():
         if isinstance(cell, (nn.Conv2d, nn.Conv2dTranspose)):
@@ -45,7 +45,6 @@ def init_weights(net, init_type='normal', init_gain=0.02):
 class ConvNormReLU(nn.Cell):
     """
     Convolution fused with BatchNorm/InstanceNorm and ReLU/LackyReLU block definition.
-
     Args:
         in_planes (int): Input channel.
         out_planes (int): Output channel.
@@ -57,7 +56,6 @@ class ConvNormReLU(nn.Cell):
             Default: "CONSTANT".
         use_relu (bool): Use relu or not. Default: True.
         padding (int): Pad size, if it is None, it will calculate by kernel_size. Default: None.
-
     Returns:
         Tensor, output tensor.
     """
@@ -103,7 +101,6 @@ class ConvNormReLU(nn.Cell):
 class ConvTransposeNormReLU(nn.Cell):
     """
     ConvTranspose2d fused with BatchNorm/InstanceNorm and ReLU/LackyReLU block definition.
-
     Args:
         in_planes (int): Input channel.
         out_planes (int): Output channel.
@@ -115,7 +112,6 @@ class ConvTransposeNormReLU(nn.Cell):
                         Default: "CONSTANT".
         use_relu (bool): use relu or not. Default: True.
         padding (int): pad size, if it is None, it will calculate by kernel_size. Default: None.
-
     Returns:
         Tensor, output tensor.
     """

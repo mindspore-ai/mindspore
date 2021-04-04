@@ -1,4 +1,5 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+#!/bin/bash
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,9 +12,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ============================================================================
-"""init file."""
-from .args import get_args
-from .reporter import Reporter
-from .tools import get_lr, load_teacher_ckpt, ImagePool, load_ckpt, save_image
-from .cityscapes_utils import CityScapes, fast_hist, get_scores
+
+python eval.py --platform GPU --device_id 0 --model ResNet --G_A_ckpt ./outputs/ckpt/G_A_200.ckpt --G_B_ckpt ./outputs/ckpt/G_B_200.ckpt

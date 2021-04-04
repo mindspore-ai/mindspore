@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 """Cycle GAN network."""
 
 import mindspore as ms
@@ -21,40 +22,40 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication.management import get_group_size
 import mindspore.ops as ops
-from .resnet import ResNetGenerator
 from .networks import ConvNormReLU, init_weights
+from .resnet import ResNetGenerator
+from .depth_resnet import DepthResNetGenerator
 from .unet import UnetGenerator
 
-def get_generator(args, teacher_net=False):
-    """Return generator by args."""
-    if teacher_net:
-        if args.model == "resnet":
-            net = ResNetGenerator(in_planes=args.in_planes, ngf=args.t_ngf, n_layers=args.t_gl_num,
-                                  alpha=args.t_slope, norm_mode=args.t_norm_mode, dropout=False,
-                                  pad_mode=args.pad_mode)
-            init_weights(net, args.init_type, args.init_gain)
-        elif args.model == "unet":
-            net = UnetGenerator(in_planes=args.in_planes, out_planes=args.in_planes, ngf=args.t_ngf,
-                                n_layers=args.t_gl_num, alpha=args.t_slope, norm_mode=args.t_norm_mode,
-                                dropout=False)
-            init_weights(net, args.init_type, args.init_gain)
-        else:
-            raise NotImplementedError(f'Model {args.model} not recognized.')
+def get_generator(args):
+    """
+    This class implements the CycleGAN model, for learning image-to-image translation without paired data.
+
+    The model training requires '--dataset_mode unaligned' dataset.
+    By default, it uses a '--netG resnet_9blocks' ResNet generator,
+    a '--netD basic' discriminator (PatchGAN introduced by pix2pix),
+    and a least-square GANs objective ('--gan_mode lsgan').
+    """
+    if args.model == "ResNet":
+        net = ResNetGenerator(in_planes=args.in_planes, ngf=args.ngf, n_layers=args.gl_num,
+                              alpha=args.slope, norm_mode=args.norm_mode, dropout=args.need_dropout,
+                              pad_mode=args.pad_mode)
+        init_weights(net, args.init_type, args.init_gain)
+    elif args.model == "DepthResNet":
+        net = DepthResNetGenerator(in_planes=args.in_planes, ngf=args.ngf, n_layers=args.gl_num,
+                                   alpha=args.slope, norm_mode=args.norm_mode, dropout=args.need_dropout,
+                                   pad_mode=args.pad_mode)
+        init_weights(net, args.init_type, args.init_gain)
+    elif args.model == "UNet":
+        net = UnetGenerator(in_planes=args.in_planes, out_planes=args.in_planes, ngf=args.ngf, n_layers=args.gl_num,
+                            alpha=args.slope, norm_mode=args.norm_mode, dropout=args.need_dropout)
+        init_weights(net, args.init_type, args.init_gain)
     else:
-        if args.model == "resnet":
-            net = ResNetGenerator(in_planes=args.in_planes, ngf=args.ngf, n_layers=args.gl_num,
-                                  alpha=args.slope, norm_mode=args.norm_mode, dropout=args.need_dropout,
-                                  pad_mode=args.pad_mode)
-            init_weights(net, args.init_type, args.init_gain)
-        elif args.model == "unet":
-            net = UnetGenerator(in_planes=args.in_planes, out_planes=args.in_planes, ngf=args.ngf, n_layers=args.gl_num,
-                                alpha=args.slope, norm_mode=args.norm_mode, dropout=args.need_dropout)
-            init_weights(net, args.init_type, args.init_gain)
-        else:
-            raise NotImplementedError(f'Model {args.model} not recognized.')
+        raise NotImplementedError(f'Model {args.model} not recognized.')
     return net
 
-def get_discriminator(args, teacher_net=False):
+
+def get_discriminator(args):
     """Return discriminator by args."""
     net = Discriminator(in_planes=args.in_planes, ndf=args.ndf, n_layers=args.dl_num,
                         alpha=args.slope, norm_mode=args.norm_mode)
@@ -65,17 +66,14 @@ def get_discriminator(args, teacher_net=False):
 class Discriminator(nn.Cell):
     """
     Discriminator of GAN.
-
     Args:
         in_planes (int): Input channel.
         ndf (int): Output channel.
         n_layers (int): The number of ConvNormReLU blocks.
         alpha (float): LeakyRelu slope. Default: 0.2.
         norm_mode (str): Specifies norm method. The optional values are "batch", "instance".
-
     Returns:
         Tensor, output tensor.
-
     Examples:
         >>> Discriminator(3, 64, 3)
     """
@@ -105,15 +103,12 @@ class Discriminator(nn.Cell):
 class Generator(nn.Cell):
     """
     Generator of CycleGAN, return fake_A, fake_B, rec_A, rec_B, identity_A and identity_B.
-
     Args:
         G_A (Cell): The generator network of domain A to domain B.
         G_B (Cell): The generator network of domain B to domain A.
         use_identity (bool): Use identity loss or not. Default: True.
-
     Returns:
         Tensors, fake_A, fake_B, rec_A, rec_B, identity_A and identity_B.
-
     Examples:
         >>> Generator(G_A, G_B)
     """
@@ -142,7 +137,6 @@ class Generator(nn.Cell):
 class WithLossCell(nn.Cell):
     """
     Wrap the network with loss function to return generator loss.
-
     Args:
         network (Cell): The target network to wrap.
     """
@@ -158,10 +152,8 @@ class WithLossCell(nn.Cell):
 class TrainOneStepG(nn.Cell):
     """
     Encapsulation class of Cycle GAN generator network training.
-
     Append an optimizer to the training network after that the construct
     function can be called to create the backward graph.
-
     Args:
         G (Cell): Generator with loss Cell. Note that loss function should have been added.
         generator (Cell): Generator of CycleGAN.
@@ -210,10 +202,8 @@ class TrainOneStepG(nn.Cell):
 class TrainOneStepD(nn.Cell):
     """
     Encapsulation class of Cycle GAN discriminator network training.
-
     Append an optimizer to the training network after that the construct
     function can be called to create the backward graph.
-
     Args:
         G (Cell): Generator with loss Cell. Note that loss function should have been added.
         optimizer (Optimizer): Optimizer for updating the weights.
