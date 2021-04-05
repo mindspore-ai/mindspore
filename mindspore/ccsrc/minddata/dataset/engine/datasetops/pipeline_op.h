@@ -26,8 +26,6 @@ namespace dataset {
 // forward declare
 class ExecutionTree;
 
-class DataBuffer;
-
 class PipelineOp : public DatasetOp {
  public:
   // Constructor

@@ -487,10 +487,8 @@ Status AlbumOp::GetNextRowPullMode(TensorRow *row) {
   if (image_rows_.empty()) PrescanEntry();
   if (sample_ids_ == nullptr) {
     RETURN_IF_NOT_OK(this->InitSampler());
-    std::unique_ptr<DataBuffer> sample_buffer;
     TensorRow sample_row;
-    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_buffer));
-    RETURN_IF_NOT_OK(sample_buffer->PopRow(&sample_row));
+    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     sample_ids_ = sample_row[0];
   }
   if (curr_row_ + 1 > sample_ids_->Size()) {

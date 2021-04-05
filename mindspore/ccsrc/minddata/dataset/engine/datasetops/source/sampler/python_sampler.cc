@@ -23,9 +23,9 @@ namespace dataset {
 PythonSamplerRT::PythonSamplerRT(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_buffer)
     : SamplerRT(num_samples, samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
 
-Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status PythonSamplerRT::GetNextSample(TensorRow *out) {
   if (need_to_reset_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
@@ -34,7 +34,6 @@ Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
     std::shared_ptr<Tensor> sample_ids;
     {
       py::gil_scoped_acquire gil_acquire;
-      (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagNone);
       if (Py_IsInitialized() == 0) {
         return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       }
@@ -57,8 +56,7 @@ Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
                       "Invalid data, python sampler iterator should return an integer index.");
       }
     }
-    TensorRow row(1, sample_ids);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    (*out) = {sample_ids};
     need_to_reset_ = true;
   }
   return Status::OK();

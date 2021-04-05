@@ -52,7 +52,7 @@ Status PKSamplerRT::InitSampler() {
     num_samples_ = num_rows_;
   }
 
-  samples_per_buffer_ = (samples_per_buffer_ > num_samples_) ? num_samples_ : samples_per_buffer_;
+  samples_per_tensor_ = (samples_per_tensor_ > num_samples_) ? num_samples_ : samples_per_tensor_;
   if (shuffle_ == true) {
     std::shuffle(labels_.begin(), labels_.end(), rnd_);
   } else {
@@ -65,19 +65,18 @@ Status PKSamplerRT::InitSampler() {
   return Status::OK();
 }
 
-Status PKSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status PKSamplerRT::GetNextSample(TensorRow *out) {
   if (next_id_ > num_samples_ || num_samples_ == 0) {
     RETURN_STATUS_UNEXPECTED("Index must be less than or equal to num_samples, but got: " + std::to_string(next_id_));
   } else if (next_id_ == num_samples_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
-    (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
-    int64_t last_id = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
+    int64_t last_id = (samples_per_tensor_ + next_id_ > num_samples_) ? num_samples_ : samples_per_tensor_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, last_id - next_id_));
     auto id_ptr = sample_ids->begin<int64_t>();
     CHECK_FAIL_RETURN_UNEXPECTED(samples_per_class_ != 0, "samples cannot be zero.");
@@ -95,8 +94,7 @@ Status PKSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
       id_ptr++;
     }
 
-    TensorRow row(1, sample_ids);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    (*out) = {sample_ids};
   }
   return Status::OK();
 }

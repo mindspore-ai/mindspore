@@ -19,7 +19,7 @@
 
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {

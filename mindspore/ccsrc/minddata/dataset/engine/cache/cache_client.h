@@ -34,7 +34,7 @@
 #else
 #include "minddata/dataset/engine/cache/stub/cache_grpc_client.h"
 #endif
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/util/lock.h"
 #include "minddata/dataset/util/cond_var.h"
 #include "minddata/dataset/util/queue_map.h"

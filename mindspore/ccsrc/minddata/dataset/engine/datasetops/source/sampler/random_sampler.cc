@@ -31,19 +31,18 @@ RandomSamplerRT::RandomSamplerRT(int64_t num_samples, bool replacement, bool res
       dist(nullptr),
       reshuffle_each_epoch_(reshuffle_each_epoch) {}
 
-Status RandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status RandomSamplerRT::GetNextSample(TensorRow *out) {
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("RandomSampler Internal Error");
   } else if (next_id_ == num_samples_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
-    (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
 
     std::shared_ptr<Tensor> sampleIds;
-    int64_t last_id = std::min(samples_per_buffer_ + next_id_, num_samples_);
+    int64_t last_id = std::min(samples_per_tensor_ + next_id_, num_samples_);
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, last_id - next_id_));
     auto id_ptr = sampleIds->begin<int64_t>();
 
@@ -62,8 +61,7 @@ Status RandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
       *(id_ptr + static_cast<ptrdiff_t>(i)) = sampled_id;
     }
     next_id_ = last_id;
-    TensorRow row(1, sampleIds);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    (*out) = {sampleIds};
   }
   return Status::OK();
 }
@@ -81,7 +79,7 @@ Status RandomSamplerRT::InitSampler() {
     num_samples_ > 0 && num_rows_ > 0,
     "Invalid parameter, num_samples & num_rows must be greater than 0, but got num_samples: " +
       std::to_string(num_samples_) + ", num_rows: " + std::to_string(num_rows_));
-  samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
+  samples_per_tensor_ = samples_per_tensor_ > num_samples_ ? num_samples_ : samples_per_tensor_;
   rnd_.seed(seed_);
 
   if (!replacement_) {

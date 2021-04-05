@@ -94,11 +94,9 @@ Status CacheBase::FetchSamplesToWorkers() {
     keys.reserve(1);
     std::vector<row_id_type> prefetch_keys;
     prefetch_keys.reserve(prefetch_size_);
-    std::unique_ptr<DataBuffer> sampler_buffer;
-    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    while (!sampler_buffer->eoe()) {
-      TensorRow sample_row;
-      RETURN_IF_NOT_OK(sampler_buffer->PopRow(&sample_row));
+    TensorRow sample_row;
+    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
+    while (!sample_row.eoe()) {
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); itr++) {
         ++row_cnt_;
@@ -115,7 +113,7 @@ Status CacheBase::FetchSamplesToWorkers() {
           prefetch_keys.clear();
         }
       }
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     }
     // Deal with any partial keys left.
     if (!prefetch_keys.empty()) {

@@ -47,9 +47,9 @@ class SubsetSamplerRT : public SamplerRT {
   Status ResetSampler() override;
 
   /// Get the sample ids.
-  /// \param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.
+  /// \param[out] out The address of a unique_ptr to DataBuffer where the sample ids will be placed.
   /// @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
 
   /// Printer for debugging purposes.
   /// \param out - output stream to write to

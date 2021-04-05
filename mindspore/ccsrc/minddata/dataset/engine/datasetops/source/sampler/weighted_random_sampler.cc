@@ -49,9 +49,9 @@ Status WeightedRandomSamplerRT::InitSampler() {
     num_rows_ > 0 && num_samples_,
     "Invalid parameter, num_samples and num_rows must be greater than 0, but got num_rows: " +
       std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
-  CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0,
+  CHECK_FAIL_RETURN_UNEXPECTED(samples_per_tensor_ > 0,
                                "Invalid parameter, samples_per_buffer must be greater than 0, but got " +
-                                 std::to_string(samples_per_buffer_) + ".\n");
+                                 std::to_string(samples_per_tensor_) + ".\n");
 
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
@@ -69,7 +69,7 @@ Status WeightedRandomSamplerRT::InitSampler() {
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
 
-  samples_per_buffer_ = (samples_per_buffer_ > num_samples_) ? num_samples_ : samples_per_buffer_;
+  samples_per_tensor_ = (samples_per_tensor_ > num_samples_) ? num_samples_ : samples_per_tensor_;
 
   if (!replacement_) {
     exp_dist_ = std::make_unique<std::exponential_distribution<>>(1);
@@ -117,7 +117,7 @@ Status WeightedRandomSamplerRT::ResetSampler() {
 }
 
 // Get the sample ids.
-Status WeightedRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status WeightedRandomSamplerRT::GetNextSample(TensorRow *out) {
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, size of sample weights must be less than or equal to num of data, "
@@ -133,16 +133,15 @@ Status WeightedRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_b
   }
 
   if (sample_id_ == num_samples_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
+    (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
-    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
-    int64_t last_id = sample_id_ + samples_per_buffer_;
+    int64_t last_id = sample_id_ + samples_per_tensor_;
     // Handling the return all samples at once, and when last draw is not a full batch.
     if (last_id > num_samples_) {
       last_id = num_samples_;
@@ -178,8 +177,7 @@ Status WeightedRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_b
       sample_id_++;
     }
 
-    // Create a TensorTable from that single tensor and push into DataBuffer
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
+    (*out) = {outputIds};
   }
 
   return Status::OK();

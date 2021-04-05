@@ -48,7 +48,7 @@ class PythonSamplerRT : public SamplerRT {
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
 
   // Printer for debugging purposes.
   // @param out - output stream to write to

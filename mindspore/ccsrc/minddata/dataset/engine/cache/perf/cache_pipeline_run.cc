@@ -22,7 +22,7 @@
 #include <iomanip>
 #include <sstream>
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/services.h"

@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/db_connector.h"
 #include "utils/ms_utils.h"
 

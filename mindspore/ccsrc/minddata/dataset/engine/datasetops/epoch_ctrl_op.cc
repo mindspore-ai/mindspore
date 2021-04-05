@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {

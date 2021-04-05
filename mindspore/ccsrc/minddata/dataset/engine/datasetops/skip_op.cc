@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/skip_op.h"
 #include "minddata/dataset/engine/db_connector.h"

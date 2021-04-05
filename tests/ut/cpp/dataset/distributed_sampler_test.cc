@@ -18,7 +18,7 @@
 
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 #include "utils/log_adapter.h"
@@ -52,11 +52,9 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsOne) {
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
-  std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
-  db->PopRow(&row);
+  ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
       out.push_back(*it);
@@ -65,8 +63,8 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsOne) {
 
   ASSERT_EQ(4, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
-  ASSERT_EQ(db->eoe(), true);
+  ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
+  ASSERT_EQ(row.eoe(), true);
 }
 
 TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
@@ -78,11 +76,10 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
-  std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
-  db->PopRow(&row);
+  ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
+
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
       out.push_back(*it);
@@ -91,8 +88,8 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
 
   ASSERT_EQ(3, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
-  ASSERT_EQ(db->eoe(), true);
+  ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
+  ASSERT_EQ(row.eoe(), true);
 }
 
 TEST_F(MindDataTestDistributedSampler, TestThreeShards) {
@@ -104,11 +101,10 @@ TEST_F(MindDataTestDistributedSampler, TestThreeShards) {
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
-  std::unique_ptr<DataBuffer> db;
   TensorRow row;
   std::vector<uint64_t> out;
-  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
-  db->PopRow(&row);
+  ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
+
   for (const auto &t : row) {
     for (auto it = t->begin<uint64_t>(); it != t->end<uint64_t>(); it++) {
       out.push_back(*it);
@@ -117,7 +113,6 @@ TEST_F(MindDataTestDistributedSampler, TestThreeShards) {
 
   ASSERT_EQ(0, out.size());
 
-  ASSERT_EQ(m_sampler.GetNextSample(&db), Status::OK());
-  ASSERT_EQ(db->eoe(), true);
+  ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
+  ASSERT_EQ(row.eoe(), true);
 }
-

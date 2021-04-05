@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace dataset {
 // Forward declare
-class DataBuffer;
 class ExecutionTree;
 
 // BarrierOp class implements the Barrier operator. It will block sending of rows until a signal has

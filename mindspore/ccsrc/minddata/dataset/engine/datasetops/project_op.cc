@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/log_adapter.h"
 

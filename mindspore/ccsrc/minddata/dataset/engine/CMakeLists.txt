@@ -13,7 +13,6 @@ file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 set(SRC_FILES_LIST
         execution_tree.cc
-        data_buffer.cc
         data_schema.cc
         dataset_iterator.cc
         tree_adapter.cc

@@ -37,8 +37,6 @@ class ExecutionTree;
 
 class DbConnector;
 
-class DataBuffer;
-
 class ShuffleOp : public PipelineOp {
   // Shuffle buffer state flags
   //

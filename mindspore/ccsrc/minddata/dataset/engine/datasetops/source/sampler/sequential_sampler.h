@@ -47,7 +47,7 @@ class SequentialSamplerRT : public SamplerRT {
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
 
   /// \brief Recursively calls this function on its children to get the actual number of samples on a tree of samplers
   /// \note This is not a getter for num_samples_. For example, if num_samples_ is 0 or if it's smaller than num_rows,

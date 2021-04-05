@@ -115,7 +115,6 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
 Status ToDevice::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), num_epochs_); }
 
 Status ToDevice::Send() {
-  std::unique_ptr<DataBuffer> db;
   RETURN_IF_NOT_OK(tree_adapter_->Launch());
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
