@@ -36,6 +36,7 @@
 #include "minddata/dataset/text/kernels/to_number_op.h"
 #include "minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
 #ifndef _WIN32
 #include "minddata/dataset/text/kernels/unicode_script_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
@@ -393,6 +394,39 @@ Status UnicodeCharTokenizerOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> UnicodeCharTokenizerOperation::Build() {
   std::shared_ptr<UnicodeCharTokenizerOp> tensor_op = std::make_shared<UnicodeCharTokenizerOp>(with_offsets_);
+  return tensor_op;
+}
+
+// WordpieceTokenizerOperation
+WordpieceTokenizerOperation::WordpieceTokenizerOperation(const std::shared_ptr<Vocab> &vocab,
+                                                         const std::string &suffix_indicator,
+                                                         int32_t max_bytes_per_token, const std::string &unknown_token,
+                                                         bool with_offsets)
+    : vocab_(vocab),
+      suffix_indicator_(suffix_indicator),
+      max_bytes_per_token_(max_bytes_per_token),
+      unknown_token_(unknown_token),
+      with_offsets_(with_offsets) {}
+
+Status WordpieceTokenizerOperation::ValidateParams() {
+  if (vocab_ == nullptr) {
+    std::string err_msg = "WordpieceTokenizer: vocab object type is incorrect or null.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (max_bytes_per_token_ < 0) {
+    std::string err_msg =
+      "WordpieceTokenizer : The parameter max_bytes_per_token must be greater than or equal to 0: " +
+      std::to_string(max_bytes_per_token_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> WordpieceTokenizerOperation::Build() {
+  std::shared_ptr<WordpieceTokenizerOp> tensor_op = std::make_shared<WordpieceTokenizerOp>(
+    vocab_, suffix_indicator_, max_bytes_per_token_, unknown_token_, with_offsets_);
   return tensor_op;
 }
 

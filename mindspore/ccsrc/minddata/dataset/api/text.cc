@@ -15,6 +15,8 @@
  */
 
 #include <unistd.h>
+#include <fstream>
+#include <regex>
 
 #include "minddata/dataset/include/text.h"
 
@@ -131,7 +133,7 @@ std::shared_ptr<TensorOperation> JiebaTokenizer::Parse() {
   return jieba_tokenizer;
 }
 
-Status JiebaTokenizer::AddWord(const std::string &word, int64_t freq) {
+Status JiebaTokenizer::AddWordChar(const std::vector<char> &word, int64_t freq) {
   if (word.empty()) {
     std::string err_msg = "JiebaTokenizer : The parameter word is empty or not provided.";
     MS_LOG(ERROR) << err_msg;
@@ -142,7 +144,59 @@ Status JiebaTokenizer::AddWord(const std::string &word, int64_t freq) {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  data_->words_list_.emplace_back(word, freq);
+  data_->words_list_.emplace_back(CharToString(word), freq);
+  return Status::OK();
+}
+
+Status JiebaTokenizer::AddDictChar(const std::vector<std::pair<std::vector<char>, int64_t>> &user_dict) {
+  for (auto &word_freq_pair : user_dict) {
+    RETURN_IF_NOT_OK(AddWordChar(word_freq_pair.first, word_freq_pair.second));
+  }
+  return Status::OK();
+}
+
+Status JiebaTokenizer::AddDictChar(const std::vector<char> &file_path) {
+  std::vector<std::pair<std::string, int64_t>> user_dict;
+  RETURN_IF_NOT_OK(ParserFile(CharToString(file_path), &user_dict));
+  RETURN_IF_NOT_OK(AddDictChar(PairStringInt64ToPairCharInt64(user_dict)));
+  return Status::OK();
+}
+
+Status JiebaTokenizer::ParserFile(const std::string &file_path,
+                                  std::vector<std::pair<std::string, int64_t>> *const user_dict) {
+  std::ifstream ifs(file_path);
+  if (!ifs) {
+    std::string err_msg = "JiebaTokenizer : Fail to load dictionary from the input file, check the file path.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  std::string line;
+  while (std::getline(ifs, line)) {
+    if (line.empty()) {
+      continue;
+    }
+    std::regex regex("^\\s*([^\\s*]+?)\\s*([0-9]+)?\\s*$");
+    std::smatch tokens;
+    std::regex_match(line, tokens, regex);
+    if (std::regex_match(line, tokens, regex)) {
+      if (tokens.size() == 2) {
+        user_dict->emplace_back(tokens.str(1), 0);
+      } else if (tokens.size() == 3) {
+        user_dict->emplace_back(tokens.str(1), strtoll(tokens.str(2).c_str(), NULL, 0));
+      } else {
+        continue;
+      }
+    } else {
+      continue;
+    }
+  }
+  MS_LOG(INFO) << "JiebaTokenizer::AddDict: The size of user input dictionary is: " << user_dict->size();
+  MS_LOG(INFO) << "Valid rows in input dictionary (Maximum of first 10 rows are shown.):";
+  for (std::size_t i = 0; i != user_dict->size(); ++i) {
+    if (i >= 10) break;
+    MS_LOG(INFO) << user_dict->at(i).first << " " << user_dict->at(i).second;
+  }
   return Status::OK();
 }
 
@@ -308,6 +362,32 @@ UnicodeCharTokenizer::UnicodeCharTokenizer(bool with_offsets) : data_(std::make_
 
 std::shared_ptr<TensorOperation> UnicodeCharTokenizer::Parse() {
   return std::make_shared<UnicodeCharTokenizerOperation>(data_->with_offsets_);
+}
+
+// WordpieceTokenizer
+struct WordpieceTokenizer::Data {
+  Data(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator, int32_t max_bytes_per_token,
+       const std::vector<char> &unknown_token, bool with_offsets)
+      : vocab_(vocab),
+        suffix_indicator_(CharToString(suffix_indicator)),
+        max_bytes_per_token_(max_bytes_per_token),
+        unknown_token_(CharToString(unknown_token)),
+        with_offsets_(with_offsets) {}
+  std::shared_ptr<Vocab> vocab_;
+  std::string suffix_indicator_;
+  int32_t max_bytes_per_token_;
+  std::string unknown_token_;
+  bool with_offsets_;
+};
+
+WordpieceTokenizer::WordpieceTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
+                                       int32_t max_bytes_per_token, const std::vector<char> &unknown_token,
+                                       bool with_offsets)
+    : data_(std::make_shared<Data>(vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets)) {}
+
+std::shared_ptr<TensorOperation> WordpieceTokenizer::Parse() {
+  return std::make_shared<WordpieceTokenizerOperation>(
+    data_->vocab_, data_->suffix_indicator_, data_->max_bytes_per_token_, data_->unknown_token_, data_->with_offsets_);
 }
 
 #ifndef _WIN32

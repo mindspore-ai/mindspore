@@ -49,6 +49,7 @@ constexpr char kTruncateSequencePairOperation[] = "TruncateSequencePair";
 constexpr char kUnicodeCharTokenizerOperation[] = "UnicodeCharTokenizer";
 constexpr char kUnicodeScriptTokenizerOperation[] = "UnicodeScriptTokenizer";
 constexpr char kWhitespaceTokenizerOperation[] = "WhitespaceTokenizer";
+constexpr char kWordpieceTokenizerOperation[] = "WordpieceTokenizer";
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
@@ -315,6 +316,28 @@ class UnicodeCharTokenizerOperation : public TensorOperation {
   std::string Name() const override { return kUnicodeCharTokenizerOperation; }
 
  private:
+  bool with_offsets_;
+};
+
+class WordpieceTokenizerOperation : public TensorOperation {
+ public:
+  explicit WordpieceTokenizerOperation(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator,
+                                       int32_t max_bytes_per_token, const std::string &unknown_token,
+                                       bool with_offsets);
+
+  ~WordpieceTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kWordpieceTokenizerOperation; }
+
+ private:
+  std::shared_ptr<Vocab> vocab_;
+  std::string suffix_indicator_;
+  int32_t max_bytes_per_token_;
+  std::string unknown_token_;
   bool with_offsets_;
 };
 

@@ -102,7 +102,7 @@ class JiebaTokenizer(TextTensorOperation):
             - JiebaMode.MP, tokenize with MPSegment algorithm.
             - JiebaMode.HMM, tokenize with Hiddel Markov Model Segment algorithm.
             - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
-        with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+        with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
     Examples:
         >>> from mindspore.dataset.text import JiebaMode
@@ -186,6 +186,9 @@ class JiebaTokenizer(TextTensorOperation):
                     word2 None
                     word3 freq3
 
+                Only valid word-freq pairs in user provided file will be added into the dictionary.
+                Rows containing invalid input will be ignored. No error nor warning Status is returned.
+
         Examples:
             >>> from mindspore.dataset.text import JiebaMode
             >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
@@ -221,16 +224,16 @@ class JiebaTokenizer(TextTensorOperation):
                 "user dict file {} is not exist.".format(file_path))
         real_file_path = os.path.realpath(file_path)
         file_dict = open(real_file_path)
-        data_re = re.compile('^(.+?)( [0-9]+)?$', re.U)
+        data_re = re.compile('^\\s*([^\\s*]+?)\\s*([0-9]+)?\\s*$', re.U)
         words_list = []
         for item in file_dict:
             data = item.strip()
             if not isinstance(data, str):
                 data = self.__decode(data)
-            words = data_re.match(data).groups()
-            if len(words) != 2:
-                raise ValueError(
-                    "user dict file {} format error.".format(real_file_path))
+            tmp = data_re.match(data)
+            if not tmp:
+                continue
+            words = tmp.groups()
             words_list.append(words)
         file_dict.close()
         return words_list
@@ -452,7 +455,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
 
     Args:
-        with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+        with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
     Examples:
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -474,8 +477,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
         return cde.UnicodeCharTokenizerOperation(self.with_offsets)
 
 
-# TODO(alexyuyue): Need to decouple WordpieceTokenizerOp to WordpieceTokenizerOperation after it's supported in C++
-class WordpieceTokenizer(cde.WordpieceTokenizerOp):
+class WordpieceTokenizer(TextTensorOperation):
     """
     Tokenize scalar token or 1-D tokens to 1-D subword tokens.
 
@@ -485,7 +487,7 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split (default=100).
         unknown_token (str, optional): When a token cannot be found: if 'unknown_token' is empty string,
             return the token directly, else return 'unknown_token' (default='[UNK]').
-        with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+        with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
     Examples:
         >>> vocab_list = ["book", "cholera", "era", "favor", "##ite", "my", "is", "love", "dur", "##ing", "the"]
@@ -511,8 +513,10 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         self.max_bytes_per_token = max_bytes_per_token
         self.unknown_token = unknown_token
         self.with_offsets = with_offsets
-        super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
-                         self.unknown_token, self.with_offsets)
+
+    def parse(self):
+        return cde.WordpieceTokenizerOperation(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
+                                               self.unknown_token, self.with_offsets)
 
 
 class PythonTokenizer:
@@ -572,7 +576,7 @@ if platform.system().lower() != 'windows':
                 only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
             preserve_unused_token (bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
         Examples:
             >>> from mindspore.dataset.text import NormalizeForm
@@ -638,7 +642,7 @@ if platform.system().lower() != 'windows':
                 only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
             preserve_unused_token (bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
         Examples:
             >>> from mindspore.dataset.text import NormalizeForm
@@ -793,7 +797,7 @@ if platform.system().lower() != 'windows':
             keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. The default value is an empty str ('')
                 which means that delimiters will not be kept as an output token (default='').
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
         Examples:
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -829,8 +833,8 @@ if platform.system().lower() != 'windows':
             UnicodeScriptTokenizer is not supported on Windows platform yet.
 
         Args:
-            keep_whitespace (bool, optional): If or not emit whitespace tokens (default=False).
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+            keep_whitespace (bool, optional): Whether or not emit whitespace tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
         Examples:
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -865,7 +869,7 @@ if platform.system().lower() != 'windows':
             WhitespaceTokenizer is not supported on Windows platform yet.
 
         Args:
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
         Examples:
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}

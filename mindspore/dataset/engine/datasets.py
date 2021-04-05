@@ -2207,7 +2207,7 @@ def _pyfunc_worker_init(pyfunc_list):
 # All exceptions will be raised to main processes
 def _pyfunc_worker_exec(index, *args):
     """
-    Internal function for call certain pyfunc in python process.
+    Internal function for call certain pyfunc in Python process.
     """
     # Some threads in multiprocess.pool can't process sigint signal,
     # and will occur hang problem, so ctrl+c will pass to parent process.
@@ -2352,7 +2352,7 @@ class MapDataset(Dataset):
 
             # Pass #1, look for Python callables and build list
             for op in self.operations:
-                # our c transforms is now callable and should not be run in python multithreading
+                # our c transforms is now callable and should not be run in Python multithreading
                 if callable(op) and str(op).find("c_transform") < 0:
                     callable_list.append(op)
 
@@ -2373,7 +2373,7 @@ class MapDataset(Dataset):
                 with _LOCK:
                     _OP_PROCESS.update(process_id)
                 for op in self.operations:
-                    # our c transforms is now callable and should not be run in python multithreading
+                    # our c transforms is now callable and should not be run in Python multithreading
                     if callable(op) and str(op).find("c_transform") < 0:
                         # Wrap Python callable into _PythonCallable
                         iter_specific_operations.append(_PythonCallable(op, idx, self.process_pool))

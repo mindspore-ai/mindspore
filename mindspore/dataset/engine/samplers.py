@@ -610,7 +610,7 @@ class SubsetSampler(BuiltinSampler):
     Samples the elements from a sequence of indices.
 
     Args:
-        indices (Any iterable python object but string): A sequence of indices.
+        indices (Any iterable Python object but string): A sequence of indices.
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:

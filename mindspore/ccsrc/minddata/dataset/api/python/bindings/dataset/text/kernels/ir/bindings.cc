@@ -232,12 +232,17 @@ PYBIND_REGISTER(UnicodeCharTokenizerOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
-// TODO(alexyuyue): Need to decouple WordpieceTokenizerOp to WordpieceTokenizerOperation after it's supported in C++
-PYBIND_REGISTER(WordpieceTokenizerOp, 1, ([](const py::module *m) {
-                  (void)py::class_<WordpieceTokenizerOp, TensorOp, std::shared_ptr<WordpieceTokenizerOp>>(
-                    *m, "WordpieceTokenizerOp")
-                    .def(py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &,
-                                  const bool &>());
+PYBIND_REGISTER(WordpieceTokenizerOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<text::WordpieceTokenizerOperation, TensorOperation,
+                                   std::shared_ptr<text::WordpieceTokenizerOperation>>(*m,
+                                                                                       "WordpieceTokenizerOperation")
+                    .def(py::init([](const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator,
+                                     int32_t max_bytes_per_token, const std::string &unknown_token, bool with_offsets) {
+                      auto wordpiece_tokenizer = std::make_shared<text::WordpieceTokenizerOperation>(
+                        vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets);
+                      THROW_IF_ERROR(wordpiece_tokenizer->ValidateParams());
+                      return wordpiece_tokenizer;
+                    }));
                 }));
 
 PYBIND_REGISTER(JiebaMode, 0, ([](const py::module *m) {

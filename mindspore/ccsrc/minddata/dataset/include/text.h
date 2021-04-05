@@ -52,7 +52,7 @@ class BasicTokenizer final : public TensorTransform {
   ///   false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
   /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]',
   ///   '[MASK]' (default=true).
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit BasicTokenizer(bool lower_case = false, bool keep_whitespace = false,
                           const NormalizeForm normalize_form = NormalizeForm::kNone, bool preserve_unused_token = true,
                           bool with_offsets = false);
@@ -88,7 +88,7 @@ class BertTokenizer final : public TensorTransform {
   ///   false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
   /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]',
   ///   '[MASK]' (default=true).
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator = "##",
                          int32_t max_bytes_per_token = 100, const std::string &unknown_token = "[UNK]",
                          bool lower_case = false, bool keep_whitespace = false,
@@ -145,7 +145,7 @@ class JiebaTokenizer final : public TensorTransform {
   ///   - JiebaMode.kMP, tokenize with MPSegment algorithm.
   ///   - JiebaMode.kHMM, tokenize with Hiddel Markov Model Segment algorithm.
   ///   - JiebaMode.kMIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,
                           const JiebaMode &mode = JiebaMode::kMix, bool with_offsets = false)
       : JiebaTokenizer(StringToChar(hmm_path), StringToChar(mp_path), mode, with_offsets) {}
@@ -156,7 +156,24 @@ class JiebaTokenizer final : public TensorTransform {
   /// \brief Destructor
   ~JiebaTokenizer() = default;
 
-  Status AddWord(const std::string &word, int64_t freq = 0);
+  /// \brief Add user defined word to JiebaTokenizer's dictionary.
+  /// \param[in] word The word to be added to the JiebaTokenizer instance.
+  ///   The added word will not be written into the built-in dictionary on disk.
+  /// \param[in] freq The frequency of the word to be added. The higher the frequency,
+  ///   the better chance the word will be tokenized (default=None, use default frequency).
+  Status AddWord(const std::string &word, int64_t freq = 0) { return AddWordChar(StringToChar(word), freq); }
+
+  /// \brief Add user defined dictionary of word-freq pairs to JiebaTokenizer's dictionary.
+  /// \param[in] user_dict Vector of word-freq pairs to be added to JiebaTokenizer's dictionary.
+  Status AddDict(const std::vector<std::pair<std::string, int64_t>> &user_dict) {
+    return AddDictChar(PairStringInt64ToPairCharInt64(user_dict));
+  }
+
+  /// \brief Add user defined dictionary of word-freq pairs to JiebaTokenizer's dictionary from a file.
+  ///   Only valid word-freq pairs in user provided file will be added into the dictionary.
+  ///   Rows containing invalid input will be ignored, no error nor warning Status is returned.
+  /// \param[in] file_path Path to the dictionary which includes user defined word-freq pairs.
+  Status AddDict(const std::string &file_path) { return AddDictChar(StringToChar(file_path)); }
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -164,6 +181,20 @@ class JiebaTokenizer final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
+  /// \brief Parser user defined word by file.
+  /// \param[in] file_path Path to the user defined file.
+  /// \param[in] user_dict Vector of word-freq pairs extracted from the user provided file.
+  Status ParserFile(const std::string &file_path, std::vector<std::pair<std::string, int64_t>> *const user_dict);
+
+  /// \brief Used to translate all API string to vector of char and back
+  Status AddWordChar(const std::vector<char> &word, int64_t freq = 0);
+
+  /// \brief Used to translate all API string to vector of char and back
+  Status AddDictChar(const std::vector<std::pair<std::vector<char>, int64_t>> &user_dict);
+
+  /// \brief Used to translate all API string to vector of char and back
+  Status AddDictChar(const std::vector<char> &file_path);
+
   struct Data;
   std::shared_ptr<Data> data_;
 };
@@ -292,7 +323,7 @@ class RegexTokenizer final : public TensorTransform {
   /// \param[in] keep_delim_pattern The string matched by 'delim_pattern' can be kept as a token if it can be
   ///   matched by 'keep_delim_pattern'. The default value is an empty string ("")
   ///   which means that delimiters will not be kept as an output token (default="").
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "", bool with_offsets = false)
       : RegexTokenizer(StringToChar(delim_pattern), StringToChar(keep_delim_pattern), with_offsets) {}
 
@@ -416,11 +447,43 @@ class TruncateSequencePair final : public TensorTransform {
 class UnicodeCharTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit UnicodeCharTokenizer(bool with_offsets = false);
 
   /// \brief Destructor
   ~UnicodeCharTokenizer() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Tokenize scalar token or 1-D tokens to 1-D subword tokens.
+class WordpieceTokenizer final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] vocab A Vocab object.
+  /// \param[in] suffix_indicator Used to show that the subword is the last part of a word (default='##').
+  /// \param[in] max_bytes_per_token Tokens exceeding this length will not be further split (default=100).
+  /// \param[in] unknown_token When a token cannot be found, return the token directly if 'unknown_token' is an empty
+  ///   string, else return the string specified (default='[UNK]').
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  explicit WordpieceTokenizer(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator = "##",
+                              int32_t max_bytes_per_token = 100, const std::string &unknown_token = "[UNK]",
+                              bool with_offsets = false)
+      : WordpieceTokenizer(vocab, StringToChar(suffix_indicator), max_bytes_per_token, StringToChar(unknown_token),
+                           with_offsets) {}
+
+  explicit WordpieceTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
+                              int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool with_offsets);
+
+  /// \brief Destructor
+  ~WordpieceTokenizer() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -437,8 +500,8 @@ class UnicodeCharTokenizer final : public TensorTransform {
 class UnicodeScriptTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] keep_whitespace If or not emit whitespace tokens (default=false).
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] keep_whitespace Whether or not emit whitespace tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit UnicodeScriptTokenizer(bool keep_whitespace = false, bool with_offsets = false);
 
   /// \brief Destructor
@@ -458,7 +521,7 @@ class UnicodeScriptTokenizer final : public TensorTransform {
 class WhitespaceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] with_offsets If or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit WhitespaceTokenizer(bool with_offsets = false);
 
   /// \brief Destructor
