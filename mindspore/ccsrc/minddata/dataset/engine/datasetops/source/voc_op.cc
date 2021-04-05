@@ -47,7 +47,6 @@ const char kImageSetsExtension[] = ".txt";
 VOCOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
   builder_task_type_ = TaskType::Segmentation;
 }
@@ -78,8 +77,8 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
       ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   }
   *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_usage_, builder_dir_, builder_labels_to_read_,
-                                 builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
-                                 builder_decode_, std::move(builder_schema_), std::move(builder_sampler_));
+                                 builder_num_workers_, builder_op_connector_size_, builder_decode_,
+                                 std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -96,10 +95,9 @@ Status VOCOp::Builder::SanityCheck() {
 }
 
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
-             const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
-             int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
-             std::shared_ptr<SamplerRT> sampler)
-    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
+             const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
+             std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
       task_type_(task_type),
       usage_(task_mode),

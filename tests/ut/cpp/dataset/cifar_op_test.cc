@@ -47,7 +47,7 @@ std::shared_ptr<CifarOp> Cifarop(uint64_t num_works, uint64_t rows, uint64_t con
   CifarOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)
                 .SetCifarDir(path)
-                .SetRowsPerBuffer(rows)
+
                 .SetOpConnectorSize(conns)
                 .SetSampler(std::move(sampler))
                 .SetCifarType(cifar10)

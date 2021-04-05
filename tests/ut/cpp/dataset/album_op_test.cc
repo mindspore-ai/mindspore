@@ -31,7 +31,7 @@ using mindspore::MsLogLevel::ERROR;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false, int rows_per_buf = 2);
+std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
 std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
@@ -42,10 +42,10 @@ std::shared_ptr<AlbumOp> Album(int64_t num_works, int64_t rows, int64_t conns, s
   std::shared_ptr<AlbumOp> so;
   AlbumOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)
-                     .SetAlbumDir(path)
-                     .SetRowsPerBuffer(rows)
-                     .SetOpConnectorSize(conns)
-                     .SetExtensions({".json"})
+                .SetAlbumDir(path)
+
+                .SetOpConnectorSize(conns)
+                .SetExtensions({".json"})
                      .SetSampler(std::move(sampler))
                      .SetDecode(decode)
                      .Build(&so);
@@ -59,12 +59,12 @@ std::shared_ptr<AlbumOp> AlbumSchema(int64_t num_works, int64_t rows, int64_t co
   std::shared_ptr<AlbumOp> so;
   AlbumOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)
-    .SetSchemaFile(schema_file)
-    .SetColumnsToLoad(column_names)
-    .SetAlbumDir(path)
-    .SetRowsPerBuffer(rows)
-    .SetOpConnectorSize(conns)
-    .SetExtensions({".json"})
+                .SetSchemaFile(schema_file)
+                .SetColumnsToLoad(column_names)
+                .SetAlbumDir(path)
+
+                .SetOpConnectorSize(conns)
+                .SetExtensions({".json"})
     .SetSampler(std::move(sampler))
     .SetDecode(decode)
     .Build(&so);
@@ -180,8 +180,8 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
     EXPECT_OK(tensor_map["_priority"]->GetItemAt<double>(&priority, {}));
     EXPECT_OK(tensor_map["id"]->GetItemAt<int64_t>(&id, {}));
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
-                  << tensor_map["label"]  << "priority: " << priority << " embedding : " 
-                  << tensor_map["_embedding"]->shape() << " id: " << id << "\n";
+                  << tensor_map["label"] << "priority: " << priority
+                  << " embedding : " << tensor_map["_embedding"]->shape() << " id: " << id << "\n";
     i++;
     di.GetNextAsMap(&tensor_map);
   }

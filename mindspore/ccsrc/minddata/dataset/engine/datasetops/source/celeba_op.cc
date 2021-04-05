@@ -34,7 +34,6 @@ namespace dataset {
 CelebAOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -54,9 +53,9 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
   // label is like this:0 1 0 0 1......
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  *op = std::make_shared<CelebAOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
-                                   builder_op_connector_size_, builder_decode_, builder_usage_, builder_extensions_,
-                                   std::move(builder_schema_), std::move(builder_sampler_));
+  *op = std::make_shared<CelebAOp>(builder_num_workers_, builder_dir_, builder_op_connector_size_, builder_decode_,
+                                   builder_usage_, builder_extensions_, std::move(builder_schema_),
+                                   std::move(builder_sampler_));
   if (*op == nullptr) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "CelebAOp init failed.");
   }
@@ -76,10 +75,10 @@ Status CelebAOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size,
-                   bool decode, const std::string &usage, const std::set<std::string> &exts,
-                   std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler)
-    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
+CelebAOp::CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_size, bool decode,
+                   const std::string &usage, const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema,
+                   std::shared_ptr<SamplerRT> sampler)
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       folder_path_(dir),
       decode_(decode),
       extensions_(exts),

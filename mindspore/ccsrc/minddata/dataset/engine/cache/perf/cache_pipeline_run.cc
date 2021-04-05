@@ -228,16 +228,13 @@ Status CachePipelineRun::RunFirstEpoch() {
   }
 
   std::vector<row_id_type> keys;
-  auto rows_per_buffer = cfg_.rows_per_buffer();
-  keys.reserve(rows_per_buffer);
+  keys.reserve(1);
   int32_t worker_id = 0;
   for (auto i = start_row_; i <= end_row_; ++i) {
     keys.push_back(i);
-    if (keys.size() == rows_per_buffer) {
-      auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
-      keys.clear();
-    }
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
+    keys.clear();
   }
   if (!keys.empty()) {
     auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
@@ -355,9 +352,8 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
 
 Status CachePipelineRun::RunReadEpoch() {
   std::vector<row_id_type> keys;
-  auto rows_per_buffer = cc_->GetPrefetchSize();  // We will use prefetch size to read.
   auto num_workers = cfg_.num_parallel_workers();
-  keys.reserve(rows_per_buffer);
+  keys.reserve(1);
   // Spawn workers
   auto f = std::bind(&CachePipelineRun::ReaderWorkerEntry, this, std::placeholders::_1);
   std::vector<Task *> worker_threads;
@@ -381,11 +377,9 @@ Status CachePipelineRun::RunReadEpoch() {
   int32_t worker_id = 0;
   for (auto id : all_keys) {
     keys.push_back(id);
-    if (keys.size() == rows_per_buffer) {
-      auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
-      keys.clear();
-    }
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
+    keys.clear();
   }
   if (!keys.empty()) {
     auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));

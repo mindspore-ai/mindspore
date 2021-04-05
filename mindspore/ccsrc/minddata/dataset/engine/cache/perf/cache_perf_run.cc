@@ -540,8 +540,7 @@ Status CachePerfRun::Run() {
   int64_t elapse_time = std::chrono::duration_cast<std::chrono::seconds>(end_tick - start_tick).count();
   std::cout << "Epoch one (build phase) elapsed time " << elapse_time << " seconds" << std::endl;
 
-  std::cout << "Epoch one (build phase) per pipeline per worker summary. Buffer size = " << cfg_.rows_per_buffer()
-            << std::endl;
+  std::cout << "Epoch one (build phase) per pipeline per worker summary." << std::endl;
   PrintEpochSummary();
 
   // Get some stat but we need to connect. The server will thinks it is the (n+1) pipeline

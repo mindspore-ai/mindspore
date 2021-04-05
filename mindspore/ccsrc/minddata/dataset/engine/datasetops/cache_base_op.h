@@ -42,11 +42,10 @@ class CacheBase : public ParallelOp {
   /// \brief Base class constructor
   /// \param num_workers Number of parallel workers
   /// \param op_connector_size Connector size
-  /// \param rows_per_buf Number of rows per buffer
   /// \param cache_client CacheClient for communication to the CacheServer
   /// \param sampler Sampler which is mandatory
-  CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-            std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler);
+  CacheBase(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<CacheClient> cache_client,
+            std::shared_ptr<SamplerRT> sampler);
   /// \brief Destructor
   ~CacheBase();
 
@@ -87,7 +86,6 @@ class CacheBase : public ParallelOp {
   int64_t row_cnt_;
   std::atomic<int64_t> num_cache_miss_;
   std::shared_ptr<CacheClient> cache_client_;
-  int32_t rows_per_buffer_;
   std::unique_ptr<Connector<std::vector<row_id_type>>> keys_miss_;
 
   /// \brief Common function to register resources for interrupt

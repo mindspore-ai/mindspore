@@ -34,7 +34,7 @@ class MindDataTestBatchOp : public UT::DatasetOpTesting {
  protected:
 };
 
-std::shared_ptr<de::BatchOp> Batch(int32_t batch_size = 1, bool drop = false, int rows_per_buf = 2) {
+std::shared_ptr<de::BatchOp> Batch(int32_t batch_size = 1, bool drop = false) {
   Status rc;
   std::shared_ptr<de::BatchOp> op;
   rc = de::BatchOp::Builder(batch_size).SetDrop(drop).Build(&op);
@@ -50,10 +50,10 @@ std::shared_ptr<de::RepeatOp> Repeat(int repeat_cnt = 1) {
   return op;
 }
 
-std::shared_ptr<de::TFReaderOp> TFReader(std::string schema, int rows_per_buf = 2, int num_works = 8) {
+std::shared_ptr<de::TFReaderOp> TFReader(std::string schema, int num_works = 8) {
   std::shared_ptr<de::TFReaderOp> so;
   de::TFReaderOp::Builder builder;
-  builder.SetDatasetFilesList({schema}).SetRowsPerBuffer(rows_per_buf).SetNumWorkers(num_works);
+  builder.SetDatasetFilesList({schema}).SetNumWorkers(num_works);
   Status rc = builder.Build(&so);
   return so;
 }
@@ -111,7 +111,7 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropTrue) {
   bool success = false;
   auto op1 = TFReader(schema_file);
   auto op2 = Repeat(2);
-  auto op3 = Batch(7, true, 99);
+  auto op3 = Batch(7, true);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
   auto tree = Build({op1, op2, op3});
@@ -161,7 +161,7 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropFalse) {
   bool success = false;
   auto op1 = TFReader(schema_file);
   auto op2 = Repeat(2);
-  auto op3 = Batch(7, false, 99);
+  auto op3 = Batch(7, false);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
   auto tree = Build({op1, op2, op3});
@@ -217,7 +217,7 @@ TEST_F(MindDataTestBatchOp, TestBatchDropFalseRepeat) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
   auto op1 = TFReader(schema_file);
-  auto op2 = Batch(7, false, 99);
+  auto op2 = Batch(7, false);
   auto op3 = Repeat(2);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
@@ -270,7 +270,7 @@ TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
   auto op1 = TFReader(schema_file);
-  auto op2 = Batch(5, true, 99);
+  auto op2 = Batch(5, true);
   auto op3 = Repeat(2);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);

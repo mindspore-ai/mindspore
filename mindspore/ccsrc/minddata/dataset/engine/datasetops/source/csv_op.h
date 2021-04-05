@@ -65,7 +65,7 @@ class CsvOp : public NonMappableLeafOp {
    public:
     CsvParser() = delete;
 
-    CsvParser(int32_t worker_id, JaggedConnector *connector, int64_t rows_per_buffer, char field_delim,
+    CsvParser(int32_t worker_id, JaggedConnector *connector, char field_delim,
               std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default, std::string file_path);
 
     ~CsvParser() = default;
@@ -128,7 +128,6 @@ class CsvOp : public NonMappableLeafOp {
 
     int32_t worker_id_;
     JaggedConnector *buffer_connector_;
-    int64_t csv_rows_per_buffer_;
     const char csv_field_delim_;
     std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_;
     State cur_state_;
@@ -261,8 +260,8 @@ class CsvOp : public NonMappableLeafOp {
 
   CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
         const std::vector<std::shared_ptr<BaseRecord>> &column_default, const std::vector<std::string> &column_name,
-        int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
-        int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id);
+        int32_t num_workers, int64_t num_samples, int32_t worker_connector_size, int32_t op_connector_size,
+        bool shuffle_files, int32_t num_devices, int32_t device_id);
 
   // Default destructor
   ~CsvOp() = default;

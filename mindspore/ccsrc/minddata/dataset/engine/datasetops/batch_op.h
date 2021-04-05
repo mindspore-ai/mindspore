@@ -225,7 +225,7 @@ class BatchOp : public ParallelOp {
 
   // Generate buffer with batched tensors
   // @return Status The status code returned
-  Status MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row);
+  Status MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row);
 
 #ifdef ENABLE_PYTHON
   // Function that calls pyfunc to perform map on batch

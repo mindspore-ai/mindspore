@@ -53,14 +53,6 @@ class MnistOp : public MappableLeafOp {
     ~Builder() = default;
 
     // Setter method
-    // @param int32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method
     // @param int32_t op_connector_size
     // @return Builder setter method returns reference to the builder.
     Builder &SetOpConnectorSize(int32_t op_connector_size) {
@@ -121,13 +113,12 @@ class MnistOp : public MappableLeafOp {
   // Constructor
   // @param const std::string &usage - Usage of this dataset, can be 'train', 'test' or 'all'
   // @param int32_t num_workers - number of workers reading images in parallel
-  // @param int32_t rows_per_buffer - number of images (rows) in each buffer
   // @param std::string folder_path - dir directory of mnist
   // @param int32_t queue_size - connector queue size
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the mnist dataset
   // @param td::unique_ptr<Sampler> sampler - sampler tells MnistOp what to read
-  MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per_buffer, std::string folder_path,
-          int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
+  MnistOp(const std::string &usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
+          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor.
   ~MnistOp() = default;

@@ -59,14 +59,6 @@ class AlbumOp : public MappableLeafOp {
     ~Builder() = default;
 
     /// \brief Setter method
-    /// \param[in] rows_per_buffer
-    /// \return Builder setter method returns reference to the builder
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    /// \brief Setter method
     /// \param[in] size
     /// \return Builder setter method returns reference to the builder
     Builder &SetOpConnectorSize(int32_t size) {
@@ -154,16 +146,14 @@ class AlbumOp : public MappableLeafOp {
 
   /// \brief Constructor
   /// \param[in] num_wkrs - Num of workers reading images in parallel
-  /// \param[in] rows_per_buffer Number of images (rows) in each buffer
   /// \param[in] file_dir - directory of Album
   /// \param[in] queue_size - connector size
   /// \param[in] do_decode - decode image files
   /// \param[in] exts - set of file extensions to read, if empty, read everything under the dir
   /// \param[in] data_schema - schema of dataset
   /// \param[in] sampler - sampler tells AlbumOp what to read
-  AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool do_decode,
-          const std::set<std::string> &exts, std::unique_ptr<DataSchema> data_schema,
-          std::shared_ptr<SamplerRT> sampler);
+  AlbumOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool do_decode, const std::set<std::string> &exts,
+          std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   /// \brief Destructor.
   ~AlbumOp() = default;
@@ -273,7 +263,6 @@ class AlbumOp : public MappableLeafOp {
   /// \return Status The status code returned
   Status ComputeColMap() override;
 
-  int32_t rows_per_buffer_;
   std::string folder_path_;  // directory of image folder
   bool decode_;
   std::set<std::string> extensions_;  // extensions allowed

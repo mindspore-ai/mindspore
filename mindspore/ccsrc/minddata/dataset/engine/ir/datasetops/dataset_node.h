@@ -92,7 +92,7 @@ constexpr char kTFRecordNode[] = "TFRecordDataset";
 constexpr char kVOCNode[] = "VOCDataset";
 
 Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
-                    int32_t connector_que_size, int32_t rows_per_buffer, std::shared_ptr<DatasetOp> *shuffle_op);
+                    int32_t connector_que_size, std::shared_ptr<DatasetOp> *shuffle_op);
 
 // Helper function to validate dataset files parameter
 Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files);
@@ -323,7 +323,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   std::shared_ptr<DatasetCache> cache_;
   int64_t dataset_size_;
   int32_t num_workers_;
-  int32_t rows_per_buffer_;
   int32_t connector_que_size_;
   int32_t worker_connector_size_;
   int32_t total_repeats_;  // Number of times required to run this operator

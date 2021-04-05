@@ -121,9 +121,7 @@ class ShuffleOp : public PipelineOp {
   // @param shuffle_size - The size for the shuffle buffer
   // @param shuffle_seed - The seed to use for random number generation
   // @param op_connector_size - The output connector queue size
-  // @param rows_per_buffer - The requested number of rows per buffer
-  ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch,
-            int32_t rows_per_buffer);
+  ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch);
 
   // Destructor
   ~ShuffleOp() = default;
@@ -183,8 +181,6 @@ class ShuffleOp : public PipelineOp {
   // (ie uniform_int_distribution) because we will need to create up to |dataset| instances
   // of the distribution object in the common case of a perfect shuffle
   std::mt19937_64 rng_;
-  int32_t buffer_counter_;   // For creating new buffer id's
-  int32_t rows_per_buffer_;  // Number of rows to pack into output buffer
   // A single (potentially large) buffer of tensor rows for performing shuffling.
   std::unique_ptr<TensorTable> shuffle_buffer_;
   int32_t shuffle_last_row_idx_;  // Internal tracking of the last slot of our shuffle buffer

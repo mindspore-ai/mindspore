@@ -138,9 +138,9 @@ class ClueOp : public NonMappableLeafOp {
   };
 
   // Constructor of ClueOp
-  ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
-         ColKeyMap cols_to_keyword, std::vector<std::string> clue_files_list, int32_t op_connector_size,
-         bool shuffle_files, int32_t num_devices, int32_t device_id);
+  ClueOp(int32_t num_workers, int64_t num_samples, int32_t worker_connector_size, ColKeyMap cols_to_keyword,
+         std::vector<std::string> clue_files_list, int32_t op_connector_size, bool shuffle_files, int32_t num_devices,
+         int32_t device_id);
 
   // Default destructor
   ~ClueOp() = default;

@@ -177,8 +177,8 @@ Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
   std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
 
   std::shared_ptr<ClueOp> clue_op =
-    std::make_shared<ClueOp>(num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, ck_map,
-                             sorted_dataset_files, connector_que_size_, shuffle_files, num_shards_, shard_id_);
+    std::make_shared<ClueOp>(num_workers_, num_samples_, worker_connector_size_, ck_map, sorted_dataset_files,
+                             connector_que_size_, shuffle_files, num_shards_, shard_id_);
 
   RETURN_IF_NOT_OK(clue_op->Init());
 
@@ -191,8 +191,8 @@ Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
     RETURN_IF_NOT_OK(ClueOp::CountAllFileRows(sorted_dataset_files, &num_rows));
 
     // Add the shuffle op after this op
-    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                  rows_per_buffer_, &shuffle_op));
+    RETURN_IF_NOT_OK(
+      AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_, &shuffle_op));
     shuffle_op->set_total_repeats(GetTotalRepeats());
     shuffle_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(shuffle_op);

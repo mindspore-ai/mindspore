@@ -35,7 +35,7 @@ TensorRow::TensorRow(row_id_type id, const std::initializer_list<value_type> &ls
 TensorRow::TensorRow(const TensorRow &tr)
     : id_(tr.id_), path_(tr.path_), row_(tr.row_), tensor_row_flag_(tr.tensor_row_flag_) {}
 
-TensorRow::TensorRow(TensorRow::TensorRowFlags flag) : tensor_row_flag_(flag) {}
+TensorRow::TensorRow(TensorRow::TensorRowFlags flag) : id_(kDefaultRowId), path_({}), tensor_row_flag_(flag) {}
 
 TensorRow &TensorRow::operator=(const TensorRow &tr) {
   if (this == &tr) {

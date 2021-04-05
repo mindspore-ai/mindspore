@@ -50,7 +50,7 @@ TEST_F(MindDataTestCLUEOp, TestCLUEBasic) {
   std::shared_ptr<ClueOp> op;
   ClueOp::Builder builder;
   builder.SetClueFilesList({dataset_path})
-    .SetRowsPerBuffer(16)
+
     .SetOpConnectorSize(2)
     .SetColsKeyMap(key_map);
 

@@ -98,16 +98,13 @@ class BarrierOp : public PipelineOp {
   };
 
   // Constructor for BarrierOp
-  // @param rows_per_buffer - number of rows in output buffer
   // @param op_connector_size - connector size
   // @param condition_name - the condition name associated with this operator
   // @param condition_func - the blocking condition check per row
-  // @note - currently rows_per_buffer should = 1 for barrier.
   // The reason for this is having other values would complicate how the pipeline behaves with other operators
   // One example of such case is having batch after barrier. Batch would be waiting for data and having
   // rows per buffer in this case can result in hanging
-  BarrierOp(int32_t rows_per_buffer, int32_t op_connector_size, const std::string &condition_name,
-            py::function condition_func);
+  BarrierOp(int32_t op_connector_size, const std::string &condition_name, py::function condition_func);
 
   // Destructor
   ~BarrierOp();
@@ -156,10 +153,6 @@ class BarrierOp : public PipelineOp {
   bool clean_up_;
   // end of file state, we stop reading data and shut down
   bool eof_;
-  // rows per buffer
-  int32_t rows_per_buffer_;
-  // buffer_id
-  int32_t buffer_id_;
   // iterator to pull new rows, we only have one child
   std::unique_ptr<ChildIterator> child_iterator_;
   // condition name, to support multiple barriers

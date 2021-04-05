@@ -50,7 +50,6 @@ const unsigned int kPadValueZero = 0;
 CocoOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
   builder_task_type_ = TaskType::Detection;
 }
@@ -100,8 +99,8 @@ Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
       RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Keypoint or Panoptic.");
   }
   *ptr = std::make_shared<CocoOp>(builder_task_type_, builder_dir_, builder_file_, builder_num_workers_,
-                                  builder_rows_per_buffer_, builder_op_connector_size_, builder_decode_,
-                                  std::move(builder_schema_), std::move(builder_sampler_));
+                                  builder_op_connector_size_, builder_decode_, std::move(builder_schema_),
+                                  std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -122,9 +121,9 @@ Status CocoOp::Builder::SanityCheck() {
 }
 
 CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
-               int32_t num_workers, int32_t rows_per_buffer, int32_t queue_size, bool decode,
-               std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
-    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
+               int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
+               std::shared_ptr<SamplerRT> sampler)
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
       task_type_(task_type),
       image_folder_path_(image_folder_path),

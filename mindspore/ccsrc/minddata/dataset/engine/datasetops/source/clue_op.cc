@@ -36,7 +36,6 @@ ClueOp::Builder::Builder()
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_rows_per_buffer_ = config_manager->rows_per_buffer();
   builder_worker_connector_size_ = config_manager->worker_connector_size();
 }
 
@@ -67,9 +66,8 @@ Status ClueOp::Builder::Build(std::shared_ptr<ClueOp> *op) {
   }
 
   std::shared_ptr<ClueOp> clue_op = std::make_shared<ClueOp>(
-    builder_num_workers_, builder_rows_per_buffer_, builder_num_samples_, builder_worker_connector_size_, ck_map,
-    builder_clue_files_list_, builder_op_connector_size_, builder_shuffle_files_, builder_num_devices_,
-    builder_device_id_);
+    builder_num_workers_, builder_num_samples_, builder_worker_connector_size_, ck_map, builder_clue_files_list_,
+    builder_op_connector_size_, builder_shuffle_files_, builder_num_devices_, builder_device_id_);
   RETURN_IF_NOT_OK(clue_op->Init());
   *op = std::move(clue_op);
 
@@ -87,11 +85,11 @@ std::vector<std::string> ClueOp::Builder::split(const std::string &s, char delim
   return res;
 }
 
-ClueOp::ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
-               ColKeyMap cols_to_keyword, std::vector<std::string> clue_files_list, int32_t op_connector_size,
-               bool shuffle_files, int32_t num_devices, int32_t device_id)
-    : NonMappableLeafOp(num_workers, worker_connector_size, rows_per_buffer, num_samples, op_connector_size,
-                        shuffle_files, num_devices, device_id),
+ClueOp::ClueOp(int32_t num_workers, int64_t num_samples, int32_t worker_connector_size, ColKeyMap cols_to_keyword,
+               std::vector<std::string> clue_files_list, int32_t op_connector_size, bool shuffle_files,
+               int32_t num_devices, int32_t device_id)
+    : NonMappableLeafOp(num_workers, worker_connector_size, num_samples, op_connector_size, shuffle_files, num_devices,
+                        device_id),
       clue_files_list_(std::move(clue_files_list)),
       cols_to_keyword_(cols_to_keyword) {}
 
@@ -200,8 +198,7 @@ void ClueOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << total_rows_
-        << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
+    out << "\nSample count: " << total_rows_ << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
         << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nClue files list:\n";
     for (int i = 0; i < clue_files_list_.size(); ++i) {
       out << " " << clue_files_list_[i];

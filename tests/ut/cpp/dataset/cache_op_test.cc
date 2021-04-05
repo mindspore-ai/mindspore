@@ -253,7 +253,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   // RandomDataOp
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   rc = RandomDataOp::Builder()
-         .SetRowsPerBuffer(4)
+
          .SetNumWorkers(4)
          .SetDataSchema(std::move(testSchema))
          .SetTotalRows(50)  // 50 samples for now
@@ -277,7 +277,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   rc = CacheOp::Builder()
          .SetNumWorkers(5)
          .SetClient(myClient)
-         .SetRowsPerBuffer(1)
+
          .SetSampler(std::move(seq_sampler))
          .Build(&myCacheOp);
   ASSERT_TRUE(rc.IsOk());
@@ -379,7 +379,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   // RandomDataOp
   std::shared_ptr<RandomDataOp> myRandomDataOp;
   rc = RandomDataOp::Builder()
-         .SetRowsPerBuffer(2)
+
          .SetNumWorkers(4)
          .SetDataSchema(std::move(testSchema))
          .SetTotalRows(10)
@@ -401,7 +401,6 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   rc = CacheOp::Builder()
          .SetNumWorkers(4)
          .SetClient(myClient)
-         .SetRowsPerBuffer(3)
          .SetSampler(std::move(seq_sampler))
          .Build(&myCacheOp);
   ASSERT_TRUE(rc.IsOk());
@@ -484,7 +483,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   ImageFolderOp::Builder builder;
   builder.SetOpConnectorSize(3)
     .SetNumWorkers(3)
-    .SetRowsPerBuffer(2)
+
     .SetExtensions({".jpg", ".JPEG"})
     .SetRecursive(true)
     .SetImageFolderDir(datasets_root_path_ + "/testPK/data");

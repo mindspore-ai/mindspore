@@ -124,8 +124,8 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 
   // Create and initialize TFReaderOp
   std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
-    num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files, std::move(data_schema),
-    connector_que_size_, columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_);
+    num_workers_, worker_connector_size_, num_samples_, sorted_dir_files, std::move(data_schema), connector_que_size_,
+    columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_);
 
   RETURN_IF_NOT_OK(tf_reader_op->Init());
 
@@ -139,8 +139,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
 
     // Add the shuffle op after this op
-    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                  rows_per_buffer_, &shuffle_op));
+    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_, &shuffle_op));
     shuffle_op->set_total_repeats(GetTotalRepeats());
     shuffle_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(shuffle_op);

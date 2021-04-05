@@ -43,21 +43,18 @@ def test_basic():
 
     ds.config.load('../data/dataset/declient.cfg')
 
-    # assert ds.config.get_rows_per_buffer() == 32
     assert ds.config.get_num_parallel_workers() == 8
     # assert ds.config.get_worker_connector_size() == 16
     assert ds.config.get_prefetch_size() == 16
     assert ds.config.get_seed() == 5489
     assert ds.config.get_monitor_sampling_interval() == 15
 
-    # ds.config.set_rows_per_buffer(1)
     ds.config.set_num_parallel_workers(2)
     # ds.config.set_worker_connector_size(3)
     ds.config.set_prefetch_size(4)
     ds.config.set_seed(5)
     ds.config.set_monitor_sampling_interval(45)
 
-    # assert ds.config.get_rows_per_buffer() == 1
     assert ds.config.get_num_parallel_workers() == 2
     # assert ds.config.get_worker_connector_size() == 3
     assert ds.config.get_prefetch_size() == 4

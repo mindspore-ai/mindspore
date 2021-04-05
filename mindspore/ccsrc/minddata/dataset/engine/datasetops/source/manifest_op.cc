@@ -33,7 +33,6 @@ namespace dataset {
 ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_decode_(false) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -49,9 +48,9 @@ Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
     builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  *ptr = std::make_shared<ManifestOp>(builder_num_workers_, builder_rows_per_buffer_, builder_file_,
-                                      builder_op_connector_size_, builder_decode_, builder_labels_to_read_,
-                                      std::move(builder_schema_), std::move(builder_sampler_), builder_usage_);
+  *ptr = std::make_shared<ManifestOp>(builder_num_workers_, builder_file_, builder_op_connector_size_, builder_decode_,
+                                      builder_labels_to_read_, std::move(builder_schema_), std::move(builder_sampler_),
+                                      builder_usage_);
   return Status::OK();
 }
 
@@ -64,10 +63,10 @@ Status ManifestOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
+ManifestOp::ManifestOp(int32_t num_works, std::string file, int32_t queue_size, bool decode,
                        const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
                        std::shared_ptr<SamplerRT> sampler, std::string usage)
-    : MappableLeafOp(num_works, queue_size, std::move(sampler), rows_per_buffer),
+    : MappableLeafOp(num_works, queue_size, std::move(sampler)),
       io_block_pushed_(0),
       sampler_ind_(0),
       data_schema_(std::move(data_schema)),

@@ -36,22 +36,21 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestZipOp : public UT::DatasetOpTesting {
- };
+class MindDataTestZipOp : public UT::DatasetOpTesting {};
 
 TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
-/* Tree:
- *
- *
- *                  OpId(2) ZipOp
- *            /                       \
- *     OpId(0) TFReaderOp    OpId(1) TFReaderOp
- * Start with an empty execution tree
-*/
+  /* Tree:
+   *
+   *
+   *                  OpId(2) ZipOp
+   *            /                       \
+   *     OpId(0) TFReaderOp    OpId(1) TFReaderOp
+   * Start with an empty execution tree
+   */
   Status rc;
   MS_LOG(INFO) << "UT test TestZipBasic.";
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -61,21 +60,19 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
   std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetRowsPerBuffer(2)
-      .SetWorkerConnectorSize(16)
-      .SetNumWorkers(1)
-      .Build(&my_tfreader_op);
+         .SetDatasetFilesList({dataset_path})
+         .SetWorkerConnectorSize(16)
+         .SetNumWorkers(1)
+         .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   std::shared_ptr<TFReaderOp> my_tfreader_op2;
   rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path2})
-      .SetRowsPerBuffer(2)
-      .SetWorkerConnectorSize(1)
-      .SetNumWorkers(1)
-      .Build(&my_tfreader_op2);
+         .SetDatasetFilesList({dataset_path2})
+         .SetWorkerConnectorSize(1)
+         .SetNumWorkers(1)
+         .Build(&my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
@@ -123,20 +120,19 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
     EXPECT_TRUE(rc.IsOk());
     row_count++;
   }
-  ASSERT_EQ(row_count, 3); // Should be 3 rows fetched
+  ASSERT_EQ(row_count, 3);  // Should be 3 rows fetched
 }
 
-
 TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
-/* Tree:
- *                  OpId(3) Repeat(3)
- *
- *                  OpId(2) ZipOp
- *            /                       \
- *         OpId(0) TFReaderOp    OpId(1) TFReaderOp
- *
- * Start with an empty execution tree
-*/
+  /* Tree:
+   *                  OpId(3) Repeat(3)
+   *
+   *                  OpId(2) ZipOp
+   *            /                       \
+   *         OpId(0) TFReaderOp    OpId(1) TFReaderOp
+   *
+   * Start with an empty execution tree
+   */
   Status rc;
   MS_LOG(INFO) << "UT test TestZipRepeat.";
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -146,21 +142,21 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetRowsPerBuffer(2)
-      .SetWorkerConnectorSize(16)
-      .SetNumWorkers(1)
-      .Build(&my_tfreader_op);
+         .SetDatasetFilesList({dataset_path})
+
+         .SetWorkerConnectorSize(16)
+         .SetNumWorkers(1)
+         .Build(&my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   std::shared_ptr<TFReaderOp> my_tfreader_op2;
   rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path2})
-      .SetRowsPerBuffer(2)
-      .SetWorkerConnectorSize(1)
-      .SetNumWorkers(1)
-      .Build(&my_tfreader_op2);
+         .SetDatasetFilesList({dataset_path2})
+
+         .SetWorkerConnectorSize(1)
+         .SetNumWorkers(1)
+         .Build(&my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
@@ -221,5 +217,5 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
     EXPECT_TRUE(rc.IsOk());
     row_count++;
   }
-  ASSERT_EQ(row_count, 9); // Should be 9 rows fetched
+  ASSERT_EQ(row_count, 9);  // Should be 9 rows fetched
 }

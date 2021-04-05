@@ -173,7 +173,6 @@ class TFReaderOp : public NonMappableLeafOp {
   // @note The builder class should be used to call this constructor.
   // @param num_workers - number of worker threads reading data from tf_file files.
   // @param worker_connector_size - size of each internal queue.
-  // @param rows_per_buffer - number of rows that a full buffer will contain.
   // @param total_num_rows - Number of rows to read
   // @param dataset_files_list - list of filepaths for the dataset files.
   // @param data_schema - the data schema object.
@@ -181,7 +180,7 @@ class TFReaderOp : public NonMappableLeafOp {
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
-  TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer, int64_t total_num_rows,
+  TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
              std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
              int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
              int32_t num_devices, int32_t device_id, bool equal_rows_per_shard);

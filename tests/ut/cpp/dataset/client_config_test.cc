@@ -45,20 +45,17 @@ TEST_F(MindDataTestClientConfig, TestClientConfig1) {
   std::shared_ptr<ConfigManager> my_conf = GlobalContext::config_manager();
 
   ASSERT_EQ(my_conf->num_parallel_workers(), kCfgParallelWorkers);
-  ASSERT_EQ(my_conf->rows_per_buffer(), kCfgRowsPerBuffer);
   ASSERT_EQ(my_conf->worker_connector_size(), kCfgWorkerConnectorSize);
   ASSERT_EQ(my_conf->op_connector_size(), kCfgOpConnectorSize);
   ASSERT_EQ(my_conf->seed(), kCfgDefaultSeed);
 
   my_conf->set_num_parallel_workers(2);
-  my_conf->set_rows_per_buffer(1);
   my_conf->set_worker_connector_size(3);
   my_conf->set_op_connector_size(4);
   my_conf->set_seed(5);
 
 
   ASSERT_EQ(my_conf->num_parallel_workers(), 2);
-  ASSERT_EQ(my_conf->rows_per_buffer(), 1);
   ASSERT_EQ(my_conf->worker_connector_size(), 3);
   ASSERT_EQ(my_conf->op_connector_size(), 4);
   ASSERT_EQ(my_conf->seed(), 5);
@@ -67,7 +64,6 @@ TEST_F(MindDataTestClientConfig, TestClientConfig1) {
   ASSERT_TRUE(my_conf->LoadFile(file));
 
   ASSERT_EQ(my_conf->num_parallel_workers(), kCfgParallelWorkers);
-  ASSERT_EQ(my_conf->rows_per_buffer(), kCfgRowsPerBuffer);
   ASSERT_EQ(my_conf->worker_connector_size(), kCfgWorkerConnectorSize);
   ASSERT_EQ(my_conf->op_connector_size(), kCfgOpConnectorSize);
   ASSERT_EQ(my_conf->seed(), kCfgDefaultSeed);

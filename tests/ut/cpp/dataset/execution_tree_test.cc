@@ -44,19 +44,15 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
   uint32_t shuffle_size = 32;
   uint32_t connector_size = 8;
 
-
-  std::shared_ptr<ShuffleOp> leaf_op1 =
-      std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false, 32);
+  std::shared_ptr<ShuffleOp> leaf_op1 = std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false);
   ASSERT_NE(leaf_op1, nullptr);
   my_tree->AssociateNode(leaf_op1);
   shuffle_size = 16;
-  std::shared_ptr<ShuffleOp> leaf_op2 =
-      std::make_shared<ShuffleOp>(shuffle_size, 0,  connector_size, false, 32);
+  std::shared_ptr<ShuffleOp> leaf_op2 = std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false);
   ASSERT_NE(leaf_op2, nullptr);
   my_tree->AssociateNode(leaf_op2);
   shuffle_size = 8;
-  std::shared_ptr<ShuffleOp> parent_op =
-      std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false, 32);
+  std::shared_ptr<ShuffleOp> parent_op = std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false);
   ASSERT_NE(parent_op, nullptr);
   my_tree->AssociateNode(parent_op);
 
@@ -68,8 +64,7 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
   parent_op->AddChild(std::move(leaf_op1));
   parent_op->AddChild(std::move(leaf_op2));
   shuffle_size = 4;
-  std::shared_ptr<DatasetOp> root_op =
-      std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false, 32);
+  std::shared_ptr<DatasetOp> root_op = std::make_shared<ShuffleOp>(shuffle_size, 0, connector_size, false);
   my_tree->AssignRoot(root_op);
   root_op->AddChild(parent_op);
   ASSERT_NE(root_op, nullptr);
@@ -105,10 +100,10 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
   std::string dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetRowsPerBuffer(2)
-      .SetWorkerConnectorSize(2)
-      .SetNumWorkers(2)
+    .SetDatasetFilesList({dataset_path})
+
+    .SetWorkerConnectorSize(2)
+    .SetNumWorkers(2)
       .Build(&my_tfreader_op);
 
   my_tree->AssociateNode(my_tfreader_op);

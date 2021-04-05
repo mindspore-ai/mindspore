@@ -113,14 +113,6 @@ class VOCOp : public MappableLeafOp {
     }
 
     // Setter method.
-    // @param int32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method.
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
@@ -164,14 +156,13 @@ class VOCOp : public MappableLeafOp {
   // @param std::string folder_path - dir directory of VOC
   // @param std::map<std::string, int32_t> class_index - input class-to-index of annotation
   // @param int32_t num_workers - number of workers reading images in parallel
-  // @param int32_t rows_per_buffer - number of images (rows) in each buffer
   // @param int32_t queue_size - connector queue size
   // @param bool decode - whether to decode images
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the VOC dataset
   // @param std::shared_ptr<Sampler> sampler - sampler tells VOCOp what to read
   VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
-        const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
-        int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
+        const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
+        std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~VOCOp() = default;
@@ -255,11 +246,9 @@ class VOCOp : public MappableLeafOp {
 
   bool decode_;
   int64_t row_cnt_;
-  int64_t buf_cnt_;
   std::string folder_path_;
   TaskType task_type_;
   std::string usage_;
-  int32_t rows_per_buffer_;
   std::unique_ptr<DataSchema> data_schema_;
 
   std::vector<std::string> image_ids_;

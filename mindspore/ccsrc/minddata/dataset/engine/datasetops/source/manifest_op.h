@@ -47,14 +47,6 @@ class ManifestOp : public MappableLeafOp {
     ~Builder() = default;
 
     // Setter method
-    // @param int32_t rows_per_buffer
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method
     // @param int32_t size
     // @return Builder setter method returns reference to the builder.
     Builder &SetOpConnectorSize(int32_t size) {
@@ -134,11 +126,10 @@ class ManifestOp : public MappableLeafOp {
 
   // Constructor
   // @param int32_t num_works - Num of workers reading images in parallel
-  // @param int32_t - rows_per_buffer Number of images (rows) in each buffer
   // @param std::string - file list of Manifest
   // @param int32_t queue_size - connector queue size
   // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
-  ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
+  ManifestOp(int32_t num_works, std::string file, int32_t queue_size, bool decode,
              const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
              std::shared_ptr<SamplerRT> sampler, std::string usage);
   // Destructor.

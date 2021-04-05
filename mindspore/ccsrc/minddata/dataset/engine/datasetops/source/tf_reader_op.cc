@@ -47,7 +47,6 @@ TFReaderOp::Builder::Builder()
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_worker_connector_size_ = config_manager->worker_connector_size();
   builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_rows_per_buffer_ = config_manager->rows_per_buffer();
   builder_shuffle_files_ = false;
   builder_data_schema_ = std::make_unique<DataSchema>();
 }
@@ -114,22 +113,21 @@ Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op)
   }
 
   std::shared_ptr<TFReaderOp> new_tf_reader_op = std::make_shared<TFReaderOp>(
-    builder_num_workers_, builder_worker_connector_size_, builder_rows_per_buffer_, builder_total_rows_,
-    builder_dataset_files_list_, std::move(builder_data_schema_), builder_op_connector_size_, builder_columns_to_load_,
-    builder_shuffle_files_, builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_);
+    builder_num_workers_, builder_worker_connector_size_, builder_total_rows_, builder_dataset_files_list_,
+    std::move(builder_data_schema_), builder_op_connector_size_, builder_columns_to_load_, builder_shuffle_files_,
+    builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_);
 
   RETURN_IF_NOT_OK(new_tf_reader_op->Init());
   *out_tf_reader_op = std::move(new_tf_reader_op);
   return Status::OK();
 }
 
-TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer,
-                       int64_t total_num_rows, std::vector<std::string> dataset_files_list,
-                       std::unique_ptr<DataSchema> data_schema, int32_t op_connector_size,
-                       std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_devices,
-                       int32_t device_id, bool equal_rows_per_shard)
-    : NonMappableLeafOp(num_workers, worker_connector_size, rows_per_buffer, total_num_rows, op_connector_size,
-                        shuffle_files, num_devices, device_id),
+TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
+                       std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
+                       int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
+                       int32_t num_devices, int32_t device_id, bool equal_rows_per_shard)
+    : NonMappableLeafOp(num_workers, worker_connector_size, total_num_rows, op_connector_size, shuffle_files,
+                        num_devices, device_id),
       dataset_files_list_(std::move(dataset_files_list)),
       columns_to_load_(std::move(columns_to_load)),
       data_schema_(std::move(data_schema)),
@@ -146,8 +144,8 @@ void TFReaderOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nRows per buffer: " << rows_per_buffer_ << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_
-        << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
+    out << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
+        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
         << "\nDataset files list: Size: " << dataset_files_list_.size() << "\n";
     for (int i = 0; i < dataset_files_list_.size(); ++i) {
       out << " " << dataset_files_list_[i];

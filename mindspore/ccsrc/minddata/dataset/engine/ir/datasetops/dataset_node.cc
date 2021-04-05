@@ -58,13 +58,13 @@ Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_ro
 
 // Helper function to inject a shuffle operator over top of current operator being built
 Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
-                    int32_t connector_que_size, int32_t rows_per_buffer, std::shared_ptr<DatasetOp> *shuffle_op) {
+                    int32_t connector_que_size, std::shared_ptr<DatasetOp> *shuffle_op) {
   std::shared_ptr<ShuffleOp> new_shuffle_op = nullptr;
   int64_t shuffle_size = 0;
   RETURN_IF_NOT_OK(ComputeShuffleSize(num_files, num_devices, num_rows, total_rows, &shuffle_size));
   MS_LOG(INFO) << "Dataset::AddShuffleOp - num_rows: " << num_rows << ", shuffle_size: " << shuffle_size;
   // Add the shuffle op
-  *shuffle_op = std::make_shared<ShuffleOp>(shuffle_size, GetSeed(), connector_que_size, true, rows_per_buffer);
+  *shuffle_op = std::make_shared<ShuffleOp>(shuffle_size, GetSeed(), connector_que_size, true);
   return Status::OK();
 }
 
@@ -231,7 +231,6 @@ DatasetNode::DatasetNode()
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
-  rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
 }

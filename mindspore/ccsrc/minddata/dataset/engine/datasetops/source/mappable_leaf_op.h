@@ -47,16 +47,13 @@ namespace dataset {
 template <typename T>
 class Queue;
 
-using ImageLabelPair = std::shared_ptr<std::pair<std::string, int32_t>>;
-using FolderImagesPair = std::shared_ptr<std::pair<std::string, std::queue<ImageLabelPair>>>;
-
 class MappableLeafOp : public ParallelOp, public RandomAccessOp {
  public:
   /// Constructor
   /// \param int32_t num_wkrs - Num of workers reading images in parallel
   /// \param int32_t queue_size - connector queue size
   /// \param td::unique_ptr<Sampler> sampler - sampler tells the source  what to read
-  MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler, int32_t rows_per_buffer);
+  MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler);
 
   /// Destructor.
   ~MappableLeafOp() = default;
@@ -94,10 +91,6 @@ class MappableLeafOp : public ParallelOp, public RandomAccessOp {
   /// Reset function to be called after every epoch to reset the source op after
   /// \return Status The status code returned
   Status Reset() override;
-
-  int32_t rows_per_buffer_;
-  int64_t row_cnt_;
-  int64_t buf_cnt_;
 };
 }  // namespace dataset
 }  // namespace mindspore

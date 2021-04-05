@@ -37,7 +37,6 @@ RandomDataOp::Builder::Builder()
   // Some arguments to the RandomDataOp have a default argument that is taken from the config.
   // The user may override these defaults by using the builder set methods.
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_op_connector_size_ = cfg->op_connector_size();
 }

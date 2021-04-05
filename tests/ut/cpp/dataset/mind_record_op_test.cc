@@ -29,12 +29,11 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestMindRecordOp : public UT::DatasetOpTesting {
-};
+class MindDataTestMindRecordOp : public UT::DatasetOpTesting {};
 
 TEST_F(MindDataTestMindRecordOp, TestMindRecordBasic) {
   // single MindRecord op and nothing else
@@ -63,10 +62,9 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBasic) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -134,11 +132,10 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordSample) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list)
-      .SetOperators(operators);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list)
+    .SetOperators(operators);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -206,11 +203,10 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordShuffle) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list)
-      .SetOperators(operators);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list)
+    .SetOperators(operators);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -281,11 +277,10 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordCategory) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list)
-      .SetOperators(operators);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list)
+    .SetOperators(operators);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -350,10 +345,9 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -364,8 +358,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
 
   uint32_t num_repeats = 2;
   std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(num_repeats)
-      .Build(&my_repeat_op);
+  rc = RepeatOp::Builder(num_repeats).Build(&my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
@@ -374,7 +367,6 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
   my_mindrecord_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());
-
 
   // Set children/root layout.
   rc = my_tree->AssignRoot(my_repeat_op);
@@ -407,7 +399,6 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
   }
 }
 
-
 TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
   // single MindRecord op and nothing else
   //
@@ -435,10 +426,9 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -449,8 +439,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
 
   uint32_t num_repeats = 2;
   std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(num_repeats)
-      .Build(&my_repeat_op);
+  rc = RepeatOp::Builder(num_repeats).Build(&my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
@@ -518,10 +507,9 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordInvalidColumnList) {
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
   builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
-      .SetLoadDataset(true)
-      .SetRowsPerBuffer(3)
-      .SetNumMindRecordWorkers(4)
-      .SetColumnsToLoad(column_list);
+    .SetLoadDataset(true)
+    .SetNumMindRecordWorkers(4)
+    .SetColumnsToLoad(column_list);
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsError());
   ASSERT_TRUE(rc.ToString().find_first_of("illegal column list") != std::string::npos);

@@ -248,7 +248,7 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
       RETURN_IF_NOT_OK(out_connector_->SendEOF(workerId));
     } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
       TensorRow new_row;
-      RETURN_IF_NOT_OK(MakeBatchedBuffer(std::move(table_pair), &new_row));
+      RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), &new_row));
       RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), workerId));
     }
     RETURN_IF_NOT_OK(worker_queues_[workerId]->PopFront(&table_pair));
@@ -256,7 +256,7 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
   return Status::OK();
 }
 
-Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
+Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
 #ifdef ENABLE_PYTHON
   if (!in_col_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc

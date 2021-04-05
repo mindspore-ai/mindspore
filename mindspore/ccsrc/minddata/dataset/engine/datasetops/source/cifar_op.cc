@@ -39,7 +39,6 @@ constexpr uint32_t kCifarImageSize = kCifarImageHeight * kCifarImageWidth * kCif
 CifarOp::Builder::Builder() : sampler_(nullptr), usage_("") {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
-  rows_per_buffer_ = cfg->rows_per_buffer();
   op_connect_size_ = cfg->op_connector_size();
   cifar_type_ = kCifar10;
 }
@@ -65,8 +64,8 @@ Status CifarOp::Builder::Build(std::shared_ptr<CifarOp> *ptr) {
       ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &another_scalar)));
   }
 
-  *ptr = std::make_shared<CifarOp>(cifar_type_, usage_, num_workers_, rows_per_buffer_, dir_, op_connect_size_,
-                                   std::move(schema_), std::move(sampler_));
+  *ptr = std::make_shared<CifarOp>(cifar_type_, usage_, num_workers_, dir_, op_connect_size_, std::move(schema_),
+                                   std::move(sampler_));
   return Status::OK();
 }
 
@@ -85,10 +84,9 @@ Status CifarOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, int32_t rows_per_buf,
-                 const std::string &file_dir, int32_t queue_size, std::unique_ptr<DataSchema> data_schema,
-                 std::shared_ptr<SamplerRT> sampler)
-    : MappableLeafOp(num_works, queue_size, std::move(sampler), rows_per_buf),
+CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, const std::string &file_dir,
+                 int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
+    : MappableLeafOp(num_works, queue_size, std::move(sampler)),
       cifar_type_(type),
       usage_(usage),
       folder_path_(file_dir),

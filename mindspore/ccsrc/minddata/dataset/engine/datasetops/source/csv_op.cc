@@ -32,7 +32,6 @@ CsvOp::Builder::Builder()
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_rows_per_buffer_ = config_manager->rows_per_buffer();
   builder_worker_connector_size_ = config_manager->worker_connector_size();
 }
 
@@ -59,8 +58,8 @@ Status CsvOp::Builder::Build(std::shared_ptr<CsvOp> *op) {
 
   std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
     builder_csv_files_list_, builder_field_delim_, builder_column_default_list_, builder_column_name_list_,
-    builder_num_workers_, builder_rows_per_buffer_, builder_num_samples_, builder_worker_connector_size_,
-    builder_op_connector_size_, builder_shuffle_files_, builder_num_devices_, builder_device_id_);
+    builder_num_workers_, builder_num_samples_, builder_worker_connector_size_, builder_op_connector_size_,
+    builder_shuffle_files_, builder_num_devices_, builder_device_id_);
   RETURN_IF_NOT_OK(csv_op->Init());
   *op = std::move(csv_op);
 
@@ -69,11 +68,11 @@ Status CsvOp::Builder::Build(std::shared_ptr<CsvOp> *op) {
 
 CsvOp::CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
              const std::vector<std::shared_ptr<BaseRecord>> &column_default,
-             const std::vector<std::string> &column_name, int32_t num_workers, int64_t rows_per_buffer,
-             int64_t num_samples, int32_t worker_connector_size, int32_t op_connector_size, bool shuffle_files,
-             int32_t num_devices, int32_t device_id)
-    : NonMappableLeafOp(num_workers, worker_connector_size, rows_per_buffer, num_samples, op_connector_size,
-                        shuffle_files, num_devices, device_id),
+             const std::vector<std::string> &column_name, int32_t num_workers, int64_t num_samples,
+             int32_t worker_connector_size, int32_t op_connector_size, bool shuffle_files, int32_t num_devices,
+             int32_t device_id)
+    : NonMappableLeafOp(num_workers, worker_connector_size, num_samples, op_connector_size, shuffle_files, num_devices,
+                        device_id),
       csv_files_list_(std::move(csv_files_list)),
       field_delim_(field_delim),
       column_default_list_(column_default),
@@ -91,11 +90,10 @@ Status CsvOp::Init() {
   return Status::OK();
 }
 
-CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, int64_t rows_per_buffer, char field_delim,
+CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, char field_delim,
                             std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default, std::string file_path)
     : worker_id_(worker_id),
       buffer_connector_(connector),
-      csv_rows_per_buffer_(rows_per_buffer),
       csv_field_delim_(field_delim),
       column_default_(column_default),
       file_path_(file_path),
@@ -469,8 +467,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
 }
 
 Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  CsvParser csv_parser(worker_id, jagged_buffer_connector_.get(), rows_per_buffer_, field_delim_, column_default_list_,
-                       file);
+  CsvParser csv_parser(worker_id, jagged_buffer_connector_.get(), field_delim_, column_default_list_, file);
   csv_parser.SetStartOffset(start_offset);
   csv_parser.SetEndOffset(end_offset);
   std::ifstream ifs;
@@ -516,8 +513,7 @@ void CsvOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << total_rows_
-        << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
+    out << "\nSample count: " << total_rows_ << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
         << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nCsv files list:\n";
     for (int i = 0; i < csv_files_list_.size(); ++i) {
       out << " " << csv_files_list_[i];
@@ -592,7 +588,7 @@ Status CsvOp::CalculateNumRowsPerShard() {
 }
 
 int64_t CsvOp::CountTotalRows(const std::string &file) {
-  CsvParser csv_parser(0, jagged_buffer_connector_.get(), rows_per_buffer_, field_delim_, column_default_list_, file);
+  CsvParser csv_parser(0, jagged_buffer_connector_.get(), field_delim_, column_default_list_, file);
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
   if (!ifs.is_open()) {

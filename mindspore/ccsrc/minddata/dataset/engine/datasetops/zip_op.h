@@ -76,9 +76,8 @@ class ZipOp : public PipelineOp {
   };
 
   // Constructor for ZipOp
-  // @param rows_per_buffer - number of rows in output buffer
   // @param op_connector_size - connector size
-  ZipOp(int32_t rows_per_buffer, int32_t op_connector_size);
+  explicit ZipOp(int32_t op_connector_size);
 
   // Destructor
   ~ZipOp();
@@ -136,8 +135,6 @@ class ZipOp : public PipelineOp {
   Status ComputeColMap() override;
 
   int32_t children_num_;
-  int32_t rows_per_buffer_;
-  int32_t buffer_id_;
   bool draining_;
   bool eof_;
   std::vector<std::unique_ptr<ChildIterator>> child_iterators_;

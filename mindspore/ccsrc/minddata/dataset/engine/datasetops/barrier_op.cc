@@ -31,7 +31,6 @@ BarrierOp::Builder::Builder() {
   // using the various builder set methods.
 
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_rows_per_buffer_ = cfg->rows_per_buffer();
   builder_op_connector_size_ = cfg->op_connector_size();
 }
 
@@ -39,17 +38,13 @@ Status BarrierOp::Builder::SanityCheck() const { return Status::OK(); }
 
 Status BarrierOp::Builder::Build(std::shared_ptr<BarrierOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<BarrierOp>(builder_rows_per_buffer_, builder_op_connector_size_, builder_condition_name_,
-                                     builder_condition_func_);
+  *ptr = std::make_shared<BarrierOp>(builder_op_connector_size_, builder_condition_name_, builder_condition_func_);
   return Status::OK();
 }
 
 // Construct BarrierOp here, local variables initialized in operator due to tree construction restrictions
-BarrierOp::BarrierOp(int32_t rows_per_buffer, int32_t op_connector_size, const std::string &condition_name,
-                     py::function condition_func)
+BarrierOp::BarrierOp(int32_t op_connector_size, const std::string &condition_name, py::function condition_func)
     : PipelineOp(op_connector_size),
-      rows_per_buffer_(rows_per_buffer),
-      buffer_id_(0),
       clean_up_(false),
       eof_(false),
       condition_name_(condition_name),
