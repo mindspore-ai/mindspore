@@ -29,7 +29,7 @@ class CPUSession : public SessionBasic {
  public:
   CPUSession() = default;
   ~CPUSession() override = default;
-  void Init(uint32_t device_id) override { InitExecutor(kCPUDevice, device_id); }
+  void Init(uint32_t device_id) override;
 
  protected:
   void UnifyMindIR(const KernelGraphPtr &graph) override { return; }

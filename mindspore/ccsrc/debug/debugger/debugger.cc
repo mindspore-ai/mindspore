@@ -31,7 +31,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
-#include "debug/data_dump/e2e_dump_util.h"
+#include "debug/data_dump/e2e_dump.h"
 #include "utils/config_manager.h"
 
 using debugger::Chunk;
@@ -52,8 +52,6 @@ namespace mindspore {
 
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
-static const size_t PARAMETER_OUTPUT_INDEX = 0;
-static const size_t VALUE_NODE_OUTPUT_INDEX = 0;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
@@ -1133,7 +1131,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   // for parameters and value nodes, set its execution order to be 0;
   int exec_order = 0;
   std::string node_name = anf_node->fullname_with_scope();
-  E2eDumpUtil::GetFileKernelName(NOT_NULL(&node_name));
+  GetFileKernelName(NOT_NULL(&node_name));
   // check if output adde exists, if not, return;
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
     return;

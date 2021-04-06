@@ -6,6 +6,9 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_json_parser.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/cpu_e2e_dump.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_utils.cc"
 )
 
 if(ENABLE_DUMP_IR)
@@ -31,8 +34,7 @@ if(ENABLE_DEBUGGER)
 endif()
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/common.cc")
-    list(APPEND _DEBUG_SRC_LIST "data_dump/dump_json_parser.cc")
-    list(APPEND _DEBUG_SRC_LIST "data_dump/e2e_dump_util.cc")
+    list(APPEND _DEBUG_SRC_LIST "data_dump/e2e_dump.cc")
 endif()
 
 set_property(SOURCE ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST} PROPERTY COMPILE_DEFINITIONS

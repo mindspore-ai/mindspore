@@ -32,6 +32,7 @@
 #include "backend/optimizer/pass/erase_visit_attr.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
+#include "debug/data_dump/dump_json_parser.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -39,6 +40,12 @@
 
 namespace mindspore {
 namespace session {
+void CPUSession::Init(uint32_t device_id) {
+  // Dump json config file if dump is enabled
+  DumpJsonParser::GetInstance().CopyJsonToDir();
+  InitExecutor(kCPUDevice, device_id);
+}
+
 ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
