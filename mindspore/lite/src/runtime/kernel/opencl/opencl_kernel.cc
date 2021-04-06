@@ -84,7 +84,7 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
     }
     case kNumberTypeInt8:
     case kNumberTypeUInt8: {
-      img_dtype = CL_UNSIGNED_INT8;
+      img_dtype = CL_SIGNED_INT8;
       break;
     }
     default: {
@@ -138,8 +138,10 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
       printf("%d %7d | ", i, reinterpret_cast<int32_t *>(data.data())[i]);
     } else if (tensor->data_type() == kNumberTypeFloat16) {
       printf("%d %7.3f | ", i, reinterpret_cast<float16_t *>(data.data())[i]);
-    } else {
+    } else if (tensor->data_type() == kNumberTypeFloat32) {
       printf("%d %7.3f | ", i, reinterpret_cast<float *>(data.data())[i]);
+    } else if (tensor->data_type() == kNumberTypeInt8) {
+      printf("%d %7d | ", i, static_cast<int>(reinterpret_cast<int8_t *>(data.data())[i]));
     }
   }
   printf("\n");
@@ -409,7 +411,7 @@ int OpenCLKernel::CheckSpecs() {
   }
   if (in_tensors_.size() > 0) {
     if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16 &&
-        in_tensors_[0]->data_type() != kNumberTypeInt32) {
+        in_tensors_[0]->data_type() != kNumberTypeInt32 && in_tensors_[0]->data_type() != kNumberTypeInt8) {
       MS_LOG(WARNING) << "Unsupported data type: " << in_tensors_[0]->data_type();
       return RET_ERROR;
     }

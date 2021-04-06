@@ -128,6 +128,9 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       MS_LOG(ERROR) << "OpenCLSubGraph new tensor failed!";
       return RET_ERROR;
     }
+    for (const auto &param : in_tensor->quant_params()) {
+      new_tensor->AddQuantParam(param);
+    }
 
     out_tensors->emplace_back(new_tensor);
     KernelKey desc{kGPU, kNumberTypeFloat32, PRIM_TO_FORMAT};

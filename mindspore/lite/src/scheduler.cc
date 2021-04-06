@@ -352,6 +352,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     // support more data type like int32
     kernel::KernelKey gpu_desc{kGPU, kNumberTypeFloat32, desc.type};
     if (context_->IsGpuFloat16Enabled()) gpu_desc.data_type = kNumberTypeFloat16;
+    if (in_tensors.front()->data_type() == kNumberTypeInt8) gpu_desc.data_type = kNumberTypeInt8;
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type) << " " << node->name_;
