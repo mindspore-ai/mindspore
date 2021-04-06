@@ -27,7 +27,9 @@
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/cpu/insert_cast_cpu.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
+#include "backend/optimizer/pass/erase_visit_attr.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
@@ -61,9 +63,21 @@ void CPUSession::Reorder(std::vector<CNodePtr> *node_list) { AnfAlgo::ReorderPos
 void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  std::string pass_name = "replace_node_by_proxy";
-  pass_name.append(std::to_string(graph_sum_));
-  pm->AddPass(std::make_shared<opt::ReplaceNodeByProxy>(pass_name));
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode && ps::PSContext::instance()->is_ps_mode()) {
+    AssignParamKey(kernel_graph);
+    if (ps::PSContext::instance()->is_worker()) {
+      std::string pass_name = "replace_node_by_proxy";
+      pass_name.append(std::to_string(graph_sum_));
+      pm->AddPass(std::make_shared<opt::ReplaceNodeByProxy>(pass_name));
+    }
+  }
+#endif
+  pm->AddPass(std::make_shared<opt::InsertCastCPU>());
+  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
+  MS_LOG(INFO) << "insert cast pass";
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -77,14 +91,8 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   graph->UpdateGraphDynamicAttr();
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::PSContext::instance()->is_ps_mode()) {
-    AssignParamKey(graph);
-    if (ps::PSContext::instance()->is_worker()) {
-      Optimize(graph);
-    }
-  }
-#endif
+  MS_LOG(INFO) << "Set kernel info end";
+  Optimize(graph);
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
 
@@ -158,6 +166,7 @@ void CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
   auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SetKernelInfo(kernel_graph.get());
+  Optimize(kernel_graph);
   BuildKernel(kernel_graph.get());
   run_op_graphs_[graph_info] = kernel_graph;
 }
