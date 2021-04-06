@@ -84,6 +84,7 @@ class ActivationGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
+    CHECK_TENSOR_SIZE(input_shape);
     std::vector<size_t> shape;
     double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 5.999999 : 0.0;
     if (mode_ == CUDNN_ACTIVATION_ELU) coef = 1.0;

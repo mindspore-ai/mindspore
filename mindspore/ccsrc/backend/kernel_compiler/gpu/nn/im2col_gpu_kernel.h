@@ -98,6 +98,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
+    CHECK_TENSOR_SIZE(in_shape);
     Set4DDesc(in_shape, filter_shape, output_shape);
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, 1),
                                 "cudnnSetConvGroupCount failed");

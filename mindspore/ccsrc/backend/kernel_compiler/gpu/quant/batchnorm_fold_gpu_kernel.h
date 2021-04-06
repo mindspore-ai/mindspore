@@ -136,6 +136,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
                     << ", but BatchNormFold GpuKernel OP needs 4DTensor input.";
       return false;
     }
+    CHECK_TENSOR_SIZE(input_shape);
     batch_ = input_shape[0];
     channel_ = input_shape[1];
     height_ = input_shape[2];

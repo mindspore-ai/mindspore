@@ -76,6 +76,7 @@ class ActivationGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
+    CHECK_TENSOR_SIZE(input_shape);
     std::vector<size_t> shape;
     double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
     if (mode_ == CUDNN_ACTIVATION_ELU) {
@@ -85,7 +86,6 @@ class ActivationGpuFwdKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, coef),
                                 "cudnnSetActivationDescriptor failed");
-
     const int split_dim = 4;
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &shape);
