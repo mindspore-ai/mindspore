@@ -35,7 +35,7 @@ class Poisson(Distribution):
         name (str): The name of the distribution. Default: 'Poisson'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Note:
         `rate` must be strictly greater than 0.
@@ -82,14 +82,14 @@ class Poisson(Distribution):
         >>> # Examples of `mean`, `sd`, `mode`, and `var` are similar.
         >>> ans = p1.mean() # return 2
         >>> print(ans.shape)
-        ()
+        (1,)
         >>> ans = p1.mean(rate_b) # return 1 / rate_b
         >>> print(ans.shape)
         (3,)
         >>> # `rate` must be passed in during function calls.
         >>> ans = p2.mean(rate_a)
         >>> print(ans.shape)
-        ()
+        (1,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()
