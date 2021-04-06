@@ -30,7 +30,7 @@
 // x28: filter_zp
 
 asm_function MatmulInt8Opt
-    sub sp, sp, #208
+    sub sp, sp, #224
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
@@ -38,6 +38,7 @@ asm_function MatmulInt8Opt
     stp x23, x24, [sp], #16
     stp x25, x26, [sp], #16
     stp x27, x28, [sp], #16
+    stp x29, x30, [sp], #16
 
     ldr w8, [sp]
     ldr w9, [sp, #8]
@@ -55,7 +56,7 @@ asm_function MatmulInt8Opt
 LoopRow:
     mov x16, x1 // reload rhs ptr
     mov x17, x4 // reload rhs col
-    mov x18, x7 // reload bias ptr
+    mov x29, x7 // reload bias ptr
     mov x27, x2 // reload dst ptr
     ldr x28, [sp, #64] // reload filter_zp
 
@@ -158,7 +159,7 @@ LoopRow:
 
         Bias:
             cbz x7, NoBias
-            ld1 {v15.4s}, [x18], #16
+            ld1 {v15.4s}, [x29], #16
             add v16.4s, v16.4s, v15.4s
             add v17.4s, v17.4s, v15.4s
             add v18.4s, v18.4s, v15.4s
@@ -330,7 +331,7 @@ LoopColEnd:
     b LoopRow
 
 LoopRowEnd:
-    sub sp, sp, #208
+    sub sp, sp, #224
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
@@ -338,5 +339,6 @@ LoopRowEnd:
     ldp x23, x24, [sp], #16
     ldp x25, x26, [sp], #16
     ldp x27, x28, [sp], #16
+    ldp x29, x30, [sp], #16
     ret
 #endif

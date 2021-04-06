@@ -33,12 +33,12 @@ asm_function DeconvDwFp32Center
         mov x16, x1
         mov x17, x4
         LoopW:
-            mov x18, x15
+            mov x22, x15
             mov x19, x2
             mov x20, x5
             ld1 {v1.4s}, [x16], x8
             LoopKh:
-                mov x21, x18
+                mov x21, x22
                 mov x13, x6
                 LoopKw:
                     ld1 {v0.4s}, [x21]
@@ -47,7 +47,7 @@ asm_function DeconvDwFp32Center
                     st1 {v0.4s}, [x21], x12
                     subs x13, x13, #1
                     bne LoopKw
-                add x18, x18, x11
+                add x22, x22, x11
                 subs x20, x20, #1
                 bne LoopKh
             add x15, x15, x10

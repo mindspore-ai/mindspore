@@ -1,6 +1,5 @@
 #ifdef __aarch64__
 #include "nnacl/assembly_global.h"
-
     .text
     .align 5
     //.p2align 5,,15

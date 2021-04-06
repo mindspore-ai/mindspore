@@ -66,7 +66,7 @@ L2:
   cmp w16, #0
   beq End2
 
-  mov x18, x1     // reload b ptr
+  mov x28, x1     // reload b ptr
   mov x19, x7     // reload bias ptr
   mov w20, w5     // reload depth
   dup v16.4s, wzr
@@ -91,7 +91,7 @@ L3:
 
 LoopD16:
   ld1 {v0.16b, v1.16b}, [x17], #32
-  ld1 {v2.16b, v3.16b}, [x18], #32
+  ld1 {v2.16b, v3.16b}, [x28], #32
 
   sdot v16.4s, v2.16b, v0.4b[0]
   sdot v18.4s, v2.16b, v0.4b[1]
@@ -104,7 +104,7 @@ LoopD16:
   sdot v28.4s, v2.16b, v1.4b[2]
   sdot v30.4s, v2.16b, v1.4b[3]
 
-  ld1 {v6.16b, v7.16b}, [x18], #32
+  ld1 {v6.16b, v7.16b}, [x28], #32
   sdot v17.4s, v3.16b, v0.4b[0]
   sdot v19.4s, v3.16b, v0.4b[1]
   sdot v21.4s, v3.16b, v0.4b[2]
@@ -126,7 +126,7 @@ LoopD16:
   sdot v28.4s, v6.16b, v5.4b[2]
   sdot v30.4s, v6.16b, v5.4b[3]
 
-  ld1 {v10.16b, v11.16b}, [x18], #32
+  ld1 {v10.16b, v11.16b}, [x28], #32
   sdot v17.4s, v7.16b, v4.4b[0]
   sdot v19.4s, v7.16b, v4.4b[1]
   sdot v21.4s, v7.16b, v4.4b[2]
@@ -148,7 +148,7 @@ LoopD16:
   sdot v28.4s, v10.16b, v9.4b[2]
   sdot v30.4s, v10.16b, v9.4b[3]
 
-  ld1 {v14.16b, v15.16b}, [x18], #32
+  ld1 {v14.16b, v15.16b}, [x28], #32
   sdot v17.4s, v11.16b, v8.4b[0]
   sdot v19.4s, v11.16b, v8.4b[1]
   sdot v21.4s, v11.16b, v8.4b[2]
@@ -187,7 +187,7 @@ LoopD4:
   beq End3
 
   ld1 {v0.16b, v1.16b}, [x17], #32
-  ld1 {v2.16b, v3.16b}, [x18], #32
+  ld1 {v2.16b, v3.16b}, [x28], #32
 
   sdot v16.4s, v2.16b, v0.4b[0]
   sdot v18.4s, v2.16b, v0.4b[1]

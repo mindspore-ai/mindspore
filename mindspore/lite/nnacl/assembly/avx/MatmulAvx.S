@@ -1,4 +1,5 @@
 #ifdef ENABLE_AVX
+#include "nnacl/assembly_global.h"
     .text
     .align 4
     .global MatmulFloatAvxOpt
@@ -34,7 +35,7 @@
 // 72: stride
 // 80: writeMode
 
-MatmulFloatAvxOpt:
+asm_function MatmulFloatAvxOpt
     // rbx, rsp, rbp, r12-r15 must be saved according to x86 calling convention
     pushq %r15
     pushq %r14

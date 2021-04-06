@@ -22,12 +22,13 @@ asm_function ConvDwInt8Center
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
-    sub sp, sp, #176
+    sub sp, sp, #192
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
     stp x21, x22, [sp], #16
     stp x23, x24, [sp], #16
+    stp x25, x26, [sp], #16
 
     ldr x8, [sp]
     ldr x9, [sp, #8]
@@ -51,9 +52,9 @@ asm_function ConvDwInt8Center
     ld1 {v24.4s}, [x17], #16
     ld1 {v25.4s}, [x17], #16
 
-    ldr x18, [sp, #80] // right shift
-    ld1 {v26.4s}, [x18], #16
-    ld1 {v27.4s}, [x18], #16
+    ldr x25, [sp, #80] // right shift
+    ld1 {v26.4s}, [x25], #16
+    ld1 {v27.4s}, [x25], #16
 
     ldr x19, [sp, #88] // acc_min
     ld1 {v28.4s}, [x19], #16
@@ -90,7 +91,7 @@ asm_function ConvDwInt8Center
             mov v6.16b, v17.16b
             mov v7.16b, v18.16b
             LoopKh4:
-                mov x18, x7
+                mov x25, x7
                 mov x21, x16
                 LoopKw4:
                     mov x22, x21
@@ -116,7 +117,7 @@ asm_function ConvDwInt8Center
                     smlal v6.4s, v8.4h, v16.4h
                     smlal2 v7.4s, v8.8h, v16.8h
 
-                    subs x18, x18, #1
+                    subs x25, x25, #1
                     add x21, x21, x13
                     bne LoopKw4
                 add x16, x16, x12
@@ -194,15 +195,15 @@ asm_function ConvDwInt8Center
 
             mov x16, x3
             add x17, x16, x9
-            add x18, x17, x9
-            add x21, x18, x9
+            add x25, x17, x9
+            add x21, x25, x9
 
             st1 {v0.s}[0], [x16], #4
             st1 {v1.s}[0], [x16], #4
             st1 {v2.s}[0], [x17], #4
             st1 {v3.s}[0], [x17], #4
-            st1 {v4.s}[0], [x18], #4
-            st1 {v5.s}[0], [x18], #4
+            st1 {v4.s}[0], [x25], #4
+            st1 {v5.s}[0], [x25], #4
             st1 {v6.s}[0], [x21], #4
             st1 {v7.s}[0], [x21], #4
 
@@ -221,7 +222,7 @@ asm_function ConvDwInt8Center
             mov v0.16b, v17.16b
             mov v1.16b, v18.16b
             LoopKh:
-                mov x18, x7
+                mov x25, x7
                 mov x22, x16
                 LoopKw:
                     ld1 {v15.8b}, [x22], x13
@@ -229,7 +230,7 @@ asm_function ConvDwInt8Center
                     ld1 {v16.8h}, [x17], #16
                     smlal v0.4s, v14.4h, v16.4h
                     smlal2 v1.4s, v14.8h, v16.8h
-                    subs x18, x18, #1
+                    subs x25, x25, #1
                     bne LoopKw
                 add x16, x16, x12
                 subs x20, x20, #1
@@ -271,11 +272,12 @@ asm_function ConvDwInt8Center
         subs x4, x4, #1
         bne LoopH
 
-    sub sp, sp, #176
+    sub sp, sp, #192
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x23, x24, [sp], #16
+    ldp x25, x26, [sp], #16
     ret
 #endif

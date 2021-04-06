@@ -1,4 +1,5 @@
 #ifdef ENABLE_AVX
+#include "nnacl/assembly_global.h"
 .text
 .align 4
 .global ConvDwFp32Avx3x3
@@ -31,7 +32,7 @@
 // 56: input_stride
 // 64: relu
 // 72: relu6
-ConvDwFp32Avx3x3:
+asm_function ConvDwFp32Avx3x3
     pushq %r15
     pushq %r14
     pushq %r13

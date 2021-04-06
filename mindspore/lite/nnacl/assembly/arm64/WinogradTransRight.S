@@ -18,6 +18,9 @@ asm_function WinogradTransRight
 //x5: k
 //x6: length
 
+sub sp, sp, #16
+stp x19, x20, [sp], #16
+
 mov x8, #16 // 4 * sizeof(float)
 mul x8, x6, x8
 mul x9, x5, x8 // step for S
@@ -43,7 +46,7 @@ LoopH:
             cmp x12, #4
             blt LoopKStart3
             mov x16, x15
-            mov x18, x4
+            mov x19, x4
             LoopK4:
                 ld1 {v0.s}[0], [x13], x10
                 ld1 {v0.s}[1], [x13], x10
@@ -54,7 +57,7 @@ LoopH:
 
                 add x14, x17, x8
                 add x16, x14, x8
-                add x18, x16, x8
+                add x19, x16, x8
 
                 LoopLength4:
                     ld1 {v16.4s}, [x2]
@@ -64,7 +67,7 @@ LoopH:
                     fmul v17.4s, v21.4s, v0.s[1]
                     ld1 {v20.4s}, [x16], #16
                     fmla v16.4s, v20.4s, v0.s[2]
-                    ld1 {v21.4s}, [x18], #16
+                    ld1 {v21.4s}, [x19], #16
                     fmla v17.4s, v21.4s, v0.s[3]
 
                     fadd v17.4s, v16.4s, v17.4s
@@ -73,7 +76,7 @@ LoopH:
                     bne LoopLength4
                 sub x2, x2, x8
                 sub x12, x12, #4
-                mov x17, x18
+                mov x17, x19
 
                 cmp x12, #4
                 bge LoopK4
@@ -107,7 +110,7 @@ LoopH:
                     bne LoopLength3
                 sub x2, x2, x8
                 sub x12, x12, #3
-                mov x17, x18
+                mov x17, x19
                 cmp x12, #3
                 bge LoopK3
 
@@ -141,5 +144,7 @@ LoopH:
     subs x4, x4, #1
     bne LoopH
 
+    sub sp, sp, #16
+    ldp x19, x20, [sp], #16
     ret
 #endif

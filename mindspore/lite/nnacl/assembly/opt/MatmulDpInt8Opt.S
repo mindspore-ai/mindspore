@@ -30,7 +30,7 @@
 // x28: filter_zp
 
 asm_function MatmulInt8DpOpt
-  sub sp, sp, #208
+  sub sp, sp, #224
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   stp x19, x20, [sp], #16
@@ -38,6 +38,7 @@ asm_function MatmulInt8DpOpt
   stp x23, x24, [sp], #16
   stp x25, x26, [sp], #16
   stp x27, x28, [sp], #16
+  stp x29, x30, [sp], #16
 
   ldr w8, [sp]
   ldr w9, [sp, #8]
@@ -56,7 +57,7 @@ asm_function MatmulInt8DpOpt
 LoopRow:
     mov x16, x1 // reload rhs ptr
     mov x17, x4 // reload rhs col
-    mov x18, x7 // reload bias ptr
+    mov x29, x7 // reload bias ptr
     mov x25, x6 // reload input_sum ptr
     mov x27, x2 // reload dst ptr
     ldr x28, [sp, #64] // reload filter_zp
@@ -113,7 +114,7 @@ LoopRow:
 
         Bias:
             cbz x7, NoReadBias
-            ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x18], #64
+            ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x29], #64
             add v16.4s, v16.4s, v0.4s
             add v17.4s, v17.4s, v1.4s
             add v18.4s, v18.4s, v2.4s
@@ -423,8 +424,8 @@ LoopRow:
 
         BiasHalf:
             cbz x7, NoReadBiasHalf
-            ld1 {v0.4s, v1.4s}, [x18]
-            add x18, x18, #64
+            ld1 {v0.4s, v1.4s}, [x29]
+            add x29, x29, #64
             add v16.4s, v16.4s, v0.4s
             add v17.4s, v17.4s, v1.4s
             add v20.4s, v20.4s, v0.4s
@@ -612,8 +613,8 @@ LoopRow:
 
         BiasQuarter:
             cbz x7, NoReadBiasQuarter
-            ld1 {v0.4s}, [x18]
-            add x18, x18, #64
+            ld1 {v0.4s}, [x29]
+            add x29, x29, #64
             add v16.4s, v16.4s, v0.4s
             add v20.4s, v20.4s, v0.4s
             add v24.4s, v24.4s, v0.4s
@@ -1072,7 +1073,7 @@ LoopColEnd:
     b LoopRow
 
 LoopRowEnd:
-  sub sp, sp, #208
+  sub sp, sp, #224
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   ldp x19, x20, [sp], #16
@@ -1080,5 +1081,6 @@ LoopRowEnd:
   ldp x23, x24, [sp], #16
   ldp x25, x26, [sp], #16
   ldp x27, x28, [sp], #16
+  ldp x29, x30, [sp], #16
   ret
 #endif

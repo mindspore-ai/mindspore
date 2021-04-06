@@ -55,16 +55,16 @@ LoopH:
             ld1 {v0.s}[2], [x17], x10
             ld1 {v0.s}[3], [x17], x10
             mov x11, x6
-            mov x18, x17
-            add x18, x14, x7
-            add x16, x18, x7
+            mov x20, x17
+            add x20, x14, x7
+            add x16, x20, x7
             add x19, x16, x7
 
             LoopLength4:
                 ld1 {v16.4s}, [x2]
                 ld1 {v20.4s}, [x14], #16
                 fmla v16.4s, v20.4s, v0.s[0]
-                ld1 {v21.4s}, [x18], #16
+                ld1 {v21.4s}, [x20], #16
                 fmul v17.4s, v21.4s, v0.s[1]
                 ld1 {v20.4s}, [x16], #16
                 fmla v16.4s, v20.4s, v0.s[2]
@@ -90,14 +90,14 @@ LoopH:
             ld1 {v0.s}[1], [x17], x10
             ld1 {v0.s}[2], [x17], x10
             mov x11, x6
-            mov x18, x17
-            add x18, x14, x7
-            add x16, x18, x7
+            mov x20, x17
+            add x20, x14, x7
+            add x16, x20, x7
             LoopLength3:
                 ld1 {v16.4s}, [x2]
                 ld1 {v20.4s}, [x14], #16
                 fmla v16.4s, v20.4s, v0.s[0]
-                ld1 {v21.4s}, [x18], #16
+                ld1 {v21.4s}, [x20], #16
                 fmul v17.4s, v21.4s, v0.s[1]
                 ld1 {v20.4s}, [x16], #16
                 fmla v16.4s, v20.4s, v0.s[2]
