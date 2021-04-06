@@ -30,6 +30,10 @@
 #include "utils/log_adapter.h"
 namespace mindspore {
 typedef std::pair<std::map<std::string, int64_t>, std::map<int64_t, std::string>> AttrConverterPair;
+typedef std::map<std::string, std::vector<int64_t>> ShapeMap;
+constexpr auto kShape = "shape";
+constexpr auto kMinShape = "min_shape";
+constexpr auto kMaxShape = "max_shape";
 
 enum CompareEnum : int64_t {
   kEqual = 1,         // ==
@@ -234,6 +238,9 @@ class CheckAndConvertUtils {
 
   static std::vector<int64_t> ConvertShapePtrToShape(const std::string &arg_name, const BaseShapePtr &shape,
                                                      const std::string &prim_name);
+
+  static ShapeMap ConvertShapePtrToShapeMap(const BaseShapePtr &shape);
+
   static void Check(const std::string &arg_name, int64_t arg_value, CompareEnum compare_type,
                     const std::string &value_name, int64_t value, const std::string &prim_name = "",
                     ExceptionType exception_type = ValueError);
