@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/softmax_fp32.h"
+#include "src/runtime/kernel/arm/fp32/log_softmax_fp32.h"
 #include <string.h>
 #include <vector>
-#include "nnacl/fp32/softmax_fp32.h"
+#include "nnacl/fp32/log_softmax_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -26,10 +26,10 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Softmax;
+using mindspore::schema::PrimitiveType_LogSoftmax;
 
 namespace mindspore::kernel {
-int SoftmaxCPUKernel::Init() {
+int LogSoftmaxCPUKernel::Init() {
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
@@ -41,7 +41,7 @@ int SoftmaxCPUKernel::Init() {
   return ReSize();
 }
 
-int SoftmaxCPUKernel::ReSize() {
+int LogSoftmaxCPUKernel::ReSize() {
   auto ret = SoftmaxBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
     return ret;
@@ -59,20 +59,20 @@ int SoftmaxCPUKernel::ReSize() {
   }
   in_plane_size_ = in_plane_size;
   out_plane_size_ = out_plane_size;
-  if (in_plane_size_ > 1) {
-    if (sum_data_ != nullptr) {
-      free(sum_data_);
-    }
-    sum_data_ = reinterpret_cast<float *>(malloc(out_plane_size * in_plane_size * sizeof(float)));
-    if (sum_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc data for softmax fail!";
-      return RET_ERROR;
-    }
+  auto tmp_data_size =
+    in_plane_size == 1 ? out_plane_size * in_plane_size * in_shape.at(axis) : out_plane_size * in_plane_size;
+  if (tmp_data_ != nullptr) {
+    free(tmp_data_);
+  }
+  tmp_data_ = reinterpret_cast<float *>(malloc(tmp_data_size * sizeof(float)));
+  if (tmp_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data for log_softmax fail!";
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
-int SoftmaxCPUKernel::DoSoftmaxLastAxis(int task_id) {
+int LogSoftmaxCPUKernel::DoLogSoftmaxLastAxis(int task_id) {
   int unit = UP_DIV(out_plane_size_, context_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, out_plane_size_);
@@ -80,37 +80,37 @@ int SoftmaxCPUKernel::DoSoftmaxLastAxis(int task_id) {
   int offset = begin * channel;
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  SoftmaxLastAxis(input_ptr + offset, output_ptr + offset, end - begin, channel);
+  LogSoftmaxLastAxis(input_ptr + offset, output_ptr + offset, tmp_data_ + offset, end - begin, channel);
   return RET_OK;
 }
 
-int SoftmaxLastAxisRun(void *cdata, int task_id) {
-  auto kernel = reinterpret_cast<SoftmaxCPUKernel *>(cdata);
-  auto ret = kernel->DoSoftmaxLastAxis(task_id);
+int LogSoftmaxLastAxisRun(void *cdata, int task_id) {
+  auto kernel = reinterpret_cast<LogSoftmaxCPUKernel *>(cdata);
+  auto ret = kernel->DoLogSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "DoSoftmaxLastAxis error task_id: " << task_id << ", ret: " << ret;
+    MS_LOG(ERROR) << "DoLogSoftmaxLastAxis error task_id: " << task_id << ", ret: " << ret;
   }
   return ret;
 }
 
-int SoftmaxCPUKernel::Run() {
+int LogSoftmaxCPUKernel::Run() {
   int ret = RET_OK;
   if (in_plane_size_ == 1) {
-    ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxLastAxisRun, this, context_->thread_num_);
+    ret = ParallelLaunch(this->context_->thread_pool_, LogSoftmaxLastAxisRun, this, context_->thread_num_);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "SoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
+      MS_LOG(ERROR) << "LogSoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
     }
   } else {
-    MS_ASSERT(sum_data_);
-    MS_ASSERT(softmax_param_);
     auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
     MS_ASSERT(input_ptr);
     auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
     MS_ASSERT(output_ptr);
-    Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
+    MS_ASSERT(tmp_data_);
+    MS_ASSERT(softmax_param_);
+    LogSoftmax(input_ptr, output_ptr, tmp_data_, softmax_param_);
   }
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Softmax, LiteKernelCreator<SoftmaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogSoftmax, LiteKernelCreator<LogSoftmaxCPUKernel>)
 }  // namespace mindspore::kernel

@@ -206,6 +206,7 @@ union PrimitiveType {
     LayerNormGrad,
     ResizeGrad,
     Splice,
+    LogSoftmax,
 }
 
 table Abs {
@@ -1093,4 +1094,8 @@ table Splice {
     context: [long];
     forward_indexes: [long];
     output_dim: long;
+}
+
+table LogSoftmax {
+    axis: long;
 }

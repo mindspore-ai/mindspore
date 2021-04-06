@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
-#define MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_LOG_SOFTMAX_H_
+#define MINDSPORE_LITE_NNACL_FP32_LOG_SOFTMAX_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/softmax_parameter.h"
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SoftmaxNormFp16(const float16_t *src, float16_t *dst, int batch, int channel);
-void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data, SoftmaxParameter *parameter);
-void SoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, int batch, int channel);
+void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, const SoftmaxParameter *parameter);
+void LogSoftmaxLastAxis(const float *src, float *dst, float *exp_data, int batch, int channel);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_LOG_SOFTMAX_H_

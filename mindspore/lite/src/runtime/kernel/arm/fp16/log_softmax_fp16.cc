@@ -16,9 +16,9 @@
 
 #include <string.h>
 #include <vector>
-#include "src/runtime/kernel/arm/fp16/softmax_fp16.h"
+#include "src/runtime/kernel/arm/fp16/log_softmax_fp16.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
-#include "nnacl/fp16/softmax_fp16.h"
+#include "nnacl/fp16/log_softmax_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -28,10 +28,10 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Softmax;
+using mindspore::schema::PrimitiveType_LogSoftmax;
 
 namespace mindspore::kernel {
-int SoftmaxFp16CPUKernel::Init() {
+int LogSoftmaxFp16CPUKernel::Init() {
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
@@ -43,7 +43,7 @@ int SoftmaxFp16CPUKernel::Init() {
   return ReSize();
 }
 
-int SoftmaxFp16CPUKernel::ReSize() {
+int LogSoftmaxFp16CPUKernel::ReSize() {
   auto ret = SoftmaxBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
     return ret;
@@ -59,20 +59,20 @@ int SoftmaxFp16CPUKernel::ReSize() {
   for (int i = axis + 1; i < n_dim; i++) {
     in_plane_size_ *= in_shape[i];
   }
-  if (in_plane_size_ > 1) {
-    if (sum_data_ != nullptr) {
-      free(sum_data_);
-    }
-    sum_data_ = reinterpret_cast<float16_t *>(malloc(out_plane_size_ * in_plane_size_ * sizeof(float16_t)));
-    if (sum_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc data for softmax fail!";
-      return RET_ERROR;
-    }
+  auto tmp_data_size =
+    in_plane_size_ == 1 ? out_plane_size_ * in_plane_size_ * in_shape.at(axis) : out_plane_size_ * in_plane_size_;
+  if (tmp_data_ != nullptr) {
+    free(tmp_data_);
+  }
+  tmp_data_ = reinterpret_cast<float16_t *>(malloc(tmp_data_size * sizeof(float16_t)));
+  if (tmp_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc data for softmax fail!";
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
-int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
+int LogSoftmaxFp16CPUKernel::DoLogSoftmaxLastAxis(int task_id) {
   int unit = UP_DIV(out_plane_size_, context_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, out_plane_size_);
@@ -80,24 +80,24 @@ int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
   int offset = begin * channel;
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->MutableData());
-  SoftmaxLastAxisFp16(input_ptr + offset, output_ptr + offset, end - begin, channel);
+  LogSoftmaxLastAxisFp16(input_ptr + offset, output_ptr + offset, tmp_data_ + offset, end - begin, channel);
   return RET_OK;
 }
 
-int SoftmaxLastAxisFp16Run(void *cdata, int task_id) {
-  auto kernel = reinterpret_cast<SoftmaxFp16CPUKernel *>(cdata);
-  auto ret = kernel->DoSoftmaxLastAxis(task_id);
+int LogSoftmaxLastAxisFp16Run(void *cdata, int task_id) {
+  auto kernel = reinterpret_cast<LogSoftmaxFp16CPUKernel *>(cdata);
+  auto ret = kernel->DoLogSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "DoSoftmaxLastAxisFp16 error task_id: " << task_id << ", ret: " << ret;
+    MS_LOG(ERROR) << "DoLogSoftmaxLastAxisFp16 error task_id: " << task_id << ", ret: " << ret;
   }
   return ret;
 }
 
-int SoftmaxFp16CPUKernel::Run() {
+int LogSoftmaxFp16CPUKernel::Run() {
   if (in_plane_size_ == 1) {
-    auto ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxLastAxisFp16Run, this, context_->thread_num_);
+    auto ret = ParallelLaunch(this->context_->thread_pool_, LogSoftmaxLastAxisFp16Run, this, context_->thread_num_);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "SoftmaxFp16CPUKernel ParallelLaunch failed, ret: " << ret;
+      MS_LOG(ERROR) << "LogSoftmaxFp16CPUKernel ParallelLaunch failed, ret: " << ret;
     }
     return ret;
   } else {
@@ -109,11 +109,11 @@ int SoftmaxFp16CPUKernel::Run() {
     MS_ASSERT(input_fp16_);
     output_fp16_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
     MS_ASSERT(output_fp16_);
-    MS_ASSERT(sum_data_);
-    SoftmaxFp16(input_fp16_, output_fp16_, sum_data_, softmax_param_);
+    MS_ASSERT(tmp_data_);
+    LogSoftmaxFp16(input_fp16_, output_fp16_, tmp_data_, softmax_param_);
   }
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Softmax, LiteKernelCreator<SoftmaxFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogSoftmax, LiteKernelCreator<LogSoftmaxFp16CPUKernel>)
 }  // namespace mindspore::kernel
