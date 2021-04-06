@@ -814,7 +814,7 @@ class BCELoss(_Loss):
         ValueError: If shape of `inputs` is not the same as `labels` or `weight` (if given).
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> weight = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), mindspore.float32)
