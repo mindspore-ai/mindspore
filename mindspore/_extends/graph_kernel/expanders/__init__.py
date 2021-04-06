@@ -46,3 +46,4 @@ from .square import Square
 from .tanh_grad import TanhGrad
 from .tile import Tile
 from .lamb_apply_optimizer_assign import LambApplyOptimizerAssign
+from .lamb_apply_weight_assign import LambApplyWeightAssign

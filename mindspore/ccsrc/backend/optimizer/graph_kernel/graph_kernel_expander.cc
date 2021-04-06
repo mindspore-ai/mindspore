@@ -39,7 +39,8 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kAssignInputIdx = 1;
-constexpr size_t kLambInputIdx = 12;
+constexpr size_t kLambOptimizerInputIdx = 12;
+constexpr size_t kLambWeightInputIdx = 4;
 
 std::vector<PrimitivePtr> GetExpandOps() {
   std::vector<PrimitivePtr> expand_ops = {
@@ -51,6 +52,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSqrtGrad,
     prim::kPrimClipByNormNoDivSum,
     prim::kLambApplyOptimizerAssign,
+    prim::kLambApplyWeightAssign,
 #elif ENABLE_GPU
     prim::kPrimBiasAdd,
     prim::kPrimBiasAddGrad,
@@ -176,7 +178,8 @@ ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &node) {
     {prim::kPrimDropout, std::make_shared<DropoutExpander>()},
     {prim::kPrimAssignAdd, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
     {prim::kPrimAssignSub, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
-    {prim::kLambApplyOptimizerAssign, std::make_shared<OpUMonadExpander>(kLambInputIdx)},
+    {prim::kLambApplyOptimizerAssign, std::make_shared<OpUMonadExpander>(kLambOptimizerInputIdx)},
+    {prim::kLambApplyWeightAssign, std::make_shared<OpUMonadExpander>(kLambWeightInputIdx)},
   };
 
   for (auto &e : expanders) {
