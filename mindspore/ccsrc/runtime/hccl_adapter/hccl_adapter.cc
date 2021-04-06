@@ -28,6 +28,7 @@
 
 static constexpr const char *kHcclOpsKernelInfoStore = "ops_kernel_info_hccl";
 static constexpr const char *kHcclDeployModeEnv = "DEPLOY_MODE";
+static constexpr const char *kHcclAlgoEnv = "HCCL_ALGO";
 // following global var, thread safety is not guaranteed
 static std::shared_ptr<ge::OpsKernelInfoStore> ops_kernel_info_store = nullptr;
 static ge::OpsKernelBuilderPtr ops_kernel_builder = nullptr;
@@ -41,16 +42,24 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
     env_deploy_mode = "0";
   }
 
-  return std::map<std::string, std::string>({{ge::OPTION_EXEC_IS_USEHCOM, "1"},
-                                             {ge::OPTION_EXEC_IS_USEHVD, "0"},
-                                             {ge::OPTION_EXEC_HCCL_FLAG, "1"},
-                                             {ge::OPTION_EXEC_DEVICE_ID, std::to_string(device_id)},
-                                             {ge::OPTION_EXEC_RANK_ID, rank_id.data()},
-                                             {ge::OPTION_EXEC_POD_NAME, rank_id.data()},
-                                             {ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data()},
-                                             {ge::OPTION_GRAPH_RUN_MODE, "1"},
-                                             {ge::OPTION_EXEC_HCCL_FLAG, "1"},
-                                             {ge::OPTION_EXEC_DEPLOY_MODE, env_deploy_mode}});
+  std::map<std::string, std::string> default_options_map = {{ge::OPTION_EXEC_IS_USEHCOM, "1"},
+                                                            {ge::OPTION_EXEC_IS_USEHVD, "0"},
+                                                            {ge::OPTION_EXEC_HCCL_FLAG, "1"},
+                                                            {ge::OPTION_EXEC_DEVICE_ID, std::to_string(device_id)},
+                                                            {ge::OPTION_EXEC_RANK_ID, rank_id.data()},
+                                                            {ge::OPTION_EXEC_POD_NAME, rank_id.data()},
+                                                            {ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data()},
+                                                            {ge::OPTION_GRAPH_RUN_MODE, "1"},
+                                                            {ge::OPTION_EXEC_HCCL_FLAG, "1"},
+                                                            {ge::OPTION_EXEC_DEPLOY_MODE, env_deploy_mode}};
+
+  auto env_hccl_algo = common::GetEnv(kHcclAlgoEnv);
+  if (!env_hccl_algo.empty()) {
+    std::string ge_hccl_algo = "HCCL_algorithm";
+    default_options_map.emplace(ge_hccl_algo, env_hccl_algo);
+  }
+
+  return default_options_map;
 }
 
 bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
