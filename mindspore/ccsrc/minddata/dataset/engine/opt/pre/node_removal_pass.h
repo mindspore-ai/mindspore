@@ -44,19 +44,19 @@ class NodeRemovalPass : public IRTreePass {
 
     /// \brief Perform RepeatNode removal check
     /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
+    /// \param[in, out] modified Indicator if the node was changed at all
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<RepeatNode> node, bool *const modified) override;
 
     /// \brief Perform SkipNode removal check
     /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
+    /// \param[in, out] modified Indicator if the node was changed at all
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<SkipNode> node, bool *const modified) override;
 
     /// \brief Perform TakeNode removal check
     /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
+    /// \param[in, out] modified Indicator if the node was changed at all
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<TakeNode> node, bool *const modified) override;
 
@@ -76,8 +76,8 @@ class NodeRemovalPass : public IRTreePass {
   ~NodeRemovalPass() = default;
 
   /// \brief Runs a removal_nodes pass first to find out which nodes to remove, then removes them.
-  /// \param[inout] tree The tree to operate on.
-  /// \param[inout] Indicate of the tree was modified.
+  /// \param[in, out] tree The tree to operate on.
+  /// \param[in, out] Indicate of the tree was modified.
   /// \return Status The status code returned
   Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) override;
 };

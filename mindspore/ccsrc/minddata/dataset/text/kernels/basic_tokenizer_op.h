@@ -49,7 +49,7 @@ class BasicTokenizerOp : public TensorOp {
 
  protected:
   Status CaseFoldWithoutUnusedWords(const std::string_view &text, const std::unordered_set<std::string> &unused_words,
-                                    std::string *outupt);
+                                    std::string *output);
   Status CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
   std::string Name() const override { return kBasicTokenizerOp; }

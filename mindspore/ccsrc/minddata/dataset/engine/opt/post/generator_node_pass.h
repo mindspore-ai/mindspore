@@ -38,31 +38,31 @@ class GeneratorNodePass : public IRNodePass {
 
   /// \brief Record the starting point to collect the Generator node
   /// \param[in] node The node being visited
-  /// \param[inout] modified Indicator if the node was changed at all
+  /// \param[in, out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
   Status Visit(std::shared_ptr<RepeatNode> node, bool *const modified) override;
 
   /// \brief Record the starting point to collect the Generator node
   /// \param[in] node The node being visited
-  /// \param[inout] modified Indicator if the node was changed at all
+  /// \param[in, out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
   Status Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modified) override;
 
   /// \brief Add the Generator node to the set
   /// \param[in] node The node being visited
-  /// \param[inout] modified Indicator if the node was changed at all
+  /// \param[in, out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
   Status Visit(std::shared_ptr<GeneratorNode> node, bool *const modified) override;
 
   /// \brief Add the Generator node(s) from the set to this Repeat node for run-time processing
   /// \param[in] node The node being visited
-  /// \param[inout] modified Indicator if the node was changed at all
+  /// \param[in, out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
   Status VisitAfter(std::shared_ptr<RepeatNode> node, bool *const modified) override;
 
   /// \brief Add the Generator node(s) from the set to this EpochCtrl node for run-time processing
   /// \param[in] node The node being visited
-  /// \param[inout] modified Indicator if the node was changed at all
+  /// \param[in, out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
   Status VisitAfter(std::shared_ptr<EpochCtrlNode> node, bool *const modified) override;
 

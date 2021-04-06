@@ -35,7 +35,7 @@ class BoundingBoxAugmentOp : public TensorOp {
   static const float kDefRatio;
 
   // Constructor for BoundingBoxAugmentOp
-  // @param std::shared_ptr<TensorOp> transform transform: C++ opration to apply on select bounding boxes
+  // @param std::shared_ptr<TensorOp> transform transform: C++ operation to apply on select bounding boxes
   // @param float ratio: ratio of bounding boxes to have the transform applied on
   BoundingBoxAugmentOp(std::shared_ptr<TensorOp> transform, float ratio);
 

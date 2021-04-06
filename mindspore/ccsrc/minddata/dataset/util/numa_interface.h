@@ -25,7 +25,7 @@ struct bitmask {
   uint64_t *maskp;
 };
 
-// Now we seperate the link from _c_dataengine with numa,
+// Now we separate the link from _c_dataengine with numa,
 // and we use dlopen("libnuma") instead. This function will
 // return a handle which you can do NumaBind and ReleaseLibrary.
 void *GetNumaAdapterHandle();
