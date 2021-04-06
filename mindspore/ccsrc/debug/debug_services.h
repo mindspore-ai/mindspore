@@ -16,6 +16,17 @@
 #ifndef MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 #define MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 
+#ifndef OFFLINE_DBG_MODE
+#define ONLINE_DBG_MODE
+#endif
+
+#ifdef OFFLINE_DBG_MODE
+#include "Eigen/Core"
+#include "Eigen/src/Core/arch/CUDA/Half.h"
+using float16 = Eigen::half;
+#include "debugger/offline_debug/offline_logger.h"
+#endif
+
 #include <math.h>
 #include <vector>
 #include <string>
@@ -26,11 +37,13 @@
 #include <mutex>
 #include <map>
 #include <limits>
+#include <sstream>
 #include "debug/tensor_load.h"
 #include "debug/tensor_data.h"
-#include "ir/dtype.h"
 
+#ifdef ONLINE_DBG_MODE
 namespace mindspore {
+#endif
 class DebugServices {
  public:
   DebugServices();
@@ -103,6 +116,8 @@ class DebugServices {
     unsigned int id;
     condition_t condition;
     std::vector<std::tuple<std::string, bool>> check_node_list;
+    std::vector<std::tuple<std::string, std::vector<uint32_t>>> check_node_device_list;
+    std::vector<std::tuple<std::string, std::vector<uint32_t>>> check_node_graph_list;
     std::vector<parameter_t> parameter_list;
     size_t location = 0;
 
@@ -167,29 +182,54 @@ class DebugServices {
     }
   } watchpoint_t;
 
-  void AddWatchpoint(unsigned int id, unsigned int watch_condition, float parameter,
-                     const std::vector<std::tuple<std::string, bool>> &check_node_list,
-                     const std::vector<parameter_t> &parameter_list);
+  void AddWatchpoint(
+    unsigned int id, unsigned int watch_condition, float parameter,
+    const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
+    const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_device_list = nullptr,
+    const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_graph_list = nullptr);
 
   void RemoveWatchpoint(unsigned int id);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *watchpoint_id, std::vector<std::vector<parameter_t>> *parameters,
                         std::vector<int32_t> *error_code, const std::vector<std::string> &op_overflows,
-                        const std::vector<std::shared_ptr<TensorData>> &tensor_list, bool init_dbg_suspend,
-                        const bool step_end, const bool recheck);
+                        std::vector<std::shared_ptr<TensorData>> *tensor_list, bool init_dbg_suspend,
+                        const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
+                        std::vector<unsigned int> *root_graph_id = nullptr);
 
+  void AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck, const std::string &tensor_name,
+                             const std::string &tensor_name_no_slot, bool *previous_iter_tensor_needed,
+                             std::string *qualified_tensor_name, std::vector<watchpoint_t> *watchpoints_to_check);
+
+#ifdef OFFLINE_DBG_MODE
+  void GetSlotInfo(const std::string &file_name, const std::string &dump_name, const std::string &specific_dump_dir,
+                   std::vector<size_t> *slot_list);
+
+  std::size_t GetShapeTypeInfo(const std::string &specific_dump_dir, std::size_t slot,
+                               const std::string &prefix_dump_file_name, std::string *file_name, std::string *type_name,
+                               std::string *out_dir, std::vector<int64_t> *shape);
+
+  void ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
+                        std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
+                        std::vector<unsigned int> root_graph_id, std::vector<std::shared_ptr<TensorData>> *result_list);
+
+  std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration);
+
+  void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed);
+#endif
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
-                        std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size, std::vector<TypePtr> *dtype,
-                        std::vector<std::vector<int64_t>> *shape);
-
+                        std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
+                        std::vector<unsigned int> *dtype, std::vector<std::vector<int64_t>> *shape);
+#ifdef ONLINE_DBG_MODE
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
   bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
-
+#endif
   void EmptyTensor();
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() const;
+
+  void AddAnalyzedTensorToCache(const bool recheck, const unsigned int id, const std::string &tensor_name);
 
   std::vector<std::shared_ptr<TensorData>> GetNodeTensorMap(const std::string &node_name) const;
 
@@ -201,21 +241,36 @@ class DebugServices {
 
   void EmptyCurrentTensor();
 
+#ifdef ONLINE_DBG_MODE
   bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
                         TypeId addr_type_id, const std::string &addr_format, size_t slot) const;
+#endif
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
 
   std::unordered_map<unsigned int, watchpoint_t> GetWatchpointTable();
 
   void ResetLoadedTensors();
-
+#ifdef ONLINE_DBG_MODE
   std::vector<std::shared_ptr<TensorData>> GetNodeTensor(const CNodePtr &kernel);
+#endif
 
   bool TensorExistsInCurrent(std::string tensor_name);
 
   void MoveTensorCurrentToPrev(std::string tensor_name);
+
+  void SetNetName(std::string net_name);
+
+  std::string GetNetName();
+
+  void SetDumpDir(std::string dump_dir);
+
+  std::string GetDumpDir();
+
+  void SetSyncMode(bool is_sync_mode);
+
+  bool GetSyncMode();
 
  private:
   std::mutex lock_;
@@ -223,9 +278,14 @@ class DebugServices {
   // to keep track of watchpoints that have been checked already for a tensor in current step
   std::unordered_map<std::string, std::set<int32_t>> wp_id_cache;
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
+  std::string net_name;
+  std::string dump_dir;
+  bool is_sync_mode;
 
   TensorLoader *tensor_loader_;
 };
+#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
+#endif
 
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_

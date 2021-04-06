@@ -24,7 +24,9 @@
 
 #include "debug/debug_services.h"
 
+#ifdef ONLINE_DBG_MODE
 namespace mindspore {
+#endif
 class RangeCountCalculator {
  public:
   RangeCountCalculator();
@@ -121,5 +123,7 @@ class TensorSummary : public ITensorSummary {
   double_t GetZeroValPercent();
   void InitCalculators(const std::vector<DebugServices::watchpoint_t> &);
 };
+#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
+#endif
 #endif  // MINDSPORE_TENSOR_SUMMARY_H

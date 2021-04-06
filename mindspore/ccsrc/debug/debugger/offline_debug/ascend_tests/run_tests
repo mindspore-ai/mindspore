@@ -1,0 +1,49 @@
+python sync_trans_false_read_tensors.py > sync_trans_false_read_tensors.actual
+sed -i '/\[WARNING\]/d' sync_trans_false_read_tensors.actual
+sed -i '/Deprecated/d' sync_trans_false_read_tensors.actual
+diff sync_trans_false_read_tensors.actual sync_trans_false_read_tensors.expected
+if [ $? -eq 0 ]; then
+    echo sync_trans_false_read_tensors PASSED
+else
+    echo sync_trans_false_read_tensors FAILED
+fi
+
+python sync_trans_true_read_tensors.py > sync_trans_true_read_tensors.actual
+sed -i '/\[WARNING\]/d' sync_trans_true_read_tensors.actual
+sed -i '/Deprecated/d' sync_trans_true_read_tensors.actual
+diff sync_trans_true_read_tensors.actual sync_trans_true_read_tensors.expected
+if [ $? -eq 0 ]; then
+    echo sync_trans_true_read_tensors PASSED
+else
+    echo sync_trans_true_read_tensors FAILED
+fi
+
+python sync_trans_false_watchpoints.py > sync_trans_false_watchpoints.actual
+sed -i '/\[WARNING\]/d' sync_trans_false_watchpoints.actual
+sed -i '/Deprecated/d' sync_trans_false_watchpoints.actual
+diff sync_trans_false_watchpoints.actual sync_trans_false_watchpoints.expected
+if [ $? -eq 0 ]; then
+    echo sync_trans_false_watchpoints PASSED
+else
+    echo sync_trans_false_watchpoints FAILED
+fi
+
+python async_sink_mode_true_read_tensors.py > async_sink_mode_true_read_tensors.actual
+sed -i '/\[WARNING\]/d' async_sink_mode_true_read_tensors.actual
+sed -i '/Deprecated/d' async_sink_mode_true_read_tensors.actual
+diff async_sink_mode_true_read_tensors.actual async_sink_mode_true_read_tensors.expected
+if [ $? -eq 0 ]; then
+    echo async_sink_mode_true_read_tensors PASSED
+else
+    echo async_sink_mode_true_read_tensors FAILED
+fi
+
+python async_sink_mode_true_watchpoints.py > async_sink_mode_true_watchpoints.actual
+sed -i '/\[WARNING\]/d' async_sink_mode_true_watchpoints.actual
+sed -i '/Deprecated/d' async_sink_mode_true_watchpoints.actual
+diff async_sink_mode_true_watchpoints.actual async_sink_mode_true_watchpoints.expected
+if [ $? -eq 0 ]; then
+    echo async_sink_mode_true_watchpoints PASSED
+else
+    echo async_sink_mode_true_watchpoints FAILED
+fi

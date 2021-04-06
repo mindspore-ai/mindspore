@@ -1,0 +1,70 @@
+-----------------------------------------------------------
+tensor_info_1 attributes:
+node name =  Default/network-WithLossCell/_backbone-AlexNet/conv2-Conv2d/conv2.bias
+slot =  0
+iteration =  2
+device_id =  None
+root_graph_id =  0
+is_parameter =  True
+
+tensor_data_1 attributes:
+data (printed in uint8) =  [  0   0   0   0 195 127   0   0 176 202 195 248 194 127   0   0   0   0
+   0   0   0   0   0   0   0   0   0   0   0   0   0   0   8  58 196 248
+ 194 127   0   0  17   0   0   0   0   0   0   0 160  76   6 140 195 127
+   0   0  69   0   0   0   0   0   0   0   1   0   0   0 195 127   0   0
+  64 195 195 248 194 127   0   0   0   0   0   0   0   0   0   0   0   0
+   0   0   0   0   0   0  88   1 196 248 194 127   0   0  18   0   0   0
+   0   0   0   0 160  47   6 140 195 127   0   0  69   0   0   0   0   0
+   0   0   1   0   0   0 195 127   0   0 176 203 195 248 194 127   0   0
+ 176 204 195 248 194 127   0   0   0   0   0   0   0   0   0   0 216 241
+ 195 248 194 127   0   0  19   0   0   0   0   0   0   0  96  39   6 140
+ 195 127   0   0  69   0   0   0   0   0   0   0   1   0   0   0 195 127
+   0   0 112  52 196 248 194 127   0   0 176  52 196 248 194 127   0   0
+   0   0   0   0   0   0   0   0  88 250 195 248 194 127   0   0  20   0
+   0   0   0   0   0   0 128 130   5 140 195 127   0   0  69   0   0   0
+   0   0   0   0   0   0   0   0 195 127   0   0 208 136 195 248 194 127
+   0   0 176 202 195 248 194 127   0   0  48  52 196 248 194 127   0   0
+ 184 247 195 248 194 127   0   0  21   0   0   0   0   0   0   0 176 213
+   4 140 195 127   0   0  69   0   0   0   0   0   0   0   0   0   0   0
+ 195 127   0   0  48  52 196 248 194 127   0   0   0   0   0   0   0   0
+   0   0   0   0   0   0   0   0   0   0   8 249 195 248 194 127   0   0
+  22   0   0   0   0   0   0   0  16  46   4 140 195 127   0   0  69   0
+   0   0   0   0   0   0   1   0   0   0 195 127   0   0  64 137 195 248
+ 194 127   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   0   0  88  12 196 248 194 127   0   0  23   0   0   0   0   0   0   0
+  32 137   3 140 195 127   0   0  85   0   0   0   0   0   0   0   0   0
+   0   0 195 127   0   0 176 202 195 248 194 127   0   0   0   0   0   0
+   0   0   0   0   0   0   0   0   0   0   0   0 104 246 195 248 194 127
+   0   0  24   0   0   0   0   0   0   0  48 104  15 140 195 127   0   0
+  32 104  15 140 195 127   0   0]
+size in bytes =  512
+debugger dtype =  11
+shape =  [128]
+-----------------------------------------------------------
+tensor_info_2 attributes:
+node name =  Default/network-WithLossCell/_backbone-AlexNet/conv3-Conv2d/Conv2D-op308
+slot =  0
+iteration =  2
+device_id =  None
+root_graph_id =  0
+is_parameter =  False
+
+tensor_data_2 attributes:
+data (printed in uint8) =  [  0 169   0 ... 152 242  63]
+size in bytes =  4153344
+debugger dtype =  11
+shape =  [32, 192, 13, 13]
+-----------------------------------------------------------
+tensor_info_3 attributes:
+node name =  Default/network-WithLossCell/_backbone-AlexNet/ReLUV2-op300
+slot =  1
+iteration =  2
+device_id =  None
+root_graph_id =  0
+is_parameter =  False
+
+tensor_data_3 attributes:
+data (printed in uint8) =  [  0 169   0 ... 217   4  52]
+size in bytes =  831744
+debugger dtype =  8
+shape =  [207936]
