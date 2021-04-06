@@ -153,19 +153,20 @@ AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
 }
 
 // This Faked BProp func_graph should not be present in the final top bprop func_graph.
-// Its output is faked but not a tuple.
 FuncGraphPtr BuildFakeBProp(const PrimitivePtr &prim, size_t inputs_num) {
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
+  outputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
   auto fake_bprop = std::make_shared<Primitive>("fake_bprop");
   (void)fake_bprop->AddAttr("info", MakeValue("Primitive " + prim->name() + "'s bprop not defined."));
-  outputs.push_back(NewValueNode(fake_bprop));
-  outputs.push_back(NewValueNode(true));
+  auto fake_input_sens = func_graph->NewCNode({NewValueNode(fake_bprop), NewValueNode(true)});
 
   for (size_t i = 0; i < inputs_num; ++i) {
     // Mock params for inputs
     auto param = func_graph->add_parameter();
+    // Mock derivatives for each inputs
+    outputs.push_back(fake_input_sens);
   }
   // mock params for out and dout
   (void)func_graph->add_parameter();
@@ -193,6 +194,9 @@ class PynativeAdjoint {
   }
 
   void AccumulateDout(const AnfNodePtr &dout_factor) {
+    if (dout_factor->abstract() == nullptr) {
+      MS_LOG(EXCEPTION) << "Abstract of dout_factor should not be null" << dout_factor->ToString();
+    }
     if (dout_ != nullptr) {
       MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
       auto arg = out_->ToAbstract()->Broaden();
@@ -261,7 +265,7 @@ class KPynativeCellImpl : public KPynativeCell {
   // Back propagate for MakeList or MakeTuple is generated from MetaFuncGraph.
   FuncGraphPtr BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode);
   // Set return node according to grad flag
-  void SetReturnNodeByGradFlag(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
+  void SetOutput(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -293,6 +297,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
     // sens parameter;
     auto sens_param = tape_->add_parameter();
     sens_param->debug_info()->set_name("sens");
+    sens_param->set_abstract(last_node_adjoint_iter->second->out()->ToAbstract()->Broaden());
     // Set dout of last node to sens;
     last_node_adjoint_iter->second->AccumulateDout(sens_param);
   } else {
@@ -311,7 +316,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   // BackPropagate sensitivity;
   BackPropagate();
   // Return the gradient;
-  SetReturnNodeByGradFlag(weights, grad_inputs, grad_weights);
+  SetOutput(weights, grad_inputs, grad_weights);
   // Replace AnfNode with parameter of tape_;
   auto mng = MakeManager({tape_}, false);
   auto tr = mng->Transact();
@@ -580,6 +585,13 @@ FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr
 }
 
 bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app) {
+  abstract::AbstractTuplePtr abstract_tuple = nullptr;
+  auto bprop_app_abstract = bprop_app->abstract();
+  abstract_tuple = bprop_app_abstract->cast<abstract::AbstractTuplePtr>();
+  if (abstract_tuple->size() != (cnode_primal->size() - 1)) {
+    MS_LOG(EXCEPTION) << "AbstractTuple size: " << abstract_tuple->ToString()
+                      << " not match primal cnode input size: " << cnode_primal->DebugString();
+  }
   for (size_t i = 1; i < cnode_primal->size(); i++) {
     auto input = cnode_primal->input(i);
     // Useless to accumulate sens for ValueNode, the sens for ValueNode should be zeros_like;
@@ -597,6 +609,9 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
       MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString();
     }
     auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i - 1))});
+    if (abstract_tuple != nullptr) {
+      din->set_abstract((*abstract_tuple)[i - 1]);
+    }
     input_adjoint_iter->second->AccumulateDout(din);
   }
   return true;
@@ -631,7 +646,17 @@ bool KPynativeCellImpl::BackPropagate() {
       }
     }
     // Back propagate process
+    auto bprop_fg_output_abs = bprop_fg->output()->abstract();
+    if (bprop_fg_output_abs == nullptr || !bprop_fg_output_abs->isa<abstract::AbstractTuple>()) {
+      if (bprop_fg_output_abs == nullptr) {
+        MS_LOG(WARNING) << "Abstract of bprop_fg_output_abs is not AbstractTuple, but nullptr";
+      } else {
+        MS_LOG(WARNING) << "Abstract of bprop_fg_output_abs is not AbstractTuple, but: "
+                        << bprop_fg_output_abs->ToString();
+      }
+    }
     auto bprop_app = tape_->NewCNode(node_list);
+    bprop_app->set_abstract(bprop_fg_output_abs);
     BackPropagate(cnode, bprop_app);
   }
   return true;
@@ -752,9 +777,11 @@ FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim,
   return b;
 }
 
-void KPynativeCellImpl::SetReturnNodeByGradFlag(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights) {
+void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights) {
   AnfNodePtrList grad_inputs_list{NewValueNode(prim::kPrimMakeTuple)};
+  AbstractBasePtr grad_inputs_spec;
   if (grad_inputs) {
+    AbstractBasePtrList grad_inputs_abs_list;
     for (const auto &input : cell_inputs_) {
       MS_EXCEPTION_IF_NULL(input);
       auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
@@ -766,11 +793,15 @@ void KPynativeCellImpl::SetReturnNodeByGradFlag(const AnfNodePtrList &weights, b
       } else {
         grad_inputs_list.push_back(input_adjoint_iter->second->RealDout());
       }
+      grad_inputs_abs_list.push_back(grad_inputs_list.back()->abstract());
     }
+    grad_inputs_spec = std::make_shared<abstract::AbstractTuple>(grad_inputs_abs_list);
   }
 
   AnfNodePtrList grad_weights_list{NewValueNode(prim::kPrimMakeTuple)};
+  AbstractBasePtr grad_weights_spec;
   if (grad_weights) {
+    AbstractBasePtrList grad_weights_abs_list;
     for (const auto &weight : weights) {
       MS_EXCEPTION_IF_NULL(weight);
       auto input_adjoint_iter = anfnode_to_adjoin_.find(weight);
@@ -786,19 +817,25 @@ void KPynativeCellImpl::SetReturnNodeByGradFlag(const AnfNodePtrList &weights, b
       } else {
         grad_weights_list.push_back(input_adjoint_iter->second->RealDout());
       }
+      grad_weights_abs_list.push_back(grad_weights_list.back()->abstract());
     }
+    grad_weights_spec = std::make_shared<abstract::AbstractTuple>(grad_weights_abs_list);
   }
 
   AnfNodePtr tape_output;
   if (grad_inputs && grad_weights) {
     tape_output = tape_->NewCNode(
       {NewValueNode(prim::kPrimMakeTuple), tape_->NewCNode(grad_inputs_list), tape_->NewCNode(grad_weights_list)});
+    tape_output->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{grad_inputs_spec, grad_weights_spec}));
   } else if (grad_inputs) {
     tape_output = tape_->NewCNode(grad_inputs_list);
+    tape_output->set_abstract(grad_inputs_spec);
   } else if (grad_weights) {
     tape_output = tape_->NewCNode(grad_weights_list);
+    tape_output->set_abstract(grad_weights_spec);
   } else if (cell_inputs_.empty()) {
     tape_output = tape_->NewCNode(grad_inputs_list);
+    tape_output->set_abstract(grad_inputs_spec);
   } else {
     auto input_adjoint_iter = anfnode_to_adjoin_.find(cell_inputs_[0]);
     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
