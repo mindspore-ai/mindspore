@@ -87,6 +87,10 @@ class ConfigManager {
   int32_t op_connector_size() const { return op_connector_size_; }
 
   // getter function
+  // @return The sending batches that will send to device
+  int64_t sending_batches() const { return sending_batches_; }
+
+  // getter function
   // @return The internal worker-to-master connector queue size
   int32_t worker_connector_size() const { return worker_connector_size_; }
 
@@ -127,6 +131,10 @@ class ConfigManager {
   // setter function
   // @param connector_size - The setting to apply to the config
   void set_op_connector_size(int32_t connector_size);
+
+  // setter function
+  // @param sending_batches - The setting to apply to the config
+  void set_sending_batches(int64_t sending_batches);
 
   // setter function
   // @param cache_host - The hostname of cache server
@@ -234,6 +242,7 @@ class ConfigManager {
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
   int32_t op_connector_size_;
+  int64_t sending_batches_;
   // This rank_id is for numa and device_queue, one process work with only one rank_id,
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
   // but for distribute scenario, this rank_id come from _get_global_rank() in python

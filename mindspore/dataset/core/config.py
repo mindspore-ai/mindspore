@@ -373,3 +373,23 @@ def _stop_dataset_profiler():
         _config.stop_dataset_profiler(True)
         logger.warning("Profiling: waiting for dataset part profiling stop.")
         time.sleep(1)
+
+
+def set_sending_batches(batch_num):
+    """
+    Set the default sending batches when training with sink_mode=True in Ascend device.
+
+    Args:
+        batch_num (int): the total sending batches, when meet sending batch num, it will wait unless sending batches
+         increase, default is 0 which means will send all batches in dataset.
+
+    Raises:
+        TypeError: If batch_num is not a int data type.
+
+    Examples:
+        >>> # Set a new global configuration value for the sending batches
+        >>> ds.config.set_sending_batches(10)
+    """
+    if not isinstance(batch_num, int):
+        raise TypeError("batch_num must be a int dtype.")
+    _config.set_sending_batches(batch_num)

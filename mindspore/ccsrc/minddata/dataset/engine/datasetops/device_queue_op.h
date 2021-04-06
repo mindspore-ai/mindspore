@@ -190,6 +190,7 @@ class DeviceQueueOp : public PipelineOp {
 #ifdef ENABLE_TDTQUE
   void WaitContinueSignal() const;
   Status SendDataToAscend();
+  void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg);
   Status SendRowToTdt(TensorRow currRow, bool isProfilingEnable, int32_t *tdt_cost);
   bool ascend_keep_waiting_;
 #endif
