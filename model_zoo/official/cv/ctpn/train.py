@@ -32,6 +32,8 @@ from src.config import config, pretrain_config, finetune_config
 from src.dataset import create_ctpn_dataset
 from src.lr_schedule import dynamic_lr
 from src.network_define import LossCallBack, LossNet, WithLossCell, TrainOneStepCell
+from src.eval_utils import eval_for_ctpn, get_eval_result
+from src.eval_callback import EvalCallBack
 
 set_seed(1)
 
@@ -43,9 +45,29 @@ parser.add_argument("--device_num", type=int, default=1, help="Use device nums, 
 parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default: 0.")
 parser.add_argument("--task_type", type=str, default="Pretraining",\
     choices=['Pretraining', 'Finetune'], help="task type, default:Pretraining")
+parser.add_argument("--run_eval", type=ast.literal_eval, default=False, \
+    help="Run evaluation when training, default is False.")
+parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True, \
+    help="Save best checkpoint when run_eval is True, default is True.")
+parser.add_argument("--eval_image_path", type=str, default="", \
+    help="eval image path, when run_eval is True, eval_image_path should be set.")
+parser.add_argument("--eval_dataset_path", type=str, default="", \
+    help="eval dataset path, when run_eval is True, eval_dataset_path should be set.")
+parser.add_argument("--eval_start_epoch", type=int, default=10, \
+    help="Evaluation start epoch when run_eval is True, default is 10.")
+parser.add_argument("--eval_interval", type=int, default=10, \
+    help="Evaluation interval when run_eval is True, default is 10.")
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id, save_graphs=True)
+
+def apply_eval(eval_param):
+    network = eval_param["eval_network"]
+    eval_ds = eval_param["eval_dataset"]
+    eval_image_path = eval_param["eval_image_path"]
+    eval_for_ctpn(network, eval_ds, eval_image_path)
+    hmean = get_eval_result()
+    return hmean
 
 if __name__ == '__main__':
     if args_opt.run_distribute:
@@ -78,7 +100,7 @@ if __name__ == '__main__':
     dataset = create_ctpn_dataset(mindrecord_file, repeat_num=1,\
         batch_size=config.batch_size, device_num=device_num, rank_id=rank)
     dataset_size = dataset.get_dataset_size()
-    net = CTPN(config=config, is_training=True)
+    net = CTPN(config=config, batch_size=config.batch_size)
     net = net.set_train()
 
     load_path = args_opt.pre_trained
@@ -100,20 +122,34 @@ if __name__ == '__main__':
         weight_decay=config.weight_decay, loss_scale=config.loss_scale)
     net_with_loss = WithLossCell(net, loss)
     if args_opt.run_distribute:
-        net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale, reduce_flag=True,
-                               mean=True, degree=device_num)
+        net_with_grads = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale, reduce_flag=True, \
+            mean=True, degree=device_num)
     else:
-        net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale)
+        net_with_grads = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale)
 
     time_cb = TimeMonitor(data_size=dataset_size)
     loss_cb = LossCallBack(rank_id=rank)
     cb = [time_cb, loss_cb]
+    save_checkpoint_path = os.path.join(config.save_checkpoint_path, "ckpt_" + str(rank) + "/")
     if config.save_checkpoint:
         ckptconfig = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs*dataset_size,
                                       keep_checkpoint_max=config.keep_checkpoint_max)
-        save_checkpoint_path = os.path.join(config.save_checkpoint_path, "ckpt_" + str(rank) + "/")
         ckpoint_cb = ModelCheckpoint(prefix='ctpn', directory=save_checkpoint_path, config=ckptconfig)
         cb += [ckpoint_cb]
-
-    model = Model(net)
+    if args_opt.run_eval:
+        if args_opt.eval_dataset_path is None or (not os.path.isfile(args_opt.eval_dataset_path)):
+            raise ValueError("{} is not a existing path.".format(args_opt.eval_dataset_path))
+        if args_opt.eval_image_path is None or (not os.path.isdir(args_opt.eval_image_path)):
+            raise ValueError("{} is not a existing path.".format(args_opt.eval_image_path))
+        eval_dataset = create_ctpn_dataset(args_opt.eval_dataset_path, \
+            batch_size=config.batch_size, repeat_num=1, is_training=False)
+        eval_net = net
+        eval_param_dict = {"eval_network": eval_net, "eval_dataset": eval_dataset, \
+            "eval_image_path": args_opt.eval_image_path}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args_opt.eval_interval,
+                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=True,
+                               ckpt_directory=save_checkpoint_path, besk_ckpt_name="best_acc.ckpt",
+                               metrics_name="hmean")
+        cb += [eval_cb]
+    model = Model(net_with_grads)
     model.train(training_cfg.total_epoch, dataset, callbacks=cb, dataset_sink_mode=True)

@@ -96,6 +96,8 @@ Here we used 6 datasets for training, and 1 datasets for Evaluation.
   │   ├── create_dataset.py                 # create mindrecord dataset
   │   ├── ctpn.py                           # ctpn network definition
   │   ├── dataset.py                        # data proprocessing
+  │   ├── eval_callback.py                  # evaluation callback while training
+  │   ├── eval_utils.py                     # evaluation function
   │   ├── lr_schedule.py                    # learning rate scheduler
   │   ├── network_define.py                 # network definition
   │   └── text_connector
@@ -234,6 +236,10 @@ Then you can run the scripts/eval_res.sh to calculate the evalulation result.
 ```base
 bash eval_res.sh
 ```
+
+### Evaluation while training
+
+You can add `run_eval` to start shell and set it True, if you want evaluation while training. And you can set argument option: `eval_dataset_path`, `save_best_ckpt`, `eval_start_epoch`, `eval_interval` when `run_eval` is True.
 
 ### Result
 

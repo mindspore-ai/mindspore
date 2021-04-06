@@ -145,7 +145,7 @@ def create_train_dataset(dataset_type):
         # test: icdar2013 test
         icdar_test_image_files, icdar_test_anno_dict = create_icdar_svt_label(config.icdar13_test_path[0],\
             config.icdar13_test_path[1], "")
-        image_files = icdar_test_image_files
+        image_files = sorted(icdar_test_image_files)
         image_anno_dict = icdar_test_anno_dict
         data_to_mindrecord_byte_image(image_files, image_anno_dict, config.test_dataset_path, \
             prefix="ctpn_test.mindrecord", file_num=1)

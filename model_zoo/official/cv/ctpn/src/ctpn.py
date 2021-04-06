@@ -29,16 +29,13 @@ class BiLSTM(nn.Cell):
      Define a BiLSTM network which contains two LSTM layers
 
      Args:
-        input_size(int): Size of time sequence. Usually, the input_size is equal to three times of image height for
-        captcha images.
-        batch_size(int): batch size of input data, default is 64
-        hidden_size(int): the hidden size in LSTM layers, default is 512
+        config(EasyDict): config for ctpn network
+        batch_size(int): batch size of input data, only support 1
     """
-    def __init__(self, config, is_training=True):
+    def __init__(self, config, batch_size):
         super(BiLSTM, self).__init__()
-        self.is_training = is_training
-        self.batch_size = config.batch_size * config.rnn_batch_size
-        print("batch size is {} ".format(self.batch_size))
+        self.batch_size = batch_size
+        self.batch_size = self.batch_size * config.rnn_batch_size
         self.input_size = config.input_size
         self.hidden_size = config.hidden_size
         self.num_step = config.num_step
@@ -84,25 +81,24 @@ class CTPN(nn.Cell):
      Define CTPN network
 
      Args:
-        input_size(int): Size of time sequence. Usually, the input_size is equal to three times of image height for
-        captcha images.
-        batch_size(int): batch size of input data, default is 64
-        hidden_size(int): the hidden size in LSTM layers, default is 512
+        config(EasyDict): config for ctpn network
+        batch_size(int): batch size of input data, only support 1
+        is_training(bool): whether training, default is True
      """
-    def __init__(self, config, is_training=True):
+    def __init__(self, config, batch_size, is_training=True):
         super(CTPN, self).__init__()
         self.config = config
-        self.is_training = is_training
+        self.batch_size = batch_size
         self.num_step = config.num_step
         self.input_size = config.input_size
-        self.batch_size = config.batch_size
         self.hidden_size = config.hidden_size
         self.vgg16_feature_extractor = VGG16FeatureExtraction()
         self.conv = nn.Conv2d(512, 512, kernel_size=3, padding=0, pad_mode='same')
-        self.rnn = BiLSTM(self.config, is_training=self.is_training).to_float(mstype.float16)
+        self.rnn = BiLSTM(self.config, batch_size=self.batch_size).to_float(mstype.float16)
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
         self.cast = P.Cast()
+        self.is_training = is_training
 
         # rpn block
         self.rpn_with_loss = RPN(config,
@@ -115,7 +111,7 @@ class CTPN(nn.Cell):
         self.featmap_size = config.feature_shapes
         self.anchor_list = self.get_anchors(self.featmap_size)
         self.proposal_generator_test = Proposal(config,
-                                                config.test_batch_size,
+                                                self.batch_size,
                                                 config.activate_num_classes,
                                                 config.use_sigmoid_cls)
         self.proposal_generator_test.set_train_local(config, False)
@@ -143,9 +139,9 @@ class CTPN(nn.Cell):
         return Tensor(anchors, mstype.float16)
 
 class CTPN_Infer(nn.Cell):
-    def __init__(self, config):
+    def __init__(self, config, batch_size):
         super(CTPN_Infer, self).__init__()
-        self.network = CTPN(config, is_training=False)
+        self.network = CTPN(config, batch_size=batch_size, is_training=False)
         self.network.set_train(False)
 
     def construct(self, img_data):
