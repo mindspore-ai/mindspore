@@ -80,7 +80,7 @@ using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
-#if (ENABLE_GE || ENABLE_D)
+#if (ENABLE_D)
 using mindspore::device::ascend::ProfilingManager;
 #endif
 
@@ -1109,7 +1109,7 @@ void InitHccl() {
     (void)context::OpenTsd(ms_context);
   }
 #endif
-#if (ENABLE_GE || ENABLE_D)
+#if (ENABLE_D)
   if (!ProfilingManager::GetInstance().IsProfiling()) {
     ProfilingManager::GetInstance().SetHcclEnabledBefProfilingEnabled();
   }
