@@ -55,12 +55,26 @@ codegen编译[MobileNetv2模型](https://download.mindspore.cn/model_zoo/officia
 
 在编译此工程之前需要预先获取安卓平台对应的[Release包](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)。
 
-算子静态库的目录如下:
-
-```bash
-├── operator_library    # 对应平台算子库目录
-    ├── include         # 对应平台算子库头文件目录
-    └── lib             # 对应平台算子库静态库目录
+安卓平台对应的Release包的目录如下:
+```text
+mindspore-lite-{version}-inference-android-{arch}
+├── inference
+│   ├── include     # 推理框架头文件
+│   ├── lib         # 推理框架库
+│   │   ├── libmindspore-lite.a  # MindSpore Lite推理框架的静态库
+│   │   └── libmindspore-lite.so # MindSpore Lite推理框架的动态库
+│   ├── minddata    # 图像处理库
+│   │   ├── include
+│   │   └── lib
+│   │       └── libminddata-lite.so # 图像处理动态库文件
+│   └── third_party # NPU库
+│       └── hiai_ddk
+└── tools
+    ├── benchmark # 基准测试工具
+    │   └── benchmark
+    └── codegen   # 代码生成工具
+        ├── include  # 算子头文件
+        └── lib      # 算子静态库
 ```
 
 生成代码工程目录如下：
@@ -68,7 +82,6 @@ codegen编译[MobileNetv2模型](https://download.mindspore.cn/model_zoo/officia
 ```bash
 ├── mobilenetv2         # 生成代码的根目录
     ├── benchmark       # 生成代码的benchmark目录
-    ├── include         # 模型推理代码对外暴露头文件目录
     └── src             # 模型推理代码目录
 ```
 
@@ -91,7 +104,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
 -DANDROID_NATIVE_API_LEVEL="19" \
 -DPLATFORM_ARM64=ON \
--DPKG_PATH={path to}/mindspore-lite-{version}-inference-android ..
+-DPKG_PATH={path to}/mindspore-lite-{version}-inference-android-{arch} ..
 make
 ```
 
@@ -104,7 +117,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 -DANDROID_TOOLCHAIN_NAME="clang" \
 -DANDROID_NATIVE_API_LEVEL="19" \
 -DMICRO_BUILD_ARM32=ON \
--DPKG_PATH={path to}/mindspore-lite-{version}-inference-android ..
+-DPKG_PATH={path to}/mindspore-lite-{version}-inference-android-{arch} ..
 make
 ```
 
