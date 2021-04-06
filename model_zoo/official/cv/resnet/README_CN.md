@@ -143,7 +143,8 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
   ├── src
     ├── config.py                          # 参数配置
     ├── dataset.py                         # 数据预处理
-    ├── CrossEntropySmooth.py             # ImageNet2012数据集的损失定义
+    ├─  eval_callback.py                   # 训练时推理回调函数
+    ├── CrossEntropySmooth.py              # ImageNet2012数据集的损失定义
     ├── lr_generator.py                    # 生成每个步骤的学习率
     └── resnet.py                          # ResNet骨干网络，包括ResNet50、ResNet101和SE-ResNet50
   ├── eval.py                              # 评估网络
@@ -296,6 +297,10 @@ bash run_parameter_server_train.sh [resnet18|resnet50|resnet101] [cifar10|imagen
 ```text
 bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 ```
+
+#### 训练时推理
+
+训练时推理需要在启动文件中添加`run_eval` 并设置为True。与此同时需要设置: `eval_dataset_path`, `save_best_ckpt`, `eval_start_epoch`, `eval_interval` 。
 
 ### 结果
 

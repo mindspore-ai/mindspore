@@ -155,6 +155,7 @@ python eval.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --dat
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
+    ├─  eval_callback.py                   # evaluation callback while training
     ├── CrossEntropySmooth.py              # loss definition for ImageNet2012 dataset
     ├── lr_generator.py                    # generate learning rate for each step
     ├── resnet.py                          # resnet backbone, including resnet50 and resnet101 and se-resnet50
@@ -322,6 +323,10 @@ bash run_parameter_server_train.sh [resnet18|resnet50|resnet101] [cifar10|imagen
 ```bash
 bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
+
+#### Evaluation while training
+
+You can add `run_eval` to start shell and set it True, if you want evaluation while training. And you can set argument option: `eval_dataset_path`, `save_best_ckpt`, `eval_start_epoch`, `eval_interval` when `run_eval` is True.
 
 ### Result
 

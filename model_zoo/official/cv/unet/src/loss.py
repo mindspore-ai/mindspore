@@ -41,7 +41,7 @@ class MultiCrossEntropyWithLogits(nn.Cell):
     def __init__(self):
         super(MultiCrossEntropyWithLogits, self).__init__()
         self.loss = CrossEntropyWithLogits()
-        self.squeeze = F.Squeeze()
+        self.squeeze = F.Squeeze(axis=0)
 
     def construct(self, logits, label):
         total_loss = 0

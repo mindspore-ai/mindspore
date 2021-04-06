@@ -17,14 +17,12 @@
 
 import os
 import argparse
-import time
-import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd import SSD300, SsdInferWithDecoder, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn, ssd_vgg16
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.config import config
-from src.eval_utils import metrics
+from src.eval_utils import apply_eval
 from src.box_utils import default_boxes
 
 def ssd_eval(dataset_path, ckpt_path, anno_json):
@@ -50,31 +48,12 @@ def ssd_eval(dataset_path, ckpt_path, anno_json):
     load_param_into_net(net, param_dict)
 
     net.set_train(False)
-    i = batch_size
     total = ds.get_dataset_size() * batch_size
-    start = time.time()
-    pred_data = []
     print("\n========================================\n")
     print("total images num: ", total)
     print("Processing, please wait a moment.")
-    for data in ds.create_dict_iterator(output_numpy=True, num_epochs=1):
-        img_id = data['img_id']
-        img_np = data['image']
-        image_shape = data['image_shape']
-
-        output = net(Tensor(img_np))
-        for batch_idx in range(img_np.shape[0]):
-            pred_data.append({"boxes": output[0].asnumpy()[batch_idx],
-                              "box_scores": output[1].asnumpy()[batch_idx],
-                              "img_id": int(np.squeeze(img_id[batch_idx])),
-                              "image_shape": image_shape[batch_idx]})
-        percent = round(i / total * 100., 2)
-
-        print(f'    {str(percent)} [{i}/{total}]', end='\r')
-        i += batch_size
-    cost_time = int((time.time() - start) * 1000)
-    print(f'    100% [{total}/{total}] cost {cost_time} ms')
-    mAP = metrics(pred_data, anno_json)
+    eval_param_dict = {"net": net, "dataset": ds, "anno_json": anno_json}
+    mAP = apply_eval(eval_param_dict)
     print("\n========================================\n")
     print(f"mAP: {mAP}")
 

@@ -123,8 +123,8 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
 ### Prepare the model
 
-1. Chose the model by changing the `using_model` in `src/confgi.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`.
-2. Change the dataset config in the corresponding config. `src/config_ssd300.py` or `src/config_ssd_mobilenet_v1_fpn.py`.
+1. Chose the model by changing the `using_model` in `src/confgi.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`, `ssd_mobilenet_v1_fpn`, `ssd_resnet50_fpn`.
+2. Change the dataset config in the corresponding config. `src/config_ssd300.py`, `src/config_ssd_mobilenet_v1_fpn.py`, `src/config_ssd_resnet50_fpn.py`, `src/config_ssd_vgg16.py`.
 3. If you are running with `ssd_mobilenet_v1_fpn`, you need a pretrained model for `mobilenet_v1`. Set the checkpoint path to `feature_extractor_base_param` in `src/config_ssd_mobilenet_v1_fpn.py`. For more detail about training mobilnet_v1, please refer to the mobilenetv1 model.
 
 ### Run the scripts
@@ -201,6 +201,7 @@ Then you can run everything just like on ascend.
     ├─ src
       ├─ __init__.py                  # init file
       ├─ box_utils.py                 # bbox utils
+      ├─ eval_callback.py             # evaluation callback when training
       ├─ eval_utils.py                # metrics utils
       ├─ config.py                    # total config
       ├─ dataset.py                   # create dataset and process dataset
@@ -229,6 +230,10 @@ Then you can run everything just like on ascend.
     "loss_scale": 1024                               # Loss scale
     "filter_weight": False                           # Load parameters in head layer or not. If the class numbers of train dataset is different from the class numbers in pre_trained checkpoint, please set True.
     "freeze_layer": "none"                           # Freeze the backbone parameters or not, support none and backbone.
+    "run_eval": False                                # Run evaluation when training
+    "save_best_ckpt": True                           # Save best checkpoint when run_eval is True
+    "eval_start_epoch": 40                           # Evaluation start epoch when run_eval is True
+    "eval_interval": 1                               # valuation interval when run_eval is True
 
     "class_num": 81                                  # Dataset class number
     "image_shape": [300, 300]                        # Image height and width used as input to the model
@@ -310,6 +315,10 @@ epoch: 1 step: 458, loss is 3.1283689
 epoch time: 150753.701, per step time: 329.157
 ...
 ```
+
+#### Evaluation while training
+
+You can add `run_eval` to start shell and set it True, if you want evaluation while training. And you can set argument option: `save_best_ckpt`, `eval_start_epoch`, `eval_interval` when `run_eval` is True.
 
 #### Transfer Training
 
