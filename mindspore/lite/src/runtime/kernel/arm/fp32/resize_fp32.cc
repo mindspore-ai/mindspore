@@ -84,28 +84,26 @@ int ResizeCPUKernel::ReSize() {
 // the calculation.
 void ResizeCPUKernel::CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len) {
   if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
-    *x_len = *x_weight_len = new_width_;
-    *y_len = *y_weight_len = new_height_;
+    *x_len = new_width_;
+    *y_len = new_height_;
+    *x_weight_len = new_width_;
+    *y_weight_len = new_height_;
   }
   if (method_ == static_cast<int>(schema::ResizeMethod_CUBIC)) {
-    *x_len = new_width_ * 2;
-    *y_len = new_height_ * 2;
+    *x_len = new_width_ * 4;
+    *y_len = new_height_ * 4;
     *x_weight_len = new_width_ * 4;
     *y_weight_len = new_height_ * 4;
   }
 }
 
-// If resize method is bicubic, x_lefts_ array stores two elements (index - 1, index - 2) for every output coordinate
-// index. For example, there is a 1-D output coordinate array:
-// [0, 0.5, 1]
-// now, search two elements at left and two at right for every position in output array.
-// Thus, x_lefts_ array looks like :
-//               x_lefts_ [-2,  -1, -1.5, -0.5, -1,  0]
-//                          \   /      \   /     \  /
-//                           \ /        \ /       \/
-// corresponding to index :   0        0.5        1
-// Apply to x_rights_ array by the same way.
+// If resize method is bicubic, x_lefts_ array stores four elements (index - 1, index, index + 1, index + 2) for every
+// output coordinate index.
 int ResizeCPUKernel::MallocTmpBuffer() {
+  if (method_ != static_cast<int>(schema::ResizeMethod_LINEAR) &&
+      method_ != static_cast<int>(schema::ResizeMethod_CUBIC)) {
+    return RET_OK;
+  }
   // make sure y_bottoms_, y_tops_, etc. are null before malloc
   FreeTmpBuffer();
 
@@ -116,12 +114,14 @@ int ResizeCPUKernel::MallocTmpBuffer() {
   {
     coordinate_.x_lefts_ = reinterpret_cast<int *>(malloc(sizeof(int) * x_len));
     CHECK_MALLOC_RES(coordinate_.x_lefts_, RET_NULL_PTR)
-    coordinate_.x_rights_ = reinterpret_cast<int *>(malloc(sizeof(int) * x_len));
-    CHECK_MALLOC_RES(coordinate_.x_rights_, RET_NULL_PTR)
     coordinate_.y_tops_ = reinterpret_cast<int *>(malloc(sizeof(int) * y_len));
     CHECK_MALLOC_RES(coordinate_.y_tops_, RET_NULL_PTR)
-    coordinate_.y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * y_len));
-    CHECK_MALLOC_RES(coordinate_.y_bottoms_, RET_NULL_PTR)
+    if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
+      coordinate_.x_rights_ = reinterpret_cast<int *>(malloc(sizeof(int) * x_len));
+      CHECK_MALLOC_RES(coordinate_.x_rights_, RET_NULL_PTR)
+      coordinate_.y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * y_len));
+      CHECK_MALLOC_RES(coordinate_.y_bottoms_, RET_NULL_PTR)
+    }
   }
 
   // malloc memory for weights of x, y axes
@@ -175,12 +175,12 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   MSLITE_CHECK_PTR(output_data);
 
   auto input_shape = input->shape();
+  int unit = UP_DIV(new_height_, context_->thread_num_);
+  int h_begin = unit * task_id;
+  int h_end = std::min(h_begin + unit, new_height_);
+  int c = input_shape.at(3);
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
-      int unit = UP_DIV(new_height_, context_->thread_num_);
-      int h_begin = unit * task_id;
-      int h_end = std::min(h_begin + unit, new_height_);
-      int c = in_tensors_.at(0)->shape().at(3);
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
       return ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
@@ -192,14 +192,10 @@ int ResizeCPUKernel::RunImpl(int task_id) {
                                    calculate_, coordinate_transform_mode_, task_id, context_->thread_num_);
     }
     case static_cast<int>(schema::ResizeMethod_CUBIC): {
-      int unit = UP_DIV(new_height_, context_->thread_num_);
-      int h_begin = unit * task_id;
-      int h_end = std::min(h_begin + unit, new_height_);
-      int c = in_tensors_.at(0)->Channel();
       float *line_buffer = line_buffer_ + new_width_ * c * 4 * task_id;
       return ResizeBicubic(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
-                           coordinate_.y_bottoms_, coordinate_.y_tops_, coordinate_.x_lefts_, coordinate_.x_rights_,
-                           y_weights_, x_weights_, line_buffer, h_begin, h_end);
+                           coordinate_.y_tops_, coordinate_.x_lefts_, y_weights_, x_weights_, line_buffer, h_begin,
+                           h_end);
     }
     default: {
       MS_LOG(ERROR) << "Resize unknown method " << method_;
@@ -227,9 +223,8 @@ int ResizeCPUKernel::ResizePrepare() {
   }
   if (method_ == static_cast<int>(schema::ResizeMethod_CUBIC)) {
     auto cubic_coeff = reinterpret_cast<ResizeParameter *>(op_parameter_)->cubic_coeff_;
-    return PrepareResizeBicubic(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_,
-                                coordinate_.y_bottoms_, coordinate_.y_tops_, coordinate_.x_lefts_,
-                                coordinate_.x_rights_, y_weights_, x_weights_, cubic_coeff);
+    return PrepareResizeBicubic(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_, coordinate_.y_tops_,
+                                coordinate_.x_lefts_, y_weights_, x_weights_, cubic_coeff);
   }
   return RET_OK;
 }
