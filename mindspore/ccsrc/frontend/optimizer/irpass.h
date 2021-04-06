@@ -39,7 +39,13 @@ class OptimizeIRPassLib {
   SubstitutionPtr adjust_all_reduce_mul_add_;
   SubstitutionPtr float_depend_g_call_;
   //  ops eliminate
-  SubstitutionPtr item_tuple_or_list_eliminate_;
+  SubstitutionPtr tuple_list_get_item_eliminator_;
+  SubstitutionPtr tuple_list_get_item_const_eliminator_;
+  SubstitutionPtr tuple_list_set_item_eliminator_;
+  SubstitutionPtr tuple_list_get_set_item_eliminator_;
+  SubstitutionPtr tuple_list_get_item_depend_reorder_;
+  SubstitutionPtr tuple_list_convert_item_index_to_positive_;
+
   SubstitutionPtr tile_eliminate_;
   SubstitutionPtr cast_eliminate_;
   SubstitutionPtr reshape_eliminate_;
@@ -57,7 +63,9 @@ class OptimizeIRPassLib {
 
   // Env Item Eliminate
   SubstitutionPtr env_get_item_eliminate_;
-  SubstitutionPtr new_env_get_item_;
+  SubstitutionPtr env_get_item_add_eliminate_;
+  SubstitutionPtr env_get_set_item_eliminate_;
+  SubstitutionPtr env_get_item_depend_swap_;
   SubstitutionPtr incorporate_env_getitem_;
   SubstitutionPtr incorporate_env_getitem_bypass_recursive_;
   SubstitutionPtr incorporate_env_getitem_switch_;

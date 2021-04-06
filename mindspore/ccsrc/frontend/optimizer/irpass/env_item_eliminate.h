@@ -157,7 +157,7 @@ class EnvGetitemTransformACrossGraph {
 }  // namespace internal
 
 // {prim::kPrimEnvGetItem, C1, C2, Y} -> Y
-class NewEnvGetItem : public AnfVisitor {
+class EnvGetItemEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode c1, c2, y;
@@ -170,10 +170,10 @@ class NewEnvGetItem : public AnfVisitor {
 
 // {prim::kPrimEnvGetItem, {prim::kPrimEnvAdd, X, Y}, C, Z} ->
 // {prim::GetPythonOps("hyper_add"), {prim::kPrimEnvGetItem, X, C, Z}, {prim::kPrimEnvGetItem, Y, C, Z}}
-class AddEnvGetItem : public AnfVisitor {
+class EnvGetItemAddEliminater : public AnfVisitor {
  public:
-  AddEnvGetItem() : PrimHyperAdd_(prim::GetPythonOps("hyper_add")) {}
-  ~AddEnvGetItem() override = default;
+  EnvGetItemAddEliminater() : PrimHyperAdd_(prim::GetPythonOps("hyper_add")) {}
+  ~EnvGetItemAddEliminater() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     is_match_ = false;
@@ -211,7 +211,7 @@ class AddEnvGetItem : public AnfVisitor {
 };
 
 // {prim::kPrimEnvGetItem, {prim::kPrimEnvSetItem, X, C1, Y}, C2, Z}
-class EnvGetSetItem : public AnfVisitor {
+class EnvGetSetItemEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     is_match_ = false;
@@ -281,7 +281,7 @@ class EnvGetSetItem : public AnfVisitor {
 
 // {prim::kPrimEnvGetitem, {prim::kPrimDepend, X1, X2}, item, dflt} ->
 // {prim::kPrimDepend, {prim::kPrimEnvGetitem, X1, item, dflt}, X2}
-class SwapEnvGetItemDepend : public OptimizerCaller {
+class EnvGetItemDependSwap : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
@@ -295,36 +295,6 @@ class SwapEnvGetItemDepend : public OptimizerCaller {
                   PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimEnvGetItem, x1, item, dflt), x2));
     return nullptr;
   }
-};
-
-class EnvGetItemEliminater : public OptimizerCaller {
- public:
-  EnvGetItemEliminater()
-      : new_env_get_item_(std::make_shared<NewEnvGetItem>()),
-        add_env_get_item_(std::make_shared<AddEnvGetItem>()),
-        env_get_set_item_(std::make_shared<EnvGetSetItem>()),
-        swap_env_get_item_depend_(std::make_shared<SwapEnvGetItemDepend>()) {
-    eliminaters_.emplace_back(new_env_get_item_);
-    eliminaters_.emplace_back(add_env_get_item_);
-    eliminaters_.emplace_back(env_get_set_item_);
-    eliminaters_.emplace_back(swap_env_get_item_depend_);
-  }
-  ~EnvGetItemEliminater() = default;
-
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    AnfNodePtr new_node;
-    for (auto &eliminater : eliminaters_) {
-      new_node = (*eliminater)(optimizer, node);
-      if (new_node != nullptr) {
-        return new_node;
-      }
-    }
-    return nullptr;
-  }
-
- private:
-  OptimizerCallerPtr new_env_get_item_, add_env_get_item_, env_get_set_item_, swap_env_get_item_depend_;
-  std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 
 // {prim::kPrimEnvGetItem, {G, Xs}, C, Y}
