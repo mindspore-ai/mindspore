@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/matmul_parameter.h"
+using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore {
 namespace lite {
@@ -45,6 +46,6 @@ OpParameter *PopulateFullconnectionParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_fullConnRegistry(schema::PrimitiveType_FullConnection, PopulateFullconnectionParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_FullConnection, PopulateFullconnectionParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

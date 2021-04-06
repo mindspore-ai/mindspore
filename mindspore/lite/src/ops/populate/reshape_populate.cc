@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/reshape_parameter.h"
+using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore {
 namespace lite {
@@ -32,6 +33,6 @@ OpParameter *PopulateReshapeParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_reshapeParameterRegistry(schema::PrimitiveType_Reshape, PopulateReshapeParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Reshape, PopulateReshapeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

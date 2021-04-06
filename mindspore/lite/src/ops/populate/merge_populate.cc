@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Merge;
 
 namespace mindspore {
 namespace lite {
@@ -29,6 +30,6 @@ OpParameter *PopulateMergeParameter(const void *prim) {
   merge_parameter->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(merge_parameter);
 }
-Registry MergeParameterRegistry(schema::PrimitiveType_Merge, PopulateMergeParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Merge, PopulateMergeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

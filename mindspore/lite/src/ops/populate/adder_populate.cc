@@ -16,6 +16,7 @@
 #include "src/common/log_adapter.h"
 #include "nnacl/conv_parameter.h"
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_AdderFusion;
 
 namespace mindspore {
 namespace lite {
@@ -57,6 +58,6 @@ OpParameter *PopulateAdderParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(conv_param);
 }
-Registry g_AdderParameterRegistry(schema::PrimitiveType_AdderFusion, PopulateAdderParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_AdderFusion, PopulateAdderParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

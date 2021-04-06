@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_PartialFusion;
 
 namespace mindspore {
 namespace lite {
@@ -36,6 +37,6 @@ OpParameter *PopulatePartialParameter(const void *prim) {
 
   return reinterpret_cast<OpParameter *>(partial_parameter);
 }
-Registry PartialParameterRegistry(schema::PrimitiveType_PartialFusion, PopulatePartialParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_PartialFusion, PopulatePartialParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_ScatterNd;
 
 namespace mindspore {
 namespace lite {
@@ -30,7 +31,6 @@ OpParameter *PopulateScatterNDParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(scatter_nd_param);
 }
 }  // namespace
-Registry g_scatterNDParameterRegistry(schema::PrimitiveType_ScatterNd, PopulateScatterNDParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_ScatterNd, PopulateScatterNDParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/prior_box_parameter.h"
+using mindspore::schema::PrimitiveType_PriorBox;
 
 namespace mindspore {
 namespace lite {
@@ -69,7 +70,6 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   prior_box_param->step_w = value->step_w();
   return reinterpret_cast<OpParameter *>(prior_box_param);
 }
-Registry PriorBoxParameterRegistry(schema::PrimitiveType_PriorBox, PopulatePriorBoxParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_PriorBox, PopulatePriorBoxParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

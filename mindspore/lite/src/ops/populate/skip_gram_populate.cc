@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/skip_gram_parameter.h"
+using mindspore::schema::PrimitiveType_SkipGram;
 
 namespace mindspore {
 namespace lite {
@@ -34,7 +35,6 @@ OpParameter *PopulateSkipGramParameter(const void *prim) {
   skipGramParameter->include_all_ngrams = value->include_all_grams();
   return reinterpret_cast<OpParameter *>(skipGramParameter);
 }
-Registry SkipGramParameterRegistry(schema::PrimitiveType_SkipGram, PopulateSkipGramParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_SkipGram, PopulateSkipGramParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

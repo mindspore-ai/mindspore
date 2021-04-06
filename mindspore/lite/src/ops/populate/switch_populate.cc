@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Switch;
 
 namespace mindspore {
 namespace lite {
@@ -29,6 +30,6 @@ OpParameter *PopulateSwitchParameter(const void *prim) {
 
   return reinterpret_cast<OpParameter *>(switch_parameter);
 }
-Registry SwitchParameterRegistry(schema::PrimitiveType_Switch, PopulateSwitchParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Switch, PopulateSwitchParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

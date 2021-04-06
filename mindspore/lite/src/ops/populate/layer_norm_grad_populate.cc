@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32_grad/layernormgrad_parameter.h"
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_LayerNormGrad;
 
 namespace mindspore {
 namespace lite {
@@ -34,7 +35,6 @@ OpParameter *PopulateLayerNormGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(layer_norm_grad_parameter);
 }
 
-Registry g_layerNormGradParameterRegistry(schema::PrimitiveType_LayerNormGrad, PopulateLayerNormGradParameter,
-                                          SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_LayerNormGrad, PopulateLayerNormGradParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

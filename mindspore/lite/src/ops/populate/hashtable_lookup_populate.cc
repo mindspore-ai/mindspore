@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_HashtableLookup;
 
 namespace mindspore {
 namespace lite {
@@ -29,8 +30,7 @@ OpParameter *PopulateHashtableLookupParameter(const void *prim) {
   param->type_ = primitive->value_type();
   return param;
 }
-Registry HashtableLookupParameterRegistry(schema::PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter,
-                                          SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

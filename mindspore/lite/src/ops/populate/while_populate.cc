@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_While;
 
 namespace mindspore {
 namespace lite {
@@ -38,6 +39,6 @@ OpParameter *PopulateWhileParemeter(const void *prim) {
   while_paremeter->cond_subgraph_index = value->cond_subgraph_index();
   return reinterpret_cast<OpParameter *>(while_paremeter);
 }
-Registry WhileParemeterRegistry(schema::PrimitiveType_While, PopulateWhileParemeter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_While, PopulateWhileParemeter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

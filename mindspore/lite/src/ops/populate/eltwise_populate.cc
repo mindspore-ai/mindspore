@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/arithmetic_populate.h"
+using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,6 @@ OpParameter *PopulateEltwiseParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_eltwiseParameterRegistry(schema::PrimitiveType_Eltwise, PopulateEltwiseParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Eltwise, PopulateEltwiseParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

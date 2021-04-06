@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore {
 namespace lite {
@@ -31,7 +32,6 @@ OpParameter *PopulateFillParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_fillParameterRegistry(schema::PrimitiveType_Fill, PopulateFillParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_Fill, PopulateFillParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

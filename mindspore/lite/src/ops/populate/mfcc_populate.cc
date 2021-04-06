@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/infer/mfcc_infer.h"
+using mindspore::schema::PrimitiveType_Mfcc;
 
 namespace mindspore {
 namespace lite {
@@ -34,6 +35,6 @@ OpParameter *PopulateMfccParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_mfccParameterRegistry(schema::PrimitiveType_Mfcc, PopulateMfccParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Mfcc, PopulateMfccParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

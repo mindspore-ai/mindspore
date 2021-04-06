@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/topk_fp32.h"
+using mindspore::schema::PrimitiveType_TopKFusion;
 
 namespace mindspore {
 namespace lite {
@@ -33,7 +34,6 @@ OpParameter *PopulateTopKParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(topk_param);
 }
 }  // namespace
-Registry g_topKParameterRegistry(schema::PrimitiveType_TopKFusion, PopulateTopKParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_TopKFusion, PopulateTopKParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/softmax_parameter.h"
+using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore {
 namespace lite {
@@ -39,6 +40,6 @@ OpParameter *PopulateSoftmaxParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_softmaxParameterRegistry(schema::PrimitiveType_Softmax, PopulateSoftmaxParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Softmax, PopulateSoftmaxParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

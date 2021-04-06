@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/base/tile_base.h"
+using mindspore::schema::PrimitiveType_TileFusion;
 
 namespace mindspore {
 namespace lite {
@@ -39,7 +40,6 @@ OpParameter *PopulateTileParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(tile_param);
 }
 
-Registry TileParameterRegistry(schema::PrimitiveType_TileFusion, PopulateTileParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_TileFusion, PopulateTileParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

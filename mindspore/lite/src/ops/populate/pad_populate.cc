@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/pad_parameter.h"
+using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore {
 namespace lite {
@@ -33,7 +34,6 @@ OpParameter *PopulatePadParameter(const void *prim) {
   pad_param->constant_value_ = value->constant_value();
   return reinterpret_cast<OpParameter *>(pad_param);
 }
-Registry PadParameterRegistry(schema::PrimitiveType_PadFusion, PopulatePadParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_PadFusion, PopulatePadParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

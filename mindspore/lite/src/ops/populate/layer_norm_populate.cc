@@ -16,6 +16,7 @@
 #include "nnacl/layer_norm_parameter.h"
 #include <cstdint>
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_LayerNormFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateLayerNormParameter(const void *prim) {
@@ -35,6 +36,6 @@ OpParameter *PopulateLayerNormParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(layer_norm_parameter);
 }
 
-Registry g_layerNormParameterRegistry(schema::PrimitiveType_LayerNormFusion, PopulateLayerNormParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_LayerNormFusion, PopulateLayerNormParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

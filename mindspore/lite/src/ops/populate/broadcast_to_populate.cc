@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/broadcast_to_fp32.h"
+using mindspore::schema::PrimitiveType_BroadcastTo;
 
 namespace mindspore {
 namespace lite {
@@ -37,6 +38,6 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(broadcast_param);
 }
 
-Registry BroadcastToParameterRegistry(schema::PrimitiveType_BroadcastTo, PopulateBroadcastToParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_BroadcastTo, PopulateBroadcastToParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

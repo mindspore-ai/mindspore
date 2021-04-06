@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/strided_slice_populate.h"
+using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore {
 namespace lite {
@@ -38,7 +39,6 @@ OpParameter *PopulateStridedSliceParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }
 
-Registry StridedSliceParameterRegistry(schema::PrimitiveType_StridedSlice, PopulateStridedSliceParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_StridedSlice, PopulateStridedSliceParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

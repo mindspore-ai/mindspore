@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Assert;
 
 namespace mindspore {
 namespace lite {
@@ -30,6 +31,6 @@ OpParameter *PopulateAssertParameter(const void *prim) {
 
   return reinterpret_cast<OpParameter *>(assert_parameter);
 }
-Registry AssertParameterRegistry(schema::PrimitiveType_Assert, PopulateAssertParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Assert, PopulateAssertParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

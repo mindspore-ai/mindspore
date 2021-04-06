@@ -16,6 +16,21 @@
 #include "src/common/log_adapter.h"
 #include "nnacl/arithmetic_self_parameter.h"
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Abs;
+using mindspore::schema::PrimitiveType_Ceil;
+using mindspore::schema::PrimitiveType_Cos;
+using mindspore::schema::PrimitiveType_Floor;
+using mindspore::schema::PrimitiveType_Log;
+using mindspore::schema::PrimitiveType_LogGrad;
+using mindspore::schema::PrimitiveType_LogicalNot;
+using mindspore::schema::PrimitiveType_Neg;
+using mindspore::schema::PrimitiveType_NegGrad;
+using mindspore::schema::PrimitiveType_Reciprocal;
+using mindspore::schema::PrimitiveType_Round;
+using mindspore::schema::PrimitiveType_Rsqrt;
+using mindspore::schema::PrimitiveType_Sin;
+using mindspore::schema::PrimitiveType_Sqrt;
+using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore {
 namespace lite {
@@ -32,20 +47,20 @@ OpParameter *PopulateArithmeticSelf(const void *prim) {
   return reinterpret_cast<OpParameter *>(arithmetic_self_param);
 }
 
-Registry g_absParameterRegistry(schema::PrimitiveType_Abs, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_cosParameterRegistry(schema::PrimitiveType_Cos, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_sinParameterRegistry(schema::PrimitiveType_Sin, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_logParameterRegistry(schema::PrimitiveType_Log, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_negParameterRegistry(schema::PrimitiveType_Neg, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_negGradParameterRegistry(schema::PrimitiveType_NegGrad, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_logGradParameterRegistry(schema::PrimitiveType_LogGrad, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_sqrtParameterRegistry(schema::PrimitiveType_Sqrt, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_squareParameterRegistry(schema::PrimitiveType_Square, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_rsqrtParameterRegistry(schema::PrimitiveType_Rsqrt, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_logicalNotParameterRegistry(schema::PrimitiveType_LogicalNot, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_floorParameterRegistry(schema::PrimitiveType_Floor, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_ceilParameterRegistry(schema::PrimitiveType_Ceil, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_roundParameterRegistry(schema::PrimitiveType_Round, PopulateArithmeticSelf, SCHEMA_CUR);
-Registry g_reciprocalParameterRegistry(schema::PrimitiveType_Reciprocal, PopulateArithmeticSelf, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Abs, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Cos, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Sin, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Log, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Neg, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_NegGrad, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_LogGrad, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Sqrt, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Square, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Rsqrt, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_LogicalNot, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Floor, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Ceil, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Round, PopulateArithmeticSelf, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Reciprocal, PopulateArithmeticSelf, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

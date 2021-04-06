@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/reverse_fp32.h"
+using mindspore::schema::PrimitiveType_ReverseV2;
 
 namespace mindspore {
 namespace lite {
@@ -39,7 +40,6 @@ OpParameter *PopulateReverseParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(reverse_param);
 }
 
-Registry ReverseParameterRegistry(schema::PrimitiveType_ReverseV2, PopulateReverseParameter, SCHEMA_CUR);
-
+REG_POPULATE(PrimitiveType_ReverseV2, PopulateReverseParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

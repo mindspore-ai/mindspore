@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/strided_slice_parameter.h"
+using mindspore::schema::PrimitiveType_StridedSliceGrad;
 
 namespace mindspore {
 namespace lite {
@@ -38,8 +39,7 @@ OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }
 
-Registry StridedSliceGradParameterRegistry(schema::PrimitiveType_StridedSliceGrad, PopulateStridedSliceGradParameter,
-                                           SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_StridedSliceGrad, PopulateStridedSliceGradParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

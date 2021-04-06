@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/gather_parameter.h"
+using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore {
 namespace lite {
@@ -33,6 +34,6 @@ OpParameter *PopulateGatherParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_gatherParameterRegistry(schema::PrimitiveType_Gather, PopulateGatherParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Gather, PopulateGatherParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

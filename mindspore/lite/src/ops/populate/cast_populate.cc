@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,6 @@ OpParameter *PopulateCastParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_castParameterRegistry(schema::PrimitiveType_Cast, PopulateCastParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Cast, PopulateCastParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -15,9 +15,10 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/default_populate.h"
+using mindspore::schema::PrimitiveType_Erf;
 
 namespace mindspore {
 namespace lite {
-Registry g_erfParameterRegistry(schema::PrimitiveType_Erf, DefaultPopulateParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_Erf, DefaultPopulateParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_CustomExtractFeatures;
 
 namespace mindspore {
 namespace lite {
@@ -30,7 +31,6 @@ OpParameter *PopulateExtractFeaturesParameter(const void *prim) {
   return param;
 }
 }  // namespace
-Registry g_customExtractFeaturesParameterRegistry(schema::PrimitiveType_CustomExtractFeatures,
-                                                  PopulateExtractFeaturesParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_CustomExtractFeatures, PopulateExtractFeaturesParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

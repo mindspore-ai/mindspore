@@ -15,6 +15,7 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/scale.h"
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore {
 namespace lite {
@@ -35,6 +36,6 @@ OpParameter *PopulateScaleParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_scaleParameterRegistry(schema::PrimitiveType_ScaleFusion, PopulateScaleParameter, SCHEMA_CUR);
+REG_POPULATE(PrimitiveType_ScaleFusion, PopulateScaleParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore
