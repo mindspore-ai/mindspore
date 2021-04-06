@@ -472,7 +472,7 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     auto out_node = output.first;
     auto name = AnfAlgo::GetCNodeName(out_node);
     if (name == prim::kPrimDepend->name() || name == prim::kPrimMakeTuple->name() ||
-        name == prim::kPrimTupleGetItem->name()) {
+        name == prim::kPrimTupleGetItem->name() || name == prim::kPrimLoad->name()) {
       auto result = IsNotRealUsedByOthers(graph, out_node);
       if (!result) {
         return result;
