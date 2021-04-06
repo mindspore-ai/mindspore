@@ -4491,29 +4491,33 @@ class MatrixInverse(PrimitiveWithInfer):
         adjoint (bool) : An optional bool. Default: False.
 
     Inputs:
-        - **x** (Tensor) - A matrix to be calculated.
-          types: float32, double.
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+                           dimensions must be the same size. types: float32, float64.
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
 
     Raises:
         TypeError: If `adjoint` is not a bool.
-        TypeError: If dtype of `x` is neither float32 nor double.
+        TypeError: If dtype of `x` is neither float32 nor float64.
+        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
         ``GPU``
 
     Examples:
-        >>> mindspore.set_seed(1)
-        >>> x = Tensor(np.random.uniform(-2, 2, (2, 2, 2)), mindspore.float32)
-        >>> matrix_inverse = P.MatrixInverse(adjoint=False)
+        >>> x = Tensor(np.array([[[-0.710504  , -1.1207525],
+        ...                       [-1.7651395 , -1.7576632]],
+        ...                      [[ 0.52412605,  1.9070215],
+        ...                       [ 1.3384849 ,  1.4274558]]]), mindspore.float32)
+        >>> matrix_inverse = MatrixInverse(adjoint=False)
         >>> output = matrix_inverse(x)
         >>> print(output)
-        [[[-0.39052644 -0.43528939]
-          [ 0.98761106 -0.16393748]]
-         [[ 0.52641493 -1.3895369 ]
-          [-1.0693996   1.2040523 ]]]
+        [[[ 2.408438   -1.535711  ]
+          [-2.4190936   0.97356814]]
+         [[-0.79111797  1.0569006 ]
+          [ 0.74180895 -0.2904787 ]]]
     """
 
     @prim_attr_register
