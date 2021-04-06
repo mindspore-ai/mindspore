@@ -200,8 +200,8 @@ class RMSProp(Optimizer):
     def construct(self, gradients):
         params = self.parameters
         gradients = self.decay_weight(gradients)
-        gradients = self.scale_grad(gradients)
         gradients = self.gradients_centralization(gradients)
+        gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.centered:
             if self.is_group_lr:

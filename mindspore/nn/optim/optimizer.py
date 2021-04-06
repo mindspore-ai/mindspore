@@ -439,10 +439,6 @@ class Optimizer(Cell):
                 self.grad_centralization = self._preprocess_grad_centralization(group_param['grad_centralization'])
                 for param in group_param['params']:
                     validator.check_value_type("parameter", param, [Parameter], self.cls_name)
-                    if "conv" not in param.name and self.grad_centralization is True:
-                        raise ValueError("Grad centralization can be perform only on the conv layer. If the parameter"
-                                         "is not a convolution layer, this parameter cannot be set to True.")
-
                     grad_centralization_ = self.grad_centralization
             else:
                 grad_centralization_ = grad_centralization
@@ -630,9 +626,16 @@ def _tensor_apply_grad_centralization_with_sparse(if_apply, gradient):
     """Get grad with grad_centralization."""
     if if_apply:
         indices = gradient.indices
-        values = op_gc(gradient.values, -1)
         shape = gradient.dense_shape
-        return RowTensor(indices, values, shape)
+        grad_shape = F.shape(gradient)
+        axis = []
+        for i in range(1, len(grad_shape)):
+            axis.append(i)
+        if len(axis) >= 1:
+            if grad_shape[1] % 16 != 0:
+                return gradient
+            values = op_gc(gradient.values, axis)
+            return RowTensor(indices, values, shape)
     return gradient
 
 
@@ -640,7 +643,14 @@ def _tensor_apply_grad_centralization_with_sparse(if_apply, gradient):
 def _tensor_apply_grad_centralization(if_apply, gradient):
     """Get grad with grad_centralization."""
     if if_apply:
-        return op_gc(gradient, -1)
+        axis = []
+        grad_shape = F.shape(gradient)
+        for i in range(1, len(grad_shape)):
+            axis.append(i)
+        if len(axis) >= 1:
+            if grad_shape[1] % 16 != 0:
+                return gradient
+            return op_gc(gradient, axis)
     return gradient
 
 

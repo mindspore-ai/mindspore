@@ -255,9 +255,9 @@ class LazyAdam(Optimizer):
 
     def construct(self, gradients):
         gradients = self.decay_weight(gradients)
+        gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         gradients = self._grad_sparse_indices_deduplicate(gradients)
-        gradients = self.gradients_centralization(gradients)
         lr = self.get_lr()
 
         self.beta1_power = self.beta1_power * self.beta1

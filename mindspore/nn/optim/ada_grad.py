@@ -153,8 +153,8 @@ class Adagrad(Optimizer):
         params = self.parameters
         accum = self.accum
         grads = self.decay_weight(grads)
-        grads = self.scale_grad(grads)
         grads = self.gradients_centralization(grads)
+        grads = self.scale_grad(grads)
         lr = self.get_lr()
         if self.is_group_lr:
             success = self.map_(F.partial(_ada_grad_opt, self.opt), lr, params, accum,

@@ -165,9 +165,9 @@ class ProximalAdagrad(Optimizer):
         params = self.parameters
         accum = self.accum
         grads = self.decay_weight(grads)
+        grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)
         grads = self._grad_sparse_indices_deduplicate(grads)
-        grads = self.gradients_centralization(grads)
         lr = self.get_lr()
         if self.is_group_lr:
             success = self.map_(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2), lr,

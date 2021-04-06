@@ -231,6 +231,9 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   std::vector<abstract::AbstractKeywordArgPtr> kwarg_list;
   std::vector<size_t> pos_arg_indexes;
   size_t arguments_count = args_spec_list.size();
+  if (hyper_param_count_ > arguments_count) {
+    MS_LOG(EXCEPTION) << "The number of parameters in funcgraph cannot exceed the number of arguments.";
+  }
   for (size_t i = 0; i < arguments_count - hyper_param_count_; i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);
     if (args_spec_list[i]->isa<abstract::AbstractKeywordArg>()) {

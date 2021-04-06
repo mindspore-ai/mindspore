@@ -26,9 +26,10 @@ centralization_op_info = TBERegOp("Centralization") \
     .attr("axis", "required", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("reduce") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ) \
+    .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ) \
     .get_op_info()
 
 

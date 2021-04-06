@@ -173,8 +173,8 @@ class SGD(Optimizer):
         params = self.parameters
         accum = self.accum
         stat = self.stat
-        gradients = self.scale_grad(gradients)
         gradients = self.gradients_centralization(gradients)
+        gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
             success = self.hyper_map(F.partial(_sgd_opt, self.opt, self.momentum), lr, gradients, params, accum, stat)

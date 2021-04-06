@@ -1048,7 +1048,7 @@ class Cell(Cell_):
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
 
         Args:
-            acc_type (:str:`less_bn`): accelerate algorithm.
+            acc_type (str): accelerate algorithm.
 
         Raises:
             ValueError: If acc_type is not in the algorithm library.
