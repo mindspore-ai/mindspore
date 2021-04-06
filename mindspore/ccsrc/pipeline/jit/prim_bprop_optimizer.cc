@@ -162,7 +162,10 @@ PrimBpropOptimizer::PrimBpropOptimizer() {}
 
 PrimBpropOptimizer::~PrimBpropOptimizer() {}
 
-void PrimBpropOptimizer::Clear() { prim_bprop_cache_.clear(); }
+void PrimBpropOptimizer::Clear() {
+  prim_bprop_cache_.clear();
+  tuple_list_bprop_cache_.clear();
+}
 
 // bprop_fg has the signature:
 // (sens_input1, sens_input2,...)bprop_fg(input1, input2, ..., out, d_out)
@@ -256,12 +259,14 @@ FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, c
 }
 
 PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) {
+  opt::irpass::OptimizeIRPassLib irpass;
   auto level_1_graph_info = std::make_shared<PrimBpropOptGraphInfo>();
   auto prim_bprop_opt_res = std::make_shared<pipeline::Resource>();
   auto prim_bprop_opt_manage = prim_bprop_opt_res->manager();
-  prim_bprop_opt_res->set_func_graph(bprop_fg);
-  prim_bprop_opt_manage->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep1(irpass_, prim_bprop_opt_res);
+  auto graph_for_cache = BasicClone(bprop_fg);
+  prim_bprop_opt_res->set_func_graph(graph_for_cache);
+  prim_bprop_opt_manage->AddFuncGraph(graph_for_cache);
+  auto opt_bprop_fg = PrimBpOptPassStep1(irpass, prim_bprop_opt_res);
   level_1_graph_info->opt_func_graph_ = opt_bprop_fg;
   return level_1_graph_info;
 }
@@ -280,12 +285,13 @@ void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
 
 PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
   const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) {
+  opt::irpass::OptimizeIRPassLib irpass;
   BindAbsToParameters(bprop_fg, abs_list_input);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   auto manager = resource->manager();
   resource->set_func_graph(bprop_fg);
   manager->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep2(irpass_, resource);
+  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource);
   auto level_2_graph_info = std::make_shared<PrimBpropOptGraphLevel2Info>(opt_bprop_fg);
   level_2_graph_info->AnalysisArgUsingInfo(manager);
   return level_2_graph_info;

@@ -176,7 +176,6 @@ class PrimBpropOptimizer {
  private:
   // cache optimized bprop graph
   PrimBpropCache prim_bprop_cache_;
-  opt::irpass::OptimizeIRPassLib irpass_;
   PrimTupleListCache tuple_list_bprop_cache_;
 };
 
