@@ -52,11 +52,12 @@ CNodePtr CreateNewDependNode(const FuncGraphPtr &func_graph, const CNodePtr &cno
 
 CNodePtr CheckIsolatedVirtualNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDepend->name()) {
+  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDepend->name() &&
+      AnfAlgo::GetCNodeName(cnode) != prim::kPrimLoad->name()) {
     return nullptr;
   }
   auto virtual_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependVirtualInputIndex);
-  if (!AnfAlgo::CheckPrimitiveType(virtual_input_op, prim::kPrimUpdateState)) {
+  if (!HasAbstractMonad(virtual_input_op)) {
     return nullptr;
   }
   auto real_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependRealInputIndex);
