@@ -31,8 +31,8 @@ void ScaleInner(const float *in_data, float *out_data, const float *scale, const
         float32x4_t data = vld1q_f32(in_data + in_offset);
         float32x4_t scale_4 = vdupq_n_f32(scale[i]);
         float32x4_t offset_4 = vdupq_n_f32(offset[i]);
-        float32x4_t reslut = vfmaq_f32(offset_4, data, scale_4);
-        vst1q_f32(out_data + in_offset, reslut);
+        float32x4_t result = vfmaq_f32(offset_4, data, scale_4);
+        vst1q_f32(out_data + in_offset, result);
       }
 #endif
       for (; in_index < inner_size; in_index++) {
@@ -54,8 +54,8 @@ void ScaleAxis(const float *in_data, float *out_data, const float *scale, const 
       float32x4_t data = vld1q_f32(in_data + in_offset);
       float32x4_t scale_4 = vld1q_f32(scale + index);
       float32x4_t offset_4 = vld1q_f32(offset + index);
-      float32x4_t reslut = vfmaq_f32(offset_4, data, scale_4);
-      vst1q_f32(out_data + in_offset, reslut);
+      float32x4_t result = vfmaq_f32(offset_4, data, scale_4);
+      vst1q_f32(out_data + in_offset, result);
     }
 #endif
     for (; index < axis_size; index++) {

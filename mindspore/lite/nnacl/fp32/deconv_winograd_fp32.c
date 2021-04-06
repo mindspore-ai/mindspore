@@ -41,12 +41,8 @@ int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, cons
 
   if (unit->use_winograd_) {
     /* Generate winograd  */
-    float matrix_g[64];
-    float matrix_gt[64];
-    float matrix_a[64];
-    float matrix_at[64];
-    float matrix_b[64];
-    float matrix_bt[64];
+    float matrix_g[64], matrix_a[64], matrix_b[64];
+    float matrix_gt[64], matrix_at[64], matrix_bt[64];
     int ret = CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 0.5f,
                              DECONV_WINOGRAD_DEFAULT_UNIT, unit->h_size_);
     if (ret != NNACL_OK) {
@@ -189,6 +185,67 @@ void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t
 }
 #endif
 
+#ifdef ENABLE_ARM32
+void DeConvWgMergeArm32(const float *src_ptr, float *dst_ptr, size_t src_step, size_t dst_step) {
+  asm volatile(
+    "mov r11, %[src_ptr]\n"
+    "mov r8, %[dst_ptr]\n"
+    "mov r10, r8\n"
+
+    "vld1.32 {q0}, [r11], %[src_step]\n"
+    "vld1.32 {q1}, [r8], %[dst_step]\n"
+    "vld1.32 {q2}, [r11], %[src_step]\n"
+    "vld1.32 {q3}, [r8], %[dst_step]\n"
+
+    "vadd.f32 q0, q0, q1\n"
+    "vld1.32 {q8}, [r11], %[src_step]\n"
+    "vadd.f32 q2, q2, q3\n"
+
+    "vst1.32 {q0}, [r10], %[dst_step]\n"
+    "vst1.32 {q2}, [r10], %[dst_step]\n"
+
+    "vld1.32 {q9}, [r8], %[dst_step]\n"
+
+    "vld1.32 {q10}, [r11], %[src_step]\n"
+
+    "vadd.f32 q8, q8, q9\n"
+    "vld1.32 {q11}, [r8], %[dst_step]\n"
+    "vadd.f32 q10, q10, q11\n"
+
+    "vld1.32 {q0}, [r11], %[src_step]\n"
+    "vst1.32 {q8}, [r10], %[dst_step]\n"
+    "vst1.32 {q10}, [r10], %[dst_step]\n"
+
+    "vld1.32 {q1}, [r8], %[dst_step]\n"
+
+    "vld1.32 {q2}, [r11], %[src_step]\n"
+    "vld1.32 {q3}, [r8], %[dst_step]\n"
+
+    "vadd.f32 q0, q0, q1\n"
+    "vadd.f32 q2, q2, q3\n"
+
+    "vst1.32 {q0}, [r10], %[dst_step]\n"
+    "vst1.32 {q2}, [r10], %[dst_step]\n"
+
+    "vld1.32 {q8}, [r11], %[src_step]\n"
+    "vld1.32 {q9}, [r8], %[dst_step]\n"
+
+    "vld1.32 {q10}, [r11], %[src_step]\n"
+    "vld1.32 {q11}, [r8], %[dst_step]\n"
+
+    "vadd.f32 q8, q8, q9\n"
+    "vadd.f32 q10, q10, q11\n"
+
+    "vst1.32 {q8}, [r10], %[dst_step]\n"
+    "vst1.32 {q10}, [r10], %[dst_step]\n"
+
+    :
+    : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
+    : "r8", "r10", "r11", "q0", "q1", "q2", "q3", "q8", "q9", "q10", "q11");
+  return;
+}
+#endif
+
 void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_stride, size_t count) {
   const float *src_ptr = src;
   float *dst_ptr = dst;
@@ -257,61 +314,7 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
 #elif ENABLE_ARM32
     size_t src_step = src_stride * sizeof(float);
     size_t dst_step = dst_stride * sizeof(float);
-    asm volatile(
-      "mov r11, %[src_ptr]\n"
-      "mov r8, %[dst_ptr]\n"
-      "mov r10, r8\n"
-
-      "vld1.32 {q0}, [r11], %[src_step]\n"
-      "vld1.32 {q1}, [r8], %[dst_step]\n"
-      "vld1.32 {q2}, [r11], %[src_step]\n"
-      "vld1.32 {q3}, [r8], %[dst_step]\n"
-
-      "vadd.f32 q0, q0, q1\n"
-      "vld1.32 {q8}, [r11], %[src_step]\n"
-      "vadd.f32 q2, q2, q3\n"
-
-      "vst1.32 {q0}, [r10], %[dst_step]\n"
-      "vst1.32 {q2}, [r10], %[dst_step]\n"
-
-      "vld1.32 {q9}, [r8], %[dst_step]\n"
-
-      "vld1.32 {q10}, [r11], %[src_step]\n"
-
-      "vadd.f32 q8, q8, q9\n"
-      "vld1.32 {q11}, [r8], %[dst_step]\n"
-      "vadd.f32 q10, q10, q11\n"
-
-      "vld1.32 {q0}, [r11], %[src_step]\n"
-      "vst1.32 {q8}, [r10], %[dst_step]\n"
-      "vst1.32 {q10}, [r10], %[dst_step]\n"
-
-      "vld1.32 {q1}, [r8], %[dst_step]\n"
-
-      "vld1.32 {q2}, [r11], %[src_step]\n"
-      "vld1.32 {q3}, [r8], %[dst_step]\n"
-
-      "vadd.f32 q0, q0, q1\n"
-      "vadd.f32 q2, q2, q3\n"
-
-      "vst1.32 {q0}, [r10], %[dst_step]\n"
-      "vst1.32 {q2}, [r10], %[dst_step]\n"
-
-      "vld1.32 {q8}, [r11], %[src_step]\n"
-      "vld1.32 {q9}, [r8], %[dst_step]\n"
-
-      "vld1.32 {q10}, [r11], %[src_step]\n"
-      "vld1.32 {q11}, [r8], %[dst_step]\n"
-
-      "vadd.f32 q8, q8, q9\n"
-      "vadd.f32 q10, q10, q11\n"
-
-      "vst1.32 {q8}, [r10], %[dst_step]\n"
-      "vst1.32 {q10}, [r10], %[dst_step]\n"
-
-      :
-      : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
-      : "r8", "r10", "r11", "q0", "q1", "q2", "q3", "q8", "q9", "q10", "q11");
+    DeConvWgMergeArm32(src_ptr, dst_ptr, src_step, dst_step);
 #else
     for (int j = 0; j < 8; j++) {
       const float *s = src_ptr + j * src_stride;
@@ -342,16 +345,16 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
 }
 
 void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, const float *weight_buf, float *tmp_buf,
-                       const float *at_buf, float *a_mid_buf, float *trans_a_buf, bool *transfered, const float *bt_buf,
-                       float *b_tmp_buf, int unit_size, int w_start, int h_start, const ConvParameter *conv_param,
-                       const DeConvParam *deconv_param) {
+                       const float *at_buf, float *a_mid_buf, float *trans_a_buf, bool *transferred,
+                       const float *bt_buf, float *b_tmp_buf, int unit_size, int w_start, int h_start,
+                       const ConvParameter *conv_param, const DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
-  if (!transfered[unit_size]) {
+  if (!transferred[unit_size]) {
     WinogradTransLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
                       deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
     WinogradTransRight(a_mid_buf, at_buf, trans_a_buf, unit_size, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
                        deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
-    transfered[unit_size] = true;
+    transferred[unit_size] = true;
   }
 
   for (int index = 0; index < winograd_plane; index++) {
@@ -449,7 +452,7 @@ void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int sta
   }
 
   /* compute */
-  bool transfered[DECONV_WINOGRAD_BUFFER_COUNT] = {false};
+  bool transferred[DECONV_WINOGRAD_BUFFER_COUNT] = {false};
   for (int i = 0; i < deconv_param->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param->compute_units_[i];
     if (unit->use_winograd_) {
@@ -465,7 +468,7 @@ void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int sta
       float *tmp_b_buf = (float *)unit->winograd_.b_buffer_ + task_id * unit->winograd_.kh_ * unit->winograd_.kw_ *
                                                                 deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
       DeConvWgCalWgFp32(tile_in, tile_out, (float *)unit->weight_, tmp_buf, unit->winograd_.AT_, wg_mid_a_buf,
-                        wg_dst_a_buf, transfered, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_, unit->w_start_,
+                        wg_dst_a_buf, transferred, unit->winograd_.BT_, tmp_b_buf, unit->winograd_.kh_, unit->w_start_,
                         unit->h_start_, conv_param, deconv_param);
     } else {
       float *tmp_buf = (float *)unit->tmp_buffer_ + task_id * deconv_param->oc_div4_ * unit->w_size_ * unit->h_size_ *
