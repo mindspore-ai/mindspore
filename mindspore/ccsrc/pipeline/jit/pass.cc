@@ -154,17 +154,19 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_after_grad = opt::OptPassConfig({
     irpass.inline_without_move_,
   });
-  opt::OptPassConfig a_3 = opt::OptPassConfig({
-    irpass.arithmetic_simplify2_,
-    irpass.same_eliminate_,
-    irpass.check_bprop_eliminate_,
-    irpass.switch_layer_defer_inline_,
-    irpass.replace_applicator_,
-    irpass.mirror_mini_step_elim_,
-    irpass.virtual_add_elim_,
-    irpass.row_tensor_add_zeros_like_,
-    irpass.mini_step_allgather_replace_,
-  });
+  opt::OptPassConfig a_3 = opt::OptPassConfig(
+    {
+      irpass.arithmetic_simplify2_,
+      irpass.same_eliminate_,
+      irpass.check_bprop_eliminate_,
+      irpass.switch_layer_defer_inline_,
+      irpass.replace_applicator_,
+      irpass.mirror_mini_step_elim_,
+      irpass.virtual_add_elim_,
+      irpass.row_tensor_add_zeros_like_,
+      irpass.mini_step_allgather_replace_,
+    },
+    false, true);
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
