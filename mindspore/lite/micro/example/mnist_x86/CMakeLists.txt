@@ -10,22 +10,22 @@ get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BI
 
 set(HEADER_PATH ${PKG_PATH}/inference)
 
-option(MICRO_BUILD_ARM64 "build android arm64" OFF)
-option(MICRO_BUILD_ARM32A "build android arm32" OFF)
+option(PLATFORM_ARM64 "build android arm64" OFF)
+option(PLATFORM_ARM32 "build android arm32" OFF)
 
 add_compile_definitions(NOT_USE_STL)
 
-if(MICRO_BUILD_ARM64 OR MICRO_BUILD_ARM32A)
+if(PLATFORM_ARM64 OR PLATFORM_ARM32)
   add_compile_definitions(ENABLE_NEON)
   add_compile_definitions(ENABLE_ARM)
 endif()
 
-if(MICRO_BUILD_ARM64)
+if(PLATFORM_ARM64)
   add_compile_definitions(ENABLE_ARM64)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+dotprod")
 endif()
 
-if(MICRO_BUILD_ARM32A)
+if(PLATFORM_ARM32)
   add_compile_definitions(ENABLE_ARM32)
   add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()

@@ -1,5 +1,5 @@
-include_directories(${LITE_DIR}/micro/coder/operator_library)
-set(WRAPPER_DIR ${LITE_DIR}/micro/coder/operator_library/wrapper/)
+include_directories(${LITE_DIR}/micro/coder/)
+set(WRAPPER_DIR ${LITE_DIR}/micro/coder/wrapper/)
 
 set(WRAPPER_SRC
         ${WRAPPER_DIR}/base/common_wrapper.c

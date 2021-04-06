@@ -130,7 +130,7 @@ if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
           -DANDROID_ABI="arm64-v8a" \
           -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
           -DANDROID_NATIVE_API_LEVEL="19" \
-          -DMICRO_BUILD_ARM64=ON \
+          -DPLATFORM_ARM64=ON \
           -DPKG_PATH=${PKG_PATH} ${BENCHMARK_PATH}
 else
     cmake -DCMAKE_BUILD_TYPE=Release \
