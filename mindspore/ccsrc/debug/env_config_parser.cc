@@ -55,7 +55,7 @@ std::optional<std::string> GetRdrPathFromEnv() {
     std::string err_msg = "RDR path parse from environment variable failed. Please check the settings about '" +
                           std::string(kPathEnv) + "' in environment variables.";
     std::string path = path_char;
-    if (!Common::IsPathValid(path, maxDirectoryLength, err_msg, false)) {
+    if (!Common::IsPathValid(path, maxDirectoryLength, err_msg)) {
       return std::string("");
     }
     return path;
@@ -186,7 +186,7 @@ void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
   }
 
   std::string path = content;
-  if (!Common::IsPathValid(path, maxDirectoryLength, err_msg, false)) {
+  if (!Common::IsPathValid(path, maxDirectoryLength, err_msg)) {
     return;
   }
 
