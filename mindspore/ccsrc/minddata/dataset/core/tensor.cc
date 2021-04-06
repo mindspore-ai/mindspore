@@ -211,20 +211,17 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
     RETURN_IF_NOT_OK(CopyStridedArray((*out)->data_, data, shape, strides, (*out)->type_.SizeInBytes()));
   } else {
     // fix: memcpy_s will fail when byte_size > 2^31 - 1
-    uint32_t step = 1;
-    while (byte_size > (step * kDeMaxDim)) {
-      int ret_code =
-        memcpy_s((*out)->data_ + (step - 1) * kDeMaxDim, kDeMaxDim, data + (step - 1) * kDeMaxDim, kDeMaxDim);
+    uint32_t step = 0;
+    while (byte_size >= kDeMaxDim) {
+      int ret_code = memcpy_s((*out)->data_ + step * kDeMaxDim, kDeMaxDim, data + step * kDeMaxDim, kDeMaxDim);
       if (ret_code != 0) {
         RETURN_STATUS_UNEXPECTED("Failed to copy data into Tensor.");
       }
+      byte_size -= kDeMaxDim;
       step++;
     }
-
-    // copy the last
-    if (byte_size > ((step - 1) * kDeMaxDim) && byte_size <= (step * kDeMaxDim)) {
-      int ret_code = memcpy_s((*out)->data_ + (step - 1) * kDeMaxDim, byte_size - ((step - 1) * kDeMaxDim),
-                              data + (step - 1) * kDeMaxDim, byte_size - ((step - 1) * kDeMaxDim));
+    if (byte_size > 0) {
+      int ret_code = memcpy_s((*out)->data_ + step * kDeMaxDim, byte_size, data + step * kDeMaxDim, byte_size);
       if (ret_code != 0) {
         RETURN_STATUS_UNEXPECTED("Failed to copy data into Tensor.");
       }
