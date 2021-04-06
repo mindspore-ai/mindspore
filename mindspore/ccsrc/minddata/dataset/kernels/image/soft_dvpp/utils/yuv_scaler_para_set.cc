@@ -249,25 +249,25 @@ YuvWPara *YuvScalerParaSet::GetInstance(std::string *paraset_name, uint32_t yuv_
 }
 
 // Searching for the index number of the filtering parameter by using the dichotomy
-int32_t GetScalerParamterIndex(uint32_t paramter, YuvWPara *paramterset) {
-  int32_t count = paramterset->real_count;
+int32_t GetScalerParameterIndex(uint32_t parameter, YuvWPara *parameterset) {
+  int32_t count = parameterset->real_count;
   int32_t left = 0;
   int32_t right = count - 1;
-  YuvScalerPara *scaler = paramterset->scale;
+  YuvScalerPara *scaler = parameterset->scale;
   int32_t index = 0;
 
-  if (paramter <= scalerRadio1Time) {
+  if (parameter <= scalerRadio1Time) {
     index = 0;
   } else {
-    paramter = paramter >> paramterInterval;
+    parameter = parameter >> parameterInterval;
     while (left <= right) {
       index = (left + right) / 2;  // 2-point search
-      if (paramter > scaler[index].range.start && paramter <= scaler[index].range.end) {
+      if (parameter > scaler[index].range.start && parameter <= scaler[index].range.end) {
         break;
       }
-      if (paramter > scaler[index].range.end) {
+      if (parameter > scaler[index].range.end) {
         left = index + 1;
-      } else if (paramter <= scaler[index].range.start) {
+      } else if (parameter <= scaler[index].range.start) {
         right = index - 1;
       }
     }

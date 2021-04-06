@@ -34,7 +34,7 @@ def generator_22to24():
 
 def test_simple_repeat():
 
-    # Since numer of epoch is 1, the GeneratorPass logic will not add the reset logic.
+    # Since number of epoch is 1, the GeneratorPass logic will not add the reset logic.
     logger.info("test_simple_repeat")
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1to2, ["data"])
@@ -59,7 +59,7 @@ def test_generator_reset_1():
     branch1 = data1.repeat(4)
     data2 = ds.GeneratorDataset(generator_10to12, ["data"])
     branch2 = data2.repeat(2)
-    branch2 = branch2.take(10)   # Meaningless opearation, just want to insert an op in between
+    branch2 = branch2.take(10)   # Meaningless operation, just want to insert an op in between
     data3 = ds.GeneratorDataset(generator_22to24, ["data"])
     branch3 = data3.repeat(3)
     branch3 = branch3.skip(1)    # Skip the first row
@@ -86,7 +86,7 @@ def test_generator_reset_2():
     branch1 = data1.repeat(3)
     data2 = ds.GeneratorDataset(generator_10to12, ["data"])
     branch2 = data2.repeat(2)
-    branch2 = branch2.take(10)   # Meaningless opearation, just want to insert an op in between
+    branch2 = branch2.take(10)   # Meaningless operation, just want to insert an op in between
     data3 = ds.GeneratorDataset(generator_22to24, ["data"])
     branch3 = data3.skip(2)    # Skip the first row
 

@@ -326,9 +326,9 @@ std::vector<uint8_t> ShardColumn::CompressBlob(const std::vector<uint8_t> &blob,
     auto dst_blob_slice = CompressInt(blob_slice, int_type);
     // Get new column size
     auto new_blob_size = UIntToBytesBig(dst_blob_slice.size(), kInt64Type);
-    // Append new colmn size
+    // Append new column size
     dst_blob.insert(dst_blob.end(), new_blob_size.begin(), new_blob_size.end());
-    // Append new colmn data
+    // Append new column data
     dst_blob.insert(dst_blob.end(), dst_blob_slice.begin(), dst_blob_slice.end());
     i_src += kInt64Len + num_bytes;
   }
@@ -344,7 +344,7 @@ vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const
   // Calculate bitmap size (bytes)
   uint64_t bitmap_size = (src_n_int + kNumDataOfByte - 1) / kNumDataOfByte;
 
-  // Initilize destination blob, more space than needed, will be resized
+  // Initialize destination blob, more space than needed, will be resized
   vector<uint8_t> dst_bytes(kBytesOfColumnLen + bitmap_size + src_bytes.size(), 0);
 
   // Write number of elements to destination blob

@@ -25,7 +25,7 @@ const uint32_t maxFileCount = 10;
 const uint32_t kMaxParaCount = 2048;
 const uint32_t kScalerCoffNb4 = 32;
 const uint32_t kScalerCoffNb6 = 48;
-const uint32_t paramterInterval = 6;  // scaler Number of bits between each group of filtering coefficients
+const uint32_t parameterInterval = 6;  // scaler Number of bits between each group of filtering coefficients
 const uint32_t scalerRadio1Time = 0X10000;
 
 struct ScalerCoefficientIndex {
@@ -83,7 +83,7 @@ class YuvScalerParaSet {
   static pthread_mutex_t g_mutex_;
 };
 
-int32_t GetScalerParamterIndex(uint32_t paramter, YuvWPara *paramterset);
+int32_t GetScalerParameterIndex(uint32_t parameter, YuvWPara *parameterset);
 
 constexpr YuvWPara YUV_W_PARA = {
   1024,

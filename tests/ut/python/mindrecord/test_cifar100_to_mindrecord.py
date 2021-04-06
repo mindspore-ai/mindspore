@@ -46,7 +46,7 @@ def test_cifar100_to_mindrecord_without_index_fields(fixture_file):
     """test transform cifar100 dataset to mindrecord without index fields."""
     cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, MINDRECORD_FILE)
     ret = cifar100_transformer.transform()
-    assert ret == SUCCESS, "Failed to tranform from cifar100 to mindrecord"
+    assert ret == SUCCESS, "Failed to transform from cifar100 to mindrecord"
     assert os.path.exists(MINDRECORD_FILE)
     assert os.path.exists(MINDRECORD_FILE + "_test")
     read()

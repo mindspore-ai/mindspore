@@ -591,27 +591,27 @@ def test_write_with_invalid_data():
         writer.write_raw_data(data)
         writer.commit()
 
-    # field: label  =>  lable
+    # field: label  =>  labels
     with pytest.raises(Exception, match="Failed to write dataset"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
-        data = [{"file_name": "001.jpg", "lable": 43, "score": 0.8, "mask": np.array([3, 6, 9], dtype=np.int64),
+        data = [{"file_name": "001.jpg", "labels": 43, "score": 0.8, "mask": np.array([3, 6, 9], dtype=np.int64),
                  "segments": np.array([[5.0, 1.6], [65.2, 8.3]], dtype=np.float32),
                  "data": bytes("image bytes abc", encoding='UTF-8')},
-                {"file_name": "002.jpg", "lable": 91, "score": 5.4, "mask": np.array([1, 4, 7], dtype=np.int64),
+                {"file_name": "002.jpg", "labels": 91, "score": 5.4, "mask": np.array([1, 4, 7], dtype=np.int64),
                  "segments": np.array([[5.1, 9.1], [2.0, 65.4]], dtype=np.float32),
                  "data": bytes("image bytes def", encoding='UTF-8')},
-                {"file_name": "003.jpg", "lable": 61, "score": 6.4, "mask": np.array([7, 6, 3], dtype=np.int64),
+                {"file_name": "003.jpg", "labels": 61, "score": 6.4, "mask": np.array([7, 6, 3], dtype=np.int64),
                  "segments": np.array([[0.0, 5.6], [3.0, 16.3]], dtype=np.float32),
                  "data": bytes("image bytes ghi", encoding='UTF-8')},
-                {"file_name": "004.jpg", "lable": 29, "score": 8.1, "mask": np.array([2, 8, 0], dtype=np.int64),
+                {"file_name": "004.jpg", "labels": 29, "score": 8.1, "mask": np.array([2, 8, 0], dtype=np.int64),
                  "segments": np.array([[5.9, 7.2], [4.0, 89.0]], dtype=np.float32),
                  "data": bytes("image bytes jkl", encoding='UTF-8')},
-                {"file_name": "005.jpg", "lable": 78, "score": 7.7, "mask": np.array([3, 1, 2], dtype=np.int64),
+                {"file_name": "005.jpg", "labels": 78, "score": 7.7, "mask": np.array([3, 1, 2], dtype=np.int64),
                  "segments": np.array([[0.6, 8.1], [5.3, 49.3]], dtype=np.float32),
                  "data": bytes("image bytes mno", encoding='UTF-8')},
-                {"file_name": "006.jpg", "lable": 37, "score": 9.4, "mask": np.array([7, 6, 7], dtype=np.int64),
+                {"file_name": "006.jpg", "labels": 37, "score": 9.4, "mask": np.array([7, 6, 7], dtype=np.int64),
                  "segments": np.array([[4.2, 6.3], [8.9, 81.8]], dtype=np.float32),
                  "data": bytes("image bytes pqr", encoding='UTF-8')}
                 ]

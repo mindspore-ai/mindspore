@@ -104,7 +104,7 @@ TEST_F(TestShardWriter, TestShardWriterShiftRawPage) {
   LoadData(input_path1, json_buffer1, kMaxNum);
   MS_LOG(INFO) << "Load Meta Data Already.";
 
-  // get files' pathes stored in vector<string> image_filenames
+  // get files' paths stored in vector<string> image_filenames
   mindrecord::GetAbsoluteFiles(path_dir, image_filenames);  // get all files whose path within path_dir
   MS_LOG(INFO) << "Only process 10 file names:";
   image_filenames.resize(kMaxNum);
@@ -236,7 +236,7 @@ TEST_F(TestShardWriter, TestShardWriterTrial) {
   LoadData(input_path1, json_buffer1, kMaxNum);
   MS_LOG(INFO) << "Load Meta Data Already.";
 
-  // get files' pathes stored in vector<string> image_filenames
+  // get files' paths stored in vector<string> image_filenames
   mindrecord::GetAbsoluteFiles(path_dir, image_filenames);  // get all files whose path within path_dir
   MS_LOG(INFO) << "Only process 10 file names:";
   image_filenames.resize(kMaxNum);
@@ -375,7 +375,7 @@ TEST_F(TestShardWriter, TestShardWriterTrialNoFields) {
   LoadData(input_path1, json_buffer1, kMaxNum);
   MS_LOG(INFO) << "Load Meta Data Already.";
 
-  // get files' pathes stored in vector<string> image_filenames
+  // get files' paths stored in vector<string> image_filenames
   mindrecord::GetAbsoluteFiles(path_dir, image_filenames);  // get all files whose path within path_dir
   MS_LOG(INFO) << "Only process 10 file names:";
   image_filenames.resize(kMaxNum);
@@ -509,7 +509,7 @@ TEST_F(TestShardWriter, DataCheck) {
   LoadData(input_path1, json_buffer1, kMaxNum);
   MS_LOG(INFO) << "Load Meta Data Already.";
 
-  // get files' pathes stored in vector<string> image_filenames
+  // get files' paths stored in vector<string> image_filenames
   mindrecord::GetAbsoluteFiles(path_dir, image_filenames);  // get all files whose path within path_dir
   MS_LOG(INFO) << "Only process 10 file names:";
   image_filenames.resize(kMaxNum);
@@ -610,7 +610,7 @@ TEST_F(TestShardWriter, AllRawDataWrong) {
   LoadData(input_path1, json_buffer1, kMaxNum);
   MS_LOG(INFO) << "Load Meta Data Already.";
 
-  // get files' pathes stored in vector<string> image_filenames
+  // get files' paths stored in vector<string> image_filenames
   mindrecord::GetAbsoluteFiles(path_dir, image_filenames);  // get all files whose path within path_dir
   MS_LOG(INFO) << "Only process 10 file names:";
   image_filenames.resize(kMaxNum);

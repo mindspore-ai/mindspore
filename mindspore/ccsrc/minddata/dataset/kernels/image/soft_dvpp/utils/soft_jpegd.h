@@ -35,7 +35,7 @@ class SoftJpegd {
    * @brief : decode interface
    * @param [in] VpcInfo& vpc_input_info : vpc input information
    * @param [in] SoftDpProcsessInfo& soft_dp_process_info : softDp process info
-   * @return : decodeSucc：decode success， decodeErr:decode failed.
+   * @return : decodeSucc：decode success, decodeErr:decode failed.
    */
   uint32_t JpegdSoftwareDecodeProcess(struct VpcInfo *vpc_input_info, struct SoftDpProcsessInfo *soft_dp_process_info);
 
@@ -50,7 +50,7 @@ class SoftJpegd {
    * @param [in] int32_t& sub_sample : level of chrominance subsampling in the image
    * @param [in] int32_t& color_spase : pointer to an integer variable that will receive one of the JPEG
    *                                   constants, indicating the colorspace of the JPEG image.
-   * @return : decodeSucc：alloc output buf success， decodeErr:alloc output buf failed.
+   * @return : decodeSucc：alloc output buf success, decodeErr:alloc output buf failed.
    */
   uint32_t AllocOutputBuffer(struct VpcInfo *vpc_input_info, int32_t *width, int32_t *height, int32_t *sub_sample);
 
@@ -59,7 +59,7 @@ class SoftJpegd {
    * @param [in] VpcInfo& vpc_input_info : vpc input information
    * @param [in] int32_t& width : output width
    * @param [in] int32_t& height : output height
-   * @return : decodeSucc：config output buf succes， decodeErr:config output buf failed.
+   * @return : decodeSucc：config output buf success, decodeErr:config output buf failed.
    */
   uint32_t ConfigVpcInputData(struct VpcInfo *vpc_input_info, int32_t *width, int32_t *height);
 };
