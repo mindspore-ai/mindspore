@@ -141,7 +141,7 @@ class TensorRow {
     if (input.at(0)->shape() != TensorShape({})) {
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensors must be a scalar tensor.");
     }
-    return input.at(0)->GetItemAt(o, {0});
+    return input.at(0)->GetItemAt(o, {});
   }
 
   /// Convert a TensorRow consisting of one 1-D tensor to a vector of size n.

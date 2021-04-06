@@ -81,7 +81,7 @@ Status GeneratorOp::InitSampler() {
 
 // Invoke the generatorFunction to get generator object
 Status GeneratorOp::CreateGeneratorObject() {
-  Status ret = Status::OK();
+  Status ret;
   {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;

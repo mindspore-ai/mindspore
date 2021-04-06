@@ -405,7 +405,7 @@ Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string col
     RETURN_IF_NOT_OK(s);
   } else if (column_type == DataType::DE_STRING) {
     std::string_view sv;
-    RETURN_IF_NOT_OK(tensor->GetItemAt(&sv, {0}));  // assume scalar string tensor
+    RETURN_IF_NOT_OK(tensor->GetItemAt(&sv, {}));  // assume scalar string tensor
     std::string ss(sv);
     (*row_raw_data)[column_name] = std::move(ss);
     return Status::OK();

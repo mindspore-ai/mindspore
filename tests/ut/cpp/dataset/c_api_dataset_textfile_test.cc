@@ -63,7 +63,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -323,7 +323,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1A) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -384,7 +384,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1B) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -444,7 +444,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse4Shard) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -507,7 +507,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1A) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -570,7 +570,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1B) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -632,7 +632,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -690,7 +690,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1A) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -751,7 +751,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1B) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -812,7 +812,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal4) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result

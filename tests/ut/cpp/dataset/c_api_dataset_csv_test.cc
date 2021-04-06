@@ -57,7 +57,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
@@ -123,7 +123,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
@@ -169,7 +169,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetNumSamples) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
@@ -211,7 +211,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
@@ -273,15 +273,15 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetType) {
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       if (colum_type[j]->type == CsvType::INT) {
         int val;
-        de_text->GetItemAt(&val, {0});
+        de_text->GetItemAt(&val, {});
         EXPECT_EQ(val, std::dynamic_pointer_cast<CsvRecord<int>>(expected[i][j])->value);
       } else if (colum_type[j]->type == CsvType::FLOAT) {
         float val;
-        de_text->GetItemAt(&val, {0});
+        de_text->GetItemAt(&val, {});
         EXPECT_EQ(val, std::dynamic_pointer_cast<CsvRecord<float>>(expected[i][j])->value);
       } else if (colum_type[j]->type == CsvType::STRING) {
         std::string_view sv;
-        de_text->GetItemAt(&sv, {0});
+        de_text->GetItemAt(&sv, {});
         std::string ss(sv);
         EXPECT_STREQ(ss.c_str(), std::dynamic_pointer_cast<CsvRecord<std::string>>(expected[i][j])->value.c_str());
       }
@@ -326,7 +326,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetHeader) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
@@ -435,7 +435,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
@@ -492,7 +492,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
@@ -548,7 +548,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {0});
+      de_text->GetItemAt(&sv, {});
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }

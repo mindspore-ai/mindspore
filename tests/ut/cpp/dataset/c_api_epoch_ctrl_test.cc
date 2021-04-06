@@ -54,7 +54,7 @@ TEST_F(MindDataTestEpochCtrl, TestAutoInjectEpoch) {
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {0});
+      de_label->GetItemAt(&label_value, {});
       EXPECT_TRUE(img_class[(i % sampler_size) / class_size] == label_value);
 
       iter->GetNextRow(&row);
@@ -100,7 +100,7 @@ TEST_F(MindDataTestEpochCtrl, TestEpoch) {
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {0});
+      de_label->GetItemAt(&label_value, {});
       EXPECT_TRUE(label_value >= 0 && label_value <= 3);
 
       iter->GetNextRow(&row);
@@ -149,7 +149,7 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatEpoch) {
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {0});
+      de_label->GetItemAt(&label_value, {});
       EXPECT_TRUE(label_value >= 0 && label_value <= 3);
 
       iter->GetNextRow(&row);
@@ -198,7 +198,7 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatRepeatEpoch) {
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {0});
+      de_label->GetItemAt(&label_value, {});
       EXPECT_TRUE(label_value >= 0 && label_value <= 3);
 
       iter->GetNextRow(&row);

@@ -57,7 +57,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
@@ -86,7 +86,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     iter->GetNextRow(&row);
@@ -109,7 +109,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     iter->GetNextRow(&row);
@@ -252,7 +252,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
@@ -295,7 +295,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
@@ -438,7 +438,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
@@ -500,7 +500,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesA) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -567,7 +567,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesB) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     // Compare against expected result
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
@@ -622,7 +622,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
@@ -669,7 +669,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
@@ -713,7 +713,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetWSC) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
