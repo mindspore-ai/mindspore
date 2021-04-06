@@ -68,7 +68,7 @@ size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }
 
 std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
   if (input_reshape_type_.empty()) {
-    return {};
+    return "";
   }
   if (input_index >= input_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node size "
@@ -79,7 +79,7 @@ std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
 
 std::string KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
   if (output_reshape_type_.empty()) {
-    return {};
+    return "";
   }
   if (output_index >= output_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of output node size "
