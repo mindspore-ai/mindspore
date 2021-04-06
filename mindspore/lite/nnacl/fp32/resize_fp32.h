@@ -32,8 +32,7 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, Calcu
                           float *x_left_weights);
 
 int PrepareResizeBicubic(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
-                         int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
-                         float *x_left_weights, float cubic_coeff);
+                         int *y_tops, int *x_lefts, float *y_weights, float *x_weights, float cubic_coeff);
 
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
@@ -41,9 +40,8 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
                    const int h_begin, const int h_end);
 
 int ResizeBicubic(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                  const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                  const float *y_bottom_weights, const float *x_left_weights, float *line_buffer, const int h_begin,
-                  const int h_end);
+                  const int *y_tops, const int *x_lefts, const float *y_weights, const float *x_weights,
+                  float *line_buffer, const int h_begin, const int h_end);
 
 int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, const int *box_idx,
                                  const int *output_shape, int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights,
