@@ -27,9 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-// forward declare
-class DataBuffer;
-
 class RenameOp : public PipelineOp {
  public:
   //  The nested builder class inside of the RenameOp is used to help manage all of

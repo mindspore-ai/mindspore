@@ -19,7 +19,7 @@
 #include <algorithm>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/engine/db_connector.h"

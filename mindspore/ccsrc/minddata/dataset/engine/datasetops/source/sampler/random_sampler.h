@@ -41,7 +41,7 @@ class RandomSamplerRT : public SamplerRT {
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
 
   // meant to be called by base class or python
   Status InitSampler() override;

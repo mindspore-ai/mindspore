@@ -39,7 +39,7 @@ class MindDataTestStandAloneSampler : public UT::DatasetOpTesting {
  protected:
   class MockStorageOp : public RandomAccessOp {
    public:
-    MockStorageOp(int64_t val){
+    MockStorageOp(int64_t val) {
       // row count is in base class as protected member
       // GetNumRowsInDataset does not need an override, the default from base class is fine.
       num_rows_ = val;
@@ -57,17 +57,17 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
     row.push_back(t);
   }
   MockStorageOp mock(20);
-  std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> tensor;
   int64_t num_samples = 0;
+  TensorRow sample_row;
   for (int i = 0; i < 6; i++) {
     std::shared_ptr<SamplerRT> sampler =
       std::make_shared<DistributedSamplerRT>(num_samples, 3, i % 3, (i < 3 ? false : true));
     sampler->HandshakeRandomAccessOp(&mock);
-    sampler->GetNextSample(&db);
-    db->GetTensor(&tensor, 0, 0);
+    sampler->GetNextSample(&sample_row);
+    tensor = sample_row[0];
     MS_LOG(DEBUG) << (*tensor);
-    if(i < 3) {  // This is added due to std::shuffle()
+    if (i < 3) {  // This is added due to std::shuffle()
       EXPECT_TRUE((*tensor) == (*row[i]));
     }
   }
@@ -83,20 +83,21 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   int64_t num_samples = 0;
   int64_t start_index = 0;
   std::shared_ptr<SamplerRT> sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index, 3);
-  std::unique_ptr<DataBuffer> db;
+
   std::shared_ptr<Tensor> tensor;
+  TensorRow sample_row;
   sampler->HandshakeRandomAccessOp(&mock);
-  sampler->GetNextSample(&db);
-  db->GetTensor(&tensor, 0, 0);
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label1));
-  sampler->GetNextSample(&db);
-  db->GetTensor(&tensor, 0, 0);
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label2));
   sampler->ResetSampler();
-  sampler->GetNextSample(&db);
-  db->GetTensor(&tensor, 0, 0);
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label1));
-  sampler->GetNextSample(&db);
-  db->GetTensor(&tensor, 0, 0);
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label2));
 }

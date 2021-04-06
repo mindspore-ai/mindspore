@@ -34,7 +34,6 @@
 namespace mindspore {
 namespace dataset {
 // Forward declare
-class DataBuffer;
 class ExecutionTree;
 
 // MapOp class implements the Map operator. It will apply a list of operations to each record specified by column names.

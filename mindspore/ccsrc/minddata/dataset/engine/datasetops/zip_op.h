@@ -29,8 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-// forward declare
-class DataBuffer;
 
 class ZipOp : public PipelineOp {
  public:

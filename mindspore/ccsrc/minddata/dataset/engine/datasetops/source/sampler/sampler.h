@@ -23,7 +23,7 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 
@@ -66,7 +66,7 @@ class SamplerRT {
   // @param int64_t samplesPerBuffer: Num of Sampler Ids to fetch via 1 GetNextBuffer call
   SamplerRT(int64_t num_samples, int64_t samples_per_buffer);
 
-  SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_buffer_) {}
+  SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_tensor_) {}
 
   // default destructor
   ~SamplerRT() = default;
@@ -76,7 +76,7 @@ class SamplerRT {
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
-  virtual Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) = 0;
+  virtual Status GetNextSample(TensorRow *out) = 0;
 
 // This function only called by python layer. Not needed by Android.
 #ifdef ENABLE_PYTHON
@@ -170,10 +170,10 @@ class SamplerRT {
   int64_t num_samples_;
 
   bool is_initialized;
-  int64_t samples_per_buffer_;
+  int64_t samples_per_tensor_;
   std::unique_ptr<ColDescriptor> col_desc_;
   std::vector<std::shared_ptr<SamplerRT>> child_;  // Child nodes
-  std::unique_ptr<DataBuffer> child_ids_;
+  TensorRow child_ids_;
 };
 }  // namespace dataset
 }  // namespace mindspore

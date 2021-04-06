@@ -19,7 +19,7 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"

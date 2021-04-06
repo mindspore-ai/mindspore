@@ -24,23 +24,22 @@ namespace dataset {
 SequentialSamplerRT::SequentialSamplerRT(int64_t num_samples, int64_t start_index, int64_t samples_per_buffer)
     : SamplerRT(num_samples, samples_per_buffer), current_id_(start_index), start_index_(start_index), id_count_(0) {}
 
-Status SequentialSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
   if (id_count_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("SequentialSampler Internal Error");
   } else if (id_count_ == num_samples_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
-    (*out_buffer) = std::make_unique<DataBuffer>(current_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sampleIds;
 
     // Compute how many ids are left to pack, and pack this amount into a new buffer.  Respect the setting for
     // samples per buffer though.
     int64_t remaining_ids = num_samples_ - id_count_;
-    int64_t num_elements = std::min(remaining_ids, samples_per_buffer_);
+    int64_t num_elements = std::min(remaining_ids, samples_per_tensor_);
 
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, num_elements));
     auto idPtr = sampleIds->begin<int64_t>();
@@ -57,8 +56,7 @@ Status SequentialSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffe
 
     id_count_ += num_elements;  // Count the packed ids towards our overall sample count
 
-    TensorRow row(1, sampleIds);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    (*out) = {sampleIds};
   }
   return Status::OK();
 }
@@ -83,9 +81,9 @@ Status SequentialSamplerRT::InitSampler() {
     num_samples_ = available_row_count;
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
-    (num_samples_ > 0 && samples_per_buffer_ > 0) || num_samples_ == 0,
-    "Invalid parameter, samples_per_buffer must be greater than 0, but got " + std::to_string(samples_per_buffer_));
-  samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
+    (num_samples_ > 0 && samples_per_tensor_ > 0) || num_samples_ == 0,
+    "Invalid parameter, samples_per_buffer must be greater than 0, but got " + std::to_string(samples_per_tensor_));
+  samples_per_tensor_ = samples_per_tensor_ > num_samples_ ? num_samples_ : samples_per_tensor_;
 
   is_initialized = true;
   return Status::OK();

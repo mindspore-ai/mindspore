@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-class DataBuffer;
 
 class BucketBatchByLengthOp : public PipelineOp {
  public:

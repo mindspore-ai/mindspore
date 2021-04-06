@@ -25,7 +25,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/random.h"

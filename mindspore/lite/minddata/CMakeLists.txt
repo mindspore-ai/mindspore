@@ -181,7 +181,6 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/weighted_random_sampler.cc
         ${MINDDATA_DIR}/engine/runtime_context.cc
         ${MINDDATA_DIR}/engine/tree_adapter.cc
-        ${MINDDATA_DIR}/engine/data_buffer.cc
         ${MINDDATA_DIR}/engine/execution_tree.cc
         ${MINDDATA_DIR}/engine/dataset_iterator.cc
         ${MINDDATA_DIR}/core/tensor_row.cc

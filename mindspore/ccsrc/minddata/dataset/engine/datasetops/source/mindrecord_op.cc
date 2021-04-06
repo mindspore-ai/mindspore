@@ -25,7 +25,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"

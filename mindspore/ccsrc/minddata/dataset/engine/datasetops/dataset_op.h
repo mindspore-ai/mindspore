@@ -59,8 +59,6 @@ constexpr char kZipOp[] = "ZipOp";
 // Forward declare
 class ExecutionTree;
 
-class DataBuffer;
-
 class NodePass;
 
 class SamplerRT;

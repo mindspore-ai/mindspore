@@ -96,7 +96,7 @@ class CacheLookupOp : public CacheBase, public SamplerRT {
   Status ResetSampler() override;
   Status HandshakeRandomAccessOp(const RandomAccessOp *op) override;
   Status InitSampler() override;
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
   void Print(std::ostream &out, bool show_all) const override;
   void SamplerPrint(std::ostream &out, bool show_all) const override;
   bool AllowCacheMiss() override { return true; }

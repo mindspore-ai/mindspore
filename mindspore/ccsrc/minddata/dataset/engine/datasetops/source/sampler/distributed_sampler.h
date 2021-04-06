@@ -50,7 +50,7 @@ class DistributedSamplerRT : public SamplerRT {
   /// \param std::unique_ptr<DataBuffer> * pBuffer
   /// \param int32_t workerId
   /// \return Status code
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
 
   /// Init sampler, called by base class or python
   Status InitSampler() override;

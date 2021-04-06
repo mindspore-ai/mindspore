@@ -19,7 +19,6 @@
 #include <limits>
 #include <memory>
 
-#include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
@@ -63,15 +62,15 @@ Status DistributedSamplerRT::InitSampler() {
 
   if (offset_ != -1 || !even_dist_) {
     if (offset_ == -1) offset_ = 0;
-    samples_per_buffer_ = (num_rows_ + offset_) / num_devices_;
+    samples_per_tensor_ = (num_rows_ + offset_) / num_devices_;
     int64_t remainder = (num_rows_ + offset_) % num_devices_;
-    if (device_id_ < remainder) samples_per_buffer_++;
-    if (device_id_ < offset_) samples_per_buffer_--;
+    if (device_id_ < remainder) samples_per_tensor_++;
+    if (device_id_ < offset_) samples_per_tensor_--;
   } else {
     offset_ = 0;
-    samples_per_buffer_ = (num_rows_ + num_devices_ - 1) / num_devices_;  // equals to ceil(num_rows/num_devices)
+    samples_per_tensor_ = (num_rows_ + num_devices_ - 1) / num_devices_;  // equals to ceil(num_rows/num_devices)
   }
-  samples_per_buffer_ = num_samples_ < samples_per_buffer_ ? num_samples_ : samples_per_buffer_;
+  samples_per_tensor_ = num_samples_ < samples_per_tensor_ ? num_samples_ : samples_per_tensor_;
   if (shuffle_) {
     shuffle_vec_.reserve(num_rows_);
     for (int64_t i = 0; i < num_rows_; i++) {
@@ -79,51 +78,48 @@ Status DistributedSamplerRT::InitSampler() {
     }
     std::shuffle(shuffle_vec_.begin(), shuffle_vec_.end(), rnd_);
   }
-  if (!samples_per_buffer_) non_empty_ = false;
+  if (!samples_per_tensor_) non_empty_ = false;
 
   is_initialized = true;
   return Status::OK();
 }
 
-Status DistributedSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
-  if (cnt_ > samples_per_buffer_) {
+Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
+  if (cnt_ > samples_per_tensor_) {
     RETURN_STATUS_UNEXPECTED(
       "Number of samples(cnt) that have already been filled in to buffer should be less than or "
       "equal to samples_per_buffer, but got cnt: " +
-      std::to_string(cnt_) + ", samples_per_buffer: " + std::to_string(samples_per_buffer_));
-  } else if (cnt_ == samples_per_buffer_ && (non_empty_ || !even_dist_)) {
-    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    if (!samples_per_buffer_) {
+      std::to_string(cnt_) + ", samples_per_buffer: " + std::to_string(samples_per_tensor_));
+  } else if (cnt_ == samples_per_tensor_ && (non_empty_ || !even_dist_)) {
+    (*out) = TensorRow(TensorRow::kFlagEOE);
+    if (!samples_per_tensor_) {
       non_empty_ = false;
     }
-  } else if (!samples_per_buffer_ && !non_empty_) {
+  } else if (!samples_per_tensor_ && !non_empty_) {
     // If the buffer is empty, we add samples with subscript 0 in the current dataset.
     // This step is to make up for the solution that the code default buffer is not empty before.
     // We will remove this value in the concat phase
     non_empty_ = true;
-    (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, 1));
     auto id_ptr = sample_ids->begin<int64_t>();
     // add index 0
     *id_ptr = 0;
-    TensorRow row(1, sample_ids);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    (*out) = {sample_ids};
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
-    (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
-    RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, samples_per_buffer_));
+    RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, samples_per_tensor_));
     auto id_ptr = sample_ids->begin<int64_t>();
     bool flag_add_1 = false;
-    while (cnt_ < samples_per_buffer_ && id_ptr != sample_ids->end<int64_t>()) {
+    while (cnt_ < samples_per_tensor_ && id_ptr != sample_ids->end<int64_t>()) {
       int64_t middle_value = num_devices_ * cnt_ + device_id_ - offset_;
       // if index < 0, we move back one place
       if (middle_value < 0) {
-        samples_per_buffer_++;
+        samples_per_tensor_++;
         cnt_++;
         flag_add_1 = true;
         middle_value = num_devices_ * cnt_ + device_id_ - offset_;
@@ -145,17 +141,16 @@ Status DistributedSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buff
 
     // If 1 was added before, we will cut off 1 here
     if (flag_add_1) {
-      samples_per_buffer_--;
+      samples_per_tensor_--;
       cnt_--;
     }
-    TensorRow row(1, sample_ids);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    (*out) = {sample_ids};
   }
   return Status::OK();
 }
 
 Status DistributedSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_buffer_, "ERROR Reset() called early/late");
+  CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_tensor_, "ERROR Reset() called early/late");
   cnt_ = 0;
 
   if (shuffle_ == true) {

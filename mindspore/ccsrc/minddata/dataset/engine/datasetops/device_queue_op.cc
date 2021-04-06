@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"

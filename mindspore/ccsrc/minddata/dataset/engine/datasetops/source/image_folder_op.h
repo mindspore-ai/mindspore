@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"

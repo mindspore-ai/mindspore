@@ -39,8 +39,8 @@ Status SubsetSamplerRT::InitSampler() {
     num_samples_ = static_cast<int64_t>(indices_.size());
   }
 
-  if (samples_per_buffer_ > num_samples_) {
-    samples_per_buffer_ = num_samples_;
+  if (samples_per_tensor_ > num_samples_) {
+    samples_per_tensor_ = num_samples_;
   }
 
   is_initialized = true;
@@ -61,19 +61,18 @@ Status SubsetSamplerRT::ResetSampler() {
 }
 
 // Get the sample ids.
-Status SubsetSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status SubsetSamplerRT::GetNextSample(TensorRow *out) {
   // All samples have been drawn
   if (sample_id_ == num_samples_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
+    (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
     }
 
-    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
-    int64_t last_id = sample_id_ + samples_per_buffer_;
+    int64_t last_id = sample_id_ + samples_per_tensor_;
     // Handling the return all samples at once, and when last draw is not a full batch.
     if (last_id > num_samples_) {
       last_id = num_samples_;
@@ -101,8 +100,7 @@ Status SubsetSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
       sample_id_++;
     }
 
-    // Create a TensorTable from that single tensor and push into DataBuffer
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
+    (*out) = {outputIds};
   }
 
   return Status::OK();

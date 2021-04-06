@@ -30,13 +30,11 @@ MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared
 // Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
 Status MappableLeafOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
+  TensorRow sample_row;
+  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
   int64_t row_cnt = 0;
   while (true) {  // each iteration is 1 epoch, breaks when IsLastIteration() is true
-    while (sampler_buffer->eoe() == false) {
-      TensorRow sample_row;
-      RETURN_IF_NOT_OK(sampler_buffer->PopRow(&sample_row));
+    while (sample_row.eoe() == false) {
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
         if ((*itr) >= num_rows_) {
@@ -46,7 +44,7 @@ Status MappableLeafOp::operator()() {
         RETURN_IF_NOT_OK(
           io_block_queues_[row_cnt++ % num_workers_]->Add(std::make_unique<IOBlock>(*itr, IOBlock::kDeIoBlockNone)));
       }
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     }
     if (IsLastIteration()) {
       std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
@@ -71,7 +69,7 @@ Status MappableLeafOp::operator()() {
     // If not the last repeat, self-reset and go to loop again.
     if (!IsLastIteration()) {
       RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
+      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     }
     UpdateRepeatAndEpochCounter();
   }
@@ -90,7 +88,7 @@ Status MappableLeafOp::InitSampler() {
   return Status::OK();
 }
 
-// contains the main logic of pulling a IOBlock from IOBlockQueue, load a buffer and push the buffer to out_connector_
+// contains the main logic of pulling a IOBlock from IOBlockQueue, load a row and push the row to out_connector_
 // IMPORTANT: 1 IOBlock produces 1 row
 Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();

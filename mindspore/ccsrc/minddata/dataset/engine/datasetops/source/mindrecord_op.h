@@ -42,7 +42,6 @@ namespace dataset {
 // Forward declares
 template <typename T>
 class Queue;
-class DataBuffer;
 
 using mindrecord::ShardOperator;
 using mindrecord::ShardReader;

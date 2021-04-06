@@ -95,7 +95,7 @@ void CacheLookupOp::SamplerPrint(std::ostream &out, bool show_all) const {
     // Then add our own info if any
   }
 }
-Status CacheLookupOp::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status CacheLookupOp::GetNextSample(TensorRow *out) {
   std::vector<row_id_type> cache_miss;
   RETURN_IF_NOT_OK(keys_miss_->Pop(0, &cache_miss));
   // Ignore the case we have no cache miss, we can't return empty samples.
@@ -104,19 +104,16 @@ Status CacheLookupOp::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   }
   // Special code for eoe
   if (cache_miss.at(0) == eoe_row_id) {
-    *out_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    *out = std::move(TensorRow(TensorRow::kFlagEOE));
   } else {
     std::shared_ptr<Tensor> sample_ts;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ts, cache_miss.size()));
-    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagNone);
     auto idPtr = sample_ts->begin<int64_t>();
     for (auto i = 0; i < cache_miss.size(); ++i) {
       *idPtr = cache_miss.at(i);
       ++idPtr;
     }
-    TensorRow row;
-    row.push_back(sample_ts);
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
+    *out = {sample_ts};
   }
   return Status::OK();
 }

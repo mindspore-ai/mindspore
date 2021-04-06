@@ -34,7 +34,6 @@
 
 namespace mindspore {
 namespace dataset {
-class DataBuffer;
 
 using PadInfo = std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>>;
 

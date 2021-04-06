@@ -36,7 +36,7 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
 SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_buffer)
     : num_rows_(0),
       num_samples_(num_samples),
-      samples_per_buffer_(samples_per_buffer),
+      samples_per_tensor_(samples_per_buffer),
       col_desc_(nullptr),
       is_initialized(false) {}
 
@@ -91,22 +91,19 @@ void SamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
 
 #ifdef ENABLE_PYTHON
 Status SamplerRT::GetAllIdsThenReset(py::array *data) {
-  std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> sample_ids;
   TensorRow sample_row;
 
-  // A call to derived class to get sample ids wrapped inside a buffer
-  RETURN_IF_NOT_OK(GetNextSample(&db));
-  // Get the only tensor inside the buffer that contains the actual SampleIds for the entire epoch
-  RETURN_IF_NOT_OK(db->GetRow(0, &sample_row));
+  // Get the only tensor inside the row that contains the actual SampleIds for the entire epoch
+  RETURN_IF_NOT_OK(GetNextSample(&sample_row));
   sample_ids = sample_row[0];
 
   // check this buffer is not a ctrl buffer
-  CHECK_FAIL_RETURN_UNEXPECTED(db->buffer_flags() == DataBuffer::kDeBFlagNone, "ERROR ctrl buffer received");
+  CHECK_FAIL_RETURN_UNEXPECTED(sample_row.Flags() == TensorRow::kFlagNone, "ERROR ctrl row received");
 
   // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
-  RETURN_IF_NOT_OK(GetNextSample(&db));
-  CHECK_FAIL_RETURN_UNEXPECTED(db->eoe(), "ERROR Non EOE received");
+  RETURN_IF_NOT_OK(GetNextSample(&sample_row));
+  CHECK_FAIL_RETURN_UNEXPECTED(sample_row.eoe(), "ERROR Non EOE received");
   // Reset Sampler since this is the end of the epoch
   RETURN_IF_NOT_OK(ResetSampler());
 
@@ -178,13 +175,11 @@ Status SamplerRT::AddChild(std::shared_ptr<SamplerRT> child) {
 bool SamplerRT::HasChildSampler() { return !child_.empty(); }
 
 Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
-  if (child_ids_ == nullptr) {
+  if (child_ids_.empty()) {
     RETURN_STATUS_UNEXPECTED("Trying to get associated child id, but there are no child ids!");
   }
 
-  TensorRow sample_row;
-  RETURN_IF_NOT_OK(child_ids_->GetRow(0, &sample_row));
-  std::shared_ptr<Tensor> sample_ids = sample_row[0];
+  std::shared_ptr<Tensor> sample_ids = child_ids_[0];
   RETURN_IF_NOT_OK(sample_ids->GetItemAt<int64_t>(out_associated_id, {id}));
   return Status::OK();
 }

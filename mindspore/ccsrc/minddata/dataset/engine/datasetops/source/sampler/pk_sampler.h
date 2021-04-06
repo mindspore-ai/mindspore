@@ -41,7 +41,7 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
   // @param std::unique_ptr<DataBuffer pBuffer
   // @param int32_t workerId
   // @return Status The status code returned
-  Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
+  Status GetNextSample(TensorRow *out) override;
 
   // first handshake between leaf source op and Sampler. This func will determine the amount of data
   // in the dataset that we can sample from.

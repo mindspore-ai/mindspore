@@ -16,7 +16,7 @@
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
 #include <iomanip>
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/engine/data_buffer.h"
+
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/task_manager.h"
 
@@ -219,12 +219,10 @@ Status GeneratorOp::operator()() {
     if (eoe) {
       // Push out EOE upon StopIteration exception from generator
       MS_LOG(DEBUG) << "Generator operator sends out EOE.";
-      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->SendEOE());
       if (IsLastIteration()) {
         // If last repeat or not repeated, push out EOF and exit master loop
         MS_LOG(DEBUG) << "Generator operator sends out EOF.";
-        std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
         RETURN_IF_NOT_OK(out_connector_->SendEOF());
         MS_LOG(DEBUG) << "Generator operator main execution loop complete.";
         eof = true;

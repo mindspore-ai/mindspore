@@ -760,11 +760,11 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id="1", size=0)
-    assert "Argument session_id with value 1 is not of type (<class 'int'>,)" in str(info.value)
+    assert "Argument session_id with value 1 is not of type [<class 'int'>]" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=None, size=0)
-    assert "Argument session_id with value None is not of type (<class 'int'>,)" in str(info.value)
+    assert "Argument session_id with value None is not of type [<class 'int'>]" in str(info.value)
 
     with pytest.raises(ValueError) as info:
         ds.DatasetCache(session_id=1, size=-1)
@@ -772,19 +772,19 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size="1")
-    assert "Argument size with value 1 is not of type (<class 'int'>,)" in str(info.value)
+    assert "Argument size with value 1 is not of type [<class 'int'>]" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=None)
-    assert "Argument size with value None is not of type (<class 'int'>,)" in str(info.value)
+    assert "Argument size with value None is not of type [<class 'int'>]" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, spilling="illegal")
-    assert "Argument spilling with value illegal is not of type (<class 'bool'>,)" in str(info.value)
+    assert "Argument spilling with value illegal is not of type [<class 'bool'>]" in str(info.value)
 
     with pytest.raises(TypeError) as err:
         ds.DatasetCache(session_id=1, size=0, hostname=50052)
-    assert "Argument hostname with value 50052 is not of type (<class 'str'>,)" in str(err.value)
+    assert "Argument hostname with value 50052 is not of type [<class 'str'>]" in str(err.value)
 
     with pytest.raises(RuntimeError) as err:
         ds.DatasetCache(session_id=1, size=0, hostname="illegal")
@@ -796,11 +796,11 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, port="illegal")
-    assert "Argument port with value illegal is not of type (<class 'int'>,)" in str(info.value)
+    assert "Argument port with value illegal is not of type [<class 'int'>]" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, port="50052")
-    assert "Argument port with value 50052 is not of type (<class 'int'>,)" in str(info.value)
+    assert "Argument port with value 50052 is not of type [<class 'int'>]" in str(info.value)
 
     with pytest.raises(ValueError) as err:
         ds.DatasetCache(session_id=1, size=0, port=0)

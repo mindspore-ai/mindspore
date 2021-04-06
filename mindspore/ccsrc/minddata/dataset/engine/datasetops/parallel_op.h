@@ -30,8 +30,6 @@ namespace dataset {
 constexpr int32_t kEndOfActions = -1;
 
 // Forward declares
-class DataBuffer;
-
 class DbConnector;
 
 // A ParallelOp provides a multi-threaded DatasetOp
