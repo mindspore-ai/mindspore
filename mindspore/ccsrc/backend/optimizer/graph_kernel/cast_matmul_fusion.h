@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_OPTIMIZE_MATMUL_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_OPTIMIZE_MATMUL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CAST_MATMUL_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CAST_MATMUL_FUSION_H_
 
 #include <map>
 #include <memory>
@@ -24,13 +24,13 @@
 
 namespace mindspore {
 namespace opt {
-class OptimizeMatmul : public Pass {
+class CastMatmulFusion : public Pass {
  public:
-  OptimizeMatmul() : Pass("optimize_matmul") {}
-  ~OptimizeMatmul() override = default;
+  CastMatmulFusion() : Pass("cast_matmul_fusion") {}
+  ~CastMatmulFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };
-using OptimizeMatmulPtr = std::shared_ptr<OptimizeMatmul>;
+using OptimizeMatmulPtr = std::shared_ptr<CastMatmulFusion>;
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_OPTIMIZE_MATMUL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CAST_MATMUL_FUSION_H_

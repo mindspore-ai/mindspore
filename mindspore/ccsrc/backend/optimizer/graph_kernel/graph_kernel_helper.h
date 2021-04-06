@@ -73,6 +73,7 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNo
 std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &prefix = "", const string &postfix = "");
 std::vector<PrimitivePtr> GetFusibleOpList();
 bool IsBasicFuseOp(const AnfNodePtr &node);
+bool IsFusibleOp(const AnfNodePtr &node);
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 void InitDependPrior(const std::vector<AnfNodePtr> &todos,
                      std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior);
