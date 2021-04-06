@@ -121,11 +121,8 @@ int SpaceToBatchNdInferShape(const TensorC *const *inputs, size_t inputs_size, T
     }
   }
   if (inputs_size == 3) {
-    if (inputs[0]->data_ == NULL) {
-      return NNACL_INFER_INVALID;
-    }
     if (inputs[1]->data_ == NULL || inputs[2]->data_ == NULL) {
-      return NNACL_ERR;
+      return NNACL_INFER_INVALID;
     }
     int ret = SpaceSetOutputShapeFromInput(inputs, inputs_size, outputs, outputs_size, parameter);
     if (ret != NNACL_OK) {
