@@ -172,18 +172,11 @@ std::optional<std::string> Common::GetEnvConfigFile() {
   return config_file;
 }
 
-bool Common::IsStrLengthValid(const std::string &str, const int &length_limit, const std::string &error_message,
-                              const bool &print_str) {
+bool Common::IsStrLengthValid(const std::string &str, const int &length_limit, const std::string &error_message) {
   const int len_str = str.length();
   if (len_str > length_limit) {
-    std::ostringstream msg;
-    if (print_str) {
-      msg << error_message << "The string is " << str << ", its length is " << str.length();
-    } else {
-      msg << error_message << "The length is " << str.length();
-    }
-    msg << ", exceeding the limit of " << length_limit << ".";
-    MS_LOG(WARNING) << msg.str();
+    MS_LOG(WARNING) << error_message << "The length is " << str.length() << ", exceeding the limit of " << length_limit
+                    << ".";
     return false;
   }
   return true;
@@ -191,6 +184,10 @@ bool Common::IsStrLengthValid(const std::string &str, const int &length_limit, c
 
 bool Common::IsEveryFilenameValid(const std::string &path, const int &length_limit, const std::string &error_message) {
   int left_pos = 0;
+  if (path.empty()) {
+    MS_LOG(WARNING) << error_message << "The path is empty.";
+    return false;
+  }
   int len_path = path.length();
   for (int i = 0; i < len_path; i++) {
     if (i != 0) {
@@ -216,8 +213,7 @@ bool Common::IsEveryFilenameValid(const std::string &path, const int &length_lim
   return true;
 }
 
-bool Common::IsPathValid(const std::string &path, const int &length_limit, const std::string &error_message,
-                         const bool &print_str) {
+bool Common::IsPathValid(const std::string &path, const int &length_limit, const std::string &error_message) {
   std::string err_msg = "Detail: ";
   if (!error_message.empty()) {
     err_msg = error_message + " " + err_msg;
@@ -228,7 +224,7 @@ bool Common::IsPathValid(const std::string &path, const int &length_limit, const
     return false;
   }
 
-  if (!IsStrLengthValid(path, length_limit, err_msg, print_str)) {
+  if (!IsStrLengthValid(path, length_limit, err_msg)) {
     return false;
   }
 
