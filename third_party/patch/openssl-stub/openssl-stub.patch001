@@ -1,0 +1,39 @@
+diff -Npur openssl-OpenSSL_1_1_0l/Makefile.shared openssl-OpenSSL_1_1_0l-patch/Makefile.shared
+--- openssl-OpenSSL_1_1_0l/Makefile.shared	2019-09-10 21:16:54.000000000 +0800
++++ openssl-OpenSSL_1_1_0l-patch/Makefile.shared	2021-04-01 09:26:06.018179700 +0800
+@@ -154,7 +154,7 @@ LINK_SO_SHLIB_UNPACKED=	\
+ DETECT_GNU_LD=($(CC) -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
+ 
+ DO_GNU_SO_COMMON=\
+-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$(SHLIBNAME_FULL)'
++	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$(SHLIBNAME)'
+ DO_GNU_DSO=\
+ 	$(DO_GNU_SO_COMMON)
+ DO_GNU_SO=\
+@@ -181,7 +181,7 @@ link_app.gnu:
+ link_shlib.linux-shared:
+ 	@$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+ 	$(DO_GNU_SO); \
+-	ALLSYMSFLAGS='-Wl,--whole-archive,--version-script=$(LIBNAME).map'; \
++	ALLSYMSFLAGS='-Wl,--whole-archive'; \
+ 	$(LINK_SO_SHLIB)
+ 
+ link_dso.bsd:
+@@ -380,7 +380,7 @@ link_dso.irix:
+ 	else \
+ 		ALLSYMSFLAGS=''; \
+ 		NOALLSYMSFLAGS=''; \
+-		SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$(SHLIBNAME_FULL),-B,symbolic'; \
++		SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$(SHLIBNAME),-B,symbolic'; \
+ 	fi; \
+ 	$(LINK_SO_DSO)
+ link_shlib.irix:
+@@ -391,7 +391,7 @@ link_shlib.irix:
+ 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL='-Wl,'; \
+ 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
+ 		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
+-		SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$(SHLIBNAME_FULL),-B,symbolic'; \
++		SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$(SHLIBNAME),-B,symbolic'; \
+ 	fi; \
+ 	$(LINK_SO_SHLIB)
+ link_app.irix:

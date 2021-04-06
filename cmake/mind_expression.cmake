@@ -17,6 +17,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
 
 if(MS_BUILD_GRPC)
     # build dependencies of gRPC
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/openssl_stub.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/absl.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/c-ares.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/zlib.cmake)
