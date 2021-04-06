@@ -8,6 +8,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
@@ -20,9 +21,9 @@ echo "for example: sh run_single_train.sh 0 500 0.1 coco /opt/retinanet-500_458.
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-if [ $# != 4 ] && [ $# != 6 ]
+if [ $# != 3 ] && [ $# != 5 ]
 then
-    echo "Usage: sh run_single_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] \
+    echo "Usage: sh run_single_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] \
 [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
@@ -37,9 +38,8 @@ echo "After running the script, the network runs in the background. The log will
 export DEVICE_ID=$1
 EPOCH_SIZE=$2
 LR=$3
-DATASET=$4
-PRE_TRAINED=$5
-PRE_TRAINED_EPOCH_SIZE=$6
+PRE_TRAINED=$4
+PRE_TRAINED_EPOCH_SIZE=$5
 
 rm -rf LOG$1
 mkdir ./LOG$1
@@ -48,23 +48,21 @@ cp -r ./src ./LOG$1
 cd ./LOG$1 || exit
 echo "start training for device $1"
 env > env.log
-if [ $# == 4 ]
+if [ $# == 3 ]
 then
     python train.py  \
     --distribute=False  \
     --lr=$LR \
-    --dataset=$DATASET \
     --device_num=1  \
     --device_id=$DEVICE_ID  \
     --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
 fi
 
-if [ $# == 6 ]
+if [ $# == 5 ]
 then
     python train,py  \
     --distribute=False  \
     --lr=$LR \
-    --dataset=$DATASET \
     --device_num=1  \
     --device_id=$DEVICE_ID  \
     --pre_trained=$PRE_TRAINED \
