@@ -81,13 +81,9 @@ const AnfNodePtr AddTrainingAttr::Process(const FuncGraphPtr &func_graph, const 
   if (iter == MarkOp.end()) {
     return nullptr;
   }
-  if (AnfAlgo::IsGraphKernel(node)) {
-    return nullptr;
-  } else {
-    auto cnode = node->cast<CNodePtr>();
-    AddAttrTraining(func_graph, cnode);
-    return cnode;
-  }
+  auto cnode = node->cast<CNodePtr>();
+  AddAttrTraining(func_graph, cnode);
+  return cnode;
 }
 }  // namespace opt
 }  // namespace mindspore

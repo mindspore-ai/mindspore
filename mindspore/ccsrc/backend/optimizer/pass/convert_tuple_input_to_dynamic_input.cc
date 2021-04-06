@@ -95,15 +95,6 @@ const AnfNodePtr ConvertTupleInputToDynamicInput::Process(const FuncGraphPtr &fu
   if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsRealKernel(node)) {
     return nullptr;
   }
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    MS_EXCEPTION_IF_NULL(sub_graph);
-    std::vector<AnfNodePtr> todos;
-    kernel::GetValidKernelNodes(sub_graph, &todos);
-    for (auto &t : todos) {
-      ConvertMakeTupleInputToPlantInputs(sub_graph, t->cast<CNodePtr>());
-    }
-  }
   ConvertMakeTupleInputToPlantInputs(func_graph, node->cast<CNodePtr>());
   return node;
 }

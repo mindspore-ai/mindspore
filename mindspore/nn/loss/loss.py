@@ -21,7 +21,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import nn
 from mindspore.ops.primitive import constexpr
-from mindspore.ops import _selected_ops
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore._checkparam import Validator as validator
@@ -48,7 +47,7 @@ class _Loss(Cell):
         if reduction == 'none':
             self.reduce = False
 
-        self.reduce_mean = _selected_ops.ReduceMean()
+        self.reduce_mean = P.ReduceMean()
         self.reduce_sum = P.ReduceSum()
         self.mul = P.Mul()
         self.cast = P.Cast()
@@ -381,7 +380,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
         self.sparse = validator.check_bool(sparse, "sparse")
         self.reduction = reduction
-        self.softmax_cross_entropy = _selected_ops.SoftmaxCrossEntropyWithLogits()
+        self.softmax_cross_entropy = P.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0., mstype.float32)

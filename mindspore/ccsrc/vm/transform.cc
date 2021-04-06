@@ -510,7 +510,7 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(prim_graph);
   FuncGraphSet graphs = prim_graph->manager()->func_graphs();
   for (auto g : graphs) {
-    if (g != graph && g != nullptr && !(g->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL))) {
+    if (g != graph && g != nullptr) {
       Compile(g);
     }
   }
@@ -542,7 +542,7 @@ uint32_t GraphCompiler::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Compile sub graphs.
   FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
-    if (sub_graph != func_graph && sub_graph != nullptr && !(sub_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL))) {
+    if (sub_graph != func_graph && sub_graph != nullptr) {
       (void)CompileGraph(sub_graph);
     }
   }

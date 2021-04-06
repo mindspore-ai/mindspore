@@ -170,26 +170,6 @@ const AnfNodePtr EliminateRedundantOp::Process(const FuncGraphPtr &func_graph, c
   if (cnode == nullptr || func_graph == nullptr) {
     return nullptr;
   }
-
-  if (AnfAlgo::IsGraphKernel(node)) {
-    // do eliminate for ops in graph kernel.
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    MS_EXCEPTION_IF_NULL(sub_graph);
-    auto mng = sub_graph->manager();
-    MS_EXCEPTION_IF_NULL(mng);
-    std::vector<AnfNodePtr> todo;
-    kernel::GetValidKernelNodes(sub_graph, &todo);
-    for (auto &t : todo) {
-      CNodePtr t_cnode = t->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(t_cnode);
-      auto t_new_node = DoEliminate(sub_graph, t_cnode);
-      if (t_new_node != nullptr && t_new_node != t) {
-        (void)mng->Replace(t, t_new_node);
-      }
-    }
-    return node;
-  }
-  // do eliminate for single op.
   return DoEliminate(func_graph, cnode);
 }
 }  // namespace opt

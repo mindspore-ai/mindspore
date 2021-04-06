@@ -15,7 +15,6 @@
 
 """Define the grad rules of neural network related operations."""
 import os
-from mindspore.ops import _selected_grad_ops as SG
 from mindspore.ops.primitive import constexpr
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import nn_ops as nps
@@ -34,7 +33,7 @@ env_force_bprop_seq = os.getenv("ENV_FORCE_BPROP_SEQ")
 @bprop_getters.register(P.BiasAdd)
 def get_bprop_bias_add(self):
     """Grad definition for `BiasAdd` operation."""
-    bias_grad = SG.BiasAddGrad(self.data_format)
+    bias_grad = G.BiasAddGrad(self.data_format)
 
     def bprop(x, w, out, dout):
         return dout, bias_grad(dout)
@@ -341,7 +340,7 @@ def get_bprop_dropout_do_mask(self):
 def get_bprop_mish(self):
     """Grad definition for `Mish` operation."""
     tanh = P.Tanh()
-    tanh_grad = SG.TanhGrad()
+    tanh_grad = G.TanhGrad()
     softplus = P.Softplus()
     softplus_grad = G.SoftplusGrad()
 
@@ -580,7 +579,7 @@ def get_bprop_softsign(self):
 @bprop_getters.register(P.Tanh)
 def get_bprop_tanh(self):
     """Grad definition for `Tanh` operation."""
-    tanh_grad = SG.TanhGrad()
+    tanh_grad = G.TanhGrad()
 
     def bprop(x, out, dout):
         dx = tanh_grad(out, dout)

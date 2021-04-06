@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <list>
 #include <memory>
+#include <vector>
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/ascend/ir_fission/dynamic_rnn_grad_fission_v2.h"
@@ -110,8 +111,6 @@
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_infer_fission.h"
 #include "backend/optimizer/ascend/ir_fission/split_fission.h"
 #include "backend/optimizer/ascend/ir_fission/splitv_fission.h"
-#include "backend/optimizer/ascend/format_type/modify_ops_attrs.h"
-#include "backend/optimizer/ascend/format_type/remove_no_use_reshape_op.h"
 #include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
 #include "backend/optimizer/ascend/format_type/remove_internal_output.h"
 #include "backend/optimizer/ascend/ir_fission/concat_fission.h"
@@ -199,19 +198,6 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
 }
 }  // namespace
-void AscendGraphKernelCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  MS_EXCEPTION_IF_NULL(optimizer);
-  auto common_process = std::make_shared<PassManager>("graph_kernel_common_process");
-  MS_EXCEPTION_IF_NULL(common_process);
-  common_process->AddPass(std::make_shared<ModifyOpAttrs>());
-  common_process->AddPass(std::make_shared<RemoveNoUseReshapeOp>());
-  optimizer->AddPassManager(common_process);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-}
-
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();

@@ -602,12 +602,6 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
       MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
     }
     AnfNodePtr fn = inputs[0];
-    if (IsValueNode<FuncGraph>(fn)) {
-      auto fg = GetValueNode<FuncGraphPtr>(fn);
-      if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-        return false;
-      }
-    }
     if (!IsValueNode<Primitive>(fn)) {
       return true;
     }

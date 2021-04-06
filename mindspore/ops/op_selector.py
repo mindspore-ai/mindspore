@@ -20,6 +20,7 @@ which can be used to control the switch of op type: GraphKernel or Primitive.
 import importlib
 import inspect
 from mindspore import context
+from mindspore.common._decorator import deprecated
 
 
 class _OpSelector:
@@ -70,6 +71,7 @@ class _OpSelector:
         return op(*args, **kwargs)
 
 
+@deprecated("1.3", "basic Primitive", False)
 def new_ops_selector(primitive_pkg, graph_kernel_pkg):
     """
     A factory method to return an op selector
@@ -82,6 +84,8 @@ def new_ops_selector(primitive_pkg, graph_kernel_pkg):
         (3). default op type is PRIMITIVE
         The order of the highest priority to lowest priority is (1), (2), (3)
     If the GraphKernel switch is off, then op_type will always be PRIMITIVE.
+
+    The user-defined GraphKernel Cell is deprecated, this interface will be removed in a future version.
 
     Args:
         primitive_pkg (str): primitive op's package name

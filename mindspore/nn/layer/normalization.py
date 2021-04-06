@@ -30,7 +30,6 @@ from mindspore._checkparam import Validator as validator
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
-from mindspore.ops import _selected_ops
 from mindspore.common import dtype as mstype
 from ..cell import Cell
 
@@ -837,9 +836,9 @@ class LayerNorm(Cell):
             gamma_init, normalized_shape), name="gamma")
         self.beta = Parameter(initializer(
             beta_init, normalized_shape), name="beta")
-        self.layer_norm = _selected_ops.LayerNorm(begin_norm_axis=self.begin_norm_axis,
-                                                  begin_params_axis=self.begin_params_axis,
-                                                  epsilon=self.epsilon)
+        self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis,
+                                      begin_params_axis=self.begin_params_axis,
+                                      epsilon=self.epsilon)
 
     def construct(self, input_x):
         y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)

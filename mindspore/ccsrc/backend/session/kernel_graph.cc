@@ -433,7 +433,9 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   auto cnode = FuncGraph::NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
   cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
-  CreateKernelInfoFromNewParameter(cnode);
+  if (AnfAlgo::IsGraphKernel(cnode)) {
+    CreateKernelInfoFromNewParameter(cnode);
+  }
   if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimCast->name()) {
     AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
   }
@@ -443,9 +445,6 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
 }
 
 void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
-  if (!AnfAlgo::IsGraphKernel(cnode)) {
-    return;
-  }
   auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
   MS_EXCEPTION_IF_NULL(func_graph);
 

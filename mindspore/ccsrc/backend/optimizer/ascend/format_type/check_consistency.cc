@@ -78,21 +78,12 @@ const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePt
     return nullptr;
   }
 
-  std::vector<AnfNodePtr> todos = {node};
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    MS_EXCEPTION_IF_NULL(sub_graph);
-    kernel::GetValidKernelNodes(sub_graph, &todos);
-  }
-
-  for (auto &t : todos) {
-    CNodePtr cnode = t->cast<CNodePtr>();
-    size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
-    for (size_t i = 0; i < in_num; ++i) {
-      if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
-        MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << AnfAlgo::GetCNodeName(cnode) << "["
-                          << cnode->DebugString() << "]";
-      }
+  CNodePtr cnode = node->cast<CNodePtr>();
+  size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < in_num; ++i) {
+    if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
+      MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << AnfAlgo::GetCNodeName(cnode) << "["
+                        << cnode->DebugString() << "]";
     }
   }
   return nullptr;
