@@ -135,17 +135,17 @@ LoopRow:
         vsub.s32 d31, d31, d23
 
         vmov.32 lr, d4[1]
-        vld1.32 {q9[]}, [lr]
+        vld1.32 {d18[], d19[]}, [lr]
         vshl.s32 q14, q14, q9
         vshl.s32 q15, q15, q9
 
         vmov.32 lr, d5[0]
-        vld1.32 {q8[]}, [lr]
+        vld1.32 {d16[], d17[]}, [lr]
         vqrdmulh.s32 q14, q14, q8
         vqrdmulh.s32 q15, q15, q8
 
         vmov.32 lr, d5[1]
-        vld1.32 {q7[]}, [lr]
+        vld1.32 {d14[], d15[]}, [lr]
         vand q6, q7, q14
         vshr.s32 q6, q6, #31
         vqadd.s32 q14, q14, q6

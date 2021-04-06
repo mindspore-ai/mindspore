@@ -491,51 +491,51 @@ LoopRow4:
         Write4:
             add lr, r2, #16
             str lr, [sp, #-40]
-            vst1.32 q4, [r2]
+            vst1.32 {d8, d9}, [r2]
             cmp r6, #1
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q5, [r2]
+            vst1.32 {d10, d11}, [r2]
             cmp r6, #2
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q6, [r2]
+            vst1.32 {d12, d13}, [r2]
             cmp r6, #3
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q7, [r2]
+            vst1.32 {d14, d15}, [r2]
             cmp r6, #4
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q8, [r2]
+            vst1.32 {d16, d17}, [r2]
             cmp r6, #5
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q9, [r2]
+            vst1.32 {d18, d19}, [r2]
             cmp r6, #6
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q10, [r2]
+            vst1.32 {d20, d21}, [r2]
             cmp r6, #7
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q11, [r2]
+            vst1.32 {d22, d23}, [r2]
             cmp r6, #8
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q12, [r2]
+            vst1.32 {d24, d25}, [r2]
             cmp r6, #9
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q13, [r2]
+            vst1.32 {d26, d27}, [r2]
             cmp r6, #10
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q14, [r2]
+            vst1.32 {d28, d29}, [r2]
             cmp r6, #11
             beq WriteEnd
             add r2, r2, r8
-            vst1.32 q15, [r2]       
+            vst1.32 {d30, d31}, [r2]
             add r2, r2, r8
             add r2, r2, #16
             b WriteEnd
