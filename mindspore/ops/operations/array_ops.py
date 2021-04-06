@@ -5298,9 +5298,6 @@ class Range(PrimitiveWithCheck):
         >>> output = ops.Range()(start, limit, delta)
         >>> print(output)
         [0, 4, 8]
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
     """
 
     @prim_attr_register

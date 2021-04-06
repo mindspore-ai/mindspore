@@ -505,10 +505,10 @@ class Conv3d(_Conv):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and the width
-            of the kernel. A tuple of 3 ints means the first value is for the depth, second value is for height
-            and the other is for the width of the kernel.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
+            and width of the 3D convolution window. Single int means the value is for the depth, height and the width of
+            the kernel. A tuple of 3 ints means the first value is for the depth, second value is for height and the
+            other is for the width of the kernel.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
@@ -531,7 +531,7 @@ class Conv3d(_Conv):
         padding (Union(int, tuple[int])): Implicit paddings on both sides of the input.
             The data type is int or a tuple of 6 integers. Default: 0. If `padding` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to padding.
-            If `paddings` is a tuple of three integers, the padding of head, tail, top, bottom, left and right equal to
+            If `paddings` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
             padding[0], padding[1], padding[2], padding[3], padding[4] and padding[5] correspondingly.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
             : math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
@@ -561,7 +561,7 @@ class Conv3d(_Conv):
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple of three.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple of six.
         ValueError: If `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
