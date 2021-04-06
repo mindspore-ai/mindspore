@@ -212,6 +212,7 @@ void ConvDwBorder(float *dst, const float *src, const float *weight, const float
       param->relu = relu;
       param->relu6 = relu6;
       ConvDwFp32Border(param);
+      free(param);
 #elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
       ConvDwFp32Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
                        sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
