@@ -59,7 +59,6 @@ class MTensor : public mindspore::tensor::MSTensor {
   void *data_ = nullptr;
   Vector<QuantArg> quant_params_;
 };
-
 }  // namespace lite
 }  // namespace mindspore
 
