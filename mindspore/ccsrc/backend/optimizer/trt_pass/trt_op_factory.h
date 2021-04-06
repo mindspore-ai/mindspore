@@ -29,9 +29,9 @@
 namespace mindspore {
 namespace opt {
 class LayerInput;
-class TrtConverterHelper;
+class TrtConverterContext;
 using ConvertResult = std::pair<bool, std::vector<LayerInput>>;
-using ConvertFunc = std::function<ConvertResult(AnfNodePtr, std::shared_ptr<TrtConverterHelper>)>;
+using ConvertFunc = std::function<ConvertResult(AnfNodePtr, std::shared_ptr<TrtConverterContext>)>;
 
 class TrtOpFactory {
  public:
@@ -69,10 +69,10 @@ class TrtOpRegister {
 };
 
 // Register operator converter from AnfNode to trt layer: `OPNAME` should keep the same as primitive definition.
-#define MS_TRT_CONVERTER_FUNC_REG(OPNAME)                                                                \
-  ConvertResult Gpu##OPNAME##TrtConverter(AnfNodePtr node, std::shared_ptr<TrtConverterHelper> context); \
-  static const TrtOpRegister(Gpu##OPNAME##ConverterRegister)(#OPNAME, Gpu##OPNAME##TrtConverter);        \
-  ConvertResult Gpu##OPNAME##TrtConverter(AnfNodePtr node, std::shared_ptr<TrtConverterHelper> context)
+#define MS_TRT_CONVERTER_FUNC_REG(OPNAME)                                                                 \
+  ConvertResult Gpu##OPNAME##TrtConverter(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context); \
+  static const TrtOpRegister(Gpu##OPNAME##ConverterRegister)(#OPNAME, Gpu##OPNAME##TrtConverter);         \
+  ConvertResult Gpu##OPNAME##TrtConverter(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context)
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTITIMIZER_TRT_PASS_OP_FACTORY_H_

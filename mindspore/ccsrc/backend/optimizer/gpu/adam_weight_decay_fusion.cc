@@ -50,6 +50,34 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   builder.SetOutputsFormat(outputs_format);
   return builder.Build();
 }
+
+AnfNodePtr ReplaceOutputEdge(const AnfNodePtr &node, CNodePtr adam_weight_decay, AnfNodePtr u_input) {
+  // Replace the parameters of the last UpdateState to maintain
+  // the execution order of FusedAdamWeightDecay and the following operators.
+  // n represents the operator assign_v in {prim::kPrimDepend, next_param, assign_v}
+  const auto &n = node->cast<CNodePtr>()->input(2);
+  MS_EXCEPTION_IF_NULL(n);
+  const auto &fg = n->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto mgr = fg->manager();
+  MS_EXCEPTION_IF_NULL(mgr);
+  auto &node_users = mgr->node_users();
+  auto iter = node_users.find(n);
+  if (iter == node_users.end()) {
+    MS_LOG(EXCEPTION) << "Can not find node : " << n->DebugString();
+  }
+
+  auto &users = iter->second;
+  for (auto &user : users) {
+    if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
+      (user.first)->cast<CNodePtr>()->set_input(1, u_input);
+      (user.first)->cast<CNodePtr>()->set_input(2, adam_weight_decay);
+      break;
+    }
+  }
+
+  return adam_weight_decay;
+}
 }  // namespace
 
 const BaseRef AdamWeightDecayFusion::DefinePattern() const {
@@ -122,18 +150,10 @@ const AnfNodePtr AdamWeightDecayFusion::Process(const FuncGraphPtr &graph, const
   // Fused into a FusedAdamWeightDecay operator.
   auto prim = std::make_shared<Primitive>(kFusedAdamWeightDecayName);
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim),
-                                    beta1_input,
-                                    one_sub_beta1_input,
-                                    beta2_input,
-                                    one_sub_beta2_input,
-                                    eps_input,
-                                    lr_input,
-                                    param,
-                                    m_input,
-                                    v_input,
-                                    gradient_input,
-                                    weight_decay_input};
+  auto prim_value = NewValueNode(prim);
+  std::vector<AnfNodePtr> inputs = {
+    prim_value, beta1_input, one_sub_beta1_input, beta2_input,       one_sub_beta2_input, eps_input, lr_input, param,
+    m_input,    v_input,     gradient_input,      weight_decay_input};
   auto adam_weight_decay = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(adam_weight_decay);
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
@@ -143,31 +163,7 @@ const AnfNodePtr AdamWeightDecayFusion::Process(const FuncGraphPtr &graph, const
 
   auto build_info = GenerateKernelBuildInfo(adam_weight_decay);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, adam_weight_decay.get());
-
-  // Replace the parameters of the last UpdateState to maintain
-  // the execution order of FusedAdamWeightDecay and the following operators.
-  // n represents the operator assign_v in {prim::kPrimDepend, next_param, assign_v}
-  auto n = node->cast<CNodePtr>()->input(2);
-  auto fg = n->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
-  auto mgr = fg->manager();
-  MS_EXCEPTION_IF_NULL(mgr);
-  auto &node_users = mgr->node_users();
-  auto iter = node_users.find(n);
-  if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "Can not find node : " << n->DebugString();
-  }
-
-  auto &users = iter->second;
-  for (auto &user : users) {
-    if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
-      (user.first)->cast<CNodePtr>()->set_input(1, u_input);
-      (user.first)->cast<CNodePtr>()->set_input(2, adam_weight_decay);
-      break;
-    }
-  }
-
-  return adam_weight_decay;
+  return ReplaceOutputEdge(node, adam_weight_decay, u_input);
 }
 }  // namespace opt
 }  // namespace mindspore
