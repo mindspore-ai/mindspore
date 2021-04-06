@@ -362,8 +362,7 @@ def construct_tensor_ops(operations):
 
         if hasattr(op_module_vis, op_name):
             op_class = getattr(op_module_vis, op_name, None)
-        elif hasattr(op_module_trans, op_name[:-2]):
-            op_name = op_name[:-2]  # to remove op from the back of the name
+        elif hasattr(op_module_trans, op_name):
             op_class = getattr(op_module_trans, op_name, None)
         else:
             raise RuntimeError(op_name + " is not yet supported by deserialize().")

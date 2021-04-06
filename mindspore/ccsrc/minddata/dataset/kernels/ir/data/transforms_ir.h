@@ -81,8 +81,10 @@ class OneHotOperation : public TensorOperation {
 
   std::string Name() const override { return kOneHotOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
-  float num_classes_;
+  int32_t num_classes_;
 };
 
 class PreBuiltOperation : public TensorOperation {
@@ -146,6 +148,8 @@ class TypeCastOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kTypeCastOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::string data_type_;

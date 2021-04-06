@@ -64,7 +64,7 @@ std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<Du
 // Constructor to OneHot
 struct OneHot::Data {
   explicit Data(int32_t num_classes) : num_classes_(num_classes) {}
-  float num_classes_;
+  int32_t num_classes_;
 };
 
 OneHot::OneHot(int32_t num_classes) : data_(std::make_shared<Data>(num_classes)) {}
