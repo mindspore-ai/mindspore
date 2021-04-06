@@ -139,7 +139,11 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   std::fstream input_graph(abs_path_buff, std::ios::in | std::ios::binary);
   mind_ir::ModelProto origin_model;
 
-  if (!input_graph || !origin_model.ParseFromIstream(&input_graph)) {
+  if (!input_graph) {
+    MS_LOG(ERROR) << "Failed to open file: " << file_name;
+    return nullptr;
+  }
+  if (!origin_model.ParseFromIstream(&input_graph)) {
     MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
     return nullptr;
   }

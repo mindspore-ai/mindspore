@@ -836,6 +836,15 @@ std::vector<ActionItem> VmPipeline() {
   return actions;
 }
 
+std::vector<ActionItem> BackendPipeline() {
+  std::vector<ActionItem> actions;
+  // compile the ANF graph
+  actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+  // to execute the graph
+  actions.emplace_back(std::make_pair("execute", ExecuteAction));
+  return actions;
+}
+
 #if (ENABLE_CPU && !_WIN32)
 std::vector<ActionItem> ServerPipeline() {
   auto actions = CommonPipeline();

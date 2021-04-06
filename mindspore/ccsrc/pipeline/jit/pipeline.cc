@@ -99,6 +99,8 @@ std::unordered_map<abstract::AbstractBasePtrList, int64_t, abstract::AbstractBas
   g_args_cache;
 
 namespace {
+constexpr char kCompileCacheFilePath[] = "compile_cache.mindir";
+
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
   std::ostringstream oss;
   int spaces = 2;
@@ -153,20 +155,70 @@ std::string GetCompileExceptionInfo() {
   return oss.str();
 }
 
-void SetGpuLoopSink(const ResourcePtr &resource_) {
-  auto func_graph = resource_->func_graph();
+void SetGpuLoopSink(const ResourcePtr &resource) {
+  auto func_graph = resource->func_graph();
   if (func_graph != nullptr && func_graph->manager() != nullptr) {
     auto manager = func_graph->manager();
     size_t graph_nums = manager->func_graphs().size();
     int64_t sinksize = ConfigManager::GetInstance().iter_num();
     if (graph_nums == 1) {
-      resource_->set_gpu_loopsink(true, sinksize);
+      resource->set_gpu_loopsink(true, sinksize);
     } else {
-      resource_->set_gpu_loopsink(false, sinksize);
+      resource->set_gpu_loopsink(false, sinksize);
     }
-    MS_LOG(INFO) << "Change gpu_loopsink_flag_ to " << resource_->gpu_loopsink_flag() << ", set loopsink size to "
+    MS_LOG(INFO) << "Change gpu_loopsink_flag_ to " << resource->gpu_loopsink_flag() << ", set loopsink size to "
                  << sinksize;
   }
+}
+
+void GetCachedFuncGraph(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  auto realpath = Common::GetRealPath(kCompileCacheFilePath);
+  if (!realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path failed. filename=" << kCompileCacheFilePath;
+  }
+  std::ifstream f(realpath.value());
+  bool cache_file_existed = f.good();
+  f.close();
+  if (!cache_file_existed) {
+    MS_LOG(WARNING) << "The compilation cache file '" << realpath.value()
+                    << "' dose not exist. Execute all the compilation actions.";
+    return;
+  }
+  MS_LOG(INFO) << "Use the compilation cache \"" << realpath.value() << "\" and execute the backend actions only.";
+  FuncGraphPtr fg = LoadMindIR(realpath.value());
+  if (fg == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to load the compilation cache file: " << realpath.value();
+  }
+  FuncGraphManagerPtr mng = fg->manager();
+  if (mng == nullptr) {
+    auto res_mng = resource->manager();
+    MS_EXCEPTION_IF_NULL(res_mng);
+    res_mng->AddFuncGraph(fg);
+    fg->set_manager(res_mng);
+  }
+  resource->set_func_graph(fg);
+}
+
+void CacheFuncGraph(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  auto realpath = Common::GetRealPath(kCompileCacheFilePath);
+  if (!realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path failed. filename=" << kCompileCacheFilePath;
+  }
+
+  ChangeFileMode(realpath.value(), S_IRWXU);
+  std::ofstream fout(realpath.value());
+  if (!fout.is_open()) {
+    MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!";
+  }
+  FuncGraphPtr fg = resource->func_graph();
+  mind_ir::ModelProto fg_model = GetBinaryProto(fg);
+  if (!fg_model.SerializeToOstream(&fout)) {
+    MS_LOG(EXCEPTION) << "Failed to cache the graph to file " << realpath.value();
+  }
+  fout.close();
+  ChangeFileMode(realpath.value(), S_IRUSR);
 }
 }  // namespace
 
@@ -554,6 +606,11 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     // Connect session to debugger
     backend_ptr->SetDebugger();
     resource->results()[kBackend] = backend_ptr;
+    // If the 'use_frontend_compile_cache' context has been set true and the cache is read successfully,
+    // do the backend actions only.
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) && resource->func_graph() != nullptr) {
+      return BackendPipeline();
+    }
     return VmPipeline();
   }
   return GePipeline();
@@ -580,6 +637,10 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   phase_ = phase_s;
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
+
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE)) {
+    GetCachedFuncGraph(resource);
+  }
 
   auto p_actions = GetPipeline(resource, phase_s, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
@@ -709,6 +770,10 @@ void Pipeline::Run() {
       };
       if (action.first == "task_emit") {
         SetGpuLoopSink(resource_);
+      } else if (action.first == "validate") {
+        if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
+          CacheFuncGraph(resource_);
+        }
       }
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;

@@ -71,6 +71,7 @@ class IrExporter {
   explicit IrExporter(IrExportBuilderPtr builder) : builder_(builder) {}
   virtual ~IrExporter() = default;
   std::string GetDumpString(const FuncGraphPtr &func_graph);
+  mind_ir::ModelProto GetDumpProto(const FuncGraphPtr &func_graph);
 
  private:
   IrExportBuilderPtr builder_;
@@ -83,6 +84,7 @@ class IrExportBuilder {
   std::string GetProtoString(const FuncGraphPtr &func_graph);
   void BuildModelInfo();
   void BuildModel(const FuncGraphPtr &func_graph);
+  mind_ir::ModelProto Model() { return model_; }
 
  private:
   void BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
@@ -144,6 +146,20 @@ std::string IrExporter::GetDumpString(const FuncGraphPtr &func_graph) {
   builder_->BuildModel(func_graph);
 
   return builder_->GetProtoString(func_graph);
+}
+
+mind_ir::ModelProto IrExporter::GetDumpProto(const FuncGraphPtr &func_graph) {
+  if ((builder_ == nullptr) || (func_graph == nullptr)) {
+    MS_LOG(EXCEPTION) << "Input params is null.";
+  }
+
+  // Export model info
+  builder_->BuildModelInfo();
+
+  // Export model and return string
+  builder_->BuildModel(func_graph);
+
+  return builder_->Model();
 }
 
 std::string IrExportBuilder::GetProtoString(const FuncGraphPtr &func_graph) {
@@ -728,5 +744,10 @@ std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) {
     return "";
   }
   return exporter->GetDumpString(func_graph);
+}
+
+mind_ir::ModelProto GetBinaryProto(const FuncGraphPtr &func_graph) {
+  auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
+  return exporter->GetDumpProto(func_graph);
 }
 }  // namespace mindspore

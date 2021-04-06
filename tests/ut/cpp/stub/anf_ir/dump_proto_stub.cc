@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "debug/dump_proto.h"
+#include "proto/mind_ir.pb.h"
 
 namespace mindspore {
 
@@ -24,4 +25,9 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) { return "";
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph) { return ""; }
 
 std::string GetBinaryProtoString(const FuncGraphPtr &func_graph) { return ""; }
+
+mind_ir::ModelProto GetBinaryProto(const FuncGraphPtr &func_graph) {
+  mind_ir::ModelProto empty_model;
+  return empty_model;
+}
 }  // namespace mindspore
