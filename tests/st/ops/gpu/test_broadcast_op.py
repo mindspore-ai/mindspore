@@ -79,6 +79,11 @@ def test_nobroadcast():
     output_ms = P.DivNoNan()(Tensor(x1_np), Tensor(x2_np_zero))
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
 
+    output_ms = P.Mod()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.fmod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -128,6 +133,10 @@ def test_nobroadcast_fp16():
     x2_np_zero = np.zeros_like(x2_np)
     output_ms = P.DivNoNan()(Tensor(x1_np), Tensor(x2_np_zero))
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
+
+    output_ms = P.Mod()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.fmod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
 
 
 @pytest.mark.level0
@@ -188,6 +197,10 @@ def test_broadcast():
     output_ms = P.DivNoNan()(Tensor(x1_np), Tensor(x2_np_zero))
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
 
+    output_ms = P.Mod()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.fmod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -247,6 +260,10 @@ def test_broadcast_diff_dims():
     output_ms = P.DivNoNan()(Tensor(x1_np), Tensor(x2_np_zero))
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
 
+    output_ms = P.Mod()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.fmod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -297,6 +314,10 @@ def test_broadcast_fp16():
     x2_np_zero = np.zeros_like(x2_np)
     output_ms = P.DivNoNan()(Tensor(x1_np), Tensor(x2_np_zero))
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
+
+    output_ms = P.Mod()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.fmod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
 
 
 @pytest.mark.level0

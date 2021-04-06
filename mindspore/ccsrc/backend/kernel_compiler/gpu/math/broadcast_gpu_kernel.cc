@@ -53,6 +53,9 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Pow, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   BroadcastOpGpuKernel, double)
+MS_REG_GPU_KERNEL_ONE(
+  Mod, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  BroadcastOpGpuKernel, double)
 
 // fp32
 MS_REG_GPU_KERNEL_ONE(
@@ -103,6 +106,9 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   DivNoNan,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  Mod, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   BroadcastOpGpuKernel, float)
 
 // fp16
@@ -155,6 +161,9 @@ MS_REG_GPU_KERNEL_ONE(
   DivNoNan,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  Mod, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half)
 
 // int32
 MS_REG_GPU_KERNEL_ONE(
@@ -193,6 +202,9 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
+  Mod, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  BroadcastOpGpuKernel, int)
 
 // int64
 MS_REG_GPU_KERNEL_ONE(
@@ -230,6 +242,9 @@ MS_REG_GPU_KERNEL_ONE(
   BroadcastOpGpuKernel, int64_t)
 MS_REG_GPU_KERNEL_ONE(
   DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  Mod, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
   BroadcastOpGpuKernel, int64_t)
 
 // int8

@@ -177,6 +177,50 @@ struct FloorDivFunc<half2> {
 };
 
 template <typename T>
+struct ModFunc {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    T data_div = lhs / rhs;
+    T data_div_min = data_div < 0.0 ? data_div : 0.0;
+    T data_div_max = data_div > 0.0 ? data_div : 0.0;
+    T data_div_max_floor = floorf(data_div_max);
+    T data_div_min_ceil = ceilf(data_div_min);
+    T data_div_res = data_div_max_floor + data_div_min_ceil;
+    return lhs - data_div_res * rhs;
+  }
+};
+
+template <>
+struct ModFunc<half> {
+  __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
+    float l = __half2float(lhs);
+    float r = __half2float(rhs);
+    float data_div = l / r;
+    float data_div_min = data_div < 0.0 ? data_div : 0.0;
+    float data_div_max = data_div > 0.0 ? data_div : 0.0;
+    float data_div_max_floor = floorf(data_div_max);
+    float data_div_min_ceil = ceilf(data_div_min);
+    float data_div_res = data_div_max_floor + data_div_min_ceil;
+    return __float2half_rn(l - data_div_res * r);
+  }
+};
+
+template <>
+struct ModFunc<half2> {
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 l = __half22float2(lhs);
+    float2 r = __half22float2(rhs);
+    float2 data_div;
+    data_div.x = l.x / r.x;
+    data_div.y = l.y / r.y;
+    data_div.x = data_div.x < 0.0 ? ceilf(data_div.x) : floorf(data_div.x);
+    data_div.y = data_div.y < 0.0 ? ceilf(data_div.y) : floorf(data_div.y);
+    data_div.x = l.x - data_div.x * r.x;
+    data_div.y = l.y - data_div.y * r.y;
+    return __float22half2_rn(data_div);
+  }
+};
+
+template <typename T>
 struct AbsGradFunc {
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     T zero = 0.0;
@@ -272,6 +316,8 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, DivNoNanFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_SQUARED_DIFFERENCE:
       return ElewiseArithKernel<T, SquaredDifferenceFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_MOD:
+      return ElewiseArithKernel<T, ModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
@@ -500,6 +546,11 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_SQUARED_DIFFERENCE:
       return BroadcastArithKernel<T, SquaredDifferenceFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_MOD:
+      return BroadcastArithKernel<T, ModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
