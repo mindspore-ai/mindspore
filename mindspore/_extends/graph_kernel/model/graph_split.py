@@ -472,7 +472,7 @@ class GraphSplitAscend(GraphSplitByPattern):
     def get_default_mode(self, op):
         if op.prim == "MatMul":
             return self.Area.MODE_COMPOSITE if op.inputs[0].dtype == "float16" else self.Area.MODE_BASIC
-        if op.prim in ("Tile", "BroadcastTo"):
+        if op.prim in ("Tile", "BroadcastTo", "ExpandDims"):
             return self.Area.MODE_COMPOSITE
         return self.Area.MODE_BASIC
 

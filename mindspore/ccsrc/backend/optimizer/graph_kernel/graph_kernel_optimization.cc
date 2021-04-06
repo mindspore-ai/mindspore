@@ -100,17 +100,17 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() {
 
 PassManagerPtr GraphKernelOptimizer::Split() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage4_split");
+
   // Move the non-scalar tensor (in composite node) to parameter list
   pm->AddPass(std::make_shared<TensorPromotion>());
 
   // Make certain nodes redundant so that they are used by only one user,
   // which can avoid unnecessary input-output and get better performance.
-  if (is_gpu) {
-    // preprocess for ShapeOpsSplitter
-    pm->AddPass(std::make_shared<ExtendOutputForUpdateState>());
-    std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
-    pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops));
-  }
+
+  // preprocess for ShapeOpsSplitter
+  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>());
+  std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
+  pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops));
 
   // Split kernel according to costmodel
   pm->AddPass(std::make_shared<GraphKernelSplitter>());
@@ -120,11 +120,9 @@ PassManagerPtr GraphKernelOptimizer::Split() {
   pm->AddPass(std::make_shared<GetitemTuple>());
 
   // Eliminate the redundant node that is copied above but not handled by GraphKernelSplitter
-  if (is_gpu) {
-    pm->AddPass(std::make_shared<MergeOutputForUpdateState>());
-    pm->AddPass(std::make_shared<GraphKernelCSE>());
-    pm->AddPass(std::make_shared<EliminateRedundantOutput>());
-  }
+  pm->AddPass(std::make_shared<MergeOutputForUpdateState>());
+  pm->AddPass(std::make_shared<GraphKernelCSE>());
+  pm->AddPass(std::make_shared<EliminateRedundantOutput>());
   return pm;
 }
 

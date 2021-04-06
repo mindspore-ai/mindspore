@@ -359,12 +359,19 @@ class Splitter {
   Splitter(const CNodePtr &main_cnode, SplitSchemerPtr split_schemer)
       : main_func_graph_(main_cnode->func_graph()), old_subgraph_cnode_(main_cnode), split_schemer_(split_schemer) {}
 
+  void ResetInlinedNodesKernelInfo() {
+    for (const auto &node : inlined_nodes_) {
+      ResetKernelInfo(node);
+    }
+  }
+
   // Maintain new subgraphs in main graph.
   void RebuildGraph(const std::vector<size_t> &cnodes_group_id) {
     BindFuncGraph();
     RecoverParameter();
     ConnectToMainGraph(cnodes_group_id);
     UpdateSubGraphInfo();
+    ResetInlinedNodesKernelInfo();
   }
 
   // Rebind nodes to its new sub_func_graph
@@ -420,7 +427,7 @@ class Splitter {
           }
         }
         if (AnfAlgo::IsRealKernel(node)) {
-          ResetKernelInfo(node);
+          inlined_nodes_.push_back(node);
         }
       }
     }
@@ -533,6 +540,7 @@ class Splitter {
   FuncGraphPtr main_func_graph_;
   CNodePtr old_subgraph_cnode_;                // The cnode that holds the original sub_func_graph
   std::vector<CNodePtr> new_subgraph_cnodes_;  // The cnode list that hold the new sub_func_graph
+  std::vector<AnfNodePtr> inlined_nodes_;
   SplitSchemerPtr split_schemer_;
   std::unordered_map<ParameterPtr, AnfNodePtr> param_to_main_graph_node_map_;
 };

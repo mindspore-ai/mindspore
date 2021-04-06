@@ -34,7 +34,9 @@
 #include "pipeline/jit/action.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "vm/segment_runner.h"
-#if ENABLE_GPU
+#if ENABLE_D
+#include "runtime/device/ascend/kernel_select_ascend.h"
+#elif ENABLE_GPU
 #include "runtime/device/gpu/kernel_info_setter.h"
 #endif
 
@@ -620,7 +622,11 @@ bool IsBasicFuseOp(const AnfNodePtr &node) {
   std::vector<PrimitivePtr> basic_ops = GetFusibleOpList();
 #if ENABLE_D
   if (!CheckProcessor(node)) {
-    return false;
+    std::vector<PrimitivePtr> fused_aicpu_op = {prim::kPrimExpandDims, prim::kPrimReshape};
+    if (!std::any_of(fused_aicpu_op.begin(), fused_aicpu_op.end(),
+                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+      return false;
+    }
   }
 #endif
   return std::any_of(basic_ops.begin(), basic_ops.end(),
@@ -644,7 +650,9 @@ bool IsFusibleOp(const AnfNodePtr &node) {
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-#if ENABLE_GPU
+#if ENABLE_D
+  device::ascend::SetKernelInfo(cnode, kernel_type);
+#elif ENABLE_GPU
   device::gpu::SetKernelInfo(cnode, kernel_type);
 #endif
 }
