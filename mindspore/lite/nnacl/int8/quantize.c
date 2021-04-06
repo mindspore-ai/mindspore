@@ -53,7 +53,7 @@ void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t
                                                int *right_shift) {
   int shift = 0;
   const uint32_t scale_bits = (uint32_t)(double_multiplier);
-  /* multipiler is in[0x40000000, 0x7FFFFF80] range */
+  /* multiplier is in[0x40000000, 0x7FFFFF80] range */
   *quantized_multiplier = (int32_t)(((scale_bits & UINT32_C(0x007FFFFF)) | UINT32_C(0x00800000)) << 7);
   if (quantized_multiplier[0] < INT32_C(0x40000000) || quantized_multiplier[0] > INT32_C(0x7FFFFF80)) {
     return;

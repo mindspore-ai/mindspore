@@ -130,11 +130,11 @@ int SaturatingRoundingMultiplyByPOT(int32_t x, int exponent) {
     const int min = INT32_MIN;
     const int max = INT32_MAX;
     const int scalar_int_bits = 8 * sizeof(int32_t);
-    const int thresold = ((1 << (uint32_t)(scalar_int_bits - 1 - exponent)) - 1);
-    const int postive_mask = x > thresold ? BitNot(0) : 0;
-    const int negative_mask = x < -thresold ? BitNot(0) : 0;
+    const int threshold = ((1 << (uint32_t)(scalar_int_bits - 1 - exponent)) - 1);
+    const int positive_mask = x > threshold ? BitNot(0) : 0;
+    const int negative_mask = x < -threshold ? BitNot(0) : 0;
     int result = x * ((int32_t)(1) << (uint32_t)exponent);
-    result = BitsSelect(postive_mask, max, result);
+    result = BitsSelect(positive_mask, max, result);
     result = BitsSelect(negative_mask, min, result);
     return result;
   } else if (exponent < 0) {

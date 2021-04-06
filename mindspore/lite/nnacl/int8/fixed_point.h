@@ -37,7 +37,7 @@ int SaturatingRoundingDoublingHighMul(int a, int b);
 int16_t SaturatingRoundingDoublingHighMulInt16(int16_t a, int16_t b);
 
 // division by a 2^exponent with rounding
-// or arithmetic right shift with rouding
+// or arithmetic right shift with rounding
 int RoundingDivideByPOT(int x, int exponent);
 
 int UpwardRounding(int x, int exponent);

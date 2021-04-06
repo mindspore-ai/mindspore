@@ -186,7 +186,7 @@ int BatchNormOpenCLKernel::Run() {
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());            // input tensor
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, scale_, lite::opencl::MemType::BUF);     // scale
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, offset_, lite::opencl::MemType::BUF);    // offest
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, offset_, lite::opencl::MemType::BUF);    // offset
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, lite::opencl::MemType::BUF);      // mean
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, variance_, lite::opencl::MemType::BUF);  // variance
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c());           // out tensor

@@ -439,7 +439,7 @@ message TransformationParameter {
   optional uint32 crop_size = 3 [default = 0];
   // mean_file and mean_value cannot be specified at the same time
   optional string mean_file = 4;
-  // if specified can be repeated once (would substract it from all the channels)
+  // if specified can be repeated once (would subtract it from all the channels)
   // or can be repeated the same number of times as channels
   // (would subtract them from the corresponding channel)
   repeated float mean_value = 5;
@@ -1499,10 +1499,10 @@ message PriorBoxParameter {
   optional bool flip = 4 [default = true];
   // If true, will clip the prior so that it is within [0, 1]
   optional bool clip = 5 [default = false];
-  // Variance for adjusting the prior bboxes.
+  // Variance for adjusting the prior boxes.
   repeated float variance = 6;
   // By default, we calculate img_height, img_width, step_x, step_y based on
-  // bottom[0] (feat) and bottom[1] (img). Unless these values are explicitely
+  // bottom[0] (feat) and bottom[1] (img). Unless these values are explicitly
   // provided.
   // Explicitly provide the img_size.
   optional uint32 img_size = 7;
