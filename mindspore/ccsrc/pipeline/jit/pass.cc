@@ -177,6 +177,9 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.mini_step_allgather_replace_,
     },
     false, true);
+  opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({
+    irpass.less_batch_normalization_,
+  });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
@@ -187,6 +190,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"a_1", a_1},
                          {"a_2", a_2},
+                         {"accelerated_algorithm", accelerated_algorithm},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},

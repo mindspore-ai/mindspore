@@ -31,6 +31,7 @@
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/accumulaten_eliminate.h"
+#include "frontend/optimizer/irpass/less_batch_normalization.h"
 #include "frontend/optimizer/irpass/minmax_grad.h"
 #include "frontend/optimizer/irpass/param_replace.h"
 #include "frontend/optimizer/irpass/partial_eliminate.h"
@@ -164,6 +165,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // AccumulateNV2
   accumulaten_eliminater_ =
     MakeSubstitution(std::make_shared<AccumulateNV2Eliminater>(), "accumulaten_eliminater", prim::kPrimAccumulateNV2);
+
+  // Accelerated Algorithm
+  less_batch_normalization_ =
+    MakeSubstitution(std::make_shared<LessBatchNormalization>(), "less_batch_normalization", prim::kPrimAdd);
 
   // inline
   inline_ = MakeSubstitution(std::make_shared<Inliner>(), "inline", IsCNodeGraph);
