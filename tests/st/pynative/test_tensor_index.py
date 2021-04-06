@@ -321,7 +321,7 @@ def test_setitem_by_mixed_tensors_2():
     assert np.all(out.asnumpy() == (input_np + const))
 
 
-class TensorGetItemByMixedTensorsTypeError(Cell):
+class TensorGetItemByMixedTensorsIndexError(Cell):
     def construct(self, x, index_0, index_1):
         ret = x[index_0, index_1, 0:3, ..., 0:5, [1, 2, 3, 4]]
         return ret
@@ -331,8 +331,8 @@ def test_getitem_by_mixedtensor_exception():
     input_ms = Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8 * 9).reshape((3, 4, 5, 6, 7, 8, 9)), mstype.int32)
     index_0 = Tensor(np.random.randint(3, size=(3, 4, 5)), mstype.int32)
     index_1 = Tensor(np.random.randint(4, size=(3, 4, 5)), mstype.int32)
-    net1 = TensorGetItemByMixedTensorsTypeError()
-    with pytest.raises(TypeError):
+    net1 = TensorGetItemByMixedTensorsIndexError()
+    with pytest.raises(IndexError):
         net1(input_ms, index_0, index_1)
 
 

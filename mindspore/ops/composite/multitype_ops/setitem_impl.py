@@ -18,6 +18,7 @@
 from . import _compile_utils as compile_utils
 from ... import functional as F
 from ...composite import base
+from ....common import Tensor
 
 setitem = base.MultitypeFuncGraph('setitem')
 
@@ -213,6 +214,9 @@ def _tensor_setitem_by_tuple_with_number(data, tuple_index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
+    if compile_utils.tuple_indices_have_false(tuple_index):
+        return data
+    tuple_index = compile_utils.format_tuple_indices(tuple_index)
     return compile_utils.tensor_setitem_by_tuple_with_number(data, tuple_index, value)
 
 
@@ -234,6 +238,9 @@ def _tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
+    if compile_utils.tuple_indices_have_false(tuple_index):
+        return data
+    tuple_index = compile_utils.format_tuple_indices(tuple_index)
     return compile_utils.tensor_setitem_by_tuple_with_tensor(data, tuple_index, value)
 
 
@@ -246,21 +253,49 @@ def _tensor_setitem_by_tuple_with_tuple(data, tuple_index, value):
         Syntax support: A[B, C, D] = U.
         Restraint condition: 1) A is a Tensor, and B, C, D are index Tensors.
                              2) A B and C could be broadcast.
-                             3) U is a Tensor.
+                             3) U is a Tuple.
 
     Inputs:
         data (Tensor): Assigned tensor.
         index (Tuple): A tuple of tensor, these tensor could be broadcast.
-        value (Tensor): Assignment tensor, should has the same data type as 'data'.
+        value (Tuple): Assignment tuple.
 
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    return compile_utils.tensor_setitem_by_tuple_with_tuple(data, tuple_index, value)
+    if compile_utils.tuple_indices_have_false(tuple_index):
+        return data
+    tuple_index = compile_utils.format_tuple_indices(tuple_index)
+    return compile_utils.tensor_setitem_by_tuple_with_sequence(data, tuple_index, value)
+
+
+@setitem.register("Tensor", "Tuple", "List")
+def _tensor_setitem_by_tuple_with_list(data, tuple_index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[B, C, D] = U.
+        Restraint condition: 1) A is a Tensor, and B, C, D are index Tensors.
+                             2) A B and C could be broadcast.
+                             3) U is a List.
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Tuple): A tuple of tensor, these tensor could be broadcast.
+        value (List): Assignment tuple.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    if compile_utils.tuple_indices_have_false(tuple_index):
+        return data
+    tuple_index = compile_utils.format_tuple_indices(tuple_index)
+    return compile_utils.tensor_setitem_by_tuple_with_sequence(data, tuple_index, value)
 
 
 @setitem.register("Tensor", "Tensor", "Tuple")
-def _tensor_setitem_by_tensor_v2(data, index, value):
+def _tensor_setitem_by_tensor_with_tuple(data, index, value):
     """
     Tensor assignment.
 
@@ -272,11 +307,27 @@ def _tensor_setitem_by_tensor_v2(data, index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    return compile_utils.tensor_setitem_by_tensor_with_tuple(data, index, value)
+    return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
+
+
+@setitem.register("Tensor", "Tensor", "List")
+def _tensor_setitem_by_tensor_with_list(data, index, value):
+    """
+    Tensor assignment.
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Tensor): Tensor of bool type.
+        value (List): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
 
 
 @setitem.register("Tensor", "Slice", "Tensor")
-def _tensor_setitem_with_slice_v3(data, input_slice, value):
+def _tensor_setitem_by_slice_with_tensor(data, input_slice, value):
     """
     Tensor assignment.
 
@@ -298,7 +349,7 @@ def _tensor_setitem_with_slice_v3(data, input_slice, value):
 
 
 @setitem.register("Tensor", "Slice", "Number")
-def _tensor_setitem_with_slice_v1(data, input_slice, value):
+def _tensor_setitem_by_slice_with_number(data, input_slice, value):
     """
     Tensor assignment.
 
@@ -319,21 +370,326 @@ def _tensor_setitem_with_slice_v1(data, input_slice, value):
     return compile_utils.tensor_setitem_by_slice_with_number(data, input_slice, value)
 
 
+@setitem.register("Tensor", "Slice", "List")
+def _tensor_setitem_by_slice_with_list(data, input_slice, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[Slice] = u
+        Restraint condition: A is a Tensor.
+                             Slice like "1:3"
+                             u is a list
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        input_slice (Slice): slice expression.
+        value (List): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_slice_with_sequence(data, input_slice, value)
+
+
+@setitem.register("Tensor", "Slice", "Tuple")
+def _tensor_setitem_by_slice_with_tuple(data, input_slice, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[Slice] = u
+        Restraint condition: A is a Tensor.
+                             Slice like "1:3"
+                             u is a tuple
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        input_slice (Slice): slice expression.
+        value (Tuple): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_slice_with_sequence(data, input_slice, value)
+
+
+
 @setitem.register("Tensor", "Number", "Number")
-def _tensor_setitem_with_int_v1(data, index, value):
+def _tensor_setitem_by_number_with_number(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[Number] = u
+        Restraint condition: A is a Tensor.
+                             u is a Number.
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Number): An integer index.
+        value (Tuple): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    if isinstance(index, bool):
+        return compile_utils.tensor_setitem_by_bool(data, index, value)
     return compile_utils.tensor_setitem_by_number_with_number(data, index, value)
 
 
 @setitem.register("Tensor", "Number", "Tensor")
-def _tensor_setitem_with_int_v2(data, index, value):
+def _tensor_setitem_by_number_with_tensor(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[Number] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tensor.
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Number): An integer index.
+        value (Tensor): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    if isinstance(index, bool):
+        return compile_utils.tensor_setitem_by_bool(data, index, value)
     return compile_utils.tensor_setitem_by_number_with_tensor(data, index, value)
 
 
+@setitem.register("Tensor", "Number", "Tuple")
+def _tensor_setitem_by_number_with_tuple(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[Number] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tuple, with all elements equal in length.
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Number): An integer index.
+        value (Tuple): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    if isinstance(index, bool):
+        return compile_utils.tensor_setitem_by_bool(data, index, value)
+    return compile_utils.tensor_setitem_by_number_with_sequence(data, index, value)
+
+
+@setitem.register("Tensor", "Number", "List")
+def _tensor_setitem_by_number_with_list(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[Number] = u
+        Restraint condition: A is a Tensor.
+                             u is a List, with all elements equal in length.
+
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Number): An integer index.
+        value (List): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    if isinstance(index, bool):
+        return compile_utils.tensor_setitem_by_bool(data, index, value)
+    return compile_utils.tensor_setitem_by_number_with_sequence(data, index, value)
+
+
 @setitem.register("Tensor", "Ellipsis", "Number")
-def _tensor_setitem_with_ellipsis_v1(data, index, value):
-    return compile_utils.tensor_setitem_by_ellipsis_with_number(data, index, value)
+def _tensor_setitem_by_ellipsis_with_number(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a Number.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Ellipsis): Index is ``...``.
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_number(data, value)
 
 
 @setitem.register("Tensor", "Ellipsis", "Tensor")
-def _tensor_setitem_with_ellipsis_v2(data, index, value):
-    return compile_utils.tensor_setitem_by_ellipsis_with_tensor(data, index, value)
+def _tensor_setitem_by_ellipsis_with_tensor(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tensor.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Ellipsis): Index is ``...``.
+        value (Tensor): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_tensor(data, value)
+
+
+@setitem.register("Tensor", "Ellipsis", "List")
+def _tensor_setitem_by_ellipsis_with_list(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a List, with all elements equal in length.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Ellipsis): Index is ``...``.
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_sequence(data, value)
+
+
+@setitem.register("Tensor", "Ellipsis", "Tuple")
+def _tensor_setitem_by_ellipsis_with_tuple(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tuple, with all elements equal in length.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (Ellipsis): Index is ``...``.
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_sequence(data, value)
+
+
+@setitem.register("Tensor", "List", "Number")
+def _tensor_setitem_by_list_with_number(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[List] = u
+        Restraint condition: A is a Tensor.
+                             u is a Number.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (List).
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    # list indices will be converted to tuple or tensor based on its contents.
+    index = compile_utils.format_list_indices(index, data.shape[0])
+    if isinstance(index, Tensor):
+        return compile_utils.tensor_setitem_by_tensor_with_number(data, index, value)
+    if compile_utils.tuple_indices_have_false(index):
+        return data
+    index = compile_utils.format_tuple_indices(index)
+    return compile_utils.tensor_setitem_by_tuple_with_number(data, index, value)
+
+
+@setitem.register("Tensor", "List", "Tensor")
+def _tensor_setitem_by_list_with_tensor(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[List] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tensor.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (List).
+        value (Tensor): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    # list indices will be converted to tuple or tensor based on its contents.
+    index = compile_utils.format_list_indices(index, data.shape[0])
+    if isinstance(index, Tensor):
+        return compile_utils.tensor_setitem_by_tensor_with_tensor(data, index, value)
+    if compile_utils.tuple_indices_have_false(index):
+        return data
+    index = compile_utils.format_tuple_indices(index)
+    return compile_utils.tensor_setitem_by_tuple_with_tensor(data, index, value)
+
+
+@setitem.register("Tensor", "List", "Tuple")
+def _tensor_setitem_by_list_with_tuple(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[List] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tuple, with all elements equal in length.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (List).
+        value (Tuple): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    # list indices will be converted to tuple or tensor based on its contents.
+    index = compile_utils.format_list_indices(index, data.shape[0])
+    if isinstance(index, Tensor):
+        return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
+    if compile_utils.tuple_indices_have_false(index):
+        return data
+    index = compile_utils.format_tuple_indices(index)
+    return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)
+
+
+@setitem.register("Tensor", "List", "List")
+def _tensor_setitem_by_list_with_list(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[List] = u
+        Restraint condition: A is a Tensor.
+                             u is a List, with all elements equal in length.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (List).
+        value (List): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    # list indices will be converted to tuple or tensor based on its contents.
+    index = compile_utils.format_list_indices(index, data.shape[0])
+    if isinstance(index, Tensor):
+        return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
+    if compile_utils.tuple_indices_have_false(index):
+        return data
+    index = compile_utils.format_tuple_indices(index)
+    return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)
