@@ -18,6 +18,7 @@
 from functools import reduce
 import numpy as np
 import mindspore as ms
+from mindspore import nn
 from mindspore.ops import _selected_grad_ops as SG
 from .. import functional as F
 from .. import operations as P
@@ -178,15 +179,15 @@ def get_bprop_tensor_add(self):
 @bprop_getters.register(P.MatrixInverse)
 def get_bprop_matrix_inverse(self):
     """Grad definition for `MatrixInverse` operation."""
-    batchmatmul_a = P.math_ops.BatchMatMul(transpose_a=True)
-    batchmatmul_b = P.math_ops.BatchMatMul(transpose_b=True)
+    matmul_x1 = nn.MatMul(transpose_x1=True)
+    matmul_x2 = nn.MatMul(transpose_x2=True)
     neg = P.Neg()
 
     def bprop(x, out, dout):
-        dx = batchmatmul_b(dout, out)
-        dx = batchmatmul_a(out, dx)
+        dx = matmul_x2(dout, out)
+        dx = matmul_x1(out, dx)
         dx = neg(dx)
-        return dx
+        return (dx,)
 
     return bprop
 
