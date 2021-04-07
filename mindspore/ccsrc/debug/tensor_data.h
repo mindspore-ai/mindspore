@@ -293,6 +293,60 @@ class TensorData {
     }
   }
 
+  bool ConvertNpyStringToDbgType(const std::string &type_name) {
+    if (type_name == "b1") {
+      this->data_type = DbgDataType::DT_BOOL;
+      this->data_type_size = 1;
+      return true;
+    } else if (type_name == "i1") {
+      this->data_type = DbgDataType::DT_INT8;
+      this->data_type_size = 1;
+      return true;
+    } else if (type_name == "i2") {
+      this->data_type = DbgDataType::DT_INT16;
+      this->data_type_size = 2;
+      return true;
+    } else if (type_name == "i4") {
+      this->data_type = DbgDataType::DT_INT32;
+      this->data_type_size = 4;
+      return true;
+    } else if (type_name == "i8") {
+      this->data_type = DbgDataType::DT_INT64;
+      this->data_type_size = 8;
+      return true;
+    } else if (type_name == "u1") {
+      this->data_type = DbgDataType::DT_UINT8;
+      this->data_type_size = 1;
+      return true;
+    } else if (type_name == "u2") {
+      this->data_type = DbgDataType::DT_UINT16;
+      this->data_type_size = 2;
+      return true;
+    } else if (type_name == "u4") {
+      this->data_type = DbgDataType::DT_UINT32;
+      this->data_type_size = 4;
+      return true;
+    } else if (type_name == "u8") {
+      this->data_type = DbgDataType::DT_UINT64;
+      this->data_type_size = 8;
+      return true;
+    } else if (type_name == "f2") {
+      this->data_type = DbgDataType::DT_FLOAT16;
+      this->data_type_size = 2;
+      return true;
+    } else if (type_name == "f4") {
+      this->data_type = DbgDataType::DT_FLOAT32;
+      this->data_type_size = 4;
+      return true;
+    } else if (type_name == "f8") {
+      this->data_type = DbgDataType::DT_FLOAT64;
+      this->data_type_size = 8;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   void ConvertStringToDbgType(const std::string &type_name) {
     std::string type_name_lower = type_name;
     std::string trans_true_prefix = "kNumberType";
@@ -340,7 +394,9 @@ class TensorData {
       this->data_type = DbgDataType::DT_UNDEFINED;
       this->data_type_size = 0;
     } else {
-      MS_LOG(EXCEPTION) << "Unexpected type name: " << type_name;
+      if (!ConvertNpyStringToDbgType(type_name_lower)) {
+        MS_LOG(EXCEPTION) << "Unexpected type name: " << type_name;
+      }
     }
   }
 

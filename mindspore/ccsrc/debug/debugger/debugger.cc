@@ -826,8 +826,9 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   } else {
     tensor_list = debug_services_->GetNodeTensor(kernel);
   }
+  std::vector<std::string> file_list;
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    &tensor_list, initial_suspend_, watchnode.empty(), recheck);
+                                    file_list, &tensor_list, initial_suspend_, watchnode.empty(), recheck);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
