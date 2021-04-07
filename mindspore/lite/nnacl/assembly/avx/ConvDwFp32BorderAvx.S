@@ -1,18 +1,14 @@
 #ifdef ENABLE_AVX
-    .text
-    .align 4
-    .global ConvDwFp32Border
-#ifndef __APPLE__
-#ifndef WIN32
-    .type ConvDwFp32Border, %function
-#endif
-#endif
+#include "nnacl/assembly_global.h"
+
+.text
+.align 4
 
 // void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height,
 //                       size_t width, size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu,
 //                       size_t relu6);
 
-ConvDwFp32Border:
+asm_function ConvDwFp32Border
     pushq %r15
     pushq %r14
     pushq %r13

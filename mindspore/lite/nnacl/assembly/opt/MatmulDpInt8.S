@@ -1,11 +1,7 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    .global MatmulInt8DpNeon64
-#ifndef __APPLE__
-    .type MatmulInt8DpNeon64, %function
-#endif
+.text
+.align 5
 
 //void MatmulInt8DpNeon64(const int8_t *a, const int8_t *b, int8_t *dst, int row8, int col8, int deep4, 
 //                      const int *a_sums, const int *bias, int act_min, int act_max, int out_zp,

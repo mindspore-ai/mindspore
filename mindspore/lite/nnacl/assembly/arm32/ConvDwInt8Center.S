@@ -1,13 +1,9 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwInt8Center
-#ifndef __APPLE__
-.type ConvDwInt8Center, %function
-#endif
+
 // void DepthwiseCenterInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
 //                          int width, int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step,
 //                          int in_sw_step, int in_kh_step, int in_kw_step, int8_t *in_zp, int32_t *out_zp,
@@ -276,5 +272,4 @@ asm_function ConvDwInt8Center
         vpop {q0, q1}
         vpop {q4-q7}
         pop {r0-r8, r10, r11, pc}
-#endif
 #endif

@@ -1,13 +1,8 @@
 #ifdef ENABLE_AVX
 #include "nnacl/assembly_global.h"
-    .text
-    .align 4
-    .global MatmulFloatAvxOpt
-#ifndef __APPLE__
-#ifndef WIN32
-    .type MatmulFloatAvxOpt, %function
-#endif
-#endif
+
+.text
+.align 4
 
 // void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth
 //                        int row, int col, size_t stride, size_t writeMode)

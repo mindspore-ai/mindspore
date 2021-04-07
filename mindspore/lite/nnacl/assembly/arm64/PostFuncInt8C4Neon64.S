@@ -1,14 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
-    .text
-    .align 5
-    //.p2align 5,,15
-    .global PostFuncInt8C4Neon64
-#ifndef __APPLE__
-    .type PostFuncInt8C4Neon64, %function
-#endif
-
+.text
+.align 5
 
 //void PostFuncInt8C4Neon64(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc4div, size_t oc4res,
 //                          size_t plane, size_t stride, int32_t multiplier, int32_t left_shift, int32_t right_shift,

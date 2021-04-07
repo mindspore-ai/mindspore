@@ -1,11 +1,7 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    .global MatMulOptR4Int8Neon64
-#ifndef __APPLE__
-    .type MatMulOptR4Int8Neon64, %function
-#endif
+.text
+.align 5
 
 //void MatMulOptR4Int8Neon64(const int8_t *a, const int8_t *b, int *dst, int row4, int col4, int deep16,
 //                          const int *input_sum, const int *bias)

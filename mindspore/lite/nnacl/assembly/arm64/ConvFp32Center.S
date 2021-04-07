@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvSwFp32Center
-#ifndef __APPLE__
-.type ConvSwFp32Center, %function
-#endif
 
 // void ConvSwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
 //                      size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t ic4, size_t in_sh_step,

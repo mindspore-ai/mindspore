@@ -1,11 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    .global MatmulInt8Opt
-#ifndef __APPLE__
-    .type MatmulInt8Opt, %function
-#endif
+
+.text
+.align 5
 
 //void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
 //                   const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier, int32_t *left_shift,

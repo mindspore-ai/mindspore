@@ -1,11 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    .global MatmulFp16Neon64Opt
-#ifndef __APPLE__
-    .type MatmulFp16Neon64Opt, %function
-#endif
+
+.text
+.align 5
 
 // void MatmulFp16Neon64Opt(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
 //                          int depth, int row, int col, size_t stride, size_t writeMode)

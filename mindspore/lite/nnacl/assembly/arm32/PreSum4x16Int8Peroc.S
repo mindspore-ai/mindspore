@@ -1,12 +1,8 @@
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global PreSum4x16Int8Peroc
-#ifndef __APPLE__
-.type PreSum4x16Int8Peroc, %function
-#endif
-
 
 //void PreSum4x16Int8Peroc(const int8_t *src, int32_t *sum, int32_t *zp, size_t hw4, size_t ic16, int32_t oc_div2,
 //                            size_t oc_res2, size_t stride);
@@ -129,3 +125,4 @@ End:
   sub sp, sp, #100
   vpop {q4-q7}
   pop {r4-r11, pc}
+#endif

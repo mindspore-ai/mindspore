@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwInt8PostAlign4PerChannel
-#ifndef __APPLE__
-.type ConvDwInt8PostAlign4PerChannel, %function
-#endif
 
 // void ConvDwInt8PostAlign4PerChannel(int8_t *dst, int32_t *buffer, int channel4, int32_t output_zp, int32_t *out_multiplier,
 //                                     int32_t *left_shift, int32_t *right_shift, int32_t acc_min, int32_t acc_max);

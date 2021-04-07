@@ -1,11 +1,8 @@
 #ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    .global MatmulFloatNeon32Opt
-#ifndef __APPLE__
-    .type MatmulFloatNeon32Opt, %function
-#endif
+
+.text
+.align 5
 
 // void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth
 //                        int row, int col, size_t stride, size_t writeMode)

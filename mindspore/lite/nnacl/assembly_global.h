@@ -16,18 +16,21 @@
 #ifndef MINDSPORE_LITE_NNACL_ASSEMBLY_GLOBAL_H
 #define MINDSPORE_LITE_NNACL_ASSEMBLY_GLOBAL_H
 
+// clang-format off
 .macro asm_function fname
 #ifdef __APPLE__
-  .globl _\fname;
-_\fname :
+.globl _\fname
+_\fname:
 #else
-  .global \fname;
-#ifdef __ELE__
-.hidden \fname;
-.type \fname, % function;
+.global \fname
+#ifdef __ELF__
+.hidden \fname
+.type \fname, %function
 #endif
-\fname :
+\fname:
 #endif
-      .endm
+.endm
+
+// clang-format on
 
 #endif  // MINDSPORE_LITE_NNACL_ASSEMBLY_GLOBAL_H

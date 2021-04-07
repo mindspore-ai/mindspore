@@ -1,13 +1,8 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDw3x3Int8BorderPixel
-#ifndef __APPLE__
-.type ConvDw3x3Int8BorderPixel, %function
-#endif
 
 // void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t height,
 //                               size_t width, size_t in_kh_step, size_t in_kw_step, size_t channel, size_t in_zp, size_t out_zp,
@@ -115,5 +110,4 @@ asm_function ConvDw3x3Int8BorderPixel
     sub sp, sp, #104
     vpop {q4-q7}
     pop {r4-r8, r9-r12, pc}
-#endif
 #endif

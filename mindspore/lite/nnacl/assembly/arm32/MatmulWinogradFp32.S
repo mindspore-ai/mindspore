@@ -3,10 +3,6 @@
 
 .text
 .align 5
-.global MatrixMultiplyWinograd
-#ifndef __APPLE__
-.type MatrixMultiplyWinograd, %function
-#endif
 
 // MatrixMultiplyWinograd(float *matix_a, float *matrix_b, float *matrix_c, int m, int k, int n, int in_channel, int c4_channel)
     // r0: matrix_a, r1: matrix_b, r2: matrix_c, r3: m, r4: k, r5: n, r6: in_channel, r7: c4_channel * 4

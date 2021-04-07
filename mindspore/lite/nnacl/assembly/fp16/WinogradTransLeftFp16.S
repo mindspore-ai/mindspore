@@ -1,11 +1,8 @@
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
-  .text
-  .align 5
-  .global WinogradTransLeftFp16
-#ifndef __APPLE__
-  .type WinogradTransLeftFp16, %function
-#endif
+.text
+.align 5
 
 asm_function WinogradTransLeftFp16
 
@@ -135,3 +132,5 @@ LoopH:
     sub sp, sp, #16
     ldp x19, x20, [sp], #16
     ret
+
+#endif

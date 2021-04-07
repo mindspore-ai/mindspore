@@ -1,11 +1,8 @@
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global TiledC4MatmulFp16
-#ifndef __APPLE__
-.type TiledC4MatmulFp16, %function
-#endif
 
 asm_function TiledC4MatmulFp16
 
@@ -258,3 +255,4 @@ LoopOcEnd:
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ret
 
+#endif

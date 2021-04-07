@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwFp32Border
-#ifndef __APPLE__
-.type ConvDwFp32Border, %function
-#endif
 
 // void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
 //                       size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6)

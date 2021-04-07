@@ -1,13 +1,8 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwFp32Center
-#ifndef __APPLE__
-.type ConvDwFp32Center, %function
-#endif
 
 // void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
 //                      size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step, size_t in_sw_step,
@@ -163,5 +158,4 @@ LoopWEnd:
     sub sp, sp, #112
     vpop {q4-q7}
     pop {r0-r8, r10, r11, pc}
-#endif
 #endif

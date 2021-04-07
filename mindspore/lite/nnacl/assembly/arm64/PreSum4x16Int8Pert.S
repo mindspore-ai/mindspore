@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    //.p2align 5,,15
-    .global PreSum4x16Int8Pert
-#ifndef __APPLE__
-    .type PreSum4x16Int8Pert, %function
-#endif
+
+.text
+.align 5
 
 // void PreSum4x16Int8Pert(const int8_t *src, int32_t *dst, size_t row4, size_t col16, int32_t filter_zp);
 

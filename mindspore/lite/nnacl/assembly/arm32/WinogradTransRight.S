@@ -1,12 +1,8 @@
 #ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
-    .text
-    .align 5
-    .global WinogradTransRight
-#ifndef __APPLE__
-    .type WinogradTransRight, %function
-#endif
+.text
+.align 5
 
 //void WinogradTransRight(const float* S, const float* B, float* M, size_t w, size_t h, size_t k, size_t length);
 //x0: S

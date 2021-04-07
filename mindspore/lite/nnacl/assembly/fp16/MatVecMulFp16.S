@@ -1,11 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
-    .text
-    .align 5
-    .global MatVecMulFp16Neon64
-#ifndef __APPLE__
-    .type MatVecMulFp16Neon64, %function
-#endif
+
+.text
+.align 5
 
 // void MatVecMulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth, int col)
 // x0: a
