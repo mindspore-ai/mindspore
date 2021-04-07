@@ -256,7 +256,7 @@ if(ENABLE_GE)
     else()
         target_link_libraries(mindspore ge_client)
     endif()
-    target_link_libraries(mindspore graph tsdclient datatransfer)
+    target_link_libraries(mindspore graph tsdclient datatransfer ascendcl runtime)
 endif()
 
 if(ENABLE_D)

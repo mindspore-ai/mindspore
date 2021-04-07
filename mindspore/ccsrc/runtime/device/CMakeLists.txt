@@ -16,8 +16,11 @@ else()
 endif()
 
 if(ENABLE_D)
-    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc"
-        "../../minddata/dataset/engine/tdt/tdt_handle.cc")
+    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc")
+endif()
+if(ENABLE_TDTQUE)
+    file(GLOB_RECURSE TDT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "../../minddata/dataset/engine/tdt/tdt_handle.cc")
 endif()
 
 if(ENABLE_CPU)
@@ -75,4 +78,4 @@ endif()
 list(REMOVE_ITEM D_SRC_LIST "ascend/profiling/profiling_callback_register.cc")
 set_property(SOURCE ${DEVICE_SRC_LIST} ${D_SRC_LIST} ${CPU_SRC_LIST}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-add_library(_mindspore_runtime_device_obj OBJECT ${DEVICE_SRC_LIST} ${D_SRC_LIST} ${CPU_SRC_LIST})
+add_library(_mindspore_runtime_device_obj OBJECT ${DEVICE_SRC_LIST} ${D_SRC_LIST} ${CPU_SRC_LIST} ${TDT_SRC_LIST})
