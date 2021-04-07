@@ -275,23 +275,14 @@ inline void FreeRestoreTensors(std::map<Tensor *, Tensor *> *restored_origin_ten
   restored_origin_tensors->clear();
 }
 
-inline bool IsChannelFirst(const std::vector<Tensor *> &in_tensors, OpParameter *op_parameter) {
+inline bool IsChannelFirst(int index, OpParameter *op_parameter) {
   MS_ASSERT(op_parameter != nullptr);
   if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
-    for (size_t i = 0; i < in_tensors.size(); i++) {
-      auto tensor = in_tensors.at(i);
-      MS_ASSERT(tensor != nullptr);
-      if (tensor->shape().size() != 2) {
-        continue;
-      }
-      const auto *param = reinterpret_cast<MatMulParameter *>(op_parameter);
-      if (i == 1) {
-        return !(param->a_transpose_);
-      } else if (i == 2) {
-        return param->b_transpose_;
-      } else {
-        // not care bias data
-      }
+    const auto *param = reinterpret_cast<MatMulParameter *>(op_parameter);
+    if (index == 0) {
+      return !(param->a_transpose_);
+    } else if (index == 1) {
+      return param->b_transpose_;
     }
   }
   return true;
@@ -307,8 +298,9 @@ kernel::LiteKernel *Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_ten
     return nullptr;
   }
   std::map<Tensor *, Tensor *> restored_origin_tensors;
+  int index = 0;
   for (auto &tensor : in_tensors) {
-    auto channel_first = IsChannelFirst(in_tensors, op_parameter);
+    auto channel_first = IsChannelFirst(index++, op_parameter);
     auto *restore_tensor = DequantUtil::DequantTensor(tensor, desc.data_type, channel_first, kernel_data_type);
     if (restore_tensor != nullptr) {
       restored_origin_tensors[tensor] = restore_tensor;
@@ -385,7 +377,8 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     // weight quant
     std::map<Tensor *, Tensor *> restored_origin_tensors;
     for (auto &tensor : in_tensors) {
-      auto channel_first = IsChannelFirst(in_tensors, op_parameter);
+      int index = 0;
+      auto channel_first = IsChannelFirst(index++, op_parameter);
       auto *restore_tensor = DequantUtil::DequantTensor(tensor, desc.data_type, channel_first, kNumberTypeFloat32);
       if (restore_tensor != nullptr) {
         restored_origin_tensors[tensor] = restore_tensor;

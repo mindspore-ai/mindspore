@@ -95,9 +95,6 @@ int DequantUtil::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tenso
 
 int DequantUtil::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
-  if (!dst_tensor->IsConst()) {
-    return RET_NO_CHANGE;
-  }
   auto quant_params = src_tensor.quantParams();
   if (quant_params == nullptr || quant_params->size() == 0) {
     return RET_NO_CHANGE;

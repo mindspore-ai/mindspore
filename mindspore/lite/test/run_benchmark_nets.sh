@@ -173,7 +173,7 @@ function Run_Converter() {
         fi
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'--quantType=WeightQuant --bitNum=8 --quantWeightChannel=0' >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_weightquant'--quantType=WeightQuant --bitNum=8 --quantWeightChannel=0' >> "${run_converter_log_file}"
         ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0
         if [ $? = 0 ]; then
             converter_result='converter weight_quant '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
@@ -190,14 +190,31 @@ function Run_Converter() {
         fi
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=WeightQuant --bitNum=8 --quantWeightSize=500 --quantWeightChannel=16' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=MINDIR --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightSize=500 --quantWeightChannel=16
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=MINDIR --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0
         if [ $? = 0 ]; then
             converter_result='converter weight_quant '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
             converter_result='converter weight_quant '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_mindspore_weightquant_config}
+
+    # Convert tf weightquant models:
+    while read line; do
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=TF --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'_weightquant' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=TF --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0
+        if [ $? = 0 ]; then
+            converter_result='converter weight_quant '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter weight_quant '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_tf_weightquant_config}
 
     # Convert mindir mixbit weightquant models:
     while read line; do
@@ -208,16 +225,16 @@ function Run_Converter() {
         model_name=`echo ${line_info}|awk -F ' ' '{print $1}'`
 
         echo ${model_name}'_7bit' >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'_7bit  --quantType=WeightQuant --bitNum=7 --quantWeightSize=500 --quantWeightChannel=16' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=MINDIR --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}'_7bit' --quantType=WeightQuant --bitNum=7 --quantWeightSize=500 --quantWeightChannel=16
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'_7bit  --quantType=WeightQuant --bitNum=7 --quantWeightSize=0 --quantWeightChannel=0' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=MINDIR --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}'_7bit' --quantType=WeightQuant --bitNum=7 --quantWeightSize=0 --quantWeightChannel=0
         if [ $? = 0 ]; then
             converter_result='converter mindspore '${model_name}'_7bit pass';echo ${converter_result} >> ${run_converter_result_file}
         else
             converter_result='converter mindspore '${model_name}'_7bit failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
         echo ${model_name}'_9bit' >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'_9bit  --quantType=WeightQuant --bitNum=9 --quantWeightSize=500 --quantWeightChannel=16' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=MINDIR --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}'_9bit' --quantType=WeightQuant --bitNum=9 --quantWeightSize=500 --quantWeightChannel=16
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'_9bit  --quantType=WeightQuant --bitNum=9 --quantWeightSize=0 --quantWeightChannel=0' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=MINDIR --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}'_9bit' --quantType=WeightQuant --bitNum=9 --quantWeightSize=0 --quantWeightChannel=0
         if [ $? = 0 ]; then
             converter_result='converter mindspore '${model_name}'_9bit pass';echo ${converter_result} >> ${run_converter_result_file}
         else
@@ -572,11 +589,29 @@ function Run_x86() {
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86: '${model_name}_weightquant' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_weightquant_config}
+
+    # Run tf weightquant converted models:
+    while read line; do
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}_weightquant' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tf_weightquant_config}
 
     # Run mindir weight quantization converted models:
     while read line; do
@@ -590,9 +625,9 @@ function Run_x86() {
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}'[weight_quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}'[weight_quant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86: '${model_name}'_weightquant failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindspore_weightquant_config}
 
@@ -845,9 +880,9 @@ function Run_x86_sse() {
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_sse: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_sse: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_sse: '${model_name}_weightquant' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_weightquant_config}
 
@@ -863,9 +898,9 @@ function Run_x86_sse() {
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86_sse: '${model_name}'[weight quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_sse: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_sse: '${model_name}'[weight quant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_sse: '${model_name}'_weightquant failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindspore_weightquant_config}
 
@@ -1135,9 +1170,9 @@ function Run_x86_avx() {
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_avx_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86_avx: '${model_name}'[weight quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_avx: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_avx: '${model_name}'[weight quant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_avx: '${model_name}'_weightquant failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindspore_weightquant_config}
 
@@ -1566,9 +1601,9 @@ function Run_arm64() {
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --loopCount=1 --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}'[weightQuant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='arm64: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='arm64: '${model_name}'[weightQuant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='arm64: '${model_name}'_weightquant failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindspore_weightquant_config}
 
@@ -2147,6 +2182,7 @@ models_npu_config=${basepath}/models_npu.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
 models_with_multiple_inputs_config=${basepath}/models_with_multiple_inputs.cfg
 models_for_process_only_config=${basepath}/models_for_process_only.cfg
+models_tf_weightquant_config=${basepath}/models_tf_weightquant.cfg
 
 ms_models_path=${basepath}/ms_models
 

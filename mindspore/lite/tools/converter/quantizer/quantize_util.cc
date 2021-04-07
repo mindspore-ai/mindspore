@@ -947,4 +947,48 @@ void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_coun
   *desired_min = min;
 }
 
+int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first) {
+  auto channels = dims[0];
+  if (!(*channel_at_first)) {
+    if (dims.size() != 2) {
+      MS_LOG(WARNING) << "unexpected dims size: " << dims.size();
+      *channel_at_first = true;
+    } else {
+      channels = dims[1];
+    }
+  } else {
+    channels = channel_cnt == -1 ? channels : channel_cnt;
+  }
+  return channels;
+}
+
+void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
+                       int *channel_cnt) {
+  if (primitive->name() == ops::kNameMatMul && static_cast<int>(shapes.size()) == 2) {
+    auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
+    MS_ASSERT(matmul_prim != nullptr);
+    *channel_at_first =
+      index != 1 || (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b());
+  } else if (primitive->name() == ops::kNameLSTM) {
+    if (index == 1 || index == 2) {
+      if (shapes.size() != 3) {
+        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
+      } else {
+        *channel_cnt = shapes[0] * shapes[1];
+      }
+    } else if (index == 3) {
+      if (shapes.size() != 2) {
+        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
+      } else {
+        auto tensor_elem_cnt = shapes[0] * shapes[1];
+        if (tensor_elem_cnt / 4 * 4 == tensor_elem_cnt) {
+          *channel_cnt = 4;
+        }
+      }
+    } else {
+      MS_LOG(WARNING) << "unexpected index of lstm: " << index;
+    }
+  }
+}
+
 }  // namespace mindspore::lite::quant
