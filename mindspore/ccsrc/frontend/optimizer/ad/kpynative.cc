@@ -398,6 +398,17 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node)
   MS_EXCEPTION_IF_NULL(output_node);
   MS_LOG(DEBUG) << "Real output node of top cell is " << output_node->DebugString();
   last_node_ = output_node;
+
+  auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
+  if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
+    if (IsPrimitiveCNode(output_node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(output_node, prim::kPrimListGetItem)) {
+      MS_LOG(DEBUG) << "Build cnode adjoint for anfnode: " << output_node->DebugString();
+      auto cnode = output_node->cast<CNodePtr>();
+      (void)ForgeGetItemAdjoint(cnode);
+      return;
+    }
+    MS_LOG (EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
+  }
 }
 
 namespace {
