@@ -401,13 +401,14 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node)
 
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
-    if (IsPrimitiveCNode(output_node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(output_node, prim::kPrimListGetItem)) {
+    if (IsPrimitiveCNode(output_node, prim::kPrimTupleGetItem) ||
+        IsPrimitiveCNode(output_node, prim::kPrimListGetItem)) {
       MS_LOG(DEBUG) << "Build cnode adjoint for anfnode: " << output_node->DebugString();
       auto cnode = output_node->cast<CNodePtr>();
       (void)ForgeGetItemAdjoint(cnode);
       return;
     }
-    MS_LOG (EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
+    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
   }
 }
 
@@ -837,7 +838,8 @@ void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, bool grad_input
   if (grad_inputs && grad_weights) {
     tape_output = tape_->NewCNode(
       {NewValueNode(prim::kPrimMakeTuple), tape_->NewCNode(grad_inputs_list), tape_->NewCNode(grad_weights_list)});
-    tape_output->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{grad_inputs_spec, grad_weights_spec}));
+    tape_output->set_abstract(
+      std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{grad_inputs_spec, grad_weights_spec}));
   } else if (grad_inputs) {
     tape_output = tape_->NewCNode(grad_inputs_list);
     tape_output->set_abstract(grad_inputs_spec);

@@ -1918,11 +1918,9 @@ void GradExecutor::SetMakeTupleAsOutputNode(const TopCellInfoPtr &top_cell, cons
 
   // get input node and value
   ValuePtrList input_args;
-  std::string input_args_info;
   std::vector<AnfNodePtr> inputs;
   inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (int64_t i = 0; i < tuple_size; i++) {
-    input_args_info += "d";
     inputs.emplace_back(GetInput(tuple[i], false));
     input_args.emplace_back(parse::data_converter::PyDataToValue(tuple[i]));
   }
