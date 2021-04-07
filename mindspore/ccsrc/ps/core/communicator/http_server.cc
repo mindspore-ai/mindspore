@@ -118,10 +118,10 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
 bool HttpServer::Start() {
   MS_LOG(INFO) << "Start http server!";
   for (size_t i = 0; i < thread_num_; i++) {
-    auto worker_queue = std::make_shared<WorkerQueue>();
-    worker_queue->Initialize(fd_, request_handlers_);
-    worker_queues_.push_back(worker_queue);
-    worker_threads_.emplace_back(std::make_shared<std::thread>(&WorkerQueue::Run, worker_queue));
+    auto http_request_handler = std::make_shared<HttpRequestHandler>();
+    http_request_handler->Initialize(fd_, request_handlers_);
+    http_request_handlers.push_back(http_request_handler);
+    worker_threads_.emplace_back(std::make_shared<std::thread>(&HttpRequestHandler::Run, http_request_handler));
   }
   return true;
 }
@@ -139,7 +139,7 @@ void HttpServer::Stop() {
 
   if (!is_stop_.load()) {
     for (size_t i = 0; i < thread_num_; i++) {
-      worker_queues_[i]->Stop();
+      http_request_handlers[i]->Stop();
     }
     is_stop_ = true;
   }

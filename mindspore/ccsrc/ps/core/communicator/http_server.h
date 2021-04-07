@@ -38,7 +38,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ps/core/communicator/worker_queue.h"
+#include "ps/core/communicator/http_request_handler.h"
 
 namespace mindspore {
 namespace ps {
@@ -75,7 +75,7 @@ class HttpServer {
   int request_timeout_;
   size_t thread_num_;
   std::vector<std::shared_ptr<std::thread>> worker_threads_;
-  std::vector<std::shared_ptr<WorkerQueue>> worker_queues_;
+  std::vector<std::shared_ptr<HttpRequestHandler>> http_request_handlers;
   int32_t backlog_;
   std::unordered_map<std::string, OnRequestReceive *> request_handlers_;
   int fd_;

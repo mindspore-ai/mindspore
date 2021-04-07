@@ -51,6 +51,9 @@ constexpr char kSparseAdamOp[] = "Adam";
 constexpr char kSparseLazyAdamOp[] = "LazyAdam";
 constexpr char kSparseFtrlOp[] = "FTRL";
 
+constexpr char kCertificateChain[] = "server.crt";
+constexpr char kPrivateKey[] = "server.key.unsecure";
+
 constexpr int64_t kInitWeightsCmd = 10;
 constexpr int64_t kInitWeightToOptimIdCmd = 11;
 constexpr int64_t kInitOptimInputsShapeCmd = 12;

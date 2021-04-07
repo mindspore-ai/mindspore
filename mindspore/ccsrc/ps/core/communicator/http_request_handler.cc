@@ -14,16 +14,39 @@
  * limitations under the License.
  */
 
-#include "ps/core/communicator/worker_queue.h"
+#include "ps/core/communicator/http_request_handler.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-bool WorkerQueue::Initialize(int fd, std::unordered_map<std::string, OnRequestReceive *> handlers) {
+bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers) {
   evbase_ = event_base_new();
   MS_EXCEPTION_IF_NULL(evbase_);
   struct evhttp *http = evhttp_new(evbase_);
   MS_EXCEPTION_IF_NULL(http);
+
+  SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(),
+                      SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2);
+  EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+  MS_EXCEPTION_IF_NULL(ecdh);
+
+  if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
+    MS_LOG(ERROR) << "SSL use certificate chain file failed!";
+    return false;
+  }
+
+  if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(), kPrivateKey, SSL_FILETYPE_PEM)) {
+    MS_LOG(ERROR) << "SSL use private key file failed!";
+    return false;
+  }
+
+  if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx())) {
+    MS_LOG(ERROR) << "SSL check private key file failed!";
+    return false;
+  }
+
+  evhttp_set_bevcb(http, BuffereventCallback, SSLWrapper::GetInstance().GetSSLCtx());
+
   int result = evhttp_accept_socket(http, fd);
   if (result < 0) {
     MS_LOG(ERROR) << "Evhttp accept socket failed!";
@@ -56,7 +79,7 @@ bool WorkerQueue::Initialize(int fd, std::unordered_map<std::string, OnRequestRe
   return true;
 }
 
-void WorkerQueue::Run() {
+void HttpRequestHandler::Run() {
   MS_LOG(INFO) << "Start http server!";
   MS_EXCEPTION_IF_NULL(evbase_);
   int ret = event_base_dispatch(evbase_);
@@ -76,13 +99,20 @@ void WorkerQueue::Run() {
   }
 }
 
-void WorkerQueue::Stop() {
+void HttpRequestHandler::Stop() {
   MS_LOG(INFO) << "Stop http server!";
 
   int ret = event_base_loopbreak(evbase_);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "event base loop break failed!";
   }
+}
+
+bufferevent *HttpRequestHandler::BuffereventCallback(event_base *base, void *arg) {
+  SSL_CTX *ctx = reinterpret_cast<SSL_CTX *>(arg);
+  SSL *ssl = SSL_new(ctx);
+  bufferevent *bev = bufferevent_openssl_socket_new(base, -1, ssl, BUFFEREVENT_SSL_ACCEPTING, BEV_OPT_CLOSE_ON_FREE);
+  return bev;
 }
 }  // namespace core
 }  // namespace ps
