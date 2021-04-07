@@ -20,10 +20,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-WorkerNode::~WorkerNode() {
-  MS_LOG(INFO) << "Stop worker node!";
-  Stop();
-}
 bool WorkerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "Starting worker node!";
   Initialize();

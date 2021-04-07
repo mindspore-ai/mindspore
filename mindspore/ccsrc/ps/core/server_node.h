@@ -36,7 +36,7 @@ namespace core {
 class ServerNode : public AbstractNode {
  public:
   ServerNode() : server_(nullptr), server_thread_(nullptr) {}
-  ~ServerNode() override;
+  ~ServerNode() override = default;
 
   bool Start(const uint32_t &timeout = ClusterMetadata::instance()->cluster_available_timeout()) override;
   bool Stop() override;
