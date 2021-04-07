@@ -18,11 +18,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-ServerNode::~ServerNode() {
-  MS_LOG(INFO) << "Stop server node!";
-  Stop();
-}
-
 bool ServerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "Start server node!";
   Initialize();

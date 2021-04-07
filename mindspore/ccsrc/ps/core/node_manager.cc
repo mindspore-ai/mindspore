@@ -110,7 +110,7 @@ void NodeManager::UpdateClusterState() {
     }
   }
   if (!timeout_nodes_info_.empty()) {
-    is_cluster_timeout_ = true;
+    is_node_timeout_ = true;
     for (auto it = timeout_nodes_info_.begin(); it != timeout_nodes_info_.end(); ++it) {
       finish_nodes_id_.insert(it->first);
     }
@@ -138,9 +138,7 @@ void NodeManager::CheckClusterTimeout() {
   }
 }
 
-void NodeManager::AddFinishNode(const FinishMessage &finish_message) {
-  finish_nodes_id_.insert(finish_message.node_id());
-}
+void NodeManager::AddFinishNode(const std::string &finish_message) { finish_nodes_id_.insert(finish_message); }
 
 std::unordered_map<std::string, NodeInfo> NodeManager::nodes_info() { return nodes_info_; }
 

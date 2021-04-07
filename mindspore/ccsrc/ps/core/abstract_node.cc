@@ -390,11 +390,9 @@ bool AbstractNode::Disconnect(const std::shared_ptr<TcpClient> &client, const ui
   auto meta = std::make_shared<MessageMeta>();
   meta->set_cmd(NodeCommand::FINISH);
 
-  FinishMessage finish_message;
-  finish_message.set_node_id(node_info_.node_id_);
+  std::string finish_message = node_info_.node_id_;
 
-  if (!SendMessageSync(client, meta, Protos::PROTOBUF, finish_message.SerializeAsString().data(),
-                       finish_message.ByteSizeLong())) {
+  if (!SendMessageSync(client, meta, Protos::RAW, finish_message.data(), finish_message.length())) {
     MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                     << " the node id:" << node_info_.node_id_ << " send Finish Message timeout!";
   }
