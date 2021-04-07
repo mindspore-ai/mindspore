@@ -1721,7 +1721,7 @@ void UpdateOrientationAfineMat(const LiteMat &src, int *rotationDstWidth, int *r
     (*varM)[0][2] = *rotationDstWidth - 1;
     (*varM)[1][0] = 0;
     (*varM)[1][1] = -1;
-    (*varM)[1][2] = *rotationDstWidth - 1;
+    (*varM)[1][2] = *rotationDstHeight - 1;
     if (IM_TOOL_EXIF_ORIENTATION_180_DEG_MIRROR == srcOrientation) {
       /* with (*varM)irror */
       (*varM)[0][0] *= -1;
@@ -1753,7 +1753,7 @@ void UpdateOrientationAfineMat(const LiteMat &src, int *rotationDstWidth, int *r
     (*varM)[0][2] = 0;
     (*varM)[1][0] = -1;
     (*varM)[1][1] = 0;
-    (*varM)[1][2] = *rotationDstWidth - 1;
+    (*varM)[1][2] = *rotationDstHeight - 1;
     if (IM_TOOL_EXIF_ORIENTATION_270_DEG_MIRROR == srcOrientation) {
       /* with Mirror */
       (*varM)[0][1] *= -1;
