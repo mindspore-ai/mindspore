@@ -34,9 +34,6 @@ class ReduceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParameter() const;
-  void CalculateTransposeInfo(std::vector<size_t> *new_shape, std::vector<size_t> *strides,
-                              std::vector<size_t> *back_strides, size_t *stride) const;
   std::vector<size_t> input_shape_;
   std::vector<int64_t> axis_;
   int reduce_type_{0};

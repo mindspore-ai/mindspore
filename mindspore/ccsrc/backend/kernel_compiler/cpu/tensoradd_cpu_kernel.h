@@ -34,15 +34,9 @@ class TensorAddCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  static void NormalProcess(const float *input_a, const float *input_b, float *output, size_t size);
-  void BroadcastProcess(const float *input_a, const float *input_b, float *output, size_t size);
-  static void CalculateStrides(const std::vector<size_t> &, std::vector<size_t> *);
   std::vector<size_t> input_shape_a_;
   std::vector<size_t> input_shape_b_;
-  // Define follow var for Broadcast
   std::vector<size_t> output_shape_;
-  std::vector<size_t> input_strides_a_;
-  std::vector<size_t> input_strides_b_;
 };
 
 MS_REG_CPU_KERNEL(
