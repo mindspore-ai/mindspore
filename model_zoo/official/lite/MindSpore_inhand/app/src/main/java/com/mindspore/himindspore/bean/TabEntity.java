@@ -15,9 +15,10 @@
  */
 package com.mindspore.himindspore.bean;
 
-import com.mindspore.customview.tablayout.listener.CustomTabEntity;
 
-public class TabEntity implements CustomTabEntity {
+import com.mindspore.himindspore.ui.view.MSTabEntity;
+
+public class TabEntity implements MSTabEntity {
 
     public String title;
     public int selectedIcon;
@@ -30,17 +31,17 @@ public class TabEntity implements CustomTabEntity {
     }
 
     @Override
-    public String getTabTitle() {
+    public String getMSTabTitle() {
         return title;
     }
 
     @Override
-    public int getTabSelectedIcon() {
+    public int getMSTabIconChecked() {
         return selectedIcon;
     }
 
     @Override
-    public int getTabUnselectedIcon() {
+    public int getMSTabIconUnchecked() {
         return unSelectedIcon;
     }
 }

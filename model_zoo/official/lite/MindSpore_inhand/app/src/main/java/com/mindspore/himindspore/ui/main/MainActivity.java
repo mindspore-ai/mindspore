@@ -24,22 +24,25 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.material.tabs.TabLayout;
 import com.mindspore.common.base.adapter.BasePagerAdapter;
 import com.mindspore.customview.dialog.UpdateDialog;
-import com.mindspore.customview.tablayout.CommonTabLayout;
-import com.mindspore.customview.tablayout.listener.CustomTabEntity;
-import com.mindspore.customview.tablayout.listener.OnTabSelectListener;
 import com.mindspore.himindspore.R;
 import com.mindspore.himindspore.base.BaseActivity;
 import com.mindspore.himindspore.comment.FragmentFactory;
 import com.mindspore.himindspore.net.FileDownLoadObserver;
 import com.mindspore.himindspore.net.UpdateInfoBean;
+import com.mindspore.himindspore.ui.view.MSTabEntity;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -49,16 +52,18 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
     private static final String TAG = "MainActivity";
 
     private ViewPager mVpHome;
-    private CommonTabLayout mCtlTable;
+    private TabLayout mTabLayout;
 
     private int now_version;
     private ProgressDialog progressDialog;
+
+    private List<MSTabEntity> mTabEntities;
 
     @Override
     protected void init() {
         presenter = new MainPresenter(this);
         mVpHome = findViewById(R.id.vp_home);
-        mCtlTable = findViewById(R.id.ctl_table);
+        mTabLayout = findViewById(R.id.tab_layout);
         showPackaeInfo();
         initTabLayout();
         initViewPager();
@@ -82,19 +87,68 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
     }
 
     private void initTabLayout() {
-        ArrayList<CustomTabEntity> mTabEntities = presenter.getTabEntity();
-        mCtlTable.setTabData(mTabEntities);
-        mCtlTable.setOnTabSelectListener(new OnTabSelectListener() {
+        mTabEntities = presenter.getTabEntity();
+        for (int i = 0; i < mTabEntities.size(); i++) {
+            mTabLayout.addTab(mTabLayout.newTab().setCustomView(getTabView(mTabEntities.get(i))));
+        }
+
+        chooseFirst();
+        mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
-            public void onTabSelect(int position) {
-                mVpHome.setCurrentItem(position);
+            public void onTabSelected(TabLayout.Tab tab) {
+                Log.e(TAG, "onTabSelected: " + tab.getPosition());
+                mVpHome.setCurrentItem(tab.getPosition(),true);
+                recoverItem();
+                View view =tab.getCustomView();
+                ImageView imageView = view.findViewById(R.id.tab_icon);
+                TextView textView = view.findViewById(R.id.tab_title);
+                imageView.setImageResource(mTabEntities.get(tab.getPosition()).getMSTabIconChecked());
+                textView.setTextColor(getResources().getColor(R.color.main_tab_text_checked));
             }
 
             @Override
-            public void onTabReselect(int position) {
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
 
             }
         });
+
+    }
+
+    public View getTabView(MSTabEntity tabEntity) {
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_tab_top, null);
+        ImageView tabIcon = view.findViewById(R.id.tab_icon);
+        tabIcon.setImageResource(tabEntity.getMSTabIconUnchecked());
+        TextView tabText = view.findViewById(R.id.tab_title);
+        tabText.setText(tabEntity.getMSTabTitle());
+        tabText.setTextColor(getResources().getColor(R.color.main_tab_text_uncheck));
+        return view;
+    }
+
+
+    private void chooseFirst() {
+        TabLayout.Tab tabAt = mTabLayout.getTabAt(0);
+        View view = tabAt.getCustomView();
+        ImageView imageView = view.findViewById(R.id.tab_icon);
+        TextView textView = view.findViewById(R.id.tab_title);
+        imageView.setImageResource(mTabEntities.get(0).getMSTabIconChecked());
+        textView.setTextColor(getResources().getColor(R.color.main_tab_text_checked));
+    }
+
+
+    private void recoverItem() {
+        for (int i = 0; i < mTabEntities.size(); i++) {
+            TabLayout.Tab tabAt = mTabLayout.getTabAt(i);
+            View view = tabAt.getCustomView();
+            ImageView imageView = view.findViewById(R.id.tab_icon);
+            TextView textView = view.findViewById(R.id.tab_title);
+            imageView.setImageResource(mTabEntities.get(i).getMSTabIconUnchecked());
+            textView.setTextColor(getResources().getColor(R.color.main_tab_text_uncheck));
+        }
     }
 
     private void initViewPager() {
@@ -104,23 +158,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
         fragments.add(FragmentFactory.getInstance().getMeFragment());
         BasePagerAdapter adapter = new BasePagerAdapter(getSupportFragmentManager(), fragments);
         mVpHome.setAdapter(adapter);
-        mVpHome.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                if (position >= 0) {
-                    mCtlTable.setCurrentTab(position);
-                }
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-            }
-        });
+        mVpHome.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(mTabLayout));
         mVpHome.setOffscreenPageLimit(3);
         mVpHome.setCurrentItem(0);
     }
@@ -171,7 +209,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
 
     public void showUpdate(final UpdateInfoBean updateInfo) {
         if (now_version != updateInfo.getVersionCode()) {
-            UpdateDialog updateDialog= new UpdateDialog(this);
+            UpdateDialog updateDialog = new UpdateDialog(this);
             updateDialog.setTitleString(getResources().getString(R.string.app_update_lastest) + updateInfo.getVersionName());
             updateDialog.setContentString(updateInfo.getMessage());
             updateDialog.setYesOnclickListener(() -> downFile());
@@ -201,12 +239,9 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
 
             @Override
             public void onProgress(final int progress, final long total) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progressDialog.setMax((int) total / 1024 / 1024);
-                        progressDialog.setProgress(progress);
-                    }
+                runOnUiThread(() -> {
+                    progressDialog.setMax((int) total / 1024 / 1024);
+                    progressDialog.setProgress(progress);
                 });
 
             }

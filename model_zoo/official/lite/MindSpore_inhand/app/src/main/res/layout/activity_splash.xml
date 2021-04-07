@@ -7,7 +7,6 @@
     android:background="@color/white"
     tools:context=".ui.guide.SplashActivity">
 
-
     <ImageView
         android:id="@+id/image_logo"
         android:layout_width="160dp"
@@ -48,23 +47,23 @@
         app:layout_constraintTop_toBottomOf="@+id/title" />
 
 
-    <com.mindspore.customview.countdown.CountDownView
+    <com.mindspore.customview.countdown.MSCountDownView
         android:id="@+id/cdv_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_marginTop="40dp"
         android:layout_marginEnd="20dp"
-        app:cd_animator_time="3"
-        app:cd_animator_time_unit="@string/splash_count_down"
-        app:cd_arc_color="@color/btn_small_checked"
-        app:cd_arc_width="2dp"
-        app:cd_bg_color="@color/gray_light"
-        app:cd_circle_radius="20dp"
-        app:cd_location="top"
-        app:cd_retreat_type="forward"
-        app:cd_text_color="@color/black"
-        app:cd_text_size="12sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:ms_cd_animator_time="3"
+        app:ms_cd_animator_time_unit="@string/splash_count_down"
+        app:ms_cd_arc_color="@color/btn_small_checked"
+        app:ms_cd_arc_width="2dp"
+        app:ms_cd_bg_color="@color/gray_light"
+        app:ms_cd_circle_radius="20dp"
+        app:ms_cd_location="top"
+        app:ms_cd_retreat_type="forward"
+        app:ms_cd_text_color="@color/black"
+        app:ms_cd_text_size="12sp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

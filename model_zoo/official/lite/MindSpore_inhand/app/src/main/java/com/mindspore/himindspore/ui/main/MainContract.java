@@ -15,12 +15,12 @@
  */
 package com.mindspore.himindspore.ui.main;
 
-import com.mindspore.customview.tablayout.listener.CustomTabEntity;
 import com.mindspore.himindspore.net.FileDownLoadObserver;
 import com.mindspore.himindspore.net.UpdateInfoBean;
+import com.mindspore.himindspore.ui.view.MSTabEntity;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.List;
 
 public interface MainContract {
 
@@ -31,7 +31,7 @@ public interface MainContract {
     }
 
     interface Presenter  {
-        ArrayList<CustomTabEntity> getTabEntity();
+        List<MSTabEntity> getTabEntity();
 
         void getUpdateInfo();
 
