@@ -148,6 +148,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
         ├── mindspore_hub_conf.py           // hub 配置脚本
         ├── postprocess.py                  // 310 推理后处理脚本
         ├── preprocess.py                   // 310 推理前处理脚本
+        ├── requirements.txt                // 需要的三方库.
 ```
 
 ### 脚本参数

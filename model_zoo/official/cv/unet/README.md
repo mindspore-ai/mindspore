@@ -144,6 +144,7 @@ Then you can run everything just like on ascend.
         ├── mindspore_hub_conf.py           // hub config file
         ├── postprocess.py                  // unet 310 infer postprocess.
         ├── preprocess.py                   // unet 310 infer preprocess dataset
+        ├── requirements.txt                // Requirements of third party package.
 ```
 
 ### [Script Parameters](#contents)
