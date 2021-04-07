@@ -26,16 +26,12 @@ set VERSION_MAJOR=''
 set VERSION_MINOR=''
 set ERSION_REVISION=''
 
-find "const int ms_version_major =" mindspore\lite\include\version.h > version.txt
-for /f "delims=\= tokens=2" %%a in ('findstr "const int ms_version_major = " version.txt') do (set x=%%a)
+for /f "delims=\= tokens=2" %%a in ('findstr /C:"const int ms_version_major = " mindspore\lite\include\version.h') do (set x=%%a)
 set VERSION_MAJOR=%x:~1,1%
-find "const int ms_version_minor =" mindspore\lite\include\version.h > version.txt
-for /f "delims=\= tokens=2" %%b in ('findstr "const int ms_versio/retestn_minor = " version.txt') do (set y=%%b)
+for /f "delims=\= tokens=2" %%b in ('findstr /C:"const int ms_version_minor = " mindspore\lite\include\version.h') do (set y=%%b)
 set VERSION_MINOR=%y:~1,1%
-find "const int ms_version_revision =" mindspore\lite\include\version.h > version.txt
-for /f "delims=\= tokens=2" %%c in ('findstr "const int ms_version_revision = " version.txt') do (set z=%%c)
+for /f "delims=\= tokens=2" %%c in ('findstr /C:"const int ms_version_revision = " mindspore\lite\include\version.h') do (set z=%%c)
 set VERSION_REVISION=%z:~1,1%
-del version.txt
 
 echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
 
