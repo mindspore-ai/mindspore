@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 
 #include <memory>
-#include "minddata/mindrecord/include/shard_task.h"
+#include "minddata/mindrecord/include/shard_task_list.h"
 
 namespace mindspore {
 namespace mindrecord {
@@ -26,7 +26,7 @@ class __attribute__((visibility("default"))) ShardOperator {
  public:
   virtual ~ShardOperator() = default;
 
-  MSRStatus operator()(ShardTask &tasks) {
+  MSRStatus operator()(ShardTaskList &tasks) {
     if (SUCCESS != this->PreExecute(tasks)) {
       return FAILED;
     }
@@ -47,11 +47,11 @@ class __attribute__((visibility("default"))) ShardOperator {
 
   virtual std::shared_ptr<ShardOperator> GetChildOp() { return child_op_; }
 
-  virtual MSRStatus PreExecute(ShardTask &tasks) { return SUCCESS; }
+  virtual MSRStatus PreExecute(ShardTaskList &tasks) { return SUCCESS; }
 
-  virtual MSRStatus Execute(ShardTask &tasks) = 0;
+  virtual MSRStatus Execute(ShardTaskList &tasks) = 0;
 
-  virtual MSRStatus SufExecute(ShardTask &tasks) { return SUCCESS; }
+  virtual MSRStatus SufExecute(ShardTaskList &tasks) { return SUCCESS; }
 
   virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return 0; }
 

@@ -140,7 +140,8 @@ class MindRecordOp : public MappableLeafOp {
   MindRecordOp(int32_t num_mind_record_workers, std::vector<std::string> dataset_file, bool load_dataset,
                int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded_,
-               const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes_);
+               const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes_,
+               std::unique_ptr<ShardReader> shard_reader);
 
   // Destructor
   ~MindRecordOp() override;

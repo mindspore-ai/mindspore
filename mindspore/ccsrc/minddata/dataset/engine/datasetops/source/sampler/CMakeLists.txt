@@ -10,6 +10,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES
         subset_random_sampler.cc
         subset_sampler.cc
         weighted_random_sampler.cc
+        mind_record_sampler.cc
         )
 
 if(ENABLE_PYTHON)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ ShardPkSample::ShardPkSample(const std::string &category_field, int64_t num_elem
   shuffle_op_ = std::make_shared<ShardShuffle>(seed, kShuffleSample);  // do shuffle and replacement
 }
 
-MSRStatus ShardPkSample::SufExecute(ShardTask &tasks) {
+MSRStatus ShardPkSample::SufExecute(ShardTaskList &tasks) {
   if (shuffle_ == true) {
     if (SUCCESS != (*shuffle_op_)(tasks)) {
       return FAILED;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,15 @@ class __attribute__((visibility("default"))) ShardDistributedSample : public Sha
 
   ~ShardDistributedSample() override{};
 
-  MSRStatus PreExecute(ShardTask &tasks) override;
+  MSRStatus PreExecute(ShardTaskList &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
  private:
   bool shuffle_;
   int no_of_padded_samples_;
-  bool first_epoch_;  // check  (num_sample + num_padded) % num_shards == 0 in first epoch
-  ShardTask task_;    // maintain the input tasks in first epoch
+  bool first_epoch_;    // check (num_sample + num_padded) % num_shards == 0 in first epoch
+  ShardTaskList task_;  // maintain the input tasks in first epoch
 };
 }  // namespace mindrecord
 }  // namespace mindspore

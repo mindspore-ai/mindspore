@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ ShardReader::ShardReader()
       num_padded_(0),
       num_rows_(0),
       total_blob_size_(0),
-      task_id_(0),
+      sample_id_position_(0),
       deliver_id_(0),
       lazy_load_(false),
       shard_sample_count_() {}
@@ -1088,9 +1088,8 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::shared_ptr<ShardOperator
       i++;
     }
   }
-
-  // Generate task list, a task will create a batch
-  std::vector<ShardTask> categoryTasks(categories.size());
+  // Generate a vector of task lists.  Each catogory has a list of tasks.
+  std::vector<ShardTaskList> categoryTasks(categories.size());
   for (uint32_t categoryNo = 0; categoryNo < categories.size(); ++categoryNo) {
     int category_index = 0;
     for (int shard_id = 0; shard_id < shard_count_ && category_index < num_elements; ++shard_id) {
@@ -1122,7 +1121,9 @@ MSRStatus ShardReader::CreateTasksByCategory(const std::shared_ptr<ShardOperator
       }
     }
   }
-  tasks_ = ShardTask::Combine(categoryTasks, category_op->GetReplacement(), num_elements, num_samples);
+  tasks_ = ShardTaskList::Combine(categoryTasks, category_op->GetReplacement(), num_elements, num_samples);
+
+  tasks_.InitSampleIds();
   if (SUCCESS != (*category_op)(tasks_)) {
     return FAILED;
   }
@@ -1246,6 +1247,10 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
     }
   }
 
+  MS_LOG(DEBUG) << "Created initial list of tasks. There are " << tasks_.Size() << " to start with before sampling.";
+
+  tasks_.InitSampleIds();
+
   for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
     const auto &op = operators[operator_no];
     if (std::dynamic_pointer_cast<ShardCategory>(op)) continue;
@@ -1256,7 +1261,9 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
 
   if (tasks_.permutation_.empty()) tasks_.MakePerm();
   num_rows_ = tasks_.Size();
-  MS_LOG(INFO) << "Total rows is " << num_rows_;
+  MS_LOG(INFO) << "Total rows is " << num_rows_
+               << " and total amount sampled initially is: " << tasks_.sample_ids_.size();
+
   return SUCCESS;
 }
 
@@ -1272,9 +1279,9 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
   uint32_t blob_start = 0;
   uint32_t blob_end = 0;
   json var_fields;
-
   // Pick up task from task list
-  auto task = tasks_.GetTaskByID(tasks_.permutation_[task_id]);
+  ShardTask task;
+  task = tasks_.GetTaskByID(task_id);
 
   // check task type
   auto task_type = std::get<0>(task);
@@ -1354,16 +1361,16 @@ MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
 
   // Loop forever
   for (;;) {
-    int task_id = 0;
+    int sample_id_pos = 0;
 
     // Get next task ID
-    task_id = task_id_++;
+    sample_id_pos = sample_id_position_++;
 
     // All tasks are done
-    if (task_id >= static_cast<int>(tasks_.Size())) {
+    if (sample_id_pos >= static_cast<int>(tasks_.sample_ids_.size())) {
       return FAILED;
     }
-    const auto &ret = ConsumerOneTask(task_id, consumer_id);
+    const auto &ret = ConsumerOneTask(tasks_.sample_ids_[sample_id_pos], consumer_id);
     if (SUCCESS != ret.first) {
       return FAILED;
     }
@@ -1372,11 +1379,13 @@ MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
     //   otherwise, set batch data in map
     {
       std::unique_lock<std::mutex> lck(mtx_delivery_);
-      cv_delivery_.wait(lck, [task_id, this] { return interrupt_ || task_id <= deliver_id_ + kNumBatchInMap; });
+      cv_delivery_.wait(lck,
+                        [sample_id_pos, this] { return interrupt_ || sample_id_pos <= deliver_id_ + kNumBatchInMap; });
       if (interrupt_) {
         return SUCCESS;
       }
-      delivery_map_[task_id] = std::make_shared<std::vector<std::tuple<std::vector<uint8_t>, json>>>(std::move(batch));
+      delivery_map_[sample_id_pos] =
+        std::make_shared<std::vector<std::tuple<std::vector<uint8_t>, json>>>(std::move(batch));
     }
     cv_iterator_.notify_one();
   }
@@ -1386,7 +1395,7 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
   if (interrupt_) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
   }
-  if (deliver_id_ >= static_cast<int>(tasks_.Size())) {
+  if (deliver_id_ >= static_cast<int>(tasks_.sample_ids_.size())) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
   }
 
@@ -1458,7 +1467,7 @@ std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> Sha
 void ShardReader::Reset() {
   {
     std::lock_guard<std::mutex> lck(mtx_delivery_);
-    task_id_ = 0;
+    sample_id_position_ = 0;
     deliver_id_ = 0;
   }
   cv_delivery_.notify_all();
@@ -1484,6 +1493,11 @@ void ShardReader::ShuffleTask() {
     }
   }
   if (tasks_.permutation_.empty()) tasks_.MakePerm();
+}
+
+const std::vector<int> *ShardReader::GetSampleIds() {
+  // return const reference to private sample id list.
+  return &(this->tasks_.sample_ids_);
 }
 
 }  // namespace mindrecord

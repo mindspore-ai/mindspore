@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
@@ -155,17 +156,19 @@ Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_));
 
   std::shared_ptr<MindRecordOp> mindrecord_op;
+  std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
+
   // If pass a string to MindData(), it will be treated as a pattern to search for matched files,
   // else if pass a vector to MindData(), it will be treated as specified files to be read
   if (search_for_pattern_) {
     std::vector<std::string> dataset_file_vec_ = {dataset_file_};
-    mindrecord_op =
-      std::make_shared<MindRecordOp>(num_workers_, dataset_file_vec_, search_for_pattern_, connector_que_size_,
-                                     columns_list_, operators_, num_padded_, padded_sample_, sample_bytes_);
+    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, dataset_file_vec_, search_for_pattern_,
+                                                   connector_que_size_, columns_list_, operators_, num_padded_,
+                                                   padded_sample_, sample_bytes_, std::move(shard_reader));
   } else {
-    mindrecord_op =
-      std::make_shared<MindRecordOp>(num_workers_, dataset_files_, search_for_pattern_, connector_que_size_,
-                                     columns_list_, operators_, num_padded_, padded_sample_, sample_bytes_);
+    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, dataset_files_, search_for_pattern_,
+                                                   connector_que_size_, columns_list_, operators_, num_padded_,
+                                                   padded_sample_, sample_bytes_, std::move(shard_reader));
   }
 
   RETURN_IF_NOT_OK(mindrecord_op->Init());
