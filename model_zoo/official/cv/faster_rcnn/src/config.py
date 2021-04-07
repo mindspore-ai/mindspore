@@ -20,7 +20,7 @@ from easydict import EasyDict as ed
 config = ed({
     "img_width": 1280,
     "img_height": 768,
-    "keep_ratio": False,
+    "keep_ratio": True,
     "flip_ratio": 0.5,
     "expand_ratio": 1.0,
 
@@ -112,19 +112,19 @@ config = ed({
     "rpn_head_weight": 1.0,
 
     # LR
-    "base_lr": 0.02,
+    "base_lr": 0.04,
     "base_step": 58633,
     "total_epoch": 13,
     "warmup_step": 500,
-    "warmup_ratio": 1/3.0,
+    "warmup_ratio": 1/16.0,
     "sgd_step": [8, 11],
     "sgd_momentum": 0.9,
 
     # train
     "batch_size": 2,
-    "loss_scale": 1,
+    "loss_scale": 256,
     "momentum": 0.91,
-    "weight_decay": 1e-4,
+    "weight_decay": 1e-5,
     "epoch_size": 12,
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
