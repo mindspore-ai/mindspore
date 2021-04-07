@@ -75,6 +75,54 @@ class TensorTransform : public std::enable_shared_from_this<TensorTransform> {
   virtual std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) { return nullptr; }
 };
 
+/// \brief Slice object used in SliceOption.
+class Slice {
+ public:
+  /// \brief Constructor, with start, stop and step default to 0.
+  Slice() : start_(0), stop_(0), step_(0) {}
+  /// \brief Constructor.
+  /// \param[in] start Starting integer specifying where to start the slicing.
+  /// \param[in] stop Ending integer specifying where to stop the slicing.
+  /// \param[in] step An integer specifying the step of the slicing.
+  Slice(dsize_t start, dsize_t stop, dsize_t step) : start_(start), stop_(stop), step_(step) {}
+  /// \brief Constructor, with step=1
+  /// \param[in] start Starting integer specifying where to start the slicing.
+  /// \param[in] stop Ending integer specifying where to stop the slicing.
+  Slice(dsize_t start, dsize_t stop) : start_(start), stop_(stop), step_(1) {}
+  /// \brief Constructor, with start=0 and step=1
+  /// \param[in] stop Ending integer specifying where to stop the slicing.
+  explicit Slice(dsize_t stop) : start_(0), stop_(stop), step_(1) {}
+  Slice(Slice const &slice) = default;
+
+  ~Slice() = default;
+
+  bool valid() const { return step_ != 0; }
+  dsize_t start_;
+  dsize_t stop_;
+  dsize_t step_;
+};
+
+/// \brief SliceOption used in Slice Op.
+class SliceOption {
+ public:
+  /// \param[in] all Slice the whole dimension
+  explicit SliceOption(bool all) : all_(all) {}
+  /// \param[in] indices Slice these indices along the dimension. Negative indices are supported.
+  explicit SliceOption(std::vector<dsize_t> indices) : indices_(indices) {}
+  /// \param[in] slice Slice the generated indices from the slice object along the dimension.
+  explicit SliceOption(Slice slice) : slice_(slice) {}
+  SliceOption(SliceOption const &slice) = default;
+
+  ~SliceOption() = default;
+
+  // only one of the following will be valid
+  // given indices to slice the Tensor.
+  std::vector<dsize_t> indices_ = {};
+  // Slice object. All start, stop and step are 0 if invalid.
+  Slice slice_;
+  bool all_ = false;
+};
+
 // Transform operations for performing data transformation.
 namespace transforms {
 
@@ -105,6 +153,29 @@ class Compose final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Concatenate Op.
+/// \notes Tensor operation that concatenates all columns into a single tensor.
+class Concatenate final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] axis Concatenate the tensors along given axis (Default=0).
+  /// \param[in] prepend MSTensor to be prepended to the already concatenated tensors (Default={}).
+  /// \param[in] append MSTensor to be appended to the already concatenated tensors (Default={}).
+  explicit Concatenate(int8_t axis = 0, MSTensor prepend = {}, MSTensor append = {});
+
+  /// \brief Destructor
+  ~Concatenate() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Duplicate Op.
 /// \notes Duplicate the input tensor to a new output tensor.
 ///     The input tensor is carried over to the output list.
@@ -122,6 +193,32 @@ class Duplicate final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
+/// \brief Mask Op.
+/// \notes Mask content of the input tensor with the given predicate.
+///     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
+class Mask final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] op One of the relational operators EQ, NE LT, GT, LE or GE.
+  /// \param[in] constant Constant to be compared to.
+  ///               Can only be MSTensor of str, int, float, bool.
+  /// \param[in] de_type Type of the generated mask (Default to be mindspore::DataType::kNumberTypeBool).
+  explicit Mask(RelationalOp op, MSTensor constant,
+                mindspore::DataType ms_type = mindspore::DataType(mindspore::DataType::kNumberTypeBool));
+
+  /// \brief Destructor
+  ~Mask() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief OneHot Op.
 /// \notes Convert the labels into OneHot format.
 class OneHot final : public TensorTransform {
@@ -132,6 +229,30 @@ class OneHot final : public TensorTransform {
 
   /// \brief Destructor
   ~OneHot() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief PadEnd Op.
+/// \notes Pad input tensor according to pad_shape, need to have same rank.
+class PadEnd final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] pad_shape List of integers representing the shape needed.
+  ///               Dimensions that set to `None` will not be padded (i.e., original dim will be used).
+  ///               Shorter dimensions will truncate the values.
+  /// \param[in] pad_value Value used to pad. Default to be {}.
+  explicit PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value = {});
+
+  /// \brief Destructor
+  ~PadEnd() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -189,6 +310,29 @@ class RandomChoice final : public TensorTransform {
 
   /// \brief Destructor
   ~RandomChoice() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Slice Op.
+/// \notes Slice operation to extract a tensor out using the given n slices.
+///     The functionality of Slice is similar to NumPy's indexing feature.
+///     (Currently only rank-1 tensors are supported).
+class Slice final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] slice_input Vector of SliceOption
+  explicit Slice(const std::vector<SliceOption> &slice_input);
+
+  /// \brief Destructor
+  ~Slice() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.

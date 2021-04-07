@@ -160,7 +160,7 @@ class _SliceOption(cde.SliceOption):
         super().__init__(slice_option)
 
 
-class Slice(cde.SliceOp):
+class Slice():
     """
     Slice operation to extract a tensor out using the given n slices.
 
@@ -200,7 +200,10 @@ class Slice(cde.SliceOp):
     def __init__(self, *slices):
         slice_input_ = list(slices)
         slice_input_ = [_SliceOption(slice_dim) for slice_dim in slice_input_]
-        super().__init__(slice_input_)
+        self.slice_input_ = slice_input_
+
+    def parse(self):
+        return cde.SliceOperation(self.slice_input_)
 
 
 class Relational(IntEnum):
@@ -220,7 +223,7 @@ DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
                    Relational.LE: cde.RelationalOp.LE}
 
 
-class Mask(cde.MaskOp):
+class Mask():
     """
     Mask content of the input tensor with the given predicate.
     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
@@ -250,12 +253,15 @@ class Mask(cde.MaskOp):
 
     @check_mask_op
     def __init__(self, operator, constant, dtype=mstype.bool_):
-        dtype = mstype_to_detype(dtype)
-        constant = cde.Tensor(np.array(constant))
-        super().__init__(DE_C_RELATIONAL[operator], constant, dtype)
+        self.operator = operator
+        self.dtype = mstype_to_detype(dtype)
+        self.constant = cde.Tensor(np.array(constant))
+
+    def parse(self):
+        return cde.MaskOperation(DE_C_RELATIONAL[self.operator], self.constant, self.dtype)
 
 
-class PadEnd(cde.PadEndOp):
+class PadEnd():
     """
     Pad input tensor according to pad_shape, need to have same rank.
 
@@ -284,12 +290,14 @@ class PadEnd(cde.PadEndOp):
 
     @check_pad_end
     def __init__(self, pad_shape, pad_value=None):
-        if pad_value is not None:
-            pad_value = cde.Tensor(np.array(pad_value))
-        super().__init__(cde.TensorShape(pad_shape), pad_value)
+        self.pad_shape = cde.TensorShape(pad_shape)
+        self.pad_value = cde.Tensor(np.array(pad_value)) if pad_value is not None else pad_value
+
+    def parse(self):
+        return cde.PadEndOperation(self.pad_shape, self.pad_value)
 
 
-class Concatenate(cde.ConcatenateOp):
+class Concatenate():
     """
     Tensor operation that concatenates all columns into a single tensor.
 
@@ -311,11 +319,12 @@ class Concatenate(cde.ConcatenateOp):
 
     @check_concat_type
     def __init__(self, axis=0, prepend=None, append=None):
-        if prepend is not None:
-            prepend = cde.Tensor(np.array(prepend))
-        if append is not None:
-            append = cde.Tensor(np.array(append))
-        super().__init__(axis, prepend, append)
+        self.axis = axis
+        self.prepend = cde.Tensor(np.array(prepend)) if prepend is not None else prepend
+        self.append = cde.Tensor(np.array(append)) if append is not None else append
+
+    def parse(self):
+        return cde.ConcatenateOperation(self.axis, self.prepend, self.append)
 
 
 class Duplicate(TensorOperation):

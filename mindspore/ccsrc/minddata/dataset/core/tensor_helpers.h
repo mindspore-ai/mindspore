@@ -19,43 +19,11 @@
 #include <memory>
 #include <vector>
 
+#include "mindspore/ccsrc/minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/constants.h"
 
 namespace mindspore {
 namespace dataset {
-class Slice {
- public:
-  Slice() : start_(0), stop_(0), step_(0) {}
-  Slice(dsize_t start, dsize_t stop, dsize_t step) : start_(start), stop_(stop), step_(step) {}
-  Slice(dsize_t start, dsize_t stop) : start_(start), stop_(stop), step_(1) {}
-  explicit Slice(dsize_t stop) : start_(0), stop_(stop), step_(1) {}
-  Slice(Slice const &slice) = default;
-
-  ~Slice() = default;
-
-  bool valid() const { return step_ != 0; }
-  dsize_t start_;
-  dsize_t stop_;
-  dsize_t step_;
-};
-
-class SliceOption {
- public:
-  explicit SliceOption(bool all) : all_(all) {}
-  explicit SliceOption(std::vector<dsize_t> indices) : indices_(indices) {}
-  explicit SliceOption(Slice slice) : slice_(slice) {}
-  SliceOption(SliceOption const &slice) = default;
-
-  ~SliceOption() = default;
-
-  // only one of the following will be valid
-  // given indices to slice the Tensor.
-  std::vector<dsize_t> indices_ = {};
-  // Slice object. All start, stop and step are 0 if invalid.
-  Slice slice_;
-  bool all_ = false;
-};
-
 /// Recursive helper function to generate indices based on vector of SliceOptions. It recursively iterates through each
 /// range represented by slice_options to generate a list of indices to be sliced.
 /// \param[out] matrix Generated nested vector of indices

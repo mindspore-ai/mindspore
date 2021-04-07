@@ -28,9 +28,13 @@ namespace mindspore {
 namespace dataset {
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kComposeOperation[] = "Compose";
+constexpr char kConcatenateOperation[] = "Concatenate";
 constexpr char kDuplicateOperation[] = "Duplicate";
+constexpr char kMaskOperation[] = "Mask";
 constexpr char kOneHotOperation[] = "OneHot";
+constexpr char kPadEndOperation[] = "PadEnd";
 constexpr char kPreBuiltOperation[] = "PreBuilt";
+constexpr char kSliceOperation[] = "Slice";
 constexpr char kRandomApplyOperation[] = "RandomApply";
 constexpr char kRandomChoiceOperation[] = "RandomChoice";
 constexpr char kTypeCastOperation[] = "TypeCast";
@@ -56,6 +60,25 @@ class ComposeOperation : public TensorOperation {
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
 };
 
+class ConcatenateOperation : public TensorOperation {
+ public:
+  explicit ConcatenateOperation(int8_t axis, const std::shared_ptr<Tensor> &prepend,
+                                const std::shared_ptr<Tensor> &append);
+
+  ~ConcatenateOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kConcatenateOperation; }
+
+ private:
+  int8_t axis_;
+  std::shared_ptr<Tensor> prepend_;
+  std::shared_ptr<Tensor> append_;
+};
+
 class DuplicateOperation : public TensorOperation {
  public:
   DuplicateOperation() = default;
@@ -67,6 +90,24 @@ class DuplicateOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kDuplicateOperation; }
+};
+
+class MaskOperation : public TensorOperation {
+ public:
+  explicit MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype);
+
+  ~MaskOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kMaskOperation; }
+
+ private:
+  RelationalOp op_;
+  std::shared_ptr<Tensor> constant_;
+  DataType dtype_;
 };
 
 class OneHotOperation : public TensorOperation {
@@ -85,6 +126,23 @@ class OneHotOperation : public TensorOperation {
 
  private:
   int32_t num_classes_;
+};
+
+class PadEndOperation : public TensorOperation {
+ public:
+  explicit PadEndOperation(const TensorShape &pad_shape, const std::shared_ptr<Tensor> &pad_value);
+
+  ~PadEndOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kPadEndOperation; }
+
+ private:
+  TensorShape pad_shape_;
+  std::shared_ptr<Tensor> pad_value_;
 };
 
 class PreBuiltOperation : public TensorOperation {
@@ -137,6 +195,23 @@ class RandomChoiceOperation : public TensorOperation {
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
 };
+
+class SliceOperation : public TensorOperation {
+ public:
+  explicit SliceOperation(const std::vector<SliceOption> &slice_input);
+
+  ~SliceOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kSliceOperation; }
+
+ private:
+  std::vector<SliceOption> slice_input_;
+};
+
 class TypeCastOperation : public TensorOperation {
  public:
   explicit TypeCastOperation(std::string data_type);

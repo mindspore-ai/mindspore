@@ -18,6 +18,7 @@
 
 #include <algorithm>
 
+#include "mindspore/ccsrc/minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 
 namespace mindspore {
@@ -56,10 +57,51 @@ Compose::Compose(const std::vector<std::reference_wrapper<TensorTransform>> &tra
 
 std::shared_ptr<TensorOperation> Compose::Parse() { return std::make_shared<ComposeOperation>(data_->transforms_); }
 
+#ifndef ENABLE_ANDROID
+// Constructor to Concatenate
+struct Concatenate::Data {
+  explicit Data(int8_t axis, MSTensor prepend, MSTensor append) : axis_(axis), prepend_(prepend), append_(append) {}
+  int8_t axis_;
+  MSTensor prepend_;
+  MSTensor append_;
+};
+
+Concatenate::Concatenate(int8_t axis, MSTensor prepend, MSTensor append)
+    : data_(std::make_shared<Data>(axis, prepend, append)) {}
+
+std::shared_ptr<TensorOperation> Concatenate::Parse() {
+  std::shared_ptr<Tensor> out_prepend, out_append;
+  Tensor::CreateFromMSTensor(data_->prepend_, &out_prepend);
+  Tensor::CreateFromMSTensor(data_->append_, &out_append);
+  return std::make_shared<ConcatenateOperation>(data_->axis_, out_prepend, out_append);
+}
+#endif  // not ENABLE_ANDROID
+
 // Constructor to Duplicate
 Duplicate::Duplicate() {}
 
 std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<DuplicateOperation>(); }
+
+#ifndef ENABLE_ANDROID
+// Constructor to Mask
+struct Mask::Data {
+  explicit Data(RelationalOp op, MSTensor constant, mindspore::DataType ms_type)
+      : op_(op), constant_(constant), ms_type_(ms_type) {}
+  RelationalOp op_;
+  MSTensor constant_;
+  mindspore::DataType ms_type_;
+};
+
+Mask::Mask(RelationalOp op, MSTensor constant, mindspore::DataType ms_type)
+    : data_(std::make_shared<Data>(op, constant, ms_type)) {}
+
+std::shared_ptr<TensorOperation> Mask::Parse() {
+  std::shared_ptr<Tensor> out_constant;
+  Tensor::CreateFromMSTensor(data_->constant_, &out_constant);
+  DataType de_type = dataset::MSTypeToDEType(static_cast<TypeId>(data_->ms_type_));
+  return std::make_shared<MaskOperation>(data_->op_, out_constant, de_type);
+}
+#endif  // not ENABLE_ANDROID
 
 // Constructor to OneHot
 struct OneHot::Data {
@@ -70,6 +112,25 @@ struct OneHot::Data {
 OneHot::OneHot(int32_t num_classes) : data_(std::make_shared<Data>(num_classes)) {}
 
 std::shared_ptr<TensorOperation> OneHot::Parse() { return std::make_shared<OneHotOperation>(data_->num_classes_); }
+
+#ifndef ENABLE_ANDROID
+// Constructor to PadEnd
+struct PadEnd::Data {
+  explicit Data(const std::vector<dsize_t> &pad_shape, MSTensor pad_value)
+      : pad_shape_(pad_shape), pad_value_(pad_value) {}
+  std::vector<dsize_t> pad_shape_;
+  MSTensor pad_value_;
+};
+
+PadEnd::PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value)
+    : data_(std::make_shared<Data>(pad_shape, pad_value)) {}
+
+std::shared_ptr<TensorOperation> PadEnd::Parse() {
+  std::shared_ptr<Tensor> pad_value;
+  Tensor::CreateFromMSTensor(data_->pad_value_, &pad_value);
+  return std::make_shared<PadEndOperation>(TensorShape(data_->pad_shape_), pad_value);
+}
+#endif  // not ENABLE_ANDROID
 
 // Constructor to RandomApply.
 struct RandomApply::Data {
@@ -135,6 +196,18 @@ RandomChoice::RandomChoice(const std::vector<std::reference_wrapper<TensorTransf
 std::shared_ptr<TensorOperation> RandomChoice::Parse() {
   return std::make_shared<RandomChoiceOperation>(data_->transforms_);
 }
+
+#ifndef ENABLE_ANDROID
+// Constructor to Slice
+struct Slice::Data {
+  explicit Data(const std::vector<SliceOption> &slice_input) : slice_input_(slice_input) {}
+  std::vector<SliceOption> slice_input_;
+};
+
+Slice::Slice(const std::vector<SliceOption> &slice_input) : data_(std::make_shared<Data>(slice_input)) {}
+
+std::shared_ptr<TensorOperation> Slice::Parse() { return std::make_shared<SliceOperation>(data_->slice_input_); }
+#endif  // not ENABLE_ANDROID
 
 // Constructor to TypeCast
 struct TypeCast::Data {

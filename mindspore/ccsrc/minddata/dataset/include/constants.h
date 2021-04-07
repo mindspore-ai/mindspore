@@ -71,6 +71,16 @@ enum class NormalizeForm {
   kNfkd,
 };
 
+// Possible values for Mask
+enum class RelationalOp {
+  kEqual = 0,     // ==
+  kNotEqual,      // !=
+  kLess,          // <
+  kLessEqual,     // <=
+  kGreater,       // >
+  kGreaterEqual,  // >=
+};
+
 // Possible values for SamplingStrategy
 enum class SamplingStrategy { kRandom = 0, kEdgeWeight = 1 };
 
