@@ -127,6 +127,16 @@ HandleRcExit $? 0 0
 PytestCmd "test_cache_map.py" "test_cache_map_nested_repeat"
 HandleRcExit $? 0 0
 
+GetSession
+HandleRcExit $? 1 1
+export SESSION_ID=$session_id
+
+PytestCmd "test_cache_map.py" "test_cache_map_interrupt_and_rerun"
+HandleRcExit $? 0 0
+
+DestroySession $session_id
+HandleRcExit $? 1 1
+
 # Run two parallel pipelines (sharing cache)
 for i in $(seq 1 2)
 do
@@ -320,6 +330,26 @@ HandleRcExit $? 0 0
 
 PytestCmd "test_cache_nomap.py" "test_cache_nomap_pyfunc" 1
 HandleRcExit $? 0 0
+
+GetSession
+HandleRcExit $? 1 1
+export SESSION_ID=$session_id
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_all_rows_cached"
+HandleRcExit $? 0 0
+
+DestroySession $session_id
+HandleRcExit $? 1 1
+
+GetSession
+HandleRcExit $? 1 1
+export SESSION_ID=$session_id
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_interrupt_and_rerun"
+HandleRcExit $? 0 0
+
+DestroySession $session_id
+HandleRcExit $? 1 1
 
 for i in $(seq 1 3)
 do
