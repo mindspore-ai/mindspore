@@ -37,12 +37,12 @@ int CopyOutputsData(void **outputs, int num) {
   if (num != 1) {
     return RET_ERROR;
   }
-  memcpy(outputs[0], g_Buffer+56, 40);
+  memcpy(outputs[0], g_Buffer + 32, 40);
   return RET_OK;
 }
 
 int GetBufferSize() {
-  return 40032;
+  return 39248;
 }
 int SetBuffer( void *buffer) {
   if (buffer == NULL) {
@@ -62,108 +62,107 @@ void FreeResource() {
 }
 void Inference() {
   {
-DoQuantizeFp32ToInt8((float *)(g_Input0), (int8_t *)(g_Buffer+0), 0.007874015718698501587, 0, 784, false);
-  }
-  {
-memset((int16_t *)(g_Buffer+10928), 0, 2048);
-memset((int16_t *)(g_Buffer+12976), 0, 256);
-memset((int *)(g_Buffer+13232), 0, 6144);
-memset((int8_t *)(g_Buffer+19376), 0, 8112);
-memset((int16_t *)(g_Buffer+27488), 0, 12544);
-QuantArg conv_param__quant_arg_in[1] = {{0.007874015718698501587, 0}};
-QuantArg conv_param__quant_arg_w[12] = {{0.003238174133002758026, -6}, {0.003890725085511803627, -8}, {0.003394871251657605171, -7}, {0.001685356837697327137, -127}, {0.004322394262999296188, 1}, {0.002274985425174236298, -56}, {0.003617759561166167259, 17}, {0.004447745624929666519, 23}, {0.004683905746787786484, 26}, {0.004021023400127887726, 24}, {0.005650237202644348145, 11}, {0.001966834301128983498, -84}};
-QuantArg conv_param__quant_arg_out[1] = {{0.01778890006244182587, 0}};
-double conv_param__real_multiplier[12] = {0.001433333970799530351, 0.001722176774828924938, 0.00150269379968211614, 0.0007460003866156953226, 0.001913249346122961134, 0.001006991503636309139, 0.001601352314486244018, 0.001968734305210294733, 0.002073267527210802957, 0.00177985160945266568, 0.002501001060249878095, 0.0008705926067589928779};
+memset((int16_t *)(g_Buffer + 10144), 0, 2048);
+memset((int16_t *)(g_Buffer + 12192), 0, 256);
+memset((int *)(g_Buffer + 12448), 0, 6144);
+memset((int8_t *)(g_Buffer + 18592), 0, 8112);
+memset((int16_t *)(g_Buffer + 26704), 0, 12544);
+QuantArg conv_param__quant_arg_in[1] = {{0.003921568859368562698, -128}};
+QuantArg conv_param__quant_arg_w[12] = {{0.005689438898116350174, 0}, {0.006241692230105400085, 0}, {0.007301395758986473083, 0}, {0.005148916970938444138, 0}, {0.005132303573191165924, 0}, {0.004976313561201095581, 0}, {0.00564815988764166832, 0}, {0.002269793068990111351, 0}, {0.0030086529441177845, 0}, {0.005234404932707548141, 0}, {0.007580270525068044662, 0}, {0.004589735530316829681, 0}};
+QuantArg conv_param__quant_arg_out[1] = {{0.01811622083187103271, 17}};
+double conv_param__real_multiplier[12] = {0.001231577267748737653, 0.001351122051282624588, 0.00158051323770531417, 0.001114571969708069233, 0.001110975704014940469, 0.001077209041359399825, 0.001222641776980984765, 0.0004913359221160916793, 0.0006512749113606706042, 0.001133077320583530554, 0.001640880438584302065, 0.0009935275121536731122};
 int conv_param__left_shift[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int conv_param__right_shift[12] = {-9, -9, -9, -10, -9, -9, -9, -8, -8, -9, -8, -10};
-int conv_param__quant_multiplier[12] = {1575967367, 1893553389, 1652229306, 1640472199, 2103639903, 1107198867, 1760705490, 1082323130, 1139790877, 1956967540, 1374939873, 1914453388};
-int conv_param__out_act_min[1] = {0};
+int conv_param__right_shift[12] = {-9, -9, -9, -9, -9, -9, -9, -10, -10, -9, -9, -9};
+int conv_param__quant_multiplier[12] = {1354133526, 1485574406, 1737792683, 1225484841, 1221530705, 1184403867, 1344308850, 1080459119, 1432168676, 1245831689, 1804167122, 1092395052};
+int conv_param__out_act_min[1] = {-128};
 int conv_param__out_act_max[1] = {127};
-ConvQuantArg conv_param__conv_quant_arg = {(RoundingMode)(1), 2, conv_param__quant_arg_in, conv_param__quant_arg_w, conv_param__quant_arg_out, conv_param__real_multiplier, conv_param__left_shift, conv_param__right_shift, conv_param__quant_multiplier, conv_param__out_act_min, conv_param__out_act_max, 1, 12, 1, 2};
+ConvQuantArg conv_param__conv_quant_arg = {(RoundingMode)(2), 2, conv_param__quant_arg_in, conv_param__quant_arg_w, conv_param__quant_arg_out, conv_param__real_multiplier, conv_param__left_shift, conv_param__right_shift, conv_param__quant_multiplier, conv_param__out_act_min, conv_param__out_act_max, 1, 12, 1, 2};
 int thread_num = MSMIN(g_thread_num, 26);
-ConvParameter conv_param_ = {{ "", 35, g_thread_num}, conv_param__conv_quant_arg, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 28, 28, 1, 1, 26, 26, 12, thread_num, 0, 0, (PadMode)(2), (ActType)(1), 0, 0, 0};
-PackInputToC8Int8((int8_t *)(g_Buffer+0), (int16_t *)(g_Buffer+27488), &conv_param_);
-Conv3x3Int8((int16_t *)(g_Buffer+27488), g_Weight10, g_Weight11, (int8_t *)(g_Buffer+784), (int16_t *)(g_Buffer+10928), (int16_t *)(g_Buffer+12976), (int *)(g_Buffer+13232), (int8_t *)(g_Buffer+19376), 0, &conv_param_);
-PackNC4HW4ToNHWCInt8((int8_t *)(g_Buffer+19376), (int8_t *)(g_Buffer+784), 1, 676, 12);
+ConvParameter conv_param_ = {{ "", true, 35, g_thread_num, 0}, conv_param__conv_quant_arg, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 28, 28, 1, 1, 26, 26, 12, thread_num, 0, 0, (PadMode)(2), (ActType)(0), 0, 0, 0};
+PackInputToC8Int8((int8_t *)(g_Input0), (int16_t *)(g_Buffer + 26704), &conv_param_);
+Conv3x3Int8((int16_t *)(g_Buffer + 26704), g_Weight10, g_Weight11, (int8_t *)(g_Buffer + 0), (int16_t *)(g_Buffer + 10144), (int16_t *)(g_Buffer + 12192), (int *)(g_Buffer + 12448), (int8_t *)(g_Buffer + 18592), 0, &conv_param_);
+PackNC4HW4ToNHWCInt8((int8_t *)(g_Buffer + 18592), (int8_t *)(g_Buffer + 0), 1, 676, 12);
   }
   {
-static QuantArg pooling_parameter_quant_in = {0.01778890006244182587, 0};
-static QuantArg pooling_parameter_quant_out = {0.01778890006244182587, 0};
+static QuantArg pooling_parameter_quant_in = {0.01811622083187103271, 17};
+static QuantArg pooling_parameter_quant_out = {0.01811622083187103271, 17};
 static QuantArg *pooling_parameter_quant[2] = { &pooling_parameter_quant_in,  &pooling_parameter_quant_out};
-const PoolingParameter pooling_parameter = {{ "", 92, g_thread_num}, (PoolMode)(1), (RoundMode)(2), (PadMode)(2), (ActType)(0), 0, false, 2, 2, 2, 2, 26, 26, 1, 12, 13, 13, 1, 12, 0, 0, 0, 0, 0, pooling_parameter_quant, false};
-MaxPoolingInt8((int8_t *)(g_Buffer+784), (int8_t *)(g_Buffer+8896), (PoolingParameter *)&pooling_parameter, 0);
+const PoolingParameter pooling_parameter = {{ "", true, 92, g_thread_num, 0}, (PoolMode)(1), (RoundMode)(2), (PadMode)(2), (ActType)(0), 0, false, 2, 2, 2, 2, 26, 26, 1, 12, 13, 13, 1, 12, 0, 0, 0, 0, 0, pooling_parameter_quant, false};
+MaxPoolingInt8((int8_t *)(g_Buffer + 0), (int8_t *)(g_Buffer + 8112), (PoolingParameter *)&pooling_parameter, 0);
   }
   {
-memset((int16_t *)(g_Buffer+10928), 0, 4096);
-memset((int16_t *)(g_Buffer+15024), 0, 256);
-memset((int *)(g_Buffer+15280), 0, 6144);
-memset((int8_t *)(g_Buffer+21424), 0, 1452);
-memset((int16_t *)(g_Buffer+22876), 0, 5408);
-QuantArg conv_param__quant_arg_in[1] = {{0.01778890006244182587, 0}};
-QuantArg conv_param__quant_arg_w[12] = {{0.005374609492719173431, 33}, {0.005837683100253343582, 22}, {0.004709810949862003326, -15}, {0.003726204857230186462, 27}, {0.00318551529198884964, -8}, {0.003453079145401716232, 50}, {0.004045850131660699844, -9}, {0.003903790842741727829, 30}, {0.004003710579127073288, -10}, {0.00560879148542881012, 27}, {0.005486610345542430878, -23}, {0.003554018214344978333, 4}};
-QuantArg conv_param__quant_arg_out[1] = {{0.07183934003114700317, 0}};
-double conv_param__real_multiplier[12] = {0.001330863973520378732, 0.001445530533608141606, 0.001166246148374064893, 0.0009226850783705293785, 0.0007887991893445710223, 0.0008550534992628172192, 0.001001835847923064193, 0.0009666590447744700769, 0.0009914011740411567478, 0.001388852288199173826, 0.00135859773990280961, 0.0008800481219728497088};
+memset((int16_t *)(g_Buffer + 10144), 0, 4096);
+memset((int16_t *)(g_Buffer + 14240), 0, 256);
+memset((int *)(g_Buffer + 14496), 0, 6144);
+memset((int8_t *)(g_Buffer + 20640), 0, 1452);
+memset((int16_t *)(g_Buffer + 22092), 0, 5408);
+QuantArg conv_param__quant_arg_in[1] = {{0.01811622083187103271, 17}};
+QuantArg conv_param__quant_arg_w[12] = {{0.006381968967616558075, 0}, {0.005092236679047346115, 0}, {0.004954888485372066498, 0}, {0.007594361435621976852, 0}, {0.006317862775176763535, 0}, {0.004739056341350078583, 0}, {0.004733041394501924515, 0}, {0.005125139374285936356, 0}, {0.005773660261183977127, 0}, {0.007067613303661346436, 0}, {0.00728381425142288208, 0}, {0.004714466165751218796, 0}};
+QuantArg conv_param__quant_arg_out[1] = {{0.118615470826625824, 31}};
+double conv_param__real_multiplier[12] = {0.0009747224012760375951, 0.0007777407468524931162, 0.0007567634496453238277, 0.001159891919861241348, 0.0009649314419479496259, 0.0007237992569070154231, 0.0007228806183814449719, 0.0007827659621256170689, 0.0008818150205007141765, 0.001079441365823280083, 0.001112461807995879974, 0.0007200436103814696152};
 int conv_param__left_shift[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int conv_param__right_shift[12] = {-9, -9, -9, -10, -10, -10, -9, -10, -9, -9, -9, -10};
-int conv_param__quant_multiplier[12] = {1463300414, 1589377630, 1282301201, 2029005945, 1734587761, 1880282530, 1101530164, 2125705720, 1090057119, 1527059240, 1493794012, 1935246286};
-int conv_param__out_act_min[1] = {0};
+int conv_param__right_shift[12] = {-10, -10, -10, -9, -10, -10, -10, -10, -10, -9, -9, -10};
+int conv_param__quant_multiplier[12] = {2143437228, 1710269989, 1664140425, 1275314653, 2121906681, 1591651398, 1589631291, 1721320554, 1939131737, 1186858333, 1223164693, 1583392644};
+int conv_param__out_act_min[1] = {-128};
 int conv_param__out_act_max[1] = {127};
 ConvQuantArg conv_param__conv_quant_arg = {(RoundingMode)(1), 2, conv_param__quant_arg_in, conv_param__quant_arg_w, conv_param__quant_arg_out, conv_param__real_multiplier, conv_param__left_shift, conv_param__right_shift, conv_param__quant_multiplier, conv_param__out_act_min, conv_param__out_act_max, 1, 12, 1, 2};
 int thread_num = MSMIN(g_thread_num, 11);
-ConvParameter conv_param_ = {{ "", 35, g_thread_num}, conv_param__conv_quant_arg, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 13, 13, 12, 1, 11, 11, 12, thread_num, 0, 0, (PadMode)(2), (ActType)(1), 0, 0, 0};
-PackInputToC8Int8((int8_t *)(g_Buffer+8896), (int16_t *)(g_Buffer+22876), &conv_param_);
-Conv3x3Int8((int16_t *)(g_Buffer+22876), g_Weight12, g_Weight13, (int8_t *)(g_Buffer+0), (int16_t *)(g_Buffer+10928), (int16_t *)(g_Buffer+15024), (int *)(g_Buffer+15280), (int8_t *)(g_Buffer+21424), 0, &conv_param_);
-PackNC4HW4ToNHWCInt8((int8_t *)(g_Buffer+21424), (int8_t *)(g_Buffer+0), 1, 121, 12);
+ConvParameter conv_param_ = {{ "", true, 35, g_thread_num, 0}, conv_param__conv_quant_arg, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 13, 13, 12, 1, 11, 11, 12, thread_num, 0, 0, (PadMode)(2), (ActType)(0), 0, 0, 0};
+PackInputToC8Int8((int8_t *)(g_Buffer + 8112), (int16_t *)(g_Buffer + 22092), &conv_param_);
+Conv3x3Int8((int16_t *)(g_Buffer + 22092), g_Weight12, g_Weight13, (int8_t *)(g_Buffer + 0), (int16_t *)(g_Buffer + 10144), (int16_t *)(g_Buffer + 14240), (int *)(g_Buffer + 14496), (int8_t *)(g_Buffer + 20640), 0, &conv_param_);
+PackNC4HW4ToNHWCInt8((int8_t *)(g_Buffer + 20640), (int8_t *)(g_Buffer + 0), 1, 121, 12);
   }
   {
-static QuantArg pooling_parameter_quant_in = {0.07136065512895584106, 0};
-static QuantArg pooling_parameter_quant_out = {0.07136065512895584106, 0};
+static QuantArg pooling_parameter_quant_in = {0.118615470826625824, 31};
+static QuantArg pooling_parameter_quant_out = {0.118615470826625824, 31};
 static QuantArg *pooling_parameter_quant[2] = { &pooling_parameter_quant_in,  &pooling_parameter_quant_out};
-const PoolingParameter pooling_parameter = {{ "", 92, g_thread_num}, (PoolMode)(1), (RoundMode)(2), (PadMode)(2), (ActType)(0), 0, false, 2, 2, 2, 2, 11, 11, 1, 12, 5, 5, 1, 12, 0, 0, 0, 0, 0, pooling_parameter_quant, false};
-MaxPoolingInt8((int8_t *)(g_Buffer+0), (int8_t *)(g_Buffer+1456), (PoolingParameter *)&pooling_parameter, 0);
+const PoolingParameter pooling_parameter = {{ "", true, 92, g_thread_num, 0}, (PoolMode)(1), (RoundMode)(2), (PadMode)(2), (ActType)(0), 0, false, 2, 2, 2, 2, 11, 11, 1, 12, 5, 5, 1, 12, 0, 0, 0, 0, 0, pooling_parameter_quant, false};
+MaxPoolingInt8((int8_t *)(g_Buffer + 0), (int8_t *)(g_Buffer + 1456), (PoolingParameter *)&pooling_parameter, 0);
   }
   {
-const ReshapeQuantArg reshape_quant_arg = {{0.07136065512895584106, 0}, {0.07136065512895584106, 0}, -128, 127};
-Int8Reshape((int8_t *)(g_Buffer+1456), (int8_t *)(g_Buffer+0), 300, reshape_quant_arg);
+const ReshapeQuantArg reshape_quant_arg = {{0.118615470826625824, 31}, {0.118615470826625824, 31}, -128, 127};
+Int8Reshape((int8_t *)(g_Buffer + 1456), (int8_t *)(g_Buffer + 0), 300, reshape_quant_arg);
   }
   {
-int32_t tmp_weight_zp = 1;
-RowMajor2Row16x4MajorInt8((int8_t *)(g_Buffer+0)+0, (int8_t *)(g_Buffer+10928), 1, 300);
-CalcInputSums((int8_t *)(g_Buffer+0)+0, 1, 300, tmp_weight_zp, (int *)(g_Buffer+12144), RowMajor);
-float filter_scale[20] = {0.003479549195617437363, 0.004490676335990428925, 0.004529818892478942871, 0.002983231563121080399, 0.003455155529081821442, 0.003223794745281338692, 0.003272445406764745712, 0.003801185870543122292, 0.003679843153804540634, 0.003040234791114926338, 0.003704284550622105598, 0.003355232765898108482, 0.002904496388509869576, 0.003024494973942637444, 0.002794801956042647362, 0.004355110693722963333, 0.003499472280964255333, 0.004184196703135967255, 0.003057289868593215942, 0.003264668164774775505};
-int filter_zp[20] = {1, 12, 3, 2, -10, -5, -11, 5, 12, 22, 16, 1, -5, 15, 13, 5, -10, -5, -6, 0};
-int left_shift[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int right_shift[20] = {-10, -9, -9, -10, -10, -10, -10, -9, -9, -10, -9, -10, -10, -10, -10, -9, -10, -9, -10, -10};
-int multiplier[20] = {2108215049, 1360422072, 1372280070, 1807502393, 2093435146, 1953256619, 1982733521, 1151545365, 1114785262, 1842040025, 1122189669, 2032893316, 1759797843, 1832503464, 1693335354, 1319353429, 2120286176, 1267576078, 1852373503, 1978021333};
-const MatmulQuantParameter matmul_quant_parameter = {{0.07136065512895584106, 0}, {0, 0}, {0.258998185396194458, 0}, -128, 127, filter_scale, filter_zp, left_shift, right_shift, multiplier};
-int32_t *cur_left = matmul_quant_parameter.left_shift_ + 0;
-int32_t *cur_right = matmul_quant_parameter.right_shift_ + 0;
-int32_t *cur_mul = matmul_quant_parameter.quant_multiplier_  + 0;
-int32_t *cur_zp = matmul_quant_parameter.filter_zp_  + 0;
-MatmulInt8Opt((int8_t *)(g_Buffer+10928), g_Weight15+0 + 0, (int8_t *)(g_Buffer+304)+0+0, 1, 20, 304, (int *)(g_Buffer+12144), g_Weight16+0, -128, 127, 0, cur_mul, cur_left, cur_right, 20, true, cur_zp);
+int32_t tmp_weight_zp = 0;
+RowMajor2Row16x4MajorInt8((int8_t *)(g_Buffer + 0)+0, (int8_t *)(g_Buffer + 10144), 1, 300);
+CalcInputSums((int8_t *)(g_Buffer + 0)+0, 1, 300, tmp_weight_zp, (int *)(g_Buffer + 11360), RowMajor);
+float filter_scale[1] = {0.007667620200663805008};
+int filter_zp[1] = {0};
+int left_shift[1] = {0};
+int right_shift[1] = {-8};
+int multiplier[1] = {1379728867};
+const MatmulQuantParameter matmul_quant_parameter = {{0.118615470826625824, 31}, {0, 0}, {0.3623915016651153564, 11}, -128, 127, filter_scale, filter_zp, left_shift, right_shift, multiplier};
+int32_t *cur_left = matmul_quant_parameter.left_shift_;
+int32_t *cur_right = matmul_quant_parameter.right_shift_;
+int32_t *cur_mul = matmul_quant_parameter.quant_multiplier_ ;
+int32_t *cur_zp = matmul_quant_parameter.filter_zp_ ;
+MatmulInt8Opt((int8_t *)(g_Buffer + 10144), g_Weight15+0 + 0, (int8_t *)(g_Buffer + 304)+0+0, 1, 20, 304, (int *)(g_Buffer + 11360), g_Weight16+0, -128, 127, 11, cur_mul, cur_left, cur_right, 20, false, cur_zp);
   }
   {
-int32_t tmp_weight_zp = 1;
-RowMajor2Row16x4MajorInt8((int8_t *)(g_Buffer+304)+0, (int8_t *)(g_Buffer+10928), 1, 20);
-CalcInputSums((int8_t *)(g_Buffer+304)+0, 1, 20, tmp_weight_zp, (int *)(g_Buffer+11056), RowMajor);
-float filter_scale[10] = {0.004678330849856138229, 0.005127115640789270401, 0.00471437256783246994, 0.004531511571258306503, 0.005476122256368398666, 0.004348111804574728012, 0.004803542047739028931, 0.006081215571612119675, 0.004532597027719020844, 0.004762654658406972885};
-int filter_zp[10] = {7, -2, 9, 2, -6, 21, 16, 10, -19, 8};
-int left_shift[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int right_shift[10] = {-8, -8, -8, -8, -8, -8, -8, -8, -8, -8};
-int multiplier[10] = {1242805482, 1362025788, 1252380041, 1203802750, 1454739904, 1155082292, 1276068015, 1615483838, 1204091115, 1265206260};
-const MatmulQuantParameter matmul_quant_parameter = {{0.258998185396194458, 0}, {0, 0}, {0.5359870791435241699, 0}, -128, 127, filter_scale, filter_zp, left_shift, right_shift, multiplier};
-int32_t *cur_left = matmul_quant_parameter.left_shift_ + 0;
-int32_t *cur_right = matmul_quant_parameter.right_shift_ + 0;
-int32_t *cur_mul = matmul_quant_parameter.quant_multiplier_  + 0;
-int32_t *cur_zp = matmul_quant_parameter.filter_zp_  + 0;
-MatmulInt8Opt((int8_t *)(g_Buffer+10928), g_Weight18+0 + 0, (int8_t *)(g_Buffer+0)+0+0, 1, 10, 32, (int *)(g_Buffer+11056), g_Weight19+0, -128, 127, 0, cur_mul, cur_left, cur_right, 10, true, cur_zp);
+int32_t tmp_weight_zp = 0;
+RowMajor2Row16x4MajorInt8((int8_t *)(g_Buffer + 304)+0, (int8_t *)(g_Buffer + 10144), 1, 20);
+CalcInputSums((int8_t *)(g_Buffer + 304)+0, 1, 20, tmp_weight_zp, (int *)(g_Buffer + 10272), RowMajor);
+float filter_scale[1] = {0.006908571347594261169};
+int filter_zp[1] = {0};
+int left_shift[1] = {0};
+int right_shift[1] = {-8};
+int multiplier[1] = {1282256865};
+const MatmulQuantParameter matmul_quant_parameter = {{0.3623915016651153564, 11}, {0, 0}, {1.073398709297180176, -20}, -128, 127, filter_scale, filter_zp, left_shift, right_shift, multiplier};
+int32_t *cur_left = matmul_quant_parameter.left_shift_;
+int32_t *cur_right = matmul_quant_parameter.right_shift_;
+int32_t *cur_mul = matmul_quant_parameter.quant_multiplier_ ;
+int32_t *cur_zp = matmul_quant_parameter.filter_zp_ ;
+MatmulInt8Opt((int8_t *)(g_Buffer + 10144), g_Weight18+0 + 0, (int8_t *)(g_Buffer + 0)+0+0, 1, 10, 32, (int *)(g_Buffer + 10272), g_Weight19+0, -128, 127, -20, cur_mul, cur_left, cur_right, 10, false, cur_zp);
   }
   {
-DoDequantizeInt8ToFp32((int8_t *)(g_Buffer+0), (float *)(g_Buffer+16), 0.5359870791435241699, 0, 10);
+const SoftmaxQuantArg quant_args = {{1.073398709297180176, 20}, {0.00390625, -128}, -128, 127, 1152553088, 27, 27};
+const SoftmaxParameter softmax_parameter = {{ "", true, 138, g_thread_num, 0}, 1, {1, 10}, 10, 2};
+memset((int *)(g_Buffer + 10144), 0, 40);
+memset((int *)(g_Buffer + 10184), 0, 40);
+SoftmaxInt8((int8_t *)(g_Buffer + 0), (int8_t *)(g_Buffer + 16), 1, (int *)(g_Buffer + 10144), (int *)(g_Buffer + 10184), quant_args, (SoftmaxParameter *)&softmax_parameter);
   }
   {
-const SoftmaxParameter softmax_parameter = {{ "", 138, g_thread_num}, 1, {1, 10}, 10, 2};
-memset((float *)(g_Buffer+10928), 0, 4);
-Softmax((float *)(g_Buffer+16), (float *)(g_Buffer+56), (float *)(g_Buffer+10928), &softmax_parameter);
+DoDequantizeInt8ToFp32((int8_t *)(g_Buffer + 16), (float *)(g_Buffer + 32), 0.00390625, -128, 10);
   }
 }
