@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,19 +145,11 @@ class DfGraphConvertor {
   OperatorPtr ConvertCNode(CNodePtr node);
   std::vector<OperatorPtr> ConvertDependNode(AnfNodePtr node);
   AnfNodePtr GetRealOpNode(AnfNodePtr node);
-  std::vector<AnfNodePtr> GetDependNodes(const AnfNodePtr &node);
   OperatorPtr ConvertParameter(AnfNodePtr node);
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
   void GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node);
   void ConvertTupleGetItem(const CNodePtr node);
-  void GetDependOnParameterUse(const CNodePtr &node, const AnfNodePtr &src_node, const AnfNodePtr &dest_node,
-                               const std::shared_ptr<std::vector<OperatorPtr>> &src_ops_list,
-                               const std::shared_ptr<std::vector<OperatorPtr>> &dst_ops_list);
-  bool GetControlDependList(const CNodePtr &node, const std::shared_ptr<std::vector<OperatorPtr>> &src_ops_list,
-                            const std::shared_ptr<std::vector<OperatorPtr>> &dst_ops_list);
-  void DrawControlDepend(const AnfNodePtr &src_node, const AnfNodePtr &dest_node);
-  void ConvertControlDependNode(const CNodePtr node);
   void ConvertMakeTuple(const CNodePtr node);
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void TraceOutput(AnfNodePtr node);
@@ -195,7 +187,7 @@ class DfGraphConvertor {
   std::shared_ptr<DfGraph> broadcast_graph_{nullptr};
   std::unordered_map<AnfNode *, DfGraph> branches_map_;
   std::unordered_map<AnfNode *, OperatorPtr> op_cache_;
-  std::unordered_map<AnfNode *, std::vector<ControlEdge>> control_depend_cache_;
+  std::unordered_map<AnfNode *, std::vector<ControlEdge>> control_edge_cache_;
   std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>> monad_control_edge_cache_;
   /* record "tuple_getitem"<->"out_handler" mapping */
   std::unordered_map<AnfNode *, OutHandler> out_handle_cache_;

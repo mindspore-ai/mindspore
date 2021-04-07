@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,7 +96,6 @@ class GPT2FinetuneCell(nn.Cell):
             self.get_status = P.NPUGetFloatStatus()
             self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -132,8 +131,8 @@ class GPT2FinetuneCell(nn.Cell):
 
         if not self.gpu_target:
             init = self.alloc_status()
+            init = F.depend(init, loss)
             clear_before_grad = self.clear_before_grad(init)
-            F.control_depend(loss, init)
             self.depend_parameter_use(clear_before_grad, scaling_sens)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
@@ -145,10 +144,10 @@ class GPT2FinetuneCell(nn.Cell):
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
         if not self.gpu_target:
+            init = F.depend(init, grads)
             flag = self.get_status(init)
+            init = F.depend(init, flag)
             flag_sum = self.reduce_sum(init, (0,))
-            F.control_depend(grads, flag)
-            F.control_depend(flag, flag_sum)
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
             flag_sum = self.addn(flag_sum)

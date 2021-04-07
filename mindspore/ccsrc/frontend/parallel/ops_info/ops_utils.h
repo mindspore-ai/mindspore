@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,7 +367,6 @@ constexpr char HISTOGRAMSUMMARY[] = "HistogramSummary";
 constexpr char DEBUG[] = "Debug";
 constexpr char BROADCASTGRADIENTARGS[] = "BroadcastGradientArgs";
 constexpr char INVERTPERMUTATION[] = "InvertPermutation";
-constexpr char CONTROLDEPEND[] = "ControlDepend";
 constexpr char DOT[] = "dot";
 constexpr char IM2COL[] = "im2col";
 constexpr char COL2IM[] = "col2im";

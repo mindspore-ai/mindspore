@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,15 +286,11 @@ class KernelGraph : public FuncGraph {
                           std::unordered_set<AnfNodePtr> *visited_nodes, bool comm_first = true);
   // update node edge list
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
-  // add node depend edge by data edge or control depend
+  // add node depend edge by data edge
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
   void UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
                                   const std::vector<AnfNodePtr> &real_depend_nodes);
-  // handle control depend
   std::vector<AnfNodePtr> GetOutputNodes(const AnfNodePtr &node);
-  bool HandleControlDependNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
-                               std::unordered_set<AnfNodePtr> *visited_nodes);
-  void UpdateControlDependRelations(const std::vector<AnfNodePtr> &depends);
   AnfNodePtr TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value);
   AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);

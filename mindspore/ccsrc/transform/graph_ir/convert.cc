@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1044,7 +1044,7 @@ bool DfGraphConvertor::IsControlEdgeNode(const AnfNodePtr &node) {
 OperatorPtr DfGraphConvertor::ToOperatorPtr(const AnfNodePtr &node) {
   auto op = Convert(GetRealOpNode(node));
   if (op == nullptr) {
-    MS_LOG(ERROR) << "Convert control depend node to operator failed, " << node->ToString();
+    MS_LOG(ERROR) << "Convert real op node to operator failed, " << node->ToString();
     error_ = FAILED;
     return nullptr;
   }
@@ -1170,13 +1170,13 @@ void DfGraphConvertor::AutoMonadSetControlInput(const AnfNodePtr &node) {
 
 void DfGraphConvertor::SetOpControlInput(const AnfNodePtr &node) {
   AutoMonadSetControlInput(node);
-  if (control_depend_cache_.find(node.get()) == control_depend_cache_.end()) {
+  if (control_edge_cache_.find(node.get()) == control_edge_cache_.end()) {
     return;
   }
 
-  std::vector<ControlEdge> control_edges = control_depend_cache_[node.get()];
+  std::vector<ControlEdge> control_edges = control_edge_cache_[node.get()];
   if ((control_edges.empty())) {
-    MS_LOG(ERROR) << "Get control depend node's src or dest operator failed";
+    MS_LOG(ERROR) << "Get control edge node's src or dest operator failed";
     return;
   }
 
@@ -1600,7 +1600,7 @@ std::vector<OperatorPtr> DfGraphConvertor::ConvertDependNode(const AnfNodePtr no
     for (size_t index = 1; index < node_inputs.size(); index++) {
       auto op = Convert(GetRealOpNode(node_inputs[index]));
       if (op == nullptr) {
-        MS_LOG(ERROR) << "Convert control depend node to operator failed";
+        MS_LOG(ERROR) << "Convert real op node to operator failed";
         error_ = FAILED;
         return std::vector<OperatorPtr>({});
       }
@@ -1611,192 +1611,11 @@ std::vector<OperatorPtr> DfGraphConvertor::ConvertDependNode(const AnfNodePtr no
 
   auto op = Convert(GetRealOpNode(node));
   if (op == nullptr) {
-    MS_LOG(ERROR) << "Convert control depend node to operator failed";
+    MS_LOG(ERROR) << "Convert real op node to operator failed";
     error_ = FAILED;
     return std::vector<OperatorPtr>({});
   }
   return std::vector<OperatorPtr>({op});
-}
-
-// get the anf node list for depend
-std::vector<AnfNodePtr> DfGraphConvertor::GetDependNodes(const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> nodes;
-  // for make tuple, should control depend on the tuple items
-  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-    auto node_inputs = node->cast<CNodePtr>()->inputs();
-    for (size_t index = 1; index < node_inputs.size(); index++) {
-      nodes.push_back(GetRealOpNode(node_inputs[index]));
-    }
-    return nodes;
-  }
-
-  // for parameter ,find the apply that used the parameter as the control depended node
-  if (node->isa<Parameter>()) {
-    auto uses = node->func_graph()->manager()->node_users()[node];
-    for (auto &use : uses) {
-      auto use_node = use.first;
-      if ((use_node->isa<CNode>()) && (!IsPrimitiveCNode(use_node, prim::kPrimControlDepend))) {
-        nodes.push_back(GetRealOpNode(use_node));
-      }
-    }
-    return nodes;
-  }
-  nodes.push_back(GetRealOpNode(node));
-  return nodes;
-}
-
-void DfGraphConvertor::DrawControlDepend(const AnfNodePtr &src_node, const AnfNodePtr &dest_node) {
-#ifdef DRAW_GE_GRAPH
-  auto src_depend_nodes = GetDependNodes(src_node);
-  auto dst_depend_nodes = GetDependNodes(dest_node);
-  if (src_depend_nodes.size() == 1 && dst_depend_nodes.size() > 1) {
-    for (auto &item : dst_depend_nodes) {
-      compute_sout_ << op_draw_name_[src_depend_nodes[0].get()] << " -> " << op_draw_name_[item.get()]
-                    << "[style=\"dotted\"]" << endl;
-    }
-  } else if (src_depend_nodes.size() > 1 && dst_depend_nodes.size() == 1) {
-    for (auto &item : src_depend_nodes) {
-      compute_sout_ << op_draw_name_[item.get()] << " -> " << op_draw_name_[dst_depend_nodes[0].get()]
-                    << "[style=\"dotted\"]" << endl;
-    }
-  } else if (src_depend_nodes.size() == 1 && dst_depend_nodes.size() == 1) {
-    compute_sout_ << op_draw_name_[src_depend_nodes[0].get()] << " -> " << op_draw_name_[dst_depend_nodes[0].get()]
-                  << "[style=\"dotted\"]" << endl;
-  }
-#endif
-}
-
-void DfGraphConvertor::GetDependOnParameterUse(const CNodePtr &node, const AnfNodePtr &src_node,
-                                               const AnfNodePtr &dest_node,
-                                               const std::shared_ptr<std::vector<OperatorPtr>> &src_ops_list,
-                                               const std::shared_ptr<std::vector<OperatorPtr>> &dst_ops_list) {
-  if (src_node->isa<Parameter>()) {
-    auto uses = node->func_graph()->manager()->node_users()[src_node];
-    for (auto &use : uses) {
-      auto use_node = use.first;
-      if ((use_node->isa<CNode>()) && (!IsPrimitiveCNode(use_node, prim::kPrimControlDepend)) &&
-          (!IsPrimitiveCNode(use_node, prim::kPrimMakeTuple))) {
-        auto converted_list = ConvertDependNode(use_node);
-        src_ops_list->insert(src_ops_list->end(), converted_list.begin(), converted_list.end());
-      }
-    }
-  }
-
-  if (dest_node->isa<Parameter>()) {
-    auto uses = node->func_graph()->manager()->node_users()[dest_node];
-    for (auto &use : uses) {
-      auto use_node = use.first;
-      if ((use_node->isa<CNode>()) && (!IsPrimitiveCNode(use_node, prim::kPrimControlDepend)) &&
-          (!IsPrimitiveCNode(use_node, prim::kPrimMakeTuple))) {
-        auto converted_list = ConvertDependNode(use_node);
-        dst_ops_list->insert(dst_ops_list->end(), converted_list.begin(), converted_list.end());
-      }
-    }
-  }
-}
-
-bool DfGraphConvertor::GetControlDependList(const CNodePtr &node,
-                                            const std::shared_ptr<std::vector<OperatorPtr>> &src_ops_list,
-                                            const std::shared_ptr<std::vector<OperatorPtr>> &dst_ops_list) {
-  const int CONTROL_DEPEND_INDEX = 0;
-  const int SRC_NODE_INDEX = 1;
-  const int DEST_NODE_INDEX = 2;
-  const int DEPEND_MODE_NORMAL_USE = 0;
-  const int DEPEND_MODE_ON_PARAMETER_USE = 1;
-
-  auto node_inputs = node->inputs();
-  if (node_inputs.size() <= DEST_NODE_INDEX) {
-    MS_LOG(WARNING) << "Control depend node input size error";
-    return false;
-  }
-  auto src_node = node_inputs[SRC_NODE_INDEX];
-  auto dest_node = node_inputs[DEST_NODE_INDEX];
-  if ((src_node == nullptr) || (dest_node == nullptr)) {
-    MS_LOG(ERROR) << "Control depend node miss src or dest node";
-    error_ = FAILED;
-    return false;
-  }
-  AnfNodePtr fn = node_inputs[CONTROL_DEPEND_INDEX];
-  PrimitivePtr prim_ptr = GetValueNode<PrimitivePtr>(fn);
-  ValuePtr mode_ptr = prim_ptr->GetAttr("depend_mode");
-  int depend_mode = DEPEND_MODE_NORMAL_USE;
-  if (mode_ptr != nullptr) {
-    auto mode_int = mode_ptr->cast<Int64ImmPtr>();
-    MS_EXCEPTION_IF_NULL(mode_int);
-    depend_mode = mode_int->value();
-    MS_LOG(DEBUG) << "depend_mode = " << depend_mode;
-  }
-  if (depend_mode == DEPEND_MODE_ON_PARAMETER_USE) {
-    GetDependOnParameterUse(node, src_node, dest_node, src_ops_list, dst_ops_list);
-  }
-
-  if (src_node->isa<CNode>()) {
-    auto converted_list = ConvertDependNode(src_node);
-    src_ops_list->insert(src_ops_list->end(), converted_list.begin(), converted_list.end());
-  }
-
-  if (dest_node->isa<CNode>()) {
-    auto converted_list = ConvertDependNode(dest_node);
-    dst_ops_list->insert(dst_ops_list->end(), converted_list.begin(), converted_list.end());
-  }
-  if (src_ops_list->empty() || dst_ops_list->empty()) {
-    MS_LOG(DEBUG) << "Control depend node's src or dest node is not a CNode, ignore it";
-    error_ = SUCCESS;
-  }
-  return true;
-}
-
-void DfGraphConvertor::ConvertControlDependNode(const CNodePtr node) {
-  const int SRC_NODE_INDEX = 1;
-  const int DEST_NODE_INDEX = 2;
-  if (control_depend_cache_.find(node.get()) != control_depend_cache_.end()) {
-    return;
-  }
-  auto node_inputs = node->inputs();
-  if (node_inputs.size() <= DEST_NODE_INDEX) {
-    MS_LOG(WARNING) << "Control depend node input size error";
-    return;
-  }
-  auto src_node = node_inputs[SRC_NODE_INDEX];
-  auto dest_node = node_inputs[DEST_NODE_INDEX];
-  if ((src_node == nullptr) || (dest_node == nullptr)) {
-    MS_LOG(ERROR) << "Control depend node miss src or dest node";
-    error_ = FAILED;
-    return;
-  }
-  std::shared_ptr<std::vector<OperatorPtr>> src_ops_list = std::make_shared<std::vector<OperatorPtr>>();
-  std::shared_ptr<std::vector<OperatorPtr>> dst_ops_list = std::make_shared<std::vector<OperatorPtr>>();
-  if (!GetControlDependList(node, src_ops_list, dst_ops_list)) {
-    MS_LOG(ERROR) << "Get depend list failed";
-    error_ = FAILED;
-    return;
-  }
-  std::vector<ControlEdge> control_edges;
-  if (src_ops_list->size() == 1 && dst_ops_list->size() > 1) {
-    (void)std::transform(dst_ops_list->begin(), dst_ops_list->end(), std::back_inserter(control_edges),
-                         [src_ops_list](const OperatorPtr &op) -> ControlEdge {
-                           return {(*src_ops_list)[0], op};
-                         });
-  } else if (src_ops_list->size() > 1 && dst_ops_list->size() == 1) {
-    (void)std::transform(src_ops_list->begin(), src_ops_list->end(), std::back_inserter(control_edges),
-                         [dst_ops_list](const OperatorPtr &op) -> ControlEdge {
-                           return {op, (*dst_ops_list)[0]};
-                         });
-  } else if (src_ops_list->size() == 1 && dst_ops_list->size() == 1) {
-    control_edges.push_back({(*src_ops_list)[0], (*dst_ops_list)[0]});
-  } else if (src_ops_list->empty() || dst_ops_list->empty()) {
-    MS_LOG(DEBUG) << "Depend list of src or dst is empty, ignore it";
-  } else {
-    MS_LOG(ERROR) << "Convert control depend node to operator failed, depend src:" << src_ops_list->size()
-                  << " -> dst:" << dst_ops_list->size();
-    error_ = FAILED;
-    return;
-  }
-  control_depend_cache_[node.get()] = control_edges;
-
-#ifdef DRAW_GE_GRAPH
-  DrawControlDepend(src_node, dest_node);
-#endif
 }
 
 bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) {
@@ -1815,12 +1634,6 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   // As for nodes with multi outputs, convert tuple_getitem to OutHandle
   if (name == prim::kPrimTupleGetItem->name()) {
     ConvertTupleGetItem(node);
-    return false;
-  }
-
-  // ControlDepend
-  if (name == prim::kPrimControlDepend->name()) {
-    ConvertControlDependNode(node);
     return false;
   }
 

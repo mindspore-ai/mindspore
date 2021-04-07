@@ -453,7 +453,6 @@ inline const PrimitivePtr kPrimHookBackward = std::make_shared<Primitive>("HookB
 inline const PrimitivePtr kPrimPrintShapeType = std::make_shared<Primitive>("PrintShapeType");
 inline const PrimitivePtr kPrimSameTypeShape = std::make_shared<Primitive>("SameTypeShape");
 inline const PrimitivePtr kPrimPrint = std::make_shared<Primitive>("Print");
-inline const PrimitivePtr kPrimControlDepend = std::make_shared<Primitive>("ControlDepend");
 inline const PrimitivePtr kPrimIs_ = std::make_shared<Primitive>("is_");
 inline const PrimitivePtr kPrimIsNot = std::make_shared<Primitive>("is_not");
 inline const PrimitivePtr kPrimInDict = std::make_shared<Primitive>("in_dict");

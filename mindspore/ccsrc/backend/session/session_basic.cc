@@ -223,10 +223,8 @@ BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &gra
     MS_EXCEPTION_IF_NULL(cnode);
     VectorRef ret;
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      if (!AnfAlgo::CheckPrimitiveType(cnode->input(i), prim::kPrimControlDepend)) {
-        auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node);
-        ret.push_back(out);
-      }
+      auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node);
+      ret.push_back(out);
     }
     return ret;
   }
@@ -384,22 +382,6 @@ bool ExistSummaryNode(const KernelGraph *graph) {
     }
   }
   return false;
-}
-
-bool IgnoreCreateParameterForMakeTuple(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &node_inputs = cnode->inputs();
-  for (size_t i = 1; i < node_inputs.size(); ++i) {
-    if (!AnfAlgo::CheckPrimitiveType(node_inputs[i], prim::kPrimControlDepend)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 void GetParameterIndex(KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
@@ -692,9 +674,6 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
 AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
-  if (IgnoreCreateParameterForMakeTuple(node)) {
-    return nullptr;
-  }
   auto new_parameter = graph->TransTupleToMakeTuple(graph->NewParameter(node->abstract()));
   auto parameters = AnfAlgo::GetAllOutput(new_parameter);
   std::vector<AnfNodePtr> pre_graph_out = {node};
@@ -1872,9 +1851,6 @@ std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_gr
   auto &users = front_func_graph_manager->node_users()[front_node];
   std::vector<AnfNodePtr> result;
   for (auto &user : users) {
-    if (IsPrimitiveCNode(user.first, prim::kPrimControlDepend)) {
-      continue;
-    }
     if (IsPrimitiveCNode(user.first, prim::kPrimDepend)) {
       auto depend_cnode = user.first->cast<CNodePtr>();
       if (depend_cnode == nullptr) {

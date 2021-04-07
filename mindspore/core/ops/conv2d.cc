@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include "ir/dtype/tensor_type.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
-#include "ops/control_depend.h"
 
 namespace mindspore {
 namespace ops {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,23 +186,6 @@ AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitiveP
     MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at least 1, but got 0";
   }
   return args_spec_list[0]->Broaden();
-}
-
-AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
-  // args: Two objects of a subclass of AbstractBase
-  CheckArgsSize(primitive->name(), args_spec_list, 2);
-  auto arg_src = args_spec_list[0];
-  auto arg_dst = args_spec_list[1];
-  // control depend can not setup tuple of ops to tuple of ops dependency relation
-  if (arg_src->isa<AbstractTuple>() && arg_dst->isa<AbstractTuple>()) {
-    auto src_size = arg_src->cast<AbstractTuplePtr>()->size();
-    auto dst_size = arg_src->cast<AbstractTuplePtr>()->size();
-    if (src_size > 1 && dst_size > 1) {
-      MS_LOG(EXCEPTION) << "Control depend can not setup operator dependency relationship from tuple from tuple";
-    }
-  }
-  return std::make_shared<AbstractScalar>(kAnyValue, kBool);
 }
 
 AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

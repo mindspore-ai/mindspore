@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,9 +426,6 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
   }
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
-    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimControlDepend->name()) {
-      continue;
-    }
     if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
         output_info.second == kDependAttachNodeIndex) {
       continue;
@@ -908,16 +905,12 @@ void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  // find BatchNorm's output which is a Depend or ControlDepend
+  // find BatchNorm's output which is a Depend
   for (const auto &node_index : manager->node_users()[old_node]) {
     AnfNodePtr output = node_index.first;
     size_t index = IntToSize(node_index.second);
     MS_EXCEPTION_IF_NULL(output);
-    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimControlDepend)) {
-      auto control_depend = output->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(control_depend);
-      control_depend->set_input(index, new_node);
-    } else if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend)) {
+    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend)) {
       auto depend = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(depend);
       depend->set_input(index, new_node);

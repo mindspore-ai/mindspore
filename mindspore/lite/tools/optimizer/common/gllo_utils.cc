@@ -57,8 +57,8 @@ bool IsRealKernel(const AnfNodePtr &node) {
                          IsPrimitive(input, prim::kPrimTensorSummary) ||
                          IsPrimitive(input, prim::kPrimHistogramSummary) || IsPrimitive(input, prim::kPrimMakeTuple) ||
                          IsPrimitive(input, prim::kPrimStateSetItem) || IsPrimitive(input, prim::kPrimDepend) ||
-                         IsPrimitive(input, prim::kPrimTupleGetItem) || IsPrimitive(input, prim::kPrimControlDepend) ||
-                         IsPrimitive(input, prim::kPrimReturn) || IsPrimitive(input, prim::kPrimPartial);
+                         IsPrimitive(input, prim::kPrimTupleGetItem) || IsPrimitive(input, prim::kPrimReturn) ||
+                         IsPrimitive(input, prim::kPrimPartial);
   return !is_virtual_node;
 }
 

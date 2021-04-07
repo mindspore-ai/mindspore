@@ -149,7 +149,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimStateSetItem, {InferImplStateSetItem, nullptr, true}},
     {prim::kPrimDepend, {InferImplDepend, nullptr, true}},
     {prim::kPrimUpdateState, {InferImplUpdateState, nullptr, true}},
-    {prim::kPrimControlDepend, {InferImplControlDepend, nullptr, true}},
     // Debug
     {prim::kPrimDebug, {InferImplDebug, nullptr, true}},
     // Dynamic shape testing

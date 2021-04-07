@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -422,7 +422,7 @@ void KernelGraph::CheckLoop() {
       none_zero_nodes[it.first] = it.second;
     }
   }
-  // if don't consider control depend and loop exit,a exception will be throw
+  // if don't consider loop exit,a exception will be throw
   if (!none_zero_nodes.empty()) {
     MS_LOG(WARNING) << "Nums of loop:" << GetLoopNum(none_zero_nodes);
     MS_LOG(EXCEPTION) << "Nodes have loop, left node num:" << none_zero_nodes.size();
@@ -815,96 +815,16 @@ std::vector<AnfNodePtr> KernelGraph::GetOutputNodes(const AnfNodePtr &node) {
   return output_nodes;
 }
 
-// update the depend relations of control depend
-void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &depends) {
-  for (const auto &node : depends) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>()) {
-      return;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimControlDepend)) {
-      MS_LOG(EXCEPTION) << node->DebugString() << " is not a control depend";
-    }
-    auto prior_node = cnode->input(kControlDependPriorIndex);
-    auto depend_node = cnode->input(kControlDependBehindIndex);
-    MS_EXCEPTION_IF_NULL(prior_node);
-    MS_EXCEPTION_IF_NULL(depend_node);
-    std::vector<AnfNodePtr> prior_nodes = {prior_node};
-    std::vector<AnfNodePtr> depend_nodes = {depend_node};
-    int depend_mode = 0;
-    if (AnfAlgo::HasNodeAttr(kControlDependMode, cnode)) {
-      depend_mode = AnfAlgo::GetNodeAttr<int64_t>(cnode, kControlDependMode);
-    }
-    MS_LOG(DEBUG) << "Prior node[" << prior_node->DebugString() << "], depend node[" << depend_node->DebugString()
-                  << "], depend_mode :" << depend_mode << ".";
-    if (prior_node->isa<Parameter>() && depend_mode == 1) {
-      prior_nodes = GetOutputNodes(prior_node);
-    }
-    if (depend_node->isa<Parameter>()) {
-      depend_nodes = depend_mode == 1 ? GetOutputNodes(depend_node) : std::vector<AnfNodePtr>{};
-    }
-
-    std::vector<AnfNodePtr> real_prior_nodes;
-    std::set<AnfNodePtr> prior_visited;
-    for (const auto &tmp : prior_nodes) {
-      AnfAlgo::GetAllFatherRealNode(tmp, &real_prior_nodes, &prior_visited);
-    }
-    std::vector<AnfNodePtr> real_depend_nodes;
-    std::set<AnfNodePtr> depend_visited;
-    for (const auto &tmp : depend_nodes) {
-      AnfAlgo::GetAllFatherRealNode(tmp, &real_depend_nodes, &depend_visited);
-    }
-    UpdateNodeInputOutputEdges(real_prior_nodes, real_depend_nodes);
-  }
-}
-
 void KernelGraph::UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
                                              const std::vector<AnfNodePtr> &real_depend_nodes) {
   for (auto &first_node : real_prior_nodes) {
-    if (AnfAlgo::CheckPrimitiveType(first_node, prim::kPrimControlDepend)) {
-      continue;
-    }
     for (auto &second_node : real_depend_nodes) {
-      if (AnfAlgo::CheckPrimitiveType(second_node, prim::kPrimControlDepend)) {
-        continue;
-      }
       MS_EXCEPTION_IF_NULL(first_node);
       MS_EXCEPTION_IF_NULL(second_node);
       MS_LOG(DEBUG) << "Add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();
       AddDependEdge(second_node, first_node, 1);
     }
   }
-}
-
-bool KernelGraph::HandleControlDependNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
-                                          std::unordered_set<AnfNodePtr> *visited_nodes) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(que);
-  MS_EXCEPTION_IF_NULL(visited_nodes);
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimControlDepend)) {
-    return false;
-  }
-  // set the control depend visited but don't push it into the que
-  if (visited_nodes->find(node) != visited_nodes->end()) {
-    return true;
-  }
-  (void)visited_nodes->insert(cnode);
-  // add a 0 depend num to keep the link relations to prepare for finding zero output nodes
-  auto prior_node = cnode->input(kControlDependPriorIndex);
-  auto depend_node = cnode->input(kControlDependBehindIndex);
-  for (const auto &input : cnode->inputs()) {
-    AddDependEdge(node, input, 0);
-  }
-  PushNoVisitedNode(depend_node, que, visited_nodes);
-  PushNoVisitedNode(prior_node, que, visited_nodes);
-  return true;
 }
 
 void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {

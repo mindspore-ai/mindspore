@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
 #include "ops/fusion/partial_fusion.h"
-#include "ops/control_depend.h"
 #include "ops/depend.h"
 #include "ops/make_tuple.h"
 #include "ops/quant_dtype_cast.h"
@@ -213,8 +212,7 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
       MS_LOG(ERROR) << "value node is invalid.";
       return;
     }
-    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(depend_node, prim::kPrimDepend) ||
-                                           opt::CheckPrimitiveType(depend_node, prim::kPrimControlDepend))) {
+    if (value_node->value() != nullptr && opt::CheckPrimitiveType(depend_node, prim::kPrimDepend)) {
       has_depend = true;
       bool mask_out = (depend_node->inputs().size() == 3);
       for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
@@ -466,8 +464,8 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     }
 
     RemoveIfDepend(cnode);
-    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend ||
-        prim->name() == mindspore::ops::kNameTupleGetItem || prim->name() == mindspore::ops::kNameMakeTuple) {
+    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameTupleGetItem ||
+        prim->name() == mindspore::ops::kNameMakeTuple) {
       continue;
     }
     if (prim->name() == "make_tuple") {

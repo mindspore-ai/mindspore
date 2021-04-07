@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,10 +218,10 @@ bool HasForwardOutput(const FuncGraphManagerPtr &mng, const AnfNodePtr &node) {
   if (output_set_iter == node_users.end()) {
     return false;
   }
-  for (const auto &node_index_set : output_set_iter->second) {
-    if (!IsBpropNode(node_index_set.first) && !IsPrimitiveCNode(node_index_set.first, prim::kPrimControlDepend)) {
-      return true;
-    }
+
+  if (std::any_of(output_set_iter->second.begin(), output_set_iter->second.end(),
+                  [](const auto &node_index_set) { return !IsBpropNode(node_index_set.first); })) {
+    return true;
   }
   return false;
 }
