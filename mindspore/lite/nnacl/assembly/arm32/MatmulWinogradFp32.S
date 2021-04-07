@@ -143,7 +143,7 @@ asm_function MatrixMultiplyWinograd
                 mov r0, r8  // mat_b1
                 ldr r12, [sp] // k
                 LoopK:
-                    vld1.32 {s0}, [r9], r5
+                    vld1.32 d0[0], [r9], r5
                     vld1.32 d2[0], [r0], r4
                     vmla.f32 s8, s0, s4
                     subs r12, r12, #1

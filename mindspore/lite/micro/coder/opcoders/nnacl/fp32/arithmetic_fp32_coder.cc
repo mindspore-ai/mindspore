@@ -265,7 +265,7 @@ void ArithmeticFP32Coder::ComputeInOutStrides() {
   }
 }
 
-void ArithmeticFP32Coder::CollectFilesForFnc(CoderContext *const context) {
+void ArithmeticFP32Coder::CollectFilesForFunc(CoderContext *const context) {
   /**
    * for nnacl's operator combine all arithmetic to nnalc/arithmetic.c
    * this solution is not suitable for micro, for the size of package.
@@ -332,6 +332,7 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
   int count = MSMIN(stride, element_num - stride * kDefaultTaskId);
   MS_CHECK_TRUE(!arithmetic_run_.empty(), "arithmetic_run function is nullptr!");
   NNaclFp32Serializer code;
+  CollectFilesForFunc(context);
   if (arithmetic_parameter_->broadcasting_) {
     stride = UP_DIV(outside_, thread_num_);
     out_count_ = MSMIN(stride, outside_ - stride * kDefaultTaskId);

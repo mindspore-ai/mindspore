@@ -73,7 +73,7 @@ CalLoop:
 
 Write:
   vmul.i32 q13, q13, q10
-  vst1.32 q13, [r1], r7
+  vst1.32 {d26, d27}, [r1], r7
   beq RowLoop
 
 End:

@@ -152,20 +152,20 @@ asm_function IndirectGemmInt8_2x4
                 cmp lr, #0
                 beq SymSum
                 ldr lr, [sp, #52]
-                vld1.32 q0, [r10]
+                vld1.32 {d0, d1}, [r10]
                 add r10, r10, lr
-                vld1.32 q1, [r10]
+                vld1.32 {d2, d3}, [r10]
                 b AddSum
             SymSum:
-                vld1.32 q0[], [r10]!
-                vld1.32 q1[], [r10]!
+                vld1.32 {d0[], d1[]}, [r10]!
+                vld1.32 {d2[], d3[]}, [r10]!
             AddSum:
                 vsub.i32 q8, q8, q0
                 vsub.i32 q12, q12, q1
             NoSum:
                 cmp r3, #0
                 beq NoBias
-                vld1.32 q2, [r3]
+                vld1.32 {d4, d5}, [r3]
                 vadd.i32 q8, q8, q2
                 vadd.i32 q12, q12, q2
 
@@ -174,19 +174,19 @@ asm_function IndirectGemmInt8_2x4
                 cmp lr, #0
                 bne PerChannel
                 ldr lr, [sp, #36]
-                vld1.32 q3[], [lr]
+                vld1.32 {d6[], d7[]}, [lr]
                 ldr lr, [sp, #32]
-                vld1.32 q4[], [lr]
+                vld1.32 {d8[], d9[]}, [lr]
                 ldr lr, [sp, #40]
-                vld1.32 q5[], [lr]
+                vld1.32 {d10[], d11[]}, [lr]
                 b QuantizeStart
             PerChannel:
                 ldr lr, [sp, #36]
-                vld1.32 q3, [lr]
+                vld1.32 {d6, d7}, [lr]
                 ldr lr, [sp, #32]
-                vld1.32 q4, [lr]
+                vld1.32 {d8, d9}, [lr]
                 ldr lr, [sp, #40]
-                vld1.32 q5, [lr]
+                vld1.32 {d10, d11}, [lr]
             QuantizeStart:
                 vshl.s32 q8, q8, q3
                 vshl.s32 q12, q12, q3

@@ -170,7 +170,12 @@ int LstmFP32Coder::DoCode(CoderContext *context) {
             "lstm_fp32.c",
             "mul_fp32.c",
           });
-
+  if (target_ == kARM32A || target_ == kARM64) {
+    Collect(context, {}, {},
+            {
+              "MatVecMulFp32.S",
+            });
+  }
   Tensor *hidden_state = input_tensors_.at(kFifthIndex);
   MS_CHECK_PTR(hidden_state);
   Tensor *cell_state = input_tensors_.at(kSixthIndex);
