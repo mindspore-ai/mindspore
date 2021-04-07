@@ -164,6 +164,10 @@ bool OpLib::RegOpFromLocalInfo() {
     MS_LOG(ERROR) << "Op info path is invalid: " << dir;
     return false;
   }
+  if (strlen(real_path) >= PATH_MAX) {
+    MS_LOG(ERROR) << "Op info path is invalid, the absolute path length is greater than PATH_MAX";
+    return false;
+  }
 #endif
   MS_LOG(INFO) << "Start to read op info from local file.";
   std::ifstream file(real_path);

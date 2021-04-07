@@ -16,6 +16,7 @@
 
 #include <unistd.h>
 #include <fstream>
+#include <thread>
 #include "nlohmann/json.hpp"
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
@@ -212,7 +213,7 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &pr
   } catch (std::exception &e) {
     MS_LOG(WARNING) << "Parse json file error: " << json_f << ", sleep 500ms and retry again.";
     kernel_json.close();
-    usleep(500000);
+    std::this_thread::sleep_for(std::chrono::microseconds(500000));
     std::ifstream retry_tmp(json_f);
     if (!retry_tmp.is_open()) {
       MS_LOG(INFO) << "Open json file: " << json_f << " error, please check kernel_meta.";

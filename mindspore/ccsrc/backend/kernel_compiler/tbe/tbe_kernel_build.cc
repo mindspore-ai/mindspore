@@ -29,6 +29,7 @@
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "utils/trace_base.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -529,7 +530,11 @@ string TbeKernelJsonCreator::GetSocVersion() {
       MS_LOG(EXCEPTION) << "GetSocVersion failed.";
     }
     // Get soc version from env value.
-    const char *soc_version_env = getenv(kSOC_VERSION);
+    const char *soc_version_env = nullptr;
+    std::string str_soc_version_env = common::GetEnv(kSOC_VERSION);
+    if (!str_soc_version_env.empty()) {
+      soc_version_env = common::SafeCStr(str_soc_version_env);
+    }
     if (soc_version_env != nullptr) {
       if (std::strcmp(soc_version, soc_version_env) != 0) {
         MS_LOG(WARNING) << "SocVerison will be change.";
