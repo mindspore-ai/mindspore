@@ -166,6 +166,12 @@ class AlbumOp {
   /// \param[in] column_name
   bool IsReadColumn(const std::string &column_name);
 
+  Status LoadTensorRowByIndex(int index, const std::string &file, const nlohmann::json &js,
+                              std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row);
+
+  Status LoadIntTensorRowByIndex(int index, bool is_array, const nlohmann::json &column_value,
+                                 std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row);
+
   std::string folder_path_;  // directory of image folder
   bool decode_;
   std::vector<std::string> columns_to_load_;

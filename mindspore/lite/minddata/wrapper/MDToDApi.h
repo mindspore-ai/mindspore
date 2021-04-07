@@ -38,7 +38,7 @@ typedef struct MDToDConf {
   int ResizeSizeWH[2];
   int fixOrientation;
   int CropSizeWH[2];
-  int64_t fileid;  // -1 All files, otherwise get a single specifc file
+  int64_t fileid;  // -1 All files, otherwise get a single specific file
 } MDToDConf_t;
 
 typedef struct MDToDResult {
