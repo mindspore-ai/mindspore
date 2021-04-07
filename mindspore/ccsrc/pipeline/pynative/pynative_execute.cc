@@ -1996,6 +1996,11 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
   if (custom_bprop_cell_count_ != 0) {
     return;
   }
+  size_t par_number = py::tuple(parse::python_adapter::CallPyObjMethod(cell, "get_parameters")).size();
+  if (par_number > 0) {
+    MS_LOG(EXCEPTION) << "When user defines the net bprop, there are " << par_number
+                      << " parameters that is not supported in the net.";
+  }
   py::function bprop_func = py::getattr(cell, parse::CUSTOM_BPROP_NAME);
   auto fake_prim = std::make_shared<PrimitivePy>(prim::kPrimHookBackward->name(), py::object());
   fake_prim->set_hook(bprop_func);
