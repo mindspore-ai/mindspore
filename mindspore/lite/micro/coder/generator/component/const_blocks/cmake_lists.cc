@@ -46,6 +46,7 @@ endif()
 
 if(PLATFORM_ARM32)
   add_compile_definitions(ENABLE_ARM32)
+  add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
@@ -123,6 +124,7 @@ endif()
 
 if(PLATFORM_ARM32)
   add_compile_definitions(ENABLE_ARM32)
+  add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99} ${CMAKE_C_FLAGS}")
