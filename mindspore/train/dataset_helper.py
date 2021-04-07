@@ -183,7 +183,7 @@ class DatasetHelper:
         >>> train_dataset = create_custom_dataset()
         >>> set_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
         >>> for next_element in set_helper:
-        >>>     print(next_element)
+        ...     print(next_element)
     """
 
     def __init__(self, dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1):
