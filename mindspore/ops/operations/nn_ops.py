@@ -2350,7 +2350,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         ``GPU`` ``CPU``
 
     Examples:
-        Please refer to :class:`mindspore.nn.SparseSoftmaxCrossEntropyWithLogits`
+        Please refer to :class:`mindspore.ops.SparseSoftmaxCrossEntropyWithLogits`
     """
 
     @prim_attr_register
@@ -4187,7 +4187,7 @@ class Adam(PrimitiveWithInfer):
         TypeError: If `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
@@ -4208,7 +4208,7 @@ class Adam(PrimitiveWithInfer):
         ...
         >>> net = Net()
         >>> gradient = Tensor(np.ones([2, 2]).astype(np.float32))
-        >>> net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
+        >>> output = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
         >>> print(net.var.asnumpy())
         [[0.9996838 0.9996838]
          [0.9996838 0.9996838]]
@@ -6386,7 +6386,7 @@ class LARSUpdate(PrimitiveWithInfer):
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
 
     Inputs:
-        - **weight** (Tensor) - The weight to be updated.
+        - **weight** (Tensor) - A tensor, representing the weight.
         - **gradient** (Tensor) - The gradient of weight, which has the same shape and dtype with weight.
         - **norm_weight** (Tensor) - A scalar tensor, representing the sum of squares of weight.
         - **norm_gradient** (Tensor) - A scalar tensor, representing the sum of squares of gradient.
@@ -7717,7 +7717,7 @@ class Conv3D(PrimitiveWithInfer):
 
     Args:
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the height
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
             and width of the 3D convolution window. Single int means the value is for the depth, height and the width
             of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
             width of the kernel.
@@ -7768,7 +7768,7 @@ class Conv3D(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple of six.
         ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
