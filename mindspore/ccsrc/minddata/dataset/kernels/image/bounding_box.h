@@ -98,14 +98,14 @@ class BoundingBox {
   /// \brief Updates bounding boxes with required Top and Left padding
   /// \note Top and Left padding amounts required to adjust bboxs min X,Y values according to padding 'push'
   ///     Top/Left since images 0,0 coordinate is taken from top left
-  /// \param bboxList: A tensor contaning bounding box tensors
+  /// \param bboxList: A tensor containing bounding box tensors
   /// \param bboxCount: total Number of bounding boxes - required within caller function to run update loop
   /// \param pad_top: Total amount of padding applied to image top
   /// \param pad_left: Total amount of padding applied to image left side
   static Status PadBBoxes(const TensorPtr *bbox_list, size_t bbox_count, int32_t pad_top, int32_t pad_left);
 
   /// \brief Updates and checks bounding boxes for new cropped region of image
-  /// \param bbox_list: A tensor contaning bounding box tensors
+  /// \param bbox_list: A tensor containing bounding box tensors
   /// \param bbox_count: total Number of bounding boxes - required within caller function to run update loop
   /// \param CB_Xmin: Image's CropBox Xmin coordinate
   /// \param CB_Xmin: Image's CropBox Ymin coordinate
@@ -116,7 +116,7 @@ class BoundingBox {
 
   /// \brief Updates bounding boxes for an Image Resize Operation - Takes in set of valid BBoxes
   /// For e.g those that remain after a crop
-  /// \param bbox_list: A tensor contaning bounding box tensors
+  /// \param bbox_list: A tensor containing bounding box tensors
   /// \param bbox_count: total Number of bounding boxes - required within caller function to run update loop
   /// \param target_width: required width of image post resize
   /// \param target_height: required height of image post resize

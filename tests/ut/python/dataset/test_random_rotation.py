@@ -154,7 +154,7 @@ def test_random_rotation_md5():
     original_seed = config_get_set_seed(5)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-    # Fisrt dataset
+    # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
     resize_op = c_vision.RandomRotation((0, 90),

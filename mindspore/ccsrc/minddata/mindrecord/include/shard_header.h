@@ -142,7 +142,7 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   /// \brief get the headers from all the shard data
   /// \param[in] the shard data real path
-  /// \param[in] the headers which readed from the shard data
+  /// \param[in] the headers which read from the shard data
   /// \return SUCCESS/FAILED
   MSRStatus GetHeaders(const vector<string> &real_addresses, std::vector<json> &headers);
 

@@ -190,11 +190,11 @@ uint32_t SoftJpegd::ConfigVpcInputData(struct VpcInfo *vpc_input_info, int32_t *
 }
 
 /*
- * @brief : destory libjpeg source
+ * @brief : destroy libjpeg source
  * @param [in] struct jpeg_decompress_struct &libjpeg_handler : libjpeg handle.
  * @param [in] tjhandle &handle : tjhandle.
  */
-void DestoryLibjpegSource(struct jpeg_decompress_struct *libjpeg_handler, const tjhandle &handle) {
+void DestroyLibjpegSource(struct jpeg_decompress_struct *libjpeg_handler, const tjhandle &handle) {
   (void)tjDestroy(handle);
   jpeg_destroy_decompress(libjpeg_handler);
 }
@@ -211,7 +211,7 @@ uint32_t SoftJpegd::JpegdSoftwareDecodeProcess(struct VpcInfo *vpc_input_info,
   int32_t prepare_decode_res = PrepareDecode(&libjpeg_handler, vpc_input_info, soft_dp_process_info);
   if (prepare_decode_res != decodeSucc) {
     JPEGD_LOGE("prepare decode failed!");
-    DestoryLibjpegSource(&libjpeg_handler, handle);
+    DestroyLibjpegSource(&libjpeg_handler, handle);
     return decodeErr;
   }
 
@@ -220,14 +220,14 @@ uint32_t SoftJpegd::JpegdSoftwareDecodeProcess(struct VpcInfo *vpc_input_info,
                         &height, &sub_sample, &color_spase);
   if (decode_header_res != decodeSucc) {
     JPEGD_LOGE("Decompress header failed, width = %d, height = %d.", width, height);
-    DestoryLibjpegSource(&libjpeg_handler, handle);
+    DestroyLibjpegSource(&libjpeg_handler, handle);
     return decodeErr;
   }
 
   int32_t alloc_out_buf_res = AllocOutputBuffer(vpc_input_info, &width, &height, &sub_sample);
   if (alloc_out_buf_res != decodeSucc) {
     JPEGD_LOGE("alloc output buffer failed!");
-    DestoryLibjpegSource(&libjpeg_handler, handle);
+    DestroyLibjpegSource(&libjpeg_handler, handle);
     return decodeErr;
   }
 
@@ -239,15 +239,15 @@ uint32_t SoftJpegd::JpegdSoftwareDecodeProcess(struct VpcInfo *vpc_input_info,
                std::this_thread::get_id());
     delete[] soft_decode_out_buf_;
     soft_decode_out_buf_ = nullptr;
-    DestoryLibjpegSource(&libjpeg_handler, handle);
+    DestroyLibjpegSource(&libjpeg_handler, handle);
     return decodeErr;
   }
 
   int32_t config_vpc_res = ConfigVpcInputData(vpc_input_info, &width, &height);
   if (config_vpc_res != decodeSucc) {
-    DestoryLibjpegSource(&libjpeg_handler, handle);
+    DestroyLibjpegSource(&libjpeg_handler, handle);
     return decodeErr;
   }
-  DestoryLibjpegSource(&libjpeg_handler, handle);
+  DestroyLibjpegSource(&libjpeg_handler, handle);
   return decodeSucc;
 }

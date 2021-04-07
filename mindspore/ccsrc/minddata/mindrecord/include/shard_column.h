@@ -105,7 +105,7 @@ class __attribute__((visibility("default"))) ShardColumn {
                               std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes);
 
  private:
-  /// \brief intialization
+  /// \brief initialization
   void Init(const json &schema_json, bool compress_integer = true);
 
   /// \brief get float value from json

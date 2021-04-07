@@ -375,11 +375,11 @@ void SoftVpc::ChipPreProcess() {
 
   YuvWPara *yuv_scaler_paraset = YuvScalerParaSet::GetInstance();
   YuvScalerPara *scale = yuv_scaler_paraset->scale;
-  int32_t index = GetScalerParamterIndex(horizon_coeff_, yuv_scaler_paraset);
+  int32_t index = GetScalerParameterIndex(horizon_coeff_, yuv_scaler_paraset);
   y_horizon_tap_ = scale[index].taps_6;
   uv_horizon_tap_ = scale[index].taps_4;
 
-  index = GetScalerParamterIndex(vertical_coeff_, yuv_scaler_paraset);
+  index = GetScalerParameterIndex(vertical_coeff_, yuv_scaler_paraset);
   vertical_tap_ = (half_line_mode_) ? scale[index].taps_6 : scale[index].taps_4;
 }
 

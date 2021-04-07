@@ -276,8 +276,8 @@ def test_pyfunc_implicit_compose():
         i = i + 4
 
 
-def test_pyfunc_execption():
-    logger.info("Test PyFunc Execption Throw: lambda x : raise Execption()")
+def test_pyfunc_exception():
+    logger.info("Test PyFunc Exception Throw: lambda x : raise Exception()")
 
     def pyfunc(x):
         raise Exception("Pyfunc Throw")
@@ -292,8 +292,8 @@ def test_pyfunc_execption():
         assert "Pyfunc Throw" in str(info.value)
 
 
-def skip_test_pyfunc_execption_multiprocess():
-    logger.info("Test Multiprocess PyFunc Execption Throw: lambda x : raise Execption()")
+def skip_test_pyfunc_Exception_multiprocess():
+    logger.info("Test Multiprocess PyFunc Exception Throw: lambda x : raise Exception()")
 
     def pyfunc(x):
         raise Exception("MP Pyfunc Throw")
@@ -320,5 +320,5 @@ if __name__ == "__main__":
     test_case_8()
     test_case_9()
     test_pyfunc_implicit_compose()
-    test_pyfunc_execption()
-    skip_test_pyfunc_execption_multiprocess()
+    test_pyfunc_exception()
+    skip_test_pyfunc_exception_multiprocess()

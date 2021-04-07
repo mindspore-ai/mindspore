@@ -37,13 +37,13 @@ class DeepCopyPass : public IRNodePass {
 
   /// \brief Clone a new copy of the node
   /// \param[in] node The node being visited
-  /// \param[inout] *modified indicates whether the node has been visited
+  /// \param[in, out] *modified indicates whether the node has been visited
   /// \return Status code
   Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
 
   /// \brief Reset parent after walking its sub tree.
   /// \param[in] node The node being visited
-  /// \param[inout] *modified indicates whether the node has been visited
+  /// \param[in, out] *modified indicates whether the node has been visited
   /// \return Status code
   Status VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) override;
 
