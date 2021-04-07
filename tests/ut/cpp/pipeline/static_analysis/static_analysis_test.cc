@@ -47,8 +47,8 @@ AbstractBasePtr InferImplScalarAddStub(const AnalysisEnginePtr &engine, const Pr
 }
 
 EvaluatorPtr InitPrimitiveScalarAddEvaluatorStub() {
-  EvaluatorPtr PrimitiveScalarAddEvaluator =
-    std::make_shared<StandardPrimEvaluator>(prim::kPrimScalarAdd, InferImplScalarAddStub);
+  EvaluatorPtr PrimitiveScalarAddEvaluator = std::make_shared<StandardPrimEvaluator>(
+    prim::kPrimScalarAdd, StandardPrimitiveImplReg{InferImplScalarAddStub, nullptr, true});
   return PrimitiveScalarAddEvaluator;
 }
 
@@ -63,8 +63,8 @@ AbstractBasePtr InferImplReturnStub(const AnalysisEnginePtr &engine, const Primi
 }
 
 EvaluatorPtr InitPrimitiveReturnEvaluatorStub() {
-  EvaluatorPtr PrimitiveReturnEvaluator =
-    std::make_shared<StandardPrimEvaluator>(prim::kPrimReturn, InferImplReturnStub);
+  EvaluatorPtr PrimitiveReturnEvaluator = std::make_shared<StandardPrimEvaluator>(
+    prim::kPrimReturn, StandardPrimitiveImplReg{InferImplReturnStub, nullptr, true});
   return PrimitiveReturnEvaluator;
 }
 
@@ -396,7 +396,6 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt64);
 }
 
-
 class TestEvalOnePrim : public UT::Common {
  public:
   TestEvalOnePrim() : getPyFun("gtest_input.pipeline.infer.infer_test", true), engine_(nullptr) {}
@@ -435,7 +434,7 @@ class TestGraphEval : public UT::Common {
   UT::PyFuncGraphFetcher getPyFun;
 };
 
-void TestGraphEval::SetUp() { engine_ = SetupAnalysisEngine(); }  
+void TestGraphEval::SetUp() { engine_ = SetupAnalysisEngine(); }
 
 void TestGraphEval::TearDown() {
   // destroy resource

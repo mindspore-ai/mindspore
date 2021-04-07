@@ -81,6 +81,5 @@ AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                                                     SoftMaxInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Softmax, prim::kPrimSoftmax, SoftmaxInfer, nullptr, true);
-REGISTER_PRIMITIVE_C(kNameSoftmax, Softmax);
 }  // namespace ops
 }  // namespace mindspore

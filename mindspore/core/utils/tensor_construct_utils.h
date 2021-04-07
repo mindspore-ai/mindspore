@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_
 #define MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_
 #include <vector>
+#include <algorithm>
 #include "ir/tensor.h"
 namespace mindspore {
 template <typename T>
@@ -23,10 +24,7 @@ void SetTensorData(void *data, T num, size_t data_length) {
   MS_EXCEPTION_IF_NULL(data);
   auto tensor_data = reinterpret_cast<T *>(data);
   MS_EXCEPTION_IF_NULL(tensor_data);
-  for (size_t index = 0; index < data_length; ++index) {
-    *tensor_data = num;
-    ++tensor_data;
-  }
+  std::fill(tensor_data, tensor_data + data_length, num);
 }
 class TensorConstructUtils {
  public:

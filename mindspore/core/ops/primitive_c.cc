@@ -32,7 +32,7 @@ AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
   if (iter == infer_map.end()) {
     MS_EXCEPTION(NotExistsError) << "Cannot find the " << this->name() << "infer function in the infer map!";
   }
-  auto infer_function = iter->second.impl_;
+  auto infer_function = iter->second.infer_shape_dtype_impl_;
   return infer_function(nullptr, shared_from_base<Primitive>(), abstract_list);
 }
 

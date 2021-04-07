@@ -25,6 +25,14 @@
 #include "common/common_test.h"
 namespace mindspore {
 namespace opt {
+class TestAttr : public ops::PrimitiveC {
+ public:
+  TestAttr() : PrimitiveC("") {}
+};
+class TestDynamicInput : public ops::PrimitiveC {
+ public:
+  TestDynamicInput() : PrimitiveC("") {}
+};
 constexpr auto kAttrConvertTestName = "attr_convert_test";
 constexpr auto kDynamicInputTestName = "dynamic_input_test";
 inline const PrimitivePtr kPrimAttrConvertTest = std::make_shared<Primitive>(kAttrConvertTestName);

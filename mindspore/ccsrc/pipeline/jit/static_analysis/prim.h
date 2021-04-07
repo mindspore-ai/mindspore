@@ -32,7 +32,7 @@ namespace mindspore {
 namespace abstract {
 class StandardPrimEvaluator : public TrivialPrimEvaluator {
  public:
-  StandardPrimEvaluator(const PrimitivePtr primitive, StandardPrimitiveEvalImpl eval_impl)
+  StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
   ~StandardPrimEvaluator() override = default;
   MS_DECLARE_PARENT(StandardPrimEvaluator, TrivialPrimEvaluator);
@@ -43,9 +43,10 @@ class StandardPrimEvaluator : public TrivialPrimEvaluator {
 
  private:
   EvalResultPtr EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args);
-
+  EvalResultPtr RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
+                                const AbstractBasePtrList &args);
   PrimitivePtr prim_;
-  const StandardPrimitiveEvalImpl eval_impl_;
+  const StandardPrimitiveImplReg eval_impl_;
 };
 
 using StandardPrimEvaluatorPtr = std::shared_ptr<StandardPrimEvaluator>;

@@ -70,6 +70,5 @@ AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   return abs;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GatherD, prim::kPrimGatherD, GatherDInfer, nullptr, false);
-REGISTER_PRIMITIVE_C(kNameGatherD, GatherD);
 }  // namespace ops
 }  // namespace mindspore

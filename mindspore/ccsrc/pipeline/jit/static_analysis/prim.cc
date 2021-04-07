@@ -530,28 +530,17 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 }
 }  // end anonymous namespace
 
-EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &engine, const AbstractBasePtr &abs_base,
+                                                     const AbstractBasePtrList &args) {
   auto prim_py = dyn_cast<PrimitivePy>(prim_);
   if (prim_py == nullptr) {
     MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyInferCheck' should be a python primitive.";
   }
-
-  // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'
+  // Call checking method 'infer_value' for python primitive
   MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
   auto py_args = PreparePyInputs(prim_py, args);
-  prim_py->RunCheck(py_args);
-
-  prim_->BeginRecordAddAttr();
-  AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
-  prim_->EndRecordAddAttr();
-  auto added_attrs = prim_->evaluate_added_attrs();
-
-  if (!py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
-    return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
-  }
-
-  // Call method 'infer_value' for primitive with this method for constant propagation
   py::tuple py_vals(py_args.size());
+  auto added_attrs = prim_->evaluate_added_attrs();
   for (size_t i = 0; i < py_args.size(); ++i) {
     py_vals[i] = py_args[i][ATTR_VALUE];
   }
@@ -559,7 +548,6 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   if (py::isinstance<py::none>(py_ret)) {
     return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
   }
-
   // Convert pyobject to Value, then to AbstractValue
   ValuePtr converted_ret = nullptr;
   TypePtr dtype = abs_base->BuildType();
@@ -577,6 +565,28 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   return std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
 }
 
+EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  auto prim_py = dyn_cast<PrimitivePy>(prim_);
+  if (prim_py == nullptr) {
+    MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyInferCheck' should be a python primitive.";
+  }
+  // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'
+  MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
+  auto py_args = PreparePyInputs(prim_py, args);
+  prim_py->RunCheck(py_args);
+
+  prim_->BeginRecordAddAttr();
+  AbstractBasePtr abs_base = eval_impl_.infer_shape_dtype_impl_(engine, prim_, args);
+  prim_->EndRecordAddAttr();
+  auto added_attrs = prim_->evaluate_added_attrs();
+
+  if (!py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
+    return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  }
+  // Call method 'infer_value' for primitive with this method for constant propagation
+  return RunPyInferValue(engine, abs_base, args);
+}
+
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
   if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
     auto ret_abstract = AbstractEval(args);
@@ -589,11 +599,19 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   if (prim_->prim_type() == PrimType::kPrimTypePyInferCheck) {
     return EvalPyCheckPrim(engine, args);
   }
-
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool need_infer_value = eval_impl_.in_white_list_ || (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
   prim_->BeginRecordAddAttr();
-  AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
+  AbstractBasePtr abs_base = eval_impl_.infer_shape_dtype_impl_(engine, prim_, args);
   prim_->EndRecordAddAttr();
   auto added_attrs = prim_->evaluate_added_attrs();
+  if (need_infer_value) {
+    if (eval_impl_.infer_value_func_ != nullptr) {
+      auto value = eval_impl_.infer_value_func_(prim_, args, abs_base);
+      abs_base->set_value(value);
+    }
+  }
   auto eval_result = std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
   return eval_result;
 }
@@ -617,7 +635,6 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   auto added_attrs = prim_py_->evaluate_added_attrs();
   MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
-
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
   auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
   (*evaluator_cache_map_)[args] = infer_result;
@@ -689,7 +706,7 @@ ValuePtr UniformPrimEvaluator::RunImpl(const ValuePtrList &args) const {
 // Primitive implementation
 // static function start
 namespace {
-EvaluatorPtr InitStandardPrimEvaluator(PrimitivePtr primitive, const StandardPrimitiveEvalImpl eval_impl) {
+EvaluatorPtr InitStandardPrimEvaluator(PrimitivePtr primitive, const StandardPrimitiveImplReg eval_impl) {
   EvaluatorPtr prim_evaluator = std::make_shared<StandardPrimEvaluator>(primitive, eval_impl);
   return prim_evaluator;
 }
@@ -1279,7 +1296,7 @@ void InitPrimEvaluatorConstructors() {
   PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
 
   for (const auto &iter : GetPrimitiveToEvalImplMap()) {
-    constructor[iter.first] = InitStandardPrimEvaluator(iter.first, iter.second.impl_);
+    constructor[iter.first] = InitStandardPrimEvaluator(iter.first, iter.second);
   }
 
   for (const auto &iter : GetUniformPrimitiveToImplMap()) {

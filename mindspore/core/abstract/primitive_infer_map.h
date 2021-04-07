@@ -19,21 +19,24 @@
 #define MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
 #include <unordered_map>
 #include <vector>
+#include <memory>
 #include "ir/primitive.h"
+#include "ops/primitive_c.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 
 namespace mindspore {
 namespace abstract {
-using StandardPrimitiveEvalImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
-                                                      const AbstractBasePtrList &);
+using InferShapeAndTypeImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
+                                                  const AbstractBasePtrList &);
 using InferValueEvalImpl = ValuePtr (*)(const PrimitivePtr &, const AbstractBasePtrList &, const AbstractBasePtr &);
 
 struct StandardPrimitiveImplReg {
-  StandardPrimitiveEvalImpl impl_;       // Implement function of Primitive
-  InferValueEvalImpl infer_value_func_;  // infer value of primitive
-  // true means this primitive can be executed by vm backend else will be constant folded by frontend
+  InferShapeAndTypeImpl infer_shape_dtype_impl_;  // Implement function of Primitive
+  InferValueEvalImpl infer_value_func_;           // infer value of primitive
+  // in_white_list_ is true means this primitive can be executed by vm backend
+  // else will be optimized by frontend
   bool in_white_list_;
 };
 
@@ -44,7 +47,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
 
 PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
 
-StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive);
+StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
 std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode);
 
@@ -52,17 +55,22 @@ void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const Standard
 
 class RegisterStandardPrimitiveEvalHelper {
  public:
-  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const StandardPrimitiveEvalImpl &impl,
+  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const InferShapeAndTypeImpl &infer_impl,
                                       const InferValueEvalImpl &infer_value_impl, const bool is_wight_list = true) {
-    const StandardPrimitiveImplReg impl_reg{impl, infer_value_impl, is_wight_list};
+    const StandardPrimitiveImplReg impl_reg{infer_impl, infer_value_impl, is_wight_list};
     RegisterStandardPrimitiveImpl(primitive, impl_reg);
   }
   ~RegisterStandardPrimitiveEvalHelper() = default;
 };
 
-#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, impl, infer_value_impl, is_wight_list) \
-  static auto helper_##name =                                                                \
-    abstract::RegisterStandardPrimitiveEvalHelper(primitive, impl, infer_value_impl, is_wight_list)
+#define REGISTER_PRIMITIVE_EVAL_IMPL(name, primitive, infer_impl, infer_value_impl, is_wight_list)         \
+  static auto helper_##name =                                                                              \
+    abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_impl, infer_value_impl, is_wight_list); \
+  std::shared_ptr<ops::PrimitiveC> GetDefaultPrimC##name() {                                               \
+    auto out = std::make_shared<name>();                                                                   \
+    return out;                                                                                            \
+  }                                                                                                        \
+  ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
