@@ -310,11 +310,11 @@ void Executor::ClearDoneTasks() {
 }
 
 void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run) {
+  sync_run_task_finished_ = false;
   {
     std::lock_guard<std::mutex> lock(task_mutex_);
     ready_tasks_.push(task);
   }
-  sync_run_task_finished_ = false;
   task_cond_var_.notify_all();
   if (sync && !sync_run_task_finished_) {
     std::unique_lock<std::mutex> lock(task_mutex_);
