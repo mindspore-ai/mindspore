@@ -180,6 +180,7 @@ class GradExecutor {
   std::string GetCellId(const py::object &obj, const py::args &args);
   std::stack<std::string> &cell_stack() { return cell_stack_; }
   std::vector<TopCellInfoPtr> &top_cell_list() { return top_cell_list_; }
+  TopCellInfoPtr GetTopCell(std::string cell_id) const;
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);

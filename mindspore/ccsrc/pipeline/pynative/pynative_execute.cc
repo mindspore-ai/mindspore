@@ -611,6 +611,11 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
   auto device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (auto &pre_tensor : pre_tensors) {
     MS_EXCEPTION_IF_NULL(pre_tensor);
+    MS_LOG(DEBUG) << "Replace Old tensor " << pre_tensor.get() << " id " << pre_tensor->id()
+                  << " device_address: " << pre_tensor->device_address()->GetMutablePtr() << " shape and type "
+                  << pre_tensor->GetShapeAndDataTypeInfo() << " with New tensor " << new_tensor.get() << " id "
+                  << new_tensor->id() << " device_address " << new_tensor->device_address()->GetMutablePtr()
+                  << " shape and dtype " << new_tensor->GetShapeAndDataTypeInfo();
     pre_tensor->set_shape(new_tensor->shape());
     pre_tensor->set_data_type(new_tensor->data_type());
     if (device_target != kCPUDevice) {
@@ -627,11 +632,6 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
         MS_LOG(EXCEPTION) << "Memory copy failed. ret: " << ret;
       }
     }
-    MS_LOG(DEBUG) << "Replace Old tensor " << pre_tensor.get() << " id " << pre_tensor->id()
-                  << " device_address: " << pre_tensor->device_address()->GetMutablePtr() << " shape and type "
-                  << pre_tensor->GetShapeAndDataTypeInfo() << " with New tensor " << new_tensor.get() << " id "
-                  << new_tensor->id() << " device_address " << new_tensor->device_address()->GetMutablePtr()
-                  << " shape and dtype " << new_tensor->GetShapeAndDataTypeInfo();
   }
 }
 
@@ -1241,6 +1241,16 @@ AnfNodePtr GradExecutor::MakeValueNode(const py::object &obj, const std::string 
   auto node = NewValueNode(converted_ret);
   SetNodeMapInGraphInfoMap(curr_g_, obj_id, node);
   return node;
+}
+
+TopCellInfoPtr GradExecutor::GetTopCell(std::string cell_id) const {
+  for (const auto &top_cell : top_cell_list_) {
+    MS_EXCEPTION_IF_NULL(top_cell);
+    if (top_cell->cell_id() == cell_id) {
+      return top_cell;
+    }
+  }
+  return nullptr;
 }
 
 void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) {
@@ -1924,12 +1934,6 @@ void GradExecutor::SetMakeTupleAsOutputNode(const TopCellInfoPtr &top_cell, cons
   // run ad for maketuple node
   ValuePtr out_value = parse::data_converter::PyDataToValue(out);
   ad::GradPynativeOp(top_cell->k_pynative_cell_ptr(), cnode, input_args, out_value);
-  // record op info
-  size_t curr_op_num = top_cell->op_num();
-  std::string op_info = "MakeTuple-" + std::to_string(curr_op_num) + "-" + input_args_info;
-  std::string curr_op_info = top_cell->all_op_info() + "_" + op_info;
-  top_cell->set_all_op_info(curr_op_info);
-  top_cell->set_op_num(curr_op_num + 1);
   MS_LOG(DEBUG) << "Tuple output node info " << cnode->DebugString();
 }
 
@@ -2225,9 +2229,10 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
     input_args_id = input_args_id + GetId(args[i]) + "_";
   }
   // Check whether need to run forward process
-  auto top_cell = grad_executor()->top_cell_direct();
+  auto top_cell = grad_executor()->GetTopCell(cell_id);
   if (top_cell != nullptr) {
     forward_run = top_cell->forward_already_run();
+    grad_executor()->set_top_cell(top_cell);
     bool input_args_changed = !top_cell->input_args_id().empty() && top_cell->input_args_id() != input_args_id;
     if (forward_run && input_args_changed && top_cell->is_dynamic()) {
       MS_LOG(WARNING) << "The construct of running cell is dynamic and the input info of this cell has changed, "
@@ -2235,7 +2240,7 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
       forward_run = false;
     }
   }
-  MS_LOG(DEBUG) << "Graph have already run " << forward_run << " top cell id " << cell_id;
+  MS_LOG(DEBUG) << "Graph have already ran " << forward_run << " top cell id " << cell_id;
   return BaseRefToPyData(forward_run);
 }
 

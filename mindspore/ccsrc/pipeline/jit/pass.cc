@@ -151,6 +151,7 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
   opt::OptPassConfig switch_simplify_ = opt::OptPassConfig({
     irpass.switch_simplify_,
+    irpass.reduce_eliminate_,
   });
 
   opt::OptPassConfig inline_ = opt::OptPassConfig({
