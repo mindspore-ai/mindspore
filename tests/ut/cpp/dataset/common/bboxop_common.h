@@ -55,7 +55,7 @@ class BBoxOpCommon : public CVOpCommon {
 
   /// \brief Load BBox data from an XML file into a Tensor
   /// \param[in] path path to XML bbox data file
-  /// \param[inout] target_BBox pointer to a Tensor to load
+  /// \param[in, out] target_BBox pointer to a Tensor to load
   /// \return True if file loaded successfully, false if error -> logged to STD out
   bool LoadAnnotationFile(const std::string &path, std::shared_ptr<Tensor> *target_BBox);
 

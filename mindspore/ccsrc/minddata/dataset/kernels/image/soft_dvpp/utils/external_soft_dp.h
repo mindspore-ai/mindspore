@@ -33,10 +33,10 @@ struct SoftDpProcsessInfo {
 };
 
 struct SoftDpCropInfo {
-  uint32_t left;   // crop left boundry
-  uint32_t right;  // crop right boundry
-  uint32_t up;     // crop up boundry
-  uint32_t down;   // crop down boundry
+  uint32_t left;   // crop left boundary
+  uint32_t right;  // crop right boundary
+  uint32_t up;     // crop up boundary
+  uint32_t down;   // crop down boundary
 };
 
 /*

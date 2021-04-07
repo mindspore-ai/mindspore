@@ -305,7 +305,7 @@ def test_take_16():
 
 def test_take_17():
     """
-    Test take: take first, then do fiter operation
+    Test take: take first, then do filter operation
     """
     logger.info("test_take_17")
     data1 = ds.GeneratorDataset(generator_10, ["data"])
@@ -322,7 +322,7 @@ def test_take_17():
 
 def test_take_18():
     """
-    Test take: take first, then do fiter, skip, batch and repeat operation
+    Test take: take first, then do filter, skip, batch and repeat operation
     """
     logger.info("test_take_18")
     data1 = ds.GeneratorDataset(generator_10, ["data"])

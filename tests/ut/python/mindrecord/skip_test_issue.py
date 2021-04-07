@@ -547,7 +547,7 @@ def skip_test_issue_155():
     count = 0
     for _ in reader.get_next():
         count += 1
-    assert count == 10000, "Failed to read mutiple writed data."
+    assert count == 10000, "Failed to read multiple writed data."
 
 
 def test_issue_124():

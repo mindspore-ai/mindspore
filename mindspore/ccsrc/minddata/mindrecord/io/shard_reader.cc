@@ -163,7 +163,7 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
   auto disk_size = page_size_ * row_group_summary.size();
   auto compression_size = shard_header_->GetCompressionSize();
   total_blob_size_ = disk_size + compression_size;
-  MS_LOG(INFO) << "Blob data size, on disk: " << disk_size << " , addtional uncompression: " << compression_size
+  MS_LOG(INFO) << "Blob data size, on disk: " << disk_size << " , additional uncompression: " << compression_size
                << " , Total: " << total_blob_size_;
 
   MS_LOG(INFO) << "Get meta from mindrecord file & index file successfully.";
