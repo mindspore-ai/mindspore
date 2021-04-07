@@ -345,9 +345,22 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     kernel::KernelKey gpu_desc{kGPU, kNumberTypeFloat32, desc.type};
     if (context_->IsGpuFloat16Enabled()) gpu_desc.data_type = kNumberTypeFloat16;
     if (in_tensors.front()->data_type() == kNumberTypeInt8) gpu_desc.data_type = kNumberTypeInt8;
+
+    // weight quant
+    std::map<Tensor *, Tensor *> restored_origin_tensors;
+    for (auto &tensor : in_tensors) {
+      int index = 0;
+      auto channel_first = IsChannelFirst(index++, op_parameter);
+      auto *restore_tensor = DequantUtil::DequantTensor(tensor, desc.data_type, channel_first, kNumberTypeFloat32);
+      if (restore_tensor != nullptr) {
+        restored_origin_tensors[tensor] = restore_tensor;
+      }
+    }
+
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type) << " " << node->name_;
+      FreeRestoreTensors(&restored_origin_tensors);
       return kernel;
     } else {
       MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(gpu_desc.type) << " "
@@ -356,6 +369,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       if (ret == RET_INFER_INVALID || ret == RET_OK) {
         op_parameter = op_parameters_[node->output_indices_.at(0)];
       } else {
+        RestoreTensorData(restored_origin_tensors);
         MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
         return nullptr;
       }

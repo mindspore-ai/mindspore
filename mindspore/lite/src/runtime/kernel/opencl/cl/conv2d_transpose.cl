@@ -44,13 +44,13 @@ __kernel void conv2d_transpose(__read_only image2d_t src_data, __write_only imag
       for (int ci = 0; ci < src_size.z; ++ci) {
         FLT4 x0 = (FLT4)0.f;
         FLT4 x2 = (FLT4)0.f;
-        if (out0_src_h < src_size.x) {
+        if (out0_src_h < src_size.x && out0_src_h >= 0) {
           x0 = READ_IMAGE(src_data, smp_zero, (int2)(out0_src_w * src_size.z + ci, n * src_size.x + out0_src_h));
           x2 = READ_IMAGE(src_data, smp_zero, (int2)(out1_src_w * src_size.z + ci, n * src_size.x + out0_src_h));
         }
         FLT4 x1 = (FLT4)0.f;
         FLT4 x3 = (FLT4)0.f;
-        if (out1_src_h < src_size.x) {
+        if (out1_src_h < src_size.x && out1_src_h >= 0) {
           x1 = READ_IMAGE(src_data, smp_zero, (int2)(out0_src_w * src_size.z + ci, n * src_size.x + out1_src_h));
           x3 = READ_IMAGE(src_data, smp_zero, (int2)(out1_src_w * src_size.z + ci, n * src_size.x + out1_src_h));
         }

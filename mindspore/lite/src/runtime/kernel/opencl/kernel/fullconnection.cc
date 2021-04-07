@@ -58,18 +58,6 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
   }
-  // for fusion: ActivationType_TANH
-  switch (static_cast<int>(param->act_type_)) {
-    case ActType_No:
-    case ActType_Relu:
-    case ActType_Relu6:
-    case ActivationType_TANH:
-      break;
-    default: {
-      MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
-      return RET_ERROR;
-    }
-  }
   N_ = out_gpu_info.N;
   CO_ = out_gpu_info.C;
   auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
@@ -140,10 +128,6 @@ int FullConnectionOpenCLKernel::InitWeights() {
 }  // namespace mindspore::kernel
 
 int FullConnectionOpenCLKernel::InitFilter() {
-  auto ret = DequantWeight();
-  if (ret != RET_OK) {
-    return ret;
-  }
   auto allocator = ocl_runtime_->GetAllocator();
   auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
   int co4 = UP_DIV(CO_, C4NUM);
@@ -196,7 +180,6 @@ int FullConnectionOpenCLKernel::InitFilter() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
-  FreeDequantedWeight();
   return RET_OK;
 }
 

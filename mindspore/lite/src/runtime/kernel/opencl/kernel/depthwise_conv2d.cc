@@ -102,10 +102,6 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
 }
 
 int DepthwiseConv2dOpenCLKernel::InitWeights() {
-  auto ret = DequantWeight();
-  if (ret != RET_OK) {
-    return ret;
-  }
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto allocator = ocl_runtime_->GetAllocator();
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
@@ -162,7 +158,6 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   } else {
     packed_weight_ = allocator->Malloc(pack_weight_size, temp_filter.data());
   }
-  FreeDequantedWeight();
   if (packed_weight_ == nullptr) {
     return RET_ERROR;
   }

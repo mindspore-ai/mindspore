@@ -91,11 +91,6 @@ void WinogradOpenCLKernel::BuildKernel() {
 void WinogradOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
 
-  auto ret = DequantWeight();
-  if (ret != RET_OK) {
-    return;
-  }
-
   // allocate opencl memory: buffer or image2d
   size_t size = 0;
   int Ogroup = 2;
@@ -140,8 +135,6 @@ void WinogradOpenCLKernel::InitFilter() {
     memcpy(packed_filter_, tmp.data(), size);
     allocator->UnmapBuffer(packed_filter_);
   }
-
-  FreeDequantedWeight();
 }
 
 void WinogradOpenCLKernel::AllocateMemory() {
