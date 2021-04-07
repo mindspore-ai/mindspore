@@ -60,6 +60,24 @@ namespace dataset {
     break;                                                                                      \
   }
 
+errno_t memcpy_ss(uchar *dest, size_t destMax, const uchar *src, size_t count) {
+  // fix: memcpy_s will fail when byte_size > 2^31 - 1
+  uint32_t step = 0;
+  while (count >= SECUREC_MEM_MAX_LEN) {
+    int ret_code = memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, SECUREC_MEM_MAX_LEN, src + step * SECUREC_MEM_MAX_LEN,
+                            SECUREC_MEM_MAX_LEN);
+    if (ret_code != 0) {
+      return ret_code;
+    }
+    count -= SECUREC_MEM_MAX_LEN;
+    step++;
+  }
+  if (count > 0) {
+    return memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, count, src + step * SECUREC_MEM_MAX_LEN, count);
+  }
+
+  return 0;
+}
 Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), type_(type), data_(nullptr) {
   // grab the mem pool from global context and create the allocator for char data area
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
@@ -111,7 +129,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   if (src != nullptr) {
     // Given the shape/type of this tensor, compute the data size and copy in the input bytes.
     int64_t byte_size = (*out)->SizeInBytes();
-    int ret_code = memcpy_s((*out)->data_, byte_size, src, byte_size);
+    int ret_code = memcpy_ss((*out)->data_, byte_size, src, byte_size);
     CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
   }
   return Status::OK();
@@ -163,71 +181,32 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
   if (DataType::FromNpArray(arr) == DataType::DE_STRING) {
     return CreateFromNpString(arr, out);
   }
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, TensorShape::CreateScalar(), DataType(DataType::DE_UNKNOWN));
 
   std::vector<dsize_t> shape;
-  for (dsize_t i = 0; i < arr.ndim(); i++) {
-    shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
-  }
-
-  (*out)->shape_ = TensorShape(shape);
-  (*out)->type_ = DataType::FromNpArray(arr);
-  if (!(*out)->shape_.known()) RETURN_STATUS_UNEXPECTED("Invalid shape.");
-
-  if ((*out)->type_ == DataType::DE_UNKNOWN) RETURN_STATUS_UNEXPECTED("Invalid data type.");
-
-  std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  (*out)->data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
-  int64_t byte_size = (*out)->SizeInBytes();
-  if (byte_size == 0) {
-    return Status::OK();
-  }
-
-  RETURN_IF_NOT_OK((*out)->AllocateBuffer(byte_size));
-
-  unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
-  if ((*out)->data_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Failed to create memory for Tensor.");
-  }
-
   std::vector<dsize_t> strides;
-  for (dsize_t i = 0; i < arr.ndim(); i++) {
-    strides.push_back(static_cast<dsize_t>(arr.strides()[i]));
-  }
-
   // check if strides are contiguous
   bool is_strided = false;
-  dsize_t count = (*out)->shape_.NumOfElements();
-  for (size_t i = 0; i < shape.size(); i++) {
-    count /= shape[i];
-    if (strides[i] != (*out)->type_.SizeInBytes() * count) {
-      is_strided = true;
-      break;
+  dsize_t count = arr.size();
+  for (dsize_t i = 0; i < arr.ndim(); i++) {
+    shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
+    strides.push_back(static_cast<dsize_t>(arr.strides()[i]));
+    // in case of empty array num_items=0
+    if (count != 0) {
+      count /= shape[i];
+      if (strides[i] != arr.itemsize() * count) {
+        is_strided = true;
+      }
     }
   }
+
+  unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
 
   if (is_strided) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(shape), DataType::FromNpArray(arr), out));
     RETURN_IF_NOT_OK(CopyStridedArray((*out)->data_, data, shape, strides, (*out)->type_.SizeInBytes()));
   } else {
-    // fix: memcpy_s will fail when byte_size > 2^31 - 1
-    uint32_t step = 0;
-    while (byte_size >= kDeMaxDim) {
-      int ret_code = memcpy_s((*out)->data_ + step * kDeMaxDim, kDeMaxDim, data + step * kDeMaxDim, kDeMaxDim);
-      if (ret_code != 0) {
-        RETURN_STATUS_UNEXPECTED("Failed to copy data into Tensor.");
-      }
-      byte_size -= kDeMaxDim;
-      step++;
-    }
-    if (byte_size > 0) {
-      int ret_code = memcpy_s((*out)->data_ + step * kDeMaxDim, byte_size, data + step * kDeMaxDim, byte_size);
-      if (ret_code != 0) {
-        RETURN_STATUS_UNEXPECTED("Failed to copy data into Tensor.");
-      }
-    }
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape), DataType::FromNpArray(arr), data, out));
   }
-
   return Status::OK();
 }
 #endif
@@ -941,8 +920,8 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
     converted_slice_objects.emplace_back(slice_option_item);
   }
 
-  // if a string with partial slices, pass in the rest
-  if (slice_options_.size() != Rank() && type() == DataType::DE_STRING) {
+  // partial slices, pass in the rest
+  if (slice_options_.size() != Rank()) {
     for (int i = slice_options_.size(); i < Rank(); i++) {
       mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[i]);
       converted_slice_objects.emplace_back(SliceOption(slice));
