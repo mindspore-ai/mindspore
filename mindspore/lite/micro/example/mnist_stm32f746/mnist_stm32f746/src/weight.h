@@ -16,7 +16,6 @@
  */
 
 #include "CMSIS/NN/Include/arm_nnfunctions.h"
-#include "nnacl/fp32/softmax_fp32.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 #include <stdlib.h>
 #include <string.h>

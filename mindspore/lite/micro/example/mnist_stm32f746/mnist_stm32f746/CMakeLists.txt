@@ -22,7 +22,6 @@ endif()
 
 if(PLATFORM_ARM64)
   add_compile_definitions(ENABLE_ARM64)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+dotprod")
 endif()
 
 if(PLATFORM_ARM32)
