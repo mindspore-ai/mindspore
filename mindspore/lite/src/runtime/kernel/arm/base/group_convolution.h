@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_H_
 
 #include <utility>
 #include <vector>
@@ -47,11 +47,9 @@ class GroupConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
  protected:
   std::vector<kernel::LiteKernel *> group_convs_;
   const int group_num_;
-
- private:
-  float *ori_in_data_ = nullptr;   // do not free
-  float *ori_out_data_ = nullptr;  // do not free
+  void *ori_in_data_ = nullptr;   // do not free
+  void *ori_out_data_ = nullptr;  // do not free
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_H_

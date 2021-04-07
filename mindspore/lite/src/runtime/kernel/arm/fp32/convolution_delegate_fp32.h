@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/fp32/convolution_creator_manager.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
