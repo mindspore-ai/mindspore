@@ -37,12 +37,12 @@ int CopyOutputsData(void **outputs, int num) {
   if (num != 1) {
     return RET_ERROR;
   }
-  memcpy(outputs[0], g_Buffer+56, 40);
+  memcpy(outputs[0], g_Buffer+32, 40);
   return RET_OK;
 }
 
 int GetBufferSize() {
-  return 11360;
+  return 10576;
 }
 int SetBuffer( void *buffer) {
   if (buffer == NULL) {
@@ -62,41 +62,36 @@ void FreeResource() {
 }
 void Inference() {
   {
-DoQuantizeFp32ToInt8((float *)(g_Input0), (int8_t *)(g_Buffer+0), 0.007874015718698501587, 0, 784, false);
+memset((int16_t *)(g_Buffer+10144), 0, 36);
+const int output_shift[12] = {-9, -9, -9, -9, -9, -9, -9, -10, -10, -9, -9, -9};
+const int output_mult[12] = {1354133566, 1485574432, 1737792646, 1225484872, 1221530746, 1184403831, 1344308820, 1080459089, 1432168625, 1245831715, 1804167149, 1092395059};
+arm_convolve_s8((int8_t *)(g_Input0), 28, 28, 1, 1, g_Weight1, 12, 3, 3, 0, 0, 1, 1, g_Weight2, (int8_t *)(g_Buffer+0), output_shift, output_mult, 17, 128, -128, 127, 26, 26, (int16_t *)(g_Buffer+10144));
   }
   {
-memset((int16_t *)(g_Buffer+10928), 0, 36);
-const int output_shift[12] = {-9, -9, -9, -10, -9, -9, -9, -8, -8, -9, -8, -10};
-const int output_mult[12] = {1575967322, 1893553385, 1652229292, 1640472187, 2103639838, 1107198853, 1760705451, 1082323166, 1139790835, 1956967482, 1374939831, 1914453305};
-arm_convolve_s8((int8_t *)(g_Buffer+0), 28, 28, 1, 1, g_Weight1, 12, 3, 3, 0, 0, 1, 1, g_Weight2, (int8_t *)(g_Buffer+784), output_shift, output_mult, 0, 0, 0, 127, 26, 26, (int16_t *)(g_Buffer+10928));
+arm_max_pool_s8(26, 26, 13, 13, 2, 2, 2, 2, 0, 0, -128, 127, 12, (int8_t *)(g_Buffer+0), NULL, (int8_t *)(g_Buffer+8112));
   }
   {
-arm_max_pool_s8(26, 13, 13, 0, 2, 2, 2, 2, 0, 0, -128, 127, 12, (int8_t *)(g_Buffer+784), NULL, (int8_t *)(g_Buffer+8896));
+memset((int16_t *)(g_Buffer+10144), 0, 432);
+const int output_shift[12] = {-10, -10, -10, -9, -10, -10, -10, -10, -10, -9, -9, -10};
+const int output_mult[12] = {2143437276, 1710269977, 1664140445, 1275314678, 2121906679, 1591651427, 1589631258, 1721320620, 1939131746, 1186858310, 1223164752, 1583392613};
+arm_convolve_s8((int8_t *)(g_Buffer+8112), 13, 13, 12, 1, g_Weight3, 12, 3, 3, 0, 0, 1, 1, g_Weight4, (int8_t *)(g_Buffer+0), output_shift, output_mult, 31, -17, -128, 127, 11, 11, (int16_t *)(g_Buffer+10144));
   }
   {
-memset((int16_t *)(g_Buffer+10928), 0, 432);
-const int output_shift[12] = {-9, -9, -9, -10, -10, -10, -9, -10, -9, -9, -9, -10};
-const int output_mult[12] = {1463300439, 1589377657, 1282301242, 2029005906, 1734587761, 1880282552, 1101530126, 2125705639, 1090057139, 1527059231, 1493793984, 1935246242};
-arm_convolve_s8((int8_t *)(g_Buffer+8896), 13, 13, 12, 1, g_Weight3, 12, 3, 3, 0, 0, 1, 1, g_Weight4, (int8_t *)(g_Buffer+0), output_shift, output_mult, 0, 0, 0, 127, 11, 11, (int16_t *)(g_Buffer+10928));
-  }
-  {
-arm_max_pool_s8(11, 5, 5, 0, 2, 2, 2, 2, 0, 0, -128, 127, 12, (int8_t *)(g_Buffer+0), NULL, (int8_t *)(g_Buffer+1456));
+arm_max_pool_s8(11, 11, 5, 5, 2, 2, 2, 2, 0, 0, -128, 127, 12, (int8_t *)(g_Buffer+0), NULL, (int8_t *)(g_Buffer+1456));
   }
   {
 memcpy((int8_t *)(g_Buffer+0), (int8_t *)(g_Buffer+1456), 300);
   }
   {
-arm_fully_connected_s8((int8_t *)(g_Buffer+0), g_Weight6, 300, 20, 1, 0, -1, 2108215098, -10, 0, g_Weight7, (int8_t *)(g_Buffer+304), -128, 127, NULL);
+arm_fully_connected_s8((int8_t *)(g_Buffer+0), g_Weight6, 300, 20, 1, -31, 0, 1379728884, -8, 11, g_Weight7, (int8_t *)(g_Buffer+304), -128, 127, NULL);
   }
   {
-arm_fully_connected_s8((int8_t *)(g_Buffer+304), g_Weight8, 20, 10, 1, 0, -7, 1242805537, -8, 0, g_Weight9, (int8_t *)(g_Buffer+0), -128, 127, NULL);
+arm_fully_connected_s8((int8_t *)(g_Buffer+304), g_Weight8, 20, 10, 1, -11, 0, 1282256809, -8, -20, g_Weight9, (int8_t *)(g_Buffer+0), -128, 127, NULL);
   }
   {
-DoDequantizeInt8ToFp32((int8_t *)(g_Buffer+0), (float *)(g_Buffer+16), 0.5359870791435241699, 0, 10);
+arm_softmax_s8((int8_t *)(g_Buffer+0), 1, 10, 1152553088, 27, -15, (int8_t *)(g_Buffer+16));
   }
   {
-const SoftmaxParameter softmax_parameter = {{ "", 138, g_thread_num}, 1, {1, 10}, 10, 2};
-memset((float *)(g_Buffer+10928), 0, 4);
-Softmax((float *)(g_Buffer+16), (float *)(g_Buffer+56), (float *)(g_Buffer+10928), &softmax_parameter);
+DoDequantizeInt8ToFp32((int8_t *)(g_Buffer+16), (float *)(g_Buffer+32), 0.00390625, -128, 10);
   }
 }
