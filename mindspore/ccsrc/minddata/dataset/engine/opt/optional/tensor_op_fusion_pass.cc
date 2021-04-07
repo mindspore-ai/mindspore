@@ -39,6 +39,7 @@ Status TensorOpFusionPass::Visit(std::shared_ptr<MapNode> node, bool *const modi
   if (itr != ops.end()) {
     MS_LOG(WARNING) << "Fusing pre-build Decode and RandomCropResize into one pre-build.";
     auto op = dynamic_cast<RandomCropAndResizeOp *>((*(itr + 1))->Build().get());
+    RETURN_UNEXPECTED_IF_NULL(op);
     (*itr) = std::make_shared<transforms::PreBuiltOperation>(std::make_shared<RandomCropDecodeResizeOp>(*op));
     ops.erase(itr + 1);
     node->setOperations(ops);
