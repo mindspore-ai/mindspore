@@ -116,7 +116,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 -DANDROID_ABI="armeabi-v7a" \
 -DANDROID_TOOLCHAIN_NAME="clang" \
 -DANDROID_NATIVE_API_LEVEL="19" \
--DMICRO_BUILD_ARM32=ON \
+-DPLATFORM_ARM32=ON \
 -DPKG_PATH={path to}/mindspore-lite-{version}-inference-android-{arch} ..
 make
 ```
