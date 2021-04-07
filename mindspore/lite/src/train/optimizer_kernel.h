@@ -32,7 +32,7 @@ class OptimizerKernel : public LiteKernel {
   ~OptimizerKernel() = default;
 
   enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH };
-  WeightUpdateMode get_optimizer_mode() { return weightUpdateMod_; }
+  WeightUpdateMode get_optimizer_mode() { return weight_update_mod_; }
 
   int Init() override {
     default_lr_ = reinterpret_cast<float *>(in_tensors_.at(lr_idx_)->MutableData())[0];
@@ -67,6 +67,7 @@ class OptimizerKernel : public LiteKernel {
       }
       valid_grad_sum_ = false;
       std::fill(grad_sum_, grad_sum_ + elem_num, 0);
+      weight_update_mod_ = WeightUpdateMode::VIRTUAL_BATCH;
     } else {
       if (grad_sum_ != nullptr) {
         OptimizerStep();
@@ -74,7 +75,6 @@ class OptimizerKernel : public LiteKernel {
         grad_sum_ = nullptr;
       }
     }
-    weightUpdateMod_ = WeightUpdateMode::VIRTUAL_BATCH;
     return RET_OK;
   }
 
@@ -112,7 +112,7 @@ class OptimizerKernel : public LiteKernel {
   bool valid_grad_sum_ = false;
 
  private:
-  WeightUpdateMode weightUpdateMod_ = WeightUpdateMode::NORMAL;
+  WeightUpdateMode weight_update_mod_ = WeightUpdateMode::NORMAL;
 };
 
 }  // namespace mindspore::kernel
