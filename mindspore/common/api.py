@@ -512,7 +512,7 @@ class _Executor:
             if "export" not in phase:
                 init_phase = "init_subgraph" + "." + str(obj.create_time)
                 _exec_init_graph(obj, init_phase)
-        elif not enable_ge and "export" in phase:
+        elif "export" in phase:
             self._build_data_graph(obj, phase)
         elif BROADCAST_PHASE not in phase and _get_parameter_broadcast():
             _parameter_broadcast(obj, auto_parallel_mode)
