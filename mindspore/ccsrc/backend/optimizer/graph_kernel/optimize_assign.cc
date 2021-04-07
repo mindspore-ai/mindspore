@@ -28,21 +28,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::string> &inputs_format,
-                                                      const std::vector<TypeId> &inputs_type,
-                                                      const std::vector<std::string> &output_formats,
-                                                      const std::vector<TypeId> &output_types, const CNodePtr &cnode) {
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
-  graph_info_builder.SetInputsFormat(inputs_format);
-  graph_info_builder.SetInputsDeviceType(inputs_type);
-  graph_info_builder.SetOutputsFormat(output_formats);
-  graph_info_builder.SetOutputsDeviceType(output_types);
-  graph_info_builder.SetProcessor(AnfAlgo::GetProcessor(cnode));
-  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
-  return graph_info_builder.Build();
-}
-
 /**
  * If an Assign's source node was outputted with this Assign, the src-node should be removed from output list,
  * external users can use the dest-node under the premise of correct execution order.
