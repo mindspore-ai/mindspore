@@ -225,7 +225,7 @@ bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string file
   } catch (std::exception &e) {
     MS_LOG(WARNING) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
     somas_json_fs.close();
-    usleep(500000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::ifstream retry_tmp(filename);
     if (!retry_tmp.is_open()) {
       MS_LOG(INFO) << "Open json file: " << filename << " error, please check kernel_meta.";
