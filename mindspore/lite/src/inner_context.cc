@@ -37,7 +37,14 @@ InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
   this->thread_num_ = context->thread_num_;
   this->device_list_.clear();
   for (auto &device_ctx : context->device_list_) {
-    this->device_list_.push_back(device_ctx);
+    if (device_ctx.device_type_ == DT_CPU) {
+      // npu server would use one core so we don't bind core to avoid competition.
+      auto cpu_ctx = device_ctx;
+      cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+      this->device_list_.push_back(cpu_ctx);
+    } else {
+      this->device_list_.push_back(device_ctx);
+    }
   }
   this->npu_manager_ = npu_manager;
 }
