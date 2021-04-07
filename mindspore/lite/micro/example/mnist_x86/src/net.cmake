@@ -4,7 +4,6 @@ set(OP_SRC
     common_func_int8.c.o
     conv3x3_int8.c.o
     conv_int8.c.o
-    exp_fp32.c.o
     fixed_point.c.o
     matmul_int8.c.o
     matmul_int8_wrapper.c.o
@@ -12,7 +11,7 @@ set(OP_SRC
     pooling_int8.c.o
     quant_dtype_cast_int8.c.o
     reshape_int8.c.o
-    softmax_fp32.c.o
+    softmax_int8.c.o
     weight.c.o
     net.c.o
     session.cc.o

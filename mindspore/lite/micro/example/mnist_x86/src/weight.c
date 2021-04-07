@@ -29,6 +29,10 @@ int32_t *g_Weight16 = NULL;
 int32_t *g_Weight17 = NULL;
 int8_t *g_Weight18 = NULL;
 int32_t *g_Weight19 = NULL;
+int8_t g_Weight6[6000];
+int32_t g_Weight7[20];
+int8_t g_Weight8[200];
+int32_t g_Weight9[10];
 
 int Init(void *weight_buffer, int weight_size) {
   if (weight_buffer == NULL) {
@@ -39,19 +43,19 @@ int Init(void *weight_buffer, int weight_size) {
     size_t size;
     size_t offset;
   };
-  int8_t *g_Weight6 = (weight_buffer + 9312);
-  int32_t *g_Weight7 = (weight_buffer + 15312);
-  int8_t *g_Weight8 = (weight_buffer + 15392);
-  int32_t *g_Weight9 = (weight_buffer + 15592);
 
   struct ModelParameter model_params[] = {
     {g_Weight10, 3072, 0},
     {g_Weight11, 48, 3072},
     {g_Weight12, 6144, 3120},
     {g_Weight13, 48, 9264},
+    {g_Weight6, 6000, 9312},
+    {g_Weight7, 80, 15312},
+    {g_Weight8, 200, 15392},
+    {g_Weight9, 40, 15592},
   };
 
-  for(int i = 0; i < 4; ++i) {
+  for(int i = 0; i < 8; ++i) {
     if (model_params[i].offset + model_params[i].size > weight_size) {
       return RET_ERROR;
     }
@@ -74,8 +78,8 @@ if (g_Weight15 == NULL) {
   return RET_ERROR;
 }
 memset(g_Weight15, 0, 6080);
-int init_filter_zp[20] = {1, 12, 3, 2, -10, -5, -11, 5, 12, 22, 16, 1, -5, 15, 13, 5, -10, -5, -6, 0};
-InitInt8MatrixB(g_Weight6, g_Weight16, g_Weight15, 1, 300, 20, 20, 304, 0, init_filter_zp, g_Weight14, true, true);
+int init_filter_zp[1] = {0};
+InitInt8MatrixB(g_Weight6, g_Weight16, g_Weight15, 1, 300, 20, 20, 304, 31, init_filter_zp, g_Weight14, true, false);
 }
 {
 g_Weight17 = malloc(48);
@@ -94,8 +98,8 @@ if (g_Weight18 == NULL) {
   return RET_ERROR;
 }
 memset(g_Weight18, 0, 384);
-int init_filter_zp[10] = {7, -2, 9, 2, -6, 21, 16, 10, -19, 8};
-InitInt8MatrixB(g_Weight8, g_Weight19, g_Weight18, 1, 20, 10, 12, 32, 0, init_filter_zp, g_Weight17, true, true);
+int init_filter_zp[1] = {0};
+InitInt8MatrixB(g_Weight8, g_Weight19, g_Weight18, 1, 20, 10, 12, 32, 11, init_filter_zp, g_Weight17, true, false);
 }
   return RET_OK;
 }
