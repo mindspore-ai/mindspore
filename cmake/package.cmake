@@ -5,6 +5,7 @@ include(GNUInstallDirs)
 # set package information
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_GENERATOR "External")
+set(CPACK_CMAKE_GENERATOR "Ninja")
 set(CPACK_EXTERNAL_PACKAGE_SCRIPT ${CMAKE_SOURCE_DIR}/cmake/package_script.cmake)
 set(CPACK_EXTERNAL_ENABLE_STAGING true)
 set(CPACK_TEMPORARY_PACKAGE_FILE_NAME ${CMAKE_SOURCE_DIR}/build/package/mindspore)
