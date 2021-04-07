@@ -26,12 +26,13 @@ void CalculateCoordinate(float out, int in, int *bottom, int *top, float *bottom
 }
 
 static void BicubicBaseFunc(float a, const float x, float *weight) {
-  if (x > 1 && x < 2) {
-    weight[0] = a * x * x * x - 5 * a * x * x + 8 * a * x - 4 * a;
-  } else if (x >= 0 && x <= 1) {
-    weight[0] = ((a + 2) * x - (a + 3)) * x * x + 1;
+  float abs_x = fabsf(x);
+  if (abs_x >= 0 && abs_x <= 1) {
+    *weight = ((a + 2) * abs_x - (a + 3)) * abs_x * abs_x + 1;
+  } else if (abs_x > 1 && abs_x <= 2) {
+    *weight = a * abs_x * abs_x * abs_x - 5 * a * abs_x * abs_x + 8 * a * abs_x - 4 * a;
   } else {
-    weight[0] = 0;
+    *weight = 0;
   }
 }
 
@@ -41,18 +42,18 @@ static void BicubicBaseFunc(float a, const float x, float *weight) {
 //        { 0,                                                             otherwise
 // the value of 'a' depends on if is half_pixel_center(the scheme is the same as tf).
 // If is half pixel mode, a equals to -0.5, otherwise -0.75.
-void CalculateWightForBicubic(float out, int in, int *bottom, int *top, float *weights, float a) {
-  // can not exchange the order of calculating bottom[1] and bottom[0], because the order is decided outside.
-  bottom[1] = (int)(floorf(out));
-  bottom[0] = (bottom[1] - 1) < 0 ? 0 : (bottom[1] - 1);
-  top[0] = (bottom[1] + 1) < in ? (bottom[1] + 1) : (in - 1);
-  top[1] = (top[0] + 1) < in ? (top[0] + 1) : (in - 1);
+void CalculateWeightForBicubic(float out, int in, int *index, float *weights, float a) {
+  int floor_index = (int)(floorf(out));
+  index[0] = (floor_index - 1) < 0 ? 0 : (floor_index - 1);
+  index[1] = floor_index;
+  index[2] = (floor_index + 1) < in ? (floor_index + 1) : (in - 1);
+  index[3] = (floor_index + 2) < in ? (floor_index + 2) : (in - 1);
 
   // get positive value
-  float distance[4] = {1, 0, 1, 2};
-  float tmp_dis = out - (float)bottom[1];
-  distance[0] += tmp_dis;
-  distance[1] += tmp_dis;
+  float distance[4] = {-1, 0, 1, 2};
+  float tmp_dis = out - (float)floor_index;
+  distance[0] -= tmp_dis;
+  distance[1] -= tmp_dis;
   distance[2] -= tmp_dis;
   distance[3] -= tmp_dis;
 
@@ -87,10 +88,9 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, Calcu
 }
 
 int PrepareResizeBicubic(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
-                         int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_weights, float *x_weights,
-                         float cubic_coeff) {
-  if (input_shape == NULL || output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL ||
-      x_rights == NULL || y_weights == NULL || x_weights == NULL) {
+                         int *y_tops, int *x_lefts, float *y_weights, float *x_weights, float cubic_coeff) {
+  if (input_shape == NULL || output_shape == NULL || y_tops == NULL || x_lefts == NULL || y_weights == NULL ||
+      x_weights == NULL) {
     return NNACL_NULL_PTR;
   }
 
@@ -101,11 +101,11 @@ int PrepareResizeBicubic(const int *input_shape, const int *output_shape, Calcul
 
   for (int h = 0; h < new_height; h++) {
     float actual_y = calculate(h, in_h, new_height);
-    CalculateWightForBicubic(actual_y, in_h, y_bottoms + 2 * h, y_tops + 2 * h, y_weights + 4 * h, cubic_coeff);
+    CalculateWeightForBicubic(actual_y, in_h, y_tops + 4 * h, y_weights + 4 * h, cubic_coeff);
   }
   for (int w = 0; w < new_width; w++) {
     float actual_x = calculate(w, in_w, new_width);
-    CalculateWightForBicubic(actual_x, in_w, x_lefts + 2 * w, x_rights + 2 * w, x_weights + 4 * w, cubic_coeff);
+    CalculateWeightForBicubic(actual_x, in_w, x_lefts + 4 * w, x_weights + 4 * w, cubic_coeff);
   }
   return NNACL_OK;
 }
@@ -292,113 +292,94 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
   return NNACL_OK;
 }
 
-void BicubicInterpRow(const float *src, float *dst, int len, const float *weights, const int *lefts, const int *rights,
-                      int in_c) {
-  int l = 0;
-  for (; l < len; l++) {
-    const float weight1 = weights[4 * l];
-    const float weight2 = weights[4 * l + 1];
-    const float weight3 = weights[4 * l + 2];
-    const float weight4 = weights[4 * l + 3];
+void BicubicInterpRow(const float *src, float *dst, const float *weights, const int *lefts, int width, int channel) {
+  for (int w = 0; w < width; w++) {
+    const float *weight = weights + 4 * w;
+    float *dst_w = dst + w * channel;
+    const float *src0_w = src + lefts[4 * w] * channel;
+    const float *src1_w = src + lefts[4 * w + 1] * channel;
+    const float *src2_w = src + lefts[4 * w + 2] * channel;
+    const float *src3_w = src + lefts[4 * w + 3] * channel;
     int c = 0;
 #ifdef ENABLE_NEON
-    float32x4_t weight1_vec = vdupq_n_f32(weight1);
-    float32x4_t weight2_vec = vdupq_n_f32(weight2);
-    float32x4_t weight3_vec = vdupq_n_f32(weight3);
-    float32x4_t weight4_vec = vdupq_n_f32(weight4);
+    float32x4_t weight0_vec = vdupq_n_f32(weight[0]);
+    float32x4_t weight1_vec = vdupq_n_f32(weight[1]);
+    float32x4_t weight2_vec = vdupq_n_f32(weight[2]);
+    float32x4_t weight3_vec = vdupq_n_f32(weight[3]);
 
-    for (; c <= in_c - 4; c += 4) {
-      float32x4_t src1_vec = vld1q_f32(src + lefts[2 * l] * in_c + c);
-      float32x4_t src2_vec = vld1q_f32(src + lefts[2 * l + 1] * in_c + c);
-      float32x4_t src3_vec = vld1q_f32(src + rights[2 * l] * in_c + c);
-      float32x4_t src4_vec = vld1q_f32(src + rights[2 * l + 1] * in_c + c);
+    for (; c <= channel - 4; c += 4) {
+      float32x4_t src0_vec = vld1q_f32(src0_w + c);
+      float32x4_t src1_vec = vld1q_f32(src1_w + c);
+      float32x4_t src2_vec = vld1q_f32(src2_w + c);
+      float32x4_t src3_vec = vld1q_f32(src3_w + c);
 
       float32x4_t interp_value =
-        src1_vec * weight1_vec + src2_vec * weight2_vec + src3_vec * weight3_vec + src4_vec * weight4_vec;
-      vst1q_f32(dst + l * in_c + c, interp_value);
+        src0_vec * weight0_vec + src1_vec * weight1_vec + src2_vec * weight2_vec + src3_vec * weight3_vec;
+      vst1q_f32(dst_w + c, interp_value);
     }
 #endif
-    int pos1 = lefts[2 * l] * in_c;
-    int pos2 = lefts[2 * l + 1] * in_c;
-    int pos3 = rights[2 * l] * in_c;
-    int pos4 = rights[2 * l + 1] * in_c;
-
-    for (; c < in_c; c++) {
-      float value1 = src[pos1 + c];
-      float value2 = src[pos2 + c];
-      float value3 = src[pos3 + c];
-      float value4 = src[pos4 + c];
-      dst[l * in_c + c] = value1 * weight1 + value2 * weight2 + value3 * weight3 + value4 * weight4;
+    for (; c < channel; c++) {
+      dst_w[c] = src0_w[c] * weight[0] + src1_w[c] * weight[1] + src2_w[c] * weight[2] + src3_w[c] * weight[3];
     }
   }
 }
 
-void BicubicInterpCol(const float *src1, const float *src2, const float *src3, const float *src4, float *dst, int len,
-                      const float *weights, int in_c) {
-  int l = 0;
-  for (; l < len; l++) {
+void BicubicInterpCol(const float *src, float *dst, const float *weights, int width, int channel) {
+  const float *src0 = src;
+  const float *src1 = src + width * channel;
+  const float *src2 = src + 2 * width * channel;
+  const float *src3 = src + 3 * width * channel;
+  for (int w = 0; w < width; w++) {
+    float *dst_w = dst + w * channel;
+    const float *src0_w = src0 + w * channel;
+    const float *src1_w = src1 + w * channel;
+    const float *src2_w = src2 + w * channel;
+    const float *src3_w = src3 + w * channel;
     int c = 0;
-    int l_stride = l * in_c;
-    const float weight1 = weights[4 * l];
-    const float weight2 = weights[4 * l + 1];
-    const float weight3 = weights[4 * l + 2];
-    const float weight4 = weights[4 * l + 3];
 #ifdef ENABLE_NEON
-    float32x4_t weight1_vec = vdupq_n_f32(weight1);
-    float32x4_t weight2_vec = vdupq_n_f32(weight2);
-    float32x4_t weight3_vec = vdupq_n_f32(weight3);
-    float32x4_t weight4_vec = vdupq_n_f32(weight4);
+    float32x4_t weight0_vec = vdupq_n_f32(weights[0]);
+    float32x4_t weight1_vec = vdupq_n_f32(weights[1]);
+    float32x4_t weight2_vec = vdupq_n_f32(weights[2]);
+    float32x4_t weight3_vec = vdupq_n_f32(weights[3]);
 
-    for (; c <= in_c - 4; c += 4) {
-      float32x4_t src1_vec = vld1q_f32(src1 + l_stride + c);
-      float32x4_t src2_vec = vld1q_f32(src2 + l_stride + c);
-      float32x4_t src3_vec = vld1q_f32(src3 + l_stride + c);
-      float32x4_t src4_vec = vld1q_f32(src4 + l_stride + c);
+    for (; c <= channel - 4; c += 4) {
+      float32x4_t src0_vec = vld1q_f32(src0_w + c);
+      float32x4_t src1_vec = vld1q_f32(src1_w + c);
+      float32x4_t src2_vec = vld1q_f32(src2_w + c);
+      float32x4_t src3_vec = vld1q_f32(src3_w + c);
       float32x4_t interp_value =
-        src1_vec * weight1_vec + src2_vec * weight2_vec + src3_vec * weight3_vec + src4_vec * weight4_vec;
-      vst1q_f32(dst + l_stride + c, interp_value);
+        src0_vec * weight0_vec + src1_vec * weight1_vec + src2_vec * weight2_vec + src3_vec * weight3_vec;
+      vst1q_f32(dst_w + c, interp_value);
     }
 #endif
-    for (; c < in_c; c++) {
-      float value1 = src1[l_stride + c];
-      float value2 = src2[l_stride + c];
-      float value3 = src3[l_stride + c];
-      float value4 = src4[l_stride + c];
-      dst[l_stride + c] = value1 * weight1 + value2 * weight2 + value3 * weight3 + value4 * weight4;
+    for (; c < channel; c++) {
+      dst_w[c] = src0_w[c] * weights[0] + src1_w[c] * weights[1] + src2_w[c] * weights[2] + src3_w[c] * weights[3];
     }
   }
 }
 
 void Bicubic(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-             const int *y_bottom, const int *y_top, const int *x_lefts, const int *x_rights, const float *y_weights,
-             const float *x_weights, float *line_buffer, const int h_begin, const int h_end) {
+             const int *y_tops, const int *x_lefts, const float *y_weights, const float *x_weights, float *line_buffer,
+             const int h_begin, const int h_end) {
   int in_w = input_shape[2];
   int in_c = input_shape[3];
   int new_width = output_shape[2];
   int h_stride = new_width * in_c;
 
-  float *line_array[4] = {line_buffer, line_buffer + h_stride, line_buffer + 2 * h_stride, line_buffer + 3 * h_stride};
   for (int h = h_begin; h < h_end; h++) {
-    for (int i = 0; i < 2; ++i) {
-      BicubicInterpRow(input_data + y_bottom[2 * h + i] * in_w * in_c, line_array[i], new_width, x_weights, x_lefts,
-                       x_rights, in_c);
+    for (int i = 0; i < 4; ++i) {
+      BicubicInterpRow(input_data + y_tops[4 * h + i] * in_w * in_c, line_buffer + i * h_stride, x_weights, x_lefts,
+                       new_width, in_c);
     }
-    for (int j = 0; j < 2; ++j) {
-      BicubicInterpRow(input_data + y_top[2 * h + j] * in_w * in_c, line_array[j + 2], new_width, x_weights, x_lefts,
-                       x_rights, in_c);
-    }
-
-    BicubicInterpCol(line_array[0], line_array[1], line_array[2], line_array[3], output_data + h * h_stride, new_width,
-                     y_weights, in_c);
+    BicubicInterpCol(line_buffer, output_data + h * h_stride, y_weights + 4 * h, new_width, in_c);
   }
 }
 
 int ResizeBicubic(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                  const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                  const float *y_weights, const float *x_weights, float *line_buffer, const int h_begin,
-                  const int h_end) {
-  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
-      y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_weights == NULL || x_weights == NULL) {
+                  const int *y_tops, const int *x_lefts, const float *y_weights, const float *x_weights,
+                  float *line_buffer, const int h_begin, const int h_end) {
+  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_tops == NULL ||
+      x_lefts == NULL || y_weights == NULL || x_weights == NULL) {
     return NNACL_NULL_PTR;
   }
   int input_cube_per_batch = input_shape[1] * input_shape[2] * input_shape[3];
@@ -406,8 +387,8 @@ int ResizeBicubic(const float *input_data, float *output_data, const int *input_
   for (int b = 0; b < input_shape[0]; b++) {
     const float *input = input_data + b * input_cube_per_batch;
     float *output = output_data + b * output_cube_per_batch;
-    Bicubic(input, output, input_shape, output_shape, y_bottoms, y_tops, x_lefts, x_rights, y_weights, x_weights,
-            line_buffer, h_begin, h_end);
+    Bicubic(input, output, input_shape, output_shape, y_tops, x_lefts, y_weights, x_weights, line_buffer, h_begin,
+            h_end);
   }
   return NNACL_OK;
 }
