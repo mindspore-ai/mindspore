@@ -35,6 +35,5 @@ MS_REG_GPU_KERNEL_ONE(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   SquaredDifferenceOpGpuKernel, int)
-
 }  // namespace kernel
 }  // namespace mindspore
