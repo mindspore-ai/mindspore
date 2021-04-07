@@ -106,10 +106,6 @@ int MatMulOpenCLKernel::InitWeights() {
     return RET_OK;
   }
   // ABMCI @ ABCICO = ABMCO
-  auto ret = DequantWeight();
-  if (ret != RET_OK) {
-    return ret;
-  }
   auto allocator = ocl_runtime_->GetAllocator();
   auto weight_shape = in_tensors_[1]->shape();
   int weight_ndim = weight_shape.size();
@@ -184,7 +180,6 @@ int MatMulOpenCLKernel::InitWeights() {
   }
 
   allocator->UnmapBuffer(padWeight_);
-  FreeDequantedWeight();
   return RET_OK;
 }
 

@@ -69,10 +69,6 @@ void StrassenOpenCLKernel::AllocatorMemoryForStrassen(int NumA, int NumB) {
 
 int StrassenOpenCLKernel::InitWeights() {
   // ABMCI @ ABCICO = ABMCO
-  auto ret = DequantWeight();
-  if (ret != RET_OK) {
-    return ret;
-  }
   auto allocator = ocl_runtime_->GetAllocator();
   int NumA = in_tensors_[0]->shape()[0];
   int NumB = in_tensors_[1]->shape()[0];
@@ -105,7 +101,6 @@ int StrassenOpenCLKernel::InitWeights() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
-  FreeDequantedWeight();
   return RET_OK;
 }
 

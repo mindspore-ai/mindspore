@@ -245,11 +245,6 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
 void Conv2DOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
 
-  auto ret = DequantWeight();
-  if (ret != RET_OK) {
-    return;
-  }
-
   // allocate opencl memory: buffer or image2d
   size_t size = 0;
   int Ogroup = block_size_.C;
@@ -285,7 +280,6 @@ void Conv2DOpenCLKernel::InitFilter() {
     allocator->UnmapBuffer(packed_filter_);
   }
 
-  FreeDequantedWeight();
   FreeTmpWeight(in_tensors_.at(kWeightIndex)->data_c());
 }
 
