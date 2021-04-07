@@ -155,6 +155,7 @@ class BatchNormGradGpuKernel : public GpuKernel {
       format = kOpFormat_NHWC;
     }
     beta_data_diff_ = GetAttrWithDefault(kernel_node, "inplace_algo", std::string("cover")) == "cover" ? 0 : 1;
+    CHECK_TENSOR_SIZE(shape);
     SetTensorDescriptor(format, shape);
     InitSizeLists();
     is_train_ = GetAttr<bool>(kernel_node, "is_training");

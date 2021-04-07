@@ -132,6 +132,7 @@ class BatchNormGpuKernel : public GpuKernel {
     if (format_attr == kOpFormat_NHWC) {
       format = kOpFormat_NHWC;
     }
+    CHECK_TENSOR_SIZE(shape);
     SetTensorDescriptor(format, shape);
     InitSizeLists();
     return true;
@@ -254,7 +255,6 @@ class BatchNormGpuKernel : public GpuKernel {
       width = SizeToInt(shape[3]);
       cudnn_format = CUDNN_TENSOR_NCHW;
     }
-
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_, cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
       "Set x desc failed");

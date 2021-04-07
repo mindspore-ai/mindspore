@@ -131,6 +131,7 @@ class InstanceNormGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
+    CHECK_TENSOR_SIZE(input_shape_);
     beta_data_diff_ = GetAttrWithDefault(kernel_node, "inplace_algo", std::string("cover")) == "cover" ? 0 : 1;
     SetTensorDescriptor();
     InitSizeLists();

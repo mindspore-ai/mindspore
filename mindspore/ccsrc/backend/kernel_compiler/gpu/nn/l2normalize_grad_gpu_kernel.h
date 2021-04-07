@@ -262,7 +262,8 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
     std::vector<size_t> inputA;
     std::vector<size_t> outputC_shape = output_shape;
     constexpr int split_dim = 4;
-
+    CHECK_TENSOR_SIZE(input_shape);
+    CHECK_TENSOR_SIZE(output_shape);
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &inputA);
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
