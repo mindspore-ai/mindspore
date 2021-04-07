@@ -33,12 +33,13 @@
 // w16: per_channel
 
 asm_function ConvDw3x3Int8Neon64
-  sub sp, sp, #176
+  sub sp, sp, #192
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   stp x19, x20, [sp], #16
   stp x21, x22, [sp], #16
   stp x23, x24, [sp], #16
+  stp x25, x26, [sp], #16
 
   ldr x8, [sp]
   ldr x9, [sp, #8]
@@ -84,16 +85,16 @@ asm_function ConvDw3x3Int8Neon64
 
   mov x16, x1
   add x17, x16, x5
-  add x18, x17, x5
+  add x25, x17, x5
   ld1 {v9.8b}, [x16], x4
   ld1 {v10.8b}, [x16], x4
   ld1 {v11.8b}, [x16], x4
   ld1 {v13.8b}, [x17], x4
   ld1 {v14.8b}, [x17], x4
   ld1 {v15.8b}, [x17], x4
-  ld1 {v17.8b}, [x18], x4
-  ld1 {v18.8b}, [x18], x4
-  ld1 {v19.8b}, [x18], x4
+  ld1 {v17.8b}, [x25], x4
+  ld1 {v18.8b}, [x25], x4
+  ld1 {v19.8b}, [x25], x4
 
   ld1 {v21.4s}, [x3]
   ld1 {v22.4s}, [x19]
@@ -123,13 +124,13 @@ HEIGHT1_LOOP:
   ld1 {v16.8b}, [x17]
   smlal v23.4s, v0.4h, v10.4h
   smlal2 v24.4s, v0.8h, v10.8h
-  ld1 {v20.8b}, [x18]
+  ld1 {v20.8b}, [x25]
   add x1, x1, x21  
   ssubl v12.8h, v12.8b, v25.8b
   smlal v21.4s, v1.4h, v10.4h
   mov x16, x1
   add x17, x16, x5
-  add x18, x17, x5
+  add x25, x17, x5
   smlal2 v22.4s, v1.8h, v10.8h
   ld1 {v9.8b}, [x16], x4
   ssubl v16.8h, v16.8b, v25.8b
@@ -159,17 +160,17 @@ HEIGHT1_LOOP:
   smlal2 v24.4s, v5.8h, v16.8h
   smlal v21.4s, v6.4h, v17.4h
   smlal2 v22.4s, v6.8h, v17.8h
-  ld1 {v17.8b}, [x18], x4
+  ld1 {v17.8b}, [x25], x4
   smlal v23.4s, v6.4h, v18.4h
   smlal2 v24.4s, v6.8h, v18.8h
   smlal v21.4s, v7.4h, v18.4h
   smlal2 v22.4s, v7.8h, v18.8h
-  ld1 {v18.8b}, [x18], x4
+  ld1 {v18.8b}, [x25], x4
   smlal v23.4s, v7.4h, v19.4h
   smlal2 v24.4s, v7.8h, v19.8h
   smlal v21.4s, v8.4h, v19.4h
   smlal2 v22.4s, v8.8h, v19.8h
-  ld1 {v19.8b}, [x18], x4
+  ld1 {v19.8b}, [x25], x4
   smlal v23.4s, v8.4h, v20.4h
   smlal2 v24.4s, v8.8h, v20.8h
 
@@ -278,7 +279,7 @@ WIDTH2_LEFT:
   smlal2 v24.4s, v1.8h, v11.8h
   smlal v21.4s, v2.4h, v11.4h
   smlal2 v22.4s, v2.8h, v11.8h
-  ld1 {v20.8b}, [x18]
+  ld1 {v20.8b}, [x25]
   smlal v23.4s, v2.4h, v12.4h
   smlal2 v24.4s, v2.8h, v12.8h
   smlal v21.4s, v3.4h, v13.4h
@@ -443,12 +444,13 @@ OUTZP3:
   st1 {v21.8b}, [x0], x6
 
 End:
-  sub sp, sp, #176
+  sub sp, sp, #192
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
   ldp x19, x20, [sp], #16
   ldp x21, x22, [sp], #16
   ldp x23, x24, [sp], #16
+  ldp x25, x26, [sp], #16
   ret
 
 #endif

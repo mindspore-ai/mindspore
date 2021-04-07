@@ -20,9 +20,10 @@
 // x7: bias
 
 asm_function MatMulOptR4Int8Neon64
-  sub sp, sp, #128
+  sub sp, sp, #144
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+  stp x19, x20, [sp], #16
 
   mov w15, #0       // b col index
   mov w16, #0       // a row index
@@ -40,7 +41,7 @@ L2:
   cmp w16, w3
   beq End2
 
-  mov x18, x1     // reload b ptr
+  mov x19, x1     // reload b ptr
   mov x10, x7    // reload bias ptr
   mov w11, w5     // reload depth
   dup v16.4s, wzr
@@ -67,10 +68,10 @@ L3:
   ld1 {v1.16b}, [x17], #16
   ld1 {v2.16b}, [x17], #16
   ld1 {v3.16b}, [x17], #16
-  ld1 {v4.16b}, [x18], #16
-  ld1 {v5.16b}, [x18], #16
-  ld1 {v6.16b}, [x18], #16
-  ld1 {v7.16b}, [x18], #16
+  ld1 {v4.16b}, [x19], #16
+  ld1 {v5.16b}, [x19], #16
+  ld1 {v6.16b}, [x19], #16
+  ld1 {v7.16b}, [x19], #16
 
   sdot v16.4s, v4.16b, v0.16b
   sdot v17.4s, v5.16b, v0.16b
@@ -135,8 +136,9 @@ End2:
   b L1
 
 End1:
-  sub sp, sp, #128
+  sub sp, sp, #144
   ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+  ldp x19, x20, [sp], #16
   ret
 #endif

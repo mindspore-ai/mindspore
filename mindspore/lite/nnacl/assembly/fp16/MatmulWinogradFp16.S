@@ -31,13 +31,13 @@ asm_function MatrixMultiplyWinogradFp16
         mov x14, x1  // mat_b
         LoopN:
             mov x16, x0  // mat_a_m
-            sub x18, x5, x15   // ni
+            sub x22, x5, x15   // ni
             sub x19, x17, x3   // mi
-            mul x18, x18, x17  // ni * m
+            mul x22, x22, x17  // ni * m
             mov x11, x6 // in_channel
-            add x18, x18, x19  // (ni * m) + mi
-            mul x18, x18, x13   // x18 * channel_in * 2
-            add x20, x2, x18   // dst + offset
+            add x22, x22, x19  // (ni * m) + mi
+            mul x22, x22, x13   // x22 * channel_in * 2
+            add x20, x2, x22   // dst + offset
             cmp x11, #32
             bge LoopC32
             cmp x11, #16

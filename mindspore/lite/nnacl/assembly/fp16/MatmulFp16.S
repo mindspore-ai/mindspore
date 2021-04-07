@@ -21,21 +21,22 @@
 // w13: writeC8
 
 asm_function MatmulFp16Neon64
-  sub sp, sp, #128
+  sub sp, sp, #144
   st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+  stp x19, x20, [sp], #16
 
   mov w18, #16 // sizeof(float16) * 8
   mul w15, w5, w18 // block stride of lhs/rhs: sizeof(float16) * 8 * depth
   mov x11, x3 // bias flag
-  mov x18, #2
+  mov x19, #2
   ldr x17, [sp]
-  mul x17, x17, x18
+  mul x17, x17, x19
 
 L1:
   mov w10, w6 // reload lhs row
   mov x12, x0 // reload lhs ptr
-  mov x18, x2 // reload dst ptr
+  mov x19, x2 // reload dst ptr
 
 L2:
   mov x16, x1 // reload rhs ptr
@@ -314,490 +315,490 @@ Write:
   b Write8
 
 Write1:
-  st1 {v16.h}[0], [x18], x17
+  st1 {v16.h}[0], [x19], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.h}[0], [x18], x17
+  st1 {v17.h}[0], [x19], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.h}[0], [x18], x17
+  st1 {v18.h}[0], [x19], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.h}[0], [x18], x17
+  st1 {v19.h}[0], [x19], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.h}[0], [x18], x17
+  st1 {v20.h}[0], [x19], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.h}[0], [x18], x17
+  st1 {v21.h}[0], [x19], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.h}[0], [x18], x17
+  st1 {v22.h}[0], [x19], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.h}[0], [x18], x17
+  st1 {v23.h}[0], [x19], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.h}[0], [x18], x17
+  st1 {v24.h}[0], [x19], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.h}[0], [x18], x17
+  st1 {v25.h}[0], [x19], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.h}[0], [x18], x17
+  st1 {v26.h}[0], [x19], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.h}[0], [x18], x17
+  st1 {v27.h}[0], [x19], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.h}[0], [x18], x17
+  st1 {v28.h}[0], [x19], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.h}[0], [x18], x17
+  st1 {v29.h}[0], [x19], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.h}[0], [x18], x17
+  st1 {v30.h}[0], [x19], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.h}[0], [x18], x17
+  st1 {v31.h}[0], [x19], x17
   b WriteEnd
 Write2:
-  add x13, x18, #2
-  st1 {v16.h}[0], [x18], x17
+  add x13, x19, #2
+  st1 {v16.h}[0], [x19], x17
   st1 {v16.h}[1], [x13], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.h}[0], [x18], x17
+  st1 {v17.h}[0], [x19], x17
   st1 {v17.h}[1], [x13], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.h}[0], [x18], x17
+  st1 {v18.h}[0], [x19], x17
   st1 {v18.h}[1], [x13], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.h}[0], [x18], x17
+  st1 {v19.h}[0], [x19], x17
   st1 {v19.h}[1], [x13], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.h}[0], [x18], x17
+  st1 {v20.h}[0], [x19], x17
   st1 {v20.h}[1], [x13], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.h}[0], [x18], x17
+  st1 {v21.h}[0], [x19], x17
   st1 {v21.h}[1], [x13], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.h}[0], [x18], x17
+  st1 {v22.h}[0], [x19], x17
   st1 {v22.h}[1], [x13], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.h}[0], [x18], x17
+  st1 {v23.h}[0], [x19], x17
   st1 {v23.h}[1], [x13], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.h}[0], [x18], x17
+  st1 {v24.h}[0], [x19], x17
   st1 {v24.h}[1], [x13], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.h}[0], [x18], x17
+  st1 {v25.h}[0], [x19], x17
   st1 {v25.h}[1], [x13], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.h}[0], [x18], x17
+  st1 {v26.h}[0], [x19], x17
   st1 {v26.h}[1], [x13], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.h}[0], [x18], x17
+  st1 {v27.h}[0], [x19], x17
   st1 {v27.h}[1], [x13], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.h}[0], [x18], x17
+  st1 {v28.h}[0], [x19], x17
   st1 {v28.h}[1], [x13], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.h}[0], [x18], x17
+  st1 {v29.h}[0], [x19], x17
   st1 {v29.h}[1], [x13], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.h}[0], [x18], x17
+  st1 {v30.h}[0], [x19], x17
   st1 {v30.h}[1], [x13], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.h}[0], [x18], x17
+  st1 {v31.h}[0], [x19], x17
   st1 {v31.h}[1], [x13], x17
   b WriteEnd
 Write3:
-  add x13, x18, #2
-  add x14, x18, #4
-  st1 {v16.h}[0], [x18], x17
+  add x13, x19, #2
+  add x14, x19, #4
+  st1 {v16.h}[0], [x19], x17
   st1 {v16.h}[1], [x13], x17
   st1 {v16.h}[2], [x14], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.h}[0], [x18], x17
+  st1 {v17.h}[0], [x19], x17
   st1 {v17.h}[1], [x13], x17
   st1 {v17.h}[2], [x14], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.h}[0], [x18], x17
+  st1 {v18.h}[0], [x19], x17
   st1 {v18.h}[1], [x13], x17
   st1 {v18.h}[2], [x14], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.h}[0], [x18], x17
+  st1 {v19.h}[0], [x19], x17
   st1 {v19.h}[1], [x13], x17
   st1 {v19.h}[2], [x14], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.h}[0], [x18], x17
+  st1 {v20.h}[0], [x19], x17
   st1 {v20.h}[1], [x13], x17
   st1 {v20.h}[2], [x14], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.h}[0], [x18], x17
+  st1 {v21.h}[0], [x19], x17
   st1 {v21.h}[1], [x13], x17
   st1 {v21.h}[2], [x14], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.h}[0], [x18], x17
+  st1 {v22.h}[0], [x19], x17
   st1 {v22.h}[1], [x13], x17
   st1 {v22.h}[2], [x14], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.h}[0], [x18], x17
+  st1 {v23.h}[0], [x19], x17
   st1 {v23.h}[1], [x13], x17
   st1 {v23.h}[2], [x14], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.h}[0], [x18], x17
+  st1 {v24.h}[0], [x19], x17
   st1 {v24.h}[1], [x13], x17
   st1 {v24.h}[2], [x14], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.h}[0], [x18], x17
+  st1 {v25.h}[0], [x19], x17
   st1 {v25.h}[1], [x13], x17
   st1 {v25.h}[2], [x14], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.h}[0], [x18], x17
+  st1 {v26.h}[0], [x19], x17
   st1 {v26.h}[1], [x13], x17
   st1 {v26.h}[2], [x14], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.h}[0], [x18], x17
+  st1 {v27.h}[0], [x19], x17
   st1 {v27.h}[1], [x13], x17
   st1 {v27.h}[2], [x14], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.h}[0], [x18], x17
+  st1 {v28.h}[0], [x19], x17
   st1 {v28.h}[1], [x13], x17
   st1 {v28.h}[2], [x14], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.h}[0], [x18], x17
+  st1 {v29.h}[0], [x19], x17
   st1 {v29.h}[1], [x13], x17
   st1 {v29.h}[2], [x14], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.h}[0], [x18], x17
+  st1 {v30.h}[0], [x19], x17
   st1 {v30.h}[1], [x13], x17
   st1 {v30.h}[2], [x14], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.h}[0], [x18], x17
+  st1 {v31.h}[0], [x19], x17
   st1 {v31.h}[1], [x13], x17
   st1 {v31.h}[2], [x14], x17
   b WriteEnd
 Write4:
-  st1 {v16.4h}, [x18], x17
+  st1 {v16.4h}, [x19], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.4h}, [x18], x17
+  st1 {v17.4h}, [x19], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.4h}, [x18], x17
+  st1 {v18.4h}, [x19], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.4h}, [x18], x17
+  st1 {v19.4h}, [x19], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.4h}, [x18], x17
+  st1 {v20.4h}, [x19], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.4h}, [x18], x17
+  st1 {v21.4h}, [x19], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.4h}, [x18], x17
+  st1 {v22.4h}, [x19], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.4h}, [x18], x17
+  st1 {v23.4h}, [x19], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.4h}, [x18], x17
+  st1 {v24.4h}, [x19], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.4h}, [x18], x17
+  st1 {v25.4h}, [x19], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.4h}, [x18], x17
+  st1 {v26.4h}, [x19], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.4h}, [x18], x17
+  st1 {v27.4h}, [x19], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.4h}, [x18], x17
+  st1 {v28.4h}, [x19], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.4h}, [x18], x17
+  st1 {v29.4h}, [x19], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.4h}, [x18], x17
+  st1 {v30.4h}, [x19], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.4h}, [x18], x17
+  st1 {v31.4h}, [x19], x17
   b WriteEnd
 Write5:
-  add x13, x18, #8
-  st1 {v16.4h}, [x18], x17
+  add x13, x19, #8
+  st1 {v16.4h}, [x19], x17
   st1 {v16.h}[4], [x13], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.4h}, [x18], x17
+  st1 {v17.4h}, [x19], x17
   st1 {v17.h}[4], [x13], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.4h}, [x18], x17
+  st1 {v18.4h}, [x19], x17
   st1 {v18.h}[4], [x13], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.4h}, [x18], x17
+  st1 {v19.4h}, [x19], x17
   st1 {v19.h}[4], [x13], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.4h}, [x18], x17
+  st1 {v20.4h}, [x19], x17
   st1 {v20.h}[4], [x13], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.4h}, [x18], x17
+  st1 {v21.4h}, [x19], x17
   st1 {v21.h}[4], [x13], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.4h}, [x18], x17
+  st1 {v22.4h}, [x19], x17
   st1 {v22.h}[4], [x13], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.4h}, [x18], x17
+  st1 {v23.4h}, [x19], x17
   st1 {v23.h}[4], [x13], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.4h}, [x18], x17
+  st1 {v24.4h}, [x19], x17
   st1 {v24.h}[4], [x13], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.4h}, [x18], x17
+  st1 {v25.4h}, [x19], x17
   st1 {v25.h}[4], [x13], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.4h}, [x18], x17
+  st1 {v26.4h}, [x19], x17
   st1 {v26.h}[4], [x13], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.4h}, [x18], x17
+  st1 {v27.4h}, [x19], x17
   st1 {v27.h}[4], [x13], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.4h}, [x18], x17
+  st1 {v28.4h}, [x19], x17
   st1 {v28.h}[4], [x13], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.4h}, [x18], x17
+  st1 {v29.4h}, [x19], x17
   st1 {v29.h}[4], [x13], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.4h}, [x18], x17
+  st1 {v30.4h}, [x19], x17
   st1 {v30.h}[4], [x13], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.4h}, [x18], x17
+  st1 {v31.4h}, [x19], x17
   st1 {v31.h}[4], [x13], x17
   b WriteEnd
 Write6:
-  add x13, x18, #8
-  add x14, x18, #10
-  st1 {v16.4h}, [x18], x17
+  add x13, x19, #8
+  add x14, x19, #10
+  st1 {v16.4h}, [x19], x17
   st1 {v16.h}[4], [x13], x17
   st1 {v16.h}[5], [x14], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.4h}, [x18], x17
+  st1 {v17.4h}, [x19], x17
   st1 {v17.h}[4], [x13], x17
   st1 {v17.h}[5], [x14], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.4h}, [x18], x17
+  st1 {v18.4h}, [x19], x17
   st1 {v18.h}[4], [x13], x17
   st1 {v18.h}[5], [x14], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.4h}, [x18], x17
+  st1 {v19.4h}, [x19], x17
   st1 {v19.h}[4], [x13], x17
   st1 {v19.h}[5], [x14], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.4h}, [x18], x17
+  st1 {v20.4h}, [x19], x17
   st1 {v20.h}[4], [x13], x17
   st1 {v20.h}[5], [x14], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.4h}, [x18], x17
+  st1 {v21.4h}, [x19], x17
   st1 {v21.h}[4], [x13], x17
   st1 {v21.h}[5], [x14], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.4h}, [x18], x17
+  st1 {v22.4h}, [x19], x17
   st1 {v22.h}[4], [x13], x17
   st1 {v22.h}[5], [x14], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.4h}, [x18], x17
+  st1 {v23.4h}, [x19], x17
   st1 {v23.h}[4], [x13], x17
   st1 {v23.h}[5], [x14], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.4h}, [x18], x17
+  st1 {v24.4h}, [x19], x17
   st1 {v24.h}[4], [x13], x17
   st1 {v24.h}[5], [x14], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.4h}, [x18], x17
+  st1 {v25.4h}, [x19], x17
   st1 {v25.h}[4], [x13], x17
   st1 {v25.h}[5], [x14], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.4h}, [x18], x17
+  st1 {v26.4h}, [x19], x17
   st1 {v26.h}[4], [x13], x17
   st1 {v26.h}[5], [x14], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.4h}, [x18], x17
+  st1 {v27.4h}, [x19], x17
   st1 {v27.h}[4], [x13], x17
   st1 {v27.h}[5], [x14], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.4h}, [x18], x17
+  st1 {v28.4h}, [x19], x17
   st1 {v28.h}[4], [x13], x17
   st1 {v28.h}[5], [x14], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.4h}, [x18], x17
+  st1 {v29.4h}, [x19], x17
   st1 {v29.h}[4], [x13], x17
   st1 {v29.h}[5], [x14], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.4h}, [x18], x17
+  st1 {v30.4h}, [x19], x17
   st1 {v30.h}[4], [x13], x17
   st1 {v30.h}[5], [x14], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.4h}, [x18], x17
+  st1 {v31.4h}, [x19], x17
   st1 {v31.h}[4], [x13], x17
   st1 {v31.h}[5], [x14], x17
   b WriteEnd
 Write7:
-  add x13, x18, #8
-  add x14, x18, #10
-  add x16, x18, #12
-  st1 {v16.4h}, [x18], x17
+  add x13, x19, #8
+  add x14, x19, #10
+  add x16, x19, #12
+  st1 {v16.4h}, [x19], x17
   st1 {v16.h}[4], [x13], x17
   st1 {v16.h}[5], [x14], x17
   st1 {v16.h}[6], [x16], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.4h}, [x18], x17
+  st1 {v17.4h}, [x19], x17
   st1 {v17.h}[4], [x13], x17
   st1 {v17.h}[5], [x14], x17
   st1 {v17.h}[6], [x16], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.4h}, [x18], x17
+  st1 {v18.4h}, [x19], x17
   st1 {v18.h}[4], [x13], x17
   st1 {v18.h}[5], [x14], x17
   st1 {v18.h}[6], [x16], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.4h}, [x18], x17
+  st1 {v19.4h}, [x19], x17
   st1 {v19.h}[4], [x13], x17
   st1 {v19.h}[5], [x14], x17
   st1 {v19.h}[6], [x16], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.4h}, [x18], x17
+  st1 {v20.4h}, [x19], x17
   st1 {v20.h}[4], [x13], x17
   st1 {v20.h}[5], [x14], x17
   st1 {v20.h}[6], [x16], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.4h}, [x18], x17
+  st1 {v21.4h}, [x19], x17
   st1 {v21.h}[4], [x13], x17
   st1 {v21.h}[5], [x14], x17
   st1 {v21.h}[6], [x16], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.4h}, [x18], x17
+  st1 {v22.4h}, [x19], x17
   st1 {v22.h}[4], [x13], x17
   st1 {v22.h}[5], [x14], x17
   st1 {v22.h}[6], [x16], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.4h}, [x18], x17
+  st1 {v23.4h}, [x19], x17
   st1 {v23.h}[4], [x13], x17
   st1 {v23.h}[5], [x14], x17
   st1 {v23.h}[6], [x16], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.4h}, [x18], x17
+  st1 {v24.4h}, [x19], x17
   st1 {v24.h}[4], [x13], x17
   st1 {v24.h}[5], [x14], x17
   st1 {v24.h}[6], [x16], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.4h}, [x18], x17
+  st1 {v25.4h}, [x19], x17
   st1 {v25.h}[4], [x13], x17
   st1 {v25.h}[5], [x14], x17
   st1 {v25.h}[6], [x16], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.4h}, [x18], x17
+  st1 {v26.4h}, [x19], x17
   st1 {v26.h}[4], [x13], x17
   st1 {v26.h}[5], [x14], x17
   st1 {v26.h}[6], [x16], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.4h}, [x18], x17
+  st1 {v27.4h}, [x19], x17
   st1 {v27.h}[4], [x13], x17
   st1 {v27.h}[5], [x14], x17
   st1 {v27.h}[6], [x16], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.4h}, [x18], x17
+  st1 {v28.4h}, [x19], x17
   st1 {v28.h}[4], [x13], x17
   st1 {v28.h}[5], [x14], x17
   st1 {v28.h}[6], [x16], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.4h}, [x18], x17
+  st1 {v29.4h}, [x19], x17
   st1 {v29.h}[4], [x13], x17
   st1 {v29.h}[5], [x14], x17
   st1 {v29.h}[6], [x16], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.4h}, [x18], x17
+  st1 {v30.4h}, [x19], x17
   st1 {v30.h}[4], [x13], x17
   st1 {v30.h}[5], [x14], x17
   st1 {v30.h}[6], [x16], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.4h}, [x18], x17
+  st1 {v31.4h}, [x19], x17
   st1 {v31.h}[4], [x13], x17
   st1 {v31.h}[5], [x14], x17
   st1 {v31.h}[6], [x16], x17
@@ -809,52 +810,52 @@ WriteC8:
   st1 {v28.8h, v29.8h, v30.8h, v31.8h}, [x2], #64
   b WriteEnd
 Write8:
-  st1 {v16.8h}, [x18], x17
+  st1 {v16.8h}, [x19], x17
   cmp w10, #1
   beq WriteEnd
-  st1 {v17.8h}, [x18], x17
+  st1 {v17.8h}, [x19], x17
   cmp w10, #2
   beq WriteEnd
-  st1 {v18.8h}, [x18], x17
+  st1 {v18.8h}, [x19], x17
   cmp w10, #3
   beq WriteEnd
-  st1 {v19.8h}, [x18], x17
+  st1 {v19.8h}, [x19], x17
   cmp w10, #4
   beq WriteEnd
-  st1 {v20.8h}, [x18], x17
+  st1 {v20.8h}, [x19], x17
   cmp w10, #5
   beq WriteEnd
-  st1 {v21.8h}, [x18], x17
+  st1 {v21.8h}, [x19], x17
   cmp w10, #6
   beq WriteEnd
-  st1 {v22.8h}, [x18], x17
+  st1 {v22.8h}, [x19], x17
   cmp w10, #7
   beq WriteEnd
-  st1 {v23.8h}, [x18], x17
+  st1 {v23.8h}, [x19], x17
   cmp w10, #8
   beq WriteEnd
-  st1 {v24.8h}, [x18], x17
+  st1 {v24.8h}, [x19], x17
   cmp w10, #9
   beq WriteEnd
-  st1 {v25.8h}, [x18], x17
+  st1 {v25.8h}, [x19], x17
   cmp w10, #10
   beq WriteEnd
-  st1 {v26.8h}, [x18], x17
+  st1 {v26.8h}, [x19], x17
   cmp w10, #11
   beq WriteEnd
-  st1 {v27.8h}, [x18], x17
+  st1 {v27.8h}, [x19], x17
   cmp w10, #12
   beq WriteEnd
-  st1 {v28.8h}, [x18], x17
+  st1 {v28.8h}, [x19], x17
   cmp w10, #13
   beq WriteEnd
-  st1 {v29.8h}, [x18], x17
+  st1 {v29.8h}, [x19], x17
   cmp w10, #14
   beq WriteEnd
-  st1 {v30.8h}, [x18], x17
+  st1 {v30.8h}, [x19], x17
   cmp w10, #15
   beq WriteEnd
-  st1 {v31.8h}, [x18], x17
+  st1 {v31.8h}, [x19], x17
 
 WriteEnd:
   subs w10, w10, #16 // lhs row - 8
@@ -871,8 +872,9 @@ NoDstStep:
   bgt L1
 
 End1:
-  sub sp, sp, #128
+  sub sp, sp, #144
   ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+  ldp x19, x20, [sp], #16
   ret
 #endif

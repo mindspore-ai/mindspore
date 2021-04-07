@@ -19,12 +19,13 @@ asm_function ConvDwFp16Center
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
-    sub sp, sp, #176
+    sub sp, sp, #192
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
     stp x21, x22, [sp], #16
     stp x23, x24, [sp], #16
+    stp x25, x26, [sp], #16
 
     ldr x8, [sp]
     ldr x9, [sp, #8]
@@ -71,7 +72,7 @@ asm_function ConvDwFp16Center
             mov v14.16b, v24.16b
             mov v15.16b, v24.16b
             LoopKh16:
-                mov x18, x7
+                mov x25, x7
                 mov x21, x16
                 LoopKw16:
                     mov x22, x21
@@ -108,7 +109,7 @@ asm_function ConvDwFp16Center
                     ld1 {v23.8h}, [x22], x11
                     fmla v14.8h, v22.8h, v25.8h
                     fmla v15.8h, v23.8h, v25.8h
-                    subs x18, x18, #1
+                    subs x25, x25, #1
                     add x21, x21, x13
                     bne LoopKw16
                 add x16, x16, x12
@@ -191,7 +192,7 @@ asm_function ConvDwFp16Center
             mov v6.16b, v24.16b
             mov v7.16b, v24.16b
             LoopKh8:
-                mov x18, x7
+                mov x25, x7
                 mov x21, x16
                 LoopKw8:
                     mov x22, x21
@@ -212,7 +213,7 @@ asm_function ConvDwFp16Center
                     ld1 {v23.8h}, [x22], x11
                     fmla v6.8h, v22.8h, v25.8h
                     fmla v7.8h, v23.8h, v25.8h
-                    subs x18, x18, #1
+                    subs x25, x25, #1
                     add x21, x21, x13
                     bne LoopKw8
                 add x16, x16, x12
@@ -260,13 +261,13 @@ asm_function ConvDwFp16Center
             mov x20, x6
             mov v0.16b, v24.16b
             LoopKh:
-                mov x18, x7
+                mov x25, x7
                 mov x22, x16
                 LoopKw:
                     ld1 {v16.8h}, [x22], x13
                     ld1 {v25.8h}, [x17], #16
                     fmla v0.8h, v16.8h, v25.8h
-                    subs x18, x18, #1
+                    subs x25, x25, #1
                     bne LoopKw
                 add x16, x16, x12
                 subs x20, x20, #1
@@ -289,11 +290,12 @@ asm_function ConvDwFp16Center
         subs x4, x4, #1
         bne LoopH
 
-    sub sp, sp, #176
+    sub sp, sp, #192
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x23, x24, [sp], #16
+    ldp x25, x26, [sp], #16
     ret
 #endif

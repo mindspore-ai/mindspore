@@ -47,11 +47,11 @@ asm_function ConvSwFp32Center
 
     LoopH:
         mov x17, x1
-        mov x18, x5
+        mov x28, x5
         mov x3, x0
-        cmp x18, #8
+        cmp x28, #8
         blt LoopW
-        cmp x18, #16
+        cmp x28, #16
         blt LoopW8
 
         LoopW16:
@@ -244,12 +244,12 @@ asm_function ConvSwFp32Center
             st1 {v14.4s}, [x3], x9
             st1 {v15.4s}, [x3], x9
             add x17, x17, x19
-            sub x18, x18, #16
-            cmp x18, #0
+            sub x28, x28, #16
+            cmp x28, #0
             ble LoopWEnd
-            cmp x18, #8
+            cmp x28, #8
             blt LoopW
-            cmp x18, #16
+            cmp x28, #16
             bge LoopW16
         LoopW8:
             mov x19, #8
@@ -369,10 +369,10 @@ asm_function ConvSwFp32Center
             st1 {v6.4s}, [x3], x9
             st1 {v7.4s}, [x3], x9
             add x17, x17, x19
-            sub x18, x18, #8
-            cmp x18, #0
+            sub x28, x28, #8
+            cmp x28, #0
             ble LoopWEnd
-            cmp x18, #8
+            cmp x28, #8
             bge LoopW8
         LoopW:
             mov x20, x17
@@ -427,7 +427,7 @@ asm_function ConvSwFp32Center
         Write:
             st1 {v0.4s}, [x3], x9
             add x17, x17, x12
-            subs x18, x18, #1
+            subs x28, x28, #1
             bne LoopW
     LoopWEnd:
         add x0, x0, x8

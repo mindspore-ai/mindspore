@@ -13,8 +13,9 @@
 // x0: output, x1: input, x2: weights, x3: bias, x4: channels, x5: output_width, x6: input_stride, x7: relu, x8: relu6
 
 asm_function ConvDwFp32Indirect3x3
-    sub sp, sp, #16
+    sub sp, sp, #32
     stp x19, x20, [sp], #16
+    stp x21, x22, [sp], #16
 
     movi v31.4s, #6
     scvtf v31.4s, v31.4s
@@ -28,7 +29,7 @@ asm_function ConvDwFp32Indirect3x3
         ldp x12, x13, [x1]
         ldp x14, x15, [x1, #16]
         ldp x16, x17, [x1, #32]
-        ldp x18, x19, [x1, #48]
+        ldp x21, x19, [x1, #48]
         ldr x20, [x1, #64]
         mov x9, x2
         mov x10, x3
@@ -56,7 +57,7 @@ asm_function ConvDwFp32Indirect3x3
             ld1 {v5.4s}, [x17], #16
             ld1 {v22.4s}, [x9], #16
             fmla v29.4s, v3.4s, v20.4s
-            ld1 {v6.4s}, [x18], #16
+            ld1 {v6.4s}, [x21], #16
             ld1 {v23.4s}, [x9], #16
             fmla v29.4s, v4.4s, v21.4s
             ld1 {v7.4s}, [x19], #16
@@ -100,7 +101,7 @@ asm_function ConvDwFp32Indirect3x3
             ld1 {v5.4s}, [x17], #16
             ld1 {v22.4s}, [x9], #16
             fmla v29.4s, v3.4s, v20.4s
-            ld1 {v6.4s}, [x18], #16
+            ld1 {v6.4s}, [x21], #16
             ld1 {v23.4s}, [x9], #16
             fmla v29.4s, v4.4s, v21.4s
             ld1 {v7.4s}, [x19], #16
@@ -141,7 +142,8 @@ asm_function ConvDwFp32Indirect3x3
         cmp x5, #0
         bgt LoopPixel
 End:
-    sub sp, sp, #16
+    sub sp, sp, #32
     ldp x19, x20, [sp], #16
+    ldp x21, x22, [sp], #16
 ret
 #endif

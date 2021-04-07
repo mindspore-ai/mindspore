@@ -13,17 +13,18 @@
 // x0: output, x1: input, x2: weights, x3: bias, x4: channels, x5: output_width, x6: input_stride, x7: relu, x8: relu6
 
 asm_function ConvDwFp32Indirect5x5
-    sub sp, sp, #160
+    sub sp, sp, #176
     stp x19, x20, [sp, #64]
     stp x21, x22, [sp, #80]
     stp x23, x24, [sp, #96]
     stp x25, x26, [sp, #112]
     stp x27, x28, [sp, #128]
     stp x29, x30, [sp, #144]
-    ldrb w8, [sp, #160]
+    ldrb w8, [sp, #176]
     stp x2, x3, [sp]
     stp x4, x6, [sp, #16]
     stp x7, x8, [sp, #32]
+    stp x0, x1, [sp, #160]
 
     movi v31.4s, #6
     scvtf v31.4s, v31.4s
@@ -44,7 +45,7 @@ asm_function ConvDwFp32Indirect5x5
         ldp x12, x13, [x1, #48]
         ldp x14, x15, [x1, #64]
         ldp x16, x17, [x1, #80]
-        ldp x18, x19, [x1, #96]
+        ldp x0, x19, [x1, #96]
         ldp x20, x21, [x1, #112]
         ldp x22, x23, [x1, #128]
         ldp x24, x25, [x1, #144]
@@ -93,7 +94,7 @@ asm_function ConvDwFp32Indirect5x5
             ld1 {v1.4s}, [x17], #16
             ld1 {v19.4s}, [x5], #16
             fmla v29.4s, v7.4s, v25.4s
-            ld1 {v2.4s}, [x18], #16
+            ld1 {v2.4s}, [x0], #16
             ld1 {v20.4s}, [x5], #16
             fmla v29.4s, v16.4s, v26.4s
             ld1 {v3.4s}, [x19], #16
@@ -160,7 +161,9 @@ asm_function ConvDwFp32Indirect5x5
             RELU:
                 fmax v29.4s, v29.4s, v30.4s
             WRITE:
-                st1 {v29.4s}, [x0], #16
+                ldr x4, [sp, #160]
+                st1 {v29.4s}, [x4], #16
+                str x4, [sp, #160]
 
             ldr x4, [sp, #56]
             ld1 {v29.4s}, [x4], #16
@@ -195,7 +198,7 @@ asm_function ConvDwFp32Indirect5x5
             ld1 {v1.4s}, [x17], #16
             ld1 {v19.4s}, [x5], #16
             fmla v29.4s, v7.4s, v25.4s
-            ld1 {v2.4s}, [x18], #16
+            ld1 {v2.4s}, [x0], #16
             ld1 {v20.4s}, [x5], #16
             fmla v29.4s, v16.4s, v26.4s
             ld1 {v3.4s}, [x19], #16
@@ -253,18 +256,24 @@ asm_function ConvDwFp32Indirect5x5
             LeftWrite:
                 cmp x2, #4
                 bne Write3
-                st1 {v29.4s}, [x0], #16
+                ldr x4, [sp, #160]
+                st1 {v29.4s}, [x4], #16
+                str x4, [sp, #160]
                 b NextPixel
             Write3:
                 sxtw x2, w2
                 tbnz w2, #1, Write2
                 tbnz w2, #0, Write1
             Write2:
-                st1 {v29.2s}, [x0], #8
+                ldr x4, [sp, #160]
+                st1 {v29.2s}, [x4], #8
+                str x4, [sp, #160]
                 ext v29.16b, v29.16b, v29.16b, #8
                 tbz w2, #0, NextPixel
             Write1:
-                str s29, [x0], #4
+                ldr x4, [sp, #160]
+                str s29, [x4], #4
+                str x4, [sp, #160]
 
     NextPixel:
         ldr x2, [sp, #24]
@@ -279,6 +288,6 @@ End:
     ldp x25, x26, [sp, #112]
     ldp x27, x28, [sp, #128]
     ldp x29, x30, [sp, #144]
-    add sp, sp, #160
+    add sp, sp, #176
 ret
 #endif

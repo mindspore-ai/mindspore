@@ -28,11 +28,11 @@ asm_function AdderFloatNeon64
 
     ldr x8, [sp]
 
-    mov x18, #48 // sizeof(float) * 12
-    mul x17, x5, x18 // block stride of lhs/rhs: sizeof(float) * 12 * depth
+    mov x20, #48 // sizeof(float) * 12
+    mul x17, x5, x20 // block stride of lhs/rhs: sizeof(float) * 12 * depth
 
-    mov x18, #4
-    mul x8, x8, x18
+    mov x20, #4
+    mul x8, x8, x20
 
 LoopRowStart:
     cmp x6, #4
@@ -595,9 +595,9 @@ LoopRow4:
 
 LoopColEnd:
         add x0, x0, x17
-        mov x18, #4
-        mul x18, x18, x7
-        sub x11, x11, x18
+        mov x20, #4
+        mul x20, x20, x7
+        sub x11, x11, x20
         mov x2, x11
         subs x6, x6, #12
         bgt LoopRowStart

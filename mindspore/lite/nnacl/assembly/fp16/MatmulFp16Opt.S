@@ -21,30 +21,31 @@
 // x9: writeMode
 
 asm_function MatmulFp16Neon64Opt
-    sub sp, sp, #80
+    sub sp, sp, #96
     st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
     stp x19, x20, [sp], #16
+    stp x21, x22, [sp], #16
 
     ldr x8, [sp]
     ldr x9, [sp, #8]
 
-    mov x18, #32 // sizeof(float16_t) * 16
-    mul x17, x5, x18 // block stride of lhs/rhs: sizeof(float16_t) * 16 * depth
+    mov x21, #32 // sizeof(float16_t) * 16
+    mul x17, x5, x21 // block stride of lhs/rhs: sizeof(float16_t) * 16 * depth
     cbnz x9, NoC8Steps
     mov x11, x2
-    mov x18, #16
-    mul x16, x6, x18 // row * 8 * sizeof(float16_t)
+    mov x21, #16
+    mul x16, x6, x21 // row * 8 * sizeof(float16_t)
 NoC8Steps:
     cmp x9, #2
     bne NoWinoSteps
-    mov x18, #2
+    mov x21, #2
     mul x15, x7, x8
-    mul x15, x15, x18 // kernel_size * col *sizeof(float16_t)
-    mov x18, #16
-    mul x16, x8, x18 // kernel_size * 8 * sizeof(float16_t)
+    mul x15, x15, x21 // kernel_size * col *sizeof(float16_t)
+    mov x21, #16
+    mul x16, x8, x21 // kernel_size * 8 * sizeof(float16_t)
 NoWinoSteps:
-    mov x18, #2
-    mul x8, x8, x18
+    mov x21, #2
+    mul x8, x8, x21
 
 LoopRowStart:
     cmp x6, #1
@@ -1221,9 +1222,9 @@ LoopRow:
 LoopColEnd:
         add x0, x0, x17
         cbz x9, C8DstStep
-        mov x18, #2
-        mul x18, x18, x7
-        sub x11, x11, x18
+        mov x21, #2
+        mul x21, x21, x7
+        sub x11, x11, x21
         mov x2, x11
         b NoDstStep
     C8DstStep:
@@ -1233,8 +1234,9 @@ LoopColEnd:
         subs x6, x6, #16
         bgt LoopRowStart
 
-    sub sp, sp, #80
+    sub sp, sp, #96
     ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
     ldp x19, x20, [sp], #16
+    ldp x21, x22, [sp], #16
     ret
 #endif

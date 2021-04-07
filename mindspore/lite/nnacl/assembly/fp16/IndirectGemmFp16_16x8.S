@@ -41,11 +41,12 @@ asm_function IndirectGemmFp16_16x8
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ r29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
-    sub sp, sp, #128
+    sub sp, sp, #144
     // performance between storing 4 registers at the same time and separately storing them on in-order cores
     // is not tested yet
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+    stp x19, x20, [sp], #16
 
     ldr x8, [sp, #0]
     ldr x9, [sp, #8]
@@ -548,87 +549,87 @@ IndirectGemmStart:
                 b WriteEnd
             Write7:
                 add x17, x15, #8
-                add x18, x15, #10
+                add x19, x15, #10
                 add x16, x15, #12
                 st1 {v16.4h}, [x15], x7
                 ins v0.s[0], v16.s[2]
                 st1 {v0.h}[0], [x17], x7
-                st1 {v0.h}[1], [x18], x7
+                st1 {v0.h}[1], [x19], x7
                 st1 {v16.h}[6], [x16], x7
                 st1 {v17.4h}, [x15], x7
                 ins v1.s[0], v17.s[2]
                 st1 {v1.h}[0], [x17], x7
-                st1 {v1.h}[1], [x18], x7
+                st1 {v1.h}[1], [x19], x7
                 st1 {v17.h}[6], [x16], x7
                 st1 {v18.4h}, [x15], x7
                 ins v2.s[0], v18.s[2]
                 st1 {v2.h}[0], [x17], x7
-                st1 {v2.h}[1], [x18], x7
+                st1 {v2.h}[1], [x19], x7
                 st1 {v18.h}[6], [x16], x7
                 st1 {v19.4h}, [x15], x7
                 ins v3.s[0], v19.s[2]
                 st1 {v3.h}[0], [x17], x7
-                st1 {v3.h}[1], [x18], x7
+                st1 {v3.h}[1], [x19], x7
                 st1 {v19.h}[6], [x16], x7
                 st1 {v20.4h}, [x15], x7
                 ins v4.s[0], v20.s[2]
                 st1 {v4.h}[0], [x17], x7
-                st1 {v4.h}[1], [x18], x7
+                st1 {v4.h}[1], [x19], x7
                 st1 {v20.h}[6], [x16], x7
                 st1 {v21.4h}, [x15], x7
                 ins v5.s[0], v21.s[2]
                 st1 {v5.h}[0], [x17], x7
-                st1 {v5.h}[1], [x18], x7
+                st1 {v5.h}[1], [x19], x7
                 st1 {v21.h}[6], [x16], x7
                 st1 {v22.4h}, [x15], x7
                 ins v6.s[0], v22.s[2]
                 st1 {v6.h}[0], [x17], x7
-                st1 {v6.h}[1], [x18], x7
+                st1 {v6.h}[1], [x19], x7
                 st1 {v22.h}[6], [x16], x7
                 st1 {v23.4h}, [x15], x7
                 ins v7.s[0], v23.s[2]
                 st1 {v7.h}[0], [x17], x7
-                st1 {v7.h}[1], [x18], x7
+                st1 {v7.h}[1], [x19], x7
                 st1 {v23.h}[6], [x16], x7
                 st1 {v24.4h}, [x15], x7
                 ins v8.s[0], v24.s[2]
                 st1 {v8.h}[0], [x17], x7
-                st1 {v8.h}[1], [x18], x7
+                st1 {v8.h}[1], [x19], x7
                 st1 {v24.h}[6], [x16], x7
                 st1 {v25.4h}, [x15], x7
                 ins v9.s[0], v25.s[2]
                 st1 {v9.h}[0], [x17], x7
-                st1 {v9.h}[1], [x18], x7
+                st1 {v9.h}[1], [x19], x7
                 st1 {v25.h}[6], [x16], x7
                 st1 {v26.4h}, [x15], x7
                 ins v10.s[0], v26.s[2]
                 st1 {v10.h}[0], [x17], x7
-                st1 {v10.h}[1], [x18], x7
+                st1 {v10.h}[1], [x19], x7
                 st1 {v26.h}[6], [x16], x7
                 st1 {v27.4h}, [x15], x7
                 ins v11.s[0], v27.s[2]
                 st1 {v11.h}[0], [x17], x7
-                st1 {v11.h}[1], [x18], x7
+                st1 {v11.h}[1], [x19], x7
                 st1 {v27.h}[6], [x16], x7
                 st1 {v28.4h}, [x15], x7
                 ins v12.s[0], v28.s[2]
                 st1 {v12.h}[0], [x17], x7
-                st1 {v12.h}[1], [x18], x7
+                st1 {v12.h}[1], [x19], x7
                 st1 {v28.h}[6], [x16], x7
                 st1 {v29.4h}, [x15], x7
                 ins v13.s[0], v29.s[2]
                 st1 {v13.h}[0], [x17], x7
-                st1 {v13.h}[1], [x18], x7
+                st1 {v13.h}[1], [x19], x7
                 st1 {v29.h}[6], [x16], x7
                 st1 {v30.4h}, [x15], x7
                 ins v14.s[0], v30.s[2]
                 st1 {v14.h}[0], [x17], x7
-                st1 {v14.h}[1], [x18], x7
+                st1 {v14.h}[1], [x19], x7
                 st1 {v30.h}[6], [x16], x7
                 st1 {v31.4h}, [x15]
                 ins v15.s[0], v31.s[2]
                 st1 {v15.h}[0], [x17]
-                st1 {v15.h}[1], [x18]
+                st1 {v15.h}[1], [x19]
                 st1 {v31.h}[6], [x16]
                 add x0, x0, #14
                 b WriteEnd
@@ -661,9 +662,10 @@ IndirectGemmStart:
     NoStepForward:
         bgt LoopOc
 
-    sub sp, sp, #128
+    sub sp, sp, #144
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+    ldp x19, x20, [sp], #16
     ret
 #endif
 

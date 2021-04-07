@@ -33,12 +33,13 @@
 // w16: per_channel
 
 asm_function ConvDw3x3Int8Stride2
-    sub sp, sp, #176
+    sub sp, sp, #192
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
     stp x21, x22, [sp], #16
     stp x23, x24, [sp], #16
+    stp x25, x26, [sp], #16
 
     ldr x8, [sp]
     ldr x9, [sp, #8]
@@ -71,7 +72,7 @@ asm_function ConvDw3x3Int8Stride2
 
     mov x16, x1
     add x17, x16, x5
-    add x18, x17, x5
+    add x25, x17, x5
     ld1 {v9.8b}, [x16], x4
     ld1 {v10.8b}, [x16], x4
     ssubl v9.8h, v9.8b, v28.8b
@@ -83,11 +84,11 @@ asm_function ConvDw3x3Int8Stride2
     ssubl v14.8h, v14.8b, v28.8b
     ld1 {v16.8b}, [x17], x4
     ssubl v15.8h, v15.8b, v28.8b
-    ld1 {v19.8b}, [x18], x4
+    ld1 {v19.8b}, [x25], x4
     ssubl v16.8h, v16.8b, v28.8b
-    ld1 {v20.8b}, [x18], x4
+    ld1 {v20.8b}, [x25], x4
     ssubl v19.8h, v19.8b, v28.8b
-    ld1 {v21.8b}, [x18], x4
+    ld1 {v21.8b}, [x25], x4
     ssubl v20.8h, v20.8b, v28.8b
     ssubl v21.8h, v21.8b, v28.8b
 
@@ -108,7 +109,7 @@ HEIGHT1_LOOP:
     ld1 {v17.8b}, [x17], x4
     ssubl v12.8h, v12.8b, v28.8b
     smlal v26.4s, v0.4h, v11.4h
-    ld1 {v22.8b}, [x18], x4
+    ld1 {v22.8b}, [x25], x4
     ssubl v17.8h, v17.8b, v28.8b
     smlal2 v27.4s, v0.8h, v11.8h
     ld1 {v13.8b}, [x16], x4
@@ -117,7 +118,7 @@ HEIGHT1_LOOP:
     ld1 {v18.8b}, [x17], x4
     ssubl v13.8h, v13.8b, v28.8b
     smlal2 v25.4s, v1.8h, v10.8h
-    ld1 {v23.8b}, [x18], x4
+    ld1 {v23.8b}, [x25], x4
     ssubl v18.8h, v18.8b, v28.8b
     smlal v26.4s, v1.4h, v12.4h
     mov v9.16b, v13.16b
@@ -157,12 +158,12 @@ HEIGHT1_LOOP:
     smlal2 v27.4s, v6.8h, v21.8h
     smlal v24.4s, v7.4h, v20.4h
     smlal2 v25.4s, v7.8h, v20.8h
-    ld1 {v20.8b}, [x18], x4
+    ld1 {v20.8b}, [x25], x4
     smlal v26.4s, v7.4h, v22.4h
     smlal2 v27.4s, v7.8h, v22.8h
     smlal v24.4s, v8.4h, v21.4h
     smlal2 v25.4s, v8.8h, v21.8h
-    ld1 {v21.8b}, [x18], x4
+    ld1 {v21.8b}, [x25], x4
     ssubl v20.8h, v20.8b, v28.8b
     smlal v26.4s, v8.4h, v23.4h
     ssubl v21.8h, v21.8b, v28.8b
@@ -260,7 +261,7 @@ WIDTH2_LEFT:
     ld1 {v17.8b}, [x17], x4
     ssubl v12.8h, v12.8b, v28.8b
     smlal v26.4s, v0.4h, v11.4h
-    ld1 {v22.8b}, [x18], x4
+    ld1 {v22.8b}, [x25], x4
     ssubl v17.8h, v17.8b, v28.8b
     smlal2 v27.4s, v0.8h, v11.8h
     ld1 {v13.8b}, [x16], x4
@@ -269,7 +270,7 @@ WIDTH2_LEFT:
     ld1 {v18.8b}, [x17], x4
     ssubl v13.8h, v13.8b, v28.8b
     smlal2 v25.4s, v1.8h, v10.8h
-    ld1 {v23.8b}, [x18], x4
+    ld1 {v23.8b}, [x25], x4
     ssubl v18.8h, v18.8b, v28.8b
     smlal v26.4s, v1.4h, v12.4h
     ssubl v23.8h, v23.8b, v28.8b
@@ -452,11 +453,12 @@ OUTZP3:
     st1 {v24.8b}, [x0], x6
 
 End:
-    sub sp, sp, #176
+    sub sp, sp, #192
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x23, x24, [sp], #16
+    ldp x25, x26, [sp], #16
     ret
 #endif

@@ -67,7 +67,7 @@ L2:
   cmp w16, #0
   beq End2
 
-  mov x18, x1     // reload b ptr
+  mov x28, x1     // reload b ptr
   mov x19, x7     // reload bias ptr
   mov w20, w5     // reload depth
   dup v16.4s, wzr
@@ -94,10 +94,10 @@ L3:
   ld1 {v1.16b}, [x17], #16
   ld1 {v2.16b}, [x17], #16
   ld1 {v3.16b}, [x17], #16
-  ld1 {v4.16b}, [x18], #16
-  ld1 {v5.16b}, [x18], #16
-  ld1 {v6.16b}, [x18], #16
-  ld1 {v7.16b}, [x18], #16
+  ld1 {v4.16b}, [x28], #16
+  ld1 {v5.16b}, [x28], #16
+  ld1 {v6.16b}, [x28], #16
+  ld1 {v7.16b}, [x28], #16
 
   smull v8.8h, v4.8b, v0.8b
   smull v9.8h, v5.8b, v0.8b
