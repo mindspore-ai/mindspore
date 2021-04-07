@@ -34,6 +34,7 @@ constexpr auto kKernelName = "kernel_name";
 constexpr auto kPartialFlag = "partial_flag";
 constexpr auto kReshapeType = "reshape_type";
 constexpr auto kOpPattern = "op_pattern";
+constexpr auto kIsDynamicFormat = "is_dynamic_format";
 constexpr auto kDynamicFormat = "dynamicFormat";
 constexpr auto kFormatAgnostic = "formatAgnostic";
 constexpr auto kNeedCheckSupported = "need_check_supported";
@@ -102,10 +103,8 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
 }
 
 void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
-  const std::map<std::string, kernel::OpPattern> kOpPatternMap = {{kFormatAgnostic, kFormatAgnosticPattern},
-                                                                  {kBroadcast, kBroadcastPattern},
-                                                                  {kReduce, kReducePattern},
-                                                                  {kDynamicFormat, kDynamicFormatPattern}};
+  const std::map<std::string, kernel::OpPattern> kOpPatternMap = {
+    {kFormatAgnostic, kFormatAgnosticPattern}, {kBroadcast, kBroadcastPattern}, {kReduce, kReducePattern}};
   MS_EXCEPTION_IF_NULL(op_info);
   op_info->set_async_flag(obj.at(kAsyncFlag));
   op_info->set_binfile_name(obj.at(kBinfileName));
@@ -116,6 +115,10 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
 
   if (obj.find(kDynamicShape) != obj.end()) {
     op_info->set_dynamic_shape(obj.at(kDynamicShape));
+  }
+
+  if (obj.find(kIsDynamicFormat) != obj.end()) {
+    op_info->set_is_dynamic_format(obj.at(kIsDynamicFormat));
   }
 
   if (obj.find(kOpPattern) != obj.end()) {

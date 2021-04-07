@@ -28,7 +28,7 @@ prelu_grad_op_info = TBERegOp("PReLUGrad") \
     .input(2, "weights", False, "required", "all") \
     .output(0, "dx", False, "required", "all") \
     .output(1, "da", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,
                   DataType.None_None) \
     .get_op_info()

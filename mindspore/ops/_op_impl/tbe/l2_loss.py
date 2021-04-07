@@ -25,7 +25,7 @@ l2_loss_op_info = TBERegOp("L2Loss") \
     .partial_flag(True) \
     .input(0, "x", None, "required", None) \
     .output(0, "y", True, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None) \
     .get_op_info()
 

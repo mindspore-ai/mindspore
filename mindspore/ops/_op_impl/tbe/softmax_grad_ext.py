@@ -23,14 +23,14 @@ softmax_grad_ext_op_info = TBERegOp("SoftmaxGradExt") \
     .compute_cost(10) \
     .kernel_name("softmax_grad_ext") \
     .partial_flag(True) \
-    .dynamic_format(True) \
+    .is_dynamic_format(True) \
     .attr("axis", "required", "listInt", "all") \
     .attr("keepdims", "required", "bool", "all") \
     .input(0, "grad", False, "required", "all") \
     .input(1, "x1", False, "required", "all") \
     .input(2, "x2", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None,
                   DataType.None_None, DataType.None_None) \
     .get_op_info()

@@ -28,7 +28,7 @@ binary_cross_entropy_op_info = TBERegOp("BinaryCrossEntropy") \
     .input(1, "y", False, "required", "all") \
     .input(2, "weight", False, "optional", "all") \
     .output(0, "output", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 

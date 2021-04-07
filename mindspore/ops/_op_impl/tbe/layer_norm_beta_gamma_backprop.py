@@ -30,7 +30,7 @@ layer_norm_beta_gamma_backprop_op_info = TBERegOp("LayerNormBetaGammaBackprop") 
     .input(3, "mean", False, "required", "all") \
     .output(0, "pd_gamma", False, "required", "all") \
     .output(1, "pd_beta", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.F16_None,
                   DataType.F32_None, DataType.F32_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None, DataType.F32_None,
