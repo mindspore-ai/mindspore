@@ -67,7 +67,7 @@
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
-#include "backend/optimizer/ascend/format_type/add_reformat_op.h"
+#include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_dyanmic_gru_v2.h"
@@ -259,6 +259,8 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
   mixed_precision_pm->AddPass(std::make_shared<LayerNormBetaGammaBackpropFusion>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  mixed_precision_pm->AddPass(std::make_shared<TransOpFormatRefine>());
+  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   mixed_precision_pm->AddPass(std::make_shared<RemoveInternalOutputCast>());
   optimizer->AddPassManager(mixed_precision_pm);
@@ -387,7 +389,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
       ConfigManager::GetInstance().iter_num() > 1) {
     other2_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
   }
-  other2_pm->AddPass(std::make_shared<AddReFormatOp>());
   other2_pm->AddPass(std::make_shared<CheckConsistency>());
   optimizer2->AddPassManager(other2_pm);
   (void)optimizer2->Optimize(kernel_graph);
