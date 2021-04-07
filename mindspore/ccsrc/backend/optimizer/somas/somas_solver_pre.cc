@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace somas {
-
 constexpr auto kSolNumThresholdMultiThread = 8;
 Status SomasSolverPre::checkTensors(TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) {
   auto &tensors = *pTensors;

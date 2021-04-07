@@ -1273,7 +1273,6 @@ session::KernelWithIndex GPUKernelRuntime::GetPrevNodeOutput(const AnfNodePtr &n
 
   return addr_iter->second[i];
 }
-
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

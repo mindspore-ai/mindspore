@@ -112,7 +112,6 @@ void ProfilingManager::PluginUnInit() const {
 
 Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
   string job_id = std::to_string(GetJobId());
-
   if (memcpy_s(prof->jobId, sizeof(prof->jobId), job_id.c_str(), strlen(job_id.c_str())) != EOK) {
     MS_LOG(ERROR) << "Copy job_id failed.";
     return PROF_FAILED;
