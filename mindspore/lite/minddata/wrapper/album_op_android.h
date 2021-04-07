@@ -91,69 +91,69 @@ class AlbumOp {
   /// \brief Load image to tensor
   /// \param[in] image_file Image name of file
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadImageTensor(const std::string &image_file, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load vector of ints to tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing multi-dimensional label
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load vector of floatss to tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing array data
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load string array into a tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load string into a tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
-  /// \param[inout]  Tensor to push to
+  /// \param[in,out]  Tensor to push to
   /// \return Status The error code returned
   Status LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load float value to tensor
   /// \param[in] json_obj Json object containing float
   /// \param[in] col_num Column num in schema
-  /// \param[inout]  Tensor to push to
+  /// \param[in,out]  Tensor to push to
   /// \return Status The error code returned
   Status LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load int value to tensor
   /// \param[in] json_obj Json object containing int
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
 
-  /// \brief Load emtpy tensor to tensor
+  /// \brief Load empty tensor to tensor
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadEmptyTensor(uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load id from file name to tensor
   /// \param[in] file The file name to get ID from
   /// \param[in] col_num Column num in schema
-  /// \param[inout] Tensor to push to
+  /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
   Status LoadIDTensor(const std::string &file, uint32_t col_num, TensorPtr *tensor);
 
   /// \brief Load a tensor according to a json file
   /// \param[in] row_id_type row_id - id for this tensor row
   /// \param[in] ImageColumns file Json file location
-  /// \param[inout] TensorRow Json content stored into a tensor row
+  /// \param[in,out] TensorRow Json content stored into a tensor row
   /// \return Status The error code returned
   Status LoadTensorRow(row_id_type row_id, const std::string &file,
                        std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row);
@@ -165,6 +165,12 @@ class AlbumOp {
   /// \brief is read column name
   /// \param[in] column_name
   bool IsReadColumn(const std::string &column_name);
+
+  Status LoadTensorRowByIndex(int index, const std::string &file, const nlohmann::json &js,
+                              std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row);
+
+  Status LoadIntTensorRowByIndex(int index, bool is_array, const nlohmann::json &column_value,
+                                 std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row);
 
   std::string folder_path_;  // directory of image folder
   bool decode_;

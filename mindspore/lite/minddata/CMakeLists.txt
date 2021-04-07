@@ -286,7 +286,7 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/image/crop_op.cc
             ${MINDDATA_DIR}/kernels/image/normalize_op.cc
             ${MINDDATA_DIR}/kernels/image/resize_op.cc
-            ${MINDDATA_DIR}/kernels/image/resize_preserve_ar_op.cc.cc
+            ${MINDDATA_DIR}/kernels/image/resize_preserve_ar_op.cc
             ${MINDDATA_DIR}/kernels/image/rgb_to_gray_op.cc
             ${MINDDATA_DIR}/kernels/image/rotate_op.cc
             ${MINDDATA_DIR}/kernels/data/compose_op.cc
