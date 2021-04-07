@@ -82,8 +82,7 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
       img_dtype = CL_HALF_FLOAT;
       break;
     }
-    case kNumberTypeInt8:
-    case kNumberTypeUInt8: {
+    case kNumberTypeInt8: {
       img_dtype = CL_SIGNED_INT8;
       break;
     }

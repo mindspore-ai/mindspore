@@ -124,11 +124,8 @@ int BatchToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
     return ret;
   }
   if (inputs_size == 3) {
-    if (inputs[0]->data_ == NULL) {
-      return NNACL_INFER_INVALID;
-    }
     if (inputs[1]->data_ == NULL || inputs[2]->data_ == NULL) {
-      return NNACL_ERR;
+      return NNACL_INFER_INVALID;
     }
     int ret = SetOutputShapeFromInput(inputs, outputs);
     return ret;
