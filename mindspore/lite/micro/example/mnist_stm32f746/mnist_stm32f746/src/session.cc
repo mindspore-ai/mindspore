@@ -30,14 +30,14 @@ int LiteSession::CompileGraph(lite::Model *model) {
   in_shape_0[1] = 28;
   in_shape_0[2] = 28;
   in_shape_0[3] = 1;
-  inputs_[0] = new (std::nothrow) MTensor(String("graph_input-0"), kNumberTypeFloat32, in_shape_0);
+  inputs_[0] = new (std::nothrow) MTensor(String("graph_input-0"), kNumberTypeInt8, in_shape_0);
   MS_ERROR_IF_NULL(inputs_[0]);
   outputs_.resize(1);
   Vector<int> out_shape_0;
   out_shape_0.resize(2);
   out_shape_0[0] = 1;
   out_shape_0[1] = 10;
-  outputs_[0] = new (std::nothrow) MTensor(String("Softmax-7"), kNumberTypeFloat32, out_shape_0);
+  outputs_[0] = new (std::nothrow) MTensor(String("int8toft32_Softmax-7_post0/output-0"), kNumberTypeFloat32, out_shape_0);
   MS_ERROR_IF_NULL(outputs_[0]);
   return RET_OK;
 }
@@ -125,7 +125,6 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &te
   }
   return nullptr;
 }
-
 }  // namespace lite
 session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
   auto *session = new (std::nothrow) lite::LiteSession();
