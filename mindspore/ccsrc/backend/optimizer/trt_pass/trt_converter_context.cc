@@ -42,7 +42,7 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index,
   // Skip control node
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad) ||
       AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
-    return GetRealOutputRecursive(node->cast<CNodePtr>()->input(kRealInputIndexInDepend), 0, inputs);
+    return GetRealOutputRecursively(node->cast<CNodePtr>()->input(kRealInputIndexInDepend), 0, inputs);
   }
 
   // Bypass TupleGetItem
@@ -57,11 +57,11 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index,
       auto make_tuple = input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(make_tuple);
       auto real_input = AnfAlgo::GetInputNode(make_tuple, index);
-      return GetRealOutputRecursive(real_input, 0, inputs);
+      return GetRealOutputRecursively(real_input, 0, inputs);
     }
 
     // Skip TupleGetItem.
-    return GetRealOutputRecursive(input, index, inputs);
+    return GetRealOutputRecursively(input, index, inputs);
   }
 
   // Flatten MakeTuple inputs.
@@ -71,7 +71,7 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index,
     size_t input_num = AnfAlgo::GetInputTensorNum(make_tuple);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       auto input_node = AnfAlgo::GetInputNode(make_tuple, input_index);
-      GetRealOutputRecursive(input_node, 0, inputs);
+      GetRealOutputRecursively(input_node, 0, inputs);
     }
     return;
   }
