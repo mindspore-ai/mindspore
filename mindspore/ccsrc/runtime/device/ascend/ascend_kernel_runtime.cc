@@ -21,7 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include "runtime/device/ascend/signal_util.h"
-#include "debug/data_dump/e2e_dump_util.h"
+#include "debug/data_dump/e2e_dump.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
@@ -587,8 +587,8 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
     auto full_scope_name = node->fullname_with_scope();
     MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << local_path
                   << " trace: " << trace::DumpSourceLines(node);
-    E2eDumpUtil::DumpInputImpl(node, false, local_path, &full_scope_name, nullptr);
-    E2eDumpUtil::DumpOutputImpl(node, false, local_path, &full_scope_name, nullptr);
+    E2eDump::DumpInputImpl(node, false, local_path, &full_scope_name, nullptr);
+    E2eDump::DumpOutputImpl(node, false, local_path, &full_scope_name, nullptr);
   }
 }
 

@@ -133,6 +133,9 @@ void DumpJsonParser::CopyJsonToDir() {
     ChangeFileMode(realpath.value(), S_IRUSR);
   }
 }
+bool DumpJsonParser::GetIterDumpFlag() {
+  return e2e_dump_enabled_ && (iteration_ == 0 || cur_dump_iter_ == iteration_);
+}
 
 bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len) {
   if (filename.empty() || data == nullptr || len == 0) {
