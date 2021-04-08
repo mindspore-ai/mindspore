@@ -14,12 +14,11 @@
 # ============================================================================
 """coco eval for maskrcnn_mobilenetv1"""
 import json
+import mmcv
 import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from pycocotools import mask as maskUtils
-import mmcv
-
 from src.config import config
 
 _init_value = np.array(0.0)

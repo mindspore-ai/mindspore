@@ -15,8 +15,8 @@
 """
 network config setting, will be used in dataset.py, run_general_distill.py and run_task_distill.py
 """
-import mindspore.common.dtype as mstype
 from easydict import EasyDict as edict
+import mindspore.common.dtype as mstype
 from .tinybert_model import BertConfig
 
 common_cfg = edict({
