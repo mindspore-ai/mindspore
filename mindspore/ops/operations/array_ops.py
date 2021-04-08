@@ -321,6 +321,8 @@ class Cast(PrimitiveWithInfer):
     def check_elim(self, x, dtype):
         if isinstance(x, (Tensor, numbers.Number, Parameter)):
             if isinstance(x, Tensor) and x.dtype == dtype:
+                x = Tensor(x)
+                x.set_cast_dtype()
                 return (True, x)
             if isinstance(x, numbers.Number):
                 return (True, Tensor(x, dtype=dtype))
