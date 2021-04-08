@@ -139,10 +139,9 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  FinishMessage finish_message;
-  finish_message.ParseFromArray(data, size);
-  node_manager_.AddFinishNode(finish_message);
-  MS_LOG(INFO) << "Process finish message from node id:" << finish_message.node_id();
+  auto finish_message = std::make_unique<std::string>(reinterpret_cast<const char *>(data), size);
+  node_manager_.AddFinishNode(*finish_message);
+  MS_LOG(INFO) << "Process finish message from node id:" << *finish_message;
   server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
 }
 

@@ -142,9 +142,6 @@ bool CommUtil::Retry(const std::function<bool()> &func, size_t max_attempts, siz
 
 void CommUtil::LogCallback(int severity, const char *msg) {
   switch (severity) {
-    case EVENT_LOG_DEBUG:
-      MS_LOG(DEBUG) << kLibeventLogPrefix << msg;
-      break;
     case EVENT_LOG_MSG:
       MS_LOG(INFO) << kLibeventLogPrefix << msg;
       break;
@@ -155,7 +152,6 @@ void CommUtil::LogCallback(int severity, const char *msg) {
       MS_LOG(ERROR) << kLibeventLogPrefix << msg;
       break;
     default:
-      MS_LOG(WARNING) << kLibeventLogPrefix << msg;
       break;
   }
 }
