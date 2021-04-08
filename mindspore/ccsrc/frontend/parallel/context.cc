@@ -68,6 +68,7 @@ void ParallelContext::Reset() {
   strategy_search_mode_ = DYNAMIC_PROGRAMMING;
   pipeline_stage_split_num_ = 1;
   grad_accumulation_step_ = 1;
+  init_param_shape_ = false;
   communi_parallel_mode_ = ALL_GROUP_PARALLEL;
 }
 

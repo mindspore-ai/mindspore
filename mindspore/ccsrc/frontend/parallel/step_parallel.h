@@ -154,11 +154,11 @@ using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeI
 
 RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode);
 
-std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node);
+std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node, size_t accum);
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
 
-bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter);
+bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter, size_t accum);
 
 void ApplyParallelOptOnParam(TensorLayout *tensor_layout, const OperatorInfoPtr &distribute_operator,
                              const CNodePtr &cnode, const AnfNodePtr &parameter, size_t index);

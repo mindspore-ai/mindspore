@@ -1857,9 +1857,13 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
 }
 
 // find previous parallel care node.
-bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids) {
+bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids, size_t accum = 0) {
   MS_EXCEPTION_IF_NULL(unique_ids);
   // if previous node is a parameter, handle it in the outsize.
+  accum += 1;
+  if (accum > MAX_RECURSIVE_DEPTH) {
+    return false;
+  }
   if (node->isa<Parameter>()) {
     return false;
   }
@@ -1881,7 +1885,7 @@ bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
-    if (FindPreNodes(cnode->inputs()[index], unique_ids)) {
+    if (FindPreNodes(cnode->inputs()[index], unique_ids, accum)) {
       find = true;
       continue;
     }
@@ -2119,13 +2123,17 @@ std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr &n
   return nullptr;
 }
 
-std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node) {
+std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node, size_t accum = 0) {
   FuncGraphManagerPtr manager = node->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
+  accum += 1;
+  if (accum > MAX_RECURSIVE_DEPTH) {
+    return nullptr;
+  }
   AnfNodeIndexSet node_set = manager->node_users()[node];
   for (auto &node_pair : node_set) {
     if (IsPrimitiveCNode(node_pair.first, prim::kPrimLoad)) {
-      auto layout_param = FindParameterNextLayout(node_pair.first);
+      auto layout_param = FindParameterNextLayout(node_pair.first, accum);
       if (!layout_param) {
         continue;
       }
@@ -2297,14 +2305,15 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
-CNodePtr HandleDependLoss(const CNodePtr &cnode) {
+CNodePtr HandleDependLoss(const CNodePtr &cnode, size_t accum = 0) {
   // Handle return->depend->loss
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  accum += 1;
   MS_EXCEPTION_IF_NULL(prim);
-  if (prim->name() == DEPEND) {
+  if (prim->name() == DEPEND && accum < MAX_RECURSIVE_DEPTH) {
     auto depend_before = cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_before);
-    return HandleDependLoss(depend_before);
+    return HandleDependLoss(depend_before, accum);
   }
   return cnode;
 }
@@ -2918,13 +2927,17 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   InsertNode(op, node, 2, pre_node, root, "shape");
 }
 
-static AnfNodePtr FindGrad(const CNodePtr &cnode) {
+static AnfNodePtr FindGrad(const CNodePtr &cnode, size_t accum = 0) {
+  accum += 1;
+  if (accum > MAX_RECURSIVE_DEPTH) {
+    return nullptr;
+  }
   for (auto &node : cnode->inputs()) {
     if (!node->isa<CNode>()) {
       continue;
     }
     if (!IsPrimitiveCNode(node, prim::kPrimEnvGetItem)) {
-      return FindGrad(node->cast<CNodePtr>());
+      return FindGrad(node->cast<CNodePtr>(), accum);
     } else {
       return node;
     }
@@ -3288,9 +3301,13 @@ bool CreateGroupsByCkptFile(const std::string &file) {
   return true;
 }
 
-bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter) {
+bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter, size_t accum = 0) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parameter);
+  accum += 1;
+  if (accum > MAX_RECURSIVE_DEPTH) {
+    return false;
+  }
   auto manager = graph->manager();
   auto node_users = manager->node_users()[parameter];
   if (node_users.empty()) {

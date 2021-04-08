@@ -55,7 +55,8 @@ class Edge;
 class OperatorInfo {
  public:
   OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs, OperatorCostPtr cost)
-      : name_(std::move(name)),
+      : is_last_node_(false),
+        name_(std::move(name)),
         inputs_shape_(std::move(inputs_shape)),
         outputs_shape_(std::move(outputs_shape)),
         attrs_(std::move(attrs)),

@@ -153,7 +153,6 @@ class ParallelContext {
   bool init_param_shape_;
   std::string communi_parallel_mode_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -266,6 +266,5 @@ Status GroupManager::FindGroup(const std::string &name, mindspore::parallel::Gro
 }
 
 void GroupManager::Clear() { (void)DestroyAllGroups(); }
-
 }  // namespace parallel
 }  // namespace mindspore
