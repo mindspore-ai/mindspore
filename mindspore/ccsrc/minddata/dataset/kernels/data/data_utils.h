@@ -124,15 +124,6 @@ Status PadEndStringHelper(const std::shared_ptr<Tensor> &src, std::vector<std::s
                           const TensorShape &dst_shape, std::vector<dsize_t> cur_ind, size_t cur_dim,
                           const std::string &pad_value);
 
-enum class RelationalOp {
-  kEqual = 0,     // ==
-  kNotEqual,      // !=
-  kLess,          // <
-  kLessEqual,     // <=
-  kGreater,       // >
-  kGreaterEqual,  // >=
-};
-
 /// Helper method that masks the input tensor
 /// @tparam T type of the tensor
 /// @param input[in] input tensor

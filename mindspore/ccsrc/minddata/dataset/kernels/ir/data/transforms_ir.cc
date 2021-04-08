@@ -20,10 +20,22 @@
 
 // Kernel data headers (in alphabetical order)
 #include "minddata/dataset/kernels/data/compose_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/data/concatenate_op.h"
+#endif
 #include "minddata/dataset/kernels/data/duplicate_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/data/mask_op.h"
+#endif
 #include "minddata/dataset/kernels/data/one_hot_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/data/pad_end_op.h"
+#endif
 #include "minddata/dataset/kernels/data/random_apply_op.h"
 #include "minddata/dataset/kernels/data/random_choice_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/data/slice_op.h"
+#endif
 #include "minddata/dataset/kernels/data/type_cast_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/data/unique_op.h"
@@ -58,10 +70,54 @@ std::shared_ptr<TensorOp> ComposeOperation::Build() {
   return std::make_shared<ComposeOp>(tensor_ops);
 }
 
+#ifndef ENABLE_ANDROID
+// ConcatenateOperation
+ConcatenateOperation::ConcatenateOperation(int8_t axis, const std::shared_ptr<Tensor> &prepend,
+                                           const std::shared_ptr<Tensor> &append)
+    : axis_(axis), prepend_(prepend), append_(append) {}
+
+Status ConcatenateOperation::ValidateParams() {
+  if (axis_ != 0 && axis_ != -1) {
+    std::string err_msg = "Concatenate: Only 1D concatenation supported.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (prepend_) {
+    if (prepend_->shape().Size() != 1) {
+      std::string err_msg = "Concatenate: Can only prepend 1D arrays.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  if (append_) {
+    if (append_->shape().Size() != 1) {
+      std::string err_msg = "Concatenate: Can only append 1D arrays.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> ConcatenateOperation::Build() {
+  return std::make_shared<ConcatenateOp>(axis_, prepend_, append_);
+}
+#endif
+
 // DuplicateOperation
 Status DuplicateOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> DuplicateOperation::Build() { return std::make_shared<DuplicateOp>(); }
+
+#ifndef ENABLE_ANDROID
+// MaskOperation
+MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype)
+    : op_(op), constant_(constant), dtype_(dtype) {}
+
+Status MaskOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> MaskOperation::Build() { return std::make_shared<MaskOp>(op_, constant_, dtype_); }
+#endif
 
 // OneHotOperation
 OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes) {}
@@ -84,6 +140,16 @@ Status OneHotOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+#ifndef ENABLE_ANDROID
+// PadEndOperation
+PadEndOperation::PadEndOperation(const TensorShape &pad_shape, const std::shared_ptr<Tensor> &pad_value)
+    : pad_shape_(pad_shape), pad_value_(pad_value) {}
+
+Status PadEndOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> PadEndOperation::Build() { return std::make_shared<PadEndOp>(pad_shape_, pad_value_); }
+#endif
 
 // PreBuiltOperation
 PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(tensor_op) {
@@ -136,6 +202,15 @@ std::shared_ptr<TensorOp> RandomChoiceOperation::Build() {
                        [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
   return std::make_shared<RandomChoiceOp>(tensor_ops);
 }
+
+#ifndef ENABLE_ANDROID
+// SliceOperation
+SliceOperation::SliceOperation(const std::vector<SliceOption> &slice_input) : slice_input_(slice_input) {}
+
+Status SliceOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> SliceOperation::Build() { return std::make_shared<SliceOp>(slice_input_); }
+#endif
 
 // TypeCastOperation
 TypeCastOperation::TypeCastOperation(std::string data_type) : data_type_(data_type) {}

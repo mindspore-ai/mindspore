@@ -15,6 +15,7 @@
  */
 #include "pybind11/pybind11.h"
 
+#include "mindspore/ccsrc/minddata/dataset/include/transforms.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/core/global_context.h"
 
@@ -64,6 +65,16 @@ PYBIND_REGISTER(
       }));
   }));
 
+PYBIND_REGISTER(ConcatenateOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<transforms::ConcatenateOperation, TensorOperation,
+                                   std::shared_ptr<transforms::ConcatenateOperation>>(*m, "ConcatenateOperation")
+                    .def(py::init([](int8_t axis, std::shared_ptr<Tensor> prepend, std::shared_ptr<Tensor> append) {
+                      auto concatenate = std::make_shared<transforms::ConcatenateOperation>(axis, prepend, append);
+                      THROW_IF_ERROR(concatenate->ValidateParams());
+                      return concatenate;
+                    }));
+                }));
+
 PYBIND_REGISTER(
   DuplicateOperation, 1, ([](const py::module *m) {
     (void)py::class_<transforms::DuplicateOperation, TensorOperation, std::shared_ptr<transforms::DuplicateOperation>>(
@@ -75,6 +86,17 @@ PYBIND_REGISTER(
       }));
   }));
 
+PYBIND_REGISTER(MaskOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<transforms::MaskOperation, TensorOperation, std::shared_ptr<transforms::MaskOperation>>(
+                      *m, "MaskOperation")
+                      .def(py::init([](RelationalOp op, std::shared_ptr<Tensor> constant, DataType dtype) {
+                        auto mask = std::make_shared<transforms::MaskOperation>(op, constant, dtype);
+                        THROW_IF_ERROR(mask->ValidateParams());
+                        return mask;
+                      }));
+                }));
+
 PYBIND_REGISTER(
   OneHotOperation, 1, ([](const py::module *m) {
     (void)py::class_<transforms::OneHotOperation, TensorOperation, std::shared_ptr<transforms::OneHotOperation>>(
@@ -83,6 +105,17 @@ PYBIND_REGISTER(
         auto one_hot = std::make_shared<transforms::OneHotOperation>(num_classes);
         THROW_IF_ERROR(one_hot->ValidateParams());
         return one_hot;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  PadEndOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::PadEndOperation, TensorOperation, std::shared_ptr<transforms::PadEndOperation>>(
+      *m, "PadEndOperation")
+      .def(py::init([](TensorShape pad_shape, std::shared_ptr<Tensor> pad_value) {
+        auto pad_end = std::make_shared<transforms::PadEndOperation>(pad_shape, pad_value);
+        THROW_IF_ERROR(pad_end->ValidateParams());
+        return pad_end;
       }));
   }));
 
@@ -111,6 +144,50 @@ PYBIND_REGISTER(RandomApplyOperation, 1, ([](const py::module *m) {
                 }));
 
 PYBIND_REGISTER(
+  SliceOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::SliceOperation, TensorOperation, std::shared_ptr<transforms::SliceOperation>>(
+      *m, "SliceOperation")
+      .def(py::init([](std::vector<SliceOption> slice_input) {
+        auto slice = std::make_shared<transforms::SliceOperation>(slice_input);
+        THROW_IF_ERROR(slice->ValidateParams());
+        return slice;
+      }));
+  }));
+
+PYBIND_REGISTER(SliceOption, 0, ([](const py::module *m) {
+                  (void)py::class_<SliceOption>(*m, "SliceOption")
+                    .def(py::init([](const py::slice &py_slice) {
+                      Slice c_slice;
+                      if (!py_slice.attr("start").is_none() && !py_slice.attr("stop").is_none() &&
+                          !py_slice.attr("step").is_none()) {
+                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice.attr("start")),
+                                        py::reinterpret_borrow<py::int_>(py_slice.attr("stop")),
+                                        py::reinterpret_borrow<py::int_>(py_slice.attr("step")));
+                      } else if (py_slice.attr("start").is_none() && py_slice.attr("step").is_none()) {
+                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice.attr("stop")));
+                      } else if (!py_slice.attr("start").is_none() && !py_slice.attr("stop").is_none()) {
+                        c_slice = Slice(py::reinterpret_borrow<py::int_>(py_slice.attr("start")),
+                                        py::reinterpret_borrow<py::int_>(py_slice.attr("stop")));
+                      }
+
+                      if (!c_slice.valid()) {
+                        THROW_IF_ERROR(
+                          Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
+                      }
+                      return SliceOption(c_slice);
+                    }))
+                    .def(py::init([](const py::list &py_list) {
+                      std::vector<dsize_t> indices;
+                      for (auto l : py_list) {
+                        indices.push_back(py::reinterpret_borrow<py::int_>(l));
+                      }
+                      return SliceOption(indices);
+                    }))
+                    .def(py::init<bool>())
+                    .def(py::init<SliceOption>());
+                }));
+
+PYBIND_REGISTER(
   TypeCastOperation, 1, ([](const py::module *m) {
     (void)py::class_<transforms::TypeCastOperation, TensorOperation, std::shared_ptr<transforms::TypeCastOperation>>(
       *m, "TypeCastOperation")
@@ -131,6 +208,17 @@ PYBIND_REGISTER(
         return unique;
       }));
   }));
+
+PYBIND_REGISTER(RelationalOp, 0, ([](const py::module *m) {
+                  (void)py::enum_<RelationalOp>(*m, "RelationalOp", py::arithmetic())
+                    .value("EQ", RelationalOp::kEqual)
+                    .value("NE", RelationalOp::kNotEqual)
+                    .value("LT", RelationalOp::kLess)
+                    .value("LE", RelationalOp::kLessEqual)
+                    .value("GT", RelationalOp::kGreater)
+                    .value("GE", RelationalOp::kGreaterEqual)
+                    .export_values();
+                }));
 
 }  // namespace dataset
 }  // namespace mindspore

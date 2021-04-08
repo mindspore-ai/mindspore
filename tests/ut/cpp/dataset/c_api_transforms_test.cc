@@ -137,6 +137,70 @@ TEST_F(MindDataTestPipeline, TestComposeFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestConcatenateSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateSuccess.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Concatenate op
+  std::vector<std::int16_t> prepend_vector = {1, 2};
+  std::shared_ptr<Tensor> prepend_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(prepend_vector, &prepend_tensor));
+  mindspore::MSTensor prepend_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(prepend_tensor));
+
+  std::vector<std::int16_t> append_vector = {3};
+  std::shared_ptr<Tensor> append_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(append_vector, &append_tensor));
+  mindspore::MSTensor append_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(append_tensor));
+
+  transforms::Concatenate concatenate = transforms::Concatenate(0, prepend_MSTensor, append_MSTensor);
+
+  // Create a Map operation on ds
+  ds = ds->Map({concatenate}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::int16_t>> expected = {
+    {1, 2, 31354, 3}, {1, 2, -5655, 3}, {1, 2, -17734, 3}, {1, 2, -17220, 3}};
+
+  // Check concatnate results
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
 TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDuplicateSuccess.";
 
@@ -175,6 +239,59 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMaskSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskSuccess.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {4});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Mask op
+  std::shared_ptr<Tensor> constant_tensor;
+  ASSERT_OK(Tensor::CreateScalar(0, &constant_tensor));
+  mindspore::MSTensor constant_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(constant_tensor));
+  transforms::Mask mask = transforms::Mask(RelationalOp::kGreater, constant_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<bool>> expected = {
+    {true, true, true, true}, {false, false, false, false}, {false, false, false, false}, {false, false, false, false}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
@@ -328,6 +445,59 @@ TEST_F(MindDataTestPipeline, TestOneHotFail2) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid OneHot input
   EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestPadEndSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndSuccess.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create PadEnd op
+  std::shared_ptr<Tensor> pad_value;
+  ASSERT_OK(Tensor::CreateScalar(0, &pad_value));
+  mindspore::MSTensor pad_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(pad_value));
+
+  transforms::PadEnd pad_end = transforms::PadEnd({3}, pad_value_MSTensor);
+  ds = ds->Map({pad_end}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::int16_t>> expected = {{31354, 0, 0}, {-5655, 0, 0}, {-17734, 0, 0}, {-17220, 0, 0}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
@@ -563,6 +733,69 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail3) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid RandomApply parameter (transform list must not be empty)
   EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestSliceSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceSuccess.";
+
+  // Create a RandomDataset
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(246);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create concatenate op
+  std::vector<std::int16_t> prepend_vector = {1, 2, 3};
+  std::shared_ptr<Tensor> prepend_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(prepend_vector, &prepend_tensor));
+  mindspore::MSTensor prepend_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(prepend_tensor));
+
+  transforms::Concatenate concatenate = transforms::Concatenate(0, prepend_MSTensor);
+
+  // Create a Map operation on ds
+  ds = ds->Map({concatenate}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Apply Slice op on ds, get the first and third elements in each row.
+  SliceOption slice_option = SliceOption(Slice(0, 3, 2));
+  transforms::Slice slice = transforms::Slice({slice_option});
+  ds = ds->Map({slice}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::int16_t>> expected = {{1, 3}, {1, 3}, {1, 3}, {1, 3}};
+
+  // Check slice results
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
