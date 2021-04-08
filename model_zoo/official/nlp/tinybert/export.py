@@ -48,7 +48,7 @@ task_params = {"SST-2": {"num_labels": 2, "seq_length": 64},
                "QNLI": {"num_labels": 2, "seq_length": 128},
                "MNLI": {"num_labels": 3, "seq_length": 128},
                "TNEWS": {"num_labels": 15, "seq_length": 128},
-               "CLUENER": {"num_labels": 10, "seq_length": 128}}
+               "CLUENER": {"num_labels": 43, "seq_length": 128}}
 
 class Task:
     """
