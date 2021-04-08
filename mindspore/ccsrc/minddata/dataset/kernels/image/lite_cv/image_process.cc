@@ -1214,6 +1214,9 @@ bool TransposeImpl(const LiteMat &src, LiteMat &dst) {
 }
 
 bool Transpose(const LiteMat &src, LiteMat &dst) {
+  if (src.IsEmpty()) {
+    return false;
+  }
   if (src.data_type_ == LDataType::DOUBLE) {
     return TransposeImpl<double>(src, dst);
   } else if (src.data_type_ == LDataType::FLOAT32) {
@@ -1540,7 +1543,7 @@ bool GetAffineTransformImpl(LiteMat &src, LiteMat &dst) {
       }
     }
 
-    double d = -1 / src.ptr<double>(i)[i];
+    const double d = -1 / src.ptr<double>(i)[i];
     for (int j = i + 1; j < m; j++) {
       double alpha = src.ptr<double>(j)[i] * d;
       for (k = i + 1; k < m; k++) {
@@ -1876,7 +1879,7 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
   }
   //  uint8_t *dst_ptr = dst;
   float varM[2][3] = {{1.0, 0, 0}, {0, 1.0, 0}};
-  float divisor = 2.0;
+  const float divisor = 2.0;
   int rotationDstWidth = src.width_;
   int rotationDstHeight = src.height_;
   if (img_orientation > IM_TOOL_EXIF_ORIENTATION_0_DEG) {
