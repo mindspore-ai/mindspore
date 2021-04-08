@@ -28,8 +28,8 @@
 namespace mindspore {
 namespace somas {
 constexpr auto kSolNumThresholdMultiThread = 8;
-Status SomasSolverPre::checkTensors(TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) {
-  auto &tensors = *pTensors;
+Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) {
+  auto tensors = *pTensors;
   if (nullptr == tensors[index1]) {
     MS_LOG(WARNING) << "NULL tensor received in continuous constraint (tensor index " << index1 << ")";
     return FAILED;
@@ -47,14 +47,14 @@ Status SomasSolverPre::checkTensors(TensorsDescMap *pTensors, uint32_t index1, u
                     << " already has a left tensor (id: " << tensors[index2]->left_->index_;
   return SUCCESS;
 }
-Status SomasSolverPre::addContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors) {
+Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors) {
   auto &tensors = *pTensors;
   // creating S Lists
   for (auto &aux : continuous_v) {
     for (uint32_t i = 0; i < aux.size() - 1; i++) {
       uint32_t index1 = aux[i];
       uint32_t index2 = aux[i + 1];
-      if (checkTensors(pTensors, index1, index2) == FAILED) {
+      if (CheckTensors(pTensors, index1, index2) == FAILED) {
         return FAILED;
       }
       tensors[index1]->right_ = tensors[index2];
@@ -63,14 +63,15 @@ Status SomasSolverPre::addContiguousInfoInMap(const vector<vector<size_t>> &cont
   }
   return SUCCESS;
 }
-Status SomasSolverPre::addContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v,
-                                                    vector<TensorsDescMap> *vecTensorsMap, TensorsDescMap *pTensors) {
+Status SomasSolverPre::AddContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v,
+                                                    vector<TensorsDescMap> *vecTensorsMap,
+                                                    const TensorsDescMap *pTensors) {
   // creating S Lists
   for (auto &aux : continuous_v) {
     for (uint32_t i = 0; i < aux.size() - 1; i++) {
       uint32_t index1 = aux[i];
       uint32_t index2 = aux[i + 1];
-      if (checkTensors(pTensors, index1, index2) == FAILED) {
+      if (CheckTensors(pTensors, index1, index2) == FAILED) {
         return FAILED;
       }
       for (size_t sol = 0; sol < vecTensorsMap->size(); sol++) {
@@ -82,7 +83,7 @@ Status SomasSolverPre::addContiguousInfoInMultiMaps(const vector<vector<size_t>>
   }
   return SUCCESS;
 }
-vector<TensorsDescMap> SomasSolverPre::createTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) {
+vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) {
   vector<TensorsDescMap> vecTensorsMap(total_sol);
   vecTensorsMap[0] = tensors;
   for (auto &pairT : tensors) {
@@ -92,7 +93,7 @@ vector<TensorsDescMap> SomasSolverPre::createTensorsMaps(const TensorsDescMap &t
       vecTensorsMap[sol].insert(std::make_pair(pairT.first, newDescPtr));
     }
   }
-  return std::move(vecTensorsMap);
+  return vecTensorsMap;
 }
 Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap *ptensors,
                                const std::vector<DynamicBitSet> *pConstraints,
@@ -110,8 +111,8 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
     if (isMultiThreadValid) {
       vector<std::shared_ptr<SomasSolverCore>> solvers;
       std::vector<common::Task> tasks;
-      vector<TensorsDescMap> vecTensorsMap = createTensorsMaps(tensors, total_sol);
-      if (addContiguousInfoInMultiMaps(continuous_v, &vecTensorsMap, ptensors) == FAILED) {
+      vector<TensorsDescMap> vecTensorsMap = CreateTensorsMaps(tensors, total_sol);
+      if (AddContiguousInfoInMultiMaps(continuous_v, &vecTensorsMap, ptensors) == FAILED) {
         return FAILED;
       }
       auto start = std::chrono::system_clock::now();
@@ -167,7 +168,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
       MS_LOG(INFO) << "Time elapsed: " << total_time << " ms";
       MS_LOG(INFO) << "Spread:" << static_cast<double>((worst - best) / static_cast<double>(best * 100.0)) << " %%";
     } else {
-      if (addContiguousInfoInMap(continuous_v, ptensors) == FAILED) {
+      if (AddContiguousInfoInMap(continuous_v, ptensors) == FAILED) {
         return FAILED;
       }
       std::shared_ptr<SomasSolverCore> pSolver = std::make_shared<SomasSolverCore>(tensors, pConstraints, 0, false);
