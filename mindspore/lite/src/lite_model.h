@@ -192,6 +192,7 @@ class LiteModel : public Model {
 
  public:
   size_t buf_size_ = 0;
+  std::vector<char *> node_bufs_;
 
  protected:
   std::vector<char *> attr_tensor_bufs_;

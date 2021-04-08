@@ -399,8 +399,15 @@ int LiteSession::CompileGraph(Model *model) {
 #endif
   InitGraphInOutTensors(model);
 
+  ret = PrepareKernels(model);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
+    is_running_.store(false);
+    return ret;
+  }
+
 #ifdef ENABLE_MINDRT
-  if (context_->IsCpuEnabled() && !context_->IsGpuEnabled() && !context_->IsNpuEnabled() && kernels_.size() == 1) {
+  if (kernels_.size() == 1) {
     executor_ = new (std::nothrow) MindrtExecutor();
   } else {
     executor_ = new (std::nothrow) Executor();
@@ -420,16 +427,10 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  ret = PrepareKernels(model);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
-    is_running_.store(false);
-    return ret;
-  }
 
   is_running_.store(false);
   return RET_OK;
-}
+}  // namespace lite
 
 int LiteSession::PrepareKernels(Model *model) {
   std::vector<kernel::LiteKernel *> all_kernels;

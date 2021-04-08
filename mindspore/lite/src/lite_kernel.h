@@ -35,7 +35,16 @@ static constexpr int kPerTensor = 1;
 static constexpr size_t kPerBatch = 3;
 
 namespace mindspore::kernel {
-enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
+enum KERNEL_ARCH {
+  kCPU,
+  kGPU,
+  kAPU,
+  kNPU,
+  kALL, /* Support GPU NPU CPU */
+  kKernelArch_MIN = kCPU,
+  kKernelArch_MAX = kALL
+};
+
 struct KernelKey {
   KERNEL_ARCH arch;
   TypeId data_type;
@@ -161,8 +170,6 @@ class LiteKernel {
 
   virtual void InitOutTensorInitRefCount();
 
-  int DecOutTensorRefCount();
-
   virtual int FreeInWorkTensor() const;
 
   KernelKey desc() const { return desc_; }
@@ -170,6 +177,8 @@ class LiteKernel {
   void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
   SubGraphType subgraph_type() const { return this->subgraph_type_; }
+
+  const lite::InnerContext *context() const { return this->context_; }
 
   virtual std::string ToString() const;
 
@@ -179,6 +188,7 @@ class LiteKernel {
   static void AllocWorkspace(size_t size);
   static void FreeWorkspace();
   void *workspace() { return workspace_; }
+  int DecOutTensorRefCount();
 #endif
 
  protected:

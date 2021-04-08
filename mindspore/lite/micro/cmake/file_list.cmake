@@ -132,6 +132,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
         ${LITE_DIR}/src/lite_model.cc
+        ${LITE_DIR}/src/sub_graph_split.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/dequant.cc

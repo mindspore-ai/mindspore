@@ -28,6 +28,7 @@ option(ENABLE_VERBOSE "" off)
 option(ENABLE_SSE "if x86_64 support SSE instruction set" off)
 option(ENABLE_AVX "if x86_64 support SSE instruction set" off)
 option(ENABLE_MINDRT "if support mindrt" on)
+option(SUBGRAPH_SPLIT "if support sub graph split" off)
 
 set(DIR_PREFIX mindspore-lite)
 set(MS_VERSION ${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
@@ -57,6 +58,9 @@ else()
     set(PROCESS_UNIT cpu)
 endif()
 
+if(SUBGRAPH_SPLIT)
+    add_compile_definitions(SUBGRAPH_SPLIT)
+endif()
 
 if(SUPPORT_NPU)
     set(DDK_PATH "$ENV{HWHIAI_DDK}/ddk/ai_ddk_lib")

@@ -352,8 +352,8 @@ void Tensor::DecRefCount() {
   if (this->IsConst() || this->IsGraphInput()) {
     return;
   }
-  this->ref_count_--;
-  if (this->ref_count_ <= 0) {
+  bool free_data = --ref_count_ <= 0;
+  if (free_data) {
     FreeData();
     this->ref_count_ = 0;
   }

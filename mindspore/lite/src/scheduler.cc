@@ -30,6 +30,7 @@
 #include "src/common/version_manager.h"
 #include "src/common/prim_util.h"
 #include "src/runtime/infer_manager.h"
+#include "src/sub_graph_split.h"
 #include "src/dequant.h"
 #include "nnacl/matmul_parameter.h"
 #if GPU_OPENCL
@@ -71,6 +72,12 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
+
+#ifdef SUBGRAPH_SPLIT
+  auto search_sub_graph = SearchSubGraph(src_model_, this->graph_output_node_indexes_);
+  search_sub_graph.SubGraphSplitByOutput();
+#endif
+
   bool infer_shape_interrupt = false;
   auto ret = InferSubGraphShape(kMainSubGraphIndex, &infer_shape_interrupt);
   if (ret != RET_OK) {
@@ -89,7 +96,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Schedule run pass failed.";
     return ret;
   }
-  ret = ConstructSubGraphs(dst_kernels);
+
+  auto src_kernel = *dst_kernels;
+  dst_kernels->clear();
+  std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
+  ret = ConstructSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstructSubGraphs failed.";
     return ret;
@@ -473,6 +484,14 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
     MS_LOG(ERROR) << "Schedule partial failed, name: " << src_node->name_;
     return nullptr;
   }
+
+  FindAllInoutKernels(sub_kernels);
+  ret = RunPass(&sub_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SchedulePartialToKernel run pass failed.";
+    return nullptr;
+  }
+
   auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(sub_kernels.front());
   auto subgraph = CreateSubGraphKernel(sub_kernels, &in_tensors, &out_tensors, cur_sub_graph_type);
   subgraph->set_name("subgraph_" + src_node->name_);
@@ -602,35 +621,33 @@ std::vector<kernel::LiteKernel *> Scheduler::FindAllSubGraphKernels(
   return sub_kernels;
 }
 
-int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
-  auto old_kernels = *kernels;
-  kernels->clear();
-  std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
-  for (auto kernel : old_kernels) {
-    is_kernel_finish[kernel] = false;
+int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
+                                  std::vector<kernel::LiteKernel *> *dst_kernel,
+                                  std::map<const kernel::LiteKernel *, bool> *is_kernel_finish) {
+  for (auto kernel : src_kernel) {
+    (*is_kernel_finish)[kernel] = false;
   }
-
   while (true) {
-    auto head_kernel_iter = std::find_if(old_kernels.begin(), old_kernels.end(), [&](const kernel::LiteKernel *kernel) {
+    auto head_kernel_iter = std::find_if(src_kernel.begin(), src_kernel.end(), [&](const kernel::LiteKernel *kernel) {
       auto kernel_inputs = kernel->in_kernels();
-      if (is_kernel_finish[kernel]) {
+      if ((*is_kernel_finish)[kernel]) {
         return false;
       }
       // when merge is removed, this if is removed automatically
       if (kernel->Type() == schema::PrimitiveType_Merge) {
-        return MergeOpIsReady(kernel, is_kernel_finish);
+        return MergeOpIsReady(kernel, (*is_kernel_finish));
       } else {
         return std::all_of(kernel_inputs.begin(), kernel_inputs.end(),
-                           [&](kernel::LiteKernel *kernel) { return is_kernel_finish[kernel]; });
+                           [&](kernel::LiteKernel *kernel) { return (*is_kernel_finish)[kernel]; });
       }
     });
-    if (head_kernel_iter == old_kernels.end()) {
+    if (head_kernel_iter == src_kernel.end()) {
       break;
     }
     auto head_kernel = *head_kernel_iter;
     if (head_kernel->subgraph_type() != kernel::kNotSubGraph) {
-      is_kernel_finish[head_kernel] = true;
-      kernels->emplace_back(head_kernel);
+      (*is_kernel_finish)[head_kernel] = true;
+      dst_kernel->push_back(head_kernel);
       continue;
     }
     if (head_kernel->desc().arch == mindspore::kernel::kAPU) {
@@ -638,15 +655,15 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
       return RET_NOT_SUPPORT;
     }
     auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
-    auto sub_kernels = FindAllSubGraphKernels(head_kernel, &is_kernel_finish);
+    auto sub_kernels = FindAllSubGraphKernels(head_kernel, is_kernel_finish);
     auto subgraph = CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type);
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";
       return RET_ERROR;
     }
-    kernels->emplace_back(subgraph);
+    dst_kernel->emplace_back(subgraph);
   }
-  for (auto *subgraph : *kernels) {
+  for (auto *subgraph : *dst_kernel) {
     auto ret = subgraph->Init();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
@@ -840,6 +857,7 @@ int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
   npu_pass_manager_->AddPass(fusion_pass);
 
   ret = npu_pass_manager_->Run();
+  npu_pass_manager_->Clear();
 #endif
   return ret;
 }

@@ -109,6 +109,7 @@ set(LITE_SRC
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/scheduler.cc
         ${SRC_DIR}/sub_graph_kernel.cc
+        ${SRC_DIR}/sub_graph_split.cc
         ${SRC_DIR}/lite_session.cc
         ${SRC_DIR}/executor.cc
         ${SRC_DIR}/lite_model.cc

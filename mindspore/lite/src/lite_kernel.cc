@@ -43,6 +43,16 @@ void LiteKernel::FreeWorkspace() {
   free(workspace_);
   workspace_ = nullptr;
 }
+
+int LiteKernel::DecOutTensorRefCount() {
+  for (auto *tensor : this->out_tensors_) {
+    tensor->set_ref_count(tensor->ref_count() - 1);
+    if (0 >= tensor->ref_count()) {
+      tensor->FreeData();
+    }
+  }
+  return 0;
+}
 #endif
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *in_tensor) {
@@ -64,16 +74,6 @@ void LiteKernel::InitOutTensorInitRefCount() {
     }
     tensor->set_init_ref_count(init_ref_count);
   }
-}
-
-int LiteKernel::DecOutTensorRefCount() {
-  for (auto *tensor : this->out_tensors_) {
-    tensor->set_ref_count(tensor->ref_count() - 1);
-    if (0 >= tensor->ref_count()) {
-      tensor->FreeData();
-    }
-  }
-  return 0;
 }
 
 int LiteKernel::FreeInWorkTensor() const {

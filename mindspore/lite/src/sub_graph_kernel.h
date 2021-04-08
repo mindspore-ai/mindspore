@@ -128,6 +128,7 @@ class CpuSubGraph : public SubGraphKernel {
               std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
       : SubGraphKernel(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
+    desc_.arch = kernel::KERNEL_ARCH::kCPU;
   }
 
   ~CpuSubGraph() override { delete this->executor_; }

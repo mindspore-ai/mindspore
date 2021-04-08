@@ -32,7 +32,7 @@ int LiteOpActor::CompileArrow() {
         }
       }
       if (to_input_index == -1) {
-        break;
+        continue;
       }
       auto id = out->name() + this->GetAID().Url();
       auto arrow = std::make_shared<OpArrow>(i, id, to_input_index);
@@ -41,10 +41,17 @@ int LiteOpActor::CompileArrow() {
         return RET_ERROR;
       }
       output_op_arrows_.emplace_back(std::move(arrow));
-      break;
     }
   }
   return RET_OK;
+}
+
+void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
+  for (auto op_arrow : output_op_arrows_) {
+    auto data = context->outputData_->at(op_arrow->from_output_index_);
+    Async(op_arrow->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data, context);
+  }
+  return;
 }
 
 void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
