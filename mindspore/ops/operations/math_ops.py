@@ -2238,7 +2238,7 @@ class DivNoNan(_MathBinaryOp):
 
 class MulNoNan(_MathBinaryOp):
     r"""
-    Computes x * y element-wise. if y is zero, No matter what x is, it will return 0.
+    Computes `input_x` * `input_y` element-wise. if `input_y` is zero, No matter what `input_x` is, it will return 0.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -2246,7 +2246,7 @@ class MulNoNan(_MathBinaryOp):
     When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Note:
-        The shapes of x and y should be same or can be broadcasted.
+        The shapes of `input_x` and `input_y` should be same or can be broadcasted.
 
     Inputs:
         - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number or scalar.
