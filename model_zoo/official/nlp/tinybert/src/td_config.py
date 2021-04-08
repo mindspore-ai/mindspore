@@ -15,8 +15,8 @@
 
 """config script for task distill"""
 
-import mindspore.common.dtype as mstype
 from easydict import EasyDict as edict
+import mindspore.common.dtype as mstype
 from .tinybert_model import BertConfig
 
 phase1_cfg = edict({
