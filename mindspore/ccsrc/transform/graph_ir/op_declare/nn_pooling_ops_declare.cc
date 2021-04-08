@@ -27,6 +27,27 @@ ATTR_MAP(MaxPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyT
 OUTPUT_MAP(MaxPool) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool, kNameMaxPool, ADPT_DESC(MaxPool))
 
+// MaxPool3D
+INPUT_MAP(MaxPool3D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPool3D) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
+                       {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"dilation", ATTR_DESC(dilation, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<int64_t>())},
+                       {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPool3D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPool3D, kNameMaxPool3D, ADPT_DESC(MaxPool3D))
+
+// MaxPool3DGrad
+INPUT_MAP(MaxPool3DGrad) = {{1, INPUT_DESC(orig_x)}, {2, INPUT_DESC(orig_y)}, {3, INPUT_DESC(grads)}};
+ATTR_MAP(MaxPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPool3DGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPool3DGrad, kNameMaxPool3DGrad, ADPT_DESC(MaxPool3DGrad))
+
 // AvgPool
 INPUT_MAP(AvgPool) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AvgPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},

@@ -185,6 +185,12 @@ ATTR_MAP(Xdivy) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Xdivy) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Xdivy, kNameXdivy, ADPT_DESC(Xdivy))
 
+// Mod
+INPUT_MAP(Mod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Mod) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Mod) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Mod, kNameMod, ADPT_DESC(Mod))
+
 // Exp
 INPUT_MAP(Exp) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Exp) = EMPTY_ATTR_MAP;
