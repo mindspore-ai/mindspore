@@ -15,21 +15,29 @@
  */
 
 #include "runtime/device/cpu/cpu_memory_manager.h"
+#include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace device {
 namespace cpu {
-uint8_t *CPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
-  void *ptr = malloc(size);
-  if (ptr != nullptr) {
-    memset_s(ptr, size, 0, size);
-    static_mem_[ptr] = size;
-    return reinterpret_cast<uint8_t *>(ptr);
-  } else {
+uint8_t *CPUMemoryManager::MemMalloc(size_t size) {
+  auto block = std::make_shared<std::vector<uint8_t>>();
+  try {
+    block->resize(size, 0);
+    auto ptr = block->data();
+    mem_block_map_[ptr] = block;
+    return ptr;
+  } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "Malloc memory failed: size " << size;
   }
+}
+
+uint8_t *CPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
+  auto ptr = MemMalloc(size);
+  static_mem_[ptr] = size;
+  return ptr;
 }
 
 uint8_t *CPUMemoryManager::MallocDynamicMem(size_t size, bool) {
@@ -38,10 +46,7 @@ uint8_t *CPUMemoryManager::MallocDynamicMem(size_t size, bool) {
   // first find the smallest cached_mem_ which fits the size
   for (auto &&iter : cached_mem_) {
     if (iter.second >= size) {
-      if (min_size == 0) {
-        ptr = iter.first;
-        min_size = iter.second;
-      } else if (iter.second < min_size) {
+      if (min_size == 0 || iter.second < min_size) {
         ptr = iter.first;
         min_size = iter.second;
       }
@@ -54,14 +59,9 @@ uint8_t *CPUMemoryManager::MallocDynamicMem(size_t size, bool) {
     return reinterpret_cast<uint8_t *>(ptr);
   }
   // if not found, malloc
-  ptr = malloc(size);
-  if (ptr != nullptr) {
-    memset_s(ptr, size, 0, size);
-    dynamic_mem_[ptr] = size;
-    return reinterpret_cast<uint8_t *>(ptr);
-  } else {
-    MS_LOG(EXCEPTION) << "Malloc memory failed: size " << size;
-  }
+  auto new_ptr = MemMalloc(size);
+  dynamic_mem_[new_ptr] = size;
+  return new_ptr;
 }
 
 void CPUMemoryManager::ResetDynamicMemory() {
@@ -76,23 +76,13 @@ CPUMemoryManager::~CPUMemoryManager() { MemFree(); }
 
 void CPUMemoryManager::MemFree() {
   if (mem_ptr_ != nullptr) {
-    free(mem_ptr_);
     mem_ptr_ = nullptr;
     mem_size_ = 0;
   }
-
-  for (auto &&iter : static_mem_) {
-    free(iter.first);
-  }
   static_mem_.clear();
-  for (auto &&iter : dynamic_mem_) {
-    free(iter.first);
-  }
   dynamic_mem_.clear();
-  for (auto &&iter : cached_mem_) {
-    free(iter.first);
-  }
   cached_mem_.clear();
+  mem_block_map_.clear();
 }
 
 void CPUMemoryManager::AssignMemory(const session::KernelGraph *graph) {
@@ -102,7 +92,7 @@ void CPUMemoryManager::AssignMemory(const session::KernelGraph *graph) {
       dynamic_mem_[mem_ptr_] = mem_size_;
       mem_size_ = 0;
     }
-    mem_ptr_ = reinterpret_cast<uint8_t *>(malloc(graph_mem_size));
+    mem_ptr_ = MemMalloc(graph_mem_size);
     if (mem_ptr_ != nullptr) {
       MS_LOG(INFO) << "Simple MemPlan GraphMemSize [" << graph_mem_size << "]";
       mem_size_ = graph_mem_size;
@@ -119,9 +109,8 @@ void CPUMemoryManager::AssignMemory(const session::KernelGraph *graph) {
 }
 
 void *CPUMemoryManager::StaticMemMalloc(size_t mem_size) {
-  void *ptr = malloc(mem_size);
+  auto ptr = MemMalloc(mem_size);
   if (ptr != nullptr) {
-    memset_s(ptr, mem_size, 0, mem_size);
     static_mem_[ptr] = mem_size;
     return ptr;
   } else {
@@ -133,7 +122,10 @@ void CPUMemoryManager::MemFree(void *ptr) {
   auto iter = static_mem_.find(ptr);
   if (iter != static_mem_.end()) {
     (void)static_mem_.erase(iter);
-    free(ptr);
+    auto block_iter = mem_block_map_.find(ptr);
+    if (block_iter != mem_block_map_.end()) {
+      (void)mem_block_map_.erase(block_iter);
+    }
   }
 }
 
@@ -141,11 +133,9 @@ void CPUMemoryManager::IncreaseSummaryRefCount(const session::NamedSummaryOutput
   if (!dynamic_malloc_) {
     return;
   }
-
   if (summary_outputs.empty()) {
     return;
   }
-
   for (auto &output_item : summary_outputs) {
     auto node = output_item.second.first;
     size_t index = IntToSize(output_item.second.second);
@@ -159,11 +149,9 @@ void CPUMemoryManager::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   if (!dynamic_malloc_) {
     return;
   }
-
   if (summary_outputs.empty()) {
     return;
   }
-
   for (auto &output_item : summary_outputs) {
     auto node = output_item.second.first;
     size_t index = IntToSize(output_item.second.second);
@@ -191,7 +179,6 @@ void CPUMemoryManager::IncreaseAddressRefCount(const session::KernelGraph *graph
       MS_EXCEPTION_IF_NULL(address);
       address->ref_count_++;
     }
-
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
@@ -217,7 +204,6 @@ void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
       address->ptr_ = nullptr;
     }
   }
-
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
