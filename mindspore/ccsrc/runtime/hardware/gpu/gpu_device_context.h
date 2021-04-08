@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
@@ -42,6 +43,10 @@ class GPUDeviceContext : public DeviceContext {
   void FreeMemory(DeviceAddress *const &address) const override;
   bool AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
                                 const std::vector<size_t> &size_list) const override;
+
+  DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                       TypeId type_id) const override;
+  DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
 
   // General graph optimezer ignore device data type and format.
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const override;

@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
@@ -35,6 +36,10 @@ class CPUDeviceContext : public DeviceContext {
 
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
+
+  DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                       TypeId type_id) const override;
+  DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kCPU; }
 
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const override;
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;

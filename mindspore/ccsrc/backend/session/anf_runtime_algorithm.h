@@ -105,6 +105,8 @@ class AnfRuntimeAlgorithm {
   static size_t GetInputTensorNum(const AnfNodePtr &node);
   // get the num of output real_kernel(which can be build and run in device)
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
+  // Get the memory size of output tensor of node.
+  static size_t GetOutputTensorMemSize(const AnfNodePtr &node, size_t output_index);
   // get all outputs format select of anf node
   static std::vector<std::string> GetAllOutputFormats(const AnfNodePtr &node);
   // get all inputs format select of anf node

@@ -50,6 +50,11 @@ void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   address->ptr_ = nullptr;
 }
 
+DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                                       TypeId type_id) const {
+  return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
+}
+
 void CPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
