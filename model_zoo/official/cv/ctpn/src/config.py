@@ -29,8 +29,7 @@ finetune_config = EasyDict({
     "total_epoch": 50,
 })
 
-# use for low case number
-config = EasyDict({
+config_default = EasyDict({
     "img_width": 960,
     "img_height": 576,
     "keep_ratio": False,
@@ -39,7 +38,6 @@ config = EasyDict({
     "expand_ratio": 1.0,
 
     # anchor
-    "feature_shapes": (36, 60),
     "num_anchors": 14,
     "anchor_base": 16,
     "anchor_height": [2, 4, 7, 11, 16, 23, 33, 48, 68, 97, 139, 198, 283, 406],
@@ -56,7 +54,6 @@ config = EasyDict({
     "neg_iou_thr": 0.5,
     "pos_iou_thr": 0.7,
     "min_pos_iou": 0.001,
-    "num_bboxes": 30240,
     "num_gts": 256,
     "num_expected_neg": 512,
     "num_expected_pos": 256,
@@ -75,12 +72,11 @@ config = EasyDict({
 
     # rnn structure
     "input_size": 512,
-    "num_step": 60,
-    "rnn_batch_size": 36,
     "hidden_size": 128,
 
     # training
     "warmup_mode": "linear",
+    # batch_size only support 1
     "batch_size": 1,
     "momentum": 0.9,
     "save_checkpoint": True,
@@ -131,3 +127,12 @@ config = EasyDict({
     "pretraining_dataset_file": "",
     "finetune_dataset_file": ""
 })
+
+config_add = {
+    "feature_shapes": (config_default["img_height"] // 16, config_default["img_width"] // 16),
+    "num_bboxes": (config_default["img_height"] // 16) * \
+        (config_default["img_width"] // 16) *config_default["num_anchors"],
+    "num_step": config_default["img_width"] // 16,
+    "rnn_batch_size": config_default["img_height"] // 16
+}
+config = EasyDict({**config_default, **config_add})

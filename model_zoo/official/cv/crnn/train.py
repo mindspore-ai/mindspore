@@ -15,6 +15,7 @@
 """crnn training"""
 import os
 import argparse
+import ast
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import set_seed
@@ -28,7 +29,8 @@ from src.loss import CTCLoss
 from src.dataset import create_dataset
 from src.crnn import crnn
 from src.crnn_for_train import TrainOneStepCellWithGradClip
-
+from src.metric import CRNNAccuracy
+from src.eval_callback import EvalCallBack
 set_seed(1)
 
 parser = argparse.ArgumentParser(description="crnn training")
@@ -38,6 +40,16 @@ parser.add_argument('--platform', type=str, default='Ascend', choices=['Ascend']
                     help='Running platform, only support Ascend now. Default is Ascend.')
 parser.add_argument('--model', type=str, default='lowercase', help="Model type, default is lowercase")
 parser.add_argument('--dataset', type=str, default='synth', choices=['synth', 'ic03', 'ic13', 'svt', 'iiit5k'])
+parser.add_argument('--eval_dataset', type=str, default='svt', choices=['synth', 'ic03', 'ic13', 'svt', 'iiit5k'])
+parser.add_argument('--eval_dataset_path', type=str, default=None, help='Dataset path, default is None')
+parser.add_argument("--run_eval", type=ast.literal_eval, default=False,
+                    help="Run evaluation when training, default is False.")
+parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True,
+                    help="Save best checkpoint when run_eval is True, default is True.")
+parser.add_argument("--eval_start_epoch", type=int, default=5,
+                    help="Evaluation start epoch when run_eval is True, default is 5.")
+parser.add_argument("--eval_interval", type=int, default=5,
+                    help="Evaluation interval when run_eval is True, default is 5.")
 parser.set_defaults(run_distribute=False)
 args_opt = parser.parse_args()
 
@@ -50,6 +62,12 @@ if args_opt.platform == 'Ascend':
     device_id = int(os.getenv('DEVICE_ID'))
     context.set_context(device_id=device_id)
 
+def apply_eval(eval_param):
+    evaluation_model = eval_param["model"]
+    eval_ds = eval_param["dataset"]
+    metrics_name = eval_param["metrics_name"]
+    res = evaluation_model.eval(eval_ds)
+    return res[metrics_name]
 
 if __name__ == '__main__':
     lr_scale = 1
@@ -86,16 +104,31 @@ if __name__ == '__main__':
     net = crnn(config)
     opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum, nesterov=config.nesterov)
 
-    net = WithLossCell(net, loss)
-    net = TrainOneStepCellWithGradClip(net, opt).set_train()
+    net_with_loss = WithLossCell(net, loss)
+    net_with_grads = TrainOneStepCellWithGradClip(net_with_loss, opt).set_train()
     # define model
-    model = Model(net)
+    model = Model(net_with_grads)
     # define callbacks
     callbacks = [LossMonitor(), TimeMonitor(data_size=step_size)]
+    save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
+    if args_opt.run_eval:
+        if args_opt.eval_dataset_path is None or (not os.path.isdir(args_opt.eval_dataset_path)):
+            raise ValueError("{} is not a existing path.".format(args_opt.eval_dataset_path))
+        eval_dataset = create_dataset(name=args_opt.eval_dataset,
+                                      dataset_path=args_opt.eval_dataset_path,
+                                      batch_size=config.batch_size,
+                                      is_training=False,
+                                      config=config)
+        eval_model = Model(net, loss, metrics={'CRNNAccuracy': CRNNAccuracy(config)})
+        eval_param_dict = {"model": eval_model, "dataset": eval_dataset, "metrics_name": "CRNNAccuracy"}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args_opt.eval_interval,
+                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=True,
+                               ckpt_directory=save_ckpt_path, besk_ckpt_name="best_acc.ckpt",
+                               metrics_name="acc")
+        callbacks += [eval_cb]
     if config.save_checkpoint and rank == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
-        save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
         ckpt_cb = ModelCheckpoint(prefix="crnn", directory=save_ckpt_path, config=config_ck)
         callbacks.append(ckpt_cb)
     model.train(config.epoch_size, dataset, callbacks=callbacks)

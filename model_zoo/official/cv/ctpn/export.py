@@ -36,7 +36,7 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
-    net = CTPN_Infer(config=config)
+    net = CTPN_Infer(config=config, batch_size=config.test_batch_size)
 
     param_dict = load_checkpoint(args.ckpt_file)
 

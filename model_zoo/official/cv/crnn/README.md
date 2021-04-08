@@ -131,6 +131,7 @@ crnn
 │   ├── crnn.py                                 # crnn network definition
 │   ├── crnn_for_train.py                       # crnn network with grad, loss and gradient clip
 │   ├── dataset.py                              # Data preprocessing for training and evaluation
+│   ├── eval_callback.py  
 │   ├── ic03_dataset.py                         # Data preprocessing for IC03
 │   ├── ic13_dataset.py                         # Data preprocessing for IC13
 │   ├── iiit5k_dataset.py                       # Data preprocessing for IIIT5K
@@ -224,6 +225,10 @@ Check the `eval/log.txt` and you will get outputs as following:
 ```shell
 result: {'CRNNAccuracy': (0.806)}
 ```
+
+### Evaluation while training
+
+You can add `run_eval` to start shell and set it True.You need also add `eval_dataset` to select which dataset to eval, and add eval_dataset_path to start shell if you want evaluation while training. And you can set argument option: `save_best_ckpt`, `eval_start_epoch`, `eval_interval` when `run_eval` is True.
 
 ## [Inference Process](#contents)
 

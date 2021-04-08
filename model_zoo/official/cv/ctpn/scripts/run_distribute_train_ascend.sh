@@ -56,6 +56,8 @@ do
     export RANK_ID=$i
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
+    cp ./*.py ./train_parallel$i
+    cp ./*.zip ./train_parallel$i
     cp ../*.py ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
