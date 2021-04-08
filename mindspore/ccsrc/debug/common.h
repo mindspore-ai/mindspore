@@ -22,9 +22,9 @@
 #include "utils/contract.h"
 
 namespace mindspore {
-static const int maxDirectoryLength = 1024;
-static const int maxFilenameLength = 128;
-static const int maxOSFilenameLength = 255;
+static const int MAX_DIRECTORY_LENGTH = 1024;
+static const int MAX_FILENAME_LENGTH = 128;
+static const int MAX_OS_FILENAME_LENGTH = 255;
 class Common {
  public:
   Common() = default;
