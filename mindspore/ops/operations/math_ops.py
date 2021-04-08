@@ -2246,21 +2246,21 @@ class MulNoNan(_MathBinaryOp):
     When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Note:
-        The shapes of X and y should be same or can be broadcasting.
+        The shapes of x and y should be same or can be broadcasted.
 
     Inputs:
-        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number.
-        - **input_y** (Union[Tensor]) - The second input is a tensor whose data type is number.
+        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number or scalar.
+        - **input_y** (Union[Tensor]) - The second input is a tensor whose data type is number or scalar.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
+        Tensor, the shape is same to the shape after broadcasting,
+        the data type is the number with higher precision or higher digits in the two inputs.
 
     Supported Platforms:
         ``Ascend``
 
     Raise:
-        TypeError: If x or y is a bool tensor.
+        TypeError: If neither `input_x` nor `input_y` is a bool tensor.
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 6.0, np.inf], [np.nan, -7.0, 4.0]]), ms.float32)
