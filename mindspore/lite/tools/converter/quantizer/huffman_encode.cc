@@ -15,7 +15,7 @@
  */
 
 #include "tools/converter/quantizer/huffman_encode.h"
-#include "src/dequant.h"
+#include "src/weight_decoder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore {

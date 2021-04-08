@@ -78,7 +78,8 @@ int MatmulBaseFP16CPUKernel::InitBias() {
     }
     memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32) {
-      Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, bias_tensor->ElementsNum());
+      MS_LOG(ERROR) << "Matmul fp16 only support fp16 weight";
+      return RET_ERROR;
     } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16) {
       memcpy(bias_ptr_, in_tensors_[2]->data_c(), max_bias_data * sizeof(float16_t));
     } else {

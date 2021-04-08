@@ -339,6 +339,7 @@ STATUS FormatTransPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uniqu
       MS_LOG(ERROR) << "Crop error";
       return RET_ERROR;
     }
+    node->primitive->value.AsCrop()->axis = axis_map[origin_axis];
     node->primitive->value.AsCrop()->offsets = offsets;
   }
   if (type == schema::PrimitiveType_SliceFusion || type == schema::PrimitiveType_StridedSlice) {

@@ -28,7 +28,7 @@
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
-#include "src/dequant.h"
+#include "src/weight_decoder.h"
 #ifdef ENABLE_MINDRT
 #include "src/mindrt_executor.h"
 #endif
@@ -57,13 +57,13 @@ int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   // huffman code and bit pack are not assumed to be performed at same time
   STATUS ret = RET_ERROR;
   if (src_tensor.enableHuffmanCode()) {
-    ret = DequantUtil::DecodeHuffmanCode(src_tensor, dst_tensor);
+    ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
       return ret;
     }
   } else if (need_bit_unpack) {
-    ret = DequantUtil::UnPackToInt(src_tensor, dst_tensor);
+    ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
       return ret;

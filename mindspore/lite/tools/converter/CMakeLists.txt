@@ -115,7 +115,7 @@ set(LITE_SRC
         ${SRC_DIR}/executor.cc
         ${SRC_DIR}/lite_model.cc
         ${SRC_DIR}/errorcode.cc
-        ${SRC_DIR}/dequant.cc
+        ${SRC_DIR}/weight_decoder.cc
         ${SRC_DIR}/huffman_decode.cc
         ${SRC_DIR}/ops/ops_utils.cc
         ${SRC_DIR}/ops/ops_def.cc

@@ -91,8 +91,8 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
     if (origin_bias_data_type_ == kNumberTypeFloat16) {
       memcpy(bias_data_, origin_bias_, output_channel * sizeof(float16_t));
     } else {
-      Float32ToFloat16(reinterpret_cast<float *>(origin_bias_), reinterpret_cast<float16_t *>(bias_data_),
-                       output_channel);
+      MS_LOG(ERROR) << "Conv1x1 only support fp16 weight";
+      return RET_ERROR;
     }
     memset(reinterpret_cast<char *>(bias_data_) + weight_size, 0, size - weight_size);
   }

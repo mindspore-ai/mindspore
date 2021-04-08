@@ -31,8 +31,7 @@
 #include "src/common/prim_util.h"
 #include "src/runtime/infer_manager.h"
 #include "src/sub_graph_split.h"
-#include "src/dequant.h"
-#include "nnacl/matmul_parameter.h"
+#include "src/weight_decoder.h"
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
@@ -216,7 +215,7 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index, bool *infer_shape_inter
 
 namespace {
 #ifndef SUPPORT_TRAIN
-int CopyConstTensor(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors, TypeId dst_data_type) {
+int CastConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors, TypeId dst_data_type) {
   MS_ASSERT(restored_origin_tensors != nullptr);
   MS_ASSERT(tensor != nullptr);
   if (dst_data_type != kNumberTypeFloat32 && dst_data_type != kNumberTypeFloat16) {
@@ -244,6 +243,26 @@ int CopyConstTensor(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origi
     auto new_tensor_data = tensor->data_c();
     MS_ASSERT(new_tensor_data != nullptr);
     Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
+    (*restored_origin_tensors)[tensor] = restore_tensor;
+#else
+    MS_LOG(ERROR) << "Unsupported dst data type: float16";
+    return RET_ERROR;
+#endif
+  } else if (tensor->data_type() == kNumberTypeFloat16 && dst_data_type == kNumberTypeFloat32) {
+#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
+    auto restore_tensor = Tensor::CopyTensor(*tensor, false);
+    restore_tensor->set_data(origin_data);
+    restore_tensor->set_own_data(tensor->own_data());
+    tensor->set_data(nullptr);
+    tensor->set_data_type(kNumberTypeFloat32);
+    auto ret = tensor->MallocData();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "malloc data failed";
+      return ret;
+    }
+    auto new_tensor_data = tensor->data_c();
+    MS_ASSERT(new_tensor_data != nullptr);
+    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
     (*restored_origin_tensors)[tensor] = restore_tensor;
 #else
     MS_LOG(ERROR) << "Unsupported dst data type: float16";
@@ -290,19 +309,6 @@ inline void RestoreTensorData(std::map<Tensor *, Tensor *> *restored_origin_tens
   }
   FreeRestoreTensors(restored_origin_tensors);
 }
-
-inline bool IsChannelFirst(int index, OpParameter *op_parameter) {
-  MS_ASSERT(op_parameter != nullptr);
-  if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
-    const auto *param = reinterpret_cast<MatMulParameter *>(op_parameter);
-    if (index == 0) {
-      return !(param->a_transpose_);
-    } else if (index == 1) {
-      return param->b_transpose_;
-    }
-  }
-  return true;
-}
 }  // namespace
 
 kernel::LiteKernel *Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors,
@@ -321,23 +327,21 @@ kernel::LiteKernel *Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_ten
     }
     cpu_desc.data_type = kNumberTypeFloat16;
   }
+  auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
+    return nullptr;
+  }
   std::map<Tensor *, Tensor *> restored_origin_tensors;
-  int index = 0;
-  for (auto &tensor : in_tensors) {
-    auto channel_first = IsChannelFirst(index++, op_parameter);
-    auto *restore_tensor = DequantUtil::DequantTensor(tensor, cpu_desc.data_type, channel_first, kernel_data_type);
-    if (restore_tensor != nullptr) {
-      restored_origin_tensors[tensor] = restore_tensor;
-    } else {
 #ifndef SUPPORT_TRAIN
-      auto ret = CopyConstTensor(tensor, &restored_origin_tensors, kernel_data_type);
-      if (ret != RET_OK) {
-        MS_LOG(DEBUG) << "CopyConstTensor failed: " << ret;
-        return nullptr;
-      }
-#endif
+  for (auto &tensor : in_tensors) {
+    ret = CastConstTensorData(tensor, &restored_origin_tensors, kernel_data_type);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "CastConstTensorData failed: " << ret;
+      return nullptr;
     }
   }
+#endif
   auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, cpu_desc, op_parameter);
   if (kernel != nullptr) {
     MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveCurVersionTypeName(op_type);
@@ -362,24 +366,18 @@ kernel::LiteKernel *Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_ten
       gpu_desc.data_type = kNumberTypeInt8;
     }
 
-    // weight quant
-    std::map<Tensor *, Tensor *> restored_origin_tensors;
-    for (auto &tensor : in_tensors) {
-      int index = 0;
-      auto channel_first = IsChannelFirst(index++, op_parameter);
-      auto *restore_tensor = DequantUtil::DequantTensor(tensor, desc.data_type, channel_first, kNumberTypeFloat32);
-      if (restore_tensor != nullptr) {
-        restored_origin_tensors[tensor] = restore_tensor;
-      }
+    // weight dequant
+    auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
+      return nullptr;
     }
 
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type);
-      FreeRestoreTensors(&restored_origin_tensors);
     } else {
       MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(gpu_desc.type);
-      RestoreTensorData(&restored_origin_tensors);
     }
     return kernel;
   } else {
@@ -396,26 +394,20 @@ kernel::LiteKernel *Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_ten
     if (npu_desc.data_type == kNumberTypeFloat16) {
       npu_desc.data_type = kNumberTypeFloat32;
     }
+    auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
+      return nullptr;
+    }
     for (auto tensor : in_tensors) {
       if (tensor->data_type() == kNumberTypeFloat16) {
         tensor->set_data_type(kNumberTypeFloat32);
       }
     }
-    std::map<Tensor *, Tensor *> restored_origin_tensors;
-    for (auto &tensor : in_tensors) {
-      int index = 0;
-      auto channel_first = IsChannelFirst(index++, op_parameter);
-      auto *restore_tensor = DequantUtil::DequantTensor(tensor, desc.data_type, channel_first, kNumberTypeFloat32);
-      if (restore_tensor != nullptr) {
-        restored_origin_tensors[tensor] = restore_tensor;
-      }
-    }
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, npu_desc, op_parameter);
     if (kernel != nullptr) {
-      FreeRestoreTensors(&restored_origin_tensors);
       MS_LOG(DEBUG) << "Get npu op success: " << PrimitiveCurVersionTypeName(npu_desc.type);
     } else {
-      RestoreTensorData(&restored_origin_tensors);
       MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(npu_desc.type);
     }
     return kernel;
