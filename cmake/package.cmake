@@ -264,6 +264,19 @@ if(NOT ENABLE_GE)
     endif()
 endif()
 
+if(MS_BUILD_GRPC)
+    install(FILES ${grpc_LIBPATH}/libgrpc++.so.1.27.3
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libgrpc++.so.1 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libgrpc.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libgrpc.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libgpr.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libgpr.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libupb.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libaddress_sorting.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libaddress_sorting.so.9 COMPONENT mindspore)
+endif()
+
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
     file(GLOB CXX_LIB_LIST ${CXX_DIR}/*.dll)

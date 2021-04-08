@@ -308,7 +308,7 @@ else()
 endif()
 
 if(MS_BUILD_GRPC)
-    target_link_libraries(_c_dataengine PRIVATE mindspore::grpc++)
+    target_link_libraries(_c_dataengine PRIVATE -Wl,--no-as-needed mindspore::grpc++)
 endif()
 
 set_target_properties(_c_dataengine PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
