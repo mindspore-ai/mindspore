@@ -169,8 +169,20 @@ The `pretrained_path` should be a checkpoint of vgg16 trained on Imagenet2012. T
 ...
 from src.vgg16 import VGG16
 ...
-network = VGG16()
+network = VGG16(num_classes=cfg.num_classes)
 ...
+
+```
+
+To train a better model, you can modify some parameter in modelzoo/official/cv/vgg16/src/config.py, here we suggested you modify the "warmup_epochs" just like below, you can also try to adjust other parameter.
+
+```python
+
+imagenet_cfg = edict({
+    ...
+    "warmup_epochs": 5
+    ...
+})
 
 ```
 
