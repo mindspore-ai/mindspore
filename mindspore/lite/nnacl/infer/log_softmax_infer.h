@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_LOG_SOFTMAX_INFER_H
+#define MINDSPORE_LITE_NNACL_LOG_SOFTMAX_INFER_H
 
-#ifndef MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
-#define MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
-
-#include "nnacl/op_base.h"
+#include "nnacl/infer/common_infer.h"
 #include "nnacl/softmax_parameter.h"
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SoftmaxNormFp16(const float16_t *src, float16_t *dst, int batch, int channel);
-void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data, SoftmaxParameter *parameter);
-void SoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, int batch, int channel);
+
+int LogSoftMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                         OpParameter *parameter);
+
 #ifdef __cplusplus
 }
 #endif
-
-#endif  // MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
+#endif  // MINDSPORE_LITE_NNACL_LOG_SOFTMAX_INFER_H
