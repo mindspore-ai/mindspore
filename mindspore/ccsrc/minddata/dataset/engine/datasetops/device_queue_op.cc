@@ -215,7 +215,8 @@ Status DeviceQueueOp::SendDataToAscend() {
           MS_LOG(INFO) << "stop_send received";
           return Status::OK();
         }
-        return Status(StatusCode::kMDTDTPushFailure, "TDT Push Failed");
+        return Status(StatusCode::kMDTDTPushFailure,
+                      "TDT Push data into device Failed, please check error before this first.");
       }
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;
@@ -262,7 +263,8 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow currRow, bool isProfilingEnable, in
       MS_LOG(INFO) << "stop_send received";
       return Status::OK();
     }
-    return Status(StatusCode::kMDTDTPushFailure, "TDT Push Failed");
+    return Status(StatusCode::kMDTDTPushFailure,
+                  "TDT Push data into device Failed, please check error before this first.");
   }
   if (create_data_info_queue_) {
     DATA_INFO data_info;

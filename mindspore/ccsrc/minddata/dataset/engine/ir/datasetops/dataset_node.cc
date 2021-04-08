@@ -636,7 +636,8 @@ Status DatasetNode::ValidateParams() {
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_workers_ > 0 && num_workers_ <= num_threads,
     Name() + "'s num_workers=" + std::to_string(num_workers_) +
-      ", this value is not within the required range of [1, cpu_thread_cnt=" + std::to_string(num_threads) + "].");
+      "(default=8), this value is not within the required range of [1, cpu_thread_cnt=" + std::to_string(num_threads) +
+      "], you can modify num_workers in script like:\n" + Name() + "(data_path, num_parallel_workers=4)");
   return Status::OK();
 }
 

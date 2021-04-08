@@ -105,7 +105,6 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
 
 // no validation is needed for generator op.
 Status GeneratorNode::ValidateParams() {
-  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (source_len_ == 0) {
     std::string err_msg = "GeneratorNode: data row of input source must not be 0, got: " + std::to_string(source_len_);
     MS_LOG(ERROR) << err_msg;
