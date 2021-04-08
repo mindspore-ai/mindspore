@@ -27,7 +27,7 @@ select_op_info = TBERegOp("Select") \
     .input(1, "x1", False, "required", "all") \
     .input(2, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 

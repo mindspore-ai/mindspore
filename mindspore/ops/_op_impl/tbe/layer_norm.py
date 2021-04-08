@@ -32,7 +32,7 @@ layer_norm_op_info = TBERegOp("LayerNorm") \
     .output(0, "y", False, "required", "all") \
     .output(1, "mean", False, "required", "all") \
     .output(2, "variance", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.F16_None,
                   DataType.F16_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None, DataType.F32_None,

@@ -36,7 +36,7 @@ adam_apply_one_op_info = TBERegOp("AdamApplyOne") \
     .output(0, "output0", False, "required", "all") \
     .output(1, "output1", False, "required", "all") \
     .output(2, "output2", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,
                   DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,
                   DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,

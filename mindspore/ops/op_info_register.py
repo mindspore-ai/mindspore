@@ -142,7 +142,7 @@ class RegOp:
         Raises:
             TypeError: If the type of value is not list.
             ValueError: If the size of param list is not equal to the size of key list, or
-                        the size of param list is not equal to the size of funtion list.
+                        the size of param list is not equal to the size of function list.
         """
         for i in [param_list, key_list, fn_list]:
             if not isinstance(i, list):
@@ -353,9 +353,9 @@ class TBERegOp(RegOp):
         self.kernel_name_ = ''
         self.partial_flag_ = False
         self.reshape_type_ = ''
-        self.dynamic_format_ = False
         self.dynamic_shape_ = False
         self.need_check_supported_ = False
+        self.is_dynamic_format_ = False
         self.op_pattern_ = ""
 
     def async_flag(self, async_flag):
@@ -424,17 +424,6 @@ class TBERegOp(RegOp):
         self.reshape_type_ = reshape_type
         return self
 
-    def dynamic_format(self, dynamic_format):
-        """
-        Whether the operator supports dynamic selection of format and dtype or not.
-
-        Args:
-            dynamic_format (bool): Value of dynamic format. Default: false.
-        """
-        self._is_bool(dynamic_format)
-        self.dynamic_format_ = dynamic_format
-        return self
-
     def dynamic_shape(self, dynamic_shape):
         """
         Whether the operator supports dynamic shape.
@@ -457,9 +446,20 @@ class TBERegOp(RegOp):
         self.need_check_supported_ = need_check_supported
         return self
 
+    def is_dynamic_format(self, is_dynamic_format):
+        """
+        Whether the operator need calop_select_format api.
+
+        Args:
+            :param is_dynamic_format: (bool): Value of is_dynamic_format_. Default: false.
+        """
+        self._is_bool(is_dynamic_format)
+        self.is_dynamic_format_ = is_dynamic_format
+        return self
+
     def op_pattern(self, pattern=None):
         """
-        The behavior type of opeator, such as broadcast, reduce and so on.
+        The behavior type of operator, such as broadcast, reduce and so on.
 
         Args:
             pattern (str): Value of op pattern.

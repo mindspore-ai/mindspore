@@ -26,7 +26,7 @@ softmax_op_info = TBERegOp("Softmax") \
     .attr("axis", "optional", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None) \
     .get_op_info()
 

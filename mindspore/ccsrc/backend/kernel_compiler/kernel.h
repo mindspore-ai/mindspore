@@ -53,7 +53,6 @@ enum OpPattern {
   kFormatAgnosticPattern = 1,
   kBroadcastPattern = 2,
   kReducePattern = 3,
-  kDynamicFormatPattern = 4,
 };
 
 // Backend processor
