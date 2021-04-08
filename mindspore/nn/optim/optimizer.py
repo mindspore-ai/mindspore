@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """optimizer"""
+import inspect
 from typing import Iterable
 
 import numpy as np
@@ -33,7 +34,18 @@ from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
 
-__all__ = ['Optimizer']
+__all__ = ['Optimizer', 'opt_init_args_register']
+
+def opt_init_args_register(fn):
+    def deco(self, *args, **kwargs):
+        bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+        arguments = bound_args.arguments
+        arguments.pop('self')
+        arguments.pop('params')
+        setattr(self, 'init_args', arguments)
+        fn(self, *args, **kwargs)
+    return deco
 
 
 class Optimizer(Cell):
