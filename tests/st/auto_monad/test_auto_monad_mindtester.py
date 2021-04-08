@@ -26,7 +26,7 @@ from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class _Grad(Cell):
@@ -644,3 +644,47 @@ def test_highgrad_one_input_third_grad():
         net, [GradOfFirstInput, GradOfFirstInput, GradOfFirstInput])
     third_grad = grad_net(x)
     assert (third_grad.asnumpy() == np.array([0, 0]).astype(np.float32)).all()
+
+
+class SideEffectControlFlowAssignDependWhileNet(Cell):
+    def __init__(self):
+        super().__init__()
+        self.parameter1 = Parameter(Tensor([199.0], ms.float32), name="parameter1")
+        self.assign = P.Assign()
+        self.assignadd = P.AssignAdd()
+        self.addn = P.AddN()
+        self.depend = P.Depend()
+
+    def construct(self, x, y, z):
+        p1 = self.assign(self.parameter1, x)
+        while self.parameter1 < y:
+            x = self.addn((x, x))
+            p2 = self.assignadd(self.parameter1, z)
+            self.depend(p2, p1)
+        return x
+
+    def grad_mindspore_impl(self, params1, params2, params3, grad_ys):
+        grad_net = GradOfAllInputsAndParams(self)
+        grad_net.set_train()
+        grad_out = grad_net(params1, params2, params3, grad_ys)
+        return grad_out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_side_effect_grad_control_flow_assign_depend_while_net():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = SideEffectControlFlowAssignDependWhileNet()
+    grad_ys = Tensor([18.0], ms.float32)
+    inputs1 = Tensor([9.0], ms.float32)
+    inputs2 = Tensor([6.0], ms.float32)
+    inputs3 = Tensor([3.0], ms.float32)
+    out1 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = SideEffectControlFlowAssignDependWhileNet()
+    out2 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
+    allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
+    allclose_nparray(out1[1][0].asnumpy(), out2[1][0].asnumpy(), 0.001, 0.001)
