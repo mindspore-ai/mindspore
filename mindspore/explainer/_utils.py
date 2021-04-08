@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,16 +104,14 @@ def retrieve_layer_by_name(model: _Module, layer_name: str):
     Retrieve the layer in the model by the given layer_name.
 
     Args:
-        model (_Module): model which contains the target layer
-        layer_name (str): name of target layer
+        model (Cell): Model which contains the target layer.
+        layer_name (str): Name of target layer.
 
-    Return:
-        - target_layer (_Module)
+    Returns:
+        Cell, the target layer.
 
-    Raise:
-        ValueError: if module with given layer_name is not found in the model,
-            raise ValueError.
-
+    Raises:
+        ValueError: If module with given layer_name is not found in the model.
     """
     if not isinstance(layer_name, str):
         raise TypeError('layer_name should be type of str, but receive {}.'
@@ -146,13 +144,14 @@ def retrieve_layer(model: _Module, target_layer: Union[str, _Module] = ''):
     be raised.
 
     Args:
-        model (_Module): the model to retrieve the target layer
-        target_layer (Union[str, _Module]): target layer to retrieve. Can be
-        either string (layer name) or the Cell object. If '' is provided,
-        the input model will be returned.
+        model (Cell): Model which contains the target layer.
+        target_layer (str, Cell): Name of target layer or the target layer instance.
 
-    Return:
-        target layer (_Module)
+    Returns:
+        Cell, the target layer.
+
+    Raises:
+        ValueError: If module with given layer_name is not found in the model.
     """
     if isinstance(target_layer, str):
         target_layer = retrieve_layer_by_name(model, target_layer)
@@ -174,9 +173,7 @@ class ForwardProbe:
     Probe to capture output of specific layer in a given model.
 
     Args:
-        target_layer (_Module): name of target layer or just provide the
-        target layer.
-
+        target_layer (str, Cell): Name of target layer or the target layer instance.
     """
 
     def __init__(self, target_layer: _Module):
@@ -204,7 +201,7 @@ class ForwardProbe:
 
 
 def format_tensor_to_ndarray(x: Union[ms.Tensor, np.ndarray]) -> np.ndarray:
-    """Unify `mindspore.Tensor` and `np.ndarray` to `np.ndarray`. """
+    """Unify Tensor and numpy.array to numpy.array."""
     if isinstance(x, ms.Tensor):
         x = x.asnumpy()
 
@@ -231,7 +228,7 @@ def calc_correlation(x: Union[ms.Tensor, np.ndarray],
 
 
 def calc_auc(x: _Array) -> _Array:
-    """Calculate the Aera under Curve."""
+    """Calculate the Area under Curve."""
     # take mean for multiple patches if the model is fully convolutional model
     if len(x.shape) == 4:
         x = np.mean(np.mean(x, axis=2), axis=3)
@@ -242,18 +239,11 @@ def calc_auc(x: _Array) -> _Array:
 
 def rank_pixels(inputs: _Array, descending: bool = True) -> _Array:
     """
-    Generate rank order fo every pixel in an 2D array.
+    Generate rank order for every pixel in an 2D array.
 
     The rank order start from 0 to (num_pixel-1). If descending is True, the
     rank order will generate in a descending order, otherwise in ascending
     order.
-
-    Example:
-        x = np.array([[4., 3., 1.], [5., 9., 1.]])
-        rank_pixels(x, descending=True)
-        >> np.array([[2, 3, 4], [1, 0, 5]])
-        rank_pixels(x, descending=False)
-        >> np.array([[3, 2, 0], [4, 5, 1]])
     """
     if len(inputs.shape) < 2 or len(inputs.shape) > 3:
         raise ValueError('Only support 2D or 3D inputs currently.')
@@ -275,16 +265,15 @@ def resize(inputs: _Tensor, size: Tuple[int, int], mode: str) -> _Tensor:
     Resize the intermediate layer _attribution to the same size as inputs.
 
     Args:
-        inputs (ms.Tensor): the input tensor to be resized
-        size (tupleint]): the targeted size resize to
-        mode (str): the resize mode. Options: 'nearest_neighbor', 'bilinear'
+        inputs (Tensor): The input tensor to be resized.
+        size (tuple[int]): The targeted size resize to.
+        mode (str): The resize mode. Options: 'nearest_neighbor', 'bilinear'.
 
     Returns:
-        outputs (ms.Tensor): the resized tensor.
+        Tensor, the resized tensor.
 
     Raises:
-        ValueError: the resize mode is not in ['nearest_neighbor',
-         'bilinear'].
+        ValueError: the resize mode is not in ['nearest_neighbor', 'bilinear'].
     """
     h, w = size
     if mode == 'nearest_neighbor':
@@ -305,6 +294,6 @@ def resize(inputs: _Tensor, size: Tuple[int, int], mode: str) -> _Tensor:
         resized_np = np.transpose(array_lst, [0, 3, 1, 2])
         outputs = ms.Tensor(resized_np, inputs.dtype)
     else:
-        raise ValueError('Unsupported resize mode {}'.format(mode))
+        raise ValueError('Unsupported resize mode {}.'.format(mode))
 
     return outputs

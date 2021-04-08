@@ -83,21 +83,30 @@ class ImageClassificationRunner:
         >>> from mindspore.explainer.benchmark import Faithfulness
         >>> from mindspore.nn import Softmax
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-        >>> # Prepare the dataset for explaining and evaluation, e.g., Cifar10
-        >>> dataset = get_dataset('/path/to/Cifar10_dataset')
-        >>> labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-        >>> # load checkpoint to a network, e.g. checkpoint of resnet50 trained on Cifar10
-        >>> param_dict = load_checkpoint("checkpoint.ckpt")
-        >>> net = resnet50(len(labels))
-        >>> activation_fn = Softmax()
+        >>>
+        >>> # The detail of AlexNet is shown in model_zoo.official.cv.alexnet.src.alexnet.py
+        >>> net = AlexNet(10)
+        >>> # Load the checkpoint
+        >>> param_dict = load_checkpoint("/path/to/checkpoint")
         >>> load_param_into_net(net, param_dict)
+        >>>
+        >>> # Prepare the dataset for explaining and evaluation.
+        >>> # The detail of create_dataset_cifar10 method is shown in model_zoo.official.cv.alexnet.src.dataset.py
+        >>>
+        >>> dataset = create_dataset_cifar10("/path/to/cifar/dataset", 1)
+        >>> labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+        >>>
+        >>> activation_fn = Softmax()
         >>> gbp = GuidedBackprop(net)
         >>> gradient = Gradient(net)
         >>> explainers = [gbp, gradient]
         >>> faithfulness = Faithfulness(len(labels), activation_fn, "NaiveFaithfulness")
         >>> benchmarkers = [faithfulness]
+        >>>
         >>> runner = ImageClassificationRunner("./summary_dir", (dataset, labels), net, activation_fn)
         >>> runner.register_saliency(explainers=explainers, benchmarkers=benchmarkers)
+        >>> runner.register_uncertainty()
+        >>> runner.register_hierarchical_occlusion()
         >>> runner.run()
     """
 

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class Localization(LabelSensitiveMetric):
 
     Examples:
         >>> from mindspore.explainer.benchmark import Localization
-        >>> num_labels = 100
+        >>> num_labels = 10
         >>> localization = Localization(num_labels, "PointingGame")
     """
 
@@ -113,18 +113,22 @@ class Localization(LabelSensitiveMetric):
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore.explainer.explanation import Gradient
-            >>> # init an explainer with a trained network, e.g., resnet50
-            >>> gradient = Gradient(network)
-            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> masks = np.zeros([1, 1, 224, 224])
-            >>> masks[:, :, 65: 100, 65: 100] = 1
+            >>>
+            >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+            >>> net = LeNet5(10, num_channel=3)
+            >>> gradient = Gradient(net)
+            >>> inputs = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
+            >>> masks = np.zeros([1, 1, 32, 32])
+            >>> masks[:, :, 10: 20, 10: 20] = 1
             >>> targets = 5
             >>> # usage 1: input the explainer and the data to be explained,
-            >>> # calculate the faithfulness with the specified metric
+            >>> # localization is a Localization instance
             >>> res = localization.evaluate(gradient, inputs, targets, mask=masks)
+            >>> print(res)
             >>> # usage 2: input the generated saliency map
             >>> saliency = gradient(inputs, targets)
             >>> res = localization.evaluate(gradient, inputs, targets, saliency, mask=masks)
+            >>> print(res)
         """
         self._check_evaluate_param_with_mask(explainer, inputs, targets, saliency, mask)
 

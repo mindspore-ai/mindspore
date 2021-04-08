@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,19 +45,19 @@ class ClassSensitivity(LabelAgnosticMetric):
             numpy.ndarray, 1D array of shape :math:`(N,)`, result of class sensitivity evaluated on `explainer`.
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore.explainer.benchmark import ClassSensitivity
             >>> from mindspore.explainer.explanation import Gradient
-            >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-            >>> # prepare your network and load the trained checkpoint file, e.g., resnet50.
-            >>> network = resnet50(10)
-            >>> param_dict = load_checkpoint("resnet50.ckpt")
-            >>> load_param_into_net(network, param_dict)
+            >>>
+            >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+            >>> net = LeNet5(10, num_channel=3)
             >>> # prepare your explainer to be evaluated, e.g., Gradient.
-            >>> gradient = Gradient(network)
-            >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+            >>> gradient = Gradient(net)
+            >>> input_x = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
             >>> class_sensitivity = ClassSensitivity()
             >>> res = class_sensitivity.evaluate(gradient, input_x)
+            >>> print(res)
         """
         self._check_evaluate_param(explainer, inputs)
 
