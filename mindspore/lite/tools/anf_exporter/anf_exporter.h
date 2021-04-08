@@ -51,11 +51,11 @@ class AnfExporter {
   int ConvertInputCNodeCommonOp(const AnfNodePtr &input_anode, schema::CNodeT *output_cnode);
   int ConvertInputParameter(const std::shared_ptr<AnfNode> &input_anode, const std::shared_ptr<PrimitiveC> &primitive,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
-  int ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_anode,
+  int ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_anode, const std::shared_ptr<PrimitiveC> &primitive,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
   int ProcessTensor(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                    const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                    const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+                    const std::shared_ptr<Value> &value, const std::shared_ptr<PrimitiveC> &primitive,
+                    schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int ProcessInt32OrInt64Imm(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
                              const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
                              const std::unique_ptr<schema::MetaGraphT> &meta_graphT);

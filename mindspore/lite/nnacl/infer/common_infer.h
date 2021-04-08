@@ -123,8 +123,10 @@ enum NNACLQuantType {
   QuantType_AwareTraining = 1,
   QuantType_WeightQuant = 2,
   QuantType_PostTraining = 3,
+  QuantType_QUANT_WEIGHT = 4,
+  QuantType_QUANT_ALL = 5,
   QuantType_MIN = QuantType_QUANT_NONE,
-  QuantType_MAX = QuantType_PostTraining
+  QuantType_MAX = QuantType_QUANT_ALL
 };
 
 typedef struct vvector {

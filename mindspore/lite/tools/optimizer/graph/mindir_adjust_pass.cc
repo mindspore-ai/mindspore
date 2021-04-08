@@ -296,6 +296,7 @@ bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
     return lite::RET_OK;
   }
   MS_ASSERT(graph != nullptr);
+  graph_ = graph;
   auto node_list = TopoSort(graph->get_return());
   int status = lite::RET_OK;
   bool success_flag = true;

@@ -26,7 +26,9 @@ using mindspore::lite::converter::FmkType_TF;
 using mindspore::lite::converter::FmkType_TFLITE;
 using mindspore::schema::QuantType_AwareTraining;
 using mindspore::schema::QuantType_PostTraining;
+using mindspore::schema::QuantType_QUANT_ALL;
 using mindspore::schema::QuantType_QUANT_NONE;
+using mindspore::schema::QuantType_QUANT_WEIGHT;
 using mindspore::schema::QuantType_WeightQuant;
 namespace mindspore::opt {
 namespace {
@@ -122,9 +124,10 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
   }
   auto weight_node = conv_node->input(kConvWeightIndex);
   switch (this->quant_type) {
-    case QuantType_AwareTraining:
-    case QuantType_PostTraining:
     case QuantType_WeightQuant:
+    case QuantType_PostTraining:
+    case QuantType_QUANT_WEIGHT:
+    case QuantType_QUANT_ALL:
     case QuantType_QUANT_NONE: {
       // sum up from current ms quant models
       prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::KCHW));

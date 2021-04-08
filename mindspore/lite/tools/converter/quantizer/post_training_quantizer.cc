@@ -829,7 +829,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
                         << "'s output quant_params size: " << input_primitive_quant_holder->output_quant_params().size()
                         << ", but index: " << index;
       }
-      primitive_quant_holder->set_quant_type(schema::QuantType_PostTraining);
+      primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
       continue;
     } else if (op_type == ops::kNameConv2DFusion || op_type == ops::kNameConv2dTransposeFusion ||
                op_type == ops::kNameFullConnection || op_type == ops::kNameLayerNormFusion) {
@@ -870,7 +870,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
       output_min_max.min = info->min;
 
       DoQuantOutput(output_scale, output_zp, &output_min_max, primitive);
-      primitive_quant_holder->set_quant_type(schema::QuantType_PostTraining);
+      primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
     }
   }
   return RET_OK;

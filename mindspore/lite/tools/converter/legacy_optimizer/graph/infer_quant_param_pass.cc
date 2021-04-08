@@ -18,75 +18,32 @@
 #include <vector>
 #include <memory>
 #include "src/common/utils.h"
-#include "tools/converter/quantizer/calc_quant_param.h"
+#include "tools/converter/quantizer/quant_helper/quant_node_helper.h"
 #include "tools/common/node_util.h"
 
 namespace mindspore::lite {
 STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
-  auto *quantParamRegister = QuantParamCalcRegister::GetInstance();
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "graph is null";
+    return RET_NULL_PTR;
+  }
 
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
-    MS_ASSERT(node != nullptr);
-    if (node->quantType == schema::QuantType_WeightQuant) {
+    if (node == nullptr) {
+      MS_LOG(ERROR) << "node is null";
+      return RET_NULL_PTR;
+    }
+
+    // make sure reenter node will keep the node status
+    if (node->quantType != schema::QuantType_QUANT_NONE) {
       continue;
     }
-    DetermineNodeQuantType(*graph, node.get());
-    if (node->quantType == schema::QuantType_AwareTraining) {
-      continue;
-    }
-    if (GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
-      MS_ASSERT(false);
-    }
-    auto quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
-    if (quantParamCalcer == nullptr) {
-      MS_LOG(DEBUG) << "Can not find QuantParamCalcer for " << node->name.c_str()
-                    << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
-      node->quantType = schema::QuantType_QUANT_NONE;
-    } else {
-      auto status = quantParamCalcer->Calc(graph, *node);
-      if (status != RET_OK) {
-        MS_LOG(DEBUG) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
-        node->quantType = schema::QuantType_QUANT_NONE;
-      } else {
-        node->quantType = schema::QuantType_AwareTraining;
-      }
-    }
+
+    auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
+
+    quant_helper->NodeQuantPreprocess(graph, node.get());
   }
   return RET_OK;
-}
-
-void InferQuantParamPass::DetermineNodeQuantType(const schema::MetaGraphT &graph, schema::CNodeT *cnode) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(cnode != nullptr);
-  bool canQuant = true;
-  for (auto &inputTensorIdx : cnode->inputIndex) {
-    MS_ASSERT(graph.allTensors.size() > inputTensorIdx);
-    auto &inTensor = graph.allTensors.at(inputTensorIdx);
-    MS_ASSERT(inTensor != nullptr);
-    if (inTensor->quantParams.empty() || inTensor->quantParams.front() == nullptr ||
-        !inTensor->quantParams.front()->inited) {
-      canQuant = false;
-      break;
-    }
-  }
-
-  for (auto &outTensorIdx : cnode->outputIndex) {
-    MS_ASSERT(graph.allTensors.size() > outTensorIdx);
-    auto &outTensor = graph.allTensors.at(outTensorIdx);
-    MS_ASSERT(outTensor != nullptr);
-    if (outTensor->quantParams.empty() || outTensor->quantParams.front() == nullptr ||
-        !outTensor->quantParams.front()->inited) {
-      canQuant = false;
-      break;
-    }
-  }
-
-  if (canQuant) {
-    cnode->quantType = schema::QuantType_AwareTraining;
-  } else {
-    cnode->quantType = schema::QuantType_QUANT_NONE;
-  }
 }
 }  // namespace mindspore::lite

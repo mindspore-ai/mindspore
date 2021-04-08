@@ -5,6 +5,7 @@ include_directories(${3RD_DIR}/opencv/build/include/opencv4)
 
 file(GLOB QUANTIZER
         ${CMAKE_CURRENT_SOURCE_DIR}/calc_quant_param.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/quant_helper/*
         ${CMAKE_CURRENT_SOURCE_DIR}/quantizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/quantize_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/post_training_quantizer.cc

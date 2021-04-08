@@ -65,6 +65,11 @@ class LiteModel : public Model {
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
       node->primitive_ = c_node->primitive();
       node->quant_type_ = c_node->quantType();
+      if (node->quant_type_ == schema::QuantType_PostTraining || node->quant_type_ == schema::QuantType_AwareTraining) {
+        node->quant_type_ = schema::QuantType_QUANT_ALL;
+      } else if (node->quant_type_ == schema::QuantType_WeightQuant) {
+        node->quant_type_ = schema::QuantType_QUANT_WEIGHT;
+      }
       node->name_ = c_node->name()->c_str();
       auto count = c_node->inputIndex()->size();
       for (uint32_t j = 0; j < count; ++j) {
