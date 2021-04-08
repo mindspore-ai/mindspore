@@ -1784,18 +1784,22 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
     auto graph_info_df = std::make_shared<GraphInfo>(cell_id);
     top_cell()->graph_info_map()[df_builder] = graph_info_df;
     // Init parameter info for make cnode and curr_g
+    std::vector<ValuePtr> input_param_values;
     for (size_t i = 0; i < args.size(); ++i) {
-      auto param = args[i];
       auto new_param = curr_g_->add_parameter();
-      ValuePtr param_value = PyAttrValue(param);
-      MS_EXCEPTION_IF_NULL(param_value);
-      new_param->set_abstract(param_value->ToAbstract());
-      std::string param_id = GetId(param);
-      SetTupleArgsToGraphInfoMap(curr_g_, param, new_param, true);
-      SetNodeMapInGraphInfoMap(curr_g_, param_id, new_param);
-      SetParamNodeMapInGraphInfoMap(curr_g_, param_id, new_param);
+      auto param_i = args[i];
+      ValuePtr param_i_value = PyAttrValue(param_i);
+      MS_EXCEPTION_IF_NULL(param_i_value);
+      input_param_values.emplace_back(param_i_value);
+      auto param_i_abs = param_i_value->ToAbstract();
+      MS_EXCEPTION_IF_NULL(param_i_abs);
+      new_param->set_abstract(param_i_abs->Broaden());
+      std::string param_i_id = GetId(param_i);
+      SetTupleArgsToGraphInfoMap(curr_g_, param_i, new_param, true);
+      SetNodeMapInGraphInfoMap(curr_g_, param_i_id, new_param);
+      SetParamNodeMapInGraphInfoMap(curr_g_, param_i_id, new_param);
     }
-    top_cell()->set_k_pynative_cell_ptr(ad::GradPynativeCellBegin(curr_g_->parameters()));
+    top_cell()->set_k_pynative_cell_ptr(ad::GradPynativeCellBegin(curr_g_->parameters(), input_param_values));
     top_cell()->set_need_compile_graph(true);
     top_cell()->set_init_kpynative(true);
   } else {

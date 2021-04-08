@@ -44,7 +44,8 @@ FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr
 
 // Start building back propagate funcgraph for this cell.
 // cell_inputs: the input parameter list of this cell except the weights;
-KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs);
+KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
+                                       const std::vector<ValuePtr> &input_param_values);
 
 // Return the back propagate funcgraph for this cell.
 // weights: weights parameters used in this cell.

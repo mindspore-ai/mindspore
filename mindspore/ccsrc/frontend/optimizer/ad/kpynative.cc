@@ -226,12 +226,16 @@ using PynativeAdjointPtr = std::shared_ptr<PynativeAdjoint>;
 
 class KPynativeCellImpl : public KPynativeCell {
  public:
-  explicit KPynativeCellImpl(const AnfNodePtrList &cell_inputs)
+  KPynativeCellImpl(const AnfNodePtrList &cell_inputs, const std::vector<ValuePtr> &input_param_values)
       : tape_(std::make_shared<FuncGraph>()), cell_inputs_(cell_inputs) {
     tape_->debug_info()->set_name("grad_top");
     for (size_t i = 0; i < cell_inputs.size(); ++i) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(cell_inputs[i]->debug_info()));
       tape_->add_parameter();
+      // Build adjoint for every input parameter
+      auto inp_i_pynative_adjoint =
+        std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, input_param_values[i], nullptr);
+      anfnode_to_adjoin_.insert(std::make_pair(cell_inputs[i], inp_i_pynative_adjoint));
     }
   }
   ~KPynativeCellImpl() override = default;
@@ -269,13 +273,18 @@ class KPynativeCellImpl : public KPynativeCell {
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
-KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs) {
+KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
+                                       const std::vector<ValuePtr> &input_param_values) {
   auto abstract_are_set = std::all_of(cell_inputs.cbegin(), cell_inputs.cend(),
                                       [](const AnfNodePtr &node) { return node->abstract() != nullptr; });
   if (!abstract_are_set) {
     MS_LOG(EXCEPTION) << "Not all abstract_value in cell_inputs are set";
   }
-  return std::make_shared<KPynativeCellImpl>(cell_inputs);
+  if (cell_inputs.size() != input_param_values.size()) {
+    MS_LOG(EXCEPTION) << "The size of cell inputs " << cell_inputs.size()
+                      << " is not equal to the size of input parameter values " << input_param_values.size();
+  }
+  return std::make_shared<KPynativeCellImpl>(cell_inputs, input_param_values);
 }
 
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
@@ -504,11 +513,6 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &c
       } else if (inp->isa<ValueNode>()) {
         const auto &inp_value = GetValueNode(inp);
         op_args.push_back(inp_value);
-      } else if (inp->isa<Parameter>()) {
-        auto param = inp->cast<ParameterPtr>();
-        const auto &abs = param->abstract();
-        MS_EXCEPTION_IF_NULL(abs);
-        op_args.push_back(abs->BuildValue());
       } else {
         MS_LOG(EXCEPTION) << "Input of MakeTuple/MakeLis is not a CNode or ValueNode, but: " << inp->DebugString();
       }
