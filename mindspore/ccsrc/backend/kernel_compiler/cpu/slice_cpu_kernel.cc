@@ -189,8 +189,12 @@ void SliceCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inp
     MS_LOG(EXCEPTION) << id << " output memory out of bounds.";
   }
 
-  auto ret = memcpy_s(output_addr + out_offset, out_buff_size - out_offset * sizeof(T), input_addr + in_offset,
-                      copy_num * sizeof(T));
+  size_t buff_size = out_buff_size - out_offset * sizeof(T);
+  size_t copy_size = copy_num * sizeof(T);
+  if (buff_size < copy_size) {
+    MS_LOG(EXCEPTION) << "output buffer is not enough. memcpy failed!";
+  }
+  auto ret = memcpy_s(output_addr + out_offset, copy_size, input_addr + in_offset, copy_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy failed. ret:" << ret;
   }
