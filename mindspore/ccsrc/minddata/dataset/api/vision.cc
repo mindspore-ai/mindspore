@@ -596,7 +596,8 @@ struct RandomSelectSubpolicy::Data {
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
 };
 
-RandomSelectSubpolicy::RandomSelectSubpolicy(std::vector<std::vector<std::pair<TensorTransform *, double>>> policy)
+RandomSelectSubpolicy::RandomSelectSubpolicy(
+  const std::vector<std::vector<std::pair<TensorTransform *, double>>> &policy)
     : data_(std::make_shared<Data>()) {
   for (int32_t i = 0; i < policy.size(); i++) {
     std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
@@ -612,7 +613,7 @@ RandomSelectSubpolicy::RandomSelectSubpolicy(std::vector<std::vector<std::pair<T
 }
 
 RandomSelectSubpolicy::RandomSelectSubpolicy(
-  std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> policy)
+  const std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> &policy)
     : data_(std::make_shared<Data>()) {
   for (int32_t i = 0; i < policy.size(); i++) {
     std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
@@ -628,7 +629,7 @@ RandomSelectSubpolicy::RandomSelectSubpolicy(
 }
 
 RandomSelectSubpolicy::RandomSelectSubpolicy(
-  std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> policy)
+  const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy)
     : data_(std::make_shared<Data>()) {
   for (int32_t i = 0; i < policy.size(); i++) {
     std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
