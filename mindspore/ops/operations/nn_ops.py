@@ -4187,7 +4187,7 @@ class Adam(PrimitiveWithInfer):
         TypeError: If `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -4871,7 +4871,7 @@ class KLDivLoss(PrimitiveWithInfer):
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = y_n \cdot (\log y_n - x_n)
 
-        Then,
+    Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
