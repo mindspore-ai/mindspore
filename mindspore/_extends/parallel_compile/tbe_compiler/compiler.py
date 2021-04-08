@@ -115,7 +115,6 @@ def build_op(build_type, json_str, tune_mode=None):
 
         # call function
         if is_dynamic_shape:
-            # with te.op.dynamic():
             import tbe.common.context.op_context as op_context
             with op_context.OpContext("dynamic"):
                 op_info = operator_info.OpInfo(op_type, op_type)
