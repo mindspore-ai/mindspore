@@ -25,12 +25,6 @@
 
 using json = nlohmann::json;
 
-constexpr auto kAttrNodeName = "node_name";
-constexpr auto kAttrLogicId = "logic_id";
-constexpr auto kAttrNodeInfo = "node_info";
-constexpr auto kAttrLabelId = "label_id";
-constexpr auto kAttrActiveStreamId = "active_stream_id";
-
 namespace mindspore {
 class ExecNode {
  public:

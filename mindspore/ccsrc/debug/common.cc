@@ -239,7 +239,7 @@ bool Common::IsPathValid(const std::string &path, const int &length_limit, const
     return false;
   }
 
-  if (!IsEveryFilenameValid(path, maxOSFilenameLength, err_msg)) {
+  if (!IsEveryFilenameValid(path, MAX_OS_FILENAME_LENGTH, err_msg)) {
     return false;
   }
   return true;
