@@ -24,7 +24,7 @@ extern "C" {
 
 typedef struct QuantDtypeCastParameter {
   OpParameter op_parameter_;
-  int srcT_;
+  int srcT_;  // deprecated
   int dstT_;
 } QuantDtypeCastParameter;
 

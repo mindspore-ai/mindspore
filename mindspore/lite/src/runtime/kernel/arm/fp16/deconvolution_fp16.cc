@@ -57,7 +57,8 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   auto kernel_h = weight_tensor->Height();
   auto kernel_w = weight_tensor->Width();
 
-  bias_data_ = malloc(UP_ROUND(output_channel, C4NUM) * sizeof(float16_t));
+  auto bias_size = UP_ROUND(output_channel, C4NUM) * sizeof(float16_t);
+  bias_data_ = malloc(bias_size);
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
     return RET_ERROR;
@@ -65,8 +66,15 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float16_t));
   if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
       in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(2)->MutableData()),
-                     reinterpret_cast<float16_t *>(bias_data_), output_channel);
+    if (in_tensors_.at(2)->data_type() != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << "deconv fp16 kernel require fp16 bias";
+      return RET_ERROR;
+    }
+    if (bias_size != in_tensors_.at(2)->Size()) {
+      MS_LOG(ERROR) << "input bias size not match : " << bias_size << " vs " << in_tensors_.at(2)->Size();
+      return RET_ERROR;
+    }
+    memcpy(bias_data_, in_tensors_.at(2)->data_c(), bias_size);
   }
 
   size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
@@ -76,7 +84,11 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(execute_weight_, 0, weight_pack_size);
-  PackNHWCFp32ToC8HWN8Fp16(reinterpret_cast<float *>(in_tensors_.at(1)->MutableData()), execute_weight_, input_channel,
+  if (in_tensors_.at(1)->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "deconv fp16 kernel require fp16 weight";
+    return RET_ERROR;
+  }
+  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), execute_weight_, input_channel,
                            kernel_w * kernel_h, output_channel);
   return RET_OK;
 }

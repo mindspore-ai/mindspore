@@ -47,7 +47,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get execute filter data failed.";
     return ret;
   }
-  PackNCHWToNHWCFp16(fp16_weight_, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
+  PackNCHWToNHWCFp16(execute_weight_, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
                      weight_tensor->Batch());
   if (fp16_weight_ != nullptr) {
     free(fp16_weight_);
@@ -64,7 +64,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     MS_ASSERT(origin_bias_);
-    auto ori_bias = reinterpret_cast<float *>(origin_bias_);
+    auto ori_bias = reinterpret_cast<float16_t *>(origin_bias_);
     for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }

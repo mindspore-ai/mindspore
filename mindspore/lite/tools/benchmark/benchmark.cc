@@ -412,9 +412,7 @@ int Benchmark::MarkPerformance() {
   for (int i = 0; i < flags_->loop_count_; i++) {
     session_->BindThread(true);
     auto start = GetTimeUs();
-    auto status = (flags_->time_profiling_ || flags_->perf_profiling_)
-                    ? session_->RunGraph(before_call_back_, after_call_back_)
-                    : session_->RunGraph();
+    auto status = session_->RunGraph(before_call_back_, after_call_back_);
     if (status != 0) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status;
@@ -479,7 +477,7 @@ int Benchmark::MarkAccuracy() {
     std::cerr << "PrintInputData error " << status << std::endl;
     return status;
   }
-  status = session_->RunGraph();
+  status = session_->RunGraph(before_call_back_, after_call_back_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
@@ -615,7 +613,9 @@ int Benchmark::RunBenchmark() {
       return ret;
     }
   }
-  if (model != nullptr) model->Free();
+  if (model != nullptr) {
+    model->Free();
+  }
 
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();
@@ -689,18 +689,18 @@ int Benchmark::InitTimeProfilingCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &callParam) {
+                          const CallBackParam &call_param) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
     }
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_times_by_type_.find(callParam.node_type) == op_times_by_type_.end()) {
-      op_times_by_type_.insert(std::make_pair(callParam.node_type, std::make_pair(0, 0.0f)));
+    if (op_times_by_type_.find(call_param.node_type) == op_times_by_type_.end()) {
+      op_times_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, 0.0f)));
     }
-    if (op_times_by_name_.find(callParam.node_name) == op_times_by_name_.end()) {
-      op_times_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, 0.0f)));
+    if (op_times_by_name_.find(call_param.node_name) == op_times_by_name_.end()) {
+      op_times_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, 0.0f)));
     }
 
     op_call_times_total_++;
@@ -735,6 +735,7 @@ int Benchmark::InitTimeProfilingCallbackParameter() {
   };
   return RET_OK;
 }
+
 int Benchmark::InitPerfProfilingCallbackParameter() {
 #ifndef ENABLE_ARM64
   MS_LOG(ERROR) << "Only support perf_profiling on arm64.";
@@ -781,18 +782,18 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &callParam) {
+                          const CallBackParam &call_param) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
     }
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_perf_by_type_.find(callParam.node_type) == op_perf_by_type_.end()) {
-      op_perf_by_type_.insert(std::make_pair(callParam.node_type, std::make_pair(0, zero)));
+    if (op_perf_by_type_.find(call_param.node_type) == op_perf_by_type_.end()) {
+      op_perf_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, zero)));
     }
-    if (op_perf_by_name_.find(callParam.node_name) == op_perf_by_name_.end()) {
-      op_perf_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, zero)));
+    if (op_perf_by_name_.find(call_param.node_name) == op_perf_by_name_.end()) {
+      op_perf_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, zero)));
     }
 
     op_call_times_total_++;
@@ -831,12 +832,89 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
   return RET_OK;
 }
 
+namespace {
+template <typename T>
+std::string DataToString(void *data, size_t data_number) {
+  if (data == nullptr) {
+    return "Data of tensor is nullptr";
+  }
+  std::ostringstream oss;
+  auto casted_data = static_cast<T *>(data);
+  for (size_t i = 0; i < 40 && i < data_number; i++) {
+    oss << " " << casted_data[i];
+  }
+  return oss.str();
+}
+
+std::string DumpMSTensor(tensor::MSTensor *tensor) {
+  if (tensor == nullptr) {
+    return "Tensor is nullptr";
+  }
+  std::ostringstream oss;
+  oss << " DataType: " << tensor->data_type();
+  oss << " Shape:";
+  for (auto &dim : tensor->shape()) {
+    oss << " " << dim;
+  }
+  oss << std::endl << "Data:";
+  switch (tensor->data_type()) {
+    case kNumberTypeFloat32: {
+      oss << DataToString<float>(tensor->data(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeFloat16: {
+      oss << DataToString<int16_t>(tensor->data(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeInt32: {
+      oss << DataToString<int32_t>(tensor->data(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeInt16: {
+      oss << DataToString<int16_t>(tensor->data(), tensor->ElementsNum());
+    } break;
+    case kNumberTypeInt8: {
+      oss << DataToString<int8_t>(tensor->data(), tensor->ElementsNum());
+    } break;
+    default:
+      oss << "Unsupported data type to print";
+      break;
+  }
+  return oss.str();
+}
+}  // namespace
+
+int Benchmark::InitDumpProfilingCallbackParameter() {
+  // before callback
+  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                          const CallBackParam &call_param) { return true; };
+
+  // after callback
+  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                         const CallBackParam &call_param) {
+    std::cout << "================================================================" << std::endl;
+    std::cout << call_param.node_name << " inputs : " << std::endl;
+    for (auto ms_tensor : after_inputs) {
+      std::cout << DumpMSTensor(ms_tensor) << std::endl;
+    }
+    std::cout << "----------------------------------------------------------------" << std::endl;
+    std::cout << call_param.node_name << " outputs : " << std::endl;
+    for (const auto ms_tensor : after_outputs) {
+      std::cout << DumpMSTensor(ms_tensor) << std::endl;
+    }
+    std::cout << "================================================================" << std::endl;
+    return true;
+  };
+  return RET_OK;
+}
+
 int Benchmark::InitCallbackParameter() {
   int ret = RET_OK;
   if (flags_->time_profiling_) {
     ret = InitTimeProfilingCallbackParameter();
   } else if (flags_->perf_profiling_) {
     ret = InitPerfProfilingCallbackParameter();
+  } else if (flags_->dump_profiling_) {
+    ret = InitDumpProfilingCallbackParameter();
   }
   return ret;
 }
@@ -917,16 +995,14 @@ int Benchmark::Init() {
     return RET_ERROR;
   }
 
-  if (flags_->time_profiling_ || flags_->perf_profiling_) {
-    if (flags_->time_profiling_ && flags_->perf_profiling_) {
-      MS_LOG(INFO) << "time_profiling is enabled, will not run perf_profiling.";
-    }
-    auto status = InitCallbackParameter();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Init callback Parameter failed.";
-      std::cerr << "Init callback Parameter failed." << std::endl;
-      return RET_ERROR;
-    }
+  if (flags_->time_profiling_ && flags_->perf_profiling_) {
+    MS_LOG(INFO) << "time_profiling is enabled, will not run perf_profiling.";
+  }
+  auto status = InitCallbackParameter();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Init callback Parameter failed.";
+    std::cerr << "Init callback Parameter failed." << std::endl;
+    return RET_ERROR;
   }
 
   return RET_OK;

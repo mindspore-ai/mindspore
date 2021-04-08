@@ -61,9 +61,13 @@ void PackNC8HW8ToNHWCFp16(const void *src, void *dst, int batch, int plane, int 
 
 void PackNCHWFp32ToNC8HW8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
 
+void PackNCHWFp16ToNC8HW8Fp16(float16_t *src, float16_t *dst, int batch, int plane, int channel);
+
 void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
 
 void PackNHWCFp32ToC8HWN8Fp16(float *src, float16_t *dst, int batch, int plane, int channel);
+
+void PackNHWCFp16ToC8HWN8Fp16(float16_t *src, float16_t *dst, int batch, int plane, int channel);
 
 void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, int channel);
 
