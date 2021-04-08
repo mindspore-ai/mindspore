@@ -74,8 +74,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   void DecreaseRefCountUsed() { ref_count_dynamic_used_--; }
   void ResetRefCountUsed() { ref_count_dynamic_used_ = ref_count_; }
   size_t ref_count_dynamic_used() const { return ref_count_dynamic_used_; }
-  virtual bool DumpMemToFile(bool dump_mode, const std::string &filepath, const std::string &host_fmt,
-                             const ShapeVector &host_shape, TypeId host_type) const {
+  virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
+                             TypeId host_type, bool trans_flag) const {
     return true;
   }
 #ifdef ENABLE_DEBUGGER

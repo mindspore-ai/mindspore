@@ -15,11 +15,41 @@
  */
 #include "runtime/device/cpu/cpu_device_address.h"
 #include <vector>
+#include <memory>
 #include "runtime/device/convert_tensor_utils.h"
+#include "debug/data_dump/dump_json_parser.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
+bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
+                                     const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
+  bool ret = false;
+  if (filepath.empty()) {
+    MS_LOG(ERROR) << "Dump file path is null!";
+    return ret;
+  }
+  std::string shape = "shape";
+  if (host_shape.empty()) {
+    shape += "_0";
+  } else {
+    for (auto &value : host_shape) {
+      shape += '_' + std::to_string(value);
+    }
+  }
+  std::string file_extension = ".bin";
+  std::string path = filepath + '_' + shape + '_' + TypeIdLabel(type_id_) + '_' + format_ + file_extension;
+  MS_LOG(DEBUG) << "E2E Dump path is " << path;
+  auto host_tmp = std::vector<uint8_t>(size_);
+  auto ret_code = memcpy_s(host_tmp.data(), size_, ptr_, size_);
+  if (ret_code != EOK) {
+    MS_LOG(ERROR) << "Failed to copy tensor!";
+    return ret;
+  }
+  ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_);
+  return ret;
+}
+
 bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /*shape*/, size_t size, TypeId type, void *host_ptr) const {
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";

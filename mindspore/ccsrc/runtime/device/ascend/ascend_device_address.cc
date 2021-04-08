@@ -649,8 +649,8 @@ void AscendDeviceAddress::ClearDeviceMemory() {
 
 AscendDeviceAddress::~AscendDeviceAddress() { ClearDeviceMemory(); }
 
-bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &filepath, const std::string &host_fmt,
-                                        const ShapeVector &host_shape, TypeId host_type) const {
+bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
+                                        const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
   bool ret = false;
   if (filepath.empty()) {
     MS_LOG(ERROR) << "Dump file path is null!";

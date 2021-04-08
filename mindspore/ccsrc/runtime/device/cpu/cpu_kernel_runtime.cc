@@ -34,6 +34,7 @@
 #include "utils/shape_utils.h"
 #include "utils/profile.h"
 #include "utils/trace_base.h"
+#include "debug/data_dump/cpu_e2e_dump.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #endif
@@ -373,6 +374,14 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
   auto kernels = kernel_graph->execution_order();
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  dump_json_parser.UpdateDumpIter();
+  bool iter_dump_flag = dump_json_parser.GetIterDumpFlag();
+  if (iter_dump_flag) {
+    CPUE2eDump::DumpParametersAndConst(kernel_graph);
+  }
+
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
     double start_time = GetTime();
@@ -411,6 +420,9 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what() << "\nTrace:" << trace::DumpSourceLines(kernel);
+    }
+    if (iter_dump_flag) {
+      CPUE2eDump::DumpCNodeData(kernel);
     }
     if (profiler_inst->GetEnableFlag()) {
       profiler_inst->OpDataProducerEnd();

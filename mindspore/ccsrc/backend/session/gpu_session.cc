@@ -49,7 +49,7 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
 #include "debug/anf_ir_dump.h"
-#include "debug/data_dump/e2e_dump_util.h"
+#include "debug/data_dump/e2e_dump.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/proto_exporter.h"
 #else
@@ -511,7 +511,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    E2eDumpUtil::DumpData(kernel_graph.get(), device_id_, debugger_.get());
+    E2eDump::DumpData(kernel_graph.get(), device_id_, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }

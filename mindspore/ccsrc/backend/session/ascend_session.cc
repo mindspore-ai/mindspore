@@ -57,7 +57,7 @@
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/session/ascend_auto_monad.h"
-#include "debug/data_dump/e2e_dump_util.h"
+#include "debug/data_dump/e2e_dump.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
@@ -991,7 +991,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDumpUtil::DumpData(kernel_graph.get(), device_id_);
+  E2eDump::DumpData(kernel_graph.get(), device_id_);
   MS_LOG(INFO) << "Finish!";
 }
 
