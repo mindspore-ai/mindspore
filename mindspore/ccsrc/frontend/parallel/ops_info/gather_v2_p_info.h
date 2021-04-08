@@ -63,6 +63,7 @@ class GatherPInfo : public OperatorInfo {
 
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status CheckManualSplit(const Strategys &strategy);
+  Status CheckSplitAxisStrategy(const StrategyPtr &strategy);
   Status GetManualSplitAttr();
   Status GetManualSplitWithoutOffsetAttr();
   Status ComputeReplaceOp();
