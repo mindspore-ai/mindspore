@@ -259,7 +259,10 @@ class BatchOp : public ParallelOp {
   // @return Status The status code returned
   Status LaunchThreadsAndInitOp();
 
-  Status GetNextRow(TensorRow *row) override;
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRow(TensorRow *const row) override;
 
 #ifdef ENABLE_PYTHON
   // Invoke batch size function with current BatchInfo to generate batch size.

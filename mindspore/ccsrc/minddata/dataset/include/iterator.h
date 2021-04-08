@@ -138,11 +138,14 @@ class PullIterator : public Iterator {
   /// \brief Constructor
   PullIterator();
 
+  /// \brief Destructor
+  ~PullIterator() = default;
+
   /// \brief Function to get next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row - the output tensor row.
   /// \return Returns true if no error encountered else false.
-  Status GetNextRow(MSTensorVec *row) override;
+  Status GetNextRow(MSTensorVec *const row) override;
 
   /// \brief Function to get specified rows from the data pipeline.
   /// \note Type of return data is a vector(without column name).
@@ -150,7 +153,7 @@ class PullIterator : public Iterator {
   /// \param[in] num_rows - the number of rows to fetch.
   /// \param[out] row - the output tensor row.
   /// \return Returns true if no error encountered else false.
-  Status GetRows(int32_t num_rows, std::vector<MSTensorVec> *row);
+  Status GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row);
 
   /// \brief Method for building and launching the pipeline.
   /// \note Consider making this function protected.
