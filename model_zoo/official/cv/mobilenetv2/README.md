@@ -91,6 +91,32 @@ You can start training using python or shell scripts. The usage of shell scripts
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 - CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 
+`DATASET_PATH` is the train dataset path. We use `ImageFolderDataset` as default dataset, which is a source dataset that reads images from a tree of directories. The directory structure is as follows, and you should use `DATASET_PATH=dataset/train` for training and `DATASET_PATH=dataset/val` for evaluation:
+
+```path
+        └─dataset
+            └─train
+              ├─class1
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+              ......
+              ├─classx
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+            └─val
+              ├─class1
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+              ......
+              ├─classx
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+```
+
 `CKPT_PATH` `FREEZE_LAYER` and `FILTER_HEAD` are optional, when set `CKPT_PATH`, `FREEZE_LAYER` must be set. `FREEZE_LAYER` should be in ["none", "backbone"], and if you set `FREEZE_LAYER`="backbone", the parameter in backbone will be freezed when training and the parameter in head will not be load from checkpoint. if `FILTER_HEAD`=True, the parameter in head will not be load from checkpoint.
 
 > RANK_TABLE_FILE is HCCL configuration file when running on Ascend.
