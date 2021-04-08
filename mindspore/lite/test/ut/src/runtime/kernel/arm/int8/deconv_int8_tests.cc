@@ -20,9 +20,9 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/nnacl/pack.h"
-#include "mindspore/lite/nnacl/fp32/matmul_fp32.h"
-#include "mindspore/lite/nnacl/int8/deconv_int8.h"
+#include "nnacl/pack.h"
+#include "nnacl/fp32/matmul_fp32.h"
+#include "nnacl/int8/deconv_int8.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/deconvolution_int8.h"
 
 using mindspore::lite::DeviceType;

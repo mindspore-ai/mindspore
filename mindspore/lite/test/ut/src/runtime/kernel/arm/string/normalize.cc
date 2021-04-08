@@ -18,7 +18,7 @@
 #include "src/runtime/kernel/arm/fp32/skip_gram_fp32.h"
 #include "src/runtime/kernel/arm/string/normalize.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/nnacl/skip_gram_parameter.h"
+#include "nnacl/skip_gram_parameter.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"

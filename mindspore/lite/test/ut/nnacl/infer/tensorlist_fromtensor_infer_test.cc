@@ -15,7 +15,7 @@
  */
 #include "common/common_test.h"
 #include "src/common/tensor_util.h"
-#include "mindspore/lite/nnacl/infer/tensorlist_fromtensor_infer.h"
+#include "nnacl/infer/tensorlist_fromtensor_infer.h"
 
 namespace mindspore {
 

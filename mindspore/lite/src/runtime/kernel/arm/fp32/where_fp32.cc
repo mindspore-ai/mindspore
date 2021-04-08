@@ -17,7 +17,7 @@
 #include <vector>
 #include <algorithm>
 #include "schema/model_generated.h"
-#include "mindspore/lite/nnacl/fp32/where_fp32.h"
+#include "nnacl/fp32/where_fp32.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

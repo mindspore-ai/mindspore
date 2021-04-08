@@ -18,7 +18,7 @@
 #include <cmath>
 #include "src/runtime/kernel/arm/fp32/l2_norm_fp32.h"
 #include "include/errorcode.h"
-#include "mindspore/lite/nnacl/fp32/l2_norm_fp32.h"
+#include "nnacl/fp32/l2_norm_fp32.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

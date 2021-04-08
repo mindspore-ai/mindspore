@@ -19,7 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/utils.h"
-#include "mindspore/lite/nnacl/fp32/strided_slice_fp32.h"
+#include "nnacl/fp32/strided_slice_fp32.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 

@@ -18,8 +18,8 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/space_to_depth_parameter.h"
-#include "mindspore/lite/nnacl/base/space_to_depth_base.h"
+#include "nnacl/space_to_depth_parameter.h"
+#include "nnacl/base/space_to_depth_base.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 

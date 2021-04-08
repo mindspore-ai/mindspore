@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/custom_normalize_infer.h"
+#include "nnacl/infer/custom_normalize_infer.h"
 
 namespace mindspore {
 

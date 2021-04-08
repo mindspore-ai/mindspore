@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/tile_infer.h"
+#include "nnacl/infer/tile_infer.h"
 #include "nnacl/base/tile_base.h"
 
 namespace mindspore {

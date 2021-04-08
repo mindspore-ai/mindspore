@@ -153,15 +153,15 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
-    file(GLOB NNACL_FILES GLOB ${TOP_DIR}/mindspore/lite/nnacl/*.h)
+    file(GLOB NNACL_FILES GLOB ${NNACL_DIR}/*.h)
     install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
@@ -185,15 +185,15 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
-    file(GLOB NNACL_FILES GLOB ${TOP_DIR}/mindspore/lite/nnacl/*.h)
+    file(GLOB NNACL_FILES GLOB ${NNACL_DIR}/*.h)
     install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+    install(DIRECTORY ${NNACL_DIR}/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
@@ -262,15 +262,15 @@ else()
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
                 DESTINATION ${CONVERTER_ROOT_DIR}/third_party/glog/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB NNACL_FILES GLOB ${TOP_DIR}/mindspore/lite/nnacl/*.h)
+        file(GLOB NNACL_FILES GLOB ${NNACL_DIR}/*.h)
         install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+        install(DIRECTORY ${NNACL_DIR}/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+        install(DIRECTORY ${NNACL_DIR}/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+        install(DIRECTORY ${NNACL_DIR}/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/nnacl/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
+        install(DIRECTORY ${NNACL_DIR}/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")

@@ -276,7 +276,7 @@ if(BUILD_MINDDATA STREQUAL "lite_cv")
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nnacl)
+add_subdirectory(${CCSRC_DIR}/backend/kernel_compiler/cpu/nnacl build)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro/coder)
 if(NOT APPLE AND ENABLE_TOOLS)
     if(SUPPORT_TRAIN)

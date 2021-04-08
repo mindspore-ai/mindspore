@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/constant_of_shape_infer.h"
+#include "nnacl/infer/constant_of_shape_infer.h"
 
 namespace mindspore {
 

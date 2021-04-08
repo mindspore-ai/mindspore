@@ -19,9 +19,9 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/nnacl/pack.h"
+#include "nnacl/pack.h"
 #ifdef ENABLE_FP16
-#include "mindspore/lite/nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/pack_fp16.h"
 #endif
 
 namespace mindspore {

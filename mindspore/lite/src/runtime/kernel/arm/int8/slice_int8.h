@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/slice_base.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 namespace mindspore::kernel {
 class SliceInt8CPUKernel : public SliceCPUKernel {

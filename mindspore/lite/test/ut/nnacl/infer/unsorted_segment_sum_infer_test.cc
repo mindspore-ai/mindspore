@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/unsorted_segment_sum_infer.h"
+#include "nnacl/infer/unsorted_segment_sum_infer.h"
 
 namespace mindspore {
 

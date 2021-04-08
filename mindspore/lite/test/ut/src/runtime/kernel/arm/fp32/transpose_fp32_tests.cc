@@ -19,7 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/transpose_fp32.h"
-#include "mindspore/lite/nnacl/transpose.h"
+#include "nnacl/transpose.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 

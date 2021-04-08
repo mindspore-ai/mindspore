@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/depth_to_space_infer.h"
+#include "nnacl/infer/depth_to_space_infer.h"
 #include "src/tensor.h"
 
 namespace mindspore {

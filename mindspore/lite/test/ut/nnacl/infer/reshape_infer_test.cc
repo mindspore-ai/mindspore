@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/reshape_infer.h"
+#include "nnacl/infer/reshape_infer.h"
 #include "nnacl/reshape_parameter.h"
 
 namespace mindspore {

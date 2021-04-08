@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "mindspore/lite/nnacl/fp32/scatter_nd_fp32.h"
+#include "nnacl/fp32/scatter_nd_fp32.h"
 
 namespace mindspore::kernel {
 

@@ -19,8 +19,8 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/deconvolution_fp32.h"
-#include "mindspore/lite/nnacl/fp32/deconv_fp32.h"
-#include "mindspore/lite/nnacl/op_base.h"
+#include "nnacl/fp32/deconv_fp32.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 class TestDeConvolutionFp32 : public mindspore::CommonTest {

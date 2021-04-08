@@ -6,9 +6,10 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
+set(NNACL_DIR ${CCSRC_DIR}/backend/kernel_compiler/cpu/nnacl)
 
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
-
+include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 file(GLOB OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
@@ -144,20 +145,20 @@ endif()
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
 file(GLOB KERNEL_SRC
         ${ARM_DIR}/base/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/fp32/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/infer/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/int8/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/base/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/quantization/*.c
+        ${NNACL_DIR}/*.c
+        ${NNACL_DIR}/fp32/*.c
+        ${NNACL_DIR}/infer/*.c
+        ${NNACL_DIR}/int8/*.c
+        ${NNACL_DIR}/base/*.c
+        ${NNACL_DIR}/quantization/*.c
         ${ARM_DIR}/fp32/*.cc
         ${ARM_DIR}/int8/*.cc
         )
 
 if(PLATFORM_ARM64)
     # assembly
-    file(GLOB ASSEMBLY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/assembly/arm64/*.s
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/assembly/arm64/*.S)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.s
+            ${NNACL_DIR}/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
 endif()

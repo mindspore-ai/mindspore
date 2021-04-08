@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "nnacl/gather_parameter.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {

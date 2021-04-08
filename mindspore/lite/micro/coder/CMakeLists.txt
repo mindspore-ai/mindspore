@@ -18,6 +18,7 @@ include_directories(${3RD_DIR}/flatbuffers/include)
 #include ms
 include_directories(${TOP_DIR}/)
 include_directories(${TOP_DIR}/mindspore/core/)
+include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 include_directories(${LITE_DIR})
 include_directories(${MICRO_DIR})
 #include coder
