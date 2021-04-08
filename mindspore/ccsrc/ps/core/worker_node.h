@@ -35,7 +35,7 @@ namespace core {
 class WorkerNode : public AbstractNode {
  public:
   WorkerNode() = default;
-  ~WorkerNode() override;
+  ~WorkerNode() override = default;
 
   bool Start(const uint32_t &timeout = ClusterMetadata::instance()->cluster_available_timeout()) override;
   bool Stop() override;

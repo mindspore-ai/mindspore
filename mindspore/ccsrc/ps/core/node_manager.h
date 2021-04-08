@@ -61,7 +61,7 @@ class NodeManager {
   std::vector<ServersMeta> FetchServersMeta();
   void UpdateClusterState();
   void CheckClusterTimeout();
-  void AddFinishNode(const FinishMessage &finish_message);
+  void AddFinishNode(const std::string &finish_message);
   std::unordered_map<std::string, NodeInfo> nodes_info();
   bool is_cluster_ready();
   bool is_cluster_finish();
