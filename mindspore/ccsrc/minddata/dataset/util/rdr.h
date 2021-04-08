@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 class MDChannelInfo {
  public:
-  explicit MDChannelInfo(std::string channel_name) : channel_name_(channel_name) {}
+  explicit MDChannelInfo(std::string channel_name) : channel_name_(channel_name), preprocess_batch_(0) {}
 
   ~MDChannelInfo() = default;
 
