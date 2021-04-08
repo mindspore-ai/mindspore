@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-
-void TensorAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+template <typename T>
+void TensorAddCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   // Init shape ans strides
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -28,13 +28,14 @@ void TensorAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 }
 
-bool TensorAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr_a = reinterpret_cast<float *>(inputs[0]->addr);
-  auto input_addr_b = reinterpret_cast<float *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  auto output_size = outputs[0]->size / sizeof(float);
+template <typename T>
+bool TensorAddCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
+  T *input_addr_a = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input_addr_b = reinterpret_cast<T *>(inputs[1]->addr);
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t output_size = outputs[0]->size / sizeof(T);
   if (input_shape_a_ == input_shape_b_) {
     auto task = [output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
