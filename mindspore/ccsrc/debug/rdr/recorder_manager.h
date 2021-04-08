@@ -26,13 +26,13 @@
 
 namespace mindspore {
 // The number is the reciprocal of the golden ratio.
-const unsigned int magicConstant = 0x9e3779b9;
-const unsigned int hashShiftLeft = 6;
-const unsigned int hashShiftRight = 2;
+const unsigned int MAGIC_CONSTANT = 0x9e3779b9;
+const unsigned int HASH_SHIFT_LEFT = 6;
+const unsigned int HASH_SHIFT_RIGHT = 2;
 
 template <typename T>
 inline void hash_combine(std::size_t *seed, const T &val) {
-  *seed ^= std::hash<T>()(val) + magicConstant + (*seed << hashShiftLeft) + (*seed >> hashShiftRight);
+  *seed ^= std::hash<T>()(val) + MAGIC_CONSTANT + (*seed << HASH_SHIFT_LEFT) + (*seed >> HASH_SHIFT_RIGHT);
 }
 
 template <typename T1, typename T2>
