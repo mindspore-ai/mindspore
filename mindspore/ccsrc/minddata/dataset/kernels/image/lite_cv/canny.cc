@@ -31,10 +31,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 static void GetSobelKernel(float *kernel, int flag, int ksize, double scale) {
   std::vector<float> buffer(ksize + 1);
-  float *ptr = kernel;
 
   if (ksize == 1) {
     buffer[0] = 1;
@@ -72,7 +70,7 @@ static void GetSobelKernel(float *kernel, int flag, int ksize, double scale) {
 
   scale = flag == 0 ? scale : 1.0;
   for (int i = 0; i < ksize; i++) {
-    ptr[i] = buffer[i] * scale;
+    kernel[i] = buffer[i] * scale;
   }
 }
 
@@ -155,33 +153,27 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
       float angle_value = atan2(gy_value_abs, gx_value_abs);
       float edge_value = temp[y * gx.width_ + x];
       float edge_pre, edge_nex;
-      if (angle_value < ANGLE_22_5) {
-        edge_pre = GetEdge(temp, gx.width_, gx.height_, x - 1, y);
-        edge_nex = GetEdge(temp, gx.width_, gx.height_, x + 1, y);
-        if (edge_value > edge_pre && edge_value >= edge_nex) {
-          edges_ptr[y * gx.width_ + x] = temp[y * gx.width_ + x];
+      if (angle_value < ANGLE_22_5 || angle_value > ANGLE_67_5) {
+        if (angle_value < ANGLE_22_5) {
+          edge_pre = GetEdge(temp, gx.width_, gx.height_, x - 1, y);
+          edge_nex = GetEdge(temp, gx.width_, gx.height_, x + 1, y);
         } else {
-          edges_ptr[y * gx.width_ + x] = 0.f;
+          edge_pre = GetEdge(temp, gx.width_, gx.height_, x, y - 1);
+          edge_nex = GetEdge(temp, gx.width_, gx.height_, x, y + 1);
         }
-      } else if (angle_value > ANGLE_67_5) {
-        edge_pre = GetEdge(temp, gx.width_, gx.height_, x, y - 1);
-        edge_nex = GetEdge(temp, gx.width_, gx.height_, x, y + 1);
         if (edge_value > edge_pre && edge_value >= edge_nex) {
-          edges_ptr[y * gx.width_ + x] = temp[y * gx.width_ + x];
-        } else {
-          edges_ptr[y * gx.width_ + x] = 0.f;
-        }
-      } else if (gx_value * gy_value < 0) {
-        edge_pre = GetEdge(temp, gx.width_, gx.height_, x + 1, y - 1);
-        edge_nex = GetEdge(temp, gx.width_, gx.height_, x - 1, y + 1);
-        if (edge_value > edge_pre && edge_value > edge_nex) {
           edges_ptr[y * gx.width_ + x] = temp[y * gx.width_ + x];
         } else {
           edges_ptr[y * gx.width_ + x] = 0.f;
         }
       } else {
-        edge_pre = GetEdge(temp, gx.width_, gx.height_, x - 1, y - 1);
-        edge_nex = GetEdge(temp, gx.width_, gx.height_, x + 1, y + 1);
+        if (gx_value * gy_value < 0) {
+          edge_pre = GetEdge(temp, gx.width_, gx.height_, x + 1, y - 1);
+          edge_nex = GetEdge(temp, gx.width_, gx.height_, x - 1, y + 1);
+        } else {
+          edge_pre = GetEdge(temp, gx.width_, gx.height_, x - 1, y - 1);
+          edge_nex = GetEdge(temp, gx.width_, gx.height_, x + 1, y + 1);
+        }
         if (edge_value > edge_pre && edge_value > edge_nex) {
           edges_ptr[y * gx.width_ + x] = temp[y * gx.width_ + x];
         } else {
@@ -194,7 +186,6 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
 
 static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, double high_thresh) {
   const float *edges_ptr = edges;
-  uint8_t *dst_ptr = dst;
 
   int size = edges.height_ * edges.width_;
   std::vector<int> stack;
@@ -239,9 +230,9 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
 
   for (int i = 0; i < size; i++) {
     if (buffer[i] == 2) {
-      dst_ptr[i] = 255;
+      dst[i] = 255;
     } else {
-      dst_ptr[i] = 0;
+      dst[i] = 0;
     }
   }
 }
@@ -254,7 +245,7 @@ bool Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thre
   if (low_thresh < 0 || high_thresh < 0 || low_thresh > high_thresh) {
     return false;
   }
-  if ((ksize & 1) == 0 || ksize < 3 || ksize > 7) {
+  if (ksize % 2 == 0 || ksize < 3 || ksize > 7) {
     return false;
   }
   if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != src.channel_ ||
@@ -276,6 +267,5 @@ bool Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thre
   Hysteresis(edges, dst, low_thresh, high_thresh);
   return true;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -261,7 +261,6 @@ static bool Conv2DImplement(const LiteMat &src, const LiteMat &kernel, T2 *dst, 
 
   const T1 *pad_ptr = pad_mat;
   const float *kernel_ptr = kernel;
-  T2 *dst_ptr = dst;
 
   int pad_step = pad_mat.width_ * pad_mat.channel_;
   int dst_step = src.width_ * src.channel_;
@@ -277,9 +276,9 @@ static bool Conv2DImplement(const LiteMat &src, const LiteMat &kernel, T2 *dst, 
           }
         }
         if (dst_type == LDataType::UINT8) {
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = clip(conv_sum);
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_] = clip(conv_sum);
         } else {
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = conv_sum;
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_] = conv_sum;
         }
       }
     }
@@ -300,13 +299,13 @@ static bool Conv2DImplement(const LiteMat &src, const LiteMat &kernel, T2 *dst, 
           }
         }
         if (dst_type == LDataType::UINT8) {
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = clip(conv_sum_b);
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 1] = clip(conv_sum_g);
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 2] = clip(conv_sum_r);
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_] = clip(conv_sum_b);
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 1] = clip(conv_sum_g);
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 2] = clip(conv_sum_r);
         } else {
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = conv_sum_b;
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 1] = conv_sum_g;
-          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 2] = conv_sum_r;
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_] = conv_sum_b;
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 1] = conv_sum_g;
+          dst[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 2] = conv_sum_r;
         }
       }
     }
