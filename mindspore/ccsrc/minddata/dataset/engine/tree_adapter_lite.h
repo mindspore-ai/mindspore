@@ -40,7 +40,7 @@ class TreeAdapterLite {
   Status BuildTree(std::shared_ptr<DatasetNode> root_ir);
 
   // Get rows equal to num_rows
-  Status GetNextRow(TensorRow *row);
+  Status GetNextRow(TensorRow *const row);
 
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const { return tree_->root()->column_name_id_map(); }
 

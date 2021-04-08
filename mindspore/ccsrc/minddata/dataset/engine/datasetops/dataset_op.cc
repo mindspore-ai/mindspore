@@ -252,7 +252,7 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status DatasetOp::GetNextRowPullMode(TensorRow *row) {
+Status DatasetOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(child_[0]);
   return child_[0]->GetNextRowPullMode(row);
 }

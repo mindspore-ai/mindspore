@@ -145,7 +145,7 @@ Status ProjectOp::ComputeColMap() {
   return Status::OK();
 }
 
-Status ProjectOp::GetNextRowPullMode(TensorRow *row) {
+Status ProjectOp::GetNextRowPullMode(TensorRow *const row) {
   ComputeColMap();
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));

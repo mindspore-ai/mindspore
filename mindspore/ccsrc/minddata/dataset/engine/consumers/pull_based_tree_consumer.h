@@ -49,7 +49,7 @@ class PullBasedIteratorConsumer {
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
-  Status GetNextAsVector(std::vector<TensorPtr> *out);
+  Status GetNextAsVector(std::vector<TensorPtr> *const out);
 
   /// Returns the next row in as a map
   /// \param[out] out std::map of string to Tensor

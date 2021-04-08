@@ -101,7 +101,10 @@ class ProjectOp : public PipelineOp {
   // @return Status The status code returned
   Status EofReceived(int32_t worker_id) override;
 
-  Status GetNextRowPullMode(TensorRow *row) override;
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
 
   // Op name getter
   // @return Name of the current Op
