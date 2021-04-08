@@ -51,7 +51,11 @@ uint8_t DataType::AsCVType() const {
   }
 
   if (res == kCVInvalidType) {
-    std::string err_msg = "Cannot convert [" + std::string(kTypeInfo[type_].name_) + "] to OpenCV type.";
+    std::string type_name = "unknown";
+    if (type_ < DataType::NUM_OF_TYPES) {
+      type_name = std::string(kTypeInfo[type_].name_);
+    }
+    std::string err_msg = "Cannot convert [" + type_name + "] to OpenCV type.";
     err_msg += " Currently unsupported data type: [uint32, int64, uint64, string]";
     MS_LOG(ERROR) << err_msg;
   }
