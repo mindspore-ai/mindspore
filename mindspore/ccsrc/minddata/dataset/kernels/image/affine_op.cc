@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 #include <random>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/kernels/image/affine_op.h"

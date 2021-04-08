@@ -19,8 +19,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <memory>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 #include "minddata/dataset/util/log_adapter.h"

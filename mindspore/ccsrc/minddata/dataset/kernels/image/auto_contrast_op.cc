@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"

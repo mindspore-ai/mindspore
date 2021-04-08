@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/perf/profiling.h"
-#include <sys/stat.h>
-#include <sys/time.h>
 #include <cstdlib>
 #include <fstream>
 #include "utils/ms_utils.h"

@@ -15,7 +15,6 @@
  */
 
 #include "minddata/dataset/kernels/image/random_sharpness_op.h"
-#include <random>
 #include "minddata/dataset/kernels/image/sharpness_op.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/random.h"

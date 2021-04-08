@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
 
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/datasets.h"

@@ -25,7 +25,6 @@
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/util/allocator.h"
-#include "minddata/dataset/util/circular_pool.h"
 #include "minddata/dataset/util/system_pool.h"
 
 namespace mindspore {

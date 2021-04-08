@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/runtime_context.h"

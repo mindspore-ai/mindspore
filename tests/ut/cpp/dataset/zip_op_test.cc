@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 #include <chrono>
-#include <cstdlib>
 #include <cstring>
-#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <thread>
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/config_manager.h"
@@ -30,7 +26,6 @@
 #include "utils/ms_utils.h"
 
 #include "gtest/gtest.h"
-#include "minddata/dataset/core/global_context.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;

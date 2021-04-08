@@ -23,7 +23,6 @@
 #include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"

@@ -15,11 +15,8 @@
 */
 #include "minddata/dataset/engine/cache/cache_admin_arg.h"
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
-#include <signal.h>
 #include <unistd.h>
-#include <algorithm>
 #include <cerrno>
 #include <iomanip>
 #include <iostream>

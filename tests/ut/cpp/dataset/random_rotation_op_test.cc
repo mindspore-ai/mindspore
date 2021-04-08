@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <opencv2/imgcodecs.hpp>
 #include "common/common.h"
 #include "common/cvop_common.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"

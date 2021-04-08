@@ -25,8 +25,6 @@
 #include "minddata/dataset/core/global_context.h"
 
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
-#include "minddata/dataset/engine/datasetops/map_op/gpu_map_job.h"
-#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"

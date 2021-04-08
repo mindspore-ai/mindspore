@@ -17,7 +17,6 @@
 
 #include <random>
 
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"

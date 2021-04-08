@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#include <unistd.h>
 #include <iostream>
 #include "minddata/dataset/engine/cache/cache_admin_arg.h"
 #include "minddata/dataset/engine/cache/cache_common.h"

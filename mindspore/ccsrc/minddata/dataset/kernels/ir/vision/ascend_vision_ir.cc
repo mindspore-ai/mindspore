@@ -15,11 +15,7 @@
  */
 
 #include <algorithm>
-
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#endif
 
 #include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"

@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
+
 #include <memory>
 #include <vector>
 #include <string>
 
 #include "common/common.h"
 #include "include/api/status.h"
-#include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/text/vocab.h"
 
 using mindspore::dataset::Tensor;

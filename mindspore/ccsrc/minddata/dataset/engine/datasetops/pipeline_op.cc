@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
-#include <iomanip>
 #include <iostream>
 
 namespace mindspore {

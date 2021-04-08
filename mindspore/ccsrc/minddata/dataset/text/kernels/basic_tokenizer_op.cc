@@ -23,7 +23,6 @@
 
 #include "unicode/errorcode.h"
 #include "unicode/normalizer2.h"
-#include "unicode/utypes.h"
 
 namespace mindspore {
 namespace dataset {

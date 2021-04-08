@@ -15,9 +15,7 @@
  */
 #include "minddata/dataset/text/kernels/regex_replace_op.h"
 #include <memory>
-#include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 namespace mindspore {

@@ -16,7 +16,6 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 
 #include <algorithm>
-#include <memory>
 #include <random>
 #include <string>
 

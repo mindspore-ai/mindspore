@@ -17,12 +17,9 @@
 #include "minddata/dataset/text/kernels/data_utils.h"
 
 #include <algorithm>
-#include <limits>
 #include <string>
-#include <vector>
 
 #include "minddata/dataset/core/pybind_support.h"
-#include "minddata/dataset/kernels/data/type_cast_op.h"
 #include "minddata/dataset/kernels/data/slice_op.h"
 #include "minddata/dataset/kernels/data/concatenate_op.h"
 

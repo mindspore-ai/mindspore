@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/engine/cache/storage_container.h"
 
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 #include "utils/ms_utils.h"

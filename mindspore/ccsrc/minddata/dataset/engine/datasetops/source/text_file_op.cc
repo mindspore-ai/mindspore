@@ -16,14 +16,12 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iomanip>
 #include <memory>
 #include <string>
 #include <utility>
 
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/util/wait_post.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"

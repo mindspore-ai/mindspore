@@ -17,7 +17,6 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 
 #include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
 
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
@@ -31,7 +30,6 @@
 #include "minddata/dataset/engine/datasetops/source/manifest_op.h"
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
-#include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"

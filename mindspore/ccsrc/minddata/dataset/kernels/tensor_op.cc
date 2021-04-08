@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/tensor_op.h"
-#include <iostream>
 #include <memory>
-#include <mutex>
 #include <vector>
 
 namespace mindspore {

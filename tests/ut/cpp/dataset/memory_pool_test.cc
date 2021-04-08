@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/circular_pool.h"
-#include "minddata/dataset/util/system_pool.h"
 #include "minddata/dataset/util/allocator.h"
 #include "common/common.h"
 #include "gtest/gtest.h"

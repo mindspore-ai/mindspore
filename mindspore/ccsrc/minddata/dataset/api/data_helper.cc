@@ -16,15 +16,10 @@
 #include "minddata/dataset/include/data_helper.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iostream>
 #include <map>
-#include <memory>
-#include <sstream>
 
 #include "minddata/dataset/util/json_helper.h"
-#include "minddata/dataset/util/log_adapter.h"
-#include "minddata/dataset/util/path.h"
 #include "include/api/status.h"
 
 namespace mindspore {

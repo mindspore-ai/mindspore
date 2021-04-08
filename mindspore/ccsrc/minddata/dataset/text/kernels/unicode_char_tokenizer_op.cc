@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include <memory>
-#include <string>
 #include <string_view>
 #include <vector>
 

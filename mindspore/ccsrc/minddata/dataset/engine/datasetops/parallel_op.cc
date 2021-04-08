@@ -17,10 +17,8 @@
 
 #include <algorithm>
 #include <iostream>
-#include <utility>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/task_manager.h"
 

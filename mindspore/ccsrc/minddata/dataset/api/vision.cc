@@ -24,7 +24,6 @@
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "utils/log_adapter.h"
 #else
 #include "mindspore/lite/src/common/log_adapter.h"

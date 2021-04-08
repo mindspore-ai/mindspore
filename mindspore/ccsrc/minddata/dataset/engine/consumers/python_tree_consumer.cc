@@ -15,7 +15,6 @@
  */
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include "minddata/dataset/engine/consumers/python_tree_consumer.h"
 

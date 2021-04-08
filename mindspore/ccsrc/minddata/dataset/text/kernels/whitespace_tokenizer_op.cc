@@ -15,13 +15,11 @@
  */
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #include <memory>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "cppjieba/Unicode.hpp"
-#include "unicode/errorcode.h"
 #include "unicode/uchar.h"
 #include "unicode/uscript.h"
 

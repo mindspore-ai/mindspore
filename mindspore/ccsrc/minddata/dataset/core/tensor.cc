@@ -22,7 +22,6 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include <functional>
 
 #include "minddata/dataset/core/type_id.h"
 

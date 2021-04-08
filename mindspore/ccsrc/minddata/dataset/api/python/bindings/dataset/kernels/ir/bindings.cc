@@ -21,7 +21,6 @@
 
 #include "minddata/dataset/kernels/data/no_op.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
-#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 #include "minddata/dataset/kernels/py_func_op.h"
 
 namespace mindspore {
