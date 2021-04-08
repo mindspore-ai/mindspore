@@ -1789,7 +1789,7 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
       auto new_param = curr_g_->add_parameter();
       ValuePtr param_value = PyAttrValue(param);
       MS_EXCEPTION_IF_NULL(param_value);
-      new_param->set_abstract(param_value->ToAbstract()->Broaden());
+      new_param->set_abstract(param_value->ToAbstract());
       std::string param_id = GetId(param);
       SetTupleArgsToGraphInfoMap(curr_g_, param, new_param, true);
       SetNodeMapInGraphInfoMap(curr_g_, param_id, new_param);

@@ -504,6 +504,11 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &c
       } else if (inp->isa<ValueNode>()) {
         const auto &inp_value = GetValueNode(inp);
         op_args.push_back(inp_value);
+      } else if (inp->isa<Parameter>()) {
+        auto param = inp->cast<ParameterPtr>();
+        const auto &abs = param->abstract();
+        MS_EXCEPTION_IF_NULL(abs);
+        op_args.push_back(abs->BuildValue());
       } else {
         MS_LOG(EXCEPTION) << "Input of MakeTuple/MakeLis is not a CNode or ValueNode, but: " << inp->DebugString();
       }
