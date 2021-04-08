@@ -22,6 +22,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
+#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/services.h"
 
 namespace mindspore {
@@ -37,7 +38,7 @@ std::string StorageManager::ConstructFileName(const std::string &prefix, int32_t
   return (base_name + "." + suffix);
 }
 
-Status StorageManager::AddOneContainer() {
+Status StorageManager::AddOneContainer(int replaced_container_pos) {
   const std::string kPrefix = "IMG";
   const std::string kSuffix = "LB";
   Path container_name = root_ / ConstructFileName(kPrefix, file_id_, kSuffix);
@@ -45,13 +46,22 @@ Status StorageManager::AddOneContainer() {
   RETURN_IF_NOT_OK(StorageContainer::CreateStorageContainer(&sc, container_name.toString()));
   containers_.push_back(sc);
   file_id_++;
+  if (replaced_container_pos >= 0) {
+    writable_containers_pool_[replaced_container_pos] = containers_.size() - 1;
+  } else {
+    writable_containers_pool_.push_back(containers_.size() - 1);
+  }
   return Status::OK();
 }
 
 Status StorageManager::DoServiceStart() {
   containers_.reserve(1000);
+  writable_containers_pool_.reserve(pool_size_);
   if (root_.IsDirectory()) {
-    RETURN_IF_NOT_OK(AddOneContainer());
+    // create multiple containers and store their index in a pool
+    for (int i = 0; i < pool_size_; i++) {
+      RETURN_IF_NOT_OK(AddOneContainer());
+    }
   } else {
     RETURN_STATUS_UNEXPECTED("Not a directory");
   }
@@ -67,22 +77,25 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
   if (sz == 0) {
     RETURN_STATUS_UNEXPECTED("Unexpected 0 length");
   }
+  auto mt = GetRandomDevice();
   std::shared_ptr<StorageContainer> cont;
   key_type out_key;
   value_type out_value;
   bool create_new_container = false;
+  int old_container_pos = -1;
   size_t last_num_container = -1;
   do {
     SharedLock lock_s(&rw_lock_);
     size_t num_containers = containers_.size();
-    if (create_new_container && (num_containers == last_num_container)) {
-      // Upgrade to exclusvie lock.
+    if (create_new_container && (num_containers == last_num_container) && (old_container_pos >= 0)) {
+      // Upgrade to exclusive lock.
       lock_s.Upgrade();
       create_new_container = false;
       // Check again if someone has already added a
       // new container after we got the x lock
       if (containers_.size() == num_containers) {
-        RETURN_IF_NOT_OK(AddOneContainer());
+        // Create a new container and replace the full container in the pool with the newly created one
+        RETURN_IF_NOT_OK(AddOneContainer(old_container_pos));
       }
       // Refresh how many containers there are.
       num_containers = containers_.size();
@@ -92,17 +105,21 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
     if (num_containers == 0) {
       RETURN_STATUS_UNEXPECTED("num_containers is zero");
     }
-    // Go to the last container to insert.
-    cont = containers_.at(num_containers - 1);
+    // Pick a random container from the writable container pool to insert.
+    std::uniform_int_distribution<int> distribution(0, pool_size_ - 1);
+    int pos_in_pool = distribution(mt);
+    int cont_index = writable_containers_pool_.at(pos_in_pool);
+    cont = containers_.at(cont_index);
     off64_t offset;
     Status rc = cont->Insert(buf, &offset);
     if (rc.StatusCode() == StatusCode::kMDBuddySpaceFull) {
       create_new_container = true;
+      old_container_pos = pos_in_pool;
       // Remember how many containers we saw. In the next iteration we will do a comparison to see
       // if someone has already created it.
       last_num_container = num_containers;
     } else if (rc.IsOk()) {
-      out_value = std::make_pair(num_containers - 1, std::make_pair(offset, sz));
+      out_value = std::make_pair(cont_index, std::make_pair(offset, sz));
       RETURN_IF_NOT_OK(index_.insert(out_value, &out_key));
       *key = out_key;
       break;
@@ -150,11 +167,15 @@ Status StorageManager::DoServiceStop() noexcept {
     }
   }
   containers_.clear();
+  writable_containers_pool_.clear();
   file_id_ = 0;
   return rc1;
 }
 
-StorageManager::StorageManager(const Path &root) : root_(root), file_id_(0), index_() {}
+StorageManager::StorageManager(const Path &root) : root_(root), pool_size_(1), file_id_(0), index_() {}
+
+StorageManager::StorageManager(const Path &root, int pool_size)
+    : root_(root), pool_size_(pool_size), file_id_(0), index_() {}
 
 StorageManager::~StorageManager() { (void)StorageManager::DoServiceStop(); }
 

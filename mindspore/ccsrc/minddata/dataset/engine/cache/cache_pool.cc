@@ -30,7 +30,8 @@ Status CachePool::DoServiceStart() {
   if (!root_.toString().empty()) {
     Path spill = GetSpillPath();
     RETURN_IF_NOT_OK(spill.CreateDirectories());
-    sm_ = std::make_shared<StorageManager>(spill);
+    auto &cs = CacheServer::GetInstance();
+    sm_ = std::make_shared<StorageManager>(spill, cs.GetNumWorkers());
     RETURN_IF_NOT_OK(sm_->ServiceStart());
     MS_LOG(INFO) << "CachePool will use disk folder: " << spill.toString();
   }

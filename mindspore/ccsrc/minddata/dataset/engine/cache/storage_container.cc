@@ -127,11 +127,23 @@ Status StorageContainer::Insert(const std::vector<ReadableSlice> &buf, off64_t *
   addr_t addr = 0;
   RETURN_IF_NOT_OK(bs_->Alloc(sz, &bspd, &addr));
   *offset = static_cast<off64_t>(addr);
-  // We will do piecewise copy of the data to disk.
-  for (auto &v : buf) {
-    RETURN_IF_NOT_OK(Write(v, addr));
-    addr += v.GetSize();
+  // We will do piecewise copy of the data to a large buffer
+  std::string mem;
+  try {
+    mem.resize(sz);
+    CHECK_FAIL_RETURN_UNEXPECTED(mem.capacity() >= sz, "Programming error");
+  } catch (const std::bad_alloc &e) {
+    return Status(StatusCode::kMDOutOfMemory);
   }
+  WritableSlice all(mem.data(), sz);
+  size_t pos = 0;
+  for (auto &v : buf) {
+    WritableSlice row_data(all, pos);
+    RETURN_IF_NOT_OK(WritableSlice::Copy(&row_data, v));
+    pos += v.GetSize();
+  }
+  // Write all data to disk at once
+  RETURN_IF_NOT_OK(Write(all, addr));
   return Status::OK();
 }
 

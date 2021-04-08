@@ -35,11 +35,22 @@ namespace mindspore {
 namespace dataset {
 class StorageManager : public Service {
  public:
-  using storage_index = AutoIndexObj<std::pair<int, std::pair<off_t, size_t>>>;
+  // Use these traits for the B+ tree inside the StorageManager
+  struct StorageBPlusTreeTraits {
+    // This determines the limit of number of keys in a node.
+    using slot_type = uint16_t;
+    // Number of slots in each leaf of the tree.
+    static constexpr slot_type kLeafSlots = 512;
+    // Number of slots in each inner node of the tree
+    static constexpr slot_type kInnerSlots = 256;
+  };
+  using value_type = std::pair<int, std::pair<off_t, size_t>>;
+  using storage_index = AutoIndexObj<value_type, std::allocator<value_type>, StorageBPlusTreeTraits>;
   using key_type = storage_index::key_type;
-  using value_type = storage_index::value_type;
 
   explicit StorageManager(const Path &);
+
+  StorageManager(const Path &root, int pool_size);
 
   ~StorageManager() override;
 
@@ -63,12 +74,19 @@ class StorageManager : public Service {
   int file_id_;
   RWLock rw_lock_;
   storage_index index_;
+  std::vector<int> writable_containers_pool_;
+  int pool_size_;
 
   std::string GetBaseName(const std::string &prefix, int32_t file_id);
 
   std::string ConstructFileName(const std::string &prefix, int32_t file_id, const std::string &suffix);
 
-  Status AddOneContainer();
+  /// \brief Add a new storage container
+  /// The newly-created container is going to be added into a pool of writable containers.
+  /// \param replaced_container_pos If provided, will use the newly created container to replace the corresponding old
+  /// container in the pool. If not provided, will just append the newly created container to the end of the pool.
+  /// \return Status object
+  Status AddOneContainer(int replaced_container_pos = -1);
 };
 }  // namespace dataset
 }  // namespace mindspore
