@@ -1,13 +1,8 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global MatVecMulFp32
-#ifndef __APPLE__
-.type MatVecMulFp32, %function
-#endif
 
 // void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col)
 // r0: a
@@ -182,5 +177,4 @@ Col1Loop:
 End:
   sub sp, sp, #52
   pop {r0-r8, r9, r10, r11, pc}
-#endif
 #endif

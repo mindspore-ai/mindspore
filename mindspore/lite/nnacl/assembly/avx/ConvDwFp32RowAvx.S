@@ -1,12 +1,8 @@
 #ifdef ENABLE_AVX
-    .text
-    .align 4
-    .global ConvDwFp32Row
-#ifndef __APPLE__
-#ifndef WIN32
-    .type ConvDwFp32Row, %function
-#endif
-#endif
+#include "nnacl/assembly_global.h"
+
+.text
+.align 4
 
 // void ConvDwFp32Row(float *output_ptr, const float *input_tmp, const float *weight_ptr, size_t num_pixels,
 //                    size_t output_channel, size_t input_step);
@@ -26,7 +22,7 @@
 // 40: output_channel
 // 48: input_step
 
-ConvDwFp32Row:
+asm_function ConvDwFp32Row
     pushq %r15
     pushq %r14
     pushq %r13

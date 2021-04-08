@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwInt8Row
-#ifndef __APPLE__
-.type ConvDwInt8Row, %function
-#endif
 
 // void ConvDwInt8Row(int32_t *output_ptr, const int8_t *input_ptr, const int16_t *weight_ptr, int num_pixels,
 //                    int output_channel, int input_step, int8_t input_zp)

@@ -3,10 +3,6 @@
 
 .text
 .align 5
-.global IndirectGemmInt16to32_8x4
-#ifndef __APPLE__
-.type IndirectGemmInt16to32_8x4, %function
-#endif
 
 // void IndirectGemmInt16to32_8x4(int *output, short *input, short *weight, size_t kszie, size_t ic8, size_t oc4, size_t offset);
 // r0: output, r1: input, r2: weight, r3: kszie, r4: ic8, r5: oc4, r6: offset

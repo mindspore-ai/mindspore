@@ -1,13 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDw3x3Stride1
-#ifndef __APPLE__
-.type ConvDw3x3Stride1, %function
-#endif
-
 
 // void ConvDw3x3Stride1(float *output, const float *buffer, const float *weight, const float *bias, int col_size,
 //                       int row_size, int channel, int output_h, int output_w, size_t relu, size_t relu6)

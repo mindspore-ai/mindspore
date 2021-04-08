@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
-    .text
-    .align 5
-    .global TiledC4MatmulFp32
-#ifndef __APPLE__
-    .type TiledC4MatmulFp32, %function
-#endif
+.text
+.align 5
 
 asm_function TiledC4MatmulFp32
 //void TiledC4MatmulFp32(float* dst, const float* src, const float* weight, size_t ic4, size_t cal_num, size_t oc4)

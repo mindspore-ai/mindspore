@@ -1,13 +1,8 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global DeconvDwInt8Post
-#ifndef __APPLE__
-.type DeconvDwInt8Post, %function
-#endif
 
 // void DeconvDwInt8Post(int8_t *dst, int32_t *output_buffer, const int32_t *bias, int block_channel, int pixel_nums,
 //                       int out_multiplier, int left_shift, int right_shift, int32_t out_zp, int32_t acc_min,
@@ -71,5 +66,4 @@ asm_function DeconvDwInt8Post
         pop {r4-r8}
         bx lr
 
-#endif
 #endif

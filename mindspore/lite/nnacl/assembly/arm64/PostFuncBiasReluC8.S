@@ -1,13 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
-    .text
-    .align 5
-    //.p2align 5,,15
-    .global PostFuncBiasReluC8
-#ifndef __APPLE__
-    .type PostFuncBiasReluC8, %function
-#endif
+.text
+.align 5
 
 //void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div,size_t oc8mod
 //                        size_t plane_size, size_t stride, int relu_type);

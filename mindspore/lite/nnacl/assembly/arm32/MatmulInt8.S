@@ -1,13 +1,8 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global MatmulInt8Neon32
-#ifndef __APPLE__
-.type MatmulInt8Neon32, %function
-#endif
 
 //void MatmulInt8Neon32(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, 
 //                      const int *input_sums, const int *weight_bias, int act_min, int act_max, int out_zp,
@@ -285,5 +280,4 @@ End1:
   sub sp, sp, #116
   vpop {q4-q7}
   pop {r0-r11, pc}
-#endif
 #endif

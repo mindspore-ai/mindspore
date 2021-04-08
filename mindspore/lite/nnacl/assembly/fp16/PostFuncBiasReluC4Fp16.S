@@ -1,12 +1,8 @@
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
-    .text
-    .align 5
-    //.p2align 5,,15
-    .global PostFuncBiasReluC4Fp16
-#ifndef __APPLE__
-    .type PostFuncBiasReluC4Fp16, %function
-#endif
+.text
+.align 5
 
 //void PostFuncBiasReluC4Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc4div, size_t oc4mod,
 //                            size_t plane_size, size_t plane_stride, size_t relu_type);
@@ -278,3 +274,5 @@ Loop_C1_3_Write:
 
 End:
   ret
+
+#endif

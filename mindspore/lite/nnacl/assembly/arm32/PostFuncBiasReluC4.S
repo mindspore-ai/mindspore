@@ -1,12 +1,8 @@
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-//.p2align 5,,15
-.global PostFuncBiasReluC4
-#ifndef __APPLE__
-.type PostFuncBiasReluC4, %function
-#endif
 
 asm_function PostFuncBiasReluC4
   push {r4-r8, r10, r11, lr}
@@ -234,3 +230,4 @@ Loop_C1_3_Write:
 End:
   sub sp, sp, #32
   pop {r4-r8, r10, r11, pc}
+#endif

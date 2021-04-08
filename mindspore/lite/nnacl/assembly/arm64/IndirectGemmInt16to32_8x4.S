@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global IndirectGemmInt16to32_8x4
-#ifndef __APPLE__
-.type IndirectGemmInt16to32_8x4, %function
-#endif
 
 // void IndirectGemmInt16to32_8x4(int *output, short *input, short *weight, size_t ksize, size_t ic8, size_t oc4, size_t offset);
 // x0: output, x1: input, x2: weight, x3: ksize, x4: ic8, x5: oc4, x6: offset

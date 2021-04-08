@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwFp16Row
-#ifndef __APPLE__
-.type ConvDwFp16Row, %function
-#endif
 
 // void ConvDwFp16Row(float16_t* output_ptr, const float16_t* input_ptr,const float16_t* filter_ptr,
 //                    size_t num_pixels, size_t input_channel, size_t input_step)

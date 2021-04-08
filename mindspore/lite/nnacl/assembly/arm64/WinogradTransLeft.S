@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
-    .text
-    .align 5
-    .global WinogradTransLeft
-#ifndef __APPLE__
-    .type WinogradTransLeft, %function
-#endif
+.text
+.align 5
 
 asm_function WinogradTransLeft
 //void WinogradTransLeft(const float* S, const float* B, float* M, size_t w, size_t h, size_t k, size_t length);

@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwInt8Center
-#ifndef __APPLE__
-.type ConvDwInt8Center, %function
-#endif
 
 // void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t height,
 //                       size_t width, size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel,

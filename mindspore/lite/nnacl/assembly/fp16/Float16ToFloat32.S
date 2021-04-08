@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global Float16ToFloat32
-#ifndef __APPLE__
-.type Float16ToFloat32, %function
-#endif
 
 // void Float16ToFloat32(const float16_t *input, float *output, int number);
 // x0: input, x1: output, x2: number

@@ -2,12 +2,6 @@
 #include "nnacl/assembly_global.h"
 .text
 .align 4
-.global ConvDwFp32Avx3x3
-#ifndef __APPLE__
-#ifndef WIN32
-.type ConvDwFp32Avx3x3, %function
-#endif
-#endif
 
 // void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const float *bias, size_t channels, size_t output_width,
 //                       size_t input_stride, size_t relum, szie_t relu6)

@@ -1,13 +1,8 @@
-#ifdef __arm__
-#ifndef __aarch64__
+#ifdef ENABLE_ARM32
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global IndirectGemmInt8_2x4
-#ifndef __APPLE__
-.type IndirectGemmInt8_2x4, %function
-#endif
 
 // void IndirectGemmInt8_2x4(int8_t *output, int8_t *input, int8_t *weight, int32_t *bias, size_t ksize, size_t ic4,
 // size_t oc, size_t offset, int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp, int32_t *out_multiplier,
@@ -293,5 +288,4 @@ LoopOcEnd:
     sub sp, sp, #96
     vpop {q4-q7}
     pop {r4-r8, r10, r11, pc}
-#endif
 #endif

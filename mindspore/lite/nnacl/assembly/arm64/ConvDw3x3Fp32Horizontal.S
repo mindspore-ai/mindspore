@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDw3x3Horizontal
-#ifndef __APPLE__
-.type ConvDw3x3Horizontal, %function
-#endif
 
 // void ConvDw3x3Horizontal(float *dst, const float *src, const float *weight, const float *bias, int in_kh_step,
 //                          int in_kw_step, int channel, size_t relu, size_t relu6)

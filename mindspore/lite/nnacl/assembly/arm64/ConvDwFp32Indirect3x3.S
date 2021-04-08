@@ -1,12 +1,8 @@
-#ifdef __aarch64__
+#ifdef ENABLE_ARM64
 #include "nnacl/assembly_global.h"
 
 .text
 .align 5
-.global ConvDwFp32Indirect3x3
-#ifndef __APPLE__
-.type ConvDwFp32Indirect3x3, %function
-#endif
 
 // void ConvDwFp32Indirect3x3(float *output, float **input, const float *weights, const float *bias, int channels, int output_width,
 //                            size_t input_stride, size_t relu, size_t relu6)
