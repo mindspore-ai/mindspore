@@ -28,6 +28,8 @@ constexpr auto ENV_RDR_PATH = "MS_RDR_PATH";
 constexpr auto KEY_RDR_SETTINGS = "rdr";
 constexpr auto KEY_PATH = "path";
 constexpr auto KEY_ENABLE = "enable";
+constexpr auto KEY_MEM_REUSE_SETTINGS = "sys";
+constexpr auto KEY_MEM_REUSE = "mem_reuse";
 }  // namespace
 
 namespace mindspore {
@@ -140,6 +142,7 @@ void EnvConfigParser::ParseFromFile() {
 
   // Parse rdr seetings from file
   ParseRdrSetting(j);
+  ParseMemReuseSetting(j);
 
   ConfigToString();
 }
@@ -152,6 +155,28 @@ void EnvConfigParser::Parse() {
   already_parsed_ = true;
   ParseFromEnv();
   ParseFromFile();
+}
+
+void EnvConfigParser::ParseMemReuseSetting(const nlohmann::json &content) {
+  auto sys_setting = content.find(KEY_MEM_REUSE_SETTINGS);
+  if (sys_setting == content.end()) {
+    MS_LOG(INFO) << "The '" << KEY_MEM_REUSE_SETTINGS << "' isn't existed. Please check the config file '"
+                 << config_file_ << "' set by 'env_config_path' in context.";
+    return;
+  }
+  auto sys_memreuse = CheckJsonKeyExist(*sys_setting, KEY_MEM_REUSE_SETTINGS, KEY_MEM_REUSE);
+  if (sys_memreuse.has_value()) {
+    ParseSysMemReuse(**sys_memreuse);
+  }
+}
+
+void EnvConfigParser::ParseSysMemReuse(const nlohmann::json &content) {
+  if (!content.is_boolean()) {
+    MS_LOG(INFO) << "the json object parses failed. 'enable' in " << KEY_MEM_REUSE_SETTINGS << " should be boolean."
+                 << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
+    return;
+  }
+  sys_memreuse_ = content;
 }
 
 void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {

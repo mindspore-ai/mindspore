@@ -35,6 +35,7 @@
 #include "utils/profile.h"
 #include "utils/trace_base.h"
 #include "debug/data_dump/cpu_e2e_dump.h"
+#include "debug/env_config_parser.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #endif
@@ -59,7 +60,7 @@ void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
   AssignInputNodeAddress(kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_enable_mem_reuse = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE);
+  bool is_enable_mem_reuse = EnvConfigParser::GetInstance().GetSysMemreuse();
   if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     // disable mem reuse for kPynativeMode
     is_enable_mem_reuse = false;
