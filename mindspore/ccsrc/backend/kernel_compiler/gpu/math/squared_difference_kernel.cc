@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,15 @@ MS_REG_GPU_KERNEL_ONE(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   SquaredDifferenceOpGpuKernel, float)
-
 // fp16
 MS_REG_GPU_KERNEL_ONE(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   SquaredDifferenceOpGpuKernel, half)
-
 // int32
 MS_REG_GPU_KERNEL_ONE(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   SquaredDifferenceOpGpuKernel, int)
-
 }  // namespace kernel
 }  // namespace mindspore
