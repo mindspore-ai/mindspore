@@ -32,7 +32,8 @@
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 
-namespace mindspore::pipeline {
+namespace mindspore {
+namespace pipeline {
 namespace {  // namespace anonymous
 
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
@@ -1467,4 +1468,5 @@ bool ReAutoMonad(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace mindspore::pipeline
+}  // namespace pipeline
+}  // namespace mindspore
