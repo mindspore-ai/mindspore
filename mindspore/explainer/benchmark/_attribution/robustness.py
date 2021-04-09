@@ -35,15 +35,6 @@ class Robustness(LabelSensitiveMetric):
             single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
             `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
             when combining this function with network, the final output is the probability of the input.
-
-
-    Examples:
-        >>> from mindspore import nn
-        >>> from mindspore.explainer.benchmark import Robustness
-        >>> # Initialize a Robustness benchmarker passing num_labels of the dataset.
-        >>> num_labels = 10
-        >>> activation_fn = nn.Softmax()
-        >>> robustness = Robustness(num_labels, activation_fn)
     """
 
     def __init__(self, num_labels, activation_fn):
@@ -79,7 +70,14 @@ class Robustness(LabelSensitiveMetric):
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
+            >>> from mindspore import nn
             >>> from mindspore.explainer.explanation import Gradient
+            >>> from mindspore.explainer.benchmark import Robustness
+            >>>
+            >>> # Initialize a Robustness benchmarker passing num_labels of the dataset.
+            >>> num_labels = 10
+            >>> activation_fn = nn.Softmax()
+            >>> robustness = Robustness(num_labels, activation_fn)
             >>>
             >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
             >>> net = LeNet5(10, num_channel=3)
@@ -89,7 +87,8 @@ class Robustness(LabelSensitiveMetric):
             >>> target_label = ms.Tensor([0], ms.int32)
             >>> # robustness is a Robustness instance
             >>> res = robustness.evaluate(gradient, input_x, target_label)
-            >>> print(res)
+            >>> print(res.shape)
+            (1,)
         """
 
         self._check_evaluate_param(explainer, inputs, targets, saliency)

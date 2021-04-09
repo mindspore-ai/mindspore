@@ -365,15 +365,6 @@ class Faithfulness(LabelSensitiveMetric):
         metric (str, optional): The specifi metric to quantify faithfulness.
             Options: "DeletionAUC", "InsertionAUC", "NaiveFaithfulness".
             Default: 'NaiveFaithfulness'.
-
-    Examples:
-        >>> from mindspore import nn
-        >>> from mindspore.explainer.benchmark import Faithfulness
-        >>> # init a `Faithfulness` object
-        >>> num_labels = 10
-        >>> metric = "InsertionAUC"
-        >>> activation_fn = nn.Softmax()
-        >>> faithfulness = Faithfulness(num_labels, activation_fn, metric)
     """
     _methods = [NaiveFaithfulness, DeletionAUC, InsertionAUC]
 
@@ -418,9 +409,15 @@ class Faithfulness(LabelSensitiveMetric):
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
+            >>> from mindspore import nn
+            >>> from mindspore.explainer.benchmark import Faithfulness
             >>> from mindspore.explainer.explanation import Gradient
             >>>
-            >>>
+            >>> # init a `Faithfulness` object
+            >>> num_labels = 10
+            >>> metric = "InsertionAUC"
+            >>> activation_fn = nn.Softmax()
+            >>> faithfulness = Faithfulness(num_labels, activation_fn, metric)
             >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
             >>> net = LeNet5(10, num_channel=3)
             >>> gradient = Gradient(net)
@@ -429,10 +426,13 @@ class Faithfulness(LabelSensitiveMetric):
             >>> # usage 1: input the explainer and the data to be explained,
             >>> # faithfulness is a Faithfulness instance
             >>> res = faithfulness.evaluate(gradient, inputs, targets)
+            >>> print(res.shape)
+            (1,)
             >>> # usage 2: input the generated saliency map
             >>> saliency = gradient(inputs, targets)
             >>> res = faithfulness.evaluate(gradient, inputs, targets, saliency)
-            >>> print(res)
+            >>> print(res.shape)
+            (1,)
         """
 
         self._check_evaluate_param(explainer, inputs, targets, saliency)

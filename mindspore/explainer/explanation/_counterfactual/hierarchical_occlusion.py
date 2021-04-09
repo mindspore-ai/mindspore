@@ -379,27 +379,6 @@ class Searcher:
         strides (Union(list[int], optional): Stride of layers, None means by auto calcuation.
         threshold (float): Threshold network output value of the target class.
         by_masking (bool): Whether it is masking mode.
-
-    Examples:
-        >>> from mindspore import nn
-        >>> from mindspore.explainer.explanation._counterfactual.hierarchical_occlusion import Searcher, EditStep
-        >>>
-        >>> from user_defined import load_network, load_sample_image
-        >>>
-        >>>
-        >>> network = nn.SequentialCell([load_network(), nn.Sigmoid()])
-        >>>
-        >>> # single image in CHW or NCHW(N=1) numpy.ndarray tensor, typical dimension is 224x224
-        >>> image = load_sample_image()
-        >>> # target class index
-        >>> class_idx = 5
-        >>>
-        >>> # by default, maximum 3 search layers, auto calculate window sizes and strides
-        >>> searcher = Searcher(network)
-        >>>
-        >>> edit_tree, layer_outputs = searcher.search(image, class_idx)
-        >>> # get the outcome image of the deepest layer in CHW(or NCHW(N=1) if input image is NCHW) format
-        >>> outcome = EditStep.apply(image, searcher.compiled_mask, edit_tree.leaf_steps)
     """
 
     def __init__(self,
