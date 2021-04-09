@@ -28,6 +28,7 @@ constexpr auto kNameTileFusion = "TileFusion";
 class TileFusion : public Tile {
  public:
   TileFusion() : Tile(kNameTileFusion) {}
+  ~TileFusion() = default;
   MS_DECLARE_PARENT(TileFusion, Tile);
   void Init(const std::vector<int64_t> &dims);
   void set_dims(const std::vector<int64_t> &dims);

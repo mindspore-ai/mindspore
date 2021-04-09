@@ -28,6 +28,7 @@ constexpr auto kNameConv2DFusion = "Conv2DFusion";
 class Conv2DFusion : public Conv2D {
  public:
   Conv2DFusion() : Conv2D(kNameConv2DFusion) {}
+  ~Conv2DFusion() = default;
   MS_DECLARE_PARENT(Conv2DFusion, Conv2D);
   void Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},

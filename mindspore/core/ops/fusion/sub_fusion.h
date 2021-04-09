@@ -26,6 +26,7 @@ constexpr auto kNameSubFusion = "SubFusion";
 class SubFusion : public Sub {
  public:
   SubFusion() : Sub(kNameSubFusion) {}
+  ~SubFusion() = default;
   MS_DECLARE_PARENT(SubFusion, Sub);
   void Init(const ActivationType &activation_type = NO_ACTIVATION);
   void set_activation_type(const ActivationType &activation_type);

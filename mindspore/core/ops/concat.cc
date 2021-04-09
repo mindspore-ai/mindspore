@@ -21,7 +21,6 @@
 #include "utils/check_convert_utils.h"
 namespace mindspore {
 namespace ops {
-
 void Concat::Init(const int64_t axis) { this->set_axis(axis); }
 int64_t Concat::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);

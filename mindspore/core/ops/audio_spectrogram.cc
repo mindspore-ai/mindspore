@@ -94,12 +94,12 @@ int64_t AudioSpectrogram::Log2Ceil(int64_t length) {
       floor += shift;
     }
   }
-  return length == (length & ~(length - 1)) ? floor : floor + 1;
+  return length == (length & ~(unsigned int)(length - 1)) ? floor : floor + 1;
 }
 
 int64_t AudioSpectrogram::GetFftLength(int64_t length) {
   int64_t shift = Log2Ceil(length);
-  return 1 << shift;
+  return 1 << (unsigned int)shift;
 }
 
 void AudioSpectrogram::set_mag_square(const bool mag_square) { this->AddAttr(kMagSquare, MakeValue(mag_square)); }

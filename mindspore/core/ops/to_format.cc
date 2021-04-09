@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void ToFormat::set_src_t(const int64_t src_t) { this->AddAttr(kSrcT, MakeValue(src_t)); }
 int64_t ToFormat::get_src_t() const {
   auto value_ptr = GetAttr(kSrcT);

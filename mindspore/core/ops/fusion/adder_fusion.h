@@ -31,6 +31,7 @@ constexpr auto kNameAdderFusion = "AdderFusion";
 class AdderFusion : public Adder {
  public:
   AdderFusion() : Adder(kNameAdderFusion) {}
+  ~AdderFusion() = default;
   MS_DECLARE_PARENT(AdderFusion, Adder);
   void Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
             const PadMode &pad_mode, const std::vector<int64_t> &stride, const std::vector<int64_t> &pad_list,

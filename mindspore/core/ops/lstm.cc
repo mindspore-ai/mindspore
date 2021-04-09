@@ -57,8 +57,8 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
     (num_layers + 1) * num_directions * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
   int64_t ws_diff_states_size =
     (num_layers + 1) * num_directions * 3 * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
-  int64_t ws_grad_comp_size = 0;
-  int64_t page_size = 4096;
+  const int64_t ws_grad_comp_size = 0;
+  const int64_t page_size = 4096;
   int64_t current_offset = 0;
   current_offset += ws_gates_size;
   current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
