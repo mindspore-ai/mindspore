@@ -23,6 +23,7 @@ class Inter(IntEnum):
     BILINEAR = LINEAR = 2
     BICUBIC = CUBIC = 3
     AREA = 4
+    PILCUBIC = 5
 
 
 # Padding Mode, Border Type

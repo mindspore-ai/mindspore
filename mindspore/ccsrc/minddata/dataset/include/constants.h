@@ -48,7 +48,7 @@ enum class ImageBatchFormat { kNHWC = 0, kNCHW = 1 };
 enum class ImageFormat { HWC = 0, CHW = 1, HW = 2 };
 
 // Possible interpolation modes
-enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3 };
+enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3, kCubicPil = 4 };
 
 // Possible JiebaMode modes
 enum class JiebaMode { kMix = 0, kMp = 1, kHmm = 2 };

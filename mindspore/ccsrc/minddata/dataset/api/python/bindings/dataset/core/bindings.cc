@@ -117,6 +117,7 @@ PYBIND_REGISTER(InterpolationMode, 0, ([](const py::module *m) {
                     .value("DE_INTER_CUBIC", InterpolationMode::kCubic)
                     .value("DE_INTER_AREA", InterpolationMode::kArea)
                     .value("DE_INTER_NEAREST_NEIGHBOUR", InterpolationMode::kNearestNeighbour)
+                    .value("DE_INTER_PILCUBIC", InterpolationMode::kCubicPil)
                     .export_values();
                 }));
 

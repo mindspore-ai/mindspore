@@ -56,6 +56,7 @@ add_library(kernels-image OBJECT
     random_resize_with_bbox_op.cc
     random_color_op.cc
     rotate_op.cc
+    resize_cubic_op.cc
     )
 if(ENABLE_ACL)
     add_dependencies(kernels-image kernels-soft-dvpp-image kernels-dvpp-image)
