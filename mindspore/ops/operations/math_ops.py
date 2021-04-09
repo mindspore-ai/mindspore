@@ -4616,6 +4616,7 @@ class IndexAdd(PrimitiveWithInfer):
         validator.check("x rank", len(x_shape), "y rank", len(y_shape), Rel.EQ, self.name)
         x_rank = len(x_shape)
         validator.check_int_range(self.axis, -x_rank - 1, x_rank, Rel.INC_NEITHER, 'axis', self.name)
+        validator.check_equal_int(len(idx_shape), 1, "rank of idx_shape", self.name)
         validator.check("size of indices", idx_shape[0], "dimension of y[axis]", y_shape[self.axis],
                         Rel.EQ, self.name)
         axis = self.axis if self.axis >= 0 else x_rank + self.axis
