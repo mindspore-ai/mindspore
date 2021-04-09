@@ -37,18 +37,18 @@ Dataset used: [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)
 
 ## [Mixed Precision(Ascend)](#contents)
 
-The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
+The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU/CPU）
-    - Prepare hardware environment with Ascend、GPU or CPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend、GPU or CPU processor.
 - Framework
-    - [MindSpore](http://10.90.67.50/mindspore/archive/20200506/OpenSource/me_vm_x86/)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
     - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
-    - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+    - [MindSpore API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script description](#contents)
 
