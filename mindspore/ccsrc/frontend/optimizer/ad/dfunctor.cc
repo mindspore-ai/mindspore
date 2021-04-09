@@ -825,8 +825,9 @@ static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGrap
       auto fg = cnode->func_graph();
       MS_EXCEPTION_IF_NULL(fg);
       if (primal_users_map.find(fg) != primal_users_map.end()) {
-        MS_LOG(EXCEPTION) << "The forward network is only allowed to be called once. Func graph: " << fg->ToString()
-                          << ", cnode: " << cnode->DebugString() << ", trace: " << trace::DumpSourceLines(cnode);
+        MS_LOG(WARNING) << "It is recommended to call the forward network only once. Func graph: " << fg->ToString()
+                        << ", cnode: " << cnode->DebugString() << ", trace: " << trace::DumpSourceLines(cnode);
+        continue;
       }
       primal_users_map[fg] = cnode;
     } else if (IsPrimitive(cnode->inputs().at(0), prim::kPrimJ)) {
