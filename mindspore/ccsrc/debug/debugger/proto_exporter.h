@@ -48,7 +48,6 @@ class DebuggerProtoExporter {
   void SetSequenceToProto(const ValueSequeuePtr &val, debugger::ValueProto *value_proto);
   void SetDictionaryToProto(const ValueDictionaryPtr &val, debugger::ValueProto *value_proto);
   void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto);
-  void SetNodeOutputType(const TypePtr &node, const BaseShapePtr &shape, debugger::TypeProto *type_proto);
 
   void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                        LocDebugDumpMode dump_location = kDebugOff);
