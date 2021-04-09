@@ -103,8 +103,8 @@ static bool isTraversable(const AnfNodePtr &node) {
   return false;
 }
 
-static inline AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node,
-                                     const SubstitutionPtr &substitution) {
+static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node,
+                              const SubstitutionPtr &substitution) {
   auto manager = optimizer->manager();
   bool is_match = substitution->predicate_(node);
   if (is_match) {
@@ -126,8 +126,8 @@ static inline AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNod
   return nullptr;
 }
 
-static inline void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodePtr &node,
-                                          std::deque<AnfNodePtr> *todo, bool change, size_t seen) {
+static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodePtr &node, std::deque<AnfNodePtr> *todo,
+                                   bool change, size_t seen) {
   if (IsValueNode<FuncGraph>(node)) {
     (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
   }
@@ -238,6 +238,23 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   return changes;
 }
 
+void SubstitutionList::DisplayStatusOfSubstitution(const std::unordered_map<std::string, std::vector<bool>> &status,
+                                                   const OptimizerPtr &optimizer, size_t space) const {
+  std::stringstream ss;
+  ss << std::endl
+     << "Pass: " << optimizer->name() << "(" << optimizer->CurPass_.counter << ")_" << optimizer->CurPass_.name
+     << std::endl;
+  for (size_t i = 0; i < list_.size(); i++) {
+    auto name = list_[i]->name_;
+    ss << std::left << std::setw(space + 4) << name << "\t";
+    for (auto change : status.at(name + std::to_string(i))) {
+      ss << change << " ";
+    }
+    ss << std::endl;
+  }
+  MS_LOG(DEBUG) << ss.str();
+}
+
 bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const {
   // Add for substitution status counting
   size_t space = 0;
@@ -282,19 +299,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
 
   // Display the status of each substitution
   if (optimizer->is_on_debug_) {
-    std::stringstream ss;
-    ss << std::endl
-       << "Pass: " << optimizer->name() << "(" << optimizer->CurPass_.counter << ")_" << optimizer->CurPass_.name
-       << std::endl;
-    for (size_t i = 0; i < list_.size(); i++) {
-      auto name = list_[i]->name_;
-      ss << std::left << std::setw(space + 4) << name << "\t";
-      for (auto change : status[name + std::to_string(i)]) {
-        ss << change << " ";
-      }
-      ss << std::endl;
-    }
-    MS_LOG(DEBUG) << ss.str();
+    DisplayStatusOfSubstitution(status, optimizer, space);
   }
   return changes;
 }
