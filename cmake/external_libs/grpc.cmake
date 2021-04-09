@@ -1,20 +1,16 @@
-set(grpc_USE_STATIC_LIBS ON)
+set(grpc_USE_STATIC_LIBS OFF)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC \
-        -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
-        -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
 else()
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
-        -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
     if(NOT ENABLE_GLIBCXX)
         set(grpc_CXXFLAGS "${grpc_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
     endif()
 endif()
 
 set(grpc_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
-
 
 if(EXISTS ${protobuf_ROOT}/lib64)
   set(_FINDPACKAGE_PROTOBUF_CONFIG_DIR "${protobuf_ROOT}/lib64/cmake/protobuf")
@@ -48,7 +44,9 @@ mindspore_add_pkg(grpc
         EXE grpc_cpp_plugin
         URL ${REQ_URL}
         MD5 ${MD5}
+        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/grpc/grpc.patch001
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release
+        -DBUILD_SHARED_LIBS=ON
         -DgRPC_INSTALL:BOOL=ON
         -DgRPC_BUILD_TESTS:BOOL=OFF
         -DgRPC_PROTOBUF_PROVIDER:STRING=package
@@ -70,14 +68,6 @@ add_library(mindspore::grpc++ ALIAS grpc::grpc++)
 
 # link other grpc libs
 target_link_libraries(grpc::grpc++ INTERFACE grpc::grpc grpc::gpr grpc::upb grpc::address_sorting)
-
-# link built dependencies
-target_link_libraries(grpc::grpc++ INTERFACE mindspore::z)
-target_link_libraries(grpc::grpc++ INTERFACE mindspore::cares)
-target_link_libraries(grpc::grpc++ INTERFACE mindspore::absl_strings mindspore::absl_throw_delegate
-                      mindspore::absl_raw_logging_internal mindspore::absl_int128 mindspore::absl_bad_optional_access)
-target_link_libraries(grpc::grpc++ INTERFACE mindspore::ssl mindspore::crypto)
-
 
 function(ms_grpc_generate c_var h_var)
     if(NOT ARGN)
