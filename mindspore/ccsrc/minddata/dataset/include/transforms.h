@@ -24,6 +24,7 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
+#include "include/api/types.h"
 #include "minddata/dataset/include/constants.h"
 
 namespace mindspore {
@@ -349,10 +350,8 @@ class Slice final : public TensorTransform {
 class TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] data_type mindspore.dtype to be cast to.
-  explicit TypeCast(std::string data_type) : TypeCast(StringToChar(data_type)) {}
-
-  explicit TypeCast(const std::vector<char> &data_type);
+  /// \param[in] data_type mindspore::DataType to be cast to.
+  explicit TypeCast(mindspore::DataType data_type);
 
   /// \brief Destructor
   ~TypeCast() = default;

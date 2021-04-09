@@ -332,7 +332,7 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt32, {}));
   std::shared_ptr<Dataset> ds = RandomData(44, schema);
   ASSERT_NE(ds, nullptr);
-  ds = ds->Map({std::make_shared<transforms::TypeCast>("uint64")}, {"label"}, {}, {}, nullptr, {cb1});
+  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {}, {}, nullptr, {cb1});
   ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);
   ASSERT_NE(ds, nullptr);

@@ -49,7 +49,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
   // Note: No need to check for output after calling API class constructor
 
   // Convert to the same type
-  std::shared_ptr<TensorTransform> type_cast(new transforms::TypeCast("uint8"));
+  std::shared_ptr<TensorTransform> type_cast(new transforms::TypeCast(mindspore::DataType::kNumberTypeUInt8));
   // Note: No need to check for output after calling API class constructor
 
   ds = ds->Map({rescale, type_cast}, {"image"});

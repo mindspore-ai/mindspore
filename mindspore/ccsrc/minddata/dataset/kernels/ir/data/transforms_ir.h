@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 
 namespace mindspore {
@@ -214,7 +215,8 @@ class SliceOperation : public TensorOperation {
 
 class TypeCastOperation : public TensorOperation {
  public:
-  explicit TypeCastOperation(std::string data_type);
+  explicit TypeCastOperation(DataType data_type);     // Used for C++ API
+  explicit TypeCastOperation(std::string data_type);  // Used for Pybind
 
   ~TypeCastOperation() = default;
 
@@ -227,7 +229,7 @@ class TypeCastOperation : public TensorOperation {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
-  std::string data_type_;
+  DataType data_type_;
 };
 
 #ifndef ENABLE_ANDROID

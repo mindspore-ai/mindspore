@@ -19,6 +19,8 @@
 #include <algorithm>
 
 #include "mindspore/ccsrc/minddata/dataset/core/type_id.h"
+#include "mindspore/core/ir/dtype/type_id.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 
 namespace mindspore {
@@ -211,11 +213,12 @@ std::shared_ptr<TensorOperation> Slice::Parse() { return std::make_shared<SliceO
 
 // Constructor to TypeCast
 struct TypeCast::Data {
-  explicit Data(const std::vector<char> &data_type) : data_type_(CharToString(data_type)) {}
-  std::string data_type_;
+  dataset::DataType data_type_;
 };
 
-TypeCast::TypeCast(const std::vector<char> &data_type) : data_(std::make_shared<Data>(data_type)) {}
+TypeCast::TypeCast(mindspore::DataType data_type) : data_(std::make_shared<Data>()) {
+  data_->data_type_ = dataset::MSTypeToDEType(static_cast<TypeId>(data_type));
+}
 
 std::shared_ptr<TensorOperation> TypeCast::Parse() { return std::make_shared<TypeCastOperation>(data_->data_type_); }
 

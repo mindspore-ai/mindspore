@@ -75,7 +75,8 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
 
   // Create objects for the tensor ops
   // uint32 will be casted to int64 implicitly in mindrecord file, so we have to cast it back to uint32
-  std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("uint32");
+  std::shared_ptr<TensorTransform> type_cast =
+    std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt32);
   EXPECT_NE(type_cast, nullptr);
 
   // Create a Map operation on ds

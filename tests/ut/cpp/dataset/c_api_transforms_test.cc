@@ -825,7 +825,8 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   iter->Stop();
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("uint16");
+  std::shared_ptr<TensorTransform> type_cast =
+    std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt16);
 
   // Create a Map operation on ds
   std::shared_ptr<Dataset> ds2 = ds->Map({type_cast}, {"image"});
@@ -848,7 +849,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
 }
 
 TEST_F(MindDataTestPipeline, TestTypeCastFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastFail with invalid params.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastFail with invalid param.";
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -856,7 +857,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastFail) {
   EXPECT_NE(ds, nullptr);
 
   // incorrect data type
-  std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("char");
+  std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>(mindspore::DataType::kTypeUnknown);
 
   // Create a Map operation on ds
   ds = ds->Map({type_cast}, {"image", "label"});
