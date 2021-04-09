@@ -16,6 +16,8 @@
 
 #include "src/runtime/agent/npu/subgraph_npu_kernel.h"
 #include <set>
+#include <unordered_map>
+#include <utility>
 #include "include/errorcode.h"
 #include "src/runtime/agent/npu/npu_executor.h"
 #include "include/graph/operator.h"
@@ -34,8 +36,10 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 static std::set<mindspore::schema::PrimitiveType> npu_specific_weight_nodes = {
-  schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_ScaleFusion,
-  schema::PrimitiveType_BatchNorm,    schema::PrimitiveType_FullConnection,        schema::PrimitiveType_InstanceNorm};
+  schema::PrimitiveType_Conv2DFusion,   schema::PrimitiveType_Conv2dTransposeFusion,
+  schema::PrimitiveType_ScaleFusion,    schema::PrimitiveType_BatchNorm,
+  schema::PrimitiveType_FullConnection, schema::PrimitiveType_InstanceNorm,
+  schema::PrimitiveType_TileFusion,     schema::PrimitiveType_PadFusion};
 
 SubGraphNpuKernel::~SubGraphNpuKernel() {
   subgraph_input_op_.clear();
@@ -95,7 +99,9 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
   op_buffer_.clear();
   for (auto node : this->nodes_) {
     std::vector<ge::Operator *> node_input_op;
-    for (auto in_tensor : node->in_tensors()) {
+    std::unordered_map<int, std::pair<ge::Operator *, int>> index2_multi_out_index;
+    for (int i = 0; i < node->in_tensors().size(); ++i) {
+      auto in_tensor = node->in_tensors()[i];
       if (IsSubGraphInputTensor(in_tensor)) {
         auto tensor_name = node->name() + "_" + std::to_string(count++);
         hiai::op::Data *data;
@@ -109,21 +115,24 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
       bool is_weight_tensor = true;
       for (auto in_kernel : node->in_kernels()) {
         if (IsContain(in_kernel->out_tensors(), in_tensor)) {
-          if (in_kernel->desc().arch == mindspore::kernel::kNPU) {
-            // input come from npu
-            auto npu_op = reinterpret_cast<NPUKernel *>(in_kernel)->GetNPUOp();
-            if (npu_op != nullptr) {
-              node_input_op.push_back(npu_op);
-              is_weight_tensor = false;
-              break;
-            } else {
-              MS_LOG(ERROR) << in_kernel->type_str() << "NPU Operator is nullptr.";
-              return RET_ERROR;
-            }
-          } else {
+          if (in_kernel->desc().arch != mindspore::kernel::kNPU) {
             MS_LOG(ERROR) << "The input of the intermediate node comes from the CPU";
             return RET_ERROR;
           }
+          // input come from npu
+          auto npu_op = reinterpret_cast<NPUKernel *>(in_kernel)->GetNPUOp();
+          if (npu_op == nullptr) {
+            MS_LOG(ERROR) << in_kernel->type_str() << "NPU Operator is nullptr.";
+            return RET_ERROR;
+          }
+          node_input_op.push_back(npu_op);
+          if (in_kernel->out_tensors().size() != 1) {  // in_kernel has multi output, we record which output we want.
+            int out_index = std::find(in_kernel->out_tensors().begin(), in_kernel->out_tensors().end(), in_tensor) -
+                            in_kernel->out_tensors().begin();
+            index2_multi_out_index[i] = {npu_op, out_index};
+          }
+          is_weight_tensor = false;
+          break;
         }
       }
 
@@ -144,7 +153,8 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
       }
     }
     // set input to NPU
-    int ret = reinterpret_cast<NPUKernel *>(node)->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op);
+    int ret = reinterpret_cast<NPUKernel *>(node)->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op,
+                                                                index2_multi_out_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << node->name() << " set npu inputs failed.";
       return RET_ERROR;

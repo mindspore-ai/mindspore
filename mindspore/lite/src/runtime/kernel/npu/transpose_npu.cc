@@ -33,10 +33,12 @@ int TransposeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, con
       perm_.push_back(static_cast<int *>(inputs[1]->data_c())[i]);
     }
   } else {
-    MS_LOG(WARNING) << "NPU perm is attribute.";
+    MS_LOG(WARNING) << "NPU perm is attribute or input[1] data nullptr";
     return RET_ERROR;
   }
-
+  if (inputs[1]->ElementsNum() != 4) {
+    return RET_OK;
+  }
   return RET_ERROR;
 }
 

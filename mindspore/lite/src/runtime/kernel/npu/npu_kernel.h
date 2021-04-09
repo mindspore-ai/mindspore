@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_KERNEL_NPU_H_
 
 #include <vector>
+#include <unordered_map>
+#include <utility>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
 #include "include/graph/graph.h"
@@ -46,6 +48,14 @@ class NPUKernel : public LiteKernel {
   virtual int SetNPUInputs(const std::vector<mindspore::lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs,
                            const std::vector<ge::Operator *> &npu_inputs) = 0;
+  virtual int SetNPUInputs(const std::vector<mindspore::lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs, const std::vector<ge::Operator *> &npu_inputs,
+                           const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
+    if (index2_multi_out_index.empty()) {
+      return SetNPUInputs(inputs, outputs, npu_inputs);
+    }
+    return RET_OK;
+  }
 };
 template <class T>
 kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
