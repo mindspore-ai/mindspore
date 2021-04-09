@@ -170,7 +170,9 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
 
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
-  optimizer->AddPassManager(PreProcess());
+  if (is_gpu) {
+    optimizer->AddPassManager(PreProcess());
+  }
   optimizer->AddPassManager(Cluster());
   optimizer->AddPassManager(HighLevelOpt1());
   optimizer->AddPassManager(Split());

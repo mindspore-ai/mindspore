@@ -43,6 +43,7 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
 #if ENABLE_D
     prim::kPrimTile,
     prim::kPrimSqrtGrad,
+    prim::kPrimReduceMean,
     prim::kPrimClipByNormNoDivSum,
     prim::kLambApplyOptimizerAssign,
 #elif ENABLE_GPU

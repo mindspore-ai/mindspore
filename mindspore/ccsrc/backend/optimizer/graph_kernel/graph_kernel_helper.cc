@@ -33,7 +33,10 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/action.h"
 #include "vm/segment_runner.h"
-#if ENABLE_GPU
+#include "utils/ms_context.h"
+#if ENABLE_D
+#include "runtime/device/ascend/kernel_select_ascend.h"
+#elif ENABLE_GPU
 #include "runtime/device/gpu/kernel_info_setter.h"
 #endif
 
@@ -571,11 +574,11 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
 std::vector<PrimitivePtr> GetFusibleOpList() {
 #if ENABLE_D
   std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,        prim::kPrimRound,      prim::kPrimNeg,     prim::kPrimExp,     prim::kPrimAdd,
-    prim::kPrimExpandDims, prim::kPrimMul,        prim::kPrimMinimum, prim::kPrimMaximum, prim::kPrimLog,
-    prim::kPrimPow,        prim::kPrimSub,        prim::kPrimRsqrt,   prim::kPrimSqrt,    prim::kPrimAddN,
-    prim::kPrimEqual,      prim::kPrimReciprocal, prim::kPrimTanh,    prim::kPrimReshape, prim::kPrimTranspose,
-    prim::kPrimCast,       prim::kPrimRealDiv};
+    prim::kPrimAbs,        prim::kPrimRound,  prim::kPrimNeg,      prim::kPrimExp,       prim::kPrimAdd,
+    prim::kPrimExpandDims, prim::kPrimMul,    prim::kPrimMinimum,  prim::kPrimMaximum,   prim::kPrimLog,
+    prim::kPrimPow,        prim::kPrimSub,    prim::kPrimRsqrt,    prim::kPrimSqrt,      prim::kPrimEqual,
+    prim::kPrimReciprocal, prim::kPrimTanh,   prim::kPrimReshape,  prim::kPrimTranspose, prim::kPrimCast,
+    prim::kPrimRealDiv,    prim::kPrimAssign, prim::kPrimReduceSum};
 #elif ENABLE_GPU
   std::vector<PrimitivePtr> fusible_basic_ops = {
     prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,       prim::kPrimExp,     prim::kPrimAdd,
@@ -620,7 +623,9 @@ bool IsBasicFuseOp(const AnfNodePtr &node) {
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-#if ENABLE_GPU
+#if ENABLE_D
+  device::ascend::SetKernelInfo(cnode, kernel_type);
+#elif ENABLE_GPU
   device::gpu::SetKernelInfo(cnode, kernel_type);
 #endif
 }
@@ -796,6 +801,19 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
   return axis;
 }
 
+kernel::Processor GetProcessorFromContext() {
+  kernel::Processor processor = kernel::Processor::UNKNOWN;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto device_info = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_info == kGPUDevice) {
+    processor = kernel::Processor::CUDA;
+  } else if (device_info == kAscendDevice) {
+    processor = kernel::Processor::AICORE;
+  }
+  return processor;
+}
+
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info) {
   // Limitation: 1. Node's attributes should be set out of this function; 2. only one output.
   MS_EXCEPTION_IF_NULL(out_info.type);
@@ -852,7 +870,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   info_builder.SetInputsDeviceType(input_types);
   info_builder.SetOutputsFormat(output_formats);
   info_builder.SetOutputsDeviceType(output_types);
-  info_builder.SetProcessor(kernel::Processor::CUDA);
+  info_builder.SetProcessor(GetProcessorFromContext());
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
   info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   auto selected_info = info_builder.Build();
