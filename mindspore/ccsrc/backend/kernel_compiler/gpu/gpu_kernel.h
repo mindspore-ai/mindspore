@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,14 +207,8 @@ class GpuKernel : public KernelMod {
       MS_EXCEPTION(ValueError) << "cudnnSetTensorNdDescriptor don't support" << shape.size() << "D.";
     }
     const int nbDims = shape.size();
-    int *dim = new (std::nothrow) int[nbDims];
-    if (dim == nullptr) {
-      MS_LOG(EXCEPTION) << "malloc dim failed.";
-    }
-    int *stride = new (std::nothrow) int[nbDims];
-    if (stride == nullptr) {
-      MS_LOG(EXCEPTION) << "malloc stride failed.";
-    }
+    std::unique_ptr<int[]> dim = std::make_unique<int[]>(nbDims);
+    std::unique_ptr<int[]> stride = std::make_unique<int[]>(nbDims);
 
     for (int i = 0; i < nbDims; i++) {
       dim[i] = SizeToInt(shape[i]);
@@ -225,13 +219,9 @@ class GpuKernel : public KernelMod {
       stride[i] = stride[i + 1] * SizeToInt(shape[i + 1]);
     }
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(node, cudnnSetTensorNdDescriptor(descriptor, data_type, nbDims, dim, stride),
+    CHECK_CUDNN_RET_WITH_EXCEPT(node,
+                                cudnnSetTensorNdDescriptor(descriptor, data_type, nbDims, dim.get(), stride.get()),
                                 "cudnnSetTensorNdDescriptor failed");
-
-    delete[] dim;
-    dim = nullptr;
-    delete[] stride;
-    stride = nullptr;
   }
 
   // choose the suitable datatype for cudnn/cublas

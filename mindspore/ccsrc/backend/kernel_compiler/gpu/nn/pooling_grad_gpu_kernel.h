@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ class PoolingGradGpuKernel : public GpuKernel {
   }
 
   bool InitShape(const CNodePtr &kernel_node, int *dimA, int *strideAin, int *dimAy, int *strideAiny, int *dimAdy,
-                 int *strideAdy, int *dimAout, int *strideAout) {
+                 int *strideAdy, int *dimAout, int *strideAout, int nbDims) {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto input_mask = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
@@ -97,14 +97,14 @@ class PoolingGradGpuKernel : public GpuKernel {
       return false;
     }
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format);
-    SetDimA(input_shape, dimA, 4, data_format);
-    SetStrideA(input_shape, strideAin, 4, data_format);
-    SetDimA(input_mask, dimAy, 4, data_format);
-    SetStrideA(input_mask, strideAiny, 4, data_format);
-    SetDimA(dout_shape, dimAdy, 4, data_format);
-    SetStrideA(dout_shape, strideAdy, 4, data_format);
-    SetDimA(output_shape, dimAout, 4, data_format);
-    SetStrideA(output_shape, strideAout, 4, data_format);
+    SetDimA(input_shape, dimA, nbDims, data_format);
+    SetStrideA(input_shape, strideAin, nbDims, data_format);
+    SetDimA(input_mask, dimAy, nbDims, data_format);
+    SetStrideA(input_mask, strideAiny, nbDims, data_format);
+    SetDimA(dout_shape, dimAdy, nbDims, data_format);
+    SetStrideA(dout_shape, strideAdy, nbDims, data_format);
+    SetDimA(output_shape, dimAout, nbDims, data_format);
+    SetStrideA(output_shape, strideAout, nbDims, data_format);
     return true;
   }
 
@@ -123,7 +123,7 @@ class PoolingGradGpuKernel : public GpuKernel {
     int strideAdy[4];
     int dimAout[4];
     int strideAout[4];
-    if (!InitShape(kernel_node, dimA, strideAin, dimAy, strideAiny, dimAdy, strideAdy, dimAout, strideAout)) {
+    if (!InitShape(kernel_node, dimA, strideAin, dimAy, strideAiny, dimAdy, strideAdy, dimAout, strideAout, nbDims)) {
       return true;
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
