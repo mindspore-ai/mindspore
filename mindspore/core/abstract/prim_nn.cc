@@ -296,7 +296,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   CheckShapeAnyAndPositive(op_name + " w_shape", w_shape);
   CheckShapeAllPositive(op_name + " w_min_shape", w_min_shape);
   CheckShapeAllPositive(op_name + " w_max_shape", w_max_shape);
-  int64_t n_axis = 0;
+  const int64_t n_axis = 0;
   int64_t c_axis = 1;
   int64_t h_axis = 2;
   int64_t w_axis = 3;
