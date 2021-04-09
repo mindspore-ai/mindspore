@@ -15,12 +15,10 @@ function Run_Converter() {
 
     # Convert tf models:
     while read line; do
-        tf_line_info=${line}
-        if [[ $tf_line_info == \#* ]]; then
+        model_name=${line%;*}
+        if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_converter_log_file}"
         echo './converter_lite  --fmk=TF --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
         ./converter_lite  --fmk=TF --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}
@@ -167,68 +165,6 @@ function Run_Converter() {
         fi
     done < ${models_tflite_awaretraining_config}
 
-    # Copy fp16 ms models:
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        model_name=${model_info%%;*}
-        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
-        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
-        if [ $? = 0 ]; then
-            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_onnx_fp16_config}
-
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
-        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
-        if [ $? = 0 ]; then
-            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_caffe_fp16_config}
-
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
-        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
-        if [ $? = 0 ]; then
-            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_tflite_fp16_config}
-
-    while read line; do
-        fp16_line_info=${line}
-        if [[ $fp16_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
-        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
-        if [ $? = 0 ]; then
-            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_tf_fp16_config}
-
     # Convert tflite weightquant models:
     while read line; do
         weight_quant_line_info=${line}
@@ -330,22 +266,6 @@ function Run_Converter() {
         fi
     done < ${models_with_multiple_inputs_config}
 
-    while read line; do
-      fp16_line_info=${line}
-      if [[ $fp16_line_info == \#* ]]; then
-        continue
-      fi
-      model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-      model_name=${model_info%%;*}
-      echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
-      cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
-      if [ $? = 0 ]; then
-          converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-      else
-          converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-      fi
-    done < ${models_multiple_inputs_fp16_config}
-
     # Convert models which does not need to be cared about the accuracy:
     while read line; do
         if [[ $line == \#* ]]; then
@@ -386,6 +306,85 @@ function Run_Converter() {
             converter_result='converter '${model_type}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_for_process_only_config}
+
+    # Copy fp16 ms models:
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        model_name=${model_info%%;*}
+        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+        if [ $? = 0 ]; then
+            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_onnx_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+        if [ $? = 0 ]; then
+            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_caffe_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+        if [ $? = 0 ]; then
+            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_tflite_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        model_name=${model_info%%;*}
+        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+        if [ $? = 0 ]; then
+            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_tf_fp16_config}
+
+    while read line; do
+      fp16_line_info=${line}
+      if [[ $fp16_line_info == \#* ]]; then
+        continue
+      fi
+      model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+      model_name=${model_info%%;*}
+      echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+      cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+      if [ $? = 0 ]; then
+          converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+      else
+          converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+      fi
+    done < ${models_multiple_inputs_fp16_config}
 }
 
 # Run on x86 platform:
@@ -397,31 +396,15 @@ function Run_x86() {
 
     # Run tf converted models:
     while read line; do
-        model_name_and_input_num=${line%;*}
-        length=${#model_name_and_input_num}
+        model_name=${line%;*}
+        length=${#model_name}
         input_shapes=${line:length+1}
-        tf_line_info=${model_name_and_input_num}
-        if [[ $tf_line_info == \#* ]]; then
+        if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
-        input_files=''
-        for i in $(seq 1 $input_num)
-        do
-          input_files=$input_files'/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'$model_name'.ms_'$i'.bin,'
-        done
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-        # run benchmark test with input data
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --inputShapes='${input_shapes} >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1295,34 +1278,27 @@ function Run_arm64() {
 
     # Run tf converted models:
     while read line; do
-        model_name_and_input_num=${line%;*}
-        length=${#model_name_and_input_num}
+        model_name=${line%;*}
+        length=${#model_name}
         input_shapes=${line:length+1}
-        tf_line_info=${model_name_and_input_num}
-        if [[ $tf_line_info == \#* ]]; then
+        if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
-        input_files=''
-        for i in $(seq 1 $input_num)
-        do
-          input_files=$input_files'/data/local/tmp/input_output/input/'$model_name'.ms_'$i'.bin,'
-        done
         echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        # run benchmark test with input data
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -1626,6 +1602,17 @@ function Run_arm64() {
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes} ' --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes} ' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
     done < ${models_with_multiple_inputs_config}
 
     # Run converted models which does not need to be cared about the accuracy:
@@ -1810,11 +1797,41 @@ function Run_arm64_fp16() {
         fi
     done < ${models_tflite_fp16_config}
 
+    # Run fp16 converted models:
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        model_name=${model_info%%;*}
+        length=${#model_name}
+        input_shapes=${model_info:length+1}
+        echo "---------------------------------------------------------" >> "${run_arm64_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        if [[ $accuracy_limit == "-1" ]]; then
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --enableFp16=true --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        else
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        fi
+        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tf_fp16_config}
+
     # Run converted models which has multiple inputs in fp16 mode:
     while read line; do
         fp16_line_info=${line}
         if [[ $fp16_line_info == \#* ]]; then
-          continue-
+          continue
         fi
         model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
@@ -1847,35 +1864,6 @@ function Run_arm64_fp16() {
             run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_multiple_inputs_fp16_config}
-
-    # Run tf fp16 models
-    while read line; do
-        tf_line_info=${line}
-        if [[ $tf_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
-        model_info=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
-        input_num=`echo ${model_info}|awk -F ';' '{print $1}'`
-        input_shapes=`echo ${model_info}|awk -F ';' '{print $2}'`
-        accuracy_limit=`echo ${model_info}|awk -F ';' '{print $3}'`
-        input_files=''
-        for i in $(seq 1 $input_num)
-        do
-          input_files=$input_files'/data/local/tmp/input_output/input/'$model_name'.ms_'$i'.bin,'
-        done
-        echo ${model_name} >> "${run_arm64_fp16_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-        cat adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp16_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_tf_fp16_config}
 }
 # Run on gpu platform:
 function Run_gpu() {
@@ -2100,6 +2088,7 @@ models_onnx_config=${basepath}/models_onnx.cfg
 models_onnx_fp16_config=${basepath}/models_onnx_fp16.cfg
 models_caffe_fp16_config=${basepath}/models_caffe_fp16.cfg
 models_tflite_fp16_config=${basepath}/models_tflite_fp16.cfg
+models_tf_fp16_config=${basepath}/models_tf_fp16.cfg
 models_multiple_inputs_fp16_config=${basepath}/models_with_multiple_inputs_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/models_mindspore_train.cfg
@@ -2113,7 +2102,6 @@ models_npu_config=${basepath}/models_npu.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
 models_with_multiple_inputs_config=${basepath}/models_with_multiple_inputs.cfg
 models_for_process_only_config=${basepath}/models_for_process_only.cfg
-models_tf_fp16_config=${basepath}/models_tf_fp16.cfg
 
 ms_models_path=${basepath}/ms_models
 
