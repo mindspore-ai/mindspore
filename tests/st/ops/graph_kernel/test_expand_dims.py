@@ -17,45 +17,35 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.relu_grad = G.ReluGrad()
+        self.expand_dims = P.ExpandDims()
 
-    def construct(self, y_backprop, x):
-        return self.relu_grad(y_backprop, x)
+    def construct(self, x, dim):
+        return self.expand_dims(x, dim)
 
 
-def get_output(y_backprop, x, enable_graph_kernel=False):
+def get_output(x, axis, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net()
-    output = net(y_backprop, x)
+    output = net(x, axis)
     return output
 
 
-def test_relu_grad(shape1, shape2, dtype):
-    x = Tensor(np.random.normal(0, 10, shape1).astype(dtype))
-    y_backprop = Tensor(np.random.normal(0, 10, shape2).astype(dtype))
-    expect = get_output(y_backprop, x, False)
-    output = get_output(y_backprop, x, True)
+def test_expand_dims(shape, dtype, axis):
+    x = Tensor(np.random.normal(0, 10, shape).astype(dtype))
+    expect = get_output(x, axis, False)
+    output = get_output(x, axis, True)
+    assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
 
-    expect_np = expect.asnumpy().copy()
-    output_np = output.asnumpy().copy()
-
-    assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_relu_grad_gpu():
+def test_expand_dims_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_relu_grad((4, 3), (4, 3), np.int32)
-    test_relu_grad((12, 1), (12, 1), np.float16)
-
-def test_relu_grad_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_relu_grad((4, 3), (4, 3), np.int32)
-    test_relu_grad((12, 1), (12, 1), np.float16)
+    test_expand_dims((2, 3), np.float16, 2)

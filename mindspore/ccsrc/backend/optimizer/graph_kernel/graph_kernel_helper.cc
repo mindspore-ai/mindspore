@@ -581,19 +581,20 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
 std::vector<PrimitivePtr> GetFusibleOpList() {
 #if ENABLE_D
   std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,        prim::kPrimRound,      prim::kPrimNeg,     prim::kPrimExp,     prim::kPrimAdd,
-    prim::kPrimExpandDims, prim::kPrimMul,        prim::kPrimMinimum, prim::kPrimMaximum, prim::kPrimLog,
-    prim::kPrimPow,        prim::kPrimSub,        prim::kPrimRsqrt,   prim::kPrimSqrt,    prim::kPrimAddN,
-    prim::kPrimEqual,      prim::kPrimReciprocal, prim::kPrimTanh,    prim::kPrimReshape, prim::kPrimTranspose,
-    prim::kPrimCast,       prim::kPrimRealDiv,    prim::kPrimMatMul,  prim::kPrimAssign,  prim::kPrimReduceSum};
+    prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,     prim::kPrimExp,      prim::kPrimAdd,
+    prim::kPrimCast,    prim::kPrimMul,        prim::kPrimMinimum, prim::kPrimMaximum,  prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,   prim::kPrimSqrt,     prim::kPrimAddN,
+    prim::kPrimEqual,   prim::kPrimReciprocal, prim::kPrimTanh,    prim::kPrimReshape,  prim::kPrimTranspose,
+    prim::kPrimRealDiv, prim::kPrimMatMul,     prim::kPrimAssign,  prim::kPrimReduceSum};
 #elif ENABLE_GPU
   std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,       prim::kPrimExp,       prim::kPrimAdd,
-    prim::kPrimRealDiv, prim::kPrimMul,        prim::kPrimMinimum,   prim::kPrimMaximum,   prim::kPrimLog,
-    prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,     prim::kPrimSqrt,      prim::kPrimAddN,
-    prim::kPrimEqual,   prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,    prim::kPrimGreater,
-    prim::kPrimCast,    prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape,   prim::kPrimTranspose,
-    prim::kPrimAssign,  prim::kPrimExpandDims, prim::kPrimLess,      prim::kPrimLessEqual, prim::kPrimGreaterEqual};
+    prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,          prim::kPrimExp,       prim::kPrimAdd,
+    prim::kPrimRealDiv, prim::kPrimMul,        prim::kPrimMinimum,      prim::kPrimMaximum,   prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,        prim::kPrimSqrt,      prim::kPrimAddN,
+    prim::kPrimEqual,   prim::kPrimReciprocal, prim::KPrimTransData,    prim::kPrimSelect,    prim::kPrimGreater,
+    prim::kPrimCast,    prim::kPrimReduceSum,  prim::kPrimTanh,         prim::kPrimReshape,   prim::kPrimTranspose,
+    prim::kPrimAssign,  prim::kPrimLessEqual,  prim::kPrimGreaterEqual, prim::kPrimReduceMax, prim::kPrimReduceMin,
+    prim::kPrimLess};
 #else
   std::vector<PrimitivePtr> fusible_basic_ops;
 #endif

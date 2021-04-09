@@ -49,6 +49,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimAssignAdd,
     prim::kPrimLayerNorm,
     prim::kPrimLayerNormGrad,
+    prim::kPrimExpandDims,
 #if ENABLE_D
     prim::kPrimTile,
     prim::kPrimSqrtGrad,
@@ -76,6 +77,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSigmoidCrossEntropyWithLogits,
     prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
     prim::kPrimSoftmaxCrossEntropyWithLogits,
+    prim::kPrimSqueeze,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();

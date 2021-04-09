@@ -176,7 +176,6 @@ class PrimLib:
         'ReduceMin': Prim(REDUCE),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),
-        'ExpandDims': Prim(RESHAPE),
         'InplaceAssign': Prim(ELEMWISE),
         '@ReduceInit': Prim(ELEMWISE),
         'Reshape': Prim(RESHAPE),

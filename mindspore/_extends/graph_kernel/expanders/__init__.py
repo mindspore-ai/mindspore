@@ -15,14 +15,15 @@
 """expanders init"""
 
 from .assign_add import AssignAdd
+from .batchnorm import BatchNorm
+from .batchnorm_grad import BatchNormGrad
 from .bias_add import BiasAdd
 from .bias_add_grad import BiasAddGrad
 from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .dropout_grad import DropoutGrad
+from .expand_dims import ExpandDims
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
-from .batchnorm import BatchNorm
-from .batchnorm_grad import BatchNormGrad
 from .gelu import GeLU
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
@@ -43,6 +44,7 @@ from .sigmoid_cross_entropy_with_logits_grad import SigmoidCrossEntropyWithLogit
 from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
 from .sqrt_grad import SqrtGrad
 from .square import Square
+from .squeeze import Squeeze
 from .tanh_grad import TanhGrad
 from .tile import Tile
 from .lamb_apply_optimizer_assign import LambApplyOptimizerAssign

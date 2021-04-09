@@ -32,8 +32,7 @@ class Net(nn.Cell):
 
 def get_output(input_dy, input_x, input_scale, input_save_mean, input_save_inv_variance, input_reverse,
                is_training, enable_graph_kernel=False):
-    if enable_graph_kernel:
-        context.set_context(enable_graph_kernel=True)
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net(is_training)
     output = net(input_dy, input_x, input_scale, input_save_mean, input_save_inv_variance, input_reverse)
     return output
