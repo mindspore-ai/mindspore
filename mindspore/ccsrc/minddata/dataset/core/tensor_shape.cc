@@ -230,6 +230,11 @@ std::vector<dsize_t> TensorShape::Strides() const { return std::vector<dsize_t>{
 // Name: ToFlatIndex()
 // Description: convert a vector style index to number, used to access memory internal use only
 Status TensorShape::ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const {
+  if (index.size() != raw_shape_.size()) {
+    std::stringstream ss;
+    ss << "Index size (" << index.size() << ") does not match the shape size (" << raw_shape_.size() << ").";
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, ss.str());
+  }
   *flat_index = 0;
   for (size_t k = 0; k < index.size(); k++) {
     *flat_index +=

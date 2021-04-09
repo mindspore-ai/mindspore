@@ -66,9 +66,9 @@ MSTensorVec Predicate1(MSTensorVec in) {
   // Convert from boolean to TensorRow
   TensorRow output;
   std::shared_ptr<Tensor> out;
-  Tensor::CreateEmpty(mindspore::dataset::TensorShape({1}),
+  Tensor::CreateEmpty(mindspore::dataset::TensorShape({}),
                       mindspore::dataset::DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
-  out->SetItemAt({0}, result);
+  out->SetItemAt({}, result);
   output.push_back(out);
 
   return RowToVec(output);
@@ -85,9 +85,9 @@ MSTensorVec Predicate2(MSTensorVec in) {
   // Convert from boolean to TensorRow
   TensorRow output;
   std::shared_ptr<Tensor> out;
-  Tensor::CreateEmpty(mindspore::dataset::TensorShape({1}),
+  Tensor::CreateEmpty(mindspore::dataset::TensorShape({}),
                       mindspore::dataset::DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
-  out->SetItemAt({0}, result);
+  out->SetItemAt({}, result);
   output.push_back(out);
 
   return RowToVec(output);
@@ -191,14 +191,14 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
 
   // Iterate over the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
   // With 2 boundaries, 3 buckets are created
   EXPECT_EQ(i, 3);
@@ -630,7 +630,7 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
 
   // iterate over the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<uint64_t> label_list;
   uint64_t i = 0;
@@ -641,10 +641,10 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
     std::shared_ptr<Tensor> de_label;
     uint64_t label_value;
     ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-    de_label->GetItemAt(&label_value, {0});
+    ASSERT_OK(de_label->GetItemAt(&label_value, {0}));
     label_list.push_back(label_value);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Only 1 column whose label is equal to 3
@@ -676,7 +676,7 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess2) {
 
   // iterate over the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<uint64_t> label_list;
   uint64_t i = 0;
@@ -687,10 +687,10 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess2) {
     std::shared_ptr<Tensor> de_label;
     uint64_t label_value;
     ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-    de_label->GetItemAt(&label_value, {0});
+    ASSERT_OK(de_label->GetItemAt(&label_value, {0}));
     label_list.push_back(label_value);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // There are 2 columns whose label is more than 1

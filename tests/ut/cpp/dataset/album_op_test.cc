@@ -92,7 +92,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchema) {
   uint64_t i = 0;
   std::string_view label = 0;
   while (tensor_map.size() != 0) {
-    EXPECT_TRUE(tensor_map["label"]->GetItemAt(&label, {}));
+    EXPECT_TRUE(tensor_map["label"]->GetItemAt(&label, {0}));
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                   << tensor_map["label"] << "\n";
     i++;
@@ -118,7 +118,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaNoOrder) {
   uint64_t i = 0;
   std::string_view label;
   while (tensor_map.size() != 0) {
-    EXPECT_OK(tensor_map["label"]->GetItemAt(&label, {}));
+    EXPECT_OK(tensor_map["label"]->GetItemAt(&label, {0}));
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                   << tensor_map["label"] << "\n";
     i++;
@@ -146,10 +146,10 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaFloat) {
   std::string_view label;
   double priority = 0;
   while (tensor_map.size() != 0) {
-    EXPECT_OK(tensor_map["label"]->GetItemAt(&label, {}));
-    EXPECT_OK(tensor_map["_priority"]->GetItemAt<double>(&priority, {}));
+    EXPECT_OK(tensor_map["label"]->GetItemAt(&label, {0}));
+    EXPECT_OK(tensor_map["_priority"]->GetItemAt<double>(&priority, {0}));
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
-                  << tensor_map["label"]  << "priority: " << priority << "\n";
+                  << tensor_map["label"] << "priority: " << priority << "\n";
     i++;
     di.GetNextAsMap(&tensor_map);
   }
@@ -176,8 +176,8 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
   double priority = 0;
   int64_t id = 0;
   while (tensor_map.size() != 0) {
-    EXPECT_OK(tensor_map["label"]->GetItemAt(&label, {}));
-    EXPECT_OK(tensor_map["_priority"]->GetItemAt<double>(&priority, {}));
+    EXPECT_OK(tensor_map["label"]->GetItemAt(&label, {0}));
+    EXPECT_OK(tensor_map["_priority"]->GetItemAt<double>(&priority, {0}));
     EXPECT_OK(tensor_map["id"]->GetItemAt<int64_t>(&id, {}));
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                   << tensor_map["label"] << "priority: " << priority

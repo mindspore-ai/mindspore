@@ -141,7 +141,7 @@ TEST_F(MindDataTestPipeline, TestShuffleWithSeed) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
@@ -206,7 +206,7 @@ TEST_F(MindDataTestPipeline, TestCallShuffleTwice) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {0});
+    de_text->GetItemAt(&sv, {});
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
 

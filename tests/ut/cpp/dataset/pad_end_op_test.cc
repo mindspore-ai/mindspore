@@ -32,7 +32,7 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
 
   // first set of testunits for numeric values
 
-  TensorShape pad_data_shape({1});
+  TensorShape pad_data_shape({});
 
   // prepare input tensor
   std::vector<float> orig1 = {1, 1, 1, 1};

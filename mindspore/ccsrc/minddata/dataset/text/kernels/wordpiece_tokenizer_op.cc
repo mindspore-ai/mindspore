@@ -128,7 +128,7 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
     uint32_t basic_start = 0;
     std::vector<std::string> temp_tokens;
     if (with_offsets_ && input.size() == 3) {
-      RETURN_IF_NOT_OK(input[1]->GetItemAt<uint32_t>(&basic_start, {count, 0}));
+      RETURN_IF_NOT_OK(input[1]->GetItemAt<uint32_t>(&basic_start, {count}));
     }
     RETURN_IF_NOT_OK(GetTokens(std::string(*iter), basic_start, &temp_tokens, &offsets_start, &offsets_limit));
     out_tokens.insert(out_tokens.end(), temp_tokens.begin(), temp_tokens.end());
