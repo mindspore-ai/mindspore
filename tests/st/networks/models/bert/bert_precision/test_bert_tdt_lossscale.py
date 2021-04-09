@@ -223,12 +223,12 @@ def test_bert_precision(enable_graph_kernel=False):
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    assert np.allclose(loss_value[0], 12.2066, 0, 0.0005)
 
     if enable_graph_kernel:
         expect_loss_value = [12.206627, 11.840489, 11.798470, 11.796345, 11.790964, 12.366766, 11.971539, 12.576565,
                              12.185522, 12.386192]
     else:
+        assert np.allclose(loss_value[0], 12.2066, 0, 0.0005)
         expect_loss_value = [12.206587, 11.966410, 11.965916, 11.975922, 11.970262, 12.608881, 12.174048, 12.840656,
                              12.407923, 12.631133]
     print("loss value: {}".format(loss_value))

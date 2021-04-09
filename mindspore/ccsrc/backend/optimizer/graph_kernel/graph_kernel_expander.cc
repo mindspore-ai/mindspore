@@ -47,6 +47,8 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSquare,
     prim::kPrimGeLUGrad,
     prim::kPrimAssignAdd,
+    prim::kPrimLayerNorm,
+    prim::kPrimLayerNormGrad,
 #if ENABLE_D
     prim::kPrimTile,
     prim::kPrimSqrtGrad,
@@ -67,8 +69,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimDropout,
     prim::kPrimDropoutGrad,
     prim::kPrimSoftmax,
-    prim::kPrimLayerNorm,
-    prim::kPrimLayerNormGrad,
     prim::kPrimRelu,
     prim::kPrimReluGrad,
     prim::kPrimSigmoid,
