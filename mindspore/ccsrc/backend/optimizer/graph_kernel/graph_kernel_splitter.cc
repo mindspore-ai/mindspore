@@ -728,6 +728,7 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
     const auto &flags = context::GraphKernelFlags::GetInstance();
     nlohmann::json flag_json;
     flag_json["dump_as_text"] = flags.dump_as_text;
+    flag_json["enable_stitch_fusion"] = flags.enable_stitch_fusion;
     return flag_json.dump();
   }
 

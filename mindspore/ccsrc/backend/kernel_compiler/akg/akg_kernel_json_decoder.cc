@@ -457,10 +457,12 @@ void AkgKernelJsonDecoder::SetStitchAttr(const nlohmann::json &op_desc, const St
   std::string tensor_name = output_descs[0][kJsonKeyTensorName];
   if (std::find(info.stitch_ops.begin(), info.stitch_ops.end(), tensor_name) != info.stitch_ops.end()) {
     AnfAlgo::SetNodeAttr(kAttrStitch, MakeValue("common"), node);
+    MS_LOG(INFO) << "Enable common stitch fusion by " << node->fullname_with_scope();
   }
   if (std::find(info.stitch_atomic_ops.begin(), info.stitch_atomic_ops.end(), tensor_name) !=
       info.stitch_atomic_ops.end()) {
     AnfAlgo::SetNodeAttr(kAttrStitch, MakeValue("atomic"), node);
+    MS_LOG(INFO) << "Enable atomic add stitch fusion by " << node->fullname_with_scope();
   }
 }
 
