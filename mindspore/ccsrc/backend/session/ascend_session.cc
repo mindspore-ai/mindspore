@@ -204,7 +204,9 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
       std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, 0, output_format, output_type);
     stub_output_tensor->set_device_address(device_address);
     output_tensor_info.output_stub_tensor = stub_output_tensor;
-    output_tensor_info.is_weight = !dynamic_cast<device::KernelInfo *>(output_node->kernel_info())->is_feature_map();
+    auto kernel_info = dynamic_cast<const device::KernelInfo *>(output_node->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    output_tensor_info.is_weight = !(kernel_info->is_feature_map());
     (*op_output_info)[kernel_with_index] = output_tensor_info;
   }
 }
