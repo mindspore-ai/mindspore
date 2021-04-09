@@ -97,6 +97,32 @@ MobileNetV2总体网络架构如下：
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 - CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
 
+`DATASET_PATH`是训练的路径. 我们使用`ImageFolderDataset` 作为默认数据处理方式, 这种数据处理方式是从原始目录中读取图片，目录结构如下, 训练时设置`DATASET_PATH=dataset/train`，验证时设置`DATASET_PATH=dataset/val`:
+
+```path
+        └─dataset
+            └─train
+              ├─class1
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+              ......
+              ├─classx
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+            └─val
+              ├─class1
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+              ......
+              ├─classx
+                ├─0001.jpg
+                ......
+                └─xxxx.jpg
+```
+
 `CKPT_PATH` `FREEZE_LAYER` 和 `FILTER_HEAD` 是可选择的选项, 如果设置`CKPT_PATH`, `FREEZE_LAYER` 也必须同时设置. `FREEZE_LAYER` 可以是 ["none", "backbone"], 如果设置 `FREEZE_LAYER`="backbone", 训练过程中backbone中的参数会被冻结，同时不会从checkpoint中加载head部分的参数. 如果`FILTER_HEAD`=True, 不会从checkpoint中加载head部分的参数.
 
 > RANK_TABLE_FILE 是在Ascned上运行分布式任务时HCCL的配置文件

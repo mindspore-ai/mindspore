@@ -39,8 +39,7 @@ void CastCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename S, typename T>
-bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   S *input = reinterpret_cast<S *>(inputs[0]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
