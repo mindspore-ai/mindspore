@@ -107,18 +107,22 @@ int GenerateInputDataWithRandom(std::vector<mindspore::tensor::MSTensor *> input
 
 int Run(mindspore::session::LiteSession *session) {
   auto inputs = session->GetInputs();
+
+  // Generate random data as input data.
   auto ret = GenerateInputDataWithRandom(inputs);
   if (ret != mindspore::lite::RET_OK) {
     std::cerr << "Generate Random Input Data failed." << std::endl;
     return ret;
   }
 
+  // Run Inference.
   ret = session->RunGraph();
   if (ret != mindspore::lite::RET_OK) {
     std::cerr << "Inference error " << ret << std::endl;
     return ret;
   }
 
+  // Get Output Tensor Data.
   auto out_tensors = session->GetOutputs();
   for (auto tensor : out_tensors) {
     std::cout << "tensor name is:" << tensor.first << " tensor size is:" << tensor.second->Size()

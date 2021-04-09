@@ -65,10 +65,13 @@ int OneHotOpenCLKernel::Prepare() {
 
 int OneHotOpenCLKernel::InitWeights() {
   depth_ = static_cast<int32_t *>(in_tensors_[1]->data_c())[0];
-  if (in_tensors_.size() > 2) {
-    on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
+  // inputs num is 3 or 4.
+  if (in_tensors_.size() == 3) {  // onnx
+    off_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
+    on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[1];
   }
-  if (in_tensors_.size() > 3) {
+  if (in_tensors_.size() == 4) {  // tf
+    on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
     off_value_ = static_cast<float *>(in_tensors_[3]->data_c())[0];
   }
   return RET_OK;
