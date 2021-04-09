@@ -112,6 +112,10 @@ def test_graphdata_distributed():
     assert features[0].tolist() == [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
                                     0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0]
 
+    nodes_pair_list = [(101, 201), (103, 207), (204, 105), (108, 208), (110, 210), (202, 102), (201, 107), (208, 108)]
+    edges = g.get_edges_from_nodes(nodes_pair_list)
+    assert edges.tolist() == [1, 9, 31, 17, 20, 25, 34, 37]
+
     batch_num = 2
     edge_num = g.graph_info()['edge_num'][0]
     out_column_names = ["neighbors", "neg_neighbors", "neighbors_features", "neg_neighbors_features"]

@@ -50,18 +50,24 @@ enum GnnOpName {
   GET_ALL_NODES = 0;
   GET_ALL_EDGES = 1;
   GET_NODES_FROM_EDGES = 2;
-  GET_ALL_NEIGHBORS = 3;
-  GET_SAMPLED_NEIGHBORS = 4;
-  GET_NEG_SAMPLED_NEIGHBORS = 5;
-  RANDOM_WALK = 6;
-  GET_NODE_FEATURE = 7;
-  GET_EDGE_FEATURE = 8;
+  GET_EDGES_FROM_NODES = 3;
+  GET_ALL_NEIGHBORS = 4;
+  GET_SAMPLED_NEIGHBORS = 5;
+  GET_NEG_SAMPLED_NEIGHBORS = 6;
+  RANDOM_WALK = 7;
+  GET_NODE_FEATURE = 8;
+  GET_EDGE_FEATURE = 9;
 }
 
 message GnnRandomWalkPb {
   float p = 1;
   float q = 2;
   int32 default_id = 3;
+}
+
+message IdPairPb {
+  int32 src_id = 1;
+  int32 dst_id = 2;
 }
 
 message GnnGraphDataRequestPb {
@@ -72,6 +78,7 @@ message GnnGraphDataRequestPb {
   TensorPb id_tensor = 5; // input ids ,node id or edge id
   GnnRandomWalkPb random_walk = 6;
   int32 strategy = 7;
+  repeated IdPairPb node_pair = 8;
 }
 
 message GnnGraphDataResponsePb {

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/gnn/tensor_proto.h"
@@ -31,6 +32,7 @@ static std::unordered_map<uint32_t, pFunction> g_get_graph_data_func_ = {
   {GET_ALL_NODES, &GraphDataServiceImpl::GetAllNodes},
   {GET_ALL_EDGES, &GraphDataServiceImpl::GetAllEdges},
   {GET_NODES_FROM_EDGES, &GraphDataServiceImpl::GetNodesFromEdges},
+  {GET_EDGES_FROM_NODES, &GraphDataServiceImpl::GetEdgesFromNodes},
   {GET_ALL_NEIGHBORS, &GraphDataServiceImpl::GetAllNeighbors},
   {GET_SAMPLED_NEIGHBORS, &GraphDataServiceImpl::GetSampledNeighbors},
   {GET_NEG_SAMPLED_NEIGHBORS, &GraphDataServiceImpl::GetNegSampledNeighbors},
@@ -184,6 +186,27 @@ Status GraphDataServiceImpl::GetNodesFromEdges(const GnnGraphDataRequestPb *requ
                  [](const google::protobuf::int32 id) { return static_cast<EdgeIdType>(id); });
   std::shared_ptr<Tensor> tensor;
   RETURN_IF_NOT_OK(graph_data_impl_->GetNodesFromEdges(edge_list, &tensor));
+  TensorPb *result = response->add_result_data();
+  RETURN_IF_NOT_OK(TensorToPb(tensor, result));
+  return Status::OK();
+}
+
+Status GraphDataServiceImpl::GetEdgesFromNodes(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response) {
+  CHECK_FAIL_RETURN_UNEXPECTED(request->node_pair_size() > 0, "The input node pair id list is empty.");
+
+  std::vector<std::pair<NodeIdType, NodeIdType>> node_list;
+  node_list.resize(request->node_pair().size());
+
+  std::transform(
+    request->node_pair().begin(), request->node_pair().end(), node_list.begin(), [](const auto &node_pair_id) {
+      auto cur_pair =
+        std::make_pair(static_cast<NodeIdType>(node_pair_id.src_id()), static_cast<NodeIdType>(node_pair_id.dst_id()));
+      return cur_pair;
+    });
+
+  std::shared_ptr<Tensor> tensor;
+  RETURN_IF_NOT_OK(graph_data_impl_->GetEdgesFromNodes(node_list, &tensor));
+
   TensorPb *result = response->add_result_data();
   RETURN_IF_NOT_OK(TensorToPb(tensor, result));
   return Status::OK();

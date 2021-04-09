@@ -360,6 +360,38 @@ def validate_dataset_param_value(param_list, param_dict, param_type):
                 type_check(param_dict.get(param_name), (param_type,), param_name)
 
 
+def check_gnn_list_of_pair_or_ndarray(param, param_name):
+    """
+    Check if the input parameter is a list of tuple or numpy.ndarray.
+
+    Args:
+        param (Union[list[tuple], nd.ndarray]): param.
+        param_name (str): param_name.
+
+    Returns:
+        Exception: TypeError if error.
+    """
+    type_check(param, (list, np.ndarray), param_name)
+    if isinstance(param, list):
+        param_names = ["pair_{0}".format(i) for i in range(len(param))]
+        type_check_list(param, (tuple,), param_names)
+        for idx, pair in enumerate(param):
+            if not len(pair) == 2:
+                raise ValueError("Each member in {0} must be a pair which means length == 2. Got length {1}".format(
+                    param_names[idx], len(pair)))
+            column_names = ["element_{0}".format(i) for i in range(len(pair))]
+            type_check_list(pair, (int,), column_names)
+    elif isinstance(param, np.ndarray):
+        if param.ndim != 2:
+            raise ValueError("Input ndarray must be in dimension 2. Got {0}".format(param.ndim))
+        if param.shape[1] != 2:
+            raise ValueError("Each member in {0} must be a pair which means length == 2. Got length {1}".format(
+                param_name, param.shape[1]))
+        if not param.dtype == np.int32:
+            raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
+                param_name, param.dtype))
+
+
 def check_gnn_list_or_ndarray(param, param_name):
     """
     Check if the input parameter is list or numpy.ndarray.

@@ -66,6 +66,13 @@ class GraphDataImpl : public GraphData {
   // @return Status The status code returned
   Status GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out) override;
 
+  // Get the edge id from connected node pair
+  // @param std::vector<std::pair<NodeIdType, NodeIdType>> node_list - List of pair nodes
+  // @param std::shared_ptr<Tensor> *out - Returned edge ids
+  // @return Status - The status code that indicate the result of function execution
+  Status GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, NodeIdType>> &node_list,
+                           std::shared_ptr<Tensor> *out) override;
+
   // All neighbors of the acquisition node.
   // @param std::vector<NodeType> node_list - List of nodes
   // @param NodeType neighbor_type - The type of neighbor. If the type does not exist, an error will be reported

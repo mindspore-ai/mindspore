@@ -29,8 +29,11 @@ namespace gnn {
 using NodeType = int8_t;
 using NodeIdType = int32_t;
 using WeightType = float;
+using EdgeIdType = int32_t;
 
 constexpr NodeIdType kDefaultNodeId = -1;
+
+class Edge;
 
 class Node {
  public:
@@ -77,6 +80,18 @@ class Node {
   // @param std::shared_ptr<Node> node -
   // @return Status The status code returned
   virtual Status AddNeighbor(const std::shared_ptr<Node> &node, const WeightType &weight) = 0;
+
+  // Add adjacent node and relative edge for source node
+  // @param std::shared_ptr<Node> node - the node to be inserted into adjacent table
+  // @param std::shared_ptr<Edge> edge - the edge related to the adjacent node of source node
+  // @return Status - The status code that indicate the result of function execution
+  virtual Status AddAdjacent(const std::shared_ptr<Node> &node, const std::shared_ptr<Edge> &edge) = 0;
+
+  // Get relative connecting edge of adjacent node by node id
+  // @param NodeIdType - The id of adjacent node to be processed
+  // @param std::shared_ptr<EdgeIdType> - The id of relative connecting edge
+  // @return Status - The status code that indicate the result of function execution
+  virtual Status GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType **out_edge_id) = 0;
 
   // Update feature of node
   // @param std::shared_ptr<Feature> feature -

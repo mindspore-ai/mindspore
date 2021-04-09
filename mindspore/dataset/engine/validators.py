@@ -25,8 +25,8 @@ import numpy as np
 from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
-    validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_num_parallel_workers, \
-    check_columns, check_pos_int32, check_valid_str
+    validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_gnn_list_of_pair_or_ndarray, \
+    check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str
 
 from . import datasets
 from . import samplers
@@ -1084,6 +1084,19 @@ def check_gnn_get_nodes_from_edges(method):
     def new_method(self, *args, **kwargs):
         [edge_list], _ = parse_user_args(method, *args, **kwargs)
         check_gnn_list_or_ndarray(edge_list, "edge_list")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_edges_from_nodes(method):
+    """A wrapper that wraps a parameter checker around the GNN `get_edges_from_nodes` function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [node_list], _ = parse_user_args(method, *args, **kwargs)
+        check_gnn_list_of_pair_or_ndarray(node_list, "node_list")
 
         return method(self, *args, **kwargs)
 

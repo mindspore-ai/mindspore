@@ -241,6 +241,18 @@ def test_graphdata_getedgefeature():
     assert features[1].shape == (40,)
 
 
+def test_graphdata_getedgesfromnodes():
+    """
+    Test get edges from nodes
+    """
+    logger.info('test get_edges_from_nodes\n')
+    g = ds.GraphData(DATASET_FILE)
+
+    nodes_pair_list = [(101, 201), (103, 207), (204, 105), (108, 208), (110, 210), (210, 110)]
+    edges = g.get_edges_from_nodes(nodes_pair_list)
+    assert edges.tolist() == [1, 9, 31, 17, 20, 40]
+
+
 if __name__ == '__main__':
     test_graphdata_getfullneighbor()
     test_graphdata_getnodefeature_input_check()
@@ -251,3 +263,4 @@ if __name__ == '__main__':
     test_graphdata_randomwalkdefault()
     test_graphdata_randomwalk()
     test_graphdata_getedgefeature()
+    test_graphdata_getedgesfromnodes()

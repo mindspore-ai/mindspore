@@ -26,9 +26,9 @@ from mindspore._c_dataengine import Tensor
 from mindspore._c_dataengine import SamplingStrategy as Sampling
 
 from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_get_all_edges, \
-    check_gnn_get_nodes_from_edges, check_gnn_get_all_neighbors, check_gnn_get_sampled_neighbors, \
-    check_gnn_get_neg_sampled_neighbors, check_gnn_get_node_feature, check_gnn_get_edge_feature, \
-    check_gnn_random_walk
+    check_gnn_get_nodes_from_edges, check_gnn_get_edges_from_nodes, check_gnn_get_all_neighbors, \
+    check_gnn_get_sampled_neighbors, check_gnn_get_neg_sampled_neighbors, check_gnn_get_node_feature, \
+    check_gnn_get_edge_feature, check_gnn_random_walk
 
 
 class SamplingStrategy(IntEnum):
@@ -161,6 +161,27 @@ class GraphData:
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_nodes_from_edges(edge_list).as_array()
+
+    @check_gnn_get_edges_from_nodes
+    def get_edges_from_nodes(self, node_list):
+        """
+        Get edges from the nodes.
+
+        Args:
+            node_list (Union[list[tuple], numpy.ndarray]): The given list of pair nodes ID.
+
+        Returns:
+            numpy.ndarray, array of edgs ID.
+
+        Examples:
+            >>> edges = graph_dataset.get_edges_from_nodes([(1, 3), (5, 2)])
+
+        Raises:
+            TypeError: If `edge_list` is not list or ndarray.
+        """
+        if self._working_mode == 'server':
+            raise Exception("This method is not supported when working mode is server.")
+        return self._graph_data.get_edges_from_nodes(node_list).as_array()
 
     @check_gnn_get_all_neighbors
     def get_all_neighbors(self, node_list, neighbor_type):

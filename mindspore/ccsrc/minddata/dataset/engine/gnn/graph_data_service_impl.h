@@ -50,6 +50,7 @@ class GraphDataServiceImpl {
   Status GetAllNodes(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
   Status GetAllEdges(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
   Status GetNodesFromEdges(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
+  Status GetEdgesFromNodes(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
   Status GetAllNeighbors(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
   Status GetSampledNeighbors(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
   Status GetNegSampledNeighbors(const GnnGraphDataRequestPb *request, GnnGraphDataResponsePb *response);
