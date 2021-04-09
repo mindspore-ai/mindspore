@@ -83,7 +83,7 @@ double VarianceAndMeanCalculator::GetVariance() {
 double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVariance()); }
 
 template <typename T>
-TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *previous_tensor_ptr, uint32_t num_elements)
+TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *const previous_tensor_ptr, uint32_t num_elements)
     : current_tensor_ptr(reinterpret_cast<T *>(current_tensor_ptr)),
       prev_tensor_ptr(reinterpret_cast<T *>(previous_tensor_ptr)),
       num_elements(num_elements),

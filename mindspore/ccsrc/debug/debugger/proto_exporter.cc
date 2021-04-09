@@ -33,7 +33,7 @@
 
 namespace mindspore {
 
-void CheckIfValidType(const TypePtr &type, debugger::TypeProto *type_proto) {
+void CheckIfValidType(const TypePtr &type, debugger::TypeProto *const type_proto) {
   if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<SymbolicKeyType>() ||
@@ -324,7 +324,7 @@ debugger::ModelProto DebuggerProtoExporter::GetFuncGraphProto(const FuncGraphPtr
   return model_;
 }
 
-void DebuggerProtoExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto,
+void DebuggerProtoExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                                             LocDebugDumpMode dump_location) {
   if (func_graph == nullptr || graph_proto == nullptr) {
     return;
@@ -366,7 +366,7 @@ void DebuggerProtoExporter::ExportParameters(const FuncGraphPtr &func_graph, deb
   }
 }
 
-void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto,
+void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                                          std::map<AnfNodePtr, size_t> *const_map_ptr, LocDebugDumpMode dump_location) {
   if (func_graph == nullptr || graph_proto == nullptr || const_map_ptr == nullptr) {
     return;
@@ -390,8 +390,8 @@ void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugge
 
 void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                         std::map<AnfNodePtr, size_t> *apply_map_ptr,
-                                        std::map<AnfNodePtr, size_t> *const_map_ptr, debugger::GraphProto *graph_proto,
-                                        LocDebugDumpMode dump_location) {
+                                        std::map<AnfNodePtr, size_t> *const_map_ptr,
+                                        debugger::GraphProto *const graph_proto, LocDebugDumpMode dump_location) {
   if (func_graph == nullptr || node == nullptr || apply_map_ptr == nullptr || const_map_ptr == nullptr ||
       graph_proto == nullptr) {
     return;

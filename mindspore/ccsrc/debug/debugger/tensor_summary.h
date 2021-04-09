@@ -96,7 +96,7 @@ class TensorSummary : public ITensorSummary {
  public:
   TensorSummary() = default;
   ~TensorSummary() override = default;
-  TensorSummary(void *, void *, uint32_t);
+  TensorSummary(void *, void *const, uint32_t);
   void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) override;
   // returns hit, error_code, parameter_list
   std::tuple<bool, int, std::vector<DebugServices::parameter_t>> IsWatchpointHit(DebugServices::watchpoint_t) override;
