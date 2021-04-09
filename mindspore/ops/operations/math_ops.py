@@ -170,7 +170,6 @@ class TensorAdd(_MathBinaryOp):
     Same as operator Add. TensorAdd will be deprecated in the future.
     Please use Add instead.
     """
-    #deprecate_new_name = "Add"
 
     @deprecated("1.1", "Add", True)
     @prim_attr_register
