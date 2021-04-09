@@ -17,7 +17,7 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
-#include <mindspore/lite/nnacl/prelu_parameter.h>
+#include <nnacl/prelu_parameter.h>
 #include <set>
 #include <vector>
 #include "src/runtime/kernel/opencl/cl/prelu.cl.inc"

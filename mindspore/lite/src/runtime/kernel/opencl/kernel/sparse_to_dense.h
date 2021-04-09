@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "mindspore/lite/nnacl/fp32/sparse_to_dense_fp32.h"
+#include "nnacl/fp32/sparse_to_dense_fp32.h"
 
 namespace mindspore::kernel {
 

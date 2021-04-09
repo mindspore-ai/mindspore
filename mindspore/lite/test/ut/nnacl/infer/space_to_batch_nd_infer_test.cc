@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/space_to_batch_nd_infer.h"
+#include "nnacl/infer/space_to_batch_nd_infer.h"
 
 namespace mindspore {
 

@@ -29,8 +29,35 @@ if(ENABLE_D)
 endif()
 
 if(ENABLE_CPU)
-    file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+    file(GLOB NNACL_C_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "cpu/nnacl/*.c"
+        "cpu/nnacl/fp32/*.c"
+        "cpu/nnacl/int8/*.c"
+        "cpu/nnacl/infer/*.c"
+        "cpu/nnacl/base/*.c"
+    )
+    if("${X86_64_SIMD}" STREQUAL "sse")
+        file(GLOB NNACL_ASM_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "cpu/nnacl/intrinsics/sse/*.c"
+        )
+        set_property(SOURCE ${NNACL_ASM_SRC} PROPERTY LANGUAGE C)
+    endif()
+    if("${X86_64_SIMD}" STREQUAL "avx")
+        file(GLOB NNACL_ASM_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "cpu/nnacl/intrinsics/sse/*.c"
+            "cpu/nnacl/intrinsics/avx/*.c"
+            "cpu/nnacl/assembly/avx/*.S"
+        )
+        set_property(SOURCE ${NNACL_ASM_SRC} PROPERTY LANGUAGE C)
+    endif()
+    set(NNACL_SRC ${NNACL_C_SRC} ${NNACL_ASM_SRC})
+
+    file(GLOB CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "cpu/*.cc"
+        "cpu/mkldnn/*.cc"
+        "cpu/ps/*.cc"
+        "cpu/quantum/*.cc"
     )
 
     if(NOT ENABLE_MPI)
@@ -102,7 +129,7 @@ if(ENABLE_GPU)
     # add_library(_mindspore_kernel_cuda_obj OBJECT ${CUDA_SRC_LIST})
 endif()
 
-set_property(SOURCE ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST}
+set_property(SOURCE ${KERNEL_SRC_LIST} ${NNACL_SRC} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
-add_library(_mindspore_backend_kernel_compiler_obj OBJECT ${KERNEL_SRC_LIST} ${CPU_SRC_LIST}
+add_library(_mindspore_backend_kernel_compiler_obj OBJECT ${KERNEL_SRC_LIST} ${NNACL_SRC} ${CPU_SRC_LIST}
     ${GPU_SRC_LIST} ${D_SRC_LIST} ${QUANTUM_SRC_LIST})

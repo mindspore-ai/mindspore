@@ -2,9 +2,11 @@ set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
+set(NNACL_DIR ${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl)
 set(CONVERTER_DIR ${TOP_DIR}/mindspore/lite/tools/converter)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
+include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
@@ -28,15 +30,15 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/fp32/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/string/*.cc
-        ${LITE_DIR}/nnacl/*.c
-        ${LITE_DIR}/nnacl/fp32/*.c
-        ${LITE_DIR}/nnacl/int8/*.c
-        ${LITE_DIR}/nnacl/base/*.c
-        ${LITE_DIR}/nnacl/infer/*.c
+        ${NNACL_DIR}/*.c
+        ${NNACL_DIR}/fp32/*.c
+        ${NNACL_DIR}/int8/*.c
+        ${NNACL_DIR}/base/*.c
+        ${NNACL_DIR}/infer/*.c
         )
 
 file(GLOB KERNEL_OP_TRAIN_SRC
-        ${LITE_DIR}/nnacl/fp32_grad/*.c
+        ${NNACL_DIR}/fp32_grad/*.c
         ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
         )
 
@@ -45,8 +47,8 @@ if(SUPPORT_TRAIN)
 endif()
 if(PLATFORM_ARM64)
     # assembly
-    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/assembly/arm64/*.s
-            ${LITE_DIR}/nnacl/assembly/arm64/*.S)
+    file(GLOB TEST_ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.s
+            ${NNACL_DIR}/assembly/arm64/*.S)
 
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
@@ -58,8 +60,8 @@ endif()
 if(PLATFORM_ARM32)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC
-            ${LITE_DIR}/nnacl/assembly/arm32/*.S
-            ${LITE_DIR}/nnacl/assembly/arm32/*.s)
+            ${NNACL_DIR}/assembly/arm32/*.S
+            ${NNACL_DIR}/assembly/arm32/*.s)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
@@ -68,7 +70,7 @@ if(PLATFORM_ARM32)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/intrinsics/sse/*.c)
+    file(GLOB TEST_ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
@@ -79,9 +81,9 @@ endif()
 if("${X86_64_SIMD}" STREQUAL "avx")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
-    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/intrinsics/sse/*.c
-            ${LITE_DIR}/nnacl/intrinsics/avx/*.c
-            ${LITE_DIR}/nnacl/assembly/avx/*.S)
+    file(GLOB TEST_ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
+            ${NNACL_DIR}/intrinsics/avx/*.c
+            ${NNACL_DIR}/assembly/avx/*.S)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}

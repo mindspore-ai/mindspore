@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/random_parameter.h"
+#include "nnacl/random_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {

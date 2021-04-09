@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/roi_pooling_infer.h"
+#include "nnacl/infer/roi_pooling_infer.h"
 
 namespace mindspore {
 

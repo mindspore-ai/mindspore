@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/bias_grad_infer.h"
+#include "nnacl/infer/bias_grad_infer.h"
 
 namespace mindspore {
 

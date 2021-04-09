@@ -17,7 +17,7 @@
 #include <iostream>
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/unsqueeze_parameter.h"
+#include "nnacl/unsqueeze_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 #include "mindspore/lite/src/tensor.h"

@@ -16,7 +16,7 @@
 
 #include <memory>
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/base/tile_base.h"
+#include "nnacl/base/tile_base.h"
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {

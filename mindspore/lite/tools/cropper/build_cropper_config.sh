@@ -39,8 +39,7 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${FLATBUFFERS}
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema/inner
--I${MINDSPORE_HOME}/mindspore/lite/src/../nnacl
--I${MINDSPORE_HOME}/mindspore/lite/src/../nnacl/optimize"
+-I${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu"
 
 REMOVE_LISTS_STR=""
 getDeep() {
@@ -108,9 +107,9 @@ getCommonFile() {
   others_files_h=(
     "${MINDSPORE_HOME}"/mindspore/lite/src/populate/populate_register.h
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.h
-    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/infer/infer_register.h
-    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.h
-    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/pack.h
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
   )
   all_files_h=("${include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
@@ -141,12 +140,12 @@ getCommonFile() {
   while IFS='' read -r line; do runtime_files_c+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.c)
   # sava all assembly files
   assembly_files=()
-  while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/nnacl/assembly/*/*.S)
+  while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/assembly/*/*.S)
   others_files_c=(
-    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.c
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.c
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.cc
-    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/infer/infer_register.c
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.c
     "${MINDSPORE_HOME}"/mindspore/core/utils/status.cc
   )
   all_files=("${src_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
@@ -191,7 +190,7 @@ getCommonFile
 # get src/ops
 getOpsFile "Registry\(schema::PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
 getOpsFile "REG_POPULATE\(PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
-getOpsFile "REG_INFER\(.*?, PrimType_" "${MINDSPORE_HOME}/mindspore/lite/nnacl/infer" "prototype" &
+getOpsFile "REG_INFER\(.*?, PrimType_" "${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer" "prototype" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat32" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat16" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt8" &

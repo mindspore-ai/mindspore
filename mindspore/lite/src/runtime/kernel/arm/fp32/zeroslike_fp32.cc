@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp32/zeroslike_fp32.h"
 #include "schema/model_generated.h"
-#include "mindspore/lite/nnacl/base/zeroslike_base.h"
+#include "nnacl/base/zeroslike_base.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 

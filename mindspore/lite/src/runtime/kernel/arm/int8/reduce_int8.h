@@ -21,7 +21,7 @@
 #include "src/lite_kernel.h"
 #include "nnacl/reduce_parameter.h"
 #include "nnacl/int8/reduce_int8.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 #include "src/runtime/kernel/arm/base/reduce_base.h"
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/tensorlist_reserve_infer.h"
+#include "nnacl/infer/tensorlist_reserve_infer.h"
 
 namespace mindspore {
 

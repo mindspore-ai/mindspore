@@ -2,9 +2,7 @@ add_compile_definitions(USE_ANDROID_LOG)
 if(ENABLE_V0)
     add_definitions(-DENABLE_V0)
 endif()
-set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${LITE_DIR}/nnacl/)
-include_directories(${LITE_DIR}/nnacl/optimize)
+include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance

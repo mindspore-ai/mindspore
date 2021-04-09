@@ -19,7 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/arm/base/quant_dtype_cast.h"
-#include "mindspore/lite/nnacl/int8/quant_dtype_cast_int8.h"
+#include "nnacl/int8/quant_dtype_cast_int8.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 
