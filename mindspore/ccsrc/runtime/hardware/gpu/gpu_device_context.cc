@@ -179,14 +179,6 @@ void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &grap
 
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
-  // Hide NopOp from execution graph in graph mode
-  if (!pynative_mode) {
-    opt::HideNopNode(graph.get());
-  }
 }
 
 void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
@@ -211,6 +203,9 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
+
+  // Hide NopOp from execution order.
+  opt::HideNopNode(graph.get());
 }
 
 void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
@@ -235,11 +230,10 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   graph->SetExecOrderByDefault();
 
   // Graph kernel fusion optimization
-  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-    return;
+  if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    opt::GraphKernelOptimize(graph);
+    graph->SetExecOrderByDefault();
   }
-  opt::GraphKernelOptimize(graph);
-  graph->SetExecOrderByDefault();
 }
 
 void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const {
