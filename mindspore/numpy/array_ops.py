@@ -370,6 +370,10 @@ def concatenate(arrays, axis=0):
     """
     Joins a sequence of tensors along an existing axis.
 
+    Note:
+        To match Numpy behaviour, :math:`axis >= 32` will not cause value error, the
+        `axis` will be treated as :class:`None` instead.
+
     Args:
         arrays (Union[Tensor, tuple(Tensor), list(Tensor)]): a tensor or a list
             of tensors to be concatenated.
@@ -381,7 +385,7 @@ def concatenate(arrays, axis=0):
 
     Raises:
         TypeError: If input arguments have types not specified above.
-        ValueError: If specified `axis` < 0, or exceeds tensor.ndim.
+        ValueError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`, and less than 32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
