@@ -43,6 +43,7 @@
 #include "debug/anf_ir_dump.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
+#include "debug/env_config_parser.h"
 #endif
 #include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "runtime/device/executor/executor_callback.h"
@@ -395,9 +396,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
   DumpJsonParser::GetInstance().UpdateNeedDumpKernels(NOT_NULL(graph));
 #ifdef MEM_REUSE_DEBUG
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE)) {
+  if (!EnvConfigParser::GetInstance().GetSysMemreuse()) {
     // Get normal graph ir for memreuse
     mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(graph);
   }

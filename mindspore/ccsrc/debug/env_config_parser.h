@@ -37,6 +37,8 @@ class EnvConfigParser {
   bool HasRdrSetting() const { return has_rdr_setting_; }
   bool RdrEnabled() const { return rdr_enabled_; }
   std::string RdrPath() const { return rdr_path_; }
+  bool GetSysMemreuse() { return sys_memreuse_; }
+  void SetSysMemreuse(bool set_memreuse) { sys_memreuse_ = set_memreuse; }
 
  private:
   EnvConfigParser() {}
@@ -50,6 +52,7 @@ class EnvConfigParser {
   bool has_rdr_setting_{false};
   std::string rdr_path_{"./rdr/"};
 
+  bool sys_memreuse_{true};
   void ParseFromFile();
   void ParseFromEnv();
   std::string GetIfstreamString(const std::ifstream &ifstream);
@@ -62,6 +65,8 @@ class EnvConfigParser {
 
   void ParseRdrPath(const nlohmann::json &content);
   void ParseRdrEnable(const nlohmann::json &content);
+  void ParseMemReuseSetting(const nlohmann::json &content);
+  void ParseSysMemReuse(const nlohmann::json &content);
 
   void ConfigToString();
 };
