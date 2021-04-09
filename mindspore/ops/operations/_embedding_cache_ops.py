@@ -15,7 +15,7 @@
 """cache_ops"""
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register, PrimitiveWithCheck
+from ..primitive import prim_attr_register, PrimitiveWithCheck
 from .. import signature as sig
 
 
@@ -30,7 +30,7 @@ class UpdateCache(PrimitiveWithCheck):
         - **updates** (Tensor) - The update values.
 
     Outputs:
-        - **out** (Tensor) - Returns a [1] Tensor, which is not usefull.
+        - **out** (Tensor) - Returns a [1] Tensor, which is not useful.
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE,
@@ -101,92 +101,6 @@ class SubAndFilter(PrimitiveWithCheck):
         return input_x_dtype
 
 
-class SearchCacheIdx(PrimitiveWithInfer):
-    """
-    Search the keys of a hashmap, and return the values.
-
-    Inputs:
-        - **hashmap** (Parameter) - The dim of hashmap is (n, 4), which cols represent the `key, value, step, tag`.
-        `key, value`: Map the indices of big table and cache table.
-        `step`: The resent step, when searching the key, it will be updated at the same time.
-        `step` can make sure the indices which are using in the last step will not be deleted in hashmap.
-        `tag`: We use linear probing(`h(k, i) = (h(k) + i) % m`) to solve hash conflicts.
-         tag is the count of linear probing times of the key. If `tag == 0`, means that the entry is empty.
-        The Hash Function is:
-         `((0.6180339 * key) - floor(0.618033 * key)) * hashmap_length`, in order to avoid data clustering.
-        - **indices** (Tensor) - The indices which are keys of hashmap.
-        - **step** (int) - The current step when searching.
-        - **emb_max_num** (int) - Max length of big table.
-         To avoid searching when `indices >= emb_max_num`, and make value = `cache_max_num`.
-        - **cache_max_num** (int) - Max length of cache table.
-
-    Outputs:
-        - **cache_idx** (Tensor) - Result of searched value, if search missed, value = -1.
-        - **miss_idx** (Tensor) - The index of Tensor indices which search missed.
-         If search success, miss_idx[i] = -1.
-        - **miss_emb_idx** (Tensor) - The value of Tensor indices which search missed.
-         If search success, miss_emb_idx[i] = -1.
-    Examples:
-        >>> hashmap = Parameter(Tensor(np.array([[0, 0, 0, 0],
-                                                [10, 5, -5, 1],
-                                                [2, 1, -5, 1],
-                                                [15, 7, -5, 2],
-                                                [0, 0, 0, 0],
-                                                [0, 0, 0, 0],
-                                                [0, 0, 0, 0],
-                                                [0, 0, 0, 0],
-                                                [3, 3, -5, 1],
-                                                [21, 9, -5, 1]], np.int32)), name="hashmap")
-        >>> indices = Tensor(np.array([10, 2, 25, 5, 3], np.int32))
-        >>> step = 0, emb_max_num = 25, cache_max_num = 10
-        >>> ops = ops.SearchCacheIdx()
-        >>> cache_idx, miss_idx, miss_emb_idx = ops(hashmap, indices, step, emb_max_num, cache_max_num)
-        cache_idx : [5, 1, 10, -1, 3]
-        miss_idx : [-1, -1, -1, 3, -1]
-        miss_emb_idx : [-1, -1, -1, 5, -1]
-        hashmap after search : [[0, 0, 0, 0],
-                                [10, 5, 0, 1],
-                                [2, 1, 0, 1],
-                                [15, 7, -5, 2],
-                                [0, 0, 0, 0],
-                                [0, 0, 0, 0],
-                                [0, 0, 0, 0],
-                                [0, 0, 0, 0],
-                                [3, 3, 0, 1],
-                                [21, 9, -5, 1]]
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('hashmap', sig.sig_rw.RW_WRITE,
-                     dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T),
-        sig.make_sig('step', dtype=sig.sig_dtype.T),
-        sig.make_sig('emb_max_num', dtype=sig.sig_dtype.T),
-        sig.make_sig('cache_max_num', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self):
-        """init SearchCacheIdx"""
-
-        self.init_prim_io_names(inputs=['hashmap', 'indices', 'step', 'emb_max_num', 'cache_max_num'],
-                                outputs=['cache_idx', 'miss_idx', 'miss_emb_idx'])
-
-    def infer_shape(self, hashmap_shape, indices_shape, step_shape, emb_max_num_shape, cache_max_num_shape):
-
-        if len(hashmap_shape) != 2:
-            raise ValueError("The dimension of 'hashmap' in SearchCacheIdx must be 2, "
-                             "but got %d." % len(hashmap_shape))
-        out_shape = (indices_shape, indices_shape, indices_shape)
-        return out_shape
-
-    def infer_dtype(self, hashmap_dtype, indices_dtype, step_dtype, emb_max_num_dtype, cache_max_num_dtype):
-        args = {"hashmap": hashmap_dtype, "indices": indices_dtype}
-        validator.check_tensors_dtypes_same_and_valid(
-            args, mstype.int_type, self.name)
-        out_dtype = (hashmap_dtype, hashmap_dtype, hashmap_dtype)
-        return out_dtype
-
-
 class MapUniform(PrimitiveWithCheck):
     """
     Map a tensor by using fomula : value = key % `group_num` * `per_group_size` + key // `group_num`.
@@ -225,48 +139,6 @@ class MapUniform(PrimitiveWithCheck):
             'per_group_size', per_group_size_dtype, [mstype.Int], self.name)
         validator.check_value_type(
             'group_num', group_num_dtype, [mstype.Int], self.name)
-
-
-class CacheSwapHashmap(PrimitiveWithInfer):
-    """
-    Delete a hashmap entry,and insert a new key to hashmap, return the key and value of delete entry.
-
-    Inputs:
-        - **hashmap** (Parameter) - Same to operation SearchCacheIdx.
-        - **miss_emb_idx** (Tensor) - The keys which are going to insert, -1 is skipped. It is the result
-        - **step** (int) - The current step.
-
-    Outputs:
-        - **swap_cache_idx** (Tensor) - Deleted value of entry, -1 is skipped.
-        - **old_emb_idx** (Tensor) - Deleted key of entry, -1 is skipped.
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('hashmap', sig.sig_rw.RW_WRITE,
-                     dtype=sig.sig_dtype.T),
-        sig.make_sig('miss_emb_idx', dtype=sig.sig_dtype.T),
-        sig.make_sig('step', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self):
-        """init CacheSwapHashmap"""
-
-        self.init_prim_io_names(inputs=['hashmap', 'miss_emb_idx', 'step'],
-                                outputs=['swap_cache_idx', 'old_emb_idx'])
-
-    def infer_shape(self, hashmap_shape, miss_emb_idx_shape, step_shape):
-        if len(hashmap_shape) != 2:
-            raise ValueError("The dimension of 'hashmap' in CacheSwapHashmap must be 2, "
-                             "but got %d." % len(hashmap_shape))
-
-        out_shape = (miss_emb_idx_shape, miss_emb_idx_shape)
-        return out_shape
-
-    def infer_dtype(self, hashmap_dtype, miss_emb_idx_dtype, step_dtype):
-        validator.check_tensor_dtype_valid(
-            "miss_emb_idx", miss_emb_idx_dtype, mstype.int_type, self.name)
-        out_dtype = (miss_emb_idx_dtype, miss_emb_idx_dtype)
-        return out_dtype
 
 
 class CacheSwapTable(PrimitiveWithCheck):
@@ -396,7 +268,7 @@ class PadAndShift(PrimitiveWithCheck):
     Pad a tensor with -1, and shift with a length.
 
     Inputs:
-        - **input_x** (Tensor) - The input Tensor, which will be copyed
+        - **input_x** (Tensor) - The input Tensor, which will be copied
             to `output`.
         - **cum_sum_arr** (Tensor) - The last value of cum_sum_arr is
             the pad length of output tensor, cum_sum_arr[shift_idx] is

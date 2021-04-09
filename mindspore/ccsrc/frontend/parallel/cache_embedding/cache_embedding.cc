@@ -145,7 +145,7 @@ void MemCopyFromHostToCache(void *hashmap_addr, void *host_addr, void *cache_add
   auto cache_data = static_cast<char *>(cache_addr);
   auto hashmap_data = static_cast<HashmapEntry<T> *>(hashmap_addr);
   // default param type float
-  size_t param_type_size = 4;
+  const size_t param_type_size = 4;
   size_t single_col_bytes = param_type_size * col_size;
   for (size_t i = 0; i < hashmap_size; ++i) {
     if (!hashmap_data[i].IsEmpty()) {
@@ -263,8 +263,6 @@ AnfNodePtr InitHashMap(const FuncGraphPtr &func_graph, const int64_t host_size, 
 AnfNodePtr InitStep(const FuncGraphPtr &func_graph, TypeId type_id) {
   std::vector<int64_t> host_shape{1};
   auto new_tensor = std::make_shared<tensor::Tensor>(type_id, host_shape);
-  auto step_data = static_cast<int64_t *>(new_tensor->data_c());
-  step_data[0] = 0;
   ParamInfoPtr new_param_info = std::make_shared<ParamInfo>();
   std::string step_name = "cache_step";
   new_param_info->set_name(step_name);

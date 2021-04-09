@@ -55,8 +55,6 @@ from .standard_normal import _standard_normal_aicpu
 from .gamma import _gamma_aicpu
 from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
-from .search_cache_idx import _search_cache_idx_aicpu
-from .cache_swap_hashmap import _cache_swap_hashmap_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu
