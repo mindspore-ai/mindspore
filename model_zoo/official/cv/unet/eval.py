@@ -17,6 +17,7 @@ import os
 import argparse
 import logging
 import numpy as np
+from scipy.special import softmax
 import mindspore
 import mindspore.nn as nn
 import mindspore.ops.operations as F
@@ -28,8 +29,6 @@ from src.data_loader import create_dataset, create_cell_nuclei_dataset
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet
-
-from scipy.special import softmax
 
 device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)

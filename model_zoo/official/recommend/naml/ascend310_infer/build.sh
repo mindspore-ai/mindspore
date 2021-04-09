@@ -17,7 +17,7 @@
 if [ ! -d out ]; then
   mkdir out
 fi
-cd out
+cd out || exit
 export CXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0
 cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_SKIP_RPATH=TRUE
 make

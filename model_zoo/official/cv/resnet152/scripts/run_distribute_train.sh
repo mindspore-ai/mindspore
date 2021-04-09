@@ -69,7 +69,7 @@ do
     cp ../*.py ./device$i
     cp *.sh ./device$i
     cp -r ../src ./device$i
-    cd ./device$i
+    cd ./device$i || exit
     export DEVICE_ID=$i
     export RANK_ID=$i
     echo "start training for device $i"

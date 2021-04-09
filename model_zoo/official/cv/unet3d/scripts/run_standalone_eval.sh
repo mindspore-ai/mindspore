@@ -75,7 +75,7 @@ mkdir ./eval
 cp ../*.py ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
-cd ./eval
+cd ./eval || exit
 echo "start eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
 python eval.py --data_url=$IMAGE_PATH --seg_url=$SEG_PATH --ckpt_path=$CHECKPOINT_FILE_PATH > eval.log 2>&1 &
 echo "end eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"

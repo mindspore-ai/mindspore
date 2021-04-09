@@ -15,8 +15,8 @@
 """dataset api"""
 import os
 from itertools import chain
-import gensim
 import numpy as np
+import gensim
 
 from mindspore.mindrecord import FileWriter
 import mindspore.dataset as ds

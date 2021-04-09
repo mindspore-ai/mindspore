@@ -102,7 +102,7 @@ def main(args):
             else:
                 param_dict_new[key] = values
         load_param_into_net(network, param_dict_new)
-        cfg.logger.info('load model {} success'.format(cfg.pretrained))
+        cfg.logger.info('load model %s success' % str(cfg.pretrained))
 
     # optimizer and lr scheduler
     lr = warmup_step(cfg, gamma=0.9)

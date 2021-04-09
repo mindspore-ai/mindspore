@@ -15,11 +15,11 @@
 """Extended Conv1D."""
 
 import math
+import numpy as np
 from mindspore import nn, Tensor
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
 from mindspore import context
-import numpy as np
 
 class Conv1d(nn.Conv1d):
     """

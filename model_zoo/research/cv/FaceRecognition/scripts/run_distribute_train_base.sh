@@ -42,7 +42,7 @@ export RANK_SIZE=8
 export RANK_TABLE_FILE=$PATH1
 
 EXECUTE_PATH=$(pwd)
-echo *******************EXECUTE_PATH= $EXECUTE_PATH
+echo *******************EXECUTE_PATH=$EXECUTE_PATH
 if [ -d "${EXECUTE_PATH}/log_parallel_graph" ]; then
   echo "[INFO] Delete old data_parallel log files"
   rm -rf ${EXECUTE_PATH}/log_parallel_graph
@@ -53,7 +53,7 @@ for((i=0;i<=7;i++));
 do
     rm -rf ${EXECUTE_PATH}/data_parallel_log_$i
     mkdir -p ${EXECUTE_PATH}/data_parallel_log_$i
-    cd ${EXECUTE_PATH}/data_parallel_log_$i
+    cd ${EXECUTE_PATH}/data_parallel_log_$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID"

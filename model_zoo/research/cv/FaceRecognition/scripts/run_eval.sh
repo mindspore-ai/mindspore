@@ -39,7 +39,7 @@ if [ -d "${EXECUTE_PATH}/log_inference" ]; then
 fi
 mkdir ${EXECUTE_PATH}/log_inference
 
-cd ${EXECUTE_PATH}/log_inference
+cd ${EXECUTE_PATH}/log_inference || exit
 env > ${EXECUTE_PATH}/log_inference/face_recognition.log
 python ${EXECUTE_PATH}/../eval.py &> ${EXECUTE_PATH}/log_inference/face_recognition.log &
 

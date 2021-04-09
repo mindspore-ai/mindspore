@@ -19,13 +19,14 @@ from __future__ import division
 import os
 import numpy as np
 from numpy import random
-
 import mmcv
+import cv2
+
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
 from src.config import config
-import cv2
+
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.

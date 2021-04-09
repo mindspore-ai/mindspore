@@ -16,11 +16,10 @@
 import os
 import argparse
 import numpy as np
+from scipy.special import softmax
 
 from src.data_loader import create_dataset
 from src.config import cfg_unet
-from scipy.special import softmax
-
 
 class dice_coeff():
     def __init__(self):

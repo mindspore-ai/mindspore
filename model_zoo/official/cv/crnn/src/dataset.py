@@ -15,11 +15,11 @@
 """Dataset preprocessing."""
 import os
 import numpy as np
+from PIL import Image, ImageFile
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as vc
-from PIL import Image, ImageFile
 from src.config import config1, label_dict
 from src.ic03_dataset import IC03Dataset
 from src.ic13_dataset import IC13Dataset

@@ -17,11 +17,9 @@ import os
 import glob
 import random
 import pickle
-
-from src.data import common
-
 import numpy as np
 import imageio
+from src.data import common
 
 
 def search(root, target="JPEG"):

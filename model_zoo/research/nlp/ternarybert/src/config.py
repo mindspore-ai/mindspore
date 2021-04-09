@@ -15,8 +15,8 @@
 
 """config script"""
 
-import mindspore.common.dtype as mstype
 from easydict import EasyDict as edict
+import mindspore.common.dtype as mstype
 from .tinybert_model import BertConfig
 from .assessment_method import Accuracy, F1, Pearsonr, Matthews
 
