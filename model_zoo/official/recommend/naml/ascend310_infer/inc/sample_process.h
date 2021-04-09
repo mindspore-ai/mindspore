@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_MODEL_ZOO_NAML_SAMPLE_PROCESS_H_
+#define MINDSPORE_MODEL_ZOO_NAML_SAMPLE_PROCESS_H_
+
 #pragma once
 #include <map>
 #include <memory>
@@ -49,8 +52,8 @@ class SampleProcess {
                            std::vector<std::vector<int>> *usersIds, std::vector<std::vector<int>> *candidateNewsIds);
     uint32_t ReadBrowsedData(const std::string &browsedNewsPath);
     void GetResult(uint32_t startPos, uint32_t endPos,
-                                  std::map<int, void*> newsEncodeResult,
-                                  std::map<int, void*> userEncodeResult);
+                                  std::map<int, void *> newsEncodeResult,
+                                  std::map<int, void *> userEncodeResult);
 
  private:
     void DestroyResource();
@@ -69,3 +72,4 @@ class SampleProcess {
     std::mutex mtx_;
 };
 
+#endif
