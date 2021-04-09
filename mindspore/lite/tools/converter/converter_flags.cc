@@ -104,7 +104,7 @@ int Flags::InitFmk() {
 }
 
 bool Flags::IsValidNum(const std::string &str, int *num) {
-  char *ptr;
+  char *ptr = nullptr;
   *num = strtol(str.c_str(), &ptr, 10);
   return ptr == (str.c_str() + str.size());
 }

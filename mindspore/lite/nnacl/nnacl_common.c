@@ -42,56 +42,16 @@ float ShortToFloat32(uint16_t src_value) {
 }
 
 uint16_t Float32ToShort(float src_value) {
-  float *psrcValue = NULL;
-  psrcValue = &src_value;
-  unsigned int srcValueBit = (unsigned int)(*psrcValue);
-  unsigned int sign = srcValueBit >> (FP32_BIT_SIZE - 1);
-  unsigned int mantissa = srcValueBit & 0x007FFFFF;
+  float32_bits src_value_bits;
+  src_value_bits.f = src_value;
+  uint16_t res = 0;
+  // mantissa
+  res += (src_value_bits.u >> 13);
   // exponent
-  int exp = ((srcValueBit & 0x7F800000) >> FP32_SIGNIFICAND) + FP16_EXPONENT_BIAS - FP32_EXPONENT_BIAS;
-  uint16_t short_res;
-  if (exp > 0 && exp < FP16_EXPONENT_MAX) {
-    // use rte rounding mode, round the significand, combine sign, exponent and significand into a short.
-    short_res = (sign << (FP16_BIT_SIZE - 1)) | (exp << FP16_SIGNIFICAND) |
-                ((mantissa + 0x00001000) >> (FP32_SIGNIFICAND - FP16_SIGNIFICAND));
-  } else if (srcValueBit == 0) {
-    short_res = 0;
-  } else {
-    if (exp <= 0) {
-      short_res = 0;
-      if (exp >= FP16_EXPONENT_MIN) {
-        mantissa = (mantissa | 0x00800000) >> (1 - exp);
-        if ((mantissa & 0x00001000) > 0) {
-          mantissa = mantissa + 0x00002000;
-        }
-        short_res = (sign << FP16_EXPONENT_BIAS) | (mantissa >> (FP32_SIGNIFICAND - FP16_SIGNIFICAND));
-      }
-    } else if (exp == (FP32_EXPONENT_MAX - FP32_EXPONENT_BIAS + FP16_EXPONENT_BIAS)) {
-      if (mantissa == 0) {
-        // input float is infinity, return infinity half
-        short_res = (sign << FP16_EXPONENT_BIAS) | 0x7C00;
-      } else {
-        // input float is NaN, return half NaN
-        short_res = (sign << FP16_EXPONENT_BIAS) | 0x7C00 | (mantissa >> (FP32_SIGNIFICAND - FP16_SIGNIFICAND));
-      }
-    } else {
-      // exp > 0, normalized single, round to nearest
-      if ((mantissa & 0x00001000) > 0) {
-        mantissa = mantissa + 0x00002000;
-        if ((mantissa & 0x00800000) > 0) {
-          mantissa = 0;
-          exp = exp + 1;
-        }
-      }
-      if (exp > FP16_EXPONENT_MAX) {
-        // exponent overflow - return infinity half
-        short_res = (sign << FP16_EXPONENT_BIAS) | 0x7C00;
-      } else {
-        // combine sign, exp and mantissa into normalized half
-        short_res = (sign << FP16_EXPONENT_BIAS) | (exp << FP16_SIGNIFICAND) |
-                    (mantissa >> (FP32_SIGNIFICAND - FP16_SIGNIFICAND));
-      }
-    }
-  }
-  return short_res;
+  res += (src_value_bits.u >> 13) & 0x3fc00;
+  res -= (127 - 15) << 13;
+
+  // sign
+  res |= (src_value_bits.u & 0x400000000) >> 16;
+  return res;
 }
