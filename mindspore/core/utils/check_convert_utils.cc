@@ -442,8 +442,8 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
   auto type = types.begin()->second;
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s" << types.begin()->first << " input must be a tensor but got "
-                            << type->ToString();
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s " << types.begin()->first
+                            << " input must be a tensor but got " << type->ToString();
   }
   TypePtr check_type = _CheckTypeSame(types, prim_name, false);
   return CheckTypeValid(types.begin()->first, check_type, check_list, prim_name);
@@ -598,5 +598,28 @@ void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     MS_EXCEPTION(NotSupportError) << class_name << "operator does not support PyNative mode.";
   }
+}
+
+std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
+                                                                  const std::string &prim_name) {
+  std::vector<int64_t> result;
+  MS_EXCEPTION_IF_NULL(attr);
+  if (attr->isa<ValueTuple>()) {
+    std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+    (void)std::transform(
+      attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
+        if (!e->isa<Int64Imm>()) {
+          MS_EXCEPTION(TypeError) << "For " << prim_name << ", the type of" << arg_name << " must be Int64";
+        }
+        return GetValue<int64_t>(e);
+      });
+  } else {
+    if (!attr->isa<Int64Imm>()) {
+      MS_EXCEPTION(TypeError) << "For " << prim_name << ", the type of" << arg_name << " must be Int64";
+    }
+    int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+    result.push_back(attr_val);
+  }
+  return result;
 }
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,18 @@
 
 namespace mindspore {
 namespace ops {
-
+// scalar_summary
+namespace {
+abstract::ShapePtr TensorSummaryInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  // check
+  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShape("v_shape", input_args[1]->BuildShape(), prim_name);
+  CheckAndConvertUtils::CheckInteger("v rank", v_shape.size(), kGreaterEqual, 1, prim_name);
+  return std::make_shared<abstract::Shape>(ShapeVector(1));
+}
+}  // namespace
 void TensorSummary::set_side_effect_io() { this->AddAttr(kSideEffectIO, MakeValue(true)); }
 
 bool TensorSummary::get_side_effect_io() const {
@@ -35,12 +46,9 @@ void TensorSummary::Init() { this->set_side_effect_io(); }
 AbstractBasePtr TensorSummaryInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
   // check
-  CheckAndConvertUtils::CheckSummaryParam(input_args[0], input_args[1], prim_name);
-  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShape("v_shape", input_args[1]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("v rank", v_shape.size(), kGreaterEqual, 1, prim_name);
-  return std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(ShapeVector(1)));
+  CheckAndConvertUtils::CheckSummaryParam(input_args[0], input_args[1], primitive->name());
+  return std::make_shared<abstract::AbstractTensor>(kInt32, TensorSummaryInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorSummary, prim::kPrimTensorSummary, TensorSummaryInfer, nullptr, true);
 REGISTER_PRIMITIVE_C(kNameTensorSummary, TensorSummary);

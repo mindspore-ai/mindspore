@@ -30,9 +30,10 @@ void SetTensorData(void *data, T num, size_t data_length) {
 }
 class TensorConstructUtils {
  public:
-  static tensor::TensorPtr CreateZerosTensor(TypeId type, const std::vector<int64_t> &shape);
-  static tensor::TensorPtr CreateOnesTensor(TypeId type, const std::vector<int64_t> &shape);
-  static tensor::TensorPtr CreateTensor(TypeId type, const std::vector<int64_t> &shape, void *data);
+  static tensor::TensorPtr CreateZerosTensor(const TypePtr type, const std::vector<int64_t> &shape);
+  static tensor::TensorPtr CreateOnesTensor(const TypePtr type, const std::vector<int64_t> &shape);
+  static tensor::TensorPtr CreateTensor(const TypePtr type, const std::vector<int64_t> &shape, void *data);
+  static TypeId ExtractTypeId(const TypePtr type);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_

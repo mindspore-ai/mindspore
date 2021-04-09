@@ -89,17 +89,6 @@ class ScalarSummary(PrimitiveWithInfer):
         """init"""
         self.add_prim_attr("side_effect_io", True)
 
-    def __infer__(self, name, value):
-        _check_summary_param(name, value, self.__class__.__name__)
-
-        v_shape = value['shape']
-        # In the summary, the value whose shape is [1] is also considered as a scalar.
-        if v_shape and v_shape != [1]:
-            raise ValueError(f"For 'value' the type should be scalar, "
-                             f"shape should be [] or [1] in {self.__class__.__name__}, but got {v_shape}.")
-
-        return SUMMARY_RETURN_VALUE
-
 
 class ImageSummary(PrimitiveWithInfer):
     """
@@ -190,17 +179,6 @@ class TensorSummary(PrimitiveWithInfer):
     def __init__(self):
         """init"""
         self.add_prim_attr("side_effect_io", True)
-
-    def __infer__(self, name, value):
-        _check_summary_param(name, value, self.__class__.__name__)
-
-        v_shape = value['shape']
-        # In the summary, the value whose shape is [] is not considered as a tensor.
-        if not v_shape:
-            raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
-                             f"shape should not be [].")
-
-        return SUMMARY_RETURN_VALUE
 
 
 class HistogramSummary(PrimitiveWithInfer):
