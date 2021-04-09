@@ -47,7 +47,7 @@ FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr
 KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
                                        const std::vector<ValuePtr> &input_param_values);
 
-// Return the back propagate funcgraph for this cell.
+// Return the back propagate funcgraph for this cell, each cnode in primal funcgraph is replaced by value node.
 // weights: weights parameters used in this cell.
 // grad_inputs: return sensitivity for input parameters;
 // grad_weights: return sensitivity for weights;
@@ -60,6 +60,16 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 // (sens_input1, sens_input2, ..., sens_weight0, sens_weight1, ) bprop_fg(input1, input2, ..., weight0, weight1, ...)
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
                                  bool grad_weights, bool has_sens_arg = false);
+
+// Return the back propagate funcgraph for this cell, each cnode in primal funcgraph is replaced by formal cnode.
+// so the return bprop funcgraph can be grad again.
+// weights: weights parameters used in this cell.
+// grad_inputs: return sensitivity for input parameters;
+// grad_weights: return sensitivity for weights;
+// return: the returned funcgraph will have prototype:
+// (sens_input1, sens_input2, ..., sens_weight0, sens_weight1, ) bprop_fg(input1, input2, ..., weight0, weight1, ...)
+FuncGraphPtr GradPynativeCellBuildFormalBProp(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights,
+                                              bool grad_inputs, bool grad_weights);
 
 // Grad for each operation.
 // c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.
