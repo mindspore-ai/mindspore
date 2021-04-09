@@ -2731,14 +2731,12 @@ class Select(PrimitiveWithInfer):
     Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the `condition`.
 
     Given a tensor as input, this operation inserts a dimension of 1 at the dimension,
-    it was invalid when both math: 'x' and math: 'y' are none,
-    the coordinates are returned as a two-dimensional tensor, where the first dimension (row) represents
-    the number of true elements and the second dimension (columns) represents the coordinates of the true
-    elements. Keep in mind that the shape of the output tensor can vary depending
+    it was invalid when both math: 'x' and math: 'y' are none.
+    Keep in mind that the shape of the output tensor can vary depending
     on how many true values are in the input. Indexes are output in row-first
     order.
 
-    math:`x` and :math:`y` must have the same shape. If :math:`x` and :math:`y` are
+    If neither is None, math:`x` and :math:`y` must have the same shape. If :math:`x` and :math:`y` are
     scalars, the conditional tensor must be a scalar. If :math:`x` and :math:`y` are
     higher-dimensional vectors, the `condition` must be a vector whose size matches the
     first dimension of :math:`x`, or must have the same shape as :math:`y`.
