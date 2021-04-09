@@ -16,6 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/sparse_to_dense_fp32.h"
 
 #include <vector>
+#include <limits>
 
 #include "include/errorcode.h"
 #include "mindspore/lite/nnacl/fp32/sparse_to_dense_fp32.h"
