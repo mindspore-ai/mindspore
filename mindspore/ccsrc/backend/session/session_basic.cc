@@ -210,9 +210,11 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
 
 BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &graph,
                                 const std::vector<tensor::TensorPtr> &input_tensors,
-                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                KernelMapTensor *node_to_tensor) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(tensor_to_node);
+  MS_EXCEPTION_IF_NULL(node_to_tensor);
   MS_LOG(INFO) << "Create tensor for output[" << anf->DebugString() << "]";
   auto item_with_index = AnfAlgo::VisitKernelWithReturnType(anf, 0);
   MS_EXCEPTION_IF_NULL(item_with_index.first);
@@ -223,7 +225,7 @@ BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &gra
     MS_EXCEPTION_IF_NULL(cnode);
     VectorRef ret;
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node);
+      auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node, node_to_tensor);
       ret.push_back(out);
     }
     return ret;
@@ -233,7 +235,16 @@ BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &gra
   if (size == 0) {
     return VectorRef();
   }
-  return CreateNodeOutputTensor(item_with_index, graph, input_tensors, tensor_to_node);
+
+  //  The outputs of graph may have the same kernel node, no need to create new tensor.
+  const auto &iter = node_to_tensor->find(item_with_index);
+  if (iter != node_to_tensor->end()) {
+    return iter->second;
+  }
+
+  const auto &tensor = CreateNodeOutputTensor(item_with_index, graph, input_tensors, tensor_to_node);
+  (*node_to_tensor)[item_with_index] = tensor;
+  return tensor;
 }
 
 ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) {
@@ -1503,11 +1514,12 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  KernelMapTensor node_to_tensor;
   auto anf_outputs = kernel_graph->outputs();
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Update output[" << item->DebugString() << "]";
-    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, &tensor_to_node));
+    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, &tensor_to_node, &node_to_tensor));
   }
 
   auto ms_context = MsContext::GetInstance();
@@ -1572,10 +1584,44 @@ void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vecto
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(tensor_to_node);
   auto anf_outputs = kernel_graph->outputs();
+  KernelMapTensor node_to_tensor;
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
-    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node));
+    outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node, &node_to_tensor));
+  }
+}
+
+void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
+                                       const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
+  MS_EXCEPTION_IF_NULL(outputs);
+  for (const auto &item : *outputs) {
+    if (utils::isa<VectorRefPtr>(item)) {
+      const auto &vector_ref = utils::cast<VectorRef>(item);
+      UpdateOutputTensors(&vector_ref, tensor_to_node);
+    } else if (utils::isa<tensor::TensorPtr>(item)) {
+      const auto &tensor = utils::cast<tensor::TensorPtr>(item);
+      MS_EXCEPTION_IF_NULL(tensor);
+      const auto &iter = tensor_to_node.find(tensor);
+      if (iter != tensor_to_node.end()) {
+        const auto &node = iter->second.first;
+        const auto &output_index = iter->second.second;
+        const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+        tensor->set_device_address(address);
+
+        if (AnfAlgo::IsDynamicShape(node)) {
+          const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
+          ShapeVector int_shape;
+          std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+          tensor->set_shape(int_shape);
+        }
+      }
+      if (tensor->NeedSyncDeviceToHostImmediately()) {
+        tensor->data_sync(false);
+        tensor->set_device_address(nullptr);
+        tensor->set_sync_status(kNeedSyncHostToDevice);
+      }
+    }
   }
 }
 
@@ -1622,11 +1668,12 @@ void SessionBasic::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::Te
 
   VectorRef vector_outputs;
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  KernelMapTensor node_to_tensor;
   auto anf_outputs = kernel_graph->outputs();
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
-    vector_outputs.emplace_back(CreateNodeOutputTensors(item, kernel_graph, inputs, &tensor_to_node));
+    vector_outputs.emplace_back(CreateNodeOutputTensors(item, kernel_graph, inputs, &tensor_to_node, &node_to_tensor));
   }
   *outputs = TransformVectorRefToMultiTensor(vector_outputs);
   for (size_t i = 0; i < outputs->size(); i++) {

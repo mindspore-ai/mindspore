@@ -20,6 +20,7 @@
 #include <memory>
 #include <algorithm>
 #include <string>
+#include <map>
 #include "backend/session/session_basic.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/session_factory.h"
@@ -53,6 +54,8 @@ class GPUSession : public SessionBasic {
   std::string GetCommWorldGroup() override { return kNcclWorldGroup; }
   void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                      const std::vector<tensor::TensorPtr> &inputs_const) const override;
+  void UpdateOutputTensors(const VectorRef *outputs,
+                           const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) override;
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;

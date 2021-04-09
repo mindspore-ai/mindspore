@@ -66,6 +66,7 @@
 #include "runtime/device/gpu/cuda_driver.h"
 #include "runtime/device/gpu/distribution/collective_init.h"
 #include "runtime/device/gpu/gpu_bucket.h"
+#include "runtime/device/gpu/gpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "utils/config_manager.h"
 #include "utils/ms_context.h"
@@ -453,6 +454,48 @@ void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
     }
 #endif
     Execute(kernel_graph);
+  }
+}
+
+void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
+                                     const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
+  MS_EXCEPTION_IF_NULL(outputs);
+  for (const auto &item : *outputs) {
+    if (utils::isa<VectorRefPtr>(item)) {
+      const auto &vector_ref = utils::cast<VectorRef>(item);
+      UpdateOutputTensors(&vector_ref, tensor_to_node);
+    } else if (utils::isa<tensor::TensorPtr>(item)) {
+      const auto &tensor = utils::cast<tensor::TensorPtr>(item);
+      MS_EXCEPTION_IF_NULL(tensor);
+      const auto &iter = tensor_to_node.find(tensor);
+      if (iter != tensor_to_node.end()) {
+        const auto &node = iter->second.first;
+        const auto &output_index = iter->second.second;
+        const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+        // The outputs may have the same tensor, so need skip when the tensor has been set to device address.
+        if ((address == nullptr) || (address->GetPtr() == nullptr)) {
+          return;
+        }
+        tensor->set_device_address(address);
+
+        // When the device address of graph output is set in tensor, the graph output need be set new device address,
+        // to avoid that the device address context of tensor be rewritten in the next step or next loop.
+        auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
+        AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+
+        if (AnfAlgo::IsDynamicShape(node)) {
+          const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
+          ShapeVector int_shape;
+          std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+          tensor->set_shape(int_shape);
+        }
+      }
+      if (tensor->NeedSyncDeviceToHostImmediately()) {
+        tensor->data_sync(false);
+        tensor->set_device_address(nullptr);
+        tensor->set_sync_status(kNeedSyncHostToDevice);
+      }
+    }
   }
 }
 

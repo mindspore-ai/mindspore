@@ -38,9 +38,22 @@
 namespace mindspore {
 namespace session {
 using AnfVisitFuncion = std::function<Any(const AnfNodePtr &node, int index)>;
-using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
+
+using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+struct KernelWithIndexCmp {
+  bool operator()(const KernelWithIndex &key1, const KernelWithIndex &key2) const {
+    if (key1.first != key2.first) {
+      return key1.first < key2.first;
+    }
+    if (key1.second != key2.second) {
+      return key1.second < key2.second;
+    }
+    return false;
+  }
+};
+
 class AnfRuntimeAlgorithm {
  public:
   static AnfNodePtr MakeMonadValueNode(const KernelGraphPtr &kg);
