@@ -55,6 +55,8 @@
 #include "minddata/mindrecord/include/shard_shuffle.h"
 #include "utils/log_adapter.h"
 
+#define API_PUBLIC __attribute__((visibility("default")))
+
 namespace mindspore {
 namespace mindrecord {
 using ROW_GROUPS =
@@ -65,7 +67,7 @@ using TASK_RETURN_CONTENT =
   std::pair<MSRStatus, std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>>>;
 const int kNumBatchInMap = 1000;  // iterator buffer size in row-reader mode
 
-class __attribute__((visibility("default"))) ShardReader {
+class API_PUBLIC ShardReader {
  public:
   ShardReader();
 
@@ -203,7 +205,7 @@ class __attribute__((visibility("default"))) ShardReader {
   void SetAllInIndex(bool all_in_index) { all_in_index_ = all_in_index; }
 
   /// \brief get all classes
-  MSRStatus GetAllClasses(const std::string &category_field, std::set<std::string> &categories);
+  MSRStatus GetAllClasses(const std::string &category_field, std::shared_ptr<std::set<std::string>> category_ptr);
 
   /// \brief get the size of blob data
   MSRStatus GetTotalBlobSize(int64_t *total_blob_size);
@@ -215,11 +217,12 @@ class __attribute__((visibility("default"))) ShardReader {
  private:
   /// \brief wrap up labels to json format
   MSRStatus ConvertLabelToJson(const std::vector<std::vector<std::string>> &labels, std::shared_ptr<std::fstream> fs,
-                               std::vector<std::vector<std::vector<uint64_t>>> &offsets, int shard_id,
-                               const std::vector<std::string> &columns, std::vector<std::vector<json>> &column_values);
+                               std::shared_ptr<std::vector<std::vector<std::vector<uint64_t>>>> offset_ptr,
+                               int shard_id, const std::vector<std::string> &columns,
+                               std::shared_ptr<std::vector<std::vector<json>>> col_val_ptr);
 
   /// \brief read all rows for specified columns
-  ROW_GROUPS ReadAllRowGroup(std::vector<std::string> &columns);
+  ROW_GROUPS ReadAllRowGroup(const std::vector<std::string> &columns);
 
   /// \brief read row meta by shard_id and sample_id
   ROW_GROUPS ReadRowGroupByShardIDAndSampleID(const std::vector<std::string> &columns, const uint32_t &shard_id,
@@ -227,8 +230,8 @@ class __attribute__((visibility("default"))) ShardReader {
 
   /// \brief read all rows in one shard
   MSRStatus ReadAllRowsInShard(int shard_id, const std::string &sql, const std::vector<std::string> &columns,
-                               std::vector<std::vector<std::vector<uint64_t>>> &offsets,
-                               std::vector<std::vector<json>> &column_values);
+                               std::shared_ptr<std::vector<std::vector<std::vector<uint64_t>>>> offset_ptr,
+                               std::shared_ptr<std::vector<std::vector<json>>> col_val_ptr);
 
   /// \brief initialize reader
   MSRStatus Init(const std::vector<std::string> &file_paths, bool load_dataset);
@@ -243,8 +246,12 @@ class __attribute__((visibility("default"))) ShardReader {
   std::vector<std::vector<uint64_t>> GetImageOffset(int group_id, int shard_id,
                                                     const std::pair<std::string, std::string> &criteria = {"", ""});
 
+  /// \brief get page id by category
+  std::pair<MSRStatus, std::vector<uint64_t>> GetPagesByCategory(int shard_id,
+                                                                 const std::pair<std::string, std::string> &criteria);
   /// \brief execute sqlite query with prepare statement
-  MSRStatus QueryWithCriteria(sqlite3 *db, string &sql, string criteria, std::vector<std::vector<std::string>> &labels);
+  MSRStatus QueryWithCriteria(sqlite3 *db, const string &sql, const string &criteria,
+                              std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr);
 
   /// \brief get column values
   std::pair<MSRStatus, std::vector<json>> GetLabels(int group_id, int shard_id, const std::vector<std::string> &columns,
@@ -257,8 +264,7 @@ class __attribute__((visibility("default"))) ShardReader {
                                                                                                                    ""});
 
   /// \brief create category-applied task list
-  MSRStatus CreateTasksByCategory(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
-                                  const std::shared_ptr<ShardOperator> &op);
+  MSRStatus CreateTasksByCategory(const std::shared_ptr<ShardOperator> &op);
 
   /// \brief create task list in row-reader mode
   MSRStatus CreateTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
@@ -286,13 +292,15 @@ class __attribute__((visibility("default"))) ShardReader {
     int shard_id, const std::vector<std::string> &columns, const std::vector<std::vector<std::string>> &label_offsets);
 
   /// \brief get classes in one shard
-  void GetClassesInShard(sqlite3 *db, int shard_id, const std::string sql, std::set<std::string> &categories);
+  void GetClassesInShard(sqlite3 *db, int shard_id, const std::string &sql,
+                         std::shared_ptr<std::set<std::string>> category_ptr);
 
   /// \brief get number of classes
   int64_t GetNumClasses(const std::string &category_field);
 
   /// \brief get meta of header
-  std::pair<MSRStatus, std::vector<std::string>> GetMeta(const std::string &file_path, json &meta_data);
+  std::pair<MSRStatus, std::vector<std::string>> GetMeta(const std::string &file_path,
+                                                         std::shared_ptr<json> meta_data_ptr);
 
   /// \brief extract uncompressed data based on column list
   std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> UnCompressBlob(const std::vector<uint8_t> &raw_blob_data);
