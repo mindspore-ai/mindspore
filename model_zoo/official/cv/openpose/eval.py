@@ -18,9 +18,9 @@ import argparse
 import warnings
 import sys
 import numpy as np
-from tqdm import tqdm
 import cv2
 from scipy.ndimage.filters import gaussian_filter
+from tqdm import tqdm
 from pycocotools.coco import COCO as LoadAnn
 from pycocotools.cocoeval import COCOeval as MapEval
 

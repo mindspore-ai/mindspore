@@ -28,8 +28,8 @@ from __future__ import print_function
 
 import os
 import numpy as np
-import pycocotools.coco as coco
 import cv2
+import pycocotools.coco as coco
 
 class CenterfaceDataset():
     """

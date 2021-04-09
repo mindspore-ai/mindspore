@@ -16,11 +16,6 @@
 import argparse
 import os
 import random
-
-from src.cnn_direction_model import CNNDirectionModel
-from src.config import config1 as config
-from src.dataset import create_dataset_train
-
 import numpy as np
 
 import mindspore as ms
@@ -34,6 +29,10 @@ from mindspore.nn.optim.adam import Adam
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
+from src.cnn_direction_model import CNNDirectionModel
+from src.config import config1 as config
+from src.dataset import create_dataset_train
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')

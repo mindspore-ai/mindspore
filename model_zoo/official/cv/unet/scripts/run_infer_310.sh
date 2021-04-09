@@ -79,7 +79,7 @@ function compile_app()
 
 function infer()
 {
-    cd -
+    cd - || exit
     if [ -d result_Files ]; then
         rm -rf ./result_Files
     fi

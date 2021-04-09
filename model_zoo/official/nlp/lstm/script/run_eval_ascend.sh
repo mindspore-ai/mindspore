@@ -26,7 +26,7 @@ CKPT_FILE=$3
 
 rm -rf eval
 mkdir -p eval
-cd eval
+cd eval || exit
 mkdir -p ms_log
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log

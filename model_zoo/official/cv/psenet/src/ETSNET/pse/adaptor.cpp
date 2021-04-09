@@ -21,6 +21,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <utility>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -76,7 +77,7 @@ namespace pse_adaptor {
         int dx[] = {-1, 1, 0, 0};
         int dy[] = {0, 0, -1, 1};
 
-        for (int kernal_id = kernels.size() - 2; kernal_id >= 0; --kernal_id) {
+        for (int kernel_id = kernels.size() - 2; kernel_id >= 0; --kernel_id) {
             while (!queue.empty()) {
                 Point point = queue.front();
                 queue.pop();
@@ -90,7 +91,7 @@ namespace pse_adaptor {
 
                     if (tmp_x < 0 || tmp_x >= static_cast<int>(text_line->size())) continue;
                     if (tmp_y < 0 || tmp_y >= static_cast<int>(text_line->at(1).size())) continue;
-                    if (kernels[kernal_id].at<char>(tmp_x, tmp_y) == 0) continue;
+                    if (kernels[kernel_id].at<char>(tmp_x, tmp_y) == 0) continue;
                     if (text_line->at(tmp_x)[tmp_y] > 0) continue;
 
                     Point point_tmp(tmp_x, tmp_y);

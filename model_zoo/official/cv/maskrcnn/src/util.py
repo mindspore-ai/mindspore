@@ -15,10 +15,10 @@
 """coco eval for maskrcnn"""
 import json
 import numpy as np
+import mmcv
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from pycocotools import mask as maskUtils
-import mmcv
 
 from src.config import config
 

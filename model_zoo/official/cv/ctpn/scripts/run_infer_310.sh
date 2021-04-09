@@ -63,7 +63,7 @@ fi
 
 function compile_app()
 {
-    cd ../ascend310_infer
+    cd ../ascend310_infer || exit
     if [ -f "Makefile" ]; then
         make clean
     fi
@@ -113,9 +113,9 @@ function cal_acc()
     if [ -f "ubmit.zip" ]; then
         rm -f submit.zip
     fi
-    cd output
+    cd output || exit
     zip -r ../submit.zip *.txt
-    cd -
+    cd - || exit
 }
 
 compile_app

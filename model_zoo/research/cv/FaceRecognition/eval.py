@@ -328,6 +328,6 @@ if __name__ == '__main__':
     log_path = os.path.join(arg.ckpt_path, 'logs')
     arg.logger = get_logger(log_path, arg.local_rank)
 
-    arg.logger.info('Config\n\n%s\n' % pformat(arg))
+    arg.logger.info('Config\n\n%s\n' % str(pformat(arg)))
 
     main(arg)

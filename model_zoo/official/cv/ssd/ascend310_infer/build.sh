@@ -17,7 +17,8 @@ if [ -d out ]; then
     rm -rf out
 fi
 
-mkdir out && cd out
+mkdir out
+cd out || exit
 
 if [ -f "Makefile" ]; then
   make clean

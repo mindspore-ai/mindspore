@@ -19,5 +19,5 @@ rm -rf ./train_single
 mkdir ./train_single
 cp -r ./src ./train_single
 cp ./train.py ./train_single
-cd ./train_single
+cd ./train_single || exit
 python ./train.py --device_id=$DEVICE_ID > ./train.log 2>&1 &

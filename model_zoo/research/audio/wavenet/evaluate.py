@@ -17,10 +17,10 @@ import os
 from os.path import join
 import argparse
 import glob
-from hparams import hparams, hparams_debug_string
-import audio
 import numpy as np
 from scipy.io import wavfile
+from hparams import hparams, hparams_debug_string
+import audio
 from tqdm import tqdm
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net

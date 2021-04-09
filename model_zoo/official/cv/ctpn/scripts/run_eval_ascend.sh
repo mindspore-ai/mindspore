@@ -67,13 +67,13 @@ do
     cp ../*.py ./eval
     cp *.sh ./eval
     cp -r ../src ./eval
-    cd ./eval
+    cd ./eval || exit
     env > env.log
     CHECKPOINT_FILE_PATH=$file
     echo "start eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
     python eval.py --device_id=$DEVICE_ID --image_path=$IMAGE_PATH --dataset_path=$DATASET_PATH --checkpoint_path=$CHECKPOINT_FILE_PATH &> log
     echo "end eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
-    cd ./submit
+    cd ./submit || exit
     file_base_name=$(basename $file)
     zip -r ../../submit_${file_base_name%.*}.zip *.txt
     cd ../../

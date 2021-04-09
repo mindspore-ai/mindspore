@@ -18,8 +18,8 @@ import json
 import random
 from collections import defaultdict
 from time import time
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 
 from mindspore import Tensor, ops
 from mindspore import dtype as mstype

@@ -37,10 +37,10 @@ then
 else
     echo "NMS module was not found, install it now..."
     git clone https://github.com/xingyizhou/CenterNet.git
-    cd CenterNet/src/lib/external/
+    cd CenterNet/src/lib/external/ || exit
     make
     python setup.py install
-    cd -
+    cd - || exit
     rm -rf CenterNet
 fi
 
