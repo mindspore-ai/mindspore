@@ -35,6 +35,9 @@ DECLARE_OP_USE_OUTPUT(SigmoidCrossEntropyWithLogits)
 DECLARE_OP_ADAPTER(SigmoidCrossEntropyWithLogitsGrad)
 DECLARE_OP_USE_OUTPUT(SigmoidCrossEntropyWithLogitsGrad)
 
+DECLARE_OP_ADAPTER(SigmoidCrossEntropyWithLogitsV2)
+DECLARE_OP_USE_OUTPUT(SigmoidCrossEntropyWithLogitsV2)
+
 DECLARE_OP_ADAPTER(LogSoftmaxGrad)
 DECLARE_OP_USE_OUTPUT(LogSoftmaxGrad)
 

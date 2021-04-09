@@ -66,6 +66,14 @@ OUTPUT_MAP(SigmoidCrossEntropyWithLogitsGrad) = {{0, OUTPUT_DESC(gradient)}};
 REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad, kNameSigmoidCrossEntropyWithLogitsGrad,
               ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad))
 
+// SigmoidCrossEntropyWithLogitsV2
+INPUT_MAP(SigmoidCrossEntropyWithLogitsV2) = {
+  {1, INPUT_DESC(predict)}, {2, INPUT_DESC(target)}, {3, INPUT_DESC(weight)}, {4, INPUT_DESC(pos_weight)}};
+ATTR_MAP(SigmoidCrossEntropyWithLogitsV2) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+OUTPUT_MAP(SigmoidCrossEntropyWithLogitsV2) = {{0, OUTPUT_DESC(loss)}};
+REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kNameSigmoidCrossEntropyWithLogitsV2,
+              ADPT_DESC(SigmoidCrossEntropyWithLogitsV2))
+
 // LogSoftmaxGrad
 INPUT_MAP(LogSoftmaxGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}};
 ATTR_MAP(LogSoftmaxGrad) = {
