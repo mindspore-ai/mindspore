@@ -23,6 +23,7 @@
 #include <iosfwd>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 #include "include/api/model.h"
 #include "include/api/serialization.h"
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
   context->MutableDeviceInfo().push_back(ascend310);
   mindspore::Graph graph;
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
+
 
   if (!FLAGS_precision_mode.empty()) {
     ascend310->SetPrecisionMode(FLAGS_precision_mode);
@@ -132,7 +134,7 @@ int main(int argc, char **argv) {
   }
   double average = 0.0;
   int infer_cnt = 0;
-  char tmpCh[256] = {0};
+
   for (auto iter = costTime_map.begin(); iter != costTime_map.end(); iter++) {
     double diff = 0.0;
     diff = iter->second - iter->first;
@@ -140,11 +142,12 @@ int main(int argc, char **argv) {
     infer_cnt++;
   }
   average = average/infer_cnt;
-  snprintf(tmpCh, sizeof(tmpCh), "NN inference cost average time: %4.3f ms of infer_count %d \n", average, infer_cnt);
+  std::stringstream timeCost;
+  timeCost << "NN inference cost average time: "<< average << "ms of infer_count " << infer_cnt << std::endl;
   std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << infer_cnt << std::endl;
   std::string file_name = "./time_Result" + std::string("/test_perform_static.txt");
   std::ofstream file_stream(file_name.c_str(), std::ios::trunc);
-  file_stream << tmpCh;
+  file_stream << timeCost.str();
   file_stream.close();
   costTime_map.clear();
   return 0;

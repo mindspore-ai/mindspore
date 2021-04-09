@@ -59,7 +59,7 @@ int ModelProcess::ModelInference(const std::vector<void *> &inputBufs,
     if (input == nullptr) {
         return INVALID_POINTER;
     }
-    int ret = 0;
+    int ret;
 
     aclmdlDataset *output = nullptr;
     output = CreateAndFillDataset(ouputBufs, outputSizes);

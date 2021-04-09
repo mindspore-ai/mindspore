@@ -22,6 +22,7 @@
 #include <iosfwd>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 #include "include/api/model.h"
 #include "include/api/context.h"
@@ -39,9 +40,9 @@ using mindspore::dataset::vision::CenterCrop;
 using mindspore::dataset::vision::Normalize;
 using mindspore::dataset::vision::HWC2CHW;
 using mindspore::dataset::TensorTransform;
+using mindspore::Context;
 using mindspore::Serialization;
 using mindspore::Model;
-using mindspore::Context;
 using mindspore::Status;
 using mindspore::ModelType;
 using mindspore::GraphCell;
@@ -69,6 +70,7 @@ int main(int argc, char **argv) {
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
   Model model;
   Status ret = model.Build(GraphCell(graph), context);
+
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
@@ -126,7 +128,7 @@ int main(int argc, char **argv) {
   }
   double average = 0.0;
   int inferCount = 0;
-  char tmpCh[256] = {0};
+
   for (auto iter = costTime_map.begin(); iter != costTime_map.end(); iter++) {
     double diff = 0.0;
     diff = iter->second - iter->first;
@@ -134,12 +136,12 @@ int main(int argc, char **argv) {
     inferCount++;
   }
   average = average / inferCount;
-  snprintf(tmpCh, sizeof(tmpCh), \
-  "NN inference cost average time: %4.3f ms of infer_count %d \n", average, inferCount);
+  std::stringstream timeCost;
+  timeCost << "NN inference cost average time: "<< average << "ms of infer_count " << inferCount << std::endl;
   std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << inferCount << std::endl;
   std::string fileName = "./time_Result" + std::string("/test_perform_static.txt");
   std::ofstream fileStream(fileName.c_str(), std::ios::trunc);
-  fileStream << tmpCh;
+  fileStream << timeCost.str();
   fileStream.close();
   costTime_map.clear();
   return 0;

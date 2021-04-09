@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_MODEL_ZOO_NAML_MODEL_PROCESS_H_
+#define MINDSPORE_MODEL_ZOO_NAML_MODEL_PROCESS_H_
 #pragma once
 #include <iostream>
 #include <map>
@@ -45,13 +47,11 @@ class ModelProcess {
 
     Result Execute(uint32_t index);
 
-    void DumpModelOutputResult(std::string fileName);
-
     void OutputModelResult();
     Result CreateInput();
     Result CpyFileToDevice(std::string fileName, uint32_t inputNum);
-    void CpyOutputFromDeviceToHost(uint32_t index, uint32_t batchSize);
-    std::map<int, void*> GetResult();
+    void CpyOutputFromDeviceToHost(uint32_t index);
+    std::map<int, void *> GetResult();
     std::vector<uint32_t> GetOutputSize();
     std::vector<uint32_t> GetInputSize();
     Result ExecuteWithFile(uint32_t fileNum);
@@ -82,9 +82,9 @@ class ModelProcess {
     uint32_t outputNum_;
     std::vector<uint32_t> outputBuffSize_;
 
-    std::map<int, void*> result_;
-    std::vector<void*> resultMem_;
-    std::vector<void*> fileBuffMem_;
+    std::map<int, void *> result_;
+    std::vector<void *> resultMem_;
+    std::vector<void *> fileBuffMem_;
     std::string inputDataPath_;
     std::string idFilePath_;
     std::vector<std::vector<void *>> fileBuff_;
@@ -92,3 +92,4 @@ class ModelProcess {
     std::vector<std::vector<int>> ids_;
 };
 
+#endif

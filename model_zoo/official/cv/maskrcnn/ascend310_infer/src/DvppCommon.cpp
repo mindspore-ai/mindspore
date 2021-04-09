@@ -115,7 +115,7 @@ int DvppCommon::GetVpcDataSize(uint32_t width, uint32_t height, acldvppPixelForm
  * @return: OK if success, other values if failure
  */
 int DvppCommon::GetVpcInputStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
-                                            uint32_t *widthStride, uint32_t *heightStride) {
+                                      uint32_t *widthStride, uint32_t *heightStride) {
     uint32_t inputWidthStride;
     if (format >= PIXEL_FORMAT_YUV_400 && format <= PIXEL_FORMAT_YVU_SEMIPLANAR_444) {
         inputWidthStride = DVPP_ALIGN_UP(width, VPC_STRIDE_WIDTH);
@@ -156,7 +156,7 @@ int DvppCommon::GetVpcInputStrideSize(uint32_t width, uint32_t height, acldvppPi
  * @return: OK if success, other values if failure
  */
 int DvppCommon::GetVpcOutputStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
-                                             uint32_t *widthStride, uint32_t *heightStride) {
+                                       uint32_t *widthStride, uint32_t *heightStride) {
     if (format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && format != PIXEL_FORMAT_YVU_SEMIPLANAR_420) {
         std::cout << "Output format[" << format << "] is not supported, just support NV12 or NV21." << std::endl;
         return INVALID_PARAM;
@@ -348,7 +348,7 @@ int DvppCommon::ResizeWithPadding(std::shared_ptr<acldvppPicDesc> inputDesc,
     pasteAreaConfig_.reset(pastRoiCfg, g_roiConfigDeleter);
 
     int ret = acldvppVpcCropAndPasteAsync(dvppChannelDesc_, inputDesc.get(), outputDesc.get(), cropAreaConfig_.get(),
-                                                pasteAreaConfig_.get(), dvppStream_);
+                                          pasteAreaConfig_.get(), dvppStream_);
     if (ret != OK) {
         // release resource.
         std::cout << "Failed to crop and paste asynchronously, ret = " << ret << "." << std::endl;
@@ -574,7 +574,7 @@ void DvppCommon::GetJpegDecodeStrideSize(uint32_t width, uint32_t height,
  * @return: OK if success, other values if failure
  */
 int DvppCommon::GetJpegImageInfo(const void *data, uint32_t dataSize, uint32_t *width, uint32_t *height,
-                                       int32_t *components) {
+                                 int32_t *components) {
     uint32_t widthTmp;
     uint32_t heightTmp;
     int32_t componentsTmp;
@@ -608,7 +608,7 @@ int DvppCommon::GetJpegImageInfo(const void *data, uint32_t dataSize, uint32_t *
  * @return: OK if success, other values if failure
  */
 int DvppCommon::GetJpegDecodeDataSize(const void *data, uint32_t dataSize, acldvppPixelFormat format,
-                                            uint32_t *decSize) {
+                                      uint32_t *decSize) {
     uint32_t outputSize;
     int ret = acldvppJpegPredictDecSize(data, dataSize, format, &outputSize);
     if (ret != OK) {
@@ -632,7 +632,7 @@ int DvppCommon::CombineJpegdProcess(const RawData& imageInfo, acldvppPixelFormat
     inputImage_ = std::make_shared<DvppDataInfo>();
     inputImage_->format = format;
     int ret = GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, &(inputImage_->width), &(inputImage_->height),
-                                     &components);
+                               &components);
     if (ret != OK) {
         std::cout << "Failed to get input image info, ret = " << ret << "." << std::endl;
         return ret;
