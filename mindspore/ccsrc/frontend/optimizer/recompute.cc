@@ -293,6 +293,17 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
   }
 }
 
+CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_node,
+                                 const std::vector<AnfNodePtr> &new_inputs) {
+  auto recomputed_node = graph->NewCNode(new_inputs);
+  MS_EXCEPTION_IF_NULL(recomputed_node);
+  recomputed_node->AddAttr("duplicated", MakeValue(true));
+  recomputed_node->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
+  recomputed_node->set_abstract(origin_node->abstract());
+  recomputed_node->set_scope(origin_node->scope());
+  return recomputed_node;
+}
+
 CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_node,
                            const std::vector<AnfNodePtr> &first_target_inputs,
                            const std::unordered_set<CNodePtr> &recomputed_origin_nodes,
@@ -336,12 +347,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
     depend_node->set_abstract(first_input->abstract());
     new_inputs[1] = depend_node;
   }
-  auto recomputed_node = graph->NewCNode(new_inputs);
-  MS_EXCEPTION_IF_NULL(recomputed_node);
-  recomputed_node->AddAttr("duplicated", MakeValue(true));
-  recomputed_node->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
-  recomputed_node->set_abstract(origin_node->abstract());
-  recomputed_node->set_scope(origin_node->scope());
+  auto recomputed_node = CreateNewRecomputedNode(graph, origin_node, new_inputs);
   origin_to_recomputed_nodes->insert(std::make_pair(origin_node, recomputed_node));
   return recomputed_node;
 }
