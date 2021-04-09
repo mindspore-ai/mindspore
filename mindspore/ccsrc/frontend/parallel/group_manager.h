@@ -67,6 +67,9 @@ class GroupManager {
   void Clear();
 
  private:
+  bool CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
+                             const std::vector<uint32_t> ranks, int device_id);
+  bool DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name, int device_id);
   Status DestroyGroup(const std::string &group_name);
   // the key is group name (name_)
   std::map<std::string, Group> groups_;
