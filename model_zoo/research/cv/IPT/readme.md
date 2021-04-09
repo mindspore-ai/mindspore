@@ -17,7 +17,9 @@ If you find our work useful in your research or publication, please cite our wor
      }
 
 ## Model architecture
-### The overall network architecture of IPT is shown as below:
+
+### The overall network architecture of IPT is shown as below
+
 ![architecture](./image/ipt.png)
 
 ## Dataset
@@ -27,12 +29,9 @@ The benchmark datasets can be downloaded as follows:
 For super-resolution:
 
  Set5,
-
 [Set14](https://sites.google.com/site/romanzeyde/research-interests),
-
 [B100](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/),
-
-[Urban100](https://sites.google.com/site/jbhuang0604/publications/struct_sr).
+Urban100.
 
 For denoising:
 
@@ -47,11 +46,15 @@ The result images are converted into YCbCr color space. The PSNR is evaluated on
 ## Requirements
 
 ### Hardware (GPU)
+
 > Prepare hardware environment with GPU.
 
 ### Framework
+
 > [MindSpore](https://www.mindspore.cn/install/en)
-### For more information, please check the resources below：
+
+### For more information, please check the resources below
+
 [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
 [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
@@ -61,7 +64,7 @@ The result images are converted into YCbCr color space. The PSNR is evaluated on
 
 ### Scripts and Sample Code
 
-```
+```bash
 IPT
 ├── eval.py # inference entry
 ├── image
@@ -95,23 +98,25 @@ IPT
 ## Evaluation
 
 ### Evaluation Process
+
 > Inference example:
 > For SR x4:
 
-```
+```bash
 python eval.py --dir_data ../../data/ --data_test Set14 --nochange --test_only --ext img --chop_new --scale 4 --pth_path ./model/IPT_sr4.ckpt
 ```
 
 > Or one can run following script for all tasks.
 
-```
+```bash
 sh scripts/run_eval.sh
 ```
 
 ### Evaluation Result
+
 The result are evaluated by the value of PSNR (Peak Signal-to-Noise Ratio), and the format is as following.
 
-```
+```bash
 result: {"Mean psnr of Se5 x4 is 32.68"}
 ```
 
