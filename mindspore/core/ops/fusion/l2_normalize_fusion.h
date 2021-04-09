@@ -28,6 +28,7 @@ constexpr auto kNameL2NormalizeFusion = "L2NormalizeFusion";
 class L2NormalizeFusion : public L2Normalize {
  public:
   L2NormalizeFusion() : L2Normalize(kNameL2NormalizeFusion) {}
+  ~L2NormalizeFusion() = default;
   MS_DECLARE_PARENT(L2NormalizeFusion, L2Normalize);
   void Init(const std::vector<int64_t> &axis, const float epsilon = 1e-4,
             const ActivationType &activation_type = NO_ACTIVATION);

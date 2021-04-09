@@ -51,7 +51,6 @@ class Proposal : public PrimitiveC {
   int64_t get_post_nms_topn() const;
   float get_nms_thresh() const;
 };
-
 }  // namespace ops
 }  // namespace mindspore
 

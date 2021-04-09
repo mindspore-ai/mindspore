@@ -28,6 +28,7 @@ constexpr auto kNameTopKFusion = "TopKFusion";
 class TopKFusion : public TopK {
  public:
   TopKFusion() : TopK(kNameTopKFusion) {}
+  ~TopKFusion() = default;
   MS_DECLARE_PARENT(TopKFusion, TopK);
   void Init(const bool sorted, const int64_t axis, const int64_t largest);
   void set_axis(const int64_t axis);

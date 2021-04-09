@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void NonMaxSuppression::set_center_point_box(const int64_t center_point_box) {
   AddAttr(kCenterPointBox, MakeValue(center_point_box));
 }

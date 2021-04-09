@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace ops {
-
 REGISTER_PRIMITIVE_C(kNameReduceAll, ReduceAll);
 }  // namespace ops
 }  // namespace mindspore

@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void PowerGrad::set_power(const float power) { this->AddAttr(kPower, MakeValue(power)); }
 float PowerGrad::get_power() const {
   auto value_ptr = GetAttr(kPower);

@@ -280,7 +280,7 @@ void MemCopyFromCacheToHost(void *hashmap_addr, void *host_addr, void *cache_add
   auto cache_data = static_cast<char *>(cache_addr);
   auto hashmap_data = static_cast<HashmapEntry<T> *>(hashmap_addr);
   // default param type float
-  size_t param_type_size = 4;
+  const size_t param_type_size = 4;
   size_t single_col_bytes = param_type_size * col_size;
   for (size_t i = 0; i < hashmap_size; ++i) {
     if (!hashmap_data[i].IsEmpty()) {

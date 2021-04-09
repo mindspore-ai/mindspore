@@ -35,7 +35,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   CheckAndConvertUtils::CheckInteger("input_x rank", x_shape.size(), kEqual, 4, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
-  int64_t offset = 2;
+  const int64_t offset = 2;
   auto block_shape = space_prim->get_block_shape();
   auto padding = space_prim->get_paddings();
   int64_t size = block_shape.size();
