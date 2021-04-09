@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 static void GetGaussianKernel(float *kernel, int size, double sigma) {
   int n = (size - 1) / 2;
   std::vector<float> buffer(n);
@@ -44,16 +43,15 @@ static void GetGaussianKernel(float *kernel, int size, double sigma) {
     sum += 1;
   }
 
-  float scale = 1. / sum;
-  float *ptr = kernel;
+  const float scale = 1. / sum;
   for (int i = 0; i < n; i++) {
     float g = buffer[i] * scale;
-    ptr[i] = g;
-    ptr[size - 1 - i] = g;
+    kernel[i] = g;
+    kernel[size - 1 - i] = g;
   }
-  ptr[n] = scale;
-  if ((size & 1) == 0) {
-    ptr[n + 1] = scale;
+  kernel[n] = scale;
+  if (size % 2 == 0) {
+    kernel[n + 1] = scale;
   }
 }
 
@@ -85,6 +83,5 @@ bool GaussianBlur(const LiteMat &src, LiteMat &dst, const std::vector<int> &ksiz
 
   return ConvRowCol(src, kx, ky, dst, src.data_type_, pad_type);
 }
-
 }  // namespace dataset
 }  // namespace mindspore
