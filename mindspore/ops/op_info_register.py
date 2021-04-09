@@ -440,7 +440,7 @@ class TBERegOp(RegOp):
         Whether the operator need check supports.
 
         Args:
-            :param need_check_supported: (bool): Value of need_check_supported. Default: false.
+            need_check_supported (bool): Value of need_check_supported. Default: false.
         """
         self._is_bool(need_check_supported)
         self.need_check_supported_ = need_check_supported
@@ -448,10 +448,10 @@ class TBERegOp(RegOp):
 
     def is_dynamic_format(self, is_dynamic_format):
         """
-        Whether the operator need calop_select_format api.
+        Whether the operator need cal op_select_format api.
 
         Args:
-            :param is_dynamic_format: (bool): Value of is_dynamic_format_. Default: false.
+            is_dynamic_format (bool): Value of is_dynamic_format_. Default: false.
         """
         self._is_bool(is_dynamic_format)
         self.is_dynamic_format_ = is_dynamic_format
