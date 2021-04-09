@@ -760,8 +760,12 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
 
   // Save cnode info and build grad graph
   if (grad()->need_construct_graph() && !grad()->in_cell_with_custom_bprop_()) {
+    std::string obj_id = GetId(out_real);
+    node_abs_map_[obj_id] = op_exec_info->abstract;
     grad()->SaveOutputNodeMap(obj_id, out_real, cnode);
     grad()->DoOpGrad(op_exec_info, cnode, out_real);
+  } else {
+    node_abs_map_.clear();
   }
   grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real);
   *ret = out_real;
