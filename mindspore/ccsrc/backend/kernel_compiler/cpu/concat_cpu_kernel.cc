@@ -53,6 +53,9 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto before_axis = input_flat_shape_list[0][0];
   for (size_t i = 0; i < before_axis; ++i) {
     for (size_t j = 0; j < input_num; ++j) {
+      if (input_flat_shape_list[j][1] == 0) {
+        continue;
+      }
       auto input_j_addr = reinterpret_cast<T *>(inputs[j]->addr);
       auto copy_num = input_flat_shape_list[j][1];
       auto offset = copy_num * i;
