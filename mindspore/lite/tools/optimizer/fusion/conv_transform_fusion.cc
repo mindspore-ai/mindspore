@@ -60,6 +60,7 @@ void GenerateNewWeightConv2D(float *dst_weight, const float *conv_weight, const 
       dst_weight[i] = conv_weight[i] * scale_weight[i % kernel_num];
     }
   } else {
+    MS_ASSERT(kernel_num > 0);
     auto kernel_size = weight_shape_size / kernel_num;
     for (int i = 0; i < kernel_num; i++) {
       for (int j = 0; j < kernel_size; j++) {
@@ -87,6 +88,7 @@ void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weig
       }
     }
   } else {
+    MS_ASSERT(group > 0);
     auto cin_group = weight_tensor->shape()[0] / group;
     int area_size = weight_tensor->shape()[2] * weight_tensor->shape()[3];
     int cout_size = kernel_num * area_size;
