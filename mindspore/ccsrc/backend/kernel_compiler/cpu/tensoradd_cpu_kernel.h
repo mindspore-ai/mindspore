@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class TensorAddCPUKernel : public CPUKernel {
  public:
   TensorAddCPUKernel() = default;
@@ -39,9 +40,15 @@ class TensorAddCPUKernel : public CPUKernel {
   std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   Add, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  TensorAddCPUKernel);
+  TensorAddCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  Add, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  TensorAddCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
+  Add, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  TensorAddCPUKernel, uint32_t);
 }  // namespace kernel
 }  // namespace mindspore
 
