@@ -157,6 +157,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/activation_populate.cc
         ${LITE_DIR}/src/ops/populate/softmax_populate.cc
         ${LITE_DIR}/src/ops/populate/splice_populate.cc
+        ${LITE_DIR}/src/ops/populate/transpose_populate.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
