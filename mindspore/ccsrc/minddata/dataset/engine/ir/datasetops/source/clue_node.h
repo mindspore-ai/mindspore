@@ -50,10 +50,6 @@ class CLUENode : public NonMappableSourceNode {
   /// \return A shared pointer to the new copy
   std::shared_ptr<DatasetNode> Copy() override;
 
-  /// \brief Generate a key map to be used in Build() according to usage and task
-  /// \return The generated key map
-  std::map<std::string, std::string> CreateKeyMapForBuild();
-
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
   /// \return Status Status::OK() if build successfully
@@ -110,6 +106,30 @@ class CLUENode : public NonMappableSourceNode {
   /// \brief Split string based on a character delimiter
   /// \return A string vector
   std::vector<std::string> split(const std::string &s, char delim);
+
+  /// \brief Generate a key map for AFQMC or CMNLI task according to usage
+  /// \return The generated key map
+  std::map<std::string, std::string> CreateKeyMapForAFQMCOrCMNLITask();
+
+  /// \brief Generate a key map for CSL task according to usage
+  /// \return The generated key map
+  std::map<std::string, std::string> CreateKeyMapForCSLTask();
+
+  /// \brief Generate a key map for IFLYTEK task according to usage
+  /// \return The generated key map
+  std::map<std::string, std::string> CreateKeyMapForIFLYTEKTask();
+
+  /// \brief Generate a key map for TNEWS task according to usage
+  /// \return The generated key map
+  std::map<std::string, std::string> CreateKeyMapForTNEWSTask();
+
+  /// \brief Generate a key map for WSC task according to usage
+  /// \return The generated key map
+  std::map<std::string, std::string> CreateKeyMapForWSCTask();
+
+  /// \brief Generate a key map to be used in Build() according to usage and task
+  /// \return The generated key map
+  std::map<std::string, std::string> CreateKeyMap();
 
   std::vector<std::string> dataset_files_;
   std::string task_;
