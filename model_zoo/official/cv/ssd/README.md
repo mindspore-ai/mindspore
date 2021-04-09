@@ -78,7 +78,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
     1. If coco dataset is used. **Select dataset to coco when run script.**
 
-        Change the `coco_root` and other settings you need in `src/config.py`. The directory structure is as follows:
+        Change the `coco_root` and other settings you need in `src/config_xxx.py`. The directory structure is as follows:
 
         ```shell
         .
@@ -91,7 +91,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         ```
 
     2. If VOC dataset is used. **Select dataset to voc when run script.**
-        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config.py`. `voc_json` is the path of json file with coco format for evaluation, `voc_root` is the path of VOC dataset, the directory structure is as follows:
+        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config_xxx.py`. `voc_json` is the path of json file with coco format for evaluation, `voc_root` is the path of VOC dataset, the directory structure is as follows:
 
         ```shell
         .
@@ -117,15 +117,15 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `src/config.py`.
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `src/config_xxx.py`.
 
 ## [Quick Start](#contents)
 
 ### Prepare the model
 
-1. Chose the model by changing the `using_model` in `src/confgi.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`, `ssd_mobilenet_v1_fpn`, `ssd_resnet50_fpn`.
-2. Change the dataset config in the corresponding config. `src/config_ssd300.py`, `src/config_ssd_mobilenet_v1_fpn.py`, `src/config_ssd_resnet50_fpn.py`, `src/config_ssd_vgg16.py`.
-3. If you are running with `ssd_mobilenet_v1_fpn`, you need a pretrained model for `mobilenet_v1`. Set the checkpoint path to `feature_extractor_base_param` in `src/config_ssd_mobilenet_v1_fpn.py`. For more detail about training mobilnet_v1, please refer to the mobilenetv1 model.
+1. Chose the model by changing the `using_model` in `src/config.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`, `ssd_vgg16`, `ssd_resnet50_fpn`.
+2. Change the dataset config in the corresponding config. `src/config_xxx.py`, `xxx` is the corresponding backbone network name
+3. If you are running with `ssd_mobilenet_v1_fpn` or `ssd_resnet50_fpn`, you need a pretrained model for `mobilenet_v1` or `resnet50`. Set the checkpoint path to `feature_extractor_base_param` in `src/config_xxx.py`. For more detail about training pre-trained model, please refer to the corresponding backbone network.
 
 ### Run the scripts
 
@@ -325,7 +325,7 @@ You can add `run_eval` to start shell and set it True, if you want evaluation wh
 You can train your own model based on either pretrained classification model or pretrained detection model. You can perform transfer training by following steps.
 
 1. Convert your own dataset to COCO or VOC style. Otherwise you have to add your own data preprocess code.
-2. Change config.py according to your own dataset, especially the `num_classes`.
+2. Change config_xxx.py according to your own dataset, especially the `num_classes`.
 3. Prepare a pretrained checkpoint. You can load the pretrained checkpoint by `pre_trained` argument. Transfer training means a new training job, so just keep `pre_trained_epoch_size`  same as default value `0`.
 4. Set argument `filter_weight` to `True` while calling `train.py`, this will filter the final detection box weight from the pretrained model.
 5. Build your own bash scripts using new config and arguments for further convenient.
