@@ -163,7 +163,7 @@ class TbeProcess:
                 res = "TBEException", \
                       "ERROR: [MS_BUILD_PROCESS_NUM] should be in range(1, 25), but got : " + str(process_num)
         elif not process_num.isdigit():
-            res = "TBEException", "ERROR: [MS_BUILD_PROCESS_NUM] type should be a int num, but got :" + process_num
+            res = "TBEException", "ERROR: [MS_BUILD_PROCESS_NUM] type should be an int num, but got :" + process_num
         return res
 
     def init_auto_tune_env(self, tune_mode):

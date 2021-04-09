@@ -170,6 +170,23 @@ class TbeTuner:
 
         return soc_info
 
+    def check_te_log(self, te_log_level):
+        """
+        Check te log level
+        :param te_log_level:
+        :return:
+        """
+        res = True
+        if te_log_level.isdigit() and int(te_log_level) >= len(TE_LOG_LEVEL):
+            log.error(f"Invalid environment TE_LOGLEVEL, the value should be in [0, 4) if it is a digit, but got : "
+                      f"{te_log_level}")
+            res = False
+        elif te_log_level.upper() not in TE_LOG_LEVEL:
+            log.error(f"Invalid environment TE_LOGLEVEL, the value should be one of [DEBUG, INFO, WARNING, ERROR] "
+                      f"if it is a string, but got :{te_log_level}")
+            res = False
+        return res
+
     def parallel_compilation_init(self, soc_info, tune_mode, process_num):
         """
         Initialize parallel compilation framework for tuner
@@ -201,14 +218,7 @@ class TbeTuner:
             os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[2]
             global_loglevel = 3
         else:
-            # pylint: disable=no-else-return
-            if te_log_level.isdigit() and int(te_log_level) >= len(TE_LOG_LEVEL):
-                log.error(f"Invalid environment TE_LOGLEVEL, the value should be in [0, 4) if it is a digit, but got : "
-                          f"{te_log_level}")
-                return False
-            elif te_log_level.upper() not in TE_LOG_LEVEL:
-                log.error(f"Invalid environment TE_LOGLEVEL, the value should be one of [DEBUG, INFO, WARNING, ERROR] "
-                          f"if it is a string, but got :{te_log_level}")
+            if not self.check_te_log(te_log_level):
                 return False
             global_loglevel = int(te_log_level) if te_log_level.isdigit() else TE_LOG_LEVEL.index(te_log_level.upper())
         ret = init_multi_process_env(embedding, soc_info, tune_mode, global_loglevel, enable_event, pid_ts)
