@@ -17,6 +17,7 @@
 #include "coder/opcoders/cmsis-nn/int8/conv2d_int8_coder.h"
 #include <string>
 #include <vector>
+#include <memory>
 #include "coder/opcoders/serializers/serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "src/common/prim_util.h"
