@@ -455,7 +455,7 @@ class Norm(Cell):
         TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.Norm(axis=0)
