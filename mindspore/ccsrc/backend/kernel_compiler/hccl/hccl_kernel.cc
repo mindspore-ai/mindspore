@@ -64,7 +64,8 @@ HcclKernelFactory &HcclKernelFactory::Get() {
   return _this;
 }
 
-HcclKernel::HcclKernel() : hccl_count_(0), op_type_(HCCL_REDUCE_SUM), root_id_(0), anf_node_(nullptr) {}
+HcclKernel::HcclKernel()
+    : hccl_count_(0), op_type_(HCCL_REDUCE_SUM), root_id_(0), receive_type_(0), anf_node_(nullptr) {}
 
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
