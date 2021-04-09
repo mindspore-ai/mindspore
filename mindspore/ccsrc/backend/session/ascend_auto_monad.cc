@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <queue>
 #include <utility>
 #include <memory>
 #include <algorithm>

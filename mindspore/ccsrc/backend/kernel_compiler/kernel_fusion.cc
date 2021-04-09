@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/kernel_fusion.h"
 
 #include <map>
+#include <set>
 #include <string>
 #include <memory>
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
