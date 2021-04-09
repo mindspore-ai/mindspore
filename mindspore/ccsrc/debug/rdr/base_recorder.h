@@ -39,7 +39,7 @@ class BaseRecorder {
     }
 
     std::string err_msg = module_ + ":" + name_ + " set filename failed.";
-    if (!filename_.empty() && !Common::IsFilenameValid(filename_, maxFilenameLength, err_msg)) {
+    if (!filename_.empty() && !Common::IsFilenameValid(filename_, MAX_FILENAME_LENGTH, err_msg)) {
       filename_ = "";
     }
 

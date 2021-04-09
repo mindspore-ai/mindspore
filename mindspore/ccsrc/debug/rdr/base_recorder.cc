@@ -22,7 +22,7 @@
 namespace mindspore {
 void BaseRecorder::SetDirectory(const std::string &directory) {
   std::string error_message = module_ + ":" + name_ + " set directory failed.";
-  if (Common::IsPathValid(directory, maxDirectoryLength, error_message)) {
+  if (Common::IsPathValid(directory, MAX_DIRECTORY_LENGTH, error_message)) {
     directory_ = directory;
     if (directory_.back() != '/') {
       directory_ += "/";
@@ -32,7 +32,7 @@ void BaseRecorder::SetDirectory(const std::string &directory) {
 
 void BaseRecorder::SetFilename(const std::string &filename) {
   std::string error_message = module_ + ":" + name_ + " set filename failed.";
-  if (Common::IsFilenameValid(filename, maxDirectoryLength, error_message)) {
+  if (Common::IsFilenameValid(filename, MAX_DIRECTORY_LENGTH, error_message)) {
     filename_ = filename;
   }
 }

@@ -23,22 +23,22 @@
 #include "utils/convert_utils_base.h"
 
 namespace {
-constexpr auto kEnableEnv = "MS_RDR_ENABLE";
-constexpr auto kPathEnv = "MS_RDR_PATH";
-constexpr auto kRdrSettings = "rdr";
-constexpr auto kPath = "path";
-constexpr auto kEnable = "enable";
+constexpr auto ENV_RDR_ENABLE = "MS_RDR_ENABLE";
+constexpr auto ENV_RDR_PATH = "MS_RDR_PATH";
+constexpr auto KEY_RDR_SETTINGS = "rdr";
+constexpr auto KEY_PATH = "path";
+constexpr auto KEY_ENABLE = "enable";
 }  // namespace
 
 namespace mindspore {
 std::optional<bool> GetRdrEnableFromEnv() {
   // get environment variable to configure RDR
-  const char *env_enable_char = std::getenv(kEnableEnv);
+  const char *env_enable_char = std::getenv(ENV_RDR_ENABLE);
   if (env_enable_char != nullptr) {
-    std::string env_enable_str = env_enable_char;
+    std::string env_enable_str = std::string(env_enable_char);
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
     if (env_enable_str != "0" && env_enable_str != "1") {
-      MS_LOG(WARNING) << "The environment variable '" << kEnableEnv << "' should be 0 or 1.";
+      MS_LOG(WARNING) << "The environment variable '" << ENV_RDR_ENABLE << "' should be 0 or 1.";
     }
     if (env_enable_str == "1") {
       return true;
@@ -50,12 +50,12 @@ std::optional<bool> GetRdrEnableFromEnv() {
 
 std::optional<std::string> GetRdrPathFromEnv() {
   // get environment variable to configure RDR
-  const char *path_char = std::getenv(kPathEnv);
+  const char *path_char = std::getenv(ENV_RDR_PATH);
   if (path_char != nullptr) {
     std::string err_msg = "RDR path parse from environment variable failed. Please check the settings about '" +
-                          std::string(kPathEnv) + "' in environment variables.";
-    std::string path = path_char;
-    if (!Common::IsPathValid(path, maxDirectoryLength, err_msg)) {
+                          std::string(ENV_RDR_PATH) + "' in environment variables.";
+    std::string path = std::string(path_char);
+    if (!Common::IsPathValid(path, MAX_DIRECTORY_LENGTH, err_msg)) {
       return std::string("");
     }
     return path;
@@ -155,21 +155,21 @@ void EnvConfigParser::Parse() {
 }
 
 void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
-  auto rdr_setting = content.find(kRdrSettings);
+  auto rdr_setting = content.find(KEY_RDR_SETTINGS);
   if (rdr_setting == content.end()) {
-    MS_LOG(WARNING) << "The '" << kRdrSettings << "' not exists. Please check the config file '" << config_file_
+    MS_LOG(WARNING) << "The '" << KEY_RDR_SETTINGS << "' not exists. Please check the config file '" << config_file_
                     << "' set by 'env_config_path' in context.";
     return;
   }
 
   has_rdr_setting_ = true;
 
-  auto rdr_enable = CheckJsonKeyExist(*rdr_setting, kRdrSettings, kEnable);
+  auto rdr_enable = CheckJsonKeyExist(*rdr_setting, KEY_RDR_SETTINGS, KEY_ENABLE);
   if (rdr_enable.has_value()) {
     ParseRdrEnable(**rdr_enable);
   }
 
-  auto rdr_path = CheckJsonKeyExist(*rdr_setting, kRdrSettings, kPath);
+  auto rdr_path = CheckJsonKeyExist(*rdr_setting, KEY_RDR_SETTINGS, KEY_PATH);
   if (rdr_path.has_value()) {
     ParseRdrPath(**rdr_path);
   }
@@ -177,16 +177,16 @@ void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
 
 void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
   std::string err_msg = "RDR path parse failed. The RDR path will be a default value: '" + rdr_path_ +
-                        "'. Please check the settings about '" + kRdrSettings + "' in config file '" + config_file_ +
-                        "' set by 'env_config_path' in context.";
+                        "'. Please check the settings about '" + KEY_RDR_SETTINGS + "' in config file '" +
+                        config_file_ + "' set by 'env_config_path' in context.";
 
-  if (!CheckJsonStringType(content, kRdrSettings, kPath)) {
+  if (!CheckJsonStringType(content, KEY_RDR_SETTINGS, KEY_PATH)) {
     MS_LOG(WARNING) << err_msg;
     return;
   }
 
   std::string path = content;
-  if (!Common::IsPathValid(path, maxDirectoryLength, err_msg)) {
+  if (!Common::IsPathValid(path, MAX_DIRECTORY_LENGTH, err_msg)) {
     return;
   }
 
@@ -198,7 +198,7 @@ void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
 
 void EnvConfigParser::ParseRdrEnable(const nlohmann::json &content) {
   if (!content.is_boolean()) {
-    MS_LOG(WARNING) << "Json parse failed. 'enable' in " << kRdrSettings << " should be boolean."
+    MS_LOG(WARNING) << "Json parse failed. 'enable' in " << KEY_RDR_SETTINGS << " should be boolean."
                     << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
     return;
   }
