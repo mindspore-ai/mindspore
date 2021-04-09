@@ -162,9 +162,9 @@ int ConvolutionWinogradFP32Coder::InitWeightBias() {
   if (input_tensors_.size() == kInputSize2) {
     auto ori_bias_addr = reinterpret_cast<float *>(bias_tensor_->data_c());
     MS_CHECK_RET_CODE(memcpy_s(new_bias_, new_bias_ele_size, ori_bias_addr, out_channel_size * sizeof(float)),
-                      "memset_s failed!");
+                      "memcpy_s failed!");
   } else {
-    return RET_ERROR;
+    MS_CHECK_RET_CODE(memset_s(new_bias_, new_bias_ele_size, 0, new_bias_ele_size), "memset_s failed!");
   }
   return RET_OK;
 }
