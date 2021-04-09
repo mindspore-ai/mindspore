@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -74,6 +75,8 @@ class SubstitutionList {
   bool ApplyIRToSubstitutions(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
   bool ApplySubstitutionToIR(const OptimizerPtr &optimizer, const AnfNodePtr &node, const SubstitutionPtr &sub) const;
   bool ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
+  void DisplayStatusOfSubstitution(const std::unordered_map<std::string, std::vector<bool>> &status,
+                                   const OptimizerPtr &optimizer, size_t space) const;
 
   std::vector<SubstitutionPtr> list_;
   // a flag to mark this list of Substitution can only be executed only once
