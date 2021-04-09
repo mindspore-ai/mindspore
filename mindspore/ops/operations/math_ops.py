@@ -2249,8 +2249,10 @@ class MulNoNan(_MathBinaryOp):
         The shapes of `input_x` and `input_y` should be same or can be broadcasted.
 
     Inputs:
-        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number or scalar.
-        - **input_y** (Union[Tensor]) - The second input is a tensor whose data type is number or scalar.
+        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is one of
+          flota16, float32, int32, int64 currently or scalar.
+        - **input_y** (Union[Tensor]) - The second input is a tensor whose data type is one of
+          flota16, float32, int32, int64 currently or scalar.
 
     Outputs:
         Tensor, the shape is same to the shape after broadcasting,
