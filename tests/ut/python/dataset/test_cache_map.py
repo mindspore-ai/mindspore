@@ -760,11 +760,11 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id="1", size=0)
-    assert "Argument session_id with value 1 is not of type [<class 'int'>]" in str(info.value)
+    assert "Argument session_id with value 1 is not of type" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=None, size=0)
-    assert "Argument session_id with value None is not of type [<class 'int'>]" in str(info.value)
+    assert "Argument session_id with value None is not of type" in str(info.value)
 
     with pytest.raises(ValueError) as info:
         ds.DatasetCache(session_id=1, size=-1)
@@ -772,19 +772,19 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size="1")
-    assert "Argument size with value 1 is not of type [<class 'int'>]" in str(info.value)
+    assert "Argument size with value 1 is not of type" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=None)
-    assert "Argument size with value None is not of type [<class 'int'>]" in str(info.value)
+    assert "Argument size with value None is not of type" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, spilling="illegal")
-    assert "Argument spilling with value illegal is not of type [<class 'bool'>]" in str(info.value)
+    assert "Argument spilling with value illegal is not of type" in str(info.value)
 
     with pytest.raises(TypeError) as err:
         ds.DatasetCache(session_id=1, size=0, hostname=50052)
-    assert "Argument hostname with value 50052 is not of type [<class 'str'>]" in str(err.value)
+    assert "Argument hostname with value 50052 is not of type" in str(err.value)
 
     with pytest.raises(RuntimeError) as err:
         ds.DatasetCache(session_id=1, size=0, hostname="illegal")
@@ -796,11 +796,11 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, port="illegal")
-    assert "Argument port with value illegal is not of type [<class 'int'>]" in str(info.value)
+    assert "Argument port with value illegal is not of type" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, port="50052")
-    assert "Argument port with value 50052 is not of type [<class 'int'>]" in str(info.value)
+    assert "Argument port with value 50052 is not of type" in str(info.value)
 
     with pytest.raises(ValueError) as err:
         ds.DatasetCache(session_id=1, size=0, port=0)
@@ -2108,6 +2108,52 @@ def test_cache_map_nested_repeat():
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 16
     logger.info('test_cache_map_nested_repeat Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_interrupt_and_rerun():
+    """
+    Test interrupt a running pipeline and then re-use the same cache to run another pipeline
+
+       cache
+         |
+      Cifar10
+    """
+
+    logger.info("Test cache map interrupt and rerun")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, cache=some_cache)
+    iter1 = ds1.create_dict_iterator()
+
+    num_iter = 0
+    with pytest.raises(AttributeError) as e:
+        for _ in iter1:
+            num_iter += 1
+            if num_iter == 10:
+                iter1.stop()
+    assert "'DictIterator' object has no attribute '_runtime_context'" in str(e.value)
+
+    num_epoch = 2
+    iter2 = ds1.create_dict_iterator(num_epochs=num_epoch)
+    epoch_count = 0
+    for _ in range(num_epoch):
+        num_iter = 0
+        for _ in iter2:
+            num_iter += 1
+        logger.info("Number of data in ds1: {} ".format(num_iter))
+        assert num_iter == 10000
+        epoch_count += 1
+
+    cache_stat = some_cache.GetStat()
+    assert cache_stat.num_mem_cached == 10000
+
+    logger.info("test_cache_map_interrupt_and_rerun Ended.\n")
 
 
 if __name__ == '__main__':
