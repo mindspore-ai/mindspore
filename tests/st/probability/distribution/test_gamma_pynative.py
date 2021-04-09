@@ -14,12 +14,12 @@
 # ============================================================================
 """test cases for gamma distribution"""
 
+import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype as ms
-import pytest
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
