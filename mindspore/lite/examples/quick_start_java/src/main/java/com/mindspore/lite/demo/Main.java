@@ -39,6 +39,8 @@ public class Main {
 
     private static boolean compile() {
         MSConfig msConfig = new MSConfig();
+        // You can set config through Init Api or use the default parameters directly.
+        // The default parameter is that the backend type is DeviceType.DT_CPU, and the number of threads is 2.
         boolean ret = msConfig.init(DeviceType.DT_CPU, 2);
         if (!ret) {
             System.err.println("Init context failed");
