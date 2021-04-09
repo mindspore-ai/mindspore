@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_KPYNATIVE_H_
 
 #include <memory>
-
+#include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 
