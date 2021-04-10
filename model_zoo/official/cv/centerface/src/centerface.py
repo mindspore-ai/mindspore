@@ -171,7 +171,6 @@ class CenterFaceLoss(nn.Cell):
         self.reg_loss = SmoothL1LossNew()
         self.reg_loss_cmask = SmoothL1LossNewCMask()
         self.print = P.Print()
-        # self.reduce_sum = P.ReduceSum()
 
     def construct(self, output_hm, output_wh, output_off, output_kps, hm, reg_mask, ind, wh, wight_mask, hm_offset,
                   hps_mask, landmarks):
@@ -190,7 +189,6 @@ class CenterFaceLoss(nn.Cell):
         F.depend(loss, F.sqrt(F.cast(wight_mask, mstype.float32)))
         F.depend(loss, F.sqrt(F.cast(reg_mask, mstype.float32)))
         # add print when you want to see loss detail and do debug
-        #self.print('hm_loss=', hm_loss, 'wh_loss=', wh_loss, 'off_loss=', off_loss, 'lm_loss=', lm_loss, 'loss=', loss)
         return loss
 
 

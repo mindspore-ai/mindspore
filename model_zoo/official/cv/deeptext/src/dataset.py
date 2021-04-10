@@ -404,7 +404,6 @@ def create_label(is_training):
             image_path = os.path.join(coco_root, data_type, file_name)
             annos = []
             for label in anno:
-                # if label["utf8_string"] != '':
                 bbox = label["bbox"]
                 x1, x2 = bbox[0], bbox[0] + bbox[2]
                 y1, y2 = bbox[1], bbox[1] + bbox[3]

@@ -463,7 +463,6 @@ class Attention(nn.Cell):
         adder = self.mul(multiplu_out, self.multiply_data)
         attention_scores = self.add(adder, score)
 
-        #attention_scores = P.Cast()(attention_scores, ori_dtype)
         shape = F.shape(attention_scores)
         attention_probs = self.softmax(
             F.reshape(attention_scores,
@@ -907,7 +906,6 @@ class PanGu1WithLoss(nn.Cell):
         input_mask = F.cast(self.not_equal(tokens, self.eos_token),
                             mstype.float32)
         logits = self.network(tokens, input_mask, input_position, attention_mask)
-        #labels = input_ids[:, 1:]
         labels = self.slice(input_ids, (0, 1), (self.batch_size, self.len + 1),
                             (1, 1))
         output = self.loss(logits, labels, input_mask)

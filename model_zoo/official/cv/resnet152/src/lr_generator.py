@@ -144,7 +144,6 @@ def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch
     """
     lr_each_step = []
     total_steps = int(steps_per_epoch * total_epochs)
-    # warmup_steps = steps_per_epoch * warmup_epochs
     warmup_steps = warmup_epochs
 
     if lr_decay_mode == 'steps':

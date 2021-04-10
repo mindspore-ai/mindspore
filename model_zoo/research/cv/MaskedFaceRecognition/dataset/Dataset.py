@@ -159,7 +159,6 @@ class ImageFolderPKDataset:
         for idx, sample in enumerate(self.samples):
             label = sample[1]
             id2range[label].append((sample, idx))
-        # print(id2range)
         for key in id2range:
             id2range[key].sort(key=lambda x: int(os.path.basename(x[0][0]).split(".")[0]))
             for item in id2range[key]:

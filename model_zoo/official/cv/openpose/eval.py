@@ -91,8 +91,7 @@ def load_model(test_net, model_path):
             continue
         elif key.startswith('network'):
             param_dict_new[key[8:]] = values
-        # else:
-        # param_dict_new[key] = values
+
     load_param_into_net(test_net, param_dict_new)
 
 def preprocess(img):
@@ -310,10 +309,7 @@ def detect(img, network):
     orig_img_h, orig_img_w, _ = orig_img.shape
 
     input_w, input_h = compute_optimal_size(orig_img, params['inference_img_size']) # 368
-    # map_w, map_h = compute_optimal_size(orig_img, params['heatmap_size']) # 320
     map_w, map_h = compute_optimal_size(orig_img, params['inference_img_size'])
-
-    # print("image size is: ", input_w, input_h)
 
     resized_image = cv2.resize(orig_img, (input_w, input_h))
     x_data = preprocess(resized_image)
@@ -388,7 +384,6 @@ def draw_person_pose(orig_img, poses):
     return canvas
 
 def depreprocess(img):
-    #x_data = img.astype('f')
     x_data = img[0]
     x_data += 0.5
     x_data *= 255
@@ -420,7 +415,6 @@ def val():
         poses, scores = detect(img, network)
 
         if poses.shape[0] > 0:
-            #print("got poses")
             for index, pose in enumerate(poses):
                 data = dict()
 
@@ -437,7 +431,6 @@ def val():
             print("Predict poses size is zero.", flush=True)
         img = draw_person_pose(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), poses)
 
-        #print('Saving result into',str(img_id)+'.png...')
         save_path = os.path.join(args.output_path, str(img_id)+".png")
         cv2.imwrite(save_path, img)
 

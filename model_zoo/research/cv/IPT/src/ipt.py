@@ -23,9 +23,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 
 
-# from mindspore.ops.primitive import constexpr
-# import IPython
-
 class MultiheadAttention(nn.Cell):
     """
     Apply multi-headed attention from "from_tensor" to "to_tensor".
@@ -86,7 +83,6 @@ class MultiheadAttention(nn.Cell):
         self.shape_k_2d = (-1, k_tensor_width)
         self.shape_v_2d = (-1, v_tensor_width)
         self.hidden_width = hidden_width
-        # units = num_attention_heads * self.size_per_head
         if self.same_dim:
             self.in_proj_layer = \
                 Parameter(Tensor(np.random.rand(hidden_width * 3,
@@ -162,19 +158,16 @@ class MultiheadAttention(nn.Cell):
             _start = int(0)
             _end = int(self.hidden_width)
             _w = self.in_proj_layer[_start:_end, :]
-            # _b = None
             query_out = self.matmul_dense(_w, tensor_q_2d)
 
             _start = int(self.hidden_width)
             _end = int(self.hidden_width * 2)
             _w = self.in_proj_layer[_start:_end, :]
-            # _b = None
             key_out = self.matmul_dense(_w, tensor_k_2d)
 
             _start = int(self.hidden_width * 2)
             _end = None
             _w = self.in_proj_layer[_start:]
-            # _b = None
             value_out = self.matmul_dense(_w, tensor_v_2d)
         else:
             query_out = self.query_layer(tensor_q_2d)
@@ -982,7 +975,6 @@ class _fold_(nn.Cell):
 
         super(_fold_, self).__init__()
 
-        # if isinstance(kernel_size, list) or isinstance(kernel_size, tuple):
         if isinstance(kernel_size, (list, tuple)):
             self.kernel_size = kernel_size
         else:

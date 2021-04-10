@@ -65,7 +65,6 @@ def test_eval():
 
     loss_net = NetWithLossClass(ncf_net)
     train_net = TrainStepWrap(loss_net)
-    # train_net.set_train()
     eval_net = PredictWithSigmoid(ncf_net, topk, num_eval_neg)
 
     ncf_metric = NCFMetric()

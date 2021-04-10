@@ -382,7 +382,6 @@ def get_ans_from_pos(tokenizer, examples, features, y1, y2, unique_id):
         tok_text = " ".join(tok_text.split())
         orig_text = " ".join(orig_tokens)
         final_text = get_final_text(tok_text, orig_text, True, False)
-    # print("final_text: " + final_text)
     return final_text
 
 
