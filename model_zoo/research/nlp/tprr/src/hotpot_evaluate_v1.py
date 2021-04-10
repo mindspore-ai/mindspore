@@ -120,13 +120,11 @@ def hotpotqa_eval(prediction_file, gold_file):
         cur_id = dp['_id']
         can_eval_joint = True
         if cur_id not in prediction['answer']:
-            print('missing answer {}'.format(cur_id))
             can_eval_joint = False
         else:
             em, prec, recall = update_answer(
                 metrics, prediction['answer'][cur_id], dp['answer'])
         if cur_id not in prediction['sp']:
-            print('missing sp fact {}'.format(cur_id))
             can_eval_joint = False
         else:
             sp_em, sp_prec, sp_recall = update_sp(

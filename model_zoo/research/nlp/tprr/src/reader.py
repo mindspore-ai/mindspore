@@ -19,7 +19,7 @@ from mindspore import load_checkpoint, load_param_into_net
 from mindspore.ops import BatchMatMul
 from mindspore import ops
 from mindspore import dtype as mstype
-from src.reader_albert_xxlarge import Reader_Albert
+from src.albert import Albert
 from src.reader_downstream import Reader_Downstream
 
 
@@ -33,15 +33,15 @@ class Reader(nn.Cell):
         """init function"""
         super(Reader, self).__init__(auto_prefix=False)
 
-        self.encoder = Reader_Albert(batch_size)
+        self.encoder = Albert(batch_size)
         param_dict = load_checkpoint(encoder_ck_file)
         not_load_params = load_param_into_net(self.encoder, param_dict)
-        print(f"not loaded: {not_load_params}")
+        print(f"reader albert not loaded params: {not_load_params}")
 
         self.downstream = Reader_Downstream()
         param_dict = load_checkpoint(downstream_ck_file)
         not_load_params = load_param_into_net(self.downstream, param_dict)
-        print(f"not loaded: {not_load_params}")
+        print(f"reader downstream not loaded params: {not_load_params}")
 
         self.bmm = BatchMatMul()
 
@@ -49,7 +49,7 @@ class Reader(nn.Cell):
                   context_mask, square_mask, packing_mask, cache_mask,
                   para_start_mapping, sent_end_mapping):
         """construct function"""
-        state = self.encoder(attn_mask, input_ids, token_type_ids)
+        state = self.encoder(input_ids, attn_mask, token_type_ids)
 
         para_state = self.bmm(ops.Cast()(para_start_mapping, dst_type), ops.Cast()(state, dst_type))  # [B, 2, D]
         sent_state = self.bmm(ops.Cast()(sent_end_mapping, dst_type), ops.Cast()(state, dst_type))  # [B, max_sent, D]

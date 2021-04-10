@@ -414,8 +414,8 @@ def convert_example_to_features(tokenizer, args, examples):
 
 def get_rerank_data(args):
     """function for generating reranker's data"""
-    new_dev_data = gen_dev_data(dev_file=args.dev_gold_file,
-                                db_path=args.wiki_db_file,
+    new_dev_data = gen_dev_data(dev_file=args.dev_gold_path,
+                                db_path=args.wiki_db_path,
                                 topk_file=args.retriever_result_file)
     tokenizer = AutoTokenizer.from_pretrained(args.albert_model_path)
     new_tokens = ['[q]', '[/q]', '<t>', '</t>', '[s]']

@@ -15,11 +15,8 @@
 # ============================================================================
 
 # eval script
-
-ulimit -u unlimited
-export DEVICE_NUM=1
-export RANK_SIZE=$DEVICE_NUM
-export RANK_ID=0
+DATAPATH="../data"
+CKPTPATH="../ckpt"
 
 if [ -d "eval_tr" ];
 then
@@ -34,6 +31,6 @@ cd ./eval_tr || exit
 env > env.log
 echo "start evaluation"
 
-python retriever_eval.py > log.txt 2>&1 &
+python -u retriever_eval.py --vocab_path=$DATAPATH/vocab.txt --wiki_path=$DATAPATH/db_docs_bidirection_new.pkl --dev_path=$DATAPATH/hotpot_dev_fullwiki_v1_for_retriever.json --dev_data_path=$DATAPATH/dev_tf_idf_data_raw.pkl --q_path=$DATAPATH/queries --onehop_bert_path=$CKPTPATH/onehop_new.ckpt --onehop_mlp_path=$CKPTPATH/onehop_mlp.ckpt --twohop_bert_path=$CKPTPATH/twohop_new.ckpt --twohop_mlp_path=$CKPTPATH/twohop_mlp.ckpt > log.txt 2>&1 &
 
 cd ..
