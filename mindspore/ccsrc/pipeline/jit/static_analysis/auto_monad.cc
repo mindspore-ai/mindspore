@@ -216,7 +216,7 @@ class SccFinder {
   explicit SccFinder(FuncGraphPtr root) : root_(root) {}
   ~SccFinder() = default;
   void Run() { (void)Search(root_); }
-  SccMap &scc_map() { return scc_map_; }
+  const SccMap &scc_map() { return scc_map_; }
 
  private:
   // Save state of a func graph.
@@ -533,7 +533,7 @@ class SideEffectFinder {
   EffectInfo TraceTupleEffectInfo(const AnfNodePtr &tuple_node, std::stack<int64_t> *tuple_indexes) {
     auto para = dyn_cast<Parameter>(tuple_node);
     if (para != nullptr) {
-      return TraceTupleParaEffectInfo(para, tuple_indexes);
+      return TraceTupleParaEffectInfo(para, *tuple_indexes);
     }
     auto tuple_cnode = dyn_cast<CNode>(tuple_node);
     if (tuple_cnode != nullptr) {
@@ -543,11 +543,11 @@ class SideEffectFinder {
     MS_LOG(EXCEPTION) << "Side effects untraceable: " << tuple_node->DebugString();
   }
 
-  EffectInfo TraceTupleParaEffectInfo(const ParameterPtr &para, std::stack<int64_t> *tuple_indexes) {
+  EffectInfo TraceTupleParaEffectInfo(const ParameterPtr &para, const std::stack<int64_t> &tuple_indexes) {
     EffectInfo info{EffectInfo::kDetected, false, false, false};
     ForEachRealArguments(para, [this, &info, tuple_indexes](const AnfNodePtr &arg) {
       // Merge real argument effect info.
-      auto tuple_indexes_copy = *tuple_indexes;
+      auto tuple_indexes_copy = tuple_indexes;
       auto arg_info = TraceTupleEffectInfo(arg, &tuple_indexes_copy);
       info.Merge(arg_info);
     });
