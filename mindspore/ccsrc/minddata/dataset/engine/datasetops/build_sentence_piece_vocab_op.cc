@@ -63,7 +63,7 @@ Status BuildSentencePieceVocabOp::operator()() {
   }
   // add empty tensorRow for quit
   TensorRow empty_row = {};
-  sentence_queue_->EmplaceBack(empty_row);
+  RETURN_IF_NOT_OK(sentence_queue_->EmplaceBack(empty_row));
   return Status::OK();
 }
 
@@ -153,7 +153,11 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
   }
 
   std::string_view sentence_v;
-  new_row[col_id_]->GetItemAt(&sentence_v, {});
+  ret_status_ = new_row[col_id_]->GetItemAt(&sentence_v, {});
+  if (ret_status_.IsError()) {
+    read_done_ = true;
+    return;
+  }
 
   std::string st{sentence_v};
   *sentence = st;

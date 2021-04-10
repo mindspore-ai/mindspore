@@ -289,9 +289,9 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
   RETURN_IF_NOT_OK(label->Zero());
   for (uint32_t index = 0; index < image_label.second.size(); index++) {
     if (image_label.second[index] == 1) {
-      label->SetItemAt<uint32_t>({0, static_cast<dsize_t>(index)}, 1);
+      RETURN_IF_NOT_OK(label->SetItemAt<uint32_t>({0, static_cast<dsize_t>(index)}, 1));
     } else {
-      label->SetItemAt<uint32_t>({0, static_cast<dsize_t>(index)}, 0);
+      RETURN_IF_NOT_OK(label->SetItemAt<uint32_t>({0, static_cast<dsize_t>(index)}, 0));
     }
   }
   label->Squeeze();

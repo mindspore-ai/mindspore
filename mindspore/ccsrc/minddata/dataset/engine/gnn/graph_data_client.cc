@@ -79,7 +79,7 @@ Status GraphDataClient::Init() {
 Status GraphDataClient::Stop() {
 #if !defined(_WIN32) && !defined(_WIN64)
   if (registered_) {
-    UnRegisterToServer();
+    RETURN_IF_NOT_OK(UnRegisterToServer());
   }
 #endif
   return Status::OK();

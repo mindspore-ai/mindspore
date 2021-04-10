@@ -44,17 +44,17 @@ Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr
   // Slice on specified axis and concatenate on new axis
   for (int32_t i = 0; i + width <= axis_end; i++) {
     auto slice_op = std::make_unique<SliceOp>(Slice(i, i + width, 1));
-    slice_op->Compute(input, &tmp);
+    RETURN_IF_NOT_OK(slice_op->Compute(input, &tmp));
     if (i == 0) {
       *output = tmp;
     } else {
       TensorRow in({*output, tmp});
       TensorRow out_row;
-      concatenate_op->Compute(in, &out_row);
+      RETURN_IF_NOT_OK(concatenate_op->Compute(in, &out_row));
       *output = out_row[0];
     }
   }
-  (*output)->Reshape(out_shape);
+  RETURN_IF_NOT_OK((*output)->Reshape(out_shape));
   return Status::OK();
 }
 }  // namespace dataset

@@ -131,7 +131,7 @@ ms::Status StartServer(int argc, char **argv) {
     if (daemonize && !rc.ToString().empty()) {
       // If we have adjusted the number of workers provided by users, use the message queue to send the warning
       // message if this is the child daemon.
-      msg.SendStatus(rc);
+      (void)msg.SendStatus(rc);
     }
     // If all goes well, kick off the threads. Loop forever and never return unless error.
     ds::CacheServer &cs = ds::CacheServer::GetInstance();

@@ -73,7 +73,8 @@ CacheClient::~CacheClient() {
   cache_miss_keys_wp_.Set();
   // Manually release the async buffer because we need the comm layer.
   if (async_buffer_stream_) {
-    async_buffer_stream_->ReleaseBuffer();
+    Status rc = async_buffer_stream_->ReleaseBuffer();
+    if (rc.IsError()) MS_LOG(ERROR) << rc;
   }
   if (client_id_ != -1) {
     try {

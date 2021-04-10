@@ -152,7 +152,7 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
     if (type_ == BaseRequest::RequestType::kBatchFetchRows || type_ == BaseRequest::RequestType::kBatchCacheRows ||
         type_ == BaseRequest::RequestType::kStopService || type_ == BaseRequest::RequestType::kAllocateSharedBlock ||
         type_ == BaseRequest::RequestType::kFreeSharedBlock) {
-      cs.ProcessRequest(this);
+      RETURN_IF_NOT_OK(cs.ProcessRequest(this));
       // WARNING. After we call ProcessRequest, the memory of 'this' is being recycled by ReturnRequestTag
       // asynchronously. Further access of 'this' is unpredictable.
     } else {

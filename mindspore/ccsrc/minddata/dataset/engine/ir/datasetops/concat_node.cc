@@ -86,7 +86,7 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   int64_t child_dataset_size = 0;
   for (int idx = 0; idx < children_.size(); idx++) {
     if (children_flag_and_nums_.empty() || children_flag_and_nums_[idx].second == 0) {
-      children_[idx]->GetDatasetSize(size_getter, false, &child_dataset_size);
+      RETURN_IF_NOT_OK(children_[idx]->GetDatasetSize(size_getter, false, &child_dataset_size));
       total_dataset_size += child_dataset_size;
     } else {
       total_dataset_size += children_flag_and_nums_[idx].second;
@@ -100,8 +100,8 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   std::shared_ptr<DistributedSamplerRT> sampler_rt =
     sampler_ ? std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_rt_base) : nullptr;
   if (sampler_rt != nullptr) {
-    sampler_rt->SetNumRowsInDataset(total_dataset_size);
-    sampler_rt->InitSampler();
+    RETURN_IF_NOT_OK(sampler_rt->SetNumRowsInDataset(total_dataset_size));
+    RETURN_IF_NOT_OK(sampler_rt->InitSampler());
 
     // (total_size % num_shards != 0) & shard_id >= (remainder) ? CalculateNumSamples()-1 : CalculateNumSamples()
     // example: 23 rows, 10 shards --> shard sizes = {3,3,3,2,2,2,2,2,2,2}

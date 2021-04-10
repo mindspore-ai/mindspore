@@ -36,7 +36,10 @@ Status NativeRuntimeContext::TerminateImpl() {
   return tree_consumer_->Terminate();
 }
 
-NativeRuntimeContext::~NativeRuntimeContext() { TerminateImpl(); }
+NativeRuntimeContext::~NativeRuntimeContext() {
+  Status rc = Terminate();
+  if (rc.IsError()) MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
+}
 
 TreeConsumer *RuntimeContext::GetConsumer() { return tree_consumer_.get(); }
 

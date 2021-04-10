@@ -66,7 +66,7 @@ Status CacheClientGreeter::DoServiceStop() {
   cq_.Shutdown();
   // Shutdown the TaskGroup.
   vg_.interrupt_all();
-  vg_.join_all(Task::WaitFlag::kNonBlocking);
+  RETURN_IF_NOT_OK(vg_.join_all(Task::WaitFlag::kNonBlocking));
   // Drain the queue. We know how many requests we send out
   while (!req_.empty()) {
     bool success;

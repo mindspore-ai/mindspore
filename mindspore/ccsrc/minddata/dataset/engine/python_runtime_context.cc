@@ -36,7 +36,8 @@ Status PythonRuntimeContext::TerminateImpl() {
 }
 
 PythonRuntimeContext::~PythonRuntimeContext() {
-  TerminateImpl();
+  Status rc = Terminate();
+  if (rc.IsError()) MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
   {
     py::gil_scoped_acquire gil_acquire;
     tree_consumer_.reset();

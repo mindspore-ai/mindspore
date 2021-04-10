@@ -254,7 +254,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
   (*out)->data_end_ = (*out)->data_ + offset_arr[i];
 
   MS_ASSERT(num_bytes == 0);
-  (*out)->Reshape(shape);
+  RETURN_IF_NOT_OK((*out)->Reshape(shape));
   return Status::OK();
 }
 #endif
@@ -399,7 +399,7 @@ void Tensor::PrintItemAt(const std::vector<dsize_t> &index, std::ostream &out) c
 
     case DataType::DE_STRING: {
       std::string_view o{""};
-      GetItemAt(&o, index);
+      rc = GetItemAt(&o, index);
       out << "\"" << o << "\"";
       break;
     }
@@ -684,7 +684,7 @@ Status Tensor::GetDataAsNumpy(py::array *data) {
   } else if (type_ == DataType::DE_FLOAT64) {
     *data = py::array_t<double>(shape_.AsVector(), reinterpret_cast<double *>(data_));
   } else if (type_ == DataType::DE_STRING) {
-    GetDataAsNumpyStrings(data);
+    RETURN_IF_NOT_OK(GetDataAsNumpyStrings(data));
   } else {
     RETURN_STATUS_UNEXPECTED("Got unexpected type when returning numpy");
   }
@@ -1031,7 +1031,7 @@ Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<std::
   for (std::vector<dsize_t> index : indices) {
     std::vector<dsize_t> cur_index = HandleNegIndices(index, dim_length);
     dsize_t cur_flat_index;
-    shape_.ToFlatIndex(cur_index, &cur_flat_index);
+    RETURN_IF_NOT_OK(shape_.ToFlatIndex(cur_index, &cur_flat_index));
     std::string_view sv;
     RETURN_IF_NOT_OK(GetItemAt(&sv, {cur_index}));
     strings.emplace_back(sv);
@@ -1039,6 +1039,10 @@ Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<std::
   return CreateFromVector(strings, shape, out);
 }
 Status Tensor::CreateFromMSTensor(const MSTensor &in, TensorPtr *out) {
+  if (in.Data().get() == nullptr) {
+    *out = nullptr;
+    return Status::OK();
+  }
   return Tensor::CreateFromMemory(TensorShape(in.Shape()), MSTypeToDEType(static_cast<TypeId>(in.DataType())),
                                   (const uchar *)(in.Data().get()), in.DataSize(), out);
 }

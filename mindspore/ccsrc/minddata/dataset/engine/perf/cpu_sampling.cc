@@ -341,7 +341,8 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
     for (auto iter = op_thread.begin(); iter != op_thread.end(); iter++) {
       int32_t op_id = iter->first;
       for (auto thread_id : iter->second) {
-        ParseCpuInfo(op_id, thread_id, &op_stat_);
+        // ignore errors in the first collect
+        (void)ParseCpuInfo(op_id, thread_id, &op_stat_);
       }
     }
   }

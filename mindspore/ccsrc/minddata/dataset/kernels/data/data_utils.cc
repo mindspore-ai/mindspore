@@ -125,73 +125,73 @@ Status FillHelper(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *
     case DataType::DE_BOOL: {
       bool value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<bool>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<bool>(value));
       break;
     }
     case DataType::DE_INT8: {
       int8_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<int8_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<int8_t>(value));
       break;
     }
     case DataType::DE_UINT8: {
       uint8_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<uint8_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<uint8_t>(value));
       break;
     }
     case DataType::DE_UINT16: {
       uint16_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<uint16_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<uint16_t>(value));
       break;
     }
     case DataType::DE_INT16: {
       int16_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<int16_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<int16_t>(value));
       break;
     }
     case DataType::DE_UINT32: {
       uint32_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<uint32_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<uint32_t>(value));
       break;
     }
     case DataType::DE_INT32: {
       int32_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<int32_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<int32_t>(value));
       break;
     }
     case DataType::DE_UINT64: {
       uint64_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<uint64_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<uint64_t>(value));
       break;
     }
     case DataType::DE_INT64: {
       int64_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<int64_t>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<int64_t>(value));
       break;
     }
     case DataType::DE_FLOAT16: {
       int64_t value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<float>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<float>(value));
       break;
     }
     case DataType::DE_FLOAT32: {
       float value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<float>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<float>(value));
       break;
     }
     case DataType::DE_FLOAT64: {
       double value = 0;
       RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      (*out)->Fill<double>(value);
+      RETURN_IF_NOT_OK((*out)->Fill<double>(value));
       break;
     }
     case DataType::DE_STRING: {

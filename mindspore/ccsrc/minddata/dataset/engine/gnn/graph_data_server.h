@@ -127,7 +127,7 @@ class CallData : public UntypedCall {
       status_ = STATE::PROCESS;
       (async_service_->*enqueue_function_)(&ctx_, &request_, &responder_, cq_, cq_, this);
     } else if (status_ == STATE::PROCESS) {
-      EnqueueRequest(service_impl_, async_service_, cq_, enqueue_function_, handle_request_function_);
+      RETURN_IF_NOT_OK(EnqueueRequest(service_impl_, async_service_, cq_, enqueue_function_, handle_request_function_));
       status_ = STATE::FINISH;
       grpc::Status s = (service_impl_->*handle_request_function_)(&ctx_, &request_, &response_);
       responder_.Finish(response_, s, this);

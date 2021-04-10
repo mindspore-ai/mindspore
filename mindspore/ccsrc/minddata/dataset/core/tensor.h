@@ -777,7 +777,7 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
   // strings will be null-terminated --> need 1 extra byte per element
   dsize_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
 
-  (*out)->AllocateBuffer(num_bytes);
+  RETURN_IF_NOT_OK((*out)->AllocateBuffer(num_bytes));
   auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
   uchar *buf = (*out)->GetStringsBuffer();
 

@@ -40,7 +40,7 @@ Status PythonSamplerRT::GetNextSample(TensorRow *out) {
       try {
         py::object py_ret = py_sampler_instance.attr("_get_indices")();
         py::array np_sample_ids = py_ret.cast<py::array>();
-        Tensor::CreateFromNpArray(np_sample_ids, &sample_ids);  // copy numpy to tensor
+        RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(np_sample_ids, &sample_ids));  // copy numpy to tensor
 
         if (HasChildSampler()) {
           for (auto it = sample_ids->begin<int64_t>(); it != sample_ids->end<int64_t>(); ++it) {

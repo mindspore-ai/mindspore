@@ -153,6 +153,15 @@ Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
   *out_json = args;
   return Status::OK();
 }
+std::shared_ptr<SamplerObj> DistributedSamplerObj::SamplerCopy() {
+  auto sampler =
+    std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_, even_dist_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
+}
 
 // PKSampler
 PKSamplerObj::PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples)
@@ -212,6 +221,15 @@ std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
 }
 #endif
 
+std::shared_ptr<SamplerObj> PKSamplerObj::SamplerCopy() {
+  auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
+}
+
 // PreBuiltOperation
 PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler) : sp_(std::move(sampler)) {}
 
@@ -239,15 +257,17 @@ std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
 #ifndef ENABLE_ANDROID
   if (sp_minddataset_ != nullptr) {
     auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
+    for (const auto &child : children_) {
+      Status rc = sampler->AddChildSampler(child);
+      if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
     }
     return sampler;
   }
 #endif
   auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_);
-  for (auto child : children_) {
-    sampler->AddChildSampler(child);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
   }
   return sampler;
 }
@@ -306,6 +326,15 @@ std::shared_ptr<mindrecord::ShardOperator> RandomSamplerObj::BuildForMindDataset
 }
 #endif
 
+std::shared_ptr<SamplerObj> RandomSamplerObj::SamplerCopy() {
+  auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
+}
+
 // SequentialSampler
 SequentialSamplerObj::SequentialSamplerObj(int64_t start_index, int64_t num_samples)
     : start_index_(start_index), num_samples_(num_samples) {}
@@ -358,7 +387,14 @@ std::shared_ptr<mindrecord::ShardOperator> SequentialSamplerObj::BuildForMindDat
   return mind_sampler;
 }
 #endif
-
+std::shared_ptr<SamplerObj> SequentialSamplerObj::SamplerCopy() {
+  auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
+}
 // SubsetSampler
 SubsetSamplerObj::SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
     : indices_(std::move(indices)), num_samples_(num_samples) {}
@@ -405,6 +441,14 @@ Status SubsetSamplerObj::to_json(nlohmann::json *const out_json) {
   *out_json = args;
   return Status::OK();
 }
+std::shared_ptr<SamplerObj> SubsetSamplerObj::SamplerCopy() {
+  auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
+}
 
 // SubsetRandomSampler
 SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
@@ -443,6 +487,14 @@ Status SubsetRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   }
   *out_json = args;
   return Status::OK();
+}
+std::shared_ptr<SamplerObj> SubsetRandomSamplerObj::SamplerCopy() {
+  auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
 }
 
 // WeightedRandomSampler
@@ -497,6 +549,14 @@ Status WeightedRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sample
   Status s = BuildChildren(sampler);
   sampler = s.IsOk() ? sampler : nullptr;
   return s;
+}
+std::shared_ptr<SamplerObj> WeightedRandomSamplerObj::SamplerCopy() {
+  auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
+  for (const auto &child : children_) {
+    Status rc = sampler->AddChildSampler(child);
+    if (rc.IsError()) MS_LOG(ERROR) << "Error in copying the sampler. Message: " << rc;
+  }
+  return sampler;
 }
 
 }  // namespace dataset

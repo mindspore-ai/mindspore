@@ -52,11 +52,11 @@ Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   float_t translation_x = translation_[0];
   float_t translation_y = translation_[1];
   float_t degrees = 0.0;
-  DegreesToRadians(degrees_, &degrees);
+  RETURN_IF_NOT_OK(DegreesToRadians(degrees_, &degrees));
   float_t shear_x = shear_[0];
   float_t shear_y = shear_[1];
-  DegreesToRadians(shear_x, &shear_x);
-  DegreesToRadians(-1 * shear_y, &shear_y);
+  RETURN_IF_NOT_OK(DegreesToRadians(shear_x, &shear_x));
+  RETURN_IF_NOT_OK(DegreesToRadians(-1 * shear_y, &shear_y));
 
   // Apply Affine Transformation
   //       T is translation matrix: [1, 0, tx | 0, 1, ty | 0, 0, 1]

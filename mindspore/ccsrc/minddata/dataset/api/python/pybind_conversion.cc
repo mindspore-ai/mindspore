@@ -264,7 +264,7 @@ Status toPadInfo(py::dict value, std::map<std::string, std::pair<TensorShape, st
         CHECK_FAIL_RETURN_UNEXPECTED(
           Tensor::CreateEmpty(TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32), &pad_val),
           "Cannot create pad_value Tensor");
-        pad_val->SetItemAt<float>({}, pad_val_float);
+        RETURN_IF_NOT_OK(pad_val->SetItemAt<float>({}, pad_val_float));
       }
       (void)pad_info->insert({toString(p.first), {shape, pad_val}});
     } else {  // tuple is None
