@@ -146,7 +146,6 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes, max_boxes
     num_layers = anchors.shape[0] // 3
     anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
     true_boxes = np.array(true_boxes, dtype='float32')
-    # input_shape = np.array([in_shape, in_shape], dtype='int32')
     input_shape = np.array(in_shape, dtype='int32')
     boxes_xy = (true_boxes[..., 0:2] + true_boxes[..., 2:4]) // 2.
     # trans to box center point
@@ -208,8 +207,6 @@ def _preprocess_true_boxes(true_boxes, anchors, in_shape, num_classes, max_boxes
                         y_true[l][j, i, k, 5 + c] = 1.
 
         threshold_anchor = (iou > iou_threshold)
-        # print('threshold_anchor\n', threshold_anchor.shape, threshold_anchor)
-        # for t, n in enumerate(best_anchor):
         for t in range(threshold_anchor.shape[0]):
             for n in range(threshold_anchor.shape[1]):
                 if not threshold_anchor[t][n]:

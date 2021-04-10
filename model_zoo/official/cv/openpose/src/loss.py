@@ -74,8 +74,6 @@ class openpose_loss(_Loss):
         self.maxoftensor = P.ArgMaxWithValue(-1)
 
     def mean_square_error(self, map1, map2, mask=None):
-        # print("mask", mask)
-        # import pdb; pdb.set_trace()
         if mask is None:
             mse = self.reduceMean((map1 - map2) ** 2)
             return mse
@@ -98,14 +96,6 @@ class openpose_loss(_Loss):
         paf_masks = F.stop_gradient(paf_masks)
         heatmap_masks = F.stop_gradient(heatmap_masks)
         for logit_paf_t, logit_heatmap_t in zip(logit_paf, logit_heatmap):
-            # TEST
-            # tensor1 -- tuple
-            # tensor1 = self.maxoftensor(logit_paf_t)[1]
-            # tensor2 = self.maxoftensor(logit_heatmap_t)[1]
-            # tensor3 = self.maxoftensor(tensor1)[1]
-            # tensor4 = self.maxoftensor(tensor2)[1]
-            # self.print("paf",tensor3)
-            # self.print("heatmaps",tensor2)
             pafs_loss_t = self.mean_square_error(logit_paf_t, gt_paf, paf_masks)
             heatmaps_loss_t = self.mean_square_error(logit_heatmap_t, gt_heatmap, heatmap_masks)
 
@@ -125,8 +115,6 @@ class BuildTrainNetwork(nn.Cell):
         logit_pafs, logit_heatmap = self.network(input_data)
         loss, _, _ = self.criterion(logit_pafs, logit_heatmap, gt_paf, gt_heatmap, mask)
         return loss
-        #loss = self.criterion(logit_pafs, logit_heatmap, gt_paf, gt_heatmap, mask)
-        # return loss, heatmaps_loss, pafs_loss
 
 class TrainOneStepWithClipGradientCell(nn.Cell):
     '''TrainOneStepWithClipGradientCell'''

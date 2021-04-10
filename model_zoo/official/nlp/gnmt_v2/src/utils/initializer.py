@@ -56,10 +56,6 @@ def weight_variable(shape):
     Returns:
         Tensor, var.
     """
-    # scale_shape = shape
-    # fan_in, fan_out = _compute_fans(scale_shape)
-    # scale = 1.0 / max(1., (fan_in + fan_out) / 2.)
-    # limit = math.sqrt(3.0 * scale)
     limit = 0.1
     values = np.random.uniform(-limit, limit, shape)
     return values

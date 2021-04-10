@@ -83,7 +83,6 @@ void PadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std
   const int pad_channel_after = paddings_[1][1];
   const T pad_value = T(0);
 
-  // const int num = input_shape_[0];
   const int channels_orig = input_shape_[1];
   const int old_height = input_shape_[2];
   const int old_width = input_shape_[3];

@@ -93,9 +93,7 @@ if __name__ == '__main__':
 
     model = Model(train_net, eval_network=test_net, metrics={"Accuracy": Accuracy()})
 
-    # time_cb = TimeMonitor(data_size=step_size)
     loss_cb = LossMonitor()
-    #cb = [time_cb, loss_cb]
     cb = [loss_cb]
     config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps, \
         keep_checkpoint_max=config.keep_checkpoint_max)

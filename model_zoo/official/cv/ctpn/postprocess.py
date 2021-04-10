@@ -51,8 +51,6 @@ def get_gt_box(img_file, label_path):
         label_info = line.split(",")
         print(label_info)
         gt_boxs.append([int(label_info[0]), int(label_info[1]), int(label_info[2]), int(label_info[3])])
-        #print(line)
-        #print(gt_boxs)
 
     return gt_boxs
 def ctpn_infer_test(dataset_path='', result_path='', label_path=''):

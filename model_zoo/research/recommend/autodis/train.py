@@ -23,7 +23,6 @@ from mindspore.communication.management import init, get_rank
 from mindspore.train.model import Model
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.common import set_seed
-#from mindspore.profiler import Profiler
 
 from src.autodis import ModelBuilder, AUCMetric
 from src.config import DataConfig, ModelConfig, TrainConfig
@@ -75,7 +74,6 @@ if __name__ == '__main__':
         rank_id = None
 
     # Init Profiler
-    #profiler = Profiler(output_path='./data', is_detail=True, is_show_op_path=False, subgraph='all')
 
     ds_train = create_dataset(args_opt.dataset_path,
                               train_mode=True,

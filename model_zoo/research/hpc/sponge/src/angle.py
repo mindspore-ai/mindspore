@@ -34,7 +34,6 @@ class Angle:
                     self.angle_with_H_numbers = value[4]
                     self.angle_without_H_numbers = value[5]
                     self.angle_numbers = self.angle_with_H_numbers + self.angle_without_H_numbers
-                    # print(self.angle_numbers)
                     information = []
                     information.extend(value)
                     while count < 15:
@@ -108,7 +107,6 @@ class Angle:
                     if "%FORMAT" in context[start_idx]:
                         continue
                     else:
-                        # print(start_idx)
                         value = list(map(float, context[start_idx].strip().split()))
                         information.extend(value)
                         count += len(value)

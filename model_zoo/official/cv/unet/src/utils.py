@@ -58,7 +58,7 @@ def apply_eval(eval_param_dict):
     dataset = eval_param_dict["dataset"]
     metrics_name = eval_param_dict["metrics_name"]
     index = 0 if metrics_name == "dice_coeff" else 1
-    eval_score = model.eval(dataset, dataset_sink_mode=False)[metrics_name][index]
+    eval_score = model.eval(dataset, dataset_sink_mode=False)["dice_coeff"][index]
     return eval_score
 
 class dice_coeff(nn.Metric):

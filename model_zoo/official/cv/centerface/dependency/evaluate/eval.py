@@ -116,10 +116,8 @@ def get_preds(pred_dir):
     """Get preds"""
     events = os.listdir(pred_dir)
     boxes = dict()
-    #pbar = tqdm.tqdm(events)
     pbar = events
     for event in pbar:
-        #pbar.set_description('Reading Predictions ')
         event_dir = os.path.join(pred_dir, event)
         event_images = os.listdir(event_dir)
         current_event = dict()
@@ -258,7 +256,6 @@ def evaluation(pred_evaluation, gt_path, iou_thresh=0.4):
         count_face = 0
         pr_curve = np.zeros((thresh_num, 2)).astype('float')
         # [hard, medium, easy]
-        # pbar = tqdm.tqdm(range(event_num))  #  61
         pbar = range(event_num)
         error_count = 0
         for i in pbar:

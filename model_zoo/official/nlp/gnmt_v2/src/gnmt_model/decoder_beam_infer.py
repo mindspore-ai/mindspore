@@ -50,7 +50,6 @@ class PredLogProbs(nn.Cell):
         self.compute_type = compute_type
         self.dtype = dtype
         self.log_softmax = nn.LogSoftmax(axis=-1)
-        # self.shape_flat_sequence_tensor = (self.batch_size * self.seq_length, self.width)
         self.cast = P.Cast()
 
     def construct(self, logits):
