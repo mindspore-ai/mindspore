@@ -39,6 +39,7 @@ ConvParameter *CreateParameter(const std::string &attr, ActType act_type) {
 void TestMain_Conv2D(const std::string &attr, float *input_data, float *weight_data, float *bias_data,
                      float *output_data, ActType act_type, bool fp16_enable, float atol = 1e-9) {
   auto *param = CreateParameter(attr, act_type);
+  param->group_ = 1;  // group conv is not supported in this test
   std::vector<int> input_shape = {param->input_batch_, param->input_h_, param->input_w_, param->input_channel_};
   std::vector<int> weight_shape = {param->output_channel_, param->kernel_h_, param->kernel_w_, param->input_channel_};
   std::vector<int> bias_shape = {param->output_channel_};
