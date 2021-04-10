@@ -30,7 +30,6 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-
   if (input_x_shape.size() != input_y_shape.size()) MS_LOG(EXCEPTION) << "x y must be same shape";
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
