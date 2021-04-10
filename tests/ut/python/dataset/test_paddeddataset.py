@@ -3,10 +3,11 @@ import copy
 import os
 import numpy as np
 import pytest
+from PIL import Image
+
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
 import mindspore.dataset.vision.c_transforms as V_C
-from PIL import Image
 
 FILES_NUM = 4
 CV_FILE_NAME = "../data/mindrecord/imagenet.mindrecord"
