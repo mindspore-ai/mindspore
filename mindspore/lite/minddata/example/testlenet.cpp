@@ -53,7 +53,6 @@ int main(int argc, char **argv) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
     iter->GetNextRow(&row);
   }
 
