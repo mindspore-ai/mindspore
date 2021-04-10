@@ -33,11 +33,11 @@ from src.reader import Reader
 
 def read(args):
     """reader function"""
-    db_file = args.wiki_db_file
+    db_file = args.wiki_db_path
     reader_feature_file = args.reader_feature_file
     reader_example_file = args.reader_example_file
-    encoder_ck_file = args.reader_encoder_ck_file
-    downstream_ck_file = args.reader_downstream_ck_file
+    encoder_ck_file = args.reader_encoder_ck_path
+    downstream_ck_file = args.reader_downstream_ck_path
     albert_model_path = args.albert_model_path
     reader_result_file = args.reader_result_file
     seed = args.seed

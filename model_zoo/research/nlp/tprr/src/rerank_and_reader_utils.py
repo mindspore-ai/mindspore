@@ -155,6 +155,14 @@ def get_parse():
     parser = argparse.ArgumentParser()
 
     # Environment
+    parser.add_argument('--data_path',
+                        type=str,
+                        default="",
+                        help='data path')
+    parser.add_argument('--ckpt_path',
+                        type=str,
+                        default="",
+                        help='ckpt path')
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
     parser.add_argument('--seq_len', type=int, default=512,
@@ -179,15 +187,15 @@ def get_parse():
                         help="Set this flag if you want to calculate reader metrics")
     parser.add_argument('--dev_gold_file',
                         type=str,
-                        default="../hotpot_dev_fullwiki_v1.json",
+                        default="hotpot_dev_fullwiki_v1.json",
                         help='file of dev ground truth')
     parser.add_argument('--wiki_db_file',
                         type=str,
-                        default="../enwiki_offset.db",
+                        default="enwiki_offset.db",
                         help='wiki_database_file')
-    parser.add_argument('--albert_model_path',
+    parser.add_argument('--albert_model',
                         type=str,
-                        default="../albert-xxlarge/",
+                        default="albert-xxlarge",
                         help='model path of huggingface albert-xxlarge')
 
     # Retriever
@@ -213,11 +221,11 @@ def get_parse():
                         help='file of rerank result')
     parser.add_argument('--rerank_encoder_ck_file',
                         type=str,
-                        default="../rerank_albert_12.ckpt",
+                        default="rerank_albert.ckpt",
                         help='checkpoint of rerank albert-xxlarge')
     parser.add_argument('--rerank_downstream_ck_file',
                         type=str,
-                        default="../rerank_downstream.ckpt",
+                        default="rerank_downstream.ckpt",
                         help='checkpoint of rerank downstream')
 
     # Reader
@@ -233,11 +241,11 @@ def get_parse():
                         help='file of reader example')
     parser.add_argument('--reader_encoder_ck_file',
                         type=str,
-                        default="../albert_12_layer.ckpt",
+                        default="reader_albert.ckpt",
                         help='checkpoint of reader albert-xxlarge')
     parser.add_argument('--reader_downstream_ck_file',
                         type=str,
-                        default="../reader_downstream.ckpt",
+                        default="reader_downstream.ckpt",
                         help='checkpoint of reader downstream')
     parser.add_argument('--reader_result_file',
                         type=str,
@@ -274,24 +282,19 @@ def select_reader_dev_data(args):
 
     for _, res in tqdm(rerank_result.items(), desc="get rerank unique ids"):
         rerank_unique_ids[res[0]] = True
-    print(f"rerank result num is {len(rerank_unique_ids)}")
 
     for feature in tqdm(dev_features, desc="select rerank top1 feature"):
         if feature.unique_id in rerank_unique_ids:
             feature_unique_ids[feature.unique_id] = True
             new_dev_features.append(feature)
-    print(f"new feature num is {len(new_dev_features)}")
 
     for example in tqdm(dev_examples, desc="select rerank top1 example"):
         if example.unique_id in rerank_unique_ids and example.unique_id in feature_unique_ids:
             new_dev_examples.append(example)
-    print(f"new examples num is {len(new_dev_examples)}")
 
-    print("start save new examples ......")
     with gzip.open(reader_example_file, "wb") as f:
         pickle.dump(new_dev_examples, f)
 
-    print("start save new features ......")
     with gzip.open(reader_feature_file, "wb") as f:
         pickle.dump(new_dev_features, f)
     print("finish selecting reader data !!!")
@@ -382,7 +385,6 @@ def get_ans_from_pos(tokenizer, examples, features, y1, y2, unique_id):
         tok_text = " ".join(tok_text.split())
         orig_text = " ".join(orig_tokens)
         final_text = get_final_text(tok_text, orig_text, True, False)
-    # print("final_text: " + final_text)
     return final_text
 
 
@@ -450,7 +452,6 @@ def cal_reranker_metrics(dev_gold_file, rerank_result_file):
 
     for item in tqdm(gt, desc="cal pem"):
         _id = item["_id"]
-
         if _id in rerank_result:
             pred = rerank_result[_id][1]
             sps = item["supporting_facts"]
