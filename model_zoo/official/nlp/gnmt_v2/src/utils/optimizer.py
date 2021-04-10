@@ -210,7 +210,6 @@ class Adam(Optimizer):
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
-        # validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)

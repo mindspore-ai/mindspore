@@ -112,7 +112,6 @@ def validate(cfg, val_dataset, model, output_dir):
             if cfg.TEST.SHIFT_HEATMAP:
                 output_flipped[:, :, :, 1:] = \
                     output_flipped.copy()[:, :, :, 0:-1]
-                # output_flipped[:, :, :, 0] = 0
 
             output = (output + output_flipped) * 0.5
 

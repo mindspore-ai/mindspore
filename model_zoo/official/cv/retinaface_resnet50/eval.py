@@ -406,14 +406,6 @@ def val():
         predict_result_path = detection.write_result()
         print('predict result path is {}'.format(predict_result_path))
 
-
-    # # TEST
-    # import json
-    # with open('./widerface_result/predict_2020_09_08_11_07_25.json', 'r') as f:
-    #     result = json.load(f)
-    # detection.results = result
-
-
     detection.get_eval_result()
     print('Eval done.')
 

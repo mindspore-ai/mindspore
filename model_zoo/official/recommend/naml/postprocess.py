@@ -64,7 +64,6 @@ class NAMLMetric:
     def update(self, predict, y_true):
         predict = predict.flatten()
         y_true = y_true.flatten()
-        # predict = np.interp(predict, (predict.min(), predict.max()), (0, 1))
         self.AUC_list.append(AUC(y_true, predict))
         self.MRR_list.append(MRR(y_true, predict))
         self.nDCG5_list.append(nDCG(y_true, predict, 5))

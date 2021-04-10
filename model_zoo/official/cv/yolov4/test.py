@@ -292,7 +292,6 @@ def test():
         exit(1)
 
     data_root = args.data_root
-    # annFile = args.annFile
 
     config = ConfigYOLOV4CspDarkNet53()
     if args.testing_shape:

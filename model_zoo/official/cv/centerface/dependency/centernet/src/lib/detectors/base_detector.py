@@ -122,7 +122,6 @@ class CenterFaceDetector():
             meta['out_height'], meta['out_width'])
         for j in range(1, self.num_classes + 1):
             dets[0][j] = np.array(dets[0][j], dtype=np.float32).reshape(-1, 15)
-            # import pdb; pdb.set_trace()
             dets[0][j][:, :4] /= scale
             dets[0][j][:, 5:] /= scale
         return dets[0]
@@ -157,7 +156,6 @@ class CenterFaceDetector():
             if not pre_processed:
                 images, meta = self.pre_process(image, scale, meta) # --1: pre_process
             else:
-                # import pdb; pdb.set_trace()
                 images = pre_processed_images['images'][scale][0]
                 meta = pre_processed_images['meta'][scale]
                 meta = {k: v.numpy()[0] for k, v in meta.items()}

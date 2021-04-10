@@ -67,9 +67,6 @@ def np2Tensor(*args, rgb_range=255):
         np_transpose = np.ascontiguousarray(img.transpose((2, 0, 1)))
         tensor = np_transpose.astype(np.float32)
         tensor = tensor * (rgb_range / 255)
-        # tensor = torch.from_numpy(np_transpose).float()
-        # tensor.mul_(rgb_range / 255)
-
         return tensor
 
     return [_np2Tensor(a) for a in args]

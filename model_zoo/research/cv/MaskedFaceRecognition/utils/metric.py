@@ -54,12 +54,10 @@ def cmc(
     assert isinstance(gallery_ids, np.ndarray)
     # assert isinstance(query_cams, np.ndarray)
     # assert isinstance(gallery_cams, np.ndarray)
-    # separate_camera_set=False
     first_match_break = True
     m, _ = distmat.shape
     # Sort and find correct matches
     indices = np.argsort(distmat, axis=1)
-    #print(indices)
     matches = (gallery_ids[indices] == query_ids[:, np.newaxis])
     # Compute CMC for each query
     ret = np.zeros([m, topk])
@@ -174,21 +172,13 @@ def mean_ap(
     is_valid_query = np.zeros(m)
     for i in range(m):
         # Filter out the same id and same camera
-        # valid = ((gallery_ids[indices[i]] != query_ids[i]) |
-        #         (gallery_cams[indices[i]] != query_cams[i]))
         valid = (gallery_ids[indices[i]] != query_ids[i]) | (gallery_ids[indices[i]] == query_ids[i])
-        # valid = indices[i] != i
-        # valid = (gallery_cams[indices[i]] != query_cams[i])
         y_true = matches[i, valid]
         y_score = -distmat[i][indices[i]][valid]
 
-        # y_true=y_true[0:100]
-        # y_score=y_score[0:100]
         if not np.any(y_true): continue
         is_valid_query[i] = 1
         aps[i] = average_precision_score(y_true, y_score)
-    # if not aps:
-    #     raise RuntimeError("No valid query")
     if average:
         return float(np.sum(aps)) / np.sum(is_valid_query)
     return aps, is_valid_query

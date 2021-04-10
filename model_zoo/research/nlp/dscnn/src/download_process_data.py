@@ -195,7 +195,6 @@ class AudioProcessor():
         sliced_foreground = padded_foreground[time_shift_offset: time_shift_offset + desired_samples]
         background_add = background_data[0] * background_volume + sliced_foreground
         background_clamp = np.clip(background_add, -1.0, 1.0)
-        # feature = mfcc(background_clamp, samplerate=FLAGS.sample_rate, winlen=0.03, winstep=0.01, numcep=40, nfilt=40).flatten()
         feature = mfcc(background_clamp, samplerate=FLAGS.sample_rate, winlen=FLAGS.window_size_ms / 1000,
                        winstep=FLAGS.window_stride_ms / 1000,
                        numcep=FLAGS.dct_coefficient_count, nfilt=40, nfft=1024, lowfreq=20, highfreq=7000).flatten()

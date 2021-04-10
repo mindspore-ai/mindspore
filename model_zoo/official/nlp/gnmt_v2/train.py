@@ -123,7 +123,6 @@ def _load_checkpoint_to_net(config, network):
                 if name.endswith(".gamma"):
                     param.set_data(one_weight(value.asnumpy().shape))
                 elif name.endswith(".beta") or name.endswith(".bias"):
-                    # param.set_data(zero_weight(value.asnumpy().shape))
                     if param.data.dtype == "Float32":
                         param.set_data((weight_variable(value.asnumpy().shape).astype(np.float32)))
                     elif param.data.dtype == "Float16":

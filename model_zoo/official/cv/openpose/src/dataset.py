@@ -69,7 +69,6 @@ class txtdataset():
                 if person_cnt > 0:
                     annotations = valid_annotations_for_img
             if annotations is None:
-                #print(img_id,'is removed')
                 self.imgIds.remove(img_id)
 
     def overlay_paf(self, img, paf):
@@ -137,7 +136,6 @@ class txtdataset():
         max_scale = min(max(max_scale, 1), params['max_scale'])
 
         scale = float((max_scale - min_scale) * random.random() + min_scale)
-        #scale = random.random()*1.5+0.5
         shape = (round(w * scale), round(h * scale))
 
         resized_img, resized_mask, resized_poses = self.resize_data(img, ignore_mask, poses, shape)
@@ -145,7 +143,6 @@ class txtdataset():
 
     def random_rotate_img(self, img, mask, poses):
         h, w, _ = img.shape
-        # degree = (random.random() - 0.5) * 2 * params['max_rotate_degree']
         degree = np.random.randn() / 3 * params['max_rotate_degree']
         rad = degree * math.pi / 180
         center = (w / 2, h / 2)
@@ -473,12 +470,8 @@ class txtdataset():
         resized_img, ignore_mask, resized_poses = self.resize_data(img, ignore_mask, poses,
                                                                    shape=(self.insize, self.insize))
 
-        # heatmaps = self.generate_heatmaps(resized_img, resized_poses, params['heatmap_sigma'])
-        # resized_heatmaps = self.resize_output(heatmaps)
         resized_heatmaps = self.generate_heatmaps_fast(resized_img, resized_poses, params['heatmap_sigma'])
 
-        # pafs = self.generate_pafs(resized_img, resized_poses, params['paf_sigma'])
-        # resized_pafs = self.resize_output(pafs)
         resized_pafs = self.generate_pafs_fast(resized_img, resized_poses, params['paf_sigma'])
 
         ignore_mask = cv2.morphologyEx(ignore_mask.astype('uint8'), cv2.MORPH_DILATE, np.ones((16, 16))).astype('bool')

@@ -159,7 +159,6 @@ if __name__ == "__main__":
         parallel_mode = ParallelMode.STAND_ALONE
         degree = 1
 
-    # context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=degree, parameter_broadcast=True, gradients_mean=True)
     # Notice: parameter_broadcast should be supported, but current version has bugs, thus been disabled.
     # To make sure the init weight on all npu is the same, we need to set a static seed in default_recurisive_init when weight initialization
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
