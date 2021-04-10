@@ -16,11 +16,11 @@
 import os
 import math as m
 import numpy as np
+from PIL import Image
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.vision.c_transforms as vc
-from PIL import Image
 from src.config import config as cf
 
 

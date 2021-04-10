@@ -25,7 +25,7 @@ ACLIMDB_DIR=$2
 GLOVE_DIR=$3
 
 mkdir -p train
-cd train
+cd train || exit
 mkdir -p ms_log
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log

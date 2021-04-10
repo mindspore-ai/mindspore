@@ -17,12 +17,12 @@ import json
 from os.path import join
 import argparse
 from warnings import warn
+import numpy as np
 from hparams import hparams, hparams_debug_string
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 from wavenet_vocoder import WaveNet
 from wavenet_vocoder.util import is_mulaw_quantize, is_scalar_input
-import numpy as np
 from src.loss import PredictNet
 
 parser = argparse.ArgumentParser(description='TTS training')

@@ -14,11 +14,12 @@
 # ============================================================================
 """Data operations, will be used in train.py."""
 
+import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as deC
 from src.config import config
-import numpy as np
+
 de.config.set_seed(1)
 
 def random_teacher_force(source_ids, target_ids, target_mask):

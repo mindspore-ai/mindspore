@@ -21,7 +21,6 @@ import numpy as np
 from src.data_loader import create_dataset, create_cell_nuclei_dataset
 from src.config import cfg_unet
 
-
 class dice_coeff():
     def __init__(self):
         self.clear()

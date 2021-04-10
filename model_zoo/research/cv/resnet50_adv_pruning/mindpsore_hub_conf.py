@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.resnet_imgnet import resnet50
-from mindspore import Tensor
 import numpy as np
+from mindspore import Tensor
+from src.resnet_imgnet import resnet50
 
 
 def get_index(filename):

@@ -75,7 +75,7 @@ for((i=0;i<=$RANK_SIZE-1;i++));
 do
     echo 'start rank '$i
     mkdir ${current_exec_path}/device$i
-    cd ${current_exec_path}/device$i
+    cd ${current_exec_path}/device$i  || exit
     export RANK_ID=$i
     dev=`expr $i + 0`
     export DEVICE_ID=$dev

@@ -67,9 +67,9 @@ function air_to_om()
 
 function compile_app()
 {
-    cd ../ascend310_infer/src
+    cd ../ascend310_infer/src || exit
     sh build.sh &> build.log
-    cd -
+    cd - || exit
 }
 
 function infer()

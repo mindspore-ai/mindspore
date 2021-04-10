@@ -18,8 +18,8 @@ from collections import defaultdict
 import random
 from time import time
 import json
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 
 from transformers import AlbertTokenizer
 
