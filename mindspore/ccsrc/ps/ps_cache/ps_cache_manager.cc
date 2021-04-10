@@ -222,9 +222,8 @@ void PsCacheManager::AllocMemForHashTable() {
     device_address.addr = addr;
 
     auto &host_address = item.second.host_address;
-    auto host_address_ptr = new float[host_vocab_cache_size_ * embedding_size];
-    MS_EXCEPTION_IF_NULL(host_address_ptr);
-    host_address = std::shared_ptr<float[]>(host_address_ptr, std::default_delete<float[]>());
+    host_address =
+      std::shared_ptr<float[]>(new float[host_vocab_cache_size_ * embedding_size], std::default_delete<float[]>());
     MS_EXCEPTION_IF_NULL(host_address);
 
     max_embedding_size = (embedding_size > max_embedding_size) ? embedding_size : max_embedding_size;
@@ -309,7 +308,7 @@ void PsCacheManager::IncreaseGraphStep(const std::string &channel_name) {
   data_prase_.notify_one();
 }
 
-void PsCacheManager::DoProcessData(uint32_t device_id, void *context) {
+void PsCacheManager::DoProcessData(uint32_t device_id, const void *context) {
   // PS embeddingLookup cache check.
   if (!initialized_ps_cache_) {
     MS_LOG(EXCEPTION) << "Only the sink_mode of dataset supports embeddingLookup cache in parameter server training "
@@ -318,7 +317,7 @@ void PsCacheManager::DoProcessData(uint32_t device_id, void *context) {
   process_data_thread_ = std::thread(&PsCacheManager::ProcessDataTask, this, device_id, context);
 }
 
-void PsCacheManager::ProcessDataTask(uint32_t device_id, void *context) {
+void PsCacheManager::ProcessDataTask(uint32_t device_id, const void *context) {
   MS_LOG(INFO) << "PS embedding cache process data task begin.";
   running_ = true;
   embedding_device_cache_->cache_->InitDevice(device_id, context);
@@ -387,8 +386,9 @@ bool PsCacheManager::ProcessData() {
     RETURN_IF_FALSE(HashSwapServerToHost(key, hash_info));
     RETURN_IF_FALSE(HashSwapHostToDevice(hash_info));
   }
+  size_t dest_len = data_size;
   // Replace the batch_ids by hash index for getNext-op getting hash index as input.
-  if (memcpy_s(data, data_size, hash_index.get(), data_size) != EOK) {
+  if (memcpy_s(data, dest_len, hash_index.get(), data_size) != EOK) {
     MS_LOG(ERROR) << "Process data memcpy failed.";
     return false;
   }
@@ -670,12 +670,14 @@ void PsCacheManager::LookUpTableTask(size_t indices_lens, size_t outer_dim_size,
       if (ret != EOK) {
         MS_LOG(ERROR) << "LookUpTable task memcpy failed.";
         running_ = false;
+        return;
       }
     } else {
       auto ret = memset_s(output_addr, (indices_lens - i) * lens, 0, lens);
       if (ret != EOK) {
         MS_LOG(ERROR) << "LookUpTable task memset failed.";
         running_ = false;
+        return;
       }
     }
     output_addr += outer_dim_size;
@@ -712,8 +714,8 @@ bool PsCacheManager::LookUpHostHashTable(size_t embedding_size, size_t indices_l
   return running_;
 }
 
-bool PsCacheManager::InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, int *insert_indices,
-                                         float *insert_data, float *hash_table_addr) {
+bool PsCacheManager::InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
+                                         const float *insert_data, float *hash_table_addr) {
   size_t first_dim_size = host_vocab_cache_size_;
   size_t thread_num = insert_indices_size / 10000 + 1;
   thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
@@ -723,16 +725,19 @@ bool PsCacheManager::InsertHostHashTable(size_t embedding_size, size_t insert_in
   size_t task_offset = 0;
 
   auto insert_hash_table_task = [this](size_t insert_indices_size, size_t outer_dim_size, size_t first_dim_size,
-                                       int *insert_indices, float *insert_data, float *hash_table_addr) {
+                                       const int *insert_indices, const float *insert_data, float *hash_table_addr) {
     auto type_size = sizeof(float);
-    size_t lens = outer_dim_size * type_size;
+    size_t copy_len = outer_dim_size * type_size;
+    size_t dest_len = copy_len;
     for (size_t i = 0; i < insert_indices_size; ++i) {
       int index = insert_indices[i];
       if (index >= 0 && index < SizeToInt(first_dim_size)) {
-        auto ret = memcpy_s(hash_table_addr + index * outer_dim_size, lens, insert_data + i * outer_dim_size, lens);
+        auto ret =
+          memcpy_s(hash_table_addr + index * outer_dim_size, dest_len, insert_data + i * outer_dim_size, copy_len);
         if (ret != EOK) {
           MS_LOG(ERROR) << "Insert hash table task memcpy failed.";
           running_ = false;
+          return;
         }
       }
     }
@@ -833,8 +838,9 @@ bool PsCacheManager::HashSwapHostToServer(size_t key, const HashTableInfo &hash_
   RETURN_IF_FALSE(LookUpHostHashTable(embedding_size, swap_indices_size, host_hash_table_addr, host_to_server_index,
                                       swap_out_data.data()));
 
-  auto copy_len = swap_indices_size * sizeof(int);
-  auto ret = memcpy_s(lookup_ids.data(), copy_len, host_to_server_ids, copy_len);
+  size_t copy_len = swap_indices_size * sizeof(int);
+  size_t dest_len = copy_len;
+  auto ret = memcpy_s(lookup_ids.data(), dest_len, host_to_server_ids, copy_len);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
@@ -855,8 +861,9 @@ bool PsCacheManager::HashSwapServerToHost(size_t key, const HashTableInfo &hash_
   auto embedding_size = hash_info.embedding_size;
   std::vector<float> lookup_result(swap_indices_size * embedding_size, 0);
   std::vector<int> lookup_ids(swap_indices_size, 0);
-  auto copy_len = swap_indices_size * sizeof(int);
-  auto ret = memcpy_s(lookup_ids.data(), copy_len, server_to_host_ids, copy_len);
+  size_t copy_len = swap_indices_size * sizeof(int);
+  size_t dest_len = copy_len;
+  auto ret = memcpy_s(lookup_ids.data(), dest_len, server_to_host_ids, copy_len);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
@@ -893,7 +900,7 @@ bool PsCacheManager::HashSwapDeviceOut(int *swap_out_index, std::vector<float> *
   return true;
 }
 
-bool PsCacheManager::HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, const HashTableInfo &hash_info,
+bool PsCacheManager::HashSwapDeviceIn(const int *swap_in_ids, const int *swap_in_index, const HashTableInfo &hash_info,
                                       size_t key) {
   MS_ERROR_IF_NULL(swap_in_ids);
   MS_ERROR_IF_NULL(swap_in_index);
@@ -909,8 +916,9 @@ bool PsCacheManager::HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, cons
   // Get id embs by swap_in_ids in host(Pipeline with hash swap-out in device).
   std::vector<float> lookup_result(swap_in_ids_size * embedding_size, 0);
   std::vector<int> lookup_ids(swap_in_ids_size, 0);
-  auto copy_len = swap_in_ids_size * sizeof(int);
-  auto ret = memcpy_s(lookup_ids.data(), copy_len, swap_in_ids, copy_len);
+  size_t copy_len = swap_in_ids_size * sizeof(int);
+  size_t dest_len = copy_len;
+  auto ret = memcpy_s(lookup_ids.data(), dest_len, swap_in_ids, copy_len);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
@@ -937,8 +945,9 @@ bool PsCacheManager::UpdataEmbeddingTable(const std::vector<float> &swap_out_dat
     return true;
   }
   std::vector<int> lookup_ids(swap_out_ids_size, 0);
-  auto copy_len = swap_out_ids_size * sizeof(int);
-  auto ret = memcpy_s(lookup_ids.data(), copy_len, swap_out_ids, copy_len);
+  size_t copy_len = swap_out_ids_size * sizeof(int);
+  size_t dest_len = copy_len;
+  auto ret = memcpy_s(lookup_ids.data(), dest_len, swap_out_ids, copy_len);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
@@ -997,8 +1006,9 @@ bool PsCacheManager::SyncHostEmbeddingTable() {
     RETURN_IF_FALSE(LookUpHostHashTable(embedding_size, swap_indices_lens, host_hash_table_addr,
                                         host_to_server_indices_ptr.get(), swap_out_data.data()));
 
-    auto copy_len = swap_indices_lens * sizeof(int);
-    auto ret = memcpy_s(lookup_ids.data(), copy_len, host_to_server_ids_ptr.get(), copy_len);
+    size_t copy_len = swap_indices_lens * sizeof(int);
+    size_t dest_len = copy_len;
+    auto ret = memcpy_s(lookup_ids.data(), dest_len, host_to_server_ids_ptr.get(), copy_len);
     if (ret != EOK) {
       MS_LOG(ERROR) << "Lookup id memcpy failed.";
       return false;
@@ -1049,8 +1059,9 @@ bool PsCacheManager::SyncDeviceEmbeddingTable() {
     RETURN_IF_FALSE(LookUpHostHashTable(embedding_size, swap_indices_lens, device_hash_table_addr_tmp.get(),
                                         device_to_server_indices_ptr.get(), swap_out_data.data()));
 
-    auto copy_len = swap_indices_lens * sizeof(int);
-    auto ret = memcpy_s(lookup_ids.data(), copy_len, device_to_server_ids_ptr.get(), copy_len);
+    size_t copy_len = swap_indices_lens * sizeof(int);
+    size_t dest_len = copy_len;
+    auto ret = memcpy_s(lookup_ids.data(), dest_len, device_to_server_ids_ptr.get(), copy_len);
     if (ret != EOK) {
       MS_LOG(ERROR) << "Lookup id memcpy failed.";
       return false;
