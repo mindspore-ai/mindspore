@@ -219,8 +219,6 @@ class BboxAssignSampleForRcnn(nn.Cell):
         else:
             valid_neg_index = self.logicaland(self.concat((self.check_neg_mask, unvalid_pos_index)), valid_neg_index)
         valid_neg_index = self.logicaland(valid_neg_index, self.check_neg_mask_ignore_end)
-        # import pdb
-        # pdb.set_trace()
         neg_index = self.reshape(neg_index, self.reshape_shape_neg)
 
         valid_neg_index = self.cast(valid_neg_index, mstype.int32)

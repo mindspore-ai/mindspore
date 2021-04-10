@@ -69,11 +69,9 @@ class SmoothL1LossNew(nn.Cell):
         :return:
         '''
         output = self.transpose(output, (0, 2, 3, 1))
-        # dim = self.shape(output)[3]
         mask = P.Select()(P.Equal()(ind, 1), P.Fill()(mstype.float32, P.Shape()(ind), 1.0), P.Fill()(mstype.float32,
                                                                                                      P.Shape()(ind),
                                                                                                      0.0))
-        # ind = self.cast(ind, mstype.float32)
         target = self.cast(target, mstype.float32)
         output = self.cast(output, mstype.float32)
         num = self.cast(self.sum(mask, ()), mstype.float32)

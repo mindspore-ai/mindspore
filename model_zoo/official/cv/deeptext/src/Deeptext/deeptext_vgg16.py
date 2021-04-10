@@ -42,7 +42,6 @@ def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mod
     layers += [nn.Conv2d(in_channels, out_channels,
                          kernel_size=kernel_size, stride=stride, padding=padding,
                          pad_mode=pad_mode, weight_init=weights, has_bias=True, bias_init=bias_conv)]
-    # layers += [nn.BatchNorm2d(out_channels)]
     return nn.SequentialCell(layers)
 
 
@@ -195,7 +194,6 @@ class Deeptext_VGG16(nn.Cell):
         self.vgg16_feature_extractor = VGG16FeatureExtraction()
 
     def construct(self, img_data, img_metas, gt_bboxes, gt_labels, gt_valids):
-        # f1, f2, f3, f4, f5 = self.vgg16_feature_extractor(img_data)
         _, _, _, f4, f5 = self.vgg16_feature_extractor(img_data)
         f4 = self.cast(f4, mstype.float32)
         f5 = self.cast(f5, mstype.float32)
@@ -306,15 +304,11 @@ class Deeptext_VGG16(nn.Cell):
             out_boxes_i = self.decode(rois, reg_logits_i)
             boxes_all += (out_boxes_i,)
 
-        # img_metas_all = self.split(img_metas)
         scores_all = self.split(scores)
         mask_all = self.split(self.cast(mask_logits, mstype.int32))
 
         boxes_all_with_batchsize = ()
         for i in range(self.test_batch_size):
-            # scale = self.split_shape(self.squeeze(img_metas_all[i]))
-            # scale_h = scale[2]
-            # scale_w = scale[3]
             boxes_tuple = ()
             for j in range(self.num_classes):
                 boxes_tmp = self.split(boxes_all[j])

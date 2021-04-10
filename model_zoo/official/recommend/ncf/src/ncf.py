@@ -201,7 +201,6 @@ class NetWithLossClass(nn.Cell):
     """
     def __init__(self, network):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
-        #self.loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         self.loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         self.network = network
         self.reducesum = P.ReduceSum(keep_dims=False)

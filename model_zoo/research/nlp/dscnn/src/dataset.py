@@ -32,7 +32,6 @@ class NpyDataset():
     def __getitem__(self, item):
         data = self.data[item]
         label = self.label[item]
-        # return data, label
         return data.astype(np.float32), label.astype(np.int32)
 
 

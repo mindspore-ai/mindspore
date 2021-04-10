@@ -21,7 +21,6 @@ from mindspore.ops import operations as P
 
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
-    # shape = (out_channels, in_channels, kernel_size, kernel_size)
     weights = 'ones'
     layers = []
     layers += [nn.Conv2d(in_channels, out_channels,

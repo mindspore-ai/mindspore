@@ -58,15 +58,11 @@ class UpsampleNetwork(nn.Cell):
         for scale in upsample_scales:
             freq_axis_padding = (freq_axis_kernel_size - 1) // 2
             k_size = (freq_axis_kernel_size, scale * 2 + 1)
-            # padding = (freq_axis_padding, scale)
             padding = (freq_axis_padding, freq_axis_padding, scale, scale)
             stretch = Resize(scale, 1, mode)
             conv = nn.Conv2d(1, 1, kernel_size=k_size, has_bias=False, pad_mode='pad', padding=padding)
             up_layers.append(stretch)
             up_layers.append(conv)
-            # if upsample_activation != "none":
-            #     nonlinear = _get_activation(upsample_activation)
-            #     up_layers.append(nonlinear(**upsample_activation_params))
         self.up_layers = nn.CellList(up_layers)
 
     def construct(self, c):
@@ -86,8 +82,6 @@ class UpsampleNetwork(nn.Cell):
         # B x C x T
         c = self.squeeze_op(c)
 
-        # if self.indent > 0:
-        #     c = c[:, :, self.indent:-self.indent]
         return c
 
 

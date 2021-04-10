@@ -88,14 +88,12 @@ class Vgg(nn.Cell):
         in_channels = 3
         for v in cfg:
             if v == 'M':
-                # layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2, pad_mode='same')]
             else:
                 conv2d = Conv2d(in_channels=in_channels,
                                 out_channels=v,
                                 kernel_size=3,
                                 stride=1,
-                                # padding=1,
                                 pad_mode='same',
                                 has_bias=True)
                 if batch_norm:

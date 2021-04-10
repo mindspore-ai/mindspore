@@ -108,17 +108,13 @@ def get_lr(lr, lr_gamma, steps_per_epoch, max_epoch_train, lr_steps, group_size,
 def load_model(test_net, model_path):
     if model_path:
         param_dict = load_checkpoint(model_path)
-        # print(type(param_dict))
         param_dict_new = {}
         for key, values in param_dict.items():
-            # print('key:', key)
             if key.startswith('moment'):
                 continue
             elif key.startswith('network.'):
                 param_dict_new[key[8:]] = values
 
-            # else:
-            # param_dict_new[key] = values
         load_param_into_net(test_net, param_dict_new)
 
 

@@ -109,15 +109,12 @@ def get_param_groups(network):
         parameter_name = x.name
         if parameter_name.endswith('.bias'):
             # all bias not using weight decay
-            # print('no decay:{}'.format(parameter_name))
             no_decay_params.append(x)
         elif parameter_name.endswith('.gamma'):
             # bn weight bias not using weight decay, be carefully for now x not include BN
-            # print('no decay:{}'.format(parameter_name))
             no_decay_params.append(x)
         elif parameter_name.endswith('.beta'):
             # bn weight bias not using weight decay, be carefully for now x not include BN
-            # print('no decay:{}'.format(parameter_name))
             no_decay_params.append(x)
         else:
             decay_params.append(x)
@@ -224,7 +221,6 @@ class LOGGER(logging.Logger):
         self.info('Args:')
         args_dict = vars(args)
         for key in args_dict.keys():
-            # self.info('--> {}: {}'.format(key, args_dict[key]))
             self.info('--> %s', key)
         self.info('')
 

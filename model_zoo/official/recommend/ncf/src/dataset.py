@@ -529,8 +529,6 @@ class DistributedSamplerOfEval:
         self._eval_batch_size = eval_batch_size
 
         self._batchs_per_rank = int(math.ceil(self._eval_batches_per_epoch / rank_size))
-        # self._samples_per_rank = int(math.ceil(self._batchs_per_rank *  self._eval_batch_size))
-        # self._total_num_samples = self._samples_per_rank * self._rank_size
 
     def __iter__(self):
         indices = [(x * self._eval_users_per_batch, (x + self._rank_id + 1) * self._eval_users_per_batch)

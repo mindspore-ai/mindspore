@@ -104,10 +104,6 @@ if __name__ == '__main__':
     optimizer = RMSProp(group_params, lr, decay=cfg.rmsprop_decay, weight_decay=cfg.weight_decay,
                         momentum=cfg.momentum, epsilon=cfg.opt_eps, loss_scale=cfg.loss_scale)
 
-    # net_with_grads = NASNetAMobileTrainOneStepWithClipGradient(net_with_loss, optimizer)
-    # net_with_grads.set_train()
-    # model = Model(net_with_grads)
-
     # high performance
     net_with_loss.set_train()
     model = Model(net_with_loss, optimizer=optimizer)
