@@ -58,13 +58,13 @@ fi
 
 function compile_app()
 {
-    cd ../ascend310_infer
+    cd ../ascend310_infer || exit
     bash build.sh &> build.log
 }
 
 function infer()
 {
-    cd -
+    cd - || exit
     if [ -d result_Files ]; then
         rm -rf ./result_Files
     fi

@@ -17,9 +17,9 @@
 Defined callback for DeepSpeech.
 """
 import time
+import numpy as np
 from mindspore.train.callback import Callback
 from mindspore import Tensor
-import numpy as np
 
 
 class TimeMonitor(Callback):

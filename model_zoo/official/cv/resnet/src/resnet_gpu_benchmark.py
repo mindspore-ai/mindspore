@@ -14,11 +14,11 @@
 # ============================================================================
 """ResNet."""
 import numpy as np
+from scipy.stats import truncnorm
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
-from scipy.stats import truncnorm
 
 format_ = "NHWC"
 # tranpose shape to NCHW, default init is NHWC.

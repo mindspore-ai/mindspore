@@ -17,8 +17,8 @@ import os
 import warnings
 import argparse
 import numpy as np
-from tqdm import tqdm
 import cv2
+from tqdm import tqdm
 
 import mindspore.nn as nn
 from mindspore import Tensor

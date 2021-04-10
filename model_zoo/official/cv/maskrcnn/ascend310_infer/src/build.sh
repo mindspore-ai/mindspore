@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-path_cur=$(cd "`dirname $0`"; pwd)
+path_cur=$(cd "`dirname $0`" || exit; pwd)
 build_type="Release"
 
 function preparePath() {
     rm -rf $1
     mkdir -p $1
-    cd $1
+    cd $1 || exit
 }
 
 function buildA300() {

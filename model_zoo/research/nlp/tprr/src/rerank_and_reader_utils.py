@@ -26,9 +26,9 @@ import gzip
 import string
 import pickle
 import sqlite3
+import numpy as np
 from tqdm import tqdm
 
-import numpy as np
 from transformers import BasicTokenizer
 
 

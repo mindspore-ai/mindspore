@@ -15,9 +15,9 @@
 """coco eval for fasterrcnn"""
 import json
 import numpy as np
+import mmcv
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-import mmcv
 
 _init_value = np.array(0.0)
 summary_init = {

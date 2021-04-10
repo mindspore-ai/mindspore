@@ -55,7 +55,7 @@ fi
 
 function compile_app()
 {
-    cd ../ascend310_infer/src/
+    cd ../ascend310_infer/src/ || exit
     if [ -f "Makefile" ]; then
         make clean
     fi
@@ -64,7 +64,7 @@ function compile_app()
 
 function infer()
 {
-    cd -
+    cd - || exit
     if [ -d result_Files ]; then
         rm -rf ./result_Files
     fi

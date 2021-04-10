@@ -78,7 +78,7 @@ function air_to_om()
 
 function compile_app()
 {
-    cd ../ascend310_infer
+    cd ../ascend310_infer || exit
     if [ -f "Makefile" ]; then
         make clean
     fi
@@ -88,7 +88,7 @@ function compile_app()
         echo "compile app code failed"
         exit 1
     fi
-    cd -
+    cd - || exit
 }
 
 function infer()

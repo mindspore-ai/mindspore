@@ -18,7 +18,7 @@ rm -rf device
 mkdir device
 cp ./*.py ./device
 cp -r ./src ./device
-cd ./device
+cd ./device || exit
 
 DATA_DIR=$1
 

@@ -21,6 +21,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <utility>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -35,21 +36,21 @@ using cv::Point;
 namespace py = pybind11;
 
 namespace pse_adaptor {
-    void get_kernals(const int *data, vector<int64> data_shape, vector<Mat> *kernals) {
+    void get_kernels(const int *data, vector<int64> data_shape, vector<Mat> *kernels) {
         for (int i = 0; i < data_shape[0]; ++i) {
-            Mat kernal = Mat::zeros(data_shape[1], data_shape[2], CV_8UC1);
-            for (int x = 0; x < kernal.rows; ++x) {
-                for (int y = 0; y < kernal.cols; ++y) {
-                    kernal.at<char>(x, y) = data[i * data_shape[1] * data_shape[2] + x * data_shape[2] + y];
+            Mat kernel = Mat::zeros(data_shape[1], data_shape[2], CV_8UC1);
+            for (int x = 0; x < kernel.rows; ++x) {
+                for (int y = 0; y < kernel.cols; ++y) {
+                    kernel.at<char>(x, y) = data[i * data_shape[1] * data_shape[2] + x * data_shape[2] + y];
                 }
             }
-            kernals->emplace_back(kernal);
+            kernels->emplace_back(kernel);
         }
     }
 
-    void growing_text_line(const vector<Mat> &kernals, vector<vector<int>> *text_line, float min_area) {
+    void growing_text_line(const vector<Mat> &kernels, vector<vector<int>> *text_line, float min_area) {
         Mat label_mat;
-        int label_num = connectedComponents(kernals[kernals.size() - 1], label_mat, 4);
+        int label_num = connectedComponents(kernels[kernels.size() - 1], label_mat, 4);
         vector<int> area(label_num + 1, 0);
         for (int x = 0; x < label_mat.rows; ++x) {
             for (int y = 0; y < label_mat.cols; ++y) {
@@ -76,7 +77,7 @@ namespace pse_adaptor {
         int dx[] = {-1, 1, 0, 0};
         int dy[] = {0, 0, -1, 1};
 
-        for (int kernal_id = kernals.size() - 2; kernal_id >= 0; --kernal_id) {
+        for (int kernel_id = kernels.size() - 2; kernel_id >= 0; --kernel_id) {
             while (!queue.empty()) {
                 Point point = queue.front();
                 queue.pop();
@@ -90,7 +91,7 @@ namespace pse_adaptor {
 
                     if (tmp_x < 0 || tmp_x >= static_cast<int>(text_line->size())) continue;
                     if (tmp_y < 0 || tmp_y >= static_cast<int>(text_line->at(1).size())) continue;
-                    if (kernals[kernal_id].at<char>(tmp_x, tmp_y) == 0) continue;
+                    if (kernels[kernel_id].at<char>(tmp_x, tmp_y) == 0) continue;
                     if (text_line->at(tmp_x)[tmp_y] > 0) continue;
 
                     Point point_tmp(tmp_x, tmp_y);
@@ -110,10 +111,10 @@ namespace pse_adaptor {
     vector<vector<int>> pse(py::array_t<int, py::array::c_style | py::array::forcecast> quad_n9, float min_area) {
         auto buf = quad_n9.request();
         auto data = static_cast<int *>(buf.ptr);
-        vector<Mat> kernals;
-        get_kernals(data, buf.shape, &kernals);
+        vector<Mat> kernels;
+        get_kernels(data, buf.shape, &kernels);
         vector<vector<int>> text_line;
-        growing_text_line(kernals, &text_line, min_area);
+        growing_text_line(kernels, &text_line, min_area);
 
         return text_line;
     }

@@ -16,6 +16,8 @@
 Data operations, will be used in train.py and eval.py
 """
 import os
+import cv2
+import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
@@ -23,9 +25,6 @@ from src.dataset_utils import lucky, noise_blur, noise_speckle, noise_gamma, noi
     shift_color, enhance_brightness, enhance_sharpness, enhance_contrast, enhance_color, gaussian_blur, \
     randcrop, resize, rdistort, rgeometry, rotate_about_center, whole_rdistort, warp_perspective, random_contrast, \
     unify_img_label
-
-import cv2
-import numpy as np
 
 cv2.setNumThreads(0)
 

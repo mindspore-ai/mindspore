@@ -34,7 +34,7 @@ def calc_psnr(sr, hr, scale, rgb_range, y_only=False, dataset=None):
     gray_coeffs = np.array([65.738, 129.057, 25.064]
                            ).reshape((1, 3, 1, 1)) / 256
     diff = np.multiply(diff, gray_coeffs).sum(1)
-    if hr.size == 1:
+    if np.size(hr) == 1:
         return 0
     if scale != 1:
         shave = scale
