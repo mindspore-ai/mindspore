@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash scripts/run_distributed_gd.sh DEVICE_NUM EPOCH_SIZE RANK_TABLE_FILE"
 echo "for example: bash scripts/run_distributed_gd.sh 8 40 /path/hccl.json"
 echo "It is better to use absolute path."
