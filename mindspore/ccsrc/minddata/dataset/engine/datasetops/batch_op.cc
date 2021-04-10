@@ -575,7 +575,7 @@ int64_t BatchOp::GetTreeBatchSize() {
   return start_batch_size_;
 }
 
-Status BatchOp::GetNextRow(TensorRow *row) {
+Status BatchOp::GetNextRow(TensorRow *const row) {
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   int32_t cur_batch_size = 0;

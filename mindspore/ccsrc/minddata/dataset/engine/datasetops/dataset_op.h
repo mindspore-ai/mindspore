@@ -129,7 +129,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \param show_all - A bool to control if you want to show all info or just a summary
   virtual void Print(std::ostream &out, bool show_all) const;
 
-  virtual Status GetNextRow(TensorRow *row);
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  virtual Status GetNextRow(TensorRow *const row);
 
   /// \brief << Stream output operator overload
   /// \notes This allows you to write the debug print info using stream operators

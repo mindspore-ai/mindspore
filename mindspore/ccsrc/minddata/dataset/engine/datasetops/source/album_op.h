@@ -291,7 +291,10 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \return Status The status code returned
   Status Reset() override;
 
-  Status GetNextRow(TensorRow *row) override;
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRow(TensorRow *const row) override;
 
   // Private function for computing the assignment of the column name map.
   // @return Status The status code returned

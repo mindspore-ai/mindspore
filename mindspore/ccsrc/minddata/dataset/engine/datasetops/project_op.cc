@@ -152,7 +152,7 @@ Status ProjectOp::ComputeColMap() {
   return Status::OK();
 }
 
-Status ProjectOp::GetNextRow(TensorRow *row) {
+Status ProjectOp::GetNextRow(TensorRow *const row) {
   ComputeColMap();
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRow(&new_row));

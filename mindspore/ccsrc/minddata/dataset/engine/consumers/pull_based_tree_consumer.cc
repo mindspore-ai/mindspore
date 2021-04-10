@@ -40,7 +40,7 @@ std::vector<TensorRow> PullBasedIteratorConsumer::GetRows(int64_t num_rows) {
   return rows;
 }
 
-Status PullBasedIteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *out) {
+Status PullBasedIteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   out->clear();
 

@@ -602,7 +602,7 @@ Status AlbumOp::ComputeColMap() {
   return Status::OK();
 }
 
-Status AlbumOp::GetNextRow(TensorRow *row) {
+Status AlbumOp::GetNextRow(TensorRow *const row) {
   if (image_rows_.empty()) PrescanEntry();
   if (sample_ids_ == nullptr) {
     RETURN_IF_NOT_OK(this->InitSampler());

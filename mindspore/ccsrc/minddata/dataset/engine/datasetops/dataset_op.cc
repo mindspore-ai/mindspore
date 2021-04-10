@@ -252,7 +252,7 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status DatasetOp::GetNextRow(TensorRow *row) {
+Status DatasetOp::GetNextRow(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(child_[0]);
   return child_[0]->GetNextRow(row);
 }
