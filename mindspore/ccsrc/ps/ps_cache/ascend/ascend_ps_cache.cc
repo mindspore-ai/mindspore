@@ -183,7 +183,7 @@ bool AscendPsCache::SynchronizeStream() {
   return true;
 }
 
-bool AscendPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
+bool AscendPsCache::CopyHostMemToDevice(void *dst, const void *src, size_t size) {
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
   auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_HOST_TO_DEVICE, stream_);
@@ -194,7 +194,7 @@ bool AscendPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
   return true;
 }
 
-bool AscendPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
+bool AscendPsCache::CopyDeviceMemToHost(void *dst, const void *src, size_t size) {
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
   auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_DEVICE_TO_HOST, stream_);
