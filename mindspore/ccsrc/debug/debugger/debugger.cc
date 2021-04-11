@@ -622,8 +622,10 @@ void Debugger::CommandLoop() {
         break;
       case DebuggerCommand::kRunCMD:
         ProcessRunCMD(reply);
-        // exit loop
-        run = true;
+        if (GetRunLevel(reply) != "recheck") {
+          // exit loop
+          run = true;
+        }
         break;
       case DebuggerCommand::kSetCMD:
         ProcessKSetCMD(reply);
