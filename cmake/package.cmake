@@ -173,6 +173,11 @@ if(ENABLE_CPU)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
+    install(
+        TARGETS nnacl
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
 endif()
 
 if(ENABLE_MPI)
