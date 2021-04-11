@@ -142,48 +142,6 @@ void Parser::CleanParserResource() {
   ScopeManager::GetInstance().ClearScope();
 }
 
-AnfNodePtr AppendParameterObj(const FuncGraphPtr &func_graph, const py::object &obj) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto value = py::cast<tensor::MetaTensorPtr>(obj);
-  // Parameter object should not be none
-  if (value == nullptr || !value->is_parameter()) {
-    MS_LOG(EXCEPTION) << "Parameter error: because obj is not Parameter object.";
-  }
-
-  // Get the parameter name from parameter object
-  auto param_name = value->param_info()->name();
-
-  auto top_graph = func_graph;
-  // If the parameter node has been created , return it
-  AnfNodePtr para_node = nullptr;
-  for (const auto &param : top_graph->parameters()) {
-    auto param_node = dyn_cast<Parameter>(param);
-    if (param_node != nullptr && param_node->name() == param_name) {
-      para_node = param;
-      break;
-    }
-  }
-  if (para_node == nullptr) {
-    auto node = top_graph->AddWeightParameter(param_name);
-
-    node->set_default_param(value);
-    // set_abstract for parameter
-    auto abs = value->ToAbstract();
-    // Boarden value
-    abs = abs->Broaden();
-    node->set_abstract(abs);
-    para_node = node;
-  }
-  return para_node;
-}
-
-void UpdataParam(const FuncGraphPtr &top_graph, const py::object &cell) {
-  auto params = py::list(cell.attr("get_parameters")()).cast<std::vector<py::object>>();
-  for (const auto &param : params) {
-    (void)AppendParameterObj(top_graph, param);
-  }
-}
-
 void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseAst> &ast) {
   // Check whether the functions referred by this function and itself are missing 'return' statement
   auto mng = Manage(fn, false);

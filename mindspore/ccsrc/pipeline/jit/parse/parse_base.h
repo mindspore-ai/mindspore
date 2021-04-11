@@ -163,7 +163,7 @@ enum ClassInstanceTypeDef {
 };
 
 // Convert python object to ValuePtr
-bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, TypePtr dtype = nullptr);
+bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr);
 
 // Convert python obj to graph
 FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
