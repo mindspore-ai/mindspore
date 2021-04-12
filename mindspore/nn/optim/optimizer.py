@@ -88,7 +88,11 @@ class Optimizer(Cell):
             It must be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. It must be greater than 0. If the
-            type of `loss_scale` input is int, it will be converted to float. Default: 1.0.
+            type of `loss_scale` input is int, it will be converted to float. In general, use the default value. Only
+            when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
+            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            Default: 1.0.
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
