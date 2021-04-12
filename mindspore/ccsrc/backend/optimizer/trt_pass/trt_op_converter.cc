@@ -23,6 +23,127 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+ConvertResult AddReshapeLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  auto *layer = context->network()->addShuffle(*inputs[0].tensor());
+  MS_EXCEPTION_IF_NULL(layer);
+
+  const auto &input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &output_shape = AnfAlgo::GetOutputInferShape(node, 0);
+  if (input_shape[0] != output_shape[0]) {
+    MS_LOG(ERROR) << "Reshape does not support modify batch size. Input batch size: " << input_shape[0]
+                  << "Output batch size: " << output_shape[0];
+    return {false, {}};
+  }
+
+  const nvinfer1::Dims &dims = TrtUtils::MsDimsToTrtDims(output_shape, false);
+  layer->setReshapeDimensions(dims);
+
+  return {true, {LayerInput(layer->getOutput(0))}};
+}
+
+ConvertResult AddElementLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
+                              nvinfer1::ElementWiseOperation op_type) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 2) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    return {false, {}};
+  }
+
+  const std::vector<size_t> &x1_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const std::vector<size_t> &x2_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  const std::vector<size_t> &y_shape = AnfAlgo::GetOutputInferShape(node, 0);
+
+  // Keep to output
+  auto Broadcast = [&context, &y_shape](nvinfer1::ITensor *tensor, const std::vector<size_t> &x_shape) {
+    if (x_shape.size() == y_shape.size()) {
+      return tensor;
+    }
+
+    // Copy x_shape to dim with tail align, and fill left axis with 1.
+    // For example:
+    //    x: [C, H, W]
+    //    y: [N, C, H, W]
+    //  dim: [1, C, H, W]
+    nvinfer1::Dims dim;
+    dim.nbDims = SizeToInt(y_shape.size());
+    std::fill(dim.d, dim.d + dim.nbDims, 1);
+    size_t offset = y_shape.size() - x_shape.size();
+    for (size_t i = 0; i < x_shape.size(); i++) {
+      dim.d[i + offset] = SizeToInt(x_shape[i]);
+    }
+
+    auto *layer = context->network()->addShuffle(*tensor);
+    MS_EXCEPTION_IF_NULL(layer);
+    layer->setReshapeDimensions(dim);
+
+    return layer->getOutput(0);
+  };
+
+  auto *x1 = Broadcast(inputs[0].tensor(), x1_shape);
+  auto *x2 = Broadcast(inputs[1].tensor(), x2_shape);
+  auto *layer = context->network()->addElementWise(*x1, *x2, op_type);
+  MS_EXCEPTION_IF_NULL(layer);
+
+  return {true, {LayerInput(layer->getOutput(0))}};
+}
+
+ConvertResult AddPoolingLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
+                              nvinfer1::PoolingType pooling_type) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
+  if (format != "NCHW") {
+    MS_LOG(ERROR) << "The format: " << format << " not supported.";
+    return {false, {}};
+  }
+
+  const auto &kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
+  auto *layer = context->network()->addPoolingNd(
+    *(inputs[0].tensor()), pooling_type, nvinfer1::DimsHW{LongToInt(kernel_size[2]), LongToInt(kernel_size[3])});
+  MS_EXCEPTION_IF_NULL(layer);
+
+  const auto &strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
+  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[2]), LongToInt(strides[3])});
+
+  auto pad_mode = AnfAlgo::GetNodeAttr<std::string>(node, "pad_mode");
+  std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);
+  if (pad_mode == "SAME") {
+    layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
+  }
+
+  return {true, {LayerInput(layer->getOutput(0))}};
+}
+
+ConvertResult AddActivationLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
+                                 nvinfer1::ActivationType act_type) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  auto *layer = context->network()->addActivation(*inputs[0].tensor(), act_type);
+  MS_EXCEPTION_IF_NULL(layer);
+
+  return {true, {LayerInput(layer->getOutput(0))}};
+}
+}  // namespace
+
 // Register operator converter from AnfNode to trt layer: `OPNAME` should keep the same as primitive definition.
 #define MS_TRT_CONVERTER_FUNC_REG(OPNAME)                                                                 \
   ConvertResult Gpu##OPNAME##TrtConverter(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context); \
@@ -69,62 +190,75 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2D) {
   return {true, {LayerInput(layer->getOutput(0))}};
 }
 
-MS_TRT_CONVERTER_FUNC_REG(Add) {
-  std::vector<LayerInput> inputs;
-  bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 2) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
-    return {false, {}};
-  }
-
-  auto *layer =
-    context->network()->addElementWise(*inputs[0].tensor(), *inputs[1].tensor(), nvinfer1::ElementWiseOperation::kSUM);
-  MS_EXCEPTION_IF_NULL(layer);
-
-  return {true, {LayerInput(layer->getOutput(0))}};
+// Binary broadcast operators.
+MS_TRT_CONVERTER_FUNC_REG(Add) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kSUM); }
+MS_TRT_CONVERTER_FUNC_REG(Sub) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kSUB); }
+MS_TRT_CONVERTER_FUNC_REG(Mul) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kPROD); }
+MS_TRT_CONVERTER_FUNC_REG(Div) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kDIV); }
+MS_TRT_CONVERTER_FUNC_REG(Pow) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kPOW); }
+MS_TRT_CONVERTER_FUNC_REG(Maximum) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kMAX); }
+MS_TRT_CONVERTER_FUNC_REG(Minimum) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kMIN); }
+MS_TRT_CONVERTER_FUNC_REG(FloorDiv) {
+  return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kFLOOR_DIV);
 }
 
-MS_TRT_CONVERTER_FUNC_REG(MaxPool) {
+// Pooling operators.
+MS_TRT_CONVERTER_FUNC_REG(AvgPool) { return AddPoolingLayer(node, context, nvinfer1::PoolingType::kAVERAGE); }
+MS_TRT_CONVERTER_FUNC_REG(MaxPool) { return AddPoolingLayer(node, context, nvinfer1::PoolingType::kMAX); }
+
+// Activation operators.
+MS_TRT_CONVERTER_FUNC_REG(ReLU) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kRELU); }
+MS_TRT_CONVERTER_FUNC_REG(Sigmoid) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kSIGMOID); }
+MS_TRT_CONVERTER_FUNC_REG(Tanh) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kTANH); }
+MS_TRT_CONVERTER_FUNC_REG(Elu) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kELU); }
+MS_TRT_CONVERTER_FUNC_REG(Softsign) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kSOFTSIGN); }
+
+MS_TRT_CONVERTER_FUNC_REG(GeLU) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
+  if (!ret || inputs.size() != 1) {
     MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
-  const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
-  if (format != "NCHW") {
-    MS_LOG(ERROR) << "The format: " << format << " not supported.";
-    return {false, {}};
-  }
+  const std::vector<size_t> &x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  nvinfer1::Dims dim;
+  dim.nbDims = SizeToInt(x_shape.size());
+  std::fill(dim.d, dim.d + dim.nbDims, 1);
 
-  const auto &kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
-  auto *layer =
-    context->network()->addPoolingNd(*(inputs[0].tensor()), nvinfer1::PoolingType::kMAX,
-                                     nvinfer1::DimsHW{LongToInt(kernel_size[2]), LongToInt(kernel_size[3])});
+  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+    std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
+    auto value = static_cast<float *>(weight->data_c());
+    value[0] = coeff;
+
+    auto *layer = context->network()->addConstant(dim, nvinfer1::Weights{nvinfer1::DataType::kFLOAT, value, 1});
+    MS_EXCEPTION_IF_NULL(layer);
+    return layer->getOutput(0);
+  };
+
+  // y = 0.5 * x * (1 + tanh(0.7978846 * (x + 0.044715 * x^3)))
+  auto *c1 = AddConst(0.5f);
+  auto *c2 = AddConst(1.0f);
+  auto *c3 = AddConst(0.7978846f);
+  auto *c4 = AddConst(0.044715f);
+  auto *c5 = AddConst(3.0f);
+
+  auto *x = inputs[0].tensor();
+  nvinfer1::ILayer *layer = context->network()->addElementWise(*x, *c5, nvinfer1::ElementWiseOperation::kPOW);
   MS_EXCEPTION_IF_NULL(layer);
-
-  const auto &strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
-  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[2]), LongToInt(strides[3])});
-
-  auto pad_mode = AnfAlgo::GetNodeAttr<std::string>(node, "pad_mode");
-  std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);
-  if (pad_mode == "SAME") {
-    layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
-  }
-
-  return {true, {LayerInput(layer->getOutput(0))}};
-}
-
-MS_TRT_CONVERTER_FUNC_REG(ReLU) {
-  std::vector<LayerInput> inputs;
-  bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
-    return {false, {}};
-  }
-
-  auto *layer = context->network()->addActivation(*inputs[0].tensor(), nvinfer1::ActivationType::kRELU);
+  layer = context->network()->addElementWise(*c4, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kPROD);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*x, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kSUM);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*c3, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kPROD);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addActivation(*layer->getOutput(0), nvinfer1::ActivationType::kTANH);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*c2, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kSUM);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*x, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kPROD);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*c1, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kPROD);
   MS_EXCEPTION_IF_NULL(layer);
 
   return {true, {LayerInput(layer->getOutput(0))}};
@@ -134,7 +268,7 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2 || !inputs[0].IsTensor() || !inputs[1].IsWeight()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -201,31 +335,11 @@ MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
   return {true, {LayerInput(layer->getOutput(0))}};
 }
 
-MS_TRT_CONVERTER_FUNC_REG(Reshape) {
-  std::vector<LayerInput> inputs;
-  bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
-    return {false, {}};
-  }
+MS_TRT_CONVERTER_FUNC_REG(Reshape) { return AddReshapeLayer(node, context); }
 
-  auto *layer = context->network()->addShuffle(*inputs[0].tensor());
-  MS_EXCEPTION_IF_NULL(layer);
+MS_TRT_CONVERTER_FUNC_REG(ExpandDims) { return AddReshapeLayer(node, context); }
 
-  const auto &input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  const auto &output_shape = AnfAlgo::GetOutputInferShape(node, 0);
-  if (input_shape[0] != output_shape[0]) {
-    MS_LOG(ERROR) << "Reshape does not support modify batch size. Input batch size: " << input_shape[0]
-                  << "Output batch size: " << output_shape[0];
-    return {false, {}};
-  }
-
-  const nvinfer1::Dims &dims = TrtUtils::MsDimsToTrtDims(output_shape, false);
-  layer->setReshapeDimensions(dims);
-  MS_EXCEPTION_IF_NULL(layer);
-
-  return {true, {LayerInput(layer->getOutput(0))}};
-}
+MS_TRT_CONVERTER_FUNC_REG(Squeeze) { return AddReshapeLayer(node, context); }
 
 MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   std::vector<LayerInput> inputs;
@@ -278,38 +392,6 @@ MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   const nvinfer1::Weights &pow{nvinfer1::DataType::kFLOAT, nullptr, 0};
   auto *layer = context->network()->addScale(*inputs[0].tensor(), nvinfer1::ScaleMode::kCHANNEL, shift, scale, pow);
   MS_EXCEPTION_IF_NULL(layer);
-
-  return {true, {LayerInput(layer->getOutput(0))}};
-}
-
-MS_TRT_CONVERTER_FUNC_REG(AvgPool) {
-  std::vector<LayerInput> inputs;
-  bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
-    return {false, {}};
-  }
-
-  const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
-  if (format != "NCHW") {
-    MS_LOG(ERROR) << "The format: " << format << " not supported.";
-    return {false, {}};
-  }
-
-  const auto &kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
-  auto *layer =
-    context->network()->addPoolingNd(*(inputs[0].tensor()), nvinfer1::PoolingType::kAVERAGE,
-                                     nvinfer1::DimsHW{LongToInt(kernel_size[2]), LongToInt(kernel_size[3])});
-  MS_EXCEPTION_IF_NULL(layer);
-
-  const auto &strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
-  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[2]), LongToInt(strides[3])});
-
-  auto pad_mode = AnfAlgo::GetNodeAttr<std::string>(node, "pad_mode");
-  std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);
-  if (pad_mode == "SAME") {
-    layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
-  }
 
   return {true, {LayerInput(layer->getOutput(0))}};
 }
