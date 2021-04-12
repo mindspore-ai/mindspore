@@ -20,15 +20,15 @@
 #include <arm_neon.h>
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
+#include "src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore::kernel {
-class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
+class ConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx, void *origin_weight,
-                           void *origin_bias, TypeId origin_weight_data_type, TypeId origin_bias_data_type)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, origin_weight_data_type, origin_bias_data_type),
+                           void *origin_bias)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
         origin_weight_(origin_weight),
         origin_bias_(origin_bias) {}
   ~ConvolutionFP16CPUKernel() override {

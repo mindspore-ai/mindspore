@@ -29,11 +29,8 @@ namespace mindspore::kernel {
 class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
  public:
   ConvolutionDelegateFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                   TypeId origin_weight_data_type, TypeId origin_bias_data_type)
-      : LiteKernel(parameter, inputs, outputs, ctx),
-        origin_weight_data_type_(origin_weight_data_type),
-        origin_bias_data_type_(origin_bias_data_type) {}
+                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateFP16CPUKernel() override {
     FreeCopiedData();
     if (fp16_conv_kernel_ != nullptr) {
@@ -56,14 +53,11 @@ class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
   void *origin_weight_ = nullptr;
   void *origin_bias_ = nullptr;
   kernel::LiteKernel *fp16_conv_kernel_ = nullptr;
-  TypeId origin_weight_data_type_;
-  TypeId origin_bias_data_type_;
 };
 
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const lite::InnerContext *ctx, void *origin_weight, void *origin_bias,
-                                            TypeId origin_weight_data_type, TypeId origin_bias_data_type);
+                                            const lite::InnerContext *ctx, void *origin_weight, void *origin_bias);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DELEGATE_FP16_H_

@@ -73,7 +73,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
-  auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
@@ -92,10 +92,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float16_t *>(bias_tensor->MutableData());
-    for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
-      reinterpret_cast<float16_t *>(bias_data_)[i] = ori_bias[i];
-    }
+    auto ori_bias = reinterpret_cast<float16_t *>(bias_tensor->data_c());
+    memcpy(bias_data_, ori_bias, bias_tensor->Size());
   }
 
   conv_param_->thread_num_ = MSMIN(thread_count_, OC8);
@@ -157,18 +155,23 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_ptr == nullptr || output_ptr == nullptr) {
+    MS_LOG(ERROR) << "Deconvolution depthwise Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
 
   if (need_align_) {
-    PackNHWCToNHWC8Fp16(execute_input_, packed_input_, conv_param_->input_batch_,
+    PackNHWCToNHWC8Fp16(input_ptr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
   } else {
-    packed_input_ = execute_input_;
+    packed_input_ = input_ptr;
   }
 
   if (!need_align_) {
-    memset(execute_output_, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float16_t));
-    packed_output_ = execute_output_;
+    memset(output_ptr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float16_t));
+    packed_output_ = output_ptr;
   }
   ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -176,7 +179,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   }
 
   if (need_align_) {
-    PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
+    PackNHWC8ToNHWCFp16(packed_output_, output_ptr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }
 

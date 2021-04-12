@@ -22,15 +22,14 @@
 #include "nnacl/fp16/common_func_fp16.h"
 #include "nnacl/fp16/deconv_winograd_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
-#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
+#include "src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore::kernel {
-class DeConvWinogradFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
+class DeConvWinogradFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvWinogradFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                              TypeId origin_weight_data_type, TypeId origin_bias_data_type)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, origin_weight_data_type, origin_bias_data_type) {}
+                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DeConvWinogradFp16CPUKernel() override;
   int Init() override;
   int Run() override;

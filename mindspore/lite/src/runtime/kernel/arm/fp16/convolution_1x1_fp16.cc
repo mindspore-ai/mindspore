@@ -88,12 +88,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
-    if (origin_bias_data_type_ == kNumberTypeFloat16) {
-      memcpy(bias_data_, origin_bias_, output_channel * sizeof(float16_t));
-    } else {
-      MS_LOG(ERROR) << "Conv1x1 only support fp16 weight";
-      return RET_ERROR;
-    }
+    memcpy(bias_data_, origin_bias_, output_channel * sizeof(float16_t));
     memset(reinterpret_cast<char *>(bias_data_) + bias_size, 0, size - bias_size);
   }
 
@@ -105,8 +100,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
-  ColMajor2Row8MajorFp16(origin_weight_, weight_ptr_, input_channel, output_channel,
-                         origin_weight_data_type_ == kNumberTypeFloat16);
+  ColMajor2Row8MajorFp16(origin_weight_, weight_ptr_, input_channel, output_channel, true);
   return RET_OK;
 }
 
@@ -217,8 +211,12 @@ static int Convolution1x1Fp16RunHw(void *cdata, int task_id) {
 }
 
 int Convolution1x1FP16CPUKernel::Run() {
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-
+  auto input_data = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_data == nullptr || output_data == nullptr) {
+    MS_LOG(ERROR) << "Convolution1x1 Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
   pack_input_ = reinterpret_cast<float16_t *>(
     ctx_->allocator->Malloc(matmul_param_->row_align_ * matmul_param_->deep_ * sizeof(float16_t)));
   if (pack_input_ == nullptr) {
@@ -227,9 +225,9 @@ int Convolution1x1FP16CPUKernel::Run() {
   }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    output_ptr_ = execute_output_ + batch_index * matmul_param_->row_ * matmul_param_->col_;
+    output_ptr_ = output_data + batch_index * matmul_param_->row_ * matmul_param_->col_;
     float16_t *batch_in =
-      execute_input_ + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_;
+      input_data + batch_index * conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_channel_;
     if (pre_trans_input_) {
       Conv1x1InputPack(batch_in, input_ptr_, conv_param_, sizeof(float16_t));
     } else {
