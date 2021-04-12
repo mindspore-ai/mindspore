@@ -310,7 +310,7 @@ def dot(x1, x2):
 
     Raises:
         TypeError: If type of x1 and x2 are not the same.
-        TpyeError: If dtype of x1 or x2 is not float16 or float32.
+        TypeError: If dtype of x1 or x2 is not float16 or float32.
         ValueError: If rank of x1 or x2 less than 2.
 
     Supported Platforms:
@@ -470,7 +470,7 @@ def batch_dot(x1, x2, axes=None):
 
     Raises:
         TypeError: If type of x1 and x2 are not the same.
-        TpyeError: If dtype of x1 or x2 is not float32.
+        TypeError: If dtype of x1 or x2 is not float32.
         ValueError: If rank of x1 or x2 less than 2.
         ValueError: If batch dim used in axes.
         ValueError: If len(axes) less than 2.
