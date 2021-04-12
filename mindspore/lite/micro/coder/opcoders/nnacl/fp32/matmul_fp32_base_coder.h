@@ -43,6 +43,7 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   int InitBufferB();
   int InitMatrixA(const float *src_ptr);
   int InitMatrixB(const float *src_ptr);
+  int CollectFilesForTarget(CoderContext *const context);
 
  protected:
   virtual int Init();
@@ -64,8 +65,10 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   int thread_stride_{0};
   int thread_count_{0};
   size_t bias_pack_ptr_size_{0};
+  size_t ori_bias_pack_ptr_size_{0};
   size_t a_pack_ptr_size_{0};
   size_t b_pack_ptr_size_{0};
+  bool is_bias_broadcast_{false};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_MATMUL_FP32_BASE_CODER_H_

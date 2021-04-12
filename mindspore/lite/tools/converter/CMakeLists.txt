@@ -6,7 +6,6 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-set(NNACL_DIR ${CCSRC_DIR}/backend/kernel_compiler/cpu/nnacl)
 
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)

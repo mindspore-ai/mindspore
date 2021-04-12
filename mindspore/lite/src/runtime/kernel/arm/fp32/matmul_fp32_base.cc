@@ -90,17 +90,52 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   return RET_OK;
 }
 
+int MatmulFp32BaseCPUKernel::CalBroadCastBiasDataElements() {
+  lite::Tensor *bias_tensor = in_tensors_.at(2);
+  int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), C16NUM);
+  if (!params_->b_const_) {
+    MS_LOG(WARNING) << "matmul do not support broadcast bias data";
+  } else {
+    lite::Tensor *const_tensor = in_tensors_.at(1);
+    size_t shape_size = const_tensor->shape().size();
+    if (shape_size < kBiasIndex) {
+      return max_bias_data;
+    }
+    if (params_->b_transpose_) {
+      max_bias_data = UP_ROUND(const_tensor->shape()[shape_size - kBiasIndex], C16NUM);
+    } else {
+      max_bias_data = UP_ROUND(const_tensor->shape()[shape_size - kWeightIndex], C16NUM);
+    }
+  }
+  return max_bias_data;
+}
+
 int MatmulFp32BaseCPUKernel::InitBiasData() {
   if (in_tensors_.size() == 3) {
     auto bias_tensor = in_tensors_[2];
     int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), C16NUM);
-    bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * sizeof(float)));
-    if (bias_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "malloc bias_ptr_ failed";
-      return RET_ERROR;
+    // whether to broadcast bias data
+    if (bias_tensor->ElementsNum() == 1) {
+      max_bias_data = CalBroadCastBiasDataElements();
+      bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * sizeof(float)));
+      if (bias_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "malloc bias_ptr_ failed";
+        return RET_ERROR;
+      }
+      float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data_c()))[0];
+      // broadcast bias data
+      for (int i = 0; i < max_bias_data; ++i) {
+        bias_ptr_[i] = broadcast_data;
+      }
+    } else {
+      bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * sizeof(float)));
+      if (bias_ptr_ == nullptr) {
+        MS_LOG(ERROR) << "malloc bias_ptr_ failed";
+        return RET_ERROR;
+      }
+      memset(bias_ptr_, 0, max_bias_data * sizeof(float));
+      memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float));
     }
-    memset(bias_ptr_, 0, max_bias_data * sizeof(float));
-    memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float));
   }
   return RET_OK;
 }

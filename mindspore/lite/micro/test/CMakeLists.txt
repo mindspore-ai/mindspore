@@ -11,6 +11,7 @@ include(${TOP_DIR}/cmake/external_libs/gtest.cmake)
 include(${MICRO_DIR}/cmake/file_list.cmake)
 include(${MICRO_DIR}/cmake/package_wrapper.cmake)
 
+include_directories(${NNACL_DIR}/../)
 include_directories(${TOP_DIR})
 include_directories(${TOP_DIR}/mindspore/core/)
 include_directories(${LITE_DIR})

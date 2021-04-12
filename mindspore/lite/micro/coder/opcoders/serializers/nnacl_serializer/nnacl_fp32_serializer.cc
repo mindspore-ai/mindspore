@@ -74,13 +74,13 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParamete
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter) {
-  CodeBaseStruct("MatMulParameter", name, mat_mul_parameter.op_parameter_, mat_mul_parameter.has_bias_,
-                 mat_mul_parameter.row_, mat_mul_parameter.col_, mat_mul_parameter.row_4_, mat_mul_parameter.row_6_,
-                 mat_mul_parameter.row_12_, mat_mul_parameter.row_16_, mat_mul_parameter.row_align_,
-                 mat_mul_parameter.col_4_, mat_mul_parameter.col_8_, mat_mul_parameter.col_align_,
-                 mat_mul_parameter.deep_, mat_mul_parameter.deep_4_, mat_mul_parameter.deep_16_,
-                 mat_mul_parameter.batch, mat_mul_parameter.a_transpose_, mat_mul_parameter.b_transpose_,
-                 mat_mul_parameter.a_const_, mat_mul_parameter.b_const_, mat_mul_parameter.act_type_);
+  CodeBaseStruct(
+    "MatMulParameter", name, mat_mul_parameter.op_parameter_, mat_mul_parameter.has_bias_, mat_mul_parameter.row_,
+    mat_mul_parameter.col_, mat_mul_parameter.row_4_, mat_mul_parameter.row_6_, mat_mul_parameter.row_12_,
+    mat_mul_parameter.row_16_, mat_mul_parameter.row_align_, mat_mul_parameter.col_4_, mat_mul_parameter.col_8_,
+    mat_mul_parameter.col_align_, mat_mul_parameter.deep_, mat_mul_parameter.deep_4_, mat_mul_parameter.deep_16_,
+    mat_mul_parameter.batch, mat_mul_parameter.a_transpose_, mat_mul_parameter.b_transpose_, mat_mul_parameter.a_const_,
+    mat_mul_parameter.b_const_, mat_mul_parameter.act_type_, mat_mul_parameter.use_axis_, mat_mul_parameter.axis_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleParameter &scale_parameter) {
@@ -142,5 +142,12 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSlice
                  strided_slice_parameter.num_axes_, strided_slice_parameter.data_type,
                  strided_slice_parameter.begins_mask_, strided_slice_parameter.ellipsisMask_,
                  strided_slice_parameter.newAxisMask_, strided_slice_parameter.shrinkAxisMask_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ArithmeticWrapperInfo &arithmetic_wrapper_info) {
+  CodeBaseStruct("ArithmeticWrapperInfo", name, arithmetic_wrapper_info.offset0_, arithmetic_wrapper_info.stride0_,
+                 arithmetic_wrapper_info.offset1_, arithmetic_wrapper_info.stride1_,
+                 arithmetic_wrapper_info.out_offset_, arithmetic_wrapper_info.out_stride_,
+                 arithmetic_wrapper_info.arithmetic_func_type_);
 }
 }  // namespace mindspore::lite::micro::nnacl
