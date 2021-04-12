@@ -94,8 +94,11 @@ class SGD(Optimizer):
         weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
         nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must be positive,
                          and dampening must equal to 0.0. Default: False.
-        loss_scale (float): A floating point value for the loss scale, which must be larger
-                            than 0.0. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale, which must be larger than 0.0. In general, use
+            the default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
+            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
