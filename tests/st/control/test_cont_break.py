@@ -32,10 +32,7 @@ def run_test(netclass, count, dev):
         np.testing.assert_array_almost_equal(output_np, output_ms.asnumpy(), decimal=3)
 
 
-class for_loop_with_break(Cell):
-    def __init__(self):
-        super().__init__()
-
+class ForLoopWithBreak(Cell):
     def construct(self, x):
         for i in range(8):
             if i > 5:
@@ -45,10 +42,7 @@ class for_loop_with_break(Cell):
         return x
 
 
-class for_loop_with_continue(Cell):
-    def __init__(self):
-        super().__init__()
-
+class ForLoopWithContinue(Cell):
     def construct(self, x):
         for i in range(8):
             if i > 5:
@@ -58,10 +52,7 @@ class for_loop_with_continue(Cell):
         return x
 
 
-class for_loop_with_cont_break(Cell):
-    def __init__(self):
-        super().__init__()
-
+class ForLoopWithContBreak(Cell):
     def construct(self, x):
         for i in range(8):
             if i < 3:
@@ -74,10 +65,7 @@ class for_loop_with_cont_break(Cell):
         return x
 
 
-class for_nested_loop_with_break(Cell):
-    def __init__(self):
-        super().__init__()
-
+class ForNestedLoopWithBreak(Cell):
     def construct(self, x):
         for _ in range(3):
             for j in range(5):
@@ -88,10 +76,7 @@ class for_nested_loop_with_break(Cell):
         return x
 
 
-class while_with_break(Cell):
-    def __init__(self):
-        super().__init__()
-
+class WhileWithBreak(Cell):
     def construct(self, x):
         i = 0
         while i < 5:
@@ -103,10 +88,7 @@ class while_with_break(Cell):
         return x
 
 
-class while_with_continue(Cell):
-    def __init__(self):
-        super().__init__()
-
+class WhileWithContinue(Cell):
     def construct(self, x):
         i = 0
         while i < 5:
@@ -119,10 +101,7 @@ class while_with_continue(Cell):
         return x
 
 
-class while_for_nested(Cell):
-    def __init__(self):
-        super().__init__()
-
+class WhileForNested(Cell):
     def construct(self, x):
         i = 0
         while i < 5:
@@ -138,10 +117,7 @@ class while_for_nested(Cell):
         return x
 
 
-class pass_branch(Cell):
-    def __init__(self):
-        super().__init__()
-
+class PassBranch(Cell):
     def construct(self, x):
         i = 0
         while i < 5:
@@ -159,11 +135,11 @@ class pass_branch(Cell):
 def test_cont_break():
     count = 20
     dev = 'CPU'
-    run_test(for_loop_with_break, count, dev)
-    run_test(for_loop_with_continue, count, dev)
-    run_test(for_loop_with_cont_break, count, dev)
-    run_test(for_nested_loop_with_break, count, dev)
-    run_test(while_with_break, count, dev)
-    run_test(while_with_continue, count, dev)
-    run_test(while_for_nested, count, dev)
-    run_test(pass_branch, count, dev)
+    run_test(ForLoopWithBreak, count, dev)
+    run_test(ForLoopWithContinue, count, dev)
+    run_test(ForLoopWithContBreak, count, dev)
+    run_test(ForNestedLoopWithBreak, count, dev)
+    run_test(WhileWithBreak, count, dev)
+    run_test(WhileWithContinue, count, dev)
+    run_test(WhileForNested, count, dev)
+    run_test(PassBranch, count, dev)
