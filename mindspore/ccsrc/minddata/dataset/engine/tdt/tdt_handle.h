@@ -32,6 +32,7 @@ class TdtHandle {
 
  private:
   TdtHandle() {}
+  ~TdtHandle() = default;
 };
 }  // namespace dataset
 }  // namespace mindspore
