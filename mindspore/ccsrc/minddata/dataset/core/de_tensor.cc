@@ -79,7 +79,7 @@ size_t DETensor::DataSize() const {
   }
 #endif
   EXCEPTION_IF_NULL(tensor_impl_);
-  return tensor_impl_->SizeInBytes();
+  return static_cast<uint32_t>(tensor_impl_->SizeInBytes());
 }
 
 const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
