@@ -561,7 +561,7 @@ Accumulating evaluation results...
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 08/01/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | COCO2017                                                    |
@@ -582,7 +582,7 @@ Accumulating evaluation results...
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | V1                          |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 08/01/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | COCO2017                    |

@@ -558,7 +558,7 @@ Accumulating evaluation results...
 | 参数                  | MaskRCNN                                                  |
 | -------------------   | --------------------------------------------------------- |
 | 模型版本              | V1                                                        |
-| 资源                  | Ascend 910；CPU： 2.60GHz，192核；内存：755G              |
+| 资源                  | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8              |
 | 上传日期              | 2020-08-01                                                |
 | MindSpore版本         | 0.6.0-alpha                                               |
 | 数据集                | COCO2017                                                  |
@@ -575,7 +575,7 @@ Accumulating evaluation results...
 | 参数                  | MaskRCNN                      |
 | --------------------- | ----------------------------- |
 | 模型版本              | V1                            |
-| 资源                  | Ascend 910                    |
+| 资源                  | Ascend 910；系统 Euler2.8                    |
 | 上传日期              | 2020-08-01                    |
 | MindSpore版本         | 0.6.0-alpha                   |
 | 数据集                | COCO2017                      |

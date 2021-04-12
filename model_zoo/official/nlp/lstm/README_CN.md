@@ -307,7 +307,7 @@ Ascend:
 
 | 参数                | LSTM (Ascend)                | LSTM (GPU)                  | LSTM (CPU)                   |
 | ------------------- | ---------------------------- | --------------------------- | ---------------------------- |
-| 资源                | Ascend 910                   | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
+| 资源                | Ascend 910；系统 Euler2.8                    | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
 | 上传日期            | 2020-12-21                   | 2020-08-06                  | 2020-08-06                   |
 | MindSpore版本       | 1.1.0                        | 0.6.0-beta                  | 0.6.0-beta                   |
 | 数据集              | aclimdb_v1                   | aclimdb_v1                  | aclimdb_v1                   |

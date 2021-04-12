@@ -537,12 +537,12 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_
 
 ## 性能
 
-### 评估性能
+### 训练性能
 
 | 参数 | Ascend 910
 | -------------------------- | -------------------------------------- |
 | 模型版本 | DeepLabV3
-| 资源 | Ascend 910 |
+| 资源 | Ascend 910；系统 Euler2.8 |
 | 上传日期 | 2020-09-04 |
 | MindSpore版本 | 0.7.0-alpha |
 | 数据集 | PASCAL VOC2012 + SBD |
@@ -554,6 +554,20 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_
 | 速度 | 31 帧数/秒（单卡，s8）<br> 234 帧数/秒（8卡，s8） |  
 | 微调检查点 | 443M （.ckpt文件） |
 | 脚本 | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) |
+
+## 推理性能
+
+| 参数          | Ascend                      |
+| ------------------- | --------------------------- |
+| 模型版本             | DeepLabV3 V1                |
+| 资源                 | Ascend 910；系统 Euler2.8                  |
+| 上传日期       | 2020-09-04 |
+| MindSpore 版本   | 0.7.0-alpha                 |
+| 数据集             | VOC 数据集    |
+| batch_size          | 32 (s16); 16 (s8)                         |
+| 输出             | 概率                 |
+| 准确率            | 8pcs: <br> s16: 77.37 <br>  s8: 78.84% <br>  s8_multiscale: 79.70% <br> s8_Flip: 79.89%  |
+| 推理模型 | 443M (.ckpt 文件)         |
 
 # 随机情况说明
 

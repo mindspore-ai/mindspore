@@ -210,7 +210,7 @@ class 1 precision is 84.24%, recall is 87.40%, F1 is 85.79%
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | Deeptext                                                     |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G, OS:Euler2.8   |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8   |
 | uploaded Date              | 12/26/2020                                                   |
 | MindSpore Version          | 1.1.0                                                        |
 | Dataset                    | 66040 images                                                 |
@@ -227,7 +227,7 @@ class 1 precision is 84.24%, recall is 87.40%, F1 is 85.79%
 | Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
 | Model Version       | Deeptext                 |
-| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G         |
+| Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8         |
 | Uploaded Date       | 12/26/2020                 |
 | MindSpore Version   | 1.1.0              |
 | Dataset             | 229 images                  |

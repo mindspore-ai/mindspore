@@ -418,7 +418,7 @@ The best acc is 0.891176
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | TinyBERT                                                   | TinyBERT                           |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
+| Resource                   |Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8           | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
 | uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
 | MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
 | Dataset                    | en-wiki-128                                                | en-wiki-128               |
@@ -438,7 +438,7 @@ The best acc is 0.891176
 | Parameters                 | Ascend                        | GPU                       |
 | -------------------------- | ----------------------------- | ------------------------- |
 | Model Version              |                               |                           |
-| Resource                   | Ascend 910                    | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910; OS Euler2.8                      | NV SMX2 V100-32G          |
 | uploaded Date              | 08/20/2020                    | 08/24/2020                |
 | MindSpore Version          | 1.0.0                         | 1.0.0                     |
 | Dataset                    | SST-2,                        | SST-2                     |

@@ -213,7 +213,7 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | 参数                 | Ascend 910                                    |   GPU |
 | -------------------------- | --------------------------------------------- |---------------------------------- |
 | 模型版本              | v1.0                                          | v1.0 |
-| 资源                   | Ascend 910，CPU 2.60GHz 192核，内存：755G   | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24核，内存： 128G
+| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8   | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24核，内存： 128G
 | 上传日期              | 2020-07-01                   | 2020-08-01 |
 | MindSpore版本          | 0.5.0-alpha                                   | 0.6.0-alpha |
 | 数据集                    | Captcha                                       | Captcha |
@@ -233,7 +233,7 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | 参数          | WarpCTC                     |
 | ------------------- | --------------------------- |
 | 模型版本       | V1.0                        |
-| 资源            | Ascend 910                  |
+| 资源            |Ascend 910；系统 Euler2.8                 |
 | 上传日期       | 2020-08-01 |
 | MindSpore版本   | 0.6.0-alpha                 |
 | 数据集             | Captcha                     |

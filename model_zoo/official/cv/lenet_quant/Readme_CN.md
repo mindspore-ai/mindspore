@@ -164,7 +164,7 @@ python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_937.ckpt > l
 
 | 参数                  | LeNet                                                       |
 | -------------------------- | ----------------------------------------------------------- |
-| 资源                   | Ascend 910 CPU：2.60GHz，192核，内存：755G                  |
+| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8                  |
 | 上传日期              | 2020-06-09                                 |
 | MindSpore版本          | 0.5.0-beta                                                  |
 | 数据集                    | MNIST                                                       |

@@ -240,7 +240,7 @@ Parameters for learning rate:
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   | Ascend 910; OS Euler2.8                                                 |
 | uploaded Date              | 09/15/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.0.0                                                          |
 | Dataset                    | WMT Englis-German                                              |
@@ -258,7 +258,7 @@ Parameters for learning rate:
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                |
 | Uploaded Date       | 09/15/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | WMT newstest2014            |

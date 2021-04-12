@@ -161,7 +161,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters          | Ascend                                                |
 | ------------------- | ----------------------------------------------------- |
 | Model Version       | TextCNN                                               |
-| Resource            | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G      |
+| Resource            |Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8    |
 | uploaded Date       | 11/10/2020 (month/day/year)                           |
 | MindSpore Version   | 1.0.1                                                 |
 | Dataset             | Movie Review Data                                     |

@@ -207,7 +207,7 @@ Parameters for re-ranker and reader evaluation can be passed directly at executi
 | Parameter                      | BGCF Ascend                  |
 | ------------------------------ | ---------------------------- |
 | Model Version                  | Inception V1                 |
-| Resource                       | Ascend 910                   |
+| Resource                       | Ascend 910; OS Euler2.8                   |
 | uploaded Date                  | 03/12/2021(month/day/year)   |
 | MindSpore Version              | 1.2.0                        |
 | Dataset                        | HotPotQA                     |

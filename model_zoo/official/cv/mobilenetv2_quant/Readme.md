@@ -169,7 +169,7 @@ result: {'acc': 0.71976314102564111}
 | Parameters                 | MobilenetV2                                                |
 | -------------------------- | ---------------------------------------------------------- |
 | Model Version              | V2                                                         |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8               |
 | uploaded Date              | 06/06/2020                                                 |
 | MindSpore Version          | 0.3.0                                                      |
 | Dataset                    | ImageNet                                                   |
@@ -189,7 +189,7 @@ result: {'acc': 0.71976314102564111}
 | Parameters                 |                               |
 | -------------------------- | ----------------------------- |
 | Model Version              | V2                            |
-| Resource                   | Ascend 910                    |
+| Resource                   | Ascend 910; OS Euler2.8                     |
 | uploaded Date              | 06/06/2020                    |
 | MindSpore Version          | 0.3.0                         |
 | Dataset                    | ImageNet, 1.2W                |

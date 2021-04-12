@@ -213,7 +213,7 @@ sh run_export.sh 16 0 ./0-1_1.ckpt
 | Parameters                 | Face Recognition                                            |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                |
 | uploaded Date              | 09/30/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | 4.7 million images                                          |
@@ -230,7 +230,7 @@ sh run_export.sh 16 0 ./0-1_1.ckpt
 | Parameters          |Face Recognition For Tracking|
 | ------------------- | --------------------------- |
 | Model Version       | V1                          |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                      |
 | Uploaded Date       | 09/30/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | 1.1 million images          |

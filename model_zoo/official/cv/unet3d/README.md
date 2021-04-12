@@ -228,7 +228,7 @@ eval average dice is 0.9502010010453671
 | Parameters          | Ascend                                                    |
 | ------------------- | --------------------------------------------------------- |
 | Model Version       | Unet3D                                                    |
-| Resource            | Ascend 910; CPU 2.60GHz，192cores；Memory，755G            |
+| Resource            |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
 | uploaded Date       | 03/18/2021 (month/day/year)                               |
 | MindSpore Version   | 1.2.0                                                     |
 | Dataset             | LUNA16                                                    |
@@ -245,7 +245,7 @@ eval average dice is 0.9502010010453671
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | Unet3D                      |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 03/18/2021 (month/day/year) |
 | MindSpore Version   | 1.2.0                       |
 | Dataset             | LUNA16                      |

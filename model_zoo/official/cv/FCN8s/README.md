@@ -192,7 +192,7 @@ Dataset used:
 | Parameters                 | Ascend
 | -------------------------- | -----------------------------------------------------------
 | Model Version              | FCN-8s
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8
 | uploaded Date              | 12/30/2020 (month/day/year)
 | MindSpore Version          | 1.1.0-alpha
 | Dataset                    | PASCAL VOC 2012 and SBD
@@ -211,7 +211,7 @@ Dataset used:
 | Parameters          | Ascend
 | ------------------- | ---------------------------
 | Model Version       | FCN-8s
-| Resource            | Ascend 910
+| Resource            | Ascend 910; OS Euler2.8
 | Uploaded Date       | 10/29/2020 (month/day/year)
 | MindSpore Version   | 1.1.0-alpha
 | Dataset             | PASCAL VOC 2012

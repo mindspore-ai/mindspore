@@ -521,7 +521,7 @@ CenterFace on 13K images(The annotation and data format must be the same as wide
 
 | Parameters                 | CenterFace                                                  |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 10/29/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                 |
 | Dataset                    | 13K images                                                  |
@@ -541,7 +541,7 @@ CenterFace on 3.2K images(The annotation and data format must be the same as wid
 
 | Parameters                 | CenterFace                                                  |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 10/29/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                               |
 | Dataset                    | 3.2K images                                                 |

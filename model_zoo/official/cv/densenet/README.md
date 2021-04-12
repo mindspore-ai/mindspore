@@ -330,7 +330,7 @@ You can modify the training behaviour through the various flags in the `train.py
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | DenseNet121               | DenseNet121               |
-| Resource            | Ascend 910                  | Tesla V100-PCIE             |
+| Resource            | Ascend 910; OS Euler2.8                  | Tesla V100-PCIE             |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 01/27/2021 (month/day/year) |
 | MindSpore Version   | 1.0.0                       | 1.1.0                       |
 | Dataset             | ImageNet                    | ImageNet                    |
@@ -343,7 +343,7 @@ You can modify the training behaviour through the various flags in the `train.py
 | Parameters          | Ascend                      | GPU                          |
 | ------------------- | --------------------------- | ---------------------------- |
 | Model Version       | DenseNet121              | DenseNet121               |
-| Resource            | Ascend 910                  | Tesla V100-PCIE              |
+| Resource            | Ascend 910; OS Euler2.8                  | Tesla V100-PCIE              |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 02/04/2021 (month/day/year)  |
 | MindSpore Version   | 1.0.0                       | 1.1.1                        |
 | Dataset             | ImageNet                    | ImageNet                     |

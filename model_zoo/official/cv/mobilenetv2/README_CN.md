@@ -231,7 +231,7 @@ python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EX
 | 参数                 | MobilenetV2                                                |                           |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | 模型版本              | V1                                                         | V1                        |
-| 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：755G | NV SMX2 V100-32G |
+| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 | NV SMX2 V100-32G |
 | 上传日期              | 2020-05-06                                                 | 2020-05-06                |
 | MindSpore版本          | 0.3.0                                                      | 0.3.0                     |
 | 数据集                    | ImageNet                                                   | ImageNet                  |

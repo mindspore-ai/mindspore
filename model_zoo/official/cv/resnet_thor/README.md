@@ -258,7 +258,7 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | --------------------------------------        |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                 |ResNet50-v1.5|
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
 | uploaded Date              | 06/01/2020 (month/day/year)                   |   09/23/2020(month/day/year)
 | MindSpore Version          | 0.3.0-alpha                                   | 1.0.0 |
 | Dataset                    | ImageNet2012                                   | ImageNet2012|
@@ -278,7 +278,7 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | Parameters          | Ascend 910                  | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
-| Resource            | Ascend 910                  | GPU                         |
+| Resource            | Ascend 910; OS Euler2.8                  | GPU                         |
 | Uploaded Date       | 06/01/2020 (month/day/year) | 09/23/2020(month/day/year)  |
 | MindSpore Version   | 0.3.0-alpha                 | 1.0.0                       |
 | Dataset             | ImageNet2012                | ImageNet2012                |

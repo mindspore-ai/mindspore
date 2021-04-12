@@ -316,7 +316,7 @@ python eval.py
 
 | Parameters               | Single <br />Ascend             | Single<br />GPU                 | Data-Parallel-8P                | Host-Device-mode-8P             |
 | ------------------------ | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
-| Resource                 | Ascend 910                      | Tesla V100-PCIE 32G             | Ascend 910                      | Ascend 910                      |
+| Resource                 | Ascend 910; OS Euler2.8                      | Tesla V100-PCIE 32G             | Ascend 910; OS Euler2.8                     | Ascend 910; OS Euler2.8                      |
 | Uploaded Date            | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     |
 | MindSpore Version        | 1.0                             | 1.0                             | 1.0                             | 1.0                             |
 | Dataset                  | [1]                             | [1]                             | [1]                             | [1]                             |
@@ -337,7 +337,7 @@ Note: The result of GPU is tested under the master version. The parameter server
 
 | Parameters        | Wide&Deep                   |
 | ----------------- | --------------------------- |
-| Resource          | Ascend 910                  |
+| Resource          | Ascend 910; OS Euler2.8                 |
 | Uploaded Date     | 10/27/2020 (month/day/year) |
 | MindSpore Version | 1.0                 |
 | Dataset           | [1]                         |

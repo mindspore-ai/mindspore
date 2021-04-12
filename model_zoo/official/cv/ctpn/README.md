@@ -301,7 +301,7 @@ Evaluation result will be stored in the example path, you can find result like t
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | CTPN                                                     |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G                |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                |
 | uploaded Date              | 02/06/2021                                                   |
 | MindSpore Version          | 1.1.1                                                        |
 | Dataset                    | 16930 images                                                 |
@@ -318,7 +318,7 @@ Evaluation result will be stored in the example path, you can find result like t
 | Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
 | Model Version       | CTPN                 |
-| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G         |
+| Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8         |
 | Uploaded Date       | 02/06/2020                 |
 | MindSpore Version   | 1.1.1              |
 | Dataset             | 229 images                  |

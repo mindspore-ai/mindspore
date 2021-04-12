@@ -241,7 +241,7 @@ The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code addr
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   | Ascend 910; OS Euler2.8                                                      |
 | uploaded Date              | 11/06/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.0.0                                                          |
 | Dataset                    | WMT English-German for training                                |
@@ -260,7 +260,7 @@ The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code addr
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | WMT newstest2014            |

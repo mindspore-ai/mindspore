@@ -260,7 +260,7 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 | Parameters                 | CNNCTC                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 09/28/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                      |
 | Dataset                    |  MJSynth,SynthText                                                  |
@@ -277,7 +277,7 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 | Parameters          | CNNCTC                   |
 | ------------------- | --------------------------- |
 | Model Version       | V1                |
-| Resource            | Ascend 910                  |
+| Resource            |  Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 09/28/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | IIIT5K    |

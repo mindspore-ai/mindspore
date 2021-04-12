@@ -253,7 +253,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameter                      | BGCF Ascend                                | BGCF GPU                                   |
 | ------------------------------ | ------------------------------------------ | ------------------------------------------ |
 | Model Version                  | Inception V1                               | Inception V1                               |
-| Resource                       | Ascend 910                                 | Tesla V100-PCIE                            |
+| Resource                       | Ascend 910; OS Euler2.8                                  | Tesla V100-PCIE                            |
 | uploaded Date                  | 09/23/2020(month/day/year)                 | 01/27/2021(month/day/year)                 |
 | MindSpore Version              | 1.0.0                                      | 1.1.0                                      |
 | Dataset                        | Amazon-Beauty                              | Amazon-Beauty                              |
@@ -268,7 +268,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameter                      | BGCF Ascend                  | BGCF GPU                     |
 | ------------------------------ | ---------------------------- | ---------------------------- |
 | Model Version                  | Inception V1                 | Inception V1                 |
-| Resource                       | Ascend 910                   | Tesla V100-PCIE              |
+| Resource                       | Ascend 910; OS Euler2.8                 | Tesla V100-PCIE              |
 | uploaded Date                  | 09/23/2020(month/day/year)   | 01/28/2021(month/day/year)   |
 | MindSpore Version              | 1.0.0                        | Master(4b3e53b4)             |
 | Dataset                        | Amazon-Beauty                | Amazon-Beauty                |

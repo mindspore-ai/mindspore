@@ -247,7 +247,7 @@ Parameters for learning rate:
 
 | 参数                | Ascend                                                    |
 | -------------------------- | -------------------------------------------------------------- |
-| 资源                  | Ascend 910                                                     |
+| 资源                  | Ascend 910；系统 Euler2.8                                                   |
 | 上传日期              | 2020-06-09                                    |
 | MindSpore版本          | 0.5.0-beta                                                     |
 | 数据集                    | WMT英-德翻译数据集                                              |
@@ -265,7 +265,7 @@ Parameters for learning rate:
 
 | 参数          | Ascend                   |
 | ------------------- | --------------------------- |
-|资源| Ascend 910 |
+|资源| Ascend 910；系统 Euler2.8  |
 | 上传日期       | 2020-06-09 |
 | MindSpore版本   | 0.5.0-beta                  |
 | 数据集             | WMT newstest2014            |

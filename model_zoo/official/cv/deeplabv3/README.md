@@ -530,7 +530,7 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Parameters                 | Ascend 910
 | -------------------------- | -------------------------------------- |
 | Model Version              | DeepLabV3
-| Resource                   | Ascend 910 |
+| Resource                   | Ascend 910; OS Euler2.8 |
 | Uploaded Date              | 09/04/2020 (month/day/year)          |
 | MindSpore Version          | 0.7.0-alpha                       |
 | Dataset                    | PASCAL VOC2012 + SBD              |
@@ -551,7 +551,7 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | DeepLabV3 V1                |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 09/04/2020 (month/day/year) |
 | MindSpore Version   | 0.7.0-alpha                 |
 | Dataset             | VOC datasets    |

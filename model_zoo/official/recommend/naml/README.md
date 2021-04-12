@@ -109,7 +109,7 @@ python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --fil
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | NAML                                                         |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G               |
+| Resource                   |Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8            |
 | uploaded Date              | 02/23/2021 (month/day/year)                                  |
 | MindSpore Version          | 1.2.0                                                        |
 | Dataset                    | MINDlarge                                                    |
@@ -125,7 +125,7 @@ python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --fil
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | NAML                        |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 02/23/2021 (month/day/year) |
 | MindSpore Version   | 1.2.0                       |  
 | Dataset             | MINDlarge                   |

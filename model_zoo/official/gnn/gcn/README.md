@@ -159,7 +159,7 @@ Test set results: cost= 1.00983 accuracy= 0.81300 time= 0.39083
 
 | Parameters                 | GCN                                                            |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   | Ascend 910; OS Euler2.8                                                    |
 | uploaded Date              | 06/09/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.0.0                                                   |
 | Dataset                    | Cora/Citeseer                                                  |

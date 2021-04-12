@@ -448,7 +448,7 @@ YOLOv4 on 118K images(The annotation and data format must be the same as coco201
 
 | Parameters                 | YOLOv4                                                      |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G; System, Euleros 2.8;|
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8; System, Euleros 2.8;|
 | uploaded Date              | 10/16/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0-alpha                                                 |
 | Dataset                    | 118K images                                                 |
@@ -468,7 +468,7 @@ YOLOv4 on 20K images(The annotation and data format must be the same as coco tes
 
 | Parameters                 | YOLOv4                                                      |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 10/16/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0-alpha                                                 |
 | Dataset                    | 20K images                                                  |

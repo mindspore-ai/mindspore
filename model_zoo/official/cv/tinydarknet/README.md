@@ -244,7 +244,7 @@ For more configuration details, please refer the script config.py.
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
-| Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
 | Uploaded Date              | 2020/12/22                                 |
 | MindSpore Version          | 1.1.0                                                       |
 | Dataset                    | 1200k images                                                |
@@ -261,7 +261,7 @@ For more configuration details, please refer the script config.py.
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | V1                |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 2020/12/22 |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | 200k images                |

@@ -363,7 +363,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters                 | Contents                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet                                                  |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   |Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.1                                                      |
 | Dataset                    | CIFAR-10                                                    |
@@ -383,7 +383,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters                 | Contents                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet                                                  |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.1                                                       |
 | Dataset                    | ImageNet                                                    |
@@ -403,7 +403,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters                 | Contents                                                    |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet_Residual                                         |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.1                                                       |
 | Dataset                    | CIFAR-10                                                    |
@@ -423,7 +423,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters                 | Contents                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet_Residual                                         |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8           |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.1                                                       |
 | Dataset                    | ImageNet                                                    |
@@ -444,7 +444,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet                  |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                     |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
 | MindSpore Version   | 1.0.1                       |
 | Dataset             | CIFAR-10                    |
@@ -457,7 +457,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet                  |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                     |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
 | MindSpore Version   | 1.0.1                       |
 | Dataset             | ImageNet                    |
@@ -470,7 +470,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet_Residual         |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                     |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
 | MindSpore Version   | 1.0.1                       |
 | Dataset             | CIFAR-10                    |
@@ -483,7 +483,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet_Residual         |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                     |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
 | MindSpore Version   | 1.0.1                       |
 | Dataset             | ImageNet                    |

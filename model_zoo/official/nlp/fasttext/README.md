@@ -164,7 +164,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   | Ascend 910; OS Euler2.8                                                     |
 | uploaded Date              | 12/21/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | AG's News Topic Classification Dataset                                |
@@ -181,7 +181,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   |Ascend 910; OS Euler2.8                                                      |
 | uploaded Date              | 11/21/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | DBPedia Ontology Classification Dataset                                |
@@ -198,7 +198,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   | Ascend 910; OS Euler2.8                                                     |
 | uploaded Date              | 11/21/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | Yelp Review Polarity Dataset                                |
@@ -217,7 +217,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 12/21/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | AG's News Topic Classification Dataset            |
@@ -229,7 +229,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 12/21/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | DBPedia Ontology Classification Dataset            |
@@ -241,7 +241,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Resource            | Ascend 910                  |
+| Resource            |Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 12/21/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | Yelp Review Polarity Dataset            |

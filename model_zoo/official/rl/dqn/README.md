@@ -109,7 +109,7 @@ pip install gym
 
 | Parameters                 | DQN                                                         |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G              |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 03/10/2021 (month/day/year)                                 |
 | MindSpore Version          | 1.1.0                                                       |
 | Training Parameters        | batch_size = 512, lr=0.001                                  |

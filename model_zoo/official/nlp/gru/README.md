@@ -227,7 +227,7 @@ Note: The `DATASET_PATH` is path to mindrecord. eg. train: /dataset_path/multi30
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
-| Resource                   | Ascend 910                                                     |
+| Resource                   | Ascend 910; OS Euler2.8                                                     |
 | uploaded Date              | 01/18/2021 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | Multi30k Dataset                                |
@@ -246,7 +246,7 @@ Note: The `DATASET_PATH` is path to mindrecord. eg. train: /dataset_path/multi30
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 01/18/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | Multi30K                    |
