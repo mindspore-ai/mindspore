@@ -29,6 +29,5 @@ MS_REG_GPU_KERNEL_TWO(BondForceWithAtomVirial,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       BondForceWithAtomVirialGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

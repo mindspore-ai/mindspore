@@ -29,6 +29,5 @@ MS_REG_GPU_KERNEL_TWO(LJEnergy,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       LJEnergyGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

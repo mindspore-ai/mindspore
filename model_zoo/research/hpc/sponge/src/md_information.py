@@ -154,7 +154,6 @@ class md_information:
             self.simulation_start_time = float(context[1].strip().split()[1])
             while count <= 6 * self.atom_numbers + 3:
                 start_idx += 1
-                # print(start_idx)
                 value = list(map(float, context[start_idx].strip().split()))
                 information.extend(value)
                 count += len(value)
