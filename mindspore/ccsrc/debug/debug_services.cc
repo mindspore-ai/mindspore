@@ -134,7 +134,7 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
 }
 
 void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
-                                     std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
+                                     std::vector<int> *condition, std::vector<unsigned int> *const watchpoint_id,
                                      std::vector<std::vector<parameter_t>> *parameters,
                                      std::vector<int32_t> *error_codes, const std::vector<std::string> &op_overflows,
                                      const std::vector<std::shared_ptr<TensorData>> &tensor_list,
@@ -202,7 +202,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
 
 void DebugServices::ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                                      std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
-                                     std::vector<TypePtr> *dtype, std::vector<std::vector<int64_t>> *shape) {
+                                     std::vector<TypePtr> *dtype, std::vector<std::vector<int64_t>> *const shape) {
   std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> result_list;
   tensor_loader_->SearchTensors(name, &result_list);
 
@@ -243,7 +243,8 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
       auto input_kernel = kernel->input(j + 1);
       std::string input_kernel_name = input_kernel->fullname_with_scope();
       auto found = w_name.find_last_of('/');
-      if (found != std::string::npos && w_name.substr(found + 1) == input_kernel_name) return true;
+      if (found != std::string::npos && w_name.size() > found + 1 && w_name.substr(found + 1) == input_kernel_name)
+        return true;
     }
     return false;
   } else {
