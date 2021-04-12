@@ -43,20 +43,33 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == "ReduceMax") {
-    reduce_type_ = 1;
-    reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::max(input[pos], *out); };
-  } else if (kernel_name == "ReduceMin") {
-    reduce_type_ = 2;
-    reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::min(input[pos], *out); };
-  } else if (kernel_name == "ReduceSum") {
-    reduce_type_ = 3;
-    reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
-  } else if (kernel_name == "ReduceMean") {
-    reduce_type_ = 4;
-    reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
+
+  if constexpr (std::is_same<T, bool>::value) {
+    if (kernel_name == "ReduceAll") {
+      reduce_type_ = ReduceType::ReduceAll;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out &= input[pos]; };
+    } else if (kernel_name == "ReduceAny") {
+      reduce_type_ = ReduceType::ReduceAny;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported reduce operation: " << kernel_name_ << " for bool.";
+    }
   } else {
-    MS_LOG(EXCEPTION) << "unsupported reduce type:  " << reduce_type_;
+    if (kernel_name == "ReduceMax") {
+      reduce_type_ = ReduceType::ReduceMax;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::max(input[pos], *out); };
+    } else if (kernel_name == "ReduceMin") {
+      reduce_type_ = ReduceType::ReduceMin;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::min(input[pos], *out); };
+    } else if (kernel_name == "ReduceSum") {
+      reduce_type_ = ReduceType::ReduceSum;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
+    } else if (kernel_name == "ReduceMean") {
+      reduce_type_ = ReduceType::ReduceMean;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported reduce operation:  " << kernel_name;
+    }
   }
 }
 
@@ -73,7 +86,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
     for (size_t i = 1; i < input_size; ++i) {
       reduce_func_(input_addr, i, output_addr);
     }
-    if (reduce_type_ == 4) {  // 4 is reduce mean
+    if (reduce_type_ == ReduceType::ReduceMean) {
       *output_addr /= input_size;
     }
   } else {
@@ -113,7 +126,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
           reduce_func_(input_addr, iter.GetPos(), &output_addr[i]);
           iter.GenNextPos();
         }
-        if (reduce_type_ == 4) {  // 4 is reduce mean
+        if (reduce_type_ == ReduceType::ReduceMean) {
           output_addr[i] /= stride;
         }
       }

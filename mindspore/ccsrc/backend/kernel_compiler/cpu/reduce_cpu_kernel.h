@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
+enum class ReduceType { ReduceAll, ReduceAny, ReduceMax, ReduceMin, ReduceSum, ReduceMean };
+
 template <typename T>
 class ReduceCPUKernel : public CPUKernel {
  public:
@@ -36,7 +38,7 @@ class ReduceCPUKernel : public CPUKernel {
  private:
   std::vector<size_t> input_shape_;
   std::vector<int64_t> axis_;
-  int reduce_type_{0};
+  ReduceType reduce_type_;
   std::function<void(const T *, size_t, T *)> reduce_func_;
 };
 
@@ -75,6 +77,12 @@ MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOu
                     ReduceCPUKernel, int32_t);
 MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
                     ReduceCPUKernel, int64_t);
+
+MS_REG_CPU_KERNEL_T(ReduceAll, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                    ReduceCPUKernel, bool);
+
+MS_REG_CPU_KERNEL_T(ReduceAny, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                    ReduceCPUKernel, bool);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_
