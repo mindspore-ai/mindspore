@@ -256,8 +256,6 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
     }
     this->debug_info_ = info;
   }
-  // Clear all info from manager.
-  void ClearAllManagerInfo();
   // Get all nodes belonging to this func graph.
   const AnfNodeSet &nodes();
   void CopyNodes(const FuncGraphPtr &source);
@@ -389,7 +387,17 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   int64_t stage() { return stage_; }
   void set_stage(int64_t stage) { stage_ = stage; }
 
+  bool dropped() { return dropped_; }
+  void set_dropped(bool dropped) { dropped_ = dropped; }
+
  private:
+  // Only used for func_graph manager to control resource free.
+  int attached_mng_cnt() { return attached_mng_cnt_; }
+  void IncAttachedMngCnt() { attached_mng_cnt_++; }
+  void DecAttachedMngCnt() { attached_mng_cnt_--; }
+  // Clear all info from manager.
+  void ClearAllManagerInfo();
+
   // Graph is manipulated by manager and others.
   friend FuncGraphManager;
 
@@ -442,6 +450,7 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // FuncGraphManager. In that special case, Manage() should be called to make the func graph
   // managed.
   std::weak_ptr<FuncGraphManager> manager_;
+  int attached_mng_cnt_ = 0;
 
   GraphDebugInfoPtr debug_info_;
   void GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
@@ -460,6 +469,10 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>
     func_graph_cache_;
+
+  // If the graph was changed, it should be dropped in cache data_converter::object_map_
+  // which used by ConvertToFuncGraph.
+  bool dropped_ = false;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

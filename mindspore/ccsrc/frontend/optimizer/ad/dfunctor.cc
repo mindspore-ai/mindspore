@@ -404,9 +404,6 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   auto out_node = c_input->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(out_node);
   out_node->set_value(GenNewTensor(manager, out_node, out_node->value(), need_replace_forward));
-  // clear resource
-  fg->ClearAllManagerInfo();
-  func_graph->ClearAllManagerInfo();
 }
 
 bool DFunctor::IsFreeMorphism(const AnfNodePtr &node) {

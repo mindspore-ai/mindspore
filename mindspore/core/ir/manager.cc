@@ -211,6 +211,15 @@ void FuncGraphManager::AddFuncGraph(FuncGraphPtr func_graph, bool is_root) {
 
 // Clear the all information in manager
 void FuncGraphManager::Clear() {
+  for (auto graph : func_graphs_) {
+    graph->DecAttachedMngCnt();
+    if (graph->attached_mng_cnt() == 0) {
+      graph->ClearAllManagerInfo();
+    } else if (graph->attached_mng_cnt() < 0) {
+      MS_LOG(EXCEPTION) << "graph:" << graph->ToString() << " attached cnt not right:" << graph->attached_mng_cnt();
+    }
+  }
+
   func_graphs_.clear();
   all_nodes_.clear();
   node_users_.clear();
@@ -280,6 +289,7 @@ void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
     fg->set_manager(this_manager);
   }
   func_graphs_.add(fg);
+  fg->IncAttachedMngCnt();
 }
 
 void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users) {
@@ -310,7 +320,7 @@ void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool
   for (auto &fg : dropped) {
     MS_EXCEPTION_IF_NULL(fg);
     all_nodes_.difference_update(fg->parameters());
-    (void)func_graphs_.erase(fg);
+    EraseOneGraph(fg.get());
     if (fg->manager().get() == this) {
       fg->set_manager(nullptr);
     }
@@ -485,7 +495,8 @@ void FuncGraphManager::MoveAllCNodeDropGraph(FuncGraphPtr source, FuncGraphPtr t
 
   MoveAllNodes(source, target);
   all_nodes_.difference_update(source->parameters());
-  (void)func_graphs_.erase(source);
+  EraseOneGraph(source.get());
+  source->set_dropped(true);
   if (source->manager().get() == this) {
     source->set_manager(nullptr);
   }
@@ -514,7 +525,7 @@ void FuncGraphManager::AddEdge(AnfNodePtr node, int index, AnfNodePtr input) {
 
 void FuncGraphManager::DropEdge(AnfNodePtr node, int index, AnfNodePtr input) {
   auto fg = node->func_graph();
-  if (input->isa<ValueNode>()) {
+  if (fg != nullptr && input->isa<ValueNode>()) {
     fg->DropValueNode(input);
     if (IsValueNode<FuncGraph>(input)) {
       auto used = GetValueNode<FuncGraphPtr>(input);
@@ -540,8 +551,8 @@ void FuncGraphManager::MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target) {
   target->CopyFreeVariables(source);
   target->CopyFuncGraphsUsed(source);
   target->CopyJValueNodes(source);
-  signals_->InvalidateComputer();
   source->ClearAllManagerInfo();
+  signals_->InvalidateComputer();
 }
 
 FuncGraphTransaction FuncGraphManager::Transact() {
@@ -634,6 +645,18 @@ void FuncGraphManager::CommitChanges(const std::vector<Change> &changes) {
 
   auto drop_func_graphs = MaybeDropNodes(nodes_reverse);
   MaybeDropFuncGraphs(*drop_func_graphs);
+}
+
+void FuncGraphManager::EraseOneGraph(FuncGraph *fg) {
+  MS_EXCEPTION_IF_NULL(fg);
+  size_t erase_cnt = func_graphs_.erase(fg->shared_from_base<FuncGraph>());
+  if (!erase_cnt) {
+    return;
+  }
+  fg->DecAttachedMngCnt();
+  if (fg->attached_mng_cnt() == 0) {
+    fg->ClearAllManagerInfo();
+  }
 }
 
 void FuncGraphTransaction::SetParameters(FuncGraphPtr fg, const std::vector<AnfNodePtr> &params) {
