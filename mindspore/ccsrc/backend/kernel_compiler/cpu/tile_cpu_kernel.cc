@@ -59,9 +59,9 @@ bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void TileRecTask(T *x, T *y, size_t dim, size_t *offset, std::vector<size_t> *pos, const std::vector<int> &multiples,
-                 const std::vector<size_t> &cargo_x, const std::vector<size_t> &cargo_y,
-                 const std::vector<size_t> &x_shape) {
+void TileRecTask(const T *x, T *y, size_t dim, size_t *offset, std::vector<size_t> *pos,
+                 const std::vector<int> &multiples, const std::vector<size_t> &cargo_x,
+                 const std::vector<size_t> &cargo_y, const std::vector<size_t> &x_shape) {
   if (dim == x_shape.size()) {
     return;
   }
@@ -72,15 +72,16 @@ void TileRecTask(T *x, T *y, size_t dim, size_t *offset, std::vector<size_t> *po
       for (size_t j = 0; j < (*pos).size(); ++j) {
         x_offset += (*pos)[j] * cargo_x[j];
       }
-      memcpy(y + *offset, x + x_offset, sizeof(T));
+      memcpy_s(y + *offset, sizeof(T), x + x_offset, sizeof(T));
       *offset += 1;
       continue;
     }
     TileRecTask(x, y, dim + 1, offset, pos, multiples, cargo_x, cargo_y, x_shape);
   }
+  size_t dim_size = cargo_y[dim] * sizeof(T);
   for (int m = 0; m < multiples[dim] - 1; ++m) {
     size_t y_offset = *offset - cargo_y[dim];
-    memcpy(y + *offset, y + y_offset, cargo_y[dim] * sizeof(T));
+    memcpy_s(y + *offset, dim_size, y + y_offset, dim_size);
     *offset += cargo_y[dim];
   }
 }
