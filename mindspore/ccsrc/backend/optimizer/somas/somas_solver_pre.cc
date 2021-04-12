@@ -199,6 +199,43 @@ void SomasSolverPre::Log(const session::KernelGraph *graph, const TensorsDescMap
                          const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
   SolverInputLog(graph, tensors, pConstraints, continuous_v);
   SolverOutputLog(graph, tensors);
+  TensorRelationLog(pConstraints, graph);
+}
+
+void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints,
+                                       const session::KernelGraph *graph) {
+  MS_LOG(INFO) << "SomasSolver::Log Writing somas_tensor_relation.ir..";
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  std::string filename = save_graphs_path + "/" + "somas_tensor_relation_" + std::to_string(graph->graph_id()) + ".ir";
+  if (filename.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << filename << " is too long.";
+    return;
+  }
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
+
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open log file '" << real_path.value() << "' failed!";
+    return;
+  }
+  for (size_t tid1 = 0; tid1 < pConstraints->size(); tid1++) {
+    ofs << 't' << tid1 << ' ';
+    for (size_t tid2 = 0; tid2 < (*pConstraints)[tid1].bit_size_; tid2++) {
+      ofs << 'H' << std::hex << (*pConstraints)[tid1].bit_[tid2];
+    }
+    ofs << std::endl << std::dec;
+  }
+  ofs.close();
+
+  MS_LOG(INFO) << "SomasSolver somas_tensor_relation Log done";
 }
 
 void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,

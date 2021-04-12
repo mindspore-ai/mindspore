@@ -68,8 +68,6 @@ enum FittingType {
 
 class DynamicBitSet {
   const size_t bit_width_ = 64;
-  size_t bit_size_;
-  std::vector<uint64_t> bit_;
 
   inline size_t GetIndex(size_t index) const { return index / bit_width_; }
 
@@ -85,6 +83,8 @@ class DynamicBitSet {
   }
 
  public:
+  size_t bit_size_;
+  std::vector<uint64_t> bit_;
   explicit DynamicBitSet(size_t count) {
     bit_size_ = (count + bit_width_ - 1) / bit_width_;
     Reset(0x0);
@@ -207,6 +207,7 @@ class SomasSolverPre {
                       const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
   void SolverOutputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors) const;
   vector<TensorsDescMap> createTensorsMaps(const TensorsDescMap &tensors, size_t total_sol);
+  void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph *graph);
 };
 using SomasSolverPrePtr = std::shared_ptr<SomasSolverPre>;
 }  // namespace somas
