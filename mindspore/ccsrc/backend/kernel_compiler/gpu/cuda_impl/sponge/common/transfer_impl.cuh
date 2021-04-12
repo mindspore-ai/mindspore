@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TRANSFER_IMPL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TRANSFER_IMPL_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/int8/quantize.h"
+#include "runtime/device/gpu/cuda_common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int GatherNdInt8(int8_t *in_data, int8_t *out_data, const int *in_offset, int area, int count, GatherQuantArg param);
-#ifdef __cplusplus
-}
-#endif
+void Transfer(int start_serial, int end_serial, int number, const float *crd_f, float *g_radial, float *g_angular,
+              cudaStream_t stream);
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TRANSFER_IMPL_H_

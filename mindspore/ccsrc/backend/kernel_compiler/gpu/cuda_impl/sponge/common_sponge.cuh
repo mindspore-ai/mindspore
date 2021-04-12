@@ -128,6 +128,14 @@ __device__ __host__ static inline VECTOR operator^(const VECTOR &veca, const VEC
   return vec;
 }
 
+__device__ __host__ static inline float normfloat(const float *x, const float *y, int i, int j) {
+  float s = 0;
+  s += (x[3 * i + 0] - y[3 * j + 0]) * (x[3 * i + 0] - y[3 * j + 0]);
+  s += (x[3 * i + 1] - y[3 * j + 1]) * (x[3 * i + 1] - y[3 * j + 1]);
+  s += (x[3 * i + 2] - y[3 * j + 2]) * (x[3 * i + 2] - y[3 * j + 2]);
+  return s;
+}
+
 __global__ static void construct_neighbor_list_kernel(int atom_numbers, int max_neighbor_numbers, int *nl_atom_numbers,
                                                       int *nl_atom_serial, NEIGHBOR_LIST *nl) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < atom_numbers; i += gridDim.x * blockDim.x) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
+#include "backend/kernel_compiler/gpu/sponge/common/transfer_kernel.h"
 
-#include "nnacl/op_base.h"
-#include "nnacl/int8/quantize.h"
+namespace mindspore {
+namespace kernel {
+MS_REG_GPU_KERNEL_TWO(
+  TransferCrd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  TransferGpuKernel, float, int)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int GatherNdInt8(int8_t *in_data, int8_t *out_data, const int *in_offset, int area, int count, GatherQuantArg param);
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_INT8_GATHERND_INT8_H_
+}  // namespace kernel
+}  // namespace mindspore

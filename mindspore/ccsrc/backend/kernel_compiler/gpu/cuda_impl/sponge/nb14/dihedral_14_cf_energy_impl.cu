@@ -56,6 +56,7 @@ void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, c
                         const int *b_14, const float *cf_scale_factor, float *ene, cudaStream_t stream) {
   size_t thread_per_block = 32;
   size_t block_per_grid = ceilf(static_cast<float>(dihedral_14_numbers) / 32);
+
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
 
@@ -65,6 +66,7 @@ void Dihedral14CFEnergy(const int dihedral_14_numbers, const int atom_numbers, c
     atom_numbers, uint_crd, uint_crd_with_LJ, LJtype, charge);
 
   VECTOR *boxlength = const_cast<VECTOR *>(reinterpret_cast<const VECTOR *>(boxlength_f));
+
   Dihedral14CFEnergyKernel<<<block_per_grid, thread_per_block, 0, stream>>>(
     dihedral_14_numbers, uint_crd_with_LJ, boxlength, a_14, b_14, cf_scale_factor, ene);
 
