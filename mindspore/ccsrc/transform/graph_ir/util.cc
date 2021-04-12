@@ -173,11 +173,6 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
     return nullptr;
   }
   size_t elements_num = IntToSize(tensor->ElementsNum());
-  if (UINT_MAX / type_size < elements_num) {
-    MS_LOG(ERROR) << "The required Me Tensor data buff size " << elements_num << " x " << type_size
-                  << " overflowed UINT_MAX: " << UINT_MAX << ".";
-    return nullptr;
-  }
 
   // get tensor buff size
   size_t data_buff_size = elements_num * type_size;
