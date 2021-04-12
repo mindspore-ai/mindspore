@@ -52,6 +52,12 @@ STATUS ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaG
         MS_ASSERT(narrow_range == quantParam->narrowRange);
         MS_ASSERT(num_bits == quantParam->numBits);
       }
+
+      if (in_quant_param->max < in_quant_param->min) {
+        MS_LOG(DEBUG) << "Input quant param is invalid for propogator";
+        return RET_ERROR;
+      }
+
       if (min_min > in_quant_param->min) {
         min_min = in_quant_param->min;
       }

@@ -69,17 +69,19 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
     quant_param.min = FLT_MAX;
     quant_param.max = FLT_MIN;
     for (int i = 0; i < filterMinPtr->ElementsNum(); ++i) {
-      quant_param.min = (*(minBuf) < quant_param.min) ? (*minBuf) : quant_param.min;
-      quant_param.max = (*(maxBuf) > quant_param.max) ? (*maxBuf) : quant_param.max;
+      schema::QuantParamT tmp_quant_param;
+      tmp_quant_param.min = *minBuf;
+      tmp_quant_param.max = *maxBuf;
+      auto ret =
+        lite::quant::CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max, true, numbits);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Can't calculate quant parameters";
+        return ret;
+      }
+      quants.emplace_back(tmp_quant_param);
       minBuf++;
       maxBuf++;
     }
-    auto ret = lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, true, numbits);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Can't calculate quant parameters";
-      return ret;
-    }
-    quants.emplace_back(quant_param);
     quant_param_holder->set_input_quant_param(1, quants);
   }
   return lite::RET_OK;

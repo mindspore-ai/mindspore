@@ -382,6 +382,16 @@ STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &i
   return ret;
 }
 
+size_t GetTensorInputIndexInCNode(const uint32_t &tensor_index, const schema::CNodeT &cnode) {
+  size_t ret = -1;
+  for (size_t i = 0; i < cnode.inputIndex.size(); i++) {
+    if (cnode.inputIndex.at(i) == tensor_index) {
+      ret = i;
+    }
+  }
+  return ret;
+}
+
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";

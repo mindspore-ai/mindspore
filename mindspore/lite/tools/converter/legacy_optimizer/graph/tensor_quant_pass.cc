@@ -20,6 +20,8 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/common/tensor_util.h"
+#include "tools/common/graph_util.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore::lite {
 namespace {
@@ -112,6 +114,62 @@ STATUS ComputeDataToInt32(const std::unique_ptr<TensorT> &tensor) {
   }
   return RET_OK;
 }
+
+STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, const schema::MetaGraphT &graph) {
+  bool channel_at_first = true;
+  int channel_cnt = -1;
+  auto used_nodes_idx = GetLinkedPostIdx(graph, tensor_index);
+  if (used_nodes_idx.size() != 1) {
+    MS_LOG(ERROR) << "Tensor is used by nodes more than one";
+    return RET_ERROR;
+  }
+  auto &used_node = graph.nodes.at(used_nodes_idx.front());
+  auto &primitive = used_node->primitive;
+  int input_index = GetTensorInputIndexInCNode(tensor_index, *used_node);
+  quant::CalQuantAssitInfo(*primitive, tensor->dims, input_index, &channel_at_first, &channel_cnt);
+
+  auto *raw_datas = reinterpret_cast<float *>(tensor->data.data());
+  ShapeVector dims;
+  std::transform(tensor->dims.begin(), tensor->dims.end(), std::back_inserter(dims),
+                 [&](int32_t dim) { return (int64_t)dim; });
+  auto channels = quant::CalChannels(dims, channel_cnt, &channel_at_first);
+  if (channels == 0) {
+    MS_LOG(ERROR) << "channels is zero";
+    return RET_ERROR;
+  }
+  int32_t dst_dtype = tensor->quantParams.front()->dstDtype == kNumberTypeInt32 ? kNumberTypeInt32 : kNumberTypeInt8;
+  size_t elem_count = tensor->data.size() / sizeof(float);
+  size_t data_size = dst_dtype == kNumberTypeInt32 ? elem_count * sizeof(int32_t) : elem_count * sizeof(int8_t);
+  std::vector<int8_t> dst_data(data_size);
+  size_t one_filter_size = elem_count / channels;
+  for (int i = 0; i < channels; i++) {
+    // do quantization
+    for (uint32_t j = 0; j < one_filter_size; j++) {
+      auto index = j + i * one_filter_size;
+      if (!channel_at_first) {
+        index = j * channels + i;
+      }
+      MS_ASSERT(index < elem_count);
+      float raw_data = raw_datas[index];
+      if (tensor->quantParams.at(i)->dstDtype == kNumberTypeInt32) {
+        auto quant_data = (int32_t)std::round(raw_datas[i] / tensor->quantParams.at(i)->scale);
+        auto *dst_data_int32 = reinterpret_cast<int32_t *>(dst_data.data());
+        dst_data_int32[index] = quant_data;
+      } else {
+        auto quant_data = quant::QuantizeData<int8_t>(raw_data, tensor->quantParams.at(i).get());
+        dst_data[index] = quant_data;
+      }
+    }
+  }
+  tensor->data.clear();
+  tensor->data.resize(data_size);
+  tensor->dataType = dst_dtype;
+  if (memcpy_s(tensor->data.data(), data_size, dst_data.data(), data_size) != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 }  // namespace
 
 STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
@@ -133,8 +191,13 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
       continue;
     }
     if (tensor->quantParams.size() != 1) {  // perchannel
-      MS_LOG(ERROR) << "perchannel do quant is not supported yet";
-      return RET_ERROR;
+      status = ComputeQuantTensorPerChannel(tensor.get(), index, *graph);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "compute tensor to int8 prechannel failed.";
+        return RET_ERROR;
+      }
+      index++;
+      continue;
     }
     // perlayer
     auto &quantParam = tensor->quantParams.front();
