@@ -191,7 +191,7 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
 }
 
 // Execute function for the example vector case: auto decode(new vision::Decode());
-Execute::Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType, uint32_t device_id) {
+Execute::Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice deviceType, uint32_t device_id) {
   // Initialize the transforms_ and other context
   for (auto &op : ops) {
     std::shared_ptr<TensorTransform> smart_ptr_op(op);
