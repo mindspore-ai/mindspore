@@ -142,9 +142,9 @@ Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
   uint64_t batch_start_time, end_time;
   int64_t send_batch = 0;
-  int32_t tdt_cost;
+  int32_t tdt_cost = 0;
   int32_t connector_size = 0;
-  int32_t connector_capacity;
+  int32_t connector_capacity = 0;
   bool is_break_loop = false;
 
   std::shared_ptr<DeviceQueueTracing> profiling_node;
@@ -202,7 +202,13 @@ Status DeviceQueueOp::SendDataToAscend() {
           MS_LOG(INFO) << "stop_send received";
           return Status::OK();
         }
-        return Status(StatusCode::kMDTDTPushFailure, "TDT Push Failed");
+        return Status(StatusCode::kMDTDTPushFailure,
+                      "TDT Push data into device Failed, please check the first error or TraceBack first, following are"
+                      " several possible checking way: 1) if training is not ready, still in network graph compiling"
+                      " stage, please check error raised by Network used operator or environment configuration. 2) if"
+                      " interrupt in middle process of training, may check whether dataset sending num and network"
+                      " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
+                      " try find ascend host log or checking info log ects.");
       }
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;
@@ -237,7 +243,13 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow currRow, bool isProfilingEnable, in
       MS_LOG(INFO) << "stop_send received";
       return Status::OK();
     }
-    return Status(StatusCode::kMDTDTPushFailure, "TDT Push Failed");
+    return Status(StatusCode::kMDTDTPushFailure,
+                  "TDT Push data into device Failed, please check the first error or TraceBack first, following are"
+                  " several possible checking way: 1) if training is not ready, still in network graph compiling"
+                  " stage, please check error raised by Network used operator or environment configuration. 2) if"
+                  " interrupt in middle process of training, may check whether dataset sending num and network"
+                  " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
+                  " try find ascend host log or checking info log ects.");
   }
   if (create_data_info_queue_) {
     DATA_INFO data_info;

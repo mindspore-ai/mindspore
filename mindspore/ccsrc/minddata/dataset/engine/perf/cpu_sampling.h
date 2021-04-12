@@ -69,7 +69,7 @@ class BaseCpu {
   BaseCpu();
   ~BaseCpu() = default;
   // Collect CPU information
-  virtual Status Collect(ExecutionTree *tree) = 0;
+  virtual Status Collect(const ExecutionTree *tree) = 0;
   virtual Status SaveToFile(const std::string &file_path) = 0;
   virtual Status Analyze(std::string *name, double *utilization, std::string *extra_message) = 0;
 
@@ -78,10 +78,10 @@ class BaseCpu {
   CpuStat pre_cpu_stat_;
   static bool fetched_all_process_shared;
   static std::unordered_map<int32_t, std::vector<pid_t>> op_process_shared;
-  bool fetched_all_process = false;
-  bool pre_fetched_state = false;
+  bool fetched_all_process;
+  bool pre_fetched_state;
   std::unordered_map<int32_t, std::vector<pid_t>> op_process;
-  int32_t cpu_processor_num;
+  int32_t cpu_processor_num_;
 };
 
 // Collect device CPU information
@@ -89,7 +89,7 @@ class DeviceCpu : public BaseCpu {
  public:
   DeviceCpu() : pre_running_process_(0), pre_context_switch_count_(0), first_collect_(true) {}
   ~DeviceCpu() = default;
-  Status Collect(ExecutionTree *tree) override;
+  Status Collect(const ExecutionTree *tree) override;
   Status SaveToFile(const std::string &file_path) override;
   Status Analyze(std::string *name, double *utilization, std::string *extra_message) override;
 
@@ -113,9 +113,9 @@ class DeviceCpu : public BaseCpu {
 // Collect operator CPU information
 class OperatorCpu : public BaseCpu {
  public:
-  OperatorCpu() : first_collect_(true) {}
+  OperatorCpu() : first_collect_(true), pre_total_stat_(0), id_count_(0) {}
   ~OperatorCpu() = default;
-  Status Collect(ExecutionTree *tree) override;
+  Status Collect(const ExecutionTree *tree) override;
   Status SaveToFile(const std::string &file_path) override;
   // Analyze will output the name of the metric, the avg utiliization of highest
   // object within the class and any extra message that would be useful for the user.
@@ -142,15 +142,15 @@ class OperatorCpu : public BaseCpu {
   std::unordered_map<int32_t, int32_t> op_parallel_workers;
   std::unordered_map<int32_t, std::unordered_map<int64_t, CpuOpStat>> pre_op_stat_;
   uint64_t pre_total_stat_;
-  int32_t id_count = 0;
+  int32_t id_count_;
 };
 
 // Collect operator CPU information
 class ProcessCpu : public BaseCpu {
  public:
-  ProcessCpu() : first_collect_(true) {}
+  ProcessCpu() : first_collect_(true), pre_total_stat_(0) {}
   ~ProcessCpu() = default;
-  Status Collect(ExecutionTree *tree) override;
+  Status Collect(const ExecutionTree *tree) override;
   Status SaveToFile(const std::string &file_path) override;
   Status Analyze(std::string *name, double *utilization, std::string *extra_message) override;
 
