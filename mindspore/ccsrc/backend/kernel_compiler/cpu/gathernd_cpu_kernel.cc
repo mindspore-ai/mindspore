@@ -15,10 +15,10 @@
  */
 #include "backend/kernel_compiler/cpu/gathernd_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#define MAX_INT (((unsigned int)(-1)) >> 1)
 
 namespace mindspore {
 namespace kernel {
-
 void GatherNdCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -83,11 +83,14 @@ bool GatherNdCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   size_t output_dim1 = dims_[1];
   size_t indices_dim1 = dims_[2];
 
-  int num = output_dim0 * output_dim1;
+  size_t num = output_dim0 * output_dim1;
+  if (num > MAX_INT) {
+    MS_LOG(EXCEPTION) << "Exceed MAX_INT: " << MAX_INT << ", dim0: " << output_dim0 << ", dim1: " << output_dim1;
+  }
 
-  for (int write_index = 0; write_index < num; write_index++) {
-    int i = write_index / output_dim1 % output_dim0;
-    int j = write_index % output_dim1;
+  for (size_t write_index = 0; write_index < num; write_index++) {
+    size_t i = write_index / output_dim1 % output_dim0;
+    size_t j = write_index % output_dim1;
 
     int read_index = 0;
     for (size_t k = 0; k < indices_dim1; k++) {
