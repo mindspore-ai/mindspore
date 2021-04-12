@@ -135,7 +135,7 @@ void ReduceLogicCPUKernel<T>::ConvertDataToOutput(const T *new_input, T *output)
     for (size_t i = 0; i < left_dims_; ++i) {
       auto value{true};
       for (size_t k = 0; k < stride_; ++k) {
-        value &= new_input[i * stride_ + k];
+        value = value && new_input[i * stride_ + k];
       }
       output[i] = value;
     }
@@ -143,7 +143,7 @@ void ReduceLogicCPUKernel<T>::ConvertDataToOutput(const T *new_input, T *output)
     for (size_t i = 0; i < left_dims_; ++i) {
       auto value{false};
       for (size_t k = 0; k < stride_; ++k) {
-        value |= new_input[i * stride_ + k];
+        value = value || new_input[i * stride_ + k];
       }
       output[i] = value;
     }
@@ -154,7 +154,7 @@ void ReduceLogicCPUKernel<T>::ConvertDataToOutput(const T *new_input, T *output)
 
 template <typename T>
 void ReduceLogicCPUKernel<T>::Transpose(const int size, const T *input, const std::vector<size_t> &input_shape,
-                                        const std::vector<size_t> &input_axis, const int shape_size, T *output) {
+                                        const std::vector<size_t> &input_axis, const int shape_size, T *const output) {
   int size_offset[kMaxDim];
   size_offset[0] = size / SizeToInt(input_shape[0]);
   for (int i = 1; i < shape_size; ++i) {
