@@ -10,3 +10,15 @@ diff -Npur grpc/CMakeLists.txt grpc-patch/CMakeLists.txt
  target_include_directories(grpc_cpp_plugin
    PRIVATE
      ${CMAKE_CURRENT_SOURCE_DIR}
+diff -Npur grpc/cmake/cares.cmake grpc-patch/cmake/cares.cmake
+--- grpc/cmake/cares.cmake	2020-02-27 03:12:33.000000000 +0800
++++ grpc-patch/cmake/cares.cmake	2021-04-10 14:22:35.895725700 +0800
+@@ -39,7 +39,7 @@ if(gRPC_CARES_PROVIDER STREQUAL "module"
+     set(gRPC_INSTALL FALSE)
+   endif()
+ elseif(gRPC_CARES_PROVIDER STREQUAL "package")
+-  find_package(c-ares 1.13.0 REQUIRED)
++  find_package(c-ares REQUIRED) # cmake 3.19+ cannot find cares 1.15.0
+   if(TARGET c-ares::cares)
+     set(_gRPC_CARES_LIBRARIES c-ares::cares)
+   endif()

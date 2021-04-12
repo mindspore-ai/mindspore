@@ -11,3 +11,4 @@ mindspore_add_pkg(openssl
   URL ${REQ_URL}
   MD5 ${MD5}
   CONFIGURE_COMMAND ./config no-zlib no-shared)
+include_directories(${openssl_INC})
