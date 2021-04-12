@@ -391,9 +391,6 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   dump_json_parser.UpdateDumpIter();
   bool iter_dump_flag = dump_json_parser.GetIterDumpFlag();
-  if (iter_dump_flag) {
-    CPUE2eDump::DumpParametersAndConst(kernel_graph);
-  }
 
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
@@ -448,6 +445,9 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
     double cost_time = GetTime() - start_time;
     MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
 #endif
+  }
+  if (iter_dump_flag) {
+    CPUE2eDump::DumpParametersAndConst(kernel_graph);
   }
   return true;
 }
