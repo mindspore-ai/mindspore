@@ -34,7 +34,6 @@ static Buffer ReadFile(const std::string &file) {
 #else
   real_path_ret = realpath(common::SafeCStr(file), real_path_mem);
 #endif
-
   if (real_path_ret == nullptr) {
     MS_LOG(ERROR) << "File: " << file << " is not exist.";
     return buffer;

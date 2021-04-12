@@ -29,6 +29,9 @@ std::shared_ptr<session::KernelGraph> LaunchMul::ObtainMulKernelGraph() {
   // obtain input & output shapes
   size_t dtype_size = abstract::TypeIdSize(dtype_);
   int64_t shape = total_size_ / dtype_size;
+  if (dtype_size == 0) {
+    MS_LOG(EXCEPTION) << "Divide by zero.";
+  }
   std::vector<std::vector<int64_t>> input_shapes = {{shape}, {1}};
   std::vector<std::vector<size_t>> output_shapes = {{static_cast<size_t>(shape)}};
   auto mul_graph = session::SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
