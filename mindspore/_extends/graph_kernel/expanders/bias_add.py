@@ -15,6 +15,7 @@
 """generate json desc for bias_add"""
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
+from .expand_dims import ExpandDims
 
 
 @VLD.add_format(DF.DEFAULT, DF.DEFAULT)
@@ -27,18 +28,19 @@ class BiasAdd(Expander):
         input_x, input_y = self.inputs
 
         if input_x.data_format == DF.NCHW:
-            input_y_expand = graph_builder.emit('ExpandDims', [input_y], attrs={'axis': 1})
-            input_y_expand = graph_builder.emit('ExpandDims', [input_y_expand], attrs={'axis': 2})
+            input_y_expand = graph_builder.emit(
+                'Reshape', [input_y], attrs={'shape': ExpandDims.infer_shape(input_y.shape, [1, 2])})
             result = graph_builder.emit('Add', [input_x, input_y_expand])
         elif input_x.data_format == DF.DEFAULT:
             if len(input_x.shape) == 2:
                 result = graph_builder.emit('Add', [input_x, input_y])
             elif len(input_x.shape) == 3:
-                input_y_expand = graph_builder.emit('ExpandDims', [input_y], attrs={'axis': 1})
+                input_y_expand = graph_builder.emit(
+                    'Reshape', [input_y], attrs={'shape': ExpandDims.infer_shape(input_y.shape, 1)})
                 result = graph_builder.emit('Add', [input_x, input_y_expand])
             else:  # len == 4
-                input_y_expand = graph_builder.emit('ExpandDims', [input_y], attrs={'axis': 1})
-                input_y_expand = graph_builder.emit('ExpandDims', [input_y_expand], attrs={'axis': 2})
+                input_y_expand = graph_builder.emit(
+                    'Reshape', [input_y], attrs={'shape': ExpandDims.infer_shape(input_y.shape, [1, 2])})
                 result = graph_builder.emit('Add', [input_x, input_y_expand])
         else:  # NHWC
             result = graph_builder.emit('Add', [input_x, input_y])

@@ -15,6 +15,7 @@
 """generate json desc for BatchNormGrad"""
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
+from .expand_dims import ExpandDims
 
 @VLD.add_format(DF.NHWC, DF.NHWC, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
 @VLD.add_format(DF.NCHW, DF.NCHW, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
@@ -32,7 +33,7 @@ class BatchNormGrad(Expander):
 
         reduce_axis = ()
         shape_x = input_x.shape
-        if input_x.data_format == "NHWC":
+        if input_x.data_format == DF.NHWC:
             reduce_axis = (0, 1, 2)
             num = shape_x[0] * shape_x[1] * shape_x[2]
         else:
@@ -44,28 +45,28 @@ class BatchNormGrad(Expander):
         if input_dy.dtype == 'float16':
             input_dy = graph_builder.emit('Cast', [input_dy], attrs={'dst_type': 'float32'})
         num_rec = -1.0 / num
-        num_rec_v = graph_builder.value(input_scale.dtype, num_rec, input_scale.data_format)
+        num_rec_v = graph_builder.value(input_scale.dtype, num_rec)
         dbeta = graph_builder.emit('ReduceSum', [input_dy], attrs={'reduce_axis': reduce_axis, 'keep_dims': False})
 
         # in training input_save_inv_variance means 1 / sqrt(variance + epsilon), which is calculated in forward pass
         if self.attrs['is_training']:
             inv_variance = input_save_inv_variance
         else:
-            epsilon_v = graph_builder.value(input_scale.dtype, self.attrs['epsilon'], input_scale.data_format)
+            epsilon_v = graph_builder.value(input_scale.dtype, self.attrs['epsilon'])
             var_add = graph_builder.emit('Add', [input_save_inv_variance, epsilon_v])
             sqrt_var_eps = graph_builder.emit('Sqrt', [var_add])
             scalar_one = 1.0
-            scalar_one_v = graph_builder.value(input_scale.dtype, scalar_one, input_scale.data_format)
+            scalar_one_v = graph_builder.value(input_scale.dtype, scalar_one)
             inv_variance = graph_builder.emit('RealDiv', [scalar_one_v, sqrt_var_eps])
 
         # compute dgamma
-        if not input_x.data_format == "NHWC":
-            input_save_mean = graph_builder.emit('ExpandDims', [input_save_mean], attrs={'axis': 1})
-            input_save_mean = graph_builder.emit('ExpandDims', [input_save_mean], attrs={'axis': 2})
-            inv_variance = graph_builder.emit('ExpandDims', [inv_variance], attrs={'axis': 1})
-            inv_variance = graph_builder.emit('ExpandDims', [inv_variance], attrs={'axis': 2})
-            input_scale = graph_builder.emit('ExpandDims', [input_scale], attrs={'axis': 1})
-            input_scale = graph_builder.emit('ExpandDims', [input_scale], attrs={'axis': 2})
+        if input_x.data_format in (DF.DEFAULT, DF.NCHW):
+            input_save_mean = graph_builder.emit(
+                'Reshape', [input_save_mean], attrs={'shape': ExpandDims.infer_shape(input_save_mean.shape, [-1, -1])})
+            inv_variance = graph_builder.emit(
+                'Reshape', [inv_variance], attrs={'shape': ExpandDims.infer_shape(inv_variance.shape, [-1, -1])})
+            input_scale = graph_builder.emit(
+                'Reshape', [input_scale], attrs={'shape': ExpandDims.infer_shape(input_scale.shape, [-1, -1])})
         x_sub_mean = graph_builder.emit('Sub', [input_x, input_save_mean])
         x_div = graph_builder.emit('Mul', [x_sub_mean, inv_variance])
         dgamma_param = graph_builder.emit('Mul', [input_dy, x_div])
@@ -75,11 +76,11 @@ class BatchNormGrad(Expander):
         # compute dx
         if self.attrs['is_training']:
             tmp_b = graph_builder.emit('Mul', [num_rec_v, dbeta])
-            if not input_x.data_format == "NHWC":
-                dgamma_expand = graph_builder.emit('ExpandDims', [dgamma], attrs={'axis': 1})
-                dgamma_expand = graph_builder.emit('ExpandDims', [dgamma_expand], attrs={'axis': 2})
-                tmp_b = graph_builder.emit('ExpandDims', [tmp_b], attrs={'axis': 1})
-                tmp_b = graph_builder.emit('ExpandDims', [tmp_b], attrs={'axis': 2})
+            if input_x.data_format in (DF.DEFAULT, DF.NCHW):
+                dgamma_expand = graph_builder.emit(
+                    'Reshape', [dgamma], attrs={'shape': ExpandDims.infer_shape(dgamma.shape, [-1, -1])})
+                tmp_b = graph_builder.emit(
+                    'Reshape', [tmp_b], attrs={'shape': ExpandDims.infer_shape(tmp_b.shape, [-1, -1])})
             else:
                 dgamma_expand = dgamma
             x_sub_mean_dgamma_mul = graph_builder.emit('Mul', [x_div, dgamma_expand])

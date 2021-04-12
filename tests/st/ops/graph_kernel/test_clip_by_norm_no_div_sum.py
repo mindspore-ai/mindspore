@@ -37,8 +37,7 @@ class ClipByNormNoDivSum(nn.Cell):
 
 
 def get_output(x0, x1, x2, x3, enable_graph_kernel=False):
-    if enable_graph_kernel:
-        context.set_context(enable_graph_kernel=True)
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = ClipByNormNoDivSum()
     output = net(x0, x1, x2, x3)
     return output

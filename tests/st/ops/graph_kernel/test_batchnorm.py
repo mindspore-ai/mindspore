@@ -34,8 +34,7 @@ class Net(nn.Cell):
 
 
 def get_output(x, weight, bias, moving_mean, moving_var, is_training, enable_graph_kernel=False):
-    if enable_graph_kernel:
-        context.set_context(enable_graph_kernel=True)
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net(Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var), is_training)
     output = net(Tensor(x))
     return output, net.mean, net.variance

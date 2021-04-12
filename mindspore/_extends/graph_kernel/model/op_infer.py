@@ -174,13 +174,6 @@ class Reshape(_Reshape):
         return self.attrs["shape"]
 
 
-class ExpandDims(_Reshape):
-    def _infer_shape(self):
-        shape = list(self.inputs[0].shape)
-        shape.insert(self.attrs["axis"], 1)
-        return shape
-
-
 class Cast(_Elemwise):
     def _infer_type(self):
         return self.attrs["dst_type"]

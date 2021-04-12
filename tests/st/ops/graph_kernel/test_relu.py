@@ -30,8 +30,7 @@ class Net(nn.Cell):
 
 
 def get_output(x, enable_graph_kernel=False):
-    if enable_graph_kernel:
-        context.set_context(enable_graph_kernel=True)
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net()
     output = net(x)
     return output
