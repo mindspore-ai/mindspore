@@ -31,14 +31,14 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
   // @param num_samples - the number of samples to draw.  value of 0 means to take the full amount
   // @param int64_t val
   // @param bool shuffle - shuffle all classIds or not, if true, classes may be 5,1,4,3,2
-  // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
+  // @param int64_t samples_per_tensor - Num of Sampler Ids to fetch via 1 GetNextSample call
   PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle,
-              int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+              int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // default destructor
   ~PKSamplerRT() = default;
 
-  // @param std::unique_ptr<DataBuffer pBuffer
+  // @param TensorRow
   // @param int32_t workerId
   // @return Status The status code returned
   Status GetNextSample(TensorRow *out) override;

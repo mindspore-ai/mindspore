@@ -32,10 +32,10 @@ using json = nlohmann::json;
 namespace mindspore {
 namespace dataset {
 // Connector throughput samples the output connector size of each op in the pipeline.
-// For the description of the data structure see perf_buffer.h
+// For the description of the data structure see perf_data.h
 // It support JSON serialization for external usage.
 class ConnectorThroughput : public Sampling {
-  using OutBufferCount = PerfData<CyclicArray<int64_t>>;
+  using OutRowCount = PerfData<CyclicArray<int64_t>>;
   using Throughput = PerfData<CyclicArray<double>>;
   using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
   using TimeStamps = PerfData<CyclicArray<TimePoint>>;
@@ -45,11 +45,11 @@ class ConnectorThroughput : public Sampling {
       : tree_(tree),
         max_rows_(max_rows),
         n_nodes_(InitNodes()),
-        out_buffer_count_table_(OutBufferCount(max_rows_, n_nodes_)),
+        out_row_count_table_(OutRowCount(max_rows_, n_nodes_)),
         throughput_(Throughput(max_rows_, n_nodes_)),
         timestamps_(TimeStamps(max_rows_, 1)) {
     timestamps_.AddSample(std::vector<TimePoint>(1));
-    out_buffer_count_table_.AddSample(std::vector<int64_t>(n_nodes_));
+    out_row_count_table_.AddSample(std::vector<int64_t>(n_nodes_));
   }
 
   /// \brief Destructor
@@ -80,7 +80,7 @@ class ConnectorThroughput : public Sampling {
   ExecutionTree *tree_ = nullptr;  // ExecutionTree pointer
   int64_t max_rows_;
   int32_t n_nodes_;
-  OutBufferCount out_buffer_count_table_;
+  OutRowCount out_row_count_table_;
   Throughput throughput_;
   TimeStamps timestamps_;
   std::string name_ = kConnectorThroughputSamplingName;

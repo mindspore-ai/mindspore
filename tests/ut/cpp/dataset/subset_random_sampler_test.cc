@@ -64,12 +64,12 @@ TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
   ASSERT_EQ(row.eoe(), true);
 }
 
-TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
+TEST_F(MindDataTestSubsetRandomSampler, TestGetNextSample) {
   int64_t total_samples = 100000 - 5;
-  int64_t samples_per_buffer = 10;
+  int64_t samples_per_tensor = 10;
   int64_t num_samples = 0;
   std::vector<int64_t> input(total_samples, 1);
-  SubsetRandomSamplerRT sampler(num_samples, input, samples_per_buffer);
+  SubsetRandomSamplerRT sampler(num_samples, input, samples_per_tensor);
 
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
@@ -90,7 +90,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
     ASSERT_EQ(sampler.GetNextSample(&row), Status::OK());
   }
 
-  ASSERT_EQ(epoch, (total_samples + samples_per_buffer - 1) / samples_per_buffer);
+  ASSERT_EQ(epoch, (total_samples + samples_per_tensor - 1) / samples_per_tensor);
   ASSERT_EQ(input.size(), out.size());
 }
 

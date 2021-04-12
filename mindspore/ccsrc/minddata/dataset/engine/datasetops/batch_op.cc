@@ -124,7 +124,7 @@ Status BatchOp::operator()() {
   while (child_iterator_->eof_handled() == false) {
     while (new_row.empty() == false) {
       table->emplace_back(new_row);
-      // if # of rows is enough to make 1 batch (1 batch is buffer), send it to worker_queue
+      // if # of rows is enough to make 1 batch, send it to worker_queue
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
         RETURN_IF_NOT_OK(worker_queues_[cnt % num_workers_]->EmplaceBack(
           std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
@@ -160,7 +160,7 @@ Status BatchOp::operator()() {
   }  // end of eof_handled() == false
   RETURN_IF_NOT_OK(
     worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
-  // EOF received, send quit signal (an empty buffer) to all workers
+  // EOF received, send quit signal to all workers
   for (int32_t ind = 0; ind < num_workers_; ind++) {
     RETURN_IF_NOT_OK(
       worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));

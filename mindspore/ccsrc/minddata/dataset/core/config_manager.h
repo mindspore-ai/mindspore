@@ -30,7 +30,7 @@
 // Config settings for the client-side
 // example config file:
 // {
-//    "rowsPerBuffer": 3
+//    "numParallelWorkers": 3
 // }
 //
 

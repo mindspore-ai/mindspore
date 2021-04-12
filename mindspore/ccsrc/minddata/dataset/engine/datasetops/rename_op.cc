@@ -66,14 +66,14 @@ Status RenameOp::operator()() {
 
   while (!new_row.eof()) {
     while (!new_row.eoe()) {
-      MS_LOG(DEBUG) << "Rename operator pushing next buffer.";
+      MS_LOG(DEBUG) << "Rename operator pushing next row.";
       RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     RETURN_IF_NOT_OK(out_connector_->SendEOE());
     MS_LOG(DEBUG) << "Rename operator EOE Received.";
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    MS_LOG(DEBUG) << "Rename operator fetching buffer after EOE.";
+    MS_LOG(DEBUG) << "Rename operator fetching row after EOE.";
   }
   RETURN_IF_NOT_OK(out_connector_->SendEOF());
   MS_LOG(DEBUG) << "Rename operator EOF Received.";

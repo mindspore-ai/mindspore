@@ -168,7 +168,7 @@ class MapOp : public ParallelOp {
   // Class functor operator () override.
   // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
   // provide the master loop that drives the logic for performing the work
-  // This main thread creates local queues, pulls databuffers from the previous
+  // This main thread creates local queues, pulls TensorRow from the previous
   // op's Connector and distributes them to the local queues. Workers pull from the local queues.
   // @return Status The status code returned
   Status operator()() override;
@@ -232,9 +232,8 @@ class MapOp : public ParallelOp {
   Status WorkerEntry(int32_t worker_id) override;  //  In: workerId assigned by tree_
 
   // Private function for worker thread to perform TensorOp's compute function and get the result.
-  // @param in_buffer A raw pointer to the DataBuffer. A raw pointer is fine because this function doesn't manage memory
-  //     and is not shared with other threads.
-  // @param[out] new_tensor_table A new Tensor Table to be populated in this function.
+  // @param in_row Input TensorRow
+  // @param[out] out_row Generated TensorRow
   Status WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                        const std::vector<std::shared_ptr<MapJob>> &job_list);
 
@@ -243,7 +242,7 @@ class MapOp : public ParallelOp {
   // @param col_name_id_map The column name to index mapping obtained from child operator
   void CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name_id_map);
 
-  // Validating if each of the input_columns exists in the DataBuffer.
+  // Validating if each of the input_columns exists in col_name_id_map.
   // @param - the column map to check
   // @return - status return code
   Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map);

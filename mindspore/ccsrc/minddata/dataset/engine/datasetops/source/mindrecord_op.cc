@@ -119,7 +119,6 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
       columns_to_load_(columns_to_load),
       operators_(operators),
       num_mind_record_workers_(num_mind_record_workers),
-      buffers_needed_(0),
       ended_worker_(0),
       num_padded_(num_padded),
       sample_json_(sample_json),
@@ -207,8 +206,8 @@ void MindRecordOp::Print(std::ostream &out, bool show_all) const {
     for (auto &file : dataset_file_) {
       out << file << " ";
     }
-    out << "\nNumber of rows : " << num_rows_ << "\nNumber of buffers : " << buffers_needed_
-        << "\nNumber of ShardReader workers : " << num_mind_record_workers_ << "\n\n";
+    out << "\nNumber of rows : " << num_rows_ << "\nNumber of ShardReader workers : " << num_mind_record_workers_
+        << "\n\n";
   }
 }
 
@@ -237,7 +236,7 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
       continue;
     }
 
-    // load data buffer
+    // load TensorRow
     std::vector<int64_t> keys;
     RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
     if (keys.empty() == true) {
@@ -252,7 +251,7 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
     const uint64_t row_id = keys[0];
     TensorRow fetched_row;
 
-    // Get the next buffer. Push it up to the output connector.
+    // Get the next row. Push it up to the output connector.
     if (row_id % LOG_INTERVAL == 0) {
       MS_LOG(DEBUG) << "MindRecord operator consumed row " << row_id << " by worker " << worker_id << ".";
     }
@@ -382,7 +381,7 @@ Status MindRecordOp::LaunchThreadsAndInitOp() {
   if (shard_reader_->Launch(true) == MSRStatus::FAILED) {
     RETURN_STATUS_UNEXPECTED("MindRecordOp launch failed.");
   }
-  // Launch main workers that load DataBuffers by reading all images
+  // Launch main workers that load TensorRows by reading all images
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_workers_, std::bind(&MindRecordOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   num_rows_ = shard_reader_->GetNumRows();

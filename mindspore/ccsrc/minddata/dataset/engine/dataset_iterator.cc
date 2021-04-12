@@ -98,19 +98,17 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
     RETURN_STATUS_UNEXPECTED(err);
   }
 
-  // Check if we need to get a new DataBuffer to iterate.
-
   if (tracing_ != nullptr) {
     cur_connector_size_ = root_->ConnectorSize();
     cur_connector_capacity_ = root_->ConnectorCapacity();
   }
   RETURN_IF_NOT_OK(root_->GetNextRow(out_row));
 
-  // Since GetNextBuffer was used rather than GetNextInput(), it means we need to manually
+  // Since GetNextRow was used rather than GetNextInput(), it means we need to manually
   // handle eoe and eof messages here.
   //
-  // An eoe buffer means we have iterated an epoch.
-  // The next buffer in the pipeline might be an EOF or a databuffer for next epoch
+  // An eoe row means we have iterated an epoch.
+  // The next row in the pipeline might be an EOF or a TensorRow for next epoch
   if (out_row->eoe()) {
     MS_LOG(INFO) << "End of data iteration.";
     if (isProfilingEnable) {

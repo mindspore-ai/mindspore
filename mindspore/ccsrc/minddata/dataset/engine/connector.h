@@ -70,7 +70,7 @@ class Connector {
   // any sync overhead.
   // @param n_producers The number of threads producing data into this DbConnector.
   // @param n_consumers The number of thread consuming data from this DbConnector.
-  // @param queue_capacity The number of element (DataBuffer) for each queue.
+  // @param queue_capacity The number of element for each queue.
   Connector(int32_t n_producers, int32_t n_consumers, int32_t queue_capacity)
       : num_producers_(n_producers), num_consumers_(n_consumers) {
     MS_LOG(DEBUG) << "A connector is created with " << n_producers << " producers and " << n_consumers << " consumers.";
@@ -121,7 +121,7 @@ class Connector {
     return (queues_[worker_id]->Add(el));
   }
 
-  auto out_buffers_count() const { return out_buffers_count_.load(); }
+  auto out_rows_count() const { return out_buffers_count_.load(); }
 
   // Add an element into the DbConnector without the overhead of synchronization.
   // It may block when the internal queue is full.

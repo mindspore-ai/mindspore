@@ -219,7 +219,7 @@ class TFReaderOp : public NonMappableLeafOp {
   static bool ValidateFirstRowCrc(const std::string &filename);
 
  private:
-  // Reads a tf_file file and loads the data into multiple buffers.
+  // Reads a tf_file file and loads the data into multiple TensorRows.
   // @param filename - the tf_file file to read.
   // @param start_offset - the start offset of file.
   // @param end_offset - the end offset of file.

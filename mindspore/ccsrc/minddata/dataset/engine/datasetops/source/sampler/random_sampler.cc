@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace dataset {
 RandomSamplerRT::RandomSamplerRT(int64_t num_samples, bool replacement, bool reshuffle_each_epoch,
-                                 int64_t samples_per_buffer)
-    : SamplerRT(num_samples, samples_per_buffer),
+                                 int64_t samples_per_tensor)
+    : SamplerRT(num_samples, samples_per_tensor),
       seed_(GetSeed()),
       replacement_(replacement),
       next_id_(0),

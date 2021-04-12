@@ -31,10 +31,10 @@ class SubsetRandomSamplerRT : public SubsetSamplerRT {
   /// Constructor.
   /// \param num_samples The number of samples to draw. 0 for the full amount.
   /// \param indices List of indices from where we will randomly draw samples.
-  /// \param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
-  /// When samples_per_buffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
+  /// \param samples_per_tensor The number of ids we draw on each call to GetNextSample().
+  /// When samples_per_tensor=0, GetNextSample() will draw all the sample ids and return them at once.
   SubsetRandomSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices,
-                        std::int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+                        std::int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   /// Destructor.
   ~SubsetRandomSamplerRT() = default;

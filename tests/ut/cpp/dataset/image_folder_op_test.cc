@@ -239,12 +239,12 @@ TEST_F(MindDataTestImageFolderSampler, TestWeightedRandomSamplerImageFolder) {
   // num samples to draw.
   int64_t num_samples = 12;
   int64_t total_samples = 44;
-  int64_t samples_per_buffer = 10;
+  int64_t samples_per_tensor = 10;
   std::vector<double> weights(total_samples, std::rand() % 100);
 
   // create sampler with replacement = replacement
   std::shared_ptr<SamplerRT> sampler =
-    std::make_shared<WeightedRandomSamplerRT>(num_samples, weights, true, samples_per_buffer);
+    std::make_shared<WeightedRandomSamplerRT>(num_samples, weights, true, samples_per_tensor);
 
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler))});

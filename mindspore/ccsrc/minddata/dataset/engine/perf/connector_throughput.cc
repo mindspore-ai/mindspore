@@ -36,13 +36,13 @@ int ConnectorThroughput::InitNodes() {
 }
 // Sample action
 Status ConnectorThroughput::Sample() {
-  std::vector<int64_t> out_buffer_count_row(n_nodes_);
+  std::vector<int64_t> out_row_count_row(n_nodes_);
   std::vector<double> throughput_row(n_nodes_);
   TimePoint cur_time;  // initialised inside the loop, used outside the loop to update prev sample time.
   auto col = 0;
   for (const auto &node : *tree_) {
-    auto cur_out_buffer_count = node.ConnectorOutBufferCount();
-    out_buffer_count_row[col] = cur_out_buffer_count;
+    auto cur_out_rows_count = node.ConnectorOutRowsCount();
+    out_row_count_row[col] = cur_out_rows_count;
     auto sz = timestamps_.size();
     cur_time = std::chrono::steady_clock::now();
     double dt = 0;
@@ -50,9 +50,9 @@ Status ConnectorThroughput::Sample() {
       auto _dt = std::chrono::duration_cast<std::chrono::microseconds>(timestamps_[0][sz - 1] - timestamps_[0][sz - 2]);
       dt = std::chrono::duration<double>(_dt).count();
     }
-    auto prev_out_buffer_count = out_buffer_count_table_[col][out_buffer_count_table_.size() - 1];
+    auto prev_out_rows_count = out_row_count_table_[col][out_row_count_table_.size() - 1];
     if (dt != 0) {
-      auto thr = (cur_out_buffer_count - prev_out_buffer_count) / (1000 * dt);
+      auto thr = (cur_out_rows_count - prev_out_rows_count) / (1000 * dt);
       throughput_row[col] = thr;
     } else {
       throughput_row[col] = 0;
@@ -62,7 +62,7 @@ Status ConnectorThroughput::Sample() {
   std::vector<TimePoint> v = {cur_time};  // temporary fix
   timestamps_.AddSample(v);
   // Push new row of sample
-  out_buffer_count_table_.AddSample(out_buffer_count_row);
+  out_row_count_table_.AddSample(out_row_count_row);
   throughput_.AddSample(throughput_row);
   return Status::OK();
 }

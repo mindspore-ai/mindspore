@@ -28,12 +28,8 @@ namespace mindspore {
 namespace dataset {
 //  Constructor.
 WeightedRandomSamplerRT::WeightedRandomSamplerRT(int64_t num_samples, const std::vector<double> &weights,
-                                                 bool replacement, int64_t samples_per_buffer)
-    : SamplerRT(num_samples, samples_per_buffer),
-      weights_(weights),
-      replacement_(replacement),
-      sample_id_(0),
-      buffer_id_(0) {}
+                                                 bool replacement, int64_t samples_per_tensor)
+    : SamplerRT(num_samples, samples_per_tensor), weights_(weights), replacement_(replacement), sample_id_(0) {}
 
 // Initialized this Sampler.
 Status WeightedRandomSamplerRT::InitSampler() {
@@ -50,7 +46,7 @@ Status WeightedRandomSamplerRT::InitSampler() {
     "Invalid parameter, num_samples and num_rows must be greater than 0, but got num_rows: " +
       std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
   CHECK_FAIL_RETURN_UNEXPECTED(samples_per_tensor_ > 0,
-                               "Invalid parameter, samples_per_buffer must be greater than 0, but got " +
+                               "Invalid parameter, samples_per_tensor must be greater than 0, but got " +
                                  std::to_string(samples_per_tensor_) + ".\n");
 
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
@@ -101,7 +97,6 @@ void WeightedRandomSamplerRT::InitOnePassSampling() {
 // Reset the internal variable to the initial state and reshuffle the indices.
 Status WeightedRandomSamplerRT::ResetSampler() {
   sample_id_ = 0;
-  buffer_id_ = 0;
   rand_gen_.seed(GetSeed());
   if (!replacement_) {
     InitOnePassSampling();

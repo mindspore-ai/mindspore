@@ -21,8 +21,8 @@
 
 namespace mindspore {
 namespace dataset {
-SequentialSamplerRT::SequentialSamplerRT(int64_t num_samples, int64_t start_index, int64_t samples_per_buffer)
-    : SamplerRT(num_samples, samples_per_buffer), current_id_(start_index), start_index_(start_index), id_count_(0) {}
+SequentialSamplerRT::SequentialSamplerRT(int64_t num_samples, int64_t start_index, int64_t samples_per_tensor)
+    : SamplerRT(num_samples, samples_per_tensor), current_id_(start_index), start_index_(start_index), id_count_(0) {}
 
 Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
   if (id_count_ > num_samples_) {
@@ -36,8 +36,8 @@ Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
 
     std::shared_ptr<Tensor> sampleIds;
 
-    // Compute how many ids are left to pack, and pack this amount into a new buffer.  Respect the setting for
-    // samples per buffer though.
+    // Compute how many ids are left to pack, and pack this amount into a new Tensor.  Respect the setting for
+    // samples per Tensor though.
     int64_t remaining_ids = num_samples_ - id_count_;
     int64_t num_elements = std::min(remaining_ids, samples_per_tensor_);
 
@@ -82,7 +82,7 @@ Status SequentialSamplerRT::InitSampler() {
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
     (num_samples_ > 0 && samples_per_tensor_ > 0) || num_samples_ == 0,
-    "Invalid parameter, samples_per_buffer must be greater than 0, but got " + std::to_string(samples_per_tensor_));
+    "Invalid parameter, samples_per_tensor must be greater than 0, but got " + std::to_string(samples_per_tensor_));
   samples_per_tensor_ = samples_per_tensor_ > num_samples_ ? num_samples_ : samples_per_tensor_;
 
   is_initialized = true;

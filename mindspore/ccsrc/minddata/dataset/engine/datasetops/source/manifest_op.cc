@@ -94,7 +94,7 @@ Status ManifestOp::LaunchThreadsAndInitOp() {
   return Status::OK();
 }
 
-// Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
+// Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status ManifestOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   std::pair<std::string, std::vector<std::string>> data = image_labelname_[static_cast<size_t>(row_id)];
   std::shared_ptr<Tensor> image;

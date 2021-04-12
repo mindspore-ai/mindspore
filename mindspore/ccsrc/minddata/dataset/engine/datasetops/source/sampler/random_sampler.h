@@ -30,15 +30,15 @@ class RandomSamplerRT : public SamplerRT {
   // @param int64_t num_samples - number samples to draw
   // @param bool replacement - put he id back / or not after a sample
   // @param reshuffle_each_epoch - T/F to reshuffle after epoch
-  // @param int64_t samples_per_buffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
+  // @param int64_t samples_per_tensor - Num of Sampler Ids to fetch via 1 GetNextSample call
   RandomSamplerRT(int64_t num_samples, bool replacement, bool reshuffle_each_epoch,
-                  int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+                  int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.
   ~RandomSamplerRT() = default;
 
-  // Op calls this to get next Buffer that contains all the sampleIds
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
+  // Op calls this to get next Sample that contains all the sampleIds
+  // @param TensorRow to be returned to StorageOp
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
   Status GetNextSample(TensorRow *out) override;

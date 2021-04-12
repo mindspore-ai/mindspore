@@ -115,7 +115,7 @@ class NonMappableLeafOp : public ParallelOp {
   // @return Status - the error code returned.
   Status PushIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> &&io_block);
 
-  // Reads a tf_file file and loads the data into multiple buffers.
+  // Reads a tf_file file and loads the data into multiple TensorRows.
   // @param filename - the tf_file file to read.
   // @param start_offset - the start offset of file.
   // @param end_offset - the end offset of file.
@@ -156,7 +156,7 @@ class NonMappableLeafOp : public ParallelOp {
   WaitPost io_block_queue_wait_post_;
   bool load_io_block_queue_;
   std::mutex load_io_block_queue_mutex_;
-  std::unique_ptr<JaggedConnector> jagged_buffer_connector_;
+  std::unique_ptr<JaggedConnector> jagged_rows_connector_;
   bool shuffle_files_;
   int64_t num_rows_per_shard_;
   int64_t num_rows_;

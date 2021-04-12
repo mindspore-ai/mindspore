@@ -100,7 +100,7 @@ Status ClueOp::Init() {
   io_block_queues_.Init(num_workers_, safe_queue_size);
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
-  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_rows_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   return Status::OK();
 }
@@ -181,7 +181,7 @@ Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t e
     }
 
     rows_total++;
-    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(tRow)));
+    RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(tRow)));
   }
 
   return Status::OK();

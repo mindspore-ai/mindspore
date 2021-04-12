@@ -66,7 +66,7 @@ Status NonMappableLeafOp::operator()() {
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&NonMappableLeafOp::WaitToFillIOBlockQueue, this), "", id()));
 
   // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
-  // data from disk into buffers
+  // data from disk into TensorRows
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(
     num_workers_, std::bind(&NonMappableLeafOp::WorkerEntry, this, std::placeholders::_1), "", id()));
 
@@ -85,7 +85,7 @@ Status NonMappableLeafOp::operator()() {
 
     while (workers_done < num_workers_) {
       TensorRow fetched_row;
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &fetched_row));
+      RETURN_IF_NOT_OK(jagged_rows_connector_->Pop(0, &fetched_row));
       if (fetched_row.eoe()) {
         workers_done++;
       } else if (total_rows_ == 0 || rows_read < total_rows_) {
@@ -122,7 +122,7 @@ Status NonMappableLeafOp::operator()() {
       finished_reading_dataset_ = true;
       NotifyToFillIOBlockQueue();
     } else {
-      jagged_buffer_connector_->DoReset();
+      jagged_rows_connector_->DoReset();
       // Self-reset to start a new iteration
       RETURN_IF_NOT_OK(Reset());
     }
@@ -156,7 +156,7 @@ Status NonMappableLeafOp::WorkerEntry(int32_t worker_id) {
       }
     } else {
       TensorRow eoe = TensorRow(TensorRow::kFlagEOE);
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe)));
+      RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(eoe)));
     }
 
     RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));

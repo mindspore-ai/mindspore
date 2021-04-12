@@ -222,7 +222,7 @@ class BatchOp : public ParallelOp {
   // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
-  // Generate buffer with batched tensors
+  // Generate row with batched tensors
   // @return Status The status code returned
   Status MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row);
 

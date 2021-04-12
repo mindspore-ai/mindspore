@@ -76,7 +76,6 @@ Status BarrierOp::operator()() {
       break;
     }
 
-    // we have to output new buffer with possibly different buffer size, possibly one row
     while (!clean_up_) {
       // 2 Block
       RETURN_IF_NOT_OK(blockCond());
@@ -131,7 +130,7 @@ Status BarrierOp::blockCond() {
   return Status::OK();
 }
 
-// fetches next Barrier buffer row
+// fetches next Barrier row
 Status BarrierOp::getNextTensorRow(TensorRow *new_row) {
   // iterate over all iterators and generate a row
   RETURN_IF_NOT_OK((child_iterator_)->FetchNextTensorRow(new_row));

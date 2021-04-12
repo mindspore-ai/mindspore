@@ -37,10 +37,10 @@ class TensorRow {
 
   enum TensorRowFlags : uint32_t {
     kFlagNone = 0,
-    kFlagEOF = 1,         // The buffer is an eof end-of-data msg
-    kFlagEOE = 1u << 1,   // The buffer is an eoe end-of-epoch msg
-    kFlagWait = 1u << 2,  // The buffer is an control signal for workers to suspend operations
-    kFlagQuit = 1u << 3   // The buffer is a control signal for workers to quit
+    kFlagEOF = 1,         // The row is an eof end-of-data msg
+    kFlagEOE = 1u << 1,   // The row is an eoe end-of-epoch msg
+    kFlagWait = 1u << 2,  // The row is an control signal for workers to suspend operations
+    kFlagQuit = 1u << 3   // The row is a control signal for workers to quit
   };
 
   // Type definitions

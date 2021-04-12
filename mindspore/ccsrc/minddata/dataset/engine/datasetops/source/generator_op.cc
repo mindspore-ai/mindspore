@@ -53,7 +53,6 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
       column_names_(column_names),
       column_types_(column_types),
       prefetch_size_(prefetch_size),
-      buffer_id_(0),
       generator_counter_(0) {}
 
 void GeneratorOp::Print(std::ostream &out, bool show_all) const {
@@ -108,7 +107,6 @@ Status GeneratorOp::CreateGeneratorObject() {
 
 // Reentrant init method.
 Status GeneratorOp::Init() {
-  buffer_id_ = 0;
   RETURN_IF_NOT_OK(InitSampler());
   return CreateGeneratorObject();
 }
@@ -150,7 +148,7 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
 //
 // while !eof:
 //      Try:
-//          Prepare one data buffer                                   GIL, Can throw
+//          Prepare one data row                                   GIL, Can throw
 //      Catch:
 //          Fetch Python Exception                                    GIL
 //          Check if Exception is StopIteration (EOE)                 GIL
@@ -248,8 +246,6 @@ Status GeneratorOp::operator()() {
 Status GeneratorOp::Reset() {
   // Reset Op state
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  // Reset BufferID
-  buffer_id_ = 0;
   // Create new generator object
   RETURN_IF_NOT_OK(CreateGeneratorObject());
   if (this->op_total_repeats() < 0) {

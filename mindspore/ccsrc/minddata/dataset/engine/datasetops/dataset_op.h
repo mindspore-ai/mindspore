@@ -146,13 +146,13 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status The status code returned
   virtual Status operator()() = 0;
 
-  /// \brief Gets the next buffer from the given child
+  /// \brief Gets the next row from the given child
   /// \param row[out] - Fetched TensorRow
   /// \param worker_id[in] - The worker id, default to 0.
   /// \return Status The status code returned
   virtual Status GetNextRow(TensorRow *row, int32_t worker_id = 0) { return GetNextRow(row, worker_id, false); }
 
-  /// \brief Gets the next buffer from the given child
+  /// \brief Gets the next row from the given child
   /// \param row[out] - Fetched TensorRow
   /// \param worker_id[in] - The worker id, default to 0.
   /// \param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
@@ -260,9 +260,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
     return ChildOpConnectorSize();
   }
 
-  /// \brief Counting number of buffer sent out by a connector
-  int64_t ConnectorOutBufferCount() const {
-    return out_connector_ == nullptr ? int64_t(-1) : static_cast<int64_t>(out_connector_->out_buffers_count());
+  /// \brief Counting number of rows sent out by a connector
+  int64_t ConnectorOutRowsCount() const {
+    return out_connector_ == nullptr ? int64_t(-1) : static_cast<int64_t>(out_connector_->out_rows_count());
   }
 
   /// \brief Getter function

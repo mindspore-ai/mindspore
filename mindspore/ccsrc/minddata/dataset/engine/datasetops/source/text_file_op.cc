@@ -111,7 +111,7 @@ Status TextFileOp::Init() {
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
 
-  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_rows_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
   return Status::OK();
 }
 
@@ -148,7 +148,7 @@ Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64
     TensorRow tRow(1, nullptr);
     tRow.setPath({file});
     RETURN_IF_NOT_OK(LoadTensor(line, &tRow));
-    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(tRow)));
+    RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(tRow)));
 
     rows_total++;
   }

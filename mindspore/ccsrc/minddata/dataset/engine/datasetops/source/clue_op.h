@@ -169,7 +169,7 @@ class ClueOp : public NonMappableLeafOp {
   std::string Name() const override { return "ClueOp"; }
 
  private:
-  // Reads a clue file and loads the data into multiple buffers.
+  // Reads a clue file and loads the data into multiple TensorRows.
   // @param file - the file to read.
   // @param start_offset - the start offset of file.
   // @param end_offset - the end offset of file.

@@ -149,7 +149,7 @@ class FilterOp : public ParallelOp {
   // @return Status The status code returned
   Status WorkerCompute(const TensorRow &in_row, bool *out_predicate);
 
-  // Collector databuffer.
+  // Collector TensorRows.
   // @return Status The status code returned
   Status Collector();
 
@@ -164,7 +164,7 @@ class FilterOp : public ParallelOp {
   Status InvokePredicateFunc(const TensorRow &input, bool *out_predicate);
 
   // Private function for validating if each of the user specified input column names
-  // exist in the DataBuffer.
+  // exist in column_name_id_map_.
   // @param input_columns The vector of input column names used in the current thread.
   // @return Status The status code returned
   Status ValidateInColumns(const std::vector<std::string> &input_columns);

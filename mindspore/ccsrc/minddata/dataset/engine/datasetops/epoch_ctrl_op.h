@@ -54,10 +54,10 @@ class EpochCtrlOp : public RepeatOp {
   void Print(std::ostream &out, bool show_all) const override;
   std::string Name() const override { return kEpochCtrlOp; }
 
-  // This function returns the buffer that is at the top of our output connector. The caller is
-  // typically our parent node, when the parent is asking us to provide the next buffer of data.
-  // Since EpochCtrlOp is derived from RepeatOp which is an inlined op, getting a buffer from us
-  // will simply bounce you to get a buffer from our child.
+  // This function returns the row that is at the top of our output connector. The caller is
+  // typically our parent node, when the parent is asking us to provide the next row of data.
+  // Since EpochCtrlOp is derived from RepeatOp which is an inlined op, getting a row from us
+  // will simply bounce you to get a row from our child.
   // Epoch Control Op does not eat the EOE, it will pass the EOE to the next op.
   Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
 

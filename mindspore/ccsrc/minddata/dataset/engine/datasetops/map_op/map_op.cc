@@ -103,9 +103,9 @@ void MapOp::Print(std::ostream &out, bool show_all) const {
 // A helper function that fetch worker map job from local queues and extract the data and map job list
 Status MapOp::FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list) {
   std::unique_ptr<MapWorkerJob> worker_job;
-  // Fetch the next worker job and data buffer
+  // Fetch the next worker job and TensorRow
   RETURN_IF_NOT_OK(local_queues_[worker_id]->PopFront(&worker_job));
-  // Extract the databuffer and job list from the map worker job.
+  // Extract the TensorRow and job list from the map worker job.
   *row = std::move(worker_job->tensor_row);
   *job_list = std::move(worker_job->jobs);
 
@@ -160,8 +160,8 @@ Status MapOp::operator()() {
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(rc);
-  // num_buffers received, including eoe, num_epoch, num_step of current epoch
-  int64_t num_buf = 0, ep_step = 0, total_step = 0;
+  // num_rows received, including eoe, num_epoch, num_step of current epoch
+  int64_t num_rows = 0, ep_step = 0, total_step = 0;
 
   RETURN_IF_NOT_OK(callback_manager_.Begin(CallbackParam(0, ep_step, total_step)));
 
@@ -176,7 +176,7 @@ Status MapOp::operator()() {
     while (!new_row.eoe()) {
       ep_step++;
       total_step++;
-      // Create an empty map worker job to be populated by a databuffer and map jobs
+      // Create an empty map worker job to be populated by a TensorRow and map jobs
 
       RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
 
@@ -186,7 +186,7 @@ Status MapOp::operator()() {
       RETURN_IF_NOT_OK(GenerateWorkerJob(&worker_job));
 
       // Push map worker job to the corresponding worker's queue
-      RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));
+      RETURN_IF_NOT_OK(local_queues_[num_rows++ % num_workers_]->Add(std::move(worker_job)));
 
       RETURN_IF_NOT_OK(callback_manager_.StepEnd(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
 
@@ -199,22 +199,22 @@ Status MapOp::operator()() {
 
       ep_step = 0;
     }
-    // Propagate the eoe buffer to worker
+    // Propagate the eoe row to worker
     std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(new_row));
-    RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));
+    RETURN_IF_NOT_OK(local_queues_[num_rows++ % num_workers_]->Add(std::move(worker_job)));
     UpdateRepeatAndEpochCounter();
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   }
   // End() is commented out because it might never be called due to the lack of EOF when EpochCtrl is -1
   // Handle eof logic, this code might never be reached if epoch_ctrl = -1.
   std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(new_row));
-  RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(worker_job)));
+  RETURN_IF_NOT_OK(local_queues_[num_rows++ % num_workers_]->Add(std::move(worker_job)));
 
   // Quit all workers, this code might never be reached if EpochCtrl is -1.
   for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
     TensorRow quit_flag(TensorRow::kFlagQuit);
     auto quit = std::make_unique<MapWorkerJob>(quit_flag);
-    RETURN_IF_NOT_OK(local_queues_[num_buf++ % num_workers_]->Add(std::move(quit)));
+    RETURN_IF_NOT_OK(local_queues_[num_rows++ % num_workers_]->Add(std::move(quit)));
   }
 
   return Status::OK();
@@ -230,14 +230,14 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
 
   TensorRow in_row;
   std::vector<std::shared_ptr<MapJob>> job_list;
-  // Fetch next data buffer and map job list
+  // Fetch next data row and map job list
   RETURN_IF_NOT_OK(FetchNextWork(worker_id, &in_row, &job_list));
 
   // Now that init work is done, drop into the main fetching loop.
   // Map op does not use child iterator, and it needs to manually handle eoe and eof's itself
   // rather than use the base-class defaults.
   while (true) {
-    // Handle special logic where buffer carries a ctrl flag.
+    // Handle special logic where row carries a ctrl flag.
     if (in_row.Flags() != TensorRow::kFlagNone) {
       if (in_row.wait()) {
         // When worker receives the signal from master thread, it increments a atomic int
@@ -247,10 +247,10 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
         }
         // This will block the worker until master thread gives it a new work
       } else if (in_row.eoe()) {
-        // Calling base class EoeReceived to forward eoe buffer.
+        // Calling base class EoeReceived to forward eoe row.
         RETURN_IF_NOT_OK(out_connector_->SendEOE(worker_id));
       } else if (in_row.eof()) {
-        // Calling base class EofReceived to forward eof buffer.
+        // Calling base class EofReceived to forward eof row.
         RETURN_IF_NOT_OK(out_connector_->SendEOF(worker_id));
       } else if (in_row.quit()) {
         break;
@@ -262,10 +262,9 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
     TensorRow out_row;
     // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
     RETURN_IF_NOT_OK(WorkerCompute(in_row, &out_row, job_list));
-    // Replace the TensorTable in DataBuffer with the new one.
-    // Push the buffer onto the connector for next operator to consume.
+    // Push the row onto the connector for next operator to consume.
     RETURN_IF_NOT_OK(out_connector_->Add(std::move(out_row), static_cast<int>(worker_id)));
-    // Fetch next data buffer and map job list
+    // Fetch next data row and map job list
     RETURN_IF_NOT_OK(FetchNextWork(worker_id, &in_row, &job_list));
   }
   return Status::OK();
@@ -280,7 +279,6 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
   TensorRow to_process;
   // Prepare the data that we need from in_row
   // to_process   : A vector of Tensors only holding cols in input_columns.
-  // cur_row      : A vector of Tensors holding all the cols from DataBuffer.
 
   // From the current row, select the Tensor that need to be passed to TensorOp
   (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(to_process),
@@ -349,7 +347,7 @@ Status MapOp::ComputeColMap() {
   return Status::OK();
 }
 
-// Validating if each of the input_columns exists in the DataBuffer.
+// Validating if each of the input_columns exists in the col_name_id_map.
 Status MapOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map) {
   for (const auto &inCol : in_columns_) {
     bool found = col_name_id_map.find(inCol) != col_name_id_map.end();
@@ -442,7 +440,7 @@ Status MapOp::WaitForWorkers() {
   // reset num_paused workers to 0
   num_workers_paused_ = 0;
   for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
-    // a special buffer (id=-1, empty, none flag) is used to signal that worker needs to pause.
+    // a special row (id=-1, empty, none flag) is used to signal that worker needs to pause.
     TensorRow waitRow(TensorRow::kFlagWait);
     RETURN_IF_NOT_OK(local_queues_[wkr_id]->Add(std::make_unique<MapWorkerJob>(waitRow)));
   }

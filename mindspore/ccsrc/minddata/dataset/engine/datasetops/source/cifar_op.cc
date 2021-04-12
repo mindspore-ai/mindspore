@@ -113,7 +113,7 @@ Status CifarOp::LaunchThreadsAndInitOp() {
   return Status::OK();
 }
 
-// Load 1 TensorRow (image,label). 1 function call produces 1 TensorTow in a DataBuffer
+// Load 1 TensorRow (image,label). 1 function call produces 1 TensorTow
 Status CifarOp::LoadTensorRow(row_id_type index, TensorRow *trow) {
   std::shared_ptr<Tensor> label;
   std::shared_ptr<Tensor> fine_label;

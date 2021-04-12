@@ -36,7 +36,6 @@ class ZipOp : public PipelineOp {
   //  the arguments for constructing it.  Use the builder by setting each argument
   //  with the provided set methods, and then finally call the build method to execute
   //  the actual construction.
-  //  NOTE: the rows per buffer with initial value 0 means to default to the number of rows from the first child
 
   class Builder {
    public:
