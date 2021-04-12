@@ -290,10 +290,10 @@ void DebugServices::GetSlotInfo(const std::string &file_name, const std::string 
     std::string input_file = specific_dump_dir + "/" + file_name;
     std::string log_enabled = DbgLogger::verbose ? "" : "> /dev/null";
     std::string convert_command =
-      "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.pyc convert -d " + input_file + " -out " +
+      "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " + input_file + " -out " +
       out_dir + " -t bin " + log_enabled;
     (void)(system(convert_command.c_str()) + 1);
-    convert_command = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.pyc convert -d " +
+    convert_command = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " +
                       input_file + " -out " + out_dir + " -f NCHW -t bin " + log_enabled;
     (void)(system(convert_command.c_str()) + 1);
 
@@ -371,10 +371,10 @@ std::size_t DebugServices::GetShapeTypeInfo(const std::string &specific_dump_dir
     std::string input_file = specific_dump_dir + "/" + *file_name;
     std::string log_enabled = DbgLogger::verbose ? "" : "> /dev/null";
     std::string convert_command =
-      "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.pyc convert -d " + input_file + " -out " +
+      "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " + input_file + " -out " +
       *out_dir + " -t bin " + log_enabled;
     (void)(system(convert_command.c_str()) + 1);
-    convert_command = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.pyc convert -d " +
+    convert_command = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " +
                       input_file + " -out " + *out_dir + " -f NCHW -t bin " + log_enabled;
     (void)(system(convert_command.c_str()) + 1);
 
