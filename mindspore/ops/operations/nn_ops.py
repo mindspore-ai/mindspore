@@ -2339,7 +2339,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         ``GPU`` ``CPU``
 
     Examples:
-        Please refer to :class:`mindspore.nn.SparseSoftmaxCrossEntropyWithLogits`
+        Please refer to :class:`mindspore.ops.SparseSoftmaxCrossEntropyWithLogits`
     """
 
     @prim_attr_register

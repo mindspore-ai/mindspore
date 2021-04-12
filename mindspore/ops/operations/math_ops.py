@@ -4493,7 +4493,7 @@ class MatrixInverse(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-                           dimensions must be the same size. types: float32, float64.
+          dimensions must be the same size. types: float32, float64.
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
