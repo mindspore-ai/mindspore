@@ -1,6 +1,6 @@
 BASE_DIR=$(realpath ../../../../)
 APP:=bin/net_runner
-MSLIB:=mindspore-lite
+MSLIB:=mindspore-lite-train
 LMDLIB:=-lminddata-lite
 MSDIR:=$(realpath package-$(TARGET)/lib)
 ifneq ("$(wildcard $(MSDIR)/libhiai.so)","")
