@@ -15,6 +15,7 @@
  */
 
 #include "load_mindir/anf_model_parser.h"
+#include <limits.h>
 #include <functional>
 #include <map>
 #include <memory>
@@ -791,6 +792,10 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
                                                const mind_ir::GraphProto &importProto, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
+  if (importProto.output_size() < 0 || importProto.output_size() > INT_MAX) {
+    MS_LOG(ERROR) << "importProto.output_size is : " << importProto.output_size();
+    return false;
+  }
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
     inputs.clear();
@@ -828,6 +833,10 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
 bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
                                            const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
+  if (importProto.node_size() < 0 || importProto.node_size() > INT_MAX) {
+    MS_LOG(ERROR) << "importProto.node_size is : " << importProto.node_size();
+    return false;
+  }
   MS_LOG(INFO) << "The CNdoe size : " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
@@ -835,14 +844,14 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
     const std::string &node_type = node_proto.op_type();
     if (node_type == kConstantValueNode) {
       if (!BuildValueNodeForFuncGraph(node_proto)) {
-        MS_LOG(ERROR) << "Build ValueNode for funcgraph fail at index: : " << i;
+        MS_LOG(ERROR) << "Build ValueNode for funcgraph fail at index: " << i;
         return false;
       }
       continue;
     }
     cnode_ptr = BuildCNodeForFuncGraph(outputFuncGraph, node_proto);
     if (cnode_ptr == nullptr) {
-      MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: : " << i;
+      MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: " << i;
       return false;
     }
   }

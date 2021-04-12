@@ -81,22 +81,34 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
     return false;
   }
   struct stat s;
-  stat(dir_in.c_str(), &s);
+  int ret = stat(dir_in.c_str(), &s);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "stat error, ret is : " << ret;
+    return false;
+  }
   if (!S_ISDIR(s.st_mode)) {
     return false;
   }
   DIR *open_dir = opendir(dir_in.c_str());
   if (NULL == open_dir) {
-    std::exit(EXIT_FAILURE);
+    MS_LOG(EXCEPTION) << "open dir " << dir_in.c_str() << " failed";
   }
   dirent *p = nullptr;
   while ((p = readdir(open_dir)) != nullptr) {
     struct stat st;
     if (p->d_name[0] != '.') {
       std::string name = dir_in + std::string("/") + std::string(p->d_name);
-      stat(name.c_str(), &st);
+      ret = stat(name.c_str(), &st);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "stat error, ret is : " << ret;
+        return false;
+      }
       if (S_ISDIR(st.st_mode)) {
-        get_all_files(name, files);
+        ret = get_all_files(name, files);
+        if (!ret) {
+          MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
+          return false;
+        }
       } else if (S_ISREG(st.st_mode)) {
         files->push_back(name);
       }
@@ -134,7 +146,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   // Load parameter into graph
   if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
     int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
-    memcpy(abs_path, abs_path_buff, path_len);
+    memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
     abs_path[path_len] = '\0';
     snprintf(abs_path + path_len, sizeof(abs_path), "variables");
     std::ifstream ifs(abs_path);
@@ -157,6 +169,10 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
         return nullptr;
       }
 
+      if (param_graph.parameter_size() < 0 || param_graph.parameter_size() > INT_MAX) {
+        MS_LOG(ERROR) << "param_graph.parameter_size() is : " << param_graph.parameter_size();
+        return nullptr;
+      }
       for (int param_index = 0; param_index < param_graph.parameter_size(); param_index++) {
         mind_ir::TensorProto *param_proto = mod_graph->add_parameter();
         param_proto->set_name(param_graph.parameter(param_index).name());
