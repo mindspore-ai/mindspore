@@ -173,7 +173,7 @@ extern void _PrimitiveType_RankSCHEMA_CUR();
 extern void _PrimitiveType_ClipSCHEMA_CUR();
 extern void _PrimitiveType_SpaceToDepthSCHEMA_CUR();
 
-void RegisterOps() {
+void IosRegisterOps() {
   _PrimitiveType_MulFusionSCHEMA_CUR();
   _PrimitiveType_NonMaxSuppressionSCHEMA_CUR();
   _PrimitiveType_TensorListStackSCHEMA_CUR();

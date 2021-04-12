@@ -18,7 +18,7 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"
-#include "src/reg_kernels.h"
+#include "src/ios_reg_kernels.h"
 #ifdef ENABLE_ARM64
 #if defined(__ANDROID__)
 #include <asm/hwcap.h>
@@ -140,9 +140,9 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_te
 }
 
 #ifdef MS_COMPILE_IOS
-void KernelRegistry::RegisterAllKernels() {
+void KernelRegistry::IosRegisterAllKernels() {
   static std::once_flag flag_kernels;
-  std::call_once(flag_kernels, [&]() { kernel::RegisterKernels(); });
+  std::call_once(flag_kernels, [&]() { kernel::IosRegisterKernels(); });
 }
 #endif
 }  // namespace mindspore::lite

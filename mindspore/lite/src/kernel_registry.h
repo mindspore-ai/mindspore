@@ -48,7 +48,7 @@ class KernelRegistry {
   kernel::LiteKernel *GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                 const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter);
 #ifdef MS_COMPILE_IOS
-  void RegisterAllKernels();
+  void IosRegisterAllKernels();
 #endif
 
  protected:

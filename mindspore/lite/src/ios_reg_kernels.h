@@ -361,7 +361,7 @@ extern void _kCPUkNumberTypeInt8PrimitiveType_LeakyRelu();
 extern void _kCPUkNumberTypeInt8PrimitiveType_LayerNormFusion();
 extern void _kCPUkNumberTypeInt8PrimitiveType_SubFusion();
 
-void RegisterKernels() {
+void IosRegisterKernels() {
   // base
   _kCPUkNumberTypeInt32PrimitiveType_StridedSlice();
   _kCPUkNumberTypeFloat32PrimitiveType_StridedSlice();
