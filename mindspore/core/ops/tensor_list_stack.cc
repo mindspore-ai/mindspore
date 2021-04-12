@@ -52,9 +52,7 @@ AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const 
   for (const auto &input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  auto op_name = primitive->name();
-  auto input0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input_args[0]->BuildShape(), op_name);
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t num = std::accumulate(input0_shape.begin(), input0_shape.end(), 1LL, std::multiplies<int64_t>());
   if (num == 0) {
     MS_LOG(ERROR) << "Try to stack a empty tensorlist!";
@@ -62,8 +60,7 @@ AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const 
   if (input_args[1]->BuildShape() == nullptr) {
     MS_LOG(ERROR) << "ele_shape->data_c() is nullptr";
   }
-  auto input1_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input_args[1]->BuildShape(), op_name);
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   input1_shape.insert(input1_shape.begin(), 1);
   return std::make_shared<abstract::AbstractTensor>(input_args[0]->BuildType(), input1_shape);
 }

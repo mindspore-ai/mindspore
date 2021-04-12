@@ -33,14 +33,11 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto input0_type_ = input_args[0]->BuildType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input0_type_);
   auto input0_type = input0_type_->element();
-  auto input0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input_args[0]->BuildShape(), op_name);
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto num = input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
-  auto input1_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input_args[1]->BuildShape(), op_name);
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto num1 = input_args[1]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
-  auto input2_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input2_shape", input_args[2]->BuildShape(), op_name);
+  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto num2 = input_args[2]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
   int64_t nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
   int64_t axisout = 0;

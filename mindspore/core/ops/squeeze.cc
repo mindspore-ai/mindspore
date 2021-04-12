@@ -29,7 +29,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   std::vector<int64_t> infer_shape;
 
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->GetShapeTrack(), op_name);
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto len = SizeToLong(in_shape.size());
   if (axis.empty()) {
     std::copy_if(in_shape.begin(), in_shape.end(), std::back_inserter(infer_shape),

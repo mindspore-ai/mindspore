@@ -43,8 +43,7 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::Analysi
     MS_EXCEPTION_IF_NULL(item);
   }
   // infer shape
-  auto input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   std::vector<int64_t> output_shape;
   if (GetValue<bool>(primitive->GetAttr(kIsGrad)) != 0) {
     output_shape = input_shape;

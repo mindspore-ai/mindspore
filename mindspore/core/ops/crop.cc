@@ -49,7 +49,7 @@ AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     MS_EXCEPTION_IF_NULL(item);
   }
   // infer shape
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[1]->BuildShape(), prim_name);
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   // infer type
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);

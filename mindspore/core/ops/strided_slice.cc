@@ -108,7 +108,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   auto temp_strides_v = input_args[3]->cast<abstract::AbstractTuplePtr>()->BuildValue();
   auto strides_v = GetValue<std::vector<int64_t>>(temp_strides_v);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t x_rank = x_shape.size();
   int64_t slice_len = begin_v.size();
   std::vector<int64_t> begin_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kBeginMask)));

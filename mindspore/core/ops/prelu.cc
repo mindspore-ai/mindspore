@@ -25,8 +25,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = primitive->name();
   auto x = input_args[0]->BuildShape();
   auto w = input_args[1]->BuildShape();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", x, prim_name);
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", w, prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w)[kShape];
 
   CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kNotEqual, 1, prim_name);
   CheckAndConvertUtils::CheckInteger("weight rank", w_shape.size(), kEqual, 1, prim_name);

@@ -39,7 +39,7 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
 
   // Infer shape
   auto dims = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input", input->BuildShape(), prim_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
   auto input_rank = input_shape.size();
   auto dim_rank = dims.size();
   std::vector<int64_t> out_shape;

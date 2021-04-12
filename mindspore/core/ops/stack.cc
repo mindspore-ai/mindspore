@@ -21,7 +21,6 @@ namespace ops {
 namespace {
 abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
 
   if (input_args.size() != 1) {
     MS_LOG(ERROR) << "Invalid output size:" << input_args.size();
@@ -29,11 +28,9 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
   if (input_args.size() < 1) {
     MS_LOG(ERROR) << "Invalid input size " << input_args.size();
   }
-  auto input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   for (int64_t i = 1; i < (int64_t)input_args.size(); ++i) {
-    auto input_shape_tmp =
-      CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[i]->BuildShape(), prim_name);
+    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";
     }

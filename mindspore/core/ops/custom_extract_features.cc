@@ -24,18 +24,14 @@ namespace ops {
 AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  // auto input = input_args[0];
-
   // Infer type
   auto output0_type = kInt32;
   auto output1_type = kFloat32;
 
   // Infer shape
   std::vector<int64_t> out_shape;
-  auto input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto string_num = input_shape[0];
   if (string_num == 0) {
     out_shape.push_back(1);

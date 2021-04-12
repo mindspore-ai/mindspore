@@ -52,11 +52,9 @@ AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   auto While_prim = primitive->cast<PrimWhilePtr>();
   MS_EXCEPTION_IF_NULL(While_prim);
-  auto op_name = While_prim->name();
   AbstractBasePtrList output;
   for (int64_t i = 0; i < (int64_t)input_args.size(); i++) {
-    auto shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape" + std::to_string(i),
-                                                              input_args[i]->BuildShape(), op_name);
+    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
     output.push_back(std::make_shared<abstract::AbstractTensor>(input_args[i]->BuildType(), shape));
   }
   return std::make_shared<abstract::AbstractTuple>(output);

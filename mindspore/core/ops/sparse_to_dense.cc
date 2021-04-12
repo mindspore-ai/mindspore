@@ -33,8 +33,7 @@ AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const Pr
     MS_EXCEPTION_IF_NULL(item);
   }
   // infer shape
-  auto dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("dense_shape", input_args[3]->BuildShape(), prim_name);
+  auto dense_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
   // infer type
   auto values_type = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();
   return std::make_shared<abstract::AbstractTensor>(values_type, dense_shape);

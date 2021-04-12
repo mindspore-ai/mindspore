@@ -27,9 +27,8 @@ AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const 
   for (auto input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  auto op_name = primitive->name();
   std::vector<int64_t> hits_shape;
-  auto input = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
+  auto input = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   hits_shape.push_back(input[0]);
 
   auto value_type = input_args[2]->BuildType();

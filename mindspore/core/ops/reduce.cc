@@ -71,8 +71,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_x_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input_x_shape", input_args[0]->BuildShape(), prim_name);
+  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
 
   auto keep_dims = GetValue<bool>(primitive->GetAttr(kKeepDims));
   auto out_shape = infer_shape_reduce(input_x_shape, axis_value, keep_dims, prim_name);

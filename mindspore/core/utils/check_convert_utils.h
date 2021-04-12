@@ -236,9 +236,6 @@ class CheckAndConvertUtils {
     MS_EXCEPTION(ValueError) << buffer.str();
   }
 
-  static std::vector<int64_t> ConvertShapePtrToShape(const std::string &arg_name, const BaseShapePtr &shape,
-                                                     const std::string &prim_name);
-
   static ShapeMap ConvertShapePtrToShapeMap(const BaseShapePtr &shape);
 
   static void Check(const std::string &arg_name, int64_t arg_value, CompareEnum compare_type,

@@ -384,18 +384,6 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
   MS_EXCEPTION(ValueError) << buffer.str();
 }
 
-std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::string &arg_name,
-                                                                  const BaseShapePtr &shape,
-                                                                  const std::string &prim_name) {
-  MS_EXCEPTION_IF_NULL(shape);
-  if (!shape->isa<abstract::Shape>()) {
-    return std::vector<int64_t>();
-  }
-  auto shape_element = shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element->shape();
-}
-
 ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::Shape>()) {

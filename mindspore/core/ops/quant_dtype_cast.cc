@@ -32,13 +32,12 @@ void QuantDTypeCast::Init(const int64_t src_t, const int64_t dst_t) {
 AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto input_type = input_args[0]->BuildType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input_type);
   auto dst_type = GetValue<int64_t>(primitive->GetAttr(kDstT));
   MS_ASSERT(input_type->element() == TypeIdToType(TypeId(dst_type)));
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId(dst_type)), input_shape);
 }
 REGISTER_PRIMITIVE_C(kNameQuantDTypeCast, QuantDTypeCast);
