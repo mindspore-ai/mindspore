@@ -746,6 +746,9 @@ def get_activation(name):
     Returns:
         Function, the activation function.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> sigmoid = nn.get_activation('sigmoid')
     """

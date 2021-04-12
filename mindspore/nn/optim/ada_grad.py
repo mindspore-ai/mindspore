@@ -95,7 +95,11 @@ class Adagrad(Optimizer):
             equal to or greater than 0. If the type of `learning_rate` is int, it will be converted to float.
             Default: 0.001.
         update_slots (bool): If true, update accumulation. Default: True.
-        loss_scale (float): Value for the loss scale. It must be greater than 0.0. Default: 1.0.
+        loss_scale (float): Value for the loss scale. It must be greater than 0.0. In general, use the default value.
+            Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
+            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            Default: 1.0.
         weight_decay (Union[float, int]): Weight decay value to multiply weight, must be zero or positive value.
             Default: 0.0.
 

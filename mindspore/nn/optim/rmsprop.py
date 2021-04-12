@@ -129,7 +129,11 @@ class RMSProp(Optimizer):
         use_locking (bool):  Whether to enable a lock to protect the variable and accumlation tensors from being
                              updated. Default: False.
         centered (bool): If true, gradients are normalized by the estimated variance of the gradient. Default: False.
-        loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
+            default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
+            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            Default: 1.0.
         weight_decay (Union[float, int]): Weight decay (L2 penalty). Should be equal to or greater than 0. Default: 0.0.
 
     Inputs:
