@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_MODEL_ZOO_NAML_UTILS_H_
+#define MINDSPORE_MODEL_ZOO_NAML_UTILS_H_
+
 #pragma once
 #include <dirent.h>
 #include <iostream>
@@ -49,3 +52,5 @@ class Utils {
                                    std::vector<std::vector<int>> *newsId);
 };
 #pragma once
+
+#endif

@@ -142,7 +142,7 @@ int AclProcess::WriteResult(const std::string& imageFile) {
     void *resHostBuf = nullptr;
     for (size_t i = 0; i < outputBuffers_.size(); ++i) {
         size_t output_size;
-        void * netOutput;
+        void *netOutput;
         netOutput = outputBuffers_[i];
         output_size =  outputSizes_[i];
         int ret = aclrtMallocHost(&resHostBuf, output_size);
@@ -164,7 +164,7 @@ int AclProcess::WriteResult(const std::string& imageFile) {
 
         std::string outFileName = homePath + "/" + fileName;
         try {
-            FILE * outputFile = fopen(outFileName.c_str(), "wb");
+            FILE *outputFile = fopen(outFileName.c_str(), "wb");
             if (outputFile == nullptr) {
                 std::cout << "open result file " << outFileName << " failed" << std::endl;
                 return INVALID_POINTER;
@@ -299,17 +299,19 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
     if (ret != ACL_ERROR_NONE) {
         std::cout << "aclrtMalloc failed, ret = " << ret << std::endl;
         aclrtFree(imInfo_dst);
+        free(im_info);
         return ret;
     }
     ret = aclrtMemcpy(reinterpret_cast<uint8_t *>(imInfo_dst), 8, im_info, 8, ACL_MEMCPY_HOST_TO_DEVICE);
     if (ret != ACL_ERROR_NONE) {
         std::cout << "aclrtMemcpy failed, ret = " << ret << std::endl;
         aclrtFree(imInfo_dst);
+        free(im_info);
         return ret;
     }
 
     std::vector<void *> inputBuffers({resizeOutData->data, imInfo_dst});
-    std::vector<size_t> inputSizes({resizeOutData->dataSize, 4*2});
+    std::vector<size_t> inputSizes({resizeOutData->dataSize, 4 * 2});
 
     for (size_t i = 0; i < modelInfo_.outputNum; i++) {
         aclrtMemset(outputBuffers_[i], outputSizes_[i], 0, outputSizes_[i]);
@@ -318,6 +320,7 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
     ret = modelProcess_->ModelInference(inputBuffers, inputSizes, outputBuffers_, outputSizes_, costTime_map);
     if (ret != OK) {
         aclrtFree(imInfo_dst);
+        free(im_info);
         std::cout << "Failed to execute the classification model, ret = " << ret << "." << std::endl;
         return ret;
     }
@@ -327,6 +330,7 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
         std::cout << "aclrtFree image info failed" << std::endl;
         return ret;
     }
+    free(im_info);
     RELEASE_DVPP_DATA(resizeOutData->data);
     return OK;
 }
