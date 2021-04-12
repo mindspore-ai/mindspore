@@ -124,13 +124,26 @@ def visual_image(img, annos, save_path, ratio=None, height=None, width=None, nam
     h, w = img.shape[0], img.shape[1]
     num_objects = len(annos)
     num = 0
+
+    def define_color(pair):
+        """define line color"""
+        left_part = [0, 1, 3, 5, 7, 9, 11, 13, 15]
+        right_part = [0, 2, 4, 6, 8, 10, 12, 14, 16]
+        if pair[0] in left_part and pair[1] in left_part:
+            color = (255, 0, 0)
+        elif pair[0] in right_part and pair[1] in right_part:
+            color = (0, 0, 255)
+        else:
+            color = (139, 0, 255)
+        return color
+
+    def visible(a, w, h):
+        return a[0] >= 0 and a[0] < w and a[1] >= 0 and a[1] < h
+
     for i in range(num_objects):
         ann = annos[i]
         bbox = coco_box_to_bbox(ann['bbox'])
-        if "score" in ann:
-            score = ann["score"]
-            if score < score_threshold and num != 0:
-                continue
+        if "score" in ann and (ann["score"] >= score_threshold or num == 0):
             num += 1
             txt = ("p" + "{:.2f}".format(ann["score"]))
             cv2.putText(img, txt, (bbox[0], bbox[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
@@ -143,33 +156,19 @@ def visual_image(img, annos, save_path, ratio=None, height=None, width=None, nam
         keypoints = ann["keypoints"]
         keypoints = np.array(keypoints, dtype=np.int32).reshape(_NUM_JOINTS, 3).tolist()
 
-        left_part = [0, 1, 3, 5, 7, 9, 11, 13, 15]
-        right_part = [0, 2, 4, 6, 8, 10, 12, 14, 16]
         for pair in data_cfg.edges:
             partA = pair[0]
             partB = pair[1]
-            if partA in left_part and partB in left_part:
-                color = (255, 0, 0)
-            elif partA in right_part and partB in right_part:
-                color = (0, 0, 255)
-            else:
-                color = (139, 0, 255)
+            color = define_color(pair)
             p_a = tuple(keypoints[partA][:2])
             p_b = tuple(keypoints[partB][:2])
             mask_a = keypoints[partA][2]
             mask_b = keypoints[partB][2]
-            if (p_a[0] >= 0 and p_a[0] < w and p_a[1] >= 0 and p_a[1] < h and
-                    p_b[0] >= 0 and p_b[0] < w and p_b[1] >= 0 and p_b[1] < h and
-                    mask_a * mask_b > 0):
+            if (visible(p_a, w, h) and visible(p_b, w, h) and mask_a * mask_b > 0):
                 cv2.line(img, p_a, p_b, color, 2)
                 cv2.circle(img, p_a, 3, color, thickness=-1, lineType=cv2.FILLED)
                 cv2.circle(img, p_b, 3, color, thickness=-1, lineType=cv2.FILLED)
-    if annos and "image_id" in annos[0]:
-        img_id = annos[0]["image_id"]
-    else:
-        img_id = random.randint(0, 9999999)
-    if name is None:
-        image_name = "cv_image_" + str(img_id) + ".png"
-    else:
-        image_name = "cv_image_" + str(img_id) + name + ".png"
+
+    img_id = annos[0]["image_id"] if annos and "image_id" in annos[0] else random.randint(0, 9999999)
+    image_name = "cv_image_" + str(img_id) + ".png" if name is None else "cv_image_" + str(img_id) + name + ".png"
     cv2.imwrite("{}/{}".format(save_path, image_name), img)

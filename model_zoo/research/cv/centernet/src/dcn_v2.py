@@ -252,7 +252,6 @@ class DeformConv2d(nn.Cell):
                     self.expand_dims(g_rt, 1) * x_q_rt)
 
         if self.modulation:
-            # modulation (b, 1, h, w, N)
             m = self.sigmoid(self.m_conv(x))
             m = self.transpose(m, self.perm_list)
             m = self.expand_dims(m, 1)

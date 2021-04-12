@@ -276,10 +276,6 @@ class COCOHP(ds.Dataset):
         inp = cv2.warpAffine(img, trans_input, (self.data_opt.input_res[0], self.data_opt.input_res[1]),
                              flags=cv2.INTER_LINEAR)
 
-        # caution: image normalization and transpose to nchw will both be done on device
-        # inp = (inp.astype(np.float32) / 255. - self.data_opt.mean) / self.data_opt.std
-        # inp = inp.transpose(2, 0, 1)
-
         assert self.data_opt.output_res[0] == self.data_opt.output_res[1]
         output_res = self.data_opt.output_res[0]
         num_joints = self.data_opt.num_joints

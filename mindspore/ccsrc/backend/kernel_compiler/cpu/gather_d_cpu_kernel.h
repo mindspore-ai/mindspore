@@ -37,7 +37,6 @@ class GatherDCPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   std::vector<size_t> index_shape_;
   std::vector<size_t> output_shape_;
-  int32_t axis_;
 };
 
 MS_REG_CPU_KERNEL_T_S(GatherD,
