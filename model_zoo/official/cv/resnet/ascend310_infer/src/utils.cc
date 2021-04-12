@@ -111,7 +111,7 @@ int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outpu
     std::string fileName(imageFile, pos + 1);
     fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
     std::string outFileName = homePath + "/" + fileName;
-    FILE * outputFile = fopen(outFileName.c_str(), "wb");
+    FILE *outputFile = fopen(outFileName.c_str(), "wb");
     fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
     fclose(outputFile);
     outputFile = nullptr;
@@ -174,7 +174,6 @@ std::string RealPath(std::string_view path) {
   char realPathMem[PATH_MAX] = {0};
   char *realPathRet = nullptr;
   realPathRet = realpath(path.data(), realPathMem);
-
   if (realPathRet == nullptr) {
     std::cout << "File: " << path << " is not exist.";
     return "";
