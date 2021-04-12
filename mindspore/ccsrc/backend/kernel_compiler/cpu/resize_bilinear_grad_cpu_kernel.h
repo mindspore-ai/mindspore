@@ -42,8 +42,8 @@ class ResizeBilinearGradCPUKernel : public CPUKernel {
   void CheckParam(const CNodePtr &kernel_node);
   TypeId dtype_{kTypeUnknown};
   bool align_corners_ = false;
-  float height_scale;
-  float width_scale;
+  float height_scale = 1.0;
+  float width_scale = 1.0;
   std::vector<size_t> size_;
   std::vector<size_t> shape_;
 };

@@ -36,19 +36,19 @@ class CTCLossCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  void GenLableWithBlank(uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
+  void GenLableWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
                          std::vector<std::vector<uint32_t>> *label_with_blank);
 
   template <typename T>
   void CalculateFwdVar(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
-                       std::vector<std::vector<T>> *log_alpha_b);
+                       std::vector<std::vector<T>> *const log_alpha_b);
   template <typename T>
   void CalculateBwdVar(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
-                       std::vector<std::vector<T>> *log_beta_b);
+                       std::vector<std::vector<T>> *const log_beta_b);
   template <typename T>
   void CalculateGrad(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
                      const std::vector<std::vector<T>> &log_alpha_b, const std::vector<std::vector<T>> &log_beta_b,
-                     const T log_pzx, std::vector<std::vector<T>> *dy);
+                     const T log_pzx, std::vector<std::vector<T>> *const dy);
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -87,7 +87,6 @@ MS_REG_CPU_KERNEL(CTCLoss,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   CTCLossCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CTCLOSS_CPU_KERNEL_H_

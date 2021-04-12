@@ -136,11 +136,11 @@ void MirrorPadGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const T *dy, T *interim_dy,
+void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const T *dy, const T *interim_dy,
                                                         const int dx_batches, const int dx_channels,
                                                         const int dx_height, const int dx_width, const int dy_height,
                                                         const int dy_width, const int padd_dim,
-                                                        const int64_t *paddings_arg, int mode, T *dx) {
+                                                        const int64_t *paddings_arg, int mode, T *const dx) {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
@@ -201,10 +201,11 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
 }
 
 template <typename T>
-void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_dy, const int dx_batches,
-                                                       const int dx_channels, const int dx_height, const int dx_width,
-                                                       const int dy_height, const int dy_width, const int padd_dim,
-                                                       const int64_t *paddings_arg, int mode, T *dx) {
+void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T *const dy, T *const interim_dy,
+                                                       const int dx_batches, const int dx_channels, const int dx_height,
+                                                       const int dx_width, const int dy_height, const int dy_width,
+                                                       const int padd_dim, const int64_t *paddings_arg, int mode,
+                                                       T *dx) {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
