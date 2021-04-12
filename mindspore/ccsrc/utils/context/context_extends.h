@@ -23,16 +23,6 @@
 #include "utils/ms_context.h"
 #include "utils/tensorprint_utils.h"
 
-#ifndef NO_DLIB
-#include "acl/acl_tdt.h"
-#include "tdt/tsd_client.h"
-#include "tdt/data_common.h"
-#include "runtime/dev.h"
-#endif
-#ifdef ENABLE_GE
-#include "transform/graph_ir/df_graph_manager.h"
-#endif
-
 namespace mindspore {
 namespace context {
 bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr);
