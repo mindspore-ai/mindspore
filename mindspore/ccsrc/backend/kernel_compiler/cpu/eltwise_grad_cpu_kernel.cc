@@ -137,7 +137,7 @@ template <typename T>
 void EltWiseGradCPUKernel<T>::AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
-    T divisor = 1 + input1[i] * input1[i];
+    const T divisor = 1 + input1[i] * input1[i];
     if (divisor == 0) {
       if (dividend == 0) {
         out[i] = std::numeric_limits<T>::quiet_NaN();

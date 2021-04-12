@@ -136,7 +136,6 @@ MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutpu
                   ReshapeCPUKernel);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
                   ReshapeCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 
