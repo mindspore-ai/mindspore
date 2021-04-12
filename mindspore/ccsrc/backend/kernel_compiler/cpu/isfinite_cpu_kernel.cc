@@ -90,6 +90,5 @@ void IsFiniteCPUKernel::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
     output[i] = true;
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
