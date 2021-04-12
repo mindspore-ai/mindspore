@@ -306,6 +306,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(
   return std::make_tuple(fg, inputs, outputs);
 }
 
+// Rebuild as node inputs or outputs have changed, processor comes from node itself
 kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::string> &inputs_format,
                                                       const std::vector<TypeId> &inputs_type,
                                                       const std::vector<std::string> &output_formats,
@@ -316,6 +317,22 @@ kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::str
   graph_info_builder.SetOutputsFormat(output_formats);
   graph_info_builder.SetOutputsDeviceType(output_types);
   graph_info_builder.SetProcessor(AnfAlgo::GetProcessor(node));
+  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  return graph_info_builder.Build();
+}
+
+// Build for new node, processor comes from context
+kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::string> &inputs_format,
+                                                      const std::vector<TypeId> &inputs_type,
+                                                      const std::vector<std::string> &output_formats,
+                                                      const std::vector<TypeId> &output_types) {
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
+  graph_info_builder.SetInputsFormat(inputs_format);
+  graph_info_builder.SetInputsDeviceType(inputs_type);
+  graph_info_builder.SetOutputsFormat(output_formats);
+  graph_info_builder.SetOutputsDeviceType(output_types);
+  graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
   graph_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
   return graph_info_builder.Build();

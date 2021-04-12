@@ -188,6 +188,8 @@ class PrimLib:
         'MatMul': Prim(OPAQUE),
         'TransData': Prim(OPAQUE),
         'BatchMatMul': Prim(OPAQUE),
+        'UnPadAkg': Prim(OPAQUE),
+        'PadAkg': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)

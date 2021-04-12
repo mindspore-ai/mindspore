@@ -27,6 +27,7 @@
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
+#include "backend/optimizer/graph_kernel/insert_pad.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
@@ -88,9 +89,11 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   // Cast the input of ReduceSum from float16 to float32 for higher precision
   pm->AddPass(std::make_shared<RaiseReductionPrecision>());
 
-  // Universal arithmetic simplify
   if (is_gpu) {
+    // Universal arithmetic simplify
     pm->AddPass(std::make_shared<ArithmeticSimplify>());
+    // Insert PadAkg and UnPadAkg Ops for MatMul
+    pm->AddPass(std::make_shared<InsertPadOps>());
   }
 
   // Common subexpression elimination
