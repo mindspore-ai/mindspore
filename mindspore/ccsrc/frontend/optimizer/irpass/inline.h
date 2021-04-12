@@ -89,24 +89,46 @@ class InlinerBase : public AnfVisitor {
       : use_move_(use_move), criterions_(criterions) {}
   ~InlinerBase() override = default;
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    auto cnode = dyn_cast<CNode>(node);
-    if (cnode == nullptr || cnode->size() < 1) {
+    if (!node->isa<CNode>()) {
       return nullptr;
     }
 
-    auto &inputs = cnode->inputs();
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    if (inputs.size() < 1 || !IsValueNode<FuncGraph>(inputs[0])) {
+      return nullptr;
+    }
+
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (!CheckFuncGraph(node, fg)) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
       return nullptr;
     }
 
+    // Do not inline GraphKernel to Cell.
+    if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      // If the GraphKernel only contains a return node, we make it inlined.
+      if (fg->nodes().size() - fg->parameters().size() > 1) {
+        return nullptr;
+      }
+    }
     Reset();
 
     // 'criterions_': {criterion_group_1:{criterion1, criterion2, ...}, criterion_group_2:{...}, ...}
     // All the criterions of 'criterion group' are true would set 'criterion group' as 'true'. As [AND].
     // Anyone of 'criterion group' in 'criterions_' is 'true' would be matched. As [OR].
-    bool is_match = ApplyCriterions(node, fg);
+    bool is_match = false;
+    for (auto &criterions : criterions_) {  // Each 'criterion group' in criterions_.
+      is_match = true;
+      for (auto &criterion : criterions) {  // Each criterion in 'criterion group'.
+        if (!criterion(this, fg, node)) {
+          is_match = false;
+          break;
+        }
+      }
+      if (is_match) {
+        break;
+      }
+    }
     if (!is_match) {
       return nullptr;
     }
@@ -122,9 +144,22 @@ class InlinerBase : public AnfVisitor {
     if (IsUniqueUse(nullptr, fg, nullptr)) {
       // For the single used fg, including non-after and after not matched above,
       // we move the whole fg nodes.
-      auto ret_node = InlineForUniqueUse(node, fg, args, inputs);
-      if (ret_node != nullptr) {
-        return ret_node;
+      if (use_move_) {
+        auto mng = fg->manager();
+        MS_EXCEPTION_IF_NULL(mng);
+        ReplaceParams(mng, args, fg);
+        auto out_node = fg->output();
+        mng->MoveAllCNodeDropGraph(fg, node->func_graph(), inputs[0]->scope());
+        return out_node;
+      }
+
+      // The other branch calling the last after block.
+      if (fg->has_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK)) {
+        // Check if parameters' changed.
+        auto param_simplified_caller = SimplifyAfterParameter(fg, node, args);
+        if (param_simplified_caller != nullptr) {
+          return param_simplified_caller;
+        }
       }
     } else {
       // We don't expand the middle multiple used after block, except the last one.
@@ -141,60 +176,6 @@ class InlinerBase : public AnfVisitor {
     }
     // Or, just make a clone for not single used fg.
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
-  }
-
-  AnfNodePtr InlineForUniqueUse(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
-                                const std::vector<AnfNodePtr> &inputs) {
-    if (use_move_) {
-      auto mng = fg->manager();
-      MS_EXCEPTION_IF_NULL(mng);
-      ReplaceParams(mng, args, fg);
-      auto out_node = fg->output();
-      mng->MoveAllCNodeDropGraph(fg, node->func_graph(), inputs[0]->scope());
-      return out_node;
-    }
-
-    // The other branch calling the last after block.
-    if (fg->has_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK)) {
-      // Check if parameters' changed.
-      auto param_simplified_caller = SimplifyAfterParameter(fg, node, args);
-      if (param_simplified_caller != nullptr) {
-        return param_simplified_caller;
-      }
-    }
-    return nullptr;
-  }
-
-  bool ApplyCriterions(const AnfNodePtr &node, const FuncGraphPtr &fg) {
-    bool is_match = false;
-    for (auto &criterions : criterions_) {  // Each 'criterion group' in criterions_.
-      is_match = true;
-      for (auto &criterion : criterions) {  // Each criterion in 'criterion group'.
-        if (!criterion(this, fg, node)) {
-          is_match = false;
-          break;
-        }
-      }
-      if (is_match) {
-        break;
-      }
-    }
-    return is_match;
-  }
-
-  bool CheckFuncGraph(const AnfNodePtr &node, const FuncGraphPtr &fg) const {
-    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
-      return false;
-    }
-
-    // Do not inline GraphKernel to Cell.
-    if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-      // If the GraphKernel only contains a return node, we make it inlined.
-      if (fg->nodes().size() - fg->parameters().size() > 1) {
-        return false;
-      }
-    }
-    return true;
   }
 
   void ReplaceParams(const FuncGraphManagerPtr &mng, const std::vector<AnfNodePtr> &new_params,
@@ -315,9 +296,9 @@ class InlinerBase : public AnfVisitor {
 };
 
 bool IsUniqueUse(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {
-  const auto &users = fg->func_graph_cnodes_index();
+  auto &cnodes = fg->func_graph_cnodes_index();
   int64_t n_use = std::accumulate(
-    users.begin(), users.end(), 0,
+    cnodes.begin(), cnodes.end(), 0,
     [](int64_t sum, const std::pair<const CNodeIndexPairPtr, int64_t> &item) { return sum + item.second; });
   return n_use == 1;
 }

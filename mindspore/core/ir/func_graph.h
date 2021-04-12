@@ -42,15 +42,12 @@
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
 using FuncGraphCounterMap = OrderedMap<FuncGraphPtr, int>;
-using CNodeIndexPair = std::pair<AnfNodeWeakPtr, int>;
-using CNodeIndexPairPtr = std::shared_ptr<CNodeIndexPair>;
 
 struct CNodeIndexHasher {
   std::size_t operator()(const CNodeIndexPairPtr pair) const {
     MS_EXCEPTION_IF_NULL(pair);
-    AnfNodePtr node_ptr = pair->first.lock();
-    MS_EXCEPTION_IF_NULL(node_ptr);
-    return hash_combine(node_ptr->hash(), std::hash<int>()(pair->second));
+    MS_EXCEPTION_IF_NULL(pair->first);
+    return hash_combine(pair->first->hash(), std::hash<int>()(pair->second));
   }
 };
 
@@ -62,7 +59,7 @@ struct CNodeIndexEqual {
     if (lhs == rhs) {
       return true;
     }
-    if (lhs->first.lock() != rhs->first.lock()) {
+    if (lhs->first != rhs->first) {
       return false;
     }
     if (lhs->second != rhs->second) {
