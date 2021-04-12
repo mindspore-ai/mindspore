@@ -114,7 +114,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   void AssignParamKey(const KernelGraphPtr &kernel_graph);
   void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
-  bool IsGetNextGraph(const GraphId &graph_id, std::string *channel_name);
+  bool IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name);
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                 std::string *error_msg) const {
     return true;
@@ -173,8 +173,12 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) { return 0; }
   virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
   virtual void BuildGraphImpl(GraphId) {}
-  virtual void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
-  }
+  virtual void PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                               const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {}
+  virtual void PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {}
+  virtual void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {}
+  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   virtual void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                            const std::vector<tensor::TensorPtr> &input_tensors,
                            const std::vector<int64_t> &tensors_mask) {}
@@ -195,7 +199,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   }
 
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
-                             const std::vector<tensor::TensorPtr> &inputs_const) const;
+                             const std::vector<tensor::TensorPtr> &inputs_const) const {}
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
                      const std::vector<tensor::TensorPtr> &input_tensors) const;
   void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph, OpRunInfo *op_run_info) const;

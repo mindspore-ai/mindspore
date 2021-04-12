@@ -59,6 +59,7 @@
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
+#include "abstract/utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/proto_exporter.h"
 #else
@@ -209,69 +210,6 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     (*op_output_info)[kernel_with_index] = output_tensor_info;
   }
 }
-}  // namespace
-
-void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
-
-void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-    DumpIRProto(graph, "before_unify_mindir_hwopt_" + std::to_string(graph->graph_id()));
-  }
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
-  unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  } else {
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  }
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
-
-  optimizer->AddPassManager(unify_mindir_pm);
-  (void)optimizer->Optimize(graph);
-  graph->SetExecOrderByDefault();
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-  }
-}
-
-GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
-  MS_LOG(INFO) << "Start";
-  // construct graph, if successfully, graph_sum_ + 1
-  auto graph = ConstructKernelGraph(lst, outputs);
-  auto graph_id = graph->graph_id();
-  InitAllBucket(graph);
-  MS_LOG(INFO) << "Compile graph " << graph_id << " success";
-  return graph_id;
-}
 
 bool IsBackward(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -355,6 +293,183 @@ void ReorderSendRecv(std::vector<CNodePtr> *execution_order) {
   if (!backward_recv.empty()) {
     ReorderRecv(execution_order, backward_recv);
   }
+}
+
+size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Load kInputCtrlTensors";
+  auto inputs_params = graph->input_ctrl_tensors();
+  if (inputs_params == nullptr) {
+    return 0;
+  }
+  if (inputs_params->size() < 3) {
+    MS_LOG(EXCEPTION) << "Illegal inputs_params size";
+  }
+  // update current loop tensor to 0 per iterator
+  auto cur_loop_tensor = (*inputs_params)[0];
+  MS_EXCEPTION_IF_NULL(cur_loop_tensor);
+  auto *cur_val = static_cast<int32_t *>(cur_loop_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(cur_val);
+  *cur_val = 0;
+  cur_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
+  // set loop_count to zero
+  MS_EXCEPTION_IF_NULL(inputs);
+  inputs->push_back(cur_loop_tensor);
+
+  // update next loop tensor to 0 per iterator
+  auto next_loop_tensor = (*inputs_params)[1];
+  MS_EXCEPTION_IF_NULL(next_loop_tensor);
+  auto *next_val = static_cast<int32_t *>(next_loop_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(next_val);
+  *next_val = 0;
+  next_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
+  // set loop_count to zero
+  MS_EXCEPTION_IF_NULL(inputs);
+  inputs->push_back(next_loop_tensor);
+
+  auto epoch_tensor = (*inputs_params)[2];
+  MS_EXCEPTION_IF_NULL(epoch_tensor);
+  auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
+  MS_EXCEPTION_IF_NULL(epoch_val);
+  *epoch_val = graph->current_epoch();
+  epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
+  inputs->push_back(epoch_tensor);
+  MS_LOG(INFO) << "Load epoch_val:" << *epoch_val;
+  graph->set_current_epoch(graph->current_epoch() + 1);
+  return inputs_params->size();
+}
+
+bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_address = AnfAlgo::GetMutableOutputAddr(parameter, 0);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    return tensor->device_address().get() == nullptr || tensor->device_address() != device_address;
+  }
+  if (tensor->NeedSyncHostToDevice()) {
+    return true;
+  }
+  auto tensor_address = tensor->device_address();
+  if (tensor_address != device_address) {
+    tensor->data_sync(false);
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
+void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
+
+void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+    DumpIRProto(graph, "before_unify_mindir_hwopt_" + std::to_string(graph->graph_id()));
+  }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+  } else {
+    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+  }
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
+
+  optimizer->AddPassManager(unify_mindir_pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+  }
+}
+
+void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                  const std::vector<tensor::TensorPtr> &inputs_const) const {
+  std::vector<tensor::TensorPtr> inputs(inputs_const);
+  size_t input_ctrl_size = 3;
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->input_ctrl_tensors()) {
+    input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
+  }
+  auto &input_nodes = kernel_graph->input_nodes();
+  auto extra_param_size = kernel_graph->GetExtraParamAndTensor().size();
+  if ((inputs.size() + input_ctrl_size) - 3 != input_nodes.size() - extra_param_size) {
+    MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
+                      << ", input_ctrl_size:" << input_ctrl_size << ", extra_param_size:" << extra_param_size;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto input_node = input_nodes[i];
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto size = LongToSize(tensor->data().nbytes());
+    if (input_node->isa<Parameter>() && input_node->cast<ParameterPtr>()->is_used_by_dynamic_kernel()) {
+      auto tensor_shape = tensor->shape();
+      std::vector<size_t> shape_tmp;
+      (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
+      AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+                                          input_node.get());
+      size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
+    }
+    if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+      const std::string &param_name = input_node->fullname_with_scope();
+      if (ps::ps_cache_instance.IsHashTable(param_name)) {
+        continue;
+      }
+#endif
+      auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+      MS_EXCEPTION_IF_NULL(device_address);
+      if (size != 0 && !device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), size,
+                                                         tensor->data_type(), tensor->data_c())) {
+        MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
+      }
+      if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
+          AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>())) {
+        tensor->set_device_address(device_address);
+      }
+    }
+    tensor->set_sync_status(kNoNeedSync);
+  }
+}
+
+GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+  MS_LOG(INFO) << "Start";
+  // construct graph, if successfully, graph_sum_ + 1
+  auto graph = ConstructKernelGraph(lst, outputs);
+  auto graph_id = graph->graph_id();
+  InitAllBucket(graph);
+  MS_LOG(INFO) << "Compile graph " << graph_id << " success";
+  return graph_id;
 }
 
 GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
@@ -559,16 +674,8 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
 
 bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInsertSwitch(); }
 
-void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                                 VectorRef *const outputs) {
-  MS_LOG(INFO) << "Start";
-  auto kernel_graph = GetGraph(graph_id);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  // if none of child graph and no anf output exists
-  if (!kernel_graph->executable()) {
-    MS_LOG(INFO) << "No child graph has anf output";
-    return;
-  }
+void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                    const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
   // load data to extra params
   std::set<KernelGraphPtr> memo;
   SyncDataToExtraParams(NOT_NULL(kernel_graph), NOT_NULL(&memo));
@@ -580,14 +687,14 @@ void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tens
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
   std::string channel_name;
-  if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(graph_id, &channel_name)) {
+  if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(kernel_graph, &channel_name)) {
     ps::ps_cache_instance.IncreaseGraphStep(channel_name);
   }
 #endif
-  {
-    // run task on device
-    Execute(kernel_graph, true);
-  }
+}
+
+void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
   // summary
   Summary(kernel_graph.get());
   // load tensor from device for debugger
@@ -598,8 +705,9 @@ void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tens
   if (debugger_) {
     debugger_->PostExecute();
   }
-  MS_LOG(INFO) << "Finish!";
 }
+
+void AscendSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { Execute(kernel_graph, true); }
 
 void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start";

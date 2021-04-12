@@ -50,7 +50,13 @@ class AscendSession : public SessionBasic {
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
   bool IsSupportSummary() override;
-  void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
+  void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
+  void PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
+                       VectorRef *const outputs) override;
+  void PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
+                        VectorRef *const outputs) override;
+  void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) override;
   void BuildGraphImpl(GraphId) override;
   void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                    const std::vector<tensor::TensorPtr> &input_tensors,

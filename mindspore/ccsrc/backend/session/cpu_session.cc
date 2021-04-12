@@ -102,20 +102,19 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   Optimize(graph);
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
-
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
-
   // runtime init
   if (!runtime_.Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-
   MS_LOG(INFO) << "Assign kernel address";
   runtime_.AssignKernelAddress(graph.get());
-
+  // set summary node
+  SetSummaryNodes(graph.get());
+  runtime_.IncreaseSummaryRefCount(graph->summary_nodes());
   DumpGraph(graph);
   return graph_id;
 }
@@ -154,38 +153,26 @@ void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
   }
 }
 
-void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                              VectorRef *outputs) {
-  auto kernel_graph = GetGraph(graph_id);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
+void CPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                 const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
   MS_LOG(INFO) << "Bind input output address";
   runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
+}
 
-  MS_LOG(INFO) << "Run graph start";
+void CPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
+  Summary(kernel_graph.get());
+}
 
-  bool enable_summary = summary_callback_ != nullptr;
-  NamedSummaryOutputs summary_outputs;
-  if (enable_summary) {
-    SetSummaryNodes(kernel_graph.get());
-    summary_outputs = kernel_graph->summary_nodes();
-    runtime_.IncreaseSummaryRefCount(summary_outputs);
-  }
-
+void CPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
   bool ret = runtime_.Run(kernel_graph.get(), false);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
-
-  if (enable_summary) {
-    Summary(kernel_graph.get());
-    runtime_.DecreaseSummaryRefCount(summary_outputs);
-  }
-
-  MS_LOG(INFO) << "Run graph end";
 }
 
 void CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
