@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void MinimumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
@@ -147,7 +146,7 @@ void MinimumCPUKernel<T>::InitTensorBroadcastShape() {
   }
 }
 
-// Broadcast comparation
+// Broadcast comparison
 template <typename T>
 size_t MinimumCPUKernel<T>::Index(const size_t &index, const size_t &dim) {
   return dim == 1 ? 0 : index;
@@ -216,6 +215,5 @@ void MinimumCPUKernel<T>::BroadcastArithTensors(const T *input_x, const T *input
     output[i] = MinimumFunc(input_x[i], input_y[i]);
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
