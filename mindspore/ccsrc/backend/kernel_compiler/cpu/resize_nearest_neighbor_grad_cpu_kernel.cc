@@ -62,7 +62,7 @@ void ResizeNearestNeighborGradCPUKernel::LaunchKernel(const std::vector<AddressP
 
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
-    MS_LOG(ERROR) << "Output buffer memset failed, ret:" << ret;
+    MS_LOG(EXCEPTION) << "Output buffer memset failed, ret:" << ret;
   }
 
   size_t in_hw_size = in_width_ * in_height_;
