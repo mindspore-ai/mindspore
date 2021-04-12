@@ -187,6 +187,5 @@ void MirrorPadCPUKernel::CheckParam(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MirrorPadCPUKernel needs 1 output.";
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
