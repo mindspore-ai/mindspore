@@ -57,7 +57,7 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
         size_t offset = n * c_size * hw_size + c * hw_size;
         size_t hw = 0;
 #ifdef ENABLE_AVX
-        constexpr size_t C8NUM = 8;
+        const size_t C8NUM = 8;
         size_t hw8 = hw_size / C8NUM * C8NUM;
         const float *in_ptr = src_addr + offset;
         float *out_ptr = output_addr + offset;
