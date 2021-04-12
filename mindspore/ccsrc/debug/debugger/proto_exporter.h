@@ -50,13 +50,13 @@ class DebuggerProtoExporter {
   void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto);
   void SetNodeOutputType(const TypePtr &node, const BaseShapePtr &shape, debugger::TypeProto *type_proto);
 
-  void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto,
+  void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                        LocDebugDumpMode dump_location = kDebugOff);
   void ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto);
-  void ExportCNodes(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto,
+  void ExportCNodes(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                     std::map<AnfNodePtr, size_t> *const_map_ptr, LocDebugDumpMode dump_location = kDebugOff);
   void ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node, std::map<AnfNodePtr, size_t> *apply_map_ptr,
-                   std::map<AnfNodePtr, size_t> *const_map_ptr, debugger::GraphProto *graph_proto,
+                   std::map<AnfNodePtr, size_t> *const_map_ptr, debugger::GraphProto *const graph_proto,
                    LocDebugDumpMode dump_location = kDebugOff);
   void ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &ret_node,
                              const std::map<AnfNodePtr, size_t> &apply_map, std::map<AnfNodePtr, size_t> *const_map_ptr,

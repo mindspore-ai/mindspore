@@ -61,6 +61,78 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
   watchpoint_table.erase(id);
 }
 
+std::unique_ptr<ITensorSummary> GetSummaryPtr(const mindspore::tensor::TensorPtr &tensor_ptr, void *previous_tensor_ptr,
+                                              uint32_t num_elements, int tensor_dtype) {
+  switch (tensor_dtype) {
+    case kNumberTypeUInt8: {
+      return std::make_unique<TensorSummary<uint8_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeInt8: {
+      return std::make_unique<TensorSummary<int8_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeUInt16: {
+      return std::make_unique<TensorSummary<uint16_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeInt16: {
+      return std::make_unique<TensorSummary<int16_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeUInt32: {
+      return std::make_unique<TensorSummary<uint32_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeInt32:
+    case kNumberTypeInt: {
+      return std::make_unique<TensorSummary<int32_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeUInt64: {
+      return std::make_unique<TensorSummary<uint64_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeInt64: {
+      return std::make_unique<TensorSummary<int64_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeFloat16: {
+      return std::make_unique<TensorSummary<float16>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeFloat32:
+    case kNumberTypeFloat: {
+      return std::make_unique<TensorSummary<float>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeFloat64: {
+      return std::make_unique<TensorSummary<double>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    case kNumberTypeBool: {
+      return std::make_unique<TensorSummary<bool>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+    }
+    default:
+      MS_LOG(INFO) << "Unsupported tensor type";
+      // return a null pointer
+      return std::unique_ptr<TensorSummary<bool>>(nullptr);
+  }
+}
+
+void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck,
+                                          const std::string &tensor_name, const std::string &tensor_name_no_slot,
+                                          std::string *qualified_tensor_name,
+                                          std::vector<watchpoint_t> *watchpoints_to_check) {
+  for (auto w_table_item : watchpoint_table) {
+    auto wp = std::get<1>(w_table_item);
+    // check ONLY init conditions on initial suspended state.
+    // skip other conditions on initial suspended state
+    if (init_dbg_suspend && (wp.condition.type != INIT)) continue;
+    // skip init condition if not init suspend
+    if ((wp.condition.type == INIT) && !init_dbg_suspend) continue;
+    // check change conditions only on step end.
+    if (wp.change_condition() && !step_end) continue;
+    // if recheck, ignore the cache results and reanalyze everything.
+    // if not a recheck, check only unanalyzed tensors
+    if (!recheck && wp_id_cache[tensor_name].count(wp.id)) continue;
+    std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot);
+    if (!found.empty()) {
+      *qualified_tensor_name = found;
+      watchpoints_to_check->push_back(w_table_item.second);
+    }
+  }
+}
+
 void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
                                      std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
                                      std::vector<std::vector<parameter_t>> *parameters,
@@ -80,24 +152,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
     int tensor_dtype = tensor_ptr->data_type_c();
     std::vector<watchpoint_t> watchpoints_to_check;
     std::string qualified_tensor_name;
-    for (auto w_table_item : watchpoint_table) {
-      auto wp = std::get<1>(w_table_item);
-      // check ONLY init conditions on intial suspended state.
-      // skip other conditions on intial suspended state
-      if (init_dbg_suspend && (wp.condition.type != INIT)) continue;
-      // skip init condition if not init suspend
-      if ((wp.condition.type == INIT) && !init_dbg_suspend) continue;
-      // check change conditions only on step end.
-      if (wp.change_condition() && !step_end) continue;
-      // if recheck, ignore the cache results and reanalyze everything.
-      // if not a recheck, check only unanalyzed tensors
-      if (!recheck && wp_id_cache[tensor_name].count(wp.id)) continue;
-      std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot);
-      if (!found.empty()) {
-        qualified_tensor_name = found;
-        watchpoints_to_check.push_back(w_table_item.second);
-      }
-    }
+    AddWatchPointsToCheck(init_dbg_suspend, step_end, recheck, tensor_name, tensor_name_no_slot, &qualified_tensor_name,
+                          &watchpoints_to_check);
     // no wp set on current tensor
     if (watchpoints_to_check.empty()) continue;
 
@@ -107,74 +163,12 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                                   : nullptr;
     std::unique_ptr<ITensorSummary> base_summary_ptr;
     if (!(watchpoints_to_check.size() == 1 && watchpoints_to_check[0].condition.type == IS_OVERFLOW)) {
-      switch (tensor_dtype) {
-        case kNumberTypeUInt8: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<uint8_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeInt8: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<int8_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeUInt16: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<uint16_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeInt16: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<int16_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeUInt32: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<uint32_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeInt32:
-        case kNumberTypeInt: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<int32_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeUInt64: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<uint64_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeInt64: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<int64_t>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeFloat16: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<float16>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeFloat32:
-        case kNumberTypeFloat: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<float>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeFloat64: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<double>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        case kNumberTypeBool: {
-          base_summary_ptr =
-            std::make_unique<TensorSummary<bool>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
-          break;
-        }
-        default:
-          MS_LOG(INFO) << "Unsupported tensor type";
-          continue;
+      base_summary_ptr = GetSummaryPtr(tensor_ptr, previous_tensor_ptr, num_elements, tensor_dtype);
+      if (base_summary_ptr != nullptr) {
+        base_summary_ptr->SummarizeTensor(watchpoints_to_check);
+      } else {
+        continue;
       }
-      base_summary_ptr->SummarizeTensor(watchpoints_to_check);
     }
 
     for (auto &wp : watchpoints_to_check) {

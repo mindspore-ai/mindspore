@@ -179,6 +179,10 @@ class DebugServices {
                         const std::vector<std::shared_ptr<TensorData>> &tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck);
 
+  void AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck, const std::string &tensor_name,
+                             const std::string &tensor_name_no_slot, std::string *qualified_tensor_name,
+                             std::vector<watchpoint_t> *watchpoints_to_check);
+
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size, std::vector<TypePtr> *dtype,
                         std::vector<std::vector<int64_t>> *shape);
