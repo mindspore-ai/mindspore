@@ -159,6 +159,8 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 
   reg.AddFlag("dump_as_text", &dump_as_text);
 
+  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion);
+
   reg.AddFlag("opt_level", &opt_level);
   reg.AddFlag("auto_tune", &auto_tune);
   reg.AddFlag("cluster_limit", &cluster_limit);
@@ -176,6 +178,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 std::string GraphKernelFlags::DumpAllFlags() const {
   nlohmann::json json;
   json["dump_as_text"] = dump_as_text;
+  json["enable_stitch_fusion"] = enable_stitch_fusion;
 
   json["opt_level"] = opt_level;
   json["auto_tune"] = auto_tune;

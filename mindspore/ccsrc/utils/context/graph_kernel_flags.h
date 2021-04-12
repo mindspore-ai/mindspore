@@ -55,6 +55,11 @@ class GraphKernelFlags {
   bool dump_as_text{false};
 
   /**
+   * Enable stitch fusion in graph kernel fusion strategy.
+   */
+  bool enable_stitch_fusion{false};
+
+  /**
    * Optimization level, value from 0 to 3.
    * 0: GraphKernel disabled
    * 1: GraphKernel enabled

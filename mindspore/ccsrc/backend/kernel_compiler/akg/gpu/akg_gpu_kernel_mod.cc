@@ -95,7 +95,9 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   CUfunction kernel_addr;
   CUresult result = kernelmanager_->GetFunction(kernel_pack_, false, &thread_info, &kernel_addr);
   if (result != CUDA_SUCCESS) {
-    MS_LOG(ERROR) << "GetFunction failed.";
+    const char *msg = nullptr;
+    cuGetErrorName(result, &msg);
+    MS_LOG(ERROR) << "Get function failed, error: " << msg;
     return false;
   }
   std::vector<void *> runtimeargs;
@@ -109,7 +111,7 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);
-    MS_LOG(ERROR) << "Launch Kernel failed. error: " << msg;
+    MS_LOG(ERROR) << "Launch kernel failed, error: " << msg;
     return false;
   }
   return true;

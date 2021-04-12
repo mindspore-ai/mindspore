@@ -30,7 +30,7 @@ def split_with_json(json_str, flags_str):
         flags = json.loads(flags_str)
         target = graph_desc['process']
         comp = model.load_composite(graph_desc)
-        graph_split, graph_mode = model.split(comp.graph, target)
+        graph_split, graph_mode = model.split(comp.graph, target, flags)
         is_multi_graph = len(graph_split) > 1
         graph_list = list(map(comp.dump, graph_split))
         _reset_graphmode_for_inplaceassign(graph_list, graph_mode)
@@ -61,7 +61,7 @@ def _dump_split_info(flags, graph_json, graph_desc, subgraphs, graph_mode):
         f.write("********** main graph: {} **********\n".format(graph_desc.name))
         f.write("input json:\n{}\n".format(graph_json))
         f.write("graph desc:\n{}\n".format(str(graph_desc)))
-        if len(subgraphs) > 1:
+        if len(subgraphs) > 1 or subgraphs[0].stitch_info is not None:
             for i, g in enumerate(subgraphs):
                 f.write("-------- subgraph {}, mode: {} --------\n".format(i, graph_mode[i]))
                 f.write("{}\n".format(str(g)))

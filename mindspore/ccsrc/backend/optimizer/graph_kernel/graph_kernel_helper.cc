@@ -122,7 +122,7 @@ bool GenJson(const AnfNodePtrList &op_nodes, const AnfNodePtrList &inputs, const
   std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
     (void)fused_name.append(AnfAlgo::GetCNodeName(node)).append("_");
   });
-  MS_LOG(INFO) << "Collect fusion json: " << fused_name;
+  MS_LOG(DEBUG) << "Collect fusion json: " << fused_name;
   return true;
 }
 
