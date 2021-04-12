@@ -28,7 +28,7 @@ size_t get_element_num(const std::vector<size_t> &shape) {
 }
 
 template <typename T, typename I>
-void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, I *index, const int &dim, T *output,
+void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, const I *index, const int &dim, T *output,
               const std::vector<size_t> &output_shape, const std::vector<size_t> &out_cargo_size,
               const std::vector<size_t> &input_cargo_size, bool reverse) {
   for (size_t i = 0; i < output_shape[cur]; ++i) {
@@ -65,7 +65,6 @@ template <typename T, typename I>
 void GatherDCPUKernel<T, I>::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-
   if (input_shape_.size() != index_shape_.size()) {
     MS_LOG(EXCEPTION) << "Invalid shape size, shape size of input: " << input_shape_.size()
                       << ", and index: " << index_shape_.size() << " should be equal";
@@ -81,7 +80,6 @@ bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &input
   size_t index_size = get_element_num(index_shape_) * sizeof(I);
   size_t dim_size = sizeof(int);
   size_t output_size = get_element_num(output_shape_) * sizeof(T);
-
   if (inputs[0]->size != input_size || inputs[1]->size != dim_size || inputs[2]->size != index_size ||
       outputs[0]->size != output_size) {
     MS_LOG(EXCEPTION) << "invalid input or output data size!";
@@ -92,7 +90,6 @@ bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &input
   auto index = reinterpret_cast<I *>(inputs[2]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   int32_t input_rank = SizeToInt(input_shape_.size());
-
   if (dim[0] >= input_rank || dim[0] < -input_rank) {
     MS_LOG(EXCEPTION) << "The value of 'dim' should be in [" << -input_rank << ", " << input_rank
                       << "], but got: " << dim[0];

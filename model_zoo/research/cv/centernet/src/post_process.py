@@ -56,7 +56,6 @@ def merge_outputs(detections, soft_nms=True):
 def convert_eval_format(detections, img_id):
     """convert detection to annotation json format"""
     # detections. scores: (b, K); bboxes: (b, K, 4); kps: (b, K, J * 2); clses: (b, K)
-    # only batch_size = 1 is supported
     detections = np.array(detections).reshape((-1, 39))
     pred_anno = {"images": [], "annotations": []}
     num_objs, _ = detections.shape
