@@ -32,8 +32,8 @@ def rerank(args):
     """rerank function"""
     rerank_feature_file = args.rerank_feature_file
     rerank_result_file = args.rerank_result_file
-    encoder_ck_file = args.rerank_encoder_ck_file
-    downstream_ck_file = args.rerank_downstream_ck_file
+    encoder_ck_file = args.rerank_encoder_ck_path
+    downstream_ck_file = args.rerank_downstream_ck_path
     seed = args.seed
     seq_len = args.seq_len
     batch_size = args.rerank_batch_size

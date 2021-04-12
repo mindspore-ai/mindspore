@@ -66,6 +66,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
 
   ```python
   # run evaluation example with HotPotQA dev dataset
+  pip install transformers
   sh run_eval_ascend.sh
   sh run_eval_ascend_reranker_reader.sh
   ```
@@ -85,22 +86,20 @@ After installing MindSpore via the official website and Dataset is correctly gen
   ├─src
   | ├─build_reranker_data.py                  # build data for re-ranker from result of retriever
   | ├─config.py                               # Evaluation configurations for retriever
+  | ├─converted_bert.py                       # Bert model for tprr  
   | ├─hotpot_evaluate_v1.py                   # Hotpotqa evaluation script
   | ├─onehop.py                               # Onehop model of retriever
-  | ├─onehop_bert.py                          # Onehop bert model of retriever
   | ├─process_data.py                         # Data preprocessing for retriever
   | ├─reader.py                               # Reader model
-  | ├─reader_albert_xxlarge.py                # Albert-xxlarge module of reader model
+  | ├─albert.py                               # Albert-xxlarge model
   | ├─reader_downstream.py                    # Downstream module of reader model
   | ├─reader_eval.py                          # Reader evaluation script
-  | ├─rerank_albert_xxlarge.py                # Albert-xxlarge module of re-ranker model
   | ├─rerank_and_reader_data_generator.py     # Data generator for re-ranker and reader
   | ├─rerank_and_reader_utils.py              # Utils for re-ranker and reader
   | ├─rerank_downstream.py                    # Downstream module of re-ranker model
   | ├─reranker.py                             # Re-ranker model
   | ├─reranker_eval.py                        # Re-ranker evaluation script
   | ├─twohop.py                               # Twohop model of retriever
-  | ├─twohop_bert.py                          # Twohop bert model of retriever
   | └─utils.py                                # Utils for retriever
   |
   ├─retriever_eval.py                         # Evaluation net for retriever

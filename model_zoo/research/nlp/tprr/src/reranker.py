@@ -16,7 +16,7 @@
 
 import mindspore.nn as nn
 from mindspore import load_checkpoint, load_param_into_net
-from src.rerank_albert_xxlarge import Rerank_Albert
+from src.albert import Albert
 from src.rerank_downstream import Rerank_Downstream
 
 
@@ -26,15 +26,15 @@ class Reranker(nn.Cell):
         """init function"""
         super(Reranker, self).__init__(auto_prefix=False)
 
-        self.encoder = Rerank_Albert(batch_size)
+        self.encoder = Albert(batch_size)
         param_dict = load_checkpoint(encoder_ck_file)
         not_load_params_1 = load_param_into_net(self.encoder, param_dict)
-        print(f"not loaded albert: {not_load_params_1}")
+        print(f"re-ranker albert not loaded params: {not_load_params_1}")
 
         self.no_answer_mlp = Rerank_Downstream()
         param_dict = load_checkpoint(downstream_ck_file)
         not_load_params_2 = load_param_into_net(self.no_answer_mlp, param_dict)
-        print(f"not loaded downstream: {not_load_params_2}")
+        print(f"re-ranker downstream not loaded params: {not_load_params_2}")
 
     def construct(self, input_ids, attn_mask, token_type_ids):
         """construct function"""

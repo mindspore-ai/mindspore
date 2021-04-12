@@ -31,8 +31,7 @@ from mindspore import load_checkpoint, load_param_into_net
 from src.onehop import OneHopBert
 from src.twohop import TwoHopBert
 from src.process_data import DataGen
-from src.onehop_bert import ModelOneHop
-from src.twohop_bert import ModelTwoHop
+from src.converted_bert import ModelOneHop
 from src.config import ThinkRetrieverConfig
 from src.utils import read_query, split_queries, get_new_title, get_raw_title, save_json
 
@@ -84,10 +83,10 @@ def evaluation(d_id):
     print('********************** loading model ********************** ')
 
     s_lm = time.time()
-    model_onehop_bert = ModelOneHop()
+    model_onehop_bert = ModelOneHop(256)
     param_dict = load_checkpoint(config.onehop_bert_path)
     load_param_into_net(model_onehop_bert, param_dict)
-    model_twohop_bert = ModelTwoHop()
+    model_twohop_bert = ModelOneHop(448)
     param_dict2 = load_checkpoint(config.twohop_bert_path)
     load_param_into_net(model_twohop_bert, param_dict2)
     onehop = OneHopBert(config, model_onehop_bert)

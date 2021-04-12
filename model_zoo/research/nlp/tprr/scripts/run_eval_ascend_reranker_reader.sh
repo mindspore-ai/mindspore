@@ -16,6 +16,8 @@
 
 # eval script
 
+DATAPATH="../data"
+CKPTPATH="../ckpt"
 ulimit -u unlimited
 export DEVICE_NUM=1
 export RANK_SIZE=$DEVICE_NUM
@@ -34,6 +36,6 @@ cd ./eval || exit
 env > env.log
 echo "start evaluation"
 
-python reranker_and_reader_eval.py --get_reranker_data --run_reranker --cal_reranker_metrics --select_reader_data --run_reader --cal_reader_metrics > log_reranker_and_reader.txt 2>&1 &
+python reranker_and_reader_eval.py --get_reranker_data --run_reranker --cal_reranker_metrics --select_reader_data --run_reader --cal_reader_metrics --data_path $DATAPATH --ckpt_path $CKPTPATH > log_reranker_and_reader.txt 2>&1 &
 
 cd ..

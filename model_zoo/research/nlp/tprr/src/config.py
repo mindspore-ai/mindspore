@@ -39,9 +39,9 @@ def ThinkRetrieverConfig():
     parser.add_argument("--dev_path", type=str, default='../hotpot_dev_fullwiki_v1_for_retriever.json',
                         help="dev path")
     parser.add_argument("--dev_data_path", type=str, default='../dev_tf_idf_data_raw.pkl', help="dev data path")
-    parser.add_argument("--onehop_bert_path", type=str, default='../onehop.ckpt', help="onehop bert ckpt path")
+    parser.add_argument("--onehop_bert_path", type=str, default='../onehop_new.ckpt', help="onehop bert ckpt path")
     parser.add_argument("--onehop_mlp_path", type=str, default='../onehop_mlp.ckpt', help="onehop mlp ckpt path")
-    parser.add_argument("--twohop_bert_path", type=str, default='../twohop.ckpt', help="twohop bert ckpt path")
+    parser.add_argument("--twohop_bert_path", type=str, default='../twohop_new.ckpt', help="twohop bert ckpt path")
     parser.add_argument("--twohop_mlp_path", type=str, default='../twohop_mlp.ckpt', help="twohop mlp ckpt path")
     parser.add_argument("--q_path", type=str, default="../queries", help="queries data path")
     return parser.parse_args()
