@@ -142,7 +142,7 @@ int AclProcess::WriteResult(const std::string& imageFile) {
     void *resHostBuf = nullptr;
     for (size_t i = 0; i < outputBuffers_.size(); ++i) {
         size_t output_size;
-        void * netOutput;
+        void *netOutput;
         netOutput = outputBuffers_[i];
         output_size =  outputSizes_[i];
         int ret = aclrtMallocHost(&resHostBuf, output_size);
@@ -164,12 +164,19 @@ int AclProcess::WriteResult(const std::string& imageFile) {
 
         std::string outFileName = homePath + "/" + fileName;
         try {
-            FILE * outputFile = fopen(outFileName.c_str(), "wb");
+            FILE *outputFile = fopen(outFileName.c_str(), "wb");
             if (outputFile == nullptr) {
                 std::cout << "open result file " << outFileName << " failed" << std::endl;
                 return INVALID_POINTER;
             }
-            fwrite(resHostBuf, output_size, sizeof(char), outputFile);
+            size_t size = fwrite(resHostBuf, sizeof(char), output_size, outputFile);
+            if (size != output_size) {
+                fclose(outputFile);
+                outputFile = nullptr;
+                std::cout << "write result file " << outFileName << " failed, write size[" << size <<
+                    "] is smaller than output size[" << output_size << "], maybe the disk is full." << std::endl;
+                return ERROR;
+            }
             fclose(outputFile);
             outputFile = nullptr;
         } catch (std::exception &e) {
@@ -301,7 +308,7 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
     }
 
     std::vector<void *> inputBuffers({resizeOutData->data, imInfo_dst});
-    std::vector<size_t> inputSizes({resizeOutData->dataSize, 4*2});
+    std::vector<size_t> inputSizes({resizeOutData->dataSize, 4 * 2});
 
     for (size_t i = 0; i < modelInfo_.outputNum; i++) {
         aclrtMemset(outputBuffers_[i], outputSizes_[i], 0, outputSizes_[i]);

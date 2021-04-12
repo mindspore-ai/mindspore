@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <iterator>
 #include <thread>
+#include <sstream>
 
 #include "acl/acl.h"
 #include "../inc/utils.h"
@@ -36,7 +37,10 @@ extern bool g_isDevice;
 SampleProcess::SampleProcess() :deviceId_(0), context_(nullptr), stream_(nullptr), threadNum_(0) {}
 
 SampleProcess::SampleProcess(uint32_t deviceId, uint32_t threadNum):
-                             deviceId_(deviceId), threadNum_(threadNum), context_(nullptr), stream_(nullptr) {}
+    deviceId_(deviceId),
+    threadNum_(threadNum),
+    context_(nullptr),
+    stream_(nullptr) {}
 
 SampleProcess::~SampleProcess() {
     DestroyResource();
@@ -145,7 +149,7 @@ Result SampleProcess::Process(const std::vector<std::string> &omPaths,
     gettimeofday(&totalStart, NULL);
     modelProcessContainer_[0]->ExecuteWithFile(fileNum);
 
-    std::map<int, void*> result = modelProcessContainer_[0]->GetResult();
+    std::map<int, void *> result = modelProcessContainer_[0]->GetResult();
 
     std::vector<uint32_t> model1OutputBuffSize = modelProcessContainer_[0]->GetOutputSize();
     std::vector<uint32_t> inputBuffSize = modelProcessContainer_[1]->GetInputSize();
@@ -164,7 +168,7 @@ Result SampleProcess::Process(const std::vector<std::string> &omPaths,
             for (int k = 0; k < 50; ++k) {
                 auto it = result.find(allHistory[i][j][k]);
                 if (it != result.end()) {
-                    aclrtMemcpy(reinterpret_cast<uint8_t *>(browedNews) + (j*50 + k) * singleDatsSize, singleDatsSize,
+                    aclrtMemcpy(reinterpret_cast<uint8_t *>(browedNews) + (j * 50 + k) * singleDatsSize, singleDatsSize,
                                 result[allHistory[i][j][k]], singleDatsSize, ACL_MEMCPY_HOST_TO_HOST);
                 }
             }
@@ -218,8 +222,8 @@ uint32_t SampleProcess::ReadBrowsedData(const std::string &browsedNewsPath) {
 }
 
 Result SampleProcess::GetPred(uint32_t fileNum) {
-    std::map<int, void*> newsEncodeResult = modelProcessContainer_[0]->GetResult();
-    std::map<int, void*> userEncodeResult = modelProcessContainer_[1]->GetResult();
+    std::map<int, void *> newsEncodeResult = modelProcessContainer_[0]->GetResult();
+    std::map<int, void *> userEncodeResult = modelProcessContainer_[1]->GetResult();
 
     uint32_t perThreadNum = fileNum / threadNum_;
     std::vector<std::thread> threads;
@@ -227,7 +231,7 @@ Result SampleProcess::GetPred(uint32_t fileNum) {
     for (int i = 0; i < threadNum_; ++i) {
         if (i != threadNum_ - 1) {
             threads.emplace_back(std::thread(&SampleProcess::GetResult, this,
-                                             i * perThreadNum, (i+1) * perThreadNum,
+                                             i * perThreadNum, (i + 1) * perThreadNum,
                                              newsEncodeResult,
                                              userEncodeResult));
         } else {
@@ -245,8 +249,8 @@ Result SampleProcess::GetPred(uint32_t fileNum) {
     return SUCCESS;
 }
 void SampleProcess::GetResult(uint32_t startPos, uint32_t endPos,
-                              std::map<int, void*> newsEncodeResult,
-                              std::map<int, void*> userEncodeResult) {
+                              std::map<int, void *> newsEncodeResult,
+                              std::map<int, void *> userEncodeResult) {
     for (int i = startPos; i < endPos; ++i) {
         std::vector<std::vector<float>> newsCandidate;
         std::vector<float> userEncodeIds(400);
@@ -282,13 +286,13 @@ int SampleProcess::WriteResult(const std::string& imageFile, std::vector<float> 
     for (size_t i = 0; i < 1; ++i) {
         std::string outFileName = homePath + "/" + name;
         try {
-            FILE * outputFile = fopen(outFileName.c_str(), "wb");
-            fwrite(static_cast<void*>(&result[0]), size, sizeof(char), outputFile);
+            FILE *outputFile = fopen(outFileName.c_str(), "wb");
+            fwrite(static_cast<void *>(&result[0]), size, sizeof(char), outputFile);
             fclose(outputFile);
             outputFile = nullptr;
         } catch (std::exception &e) {
             std::cout << "write result file " << outFileName << " failed, error info: " << e.what() << std::endl;
-            std::exit(1);
+            return FAILED;
         }
     }
     return SUCCESS;
@@ -333,7 +337,7 @@ std::vector<std::string> SampleProcess::GetModelExecCostTimeInfo() {
     result.emplace_back(modelProcessContainer_[0]->GetCostTimeInfo());
     double secondModelAverage = 0.0;
     int infer_cnt = 0;
-    char tmpCh[256] = {0};
+
     for (auto iter = secondModelCostTime_map_.begin(); iter != secondModelCostTime_map_.end(); iter++) {
         double diff = 0.0;
         diff = iter->second - iter->first;
@@ -341,14 +345,16 @@ std::vector<std::string> SampleProcess::GetModelExecCostTimeInfo() {
         infer_cnt++;
     }
     secondModelAverage = secondModelAverage / infer_cnt;
-    snprintf(tmpCh, sizeof(tmpCh), "second model inference cost average time: %4.3f ms of infer_count %d\n",
-             secondModelAverage, infer_cnt);
-    result.emplace_back(tmpCh);
+    std::stringstream timeCost;
+    timeCost << "second model inference cost average time: "<< secondModelAverage <<
+        "ms of infer_count " << infer_cnt << std::endl;
+    result.emplace_back(timeCost.str());
 
     double totalCostTime;
     totalCostTime = totalCostTime_map_.begin()->second - totalCostTime_map_.begin()->first;
-    snprintf(tmpCh, sizeof(tmpCh), "total inference cost time: %4.3f ms; count %d\n", totalCostTime, infer_cnt);
-    result.emplace_back(tmpCh);
+    std::stringstream totalTimeCost;
+    totalTimeCost << "total inference cost time: "<< totalCostTime << " ms; count " << infer_cnt << std::endl;
+    result.emplace_back(totalTimeCost.str());
 
     return result;
 }

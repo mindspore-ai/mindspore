@@ -26,11 +26,20 @@
 extern bool g_isDevice;
 
 ModelProcess::ModelProcess(const std::string &inputDataPath, const std::string &idFilePath, uint32_t batchSize):
-                           modelId_(0), modelMemSize_(0), modelWeightSize_(0), modelMemPtr_(nullptr),
-                           modelWeightPtr_(nullptr), loadFlag_(false), modelDesc_(nullptr), output_(nullptr),
-                           inputDataPath_(inputDataPath), input_(nullptr), batchSize_(batchSize),
-                           idFilePath_(idFilePath), inputNum_(0), outputNum_(0) {
-}
+    modelId_(0),
+    modelMemSize_(0),
+    modelWeightSize_(0),
+    modelMemPtr_(nullptr),
+    modelWeightPtr_(nullptr),
+    loadFlag_(false),
+    modelDesc_(nullptr),
+    output_(nullptr),
+    inputDataPath_(inputDataPath),
+    input_(nullptr),
+    batchSize_(batchSize),
+    idFilePath_(idFilePath),
+    inputNum_(0),
+    outputNum_(0) {}
 
 ModelProcess::~ModelProcess() {
     Unload();
@@ -244,62 +253,6 @@ Result ModelProcess::CreateOutput() {
     return SUCCESS;
 }
 
-void ModelProcess::DumpModelOutputResult(std::string fileName) {
-    std::size_t dex = fileName.find_last_of(".");
-    std::string outputFile = fileName.erase(dex);
-    std::string Path = "../result_Files";
-
-    // stringstream ss;
-    size_t outputNum = aclmdlGetDatasetNumBuffers(output_);
-    static int executeNum = 0;
-    for (size_t i = 0; i < outputNum; ++i) {
-        std::stringstream ss;
-        ss << Path <<"/output" << "_" << i << "_in_" << outputFile << ".bin";
-        std::string outputFileName = ss.str();
-        FILE *file = fopen(outputFileName.c_str(), "wb");
-        if (file) {
-            aclDataBuffer* dataBuffer = aclmdlGetDatasetBuffer(output_, i);
-            void* data = aclGetDataBufferAddr(dataBuffer);
-            uint32_t len = aclGetDataBufferSizeV2(dataBuffer);
-
-            void* outHostData = NULL;
-            aclError ret = ACL_ERROR_NONE;
-            if (!g_isDevice) {
-                ret = aclrtMallocHost(&outHostData, len);
-                if (ret != ACL_ERROR_NONE) {
-                    ERROR_LOG("aclrtMallocHost failed, ret[%d]", ret);
-                    return;
-                }
-
-                ret = aclrtMemcpy(outHostData, len, data, len, ACL_MEMCPY_DEVICE_TO_HOST);
-                if (ret != ACL_ERROR_NONE) {
-                    ERROR_LOG("aclrtMemcpy failed, ret[%d]", ret);
-                    (void)aclrtFreeHost(outHostData);
-                    return;
-                }
-
-                fwrite(outHostData, len, sizeof(char), file);
-
-                ret = aclrtFreeHost(outHostData);
-                if (ret != ACL_ERROR_NONE) {
-                    ERROR_LOG("aclrtFreeHost failed, ret[%d]", ret);
-                    return;
-                }
-            } else {
-                fwrite(data, len, sizeof(char), file);
-            }
-            fclose(file);
-            file = nullptr;
-        } else {
-            ERROR_LOG("create output file [%s] failed", outputFileName.c_str());
-            return;
-        }
-    }
-
-    INFO_LOG("dump data success");
-    return;
-}
-
 void ModelProcess::OutputModelResult() {
     for (size_t i = 0; i < aclmdlGetDatasetNumBuffers(output_); ++i) {
         aclDataBuffer* dataBuffer = aclmdlGetDatasetBuffer(output_, i);
@@ -322,9 +275,9 @@ void ModelProcess::OutputModelResult() {
                 return;
             }
 
-            outData = reinterpret_cast<float*>(outHostData);
+            outData = reinterpret_cast<float *>(outHostData);
         } else {
-            outData = reinterpret_cast<float*>(data);
+            outData = reinterpret_cast<float *>(data);
         }
         std::map<float, unsigned int, std::greater<float> > resultMap;
         for (unsigned int j = 0; j < len / sizeof(float); ++j) {
@@ -372,12 +325,12 @@ void ModelProcess::DestroyOutput() {
 
 Result ModelProcess::CpyFileToDevice(std::string fileName, uint32_t inputNum) {
     uint32_t inputHostBuffSize = 0;
-    void* inputHostBuff = Utils::ReadBinFile(fileName, &inputHostBuffSize);
+    void *inputHostBuff = Utils::ReadBinFile(fileName, &inputHostBuffSize);
     if (inputHostBuff == nullptr) {
         return FAILED;
     }
     aclDataBuffer *inBufferDev = aclmdlGetDatasetBuffer(input_, inputNum);
-    void*p_batchDst = aclGetDataBufferAddr(inBufferDev);
+    void *p_batchDst = aclGetDataBufferAddr(inBufferDev);
     aclrtMemset(p_batchDst, inputHostBuffSize, 0, inputHostBuffSize);
     aclError ret = aclrtMemcpy(p_batchDst, inputHostBuffSize, inputHostBuff, inputHostBuffSize,
                                ACL_MEMCPY_HOST_TO_DEVICE);
@@ -396,7 +349,7 @@ Result ModelProcess::CpyDataToDevice(void *data, uint32_t len, uint32_t inputNum
         return FAILED;
     }
     aclDataBuffer *inBufferDev = aclmdlGetDatasetBuffer(input_, inputNum);
-    void*p_batchDst = aclGetDataBufferAddr(inBufferDev);
+    void *p_batchDst = aclGetDataBufferAddr(inBufferDev);
     aclrtMemset(p_batchDst, len, 0, len);
     aclError ret = aclrtMemcpy(p_batchDst, len, data, len, ACL_MEMCPY_HOST_TO_DEVICE);
     if (ret != ACL_ERROR_NONE) {
@@ -407,7 +360,7 @@ Result ModelProcess::CpyDataToDevice(void *data, uint32_t len, uint32_t inputNum
     return SUCCESS;
 }
 
-void ModelProcess::CpyOutputFromDeviceToHost(uint32_t index, uint32_t batchSize) {
+void ModelProcess::CpyOutputFromDeviceToHost(uint32_t index) {
     size_t outputNum = aclmdlGetDatasetNumBuffers(output_);
 
     for (size_t i = 0; i < outputNum; ++i) {
@@ -430,8 +383,8 @@ void ModelProcess::CpyOutputFromDeviceToHost(uint32_t index, uint32_t batchSize)
             return;
         }
 
-        uint32_t len = (uint32_t)bufferSize/batchSize;
-        for (size_t j = 0; j < batchSize; j++) {
+        uint32_t len = (uint32_t)bufferSize / batchSize_;
+        for (size_t j = 0; j < batchSize_; j++) {
             result_.emplace(ids_[index][j], reinterpret_cast<uint8_t *>(outHostData) + (j * len));
         }
     }
@@ -448,7 +401,7 @@ std::vector<std::vector<void *>> ModelProcess::ReadInputFiles(std::vector<std::v
         return buff;
     }
 
-    void* inputHostBuff;
+    void *inputHostBuff = nullptr;
     uint32_t inputHostBuffSize = 0;
     for (int i = 0; i < inputSize; ++i) {
         for (int j = 0; j < fileNum; ++j) {
@@ -491,8 +444,8 @@ Result ModelProcess::ExecuteWithFile(uint32_t fileNum) {
         double startTime_ms;
         double endTime_ms;
         gettimeofday(&start, NULL);
-        void* picDevBuffer = nullptr;
-        int pathIndex = 0;
+        void *picDevBuffer = nullptr;
+
         for (auto i = 0; i < inputNum_; ++i) {
             CpyDataToDevice(fileBuff_[i][index], fileSize_[i][index], i);
         }
@@ -503,7 +456,7 @@ Result ModelProcess::ExecuteWithFile(uint32_t fileNum) {
             return FAILED;
         }
 
-        CpyOutputFromDeviceToHost(index, batchSize_);
+        CpyOutputFromDeviceToHost(index);
         gettimeofday(&end, NULL);
         startTime_ms = (1.0 * start.tv_sec * 1000000 + start.tv_usec) / 1000;
         endTime_ms = (1.0 * end.tv_sec * 1000000 + end.tv_usec) / 1000;
@@ -525,7 +478,7 @@ Result ModelProcess::Execute(uint32_t index) {
         return FAILED;
     }
 
-    CpyOutputFromDeviceToHost(index, batchSize_);
+    CpyOutputFromDeviceToHost(index);
     gettimeofday(&end, NULL);
     startTime_ms = (1.0 * start.tv_sec * 1000000 + start.tv_usec) / 1000;
     endTime_ms = (1.0 * end.tv_sec * 1000000 + end.tv_usec) / 1000;
@@ -533,7 +486,7 @@ Result ModelProcess::Execute(uint32_t index) {
     return SUCCESS;
 }
 
-std::map<int, void*> ModelProcess::GetResult() {
+std::map<int, void *> ModelProcess::GetResult() {
     return result_;
 }
 
@@ -584,15 +537,17 @@ std::string ModelProcess::GetInputDataPath() {
 std::string ModelProcess::GetCostTimeInfo() {
     double average = 0.0;
     int infer_cnt = 0;
-    char tmpCh[256] = {0};
+
     for (auto iter = costTime_map_.begin(); iter != costTime_map_.end(); iter++) {
         double diff = 0.0;
         diff = iter->second - iter->first;
         average += diff;
         infer_cnt++;
     }
-    average = average/infer_cnt;
-    snprintf(tmpCh, sizeof(tmpCh), "first model latency %4.3f ms; count %d\n", average, infer_cnt);
+    average = average / infer_cnt;
 
-    return std::string(tmpCh);
+    std::stringstream timeCost;
+    timeCost << "first model latency "<< average << "ms; count " << infer_cnt << std::endl;
+
+    return timeCost.str();
 }

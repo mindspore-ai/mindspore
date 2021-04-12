@@ -171,7 +171,6 @@ std::string Utils::RealPath(std::string path) {
     char real_path_mem[PATH_MAX] = {0};
     char *real_path_ret = nullptr;
     real_path_ret = realpath(path.data(), real_path_mem);
-
     if (real_path_ret == nullptr) {
         std::cout << "File: " << path << " is not exist.";
         return "";
