@@ -339,7 +339,7 @@ bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num) {
   return conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_w_ == 1 &&
          conv_param->stride_h_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
          conv_param->pad_u_ == 1 && conv_param->pad_d_ == 1 && conv_param->pad_l_ == 1 && conv_param->pad_r_ == 1 &&
-         conv_param->input_channel_ == conv_param->output_channel_ &&
+         conv_param->input_channel_ == conv_param->output_channel_ && conv_param->output_w_ >= 4 &&
          conv_param->output_h_ >= thread_num * 4;  // better had more than 4 rows for each thread
 }
 
