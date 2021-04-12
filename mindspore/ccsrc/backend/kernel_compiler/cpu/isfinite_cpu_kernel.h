@@ -86,7 +86,6 @@ MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutp
 
 MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
                   IsFiniteCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 
