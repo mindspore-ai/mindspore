@@ -14,9 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
-    DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [NEED_PREPROCESS]
+    DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero.
+    NEED_PREPROCESS means weather need preprocess or not, it's value is 'y' or 'n'."
 exit 1
 fi
 
@@ -29,7 +30,7 @@ get_real_path(){
 }
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
-if [ $# == 3 ]; then
+if [ $# == 4 ]; then
     device_id=$3
     if [ -z $device_id ]; then
         device_id=0
@@ -37,10 +38,12 @@ if [ $# == 3 ]; then
         device_id=$device_id
     fi
 fi
+need_preprocess=$4
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
 echo "device id: "$device_id
+echo "need preprocess or not: "$need_preprocess
 
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
@@ -85,7 +88,7 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/src/main --mindir_path=$model --dataset_path=./preprocess_Result/ --device_id=$device_id &> infer.log
+    ../ascend310_infer/src/main --mindir_path=$model --dataset_path=./preprocess_Result/ --device_id=$device_id --need_preprocess=$need_preprocess &> infer.log
 }
 
 function cal_acc()

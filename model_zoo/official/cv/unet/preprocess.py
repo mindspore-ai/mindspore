@@ -14,6 +14,10 @@
 # ============================================================================
 """unet 310 infer preprocess dataset"""
 import argparse
+import os
+import numpy as np
+import cv2
+
 from src.data_loader import create_dataset
 from src.config import cfg_unet
 
@@ -29,6 +33,56 @@ def preprocess_dataset(data_dir, result_path, cross_valid_ind=1, cfg=None):
         data[0].asnumpy().tofile(file_path)
 
 
+class CellNucleiDataset:
+    """
+    Cell nuclei dataset preprocess class.
+    """
+    def __init__(self, data_dir, repeat, result_path, is_train=False, split=0.8):
+        self.data_dir = data_dir
+        self.img_ids = sorted(next(os.walk(self.data_dir))[1])
+        self.train_ids = self.img_ids[:int(len(self.img_ids) * split)] * repeat
+        np.random.shuffle(self.train_ids)
+        self.val_ids = self.img_ids[int(len(self.img_ids) * split):]
+        self.is_train = is_train
+        self.result_path = result_path
+        self._preprocess_dataset()
+
+    def _preprocess_dataset(self):
+        for img_id in self.val_ids:
+            path = os.path.join(self.data_dir, img_id)
+            img = cv2.imread(os.path.join(path, "images", img_id + ".png"))
+            if len(img.shape) == 2:
+                img = np.expand_dims(img, axis=-1)
+                img = np.concatenate([img, img, img], axis=-1)
+            mask = []
+            for mask_file in next(os.walk(os.path.join(path, "masks")))[2]:
+                mask_ = cv2.imread(os.path.join(path, "masks", mask_file), cv2.IMREAD_GRAYSCALE)
+                mask.append(mask_)
+            mask = np.max(mask, axis=0)
+            cv2.imwrite(os.path.join(self.result_path, img_id + ".png"), img)
+
+    def _read_img_mask(self, img_id):
+        path = os.path.join(self.data_dir, img_id)
+        img = cv2.imread(os.path.join(path, "image.png"))
+        mask = cv2.imread(os.path.join(path, "mask.png"), cv2.IMREAD_GRAYSCALE)
+        return img, mask
+
+    def __getitem__(self, index):
+        if self.is_train:
+            return self._read_img_mask(self.train_ids[index])
+        return self._read_img_mask(self.val_ids[index])
+
+    @property
+    def column_names(self):
+        column_names = ['image', 'mask']
+        return column_names
+
+    def __len__(self):
+        if self.is_train:
+            return len(self.train_ids)
+        return len(self.val_ids)
+
+
 def get_args():
     parser = argparse.ArgumentParser(description='Preprocess the UNet dataset ',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -42,5 +96,8 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    preprocess_dataset(data_dir=args.data_url, cross_valid_ind=cfg_unet['cross_valid_ind'], cfg=cfg_unet, result_path=
-                       args.result_path)
+    if 'dataset' in cfg_unet and cfg_unet['dataset'] == "Cell_nuclei":
+        cell_dataset = CellNucleiDataset(args.data_url, 1, args.result_path, False, 0.8)
+    else:
+        preprocess_dataset(data_dir=args.data_url, cross_valid_ind=cfg_unet['cross_valid_ind'], cfg=cfg_unet,
+                           result_path=args.result_path)
