@@ -42,7 +42,7 @@ bool ServerNode::Start(const uint32_t &timeout) {
 
 void ServerNode::set_handler(const RequestHandler &handler) { request_handler_ = handler; }
 
-void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, void *data,
+void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const void *data,
                           size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -102,8 +102,8 @@ void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::share
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
-  int ret = memcpy_s(res.get(), size, data, size);
-  if (ret != 0) {
+  auto ret = memcpy_s(res.get(), size, data, size);
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)

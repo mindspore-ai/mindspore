@@ -76,9 +76,10 @@ class HttpClient {
   static void RequestErrorCallback(enum evhttp_request_error error, void *arg);
   static void ConnectionCloseCallback(struct evhttp_connection *connection, void *arg);
 
-  void AddHeaders(const std::map<std::string, std::string> &headers, struct evhttp_request *request,
+  void AddHeaders(const std::map<std::string, std::string> &headers, const struct evhttp_request *request,
                   std::shared_ptr<HttpMessageHandler> handler);
-  void InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url, struct evhttp_request *request);
+  void InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url,
+                   const struct evhttp_request *request);
   Status CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,
                        struct evhttp_request *request, HttpMethod method);
 
