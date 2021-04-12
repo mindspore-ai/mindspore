@@ -144,9 +144,7 @@ void Conv2DOpenCLKernel::BuildKernel() {
     kernel_name << "_Img";
   }
   ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source);
-  std::string build_option =
-    (OW_ * CO_SLICES_ <= ocl_runtime_->GetMaxImage2DWidth()) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), {build_option});
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str());
 }
 
 void Conv2DOpenCLKernel::SetBlockSize() {
