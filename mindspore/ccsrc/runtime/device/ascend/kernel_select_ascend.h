@@ -31,6 +31,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node,
                                     KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 void SetTensorDeviceInfo(const CNodePtr &kernel_node);
 void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph);
+void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

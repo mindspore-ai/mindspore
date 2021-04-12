@@ -513,6 +513,57 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   }
   return select_status;
 }
+
+void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+  auto kernel_info = static_cast<device::KernelInfo *>(kernel_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto kernel_build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
+
+  if (AnfAlgo::IsGraphKernel(kernel_node)) {
+    return;
+  }
+
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  builder->SetOriginDataFormat(kernel_build_info->GetOriginDataFormat());
+  builder->SetInputsFormat(kernel_build_info->GetAllInputFormats());
+  builder->SetInputsDeviceType(kernel_build_info->GetAllInputDeviceTypes());
+  builder->SetOutputsFormat(kernel_build_info->GetAllOutputFormats());
+  builder->SetOutputsDeviceType(kernel_build_info->GetAllOutputDeviceTypes());
+  builder->SetOpPattern(kernel_build_info->op_pattern());
+  builder->SetFusionType(kernel_build_info->fusion_type());
+
+  auto new_kernel_type = kernel_type;
+  auto new_processor = kernel_build_info->processor();
+  if (kernel_type == UNKNOWN_KERNEL_TYPE) {
+    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
+    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
+    kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
+    auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
+    if (select_status != kNoMatched) {
+      new_kernel_type = TBE_KERNEL;
+      new_processor = kernel::Processor::AICORE;
+      MS_LOG(INFO) << kernel_node->fullname_with_scope() << " uses TBE_KERNEL";
+    } else {
+      kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
+      select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
+      if (select_status != kNoMatched) {
+        new_kernel_type = AICPU_KERNEL;
+        new_processor = kernel::Processor::AICPU;
+        MS_LOG(INFO) << kernel_node->fullname_with_scope() << " uses AICPU_KERNEL";
+      }
+    }
+  }
+  if (new_kernel_type == UNKNOWN_KERNEL_TYPE) {
+    new_kernel_type = AKG_KERNEL;
+    new_processor = kernel::Processor::AICORE;
+    MS_LOG(INFO) << kernel_node->fullname_with_scope() << " uses AKG_KERNEL";
+  }
+  builder->SetKernelType(new_kernel_type);
+  builder->SetProcessor(new_processor);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+}
+
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
