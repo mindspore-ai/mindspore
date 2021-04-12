@@ -26,6 +26,5 @@ MS_REG_GPU_KERNEL_TWO(MDTemperature,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       MDTemperatureGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

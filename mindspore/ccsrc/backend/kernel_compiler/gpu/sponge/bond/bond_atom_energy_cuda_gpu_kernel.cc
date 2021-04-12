@@ -28,6 +28,5 @@ MS_REG_GPU_KERNEL_TWO(BondAtomEnergy,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       BondAtomEnergyCudaGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

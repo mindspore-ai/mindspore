@@ -1833,6 +1833,9 @@ class PMEReciprocalForce(PrimitiveWithInfer):
         validator.check_value_type('fftx', fftx, (int), self.name)
         validator.check_value_type('ffty', ffty, (int), self.name)
         validator.check_value_type('fftz', fftz, (int), self.name)
+        validator.check_value_type('box_length_0', box_length_0, (float), self.name)
+        validator.check_value_type('box_length_1', box_length_1, (float), self.name)
+        validator.check_value_type('box_length_2', box_length_2, (float), self.name)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -2002,6 +2005,9 @@ class PMEEnergy(PrimitiveWithInfer):
         validator.check_value_type('fftx', fftx, (int), self.name)
         validator.check_value_type('ffty', ffty, (int), self.name)
         validator.check_value_type('fftz', fftz, (int), self.name)
+        validator.check_value_type('box_length_0', box_length_0, (float), self.name)
+        validator.check_value_type('box_length_1', box_length_1, (float), self.name)
+        validator.check_value_type('box_length_2', box_length_2, (float), self.name)
         self.atom_numbers = atom_numbers
         self.excluded_numbers = excluded_numbers
         self.beta = beta

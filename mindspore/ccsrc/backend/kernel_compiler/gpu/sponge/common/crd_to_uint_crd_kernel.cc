@@ -22,6 +22,5 @@ MS_REG_GPU_KERNEL_TWO(
   CrdToUintCrd,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt32),
   CrdToUintCrdGpuKernel, float, unsigned int)
-
 }  // namespace kernel
 }  // namespace mindspore

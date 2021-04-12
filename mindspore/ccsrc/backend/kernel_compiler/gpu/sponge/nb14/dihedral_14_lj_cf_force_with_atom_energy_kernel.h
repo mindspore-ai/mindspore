@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T, typename T1>
 class Dihedral14LJCFForceWithAtomEnergyGpuKernel : public GpuKernel {
  public:

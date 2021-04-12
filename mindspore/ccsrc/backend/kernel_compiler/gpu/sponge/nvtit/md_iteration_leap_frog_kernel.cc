@@ -27,6 +27,5 @@ MS_REG_GPU_KERNEL_ONE(MDIterationLeapFrog,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       MDIterationLeapFrogGpuKernel, float)
-
 }  // namespace kernel
 }  // namespace mindspore
