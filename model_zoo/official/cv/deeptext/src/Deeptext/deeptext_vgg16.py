@@ -424,3 +424,13 @@ class Deeptext_VGG16(nn.Cell):
             multi_level_anchors += (Tensor(anchors.astype(np.float32)),)
 
         return multi_level_anchors
+
+class Deeptext_VGG16_Infer(nn.Cell):
+    def __init__(self, config):
+        super(Deeptext_VGG16_Infer, self).__init__()
+        self.network = Deeptext_VGG16(config)
+        self.network.set_train(False)
+
+    def construct(self, img_data):
+        output = self.network(img_data, None, None, None, None)
+        return output

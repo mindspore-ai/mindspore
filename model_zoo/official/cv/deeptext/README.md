@@ -64,9 +64,11 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
 .
 └─deeptext
   ├─README.md
+  ├─ascend310_infer                     #application for 310 inference
   ├─scripts
     ├─run_standalone_train_ascend.sh    # launch standalone training with ascend platform(1p)
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
+    ├─run_infer_310.sh                  # shell script for 310 inference
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
   ├─src
     ├─DeepText
@@ -81,12 +83,14 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
       ├─rpn.py                          # region-proposal network
       └─vgg16.py                        # backbone
     ├─config.py                       # training configuration
+    ├─aipp.cfg                        # aipp config file
     ├─dataset.py                      # data proprocessing
     ├─lr_schedule.py                  # learning rate scheduler
     ├─network_define.py               # network definition
     └─utils.py                        # some functions which is commonly used
   ├─eval.py                           # eval net
   ├─export.py                         # export checkpoint, surpport .onnx, .air, .mindir convert
+  ├─postprogress.py                   # post process for 310 inference
   └─train.py                          # train net
 ```
 
@@ -168,6 +172,35 @@ Evaluation result will be stored in the example path, you can find result like t
 class 1 precision is 88.01%, recall is 82.77%
 ```
 
+## Model Export
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## Inference Process
+
+### Usage
+
+Before performing inference, the air file must bu exported by export script on the Ascend910 environment.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```python
+========================================
+
+class 1 precision is 84.24%, recall is 87.40%, F1 is 85.79%
+```
+
 # [Model description](#contents)
 
 ## [Performance](#contents)
@@ -177,7 +210,7 @@ class 1 precision is 88.01%, recall is 82.77%
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | Deeptext                                                     |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G                |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G, OS:Euler2.8   |
 | uploaded Date              | 12/26/2020                                                   |
 | MindSpore Version          | 1.1.0                                                        |
 | Dataset                    | 66040 images                                                 |
