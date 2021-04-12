@@ -81,7 +81,7 @@ class KernelRuntime {
   virtual void ClearGlobalIdleMem() {}
   virtual void CreateContext() {}
   virtual void SetContext() {}
-  virtual void *context() const { return nullptr; }
+  virtual const void *context() const { return nullptr; }
   uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
     return mem_manager_->MallocMem(type, size, address);
   }
