@@ -82,6 +82,9 @@ std::shared_ptr<session::KernelGraph> AscendLaunchAtomicClean::ObtainAtomicClean
   std::vector<TypeId> output_dtypes = {};
   // obtain input & output shapes
   size_t dtype_size = abstract::TypeIdSize(dtype_);
+  if (dtype_size == 0) {
+    MS_LOG(EXCEPTION) << "Divide by zero.";
+  }
   int64_t shape = total_size_ / dtype_size;
   std::vector<std::vector<int64_t>> input_shapes = {{shape}};
   std::vector<std::vector<size_t>> output_shapes = {};
