@@ -42,6 +42,8 @@ constexpr auto kPrefixOutput = "output";
 constexpr char kParamTypeDynamic[] = "dynamic";
 constexpr char kParamTypeRequre[] = "required";
 constexpr char kParamTypeOptional[] = "optional";
+const std::set<TypeId> transpose_unsupported = {kNumberTypeInt8, kNumberTypeUInt8, kNumberTypeBool, kNumberTypeInt64,
+                                                kNumberTypeUInt64};
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   auto tbe_selecter = TbeKernelSelect(kernel_node, kernel_info_list);
   tbe_selecter.TbeMetadataInfoEx();
@@ -187,6 +189,7 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> new_kernel_info_list;
   auto dynamic_inputs = GetNodeDynamicInputs();
+  auto op_name = AnfAlgo::GetCNodeName(cnode_ptr_);
   for (auto iter = kernel_info_list_->begin(); iter != kernel_info_list_->end(); ++iter) {
     if (!FilterInVaildShape(iter, !dynamic_inputs.empty())) {
       continue;
@@ -195,6 +198,10 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
       if (!TbeCheckSupported(iter)) {
         continue;
       }
+    }
+    if (op_name == kTransposeOpName &&
+        transpose_unsupported.find((*iter)->GetInputDeviceType(0)) != transpose_unsupported.end()) {
+      continue;
     }
     new_kernel_info_list.emplace_back(*iter);
   }
