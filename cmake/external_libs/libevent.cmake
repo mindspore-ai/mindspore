@@ -1,6 +1,6 @@
-set(libevent_CFLAGS "-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2")
+set(libevent_CFLAGS "-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ldl")
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(libevent_LDFLAGS "-Wl,-z,now -ldl")
+    set(libevent_LDFLAGS "-Wl,-z,now")
 endif()
 
 if(ENABLE_GITEE)
