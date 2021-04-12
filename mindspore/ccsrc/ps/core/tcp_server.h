@@ -57,7 +57,7 @@ class TcpConnection {
   bool SendMessage(std::shared_ptr<CommMessage> message) const;
   bool SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) const;
   virtual void OnReadHandler(const void *buffer, size_t numBytes);
-  TcpServer *GetServer() const;
+  const TcpServer *GetServer() const;
   const evutil_socket_t &GetFd() const;
   void set_callback(const Callback &callback);
 

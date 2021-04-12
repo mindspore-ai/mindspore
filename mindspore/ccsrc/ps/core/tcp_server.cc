@@ -42,7 +42,7 @@ void TcpConnection::SendMessage(const void *buffer, size_t num) const {
   }
 }
 
-TcpServer *TcpConnection::GetServer() const { return server_; }
+const TcpServer *TcpConnection::GetServer() const { return server_; }
 
 const evutil_socket_t &TcpConnection::GetFd() const { return fd_; }
 
@@ -283,7 +283,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   MS_EXCEPTION_IF_NULL(sockaddr);
 
   struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
-  if (!bev) {
+  if (bev == nullptr) {
     MS_LOG(ERROR) << "Error constructing buffer event!";
     int ret = event_base_loopbreak(base);
     if (ret != 0) {
@@ -361,7 +361,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
   struct evbuffer *output = bufferevent_get_output(bev);
   size_t remain = evbuffer_get_length(output);
   auto conn = static_cast<class TcpConnection *>(data);
-  auto srv = conn->GetServer();
+  auto srv = const_cast<TcpServer *>(conn->GetServer());
 
   if (events & BEV_EVENT_EOF) {
     MS_LOG(INFO) << "Event buffer end of file!";

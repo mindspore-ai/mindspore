@@ -43,7 +43,7 @@ void HttpMessageHandler::InitHttpMessage() {
   MS_EXCEPTION_IF_NULL(event_uri_);
 
   const char *query = evhttp_uri_get_query(event_uri_);
-  if (query) {
+  if (query != nullptr) {
     MS_LOG(WARNING) << "The query is:" << query;
     evhttp_parse_query_str(query, &path_params_);
   }
@@ -142,7 +142,7 @@ std::string HttpMessageHandler::GetRequestPath() {
   }
   std::string path_res(path);
   const char *query = evhttp_uri_get_query(event_uri_);
-  if (query) {
+  if (query != nullptr) {
     path_res.append("?");
     path_res.append(query);
   }
@@ -248,7 +248,7 @@ void HttpMessageHandler::set_content_len(const uint64_t &len) { content_len_ = l
 
 uint64_t HttpMessageHandler::content_len() { return content_len_; }
 
-event_base *HttpMessageHandler::http_base() { return event_base_; }
+const event_base *HttpMessageHandler::http_base() { return event_base_; }
 
 void HttpMessageHandler::set_http_base(const struct event_base *base) {
   MS_EXCEPTION_IF_NULL(base);
@@ -260,9 +260,7 @@ void HttpMessageHandler::set_request(const struct evhttp_request *req) {
   event_request_ = const_cast<evhttp_request *>(req);
 }
 
-struct evhttp_request *HttpMessageHandler::request() {
-  return event_request_;
-}
+const struct evhttp_request *HttpMessageHandler::request() { return event_request_; }
 
 void HttpMessageHandler::InitBodySize() { body_->resize(content_len()); }
 

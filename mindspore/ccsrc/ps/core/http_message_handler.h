@@ -100,10 +100,10 @@ class HttpMessageHandler {
   void ReceiveMessage(const void *buffer, size_t num);
   void set_content_len(const uint64_t &len);
   uint64_t content_len();
-  event_base *http_base();
+  const event_base *http_base();
   void set_http_base(const struct event_base *base);
   void set_request(const struct evhttp_request *req);
-  struct evhttp_request *request();
+  const struct evhttp_request *request();
   void InitBodySize();
   VectorPtr body();
   void set_body(VectorPtr body);
