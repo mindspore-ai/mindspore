@@ -81,7 +81,7 @@ class Worker {
   void Finalize();
 
  private:
-  Worker() : running_(false), key_cnt_(0) {}
+  Worker() : server_num_(-1), running_(false), key_cnt_(0) {}
   ~Worker() = default;
   Worker(const Worker &) = delete;
   Worker &operator=(const Worker &) = delete;
