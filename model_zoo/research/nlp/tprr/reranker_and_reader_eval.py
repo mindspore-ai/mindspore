@@ -14,6 +14,8 @@
 # ============================================================================
 """main file"""
 
+import os
+from time import time
 from mindspore import context
 from src.rerank_and_reader_utils import get_parse, cal_reranker_metrics, select_reader_dev_data
 from src.reranker_eval import rerank
@@ -27,6 +29,13 @@ def rerank_and_retriever_eval():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     parser = get_parse()
     args = parser.parse_args()
+    args.dev_gold_path = os.path.join(args.data_path, args.dev_gold_file)
+    args.wiki_db_path = os.path.join(args.data_path, args.wiki_db_file)
+    args.albert_model_path = os.path.join(args.ckpt_path, args.albert_model)
+    args.rerank_encoder_ck_path = os.path.join(args.ckpt_path, args.rerank_encoder_ck_file)
+    args.rerank_downstream_ck_path = os.path.join(args.ckpt_path, args.rerank_downstream_ck_file)
+    args.reader_encoder_ck_path = os.path.join(args.ckpt_path, args.reader_encoder_ck_file)
+    args.reader_downstream_ck_path = os.path.join(args.ckpt_path, args.reader_downstream_ck_file)
 
     if args.get_reranker_data:
         get_rerank_data(args)
@@ -36,8 +45,7 @@ def rerank_and_retriever_eval():
 
     if args.cal_reranker_metrics:
         total_top1_pem, _, _ = \
-            cal_reranker_metrics(dev_gold_file=args.dev_gold_file, rerank_result_file=args.rerank_result_file)
-        print(f"total top1 pem: {total_top1_pem}")
+            cal_reranker_metrics(dev_gold_file=args.dev_gold_path, rerank_result_file=args.rerank_result_file)
 
     if args.select_reader_data:
         select_reader_dev_data(args)
@@ -46,10 +54,18 @@ def rerank_and_retriever_eval():
         read(args)
 
     if args.cal_reader_metrics:
-        metrics = hotpotqa_eval(args.reader_result_file, args.dev_gold_file)
+        metrics = hotpotqa_eval(args.reader_result_file, args.dev_gold_path)
+
+    if args.cal_reranker_metrics:
+        print(f"total top1 pem: {total_top1_pem}")
+
+    if args.cal_reader_metrics:
         for k in metrics:
             print(f"{k}: {metrics[k]}")
 
 
 if __name__ == "__main__":
+    t1 = time()
     rerank_and_retriever_eval()
+    t2 = time()
+    print(f"eval reranker and reader cost {(t2 - t1) / 3600} h")
