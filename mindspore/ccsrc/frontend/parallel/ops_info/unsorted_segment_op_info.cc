@@ -365,6 +365,5 @@ Status UnsortedSegmentMaxInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

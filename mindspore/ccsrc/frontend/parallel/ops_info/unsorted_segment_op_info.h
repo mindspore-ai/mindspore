@@ -91,7 +91,6 @@ class UnsortedSegmentMaxInfo : public UnsortedSegmentOpInfo {
  protected:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNSORTEDSEGMENTOP_INFO_H_
