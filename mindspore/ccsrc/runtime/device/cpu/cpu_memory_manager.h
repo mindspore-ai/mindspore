@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_MEMORY_MANAGER_H_
 #include <vector>
 #include <map>
+#include <memory>
 #include "backend/session/kernel_graph.h"
 #include "backend/session/session_basic.h"
 #include "runtime/device/device_address.h"
@@ -48,6 +49,7 @@ class CPUMemoryManager : public MemoryManager {
   uint8_t *MallocDynamicMem(size_t size, bool communication_mem) override;
 
  private:
+  uint8_t *MemMalloc(size_t size);
   void MemFree();
   CPUSimpleMemPlan mem_plan_;
 
@@ -57,6 +59,7 @@ class CPUMemoryManager : public MemoryManager {
   std::map<void *, size_t> dynamic_mem_;
   std::map<void *, size_t> static_mem_;
   std::map<void *, size_t> cached_mem_;
+  std::map<void *, std::shared_ptr<std::vector<uint8_t>>> mem_block_map_;
 };
 }  // namespace cpu
 }  // namespace device
