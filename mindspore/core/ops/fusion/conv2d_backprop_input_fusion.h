@@ -27,6 +27,7 @@ constexpr auto kNameConv2DBackpropInputFusion = "Conv2DBackpropInputFusion";
 class Conv2DBackpropInputFusion : public Conv2DBackpropInput {
  public:
   Conv2DBackpropInputFusion() : Conv2DBackpropInput(kNameConv2DBackpropInputFusion) {}
+  ~Conv2DBackpropInputFusion() = default;
   MS_DECLARE_PARENT(Conv2DBackpropInputFusion, Conv2DBackpropInput);
   void Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},

@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void AvgPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
                          const PadMode &pad_mode, const Format &format, const std::vector<int64_t> &pad,
                          const RoundMode &round_mode, const bool global, const ActivationType activation_type) {

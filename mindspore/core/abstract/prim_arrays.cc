@@ -1056,7 +1056,6 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
   TypePtr range_start_type = CheckTensorDType(range_start, supported_types, "range_start input of Range should be %s");
   TypePtr range_end_type = CheckTensorDType(range_end, supported_types, "range_start input of Range should be %s");
   TypePtr range_delta_type = CheckTensorDType(range_delta, supported_types, "range_start input of Range should be %s");
-
   // check all 3 inputs are same type
   if (!IsIdentidityOrSubclass(range_start_type, range_end_type) ||
       !IsIdentidityOrSubclass(range_end_type, range_delta_type)) {

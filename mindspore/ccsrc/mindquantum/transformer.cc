@@ -109,7 +109,6 @@ Hamiltonians HamiltoniansTransfor(const PaulisCoeffsType &paulis_coeffs, const P
   }
   return hams;
 }
-
 }  // namespace transformer
 }  // namespace mindquantum
 }  // namespace mindspore

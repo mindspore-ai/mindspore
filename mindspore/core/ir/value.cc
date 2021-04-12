@@ -309,5 +309,4 @@ const ValuePtr kUMonad = std::make_shared<UMonad>();
 
 bool IOMonad::operator==(const Value &other) const { return other.isa<IOMonad>(); }
 const ValuePtr kIOMonad = std::make_shared<IOMonad>();
-
 }  // namespace mindspore
