@@ -42,7 +42,7 @@ class ConfusionMatrix(Metric):
     Examples:
         >>> x = Tensor(np.array([1, 0, 1, 0]))
         >>> y = Tensor(np.array([1, 0, 0, 1]))
-        >>> metric = nn.ConfusionMatrix(num_classes=2, normalize=NO_NORM, threshold=0.5)
+        >>> metric = nn.ConfusionMatrix(num_classes=2, normalize="no_norm", threshold=0.5)
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> output = metric.eval()
