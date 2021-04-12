@@ -811,11 +811,24 @@ bool DFunctor::AllReferencesStopped(const CNodePtr &node) {
   return true;
 }
 
+CNodePtr GetJUser(const NodeUsersMap &node_user_map, const CNodePtr &cnode, int index) {
+  auto it = node_user_map.find(cnode);
+  if (it == node_user_map.end()) {
+    MS_LOG(EXCEPTION) << "J CNode not used {" << cnode->DebugString(2) << "/" << index << "}";
+  }
+  auto &j_users = it->second;
+  auto size = j_users.size();
+  if (size != 1) {
+    MS_LOG(EXCEPTION) << "Wrong J CNode use size " << size << " {" << cnode->DebugString(2) << "/" << index << "}";
+  }
+  return j_users.begin()->first->cast<CNodePtr>();
+}
+
 static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGraphManagerPtr &manager,
                                                                   const FuncGraphPtr &primal_graph) {
   std::vector<std::pair<CNodePtr, CNodePtr>> primal_j_pair;
   std::map<FuncGraphPtr, CNodePtr> primal_users_map;
-  auto &node_user_map = manager->node_users();
+  const auto &node_user_map = manager->node_users();
   // Search primal graph user cnodes.
   for (auto &entry : primal_graph->func_graph_cnodes_index()) {
     auto cnode = entry.first->first->cast<CNodePtr>();
@@ -832,16 +845,7 @@ static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGrap
       primal_users_map[fg] = cnode;
     } else if (IsPrimitive(cnode->inputs().at(0), prim::kPrimJ)) {
       // To find J user.
-      auto it = node_user_map.find(cnode);
-      if (it == node_user_map.end()) {
-        MS_LOG(EXCEPTION) << "J CNode not used {" << cnode->DebugString(2) << "/" << index << "}";
-      }
-      auto &j_users = it->second;
-      auto size = j_users.size();
-      if (size != 1) {
-        MS_LOG(EXCEPTION) << "Wrong J CNode use size " << size << " {" << cnode->DebugString(2) << "/" << index << "}";
-      }
-      auto j_user = j_users.begin()->first->cast<CNodePtr>();
+      auto j_user = GetJUser(node_user_map, cnode, index);
       primal_j_pair.push_back({nullptr, j_user});
     }
   }
