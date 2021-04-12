@@ -31,6 +31,12 @@ class PoolingCPUKernel : public MKLCPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
+ private:
+  size_t workspace_size_{0};
 };
 
 MS_REG_CPU_KERNEL(MaxPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
