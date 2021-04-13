@@ -32,7 +32,6 @@
 #endif
 
 namespace mindspore {
-
 bool E2eDump::IsDeviceTargetGPU() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);

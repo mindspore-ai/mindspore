@@ -128,7 +128,6 @@ bool CheckInputs(const CNodePtr &origin_node) {
   }
   auto param_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
   auto indice_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
-
   // this optimizer only support embedding_table has dynamic shape
   if (param_shape.empty() || indice_shape.empty() || AnfAlgo::IsDynamicShape(origin_node->input(2))) {
     return false;
