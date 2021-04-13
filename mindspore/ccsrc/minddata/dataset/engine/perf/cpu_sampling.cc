@@ -138,7 +138,7 @@ Status DeviceCpu::Collect(const ExecutionTree *tree) {
   first_collect_ = false;
   return Status::OK();
 }
-Status DeviceCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
+Status DeviceCpu::Analyze(std::string *const name, double *utilization, std::string *const extra_message) {
   name->clear();
   name->append("device_info");
   int total_samples = cpu_util_.size();
@@ -354,7 +354,7 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
   return Status::OK();
 }
 
-Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
+Status OperatorCpu::Analyze(std::string *const name, double *utilization, std::string *const extra_message) {
   int total_samples = cpu_op_util_.size();
 
   // Only analyze the middle half of the samples
@@ -512,7 +512,7 @@ Status ProcessCpu::Collect(const ExecutionTree *tree) {
   return Status::OK();
 }
 
-Status ProcessCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
+Status ProcessCpu::Analyze(std::string *const name, double *utilization, std::string *const extra_message) {
   name->clear();
   name->append("process_info");
   int total_samples = process_util_.size();
