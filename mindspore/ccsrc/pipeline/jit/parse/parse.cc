@@ -197,10 +197,6 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseAst> &as
       python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(), ret[0], ret[1]);
     MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
   }
-  // Clear manager info after checking missing return
-  for (const auto &fg : mng->func_graphs()) {
-    fg->ClearAllManagerInfo();
-  }
 }
 
 FuncGraphPtr Parser::ParseFuncGraph() {
@@ -1710,9 +1706,6 @@ void Parser::RemoveUnnecessaryPhis() {
     // Shrink container to new size
     new_parameters.resize(std::distance(new_parameters.begin(), it));
     func_graph->set_parameters(new_parameters);
-  }
-  for (const auto &fg : mng->func_graphs()) {
-    fg->ClearAllManagerInfo();
   }
 }
 

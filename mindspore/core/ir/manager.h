@@ -301,6 +301,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
     if (is_manage_) {
       RemoveRoots();
     }
+    Clear();
   }
 
   void Reset();
@@ -359,6 +360,8 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   std::shared_ptr<ParentComputer> func_graph_parent_;
 
  private:
+  // Erase OneGraph From Manager
+  void EraseOneGraph(FuncGraph *fg);
   void AddIntoManaged(const FuncGraphPtr &fg);
   void ProcessEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction);
   void ProcessInputs(const AnfNodePtr &node, EdgeProcessDirection direction);

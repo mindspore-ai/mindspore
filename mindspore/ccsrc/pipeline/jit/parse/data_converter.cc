@@ -468,10 +468,10 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   FuncGraphPtr func_graph = nullptr;
   ValuePtr value = nullptr;
   bool is_cache = data_converter::GetObjectValue(obj_id, &value);
-  if (is_cache) {
-    if (value && value->isa<FuncGraph>()) {
-      MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
-      func_graph = value->cast<FuncGraphPtr>();
+  if (is_cache && value != nullptr && value->isa<FuncGraph>()) {
+    MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
+    func_graph = value->cast<FuncGraphPtr>();
+    if (!func_graph->dropped()) {
       return func_graph;
     }
   }
