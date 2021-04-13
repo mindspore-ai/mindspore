@@ -41,14 +41,14 @@ class CTCLossCPUKernel : public CPUKernel {
 
   template <typename T>
   void CalculateFwdVar(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
-                       std::vector<std::vector<T>> *const log_alpha_b);
+                       std::vector<std::vector<T>> *log_alpha_b);
   template <typename T>
   void CalculateBwdVar(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
-                       std::vector<std::vector<T>> *const log_beta_b);
+                       std::vector<std::vector<T>> *log_beta_b);
   template <typename T>
   void CalculateGrad(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
                      const std::vector<std::vector<T>> &log_alpha_b, const std::vector<std::vector<T>> &log_beta_b,
-                     const T log_pzx, std::vector<std::vector<T>> *const dy);
+                     const T log_pzx, std::vector<std::vector<T>> *dy);
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
