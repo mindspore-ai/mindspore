@@ -55,7 +55,7 @@ class ImageGradients(Cell):
         ValueError: If length of shape of `images` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.ImageGradients()
