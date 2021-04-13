@@ -23,11 +23,40 @@ from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedEx
 
 def create_expander(expand_info):
     """Create an expander according to op name"""
+    expander_list = {
+        "AssignAdd": expanders.AssignAdd,
+        "BiasAdd": expanders.BiasAdd,
+        "BiasAddGrad": expanders.BiasAddGrad,
+        "ClipByNormNoDivSum": expanders.ClipByNormNoDivSum,
+        "DropoutGrad": expanders.DropoutGrad,
+        "FusedAdam": expanders.FusedAdam,
+        "FusedAdamWeightDecay": expanders.FusedAdamWeightDecay,
+        "GeLU": expanders.GeLU,
+        "GeLUGrad": expanders.GeLUGrad,
+        "GkDropout": expanders.GkDropout,
+        "LayerNorm": expanders.LayerNorm,
+        "LayerNormGrad": expanders.LayerNormGrad,
+        "LogSoftmax": expanders.LogSoftmax,
+        "LogSoftmaxGrad": expanders.LogSoftmaxGrad,
+        "MaximumGrad": expanders.MaximumGrad,
+        "MinimumGrad": expanders.MinimumGrad,
+        "ReduceMean": expanders.ReduceMean,
+        "Softmax": expanders.Softmax,
+        "Sigmoid": expanders.Sigmoid,
+        "SigmoidGrad": expanders.SigmoidGrad,
+        "SigmoidCrossEntropyWithLogits": expanders.SigmoidCrossEntropyWithLogits,
+        "SigmoidCrossEntropyWithLogitsGrad": expanders.SigmoidCrossEntropyWithLogitsGrad,
+        "SoftmaxCrossEntropyWithLogits": expanders.SoftmaxCrossEntropyWithLogits,
+        "SqrtGrad": expanders.SqrtGrad,
+        "Square": expanders.Square,
+        "TanhGrad": expanders.TanhGrad,
+        "Tile": expanders.Tile,
+        "LambApplyOptimizerAssign": expanders.LambApplyOptimizerAssign,
+    }
     op_name = str(expand_info['name'])
-    if not hasattr(expanders, op_name):
+    if op_name not in expander_list:
         raise GraphKernelUnsupportedException("Generator do not support op: {}".format(op_name))
-    expander = getattr(expanders, op_name)
-    return expander(expand_info)
+    return expander_list[op_name](expand_info)
 
 
 def extract_expand_info(kernel_info):

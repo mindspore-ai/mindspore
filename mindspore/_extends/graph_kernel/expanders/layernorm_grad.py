@@ -73,7 +73,7 @@ class LayerNormGrad(Expander):
         sum_3_mul = graph_builder.emit('Mul', [const_neg_two, x_sub_mean])
         sum_3 = graph_builder.emit('ReduceSum', [sum_3_mul], attrs={'reduce_axis': norm_axis, 'keep_dims': True})
 
-        # cal dx = dx1 + dx2 + dx3
+        # cal dx, which is dx1 + dx2 + dx3
         dx_1 = graph_builder.emit('Mul', [dy_mul_gamma, rsqrt_var_eps])
         sum_1_mul_two = graph_builder.emit('Mul', [sum_1, const_two])
         sum_1_mul_two_tmp = graph_builder.emit('Mul', [sum_1_mul_two, mean_cof])

@@ -23,7 +23,7 @@ class SigmoidGrad(Expander):
     def _expand(self, graph_builder):
         input_y, dy = self.inputs
         # Calculate sigmoid_grad(y, dy)
-        # formula is : sigmoid_grad(y, dy) = (1 - y) * y * dy
+        # formula of sigmoid_grad is : (1 - y) * y * dy
         const_one = graph_builder.value(input_y.dtype, 1.0)
         one_mins_y = graph_builder.emit('Sub', [const_one, input_y])
         y_mul_dy = graph_builder.emit('Mul', [input_y, dy])

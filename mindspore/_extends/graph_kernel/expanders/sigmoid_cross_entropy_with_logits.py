@@ -23,9 +23,7 @@ class SigmoidCrossEntropyWithLogits(Expander):
     def _expand(self, graph_builder):
         logits, label = self.inputs
         # Calculate sigmoid_cross_entropy_with_logits(logits, label)
-        # formula is :
-        # sigmoid_cross_entropy_with_logits(logits, label)
-        #       = -(label * log(sigmoid(logits)) + (1 - label) * log(1 - sigmoid(logits)))
+        # formula is: -(label * log(sigmoid(logits)) + (1 - label) * log(1 - sigmoid(logits)))
         const_one = graph_builder.value(logits.dtype, 1.0)
         neg_x = graph_builder.emit('Neg', [logits])
         exp_neg_x = graph_builder.emit('Exp', [neg_x])

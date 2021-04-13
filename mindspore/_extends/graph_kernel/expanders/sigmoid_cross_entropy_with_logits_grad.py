@@ -23,8 +23,7 @@ class SigmoidCrossEntropyWithLogitsGrad(Expander):
     def _expand(self, graph_builder):
         logits, label, dout = self.inputs
         # Calculate sigmoid_cross_entropy_with_logits_grad(logits, label, dout)
-        # formula is :
-        # sigmoid_cross_entropy_with_logits_grad(logits, label, dout) = (sigmoid(logits) - label) * dout
+        # formula of sigmoid_cross_entropy_with_logits_grad is : (sigmoid(logits) - label) * dout
         const_one = graph_builder.value(logits.dtype, 1.0)
         neg_x = graph_builder.emit('Neg', [logits])
         exp_neg_x = graph_builder.emit('Exp', [neg_x])

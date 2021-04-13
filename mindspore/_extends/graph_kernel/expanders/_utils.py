@@ -66,19 +66,18 @@ class Expander:
 
 class ExpanderInfoValidator:
     """ExpanderInfoValidator is the utility class which defines the validator decorator for expanders"""
-    # pylint: disable=W0211
     @staticmethod
-    def _add_check_function(cls, func):
+    def _add_check_function(kls, func):
         """
         Rewrite the function `_check` in class Expander
         to append the new `func` after the original checks.
         """
-        old_check = getattr(cls, "_check")
+        old_check = getattr(kls, "_check")
 
         def new_check(obj):
             old_check(obj)
             func(obj)
-        setattr(cls, "_check", new_check)
+        setattr(kls, "_check", new_check)
 
     @staticmethod
     def add_format(*input_format):
@@ -112,7 +111,7 @@ class ExpanderInfoValidator:
         return wrapper
 
     @staticmethod
-    def check_all_formats_same(cls):
+    def check_all_formats_same(kls):
         """Check that all formats are the same"""
         def _check_format(obj):
             inp_formats = [inp['format'] for inp in obj.inputs]
@@ -122,10 +121,10 @@ class ExpanderInfoValidator:
                 ','.join(inp_formats), obj.name))
 
         def wrapper(*args, **kargs):
-            if not issubclass(cls, Expander):
-                raise Exception("{} should be subclass of Expander.".format(cls.__name__))
-            ExpanderInfoValidator._add_check_function(cls, _check_format)
-            return cls(*args, **kargs)
+            if not issubclass(kls, Expander):
+                raise Exception("{} should be subclass of Expander.".format(kls.__name__))
+            ExpanderInfoValidator._add_check_function(kls, _check_format)
+            return kls(*args, **kargs)
 
         return wrapper
 
