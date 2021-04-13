@@ -32,6 +32,7 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/const_blocks/model.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/license.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/load_input.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/calib_output.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/thread_pool.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/benchmark.cc
         )
