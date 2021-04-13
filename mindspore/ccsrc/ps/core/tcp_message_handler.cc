@@ -53,10 +53,12 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
       remaining_length_ -= copy_len;
       num -= copy_len;
 
-      int ret = memcpy_s(message_buffer_.get() + last_copy_len_, copy_len, buffer_data, copy_len);
+      size_t dest_size = copy_len;
+      size_t src_size = copy_len;
+      auto ret = memcpy_s(message_buffer_.get() + last_copy_len_, dest_size, buffer_data, src_size);
       last_copy_len_ += copy_len;
       buffer_data += copy_len;
-      if (ret != 0) {
+      if (ret != EOK) {
         MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
       }
 

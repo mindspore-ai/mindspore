@@ -165,7 +165,7 @@ class PsCacheManager {
                            float *hash_table_addr);
   bool LookUpHostHashTable(size_t embedding_size, size_t indices_lens, const float *hash_table_addr,
                            const int *indices_addr, float *output_addr);
-  bool UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *swap_out_ids, size_t key);
+  bool UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *const swap_out_ids, size_t key);
   void LookUpTableTask(size_t indices_lens, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
                        const int *indices_addr, float *output_addr);
   bool CheckFinishInsertInitInfo() const;
