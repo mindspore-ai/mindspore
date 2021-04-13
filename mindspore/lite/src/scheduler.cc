@@ -25,6 +25,7 @@
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
 #include "src/kernel_registry.h"
+#include "src/lite_kernel_util.h"
 #include "src/sub_graph_kernel.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"

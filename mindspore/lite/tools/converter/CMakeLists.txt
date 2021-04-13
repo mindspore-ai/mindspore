@@ -108,6 +108,7 @@ set(LITE_SRC
         ${SRC_DIR}/tensorlist.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/lite_kernel.cc
+        ${SRC_DIR}/lite_kernel_util.cc
         ${SRC_DIR}/scheduler.cc
         ${SRC_DIR}/sub_graph_kernel.cc
         ${SRC_DIR}/sub_graph_split.cc

@@ -222,23 +222,6 @@ typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                      const lite::InnerContext *ctx, const KernelKey &desc);
 
-class LiteKernelUtil {
- public:
-  static std::vector<kernel::LiteKernel *> SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels);
-
-  static std::vector<kernel::LiteKernel *> SubgraphOutputNodes(const std::vector<kernel::LiteKernel *> &kernels);
-
-  static std::vector<lite::Tensor *> SubgraphInputTensors(const std::vector<kernel::LiteKernel *> &kernels);
-
-  static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels);
-
-  static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
-
-  static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
-
-  static int SetInput(LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
-};
-
 template <class T>
 kernel::LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
