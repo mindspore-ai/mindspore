@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 int LiteSession::CompileGraph(lite::Model *model) {
   inputs_.resize(1);
-  Vector<int32_t> in_shape_0;
+  Vector<int> in_shape_0;
   in_shape_0.resize(4);
   in_shape_0[0] = 1;
   in_shape_0[1] = 28;
@@ -33,7 +33,7 @@ int LiteSession::CompileGraph(lite::Model *model) {
   inputs_[0] = new (std::nothrow) MTensor(String("graph_input-0"), kNumberTypeInt8, in_shape_0);
   MS_ERROR_IF_NULL(inputs_[0]);
   outputs_.resize(1);
-  Vector<int32_t> out_shape_0;
+  Vector<int> out_shape_0;
   out_shape_0.resize(2);
   out_shape_0[0] = 1;
   out_shape_0[1] = 10;
