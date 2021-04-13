@@ -23,13 +23,16 @@ constexpr auto kHcclConfigFileOld = "RANK_TABLE_FILE";
 
 namespace mindspore {
 namespace kernel {
-std::string GetRankId() {
-  std::string rank_id_str;
-  rank_id_str = std::getenv("RANK_ID");
-  if (rank_id_str.empty()) {
-    MS_LOG(ERROR) << "Get hccl rankid failed, please set env RANK_ID";
+int GetRankId() {
+  auto rank_id_env = std::getenv("RANK_ID");
+  if (rank_id_env == nullptr) {
+    MS_LOG(EXCEPTION) << "No RANK_ID, please export RANK_ID";
   }
-  return rank_id_str;
+  try {
+    return std::stoi(rank_id_env);
+  } catch (std::invalid_argument &e) {
+    MS_LOG(EXCEPTION) << "Invalid rankd id env:" << rank_id_env;
+  }
 }
 
 bool HcclContext::InitHccl() {
@@ -45,14 +48,7 @@ bool HcclContext::InitHccl() {
     }
   }
 
-  auto rank_id = GetRankId();
-  try {
-    rank_id_ = std::stoi(rank_id);
-  } catch (std::invalid_argument &e) {
-    MS_LOG(ERROR) << "Invalid rankd id env:" << rank_id;
-    return false;
-  }
-
+  rank_id_ = GetRankId();
   if (rank_id_ < 0 || rank_id_ > 7) {
     MS_LOG(ERROR) << "rank_id needs to be between 0-7";
     return false;
