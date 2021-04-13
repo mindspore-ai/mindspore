@@ -285,7 +285,6 @@ set(LITE_KERNEL_SRC
 #### sse
 if("${X86_64_SIMD}" STREQUAL "sse")
     set(SSE_SRC
-            ${NNACL_DIR}/intrinsics/sse/sse_common.c
             ${NNACL_DIR}/intrinsics/sse/MatMul_Sse.c
             )
     set_property(SOURCE ${SSE_SRC} PROPERTY LANGUAGE C)
@@ -297,7 +296,6 @@ if("${X86_64_SIMD}" STREQUAL "avx")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
     set(AVX_SRC
             ${NNACL_DIR}/intrinsics/avx/common_utils.c
-            ${NNACL_DIR}/intrinsics/sse/sse_common.c
             ${NNACL_DIR}/intrinsics/sse/MatMul_Sse.c
             ${NNACL_DIR}/assembly/avx/MatmulAvx.S
             )
