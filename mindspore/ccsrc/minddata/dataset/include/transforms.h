@@ -194,6 +194,30 @@ class Duplicate final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
+/// \brief Fill Op.
+/// \notes Tensor operation to fill all elements in the tensor with the specified value.
+///    The output tensor will have the same shape and type as the input tensor.
+class Fill final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] fill_value Scalar value to fill the tensor with.
+  ///               Can only be MSTensor of the following types from mindspore::DataType:
+  ///               String, Bool, Int8/16/32/64, UInt8/16/32/64, Float16/32/64.
+  explicit Fill(MSTensor fill_value);
+
+  /// \brief Destructor
+  ~Fill() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Mask Op.
 /// \notes Mask content of the input tensor with the given predicate.
 ///     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.

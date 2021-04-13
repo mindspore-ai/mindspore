@@ -86,6 +86,17 @@ PYBIND_REGISTER(
       }));
   }));
 
+PYBIND_REGISTER(FillOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<transforms::FillOperation, TensorOperation, std::shared_ptr<transforms::FillOperation>>(
+                      *m, "FillOperation")
+                      .def(py::init([](std::shared_ptr<Tensor> fill_value) {
+                        auto fill = std::make_shared<transforms::FillOperation>(fill_value);
+                        THROW_IF_ERROR(fill->ValidateParams());
+                        return fill;
+                      }));
+                }));
+
 PYBIND_REGISTER(MaskOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<transforms::MaskOperation, TensorOperation, std::shared_ptr<transforms::MaskOperation>>(

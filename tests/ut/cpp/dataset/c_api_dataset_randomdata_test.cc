@@ -475,6 +475,82 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+TEST_F(MindDataTestPipeline, TestRandomDatasetUInt8) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetUInt8.";
+
+  // Create a RandomDataset with UInt8 numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(963);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(3);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetFloat) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetFloat.";
+
+  // Create a RandomDataset with Float numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(369);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeFloat16, {2, 3});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
 TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetDuplicateColumnName.";
 

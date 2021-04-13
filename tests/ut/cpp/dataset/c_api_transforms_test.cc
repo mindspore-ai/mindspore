@@ -241,6 +241,434 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestFillSuccessInt) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessInt.";
+
+  // Create a RandomDataset with Int32 numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(864);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {6});
+  std::shared_ptr<Dataset> ds = RandomData(5, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(3);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with 3
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar(3, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<int32_t>> expected = {
+    {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 5);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestFillSuccessBool) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessBool.";
+
+  // Create a RandomDataset with bool values for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(963);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeBool, {4});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with zero
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar((bool)true, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<bool>> expected = {
+    {true, true, true, true}, {true, true, true, true}, {true, true, true, true}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessDownTypecast.";
+
+  // Create a RandomDataset with UInt8 numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(963);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with -3
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar(-3, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  // Note: 2**8 -3 = 256 -3 = 253
+  std::vector<std::vector<uint8_t>> expected = {{253, 253, 253, 253}, {253, 253, 253, 253}, {253, 253, 253, 253}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecastZero) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessDownTypecastZero.";
+
+  // Create a RandomDataset with UInt8 numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(963);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with zero
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar(0, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  // Note: 2**8 = 256
+  std::vector<std::vector<uint8_t>> expected = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast16) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessDownTypecast16.";
+
+  // Create a RandomDataset with UInt16 numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(963);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt16, {4});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with -3
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar(-3, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  // Note: 2**16 -3 = 65536 -3 = 65533
+  std::vector<std::vector<uint16_t>> expected = {
+    {65533, 65533, 65533, 65533}, {65533, 65533, 65533, 65533}, {65533, 65533, 65533, 65533}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestFillSuccessUpTypecast) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessUpTypecast.";
+
+  // Create a RandomDataset with Float numbers for given shape
+  u_int32_t curr_seed = GlobalContext::config_manager()->seed();
+  GlobalContext::config_manager()->set_seed(963);
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {2});
+  std::shared_ptr<Dataset> ds = RandomData((float)4.0, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with zeroes
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar(0, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"col1"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<float_t>> expected = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["col1"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], &de_expected_tensor));
+    mindspore::MSTensor expected_tensor =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+  GlobalContext::config_manager()->set_seed(curr_seed);
+}
+
+TEST_F(MindDataTestPipeline, TestFillSuccessString) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessString.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/basic_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create BasicTokenizer operation on ds
+  std::shared_ptr<TensorTransform> basic_tokenizer = std::make_shared<text::BasicTokenizer>(true);
+  EXPECT_NE(basic_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({basic_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - to fill with string
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateScalar<std::string>("Hello", &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"Hello", "Hello", "Hello", "Hello", "Hello"};
+  std::shared_ptr<Tensor> de_expected_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
+  mindspore::MSTensor expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    EXPECT_MSTENSOR_EQ(ind, expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFillFailFillValueNotScalar) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillFailFillValueNotScalar.";
+  // Test BasicTokenizer with lower_case true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/basic_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create BasicTokenizer operation on ds
+  std::shared_ptr<TensorTransform> basic_tokenizer = std::make_shared<text::BasicTokenizer>(true);
+  EXPECT_NE(basic_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({basic_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create Fill op - with wrongful vector shape instead of scalar
+  std::vector<std::string> fill_string = {"ERROR"};
+  std::shared_ptr<Tensor> fill_value_tensor;
+  ASSERT_OK(Tensor::CreateFromVector(fill_string, &fill_value_tensor));
+  mindspore::MSTensor fill_value_MSTensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(fill_value_tensor));
+  transforms::Fill mask = transforms::Fill(fill_value_MSTensor);
+  ds = ds->Map({mask}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+
+  // Expect failure: invalid Fill parameter (the shape of fill_value is not a scalar)
+  EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestMaskSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskSuccess.";
 

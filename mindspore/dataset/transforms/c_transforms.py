@@ -77,7 +77,7 @@ class OneHot(TensorOperation):
         return cde.OneHotOperation(self.num_classes)
 
 
-class Fill(cde.FillOp):
+class Fill(TensorOperation):
     """
     Tensor operation to fill all elements in the tensor with the specified value.
     The output tensor will have the same shape and type as the input tensor.
@@ -101,7 +101,10 @@ class Fill(cde.FillOp):
 
     @check_fill_value
     def __init__(self, fill_value):
-        super().__init__(cde.Tensor(np.array(fill_value)))
+        self.fill_value = cde.Tensor(np.array(fill_value))
+
+    def parse(self):
+        return cde.FillOperation(self.fill_value)
 
 
 class TypeCast(TensorOperation):
