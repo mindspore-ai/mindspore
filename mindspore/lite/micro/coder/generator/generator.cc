@@ -24,6 +24,7 @@
 #include "coder/generator/component/const_blocks/cmake_lists.h"
 #include "coder/generator/component/const_blocks/debug_utils.h"
 #include "coder/generator/component/const_blocks/load_input.h"
+#include "coder/generator/component/const_blocks/calib_output.h"
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
 #include "coder/generator/component/const_blocks/mstring.h"
@@ -85,9 +86,11 @@ int Generator::CodeSourceCMakeFile() {
 
 int Generator::CodeStaticContent() {
   std::vector<std::pair<std::string, std::string>> const_blocks = {
+    {config_->code_path() + "/" + "CMakeLists.txt", bench_cmake_lists_txt},
+    {net_main_file_path_ + "calib_output.h", calib_header},
+    {net_main_file_path_ + "calib_output.cc", calib_source},
     {net_main_file_path_ + "load_input.h", load_input_h},
     {net_main_file_path_ + "load_input.c", load_input_c},
-    {config_->code_path() + "/" + "CMakeLists.txt", bench_cmake_lists_txt},
     {net_main_file_path_ + "benchmark.cc", benchmark_source},
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
     {net_src_file_path_ + "session.h", session_header},

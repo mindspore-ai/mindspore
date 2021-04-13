@@ -72,6 +72,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${HEADER_PATH})
 set(SRC_FILES
         benchmark/benchmark.cc
+        benchmark/calib_output.cc
         benchmark/load_input.c
 )
 add_executable(benchmark ${SRC_FILES})

@@ -307,6 +307,7 @@ String operator+(const char *lhs, const String &rhs) {
   return str;
 }
 
+bool operator!=(const String &lhs, const String &rhs) { return lhs.compare(rhs) != 0; }
 bool operator==(const String &lhs, const String &rhs) { return lhs.compare(rhs) == 0; }
 bool operator==(const String &lhs, const char *rhs) { return lhs.compare(rhs) == 0; }
 bool operator==(const char *lhs, const String &rhs) { return rhs.compare(lhs) == 0; }
