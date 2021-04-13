@@ -36,12 +36,12 @@ class GraphDefTransform {
   GraphDefTransform();
   virtual ~GraphDefTransform();
   virtual int Transform(const converter::Flags &ctx);
-  void SetGraphDef(schema::MetaGraphT *dstDef);
-  inline schema::MetaGraphT *GetOutput() { return graphDefT; }
+  void SetGraphDef(schema::MetaGraphT *dst_def);
+  inline schema::MetaGraphT *GetOutput() { return graph_defT_; }
 
  protected:
   std::vector<schema::CNodeT *> GetGraphNodes();
-  schema::MetaGraphT *graphDefT = nullptr;
+  schema::MetaGraphT *graph_defT_ = nullptr;
   Optimizer *optimizer = nullptr;
 };
 }  // namespace lite

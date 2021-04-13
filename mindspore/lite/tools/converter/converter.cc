@@ -121,8 +121,8 @@ int RunConverter(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
   auto meta_graph = converter->Convert(flags);
-  NoSupportOp::GetInstance()->PrintOps();
-  status = ReturnCode::GetSingleReturnCode()->GetReturnCode();
+  NotSupportOp::GetInstance()->PrintOps();
+  status = ReturnCode::GetSingleReturnCode()->status_code();
   if (meta_graph == nullptr) {
     oss.clear();
     oss << "CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status);

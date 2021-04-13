@@ -30,17 +30,17 @@ Flags::Flags() {
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
           "");
-  AddFlag(&Flags::inputDataTypeIn, "inputDataType",
+  AddFlag(&Flags::inputDataTypeStr, "inputDataType",
           "Data type of input tensors, default is same with the type defined in model. FLOAT | INT8 | UINT8 | DEFAULT",
           "DEFAULT");
-  AddFlag(&Flags::outputDataTypeIn, "outputDataType",
+  AddFlag(&Flags::outputDataTypeStr, "outputDataType",
           "Data type of output and output tensors, default is same with the type defined in model. FLOAT | INT8 | "
           "UINT8 | DEFAULT",
           "DEFAULT");
-  AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. PostTraining | WeightQuant", "");
+  AddFlag(&Flags::quantTypeStr, "quantType", "Quantization Type. PostTraining | WeightQuant", "");
   AddFlag(&Flags::bitNumIn, "bitNum", "Weight quantization bitNum", "8");
-  AddFlag(&Flags::quantWeightSizeIn, "quantWeightSize", "Weight quantization size threshold", "0");
-  AddFlag(&Flags::quantWeightChannelIn, "quantWeightChannel", "Channel threshold for weight quantization", "16");
+  AddFlag(&Flags::quantWeightSizeStr, "quantWeightSize", "Weight quantization size threshold", "0");
+  AddFlag(&Flags::quantWeightChannelStr, "quantWeightChannel", "Channel threshold for weight quantization", "16");
   AddFlag(&Flags::configFile, "configFile", "Configuration for post-training.", "");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device. "
@@ -49,32 +49,32 @@ Flags::Flags() {
 }
 
 int Flags::InitInputOutputDataType() {
-  if (this->inputDataTypeIn == "FLOAT") {
+  if (this->inputDataTypeStr == "FLOAT") {
     this->inputDataType = TypeId::kNumberTypeFloat32;
-  } else if (this->inputDataTypeIn == "INT8") {
+  } else if (this->inputDataTypeStr == "INT8") {
     this->inputDataType = TypeId::kNumberTypeInt8;
-  } else if (this->inputDataTypeIn == "UINT8") {
+  } else if (this->inputDataTypeStr == "UINT8") {
     this->inputDataType = TypeId::kNumberTypeUInt8;
-  } else if (this->inputDataTypeIn == "DEFAULT") {
+  } else if (this->inputDataTypeStr == "DEFAULT") {
     this->inputDataType = TypeId::kTypeUnknown;
   } else {
     std::cerr << "INPUT INVALID: inputDataType is invalid: %s, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
-      this->inputDataTypeIn.c_str();
+      this->inputDataTypeStr.c_str();
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->outputDataTypeIn == "FLOAT") {
+  if (this->outputDataTypeStr == "FLOAT") {
     this->outputDataType = TypeId::kNumberTypeFloat32;
-  } else if (this->outputDataTypeIn == "INT8") {
+  } else if (this->outputDataTypeStr == "INT8") {
     this->outputDataType = TypeId::kNumberTypeInt8;
-  } else if (this->outputDataTypeIn == "UINT8") {
+  } else if (this->outputDataTypeStr == "UINT8") {
     this->outputDataType = TypeId::kNumberTypeUInt8;
-  } else if (this->outputDataTypeIn == "DEFAULT") {
+  } else if (this->outputDataTypeStr == "DEFAULT") {
     this->outputDataType = TypeId::kTypeUnknown;
   } else {
     std::cerr
       << "INPUT INVALID: outputDataType is invalid: %s, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
-      this->outputDataTypeIn.c_str();
+      this->outputDataTypeStr.c_str();
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -110,7 +110,7 @@ bool Flags::IsValidNum(const std::string &str, int *num) {
 }
 
 int Flags::QuantParamInputCheck() {
-  if (!Flags::IsValidNum(this->quantWeightChannelIn, &this->quantWeightChannel)) {
+  if (!Flags::IsValidNum(this->quantWeightChannelStr, &this->quantWeightChannel)) {
     std::cerr << "quantWeightChannel should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
@@ -118,7 +118,7 @@ int Flags::QuantParamInputCheck() {
     std::cerr << "quantWeightChannel should be greater than or equal to zero.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (!Flags::IsValidNum(this->quantWeightSizeIn, &this->quantWeightSize)) {
+  if (!Flags::IsValidNum(this->quantWeightSizeStr, &this->quantWeightSize)) {
     std::cerr << "quantWeightSize should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
@@ -138,11 +138,11 @@ int Flags::QuantParamInputCheck() {
 }
 
 int Flags::InitQuantParam() {
-  if (this->quantTypeIn == "WeightQuant") {
+  if (this->quantTypeStr == "WeightQuant") {
     this->quantType = QuantType_WeightQuant;
-  } else if (this->quantTypeIn == "PostTraining") {
+  } else if (this->quantTypeStr == "PostTraining") {
     this->quantType = QuantType_PostTraining;
-  } else if (this->quantTypeIn.empty()) {
+  } else if (this->quantTypeStr.empty()) {
     this->quantType = QuantType_QUANT_NONE;
   } else {
     std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining";

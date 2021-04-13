@@ -476,7 +476,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
 FuncGraphPtr paserTfFuction() { return nullptr; }
 FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::string &weightFile,
                                   const QuantType &quantType) {
-  NoSupportOp::GetInstance()->SetFmkType("TF");
+  NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.pb";
@@ -888,7 +888,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   MS_LOG(INFO) << "parse op : " << op_type;
   auto node_parser = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
   if (node_parser == nullptr) {
-    NoSupportOp::GetInstance()->InsertOp(op_type);
+    NotSupportOp::GetInstance()->InsertOp(op_type);
     MS_LOG(ERROR) << "cannot find node parser: " << node_def.name() << " in "
                   << func_graph_ptr->get_attr("graph_name")->ToString();
     return RET_NOT_FIND_OP;

@@ -34,13 +34,13 @@ class FormatTransPass : public GraphPass {
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
-  void SetQuantType(QuantType quantType) { this->quant_type_ = quantType; }
+  void set_quant_type(QuantType quant_type) { this->quant_type_ = quant_type; }
 
-  void SetFmk(converter::FmkType fmkType) { this->fmk_type_ = fmkType; }
+  void set_fmk_type(converter::FmkType fmk_type) { this->fmk_type_ = fmk_type; }
 
  protected:
-  NodeIter InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
-                                 FormatTransNodeType nodeType, STATUS *errorCode);
+  NodeIter InsertFormatTransNode(schema::MetaGraphT *in_op_def, NodeIter exist_node_iter, InsertPlace place,
+                                 size_t inout_idx, FormatTransNodeType node_type, STATUS *error_code);
 
   STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
 
@@ -61,8 +61,8 @@ class FormatTransPass : public GraphPass {
 
   int GetFormat(const schema::CNodeT &);
 
-  STATUS GetInsertFormatTrans(const schema::CNodeT &node, FormatTransNodeType *beforeNodeType,
-                              FormatTransNodeType *afterNodeType);
+  STATUS GetInsertFormatTrans(const schema::CNodeT &node, FormatTransNodeType *before_node_type,
+                              FormatTransNodeType *after_node_type);
 
  protected:
   size_t id_ = 0;

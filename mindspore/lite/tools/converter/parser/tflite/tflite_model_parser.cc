@@ -101,7 +101,7 @@ std::string GetTensorName(size_t index, const tflite::BuiltinOperator &op_type, 
 
 STATUS TfliteModelParser::ConvertOps() {
   const auto &tflite_subgraph = tflite_model_->subgraphs.front();
-  NoSupportOp::GetInstance()->SetFmkType("TFLITE");
+  NotSupportOp::GetInstance()->set_fmk_type("TFLITE");
   STATUS status = RET_OK;
   int op_idx = 0;
   for (auto &op : tflite_subgraph->operators) {
@@ -113,7 +113,7 @@ STATUS TfliteModelParser::ConvertOps() {
     MS_LOG(INFO) << "parse node :" << op_name;
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(tflite_op_type);
     if (node_parser == nullptr) {
-      NoSupportOp::GetInstance()->InsertOp(op_type);
+      NotSupportOp::GetInstance()->InsertOp(op_type);
       status = (status == RET_OK ? RET_NOT_FIND_OP : status);
       continue;
     }

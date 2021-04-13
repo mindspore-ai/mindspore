@@ -98,7 +98,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     MS_LOG(INFO) << "parse op : " << layer.type();
     auto node_parser = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type());
     if (node_parser == nullptr) {
-      NoSupportOp::GetInstance()->InsertOp(layer.type());
+      NotSupportOp::GetInstance()->InsertOp(layer.type());
       status = (status == RET_OK ? RET_NOT_FIND_OP : status);
       continue;
     }

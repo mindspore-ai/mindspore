@@ -1344,7 +1344,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
 
   // add quant_cast
   quant::QuantCast quant_cast;
-  quant_cast.SetInputDataDType(kNumberTypeFloat32);
+  quant_cast.set_input_data_dtype(kNumberTypeFloat32);
   status = quant_cast.Run(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "add QuantCast error";

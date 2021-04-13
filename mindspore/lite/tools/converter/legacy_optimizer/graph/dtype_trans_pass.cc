@@ -55,34 +55,35 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
 
 STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  auto &graphInIdxes = graph->inputIndex;
-  if (this->inputDataDType != TypeId::kNumberTypeFloat32 && this->inputDataDType != TypeId::kNumberTypeUInt8 &&
-      this->inputDataDType != TypeId::kNumberTypeInt8 && this->inputDataDType != TypeId::kTypeUnknown) {
-    MS_LOG(ERROR) << "Invalid inputDataType: " << this->inputDataDType;
+  auto &graph_in_idxes = graph->inputIndex;
+  if (this->input_data_dtype != TypeId::kNumberTypeFloat32 && this->input_data_dtype != TypeId::kNumberTypeUInt8 &&
+      this->input_data_dtype != TypeId::kNumberTypeInt8 && this->input_data_dtype != TypeId::kTypeUnknown) {
+    MS_LOG(ERROR) << "Invalid inputDataType: " << this->input_data_dtype;
     return RET_ERROR;
   }
-  for (auto graphInIdx : graphInIdxes) {
-    MS_ASSERT(graphInIdx < graph->allTensors.size());
-    auto &tensor = graph->allTensors.at(graphInIdx);
+  for (auto graph_in_idx : graph_in_idxes) {
+    MS_ASSERT(graph_in_idx < graph->allTensors.size());
+    auto &tensor = graph->allTensors.at(graph_in_idx);
     if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
       continue;
     }
-    int32_t tensorDataType = this->inputDataDType != TypeId::kTypeUnknown
-                               ? this->inputDataDType
-                               : TensorDataType::GetInstance()->GetTensorType(graphInIdx);
+    int32_t tensor_data_type = this->input_data_dtype != TypeId::kTypeUnknown
+                                 ? this->input_data_dtype
+                                 : TensorDataType::GetInstance()->GetTensorType(graph_in_idx);
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-      auto nodeName = (*iter)->name;
-      for (size_t inputIndexIdx = 0; inputIndexIdx < (*iter)->inputIndex.size(); inputIndexIdx++) {
-        if ((*iter)->inputIndex.at(inputIndexIdx) == graphInIdx) {
+      auto node_name = (*iter)->name;
+      for (size_t input_indexidx = 0; input_indexidx < (*iter)->inputIndex.size(); input_indexidx++) {
+        if ((*iter)->inputIndex.at(input_indexidx) == graph_in_idx) {
           STATUS status = RET_OK;
 
           // insert dtype cast node between input tensor and input node
-          if (tensorDataType != tensor->dataType && tensorDataType != kTypeUnknown) {
-            iter = InsertDTypeTransNode(graph, iter, kBefore, inputIndexIdx, tensorDataType, tensor->dataType, &status);
+          if (tensor_data_type != tensor->dataType && tensor_data_type != kTypeUnknown) {
+            iter =
+              InsertDTypeTransNode(graph, iter, kBefore, input_indexidx, tensor_data_type, tensor->dataType, &status);
           }
 
           if (status != RET_OK) {
-            MS_LOG(ERROR) << "InsertDTypeTransNode before " << nodeName.c_str() << " failed";
+            MS_LOG(ERROR) << "InsertDTypeTransNode before " << node_name.c_str() << " failed";
             return status;
           }
         }
@@ -94,33 +95,34 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
 
 STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  if (this->outputDataDType != TypeId::kNumberTypeFloat32 && this->outputDataDType != TypeId::kNumberTypeUInt8 &&
-      this->outputDataDType != TypeId::kNumberTypeInt8 && this->outputDataDType != TypeId::kTypeUnknown) {
-    MS_LOG(ERROR) << "Invalid outputDataType: " << this->outputDataDType;
+  if (this->output_data_dtype != TypeId::kNumberTypeFloat32 && this->output_data_dtype != TypeId::kNumberTypeUInt8 &&
+      this->output_data_dtype != TypeId::kNumberTypeInt8 && this->output_data_dtype != TypeId::kTypeUnknown) {
+    MS_LOG(ERROR) << "Invalid outputDataType: " << this->output_data_dtype;
     return RET_ERROR;
   }
-  auto &graphOutIdxes = graph->outputIndex;
-  for (auto graphOutIdx : graphOutIdxes) {
-    MS_ASSERT(graphOutIdx < graph->allTensors.size());
-    auto &tensor = graph->allTensors.at(graphOutIdx);
+  auto &graph_out_idxes = graph->outputIndex;
+  for (auto graph_out_idx : graph_out_idxes) {
+    MS_ASSERT(graph_out_idx < graph->allTensors.size());
+    auto &tensor = graph->allTensors.at(graph_out_idx);
     if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
       continue;
     }
-    int32_t tensorDataType = this->outputDataDType != TypeId::kTypeUnknown
-                               ? this->outputDataDType
-                               : TensorDataType::GetInstance()->GetTensorType(graphOutIdx);
+    int32_t tensor_data_type = this->output_data_dtype != TypeId::kTypeUnknown
+                                 ? this->output_data_dtype
+                                 : TensorDataType::GetInstance()->GetTensorType(graph_out_idx);
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-      auto nodeName = (*iter)->name;
+      auto node_name = (*iter)->name;
       MS_ASSERT(node != nullptr);
       for (size_t outputIndexIdx = 0; outputIndexIdx < (*iter)->outputIndex.size(); outputIndexIdx++) {
-        if ((*iter)->outputIndex.at(outputIndexIdx) == graphOutIdx) {
+        if ((*iter)->outputIndex.at(outputIndexIdx) == graph_out_idx) {
           // insert transNode
           STATUS status = RET_OK;
-          if (tensorDataType != tensor->dataType && tensorDataType != kTypeUnknown) {
-            iter = InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, tensor->dataType, tensorDataType, &status);
+          if (tensor_data_type != tensor->dataType && tensor_data_type != kTypeUnknown) {
+            iter =
+              InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, tensor->dataType, tensor_data_type, &status);
           }
           if (status != RET_OK) {
-            MS_LOG(ERROR) << "InsertDTypeTransNode after " << nodeName.c_str() << " failed";
+            MS_LOG(ERROR) << "InsertDTypeTransNode after " << node_name.c_str() << " failed";
             return status;
           }
           break;
@@ -231,52 +233,53 @@ STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
   return RET_OK;
 }
 
-NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place,
-                                              size_t inoutIdx, int32_t inputDataType, int32_t outputDataType,
-                                              STATUS *errorCode) {
-  MS_ASSERT((*existNodeIter) != nullptr);
-  auto existNodeName = (*existNodeIter)->name;
-  std::string tileName;
+NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIter exist_node_iter, InsertPlace place,
+                                              size_t inout_idx, int32_t input_data_type, int32_t output_data_type,
+                                              STATUS *error_code) {
+  MS_ASSERT((*exist_node_iter) != nullptr);
+  auto exist_node_name = (*exist_node_iter)->name;
+  std::string tile_name;
   if (place == kBefore) {
-    tileName = existNodeName + "_pre";
+    tile_name = exist_node_name + "_pre";
   } else {
-    tileName = existNodeName + "_post";
+    tile_name = exist_node_name + "_post";
   }
-  auto transNode = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
-  if (transNode == nullptr) {
+  auto trans_node = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
+  if (trans_node == nullptr) {
     MS_LOG(ERROR) << "new TransNode failed";
-    *errorCode = RET_ERROR;
+    *error_code = RET_ERROR;
     return graph->nodes.end();
   }
-  auto quantDTypeCastParam = new (std::nothrow) QuantDTypeCastT;
-  if (quantDTypeCastParam == nullptr) {
+  auto quant_dtype_cast_param = new (std::nothrow) QuantDTypeCastT;
+  if (quant_dtype_cast_param == nullptr) {
     MS_LOG(ERROR) << "new quantDTypeCastParam failed";
-    *errorCode = RET_ERROR;
+    *error_code = RET_ERROR;
     return graph->nodes.end();
   }
-  transNode->primitive = std::make_unique<schema::PrimitiveT>();
-  transNode->primitive->value.value = quantDTypeCastParam;
-  transNode->primitive->value.type = PrimitiveType_QuantDTypeCast;
-  transNode->quantType = QuantType_AwareTraining;
-  quantDTypeCastParam->src_t = inputDataType;
-  quantDTypeCastParam->dst_t = outputDataType;
-  if (inputDataType == TypeId::kNumberTypeInt8 && outputDataType == TypeId::kNumberTypeFloat32) {
-    transNode->name = "int8toft32_" + tileName + std::to_string(id++);
-  } else if (inputDataType == TypeId::kNumberTypeFloat32 && outputDataType == TypeId::kNumberTypeInt8) {
-    transNode->name = "ft32toint8_" + tileName + std::to_string(id++);
-  } else if (inputDataType == TypeId::kNumberTypeUInt8 && outputDataType == TypeId::kNumberTypeInt8) {
-    transNode->name = "uint8toint8_" + tileName + std::to_string(id++);
-  } else if (inputDataType == TypeId::kNumberTypeInt8 && outputDataType == TypeId::kNumberTypeUInt8) {
-    transNode->name = "int8touint8_" + tileName + std::to_string(id++);
+  trans_node->primitive = std::make_unique<schema::PrimitiveT>();
+  trans_node->primitive->value.value = quant_dtype_cast_param;
+  trans_node->primitive->value.type = PrimitiveType_QuantDTypeCast;
+  trans_node->quantType = QuantType_AwareTraining;
+  quant_dtype_cast_param->src_t = input_data_type;
+  quant_dtype_cast_param->dst_t = output_data_type;
+  if (input_data_type == TypeId::kNumberTypeInt8 && output_data_type == TypeId::kNumberTypeFloat32) {
+    trans_node->name = "int8toft32_" + tile_name + std::to_string(id_++);
+  } else if (input_data_type == TypeId::kNumberTypeFloat32 && output_data_type == TypeId::kNumberTypeInt8) {
+    trans_node->name = "ft32toint8_" + tile_name + std::to_string(id_++);
+  } else if (input_data_type == TypeId::kNumberTypeUInt8 && output_data_type == TypeId::kNumberTypeInt8) {
+    trans_node->name = "uint8toint8_" + tile_name + std::to_string(id_++);
+  } else if (input_data_type == TypeId::kNumberTypeInt8 && output_data_type == TypeId::kNumberTypeUInt8) {
+    trans_node->name = "int8touint8_" + tile_name + std::to_string(id_++);
   }
-  transNode->primitive->value.value = quantDTypeCastParam;
+  trans_node->primitive->value.value = quant_dtype_cast_param;
   int insert_num = 0;
-  return InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode, &insert_num, castOpCopyer);
+  return InsertNode(graph, exist_node_iter, place, inout_idx, std::move(trans_node), error_code, &insert_num,
+                    castOpCopyer);
 }
 
-void DTypeTransPass::SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }
+void DTypeTransPass::set_input_data_dtype(TypeId data_type) { this->input_data_dtype = data_type; }
 
-void DTypeTransPass::SetOutputDataDType(TypeId dataType) { this->outputDataDType = dataType; }
+void DTypeTransPass::set_output_data_dtype(TypeId data_type) { this->output_data_dtype = data_type; }
 
 }  // namespace lite
 }  // namespace mindspore
