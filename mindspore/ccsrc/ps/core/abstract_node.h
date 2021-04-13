@@ -130,7 +130,7 @@ class AbstractNode : public Node {
   // the key is rank_id, the value is rank_id's actual request_id
   std::unordered_map<uint32_t, uint64_t> actual_rank_request_ids_;
   std::mutex rank_request_ids_mutex;
-  timeval scheduler_time_;
+  timeval scheduler_time_{0, 0};
   std::unordered_map<NodeCommand, ResponseHandler> handlers_;
 };
 }  // namespace core

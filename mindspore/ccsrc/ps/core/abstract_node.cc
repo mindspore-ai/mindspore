@@ -526,8 +526,8 @@ void AbstractNode::ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const 
   auto it = receive_messages_.find(request_id);
   VectorPtr received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
   if (size > 0) {
-    int ret = memcpy_s(received_data.get()->data(), size, data, size);
-    if (ret != 0) {
+    auto ret = memcpy_s(received_data.get()->data(), size, data, size);
+    if (ret != EOK) {
       MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
     }
   }

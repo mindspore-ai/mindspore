@@ -947,6 +947,7 @@ void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &pa
 
 void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &partitioner,
                          const std::map<int64_t, int64_t> &attrs, std::vector<float> *vals, std::vector<int> *lens) {
+  MS_EXCEPTION_IF_NULL(vals);
   PartitionKVMessages messages;
   partitioner(send, &messages, {});
   std::vector<uint32_t> rank_ids;
