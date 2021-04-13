@@ -45,9 +45,9 @@ get_version() {
 }
 
 download_inference() {
-    MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-inference-linux-x64"
+    MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
     local MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
+    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}-rc2/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
 
     if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
       wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}

@@ -97,7 +97,6 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "model.h", model_header}};
   if (config_->support_parallel()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "thread_pool.h", thread_header));
-    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "thread_pool.c", thread_source));
   }
   if (config_->debug_mode()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
