@@ -34,7 +34,7 @@ TEST_F(StackTestFp32, StackTest1) {
   constexpr int kOutSize = 18;
   float expect_out[kOutSize] = {1, 4, 7, 2, 5, 8, 3, 6, 9, 10, 40, 70, 20, 50, 80, 30, 60, 90};
   float output[kOutSize];
-  Stack(input, reinterpret_cast<char *>(output), 3, 4, 6);
+  Stack(input, reinterpret_cast<char *>(output), 3, 4, 0, 6);
   for (float i : output) {
     std::cout << i << " ";
   }
