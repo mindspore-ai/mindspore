@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace lite {
 #ifdef MS_COMPILE_IOS
-void RegisterOps();
+void IosRegisterOps();
 #endif
 typedef OpParameter *(*ParameterGen)(const void *prim);
 class PopulateRegistry {
@@ -52,9 +52,9 @@ class PopulateRegistry {
     return param_creator;
   }
 #ifdef MS_COMPILE_IOS
-  void RegisterAllOps() {
+  void IosRegisterAllOps() {
     static std::once_flag flag_ops;
-    std::call_once(flag_ops, [&]() { RegisterOps(); });
+    std::call_once(flag_ops, [&]() { IosRegisterOps(); });
   }
 #endif
 

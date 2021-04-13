@@ -59,8 +59,8 @@ constexpr int kMainSubGraphIndex = 0;
 
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #ifdef MS_COMPILE_IOS
-  PopulateRegistry::GetInstance()->RegisterAllOps();
-  KernelRegistry::GetInstance()->RegisterAllKernels();
+  PopulateRegistry::GetInstance()->IosRegisterAllOps();
+  KernelRegistry::GetInstance()->IosRegisterAllKernels();
 #endif
   if (src_model_ == nullptr) {
     MS_LOG(ERROR) << "Input model is nullptr";
