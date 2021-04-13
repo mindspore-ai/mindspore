@@ -18,7 +18,7 @@
 #include <memory>
 #include "runtime/mem.h"
 
-using ge::model_runner::MemcpyAsyncTaskInfo;
+using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;
 
 namespace mindspore {

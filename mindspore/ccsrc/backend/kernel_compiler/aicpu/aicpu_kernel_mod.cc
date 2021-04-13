@@ -30,7 +30,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/ascend/executor/host_dynamic_kernel.h"
 
-using AicpuTaskInfoPtr = std::shared_ptr<ge::model_runner::AicpuTaskInfo>;
+using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskInfo>;
 using AicpuDynamicKernel = mindspore::device::ascend::AiCpuDynamicKernel;
 using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 
@@ -193,9 +193,9 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
     node_name_ = kPack;
   }
 
-  AicpuTaskInfoPtr task_info_ptr =
-    make_shared<ge::model_runner::AicpuTaskInfo>(kernel_name_, stream_id, node_so_, node_name_, node_def_str_,
-                                                 ext_info_, input_data_addrs, output_data_addrs, NeedDump());
+  AicpuTaskInfoPtr task_info_ptr = std::make_shared<mindspore::ge::model_runner::AicpuTaskInfo>(
+    kernel_name_, stream_id, node_so_, node_name_, node_def_str_, ext_info_, input_data_addrs, output_data_addrs,
+    NeedDump());
 
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask end";
   return {task_info_ptr};

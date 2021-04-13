@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include "runtime/device/ascend/ascend_memory_pool.h"
+#include "runtime/mem.h"
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include "utils/log_adapter.h"
 

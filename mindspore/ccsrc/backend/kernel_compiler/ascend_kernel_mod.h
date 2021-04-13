@@ -19,11 +19,11 @@
 
 #include <vector>
 #include <memory>
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "debug/data_dump/dump_json_parser.h"
 
-using TaskInfoPtr = std::shared_ptr<ge::model_runner::TaskInfo>;
+using TaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TaskInfo>;
 namespace mindspore {
 namespace kernel {
 class AscendKernelMod : public KernelMod {

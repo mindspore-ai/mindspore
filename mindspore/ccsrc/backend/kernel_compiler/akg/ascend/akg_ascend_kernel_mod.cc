@@ -29,7 +29,7 @@ using std::fstream;
 using std::map;
 using std::mutex;
 using std::string;
-using TbeTaskInfoPtr = std::shared_ptr<ge::model_runner::TbeTaskInfo>;
+using TbeTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
 constexpr uint32_t DEFAULT_BLOCK_DIM = 1;
 /**
@@ -118,7 +118,7 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
 
   MS_LOG(DEBUG) << "The block_dim is:" << block_dim;
 
-  TbeTaskInfoPtr task_info_ptr = make_shared<ge::model_runner::TbeTaskInfo>(
+  TbeTaskInfoPtr task_info_ptr = std::make_shared<mindspore::ge::model_runner::TbeTaskInfo>(
     kernel_name_, stream_id, stub_func, block_dim, args, args_size, sm_desc, binary, binary_size, meta_data,
     input_data_addrs, output_data_addrs, workspace_addrs, NeedDump());
   return {task_info_ptr};

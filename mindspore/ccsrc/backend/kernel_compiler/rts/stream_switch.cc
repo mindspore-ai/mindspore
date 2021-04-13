@@ -21,7 +21,7 @@
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-using ge::model_runner::StreamSwitchTaskInfo;
+using mindspore::ge::model_runner::StreamSwitchTaskInfo;
 using StreamSwitchTaskInfoPtr = std::shared_ptr<StreamSwitchTaskInfo>;
 
 namespace mindspore {

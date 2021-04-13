@@ -20,7 +20,7 @@
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-using ge::model_runner::LabelSetTaskInfo;
+using mindspore::ge::model_runner::LabelSetTaskInfo;
 using LabelSetTaskInfoPtr = std::shared_ptr<LabelSetTaskInfo>;
 
 namespace mindspore {

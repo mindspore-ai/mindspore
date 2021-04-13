@@ -24,8 +24,8 @@
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
 
-using HcclTaskInfoPtr = std::shared_ptr<ge::model_runner::HcclTaskInfo>;
-using ge::model_runner::HcclTaskInfo;
+using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
+using mindspore::ge::model_runner::HcclTaskInfo;
 
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {

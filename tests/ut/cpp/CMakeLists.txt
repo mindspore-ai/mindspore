@@ -23,6 +23,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/runtime/)
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
@@ -103,6 +104,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/bucket.cc"
         "../../../mindspore/ccsrc/runtime/device/launch_kernel.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/profiling/*.cc"
+        "../../../mindspore/ccsrc/runtime/device/ascend/ge_runtime/*.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/kernel_select_ascend.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_launch_kernel.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_launch_mul.cc"

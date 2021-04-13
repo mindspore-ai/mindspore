@@ -24,6 +24,7 @@
 #include "ps/ps_cache/ps_cache_basic.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_mod.h"
 #include "ir/dtype.h"
+#include "runtime/base.h"
 
 namespace mindspore {
 namespace ps {

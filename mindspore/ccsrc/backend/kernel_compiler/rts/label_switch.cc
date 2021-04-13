@@ -21,7 +21,7 @@
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-using ge::model_runner::LabelSwitchTaskInfo;
+using mindspore::ge::model_runner::LabelSwitchTaskInfo;
 using LabelSwitchTaskInfoPtr = std::shared_ptr<LabelSwitchTaskInfo>;
 
 namespace mindspore {

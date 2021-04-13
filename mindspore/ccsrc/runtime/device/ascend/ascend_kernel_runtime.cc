@@ -28,9 +28,9 @@
 #include "utils/mpi/mpi_config.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "common/trans.h"
-#include "runtime/context.h"
+#include "runtime/rt.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
-#include "framework/ge_runtime/model_runner.h"
+#include "runtime/device/ascend/ge_runtime/model_runner.h"
 #include "runtime/device/ascend/tasksink/task_generator.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
@@ -40,7 +40,6 @@
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
-#include "utils/runtime_error_codes.h"
 #include "debug/anf_ir_dump.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
@@ -61,10 +60,10 @@ using mindspore::dataset::TdtHandle;
 #include "debug/rdr/running_data_recorder.h"
 #endif
 
-using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
+using mindspore::ge::model_runner::ModelRunner;
 using mindspore::kernel::tbe::TbeUtils;
 using std::vector;
 
@@ -158,10 +157,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
   graph_kernel_events_map_.clear();
   for (auto &iter : graph_model_map_) {
     MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
-    auto ret = ModelRunner::Instance().UnloadModel(iter.first);
-    if (!ret) {
-      MS_LOG(ERROR) << "UnloadModel failed";
-    }
+    ModelRunner::Instance().UnloadModel(iter.first);
   }
 }
 
@@ -194,10 +190,7 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " runtime resource";
   if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
     MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
-    auto ret = ModelRunner::Instance().UnloadModel(graph_id);
-    if (!ret) {
-      MS_LOG(ERROR) << "UnloadModel failed";
-    }
+    ModelRunner::Instance().UnloadModel(graph_id);
     graph_model_map_.erase(model_iter);
   } else {
     MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
@@ -482,10 +475,9 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
                << ", total label num:" << graph->label_num()
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
-  std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
   auto model = std::make_shared<ge::model_runner::DavinciModel>(
-    task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
-    0, 0, 0, 0, 0, resource_manager.get_cur_stream_num(), graph->label_num(), resource_manager.get_cur_event_num(), 0);
+    task_info_list, wait_active_stream_list, force_copy_stream_list, 0, 0, 0, 0, 0, 0,
+    resource_manager.get_cur_stream_num(), graph->label_num(), resource_manager.get_cur_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
@@ -514,24 +506,20 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
     return false;
   }
 
-  std::shared_ptr<ge::ModelListener> listener;
   MS_LOG(INFO) << "LoadDavinciModel mode_id:" << model_iter->first;
-  bool status =
-    ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second, listener);
-  if (!status) {
-    MS_LOG(EXCEPTION) << "Load Model Failed";
-  }
+  ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first, model_iter->second);
 
   std::function<void *()> model_handle =
     std::bind(&ModelRunner::GetModelHandle, &ModelRunner::Instance(), model_iter->first);
   DistributeDebugTask(NOT_NULL(graph), NOT_NULL(model_handle));
 
-  status = ModelRunner::Instance().DistributeTask(model_iter->first);
-  if (!status) {
+  try {
+    ModelRunner::Instance().DistributeTask(model_iter->first);
+  } catch (const std::exception &e) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
-    MS_LOG(EXCEPTION) << "Distribute Task Failed";
+    MS_LOG(EXCEPTION) << "Distribute Task Failed, error: " << e.what();
   }
 
   if (ProfilingManager::GetInstance().IsProfiling()) {
@@ -542,10 +530,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
 
   LaunchDataDump(graph->graph_id());
 
-  if (!ModelRunner::Instance().LoadModelComplete(model_iter->first)) {
-    MS_LOG(ERROR) << "Call ge runtime LoadModelComplete failed";
-    return false;
-  }
+  ModelRunner::Instance().LoadModelComplete(model_iter->first);
   return true;
 }
 
@@ -730,8 +715,6 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  ge::InputData input_tensors = ge::InputData();
-  ge::OutputData *output_tensors = nullptr;
   if (GraphWithEmptyTaskList(graph)) {
     MS_LOG(WARNING) << "RunTask end, no task info found";
     return true;
@@ -742,8 +725,9 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
     return false;
   }
 
-  bool status = ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
-  if (!status) {
+  try {
+    ModelRunner::Instance().RunModel(graph->graph_id());
+  } catch (const std::exception &) {
     DumpTaskExceptionInfo(graph);
     std::string file_name = "task_error_debug" + std::to_string(graph->graph_id()) + ".ir";
     auto graph_tmp = std::make_shared<session::KernelGraph>(*graph);
@@ -988,7 +972,7 @@ void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) 
 }
 
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
-  auto ascend_mem_manager = dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
+  auto ascend_mem_manager = std::dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
   return ascend_mem_manager->GetDeviceMemSize();
 }
 

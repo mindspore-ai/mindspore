@@ -36,7 +36,7 @@ using mindspore::kernel::tbe::TbeUtils;
 bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
-  static set<std::string> processed_kernel;
+  static std::set<std::string> processed_kernel;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
@@ -259,8 +259,8 @@ bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std
 }
 
 KernelModPtr ParallelBuildManager::GenKernelMod(const string &json_name, const string &processor,
-                                                const vector<size_t> &input_size_list,
-                                                const vector<size_t> &output_size_list,
+                                                const std::vector<size_t> &input_size_list,
+                                                const std::vector<size_t> &output_size_list,
                                                 const mindspore::kernel::KernelPackPtr &kernel_pack) const {
   MS_EXCEPTION_IF_NULL(kernel_pack);
   auto kernel_json_info = kernel_pack->kernel_json_info();

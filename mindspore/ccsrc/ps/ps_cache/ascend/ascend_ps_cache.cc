@@ -27,6 +27,7 @@
 #include "proto/tensor_shape.pb.h"
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
+#include "runtime/rt.h"
 
 using mindspore::kernel::Address;
 using AddressPtr = std::shared_ptr<Address>;
