@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDQUANTUM_ENGINE_INTRINSIC_ONE_PARAGATE_H_
-#define MINDQUANTUM_ENGINE_INTRINSIC_ONE_PARAGATE_H_
+#ifndef MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
+#define MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
 #include <string>
-#include "mindquantum/gates/parameter_gate.h"
-#include "mindquantum/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/basic_gates.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 
 namespace mindspore {
 namespace mindquantum {
-class IntrinsicOneParaGate : public ParameterGate {
-  virtual Matrix GetIntrinsicMatrix(CalcType);
-  virtual Matrix GetIntrinsicDiffMatrix(CalcType);
-
+class ParameterGate : public BasicGate {
  public:
-  IntrinsicOneParaGate();
-  IntrinsicOneParaGate(const std::string &, const Indexes &, const Indexes &, const ParameterResolver &);
-  CalcType LinearCombination(const ParameterResolver &, const ParameterResolver &);
-  Matrix GetMatrix(const ParameterResolver &) override;
-  Matrix GetDiffMatrix(const ParameterResolver &) override;
+  ParameterGate();
+  ParameterGate(const std::string &, const Indexes &, const Indexes &, const ParameterResolver &);
 };
 }  // namespace mindquantum
 }  // namespace mindspore
-#endif  // MINDQUANTUM_ENGINE_INTRINSIC_ONE_PARAGATE_H_
+#endif  // MINDQUANTUM_ENGINE_PARAMETER_GATE_H_

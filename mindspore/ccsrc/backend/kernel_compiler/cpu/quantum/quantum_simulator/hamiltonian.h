@@ -17,9 +17,9 @@
 #ifndef MINDQUANTUM_ENGINE_CHAMILTONIAN_H_
 #define MINDQUANTUM_ENGINE_CHAMILTONIAN_H_
 #include "projectq/backends/_sim/_cppkernels/simulator.hpp"
-#include "mindquantum/gates/basic_gates.h"
-#include "mindquantum/sparse.h"
-#include "mindquantum/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/basic_gates.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/sparse.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 
 namespace mindspore {
 namespace mindquantum {
