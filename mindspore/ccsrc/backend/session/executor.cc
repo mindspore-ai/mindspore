@@ -192,6 +192,7 @@ void Executor::WorkerLoop() {
       done_tasks_.emplace_back(task);
     }
     if (task->type_ != kRunGraph || task->sync_run_) {
+      std::lock_guard<std::mutex> lock(task_mutex_);
       sync_run_task_finished_ = true;
       sync_cond_var_.notify_all();
     }
@@ -217,10 +218,15 @@ void Executor::OnEvent(const ExecutorEvent &event) {
   if (event == ExecutorEvent::kRunGraphFinished) {
     OnRunGraphFinished();
   } else if (event == ExecutorEvent::kClear) {
-    WorkerJoin();
+    OnClear();
   } else if (event == ExecutorEvent::kException) {
     OnException();
   }
+}
+
+void Executor::OnClear() {
+  WorkerJoin();
+  ClearDoneTasks();
 }
 
 void Executor::OnException() {
@@ -278,9 +284,9 @@ void Executor::ClearDoneTasks() {
 }
 
 void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run) {
-  sync_run_task_finished_ = false;
   {
     std::lock_guard<std::mutex> lock(task_mutex_);
+    sync_run_task_finished_ = false;
     ready_tasks_.push(task);
   }
   task_cond_var_.notify_all();
