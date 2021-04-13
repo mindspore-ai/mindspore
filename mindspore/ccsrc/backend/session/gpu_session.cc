@@ -299,14 +299,6 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
   }
 }
 
-void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  if (!runtime_instance->Run(kernel_graph.get(), false)) {
-    MS_LOG(EXCEPTION) << "GPU execute graph failed!";
-  }
-}
-
 GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   // Construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs);
@@ -419,10 +411,8 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   return graph->graph_id();
 }
 
-void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                              VectorRef *outputs) {
-  auto &kernel_graph = graphs_[graph_id];
-  MS_LOG(INFO) << "RunGraph graph_id: " << graph_id;
+void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                 const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   if (debugger_) {
     debugger_->PreExecute(kernel_graph, graph_sum_);
   }
@@ -430,26 +420,48 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  // It's InitDataset graph if kernel_num == 1, skip the loop.
-  int kernel_num = kernel_graph->execution_order().size();
-  int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
-  for (int64_t i = 0; i < loopsize; i++) {
-#if ENABLE_CPU && ENABLE_GPU
-    std::string channel_name;
-    if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(graph_id, &channel_name)) {
-      ps::ps_cache_instance.IncreaseGraphStep(channel_name);
-    }
-#endif
-    Execute(kernel_graph);
-  }
+}
+
+void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
+                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY)) {
     Summary(kernel_graph.get());
   }
-  PostIterationDbg(kernel_graph);
+  bool dump_enabled = DumpDataEnabledIteration();
+  // debug used for dump
+  if (debugger_ && dump_enabled) {
+    Dump(kernel_graph);
+  } else {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
+  }
+  if (debugger_) {
+    debugger_->PostExecute();
+  }
+}
+
+void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  int kernel_num = kernel_graph->execution_order().size();
+  int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
+  for (int64_t i = 0; i < loopsize; i++) {
+#if ENABLE_CPU && ENABLE_GPU
+    std::string channel_name;
+    if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(kernel_graph, &channel_name)) {
+      ps::ps_cache_instance.IncreaseGraphStep(channel_name);
+    }
+#endif
+    Execute(kernel_graph);
+  }
+}
+
+void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  if (!runtime_instance->Run(kernel_graph.get(), false)) {
+    MS_LOG(EXCEPTION) << "GPU execute graph failed!";
+  }
 }
 
 void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
@@ -517,19 +529,6 @@ bool GPUSession::DumpDataEnabledIteration() const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   return runtime_instance->DumpDataEnabledIteration();
-}
-
-void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  bool dump_enabled = DumpDataEnabledIteration();
-  // debug used for dump
-  if (debugger_ && dump_enabled) {
-    Dump(kernel_graph);
-  } else {
-    DumpJsonParser::GetInstance().UpdateDumpIter();
-  }
-  if (debugger_) {
-    debugger_->PostExecute();
-  }
 }
 
 void GPUSession::SyncStream() {
