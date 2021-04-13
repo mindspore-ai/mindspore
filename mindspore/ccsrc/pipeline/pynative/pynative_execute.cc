@@ -1710,16 +1710,24 @@ void GradExecutor::SubNestedGradOrder() {
 }
 
 void GradExecutor::ClearCellRes(const std::string &cell_id) {
+  static bool clear_all_cell_res = false;
   // Grad clean
   if (cell_id.empty()) {
+    MS_LOG(DEBUG) << "Clear all cell resources";
+    clear_all_cell_res = true;
     for (const auto &it : top_cell_list_) {
       it->clear();
     }
     top_cell_list_.clear();
     already_run_top_cell_.clear();
-    MS_LOG(DEBUG) << "Clear all cell resources";
+    clear_all_cell_res = false;
     return;
   }
+  if (clear_all_cell_res) {
+    MS_LOG(DEBUG) << "In process of clearing all cell resources, so no need to clear single cell resource again";
+    return;
+  }
+  // clear when cell destruction
   for (auto it = top_cell_list_.begin(); it != top_cell_list_.end();) {
     auto top_cell_id = (*it)->cell_id();
     if (IsCellObjIdEq(cell_id, top_cell_id)) {
@@ -2252,8 +2260,8 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
 
 bool GradExecutor::CheckNeedCompileGraph() {
   auto new_top_cell = top_cell();
-  bool ret = true;
   std::string top_cell_id = new_top_cell->cell_id();
+  // update top cell by current cell op info
   if (already_run_top_cell_.find(top_cell_id) == already_run_top_cell_.end()) {
     MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has never been ran, need compile graph";
     already_run_top_cell_[top_cell_id] = new_top_cell;
@@ -2270,15 +2278,16 @@ bool GradExecutor::CheckNeedCompileGraph() {
       pre_top_cell->clear();
       already_run_top_cell_[top_cell_id] = new_top_cell;
     } else {
+      pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
       EraseTopCellFromTopCellList(new_top_cell);
       new_top_cell->clear();
       set_top_cell(already_run_top_cell_.at(top_cell_id));
       MS_LOG(DEBUG) << "The op info has not been changed, no need to compile graph again";
-      ret = pre_top_cell->need_compile_graph();
     }
   }
-  top_cell()->set_need_compile_graph(ret);
-  return ret;
+  // Update status of top cell
+  top_cell()->set_forward_already_run(true);
+  return top_cell()->need_compile_graph();
 }
 
 void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args,
