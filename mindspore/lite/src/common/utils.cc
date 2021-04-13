@@ -155,7 +155,11 @@ bool IsSupportSDot() {
 
 bool IsSupportFloat16() {
   bool status = false;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM32
+  status = true;
+#endif
+
+#if defined(ENABLE_ARM64)
 #if defined(__ANDROID__)
   int hwcap_type = 16;
   uint32_t hwcap = getHwCap(hwcap_type);

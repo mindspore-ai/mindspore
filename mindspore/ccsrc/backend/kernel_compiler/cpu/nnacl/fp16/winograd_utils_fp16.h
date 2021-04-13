@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_NNACL_FP16_WINOGRAD_UTILS_H_
 #define MINDSPORE_NNACL_FP16_WINOGRAD_UTILS_H_
 
-#include <arm_neon.h>
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 #define MAX_LEN 256
 

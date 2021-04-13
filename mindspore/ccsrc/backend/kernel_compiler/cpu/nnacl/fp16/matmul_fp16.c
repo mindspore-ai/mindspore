@@ -226,24 +226,43 @@ void ColMajor2Row8MajorFp16(const void *src_ptr, float16_t *dst_ptr, size_t row,
   return;
 }
 
-void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
-                int deep, int row, int col, int stride, bool write_nhwc) {
-  if (write_nhwc) {
-    /*  col16-major * row8-major => col-major  */
+void MatMul16x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
+                    int deep, int row, int col, int stride, int write_mode) {
+  if (write_mode == OutType_Nhwc) {
     for (int r = 0; r < row; r++) {
       for (int c = 0; c < col; c++) {
+        int r16div = r / 16, r16mod = r % 16;
+        int c8div = c / 8, c8mod = c % 8;
+        size_t ci = r * stride + c;
+        float16_t value = 0;
+        for (int d = 0; d < deep; d++) {
+          size_t ai = r16div * deep * 16 + d * 16 + r16mod;
+          size_t bi = c8div * deep * 8 + d * 8 + c8mod;
+          value = value + a[ai] * b[bi];
+        }
+        ADD_BIAS(value, bias, c)
+        DO_RELU(value, act_type)
+        DO_RELU6(value, act_type)
+        dst[ci] = value;
+      }
+    }
+  } else if (write_mode == OutType_C8) {
+    int col_8 = UP_ROUND(col, C8NUM);
+    int row_16 = UP_ROUND(row, C16NUM);
+    for (int r = 0; r < row_16; r++) {
+      for (int c = 0; c < col_8; c++) {
         int r16div = r / C16NUM, r16mod = r % C16NUM;
         int c8div = c / C8NUM, c8mod = c % C8NUM;
-        size_t ci = r * stride + c;
-        float value = 0;
+        size_t ci = (c8div * C8NUM * row_16 + r * C8NUM + c8mod);
+        float16_t value = 0;
         for (int d = 0; d < deep; d++) {
           size_t ai = r16div * deep * C16NUM + d * C16NUM + r16mod;
           size_t bi = c8div * deep * C8NUM + d * C8NUM + c8mod;
           value = value + a[ai] * b[bi];
         }
-        if (bias != NULL) value += bias[c];
-        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
-        if (act_type != ActType_No) value = MSMAX(0.0f, value);
+        ADD_BIAS(value, bias, c)
+        DO_RELU(value, act_type)
+        DO_RELU6(value, act_type)
         dst[ci] = value;
       }
     }
@@ -254,37 +273,119 @@ void MatMul16x8(const float16_t *a, const float16_t *b, float16_t *dst, const fl
       for (int j = 0; j < col; ++j) {
         int c8div = j / 8, c8mod = j % 8;
         size_t ci = dst_r_offset + c8div * 8 * stride + c8mod;
-        float value = 0;
+        float16_t value = 0;
         for (int d = 0; d < deep; ++d) {
           size_t ai = src_r_offset + d * C16NUM;
           size_t bi = c8div * deep * 8 + d * 8 + c8mod;
           value = value + a[ai] * b[bi];
         }
-        if (bias != NULL) value += bias[j];
-        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
-        if (act_type != ActType_No) value = MSMAX(0.0f, value);
+        ADD_BIAS(value, bias, j)
+        DO_RELU(value, act_type)
+        DO_RELU6(value, act_type)
         dst[ci] = value;
       }
     }
   }
-  return;
+}
+
+void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
+                    int deep, int row, int col, int stride, int write_mode) {
+  if (write_mode == OutType_Nhwc) {
+    for (int r = 0; r < row; r++) {
+      for (int c = 0; c < col; c++) {
+        int r12div = r / 12, r12mod = r % 12;
+        int c8div = c / 8, c8mod = c % 8;
+        size_t ci = r * stride + c;
+        float16_t value = 0;
+        for (int d = 0; d < deep; d++) {
+          size_t ai = r12div * deep * 12 + d * 12 + r12mod;
+          size_t bi = c8div * deep * 8 + d * 8 + c8mod;
+          value = value + a[ai] * b[bi];
+        }
+        ADD_BIAS(value, bias, c)
+        DO_RELU(value, act_type)
+        DO_RELU6(value, act_type)
+        dst[ci] = value;
+      }
+    }
+  } else if (write_mode == OutType_C8) {
+    int col_8 = UP_ROUND(col, C8NUM);
+    int row_12 = UP_ROUND(row, C12NUM);
+    for (int r = 0; r < row_12; r++) {
+      for (int c = 0; c < col_8; c++) {
+        int r12div = r / C12NUM, r12mod = r % C12NUM;
+        int c8div = c / C8NUM, c8mod = c % C8NUM;
+        size_t ci = (c8div * C8NUM * row_12 + r * C8NUM + c8mod);
+        float16_t value = 0;
+        for (int d = 0; d < deep; d++) {
+          size_t ai = r12div * deep * C12NUM + d * C12NUM + r12mod;
+          size_t bi = c8div * deep * C8NUM + d * C8NUM + c8mod;
+          value = value + a[ai] * b[bi];
+        }
+        ADD_BIAS(value, bias, c)
+        DO_RELU(value, act_type)
+        DO_RELU6(value, act_type)
+        dst[ci] = value;
+      }
+    }
+  } else {
+    for (int i = 0; i < row; ++i) {
+      int src_r_offset = i;
+      int dst_r_offset = i * col * stride;
+      for (int j = 0; j < col; ++j) {
+        int c8div = j / 8, c8mod = j % 8;
+        size_t ci = dst_r_offset + c8div * 8 * stride + c8mod;
+        float16_t value = 0;
+        for (int d = 0; d < deep; ++d) {
+          size_t ai = src_r_offset + d * C12NUM;
+          size_t bi = c8div * deep * 8 + d * 8 + c8mod;
+          value = value + a[ai] * b[bi];
+        }
+        ADD_BIAS(value, bias, j)
+        DO_RELU(value, act_type)
+        DO_RELU6(value, act_type)
+        dst[ci] = value;
+      }
+    }
+  }
 }
 
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, int out_type) {
   if (out_type == OutType_C8) {
+#ifdef ENABLE_ARM64
     MatmulFp16Neon64(a, b, c, bias, (int)act_type, depth, row, col, stride, false);
+#else
+    MatMul12x8A32Fp16(a, b, c, bias, (int)act_type, depth, row, col, stride, out_type);
+#endif
   } else {
+#ifdef ENABLE_ARM64
     MatmulFp16Neon64Opt(a, b, c, bias, (int)act_type, depth, row, col, stride, out_type);
+#else
+    MatMul12x8A32Fp16(a, b, c, bias, (int)act_type, depth, row, col, stride, out_type);
+#endif
   }
   return;
 }
 
+#ifdef ENABLE_ARM82_A32
+void MatVecMulA32Fp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
+                      int depth, int col) {
+  // TODO(fun): function
+  return;
+}
+#endif
+
 void MatVecMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                    int depth, int col) {
+#ifdef ENABLE_ARM64
   MatVecMulFp16Neon64(a, b, c, bias, (int)act_type, depth, col);
+#else
+  MatVecMulA32Fp16(a, b, c, bias, (int)act_type, depth, col);
+#endif
 }
 
+#ifdef ENABLE_ARM64
 static void Row2Col16Block16(const float16_t *src_ptr, float16_t *dst_ptr, size_t col) {
   size_t stride = col * 2;
   asm volatile(
@@ -392,6 +493,7 @@ static void Row2Col16Block16(const float16_t *src_ptr, float16_t *dst_ptr, size_
       "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30",
       "v31");
 }
+#endif
 
 void RowMajor2Col16MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
   size_t row_up_16 = UP_ROUND(row, C16NUM);
@@ -440,6 +542,54 @@ void RowMajor2Col16MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, si
     dst_r += 1;
   }
   return;
+}
+
+void RowMajor2Col12MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
+  size_t row_up_12 = UP_ROUND(row, C12NUM);
+  size_t row12 = row / C12NUM * C12NUM;
+  size_t col8 = col / C8NUM * C8NUM;
+  const float16_t *src_r = src_ptr;
+  float16_t *dst_r = dst_ptr;
+  size_t ri = 0;
+  // transpose 12x8
+  for (; ri < row12; ri += C12NUM) {
+    size_t ci = 0;
+    for (; ci < col8; ci += C8NUM) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C12NUM;
+#ifdef ENABLE_ARM82_A32
+      Transpose12x8A32Fp16(src_c, dst_c, col * sizeof(float16_t), 24);
+#else
+      for (int tr = 0; tr < C12NUM; tr++) {
+        for (int tc = 0; tc < C8NUM; tc++) {
+          dst_c[tc * C12NUM + tr] = src_c[tr * col + tc];
+        }
+      }
+#endif
+    }
+    for (; ci < col; ci++) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C12NUM;
+      for (size_t i = 0; i < C12NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C12NUM * col;
+    dst_r += C12NUM * col;
+  }
+  for (; ri < row; ri++) {
+    for (size_t i = 0; i < col; ++i) {
+      dst_r[i * C12NUM] = src_r[i];
+    }
+    src_r += col;
+    dst_r += 1;
+  }
+  for (; ri < row_up_12; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C12NUM] = 0;
+    }
+    dst_r += 1;
+  }
 }
 
 void RowMajor2Col16MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src) {

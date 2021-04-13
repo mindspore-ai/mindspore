@@ -56,3 +56,17 @@ void PostConvFuncFp16C4(const float16_t *c4_out, float16_t *nhwc_out, const floa
   PostFuncBiasReluC4Fp16(nhwc_out, c4_out, bias, oc4div, oc4mod, plane, stride_size, act_type);
   return;
 }
+
+#ifdef ENABLE_ARM82_A32
+void PostFuncBiasReluC4Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc4div, size_t oc4mod,
+                            size_t plane_size, size_t plane_stride, size_t relu_type) {
+  // TODO(fun): function
+  return;
+}
+
+void PostFuncBiasReluC8Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc8div, size_t oc8mod,
+                            size_t plane_size, size_t stride, size_t relu_type) {
+  // TODO(fun): function
+  return;
+}
+#endif

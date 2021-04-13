@@ -18,10 +18,7 @@
 #define MINDSPORE_NNACL_FP16_QUANTDTYPECAST_FP16_H_
 
 #include "nnacl/op_base.h"
-
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {

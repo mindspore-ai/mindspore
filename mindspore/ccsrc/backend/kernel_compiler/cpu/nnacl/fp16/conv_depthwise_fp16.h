@@ -23,9 +23,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef ENABLE_ARM64
 void ConvDwFp16Row(float16_t *output_ptr, const float16_t *input_ptr, const float16_t *filter_ptr, size_t num_pixels,
                    size_t input_channel, size_t input_step);
+#ifdef ENABLE_ARM64
 void ConvDwFp16Border(float16_t *dst, const float16_t *src, const float16_t *weight, const float16_t *bias,
                       size_t height, size_t width, size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu,
                       size_t relu6);

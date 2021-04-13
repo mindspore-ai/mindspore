@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_NNACL_CAST_FP16_H_
 #define MINDSPORE_NNACL_CAST_FP16_H_
 
-#include <arm_neon.h>
 #include "nnacl/op_base.h"
 
 #ifdef __cplusplus

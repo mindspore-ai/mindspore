@@ -17,7 +17,7 @@ endif()
 add_library(cpu_kernel_mid OBJECT ${KERNEL_SRC})
 add_dependencies(cpu_kernel_mid fbs_src)
 
-if(PLATFORM_ARM64)
+if(PLATFORM_ARM)
     if(ENABLE_FP16)
         file(GLOB FP16_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16/*.cc)
         if(SUPPORT_TRAIN)

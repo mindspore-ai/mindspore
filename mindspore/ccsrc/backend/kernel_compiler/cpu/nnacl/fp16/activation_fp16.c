@@ -29,7 +29,7 @@ int ReluFp16(const float16_t *src, float16_t *dst, int ele_num) {
   }
 #endif
   for (; offset < ele_num; offset++) {
-    dst[offset] = src[offset] < 0 ? 0 : src[offset];
+    dst[offset] = src[offset] < 0.0f ? 0.0f : src[offset];
   }
   return NNACL_OK;
 }
@@ -47,14 +47,24 @@ int Relu6Fp16(const float16_t *data, float16_t *dst, int ele_num) {
   }
 #endif
   for (; offset < ele_num; offset++) {
-    dst[offset] = data[offset] < 0 ? 0 : data[offset];
-    dst[offset] = dst[offset] > 6 ? 6 : dst[offset];
+    dst[offset] = data[offset] < 0.0f ? 0.0f : data[offset];
+    dst[offset] = dst[offset] > 6.0f ? 6.0f : dst[offset];
   }
   return NNACL_OK;
 }
 
 int LReluFp16(const float16_t *src, float16_t *dst, int ele_num, float16_t alpha) {
-  for (int i = 0; i < ele_num; ++i) {
+  int i = 0;
+#ifdef ENABLE_NEON
+  int ele_c8 = UP_ROUND(ele_num, C8NUM);
+  for (; i < ele_c8; i += C8NUM) {
+    float16x8_t src_tmp = vld1q_f16(src + i);
+    float16x8_t mul_tmp = vmulq_n_f16(src_tmp, alpha);
+    float16x8_t mask = vcgtq_f16(src_tmp, vdupq_n_f16(0.0f));
+    vst1q_f16(dst + i, vbslq_f32(mask, src_tmp, mul_tmp));
+  }
+#endif
+  for (; i < ele_num; ++i) {
     dst[i] = src[i] > (float16_t)0.0f ? src[i] : (src[i] * alpha);
   }
   return NNACL_OK;
@@ -62,12 +72,12 @@ int LReluFp16(const float16_t *src, float16_t *dst, int ele_num, float16_t alpha
 
 int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num) {
   int i = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   int count = (ele_num / C4NUM) * C4NUM;
   for (; i < count; i += C4NUM) {
     float32x4_t tmp;
     simd_exp(vnegq_f32(vcvt_f32_f16(vld1_f16(src + i))), (float *)&tmp);
-    vst1_f16(dst + i, vcvt_f16_f32(vdivq_f32(vdupq_n_f32(1.0f), vaddq_f32(vdupq_n_f32(1.0f), tmp))));
+    vst1_f16(dst + i, vcvt_f16_f32(MS_DIVQ_F32(vdupq_n_f32(1.0f), vaddq_f32(vdupq_n_f32(1.0f), tmp))));
   }
 #endif
   for (; i < ele_num; ++i) {
@@ -79,9 +89,9 @@ int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num) {
 }
 
 float16_t TanhOptFp16(float16_t src) {
-  if (src > 5.0) {
+  if (src > 5.0f) {
     return 1.0f;
-  } else if (src < -5.0) {
+  } else if (src < -5.0f) {
     return -1.0f;
   } else {
     float square = src * src;
@@ -93,7 +103,7 @@ float16_t TanhOptFp16(float16_t src) {
 
 int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
   int i = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   static float32x4_t paramv[] = {{378.0f, 378.0f, 378.0f, 378.0f},
                                  {17325.0f, 17325.0f, 17325.0f, 17325.0f},
                                  {135135.0f, 135135.0f, 135135.0f, 135135.0f},
@@ -112,7 +122,7 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
     float32x4_t b = vaddq_f32(
       vmulq_f32(vaddq_f32(vmulq_f32(vaddq_f32(vmulq_f32(paramv[3], square), paramv[4]), square), paramv[5]), square),
       paramv[2]);
-    vst1_f16(dst + i, vcvt_f16_f32(vminq_f32(vmaxq_f32(vdivq_f32(a, b), neg_one), pos_one)));
+    vst1_f16(dst + i, vcvt_f16_f32(vminq_f32(vmaxq_f32(MS_DIVQ_F32(a, b), neg_one), pos_one)));
   }
 #endif
   for (; i < ele_num; ++i) {
@@ -130,7 +140,7 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
 int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
   for (int i = 0; i < ele_num; ++i) {
     float16_t in = src[i];
-    float16_t relu6 = MSMIN(MSMAX(in + 3, 0), 6);
+    float16_t relu6 = MSMIN(MSMAX(in + 3.0f, 0.0f), 6.0f);
     dst[i] = in * relu6 / (float16_t)6.0f;
   }
   return NNACL_OK;
@@ -181,26 +191,26 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
     for (; i < C8; i += C8NUM) {
       float16x8_t in = vld1q_f16(src + i);
       float16x8_t res =
-        0.5 * in * (1.0 + MS_TANHX8_F16(((float16_t)0.79788456080287 + (float16_t)0.035677408136 * in * in) * in));
+        0.5f * in * (1.0f + MS_TANHX8_F16(((float16_t)0.79788456080287f + (float16_t)0.035677408136f * in * in) * in));
       vst1q_f16(dst + i, res);
     }
 #endif
     for (; i < length; i++) {
       dst[i] =
-        0.5 * src[i] *
-        (1.0 + TanhOptFp16(((float16_t)0.79788456080287 + (float16_t)0.035677408136 * src[i] * src[i]) * src[i]));
+        0.5f * src[i] *
+        (1.0f + TanhOptFp16(((float16_t)0.79788456080287f + (float16_t)0.035677408136f * src[i] * src[i]) * src[i]));
     }
   } else {
 #ifdef ENABLE_NEON
     int C8 = UP_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       float16x8_t in = vld1q_f16(src + i);
-      const float16x8_t res = 0.5 * in * (1.0 + MS_ERFX8_F16(in / (float16_t)1.4142135623730951f));
+      const float16x8_t res = 0.5f * in * (1.0f + MS_ERFX8_F16(in / (float16_t)1.4142135623730951f));
       vst1q_f16(dst + i, res);
     }
 #endif
     for (; i < length; i++) {
-      dst[i] = 0.5 * src[i] * (1.0 + erf(src[i] / 1.4142135623730951f));
+      dst[i] = 0.5f * src[i] * (1.0f + erff(src[i] / 1.4142135623730951f));
     }
   }
   return NNACL_OK;

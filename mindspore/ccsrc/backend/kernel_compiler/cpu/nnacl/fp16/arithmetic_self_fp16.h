@@ -16,10 +16,8 @@
 #ifndef MINDSPORE_NNACL_FP16_ARITHMETIC_SELF_FP16_H_
 #define MINDSPORE_NNACL_FP16_ARITHMETIC_SELF_FP16_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus

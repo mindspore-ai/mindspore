@@ -53,8 +53,8 @@ int PoolingFp16CPUKernel::ReSize() {
 }
 
 int PoolingFp16CPUKernel::RunImpl(int task_id) {
-  float16_t minf = -FLT_MAX;
-  float16_t maxf = FLT_MAX;
+  float16_t minf = -FLT16_MAX;
+  float16_t maxf = FLT16_MAX;
   if (pooling_param_->act_type_ == ActType_Relu) {
     minf = 0.f;
   } else if (pooling_param_->act_type_ == ActType_Relu6) {

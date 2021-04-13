@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
+#include "nnacl/fp16/cast_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef ENABLE_ARM64
-extern void Float32ToFloat16(const float *input, float16_t *output, int number);
-extern void Float16ToFloat32(const float16_t *input, float *output, int number);
-
-inline void Float32ToFloat16_fp16_handler(const void *input, void *output, int number) {
+static inline void Float32ToFloat16_fp16_handler(const void *input, void *output, int number) {
   Float32ToFloat16(reinterpret_cast<const float *>(input), reinterpret_cast<float16_t *>(output), number);
 }
-
-inline void Float16ToFloat32_fp16_handler(const void *input, void *output, int number) {
+static inline void Float16ToFloat32_fp16_handler(const void *input, void *output, int number) {
   Float16ToFloat32(reinterpret_cast<const float16_t *>(input), reinterpret_cast<float *>(output), number);
 }
-#endif
 
 #ifdef __cplusplus
 }

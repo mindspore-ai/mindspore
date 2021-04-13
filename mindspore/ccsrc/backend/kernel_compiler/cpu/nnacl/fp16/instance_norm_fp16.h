@@ -17,7 +17,6 @@
 #define MINDSPORE_NNACL_FP16_INSTANCE_NORM_H_
 
 #include "nnacl/instance_norm_parameter.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

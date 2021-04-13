@@ -24,7 +24,7 @@
 typedef float16_t *TmpBufferAddressFp16;
 typedef float16_t *MatricesFp16;
 
-#ifndef ENABLE_NEON
+#ifndef ENABLE_ARM64
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
                            size_t ic4, size_t oc8, size_t offset, size_t mode, size_t writeC8, size_t relu,
                            size_t relu6);

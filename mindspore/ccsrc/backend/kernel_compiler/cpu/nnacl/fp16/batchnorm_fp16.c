@@ -26,7 +26,7 @@ void BatchNormFp16(const float16_t *input, const void *mean, const void *varianc
 
   for (int i = 0; i < cur_unit; i++) {
     for (int c = 0; c < param->channel_; c++) {
-      float16_t variance_sqrt = sqrt(((const float16_t *)variance)[c] + param->epsilon_);
+      float16_t variance_sqrt = sqrtf(((const float16_t *)variance)[c] + param->epsilon_);
       if (variance_sqrt != 0) {
         output[cur_offset + c] = (input[cur_offset + c] - ((const float16_t *)mean)[c]) / variance_sqrt;
       }
@@ -44,7 +44,7 @@ void FusedBatchNormFp16(const void *input, const void *scale, const void *offset
 
   for (int i = 0; i < cur_unit; i++) {
     for (int c = 0; c < param->channel_; c++) {
-      float16_t variance_sqrt = sqrt(((const float16_t *)variance)[c] + param->epsilon_);
+      float16_t variance_sqrt = sqrtf(((const float16_t *)variance)[c] + param->epsilon_);
       if (variance_sqrt != 0) {
         float16_t norm_val =
           (((const float16_t *)input)[cur_offset + c] - ((const float16_t *)mean)[c]) / variance_sqrt;

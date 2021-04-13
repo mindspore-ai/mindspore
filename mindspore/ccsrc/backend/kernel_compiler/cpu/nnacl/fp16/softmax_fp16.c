@@ -40,7 +40,7 @@ void SoftmaxNormFp16(const float16_t *src, float16_t *dst, int batch, int channe
       }
     }
     int k = 0;
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
     int count2 = (channel / C8NUM) * C8NUM;
     for (; k < count2; k += C8NUM) {
       float16x8_t input_8 = vld1q_f16(src + cur_batch_offset + k);
@@ -58,9 +58,9 @@ void SoftmaxNormFp16(const float16_t *src, float16_t *dst, int batch, int channe
 void SumAndDivFp16(const float16_t *src, float16_t *dst, int batch, int channel) {
   int cur_batch_offset = 0;
   for (int i = 0; i < batch; i++, cur_batch_offset += channel) {
-    float16_t sum = 0;
+    float16_t sum = 0.0f;
     int j = 0;
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
     float16x8_t sum8 = vdupq_n_f16(0);
     int count = (channel / C8NUM) * C8NUM;
     for (; j < count; j += C8NUM) {
@@ -72,7 +72,7 @@ void SumAndDivFp16(const float16_t *src, float16_t *dst, int batch, int channel)
       sum += src[cur_batch_offset + j];
     }
     int k = 0;
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
     const float16_t div = 1.0f / sum;
     for (; k < count; k += C8NUM) {
       vst1q_f16(dst + cur_batch_offset + k, vmulq_n_f16(vld1q_f16(src + cur_batch_offset + k), div));
@@ -117,7 +117,7 @@ void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *s
       }
       for (int j = 0; j < input_shape[axis]; j++) {
         int axis_offset = inner_offset + j * inner_size;
-        output_ptr[axis_offset] = exp(input_ptr[axis_offset] - max_data);
+        output_ptr[axis_offset] = expf(input_ptr[axis_offset] - max_data);
         sum_data[k + sum_outter_offset] += output_ptr[axis_offset];
       }
     }

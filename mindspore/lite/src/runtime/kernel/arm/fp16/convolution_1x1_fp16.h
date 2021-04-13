@@ -62,6 +62,8 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   float16_t *pack_input_ = nullptr;
   float16_t *output_ptr_ = nullptr;
   MatMulParameter *matmul_param_ = nullptr;
+  int col_tile_;
+  int row_tile_;
 };
 }  // namespace mindspore::kernel
 

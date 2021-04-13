@@ -16,9 +16,6 @@
 #ifndef MINDSPORE_NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
 #define MINDSPORE_NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/constant_of_shape_parameter.h"
@@ -27,7 +24,7 @@
 extern "C" {
 #endif
 #ifdef __cplusplus
-#ifdef ENABLE_NEON
+#ifdef ENABLE_FP16
 inline int ConstantOfShapeFp16(float16_t *output, int start, int end, float16_t value) {
   for (int i = start; i < end; i++) {
     output[i] = value;

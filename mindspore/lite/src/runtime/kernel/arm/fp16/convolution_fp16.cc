@@ -34,7 +34,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  int oc8 = UP_ROUND(out_channel, C8NUM);
+  int oc8 = UP_ROUND(out_channel, col_tile_);
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   int pack_weight_size = oc8 * in_channel * kernel_plane;
 
@@ -69,9 +69,8 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionFP16CPUKernel::InitTmpBuffer() {
-  const int cal_num = 16;
   int unit_size =
-    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * cal_num * thread_count_;
+    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * row_tile_ * thread_count_;
 
   packed_input_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(unit_size * sizeof(float16_t)));
   if (packed_input_ == nullptr) {
@@ -88,6 +87,12 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionFP16CPUKernel::Init() {
+#ifdef ENABLE_ARM64
+  row_tile_ = C16NUM;
+#else
+  row_tile_ = C12NUM;
+#endif
+  col_tile_ = C8NUM;
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -99,7 +104,7 @@ int ConvolutionFP16CPUKernel::Init() {
 void ConvolutionFP16CPUKernel::AdjustNumberOfThread() {
   auto out_tensor = out_tensors_.front();
   int out_plane = out_tensor->Height() * out_tensor->Width();
-  thread_count_ = MSMIN(ctx_->thread_num_, UP_DIV(out_plane, C16NUM));
+  thread_count_ = MSMIN(ctx_->thread_num_, UP_DIV(out_plane, row_tile_));
   conv_param_->thread_num_ = thread_count_;
 }
 

@@ -16,6 +16,7 @@
 #include "nnacl/fp16/instance_norm_fp16.h"
 #include <math.h>
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 int InstanceNormFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *gamma_data,
                      const float16_t *beta_data, const InstanceNormParameter *param, size_t task_id) {

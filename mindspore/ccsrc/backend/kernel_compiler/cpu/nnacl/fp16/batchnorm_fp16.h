@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_BATCHNORM_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_BATCHNORM_FP16_H_
+#ifndef MINDSPORE_NNACL_FP16_BATCHNORM_FP16_H_
+#define MINDSPORE_NNACL_FP16_BATCHNORM_FP16_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/batchnorm_parameter.h"
 
 #ifdef __cplusplus
@@ -34,4 +31,4 @@ void FusedBatchNormFp16(const void *input, const void *scale, const void *offset
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_FP16_BATCHNORM_FP16_H_
+#endif  // MINDSPORE_NNACL_FP16_BATCHNORM_FP16_H_

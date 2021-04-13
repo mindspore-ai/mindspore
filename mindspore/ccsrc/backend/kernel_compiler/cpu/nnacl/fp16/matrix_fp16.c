@@ -39,7 +39,7 @@ void MatrixMultiplyWinogradFp16(const float16_t *matix_a, const float16_t *matri
   for (int i = 0; i < m; ++i) {
     for (int j = 0; j < n; ++j) {
       for (int y = 0; y < in_channel; ++y) {
-        float16_t tmp = 0;
+        float tmp = 0;
         for (int z = 0; z < k; ++z) {
           tmp += matix_a[z * in_channel + y + i * in_channel * k] * matrix_b[j + z * n];
         }

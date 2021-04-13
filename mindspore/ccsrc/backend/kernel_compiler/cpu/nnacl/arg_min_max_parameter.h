@@ -30,7 +30,7 @@ typedef struct ArgElement {
     int8_t i8_data_;
     int32_t i_data_;
     float f_data_;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
     float16_t f16_data_;
 #endif
   } data_;
