@@ -125,10 +125,6 @@ class Tensor(Tensor_):
             return Tensor_.__repr__(self)
         return ''
 
-    def __add__(self, other):
-        out = tensor_operator_registry.get('__add__')(self, other)
-        return out
-
     def __eq__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return False
@@ -149,10 +145,6 @@ class Tensor(Tensor_):
 
     def __hash__(self):
         return hash(id(self))
-
-    def __mul__(self, other):
-        out = tensor_operator_registry.get('__mul__')(self, other)
-        return out
 
     def __neg__(self):
         out = tensor_operator_registry.get('__neg__')(self)
@@ -187,38 +179,59 @@ class Tensor(Tensor_):
     def __pos__(self):
         return self
 
+    def __add__(self, other):
+        return tensor_operator_registry.get('__add__')(self, other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
     def __iadd__(self, other):
         return self.__add__(other)
 
-    def __radd__(self, other):
-        out = tensor_operator_registry.get('__add__')(self, other)
-        return out
-
-    def __imul__(self, other):
-        return self.__mul__(other)
-
-    def __rmul__(self, other):
-        out = tensor_operator_registry.get('__mul__')(self, other)
-        return out
-
-    def __truediv__(self, other):
-        out = tensor_operator_registry.get('__truediv__')(self, other)
-        return out
-
-    def __rtruediv__(self, other):
-        out = tensor_operator_registry.get('__truediv__')(other, self)
-        return out
-
     def __sub__(self, other):
-        out = tensor_operator_registry.get('__sub__')(self, other)
-        return out
+        return tensor_operator_registry.get('__sub__')(self, other)
+
+    def __rsub__(self, other):
+        return tensor_operator_registry.get('__sub__')(other, self)
 
     def __isub__(self, other):
         return self.__sub__(other)
 
-    def __rsub__(self, other):
-        out = tensor_operator_registry.get('__sub__')(other, self)
-        return out
+    def __mul__(self, other):
+        return tensor_operator_registry.get('__mul__')(self, other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __imul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return tensor_operator_registry.get('__truediv__')(self, other)
+
+    def __rtruediv__(self, other):
+        return tensor_operator_registry.get('__truediv__')(other, self)
+
+    def __mod__(self, other):
+        return tensor_operator_registry.get('__mod__')(self, other)
+
+    def __rmod__(self, other):
+        return tensor_operator_registry.get('__mod__')(other, self)
+
+    def __imod__(self, other):
+        return self.__mod__(other)
+
+    def __pow__(self, other):
+        return tensor_operator_registry.get('__pow__')(self, other)
+
+    def __floordiv__(self, other):
+        return tensor_operator_registry.get('__floordiv__')(self, other)
+
+    def __rfloordiv__(self, other):
+        return tensor_operator_registry.get('__floordiv__')(other, self)
+
+    def __ifloordiv__(self, other):
+        return self.__floordiv__(other)
 
     def __lt__(self, other):
         out = tensor_operator_registry.get('__lt__')(self, other)
@@ -229,8 +242,6 @@ class Tensor(Tensor_):
         return out
 
     def __getitem__(self, index):
-        if isinstance(index, int) and not isinstance(index, bool) and self.shape and index >= self.shape[0]:
-            raise IndexError("index {} is out of bounds for axis 0 with size {}".format(index, self.shape[0]))
         out = tensor_operator_registry.get('__getitem__')(self, index)
         return out
 
@@ -252,27 +263,6 @@ class Tensor(Tensor_):
         if out:
             return out[0]
         raise TypeError("Not support len of a 0-D tensor")
-
-    def __mod__(self, other):
-        return tensor_operator_registry.get('__mod__')(self, other)
-
-    def __imod__(self, other):
-        return self.__mod__(other)
-
-    def __rmod__(self, other):
-        return tensor_operator_registry.get('__mod__')(other, self)
-
-    def __pow__(self, other):
-        return tensor_operator_registry.get('__pow__')(self, other)
-
-    def __floordiv__(self, other):
-        return tensor_operator_registry.get('__floordiv__')(self, other)
-
-    def __ifloordiv__(self, other):
-        return self.__floordiv__(other)
-
-    def __rfloordiv__(self, other):
-        return tensor_operator_registry.get('__floordiv__')(other, self)
 
     def __str__(self):
         if self.dtype == mstype.type_none:

@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `div` operations."""
 
+from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
 
@@ -83,4 +84,68 @@ def _tensor_div_scalar(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
+    return F.tensor_div(x, y)
+
+
+@div.register("Tuple", "Tensor")
+def _tuple_div_tensor(x, y):
+    """
+    Tuple divided by tensor.
+
+    Args:
+        x (Tuple): x
+        y (Tensor): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_div(x, y)
+
+
+@div.register("Tensor", "Tuple")
+def _tensor_div_tuple(x, y):
+    """
+    Tensor divided by tuple.
+
+    Args:
+        x (Tensor): x
+        y (Tuple): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_div(x, y)
+
+
+@div.register("List", "Tensor")
+def _list_div_tensor(x, y):
+    """
+    List divided by tensor.
+
+    Args:
+        x (List): x
+        y (Tensor): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_div(x, y)
+
+
+@div.register("Tensor", "List")
+def _tensor_div_list(x, y):
+    """
+    Tensor divided by list
+
+    Args:
+        x (Tensor): x
+        y (List): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_div(x, y)

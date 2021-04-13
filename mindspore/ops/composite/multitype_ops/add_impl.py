@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `add` operations."""
 
+from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
 
@@ -112,6 +113,70 @@ def _tensor_add_scalar(x, y):
         Tensor, has the same dtype as x.
     """
     return F.add(x, y)
+
+
+@add.register("Tuple", "Tensor")
+def _tuple_add_tensor(x, y):
+    """
+    Tuple is added to tensor.
+
+    Args:
+        x (Tuple): x
+        y (Tensor): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_add(x, y)
+
+
+@add.register("Tensor", "Tuple")
+def _tensor_add_tuple(x, y):
+    """
+    Tensor is added to number.
+
+    Args:
+        x (Tensor): x
+        y (Tuple): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_add(x, y)
+
+
+@add.register("List", "Tensor")
+def _list_add_tensor(x, y):
+    """
+    Tuple is added to tensor.
+
+    Args:
+        x (List): x
+        y (Tensor): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_add(x, y)
+
+
+@add.register("Tensor", "List")
+def _tensor_add_list(x, y):
+    """
+    Tensor is added to number.
+
+    Args:
+        x (Tensor): x
+        y (List): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_add(x, y)
 
 
 @add.register("Tensor", "Tensor")
