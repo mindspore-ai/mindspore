@@ -7128,6 +7128,9 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
 
 class BasicLSTMCell(PrimitiveWithInfer):
     r"""
+    It's similar to operator DynamicRNN. BasicLSTMCell will be deprecated in the future.
+    Please use DynamicRNN instead.
+
     Applies the long short-term memory (LSTM) to the input.
 
     .. math::
@@ -7191,7 +7194,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         TypeError: If dtype of `x`, `h`, `c` or `w` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> np.random.seed(0)
@@ -7212,6 +7215,8 @@ class BasicLSTMCell(PrimitiveWithInfer):
          [[7.6953e-01, 9.2432e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[0.0000e+00, 0.0000e+00]]))
     """
+
+    # deprecate_new_name = "BasicLSTMCell"
 
     @prim_attr_register
     def __init__(self, keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'):
