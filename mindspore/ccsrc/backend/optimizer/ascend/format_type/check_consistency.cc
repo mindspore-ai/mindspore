@@ -39,7 +39,7 @@ bool CheckFormatForConsistency(const CNodePtr &node, const size_t input_index) {
   if (pre_output_format == kOpFormat_DEFAULT || selected_input_format == kOpFormat_DEFAULT) {
     string checking_format = (pre_output_format == kOpFormat_DEFAULT) ? selected_input_format : pre_output_format;
     // when input shape size is 1D, default format and NC1HWC0 are compatible
-    if (input_origin_shape.size() == 1 && checking_format == kOpFormat_NC1HWC0) {
+    if (input_origin_shape.size() == 1) {
       return true;
     }
     if (kDefaultCompatibleFormat.find(checking_format) != kDefaultCompatibleFormat.end()) {

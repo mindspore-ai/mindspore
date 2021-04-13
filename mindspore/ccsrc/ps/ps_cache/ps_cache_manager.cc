@@ -309,7 +309,7 @@ void PsCacheManager::IncreaseGraphStep(const std::string &channel_name) {
   data_prase_.notify_one();
 }
 
-void PsCacheManager::DoProcessData(uint32_t device_id, void *context) {
+void PsCacheManager::DoProcessData(uint32_t device_id, const void *context) {
   // PS embeddingLookup cache check.
   if (!initialized_ps_cache_) {
     MS_LOG(EXCEPTION) << "Only the sink_mode of dataset supports embeddingLookup cache in parameter server training "
@@ -318,7 +318,7 @@ void PsCacheManager::DoProcessData(uint32_t device_id, void *context) {
   process_data_thread_ = std::thread(&PsCacheManager::ProcessDataTask, this, device_id, context);
 }
 
-void PsCacheManager::ProcessDataTask(uint32_t device_id, void *context) {
+void PsCacheManager::ProcessDataTask(uint32_t device_id, const void *context) {
   MS_LOG(INFO) << "PS embedding cache process data task begin.";
   running_ = true;
   embedding_device_cache_->cache_->InitDevice(device_id, context);

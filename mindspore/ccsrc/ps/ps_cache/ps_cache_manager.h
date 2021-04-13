@@ -129,7 +129,7 @@ class PsCacheManager {
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
   size_t vocab_cache_size() const { return vocab_cache_size_; }
   int cache_indices_lower_bound() const;
-  void DoProcessData(uint32_t device_id, void *context);
+  void DoProcessData(uint32_t device_id, const void *context);
   void IncreaseGraphStep(const std::string &channel_name);
   void SyncEmbeddingTable();
   void Finalize();
@@ -148,7 +148,7 @@ class PsCacheManager {
   void InitDataChannel();
   void AllocMemForHashTable();
   void SetLocalIdRank();
-  void ProcessDataTask(uint32_t device_id, void *context);
+  void ProcessDataTask(uint32_t device_id, const void *context);
   bool ProcessData();
   bool ParseData(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
   bool WaitGraphRun();

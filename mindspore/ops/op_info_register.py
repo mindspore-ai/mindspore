@@ -451,7 +451,7 @@ class TBERegOp(RegOp):
         Whether the operator need cal op_select_format api.
 
         Args:
-            is_dynamic_format (bool): Value of is_dynamic_format_. Default: false.
+            is_dynamic_format (bool): The format needs to be dynamically obtained. Default: false.
         """
         self._is_bool(is_dynamic_format)
         self.is_dynamic_format_ = is_dynamic_format

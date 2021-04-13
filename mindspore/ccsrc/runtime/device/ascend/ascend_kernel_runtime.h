@@ -54,7 +54,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
   void SetContext() override;
   void CreateContext() override;
-  void *context() const override { return rt_context_; }
+  const void *context() const override { return rt_context_; }
   void PreInit() override;
   uint64_t GetAvailableMemMaxSize() const override;
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kAscend; };
