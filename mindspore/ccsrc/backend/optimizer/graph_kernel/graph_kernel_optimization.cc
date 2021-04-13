@@ -26,7 +26,6 @@
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
-#include "backend/optimizer/graph_kernel/clean_all_in_once.h"
 #include "backend/optimizer/graph_kernel/depend_formater.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
