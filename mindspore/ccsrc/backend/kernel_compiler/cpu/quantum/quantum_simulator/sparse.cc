@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindquantum/sparse.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/sparse.h"
 
 namespace mindspore {
 namespace mindquantum {

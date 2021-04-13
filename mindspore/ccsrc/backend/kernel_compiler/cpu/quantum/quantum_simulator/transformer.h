@@ -18,11 +18,11 @@
 #define MINDQUANTUM_ENGINE_TRANSFORMER_H_
 #include <vector>
 #include <string>
-#include "mindquantum/gates/gates.h"
-#include "mindquantum/circuit.h"
-#include "mindquantum/utils.h"
-#include "mindquantum/parameter_resolver.h"
-#include "mindquantum/hamiltonian.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/gates.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/circuit.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/parameter_resolver.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/hamiltonian.h"
 
 namespace mindspore {
 namespace mindquantum {

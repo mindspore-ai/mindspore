@@ -22,12 +22,12 @@
 #include <memory>
 #include "projectq/backends/_sim/_cppkernels/simulator.hpp"
 #include "utils/log_adapter.h"
-#include "mindquantum/gates/basic_gates.h"
-#include "mindquantum/parameter_resolver.h"
-#include "mindquantum/circuit.h"
-#include "mindquantum/hamiltonian.h"
-#include "mindquantum/utils.h"
-#include "mindquantum/transformer.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/basic_gates.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/parameter_resolver.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/circuit.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/hamiltonian.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/transformer.h"
 
 namespace mindspore {
 namespace mindquantum {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindquantum/transformer.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/transformer.h"
 
 #include <algorithm>
 #include <utility>
@@ -109,6 +109,7 @@ Hamiltonians HamiltoniansTransfor(const PaulisCoeffsType &paulis_coeffs, const P
   }
   return hams;
 }
+
 }  // namespace transformer
 }  // namespace mindquantum
 }  // namespace mindspore

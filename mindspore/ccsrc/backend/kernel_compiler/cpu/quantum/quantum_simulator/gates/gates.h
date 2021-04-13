@@ -16,8 +16,8 @@
 
 #ifndef MINDQUANTUM_ENGINE_GATES_H_
 #define MINDQUANTUM_ENGINE_GATES_H_
-#include "mindquantum/gates/intrinsic_one_para_gate.h"
-#include "mindquantum/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/intrinsic_one_para_gate.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 
 namespace mindspore {
 namespace mindquantum {

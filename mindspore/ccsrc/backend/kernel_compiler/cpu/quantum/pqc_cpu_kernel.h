@@ -21,10 +21,10 @@
 #include <string>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-#include "mindquantum/pqc_simulator.h"
-#include "mindquantum/transformer.h"
-#include "mindquantum/circuit.h"
-#include "mindquantum/parameter_resolver.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/pqc_simulator.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/transformer.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/circuit.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/parameter_resolver.h"
 
 namespace mindspore {
 namespace kernel {

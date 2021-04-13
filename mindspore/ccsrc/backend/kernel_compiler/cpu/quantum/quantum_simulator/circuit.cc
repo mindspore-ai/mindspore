@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindquantum/circuit.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/circuit.h"
 
 namespace mindspore {
 namespace mindquantum {
