@@ -74,6 +74,7 @@ static const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 static const char kMSDtypeModelName[] = "mindspore.common.dtype";
 namespace mindspore::pynative {
 static std::shared_ptr<session::SessionBasic> session = nullptr;
+static std::shared_ptr<compile::MindRTBackend> mind_rt_backend = nullptr;
 PynativeExecutorPtr PynativeExecutor::executor_ = nullptr;
 ForwardExecutorPtr PynativeExecutor::forward_executor_ = nullptr;
 GradExecutorPtr PynativeExecutor::grad_executor_ = nullptr;
@@ -1515,7 +1516,19 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     op_exec_info->next_input_index};
 #endif
   VectorRef outputs;
-  session->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
+  if (!compile::IsMindRTUsed()) {
+    session->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
+  } else {
+    if (mind_rt_backend == nullptr) {
+      std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+      uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+      mind_rt_backend = std::make_shared<compile::MindRTBackend>("ms", device_target, device_id);
+    }
+    const compile::ActorInfo &actor_info =
+      mind_rt_backend->CompileGraph(op_run_info, graph_info, &tensors_mask, &input_tensors);
+    outputs = mind_rt_backend->RunGraph(actor_info, &tensors_mask, &input_tensors);
+  }
+
   if (op_exec_info->is_dynamic_shape) {
     op_exec_info->abstract = op_run_info.abstract;
   }

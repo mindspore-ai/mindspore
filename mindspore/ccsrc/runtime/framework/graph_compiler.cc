@@ -17,12 +17,14 @@
 #include "runtime/framework/graph_compiler.h"
 #include <numeric>
 #include <map>
+#include <utility>
 #include "runtime/framework/graph_scheduler.h"
 #include "runtime/device/device_address.h"
 #include "common/trans.h"
 #include "utils/convert_utils.h"
 #include "ir/tensor.h"
 #include "backend/optimizer/common/helper.h"
+#include "base/base_ref_utils.h"
 
 namespace mindspore {
 namespace runtime {
@@ -97,7 +99,7 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
   MS_EXCEPTION_IF_NULL(value_node);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::vector<tensor::TensorPtr> tensors;
+  std::vector<TensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
 
   for (const auto &tensor : tensors) {
@@ -122,7 +124,7 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     device::DeviceAddressPtr address =
       device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
     MS_EXCEPTION_IF_NULL(address);
-    AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
+    AnfAlgo::SetOutputAddr(address, output_idx++, value_node.get());
   }
 }
 
@@ -226,19 +228,21 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
   return graph->graph_id();
 }
 
-GraphId GraphCompiler::CompileGraph(session::OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                                    std::vector<tensor::TensorPtr> *input_tensors,
-                                    const std::vector<int64_t> &tensors_mask) {
+GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                    const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *input_tensors,
+                                    bool *single_op_cache_hit) {
   // Check if the graph cache exists.
   auto iter = run_op_graphs_.find(graph_info);
   if (iter != run_op_graphs_.end()) {
     const auto &graph = iter->second;
     MS_EXCEPTION_IF_NULL(graph);
+    *single_op_cache_hit = true;
     return graph->graph_id();
   }
+  *single_op_cache_hit = false;
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
-  KernelGraphPtr graph = session_->ConstructSingleOpGraph(*op_run_info, *input_tensors, tensors_mask);
+  KernelGraphPtr graph = session_->ConstructSingleOpGraph(op_run_info, *input_tensors, *tensors_mask);
   MS_EXCEPTION_IF_NULL(graph);
 
   MS_EXCEPTION_IF_NULL(device_context_);
@@ -255,7 +259,7 @@ GraphId GraphCompiler::CompileGraph(session::OpRunInfo *op_run_info, const Graph
   CreateDeviceAddress(graph);
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
-
+  run_op_graphs_[graph_info] = graph;
   return graph->graph_id();
 }
 
@@ -278,6 +282,75 @@ void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph) const {
   CreateValueNodeDeviceAddress(device_context_, graph);
   CreateKernelOutputDeviceAddress(device_context_, graph);
   CreateKernelWorkspaceDeviceAddress(device_context_, graph);
+}
+
+void GraphCompiler::GetParamAndOutputIndex(
+  const KernelGraphPtr &graph, const std::vector<TensorPtr> &inputs, VectorRef *outputs,
+  std::map<AnfNodePtr, size_t> *parameter_index,
+  std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->GetParameterIndex(graph.get(), inputs, parameter_index);
+  session_->CreateOutputPlaceholder(graph, inputs, outputs, output_indexes);
+}
+
+void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
+                                            const std::map<KernelWithIndex, TensorPtr> &op_output,
+                                            const std::map<AnfNodePtr, size_t> &parameter_index,
+                                            const std::vector<TensorPtr> &graph_inputs,
+                                            InputTensorInfo *input_tensor_info) {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_tensor_info);
+}
+
+void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
+                                                   OpRunInfo *run_info, GraphInfo *graph_info) {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->GetSingleOpRunInfo(kernel, run_info);
+  *graph_info = session_->GetSingleOpGraphInfo(kernel, input_tensors);
+}
+
+void GraphCompiler::RecoverGraphOutput(
+  const AnfNodePtr &kernel, const VectorRef &op_outputs,
+  const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
+  std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(op_output_map);
+  MS_EXCEPTION_IF_NULL(outputs);
+  std::vector<TensorPtr> output_tensors = TransformVectorRefToMultiTensor(op_outputs);
+  if (output_tensors.size() > op_outputs.size()) {
+    MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
+  }
+  size_t out_index = 0;
+  for (const auto &output_tensor : output_tensors) {
+    auto kernel_with_index = std::make_pair(kernel, out_index++);
+    (*op_output_map)[kernel_with_index] = output_tensor;
+    const auto &iter = output_indexes.find(kernel_with_index);
+    if (iter == output_indexes.end()) {
+      continue;
+    }
+
+    const std::vector<std::vector<size_t>> &multiple_ref_indexes = iter->second;
+    for (const auto &ref_indexes : multiple_ref_indexes) {
+      size_t n = 0;
+      const VectorRef *cur_vector_ref = outputs;
+      for (; n < ref_indexes.size() - 1; n += 1) {
+        size_t index = ref_indexes.at(n);
+        if (index >= cur_vector_ref->size()) {
+          MS_LOG(EXCEPTION) << "Get invalid output ref index: " << index << ", size of vertor ref is "
+                            << cur_vector_ref->size();
+        }
+
+        const BaseRef &base_ref = (*cur_vector_ref)[index];
+        if (!utils::isa<VectorRef>(base_ref)) {
+          MS_LOG(EXCEPTION) << "Get none VectorRef by ref index, index: " << index << "cur n: " << n;
+        }
+        cur_vector_ref = &utils::cast<VectorRef>(base_ref);
+      }
+
+      BaseRef &tensor_ref = (*const_cast<VectorRef *>(cur_vector_ref))[ref_indexes.at(n)];
+      tensor_ref = output_tensor;
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

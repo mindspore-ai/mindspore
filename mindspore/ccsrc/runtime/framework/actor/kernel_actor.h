@@ -28,12 +28,14 @@
 #include "runtime/framework/device_tensor_store.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "ir/anf.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
+using mindspore::tensor::TensorPtr;
 
 // The kernel actor is used to receive the device tensors and control info to luanch kernel.
 // The processing flow is RunOpData/RunOpControl -> CheckLaunchCondition -> AllocateMemory
@@ -53,6 +55,9 @@ class KernelActor : public MemoryInterfaceActor {
   void RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context) override;
   // The kernel actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
+  // The kernel actor run when receive the input control and input tensors, used in step mode.
+  void RunOpControlWithInputTensor(AID *input_control, OpContext<DeviceTensor> *context,
+                                   const std::vector<TensorPtr> *input_tensors);
 
   // The memory related operation interface.
   void AllocateMemory(OpContext<DeviceTensor> *context) override;
@@ -77,6 +82,9 @@ class KernelActor : public MemoryInterfaceActor {
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   void FetchOutputDeviceTensor();
   void FetchWorkspaceDeviceTensor();
+
+  // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
+  void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
   CNodePtr kernel_;
   // The device interface of kernel launch.

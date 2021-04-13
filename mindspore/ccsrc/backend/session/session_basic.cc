@@ -347,35 +347,6 @@ bool ExistSummaryNode(const KernelGraph *graph) {
   return false;
 }
 
-void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                       std::map<AnfNodePtr, size_t> *parameter_index) {
-  size_t index = 0;
-  for (const auto &input_node : graph->inputs()) {
-    auto params = AnfAlgo::GetAllOutput(input_node);
-    for (const auto &param : params) {
-      if (index >= inputs.size()) {
-        MS_LOG(EXCEPTION) << "Parameter size out of range. Parameter index: " << index
-                          << ", input size: " << inputs.size();
-      }
-      const auto &input = inputs[index];
-      // Check shape of input and parameter
-      const auto &input_shape = input->shape();
-      const auto &param_shape = AnfAlgo::GetOutputInferShape(param, 0);
-      if (input_shape.size() != param_shape.size()) {
-        MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
-                          << ", parameter: " << param->fullname_with_scope();
-      }
-      for (size_t i = 0; i < input_shape.size(); i += 1) {
-        if (input_shape[i] < 0 || static_cast<size_t>(input_shape[i]) != param_shape[i]) {
-          MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
-                            << ", parameter: " << param->fullname_with_scope();
-        }
-      }
-      parameter_index->emplace(param, index++);
-    }
-  }
-}
-
 BaseRef CreateNodeOutputPlaceholder(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
                                     const std::vector<tensor::TensorPtr> &input_tensors,
                                     const std::vector<size_t> &indexes,
@@ -437,22 +408,6 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
     return VectorRef();
   }
   return CreateNodeOutputPlaceholder(item_with_index, graph, input_tensors, indexes, output_indexes);
-}
-
-void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                             VectorRef *outputs,
-                             std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_EXCEPTION_IF_NULL(outputs);
-  MS_EXCEPTION_IF_NULL(output_indexes);
-  auto anf_outputs = kernel_graph->outputs();
-  size_t index = 0;
-  for (auto &item : anf_outputs) {
-    MS_EXCEPTION_IF_NULL(item);
-    MS_LOG(INFO) << "Create node output placeholder[" << item->DebugString() << "]";
-    std::vector<size_t> indexes{index++};
-    outputs->emplace_back(CreateNodeOutputPlaceholder(item, kernel_graph, input_tensors, indexes, output_indexes));
-  }
 }
 
 void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) {
@@ -1294,6 +1249,51 @@ void SessionBasic::GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info)
   const auto &shape_info = shape->ToString();
   if (shape_info.find("-1") != string::npos) {
     run_info->is_dynamic_shape = true;
+  }
+}
+
+void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
+                                     std::map<AnfNodePtr, size_t> *parameter_index) {
+  size_t index = 0;
+  for (const auto &input_node : graph->inputs()) {
+    auto params = AnfAlgo::GetAllOutput(input_node);
+    for (const auto &param : params) {
+      if (index >= inputs.size()) {
+        MS_LOG(EXCEPTION) << "Parameter size out of range. Parameter index: " << index
+                          << ", input size: " << inputs.size();
+      }
+      const auto &input = inputs[index];
+      // Check shape of input and parameter
+      const auto &input_shape = input->shape();
+      const auto &param_shape = AnfAlgo::GetOutputInferShape(param, 0);
+      if (input_shape.size() != param_shape.size()) {
+        MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
+                          << ", parameter: " << param->fullname_with_scope();
+      }
+      for (size_t i = 0; i < input_shape.size(); i += 1) {
+        if (input_shape[i] < 0 || static_cast<size_t>(input_shape[i]) != param_shape[i]) {
+          MS_LOG(EXCEPTION) << "Shapes of input and parameter are different, input index: " << index
+                            << ", parameter: " << param->fullname_with_scope();
+        }
+      }
+      parameter_index->emplace(param, index++);
+    }
+  }
+}
+
+void SessionBasic::CreateOutputPlaceholder(
+  const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs,
+  std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(output_indexes);
+  auto anf_outputs = kernel_graph->outputs();
+  size_t index = 0;
+  for (auto &item : anf_outputs) {
+    MS_EXCEPTION_IF_NULL(item);
+    MS_LOG(INFO) << "Create node output placeholder[" << item->DebugString() << "]";
+    std::vector<size_t> indexes{index++};
+    outputs->emplace_back(CreateNodeOutputPlaceholder(item, kernel_graph, input_tensors, indexes, output_indexes));
   }
 }
 

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <map>
 
 #include "vm/transform.h"
 #include "backend/session/session_factory.h"
@@ -236,13 +237,12 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
   graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
 }
 
-ActorInfo MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
+const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphPtr root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
-
   // Compile root graph.
-  graph_to_device_context_.clear();
+  graph_id_to_device_context_.clear();
   control_nodes_.clear();
   CompileGraph(root_graph);
 
@@ -257,12 +257,17 @@ ActorInfo MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
 
-  // Transform graph to actor DAG, and schedule the actor DAG.
-  const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*(graph_compiler_info.get()));
-  runtime::GraphScheduler::GetInstance().Schedule(actor_set);
-
-  actor_to_graph_compiler_info_.emplace(actor_set->name_, std::move(graph_compiler_info));
-  return actor_set->name_;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  const bool graph_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
+  if (graph_mode) {
+    // Transform graph to actor DAG, and schedule the actor DAG.
+    const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
+    runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+  }
+  const ActorInfo &actor_info = graph_compiler_info->name_;
+  actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
+  return actor_info;
 }
 
 void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
@@ -298,13 +303,74 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
 
       // Compile graph.
       auto graph_id = runtime::GraphCompiler::GetInstance().CompileGraph(segment->nodes_, outputs);
-      graph_to_device_context_[graph_id] = device_context;
+      graph_id_to_device_context_[graph_id] = device_context;
     } else {
       // Compile the cut node.
       auto cut_node = segment->nodes_[0];
       MS_EXCEPTION_IF_NULL(cut_node);
       MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->fullname_with_scope();
       control_nodes_.push_back(cut_node);
+    }
+  }
+}
+
+const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                             const std::vector<int64_t> *tensors_mask,
+                                             std::vector<tensor::TensorPtr> *input_tensors) {
+  static DeviceContext *device_context = nullptr;
+  if (!device_context) {
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    device_context->Initialize();
+    runtime::GraphCompiler::GetInstance().set_device_context(device_context);
+  }
+
+  bool single_op_cache_hit;
+  (void)runtime::GraphCompiler::GetInstance().CompileGraph(op_run_info, graph_info, tensors_mask, input_tensors,
+                                                           &single_op_cache_hit);
+  if (single_op_cache_hit) {
+    return graph_info;
+  }
+
+  graph_info_to_device_context_.clear();
+  graph_info_to_device_context_[graph_info] = device_context;
+
+  auto graph_compiler_info = ConstructGraphCompilerInfo(tensors_mask, input_tensors);
+  const auto actor_set =
+    runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info, runtime::GraphExecutionStrategy::kStep);
+  runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+  graph_compiler_info->input_tensors_.clear();
+
+  actor_to_graph_compiler_info_.emplace(actor_set->name_, std::move(graph_compiler_info));
+  return actor_set->name_;
+}
+
+void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
+                                       const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
+  for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
+    const auto &graph = graphs[graph_index];
+    std::map<AnfNodePtr, size_t> parameter_index;
+    std::map<KernelWithIndex, std::vector<std::vector<size_t>>> output_indexes;
+    std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
+
+    runtime::GraphCompiler::GetInstance().GetParamAndOutputIndex(graph, inputs[graph_index], outputs, &parameter_index,
+                                                                 &output_indexes);
+
+    for (const auto &kernel : graph->execution_order()) {
+      OpRunInfo op_run_info;
+      GraphInfo graph_info;
+      InputTensorInfo input_tensor_info;
+      runtime::GraphCompiler::GetInstance().GetSingleOpInputTensors(kernel, op_output_map, parameter_index,
+                                                                    inputs[graph_index], &input_tensor_info);
+      runtime::GraphCompiler::GetInstance().GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info.input_tensors,
+                                                                           &op_run_info, &graph_info);
+
+      const ActorInfo &actor_info =
+        CompileGraph(op_run_info, graph_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
+      VectorRef op_outputs =
+        RunGraph(actor_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
+
+      runtime::GraphCompiler::GetInstance().RecoverGraphOutput(kernel, op_outputs, output_indexes, &op_output_map,
+                                                               outputs);
     }
   }
 }
@@ -343,11 +409,23 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
     input_tensors.emplace_back(input_tensor);
   }
 
+  VectorRef outputs;
+
   // Run actor DAG.
+
+  auto ms_context = MsContext::GetInstance();
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  if (pynative_mode) {
+    RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, &outputs);
+    return outputs;
+  }
+
   mindspore::ScopedLongRunning long_running;
+
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
+
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
@@ -355,7 +433,6 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
   // Fetch outputs.
   MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
   auto &output_tensors = actor_set->output_actor_->outputs();
-  VectorRef outputs;
   (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs.elements_),
                        [](tensor::TensorPtr &tensor) { return std::move(tensor); });
   MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
@@ -368,7 +445,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   std::vector<KernelGraphPtr> graphs;
   std::vector<DeviceContext *> device_contexts;
   std::string name = "kernel_graph";
-  for (const auto &graph_id_to_context : graph_to_device_context_) {
+  for (const auto &graph_id_to_context : graph_id_to_device_context_) {
     graphs.emplace_back(runtime::GraphCompiler::GetInstance().Fetch(graph_id_to_context.first));
     device_contexts.emplace_back(graph_id_to_context.second);
     name.append("_").append(std::to_string(graph_id_to_context.first));
@@ -383,9 +460,77 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     outputs_order.emplace(output_with_index, position++);
   }
 
+  std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
-  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, input_tensors, control_nodes_,
+  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
                                              root_graph->parameters(), outputs_order, name);
+}
+
+std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
+  const std::vector<int64_t> *tensors_mask, const std::vector<tensor::TensorPtr> *input_tensors) {
+  std::vector<KernelGraphPtr> graphs;
+  std::vector<DeviceContext *> device_contexts;
+  runtime::KernelMapPosition outputs_order;
+  size_t position = 0;
+  std::string name;
+
+  for (const auto &graph_info_to_context : graph_info_to_device_context_) {
+    const auto &graph = runtime::GraphCompiler::GetInstance().Fetch(graph_info_to_context.first);
+    graphs.emplace_back(graph);
+    device_contexts.emplace_back(graph_info_to_context.second);
+    name.append(graph_info_to_context.first);
+
+    const auto &outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+    for (const auto &output : outputs) {
+      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
+      MS_EXCEPTION_IF_NULL(output_with_index.first);
+      outputs_order.emplace(output_with_index, position++);
+    }
+  }
+  std::vector<std::vector<int64_t> *> tensors_mask_list(1, const_cast<std::vector<int64_t> *>(tensors_mask));
+  std::vector<std::vector<TensorPtr> *> input_tensors_list(1,
+                                                           const_cast<std::vector<tensor::TensorPtr> *>(input_tensors));
+
+  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
+                                             std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), outputs_order, name);
+}
+
+VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
+                                  const std::vector<tensor::TensorPtr> *input_tensors) {
+  const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
+  if (graph_iter == actor_to_graph_compiler_info_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find the graph compiler info.";
+  }
+  const auto &graph_compiler_info = *(graph_iter->second);
+
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
+  MS_EXCEPTION_IF_NULL(actor_set);
+
+  // Erase value node tensor.
+  std::vector<tensor::TensorPtr> tensors_without_value_node;
+  if (input_tensors->size() != tensors_mask->size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
+                      << tensors_mask->size();
+  }
+  for (size_t index = 0; index < tensors_mask->size(); ++index) {
+    if (tensors_mask->at(index) != kValueNodeTensorMask) {
+      tensors_without_value_node.emplace_back(input_tensors->at(index));
+    }
+  }
+
+  mindspore::ScopedLongRunning long_running;
+  runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, {tensors_without_value_node});
+  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, runtime::GraphExecutionStrategy::kStep, input_tensors)) {
+    MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
+  }
+
+  // Fetch outputs.
+  MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
+  auto &output_tensors = actor_set->output_actor_->outputs();
+  VectorRef outputs;
+  (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs.elements_),
+                       [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+  return outputs;
 }
 }  // namespace compile
 }  // namespace mindspore

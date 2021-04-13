@@ -38,6 +38,12 @@
 #endif
 
 namespace mindspore {
+namespace runtime {
+class GraphCompiler;
+}  // namespace runtime
+}  // namespace mindspore
+
+namespace mindspore {
 using GraphId = uint32_t;
 using GraphInfo = std::string;
 namespace session {
@@ -161,6 +167,11 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                             const std::shared_ptr<KernelGraph> &backend_graph);
   std::string AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
                                       const AnfNodePtr &partial_node);
+  void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
+                         std::map<AnfNodePtr, size_t> *parameter_index);
+  void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
+                               VectorRef *outputs,
+                               std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
 
  protected:
   friend class Executor;
@@ -170,6 +181,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   friend class RunGraphTask;
   friend class RunOpTask;
   friend class RunOpsInGraphTask;
+  friend class mindspore::runtime::GraphCompiler;
   virtual bool IsSupportSummary() { return true; }
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,

@@ -38,8 +38,9 @@ static thread_local bool cur_thread_device_inited{false};
 
 bool GPUDeviceContext::Initialize() {
   if (initialized_ == true) {
-    CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SetDevice(UintToInt(device_context_key_.device_id_)),
-                             "Failed to set device id");
+    if (!BindDeviceToCurrentThread()) {
+      return false;
+    }
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
   }
@@ -209,9 +210,6 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
-
-  // Hide NopOp from execution order.
-  opt::HideNopNode(graph.get());
 }
 
 void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
