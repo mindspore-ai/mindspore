@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/lite_kernel_util.h"
 
 namespace mindspore {
 class UtilsTest : public mindspore::CommonTest {
