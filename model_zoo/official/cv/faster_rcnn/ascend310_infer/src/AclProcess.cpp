@@ -23,7 +23,7 @@
  * @attention context is passed in as a parameter after being created in ResourceManager::InitResource
  */
 AclProcess::AclProcess(int deviceId, const std::string &om_path, uint32_t width, uint32_t height)
-    : deviceId_(deviceId), stream_(nullptr), modelProcess_(nullptr), dvppCommon_(nullptr), keepRatio_(false) {
+    : deviceId_(deviceId), stream_(nullptr), modelProcess_(nullptr), dvppCommon_(nullptr), keepRatio_(true) {
     modelInfo_.modelPath = om_path;
     modelInfo_.modelWidth = width;
     modelInfo_.modelHeight = height;
@@ -284,29 +284,22 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
         heightScale = static_cast<float>(resizeOutData->height) / inputImg->height;
     }
 
-    aclFloat16 inputWidth = aclFloatToFloat16(static_cast<float>(inputImg->width));
-    aclFloat16 inputHeight = aclFloatToFloat16(static_cast<float>(inputImg->height));
-    aclFloat16 resizeWidthRatioFp16 = aclFloatToFloat16(widthScale);
-    aclFloat16 resizeHeightRatioFp16 = aclFloatToFloat16(heightScale);
-
-    aclFloat16 *im_info = reinterpret_cast<aclFloat16 *>(malloc(sizeof(aclFloat16) * 4));
-    im_info[0] = inputHeight;
-    im_info[1] = inputWidth;
-    im_info[2] = resizeHeightRatioFp16;
-    im_info[3] = resizeWidthRatioFp16;
+    float im_info[4];
+    im_info[0] = static_cast<float>(inputImg->height);
+    im_info[1] = static_cast<float>(inputImg->width);
+    im_info[2] = heightScale;
+    im_info[3] = widthScale;
     void *imInfo_dst = nullptr;
-    int ret = aclrtMalloc(&imInfo_dst, 8, ACL_MEM_MALLOC_NORMAL_ONLY);
+    int ret = aclrtMalloc(&imInfo_dst, 16, ACL_MEM_MALLOC_NORMAL_ONLY);
     if (ret != ACL_ERROR_NONE) {
         std::cout << "aclrtMalloc failed, ret = " << ret << std::endl;
         aclrtFree(imInfo_dst);
-        free(im_info);
         return ret;
     }
-    ret = aclrtMemcpy(reinterpret_cast<uint8_t *>(imInfo_dst), 8, im_info, 8, ACL_MEMCPY_HOST_TO_DEVICE);
+    ret = aclrtMemcpy(reinterpret_cast<uint8_t *>(imInfo_dst), 16, im_info, 16, ACL_MEMCPY_HOST_TO_DEVICE);
     if (ret != ACL_ERROR_NONE) {
         std::cout << "aclrtMemcpy failed, ret = " << ret << std::endl;
         aclrtFree(imInfo_dst);
-        free(im_info);
         return ret;
     }
 
@@ -320,7 +313,6 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
     ret = modelProcess_->ModelInference(inputBuffers, inputSizes, outputBuffers_, outputSizes_, costTime_map);
     if (ret != OK) {
         aclrtFree(imInfo_dst);
-        free(im_info);
         std::cout << "Failed to execute the classification model, ret = " << ret << "." << std::endl;
         return ret;
     }
@@ -330,7 +322,6 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
         std::cout << "aclrtFree image info failed" << std::endl;
         return ret;
     }
-    free(im_info);
     RELEASE_DVPP_DATA(resizeOutData->data);
     return OK;
 }
