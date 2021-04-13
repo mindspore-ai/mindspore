@@ -102,7 +102,9 @@ void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::share
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
-  auto ret = memcpy_s(res.get(), size, data, size);
+  size_t dest_size = size;
+  size_t src_size = size;
+  auto ret = memcpy_s(res.get(), dest_size, data, src_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }

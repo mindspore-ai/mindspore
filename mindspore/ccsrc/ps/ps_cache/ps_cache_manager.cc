@@ -931,7 +931,8 @@ bool PsCacheManager::HashSwapDeviceIn(const int *swap_in_ids, const int *swap_in
   return true;
 }
 
-bool PsCacheManager::UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *swap_out_ids, size_t key) {
+bool PsCacheManager::UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *const swap_out_ids,
+                                          size_t key) {
   MS_ERROR_IF_NULL(embedding_device_cache_);
   MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
   MS_ERROR_IF_NULL(swap_out_ids);

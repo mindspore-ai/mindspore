@@ -92,7 +92,7 @@ class Worker {
   void AddKeyByHashMod(const Key &key);
   void InitPSOptimId(const size_t param_key);
   void InitPSOptimInputShapes(const size_t key);
-  void InitPSParamData(const std::vector<size_t> &keys, void *origin_addr, size_t size);
+  void InitPSParamData(const std::vector<size_t> &keys, void *const origin_addr, size_t size);
   bool IsReadyForPush(const Key &key);
   bool IsReadyForPull(const Key &key);
   void PrepareSparseGradient(const size_t begin, const size_t end, const std::unordered_set<int> &distinct_ids,
@@ -105,8 +105,8 @@ class Worker {
                 int command = 0, int64_t priority = 0);
   void PushSparseData(const std::vector<Key> &keys, const std::vector<float> &vals, const std::vector<int> &lens,
                       size_t grad_index, size_t indice_index, size_t first_dim_size, size_t outer_dim_size);
-  void PullData(const std::vector<Key> &keys, std::vector<float> *vals, std::vector<int> *lens = nullptr, int cmd = 0,
-                int64_t priority = 0);
+  void PullData(const std::vector<Key> &keys, std::vector<float> *const vals, std::vector<int> *lens = nullptr,
+                int cmd = 0, int64_t priority = 0);
 
   void LookupIdPartitioner(const EmbeddingTableLookup &send, PartitionEmbeddingMessages *partition,
                            const std::map<int64_t, int64_t> &attrs);

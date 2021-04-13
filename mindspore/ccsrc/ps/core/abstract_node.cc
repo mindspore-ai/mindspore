@@ -526,7 +526,9 @@ void AbstractNode::ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const 
   auto it = receive_messages_.find(request_id);
   VectorPtr received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
   if (size > 0) {
-    auto ret = memcpy_s(received_data.get()->data(), size, data, size);
+    size_t dest_size = size;
+    size_t src_size = size;
+    auto ret = memcpy_s(received_data.get()->data(), dest_size, data, src_size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
     }
@@ -586,7 +588,9 @@ void AbstractNode::RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const P
   // If they are equal, then call the callback function
   uint64_t rank_request_id = NextActualRankRequestId(rank_id);
   std::shared_ptr<std::vector<unsigned char>> received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
-  int ret = memcpy_s(received_data->data(), size, data, size);
+  size_t dest_size = size;
+  size_t src_size = size;
+  int ret = memcpy_s(received_data->data(), dest_size, data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }

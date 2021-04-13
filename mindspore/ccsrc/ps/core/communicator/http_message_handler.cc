@@ -237,7 +237,9 @@ void HttpMessageHandler::RespError(int nCode, const std::string &message) {
 
 void HttpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
   MS_EXCEPTION_IF_NULL(buffer);
-  int ret = memcpy_s(body_->data() + offset_, num, buffer, num);
+  size_t dest_size = num;
+  size_t src_size = num;
+  int ret = memcpy_s(body_->data() + offset_, dest_size, buffer, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
