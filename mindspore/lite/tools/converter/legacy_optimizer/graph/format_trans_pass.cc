@@ -45,32 +45,32 @@ STATUS FormatTransPass::Run(schema::MetaGraphT *graph) {
   return RET_OK;
 }
 
-STATUS FormatTransPass::GetInsertFormatTrans(const schema::CNodeT &node, FormatTransNodeType *beforeNodeType,
-                                             FormatTransNodeType *afterNodeType) {
+STATUS FormatTransPass::GetInsertFormatTrans(const schema::CNodeT &node, FormatTransNodeType *before_node_type,
+                                             FormatTransNodeType *after_node_type) {
   if (fmk_type_ == converter::FmkType_TFLITE) {  // inference by nhwc
     if (!IsContain(GetNchwOpList(), GetCNodeTType(node))) {
       return RET_NO_CHANGE;
     }
-    *beforeNodeType = kNHWC2NCHW;
-    *afterNodeType = kNCHW2NHWC;
+    *before_node_type = kNHWC2NCHW;
+    *after_node_type = kNCHW2NHWC;
     return RET_OK;
   } else if (fmk_type_ == converter::FmkType_CAFFE || fmk_type_ == converter::FmkType_MS ||
              fmk_type_ == converter::FmkType_ONNX) {
     if (!IsContain(GetNhwcOpList(), GetCNodeTType(node))) {
       return RET_NO_CHANGE;
     }
-    *beforeNodeType = kNCHW2NHWC;
-    *afterNodeType = kNHWC2NCHW;
+    *before_node_type = kNCHW2NHWC;
+    *after_node_type = kNHWC2NCHW;
     return RET_OK;
   } else if (fmk_type_ == converter::FmkType_TF) {
     if (IsContain(GetNhwcOpList(), GetCNodeTType(node)) && GetFormat(node) == schema::Format_NCHW) {
-      *beforeNodeType = kNCHW2NHWC;
-      *afterNodeType = kNHWC2NCHW;
+      *before_node_type = kNCHW2NHWC;
+      *after_node_type = kNHWC2NCHW;
       return RET_OK;
     }
     if (IsContain(GetNchwOpList(), GetCNodeTType(node))) {
-      *beforeNodeType = kNHWC2NCHW;
-      *afterNodeType = kNCHW2NHWC;
+      *before_node_type = kNHWC2NCHW;
+      *after_node_type = kNCHW2NHWC;
       return RET_OK;
     }
     return RET_NO_CHANGE;
@@ -96,36 +96,34 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
       return RET_OK;
     }
   }
-  auto graphInputIdxes = graph->inputIndex;
-  for (size_t i = 0; i < graphInputIdxes.size(); i++) {
+  auto graph_input_idxes = graph->inputIndex;
+  for (size_t i = 0; i < graph_input_idxes.size(); i++) {
     bool transed = false;
-    auto inputIdx = graphInputIdxes.at(i);
-    MS_ASSERT(inputIdx < subGraph->allTensors.size());
-    auto &tensor = graph->allTensors.at(inputIdx);
+    auto input_idx = graph_input_idxes.at(i);
+    auto &tensor = graph->allTensors.at(input_idx);
     if (tensor->dims.size() != kNCHWDimNumber) {
       continue;
     }
 
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-      for (size_t inputIndexIdx = 0; inputIndexIdx < (*iter)->inputIndex.size(); inputIndexIdx++) {
-        if ((*iter)->inputIndex.at(inputIndexIdx) == inputIdx) {
+      for (size_t input_index_idx = 0; input_index_idx < (*iter)->inputIndex.size(); input_index_idx++) {
+        if ((*iter)->inputIndex.at(input_index_idx) == input_idx) {
           STATUS status = RET_OK;
-          iter = InsertFormatTransNode(graph, iter, kBefore, inputIndexIdx, kNHWC2NCHW, &status);
+          iter = InsertFormatTransNode(graph, iter, kBefore, input_index_idx, kNHWC2NCHW, &status);
           if (status != RET_OK) {
             MS_LOG(ERROR) << "InsertNhwc2NchwNode before " << (*iter)->name << " failed";
             return status;
           }
           // set first tensor format to nhwc
-          auto &transNode = *(iter - 1);
-          MS_ASSERT(transNode != nullptr);
-          MS_ASSERT(transNode->inputIndex.size() == 1);
-          MS_ASSERT(subGraph->allTensors.size() > transNode->inputIndex.front());
-          auto &graphInTensor = graph->allTensors.at(transNode->inputIndex.front());
-          graphInTensor->format = schema::Format::Format_NHWC;
+          auto &trans_node = *(iter - 1);
+          MS_ASSERT(trans_node != nullptr);
+          MS_ASSERT(trans_node->inputIndex.size() == 1);
+          auto &graph_in_tensor = graph->allTensors.at(trans_node->inputIndex.front());
+          graph_in_tensor->format = schema::Format::Format_NHWC;
           // assume parser not reformat shape
-          auto oldDims = graphInTensor->dims;
+          auto old_dims = graph_in_tensor->dims;
           if (!transed) {
-            graphInTensor->dims = {oldDims[NCHW_N], oldDims[NCHW_H], oldDims[NCHW_W], oldDims[NCHW_C]};
+            graph_in_tensor->dims = {old_dims[NCHW_N], old_dims[NCHW_H], old_dims[NCHW_W], old_dims[NCHW_C]};
             transed = true;
           }
         }
@@ -143,10 +141,10 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   // insert before and after the op cal by nchw/nc4hw4
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-    FormatTransNodeType beforeNodeType = kNCHW2NHWC;
-    FormatTransNodeType afterNodeType = kNHWC2NCHW;
+    FormatTransNodeType before_node_type = kNCHW2NHWC;
+    FormatTransNodeType after_node_type = kNHWC2NCHW;
     STATUS status = RET_OK;
-    status = GetInsertFormatTrans(**iter, &beforeNodeType, &afterNodeType);
+    status = GetInsertFormatTrans(**iter, &before_node_type, &after_node_type);
     if (status == RET_NO_CHANGE) {
       continue;
     }
@@ -170,17 +168,17 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
     if (node->primitive->value.type == schema::PrimitiveType_DepthToSpace) {
       reinterpret_cast<schema::DepthToSpaceT *>(attr)->format = schema::Format_NHWC;
     }
-    auto specInsertIndexes = GetExtNhwcIndexes();
-    auto opType = GetCNodeTType(**iter);
-    if (specInsertIndexes.find(opType) != specInsertIndexes.end()) {
-      for (auto insert_index : specInsertIndexes[opType]) {
-        iter = InsertFormatTransNode(graph, iter, kBefore, insert_index, beforeNodeType, &status);
+    auto spec_insert_indexes = GetExtNhwcIndexes();
+    auto op_type = GetCNodeTType(**iter);
+    if (spec_insert_indexes.find(op_type) != spec_insert_indexes.end()) {
+      for (auto insert_index : spec_insert_indexes[op_type]) {
+        iter = InsertFormatTransNode(graph, iter, kBefore, insert_index, before_node_type, &status);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
           return RET_ERROR;
         }
       }
-    } else if (IsContain(GetNhwcAllInputOpList(), opType)) {
+    } else if (IsContain(GetNhwcAllInputOpList(), op_type)) {
       auto input_size = node->inputIndex.size();
       if (GetCNodeTType(**iter) == schema::PrimitiveType_ResizeGrad) {
         if ((**iter).primitive->value.AsResizeGrad()->method == schema::ResizeMethod_NEAREST) {
@@ -188,16 +186,16 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
         }
       }
       for (size_t i = 0; i < input_size; i++) {
-        iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
+        iter = InsertFormatTransNode(graph, iter, kBefore, i, before_node_type, &status);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
           return RET_ERROR;
         }
       }
     } else {
-      iter = InsertFormatTransNode(graph, iter, kBefore, 0, beforeNodeType, &status);
+      iter = InsertFormatTransNode(graph, iter, kBefore, 0, before_node_type, &status);
     }
-    iter = InsertFormatTransNode(graph, iter, kAfter, 0, afterNodeType, &status);
+    iter = InsertFormatTransNode(graph, iter, kAfter, 0, after_node_type, &status);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";
       return RET_ERROR;
@@ -206,29 +204,29 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
   return RET_OK;
 }
 
-NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place,
-                                                size_t inoutIdx, FormatTransNodeType nodeType, STATUS *errorCode) {
-  MS_ASSERT((*existNodeIter) != nullptr);
+NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter exist_node_iter, InsertPlace place,
+                                                size_t inout_idx, FormatTransNodeType node_type, STATUS *error_code) {
+  MS_ASSERT((*exist_node_iter) != nullptr);
   MS_ASSERT(graph != nullptr);
-  auto existNodeName = (*existNodeIter)->name;
-  std::string tileName;
+  auto exist_node_name = (*exist_node_iter)->name;
+  std::string tile_name;
   if (place == kBefore) {
-    tileName = existNodeName + "_pre";
+    tile_name = exist_node_name + "_pre";
   } else {
-    tileName = existNodeName + "_post";
+    tile_name = exist_node_name + "_post";
   }
-  auto transNode = std::make_unique<schema::CNodeT>();
-  transNode->primitive = std::make_unique<schema::PrimitiveT>();
-  transNode->primitive->value.type = schema::PrimitiveType_Transpose;
+  auto trans_node = std::make_unique<schema::CNodeT>();
+  trans_node->primitive = std::make_unique<schema::PrimitiveT>();
+  trans_node->primitive->value.type = schema::PrimitiveType_Transpose;
   auto perm_tensor = std::make_unique<schema::TensorT>();
   perm_tensor->dataType = kNumberTypeInt32;
   perm_tensor->dims = {4};
   std::vector<int> perm;
-  if (nodeType == kNCHW2NHWC) {
-    transNode->name = "nchw2nhwc_" + tileName + std::to_string(id_++);
+  if (node_type == kNCHW2NHWC) {
+    trans_node->name = "nchw2nhwc_" + tile_name + std::to_string(id_++);
     perm = {0, 2, 3, 1};
   } else {
-    transNode->name = "nhwc2nchw_" + tileName + std::to_string(id_++);
+    trans_node->name = "nhwc2nchw_" + tile_name + std::to_string(id_++);
     perm = {0, 3, 1, 2};
   }
   size_t bytes = perm.size() * sizeof(int);
@@ -236,27 +234,27 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
   if (memcpy_s(perm_tensor->data.data(), bytes, perm.data(), bytes) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
   }
-  perm_tensor->name = transNode->name + "_perm";
+  perm_tensor->name = trans_node->name + "_perm";
 
-  OpDefCopyer TransposeOpCopyer = [](CNodeT *inOpDef) -> std::unique_ptr<CNodeT> {
-    auto newOpDef = std::make_unique<schema::CNodeT>();
-    if (newOpDef == nullptr) {
+  OpDefCopyer transpose_op_copyer = [](CNodeT *in_op_def) -> std::unique_ptr<CNodeT> {
+    auto new_op_def = std::make_unique<schema::CNodeT>();
+    if (new_op_def == nullptr) {
       MS_LOG(ERROR) << "new CNodeT failed";
       return nullptr;
     }
-    newOpDef->name = inOpDef->name;
-    newOpDef->quantType = inOpDef->quantType;
-    newOpDef->primitive = std::make_unique<schema::PrimitiveT>();
-    if (newOpDef->primitive == nullptr) {
+    new_op_def->name = in_op_def->name;
+    new_op_def->quantType = in_op_def->quantType;
+    new_op_def->primitive = std::make_unique<schema::PrimitiveT>();
+    if (new_op_def->primitive == nullptr) {
       MS_LOG(ERROR) << "new PrimitiveT failed";
       return nullptr;
     }
-    newOpDef->primitive->value.type = schema::PrimitiveType_Transpose;
-    return newOpDef;
+    new_op_def->primitive->value.type = schema::PrimitiveType_Transpose;
+    return new_op_def;
   };
   int insert_num = 0;
-  auto iter =
-    InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode, &insert_num, TransposeOpCopyer);
+  auto iter = InsertNode(graph, exist_node_iter, place, inout_idx, std::move(trans_node), error_code, &insert_num,
+                         transpose_op_copyer);
   size_t index = graph->allTensors.size();
   graph->allTensors.push_back(std::move(perm_tensor));
   for (int i = insert_num; i > 0; --i) {

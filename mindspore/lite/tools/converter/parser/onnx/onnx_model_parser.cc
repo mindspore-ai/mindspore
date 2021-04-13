@@ -47,7 +47,7 @@ static const std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
 
 FuncGraphPtr OnnxModelParser::Parse(const std::string &model_file, const std::string &weight_file,
                                     const QuantType &quant_type) {
-  NoSupportOp::GetInstance()->SetFmkType("ONNX");
+  NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   anf_root_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
   if (RET_OK != status) {
@@ -195,7 +195,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
   for (const auto &onnx_node : onnx_graph.node()) {
     auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser(onnx_node.op_type());
     if (node_parser == nullptr) {
-      NoSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
+      NotSupportOp::GetInstance()->InsertOp(onnx_node.op_type());
       status = status == RET_OK ? RET_NOT_FIND_OP : status;
       MS_LOG(ERROR) << "not support onnx data type " << onnx_node.op_type();
     }

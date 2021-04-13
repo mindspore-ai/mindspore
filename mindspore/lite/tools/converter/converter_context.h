@@ -28,67 +28,67 @@ namespace mindspore {
 namespace lite {
 class ReturnCode {
  public:
-  ~ReturnCode() = default;
+  virtual ~ReturnCode() = default;
   static ReturnCode *GetSingleReturnCode() {
-    static ReturnCode returnCode;
-    return &returnCode;
+    static ReturnCode return_code;
+    return &return_code;
   }
   void UpdateReturnCode(STATUS status) {
-    if (statusCode == RET_OK) {
-      statusCode = status;
+    if (status_code_ == RET_OK) {
+      status_code_ = status;
     }
   }
-  STATUS GetReturnCode() const { return statusCode; }
+  STATUS status_code() const { return status_code_; }
 
  private:
-  ReturnCode() { statusCode = RET_OK; }
-  int statusCode;
+  ReturnCode() = default;
+  int status_code_ = RET_OK;
 };
 
-class NoSupportOp {
+class NotSupportOp {
  public:
-  ~NoSupportOp() = default;
-  static NoSupportOp *GetInstance() {
-    static NoSupportOp noSupportOp;
-    return &noSupportOp;
+  virtual ~NotSupportOp() = default;
+  static NotSupportOp *GetInstance() {
+    static NotSupportOp not_support_op;
+    return &not_support_op;
   }
-  void SetFmkType(const std::string &fmk_type) { fmkType = fmk_type; }
-  void InsertOp(const std::string &op_name) { noSupportOps.insert(op_name); }
+  void set_fmk_type(const std::string &fmk_type) { fmk_type_ = fmk_type; }
+  void InsertOp(const std::string &op_name) { not_support_ops_.insert(op_name); }
   void PrintOps() const {
-    if (!noSupportOps.empty()) {
+    if (!not_support_ops_.empty()) {
       MS_LOG(ERROR) << "===========================================";
       MS_LOG(ERROR) << "UNSUPPORTED OP LIST:";
-      for (auto &op_name : noSupportOps) {
-        MS_LOG(ERROR) << "FMKTYPE: " << fmkType << ", OP TYPE: " << op_name;
+      for (auto &op_name : not_support_ops_) {
+        MS_LOG(ERROR) << "FMKTYPE: " << fmk_type_ << ", OP TYPE: " << op_name;
       }
       MS_LOG(ERROR) << "===========================================";
     }
   }
 
  private:
-  NoSupportOp() { noSupportOps.clear(); }
-  std::set<std::string> noSupportOps;
-  std::string fmkType;
+  NotSupportOp() = default;
+  std::set<std::string> not_support_ops_;
+  std::string fmk_type_;
 };
 
 class TensorDataType {
  public:
   ~TensorDataType() = default;
   static TensorDataType *GetInstance() {
-    static TensorDataType tensorDataType;
-    return &tensorDataType;
+    static TensorDataType tensor_data_type;
+    return &tensor_data_type;
   }
-  void UpdateTensorType(int32_t index, int32_t type) { tensorDataTypeMap[index] = type; }
+  void UpdateTensorType(int32_t index, int32_t type) { tensor_data_type_map_[index] = type; }
   int32_t GetTensorType(int32_t index) const {
-    if (tensorDataTypeMap.find(index) == tensorDataTypeMap.end()) {
+    if (tensor_data_type_map_.find(index) == tensor_data_type_map_.end()) {
       return TypeId::kTypeUnknown;
     }
-    return tensorDataTypeMap.at(index);
+    return tensor_data_type_map_.at(index);
   }
 
  private:
   TensorDataType() {}
-  std::map<int32_t, int32_t> tensorDataTypeMap;
+  std::map<int32_t, int32_t> tensor_data_type_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

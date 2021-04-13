@@ -41,10 +41,10 @@ class GraphPass : public Pass<schema::MetaGraphT> {
 };
 
 struct GraphNode {
-  GraphNode(schema::MetaGraphT *subGraph, schema::CNodeT *opDefT) : subGraph(subGraph), opDef(opDefT) {}
+  GraphNode(schema::MetaGraphT *subGraph, schema::CNodeT *opDefT) : sub_graph_(subGraph), op_def_(opDefT) {}
   ~GraphNode() = default;
-  schema::MetaGraphT *subGraph = nullptr;
-  schema::CNodeT *opDef = nullptr;
+  schema::MetaGraphT *sub_graph_ = nullptr;
+  schema::CNodeT *op_def_ = nullptr;
 };
 
 class NodePass : public Pass<GraphNode> {
@@ -72,8 +72,8 @@ class Optimizer {
   STATUS Run(schema::MetaGraphT *graphDefT);
 
  private:
-  std::vector<GraphPass *> graphPasses;
-  std::vector<NodePass *> nodePasses;
+  std::vector<GraphPass *> graph_passes_;
+  std::vector<NodePass *> node_passes_;
 };
 }  // namespace lite
 }  // namespace mindspore

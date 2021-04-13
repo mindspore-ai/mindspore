@@ -30,15 +30,15 @@ enum DTypeTransNodeType { kInt8ToFP32, kFP32ToInt8, kUInt8ToInt8, kInt8ToUInt8 }
 
 class DTypeTransPass : public GraphPass {
  public:
-  DTypeTransPass() : id(0) {}
+  DTypeTransPass() : id_(0) {}
 
   ~DTypeTransPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
-  void SetInputDataDType(TypeId dataType);
+  void set_input_data_dtype(TypeId data_type);
 
-  void SetOutputDataDType(TypeId dataType);
+  void set_output_data_dtype(TypeId dataType);
 
  private:
   STATUS DoModelInputDTypeTrans(schema::MetaGraphT *graph);
@@ -51,13 +51,14 @@ class DTypeTransPass : public GraphPass {
 
   STATUS InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraphT *graph, NodeIter *iter);
 
-  NodeIter InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
-                                int32_t inputDataType, int32_t outputDataType, STATUS *errorCode);
+  NodeIter InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIter exist_node_iter, InsertPlace place,
+                                size_t inout_idx, int32_t input_data_type, int32_t output_data_type,
+                                STATUS *error_code);
 
  private:
-  size_t id;
-  TypeId inputDataDType = TypeId::kNumberTypeFloat;
-  TypeId outputDataDType = TypeId::kNumberTypeFloat;
+  size_t id_;
+  TypeId input_data_dtype = TypeId::kNumberTypeFloat;
+  TypeId output_data_dtype = TypeId::kNumberTypeFloat;
 
   OpDefCopyer castOpCopyer = [](schema::CNodeT *inCNode) -> std::unique_ptr<schema::CNodeT> {
     std::unique_ptr<schema::CNodeT> newCNode(new (std::nothrow) schema::CNodeT);

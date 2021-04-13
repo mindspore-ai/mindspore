@@ -65,25 +65,20 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string fmkIn;
   FmkType fmk;
   std::string weightFile;
-  std::string inputArrays;
-  std::string outputArrays;
-  std::string inputShapes;
-  // used for quantization
-  std::string quantTypeIn;
-  QuantType quantType;
-  std::string inferenceTypeIn;
-  std::string inputDataTypeIn;
-  std::string outputDataTypeIn;
-  // used for parse aware trainning
   TypeId inputDataType;
   TypeId outputDataType;
+  // used for quantization
+  std::string quantTypeStr;
+  QuantType quantType;
+  std::string inputDataTypeStr;
+  std::string outputDataTypeStr;
   // used for post-trainning-weight
-  std::string quantWeightSizeIn;
+  std::string quantWeightSizeStr;
   int quantWeightSize;
   std::string bitNumIn;
   int bitNum;
   std::string configFile;
-  std::string quantWeightChannelIn;
+  std::string quantWeightChannelStr;
   int quantWeightChannel;
   std::string trainModelIn;
   bool trainModel = false;
