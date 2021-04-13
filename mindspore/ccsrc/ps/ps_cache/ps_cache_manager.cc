@@ -1074,8 +1074,8 @@ void PsCacheManager::DumpHashTables(bool dump_device_tables) const {
                  << ", device cache address:" << reinterpret_cast<void *>(item.second.device_address.addr)
                  << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
     if (dump_device_tables) {
-      float *output = new float[item.second.device_address.size / 4];
-      embedding_device_cache_->cache_->CopyDeviceMemToHost(output, item.second.device_address.addr,
+      std::unique_ptr<float[]> output = std::make_unique<float[]>(item.second.device_address.size / 4);
+      embedding_device_cache_->cache_->CopyDeviceMemToHost(output.get(), item.second.device_address.addr,
                                                            item.second.device_address.size);
       embedding_device_cache_->cache_->SynchronizeStream();
       for (size_t i = 0; i < cache_vocab_size; i++) {
@@ -1085,7 +1085,6 @@ void PsCacheManager::DumpHashTables(bool dump_device_tables) const {
         std::cout << std::endl;
       }
       std::cout << std::endl;
-      delete[] output;
     }
   }
 }

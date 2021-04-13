@@ -1052,8 +1052,9 @@ DeviceAddressPtr KernelRuntime::AssignSingleOpLaunchMemory(size_t size, const st
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *first_cache_input_index,
-                                             size_t *first_cache_size) {
+void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph,
+                                             AnfNodePtr *const first_cache_input_index,
+                                             size_t *const first_cache_size) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &kernel : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);

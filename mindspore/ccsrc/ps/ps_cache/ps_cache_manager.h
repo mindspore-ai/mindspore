@@ -54,7 +54,8 @@ struct HashTableInfo {
 };
 
 struct EmbeddingDeviceCache {
-  EmbeddingDeviceCache(size_t batch_elements, size_t cache_vocab_size) {
+  EmbeddingDeviceCache(size_t batch_elements, size_t cache_vocab_size)
+      : hash_swap_index_addr_(nullptr), hash_swap_value_addr_(nullptr) {
     device_to_host_index = std::make_unique<int[]>(batch_elements);
     device_to_host_ids = std::make_unique<int[]>(batch_elements);
     host_to_device_index = std::make_unique<int[]>(batch_elements);

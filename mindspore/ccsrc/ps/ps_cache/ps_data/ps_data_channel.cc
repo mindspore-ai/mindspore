@@ -42,10 +42,10 @@ void PsDataChannel::TryWakeChannel(bool force_wake) {
   current_graph_step_++;
 }
 
-void PsDataChannel::set_data(void *data, const size_t data_size) {
+void PsDataChannel::set_data(const void *data, const size_t data_size) {
   MS_EXCEPTION_IF_NULL(data);
   TryLockChannel();
-  data_ = data;
+  data_ = const_cast<void *>(data);
   data_size_ = data_size;
 }
 }  // namespace ps

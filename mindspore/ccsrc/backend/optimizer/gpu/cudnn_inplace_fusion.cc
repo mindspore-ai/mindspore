@@ -105,7 +105,6 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, const FuncG
     auto second_cnode = (*inplace_node)[1].node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(second_cnode);
     auto second_node_input = second_cnode->input(1);
-
     // if two inplace nodes have same input, will be have loop after insert depend
     // so copy a new input for one of inplace node
     if (first_node_input == second_node_input) {
