@@ -18,10 +18,8 @@
 #define MINDSPORE_NNACL_FP16_POOLING_FP16_H_
 
 #include <math.h>
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/pooling_parameter.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

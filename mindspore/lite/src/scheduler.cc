@@ -45,7 +45,7 @@
 #include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
 #include "src/runtime/agent/npu/optimizer/npu_insert_transform_pass.h"
 #endif
-#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
 
@@ -230,7 +230,7 @@ int CopyConstTensor(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origi
   auto origin_data = tensor->data_c();
   MS_ASSERT(origin_data != nullptr);
   if (tensor->data_type() == kNumberTypeFloat32 && dst_data_type == kNumberTypeFloat16) {
-#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     auto restore_tensor = Tensor::CopyTensor(*tensor, false);
     restore_tensor->set_data(origin_data);
     restore_tensor->set_own_data(tensor->own_data());

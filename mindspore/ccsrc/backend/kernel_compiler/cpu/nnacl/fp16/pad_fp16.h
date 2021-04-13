@@ -16,9 +16,6 @@
 #ifndef MINDSPORE_NNACL_FP16_PAD_FP16_H_
 #define MINDSPORE_NNACL_FP16_PAD_FP16_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/fp32/pad_fp32.h"
 
 #ifdef __cplusplus

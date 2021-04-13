@@ -19,9 +19,6 @@
 #include "nnacl/op_base.h"
 #include "nnacl/reduce_parameter.h"
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

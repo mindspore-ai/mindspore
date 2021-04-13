@@ -38,13 +38,10 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-
-  const int oc_block = C8NUM;
-  int oc_block_num = UP_DIV(out_channel, C8NUM);
-
+  int oc_block_num = UP_DIV(out_channel, col_tile_);
   // init weight
   // set data
-  auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * oc_block * sizeof(float16_t);
+  auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * col_tile_ * sizeof(float16_t);
   trans_weight_ = reinterpret_cast<float16_t *>(malloc(trans_matrix_data_size));
   if (trans_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc trans_weight_ failed.";
@@ -73,7 +70,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get execute filter failed.";
     return ret;
   }
-  ret = WinogradFilterTransformFp16(execute_weight_, matrix_g, matrix_gt, oc_block);
+  ret = WinogradFilterTransformFp16(execute_weight_, matrix_g, matrix_gt, col_tile_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transform failed.";
     return ret;
@@ -85,12 +82,12 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   }
 
   // init bias
-  bias_data_ = malloc(oc_block_num * oc_block * sizeof(float16_t));
+  bias_data_ = malloc(oc_block_num * col_tile_ * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float16_t));
+  memset(bias_data_, 0, oc_block_num * col_tile_ * sizeof(float16_t));
 
   if (in_tensors_.size() == kInputSize2) {
     if (origin_bias_data_type_ == kNumberTypeFloat16) {
@@ -105,11 +102,9 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
-  const int cal_num = 16;
   int channel_out = conv_param_->output_channel_;
-
   size_t tile_buffer_size =
-    thread_count_ * cal_num * input_unit_ * input_unit_ * conv_param_->input_channel_ * sizeof(float16_t);
+    thread_count_ * row_tile_ * input_unit_ * input_unit_ * conv_param_->input_channel_ * sizeof(float16_t);
   trans_input_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(tile_buffer_size));
   if (trans_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc trans_input_ failed.";
@@ -117,7 +112,7 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   }
 
   gemm_out_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(
-    thread_count_ * cal_num * input_unit_ * input_unit_ * UP_ROUND(channel_out, C8NUM) * sizeof(float16_t)));
+    thread_count_ * row_tile_ * input_unit_ * input_unit_ * UP_ROUND(channel_out, C8NUM) * sizeof(float16_t)));
   if (gemm_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc gemm_out_ failed.";
     return RET_ERROR;
@@ -131,7 +126,7 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   }
 
   col_buffer_ = reinterpret_cast<float16_t *>(
-    ctx_->allocator->Malloc(thread_count_ * cal_num * conv_param_->input_channel_ * sizeof(float16_t)));
+    ctx_->allocator->Malloc(thread_count_ * row_tile_ * conv_param_->input_channel_ * sizeof(float16_t)));
   if (col_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc col_buffer_ failed.";
     return RET_ERROR;
@@ -159,6 +154,12 @@ int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Init() {
+  col_tile_ = C8NUM;
+#ifdef ENABLE_ARM64
+  row_tile_ = C16NUM;
+#else
+  row_tile_ = C12NUM;
+#endif
   kernel_unit_ = conv_param_->kernel_h_;
   input_unit_ = output_unit_ + kernel_unit_ - 1;
   conv_param_->input_unit_ = input_unit_;

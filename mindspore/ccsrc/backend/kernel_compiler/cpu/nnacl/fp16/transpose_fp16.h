@@ -18,10 +18,8 @@
 #define MINDSPORE_NNACL_FP16_TRANSPOSE_FP16_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 #include "nnacl/transpose.h"
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {

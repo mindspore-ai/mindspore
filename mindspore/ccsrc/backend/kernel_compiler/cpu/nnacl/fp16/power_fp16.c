@@ -17,7 +17,7 @@
 #include "nnacl/fp16/power_fp16.h"
 #include "nnacl/errorcode.h"
 
-#if defined(ENABLE_NEON)
+#if defined(ENABLE_ARM64)
 float16x8_t OptimizedPowerSimdFp16(float16x8_t x, const void *exponent) {
   int tmp = (int)(*(float16_t *)exponent);
   int exp = abs(tmp);
@@ -53,23 +53,23 @@ float16_t OptimizedPowerScalarFp16(float16_t x, const void *exponent) {
 void PowerBroadCastFp16(const float16_t *input, const float16_t *exponent, float16_t *output, int len, float scale,
                         float shift) {
   PowerScalarFunFp16 PowerScalarFunFp16_ = NULL;
-#if defined(ENABLE_NEON)
+#if defined(ENABLE_ARM64)
   PowerSimdFunFp16 PowerSimdFunFp16_ = NULL;
 #endif
 
   if (CheckInteger(*exponent)) {
-#if defined(ENABLE_NEON)
+#if defined(ENABLE_ARM64)
     PowerSimdFunFp16_ = OptimizedPowerSimdFp16;
 #endif
     PowerScalarFunFp16_ = OptimizedPowerScalarFp16;
   } else {
-#if defined(ENABLE_NEON)
+#if defined(ENABLE_ARM64)
     PowerSimdFunFp16_ = StdPowerSimdFp16;
 #endif
     PowerScalarFunFp16_ = StdPowerScalarFp16;
   }
   int i = 0;
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
   int len_c8 = UP_ROUND(len, C8NUM);
   float16x8_t scale_8 = vmovq_n_f16(scale);
   float16x8_t shift_8 = vmovq_n_f16(shift);
@@ -87,7 +87,7 @@ void PowerSingleFp16(const float16_t *input, const float16_t *exponent, float16_
                      float shift) {
   int i = 0;
   PowerScalarFunFp16 PowerScalarFunFp16_ = NULL;
-#ifdef ENABLE_NEON
+#ifdef ENABLE_ARM64
   int len_c8 = UP_ROUND(len, C8NUM);
   float16x8_t scale_8 = vmovq_n_f16(scale);
   float16x8_t shift_8 = vmovq_n_f16(shift);

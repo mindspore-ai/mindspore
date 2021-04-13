@@ -19,7 +19,7 @@
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"
 #include "src/ios_reg_kernels.h"
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_FP16) && defined(ENABLE_ARM)
 #if defined(__ANDROID__)
 #include <asm/hwcap.h>
 #endif
@@ -55,6 +55,8 @@ int KernelRegistry::Init() {
   } else {
     MS_LOG(INFO) << "The current device NOT supports Sdot.";
   }
+#endif
+#ifdef ENABLE_FP16
   if (mindspore::lite::IsSupportFloat16()) {
     MS_LOG(INFO) << "The current device supports float16.";
   } else {

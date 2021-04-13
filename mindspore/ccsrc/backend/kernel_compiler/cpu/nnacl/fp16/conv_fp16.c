@@ -31,7 +31,7 @@ void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weigh
 #ifdef __cplusplus
 }
 #endif
-#ifndef ENABLE_NEON
+#ifndef ENABLE_ARM64
 void IndirectGemmFp16_16x8(float16_t *output, float16_t *input, float16_t *weight, float16_t *bias, size_t step,
                            size_t ic4, size_t out_channel, size_t offset, size_t mode, size_t writeC8, size_t relu,
                            size_t relu6) {
@@ -124,7 +124,11 @@ void IndirectGemmFp16_16x8_c8(float16_t *output, float16_t *input, float16_t *we
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
               float16_t *col_major_input, float16_t *output_data, int task_id, ConvParameter *conv_param) {
+#ifdef ENABLE_ARM64
   const int tile_n = 16;
+#else
+  const int tile_n = 12;
+#endif
   int out_channel = conv_param->output_channel_;
   int output_count = conv_param->output_h_ * conv_param->output_w_;
   int output_tile_count = UP_DIV(output_count, tile_n);
@@ -144,7 +148,11 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
       Im2ColPackUnitFp16(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
+#ifdef ENABLE_ARM64
       RowMajor2Col16MajorFp16Opt(gemm_input, col_major_gemm_input, tile_n, deep);
+#else
+      RowMajor2Col12MajorFp16Opt(gemm_input, col_major_gemm_input, tile_n, deep);
+#endif
       MatMulFp16(col_major_gemm_input, packed_weight, output_data + out_offset, bias_data, conv_param->act_type_, deep,
                  real_cal_num, out_channel, out_channel, OutType_Nhwc);
     }
@@ -155,7 +163,11 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
 void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
                       float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
                       InputTransFp16Func in_func, OutputTransFp16Func out_func) {
+#ifdef ENABLE_ARM64
   const int tile_num = 16;
+#else
+  const int tile_num = 12;
+#endif
   int in_channel = conv_param->input_channel_;
   int out_w_block = UP_DIV(conv_param->output_w_, conv_param->output_unit_);
   int out_h_block = UP_DIV(conv_param->output_h_, conv_param->output_unit_);
@@ -194,7 +206,11 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
       float16_t *dst_ptr = gemm_out + task_id * gemm_out_offset;
       float16_t *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
+#ifdef ENABLE_ARM64
         RowMajor2Col16MajorFp16Opt(src_ptr + i * tile_num * in_channel, tmp_col_ptr, cal_num, in_channel);
+#else
+        RowMajor2Col12MajorFp16Opt(src_ptr + i * tile_num * in_channel, tmp_col_ptr, cal_num, in_channel);
+#endif
         MatMulFp16(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
                    cal_num, oc8 * C8NUM, input_unit_square, OutType_TileC8);
       }

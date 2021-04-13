@@ -17,7 +17,7 @@
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
-#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
+#ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
 #include "src/common/version_manager.h"
@@ -283,7 +283,7 @@ int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
 }
 
 int CpuFp16SubGraph::PreProcess() {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_FP16
   if (!mindspore::lite::IsSupportFloat16()) {
     MS_LOG(ERROR) << "Unsupported fp16 in this devices";
     return RET_ERROR;
@@ -347,7 +347,7 @@ int CpuFp16SubGraph::PreProcess() {
 }
 
 int CpuFp16SubGraph::PostProcess() {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_FP16
   if (!mindspore::lite::IsSupportFloat16()) {
     MS_LOG(ERROR) << "Unsupported fp16 in this devices";
     return RET_ERROR;

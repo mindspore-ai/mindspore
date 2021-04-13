@@ -68,7 +68,7 @@ add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
 add_dependencies(nnacl fbs_src)
 add_dependencies(nnacl_mid fbs_src)
 
-########################### arm64 build optimize library ########################
-if(PLATFORM_ARM64)
+########################### arm fp16 build optimize library ########################
+if(ENABLE_FP16)
     add_subdirectory(${NNACL_DIR}/optimize)
 endif()

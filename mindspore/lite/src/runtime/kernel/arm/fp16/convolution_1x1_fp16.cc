@@ -31,8 +31,8 @@ int Convolution1x1FP16CPUKernel::InitMatmulParam() {
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->col_ = conv_param_->output_channel_;
   matmul_param_->deep_ = conv_param_->input_channel_;
-  matmul_param_->row_16_ = UP_ROUND(matmul_param_->row_, C16NUM);
-  matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
+  matmul_param_->row_align_ = UP_ROUND(matmul_param_->row_, row_tile_);
+  matmul_param_->col_align_ = UP_ROUND(matmul_param_->col_, col_tile_);
   matmul_param_->act_type_ = conv_param_->act_type_;
   return RET_OK;
 }
@@ -54,14 +54,14 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
   pre_trans_input_ = (conv_param_->pad_u_ != 0 || conv_param_->pad_l_ != 0 || conv_param_->stride_h_ != 1 ||
                       conv_param_->stride_w_ != 1);
 
-  if ((matmul_param_->row_ > (C16NUM * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
+  if ((matmul_param_->row_ > (row_tile_ * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
     multi_thread_by_hw_ = true;
-    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, C16NUM));
-    thread_stride_ = UP_DIV(UP_DIV(matmul_param_->row_, C16NUM), thread_count_) * C16NUM;
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, row_tile_));
+    thread_stride_ = UP_DIV(UP_DIV(matmul_param_->row_, row_tile_), thread_count_) * row_tile_;
   } else {
     multi_thread_by_hw_ = false;
-    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, C8NUM));
-    thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, C8NUM), thread_count_) * C8NUM;
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, col_tile_));
+    thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, col_tile_), thread_count_) * col_tile_;
   }
 
   if (pre_trans_input_) {
@@ -81,8 +81,8 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   auto output_channel = weight_tensor->Batch();
 
   if (in_tensors_.size() == 3) {
-    size_t size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
-    size_t weight_size = output_channel * sizeof(float16_t);
+    size_t size = UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
+    size_t bias_size = output_channel * sizeof(float16_t);
     bias_data_ = malloc(size);
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
@@ -94,11 +94,11 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       Float32ToFloat16(reinterpret_cast<float *>(origin_bias_), reinterpret_cast<float16_t *>(bias_data_),
                        output_channel);
     }
-    memset(reinterpret_cast<char *>(bias_data_) + weight_size, 0, size - weight_size);
+    memset(reinterpret_cast<char *>(bias_data_) + bias_size, 0, size - bias_size);
   }
 
-  size_t size = input_channel * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
-  size_t down_size = input_channel * DOWN_DIV(output_channel, C8NUM) * C8NUM * sizeof(float16_t);
+  size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
+  size_t down_size = input_channel * DOWN_DIV(output_channel, col_tile_) * col_tile_ * sizeof(float16_t);
   weight_ptr_ = reinterpret_cast<float16_t *>(malloc(size));
   if (weight_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc weight_ptr_ error!";
@@ -111,6 +111,12 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
 }
 
 int Convolution1x1FP16CPUKernel::Init() {
+  col_tile_ = C8NUM;
+#ifdef ENABLE_ARM64
+  row_tile_ = C16NUM;
+#else
+  row_tile_ = C12NUM;
+#endif
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
@@ -177,8 +183,11 @@ int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
 
   float16_t *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
   float16_t *thread_pack_input = pack_input_ + task_id * thread_stride_ * matmul_param_->deep_;
+#ifdef ENABLE_ARM64
   RowMajor2Col16MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
-
+#else
+  RowMajor2Col12MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
+#endif
   float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
   MatMulFp16(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
              matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
@@ -211,7 +220,7 @@ int Convolution1x1FP16CPUKernel::Run() {
   ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   pack_input_ = reinterpret_cast<float16_t *>(
-    ctx_->allocator->Malloc(matmul_param_->row_16_ * matmul_param_->deep_ * sizeof(float16_t)));
+    ctx_->allocator->Malloc(matmul_param_->row_align_ * matmul_param_->deep_ * sizeof(float16_t)));
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
@@ -231,7 +240,11 @@ int Convolution1x1FP16CPUKernel::Run() {
     if (multi_thread_by_hw_) {
       ret = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunHw, this, thread_count_);
     } else {
+#ifdef ENABLE_ARM64
       RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#else
+      RowMajor2Col12MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
+#endif
       ret = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunOc, this, thread_count_);
     }
     if (ret != RET_OK) {

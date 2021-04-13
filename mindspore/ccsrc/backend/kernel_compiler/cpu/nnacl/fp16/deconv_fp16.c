@@ -53,11 +53,7 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
             int dst_index = oh * dst_oh_stride + ow * dst_ow_stride + kh * dst_kh_stride + kw * dst_kw_stride;
             float16_t *tmp_dst = dst_ptr + dst_index;
             const float16_t *tmp_src = src_ptr + src_index;
-#ifdef DEBUG_CODE
-            for (int i = 0; i < C8NUM; i++) {
-              tmp_dst[i] += tmp_src[i];
-            }
-#else
+#ifdef ENABLE_ARM64
             asm volatile(
               "mov x0, %[tmp_src] \n"
               "mov x1, %[tmp_dst] \n"
@@ -72,6 +68,10 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
               :
               : [ tmp_src ] "r"(tmp_src), [ tmp_dst ] "r"(tmp_dst)
               : "x0", "x1", "v0", "v1");
+#else
+            for (int i = 0; i < C8NUM; i++) {
+              tmp_dst[i] += tmp_src[i];
+            }
 #endif
           } /*kw*/
         }   /*kh*/

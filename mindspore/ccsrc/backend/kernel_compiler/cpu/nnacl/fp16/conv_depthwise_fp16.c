@@ -18,6 +18,18 @@
 #include <string.h>
 #include "nnacl/fp16/activation_fp16.h"
 
+#ifdef ENABLE_ARM82_A32
+void ConvDwFp16Row(float16_t *output_ptr, const float16_t *input_ptr, const float16_t *weight_ptr, size_t num_pixels,
+                   size_t output_channel, size_t input_step) {
+  for (int i = 0; i < num_pixels; i++) {
+    for (int c = 0; c < output_channel; c++) {
+      *output_ptr++ += weight_ptr[c] * input_ptr[c];
+    }
+    input_ptr += input_step;
+  }
+}
+#endif
+
 void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                 const float16_t *bias_data, const ConvParameter *conv_param, int task_id) {
   int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
@@ -57,7 +69,6 @@ void ConvDwFp16(float16_t *output_data, const float16_t *input_data, const float
 
           const float16_t *src_kw = src_kh + iw_origin * conv_param->input_channel_;
           int num_pixels = out_w_end - out_w_start;
-
           ConvDwFp16Row(dst_w, src_kw, weight_kh, num_pixels, conv_param->output_channel_, in_sw_step);
           weight_kh += conv_param->output_channel_;
         }

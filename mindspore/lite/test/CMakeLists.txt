@@ -377,8 +377,11 @@ add_dependencies(lite-test fbs_src)
 
 target_link_libraries(lite-test dl mindspore::gtest)
 
-if(PLATFORM_ARM64 AND ENABLE_FP16)
-    target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
+if(PLATFORM_ARM AND ENABLE_FP16)
+    target_link_libraries(lite-test nnacl_fp16_mid)
+    if(PLATFORM_ARM64)
+        target_link_libraries(lite-test nnacl_optimize_mid)
+    endif()
 endif()
 
 if(PLATFORM_ARM)

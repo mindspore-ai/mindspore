@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #define MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #include <math.h>
+
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
+
 #if defined(ENABLE_SSE) || defined(ENABLE_AVX)
 #include <x86intrin.h>
 #endif
@@ -46,7 +48,7 @@
 #ifdef ENABLE_ARM64
 #define MS_DIVQ_F32(src1, src2) vdivq_f32(src1, src2)
 #else
-inline static float32x4_t vrecp(float32x4_t v) {
+static inline float32x4_t vrecp(float32x4_t v) {
   float32x4_t r = vrecpeq_f32(v);
   r = vmulq_f32(vrecpsq_f32(v, r), r);
   r = vmulq_f32(vrecpsq_f32(v, r), r);
@@ -204,26 +206,5 @@ static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
   dst[3] = erff(src[3]);
   return dst;
 }
-
-#ifdef ENABLE_ARM64
-static inline float16x8_t MS_TANHX8_F16(float16x8_t src) {
-  float32x4_t src_low = vcvt_f32_f16(vget_low_f16(src));
-  float32x4_t src_high = vcvt_f32_f16(vget_high_f16(src));
-  return vcombine_f16(vcvt_f16_f32(MS_TANHX4_F32(src_low)), vcvt_f16_f32(MS_TANHX4_F32(src_high)));
-}
-
-static inline float16x8_t MS_ERFX8_F16(float16x8_t src) {
-  float16x8_t dst;
-  dst[0] = erff(src[0]);
-  dst[1] = erff(src[1]);
-  dst[2] = erff(src[2]);
-  dst[3] = erff(src[3]);
-  dst[4] = erff(src[4]);
-  dst[5] = erff(src[5]);
-  dst[6] = erff(src[6]);
-  dst[7] = erff(src[7]);
-  return dst;
-}
-#endif
 
 #endif  // MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

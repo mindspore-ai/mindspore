@@ -80,7 +80,7 @@ int ElementLogicalNotFp16(float16_t *input, float16_t *output, int element_size)
 
 int ElementRoundFp16(float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
-    output[i] = round(input[i]);
+    output[i] = roundf(input[i]);
   }
   return NNACL_OK;
 }
@@ -94,7 +94,7 @@ int ElementFloorFp16(float16_t *input, float16_t *output, int element_size) {
 
 int ElementCeilFp16(float16_t *input, float16_t *output, int number) {
   for (int i = 0; i < number; ++i) {
-    output[i] = ceil(input[i]);
+    output[i] = ceilf(input[i]);
   }
   return NNACL_OK;
 }

@@ -21,6 +21,7 @@
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 void PackLstmWeightFp32ToFp16(float16_t *dst, const float *src, int batch, int deep, int col, int col_align) {
   for (int i = 0; i < batch; i++) {
@@ -121,7 +122,7 @@ int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float1
   for (; index <= element_size - 8; index += 8) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vout = vld1q_f16(output + index);
-    vout = vfmaq_n_f16(vout, vin0, input1);
+    vout = MS_FMAQ_N_F16(vout, vin0, input1);
     vst1q_f16(output + index, vout);
   }
   for (; index < element_size; index++) {

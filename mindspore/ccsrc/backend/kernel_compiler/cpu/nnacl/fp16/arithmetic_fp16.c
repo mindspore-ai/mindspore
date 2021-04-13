@@ -569,7 +569,7 @@ int ElementDivFp16(const float16_t *input0, const float16_t *input1, float16_t *
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vdivq_f16(vin0, vin1);
+    float16x8_t vout = MS_DIVQ_F16(vin0, vin1);
     vst1q_f16(output + index, vout);
   }
 #endif
@@ -591,7 +591,7 @@ int ElementOptDivFp16(const float16_t *input0, const float16_t *input1, float16_
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vdivq_f16(vin0_opt, vin1);
+      float16x8_t vout = MS_DIVQ_F16(vin0_opt, vin1);
       vst1q_f16(output + index, vout);
     }
 #endif
@@ -606,7 +606,7 @@ int ElementOptDivFp16(const float16_t *input0, const float16_t *input1, float16_
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vdivq_f16(vin0, vin1_opt);
+      float16x8_t vout = MS_DIVQ_F16(vin0, vin1_opt);
       vst1q_f16(output + index, vout);
     }
 #endif
@@ -624,7 +624,7 @@ int ElementDivReluFp16(const float16_t *input0, const float16_t *input1, float16
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vdivq_f16(vin0, vin1);
+    float16x8_t vout = MS_DIVQ_F16(vin0, vin1);
     vout = vmaxq_f16(vout, zeros);
     vst1q_f16(output + index, vout);
   }
@@ -652,7 +652,7 @@ int ElementOptDivReluFp16(const float16_t *input0, const float16_t *input1, floa
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vmaxq_f16(vdivq_f16(vin0_opt, vin1), zeros);
+      float16x8_t vout = vmaxq_f16(MS_DIVQ_F16(vin0_opt, vin1), zeros);
       vst1q_f16(output + index, vout);
     }
 #endif
@@ -670,7 +670,7 @@ int ElementOptDivReluFp16(const float16_t *input0, const float16_t *input1, floa
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vmaxq_f16(vdivq_f16(vin0, vin1_opt), zeros);
+      float16x8_t vout = vmaxq_f16(MS_DIVQ_F16(vin0, vin1_opt), zeros);
       vst1q_f16(output + index, vout);
     }
 #endif
@@ -689,7 +689,7 @@ int ElementDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float1
   for (; index <= element_size - 8; index += C8NUM) {
     float16x8_t vin0 = vld1q_f16(input0 + index);
     float16x8_t vin1 = vld1q_f16(input1 + index);
-    float16x8_t vout = vdivq_f16(vin0, vin1);
+    float16x8_t vout = MS_DIVQ_F16(vin0, vin1);
     vout = vminq_f16(vmaxq_f16(vout, zeros), bounds);
     vst1q_f16(output + index, vout);
   }
@@ -716,7 +716,7 @@ int ElementOptDivRelu6Fp16(const float16_t *input0, const float16_t *input1, flo
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1 = vld1q_f16(input1 + index);
-      float16x8_t vout = vminq_f16(vmaxq_f16(vdivq_f16(vin0_opt, vin1), zeros), bounds);
+      float16x8_t vout = vminq_f16(vmaxq_f16(MS_DIVQ_F16(vin0_opt, vin1), zeros), bounds);
       vst1q_f16(output + index, vout);
     }
 #endif
@@ -733,7 +733,7 @@ int ElementOptDivRelu6Fp16(const float16_t *input0, const float16_t *input1, flo
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0 = vld1q_f16(input0 + index);
-      float16x8_t vout = vminq_f16(vmaxq_f16(vdivq_f16(vin0, vin1_opt), zeros), bounds);
+      float16x8_t vout = vminq_f16(vmaxq_f16(MS_DIVQ_F16(vin0, vin1_opt), zeros), bounds);
       vst1q_f16(output + index, vout);
     }
 #endif
