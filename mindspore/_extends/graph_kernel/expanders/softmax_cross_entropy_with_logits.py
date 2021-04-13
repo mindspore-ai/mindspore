@@ -24,8 +24,7 @@ class SoftmaxCrossEntropyWithLogits(Expander):
     def _expand(self, graph_builder):
         logits, label = self.inputs
         # Calculate softmax_cross_entropy_with_logits(logits, label)
-        # formula is :
-        # softmax_cross_entropy_with_logits(logits, label) = -reduce_sum(label * log(softmax(logits)))
+        # formula of softmax_cross_entropy_with_logits is : -reduce_sum(label * log(softmax(logits)))
         axis = (-1,)
         max_x = graph_builder.emit('ReduceMax', [logits], attrs={'reduce_axis': axis, 'keep_dims': True})
         data_sub = graph_builder.emit('Sub', [logits, max_x])

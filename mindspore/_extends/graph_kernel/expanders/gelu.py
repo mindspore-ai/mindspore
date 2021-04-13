@@ -23,7 +23,7 @@ class GeLU(Expander):
 
     def _expand(self, graph_builder):
         # cal formula are:
-        # gelu(x) is 0.5 * x * (1.0 + tanh(y))
+        # gelu of x is 0.5 * x * (1.0 + tanh(y))
         # y is sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)
 
         input_x = self.inputs[0]
