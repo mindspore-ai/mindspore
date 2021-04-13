@@ -34,8 +34,8 @@ void Cast(const S *in, T *out, size_t size) {
 template <typename S, typename T>
 void CastCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  source_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  target_dtype = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+  source_dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
+  target_dtype = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
 }
 
 template <typename S, typename T>
@@ -44,6 +44,7 @@ bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   S *input = reinterpret_cast<S *>(inputs[0]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   MS_LOG(DEBUG) << "Type source: " << typeid(S).name() << "; target: " << typeid(T).name();
+
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
   Cast<S, T>(input, output, lens);
   return true;
