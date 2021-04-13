@@ -80,7 +80,8 @@ def test_net(data_dir,
              cfg=None):
 
     if 'dataset' in cfg and cfg['dataset'] == "Cell_nuclei":
-        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False, split=0.8)
+        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False,
+                                                   eval_resize=cfg["eval_resize"], split=0.8)
     else:
         _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False, do_crop=cfg['crop'],
                                           img_size=cfg['img_size'])
