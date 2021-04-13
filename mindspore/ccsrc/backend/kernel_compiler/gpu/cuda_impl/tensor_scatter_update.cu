@@ -48,12 +48,11 @@ __global__ void TensorScatterUpdateKernel(T *input, S *indices, T *update, T *ou
 
 template <typename T, typename S>
 void TensorScatterUpdate(T *input, S *indices, T *update, T *output, const size_t &block_size, const size_t &input_size,
-               const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1, S *indices_stride,
-               S *work_shape, cudaStream_t stream) {
-  TensorScatterUpdateKernel<<<GET_BLOCKS(output_size), GET_THREADS, 0, stream>>>(input, indices, update, output,
-                                                                                 block_size, input_size, output_size,
-                                                                                 indices_dim_0, indices_dim_1,
-                                                                                 indices_stride, work_shape);
+                         const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+                         S *indices_stride, S *work_shape, cudaStream_t stream) {
+  TensorScatterUpdateKernel<<<GET_BLOCKS(output_size), GET_THREADS, 0, stream>>>(
+    input, indices, update, output, block_size, input_size, output_size, indices_dim_0, indices_dim_1, indices_stride,
+    work_shape);
   return;
 }
 
@@ -77,13 +76,18 @@ template void TensorScatterUpdate<char, int>(char *input, int *indices, char *up
                                              const size_t &output_size, const size_t &indices_dim_0,
                                              const size_t &indices_dim_1, int *indices_stride, int *work_shape,
                                              cudaStream_t stream);
-template void TensorScatterUpdate<int, int>(int *input, int *indices, int *update, int *output,
-                                            const size_t &block_size, const size_t &input_size,
-                                            const size_t &output_size, const size_t &indices_dim_0,
-                                            const size_t &indices_dim_1, int *indices_stride, int *work_shape,
-                                            cudaStream_t stream);
 template void TensorScatterUpdate<unsigned char, int>(unsigned char *input, int *indices, unsigned char *update,
                                                       unsigned char *output, const size_t &block_size,
                                                       const size_t &input_size, const size_t &output_size,
                                                       const size_t &indices_dim_0, const size_t &indices_dim_1,
                                                       int *indices_stride, int *work_shape, cudaStream_t stream);
+template void TensorScatterUpdate<int, int>(int *input, int *indices, int *update, int *output,
+                                            const size_t &block_size, const size_t &input_size,
+                                            const size_t &output_size, const size_t &indices_dim_0,
+                                            const size_t &indices_dim_1, int *indices_stride, int *work_shape,
+                                            cudaStream_t stream);
+template void TensorScatterUpdate<double, int64_t>(double *input, int64_t *indices, double *update, double *output,
+                                                   const size_t &block_size, const size_t &input_size,
+                                                   const size_t &output_size, const size_t &indices_dim_0,
+                                                   const size_t &indices_dim_1, int64_t *indices_stride,
+                                                   int64_t *work_shape, cudaStream_t stream);

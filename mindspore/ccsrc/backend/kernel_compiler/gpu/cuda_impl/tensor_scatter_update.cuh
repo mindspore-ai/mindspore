@@ -21,6 +21,6 @@
 
 template <typename T, typename S>
 void TensorScatterUpdate(T *input, S *indices, T *update, T *output, const size_t &block_size, const size_t &input_size,
-               const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1, S *indices_stride,
-               S *work_shape, cudaStream_t stream);
+                         const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
+                         S *indices_stride, S *work_shape, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_TENSOR_SCATTER_UPDATE_IMPL_CUH
