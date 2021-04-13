@@ -34,9 +34,18 @@
 
 namespace py = pybind11;
 namespace mindspore {
+
+class PrimitivePy;
+using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
+using PrimitivePyWeakPtr = std::weak_ptr<PrimitivePy>;
+
+class PrimitivePyAdapter;
+using PrimitivePyAdapterPtr = std::shared_ptr<PrimitivePyAdapter>;
+
 class PrimitivePy : public Primitive {
  public:
-  PrimitivePy(const py::str &name, const py::object &python_obj);
+  explicit PrimitivePy(const std::string &name);
+  PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter);
   ~PrimitivePy() override;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);
   py::function GetBpropFunction();
@@ -46,10 +55,6 @@ class PrimitivePy : public Primitive {
   const std::vector<Signature> &signatures() const { return signatures_; }
 
   void CopyHookFunction(const PrimitivePtr &primitive) override;
-
-  void AddPyAttr(const py::str &name, const py::object &obj);
-
-  void DelPyAttr(const py::str &name);
 
   py::dict GetAttrDict();
   void set_hook(const py::function &hook) { hook_ = hook; }
@@ -61,13 +66,13 @@ class PrimitivePy : public Primitive {
   bool HasComputeFunction() const;
   const bool parse_info_ = true;
   const py::object &GetPyObj() const { return python_obj_; }
-  void SetPyObj(const py::object &obj);
   py::dict RunInfer(const py::tuple &args);
   void RunCheck(const py::tuple &args);
   py::object RunInferValue(const py::tuple &args);
   bool ObjHasAttr(const char *attr_name) { return py::hasattr(python_obj_, attr_name); }
   bool HasPyObj() { return python_obj_.operator bool(); }
   PrimitivePtr Clone() override;
+  PrimitivePyAdapterPtr adapter() const { return adapter_; }
   bool is_tuple_input_ = false;
 
  private:
@@ -75,11 +80,41 @@ class PrimitivePy : public Primitive {
   void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) const;
   void CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out) const;
   py::object python_obj_;
+  PrimitivePyAdapterPtr adapter_;
   py::function hook_;
   std::vector<Signature> signatures_;
   static std::map<std::string, py::object> hook_grad_;
 };
 
-using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
+class PrimitivePyAdapter {
+ public:
+  explicit PrimitivePyAdapter(const py::str &name);
+  ~PrimitivePyAdapter() = default;
+  void AddPyAttr(const py::str &name, const py::object &obj);
+  void DelPyAttr(const py::str &name);
+  py::dict GetAttrDict();
+  void set_prim_type(const PrimType t);
+  void set_const_prim(bool is_const_prim);
+  void set_const_input_indexes(const std::vector<size_t> &const_input_indexes);
+  void set_signatures(const std::vector<Signature> &signatures);
+  void set_hook(const py::function &hook);
+  void set_instance_name(const std::string &s);
+  void set_attached_primitive(const PrimitivePyPtr &prim);
+  PrimitivePyPtr attached_primitive() { return attached_primitive_.lock(); }
+  void set_name(const std::string &name) { name_ = name; }
+  const bool parse_info_ = true;
+
+ private:
+  friend PrimitivePy;
+  std::string name_;
+  PrimitivePyWeakPtr attached_primitive_;
+  std::unordered_map<std::string, ValuePtr> attrs_;
+  PrimType prim_type_{kPrimTypeBuiltIn};
+  bool is_const_prim_{false};
+  std::vector<size_t> const_input_indexes_;
+  std::vector<Signature> signatures_;
+  py::function hook_;
+  std::string instance_name_;
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_

@@ -56,7 +56,6 @@ struct OpExecInfo {
   AbstractBasePtr abstract;
 
   py::list op_inputs;
-  py::dict op_attrs;
   std::vector<int64_t> inputs_mask;
   bool is_dynamic_shape = false;
   std::string next_op_name = "";

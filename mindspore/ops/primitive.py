@@ -50,7 +50,7 @@ class Primitive(Primitive_):
         self.attrs = {}
         self.init_attrs = {"name": name}
         self._update_parameter = False
-        Primitive_.__init__(self, name, self)
+        Primitive_.__init__(self, name)
         if hasattr(self.__class__, '__mindspore_signature__'):
             out = self._fill_signature(self.__class__.__mindspore_signature__)
             self.set_signatures(out)

@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <map>
+#include <utility>
 #include "ir/signature.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/python_adapter.h"
@@ -57,22 +58,21 @@ void SyncData(const py::object &arg) {
 }  // namespace
 std::map<std::string, py::object> PrimitivePy::hook_grad_;
 
-PrimitivePy::PrimitivePy(const py::str &name, const py::object &python_obj)
-    : Primitive(name, false), python_obj_(python_obj), signatures_() {
-  auto &mem_cleaner = pipeline::Resource::mem_cleaner();
-  mem_cleaner.RecordPrimitivePy(this);
-  MS_LOG(DEBUG) << "New primitive:" << name;
-  if (mem_cleaner.IsInPynativeConstructProcess() && !mem_cleaner.IsInPynativeEndGraphProcess()) {
-    mem_cleaner.RecordPynativeShortLifePrimitivePy(this);
-  }
+PrimitivePy::PrimitivePy(const std::string &name) : Primitive(name, false), python_obj_(py::none()) {}
+
+PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter)
+    : Primitive(adapter->name_, false), python_obj_(python_obj), adapter_(adapter) {
+  MS_LOG(DEBUG) << "New primitive:" << adapter->name_;
+  set_signatures(adapter->signatures_);
+  Primitive::SetAttrs(adapter->attrs_);
+  Primitive::set_prim_type(adapter->prim_type_);
+  Primitive::set_const_prim(adapter->is_const_prim_);
+  Primitive::set_const_input_indexes(adapter->const_input_indexes_);
+  set_hook(adapter->hook_);
+  set_instance_name(adapter->instance_name_);
 }
-PrimitivePy::~PrimitivePy() {
-  // Erase primitive here to set released flag false, to avoid calling released pointer when clear primitives in
-  // resource.
-  pipeline::Resource::mem_cleaner().ReleasePrimitivePyObj(this);
-  MS_LOG(DEBUG) << "Release:" << ToString();
-}
-void PrimitivePy::SetPyObj(const py::object &obj) { python_obj_ = obj; }
+PrimitivePy::~PrimitivePy() { MS_LOG(DEBUG) << "Release:" << ToString(); }
+
 void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   signatures_ = signatures;
   set_has_signature(!signatures.empty());
@@ -272,29 +272,6 @@ py::function PrimitivePy::GetComputeFunction() const {
   return vm_fn;
 }
 
-void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
-  std::string attr_name = name;
-  ValuePtr converted_ret = nullptr;
-  if (py::isinstance<py::module>(obj)) {
-    MS_LOG(EXCEPTION) << "AddPyAttr failed, obj should not be py::module";
-  }
-  bool converted = parse::ConvertData(obj, &converted_ret);
-  if (!converted) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
-  }
-  if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
-    attr_name = kOpAttrNameReplaceMap[attr_name];
-  }
-  const std::string &prim_name = this->name();
-  CheckAndConvertUtils::ConvertAttrValueToInt(prim_name, attr_name, &converted_ret);
-  (void)this->AddAttr(attr_name, converted_ret);
-}
-
-void PrimitivePy::DelPyAttr(const py::str &name) {
-  std::string attr_name = name;
-  (void)this->DelAttr(attr_name);
-}
-
 py::dict PrimitivePy::GetAttrDict() {
   py::dict attr_dict;
   for (auto &attr : attrs_) {
@@ -338,9 +315,11 @@ bool PrimitivePy::HasComputeFunction() const {
 
 PrimitivePtr PrimitivePy::Clone() {
   auto clone_fn = python_obj_.attr("_clone");
-  py::object new_obj = clone_fn();
-  auto cloned_prim = new_obj.cast<PrimitivePyPtr>();
-  return cloned_prim;
+  py::object obj_adapter = clone_fn();
+  auto prim_adapter = obj_adapter.cast<PrimitivePyAdapterPtr>();
+  auto prim = std::make_shared<PrimitivePy>(obj_adapter, prim_adapter);
+  prim_adapter->set_attached_primitive(prim);
+  return prim;
 }
 
 py::dict PrimitivePy::RunInfer(const py::tuple &args) {
@@ -379,6 +358,113 @@ py::object PrimitivePy::RunInferValue(const py::tuple &args) {
   return infer_value(*args);
 }
 
+PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name) {}
+
+void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
+  std::string attr_name = name;
+  ValuePtr converted_ret = nullptr;
+  if (py::isinstance<py::module>(obj)) {
+    MS_LOG(EXCEPTION) << "AddPyAttr failed, obj should not be py::module";
+  }
+  bool converted = parse::ConvertData(obj, &converted_ret);
+  if (!converted) {
+    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
+  }
+  if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
+    attr_name = kOpAttrNameReplaceMap[attr_name];
+  }
+  CheckAndConvertUtils::ConvertAttrValueToInt(name_, name, &converted_ret);
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->AddAttr(attr_name, converted_ret);
+  } else {
+    attrs_[attr_name] = converted_ret;
+  }
+}
+
+void PrimitivePyAdapter::DelPyAttr(const py::str &name) {
+  std::string attr_name = name;
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->DelAttr(attr_name);
+  } else {
+    attrs_.erase(attr_name);
+  }
+}
+
+py::dict PrimitivePyAdapter::GetAttrDict() {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    return prim->GetAttrDict();
+  }
+
+  py::dict attr_dict;
+  for (auto &attr : attrs_) {
+    attr_dict[py::str(attr.first)] = ValuePtrToPyData(attr.second);
+  }
+  return attr_dict;
+}
+
+void PrimitivePyAdapter::set_prim_type(const PrimType t) {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_prim_type(t);
+  } else {
+    prim_type_ = t;
+  }
+}
+void PrimitivePyAdapter::set_const_prim(bool is_const_prim) {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_const_prim(is_const_prim);
+  } else {
+    is_const_prim_ = is_const_prim;
+  }
+}
+void PrimitivePyAdapter::set_const_input_indexes(const std::vector<size_t> &const_input_indexes) {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_const_input_indexes(const_input_indexes);
+  } else {
+    const_input_indexes_ = const_input_indexes;
+  }
+}
+
+void PrimitivePyAdapter::set_signatures(const std::vector<Signature> &signatures) {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_signatures(signatures);
+  } else {
+    signatures_ = signatures;
+  }
+}
+
+void PrimitivePyAdapter::set_hook(const py::function &hook) {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_hook(hook);
+  } else {
+    hook_ = hook;
+  }
+}
+
+void PrimitivePyAdapter::set_instance_name(const std::string &s) {
+  auto prim = attached_primitive_.lock();
+  if (prim != nullptr) {
+    prim->set_instance_name(s);
+  } else {
+    instance_name_ = s;
+  }
+}
+
+void PrimitivePyAdapter::set_attached_primitive(const PrimitivePyPtr &prim) {
+  if (attached_primitive_.lock() != nullptr) {
+    MS_LOG(EXCEPTION) << "PrimitivePyAdapter can't attach to multi Primitive.";
+  }
+  MS_EXCEPTION_IF_NULL(prim);
+  attached_primitive_ = prim;
+}
+
 REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                          (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
                            .value("unknown", PrimType::kPrimTypeUnknown)
@@ -386,18 +472,20 @@ REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                            .value("py_infer_shape", PrimType::kPrimTypePyInferShape)
                            .value("user_custom", PrimType::kPrimTypeUserCustom)
                            .value("py_infer_check", PrimType::kPrimTypePyInferCheck);
-                         (void)py::class_<PrimitivePy, std::shared_ptr<PrimitivePy>>(*m, "Primitive_")
-                           .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePy::parse_info_)
-                           .def(py::init<py::str &, py::object>())
-                           .def("add_attr", &PrimitivePy::AddPyAttr, "add primitive attr")
-                           .def("del_attr", &PrimitivePy::DelPyAttr, "del primitive attr")
-                           .def("get_attr_dict", &PrimitivePy::GetAttrDict, "get primitive attr")
-                           .def("set_prim_type", &PrimitivePy::set_prim_type, "Set primitive type.")
-                           .def("set_const_prim", &PrimitivePy::set_const_prim, "Set primitive is const.")
-                           .def("set_const_input_indexes", &PrimitivePy::set_const_input_indexes,
+                         (void)py::class_<PrimitivePyAdapter, std::shared_ptr<PrimitivePyAdapter>>(*m, "Primitive_")
+                           .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePyAdapter::parse_info_)
+                           .def(py::init<py::str &>())
+                           .def("add_attr", &PrimitivePyAdapter::AddPyAttr, "add primitive attr")
+                           .def("del_attr", &PrimitivePyAdapter::DelPyAttr, "del primitive attr")
+                           .def("get_attr_dict", &PrimitivePyAdapter::GetAttrDict, "get primitive attr")
+                           .def("set_prim_type", &PrimitivePyAdapter::set_prim_type, "Set primitive type.")
+                           .def("set_const_prim", &PrimitivePyAdapter::set_const_prim, "Set primitive is const.")
+                           .def("set_const_input_indexes", &PrimitivePyAdapter::set_const_input_indexes,
                                 "Set primitive const input indexes.")
-                           .def("set_signatures", &PrimitivePy::set_signatures, "Set primitive inputs signature.")
-                           .def("register_hook", &PrimitivePy::set_hook, "Set primitive hook function.")
-                           .def("set_instance_name", &PrimitivePy::set_instance_name, "Set primitive instance name.");
+                           .def("set_signatures", &PrimitivePyAdapter::set_signatures,
+                                "Set primitive inputs signature.")
+                           .def("register_hook", &PrimitivePyAdapter::set_hook, "Set primitive hook function.")
+                           .def("set_instance_name", &PrimitivePyAdapter::set_instance_name,
+                                "Set primitive instance name.");
                        }));
 }  // namespace mindspore

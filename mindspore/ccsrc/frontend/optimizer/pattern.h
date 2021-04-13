@@ -87,16 +87,18 @@ class Prim : public Pattern {
  public:
   Prim() { unique_name_ = std::to_string(g_id_++); }
   ~Prim() = default;
-  Prim(vector<PrimitivePyPtr> prims, string name) : primitives_(prims), name_(name) {
+  Prim(vector<py::object> prim_objs, string name) : name_(name) {
     unique_name_ = std::to_string(g_id_++) + "Prim_" + name;
-    // Default using the first prim to build target
-    matched_prim_ = primitives_[0];
-  }
-  Prim(vector<string> types, string name) : types_(types), name_(name) {
-    unique_name_ = std::to_string(g_id_++) + "Prim_" + name;
-    // Make primitives_
-    for (auto &iter : types) {
-      primitives_.push_back(std::make_shared<PrimitivePy>(iter, py::cast(nullptr)));
+    for (auto &prim_obj : prim_objs) {
+      if (py::isinstance<PrimitivePyAdapter>(prim_obj)) {
+        auto prim_adapter = prim_obj.cast<PrimitivePyAdapterPtr>();
+        primitives_.push_back(std::make_shared<PrimitivePy>(prim_obj, prim_adapter));
+      } else if (py::isinstance<py::str>(prim_obj)) {
+        std::string prim_name = prim_obj.cast<py::str>();
+        primitives_.push_back(std::make_shared<PrimitivePy>(prim_name));
+      } else {
+        MS_LOG(EXCEPTION) << "Parameter of Prim::__init__ must be Primitive_ type or Prim name, please check input.";
+      }
     }
     // Default using the first prim to build target
     matched_prim_ = primitives_[0];
@@ -111,7 +113,6 @@ class Prim : public Pattern {
   }
 
  private:
-  vector<string> types_;
   vector<PrimitivePyPtr> primitives_;
   string name_;
   PrimitivePyPtr matched_prim_{nullptr};
@@ -127,14 +128,17 @@ class Call : public Pattern {
     unique_name_ = std::to_string(g_id_++) + "Call_" + prim_pattern->unique_name();
     inputs_ = inputs;
   }
-  Call(PrimitivePyPtr prim, vector<PatternPtr> inputs) {
-    prim_ = prim;
+  Call(py::object prim_obj, vector<PatternPtr> inputs) {
+    if (py::isinstance<PrimitivePyAdapter>(prim_obj)) {
+      auto prim_adapter = prim_obj.cast<PrimitivePyAdapterPtr>();
+      prim_ = std::make_shared<PrimitivePy>(prim_obj, prim_adapter);
+    } else if (py::isinstance<py::str>(prim_obj)) {
+      std::string prim_name = prim_obj.cast<py::str>();
+      prim_ = std::make_shared<PrimitivePy>(prim_name);
+    } else {
+      MS_LOG(EXCEPTION) << "Parameter of Call::__init__ must be Primitive_ type or Prim name, please check input.";
+    }
     unique_name_ = std::to_string(g_id_++) + "Call_" + prim_->ToString();
-    inputs_ = inputs;
-  }
-  Call(string prim_str, vector<PatternPtr> inputs) {
-    prim_ = std::make_shared<PrimitivePy>(prim_str, py::cast(nullptr));
-    unique_name_ = std::to_string(g_id_++) + "CallStr_" + prim_->ToString();
     inputs_ = inputs;
   }
   MS_DECLARE_PARENT(Call, Pattern);
