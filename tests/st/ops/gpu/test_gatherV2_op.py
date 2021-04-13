@@ -914,16 +914,16 @@ class GatherNet2(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather2():
-    x = Tensor(np.array([[4., 5., 4., 1., 5.,],
-                         [4., 9., 5., 6., 4.,],
-                         [9., 8., 4., 3., 6.,],
-                         [0., 4., 2., 2., 8.,],
-                         [1., 8., 6., 2., 8.,],
-                         [8., 1., 9., 7., 3.,],
-                         [7., 9., 2., 5., 7.,],
-                         [9., 8., 6., 8., 5.,],
-                         [3., 7., 2., 7., 4.,],
-                         [4., 2., 8., 2., 9.,]]
+    x = Tensor(np.array([[4., 5., 4., 1., 5.],
+                         [4., 9., 5., 6., 4.],
+                         [9., 8., 4., 3., 6.],
+                         [0., 4., 2., 2., 8.],
+                         [1., 8., 6., 2., 8.],
+                         [8., 1., 9., 7., 3.],
+                         [7., 9., 2., 5., 7.],
+                         [9., 8., 6., 8., 5.],
+                         [3., 7., 2., 7., 4.],
+                         [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
 
     indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int64))
@@ -949,6 +949,7 @@ class GatherNetDynamic(nn.Cell):
         self.to_dyn_1 = dyn_a
         self.to_dyn_2 = dyn_b
         self.axis = axis
+
     def construct(self, x, indices):
         # testing selective inputs being dynamic
         if self.to_dyn_1:
@@ -967,16 +968,16 @@ def test_gatherV2_dyn_ab():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gather = GatherNetDynamic()
-    x = Tensor(np.array([[4., 5., 4., 1., 5.,],
-                         [4., 9., 5., 6., 4.,],
-                         [9., 8., 4., 3., 6.,],
-                         [0., 4., 2., 2., 8.,],
-                         [1., 8., 6., 2., 8.,],
-                         [8., 1., 9., 7., 3.,],
-                         [7., 9., 2., 5., 7.,],
-                         [9., 8., 6., 8., 5.,],
-                         [3., 7., 2., 7., 4.,],
-                         [4., 2., 8., 2., 9.,]]
+    x = Tensor(np.array([[4., 5., 4., 1., 5.],
+                         [4., 9., 5., 6., 4.],
+                         [9., 8., 4., 3., 6.],
+                         [0., 4., 2., 2., 8.],
+                         [1., 8., 6., 2., 8.],
+                         [8., 1., 9., 7., 3.],
+                         [7., 9., 2., 5., 7.],
+                         [9., 8., 6., 8., 5.],
+                         [3., 7., 2., 7., 4.],
+                         [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
     indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
     expect = np.array([[[0., 0., 0., 0., 0.],
@@ -999,16 +1000,16 @@ def test_gatherV2_dyn_a():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gather = GatherNetDynamic(-1, True, False)
     # test 1
-    x = Tensor(np.array([[4., 5., 4., 1., 5.,],
-                         [4., 9., 5., 6., 4.,],
-                         [9., 8., 4., 3., 6.,],
-                         [0., 4., 2., 2., 8.,],
-                         [1., 8., 6., 2., 8.,],
-                         [8., 1., 9., 7., 3.,],
-                         [7., 9., 2., 5., 7.,],
-                         [9., 8., 6., 8., 5.,],
-                         [3., 7., 2., 7., 4.,],
-                         [4., 2., 8., 2., 9.,]]
+    x = Tensor(np.array([[4., 5., 4., 1., 5.],
+                         [4., 9., 5., 6., 4.],
+                         [9., 8., 4., 3., 6.],
+                         [0., 4., 2., 2., 8.],
+                         [1., 8., 6., 2., 8.],
+                         [8., 1., 9., 7., 3.],
+                         [7., 9., 2., 5., 7.],
+                         [9., 8., 6., 8., 5.],
+                         [3., 7., 2., 7., 4.],
+                         [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
     indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int64))
     expect = np.array([[[0., 5., 0.]],
@@ -1075,16 +1076,16 @@ def test_gatherV2_dyn_b():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gather = GatherNetDynamic(-1, False, True)
     # test 1
-    x = Tensor(np.array([[4., 5., 4., 1., 5.,],
-                         [4., 9., 5., 6., 4.,],
-                         [9., 8., 4., 3., 6.,],
-                         [0., 4., 2., 2., 8.,],
-                         [1., 8., 6., 2., 8.,],
-                         [8., 1., 9., 7., 3.,],
-                         [7., 9., 2., 5., 7.,],
-                         [9., 8., 6., 8., 5.,],
-                         [3., 7., 2., 7., 4.,],
-                         [4., 2., 8., 2., 9.,]]
+    x = Tensor(np.array([[4., 5., 4., 1., 5.],
+                         [4., 9., 5., 6., 4.],
+                         [9., 8., 4., 3., 6.],
+                         [0., 4., 2., 2., 8.],
+                         [1., 8., 6., 2., 8.],
+                         [8., 1., 9., 7., 3.],
+                         [7., 9., 2., 5., 7.],
+                         [9., 8., 6., 8., 5.],
+                         [3., 7., 2., 7., 4.],
+                         [4., 2., 8., 2., 9.]]
                         ).astype(np.float32))
     indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
     expect = np.array([[[0., 5., 0.]],
@@ -1134,6 +1135,7 @@ def test_gatherV2_dyn_b():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -1358,3 +1360,17 @@ def test_gather1_uint8():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gather1_bool():
+    x = Tensor(np.array([[0, 1, 1, 0], [1, 0, 0, 0], [1, 0, 1, 0]], dtype=np.bool))
+    indices = Tensor(np.array(([1, 2]), dtype='i4'))
+    expect = np.array([[1, 1], [0, 0], [0, 1]]).astype(np.bool)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    gather = GatherNet1()
+    output = gather(x, indices)
+    assert np.all(expect == output.asnumpy())
