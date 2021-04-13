@@ -45,7 +45,3 @@ extern int32_t *g_Weight16;
 extern int32_t *g_Weight17;
 extern int8_t *g_Weight18;
 extern int32_t *g_Weight19;
-extern int8_t g_Weight6[];
-extern int32_t g_Weight7[];
-extern int8_t g_Weight8[];
-extern int32_t g_Weight9[];

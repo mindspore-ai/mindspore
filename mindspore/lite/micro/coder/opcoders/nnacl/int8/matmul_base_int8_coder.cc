@@ -62,7 +62,8 @@ void MatMulBaseInt8Coder::ResizeParameter() {
   param_->row_align_ = UP_ROUND(param_->row_, row_tile_);
   param_->col_align_ = UP_ROUND(param_->col_, col_tile_);
   param_->deep_16_ = UP_ROUND(param_->deep_, C16NUM);
-  thread_count_ = MSMIN(param_->op_parameter_.thread_num_, UP_DIV(param_->col_align_, col_tile_));
+
+  thread_count_ = MSMIN(kDefaultThreadNum, UP_DIV(param_->col_align_, col_tile_));
   thread_stride_ = UP_DIV(UP_DIV(param_->col_align_, col_tile_), thread_count_);
 }
 

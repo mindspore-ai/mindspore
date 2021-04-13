@@ -13,6 +13,7 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/int8/conv_init_int8_wrapper.c
         ${WRAPPER_DIR}/int8/conv1x1_init_int8_wrapper.c
         ${WRAPPER_DIR}/int8/conv1x1_run_int8_wrapper.c
+        ${WRAPPER_DIR}/int8/conv3x3_run_int8_wrapper.c
         ${WRAPPER_DIR}/int8/convolution_depthwise_int8_wrapper.c
         ${WRAPPER_DIR}/int8/resize_int8_wrapper.c
         ${WRAPPER_DIR}/int8/slice_int8_wrapper.c

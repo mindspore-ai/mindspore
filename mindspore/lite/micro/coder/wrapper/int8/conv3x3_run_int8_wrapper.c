@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_THREAD_POOL_H_
-#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_THREAD_POOL_H_
+#include "wrapper/int8/conv3x3_run_int8_wrapper.h"
 
-namespace mindspore::lite::micro {
-
-extern const char *thread_header;
-
-}  // namespace mindspore::lite::micro
-
-#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_THREAD_POOL_H_
+int Conv3x3Int8Run(void *cdata, int task_id) {
+  Conv3x3Int8Args *args = (Conv3x3Int8Args *)cdata;
+  Conv3x3Int8(args->input_data, args->transed_weight, args->bias_data, args->output_data, args->tile_buffer,
+              args->block_unit_buffer, args->tmp_dst_buffer, args->tmp_out, task_id, args->conv_param);
+  return NNACL_OK;
+}
