@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     average += diff;
     infer_cnt++;
   }
-  average = average/infer_cnt;
+  average = average / infer_cnt;
   std::stringstream timeCost;
   timeCost << "NN inference cost average time: "<< average << "ms of infer_count " << infer_cnt << std::endl;
   std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << infer_cnt << std::endl;
