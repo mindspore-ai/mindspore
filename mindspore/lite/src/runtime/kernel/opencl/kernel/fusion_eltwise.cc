@@ -379,7 +379,7 @@ std::string FusionEltwiseOpenCLKernel::CodegenCore(FusionEltwiseParameter *param
       code << cl_prefix << "FLT4 " << exp0 << " =  exp(" + var0 + ");\n";
       code << cl_prefix << "FLT4 " << exp1 << " =  exp(-" + var0 + ");\n";
       code << cl_prefix << "FLT4 " << out_name << " =  (" << exp0 << " - " << exp1 << ") / (" << exp0 << " + " << exp1
-           << "));\n";
+           << ");\n";
     }
   }
 

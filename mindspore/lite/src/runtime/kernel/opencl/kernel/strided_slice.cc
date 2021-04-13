@@ -143,11 +143,11 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
       // avoid begin is out of range
       begin_.s[i] = std::clamp(begin_.s[i], 0, input_shape_.s[i] - 1);
       // end is negative
-      if (end_.s[i] < 0) {
+      if (end_.s[i] <= 0) {
         end_.s[i] += input_shape_.s[i];
       }
       // avoid end is out of range
-      end_.s[i] = std::clamp(end_.s[i], -1, input_shape_.s[i]);
+      end_.s[i] = std::clamp(end_.s[i], 0, input_shape_.s[i]);
 
       // check stride begin end
       if (stride_.s[i] > 0) {
