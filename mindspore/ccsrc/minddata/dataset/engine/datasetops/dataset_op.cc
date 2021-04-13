@@ -257,7 +257,7 @@ Status DatasetOp::GetNextRowPullMode(TensorRow *const row) {
   return child_[0]->GetNextRowPullMode(row);
 }
 
-// Gets the next buffer from the given child
+// Gets the next row from the given child
 Status DatasetOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
   RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), row, retry_if_eoe));

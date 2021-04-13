@@ -30,10 +30,10 @@ class SubsetSamplerRT : public SamplerRT {
   /// Constructor.
   /// \param num_samples The number of elements to sample. 0 for the full amount.
   /// \param indices List of indices.
-  /// \param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
-  /// When samples_per_buffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
+  /// \param samples_per_tensor The number of ids we draw on each call to GetNextSample().
+  /// When samples_per_tensor=0, GetNextSample() will draw all the sample ids and return them at once.
   SubsetSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices,
-                  std::int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+                  std::int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   /// Destructor.
   ~SubsetSamplerRT() = default;
@@ -47,8 +47,8 @@ class SubsetSamplerRT : public SamplerRT {
   Status ResetSampler() override;
 
   /// Get the sample ids.
-  /// \param[out] out The address of a unique_ptr to DataBuffer where the sample ids will be placed.
-  /// @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
+  /// \param[out] TensorRow where the sample ids will be placed.
+  /// @note the sample ids (int64_t) will be placed in one Tensor
   Status GetNextSample(TensorRow *out) override;
 
   /// Printer for debugging purposes.
@@ -74,9 +74,6 @@ class SubsetSamplerRT : public SamplerRT {
  private:
   /// Current sample id.
   int64_t sample_id_;
-
-  /// Current buffer id.
-  int64_t buffer_id_;
 };
 }  // namespace dataset
 }  // namespace mindspore

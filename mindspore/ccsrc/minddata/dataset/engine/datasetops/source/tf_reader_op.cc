@@ -181,7 +181,7 @@ Status TFReaderOp::Init() {
   // parallel op base.
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
 
-  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_rows_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   // temporary: make size large enough to hold all files + EOE to avoid hangs
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(dataset_files_list_.size() / num_workers_)) + 1;
@@ -304,7 +304,7 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
   return Status::OK();
 }
 
-// Reads a tf_file file and loads the data into multiple buffers.
+// Reads a tf_file file and loads the data into multiple TensorRows.
 Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   std::ifstream reader;
   reader.open(filename);
@@ -348,7 +348,7 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
       newRow.setPath(file_path);
       RETURN_IF_NOT_OK(LoadExample(&tf_file, &newRow));
       rows_read++;
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(newRow)));
+      RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(newRow)));
     }
 
     // ignore crc footer

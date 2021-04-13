@@ -78,7 +78,7 @@ Status FilterOp::EofReceived(int32_t) { return Status::OK(); }
 
 Status FilterOp::EoeReceived(int32_t) { return Status::OK(); }
 
-// Validating if each of the input_columns exists in the DataBuffer.
+// Validating if each of the input_columns exists in the column_name_id_map_.
 Status FilterOp::ValidateInColumns(const std::vector<std::string> &input_columns) {
   for (const auto &inCol : input_columns) {
     bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
@@ -158,9 +158,9 @@ Status FilterOp::WorkerCompute(const TensorRow &in_row, bool *out_predicate) {
   return Status::OK();
 }
 
-// if the filtered DataBuffer is written directly to out_connector_,
+// if the filtered TensorRow is written directly to out_connector_,
 // the thread fetching data will block in a queue.
-// Collector function will reorder the DataBuffer in order.
+// Collector function will reorder the TensorRow in order.
 // for example in two work queues:
 // int filter_queues_:
 // queue1:  DB(data1 kFilterEmpty)    DB(eoe)                                  DB(data4)   DB(eof)

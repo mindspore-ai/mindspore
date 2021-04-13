@@ -343,7 +343,7 @@ Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, 
   return Status::OK();
 }
 
-// Load 1 TensorRow (image,label) using 1 ImageColumns. 1 function call produces 1 TensorRow in a DataBuffer
+// Load 1 TensorRow (image,label) using 1 ImageColumns. 1 function call produces 1 TensorRow
 // possible optimization: the helper functions of LoadTensorRow should be optimized
 // to take a reference to a column descriptor?
 // the design of this class is to make the code more readable, forgoing minor performance gain like
@@ -463,7 +463,7 @@ Status AlbumOp::LaunchThreadsAndInitOp() {
   // registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  // launch main workers that load DataBuffers by reading all images
+  // launch main workers that load TensorRows by reading all images
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_workers_, std::bind(&AlbumOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   TaskManager::FindMe()->Post();

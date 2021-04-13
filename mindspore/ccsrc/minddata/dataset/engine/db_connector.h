@@ -34,14 +34,14 @@ class DbConnector : public Connector<TensorRow> {
   //     See Connector.h for more details.
   // @param n_producers The number of threads producing data into this DbConnector.
   // @param n_consumers The number of thread consuming data from this DbConnector.
-  // @param queue_capacity The number of element (DataBuffer) for each internal queue.
+  // @param queue_capacity The number of element (TensorRows) for each internal queue.
   DbConnector(int32_t n_producers, int32_t n_consumers, int32_t queue_capacity)
       : Connector<TensorRow>(n_producers, n_consumers, queue_capacity), end_of_file_(false) {}
 
   // Destructor of DbConnector
   ~DbConnector() = default;
 
-  // Add a unique_ptr<DataBuffer> into the DbConnector.
+  // Add a TensorRow into the DbConnector.
   // @note The caller of this add method should use std::move to pass the ownership to DbConnector.
   // @param worker_id The id of a worker thread calling this method.
   // @param el A rvalue reference to an element to be passed/added/pushed.
@@ -58,13 +58,13 @@ class DbConnector : public Connector<TensorRow> {
     TensorRow eof = TensorRow(TensorRow::kFlagEOF);
     return Add(std::move(eof), worker_id);
   }
-  // Get a unique_ptr<DataBuffer> from the DbConnector.
-  // @note After the first EOF Buffer is encountered, subsequent pop()s will return EOF Buffer.
+  // Get a TensorRow from the DbConnector.
+  // @note After the first EOF row is encountered, subsequent pop()s will return EOF row.
   // This will provide/propagate the EOF to all consumer threads of this Connector.
   // Thus, When the num_consumers < num_producers, there will be extra EOF messages in some of the internal queues
   // and reset() must be called before reusing DbConnector.
   // @param worker_id The id of a worker thread calling this method.
-  // @param result The address of a unique_ptr<DataBuffer> where the popped element will be placed.
+  // @param result The address of a TensorRow where the popped element will be placed.
   // @param retry_if_eoe A flag to allow the same thread invoke pop() again if the current pop returns eoe buffer.
   Status PopWithRetry(int32_t worker_id, TensorRow *result, bool retry_if_eoe = false) noexcept {
     if (result == nullptr) {

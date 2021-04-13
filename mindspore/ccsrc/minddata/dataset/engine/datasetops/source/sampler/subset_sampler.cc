@@ -22,8 +22,8 @@
 namespace mindspore {
 namespace dataset {
 // Constructor.
-SubsetSamplerRT::SubsetSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices, int64_t samples_per_buffer)
-    : SamplerRT(num_samples, samples_per_buffer), indices_(indices), sample_id_(0), buffer_id_(0) {}
+SubsetSamplerRT::SubsetSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices, int64_t samples_per_tensor)
+    : SamplerRT(num_samples, samples_per_tensor), indices_(indices), sample_id_(0) {}
 
 // Initialized this Sampler.
 Status SubsetSamplerRT::InitSampler() {
@@ -51,7 +51,6 @@ Status SubsetSamplerRT::InitSampler() {
 Status SubsetSamplerRT::ResetSampler() {
   // Reset the internal counters.
   sample_id_ = 0;
-  buffer_id_ = 0;
 
   if (HasChildSampler()) {
     RETURN_IF_NOT_OK(child_[0]->ResetSampler());

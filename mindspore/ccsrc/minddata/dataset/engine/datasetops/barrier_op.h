@@ -31,9 +31,7 @@ namespace dataset {
 class ExecutionTree;
 
 // BarrierOp class implements the Barrier operator. It will block sending of rows until a signal has
-// been received. This signal is given from python layer. The current barrier design respects the
-// rows per buffer design and will only output a buffer with rows once it has received rows per buffer
-// signals from python.
+// been received. This signal is given from python layer.
 
 class BarrierOp : public PipelineOp {
  public:
@@ -101,8 +99,7 @@ class BarrierOp : public PipelineOp {
   // @param condition_name - the condition name associated with this operator
   // @param condition_func - the blocking condition check per row
   // The reason for this is having other values would complicate how the pipeline behaves with other operators
-  // One example of such case is having batch after barrier. Batch would be waiting for data and having
-  // rows per buffer in this case can result in hanging
+  // One example of such case is having batch after barrier.
   BarrierOp(int32_t op_connector_size, const std::string &condition_name, py::function condition_func);
 
   // Destructor
@@ -134,12 +131,8 @@ class BarrierOp : public PipelineOp {
   Status operator()() override;
 
   // Handles preprocessing of the main loop, used when starting new epoch
-  // @param table - a table of tensors to be moved into a buffer
+  // @param table - a table of tensors to be moved into a row
   Status prepare();
-
-  // This function calls takes a table repeatedly adds rows to it.
-  // @param table - a table of tensors to be moved into a buffer
-  Status fillBuffer(TensorQTable *const table);
 
   // Gets next tensor row and sets control signals
   Status getNextTensorRow(TensorRow *new_row);
@@ -148,7 +141,7 @@ class BarrierOp : public PipelineOp {
   Status blockCond();
 
  private:
-  // clean up variable to return incomplete buffer
+  // clean up variable
   bool clean_up_;
   // end of file state, we stop reading data and shut down
   bool eof_;

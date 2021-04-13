@@ -78,8 +78,8 @@ class ProjectOp : public PipelineOp {
   // @return Status The status code returned
   Status operator()() override;
 
-  // Gets a buffer from the child node and projects that buffer. The caller is typically our parent node.
-  // @param p_buffer - output pointer to the projected buffer.
+  // Gets a row from the child node and projects that row. The caller is typically our parent node.
+  // @param row - output pointer to the projected row.
   // @param worker_id - The worker id
   Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
 

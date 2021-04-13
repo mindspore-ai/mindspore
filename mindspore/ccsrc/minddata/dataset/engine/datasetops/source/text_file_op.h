@@ -174,7 +174,7 @@ class TextFileOp : public NonMappableLeafOp {
   // @return Status - the error code returned.
   Status LoadTensor(const std::string &line, TensorRow *out_row);
 
-  // Reads a text file and loads the data into multiple buffers.
+  // Reads a text file and loads the data into multiple TensorRows.
   // @param file - the file to read.
   // @param start_offset - the start offset of file.
   // @param end_offset - the end offset of file.

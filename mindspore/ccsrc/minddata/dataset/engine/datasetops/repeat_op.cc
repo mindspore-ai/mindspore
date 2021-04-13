@@ -72,12 +72,12 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-// This function returns the buffer that is at the top of our output connector. The caller is
-// typically our parent node, when the parent is asking us to provide the next buffer of data.
-// Since RepeatOp is an inlined op, getting a buffer from us will simply bounce you to get
-// a buffer from our child.
+// This function returns the row that is at the top of our output connector. The caller is
+// typically our parent node, when the parent is asking us to provide the next row of data.
+// Since RepeatOp is an inlined op, getting a row from us will simply bounce you to get
+// a row from our child.
 // This function sets the `retryIfEoe` flag when popping from the child connector. This way,
-// this function will retry to pop the connector again and will get the non-EOE buffer if any.
+// this function will retry to pop the connector again and will get the non-EOE row if any.
 Status RepeatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, RepeatOp can't be the first op in pipeline.");

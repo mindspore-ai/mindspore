@@ -32,10 +32,10 @@ class WeightedRandomSamplerRT : public SamplerRT {
   // @param num_samples Number of samples to be drawn.
   // @param weights A lift of sample weights.
   // @param replacement Determine if samples are drawn with/without replacement.
-  // @param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
-  // When samplesPerBuffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
+  // @param samples_per_tensor The number of ids we draw on each call to GetNextSample().
+  // When samples_per_tensor=0, GetNextSample() will draw all the sample ids and return them at once.
   WeightedRandomSamplerRT(int64_t num_samples, const std::vector<double> &weights, bool replacement,
-                          int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+                          int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.
   ~WeightedRandomSamplerRT() = default;
@@ -49,8 +49,8 @@ class WeightedRandomSamplerRT : public SamplerRT {
   Status ResetSampler() override;
 
   // Get the sample ids.
-  // @param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.
-  // @note the sample ids (int64_t) will be placed in one Tensor and be placed into pBuffer.
+  // @param[out] TensorRow where the sample ids will be placed.
+  // @note the sample ids (int64_t) will be placed in one Tensor
   Status GetNextSample(TensorRow *out) override;
 
   // Printer for debugging purposes.
@@ -72,9 +72,6 @@ class WeightedRandomSamplerRT : public SamplerRT {
 
   // Current sample id.
   int64_t sample_id_;
-
-  // Current buffer id.
-  int64_t buffer_id_;
 
   // Random engine and device
   std::mt19937 rand_gen_;

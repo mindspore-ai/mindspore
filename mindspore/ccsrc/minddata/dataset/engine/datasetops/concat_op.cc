@@ -144,7 +144,7 @@ Status ConcatOp::operator()() {
       }
     }
 
-    // 4. Add eoe buffer after get buffer from all child
+    // 4. Add eoe row after get rows from all child
     if (eof_count == 0) {
       RETURN_IF_NOT_OK(out_connector_->SendEOE());
     }
@@ -152,8 +152,8 @@ Status ConcatOp::operator()() {
   }
   CHECK_FAIL_RETURN_UNEXPECTED(eof_count == children_num_,
                                "Something went wrong, eof count does not match the number of children.");
-  // 5. Add eof buffer in the end manually
-  MS_LOG(DEBUG) << "Add the eof buffer manually in the end.";
+  // 5. Add eof row in the end manually
+  MS_LOG(DEBUG) << "Add the eof row manually in the end.";
   RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }

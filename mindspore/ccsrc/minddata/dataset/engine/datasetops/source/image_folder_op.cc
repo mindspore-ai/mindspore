@@ -119,7 +119,7 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   return Status::OK();
 }
 
-// Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow in a DataBuffer
+// Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status ImageFolderOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   ImageLabelPair pairPtr = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
@@ -262,7 +262,7 @@ Status ImageFolderOp::LaunchThreadsAndInitOp() {
   // The following code launch 3 threads group
   // 1) A thread that walks all folders and push the folder names to a util:Queue folder_name_queue_.
   // 2) Workers that pull foldername from folder_name_queue_, walk it and return the sorted images to image_name_queue
-  // 3) Launch main workers that load DataBuffers by reading all images
+  // 3) Launch main workers that load TensorRows by reading all images
   RETURN_IF_NOT_OK(
     tree_->AllTasks()->CreateAsyncTask("walk dir", std::bind(&ImageFolderOp::StartAsyncWalk, this), nullptr, id()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,

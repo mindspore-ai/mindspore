@@ -70,8 +70,7 @@ Status CacheBase::FetchSamplesToWorkers() {
   int64_t buf_cnt = 0;
   int64_t wait_cnt = 0;
   int64_t prefetch_cnt = 0;
-  // Kick off several threads which will prefetch prefetch_size_ rows in advance. The rows_per_buffers_
-  // is too small (1 by default) and won't help performance.
+  // Kick off several threads which will prefetch prefetch_size_ rows in advance.
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_prefetchers_, std::bind(&CacheBase::Prefetcher, this, std::placeholders::_1), Name()));
   auto send_to_que = [](QueueList<std::unique_ptr<IOBlock>> &qList, int32_t worker_id,

@@ -70,7 +70,7 @@ Status EpochCtrlOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_
   RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, false));
 
   // Only intercept EOE for EoeReceived processing, after that the EOE is forwarded to next op.
-  // Other databuffers containing data or EOF will simply be forwarded.
+  // Other TensorRows containing data or EOF will simply be forwarded.
   // EOF can simply be forwarded because this op does not spawn any thread, thus does not require clean up.
   if (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(worker_id));
@@ -85,7 +85,7 @@ Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
   MS_LOG(DEBUG) << "Epoch Control operator received end of epoch. Epoch count is now: " << repeat_count_
                 << ". Max epochs: " << num_repeats_;
 
-  // This will allow GetNextInput in DatasetOp class to pass EOE buffer instead of eating it.
+  // This will allow GetNextInput in DatasetOp class to pass EOE row instead of eating it.
   state_ = OpState::kDeOpIdle;
 
   if (repeat_count_ != num_repeats_) {

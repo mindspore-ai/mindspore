@@ -127,7 +127,7 @@ class CsvOp : public NonMappableLeafOp {
     int CatchException(int c);
 
     int32_t worker_id_;
-    JaggedConnector *buffer_connector_;
+    JaggedConnector *rows_connector_;
     const char csv_field_delim_;
     std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_;
     State cur_state_;
@@ -298,7 +298,7 @@ class CsvOp : public NonMappableLeafOp {
   // @return Status - the error code returned.
   Status LoadTensor(const std::string &line, std::unique_ptr<TensorQTable> *tensor_table, int64_t row);
 
-  // Reads a csv file and loads the data into multiple buffers.
+  // Reads a csv file and loads the data into multiple tensors.
   // @param file - the file to read.
   // @param start_offset - the start offset of file.
   // @param end_offset - the end offset of file.

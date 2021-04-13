@@ -33,10 +33,10 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
   return Status::OK();
 }
 
-SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_buffer)
+SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_tensor)
     : num_rows_(0),
       num_samples_(num_samples),
-      samples_per_tensor_(samples_per_buffer),
+      samples_per_tensor_(samples_per_tensor),
       col_desc_(nullptr),
       is_initialized(false) {}
 
@@ -98,10 +98,10 @@ Status SamplerRT::GetAllIdsThenReset(py::array *data) {
   RETURN_IF_NOT_OK(GetNextSample(&sample_row));
   sample_ids = sample_row[0];
 
-  // check this buffer is not a ctrl buffer
+  // check this tensorRow is not a ctrl tensorRow
   CHECK_FAIL_RETURN_UNEXPECTED(sample_row.Flags() == TensorRow::kFlagNone, "ERROR ctrl row received");
 
-  // perform error checking! Next buffer supposed to be EOE since last one already contains all ids for current epoch
+  // perform error checking! Next TensorRow supposed to be EOE since last one already contains all ids for current epoch
   RETURN_IF_NOT_OK(GetNextSample(&sample_row));
   CHECK_FAIL_RETURN_UNEXPECTED(sample_row.eoe(), "ERROR Non EOE received");
   // Reset Sampler since this is the end of the epoch

@@ -94,7 +94,7 @@ Status TakeOp::operator()() {
   }
 
   take_count_ = 0;
-  MS_LOG(DEBUG) << "Meet the end and push-back eof buffer.";
+  MS_LOG(DEBUG) << "Meet the end and push-back eof row.";
   RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }

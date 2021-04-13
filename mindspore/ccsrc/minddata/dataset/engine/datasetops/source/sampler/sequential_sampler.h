@@ -29,9 +29,9 @@ class SequentialSamplerRT : public SamplerRT {
   // @param num_samples - The number of samples to draw. A value of 0 indicates the sampler should produce the
   //                      full amount of ids from the dataset
   // @param start_index - The starting index value
-  // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
+  // @param int64_t samples_per_tensor - Num of Sampler Ids to fetch via 1 GetNextSample call
   SequentialSamplerRT(int64_t num_samples, int64_t start_index,
-                      int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+                      int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.
   ~SequentialSamplerRT() = default;
@@ -43,8 +43,8 @@ class SequentialSamplerRT : public SamplerRT {
   // @return Status The status code returned
   Status ResetSampler() override;
 
-  // Op calls this to get next Buffer that contains all the sampleIds
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
+  // Op calls this to get next Sample that contains all the sampleIds
+  // @param TensorRow to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
   Status GetNextSample(TensorRow *out) override;

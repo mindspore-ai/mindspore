@@ -27,9 +27,9 @@
 #include <unordered_set>
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestWeightedRandomSampler : public UT::Common {
  public:
@@ -107,15 +107,15 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
   ASSERT_EQ(row.eoe(), true);
 }
 
-TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferReplacement) {
+TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleReplacement) {
   // num samples to draw.
   uint64_t num_samples = 100;
   uint64_t total_samples = 1000;
-  uint64_t samples_per_buffer = 10;
+  uint64_t samples_per_tensor = 10;
   std::vector<double> weights(total_samples, std::rand() % 100);
 
   // create sampler with replacement = replacement
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, true, samples_per_buffer);
+  WeightedRandomSamplerRT m_sampler(num_samples, weights, true, samples_per_tensor);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -135,22 +135,22 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferReplacement) {
     ASSERT_EQ(m_sampler.GetNextSample(&row), Status::OK());
   }
 
-  ASSERT_EQ(epoch, (num_samples + samples_per_buffer - 1) / samples_per_buffer);
+  ASSERT_EQ(epoch, (num_samples + samples_per_tensor - 1) / samples_per_tensor);
   ASSERT_EQ(num_samples, out.size());
 }
 
-TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferNoReplacement) {
+TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleNoReplacement) {
   // num samples to draw.
   uint64_t num_samples = 100;
   uint64_t total_samples = 100;
-  uint64_t samples_per_buffer = 10;
+  uint64_t samples_per_tensor = 10;
   std::vector<double> weights(total_samples, std::rand() % 100);
   weights[1] = 0;
   weights[2] = 0;
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = replacement
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, false, samples_per_buffer);
+  WeightedRandomSamplerRT m_sampler(num_samples, weights, false, samples_per_tensor);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -178,7 +178,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferNoReplacement) {
     }
   }
 
-  ASSERT_EQ(epoch, (num_samples + samples_per_buffer - 1) / samples_per_buffer);
+  ASSERT_EQ(epoch, (num_samples + samples_per_tensor - 1) / samples_per_tensor);
   ASSERT_EQ(num_samples, out.size());
 }
 

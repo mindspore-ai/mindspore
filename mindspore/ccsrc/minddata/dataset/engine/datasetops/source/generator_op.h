@@ -138,13 +138,10 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   int64_t generator_counter_;
 
   py::object generator_;
-  int32_t buffer_id_;
 
   WaitPost wp_;
 
   Status PyRowToTensorRow(py::object py_data, TensorRow *tensor_row);
-
-  Status FillBuffer(TensorQTable *tt);
 
   /// Private function for computing the assignment of the column name map.
   /// \return - Status

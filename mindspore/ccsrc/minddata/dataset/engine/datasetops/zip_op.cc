@@ -106,7 +106,7 @@ Status ZipOp::prepare() {
   return Status::OK();
 }
 
-// fetches next zip buffer row (merged row)
+// fetches next zipped (merged) row
 Status ZipOp::getNextTensorRow(TensorRow *const new_zip_row) {
   // iterate over all iterators and generate a row
   for (int32_t i = 0; i < children_num_; ++i) {

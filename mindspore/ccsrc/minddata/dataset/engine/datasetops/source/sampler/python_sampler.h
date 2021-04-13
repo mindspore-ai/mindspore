@@ -29,9 +29,9 @@ class PythonSamplerRT : public SamplerRT {
   // @param num_samples - the number of samples to draw.  Value of 0 means to sample all of the
   //                      data from the dataset.
   // @param py_sampler_instance - the python instance of the sampler
-  // @param int64_t samples_per_buffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
+  // @param int64_t samples_per_tensor - Num of Sampler Ids to fetch via 1 GetNextSample call
   explicit PythonSamplerRT(int64_t num_samples, py::object py_sampler_instance,
-                           int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+                           int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.
   ~PythonSamplerRT() = default;
@@ -44,8 +44,8 @@ class PythonSamplerRT : public SamplerRT {
   // @return Status The status code returned
   Status ResetSampler() override;
 
-  // Op calls this to get next Buffer that contains all the sampleIds
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
+  // Op calls this to get next Sample that contains all the sampleIds
+  // @param TensorRow to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
   Status GetNextSample(TensorRow *out) override;
@@ -56,7 +56,7 @@ class PythonSamplerRT : public SamplerRT {
   void SamplerPrint(std::ostream &out, bool show_all) const override;
 
  private:
-  bool need_to_reset_;  // Whether Reset() should be called before calling GetNextBuffer()
+  bool need_to_reset_;  // Whether Reset() should be called before calling GetNextSample()
 
   py::object py_sampler_instance;  // The handle to the py_sampler python object
 };

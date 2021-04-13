@@ -81,13 +81,13 @@ class RepeatOp : public PipelineOp {
   // @return Status The status code returned
   Status operator()() override;
 
-  // This function returns the buffer that is at the top of our output connector. The caller is
-  // typically our parent node, when the parent is asking us to provide the next buffer of data.
-  // Since RepeatOp is an inlined op, getting a buffer from us will simply bounce you to get
-  // a buffer from our child.
+  // This function returns the row that is at the top of our output connector. The caller is
+  // typically our parent node, when the parent is asking us to provide the next row of data.
+  // Since RepeatOp is an inlined op, getting a row from us will simply bounce you to get
+  // a row from our child.
   // @note This function sets the `retryIfEoe` flag when popping from the child connector. This way,
-  // this function will retry to pop the connector again and will get the non-EOE buffer if any.
-  // @param p_buffer - output pointer to the buffer that it will fetch.
+  // this function will retry to pop the connector again and will get the non-EOE row if any.
+  // @param row - output pointer to the buffer that it will fetch.
   // @param worker_id - The worker id
   // @param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
   // @return Status The status code returned

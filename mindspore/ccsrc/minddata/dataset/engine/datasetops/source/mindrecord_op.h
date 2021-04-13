@@ -160,7 +160,7 @@ class MindRecordOp : public MappableLeafOp {
     return out;
   }
 
-  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
+  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a TensorRow and push it to Connector
   // @param int32_t workerId - id of each worker
   // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;

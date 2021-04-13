@@ -47,7 +47,7 @@ class DistributedSamplerRT : public SamplerRT {
   /// \brief default destructor
   ~DistributedSamplerRT() = default;
 
-  /// \param std::unique_ptr<DataBuffer> * pBuffer
+  /// \param TensorRow out
   /// \param int32_t workerId
   /// \return Status code
   Status GetNextSample(TensorRow *out) override;
@@ -78,7 +78,7 @@ class DistributedSamplerRT : public SamplerRT {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
-  int64_t cnt_;  // number of samples that have already been filled in to buffer
+  int64_t cnt_;  // number of samples that have already been filled in to Tensor
   uint32_t seed_;
   int64_t device_id_;
   int64_t num_devices_;

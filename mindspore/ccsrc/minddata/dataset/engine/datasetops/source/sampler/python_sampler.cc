@@ -20,8 +20,8 @@
 namespace mindspore {
 namespace dataset {
 
-PythonSamplerRT::PythonSamplerRT(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_buffer)
-    : SamplerRT(num_samples, samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
+PythonSamplerRT::PythonSamplerRT(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_tensor)
+    : SamplerRT(num_samples, samples_per_tensor), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
 
 Status PythonSamplerRT::GetNextSample(TensorRow *out) {
   if (need_to_reset_) {

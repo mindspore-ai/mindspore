@@ -87,17 +87,17 @@ Status DistributedSamplerRT::InitSampler() {
 Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
   if (cnt_ > samples_per_tensor_) {
     RETURN_STATUS_UNEXPECTED(
-      "Number of samples(cnt) that have already been filled in to buffer should be less than or "
-      "equal to samples_per_buffer, but got cnt: " +
-      std::to_string(cnt_) + ", samples_per_buffer: " + std::to_string(samples_per_tensor_));
+      "Number of samples(cnt) that have already been filled in to Tensor should be less than or "
+      "equal to samples_per_tensor, but got cnt: " +
+      std::to_string(cnt_) + ", samples_per_tensor: " + std::to_string(samples_per_tensor_));
   } else if (cnt_ == samples_per_tensor_ && (non_empty_ || !even_dist_)) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
     if (!samples_per_tensor_) {
       non_empty_ = false;
     }
   } else if (!samples_per_tensor_ && !non_empty_) {
-    // If the buffer is empty, we add samples with subscript 0 in the current dataset.
-    // This step is to make up for the solution that the code default buffer is not empty before.
+    // If the Tensor is empty, we add samples with subscript 0 in the current dataset.
+    // This step is to make up for the solution that the code default Tensor is not empty before.
     // We will remove this value in the concat phase
     non_empty_ = true;
     std::shared_ptr<Tensor> sample_ids;

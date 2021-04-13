@@ -63,8 +63,8 @@ class SamplerRT {
   // Constructor
   // @param int64_t num_samples: the user-requested number of samples ids to generate. A value of 0
   //                indicates that the sampler should produce the complete set of ids.
-  // @param int64_t samplesPerBuffer: Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  SamplerRT(int64_t num_samples, int64_t samples_per_buffer);
+  // @param int64_t samples_per_tensor: Num of Sampler Ids to fetch via 1 GetNextSample call
+  SamplerRT(int64_t num_samples, int64_t samples_per_tensor);
 
   SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_tensor_) {}
 
@@ -73,7 +73,7 @@ class SamplerRT {
 
   // Get a list of sample ids.
   // @note It is Sampler responsibility to make sure that the id is not out of bound.
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
+  // @param TensorRow to be returned to StorageOp
   // @param int32_t workerId - not meant to be used
   // @return Status The status code returned
   virtual Status GetNextSample(TensorRow *out) = 0;

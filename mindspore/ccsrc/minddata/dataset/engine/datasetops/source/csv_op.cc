@@ -85,7 +85,7 @@ Status CsvOp::Init() {
   io_block_queues_.Init(num_workers_, safe_queue_size);
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
-  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_rows_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   return Status::OK();
 }
@@ -93,7 +93,7 @@ Status CsvOp::Init() {
 CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, char field_delim,
                             std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default, std::string file_path)
     : worker_id_(worker_id),
-      buffer_connector_(connector),
+      rows_connector_(connector),
       csv_field_delim_(field_delim),
       column_default_(column_default),
       file_path_(file_path),
@@ -200,7 +200,7 @@ int CsvOp::CsvParser::PutRow(int c) {
   total_rows_++;
   cur_col_ = 0;
 
-  buffer_connector_->Add(worker_id_, std::move(cur_row_));
+  rows_connector_->Add(worker_id_, std::move(cur_row_));
 
   return 0;
 }
@@ -467,7 +467,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
 }
 
 Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  CsvParser csv_parser(worker_id, jagged_buffer_connector_.get(), field_delim_, column_default_list_, file);
+  CsvParser csv_parser(worker_id, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
   csv_parser.SetStartOffset(start_offset);
   csv_parser.SetEndOffset(end_offset);
   std::ifstream ifs;
@@ -588,7 +588,7 @@ Status CsvOp::CalculateNumRowsPerShard() {
 }
 
 int64_t CsvOp::CountTotalRows(const std::string &file) {
-  CsvParser csv_parser(0, jagged_buffer_connector_.get(), field_delim_, column_default_list_, file);
+  CsvParser csv_parser(0, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
   if (!ifs.is_open()) {
