@@ -35,6 +35,21 @@ bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
   return false;
 }
 
+void UpdatePrevNotCNodeFormatDtype(const KernelAttr &kernel_attr, const std::vector<size_t> &input_not_cnode_indexes,
+                                   const CNodePtr kernel_node) {
+  for (auto &input_index : input_not_cnode_indexes) {
+    auto input_node = AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
+    MS_EXCEPTION_IF_NULL(input_node);
+    std::vector<TypeId> output_types;
+    output_types.emplace_back(kernel_attr.GetInputAttr(input_index).first);
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
+    builder->SetOutputsFormat({kOpFormat_DEFAULT});
+    builder->SetOutputsDeviceType(output_types);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_node.get());
+  }
+}
+
 void GetOutputInferFormatsAndDtypes(const CNodePtr &kernel_node, std::vector<std::string> *output_formats,
                                     std::vector<TypeId> *output_types) {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -127,11 +142,35 @@ std::pair<int, int> GetInputDtypeFormatMatchedNum(const KernelAttr &kernel_attr,
   int format_matched_num = 0;
   auto input_num = input_types.size();
   for (size_t i = 0; i < input_num; ++i) {
-    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).first, input_types[i], strict)) {
+    bool is_not_cnode_idx = std::any_of(input_not_cnode_indexes.begin(), input_not_cnode_indexes.end(),
+                                        [i](size_t index) { return index == i; });
+    bool have_cnode_input = (input_types.size() != input_not_cnode_indexes.size());
+    if (have_cnode_input && is_not_cnode_idx) {
+      data_type_matched_num++;
+      format_matched_num++;
+      continue;
+    }
+    if (is_not_cnode_idx) {
+      if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).first, input_types[i], strict)) {
+        MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).first
+                      << ", actual input dtype:" << input_types[i];
+      } else {
+        data_type_matched_num++;
+      }
+      format_matched_num++;
+      continue;
+    }
+    if (kernel_attr.GetInputAttr(i).first != input_types[i]) {
       MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).first
                     << ", actual input dtype:" << input_types[i];
     } else {
       data_type_matched_num++;
+    }
+
+    if (kernel_attr.GetInputAttr(i).second != input_formats[i]) {
+      MS_LOG(DEBUG) << "required format:" << kernel_attr.GetInputAttr(i).second
+                    << ", actual input format:" << input_formats[i];
+    } else {
       format_matched_num++;
     }
   }
@@ -281,8 +320,9 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
       (matched.first || input_types.size() == input_not_cnode_indexes.size())) {
     MS_LOG(INFO) << "Input format and dtype is matched";
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &output_formats, &output_types);
-    for (size_t i = 0; i < selected_kernel_attr.GetInputSize(); ++i) {
-      input_types[SizeToInt(i)] = selected_kernel_attr.GetInputAttr(i).first;
+    UpdatePrevNotCNodeFormatDtype(selected_kernel_attr, input_not_cnode_indexes, kernel_node);
+    for (auto &input_index : input_not_cnode_indexes) {
+      input_types[input_index] = selected_kernel_attr.GetInputAttr(input_index).first;
     }
   }
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());

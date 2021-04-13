@@ -27,7 +27,7 @@ void MaximumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dout_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dy_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   if (!x_shape_.size() || !y_shape_.size() || !dout_shape.size()) {
     MS_LOG(EXCEPTION) << "Input NULL";
   }
