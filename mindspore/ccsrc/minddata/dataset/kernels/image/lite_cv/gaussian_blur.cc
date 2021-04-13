@@ -39,7 +39,7 @@ static void GetGaussianKernel(float *kernel, int size, double sigma) {
     sum += g;
   }
   sum = sum * 2 + 1;
-  if ((size & 1) == 0) {
+  if (size % 2 == 0) {
     sum += 1;
   }
 
