@@ -667,7 +667,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
   std::string file_extension = ".bin";
   if (trans_flag) {
     std::string path =
-      filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + host_fmt + file_extension;
+      filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt + file_extension;
     MS_LOG(INFO) << "E2E Dump path is " << path;
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     size_t host_size = out_tensor->data().nbytes();

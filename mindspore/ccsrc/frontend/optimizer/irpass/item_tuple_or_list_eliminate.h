@@ -439,7 +439,6 @@ class ItemTupleOrListEliminator : public OptimizerCaller {
     get_item_depend_reorder_, convert_item_index_to_positive_;
   std::vector<OptimizerCallerPtr> eliminators_{};
 };
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
