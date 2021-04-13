@@ -577,7 +577,6 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
     Notes:
         When exporting to AIR format, the size of a single tensor can not exceed 2GB.
-        Otherwise, a small wrong air file will be exported.
 
     Args:
         net (Cell): MindSpore network.
