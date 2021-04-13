@@ -30,6 +30,5 @@ MS_REG_GPU_KERNEL_TWO(MDIterationLeapFrogLiujian,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       MDIterationLeapFrogLiujianCudaGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

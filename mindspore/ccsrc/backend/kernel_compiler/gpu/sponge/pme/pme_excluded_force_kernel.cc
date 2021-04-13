@@ -27,6 +27,5 @@ MS_REG_GPU_KERNEL_TWO(PMEExcludedForce,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       PMEExcludedForceGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

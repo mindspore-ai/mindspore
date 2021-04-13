@@ -22,6 +22,5 @@ MS_REG_GPU_KERNEL_TWO(
   TransferCrd,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   TransferGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

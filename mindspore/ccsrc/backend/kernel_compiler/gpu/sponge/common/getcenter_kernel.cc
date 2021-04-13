@@ -22,6 +22,5 @@ MS_REG_GPU_KERNEL_TWO(
   GetCenterOfGeometry,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   GetCenterOfGeometryGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

@@ -29,6 +29,5 @@ MS_REG_GPU_KERNEL_TWO(LJForceWithPMEDirectForce,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       LJForceWithPMEDirectForceGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

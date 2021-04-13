@@ -30,6 +30,5 @@ MS_REG_GPU_KERNEL_TWO(AngleForceWithAtomEnergy,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       AngleForceWithAtomEnergyGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore
