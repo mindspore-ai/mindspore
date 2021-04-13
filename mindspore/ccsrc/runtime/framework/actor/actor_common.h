@@ -40,6 +40,9 @@ constexpr int kFailure = 1;
     return;                                   \
   }
 
+// Get the max available thread number of system.
+int64_t GetMaxThreadNum();
+
 }  // namespace runtime
 }  // namespace mindspore
 

@@ -23,6 +23,7 @@
 #include <utility>
 #include <unordered_map>
 #include <algorithm>
+#include <fstream>
 #include "runtime/framework/actor/data_source_actor.h"
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
@@ -62,7 +63,8 @@ class GraphScheduler {
     return instance;
   }
 
-  // The memory manager creating and scheduling.
+  // 1. Thread pool creating.
+  // 2. The memory manager creating and scheduling.
   void Initialize();
 
   // Transform graph to actor DAG, contains build and link.
@@ -78,8 +80,7 @@ class GraphScheduler {
   // 1. Prepare the data of device tensor store(such as weights and value nodes of graph).
   // 2. Prepare the data of host tensor queue(such as non weighted parameters of graph).
   // 3. Prepare the output tensor of graph.
-  void PrepareRun(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                  const std::vector<TensorPtr> *input_tensors, VectorRef *const &outputs);
+  void PrepareRun(const KernelGraphPtr &graph, const std::vector<TensorPtr> *input_tensors, VectorRef *const &outputs);
 
   // The processing entry of actors running.
   bool Run(const ActorSet *actor_set, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
@@ -118,11 +119,20 @@ class GraphScheduler {
                                       GraphExecutionStrategy strategy);
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const KernelGraphPtr &graph);
 
+  // Check whether the actor set is valid.
+  bool CheckActorValid(const ActorSet *actor_set) const;
+
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const KernelGraphPtr &graph);
 
   // Fetch the hsot tensor queue by kernel graph.
   HostTensorQueue *FetchHostQueue(const KernelGraphPtr &graph) const;
+
+  // Display the actor information of corresponding kernel graph.
+  void DumpActor(const KernelGraphPtr &graph) const;
+  void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) const;
+  void DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const;
+  void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const;
 
   std::unordered_map<KernelGraphPtr, ActorSetPtr> graph_to_actors_;
   std::unordered_map<KernelGraphPtr, HostTensorQueuePtr> graph_to_host_queue_;

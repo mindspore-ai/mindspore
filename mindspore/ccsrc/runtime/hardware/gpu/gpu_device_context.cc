@@ -270,7 +270,7 @@ bool GPUDeviceContext::LaunchKernel(KernelMod *kernel_mod, const std::vector<Add
   return kernel_mod->Launch(inputs, workspace, outputs, streams_.front());
 }
 
-bool GPUDeviceContext::SyncStream(size_t stream_id) {
+bool GPUDeviceContext::SyncStream(size_t stream_id) const {
   if (stream_id >= streams_.size()) {
     MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
   }

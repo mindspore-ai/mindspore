@@ -757,6 +757,13 @@ AnfNodePtr KernelGraph::GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf) {
   return front_backend_anf_map_[front_anf];
 }
 
+AnfNodePtr KernelGraph::GetFrontAnfByBackendAnf(const AnfNodePtr &backend_anf) {
+  if (backend_front_anf_map_.find(backend_anf) == backend_front_anf_map_.end()) {
+    return nullptr;
+  }
+  return backend_front_anf_map_[backend_anf];
+}
+
 bool KernelGraph::BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf) {
   return backend_front_anf_map_.find(backend_anf) != backend_front_anf_map_.end();
 }

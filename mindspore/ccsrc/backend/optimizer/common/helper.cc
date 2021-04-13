@@ -397,7 +397,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   MS_EXCEPTION_IF_NULL(manager);
   auto iter = manager->node_users().find(node);
   if (iter == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
+    return output_node_list;
   }
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
@@ -469,7 +469,8 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     auto out_node = output.first;
     auto name = AnfAlgo::GetCNodeName(out_node);
     if (name == prim::kPrimDepend->name() || name == prim::kPrimMakeTuple->name() ||
-        name == prim::kPrimTupleGetItem->name() || name == prim::kPrimLoad->name()) {
+        name == prim::kPrimTupleGetItem->name() || name == prim::kPrimLoad->name() ||
+        name == prim::kPrimReturn->name()) {
       auto result = IsNotRealUsedByOthers(graph, out_node);
       if (!result) {
         return result;

@@ -233,10 +233,12 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
     : Backend(backend_name), device_name_(device_name), device_id_(device_id) {}
 
 GraphId MindRTBackend::CompileGraph(const AnfNodePtrList &nodes) {
+  MS_LOG(INFO) << "Compile graph begin.";
   // Get and set the device context.
   const auto &cur_device_name = GetCNodeTarget(nodes[0]);
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
+  device_context->Initialize();
   runtime::GraphCompiler::GetInstance().set_device_context(device_context);
 
   // Transform nodes to inputs and outputs.
@@ -246,10 +248,13 @@ GraphId MindRTBackend::CompileGraph(const AnfNodePtrList &nodes) {
   std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(nodes);
 
   // Compile graph.
-  return runtime::GraphCompiler::GetInstance().CompileGraph(inputs, outputs);
+  auto graph_id = runtime::GraphCompiler::GetInstance().CompileGraph(nodes, outputs);
+  MS_LOG(INFO) << "Compile graph end, graph id: " << graph_id;
+  return graph_id;
 }
 
 VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
+  MS_LOG(INFO) << "Run graph begin, graph id: " << graph_id;
   const auto &context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
@@ -257,24 +262,38 @@ VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
     return VectorRef();
   }
 
-  // Transform args to input tensors.
-  std::vector<tensor::TensorPtr> inputs;
-  for (const auto &arg : args) {
-    PushInputTensor(arg, &inputs);
-  }
-
   // Fetch the kernel graph.
   const auto &kernel_graph = runtime::GraphCompiler::GetInstance().Fetch(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  // Transform args to input tensors.
+  std::vector<tensor::TensorPtr> inputs;
+  for (const auto &input_node : kernel_graph->input_nodes()) {
+    const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
+    MS_EXCEPTION_IF_NULL(front_node);
+    MS_EXCEPTION_IF_NULL(front_node->func_graph());
+    const auto &origin_parameters = front_node->func_graph()->parameters();
+    const auto &iter = std::find(origin_parameters.begin(), origin_parameters.end(), front_node);
+    if (iter == origin_parameters.end()) {
+      MS_LOG(EXCEPTION) << "Parameter node: " << front_node->fullname_with_scope() << " is not exist.";
+    }
+    auto position = IntToSize(std::distance(origin_parameters.begin(), iter));
+    PushInputTensor(args[position], &inputs);
+  }
 
   // Fetch the actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(kernel_graph);
   MS_EXCEPTION_IF_NULL(actor_set);
 
-  // Run actor DAG, wait interface of GraphScheduler to create outputs.
+  // Run actor DAG.
   VectorRef outputs;
-  runtime::GraphScheduler::GetInstance().Run(actor_set);
+  runtime::GraphScheduler::GetInstance().PrepareRun(kernel_graph, &inputs, &outputs);
+  if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
+    MS_LOG(EXCEPTION) << "The graph runs failed, graph id: " << graph_id
+                      << ", graph name: " << kernel_graph->ToString();
+  }
 
+  MS_LOG(INFO) << "Run graph end, graph id: " << graph_id;
   return outputs;
 }
 }  // namespace compile

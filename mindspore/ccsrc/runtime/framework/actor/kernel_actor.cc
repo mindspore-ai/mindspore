@@ -78,7 +78,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   FreeMemory(context);
 }
 
-bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) {
+bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     auto data_iter = input_op_datas_.find(context->sequential_num_);
@@ -136,16 +136,14 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
-    if (workspace_sizes[i] != 0) {
-      auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel_, i);
-      MS_EXCEPTION_IF_NULL(device_address);
-      workspace_device_tensors_.emplace_back(device_address.get());
-    }
+    auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel_, i);
+    MS_EXCEPTION_IF_NULL(device_address);
+    workspace_device_tensors_.emplace_back(device_address.get());
   }
 }
 
 void KernelActor::FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::vector<AddressPtr> *kernel_outputs,
-                                  std::vector<AddressPtr> *kernel_workspaces) {
+                                  std::vector<AddressPtr> *kernel_workspaces) const {
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   MS_EXCEPTION_IF_NULL(kernel_outputs);
   MS_EXCEPTION_IF_NULL(kernel_workspaces);
@@ -165,7 +163,7 @@ void KernelActor::FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::v
   }
 }
 
-void KernelActor::SendOutput(OpContext<DeviceTensor> *context) {
+void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   // Send output data.
   for (auto &op_arrow : output_op_arrows_) {
@@ -183,6 +181,17 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) {
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_op_controls_) {
     Async(output_control, &OpActor::RunOpControl, source_aid, context);
+  }
+}
+
+void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (input_datas_num_ != 0) {
+    (void)input_op_datas_.erase(context->sequential_num_);
+  }
+
+  if (input_controls_num_ != 0) {
+    (void)input_op_controls_.erase(context->sequential_num_);
   }
 }
 

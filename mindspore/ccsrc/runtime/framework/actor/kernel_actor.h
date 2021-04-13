@@ -64,12 +64,14 @@ class KernelActor : public MemoryInterfaceActor {
   friend class GraphScheduler;
 
   // Check whether satisfy the condition for launch.
-  bool CheckLaunchCondition(OpContext<DeviceTensor> *context);
+  bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
   // Fetch the args of kernel launch.
   void FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::vector<AddressPtr> *kernel_outputs,
-                       std::vector<AddressPtr> *kernel_workspaces);
+                       std::vector<AddressPtr> *kernel_workspaces) const;
   // Send output data and output controls when finish kernel launch.
-  void SendOutput(OpContext<DeviceTensor> *context);
+  void SendOutput(OpContext<DeviceTensor> *context) const;
+  // Erase input data and input controls when finish kernel launch.
+  void EraseInput(OpContext<DeviceTensor> *context);
 
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
