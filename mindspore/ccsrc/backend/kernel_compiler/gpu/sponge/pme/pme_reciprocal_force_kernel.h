@@ -46,10 +46,7 @@ class PMEReciprocalForceGpuKernel : public GpuKernel {
     float box_length_0 = static_cast<float>(GetAttr<float_t>(kernel_node, "box_length_0"));
     float box_length_1 = static_cast<float>(GetAttr<float_t>(kernel_node, "box_length_1"));
     float box_length_2 = static_cast<float>(GetAttr<float_t>(kernel_node, "box_length_2"));
-    std::vector<float> h_box_length(3);
-    h_box_length[0] = box_length_0;
-    h_box_length[1] = box_length_1;
-    h_box_length[2] = box_length_2;
+    std::vector<float> h_box_length{box_length_0, box_length_1, box_length_2};
     VECTOR *box_length = reinterpret_cast<VECTOR *>(h_box_length.data());
     PME_inverse_box_vector.x = static_cast<float>(fftx) / box_length[0].x;
     PME_inverse_box_vector.y = static_cast<float>(ffty) / box_length[0].y;
@@ -170,6 +167,7 @@ class PMEReciprocalForceGpuKernel : public GpuKernel {
     res.y *= t;
     return res;
   }
+
   float M_(float u, int n) {
     if (n == 2) {
       if (u > 2 || u < 0) return 0;
@@ -178,6 +176,7 @@ class PMEReciprocalForceGpuKernel : public GpuKernel {
       return u / (n - 1) * M_(u, n - 1) + (n - u) / (n - 1) * M_(u - 1, n - 1);
     }
   }
+
   float getb(int k, int NFFT, int B_order) {
     cufftComplex tempc, tempc2, res;
     float tempf;
@@ -190,7 +189,12 @@ class PMEReciprocalForceGpuKernel : public GpuKernel {
 
     for (int kk = 0; kk < (B_order - 1); kk++) {
       tempc.x = 0;
-      tempc.y = 2 * PI * k / NFFT * kk;
+      if (NFFT == 0) {
+        MS_LOG(ERROR) << "Divide by zero.";
+        break;
+      } else {
+        tempc.y = 2 * PI * k / NFFT * kk;
+      }
       tempc = expc(tempc);
       tempf = M_(kk + 1, B_order);
       tempc2.x += tempf * tempc.x;

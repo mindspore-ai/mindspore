@@ -20,6 +20,5 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(MDIterationSetupRandState, KernelAttr().AddOutputAttr(kNumberTypeFloat32),
                       MDIterationSetupRandStateGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

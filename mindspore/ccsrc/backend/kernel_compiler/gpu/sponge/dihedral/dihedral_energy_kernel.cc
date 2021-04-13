@@ -33,6 +33,5 @@ MS_REG_GPU_KERNEL_TWO(DihedralEnergy,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       DihedralEnergyGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

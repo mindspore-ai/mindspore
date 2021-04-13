@@ -41,6 +41,5 @@ MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       NeighborListUpdateGpuKernel, int, float)
-
 }  // namespace kernel
 }  // namespace mindspore

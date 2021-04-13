@@ -21,6 +21,5 @@ MS_REG_GPU_KERNEL_TWO(
   PMEReciprocalForce,
   KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   PMEReciprocalForceGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

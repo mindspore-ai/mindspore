@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 class MDIterationLeapFrogGpuKernel : public GpuKernel {
  public:

@@ -29,6 +29,5 @@ MS_REG_GPU_KERNEL_TWO(Dihedral14CFAtomEnergy,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       Dihedral14CFAtomEnergyGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore
