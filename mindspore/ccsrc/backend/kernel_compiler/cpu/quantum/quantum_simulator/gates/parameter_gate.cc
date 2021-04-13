@@ -13,32 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/parameter_gate.h"
 
-#ifndef MINDQUANTUM_ENGINE_PARAMETER_RESOLVER_H_
-#define MINDQUANTUM_ENGINE_PARAMETER_RESOLVER_H_
-#include <map>
 #include <string>
-#include <set>
-#include "mindquantum/utils.h"
 
 namespace mindspore {
 namespace mindquantum {
-
-class ParameterResolver {
- public:
-  ParameterResolver();
-  ParameterResolver(const ParaType &, const ParaSetType &, const ParaSetType &);
-  const ParaType &GetData() const;
-  const ParaSetType &GetRequiresGradParameters() const;
-  void SetData(const std::string &, const CalcType &);
-  void InsertNoGrad(const std::string &);
-  void InsertRequiresGrad(const std::string &);
-
- private:
-  ParaType data_;
-  ParaSetType no_grad_parameters_;
-  ParaSetType requires_grad_parameters_;
-};
+ParameterGate::ParameterGate(const std::string &name, const Indexes &obj_qubits, const Indexes &ctrl_qubits,
+                             const ParameterResolver &paras)
+    : BasicGate(name, true, obj_qubits, ctrl_qubits, paras) {}
 }  // namespace mindquantum
 }  // namespace mindspore
-#endif  // MINDQUANTUM_ENGINE_PARAMETER_RESOLVER_H_

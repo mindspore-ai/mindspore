@@ -17,8 +17,8 @@
 #ifndef MINDQUANTUM_ENGINE_BASIC_GATES_H_
 #define MINDQUANTUM_ENGINE_BASIC_GATES_H_
 #include <string>
-#include "mindquantum/parameter_resolver.h"
-#include "mindquantum/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/parameter_resolver.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 
 namespace mindspore {
 namespace mindquantum {

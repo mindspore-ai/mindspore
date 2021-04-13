@@ -19,9 +19,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "mindquantum/gates/non_parameter_gate.h"
-#include "mindquantum/gates/gates.h"
-#include "mindquantum/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/non_parameter_gate.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/gates.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 
 namespace mindspore {
 namespace mindquantum {

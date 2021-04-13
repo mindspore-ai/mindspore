@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/non_parameter_gate.h"
 
-#ifndef MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
-#define MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
 #include <string>
-#include "mindquantum/gates/basic_gates.h"
-#include "mindquantum/utils.h"
 
 namespace mindspore {
 namespace mindquantum {
-class ParameterGate : public BasicGate {
- public:
-  ParameterGate();
-  ParameterGate(const std::string &, const Indexes &, const Indexes &, const ParameterResolver &);
-};
+NoneParameterGate::NoneParameterGate(const std::string &name, const Matrix &gate_matrix, const Indexes &obj_qubits,
+                                     const Indexes &ctrl_qubits)
+    : BasicGate(name, false, obj_qubits, ctrl_qubits), gate_matrix_(gate_matrix) {}
+
+Matrix &NoneParameterGate::GetBaseMatrix() { return gate_matrix_; }
 }  // namespace mindquantum
 }  // namespace mindspore
-#endif  // MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
