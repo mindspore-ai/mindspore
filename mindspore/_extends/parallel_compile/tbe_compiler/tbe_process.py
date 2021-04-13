@@ -34,6 +34,8 @@ RL_COMPILE = "RL_COMPILE"
 RL_OFFLINE = "RL_OFFLINE"
 RL_ONLINE = "RL_ONLINE"
 
+COMPILE_TIME_OUT_SECONDS = 600
+
 
 def create_tbe_parallel_process():
     """
@@ -102,8 +104,8 @@ def run_compiler(op_json):
     """
     try:
         tbe_compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
-        completed_object = subprocess.run([sys.executable, tbe_compiler], input=op_json, timeout=300,
-                                          text=True, capture_output=True, check=True)
+        completed_object = subprocess.run([sys.executable, tbe_compiler], input=op_json,
+                                          timeout=COMPILE_TIME_OUT_SECONDS, text=True, capture_output=True, check=True)
         return "Success", completed_object.stderr
     except subprocess.TimeoutExpired:
         tb = traceback.format_exc()
@@ -363,7 +365,7 @@ class TbeProcess:
         ret = 0, "Failed", "Failed"
         if self.__running_tasks:
             task_id, task_future = self.__running_tasks.pop(0)
-            ret_type, result = task_future.get(330)
+            ret_type, result = task_future.get(COMPILE_TIME_OUT_SECONDS)
             if ret_type == "Success":
                 ret = task_id, "Success", result
             elif ret_type in ("Exception", "TBEException"):
