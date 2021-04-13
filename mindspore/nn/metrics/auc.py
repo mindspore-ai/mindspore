@@ -40,6 +40,7 @@ def auc(x, y, reorder=False):
         >>> metric.update(y_pred, y)
         >>> fpr, tpr, thre = metric.eval()
         >>> output = auc(fpr, tpr)
+        >>> print(output)
         0.5357142857142857
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
