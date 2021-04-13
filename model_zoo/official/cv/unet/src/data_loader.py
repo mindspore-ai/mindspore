@@ -216,7 +216,7 @@ class CellNucleiDataset:
             return len(self.train_ids)
         return len(self.val_ids)
 
-def preprocess_img_mask(img, mask, img_size, augment=False):
+def preprocess_img_mask(img, mask, img_size, augment=False, eval_resize=False):
     """
     Preprocess for cell nuclei dataset.
     Random crop and flip images and masks when augment is True.
@@ -236,7 +236,8 @@ def preprocess_img_mask(img, mask, img_size, augment=False):
             mask = cv2.flip(mask, flip_code)
     else:
         img = cv2.resize(img, img_size)
-        mask = cv2.resize(mask, img_size)
+        if not eval_resize:
+            mask = cv2.resize(mask, img_size)
     img = (img.astype(np.float32) - 127.5) / 127.5
     img = img.transpose(2, 0, 1)
     mask = mask.astype(np.float32) / 255
@@ -245,7 +246,7 @@ def preprocess_img_mask(img, mask, img_size, augment=False):
     mask = mask.transpose(2, 0, 1).astype(np.float32)
     return img, mask
 
-def create_cell_nuclei_dataset(data_dir, img_size, repeat, batch_size, is_train=False, augment=False,
+def create_cell_nuclei_dataset(data_dir, img_size, repeat, batch_size, is_train=False, augment=False, eval_resize=False,
                                split=0.8, rank=0, group_size=1, python_multiprocessing=True, num_parallel_workers=8):
     """
     Get generator dataset for cell nuclei dataset.
@@ -253,7 +254,8 @@ def create_cell_nuclei_dataset(data_dir, img_size, repeat, batch_size, is_train=
     cell_dataset = CellNucleiDataset(data_dir, repeat, is_train, split)
     sampler = ds.DistributedSampler(group_size, rank, shuffle=is_train)
     dataset = ds.GeneratorDataset(cell_dataset, cell_dataset.column_names, sampler=sampler)
-    compose_map_func = (lambda image, mask: preprocess_img_mask(image, mask, tuple(img_size), augment and is_train))
+    compose_map_func = (lambda image, mask: preprocess_img_mask(image, mask, tuple(img_size), augment and is_train,
+                                                                eval_resize))
     dataset = dataset.map(operations=compose_map_func, input_columns=cell_dataset.column_names,
                           output_columns=cell_dataset.column_names, column_order=cell_dataset.column_names,
                           python_multiprocessing=python_multiprocessing,
