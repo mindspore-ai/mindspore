@@ -4512,7 +4512,7 @@ class MatrixInverse(PrimitiveWithInfer):
         ...                       [-1.7651395 , -1.7576632]],
         ...                      [[ 0.52412605,  1.9070215],
         ...                       [ 1.3384849 ,  1.4274558]]]), mindspore.float32)
-        >>> matrix_inverse = MatrixInverse(adjoint=False)
+        >>> matrix_inverse = ops.MatrixInverse(adjoint=False)
         >>> output = matrix_inverse(x)
         >>> print(output)
         [[[ 2.408438   -1.535711  ]
