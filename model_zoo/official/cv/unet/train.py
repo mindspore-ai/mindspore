@@ -80,7 +80,7 @@ def train_net(args_opt,
     else:
         criterion = CrossEntropyWithLogits()
     if 'dataset' in cfg and cfg['dataset'] == "Cell_nuclei":
-        repeat = 10
+        repeat = cfg['repeat']
         dataset_sink_mode = True
         per_print_times = 0
         train_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], repeat, batch_size,
@@ -90,7 +90,7 @@ def train_net(args_opt,
                                                    eval_resize=cfg["eval_resize"], split=0.8,
                                                    python_multiprocessing=False)
     else:
-        repeat = epochs
+        repeat = cfg['repeat']
         dataset_sink_mode = False
         per_print_times = 1
         train_dataset, valid_dataset = create_dataset(data_dir, repeat, batch_size, True, cross_valid_ind,

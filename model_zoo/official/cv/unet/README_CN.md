@@ -31,7 +31,7 @@
 
 ## U-Net说明
 
-U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)。在2015年ISBI细胞跟踪竞赛中，U-Net获得了许多最佳奖项。论文中提出了一种用于医学图像分割的网络模型和数据增强方法，有效利用标注数据来解决医学领域标注数据不足的问题。U型网络结构也用于提取上下文和位置信息。
+U-Net模型基于二维图像分割。实现方式见论文[UNet：Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)。在2015年ISBI细胞跟踪竞赛中，U-Net获得了许多最佳奖项。论文中提出了一种用于医学图像分割的网络模型和数据增强方法，有效利用标注数据来解决医学领域标注数据不足的问题。U型网络结构也用于提取上下文和位置信息。
 
 UNet++是U-Net的增强版本，使用了新的跨层链接方式和深层监督，可以用于语义分割和实例分割。
 
@@ -75,7 +75,8 @@ UNet++是U-Net的增强版本，使用了新的跨层链接方式和深层监督
 
 - 选择模型及数据集
 
-我们在`src/config.py`预备了一些网络及数据集的参数配置用于快速体验。也可以通过设置`'model'` 为 `'unet_medical'`,`'unet_nested'` 或者 `'unet_simple'` 来选择使用什么网络结构。我们支持`ISBI` 和 `Cell_nuclei`两种数据集处理，默认使用`ISBI`，可以设置`'dataset'` 为 `'Cell_nuclei'`使用`Cell_nuclei`数据集。
+1. 在`src/config.py`中选择相应的配置项赋给`cfg_unet`，现在支持unet和unet++，我们在`src/config.py`预备了一些网络及数据集的参数配置用于快速体验。
+2. 如果使用其他的参数，也可以参考`src/config.py`通过设置`'model'` 为 `'unet_nested'` 或者 `'unet_simple'` 来选择使用什么网络结构。我们支持`ISBI` 和 `Cell_nuclei`两种数据集处理，默认使用`ISBI`，可以设置`'dataset'` 为 `'Cell_nuclei'`使用`Cell_nuclei`数据集。
 
 - Ascend处理器环境运行
 
@@ -161,6 +162,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'name': 'Unet',                     # 模型名称
   'lr': 0.0001,                       # 学习率
   'epochs': 400,                      # 运行1p时的总训练轮次
+  'repeat': 400,                      # 每一遍epoch重复数据集的次数
   'distribute_epochs': 1600,          # 运行8p时的总训练轮次
   'batchsize': 16,                    # 训练批次大小
   'cross_valid_ind': 1,               # 交叉验证指标
@@ -182,6 +184,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'img_size': [96, 96],               # 输入图像大小
   'lr': 3e-4,                         # 学习率
   'epochs': 200,                      # 运行1p时的总训练轮次
+  'repeat': 10,                       # 每一遍epoch重复数据集的次数
   'distribute_epochs': 1600,          # 运行8p时的总训练轮次
   'batchsize': 16,                    # 训练批次大小
   'num_classes': 2,                   # 数据集类数
@@ -198,6 +201,8 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'transfer_training': False          # 是否使用迁移学习
   'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']  # 迁移学习过滤参数名
   ```
+
+注意: 实际运行时的每epoch的step数为 floor(epochs / repeat)。这是因为unet的数据集一般都比较小，每一遍epoch重复数据集用来避免在加batch时丢掉过多的图片。
 
 ## 训练过程
 
@@ -262,7 +267,7 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
   在运行以下命令之前，请检查用于评估的检查点路径。将检查点路径设置为绝对全路径，如"username/unet/ckpt_unet_medical_adam-48_600.ckpt"。
 
   ```shell
-  python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/checkpoint/ > eval.log 2>&1 &
+  python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/unet.ckpt/ > eval.log 2>&1 &
   OR
   bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
   ```
@@ -271,7 +276,7 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
 
   ```shell
   # grep "Cross valid dice coeff is:" eval.log
-  ============== Cross valid dice coeff is: {'dice_coeff': 0.9085704886070473}
+  ============== Cross valid dice coeff is: {'dice_coeff': 0.9111}
   ```
 
 ## 模型描述
@@ -285,11 +290,10 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
 | 模型版本 | U-Net |
 | 资源 | Ascend 910；CPU 2.60GHz，192核；内存 755GB；系统 Euler2.8  |
 | 上传日期 | 2020-9-15 |
-| MindSpore版本 | 1.0.0 |
+| MindSpore版本 | 1.2.0 |
 | 数据集             | ISBI                                                         |
 | 训练参数   | 1pc: epoch=400, total steps=600, batch_size = 16, lr=0.0001  |
-|                            | 8pc: epoch=1600, total steps=300, batch_size = 16, lr=0.0001 |
-| 优化器 | ADAM |
+| 优化器 | Adam |
 | 损失函数              | Softmax交叉熵                                         |
 | 输出 | 概率 |
 | 损失 | 0.22070312                                                   |
