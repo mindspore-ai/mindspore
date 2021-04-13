@@ -21,6 +21,7 @@ from mindspore import Tensor, export, load_checkpoint, load_param_into_net, cont
 from src.unet_medical.unet_model import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet as cfg
+from src.utils import UnetEval
 
 parser = argparse.ArgumentParser(description='unet export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
@@ -52,5 +53,6 @@ if __name__ == "__main__":
     param_dict = load_checkpoint(args.ckpt_file)
     # load the parameter into net
     load_param_into_net(net, param_dict)
+    net = UnetEval(net)
     input_data = Tensor(np.ones([args.batch_size, cfg["num_channels"], args.height, args.width]).astype(np.float32))
     export(net, input_data, file_name=args.file_name, file_format=args.file_format)
