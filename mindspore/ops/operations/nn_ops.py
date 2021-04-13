@@ -7116,91 +7116,12 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
 
 
 class BasicLSTMCell(PrimitiveWithInfer):
-    r"""
-    Applies the long short-term memory (LSTM) to the input.
-
-    .. math::
-        \begin{array}{ll} \\
-            i_t = \sigma(W_{ix} x_t + b_{ix} + W_{ih} h_{(t-1)} + b_{ih}) \\
-            f_t = \sigma(W_{fx} x_t + b_{fx} + W_{fh} h_{(t-1)} + b_{fh}) \\
-            \tilde{c}_t = \tanh(W_{cx} x_t + b_{cx} + W_{ch} h_{(t-1)} + b_{ch}) \\
-            o_t = \sigma(W_{ox} x_t + b_{ox} + W_{oh} h_{(t-1)} + b_{oh}) \\
-            c_t = f_t * c_{(t-1)} + i_t * \tilde{c}_t \\
-            h_t = o_t * \tanh(c_t) \\
-        \end{array}
-
-    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
-    are learnable weights between the output and the input in the formula. For instance,
-    :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
-    Details can be found in paper `LONG SHORT-TERM MEMORY
-    <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ and
-    `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
-    <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
-
-    Args:
-        keep_prob (float): If not 1.0, append `Dropout` layer on the outputs of each
-            LSTM layer except the last layer. Default 1.0. The range of dropout is [0.0, 1.0].
-        forget_bias (float): Add forget bias to forget gate biases in order to decrease former scale. Default: 1.0.
-        state_is_tuple (bool): If true, the state is a tuple of 2 tensors, containing h and c; If false, the state is
-            a tensor and it needs to be split first. Default: True.
-        activation (str): Activation. Default: "tanh". Only "tanh" is currently supported.
-
-    Inputs:
-        - **x** (Tensor) - Current words. Tensor of shape (`batch_size`, `input_size`).
-          The data type must be float16 or float32.
-        - **h** (Tensor) - Hidden state last moment. Tensor of shape (`batch_size`, `hidden_size`).
-          The data type must be float16 or float32.
-        - **c** (Tensor) - Cell state last moment. Tensor of shape (`batch_size`, `hidden_size`).
-          The data type must be float16 or float32.
-        - **w** (Tensor) - Weight. Tensor of shape (`input_size + hidden_size`, `4 x hidden_size`).
-          The data type must be float16 or float32.
-        - **b** (Tensor) - Bias. Tensor of shape (`4 x hidden_size`).
-          The data type must be the same as `c`.
-
-    Outputs:
-        - **ct** (Tensor) - Forward :math:`c_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
-          Has the same type with input `c`.
-        - **ht** (Tensor) - Cell output. Tensor of shape (`batch_size`, `hidden_size`). With data type of float16.
-        - **it** (Tensor) - Forward :math:`i_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
-          Has the same type with input `c`.
-        - **jt** (Tensor) - Forward :math:`j_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
-          Has the same type with input `c`.
-        - **ft** (Tensor) - Forward :math:`f_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
-          Has the same type with input `c`.
-        - **ot** (Tensor) - Forward :math:`o_t` cache at moment `t`. Tensor of shape (`batch_size`, `hidden_size`).
-          Has the same type with input `c`.
-        - **tanhct** (Tensor) - Forward :math:`tanh c_t` cache at moment `t`.
-          Tensor of shape (`batch_size`, `hidden_size`), has the same type with input `c`.
-
-    Raises:
-        TypeError: If dtype of `keep_prob` or `forget_bias` is not float.
-        TypeError: If `state_is_tuple` is not a bool.
-        TypeError: If `activation` is not a str.
-        TypeError: If `x`, `h`, `c`, `w` or `b` is not a Tensor.
-        TypeError: If dtype of `x`, `h`, `c` or `w` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> np.random.seed(0)
-        >>> x = Tensor(np.random.rand(1, 32).astype(np.float16))
-        >>> h = Tensor(np.random.rand(1, 2).astype(np.float16))
-        >>> c = Tensor(np.random.rand(1, 2).astype(np.float16))
-        >>> w = Tensor(np.random.rand(34, 8).astype(np.float16))
-        >>> b = Tensor(np.random.rand(8, ).astype(np.float16))
-        >>> lstm = ops.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh')
-        >>> output = lstm(x, h, c, w, b)
-        >>> print(output)
-        (Tensor(shape=[1, 2], dtype=Float16, value=
-        ([[7.6953e-01, 9.2432e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[7.6953e-01, 9.2432e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[0.0000e+00, 0.0000e+00]]))
     """
+    It's similar to operator DynamicRNN. BasicLSTMCell will be deprecated in the future.
+    Please use DynamicRNN instead.
+    """
+
+    # deprecate_new_name = "BasicLSTMCell"
 
     @prim_attr_register
     def __init__(self, keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'):
