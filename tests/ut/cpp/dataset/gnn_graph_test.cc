@@ -95,6 +95,21 @@ class MindDataTestGNNGraph : public UT::Common {
   }
 };
 
+TEST_F(MindDataTestGNNGraph, TestGetEdgesFromNodes) {
+  std::string path = "data/mindrecord/testGraphData/testdata";
+  GraphDataImpl graph(path, 1);
+  Status s = graph.Init();
+  EXPECT_TRUE(s.IsOk());
+
+  std::vector<std::pair<NodeIdType, NodeIdType>> src_dst_list = {{101, 201}, {103, 207}, {108, 208},
+                                                                 {110, 201}, {204, 105}, {208, 108}};
+  std::shared_ptr<Tensor> edges;
+  s = graph.GetEdgesFromNodes(src_dst_list, &edges);
+
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(edges->ToString() == "Tensor (shape: <6>, Type: int32)\n[1,9,17,19,31,37]");
+}
+
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
   GraphDataImpl graph(path, 1);

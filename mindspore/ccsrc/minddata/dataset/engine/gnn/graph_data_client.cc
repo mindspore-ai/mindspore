@@ -120,6 +120,25 @@ Status GraphDataClient::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_li
   return Status::OK();
 }
 
+Status GraphDataClient::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, NodeIdType>> &node_list,
+                                          std::shared_ptr<Tensor> *out) {
+#if !defined(_WIN32) && !defined(_WIN64)
+  GnnGraphDataRequestPb request;
+  GnnGraphDataResponsePb response;
+
+  request.set_op_name(GET_EDGES_FROM_NODES);
+
+  for (const auto &pair_node_id : node_list) {
+    IdPairPb *proto_pair(request.add_node_pair());
+    proto_pair->set_src_id(static_cast<google::protobuf::int32>(pair_node_id.first));
+    proto_pair->set_dst_id(static_cast<google::protobuf::int32>(pair_node_id.second));
+  }
+
+  RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#endif
+  return Status::OK();
+}
+
 Status GraphDataClient::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                                         std::shared_ptr<Tensor> *out) {
 #if !defined(_WIN32) && !defined(_WIN64)

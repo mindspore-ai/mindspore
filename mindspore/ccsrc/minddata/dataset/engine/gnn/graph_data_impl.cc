@@ -128,6 +128,30 @@ Status GraphDataImpl::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list
   return Status::OK();
 }
 
+Status GraphDataImpl::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, NodeIdType>> &node_list,
+                                        std::shared_ptr<Tensor> *out) {
+  if (node_list.empty()) {
+    RETURN_STATUS_UNEXPECTED("Input node list is empty.");
+  }
+
+  std::vector<std::vector<EdgeIdType>> edge_list;
+  edge_list.reserve(node_list.size());
+
+  for (const auto &node_id : node_list) {
+    std::shared_ptr<Node> src_node;
+    RETURN_IF_NOT_OK(GetNodeByNodeId(node_id.first, &src_node));
+
+    EdgeIdType *edge_id = nullptr;
+    src_node->GetEdgeByAdjNodeId(node_id.second, &edge_id);
+
+    std::vector<EdgeIdType> connection_edge = {*edge_id};
+    edge_list.emplace_back(std::move(connection_edge));
+  }
+
+  RETURN_IF_NOT_OK(CreateTensorByVector<EdgeIdType>(edge_list, DataType(DataType::DE_INT32), out));
+  return Status::OK();
+}
+
 Status GraphDataImpl::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                                       std::shared_ptr<Tensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");

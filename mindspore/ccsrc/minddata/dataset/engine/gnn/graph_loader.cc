@@ -61,10 +61,14 @@ Status GraphLoader::GetNodesAndEdges() {
       std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> p;
       RETURN_IF_NOT_OK(edge_ptr->GetNode(&p));
       auto src_itr = n_id_map->find(p.first->id()), dst_itr = n_id_map->find(p.second->id());
+
       CHECK_FAIL_RETURN_UNEXPECTED(src_itr != n_id_map->end(), "invalid src_id:" + std::to_string(src_itr->first));
       CHECK_FAIL_RETURN_UNEXPECTED(dst_itr != n_id_map->end(), "invalid src_id:" + std::to_string(dst_itr->first));
+
       RETURN_IF_NOT_OK(edge_ptr->SetNode({src_itr->second, dst_itr->second}));
       RETURN_IF_NOT_OK(src_itr->second->AddNeighbor(dst_itr->second, edge_ptr->weight()));
+      RETURN_IF_NOT_OK(src_itr->second->AddAdjacent(dst_itr->second, edge_ptr));
+
       e_id_map->insert({edge_ptr->id(), edge_ptr});  // add edge to edge_id_map_
       graph_impl_->edge_type_map_[edge_ptr->type()].push_back(edge_ptr->id());
       dq.pop_front();

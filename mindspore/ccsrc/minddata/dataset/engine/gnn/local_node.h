@@ -65,6 +65,18 @@ class LocalNode : public Node {
   // @return Status The status code returned
   Status AddNeighbor(const std::shared_ptr<Node> &node, const WeightType &) override;
 
+  // Add adjacent node and relative edge for source node
+  // @param std::shared_ptr<Node> node - the node to be inserted into adjacent table
+  // @param std::shared_ptr<Edge> edge - the edge related to the adjacent node of source node
+  // @return Status - The status code that indicate the result of function execution
+  Status AddAdjacent(const std::shared_ptr<Node> &node, const std::shared_ptr<Edge> &edge) override;
+
+  // Get relative connecting edge of adjacent node by node id
+  // @param NodeIdType - The id of adjacent node to be processed
+  // @param std::shared_ptr<EdgeIdType> - The id of relative connecting edge
+  // @return Status - The status code that indicate the result of function execution
+  Status GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType **out_edge_id) override;
+
   // Update feature of node
   // @param std::shared_ptr<Feature> feature -
   // @return Status The status code returned
@@ -81,6 +93,7 @@ class LocalNode : public Node {
   std::mt19937 rnd_;
   std::unordered_map<FeatureType, std::shared_ptr<Feature>> features_;
   std::unordered_map<NodeType, std::pair<std::vector<std::shared_ptr<Node>>, std::vector<WeightType>>> neighbor_nodes_;
+  std::unordered_map<NodeIdType, EdgeIdType> adjacent_nodes_;
 };
 }  // namespace gnn
 }  // namespace dataset
