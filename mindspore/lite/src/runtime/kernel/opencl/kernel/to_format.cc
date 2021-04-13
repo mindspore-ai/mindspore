@@ -41,8 +41,6 @@ int ToFormatOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Unsupported data type " << data_type;
     return RET_ERROR;
   }
-  auto parameter = reinterpret_cast<OpenCLToFormatParameter *>(op_parameter_);
-  out_mem_type_ = parameter->out_mem_type;
   return RET_OK;
 }
 
@@ -102,8 +100,10 @@ int ToFormatOpenCLKernel::Run() {
 }
 
 int ToFormatOpenCLKernel::InferShape() {
-  out_tensors_[0]->set_shape(in_tensors_[0]->shape());
-  op_parameter_->infer_flag_ = false;
+  if (!op_parameter_->infer_flag_) {
+    op_parameter_->infer_flag_ = true;
+    out_tensors_.front()->set_shape(in_tensors_.front()->shape());
+  }
   return RET_OK;
 }
 

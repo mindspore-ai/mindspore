@@ -100,6 +100,11 @@ void OpenCLSubGraph::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_t
       iv->set_out_tensors(tensors);
       in_convert_op->AddInKernel(iv);
     }
+    if (in_convert_op->in_kernels().empty()) {
+      in_convert_op->op_parameter()->infer_flag_ = true;
+    } else {
+      in_convert_op->op_parameter()->infer_flag_ = in_opencl_op->in_kernels().front()->op_parameter()->infer_flag_;
+    }
   }
 }
 
@@ -140,7 +145,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
     parameter->op_parameter.type_ = PRIM_TO_FORMAT;
-    parameter->op_parameter.infer_flag_ = false;
+    parameter->op_parameter.infer_flag_ = false;  // infer_flag_ is set in ReplaceOutTensorAndKernelToConvert()
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
@@ -152,7 +157,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
         {new_tensor}, {in_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
     }
     MS_ASSERT(in_convert_op);
-    if (in_convert_op == nullptr) {
+    if (in_convert_op == nullptr || reinterpret_cast<ToFormatOpenCLKernel *>(in_convert_op)->CheckSpecs() != RET_OK) {
       MS_LOG(ERROR) << "OpenCLSubGraph create op failed!";
       delete new_tensor;
       new_tensor = nullptr;
