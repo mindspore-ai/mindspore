@@ -3025,7 +3025,7 @@ class L2Normalize(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> l2_normalize = ops.L2Normalize()
