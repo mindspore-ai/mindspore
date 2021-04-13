@@ -410,6 +410,10 @@ int Benchmark::MarkPerformance() {
   uint64_t time_avg = 0;
 
   for (int i = 0; i < flags_->loop_count_; i++) {
+    auto inputs = session_->GetInputs();
+    for (auto tensor : inputs) {
+      tensor->MutableData();  // prepare data
+    }
     session_->BindThread(true);
     auto start = GetTimeUs();
     auto status = session_->RunGraph(before_call_back_, after_call_back_);
