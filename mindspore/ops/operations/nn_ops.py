@@ -2350,7 +2350,17 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         ``GPU`` ``CPU``
 
     Examples:
-        Please refer to :class:`mindspore.ops.SparseSoftmaxCrossEntropyWithLogits`
+        >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
+        >>> labels = Tensor([0, 1], mindspore.int32)
+        >>> sparse_softmax_cross = ops.SparseSoftmaxCrossEntropyWithLogits()
+        >>> loss = sparse_softmax_cross(logits, labels)
+        >>> print(loss)
+        3.4878292
+        >>> sparse_softmax_cross_grad = ops.SparseSoftmaxCrossEntropyWithLogits(is_grad=True)
+        >>> loss_grad = sparse_softmax_cross_grad(logits, labels)
+        >>> print(loss_grad)
+        [[-0.48415753  0.04306427  0.00582811  0.11706084  0.3182043 ]
+         [ 0.04007946 -0.4852556   0.04007946  0.2961494   0.10894729]]
     """
 
     @prim_attr_register
