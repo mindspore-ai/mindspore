@@ -1145,7 +1145,7 @@ class BatchNorm(PrimitiveWithInfer):
         TypeError: If dtype of `input_x`, `scale` or `mean` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
@@ -3533,7 +3533,7 @@ class PReLU(PrimitiveWithInfer):
         ValueError: If length of shape of `weight` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
