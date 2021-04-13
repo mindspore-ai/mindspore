@@ -228,6 +228,10 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
       return Status(StatusCode::kMDDuplicateKey, __LINE__, __FILE__,
                     "Not an error and we should bypass the build phase");
     }
+    if (async_buffer_stream_) {
+      // Reset the async buffer stream to its initial state. Any stale status and data would get cleaned up.
+      RETURN_IF_NOT_OK(async_buffer_stream_->Reset());
+    }
   } else {
     cinfo_.set_crc(tree_crc);  // It's really a new cache we're creating so save our crc in the client
     // Now execute the cache create request using this identifier and other configs
@@ -392,7 +396,7 @@ bool CacheClient::CacheMissKeys::KeyIsCacheMiss(row_id_type key) {
   }
 }
 
-CacheClient::AsyncBufferStream::AsyncBufferStream() : cc_(nullptr), offset_addr_(-1), cur_(0), next_addr_(0) {}
+CacheClient::AsyncBufferStream::AsyncBufferStream() : cc_(nullptr), offset_addr_(-1), cur_(0) {}
 
 CacheClient::AsyncBufferStream::~AsyncBufferStream() {
   (void)vg_.ServiceStop();
@@ -475,8 +479,16 @@ Status CacheClient::AsyncBufferStream::SyncFlush(AsyncFlushFlag flag) {
       // If we are asked to wait, say this is the final flush, just wait for its completion.
       bool blocking = (flag & AsyncFlushFlag::kFlushBlocking) == AsyncFlushFlag::kFlushBlocking;
       if (blocking) {
-        flush_rc_ = asyncWriter->rq->Wait();
-        asyncWriter->rq.reset();
+        // Make sure we are done with all the buffers
+        for (auto i = 0; i < kNumAsyncBuffer; ++i) {
+          if (buf_arr_[i].rq) {
+            Status rc = buf_arr_[i].rq->Wait();
+            if (rc.IsError()) {
+              flush_rc_ = rc;
+            }
+            buf_arr_[i].rq.reset();
+          }
+        }
       }
       // Prepare for the next buffer.
       cur_ = (cur_ + 1) % kNumAsyncBuffer;
@@ -505,6 +517,18 @@ Status CacheClient::AsyncBufferStream::AsyncWriter::Write(int64_t sz, const std:
     bytes_avail_ -= write_sz;
   }
   ++num_ele_;
+  return Status::OK();
+}
+
+Status CacheClient::AsyncBufferStream::Reset() {
+  // Clean up previous running state to be prepared for a new run.
+  cur_ = 0;
+  flush_rc_ = Status::OK();
+  for (auto i = 0; i < kNumAsyncBuffer; ++i) {
+    buf_arr_[i].bytes_avail_ = kAsyncBufferSize;
+    buf_arr_[i].num_ele_ = 0;
+    buf_arr_[i].rq.reset();
+  }
   return Status::OK();
 }
 }  // namespace dataset

@@ -342,6 +342,9 @@ class CacheClient {
     /// \brief Release the shared memory during shutdown
     /// /note but needs comm layer to be alive.
     Status ReleaseBuffer();
+    /// \brief Reset the AsyncBufferStream into its initial state
+    /// \return Status object
+    Status Reset();
 
    private:
     Status flush_rc_;
@@ -351,7 +354,6 @@ class CacheClient {
     int64_t offset_addr_;
     AsyncWriter buf_arr_[kNumAsyncBuffer];
     int32_t cur_;
-    std::atomic<int64_t> next_addr_;
   };
   std::shared_ptr<AsyncBufferStream> async_buffer_stream_;
 

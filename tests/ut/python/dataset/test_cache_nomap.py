@@ -1194,6 +1194,58 @@ def test_cache_nomap_server_stop():
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_interrupt_and_rerun():
+    """
+    Test interrupt a running pipeline and then re-use the same cache to run another pipeline
+
+       Cache
+         |
+     RandomDataset
+    """
+
+    logger.info("Test cache nomap interrupt and rerun")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    schema = ds.Schema()
+    schema.add_column('image', de_type=mstype.uint8,
+                      shape=[640, 480, 3])  # 921600 bytes (a bit less than 1 MB per image)
+    schema.add_column('label', de_type=mstype.uint8, shape=[1])
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # User-created sampler here
+    ds1 = ds.RandomDataset(schema=schema, total_rows=10000, num_parallel_workers=4, cache=some_cache)
+    iter1 = ds1.create_dict_iterator()
+
+    num_iter = 0
+    with pytest.raises(AttributeError) as e:
+        for _ in iter1:
+            num_iter += 1
+            if num_iter == 10:
+                iter1.stop()
+    assert "'DictIterator' object has no attribute '_runtime_context'" in str(e.value)
+
+    num_epoch = 2
+    iter2 = ds1.create_dict_iterator(num_epochs=num_epoch)
+    epoch_count = 0
+    for _ in range(num_epoch):
+        num_iter = 0
+        for _ in iter2:
+            num_iter += 1
+        logger.info("Number of data in ds1: {} ".format(num_iter))
+        assert num_iter == 10000
+        epoch_count += 1
+
+    cache_stat = some_cache.GetStat()
+    assert cache_stat.num_mem_cached == 10000
+
+    logger.info("test_cache_nomap_interrupt_and_rerun Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_epoch_ctrl1():
     """
     Test using two-loops method to run several epochs
@@ -2260,6 +2312,47 @@ def test_cache_nomap_pyfunc_function():
             num_iter += 1
     assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
     logger.info("test_cache_nomap_pyfunc_function Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_all_rows_cached():
+    """
+    Make sure all rows are cached before we switch to the fetching phase
+
+       Cache
+         |
+     RandomDataset
+    """
+
+    logger.info("Test cache nomap all rows cached")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    schema = ds.Schema()
+    schema.add_column('image', de_type=mstype.uint8,
+                      shape=[450, 450, 3])
+    schema.add_column('label', de_type=mstype.uint8, shape=[1])
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # easier to reproduce the problem with 271 total rows
+    num_total_rows = 271
+    # User-created sampler here
+    ds1 = ds.RandomDataset(schema=schema, total_rows=num_total_rows, num_parallel_workers=4, cache=some_cache)
+    iter1 = ds1.create_dict_iterator()
+
+    num_iter = 0
+    for _ in iter1:
+        num_iter += 1
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == num_total_rows
+
+    cache_stat = some_cache.GetStat()
+    assert cache_stat.num_mem_cached == num_total_rows
+
+    logger.info("test_cache_nomap_all_rows_cached Ended.\n")
 
 
 if __name__ == '__main__':
