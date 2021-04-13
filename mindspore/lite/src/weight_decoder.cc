@@ -16,12 +16,11 @@
 #include <cmath>
 #include <string>
 #include <memory>
-#include "src/dequant.h"
+#include "src/weight_decoder.h"
 #include "src/huffman_decode.h"
-#include "nnacl/matmul_parameter.h"
 
 namespace mindspore::lite {
-int DequantUtil::DequantWeight(lite::Tensor *input_tensor, bool channel_first, TypeId dst_data_type) {
+int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first, TypeId dst_data_type) {
   MS_ASSERT(input_tensor != nullptr);
   if (input_tensor->data_type() != kNumberTypeInt8 && input_tensor->data_type() != kNumberTypeInt16) {
     MS_LOG(ERROR) << "Conv weight input type error." << input_tensor->data_type();
@@ -69,7 +68,7 @@ int DequantUtil::DequantWeight(lite::Tensor *input_tensor, bool channel_first, T
   return RET_OK;
 }
 
-int DequantUtil::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
+int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
   if (!dst_tensor->IsConst() || !src_tensor.enableHuffmanCode()) {
     return RET_NO_CHANGE;
@@ -93,7 +92,7 @@ int DequantUtil::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tenso
   return RET_OK;
 }
 
-int DequantUtil::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
+int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
   auto quant_params = src_tensor.quantParams();
   if (quant_params == nullptr || quant_params->size() == 0) {
@@ -127,26 +126,39 @@ int DequantUtil::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst
   }
 }
 
-Tensor *DequantUtil::DequantTensor(Tensor *tensor, TypeId data_type, bool channel_first, TypeId dst_data_type) {
+int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors,
+                               TypeId dst_data_type) {
+  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT) {
+    return RET_OK;
+  }
+  int index = 0;
+  for (auto &tensor : in_tensors) {
+    auto channel_first = IsChannelFirst(index++, op_parameter);
+    auto ret = WeightDecoder::DequantTensor(tensor, channel_first, dst_data_type);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(DEBUG) << "Dequant tensor failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int WeightDecoder::DequantTensor(Tensor *tensor, bool channel_first, TypeId dst_data_type) {
   MS_ASSERT(tensor != nullptr);
-  Tensor *restore_tensor = nullptr;
-  if (!tensor->IsConst() || !(data_type == TypeId::kNumberTypeFloat32 || data_type == TypeId::kNumberTypeFloat16)) {
-    return nullptr;
+  if (!tensor->IsConst() ||
+      !(dst_data_type == TypeId::kNumberTypeFloat32 || dst_data_type == TypeId::kNumberTypeFloat16)) {
+    return RET_NO_CHANGE;
   }
-  auto restore_type = tensor->data_type();
   bool need_dequant = !tensor->quant_params().empty() && tensor->quant_params().front().inited &&
-                      (restore_type == kNumberTypeInt8 || restore_type == kNumberTypeInt16);
+                      (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeInt16);
   if (!need_dequant) {
-    return nullptr;
+    return RET_NO_CHANGE;
   }
-  restore_tensor = Tensor::CopyTensor(*tensor, false);
-  restore_tensor->set_data(tensor->data_c());
-  restore_tensor->set_own_data(tensor->own_data());
-  auto ret = DequantUtil::DequantWeight(tensor, channel_first, dst_data_type);
+  auto ret = WeightDecoder::DequantWeight(tensor, channel_first, dst_data_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Dequant data failed: " << ret;
-    return nullptr;
+    return ret;
   }
-  return restore_tensor;
+  return RET_OK;
 }
 }  // namespace mindspore::lite

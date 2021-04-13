@@ -67,7 +67,7 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
       in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
     if (in_tensors_.at(2)->data_type() != kNumberTypeFloat16) {
-      MS_LOG(ERROR) << "deconv fp16 kernel require fp16 bias";
+      MS_LOG(ERROR) << "DeConv fp16 only support fp16 weight";
       return RET_ERROR;
     }
     if (bias_size != in_tensors_.at(2)->Size()) {

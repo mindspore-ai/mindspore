@@ -22,19 +22,22 @@
 #include <vector>
 #include <queue>
 #include <cmath>
+#include "nnacl/matmul_parameter.h"
 #include "src/lite_kernel.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 
 namespace mindspore::lite {
-class DequantUtil {
+class WeightDecoder {
  public:
   static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
   static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
-  static Tensor *DequantTensor(Tensor *tensor, TypeId data_type, bool channel_first = true,
-                               TypeId dst_data_type = kNumberTypeFloat32);
+  static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
+
+ private:
+  static int DequantTensor(Tensor *tensor, bool channel_first = true, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename ST, typename DT = float>
   static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
@@ -102,22 +105,19 @@ class DequantUtil {
     return dequant_datas;
   }
 
-  template <typename T1, typename T2>
-  static void UnpackUtil(const T1 *weight_data, int pack_size, int origin_bit, void *unpack_int_data) {
-    if (weight_data == nullptr || unpack_int_data == nullptr) {
-      MS_LOG(ERROR) << "data is nullptr";
-      return;
+  inline static bool IsChannelFirst(int index, const OpParameter *op_parameter) {
+    MS_ASSERT(op_parameter != nullptr);
+    if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
+      const auto *param = reinterpret_cast<const MatMulParameter *>(op_parameter);
+      if (index == 0) {
+        return !(param->a_transpose_);
+      } else if (index == 1) {
+        return param->b_transpose_;
+      }
     }
-    std::queue<bool> unpack_bit_data;
-    size_t count = 0;
-    for (int i = 0; i < pack_size; ++i) {
-      T2 pack_data = (static_cast<const T2 *>(static_cast<const void *>(weight_data)))[i];
-      bool is_last = i == pack_size - 1;
-      UnPackData<T1, T2>(origin_bit, pack_data, &unpack_bit_data, unpack_int_data, &count, is_last);
-    }
+    return true;
   }
 
- private:
   static int DequantWeight(lite::Tensor *input_tensor, bool channel_first, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename T1, typename T2>

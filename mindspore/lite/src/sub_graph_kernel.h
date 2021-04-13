@@ -178,6 +178,19 @@ class CpuFp16SubGraph : public CpuSubGraph {
   int PreProcess() override;
   int Run() override { return CpuSubGraph::Run(); }
   int Run(const KernelCallBack &before, const KernelCallBack &after) override {
+#ifdef Debug
+    for (const auto *node : nodes_) {
+      if (node->Type() == schema::PrimitiveType_PartialFusion) {
+        continue;
+      }
+      for (const auto *in_tensor : node->in_tensors()) {
+        if (in_tensor->data_type() == kNumberTypeFloat32) {
+          MS_LOG(ERROR) << "FP16 kernel can not accept float32 input";
+          return lite::RET_ERROR;
+        }
+      }
+    }
+#endif
     return CpuSubGraph::Run(before, after);
   };
   int PostProcess() override;

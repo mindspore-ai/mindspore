@@ -61,7 +61,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dequant.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
         )
 if(DEFINED ARCHS)

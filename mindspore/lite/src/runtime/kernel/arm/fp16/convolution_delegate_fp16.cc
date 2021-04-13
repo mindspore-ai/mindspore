@@ -247,6 +247,10 @@ kernel::LiteKernel *CreateDelegateConvFp16(const std::vector<lite::Tensor *> &in
                                            const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                            const InnerContext *ctx) {
   auto weight_data_type = inputs.at(1)->data_type();
+  if (weight_data_type != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Convfp16 only support fp16 weight";
+    return nullptr;
+  }
   TypeId bias_data_type = kTypeUnknown;
   if (inputs.size() == 3) {
     bias_data_type = inputs.at(2)->data_type();
