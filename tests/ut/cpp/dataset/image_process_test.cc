@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/types_c.h>
+#include <fstream>
 
 #include "common/common.h"
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/types_c.h>
-
-#include <fstream>
+#include "minddata/dataset/kernels/image/resize_cubic_op.h"
 
 using namespace mindspore::dataset;
 class MindDataImageProcess : public UT::Common {
@@ -182,6 +182,24 @@ TEST_F(MindDataImageProcess, test3C) {
 
   cv::Mat dst_image(lite_norm_mat_cut.height_, lite_norm_mat_cut.width_, CV_32FC3, lite_norm_mat_cut.data_ptr_);
   CompareMat(cv_image, lite_norm_mat_cut);
+}
+
+TEST_F(MindDataImageProcess, testCubic3C) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat rgb_mat;
+  cv::cvtColor(image, rgb_mat, CV_BGR2RGB);
+
+  LiteMat imIn, imOut;
+  int32_t output_width = 24;
+  int32_t output_height = 24;
+  imIn.Init(rgb_mat.cols, rgb_mat.rows, rgb_mat.channels(), rgb_mat.data, LDataType::UINT8);
+  imOut.Init(output_width, output_height, 3, LDataType::UINT8);
+
+  bool ret = ResizeCubic(imIn, imOut, output_width, output_height);
+
+  ASSERT_TRUE(ret == true);
+  return;
 }
 
 bool ReadYUV(const char *filename, int w, int h, uint8_t **data) {

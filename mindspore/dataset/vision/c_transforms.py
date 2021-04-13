@@ -84,7 +84,8 @@ DE_C_IMAGE_BATCH_FORMAT = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
                    Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC,
-                   Inter.AREA: cde.InterpolationMode.DE_INTER_AREA}
+                   Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
+                   Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
 
 
 def parse_padding(padding):
@@ -930,6 +931,10 @@ class RandomResizedCrop(ImageTensorOperation):
 
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
+            - Inter.AREA, means interpolation method is pixel area interpolation.
+
+            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow.
+
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop_area (default=10). If exceeded, fall back to use center_crop instead.
 
@@ -1313,6 +1318,8 @@ class Resize(ImageTensorOperation):
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
             - Inter.AREA, means interpolation method is pixel area interpolation.
+
+            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow.
 
     Examples:
         >>> from mindspore.dataset.vision import Inter

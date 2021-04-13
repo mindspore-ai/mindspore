@@ -21,11 +21,12 @@
 #include <utility>
 #include <opencv2/imgcodecs.hpp>
 #include "utils/ms_utils.h"
-#include "minddata/dataset/kernels/image/math_utils.h"
-#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/kernels/image/math_utils.h"
+#include "minddata/dataset/kernels/image/resize_cubic_op.h"
 #include "minddata/dataset/util/random.h"
 
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
@@ -108,6 +109,19 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
   if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
     RETURN_STATUS_UNEXPECTED("Resize: input tensor is not in shape of <H,W,C> or <H,W>");
+  }
+
+  if (mode == InterpolationMode::kCubicPil) {
+    LiteMat imIn, imOut;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({output_height, output_width, 3});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    imOut.Init(output_width, output_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
+    imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[2], input_cv->mat().data, LDataType::UINT8);
+    ResizeCubic(imIn, imOut, output_width, output_height);
+    *output = output_tensor;
+    return Status::OK();
   }
 
   cv::Mat in_image = input_cv->mat();
@@ -569,6 +583,24 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     cv::Rect roi(x, y, crop_width, crop_height);
     auto cv_mode = GetCVInterpolationMode(mode);
     cv::Mat cv_in = input_cv->mat();
+
+    if (mode == InterpolationMode::kCubicPil) {
+      cv::Mat input_roi = cv_in(roi);
+      std::shared_ptr<CVTensor> input_image;
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_roi, &input_image));
+      LiteMat imIn, imOut;
+      std::shared_ptr<Tensor> output_tensor;
+      TensorShape new_shape = TensorShape({target_height, target_width, 3});
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
+      uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+      imOut.Init(target_width, target_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
+      imIn.Init(input_image->shape()[1], input_image->shape()[0], input_image->shape()[2], input_image->mat().data,
+                LDataType::UINT8);
+      ResizeCubic(imIn, imOut, target_width, target_height);
+      *output = output_tensor;
+      return Status::OK();
+    }
+
     TensorShape shape{target_height, target_width};
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() == 3) shape = shape.AppendDim(num_channels);
