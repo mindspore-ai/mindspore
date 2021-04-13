@@ -22,8 +22,8 @@
 
 namespace mindspore::opt {
 namespace {
-constexpr size_t InputDoubleNum = 2;
-constexpr size_t InputTripleNum = 3;
+constexpr size_t kInputDoubleNum = 2;
+constexpr size_t kInputTripleNum = 3;
 void FetchCNodeFromMakeTuple(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *inputs) {
   MS_ASSERT(anf_node != nullptr);
   MS_ASSERT(inputs != nullptr);
@@ -45,14 +45,14 @@ int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraph
   }
   auto cnode = anf_node->cast<CNodePtr>();
   if (CheckPrimitiveType(anf_node, kPrimIdentity)) {
-    if (cnode->size() != InputDoubleNum) {
+    if (cnode->size() != kInputDoubleNum) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
       remove_cnode_.insert(anf_node);
       return lite::RET_NO_CHANGE;
     }
   }
   if (CheckPrimitiveType(anf_node, prim::kPrimDepend)) {
-    if (cnode->size() != InputDoubleNum) {
+    if (cnode->size() != kInputDoubleNum) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
       remove_cnode_.insert(anf_node);
       return lite::RET_NO_CHANGE;
@@ -106,7 +106,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  if (cnode->inputs().size() != InputTripleNum) {
+  if (cnode->inputs().size() != kInputTripleNum) {
     MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
     return RET_ERROR;
   }
@@ -133,6 +133,45 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
   return lite::RET_OK;
 }
 
+int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
+  MS_ASSERT(anf_node != nullptr);
+  MS_ASSERT(manager != nullptr);
+  if (!utils::isa<CNodePtr>(anf_node)) {
+    MS_LOG(DEBUG) << "anf node is node a cnode.";
+    return lite::RET_NO_CHANGE;
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode->size() > kInputDoubleNum) {
+    MS_LOG(ERROR) << "dropout input invalid.";
+    return lite::RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTuplePtr>(anf_node->abstract())) {
+    MS_LOG(DEBUG) << "dropout output size is one.";
+    manager->Replace(anf_node, cnode->input(1));
+  } else {
+    auto node_users = manager->node_users()[anf_node];
+    for (auto &node_user : node_users) {
+      auto node = node_user.first;
+      if (!CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+        MS_LOG(ERROR) << "dropout out node is invalid.";
+        return lite::RET_ERROR;
+      }
+      auto get_index_node = node->cast<CNodePtr>()->input(kInputDoubleNum)->cast<ValueNodePtr>();
+      if (get_index_node == nullptr) {
+        MS_LOG(ERROR) << "tuple get item node is invalid.";
+        return lite::RET_ERROR;
+      }
+      auto get_index = CastToInt(get_index_node->value()).front();
+      if (get_index > 0 && !manager->node_users()[node].empty()) {
+        MS_LOG(ERROR) << "dropout's second output is useful.";
+        return lite::RET_ERROR;
+      }
+      manager->Replace(node, cnode->input(1));
+    }
+  }
+  return lite::RET_OK;
+}
+
 bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
@@ -154,6 +193,9 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     }
     if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       status = ReplaceTupleGetItem(node, manager);
+    }
+    if (CheckPrimitiveType(node, prim::kPrimDropout)) {
+      status = RemoveDropoutOp(node, manager);
     }
     if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(1));

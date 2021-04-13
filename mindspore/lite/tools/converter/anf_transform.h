@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,19 +39,19 @@ class AnfTransform {
  private:
   std::unique_ptr<quant::Quantizer> m_quantizer_ = nullptr;
 
-  FuncGraphPtr TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
+  FuncGraphPtr TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
-  static int AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+  static int RunFusionPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  static int AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+  static int RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  static int AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+  static int RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  static int AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+  static int RunConstFoldPass(const FuncGraphPtr &olde_graph, const converter::Flags *config);
 
   static int RunPrecedingPass(const FuncGraphPtr &old_graph, const converter::Flags &config);
 
-  static int AddConv1DAdjustPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+  static int RunConv1DAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   static int RunAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
@@ -61,7 +61,7 @@ class AnfTransform {
 
   static int RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config, const FuncGraphPtr &new_graph);
+  int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   void GetAllFuncGraph(const FuncGraphPtr &func_graph);
 

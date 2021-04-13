@@ -68,10 +68,12 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
         (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param())) {
       continue;
     }
-    matmul_cnode->add_input(bias_node);
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);
     matmul_cnode->set_fullname_with_scope(node->fullname_with_scope());
+    auto tr = manager->Transact();
+    tr.AddEdge(matmul_cnode, bias_node);
+    tr.Commit();
     manager->Replace(node, matmul_cnode);
   }
   return false;

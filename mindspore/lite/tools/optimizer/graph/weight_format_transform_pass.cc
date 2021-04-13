@@ -17,7 +17,6 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
-#include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "ops/transpose.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
@@ -34,7 +33,6 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kFirstInputIndex = 1;
 constexpr size_t kConvWeightIndex = 2;
-const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
 lite::STATUS GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm) {
   MS_ASSERT(perm != nullptr);
   auto src_format_str = std::string(schema::EnumNameFormat(src_format));

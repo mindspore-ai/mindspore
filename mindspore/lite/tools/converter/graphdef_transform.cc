@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,14 +94,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto old_nodes = GetGraphNodes();
 
     Optimizer format_trans_optimizer;
-    auto format_trans_pass = new (std::nothrow) FormatTransPass();
-    if (format_trans_pass == nullptr) {
-      MS_LOG(ERROR) << "new formatTransPass failed";
-      return RET_MEMORY_FAILED;
-    }
-    format_trans_pass->set_quant_type(ctx.quantType);
-    format_trans_pass->set_fmk_type(ctx.fmk);
-    format_trans_optimizer.AddPass(format_trans_pass);
     format_trans_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     format_trans_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
     if (ctx.fmk != converter::FmkType_TF) {
@@ -117,11 +109,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer format_trans_optimizer;
-    format_trans_optimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
-    format_trans_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    format_trans_optimizer.AddPass(new (std::nothrow) TransOpRemovePass());
-    format_trans_optimizer.AddPass(new (std::nothrow) TransOpInsertPass());
-    format_trans_optimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     format_trans_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     format_trans_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     status = format_trans_optimizer.Run(graph_defT_);

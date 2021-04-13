@@ -25,6 +25,7 @@
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
 #include "backend/optimizer/common/pattern_engine.h"
+#include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_context.h"
 
@@ -36,6 +37,7 @@ namespace mindspore {
 namespace opt {
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
+const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
 constexpr auto kWeightFormat = "weight_format";
 std::vector<int> CastToInt(const ValuePtr &value);
 
@@ -145,6 +147,11 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
 
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
                                           const std::string &node_name);
+
+CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &perm,
+                          const std::string &cnode_name);
+
+CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input, size_t index);
 
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {

@@ -30,7 +30,7 @@ class Conv1DWeightExpandingPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  lite::STATUS ExpandFilterShape(const tensor::TensorPtr &tensor, const schema::Format &format);
+  lite::STATUS ExpandFilterShape(const AnfNodePtr &weight_node, const schema::Format &format);
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV1D_WEIGHT_EXPANDING_PASS_H_

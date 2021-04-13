@@ -49,24 +49,23 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
   ret = infer_shape_func(static_cast<TensorC **>(in_tensors.data()), in_tensors.size(), out_tensors.data(),
                          out_tensors.size(), parameter);
 
-  if (ret == RET_OK) {
-    for (size_t i = 0; i < out_tensors.size(); i++) {
-      if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
-        auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
-        auto *tensor_list = reinterpret_cast<TensorList *>(outputs->at(i));
-        tensor_list->set_shape({static_cast<int>(tensor_list_c->element_num_)});
-        auto tensor_shape = std::vector<std::vector<int>>(
-          tensor_list_c->element_num_,
-          std::vector<int>(tensor_list_c->element_shape_,
-                           tensor_list_c->element_shape_ + tensor_list_c->element_shape_size_));
-        tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
-        TensorListC2TensorList(tensor_list_c, tensor_list);
-      } else {
-        TensorC2Tensor(out_tensors.at(i), outputs->at(i));
-      }
+  for (size_t i = 0; i < out_tensors.size(); i++) {
+    if (out_tensors.at(i) == nullptr) {
+      continue;
     }
-  } else {
-    SetOutputTensorAttr(out_tensors, outputs);
+    if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
+      auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
+      auto *tensor_list = reinterpret_cast<TensorList *>(outputs->at(i));
+      tensor_list->set_shape({static_cast<int>(tensor_list_c->element_num_)});
+      auto tensor_shape = std::vector<std::vector<int>>(
+        tensor_list_c->element_num_,
+        std::vector<int>(tensor_list_c->element_shape_,
+                         tensor_list_c->element_shape_ + tensor_list_c->element_shape_size_));
+      tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
+      TensorListC2TensorList(tensor_list_c, tensor_list);
+    } else {
+      TensorC2Tensor(out_tensors.at(i), outputs->at(i));
+    }
   }
 
   FreeAllTensorC(&in_tensors);
