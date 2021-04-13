@@ -669,7 +669,9 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
     MS_LOG(ERROR) << "schema tensor format is wrong, " << schema_tensor->format;
     return RET_ERROR;
   }
-  if (primitive_c->GetAttr(opt::kWeightFormat) != nullptr) {
+
+  // attr weightFormat is only used by conv-like ops' second input
+  if (output_cnode->inputIndex.size() == 1 && primitive_c->GetAttr(opt::kWeightFormat) != nullptr) {
     schema_tensor->format = static_cast<schema::Format>(GetValue<int64_t>(primitive_c->GetAttr(opt::kWeightFormat)));
   }
   schema_tensor->name = param_node->name();
