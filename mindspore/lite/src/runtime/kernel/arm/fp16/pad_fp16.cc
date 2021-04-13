@@ -35,6 +35,34 @@ int PadFp16CPUKernel::RunImpl(int task_id) {
 }
 
 int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
+  auto input = in_tensors_.at(0);
+  auto output = out_tensors_.at(0);
+  auto input_data = reinterpret_cast<float16_t *>(input->data_c());
+  auto output_data = reinterpret_cast<float16_t *>(output->data_c());
+
+  /* Fast Mirror pad */
+  if (mirror_pad_block_.size() != 0) {
+    /* copy center part */
+    PadFp16(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+
+    /* calculate region part */
+    for (size_t i = task_id; i < mirror_pad_block_.size(); i += context_->thread_num_) {
+      auto block = mirror_pad_block_[i];
+
+      for (int a = 0; a < block.size_[0]; a++) {
+        int out_a_index = block.out_offset_ + a * block.out_stride_[0];
+        for (int b = 0; b < block.size_[1]; b++) {
+          int out_b_index = out_a_index + b * block.out_stride_[1];
+          for (int c = 0; c < block.size_[2]; ++c) {
+            int output_index = out_b_index + c * block.out_stride_[2];
+            MirrorPadFp16(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[3]);
+          }
+        }
+      }
+    }
+    return RET_OK;
+  }
+
   int unit = UP_DIV(out_tensors_.at(0)->ElementsNum(), context_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, out_tensors_.at(0)->ElementsNum());
