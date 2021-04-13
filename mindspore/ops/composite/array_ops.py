@@ -15,6 +15,7 @@
 """array Operations."""
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
+from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.ops.primitive import constexpr
@@ -103,6 +104,8 @@ def repeat_elements(x, rep, axis=0):
     x_rep = reshape_op(x_expand, x_reshape)
 
     return x_rep
+
+tensor_operator_registry.register('repeat_elements', repeat_elements)
 
 
 @constexpr

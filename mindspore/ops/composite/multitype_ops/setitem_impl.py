@@ -402,7 +402,6 @@ def _tensor_setitem_by_slice_with_tuple(data, input_slice, value):
     return compile_utils.tensor_setitem_by_slice_with_sequence(data, input_slice, value)
 
 
-
 @setitem.register("Tensor", "Number", "Number")
 def _tensor_setitem_by_number_with_number(data, index, value):
     """

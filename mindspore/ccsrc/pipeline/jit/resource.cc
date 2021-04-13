@@ -175,7 +175,8 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"__setitem__", prim::kPrimArraySetItem},        // P.array_setitem,
                                          {"__ms_iter__", std::string("array_iter")},      // C.array_iter
                                          {"__ms_to_array__", prim::kPrimIdentity},        // P.identity,
-                                         {"item", prim::kPrimArrayToScalar},              // P.array_to_scalar,
+                                         {"item", std::string("item")},                   // P.item,
+                                         {"itemset", std::string("itemset")},             // P.itemset,
                                          {"transpose", std::string("transpose")},         // P.transpose
                                          {"flatten", std::string("flatten")},             // P.reshape(,-1)
                                          {"reshape", std::string("reshape")},             // P.reshape()
@@ -183,9 +184,26 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"swapaxes", std::string("swapaxes")},           // P.transpose()
                                          {"squeeze", std::string("squeeze")},             // P.squeeze()
                                          {"astype", std::string("astype")},               // P.cast()
-                                         {"__bool__", std::string("tensor_bool")},        // C.tensor_bool
-                                         {"argmax", std::string("argmax")},               // P.Argmax()
-                                         {"argmin", std::string("argmin")},               // P.Argmax()
+                                         {"cumsum", std::string("cumsum")},               // P.cumsum()
+                                         {"copy", std::string("copy")},                   // copy()
+                                         {"max", std::string("max")},                     // P.reduce_max()
+                                         {"min", std::string("min")},                     // P.reduce_min()
+                                         {"fill", std::string("fill")},                   // P.fill()
+                                         {"ptp", std::string("ptp")},               // P.reduce_max() - P.reduce_min()
+                                         {"clip", std::string("clip")},             // P.maximum(P.minimum)
+                                         {"__bool__", std::string("tensor_bool")},  // C.tensor_bool
+                                         {"argmax", std::string("argmax")},         // P.Argmax()
+                                         {"argmin", std::string("argmin")},         // P.Argmax()
+                                         {"resize", std::string("resize")},         // P.Reshape()
+                                         {"choose", std::string("choose")},         // P.Select()
+                                         {"diagonal", std::string("diagonal")},     // P.Eye()
+                                         {"searchsorted", std::string("searchsorted")},  // P.Select()
+                                         {"take", std::string("take")},                  // P.GatherNd()
+                                         {"trace", std::string("trace")},                // P.Eye()
+                                         {"var", std::string("var")},                    // P.ReduceSum
+                                         {"std", std::string("std")},                    // P.ReduceSum
+                                         {"sum", std::string("sum")},                    // P.ReduceSum
+                                         {"repeat", std::string("repeat")},              // C.repeat_elements
                                        }},
                                       {kObjectTypeRowTensorType,
                                        {

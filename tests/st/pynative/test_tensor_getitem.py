@@ -16,7 +16,8 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor, Parameter
+from mindspore import Tensor
+from mindspore import Parameter
 from mindspore import context
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
@@ -28,7 +29,7 @@ grad_by_list_with_sens = C.GradOperation(get_by_list=True, sens_param=True)
 
 
 def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class NetWorkSlicePositive(Cell):
@@ -50,6 +51,7 @@ class NetWorkSlicePositive(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice_positive():
     net = NetWorkSlicePositive()
@@ -77,12 +79,17 @@ class NetWorkSliceEllipsis(Cell):
         return ret0, ret1, ret2, ret3
 
 
-def Xtest_slice_ellipsis():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_slice_ellipsis():
     net = NetWorkSliceEllipsis()
     input_np = np.arange(6*7*8*9).reshape(6, 7, 8, 9).astype(np.int32)
     input_0 = Tensor(input_np)
     output0, output1, output2, output3 = net(input_0)
-    assert np.all(output0.asnumpy() == input_np[0:4:2, ..., 1] + np.ones([1, 2, 3]))
+    assert np.all(output0.asnumpy() == input_np[0:4:2, ..., 1] + np.ones([2, 7, 8]))
     assert np.all(output1.asnumpy() == input_np[...] + np.ones([6, 7, 8, 9]))
     assert np.all(output2.asnumpy() == input_np[None] + np.ones([6, 7, 8, 9]))
     assert np.all(output3.asnumpy() == input_np[True] + np.ones([1, 6, 7, 8, 9]))
@@ -104,7 +111,12 @@ class NetWorkReduceDimension(Cell):
         return ret1, ret2, ret3, ret4
 
 
-def Xtest_reduce_dimension():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reduce_dimension():
     net = NetWorkReduceDimension()
     input_np = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
     input_0 = Tensor(input_np)
@@ -115,6 +127,11 @@ def Xtest_reduce_dimension():
     assert np.all(output4.asnumpy() == input_np[1] + np.ones([8, 10]))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 class NetWorkSliceStep(Cell):
     def __init__(self):
         super(NetWorkSliceStep, self).__init__()
@@ -127,12 +144,16 @@ class NetWorkSliceStep(Cell):
         return ret1, ret2
 
 
-def Xtest_step_negative():
-    net = NetWorkSliceEllipsis()
+@pytest.mark.level0
+# ascend op stridedslice has bug, and has not been fixed.
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_step_negative():
+    net = NetWorkSliceStep()
     input_np = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
     input_0 = Tensor(input_np)
     output1, output2 = net(input_0)
-    assert np.all(output1.asnumpy() == input_np[::1, -5::, ::-1] + np.ones([6, 8, 10]))
+    assert np.all(output1.asnumpy() == input_np[::1, -5::, ::-1] + np.ones([6, 5, 10]))
     assert np.all(output2.asnumpy() == input_np[::2, -5::, ::2] + np.ones([3, 5, 5]))
 
 
@@ -153,8 +174,9 @@ class TensorGetItemByThreeTensors(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def Xtest_getitem_by_tensors():
+def test_getitem_by_tensors():
     """This testcase may encounter a sync stream error occasionally"""
     net = TensorGetItemByThreeTensors()
     input_x = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
@@ -194,6 +216,7 @@ class TensorGetItemByMixedTensorsBasicCase(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_getitem_by_mixed_tensors():
     const0 = np.ones((3, 4, 5, 3), np.float32)
@@ -218,6 +241,109 @@ def test_getitem_by_mixed_tensors():
     assert np.all(out5.asnumpy() == (input_np[..., index_np_0, index_np_1] + const5))
 
 
+class TensorItemByNone(Cell):
+    def construct(self, tensor):
+        ret = tensor.item()
+        return ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_item_by_none():
+    net = TensorItemByNone()
+    input_1d_np = np.ndarray([1]).astype(np.float32)
+    input_1d_ms = Tensor(input_1d_np, mstype.float32)
+    input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
+    input_3d_ms = Tensor(input_3d_np, mstype.float32)
+
+    output_ms = net(input_1d_ms)
+    assert np.all(output_ms.asnumpy() == input_1d_np.item())
+
+    with pytest.raises(ValueError):
+        net(input_3d_ms)
+
+
+class TensorItemByItem(Cell):
+    def construct(self, tensor, index):
+        ret = tensor.item(index)
+        return ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_item_by_int():
+    net = TensorItemByItem()
+    input_1d_np = np.ndarray([1]).astype(np.float32)
+    input_1d_ms = Tensor(input_1d_np, mstype.float32)
+
+    input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
+    input_3d_ms = Tensor(input_3d_np, mstype.float32)
+
+    index_np_1, index_np_2, index_np_3, index_np_4 = 0, 1.0, 30, 60
+
+    output_1d_ms = net(input_1d_ms, index_np_1)
+    output_3d_ms_1 = net(input_3d_ms, index_np_1)
+    output_3d_ms_2 = net(input_3d_ms, index_np_3)
+
+    assert np.all(output_1d_ms.asnumpy() == input_1d_np.item(index_np_1))
+    assert np.all(output_3d_ms_1.asnumpy() == input_3d_np.item(index_np_1))
+    assert np.all(output_3d_ms_2.asnumpy() == input_3d_np.item(index_np_3))
+
+    with pytest.raises(TypeError):
+        net(input_1d_ms, index_np_2)
+
+    with pytest.raises(IndexError):
+        net(input_1d_ms, index_np_3)
+
+    with pytest.raises(TypeError):
+        net(input_3d_ms, index_np_2)
+
+    with pytest.raises(IndexError):
+        net(input_3d_ms, index_np_4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_item_by_tuple():
+    net = TensorItemByItem()
+    input_1d_np = np.ndarray([1]).astype(np.float32)
+    input_1d_ms = Tensor(input_1d_np, mstype.float32)
+    input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
+    input_3d_ms = Tensor(input_3d_np, mstype.float32)
+
+    index_np_1 = (0,)
+    index_np_2 = (1, 2)
+    index_np_3 = (1, 2, 3)
+    index_np_4 = (3, 4, 4)
+    index_np_5 = (1, 2, 3, 4)
+
+    output_1d_ms = net(input_1d_ms, index_np_1)
+    output_3d_ms = net(input_3d_ms, index_np_3)
+    assert np.all(output_1d_ms.asnumpy() == input_1d_np.item(index_np_1))
+    assert np.all(output_3d_ms.asnumpy() == input_3d_np.item(index_np_3))
+
+    with pytest.raises(ValueError):
+        net(input_1d_ms, index_np_2)
+
+    with pytest.raises(ValueError):
+        net(input_3d_ms, index_np_2)
+
+    with pytest.raises(IndexError):
+        net(input_3d_ms, index_np_4)
+
+    with pytest.raises(ValueError):
+        net(input_3d_ms, index_np_5)
+
+
 class TensorSetItemByMixedTensors_0(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_0, self).__init__()
@@ -236,6 +362,7 @@ class TensorSetItemByMixedTensors_0(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_mixed_tensors_0():
     value = 88.0
@@ -253,6 +380,11 @@ def test_setitem_by_mixed_tensors_0():
     assert np.all(out.asnumpy() == (input_np + const))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 class TensorSetItemByMixedTensors_1(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_1, self).__init__()
@@ -270,6 +402,7 @@ class TensorSetItemByMixedTensors_1(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_mixed_tensors_1():
     value = 88.0
@@ -287,6 +420,11 @@ def test_setitem_by_mixed_tensors_1():
     assert np.all(out.asnumpy() == (input_np + const))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 class TensorSetItemByMixedTensors_2(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_2, self).__init__()
@@ -304,6 +442,7 @@ class TensorSetItemByMixedTensors_2(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_mixed_tensors_2():
     value = 88.0
@@ -327,7 +466,12 @@ class TensorGetItemByMixedTensorsIndexError(Cell):
         return ret
 
 
-def test_getitem_by_mixedtensor_exception():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_getitem_by_mixed_tensor_exception():
     input_ms = Tensor(np.arange(3 * 4 * 5 * 6 * 7 * 8 * 9).reshape((3, 4, 5, 6, 7, 8, 9)), mstype.int32)
     index_0 = Tensor(np.random.randint(3, size=(3, 4, 5)), mstype.int32)
     index_1 = Tensor(np.random.randint(4, size=(3, 4, 5)), mstype.int32)
@@ -352,6 +496,7 @@ class TensorSetItemByOneTensorWithNumber(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_one_tensor_with_number():
     value = 0.0
@@ -380,6 +525,7 @@ class TensorSetItemByOneTensorWithTensor(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_one_tensor_with_tensor():
     net = TensorSetItemByOneTensorWithTensor()
@@ -410,6 +556,7 @@ class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_one_tensor_with_tuple_number():
     value = (0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7)
@@ -438,6 +585,7 @@ class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_one_tensor_with_tuple_tensors():
     net = TensorSetItemByOneTensorWithTupleOfTensor()
@@ -472,7 +620,9 @@ class TensorSetItemByTensorsWithNumber(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.level0
 def test_setitem_by_tensors_with_number():
     value = 0.0
     net = TensorSetItemByTensorsWithNumber(value)
@@ -504,6 +654,7 @@ class TensorSetItemByTensorsWithTensor(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tensor():
     net = TensorSetItemByTensorsWithTensor()
@@ -537,6 +688,7 @@ class TensorSetItemByTensorsWithTensorNumberError(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tensor_error():
     index_0 = Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32)
@@ -565,6 +717,7 @@ class TensorSetItemByTensorsWithTupleOfNumber(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+# GPU op has bug, and has not been fixed.
 @pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tuple_of_number():
     value = (0.0, 1.1, 2.2, 3.3, 4.4)
@@ -597,6 +750,7 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+# GPU op has bug, and has not been fixed.
 @pytest.mark.env_onecard
 def test_setitem_by_tensors_with_tuple_of_tensor():
     value_0 = np.zeros((4, 5))
@@ -634,6 +788,7 @@ class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_tensor_with_tuple_of_tensor_error():
     net = TensorSetItemByTensorsWithTupleOfTensorNumberError()
@@ -648,6 +803,11 @@ def test_setitem_by_tensor_with_tuple_of_tensor_error():
         net(index_0_ms, index_1_ms, index_2_ms, value_0_ms, value_1_ms)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_setitem_grad():
     class Net(Cell):
         def __init__(self):
@@ -720,14 +880,15 @@ class TensorAssignWithSlice(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_slice_value_1():
     net = TensorAssignWithSlice()
     a = np.arange(60).reshape(3, 4, 5)
-    ck = np.arange(60).reshape(3, 4, 5)
     b = np.array([1]).astype(np.float32)  # Tensor([1], dtype=mstype.float32)
-    tb = Tensor(b, dtype=mstype.float32)
+    ck = np.arange(60).reshape(3, 4, 5)
     ta = Tensor(a, dtype=mstype.float32)
+    tb = Tensor(b, dtype=mstype.float32)
     tck = Tensor(ck, dtype=mstype.float32)
     out = net(ta, tb, tck)
     a[1:3, ::] = b
@@ -745,6 +906,7 @@ def test_tensor_assign_slice_value_1():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_slice_value_2():
     net2 = TensorAssignWithSlice2()
@@ -768,6 +930,7 @@ def test_tensor_assign_slice_value_2():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_exception():
     net = TensorAssignWithSlice()
@@ -939,6 +1102,7 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_bool_index_0():
     a = np.arange(60).reshape(3, 4, 5)
@@ -960,6 +1124,7 @@ def test_tensor_assign_bool_index_0():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_bool_index_1():
     a = np.arange(60).reshape(3, 4, 5)
@@ -977,6 +1142,11 @@ def test_tensor_assign_bool_index_1():
     assert np.all(out.asnumpy() == res)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_tensor_assign_bool_index_exception():
     a = np.arange(60).reshape(3, 4, 5)
     b = a > 5
@@ -1015,7 +1185,12 @@ def test_tensor_assign_bool_index_exception():
         net4(Ta, u_scalar)
 
 
-def Xtest_tensor_slice_reduce_out_of_bounds_neg():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_slice_reduce_out_of_bounds_neg():
     class NetWork(Cell):
         def __init__(self):
             super(NetWork, self).__init__()
@@ -1029,11 +1204,15 @@ def Xtest_tensor_slice_reduce_out_of_bounds_neg():
     net = NetWork()
     with pytest.raises(IndexError) as ex:
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(
-        ex.value)
+    assert "begin should be in [-6, 6), but got stride: 1, begin: -7." in str(ex.value)
 
 
-def Xtest_tensor_slice_reduce_out_of_bounds_positive():
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_slice_reduce_out_of_bounds_positive():
     class NetWork(Cell):
         def __init__(self):
             super(NetWork, self).__init__()
@@ -1047,12 +1226,13 @@ def Xtest_tensor_slice_reduce_out_of_bounds_positive():
     net = NetWork()
     with pytest.raises(IndexError) as ex:
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)
+    assert "begin should be in [-6, 6), but got stride: 1, begin: 6." in str(ex.value)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_range():
     a = np.arange(4*5*6).reshape(4, 5, 6).astype(np.float32)

@@ -639,6 +639,30 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         return a
 
 
+class TensorItemSetWithNumber(Cell):
+    def construct(self, tensor, number_value):
+        ret = tensor.itemset(number_value)
+        return ret
+
+
+class TensorItemSetByItemWithNumber(Cell):
+    def construct(self, tensor, index, number_value):
+        ret = tensor.itemset(index, number_value)
+        return ret
+
+
+input_1d_np = np.ndarray([1]).astype(np.float32)
+input_1d_ms = Tensor(input_1d_np, mstype.float32)
+
+input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
+input_3d_ms = Tensor(input_3d_np, mstype.float32)
+
+index_np_1, index_np_2, index_np_3, index_np_4 = 0, 30, 60, 2.0
+tuple_index_np_1, tuple_index_np_2, tuple_index_np_3, tuple_index_np_4, tuple_index_np_5 = \
+    (0,), (1, 2), (1, 2, 3), (3, 4, 4), (1, 2, 3, 4)
+value_np_1, value_np_2 = 1, 2.0
+
+
 a = np.arange(60).reshape(3, 4, 5)
 ck = np.arange(60).reshape(3, 4, 5)
 a4 = np.arange(60).reshape(3, 2, 2, 5)
@@ -934,9 +958,57 @@ test_cases = [
                         Tensor(np.random.randint(4, size=(4, 5)), mstype.int32),
                         Tensor(np.random.randint(3, size=(2, 1, 4, 5)), mstype.int32)],
     }),
+    ('1dTensorItemSetWithInt', {
+        'block': TensorItemSetWithNumber(),
+        'desc_inputs': [input_1d_ms, value_np_1]
+    }),
+    ('1dTensorItemSetWithFloat', {
+        'block': TensorItemSetWithNumber(),
+        'desc_inputs': [input_1d_ms, value_np_2]
+    }),
+    ('1dTensorItemSetByIntWithInt', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_1d_ms, index_np_1, value_np_1]
+    }),
+    ('1dTensorItemSetByIntWithFloat', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_1d_ms, index_np_1, value_np_2]
+    }),
+    ('3dTensorItemSetByIntWithInt', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_3d_ms, index_np_1, value_np_1]
+    }),
+    ('3dTensorItemSetByIntWithFloat', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_3d_ms, index_np_1, value_np_2]
+    }),
+    ('3dTensorItemSetByIntWithInt2', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_3d_ms, index_np_2, value_np_1]
+    }),
+    ('3dTensorItemSetByIntWithFloat2', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_3d_ms, index_np_2, value_np_2]
+    }),
+    ('1dTensorItemSetBy1dTupleWithInt', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_1d_ms, tuple_index_np_1, value_np_1]
+    }),
+    ('1dTensorItemSetBy1dTupleWithFloat', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_1d_ms, tuple_index_np_1, value_np_2]
+    }),
+    ('3dTensorItemSetBy3dTupleWithInt', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_3d_ms, tuple_index_np_3, value_np_1]
+    }),
+    ('3dTensorItemSetBy3dTupleWithFloat', {
+        'block': TensorItemSetByItemWithNumber(),
+        'desc_inputs': [input_3d_ms, tuple_index_np_3, value_np_2]
+    }),
 ]
 
-raise_error_set = [
+test_error_cases = [
     ('TensorGetItemByOneTensorDtypeError', {
         'block': (TensorGetItemByOneTensor(), {'exception': IndexError}),
         'desc_inputs': [Tensor(np.arange(6 * 7 * 8).reshape((6, 7, 8)), mstype.int32),
@@ -1137,6 +1209,86 @@ raise_error_set = [
         'desc_inputs': [Tensor(np.random.randint(3, size=(3, 4, 5)), mstype.float32),
                         Tensor(np.random.randint(4, size=(4, 5)), mstype.int32),
                         Tensor(np.random.randint(3, size=(2, 1, 4, 5)), mstype.int32)],
+    }),
+    ('3dTensorItemSetWithInt', {
+        'block': (TensorItemSetWithNumber(), {'exception': IndexError}),
+        'desc_inputs': [input_3d_ms, value_np_1]
+    }),
+    ('3dTensorItemSetWithFloat', {
+        'block': (TensorItemSetWithNumber(), {'exception': IndexError}),
+        'desc_inputs': [input_3d_ms, value_np_2]
+    }),
+    ('1dTensorItemSetByOverflowIntWithInt', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': IndexError}),
+        'desc_inputs': [input_1d_ms, index_np_2, value_np_1]
+    }),
+    ('1dTensorItemSetByOverflowIntWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': IndexError}),
+        'desc_inputs': [input_1d_ms, index_np_2, value_np_2]
+    }),
+    ('1dTensorItemSetByFloatWithInt', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': TypeError}),
+        'desc_inputs': [input_1d_ms, index_np_4, value_np_1]
+    }),
+    ('1dTensorItemSetByFLoatWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': TypeError}),
+        'desc_inputs': [input_1d_ms, index_np_4, value_np_2]
+    }),
+    ('3dTensorItemSetByOverflowIntWithInt', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': IndexError}),
+        'desc_inputs': [input_3d_ms, index_np_3, value_np_1]
+    }),
+    ('3dTensorItemSetByOverflowIntWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': IndexError}),
+        'desc_inputs': [input_3d_ms, index_np_3, value_np_2]
+    }),
+    ('3dTensorItemSetByFloatIntWithInt', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': TypeError}),
+        'desc_inputs': [input_3d_ms, index_np_4, value_np_1]
+    }),
+    ('3dTensorItemSetByFloatWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': TypeError}),
+        'desc_inputs': [input_3d_ms, index_np_4, value_np_2]
+    }),
+    ('1dTensorItemSetBy2dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_1d_ms, tuple_index_np_2, value_np_1]
+    }),
+    ('1dTensorItemSetBy2dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_1d_ms, tuple_index_np_2, value_np_2]
+    }),
+    ('3dTensorItemSetBy1dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_1, value_np_1]
+    }),
+    ('3dTensorItemSetBy1dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_1, value_np_2]
+    }),
+    ('3dTensorItemSetBy2dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_2, value_np_1]
+    }),
+    ('3dTensorItemSetBy2dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_2, value_np_2]
+    }),
+    ('3dTensorItemSetBy3dTupleOverFloawWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_4, value_np_1]
+    }),
+    ('3dTensorItemSetBy3dTupleOverFloawWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_4, value_np_2]
+    }),
+    ('3dTensorItemSetBy4dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_5, value_np_1]
+    }),
+    ('3dTensorItemSetBy4dTupleWithFloat', {
+        'block': (TensorItemSetByItemWithNumber(), {'exception': ValueError}),
+        'desc_inputs': [input_3d_ms, tuple_index_np_5, value_np_2]
     })
 ]
 
@@ -1149,7 +1301,7 @@ def test_exec():
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
 def test_check_exception():
-    return raise_error_set
+    return test_error_cases
 
 
 def test_tensor_slice_reduce_out_of_bounds_neg():

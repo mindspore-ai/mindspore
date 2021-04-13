@@ -942,14 +942,20 @@ def mnp_clip(x):
     a = mnp.clip(x, to_tensor(10.0), to_tensor([2,]))
     b = mnp.clip(x, 0, 1)
     c = mnp.clip(x, to_tensor(0), to_tensor(10), dtype=mnp.float32)
-    return a, b, c
+    d = x.clip(to_tensor(10.0), to_tensor([2,]))
+    e = x.clip(0, 1)
+    f = x.clip(to_tensor(0), to_tensor(10), dtype=mnp.float32)
+    return a, b, c, d, e, f
 
 
 def onp_clip(x):
     a = onp.clip(x, onp.asarray(10.0), onp.asarray([2,]))
     b = onp.clip(x, 0, 1)
     c = onp.clip(x, onp.asarray(0), onp.asarray(10), dtype=onp.float32)
-    return a, b, c
+    d = x.clip(onp.asarray(10.0), onp.asarray([2,]))
+    e = x.clip(0, 1)
+    f = x.clip(onp.asarray(0), onp.asarray(10), dtype=onp.float32)
+    return a, b, c, d, e, f
 
 
 @pytest.mark.level1
@@ -2730,3 +2736,20 @@ def test_correlate():
             mnp_res = mnp_correlate(a, v)
             onp_res = onp_correlate(a, v)
             match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_searchsorted():
+    x = onp.arange(-10, 10)
+    mnp_x = to_tensor(x)
+    y = onp.random.randint(-15, 15, size=(2, 3, 4)) + onp.random.choice([0, 0.5], (2, 3, 4))
+    sorter = onp.random.shuffle(onp.arange(20))
+    match_res(mnp_x.searchsorted, x.searchsorted, y)
+    match_res(mnp_x.searchsorted, x.searchsorted, y, side='right')
+    match_res(mnp_x.searchsorted, x.searchsorted, y, sorter=sorter)
+    match_res(mnp_x.searchsorted, x.searchsorted, y, side='right', sorter=sorter)

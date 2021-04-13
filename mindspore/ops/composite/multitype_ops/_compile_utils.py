@@ -137,6 +137,68 @@ tensor_operator_registry.register('__pow__', _tensor_pow)
 tensor_operator_registry.register('__floordiv__', _tensor_floordiv)
 
 
+def tensor_item(data, *args):
+    """Tensor getitem by index whose dtype is int or tuple with int."""
+    # transform a.item(tuple(int)) -> a.item(int1,int2...intN)
+    if len(args) == 1 and isinstance(args[0], tuple):
+        args = args[0]
+
+    args_types = hyper_map(F.typeof, args)
+    if not args or const_utils.judge_index_type(args_types[0], mstype.type_none):
+        if data.shape == (1,):
+            return data
+        const_utils.raise_value_error("Can only convert an array of size 1 to a Python scalar")
+
+    if not const_utils.judge_indexes_types(args_types, mstype.int64):
+        const_utils.raise_type_error("The index object cannot be interpreted as an integer")
+
+    if len(args) == data.ndim:
+        return _tensor_getitem_by_tuple_slice(data, args)
+    if len(args) > 1:
+        const_utils.raise_value_error("Incorrect number of indices for array")
+    return _tensor_index_by_integer(F.reshape(data, (-1,)), args[0])
+
+
+def tensor_itemset(data, *args):
+    """Tensor setitem by index and value."""
+    if not args:
+        const_utils.raise_value_error("itemset must have at least one argument")
+    if len(args) == 2:
+        if const_utils.judge_index_type(F.typeof(args[0]), mstype.int64):
+            return tensor_itemset_by_number_with_number(data, args[0], args[1])
+        if isinstance(args[0], tuple):
+            return tensor_itemset_by_tuple_with_number(data, args[0], args[1])
+        const_utils.raise_type_error("The index object cannot be interpreted as an integer")
+    if len(args) > 2:
+        const_utils.raise_value_error("incorrect number of indices for array")
+    return tensor_itemset_with_number(data, args[0])
+
+
+tensor_operator_registry.register("item", tensor_item)
+tensor_operator_registry.register("itemset", tensor_itemset)
+
+
+def tensor_itemset_with_number(data, number_value):
+    if not const_utils.judge_index_type(F.typeof(number_value), mstype.number_type):
+        const_utils.raise_index_error("The Tensor could only use the number value for itemset")
+    if data.shape != (1,):
+        const_utils.raise_index_error("The Tensor without shape (1,) could not use the itemset api with only one args")
+    return const_utils.make_tensor((number_value,), F.dtype(data))
+
+
+def tensor_itemset_by_number_with_number(data, int_index, number_value):
+    flatten_data = F.reshape(data, (-1,))
+    itemset_data = tensor_setitem_by_number_with_number(flatten_data, int_index, number_value)
+    res_data = F.reshape(itemset_data, F.shape(data))
+    return res_data
+
+
+def tensor_itemset_by_tuple_with_number(data, tuple_index, nubmer_value):
+    if len(tuple_index) != data.ndim:
+        const_utils.raise_value_error("incorrect number of indices for array")
+    return tensor_setitem_by_tuple_with_number(data, tuple_index, nubmer_value)
+
+
 def _broadcast(broadcast_shape, x):
     """Broadcast tensor to the required shape."""
     if not const_utils.check_two_shapes_need_broadcast(broadcast_shape, F.shape(x)):
@@ -148,10 +210,10 @@ def _broadcast(broadcast_shape, x):
     return x
 
 
-def _transform_indexing_tensor(broadcast_shape, final_shape, new_shape, x):
+def _transform_indexing_tensor(broadcast_shape, final_shape, new_shape, item):
     """Transform indexing tensor to the required."""
-    x = _broadcast(broadcast_shape, x)
-    return _broadcast(final_shape, F.reshape(x, new_shape))
+    item = _broadcast(broadcast_shape, item)
+    return _broadcast(final_shape, F.reshape(item, new_shape))
 
 
 def _transform_ellipsis_to_slice(data, tuple_index, op_name):
@@ -636,12 +698,12 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
         return data
 
     indexes_types = hyper_map(F.typeof, tuple_index)
-    contain_type = const_utils.tuple_index_type_cnt(indexes_types, const_utils.TENSOR_SETITEM)
+    contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
 
     if contain_type == const_utils.ALL_TENSOR:
-        indices = _generate_indices_from_tuple_of_tensor(tuple_index, const_utils.TENSOR_SETITEM)
+        indices = _generate_indices_from_tuple_of_tensor(tuple_index, op_name)
     else:
-        indices = _generate_indices_from_tuple(data, tuple_index, const_utils.TENSOR_SETITEM, idx_advanced)
+        indices = _generate_indices_from_tuple(data, tuple_index, op_name, idx_advanced)
         if indices is False:
             return data
     updates = _generate_updates_from_tensor(data, indices, value, const_utils.SET_ITEM_BY_TUPLE_OF_TENSOR)
@@ -824,3 +886,65 @@ def format_index(idx, data_shape, cur_dim):
         # does not take bool tensor into account since it's currently not supported
         idx = F.select(idx < 0, idx + data_shape[cur_dim], idx)
     return idx
+
+
+def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, where=True, dtype=None):
+    """
+    Applies comparison based on cmp_fn and reduction based on reduce_fn.
+    If cmp_fn is None, only reduction is performed.
+    """
+
+    shape = F.shape(a)
+    ndim = F.rank(a)
+    if dtype is None:
+        dtype = F.dtype(a)
+    axes = const_utils.check_axis_valid_const(axis, ndim)
+    if initial is not None:
+        if ((isinstance(initial, Tensor) and F.rank(initial) > 0) or
+                not isinstance(initial, (int, float, bool, Tensor))):
+            const_utils.raise_type_error('initial should be scalar')
+
+    if F.shape_mul(shape) == 0:
+        const_utils.raise_value_error('zero-size tensors are not supported.')
+
+    if initial is not None:
+        initial = F.fill(dtype, shape, initial)
+        a = cmp_fn(a, initial)
+
+    if isinstance(where, Tensor):
+        if initial is None:
+            const_utils.raise_value_error('initial value must be provided for where masks')
+        ndim_orig = F.rank(a)
+        a = F.select(where, a, initial)
+        axes = const_utils.real_axes(ndim_orig, F.rank(a), axes)
+
+    return reduce_fn(a, axes).astype(dtype)
+
+
+tensor_operator_registry.register("reduce", reduce_)
+
+
+def check_indices(dims, indices, mode, allow_negative_index=True):
+    """Checks whether indices are out of bounds."""
+    shape = F.shape(indices)
+    dtype = F.dtype(indices)
+    if not allow_negative_index:
+        lowerbounds = F.fill(dtype, shape, 0)
+    else:
+        lowerbounds = F.fill(dtype, shape, -dims)
+    upperbounds = F.fill(dtype, shape, dims - 1)
+    out_of_lowerbounds = F.tensor_lt(indices, lowerbounds)
+    out_of_upperbounds = F.tensor_gt(indices, upperbounds)
+    if mode == 'raise':
+        const_utils.raise_unimplemented_error('"raise" mode is not implemented')
+    if mode == 'wrap':
+        bounds = F.fill(dtype, shape, dims)
+        quotient = F.tensor_floordiv(indices, bounds)
+        prod = F.tensor_mul(bounds, quotient)
+        return F.tensor_sub(indices, prod)
+    zeros = F.fill(dtype, shape, 0)
+    clipped = F.select(out_of_lowerbounds, zeros, indices)
+    clipped = F.select(out_of_upperbounds, upperbounds, clipped)
+    return clipped
+
+tensor_operator_registry.register('check_indices', check_indices)

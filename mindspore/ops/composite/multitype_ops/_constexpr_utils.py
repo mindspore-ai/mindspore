@@ -15,6 +15,8 @@
 """constexpr util"""
 
 from itertools import compress
+from functools import partial
+import operator
 
 import numpy as np
 
@@ -22,7 +24,9 @@ from ...primitive import constexpr
 from .... import log as logger
 from ....common import dtype as mstype
 from ....common.tensor import Tensor
+from ....common._register_for_tensor import tensor_operator_registry
 from ....ops import _utils as op_utils
+from ...._checkparam import Validator as validator
 
 ALL_TENSOR = 0
 NO_TENSOR = 1
@@ -56,6 +60,11 @@ def raise_index_error(msg):
 @constexpr
 def raise_type_error(msg):
     raise TypeError(msg)
+
+
+@constexpr
+def raise_unimplemented_error(msg):
+    raise NotImplementedError(msg)
 
 
 @constexpr
@@ -165,6 +174,8 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=-1):
 
     return Tensor(a, dtype)
 
+tensor_operator_registry.register('make_tensor', make_tensor)
+
 
 @constexpr
 def judge_data_dim(data_dim, min_data_dim=0, max_data_dim=8):
@@ -234,8 +245,7 @@ def is_same_type(inst, type_):
 @constexpr
 def check_valid_dim(dim, name):
     if dim not in (1, 2):
-        raise ValueError(
-            f"For {name}, inputs dim must be 1d or 2d")
+        raise ValueError(f"For {name}, inputs dim must be 1d or 2d")
 
 
 @constexpr
@@ -249,8 +259,12 @@ def judge_index_type(index_type, target_type):
 def judge_indexes_types(dtypes, target_type):
     """Check a tuple of tensor data type."""
     for dtype in dtypes:
-        if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
-            return False
+        if isinstance(target_type, (list, tuple)):
+            if dtype not in target_type:
+                return False
+        else:
+            if dtype != target_type:
+                return False
     return True
 
 
@@ -547,7 +561,7 @@ def check_number_index_type(number):
 @constexpr
 def get_stride_info_from_slice(data_shape, slice_index):
     """Get stride info from a python slice"""
-    begin, end, step = get_slice_stride(data_shape[0], slice_index)
+    begin, end, step = get_slice_stride(slice_index, data_shape[0])
     begin_strides = [begin]
     end_strides = [end]
     step_strides = [step]
@@ -571,7 +585,7 @@ def get_stride_info_from_integer(data_shape, number):
     return tuple(begin_strides), tuple(end_strides), tuple(step_strides)
 
 
-def get_slice_stride(dim_size, index_slice):
+def get_slice_stride(index_slice, dim_size):
     """Get slice stride info"""
     step = 1 if index_slice.step is None else index_slice.step
     start_default = 0
@@ -591,20 +605,20 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
     tuple_index_len = len(tuple_index)
     data_dim = len(data_shape)
     shrink_axis, index_count, ellipsis_count = 0, 0, 0
-    for idx, item in enumerate(tuple_index):
-        if isinstance(item, slice):
-            start, stop, step = get_slice_stride(data_shape[idx], item)
+    for index, dim_size in zip(tuple_index, data_shape):
+        if isinstance(index, slice):
+            start, stop, step = get_slice_stride(index, dim_size)
             begin_strides.append(start)
             end_strides.append(stop)
             step_strides.append(step)
             index_count = index_count + 1
-        elif isinstance(item, int):
-            begin_strides.append(item)
-            end_strides.append(item + 1)
+        elif isinstance(index, int):
+            begin_strides.append(index)
+            end_strides.append(index + 1)
             step_strides.append(1)
             shrink_axis = shrink_axis + (1 << index_count)
             index_count = index_count + 1
-        elif item is ...:
+        elif index is ...:
             ellipsis_count = ellipsis_count + 1
             if ellipsis_count > 1:
                 raise IndexError("An index can have only one ellipsis (...)")
@@ -616,10 +630,10 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
             index_count = index_count + ellipsis_range_size
         else:
             raise IndexError("Not supported index data type, got ",
-                             item, " type is ", type(item))
-    for item in range(index_count, data_dim):
+                             index, " type is ", type(item))
+    for index in range(index_count, data_dim):
         begin_strides.append(0)
-        end_strides.append(data_shape[item])
+        end_strides.append(data_shape[index])
         step_strides.append(1)
     return tuple(begin_strides), tuple(end_strides), tuple(step_strides), shrink_axis
 
@@ -773,3 +787,15 @@ def rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim
 @constexpr
 def check_slice_empty(start, stop, step):
     return (start - stop)*step >= 0
+
+
+@constexpr
+def real_axes(ndim_orig, ndim_out, axes_orig):
+    """Returns the real axes to be reduced after performing broadcast"""
+    _diff = ndim_out - ndim_orig
+    axes = tuple(range(_diff))
+    axes_orig = map(partial(operator.add, _diff), axes_orig)
+    return axes + tuple(axes_orig)
+
+
+check_axis_valid_const = constexpr(validator.check_axis_valid)
