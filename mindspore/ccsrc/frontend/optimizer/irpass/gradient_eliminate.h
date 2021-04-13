@@ -31,7 +31,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 // {prim::kPrimJ, C}
 class ExpandJPrim {
  public:

@@ -130,6 +130,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   const EvaluatorCacheMapPtr &GetEvalCache(const EvaluatorPtr &eval);
   // Try to build unique argvals from the broaded arg vals if it is unique.
   std::pair<AbstractBasePtrList, AbstractBasePtr> BuildFromBroadedArgsVal(const EvaluatorPtr &eval);
+  void UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node);
 };
 }  // namespace abstract
 }  // namespace mindspore
