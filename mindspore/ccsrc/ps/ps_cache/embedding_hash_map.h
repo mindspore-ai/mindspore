@@ -59,8 +59,8 @@ class EmbeddingHashMap {
     graph_running_index_ = std::make_unique<int[]>(hash_capacity);
   }
   virtual ~EmbeddingHashMap() = default;
-  int ParseData(const int id, int *swap_out_index, int *swap_out_ids, const size_t data_step,
-                const size_t graph_running_step, size_t *swap_out_size, bool *need_wait_graph);
+  int ParseData(const int id, int *const swap_out_index, int *const swap_out_ids, const size_t data_step,
+                const size_t graph_running_step, size_t *const swap_out_size, bool *const need_wait_graph);
   size_t hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
   void set_hash_step(const int hash_index, const size_t step) { hash_map_elements_[hash_index].set_step(step); }
   const std::unordered_map<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
@@ -69,7 +69,8 @@ class EmbeddingHashMap {
   void Reset();
 
  private:
-  int FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *need_swap, bool *need_wait_graph);
+  int FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *const need_swap,
+                       bool *const need_wait_graph);
   size_t hash_count_;
   size_t hash_capacity_;
   std::vector<HashMapElement> hash_map_elements_;
