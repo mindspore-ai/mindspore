@@ -64,6 +64,7 @@ class OcclusionSensitivity(Metric):
         >>> metric.clear()
         >>> metric.update(model, test_data, label)
         >>> score = metric.eval()
+        >>> print(score)
         [0.29999995    0.6    1    0.9]
     """
     def __init__(self, pad_val=0.0, margin=2, n_batch=128, b_box=None):

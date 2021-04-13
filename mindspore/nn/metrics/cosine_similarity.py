@@ -32,14 +32,15 @@ class CosineSimilarity(Metric):
         If sum or mean are used, then returns (b, 1) with the reduced value for each row
 
     Example:
-        >>> test_data = np.random.randn(4, 8)
+        >>> test_data = np.array([[1, 3, 4, 7], [2, 4, 2, 5], [3, 1, 5, 8]])
         >>> metric = CosineSimilarity()
         >>> metric.clear()
         >>> metric.update(test_data)
         >>> square_matrix = metric.eval()
-        [[0. -0.14682831 0.19102288 -0.36204537]
-         ...
-         ]
+        >>> print(square_matrix)
+        [[0.  0.94025615  0.95162452]
+         [0.94025615  0.  0.86146098]
+         [0.95162452  0.86146098  0.]]
     """
     def __init__(self, similarity='cosine', reduction='none', zero_diagonal=True):
         super().__init__()

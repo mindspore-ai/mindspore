@@ -39,6 +39,7 @@ class Perplexity(Metric):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> perplexity = metric.eval()
+        >>> print(perplexity)
         2.231443166940565
     """
 
