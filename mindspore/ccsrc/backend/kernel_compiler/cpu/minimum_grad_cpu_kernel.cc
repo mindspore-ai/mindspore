@@ -83,10 +83,11 @@ bool MinimumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void MinimumGradRecTask(T *x, T *y, T *dout, T *dx, T *dy, size_t dim, size_t x_index, size_t y_index,
-                        size_t dout_index, const std::vector<size_t> &x_cargo, const std::vector<size_t> &y_cargo,
-                        const std::vector<size_t> &dout_cargo, const std::vector<size_t> &x_shape,
-                        const std::vector<size_t> &y_shape, const std::vector<size_t> &dout_shape) {
+void MinimumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, const size_t dim, const size_t x_index,
+                        const size_t y_index, const size_t dout_index, const std::vector<size_t> &x_cargo,
+                        const std::vector<size_t> &y_cargo, const std::vector<size_t> &dout_cargo,
+                        const std::vector<size_t> &x_shape, const std::vector<size_t> &y_shape,
+                        const std::vector<size_t> &dout_shape) {
   for (size_t i = 0; i < dout_shape[dim]; i++) {
     size_t x_i = x_shape[dim] == dout_shape[dim] ? i * x_cargo[dim] : 0;
     size_t y_i = y_shape[dim] == dout_shape[dim] ? i * y_cargo[dim] : 0;

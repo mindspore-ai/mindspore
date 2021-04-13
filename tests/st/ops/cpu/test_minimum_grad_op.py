@@ -64,7 +64,7 @@ def gen_data(inputA_np, inputB_np, grad_=None):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_4d():
     inputA_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
@@ -76,7 +76,7 @@ def test_min_tensor_grad_4d():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_result():
     inputA = np.array([[[[0.659578], [0.49113268], [0.75909054], [0.71681815], [0.30421826]]],
