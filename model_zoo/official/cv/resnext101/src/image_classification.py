@@ -31,6 +31,7 @@ class ImageClassificationNetwork(nn.Cell):
     Returns:
         Tensor, output tensor.
     """
+
     def __init__(self, backbone, head, include_top=True, activation="None"):
         super(ImageClassificationNetwork, self).__init__()
         self.backbone = backbone
@@ -45,7 +46,8 @@ class ImageClassificationNetwork(nn.Cell):
                 elif activation == "Softmax":
                     self.activation = P.Softmax()
                 else:
-                    raise NotImplementedError(f"The activation {activation} not in [Sigmoid, Softmax].")
+                    raise NotImplementedError(
+                        f"The activation {activation} not in [Sigmoid, Softmax].")
 
     def construct(self, x):
         x = self.backbone(x)
@@ -65,11 +67,13 @@ class ResNeXt(ImageClassificationNetwork):
     Returns:
         Resnet.
     """
+
     def __init__(self, backbone_name, num_classes=1000, platform="Ascend", include_top=True, activation="None"):
         self.backbone_name = backbone_name
         backbone = backbones.__dict__[self.backbone_name](platform=platform)
         out_channels = backbone.get_out_channels()
-        head = heads.CommonHead(num_classes=num_classes, out_channels=out_channels)
+        head = heads.CommonHead(num_classes=num_classes,
+                                out_channels=out_channels)
         super(ResNeXt, self).__init__(backbone, head, include_top, activation)
 
         default_recurisive_init(self)
@@ -77,7 +81,8 @@ class ResNeXt(ImageClassificationNetwork):
         for cell in self.cells_and_names():
             if isinstance(cell, nn.Conv2d):
                 cell.weight.set_data(init.initializer(
-                    KaimingNormal(a=math.sqrt(5), mode='fan_out', nonlinearity='relu'),
+                    KaimingNormal(a=math.sqrt(5), mode='fan_out',
+                                  nonlinearity='relu'),
                     cell.weight.shape, cell.weight.dtype))
             elif isinstance(cell, nn.BatchNorm2d):
                 cell.gamma.set_data(init.initializer('ones', cell.gamma.shape))
@@ -87,11 +92,12 @@ class ResNeXt(ImageClassificationNetwork):
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         for cell in self.cells_and_names():
-            if isinstance(cell, backbones.resnet.Bottleneck):
-                cell.bn3.gamma.set_data(init.initializer('zeros', cell.bn3.gamma.shape))
-            elif isinstance(cell, backbones.resnet.BasicBlock):
-                cell.bn2.gamma.set_data(init.initializer('zeros', cell.bn2.gamma.shape))
-
+            if isinstance(cell, backbones.resnext.Bottleneck):
+                cell.bn3.gamma.set_data(init.initializer(
+                    'zeros', cell.bn3.gamma.shape))
+            elif isinstance(cell, backbones.resnext.BasicBlock):
+                cell.bn2.gamma.set_data(init.initializer(
+                    'zeros', cell.bn2.gamma.shape))
 
 
 def get_network(**kwargs):

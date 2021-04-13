@@ -60,15 +60,18 @@ class _DownSample(nn.Cell):
     Examples:
         >>>DownSample(32, 64, 2)
     """
+
     def __init__(self, in_channels, out_channels, stride):
         super(_DownSample, self).__init__()
-        self.conv = conv1x1(in_channels, out_channels, stride=stride, padding=0)
+        self.conv = conv1x1(in_channels, out_channels,
+                            stride=stride, padding=0)
         self.bn = nn.BatchNorm2d(out_channels)
 
     def construct(self, x):
         out = self.conv(x)
         out = self.bn(out)
         return out
+
 
 class BasicBlock(nn.Cell):
     """
@@ -125,6 +128,7 @@ class BasicBlock(nn.Cell):
         out = self.relu(out)
         return out
 
+
 class Bottleneck(nn.Cell):
     """
     ResNeXt Bottleneck block definition.
@@ -155,9 +159,11 @@ class Bottleneck(nn.Cell):
         self.conv3x3s = nn.CellList()
 
         if platform == "GPU":
-            self.conv2 = nn.Conv2d(width, width, 3, stride, pad_mode='pad', padding=1, group=groups)
+            self.conv2 = nn.Conv2d(
+                width, width, 3, stride, pad_mode='pad', padding=1, group=groups)
         else:
-            self.conv2 = GroupConv(width, width, 3, stride, pad=1, groups=groups)
+            self.conv2 = GroupConv(
+                width, width, 3, stride, pad=1, groups=groups)
 
         self.bn2 = nn.BatchNorm2d(width)
         self.conv3 = conv1x1(width, out_channels * self.expansion, stride=1)
@@ -197,6 +203,7 @@ class Bottleneck(nn.Cell):
         out = self.relu(out)
         return out
 
+
 class ResNeXt(nn.Cell):
     """
     ResNeXt architecture.
@@ -213,8 +220,9 @@ class ResNeXt(nn.Cell):
     Examples:
         >>>ResNeXt()
     """
+
     def __init__(self, block, layers, width_per_group=64, groups=1, use_se=False, platform="Ascend"):
-        super(ResNet, self).__init__()
+        super(ResNeXt, self).__init__()
         self.in_channels = 64
         self.groups = groups
         self.base_width = width_per_group
@@ -224,10 +232,14 @@ class ResNeXt(nn.Cell):
         self.relu = P.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
 
-        self.layer1 = self._make_layer(block, 64, layers[0], use_se=use_se, platform=platform)
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, use_se=use_se, platform=platform)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, use_se=use_se, platform=platform)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, use_se=use_se, platform=platform)
+        self.layer1 = self._make_layer(
+            block, 64, layers[0], use_se=use_se, platform=platform)
+        self.layer2 = self._make_layer(
+            block, 128, layers[1], stride=2, use_se=use_se, platform=platform)
+        self.layer3 = self._make_layer(
+            block, 256, layers[2], stride=2, use_se=use_se, platform=platform)
+        self.layer4 = self._make_layer(
+            block, 512, layers[3], stride=2, use_se=use_se, platform=platform)
 
         self.out_channels = 512 * block.expansion
         self.cast = P.Cast()
@@ -274,6 +286,7 @@ class ResNeXt(nn.Cell):
 
 def resnext50(platform="Ascend"):
     return ResNeXt(Bottleneck, [3, 4, 6, 3], width_per_group=4, groups=32, platform=platform)
+
 
 def resnext101(platform="Ascend"):
     return ResNeXt(Bottleneck, [3, 4, 23, 3], width_per_group=4, groups=64, platform=platform)
