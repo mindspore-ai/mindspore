@@ -18,12 +18,13 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_DEFER_H
 
 #include <functional>
+#include <memory>
+#include <utility>
 
 #include "async/async.h"
 #include "async/option.h"
 
 namespace mindspore {
-
 template <typename F>
 class Deferred : public std::function<F> {
  public:
@@ -46,7 +47,6 @@ class Deferred : public std::function<F> {
 };
 
 namespace internal {
-
 template <typename F>
 class DeferredHelper {
  public:
@@ -310,7 +310,5 @@ auto Defer(const AID &aid, R (T::*method)(Args0...), Args1 &&... args)
 
   return std::bind(&std::function<Future<R>(Args0...)>::operator(), std::move(f), std::forward<Args1>(args)...);
 }
-
 }  // namespace mindspore
-
 #endif

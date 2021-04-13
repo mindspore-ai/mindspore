@@ -23,11 +23,9 @@
 #include <mutex>
 #include <string>
 #include <utility>
-
 #include "actor/msg.h"
 
 namespace mindspore {
-
 class ActorBase;
 class ActorMgr;
 class ActorPolicy;
@@ -208,7 +206,5 @@ class ActorBase {
   std::string msgRecords[MAX_ACTOR_RECORD_SIZE];
   uint32_t recordNextPoint = 0;
 };
-
 };  // namespace mindspore
-
 #endif

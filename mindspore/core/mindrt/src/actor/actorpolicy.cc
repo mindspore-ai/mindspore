@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <utility>
+#include <list>
+#include <memory>
 #include "actor/actor.h"
 #include "actor/actormgr.h"
 #include "actor/actorpolicy.h"
@@ -43,12 +47,10 @@ int SingleThread::EnqueMessage(std::unique_ptr<MessageBase> &msg) {
     enqueMailbox->push_back(std::move(msg));
     result = ++msgCount;
   }
-
   // Notify when the count of message  is from  empty to one.
   if (start && result == 1) {
     conditionVar.notify_one();
   }
-
   return result;
 }
 void SingleThread::Notify() {
@@ -62,7 +64,6 @@ std::list<std::unique_ptr<MessageBase>> *SingleThread::GetMsgs() {
   std::unique_lock<std::mutex> lock(mailboxLock);
   conditionVar.wait(lock, [this] { return (!this->enqueMailbox->empty()); });
   SwapMailbox();
-
   // REF_PRIVATE_MEMBER
   result = dequeMailbox;
 
@@ -109,7 +110,6 @@ void ShardedThread::Notify() {
 std::list<std::unique_ptr<MessageBase>> *ShardedThread::GetMsgs() {
   std::list<std::unique_ptr<MessageBase>> *result;
   mailboxLock.lock();
-
   if (enqueMailbox->empty()) {
     ready = false;
     result = nullptr;
@@ -118,10 +118,7 @@ std::list<std::unique_ptr<MessageBase>> *ShardedThread::GetMsgs() {
     SwapMailbox();
     result = dequeMailbox;
   }
-
   mailboxLock.unlock();
-
   return result;
 }
-
 };  // end of namespace mindspore

@@ -20,12 +20,11 @@
 #include <atomic>
 
 namespace mindspore {
-
 class SpinLock {
  public:
   void Lock() {
-    while (locked.test_and_set(std::memory_order_acquire))
-      ;
+    while (locked.test_and_set(std::memory_order_acquire)) {
+    }
   }
 
   void Unlock() { locked.clear(std::memory_order_release); }
@@ -33,7 +32,5 @@ class SpinLock {
  private:
   std::atomic_flag locked = ATOMIC_FLAG_INIT;
 };
-
 }  // namespace mindspore
-
 #endif

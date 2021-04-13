@@ -20,7 +20,8 @@
 #include <condition_variable>
 #include <list>
 #include <thread>
-
+#include <memory>
+#include <string>
 #include "actor/actor.h"
 
 namespace mindspore {
@@ -44,6 +45,5 @@ class ActorThread {
   std::list<std::unique_ptr<std::thread>> workers;
   std::string threadName;
 };
-
 };  // end of namespace mindspore
 #endif

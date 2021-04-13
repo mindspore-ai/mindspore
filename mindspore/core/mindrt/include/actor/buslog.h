@@ -30,7 +30,6 @@
 #include "common/log_adapter.h"
 #endif
 namespace mindspore {
-
 #define BUS_LOG(severity)       // LOG(severity)
 #define BUS_DLOG(verboselevel)  // VLOG(verboselevel)
 
@@ -55,9 +54,7 @@ inline void KillProcess(const std::string &ret) {
   // flush the log in cache to disk before exiting.
   FlushHLogCache();
 }
-
 }  // namespace mindspore
-
 constexpr int DLEVEL4 = 1000;
 constexpr int DLEVEL3 = 3;
 constexpr int DLEVEL2 = 2;

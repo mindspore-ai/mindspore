@@ -16,13 +16,15 @@
 
 #ifndef MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORPOLICY_H
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORPOLICY_H
+
+#include <list>
+#include <memory>
 #include "actor/actorpolicyinterface.h"
 
 namespace mindspore {
-
 class ShardedThread : public ActorPolicy {
  public:
-  ShardedThread(const std::shared_ptr<ActorBase> &actor);
+  explicit ShardedThread(const std::shared_ptr<ActorBase> &actor);
   virtual ~ShardedThread();
 
  protected:
@@ -51,6 +53,5 @@ class SingleThread : public ActorPolicy {
  private:
   std::condition_variable conditionVar;
 };
-
 };  // end of namespace mindspore
 #endif

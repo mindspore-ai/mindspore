@@ -18,9 +18,7 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_COMMON_H
 
 namespace mindspore {
-
 struct Nothing {};
-
 }  // namespace mindspore
 
 #endif /* COMMON_HPP__ */

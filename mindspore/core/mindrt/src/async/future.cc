@@ -18,11 +18,9 @@
 
 namespace mindspore {
 namespace internal {
-
 void Waitf(const AID &aid) {
   mindspore::Terminate(aid);
   MS_LOG(WARNING) << "WaitFor is timeout.";
 }
-
 }  // namespace internal
 }  // namespace mindspore

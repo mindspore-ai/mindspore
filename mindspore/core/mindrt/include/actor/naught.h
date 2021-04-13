@@ -18,9 +18,9 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_NAUGHT_H
 
 #include <memory>
+#include <string>
 
 namespace mindspore {
-
 class Naught;
 class ActorBase;
 
@@ -33,7 +33,5 @@ class Naught {
  public:
   virtual ~Naught() {}
 };
-
 };  // namespace mindspore
-
 #endif

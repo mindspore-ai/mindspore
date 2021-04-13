@@ -22,11 +22,11 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include "async/option.h"
 
 namespace mindspore {
 namespace uuids {
-
 const std::size_t UUID_SIZE = 16;
 
 struct uuid {
@@ -88,7 +88,7 @@ std::basic_ostream<T, F> &operator<<(std::basic_ostream<T, F> &s, const struct u
 
   int i = 0;
   for (const uint8_t *ptr = outputUuid.BeginAddress(); ptr < outputUuid.EndAddress(); ++ptr, ++i) {
-    s << std::setw(UUID_WIDTH) << (int)(*ptr);
+    s << std::setw(UUID_WIDTH) << static_cast<int>(*ptr);
     if (i == FIRST_DELIM_OFFSET || i == SECOND_DELIM_OFFSET || i == THIRD_DELIM_OFFSET || i == FOURTH_DELIM_OFFSET) {
       s << '-';
     }
@@ -97,8 +97,6 @@ std::basic_ostream<T, F> &operator<<(std::basic_ostream<T, F> &s, const struct u
   s << std::setfill(static_cast<T>(' ')) << std::dec;
   return s;
 }
-
 }  // namespace uuids
 }  // namespace mindspore
-
 #endif /* UUID_BASE_HPP_ */

@@ -20,12 +20,11 @@
 #include "async/status.h"
 
 namespace mindspore {
-
 class Failure : public Status {
  public:
   Failure() : Status(Status::KOK), errorCode(Status::KOK) {}
 
-  Failure(int32_t code) : Status(code), errorCode(code) {}
+  explicit Failure(int32_t code) : Status(code), errorCode(code) {}
 
   ~Failure() {}
 
@@ -34,7 +33,5 @@ class Failure : public Status {
  private:
   Status::Code errorCode;
 };
-
 }  // namespace mindspore
-
 #endif /* __FAILURE_HPP__ */

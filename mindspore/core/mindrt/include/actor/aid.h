@@ -18,27 +18,19 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_AID_H
 
 #include <string>
-
 #include "actor/buslog.h"
 
 namespace mindspore {
-
 constexpr auto BUS_TCP = "tcp";
 constexpr auto BUS_UDP = "udp";
-
 class AID {
  public:
   AID() : name(), url() {}
-
   ~AID() {}
-
   AID(const char *name);
   AID(const std::string &name);
-
   AID(const std::string &tmpName, const std::string &sUrl) : name(tmpName), url(sUrl) { SetUnfixUrl(); }
-
   AID(const AID &id) : name(id.name), url(id.url) { SetUnfixUrl(); }
-
   // Overloading of Assignment Operator
   AID &operator=(const AID &id);
 
@@ -97,7 +89,6 @@ inline bool operator!=(const AID &aid1, const AID &aid2) { return !(aid1 == aid2
 
 inline bool operator>(const AID &aid1, const AID &aid2) { return aid1.HashString() > aid2.HashString(); }
 inline bool operator<(const AID &aid1, const AID &aid2) { return aid1.HashString() < aid2.HashString(); }
-
 };  // namespace mindspore
 
 // custom specialization of std::hash can be injected in namespace std
@@ -109,5 +100,4 @@ struct hash<mindspore::AID> {
   result_type operator()(argument_type const &s) const noexcept { return (std::hash<std::string>{}(s.HashString())); }
 };
 }  // namespace std
-
 #endif

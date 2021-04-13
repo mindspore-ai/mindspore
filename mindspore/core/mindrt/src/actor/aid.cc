@@ -17,7 +17,6 @@
 #include "actor/aid.h"
 
 namespace mindspore {
-
 constexpr int PORTMINNUMBER = 0;
 constexpr int PORTMAXNUMBER = 65535;
 constexpr int PROCOLLEN = 3;  // strlen("://");
@@ -83,7 +82,6 @@ void AID::SetProtocol(const std::string &protocol) {
     } else {
       url = protocol + url.substr(index);
     }
-
   } else {
     if (protocol == BUS_TCP) {
       //            url = url;
@@ -125,5 +123,4 @@ uint16_t AID::GetPort() const {
   }
   return (uint16_t)std::stoul(url.substr(index + 1));
 }
-
 };  // end of namespace mindspore
