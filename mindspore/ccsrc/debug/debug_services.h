@@ -174,8 +174,9 @@ class DebugServices {
   void RemoveWatchpoint(unsigned int id);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
-                        std::vector<unsigned int> *watchpoint_id, std::vector<std::vector<parameter_t>> *parameters,
-                        std::vector<int32_t> *error_code, const std::vector<std::string> &op_overflows,
+                        std::vector<unsigned int> *const watchpoint_id,
+                        std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_code,
+                        const std::vector<std::string> &op_overflows,
                         const std::vector<std::shared_ptr<TensorData>> &tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck);
 
@@ -185,7 +186,7 @@ class DebugServices {
 
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size, std::vector<TypePtr> *dtype,
-                        std::vector<std::vector<int64_t>> *shape);
+                        std::vector<std::vector<int64_t>> *const shape);
 
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 

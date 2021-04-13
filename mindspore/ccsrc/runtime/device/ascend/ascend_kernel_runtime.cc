@@ -591,7 +591,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
   }
 }
 
-bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
+bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_sink) {
   SignalGuard sg;
   MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
