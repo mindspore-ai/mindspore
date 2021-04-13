@@ -370,6 +370,7 @@ def test_nanstd():
     arr2[0][4][3][0][2] = onp.nan
     run_single_test(mnp_nanstd, onp_nanstd, arr1, error=1e-5)
     run_single_test(mnp_nanstd, onp_nanstd, arr2, error=1e-5)
+    match_res(mnp.nanstd, onp.nanstd, rand_int())
 
 
 def mnp_var(x):
@@ -436,6 +437,7 @@ def test_nanvar():
     arr2[0][4][3][0][2] = onp.nan
     run_single_test(mnp_nanvar, onp_nanvar, arr1, error=1e-5)
     run_single_test(mnp_nanvar, onp_nanvar, arr2, error=1e-5)
+    match_res(mnp.nanvar, onp.nanvar, rand_int())
 
 
 def mnp_average(x):
@@ -993,6 +995,7 @@ def test_amax():
     a = rand_int(2, 3, 4, 5).astype('float32')
     mask = rand_bool(2, 3, 4, 5)
     run_multi_test(mnp_amax, onp_amax, (a, mask))
+    match_res(mnp.amax, onp.amax, rand_int())
 
 
 def mnp_amin(x, mask):
@@ -1029,6 +1032,7 @@ def test_amin():
     a = rand_int(2, 3, 4, 5).astype('float32')
     mask = rand_bool(2, 3, 4, 5)
     run_multi_test(mnp_amin, onp_amin, (a, mask))
+    match_res(mnp.amin, onp.amin, rand_int())
 
 
 def mnp_hypot(x1, x2):
@@ -1843,6 +1847,7 @@ def test_nansum():
     x[1][0][2][4] = onp.nan
     x[1][1][1][1] = onp.nan
     run_multi_test(mnp_nansum, onp_nansum, (x,))
+    match_res(mnp.nansum, onp.nansum, rand_int())
 
 
 def mnp_nanmean(x):
@@ -1875,6 +1880,7 @@ def test_nanmean():
     x[1][0][2][4] = onp.nan
     x[1][1][1][1] = onp.nan
     run_multi_test(mnp_nanmean, onp_nanmean, (x,))
+    match_res(mnp.nanmean, onp.nanmean, rand_int())
 
 
 def mnp_mean(*arrs):

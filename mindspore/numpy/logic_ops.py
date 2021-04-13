@@ -578,9 +578,9 @@ def isin(element, test_elements, invert=False):
         not rely on the uniqueness of the input arrays.
 
     Args:
-        element (array_like): Input array.
-        test_elements (array_like): The values against which to test each value of
-            `element`.
+        element (Union[int, float, bool, list, tuple, Tensor]): Input array.
+        test_elements (Union[int, float, bool, list, tuple, Tensor]): The values against
+            which to test each value of `element`.
         invert (boolean, optional): If True, the values in the returned array are
             inverted, as if calculating `element` not in `test_elements`. Default is False.
 
@@ -603,6 +603,7 @@ def isin(element, test_elements, invert=False):
         [[ True False]
         [False  True]]
     """
+    element = _to_tensor(element)
     res = in1d(element, test_elements, invert=invert)
     return F.reshape(res, F.shape(element))
 
