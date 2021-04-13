@@ -2237,11 +2237,11 @@ class DivNoNan(_MathBinaryOp):
 
 class MulNoNan(_MathBinaryOp):
     r"""
-    Computes `input_x` * `input_y` element-wise. if `input_y` is zero, No matter what `input_x` is, it will return 0.
+    Computes `input_x` * `input_y` element-wise. If `input_y` is zero, no matter what `input_x` is, it will return 0.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are two tensors, the shapes of them could be broadcasted.
     When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Note:
@@ -2260,8 +2260,8 @@ class MulNoNan(_MathBinaryOp):
     Supported Platforms:
         ``Ascend``
 
-    Raise:
-        TypeError: If neither `input_x` nor `input_y` is a bool tensor.
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a bool Tensor.
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 6.0, np.inf], [np.nan, -7.0, 4.0]]), ms.float32)
