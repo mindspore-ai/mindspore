@@ -257,7 +257,10 @@ class AlbumOp : public MappableLeafOp {
   /// \return Status The status code returned
   Status LaunchThreadsAndInitOp() override;
 
-  Status GetNextRowPullMode(TensorRow *row) override;
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
 
   /// Private function for computing the assignment of the column name map.
   /// \return Status The status code returned
