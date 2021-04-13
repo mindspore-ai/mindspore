@@ -4410,7 +4410,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
                    `gradient` or `indices` is not float32.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -4558,7 +4558,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         TypeError: If dtype of `indices` is not int32.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
