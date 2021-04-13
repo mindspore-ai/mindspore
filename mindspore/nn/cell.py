@@ -1038,7 +1038,9 @@ class Cell(Cell_):
 
     def set_grad(self, requires_grad=True):
         """
-        Sets the cell flag for gradient.
+        Sets the cell flag for gradient. In pynative mode, this parameter specifies whether the network require
+        gradients. If True, the backward network needed to compute the gradients will be generated when the forward
+        network is executed.
 
         Args:
             requires_grad (bool): Specifies if the net need to grad, if it is
@@ -1051,7 +1053,9 @@ class Cell(Cell_):
         """
         Sets the cell to training mode.
 
-        The cell itself and all children cells will be set to training mode.
+        The cell itself and all children cells will be set to training mode. Layers that have different constructions
+        for training and predicting, such as `BatchNorm`, will distinguish between the branches by this attribute. If
+        set to True, the training branch will be executed, otherwise another branch.
 
         Args:
             mode (bool): Specifies whether the model is training. Default: True.
@@ -1190,6 +1194,9 @@ class GraphKernel(Cell):
         auto_prefix (bool): Recursively generate namespaces. Default: True.
         flags (dict) : Set graph flags. Default: None.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> class Relu(nn.GraphKernel):
         ...    def __init__(self):
@@ -1218,6 +1225,9 @@ class GraphCell(Cell):
 
     Args:
         graph (object): A compiled graph loaded from MindIR.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

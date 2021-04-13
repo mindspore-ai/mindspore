@@ -101,7 +101,11 @@ class Momentum(Optimizer):
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
             It must be at least 0.0.
         weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0.0. Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. It must be greater than 0.0. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale. It must be greater than 0.0. In general, use the
+            default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
+            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            Default: 1.0.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:

@@ -144,7 +144,11 @@ class FTRL(Optimizer):
         l1 (float): l1 regularization strength, must be greater than or equal to zero. Default: 0.0.
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
         use_locking (bool): If true, use locks for updating operation. Default: False.
-        loss_scale (float): Value for the loss scale. It must be equal to or greater than 1.0. Default: 1.0.
+        loss_scale (float): Value for the loss scale. It must be greater than 0.0. In general, use the default value.
+            Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
+            `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            Default: 1.0.
         weight_decay (Union[float, int]): Weight decay value to multiply weight, must be zero or positive value.
             Default: 0.0.
 
