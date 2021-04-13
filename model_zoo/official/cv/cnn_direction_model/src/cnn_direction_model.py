@@ -233,9 +233,7 @@ class CNNDirectionModel(nn.Cell):
         # 5 previous layers have mp=2. Height and width of the image would become 1/32.
         self.avg_pool = nn.AvgPool2d(kernel_size=(int(self.image_h / 32), int(self.image_w / 32)))
 
-        # sqrt(6 / (fan_in + fan_out))
         scale = math.sqrt(6 / (out_channels[-1] + dense_layers[0]))
-        # weight_init='glorot_uniform'
         self.dense1 = nn.Dense(out_channels[-1], dense_layers[0], weight_init=Uniform(scale=scale), activation='relu')
 
         scale = math.sqrt(6 / (dense_layers[0] + dense_layers[1]))

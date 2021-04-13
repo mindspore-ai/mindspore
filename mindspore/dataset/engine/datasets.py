@@ -1300,8 +1300,6 @@ class Dataset:
             file_type (str, optional): Dataset format (default='mindrecord').
 
         """
-        # todo(CRC) warning("Used shuffle, repeat, batch before save operator.")
-
         ir_tree, api_tree = self.create_ir_tree()
 
         runtime_context = cde.PythonRuntimeContext()
