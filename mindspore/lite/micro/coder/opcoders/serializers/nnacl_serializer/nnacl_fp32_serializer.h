@@ -34,6 +34,7 @@
 #include "wrapper/fp32/dequant_int8_to_fp32_wrapper.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
+#include "wrapper/fp32/arithmetic_fp32_wrapper.h"
 namespace mindspore::lite::micro::nnacl {
 
 class NNaclFp32Serializer : public Serializer {
@@ -55,6 +56,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SpliceParameter &splice_parameter);
   void CodeStruct(const std::string &name, const ExpParameter &exp_parameter);
   void CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter);
+  void CodeStruct(const std::string &name, const ArithmeticWrapperInfo &arithmetic_wrapper_info);
 };
 
 }  // namespace mindspore::lite::micro::nnacl

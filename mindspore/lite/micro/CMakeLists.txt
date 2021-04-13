@@ -6,7 +6,7 @@ option(PLATFORM_ARM32 "build operator for android arm 32" off)
 option(PLATFORM_ARM64 "build operator for android arm 64" off)
 
 string(REPLACE "/mindspore/lite/micro" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
+set(NNACL_DIR ${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl)
 include_directories(${CMAKE_BINARY_DIR})
 include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)

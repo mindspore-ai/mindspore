@@ -28,7 +28,6 @@
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::lite::micro::nnacl {
-
 int MatMulFP32BaseCoder::ReSize() {
   ResizeParameter();
   thread_count_ = MSMIN(thread_num_, UP_DIV(params_->col_align_, col_tile_));
@@ -45,8 +44,12 @@ int MatMulFP32BaseCoder::ReSize() {
 
 int MatMulFP32BaseCoder::InitBiasData() {
   if (input_tensors_.size() == 3) {
-    int max_bias_data = UP_ROUND(bias_tensor_->ElementsNum(), C16NUM);
+    int max_bias_data = params_->col_align_;
     bias_pack_ptr_size_ = static_cast<size_t>(max_bias_data * sizeof(float));
+    if (bias_tensor_->ElementsNum() == 1) {
+      is_bias_broadcast_ = true;
+    }
+    ori_bias_pack_ptr_size_ = bias_tensor_->ElementsNum() * sizeof(float);
     bias_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
     MS_CHECK_PTR(bias_ptr_);
   }
@@ -123,8 +126,7 @@ int MatMulFP32BaseCoder::Init() {
 
 int MatMulFP32BaseCoder::Prepare(CoderContext *const context) { return RET_OK; }
 
-int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
-  // generate code .h .c
+int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp32/matmul_fp32.h",
@@ -158,6 +160,11 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
               "dequant_int8_to_fp32_wrapper.c",
             });
   }
+  return RET_OK;
+}
+
+int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
+  CollectFilesForTarget(context);
   NNaclFp32Serializer code;
   NNaclFp32Serializer init_code;
   code.CodeStruct("mat_mul_parameter", *params_);
@@ -165,7 +172,17 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // do bias packing to init
   if (bias_ptr_) {
     init_code.CodeMallocExpression(bias_ptr_, bias_pack_ptr_size_);
-    init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, bias_pack_ptr_size_);
+    init_code.CodeFunction("memset", bias_ptr_, 0, bias_pack_ptr_size_);
+    int max_bias_data = params_->col_align_;
+    if (is_bias_broadcast_) {
+      float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data_c()))[0];
+      std::string bias_ptr_str = "((float *)(" + allocator_->GetRuntimeAddr(bias_ptr_) + "))";
+      init_code << "\tfor (int i = 0; i < " << max_bias_data << "; ++i) {\n";
+      init_code << "\t\t" << bias_ptr_str << "[i] = " << broad_cast_data << ";\n";
+      init_code << "\t}\n";
+    } else {
+      init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, ori_bias_pack_ptr_size_);
+    }
   }
 
   // Get Tensor Pointer
@@ -179,6 +196,7 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   if (!params_->a_const_) {
     code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
     init_code.CodeMallocExpression(b_pack_ptr_, b_pack_ptr_size_);
+    init_code.CodeFunction("memset", b_pack_ptr_, 0, b_pack_ptr_size_);
     std::string b_src_str = b_str;
     if (de_quant_flag_) {
       // reuse to b_pack_str
@@ -191,6 +209,7 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   }
   if (!params_->b_const_) {
     init_code.CodeMallocExpression(a_pack_str, a_pack_ptr_size_);
+    init_code.CodeFunction("memset", a_pack_ptr_, 0, a_pack_ptr_size_);
     std::string a_src_str = a_str;
     if (de_quant_flag_) {
       // reuse to a_pack_str
@@ -228,7 +247,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
                       params_->deep_, params_->row_, cur_oc, params_->col_, "OutType_Nhwc");
   }
   code << "\t\t}\n";
-
   context->AppendCode(code.str());
   context->AppendInitCode(init_code.str());
   return RET_OK;

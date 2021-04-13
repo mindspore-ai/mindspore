@@ -56,6 +56,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   void ResizeParameter();
   void FreeResizeBufA();
   void FreeResizeBufB();
+  int CalBroadCastBiasDataElements();
 
  protected:
   MatMulParameter *params_ = nullptr;

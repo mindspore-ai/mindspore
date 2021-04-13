@@ -179,7 +179,6 @@ set(LITE_SRC
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
 
-set(NNACL_DIR ${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl)
 set(LITE_KERNEL_SRC
         ### nnacl
         ${NNACL_DIR}/common_func.c
@@ -188,6 +187,7 @@ set(LITE_KERNEL_SRC
         ${NNACL_DIR}/base/slice_base.c
         ${NNACL_DIR}/fp32/winograd_utils.c
         ${NNACL_DIR}/fp32/pack_fp32.c
+        ${NNACL_DIR}/fp32/arithmetic_fp32.c
         ${NNACL_DIR}/int8/quantize.c
         ${NNACL_DIR}/int8/pack_int8.c
         ${NNACL_DIR}/int8/matmul_int8.c
