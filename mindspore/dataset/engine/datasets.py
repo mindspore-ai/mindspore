@@ -2002,7 +2002,6 @@ class BatchDataset(Dataset):
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
-            logger.info("Batch process pool is being terminated.")
             self.process_pool.close()
 
 
@@ -2396,7 +2395,6 @@ class MapDataset(Dataset):
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
-            logger.info("Map process pool is being terminated.")
             self.process_pool.close()
             self.process_pool.join()
 
@@ -3245,7 +3243,6 @@ class SamplerFn:
 
 
 def _subprocess_handle(eof, signum, frame):
-    logger.info("The subprocess receives a termination signal.")
     eof.set()
 
 

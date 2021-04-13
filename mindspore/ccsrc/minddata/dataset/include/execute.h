@@ -48,7 +48,7 @@ class Execute {
                    MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
   explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
                    MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
-  explicit Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType = MapTargetDevice::kCpu,
+  explicit Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice deviceType = MapTargetDevice::kCpu,
                    uint32_t device_id = 0);
 
   /// \brief Destructor
