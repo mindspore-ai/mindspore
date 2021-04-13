@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindquantum/parameter_resolver.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/parameter_resolver.h"
 
 namespace mindspore {
 namespace mindquantum {

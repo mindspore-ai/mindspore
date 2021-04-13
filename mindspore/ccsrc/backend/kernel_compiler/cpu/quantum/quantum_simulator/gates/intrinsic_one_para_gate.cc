@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindquantum/gates/intrinsic_one_para_gate.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/intrinsic_one_para_gate.h"
 
 #include <string>
 
