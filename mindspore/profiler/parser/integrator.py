@@ -45,7 +45,7 @@ class Integrator:
                            'percent']
     _header_aicore_detail = ['full_op_name', 'execution_time']
     _header_aicpu = ['serial_number', 'op_type', 'total_time', 'dispatch_time',
-                     'run_start', 'run_end']
+                     'execution_time', 'run_start', 'run_end']
 
     _file_name_aicore_type_time = 'aicore_intermediate_{}_type.csv'
     _file_name_aicore_detail_info = 'aicore_intermediate_{}_detail.csv'
