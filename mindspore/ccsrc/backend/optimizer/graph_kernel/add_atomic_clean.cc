@@ -37,13 +37,18 @@
 namespace mindspore {
 namespace opt {
 namespace {
-std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node) {
+std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = false) {
   if (!IsPrimitiveCNode(node, prim::kPrimReduceSum)) {
     MS_LOG(EXCEPTION) << "Only process for reduce sum!";
   }
 
   auto input = node->cast<CNodePtr>()->input(kFirstDataInputIndex);
-  auto src_shape_vec = GetShape(input);
+  ShapeVector src_shape_vec;
+  if (is_ascend) {
+    src_shape_vec = GetDeviceShape(input);
+  } else {
+    src_shape_vec = GetShape(input);
+  }
   auto axis_vec = GetReduceAxis(node);
   if (axis_vec.empty()) {
     for (size_t i = 0; i < src_shape_vec.size(); ++i) {
@@ -140,7 +145,8 @@ bool AtomicAddChecker::CanActivateAtomicAdd(const AnfNodePtr &anf_node) {
   //    which mean it should be in output list.
   // 2. The reduce axis and reduce number should meet condition:
   //    (GPU) all-reduce or reduce-x when fuse number is greater than or equal to 1024, or reduce-y.
-  //    (Ascend) all-reduce or non-reduce axes with dimension 1
+  //    (Ascend) The first valid axis of the input data is the reduce axis or the non-reduce axis
+  //    cannot make full use of multi-core.
   // 3. No other ReduceSum as output ReduceSum's predecessors (reduce compile limitation).
 
   // Rule 1.
@@ -180,11 +186,46 @@ bool AtomicAddCheckerGPU::SuitableForAtomicAdd(const AnfNodePtr &node) {
 }
 
 bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
-  auto dst_shape_vec = AnfAlgo::GetOutputDeviceShape(node, 0);
+  auto input = node->cast<CNodePtr>()->input(kFirstDataInputIndex);
 
-  // all reduce
-  // non-reduce axes with dimension 1
-  return std::all_of(dst_shape_vec.cbegin(), dst_shape_vec.cend(), [](const size_t &dim) { return dim == 1; });
+  // Atomic addition is enabled only when the data type is fp32
+  auto type = AnfAlgo::GetOutputDeviceDataType(input, 0);
+  if (type != kNumberTypeFloat32) {
+    return false;
+  }
+
+  // If the first valid axis of the input data is the reduce axis, enable atomic addition
+  auto src_shape_vec = GetDeviceShape(input);
+  std::set<int64_t> reduce_axis_set = GetUniqReduceAxes(node, true);
+  auto start_with_reduce = false;
+  for (size_t i = 0; i < src_shape_vec.size(); ++i) {
+    auto dim = src_shape_vec[i];
+    if (dim != 1) {
+      if (reduce_axis_set.count(i)) {
+        start_with_reduce = true;
+      }
+      break;
+    }
+  }
+  if (start_with_reduce) {
+    return true;
+  }
+
+  // If the non-reduce axis cannot make full use of multi-core, enable atomic addition
+  auto processor_core_num = 32;
+  auto start_non_reduce_dim = 1;
+  for (size_t i = 0; i < src_shape_vec.size(); ++i) {
+    auto dim = src_shape_vec[i];
+    if (reduce_axis_set.count(i)) {
+      break;
+    }
+    start_non_reduce_dim = start_non_reduce_dim * dim;
+  }
+  if (start_non_reduce_dim < processor_core_num) {
+    return true;
+  }
+
+  return false;
 }
 
 void AtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
