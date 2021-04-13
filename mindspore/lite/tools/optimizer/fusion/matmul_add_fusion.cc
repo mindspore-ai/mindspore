@@ -64,7 +64,8 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
     }
     auto matmul_cnode = cnode->input(index)->cast<CNodePtr>();
     auto bias_node = cnode->input(kAddInputSize - index);
-    if (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param()) {
+    if (!utils::isa<ValueNode>(bias_node) &&
+        (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param())) {
       continue;
     }
     matmul_cnode->add_input(bias_node);
