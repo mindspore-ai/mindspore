@@ -923,14 +923,16 @@ AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrLis
   auto ret = prim_eval_implement_map.find(prim);
   if (ret != prim_eval_implement_map.end()) {
     // fing infer function in the front infer map and restore input abastract form dynamic inputs and reg attr
+    MS_EXCEPTION_IF_NULL(ret->second.infer_shape_dtype_impl_);
     auto infer_spec_list = RectifyAbstract(prim, args_spec_list);
-    return ret->second.impl_(nullptr, prim, infer_spec_list);
+    return ret->second.infer_shape_dtype_impl_(nullptr, prim, infer_spec_list);
   } else {
     // if the infer function has been not founded in the front infer map find it in the backend infer map instead
     auto &prim_backend_eval_impl_map = abstract::GetPrimitiveToBackendEvalImplMap();
     auto ret_backend = prim_backend_eval_impl_map.find(prim);
     if (ret_backend != prim_backend_eval_impl_map.end()) {
-      return ret_backend->second.impl_(nullptr, prim, args_spec_list);
+      MS_EXCEPTION_IF_NULL(ret_backend->second.infer_shape_dtype_impl_);
+      return ret_backend->second.infer_shape_dtype_impl_(nullptr, prim, args_spec_list);
     }
   }
   MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()

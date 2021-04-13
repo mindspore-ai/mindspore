@@ -51,6 +51,5 @@ AbstractBasePtr ScalarSummaryInfer(const abstract::AnalysisEnginePtr &, const Pr
   return std::make_shared<abstract::AbstractTensor>(kInt32, ScalarSummaryInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ScalarSummary, prim::kPrimScalarSummary, ScalarSummaryInfer, nullptr, true);
-REGISTER_PRIMITIVE_C(kNameScalarSummary, ScalarSummary);
 }  // namespace ops
 }  // namespace mindspore

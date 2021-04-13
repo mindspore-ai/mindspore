@@ -66,10 +66,8 @@ AbstractBasePtr ZerosInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   auto abs = std::make_shared<abstract::AbstractTensor>(ZerosInferType(primitive, input_args),
                                                         ZerosInferShape(primitive, input_args));
-  abs->set_value(ZerosInferValue(primitive, input_args, abs));
   return abs;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Zeros, prim::kPrimZeros, ZerosInfer, ZerosInferValue, false);
-REGISTER_PRIMITIVE_C(kNameZeros, Zeros);
 }  // namespace ops
 }  // namespace mindspore

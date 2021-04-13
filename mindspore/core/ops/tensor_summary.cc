@@ -51,6 +51,5 @@ AbstractBasePtr TensorSummaryInfer(const abstract::AnalysisEnginePtr &, const Pr
   return std::make_shared<abstract::AbstractTensor>(kInt32, TensorSummaryInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorSummary, prim::kPrimTensorSummary, TensorSummaryInfer, nullptr, true);
-REGISTER_PRIMITIVE_C(kNameTensorSummary, TensorSummary);
 }  // namespace ops
 }  // namespace mindspore

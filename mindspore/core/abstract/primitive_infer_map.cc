@@ -213,13 +213,13 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   return prim_backend_eval_implement_map;
 }
 
-StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
+StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto iter = GetPrimitiveToEvalImplMap().find(primitive);
   if (iter == GetPrimitiveToEvalImplMap().end()) {
-    return nullptr;
+    return {nullptr, nullptr, false};
   }
-  return iter->second.impl_;
+  return iter->second;
 }
 
 void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg) {
