@@ -47,6 +47,8 @@ class MS_API MSTensor {
                                        const void *data, size_t data_len) noexcept;
   static inline MSTensor *CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
                                           const void *data, size_t data_len) noexcept;
+  static inline MSTensor *CreateDevTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                                          const void *data, size_t data_len) noexcept;
   static inline MSTensor *StringsToTensor(const std::string &name, const std::vector<std::string> &str);
   static inline std::vector<std::string> TensorToStrings(const MSTensor &tensor);
   static void DestroyTensorPtr(MSTensor *tensor) noexcept;
@@ -78,6 +80,8 @@ class MS_API MSTensor {
   static MSTensor *CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                 const void *data, size_t data_len) noexcept;
   static MSTensor *CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                                   const void *data, size_t data_len) noexcept;
+  static MSTensor *CreateDevTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                    const void *data, size_t data_len) noexcept;
   static MSTensor *CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &str);
   static std::vector<std::vector<char>> TensorToStringChars(const MSTensor &tensor);
@@ -118,6 +122,11 @@ MSTensor *MSTensor::CreateTensor(const std::string &name, enum DataType type, co
 MSTensor *MSTensor::CreateRefTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
                                     const void *data, size_t data_len) noexcept {
   return CreateRefTensor(StringToChar(name), type, shape, data, data_len);
+}
+
+MSTensor *MSTensor::CreateDevTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+                                    const void *data, size_t data_len) noexcept {
+  return CreateDevTensor(StringToChar(name), type, shape, data, data_len);
 }
 
 MSTensor *MSTensor::StringsToTensor(const std::string &name, const std::vector<std::string> &str) {
