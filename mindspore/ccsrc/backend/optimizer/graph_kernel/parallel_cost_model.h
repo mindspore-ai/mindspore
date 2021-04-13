@@ -114,6 +114,7 @@ class ParellelCostModelWarehouse {
 
  private:
   ParellelCostModelWarehouse() { cost_model_ = std::make_shared<ParallelCostModel>(); }
+  ~ParellelCostModelWarehouse() = default;
   ParallelCostModelPtr cost_model_;
 };
 }  // namespace opt
