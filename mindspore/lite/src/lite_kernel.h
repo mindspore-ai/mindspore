@@ -31,9 +31,6 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 
-static constexpr int kPerTensor = 1;
-static constexpr size_t kPerBatch = 3;
-
 namespace mindspore::kernel {
 enum KERNEL_ARCH {
   kCPU,

@@ -20,6 +20,7 @@
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "coder/log.h"
+#include "src/weight_decoder.h"
 namespace mindspore::lite::micro {
 
 Conv2DBaseCoder::~Conv2DBaseCoder() {
