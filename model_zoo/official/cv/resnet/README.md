@@ -525,7 +525,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters                 | Ascend 910                                                   |
 | -------------------------- | -------------------------------------- |
 | Model Version              | ResNet18                                                |
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
 | uploaded Date              | 02/25/2021 (month/day/year)                          |
 | MindSpore Version          | 1.1.1-alpha                                                       |
 | Dataset                    | CIFAR-10                                                    |
@@ -545,7 +545,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters                 | Ascend 910                                                   |
 | -------------------------- | -------------------------------------- |
 | Model Version              | ResNet18                                                |
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
 | uploaded Date              | 02/25/2021 (month/day/year)  ；                        |
 | MindSpore Version          | 1.1.1-alpha                                                       |
 | Dataset                    | ImageNet2012                                                    |
@@ -565,7 +565,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
 | uploaded Date              | 04/01/2020 (month/day/year)                          | 08/01/2020 (month/day/year)
 | MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10
@@ -585,7 +585,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
 | uploaded Date              | 04/01/2020 (month/day/year)  ；                        | 08/01/2020 (month/day/year)
 | MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
@@ -605,7 +605,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet101                                                |ResNet101|
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
 | uploaded Date              | 04/01/2020 (month/day/year)                          | 08/01/2020 (month/day/year)
 | MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
@@ -625,7 +625,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters                 | Ascend 910
 | -------------------------- | ------------------------------------------------------------------------ |
 | Model Version              | SE-ResNet50                                               |
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
 | uploaded Date              | 08/16/2020 (month/day/year)                         |
 | MindSpore Version          | 0.7.0-alpha                                                 |
 | Dataset                    | ImageNet2012                                                |
@@ -647,7 +647,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | ResNet18               |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 02/25/2021 (month/day/year) |
 | MindSpore Version   | 1.1.1-alpha                 |
 | Dataset             | CIFAR-10                    |
@@ -661,7 +661,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | ResNet18               |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 02/25/2021 (month/day/year) |
 | MindSpore Version   | 1.1.1-alpha                |
 | Dataset             | ImageNet2012                |
@@ -675,7 +675,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
-| Resource            | Ascend 910                  | GPU                         |
+| Resource            | Ascend 910; OS Euler2.8                   | GPU                         |
 | Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
 | MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
 | Dataset             | CIFAR-10                    | CIFAR-10                    |
@@ -689,7 +689,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
-| Resource            | Ascend 910                  | GPU                         |
+| Resource            | Ascend 910; OS Euler2.8                | GPU                         |
 | Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
 | MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
 | Dataset             | ImageNet2012                | ImageNet2012                |
@@ -703,7 +703,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet101                   | ResNet101                    |
-| Resource            | Ascend 910                  | GPU                         |
+| Resource            | Ascend 910; OS Euler2.8                | GPU                         |
 | Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
 | MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
 | Dataset             | ImageNet2012                | ImageNet2012                |
@@ -717,7 +717,7 @@ top1_accuracy:70.42, top5_accuracy:89.7
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | SE-ResNet50                 |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8             |
 | Uploaded Date       | 08/16/2020 (month/day/year) |
 | MindSpore Version   | 0.7.0-alpha                 |
 | Dataset             | ImageNet2012                |

@@ -184,7 +184,7 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 | Parameters                 | PSENet                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 09/30/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                   |
 | Dataset                    | ICDAR2015                                                   |

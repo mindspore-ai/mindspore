@@ -181,7 +181,7 @@ Parameters for both training and evaluation can be set in config.py
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | FCN-4                                                       |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8            |
 | uploaded Date              | 09/11/2020 (month/day/year)                                 |
 | MindSpore Version          | r0.7.0                                                |
 | Training Parameters        | epoch=10, steps=534, batch_size = 32, lr=0.005              |

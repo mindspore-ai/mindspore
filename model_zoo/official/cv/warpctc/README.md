@@ -209,7 +209,7 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | Parameters                 | Ascend 910                                    |   GPU |
 | -------------------------- | --------------------------------------------- |---------------------------------- |
 | Model Version              | v1.0                                          | v1.0 |
-| Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G   | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G /
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8   | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G /
 | uploaded Date              | 07/01/2020 (month/day/year)                   | 08/01/2020 (month/day/year) |
 | MindSpore Version          | 0.5.0-alpha                                   | 0.6.0-alpha |
 | Dataset                    | Captcha                                       | Captcha |
@@ -229,7 +229,7 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
 | Parameters          | WarpCTC                     |
 | ------------------- | --------------------------- |
 | Model Version       | V1.0                        |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                |
 | Uploaded Date       | 08/01/2020 (month/day/year) |
 | MindSpore Version   | 0.6.0-alpha                 |
 | Dataset             | Captcha                     |

@@ -196,7 +196,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | NCF                                                 |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8             |
 | uploaded Date              | 10/23/2020 (month/day/year)                                  |
 | MindSpore Version          | 1.0.0                                                |
 | Dataset                    | ml-1m                                                        |
@@ -212,7 +212,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameters          | Ascend              |
 | ------------------- | --------------------------- |
 | Model Version       | NCF               |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 10/23/2020 (month/day/year)  |
 | MindSpore Version   | 1.0.0                |  
 | Dataset             | ml-1m                       |

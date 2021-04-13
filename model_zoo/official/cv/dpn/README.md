@@ -274,7 +274,7 @@ All results are validated at image size of 224x224. The dataset preprocessing an
 | Parameters        | Ascend                      |
 | ----------------- | --------------------------- |
 | Model Version     | DPN92 (Train)               |
-| Resource          | Ascend 910                  |
+| Resource          | Ascend 910; OS Euler2.8                  |
 | Uploaded Date     | 12/20/2020 (month/day/year) |
 | MindSpore Version | 1.1.0                       |
 | Dataset           | ImageNet-1K                 |
@@ -289,7 +289,7 @@ All results are validated at image size of 224x224. The dataset preprocessing an
 | Parameters        | Ascend                            |
 | ----------------- | --------------------------------- |
 | Model Version     | DPN92                             |
-| Resource          | Ascend 910                        |
+| Resource          | Ascend 910; OS Euler2.8                        |
 | Uploaded Date     | 12/20/2020 (month/day/year)       |
 | MindSpore Version | 1.1.0                             |
 | Dataset           | ImageNet-1K                       |

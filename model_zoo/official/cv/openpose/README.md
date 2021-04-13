@@ -208,7 +208,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters                 | Ascend
 | -------------------------- | -----------------------------------------------------------
 | Model Version              | openpose
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8
 | uploaded Date              | 12/14/2020 (month/day/year)
 | MindSpore Version          | 1.0.1-alpha
 | Training Parameters        | epoch=60(1pcs)/80(8pcs), steps=30k(1pcs)/5k(8pcs), batch_size=10, init_lr=0.0001

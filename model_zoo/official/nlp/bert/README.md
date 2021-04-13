@@ -596,7 +596,7 @@ The result will be as follows:
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_base                                                  | BERT_base                 |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              | NV SMX2 V100-16G, cpu: Intel(R) Xeon(R) Platinum 8160 CPU @2.10GHz, memory: 256G         |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8             | NV SMX2 V100-16G, cpu: Intel(R) Xeon(R) Platinum 8160 CPU @2.10GHz, memory: 256G         |
 | uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
 | Dataset                    | cn-wiki-128(4000w)                                         | cn-wiki-128(4000w)        |
@@ -616,7 +616,7 @@ The result will be as follows:
 | Parameters                 | Ascend                                                     |
 | -------------------------- | ---------------------------------------------------------- |
 | Model Version              | BERT_NEZHA                                                 |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8              |
 | uploaded Date              | 08/20/2020                                                 |
 | MindSpore Version          | 1.0.0                                                      |
 | Dataset                    | cn-wiki-128(4000w)                                         |
@@ -638,7 +638,7 @@ The result will be as follows:
 | Parameters                 | Ascend                        |
 | -------------------------- | ----------------------------- |
 | Model Version              |                               |
-| Resource                   | Ascend 910                    |
+| Resource                   | Ascend 910; OS Euler2.8                     |
 | uploaded Date              | 08/22/2020                    |
 | MindSpore Version          | 1.0.0                         |
 | Dataset                    | cola, 1.2W                    |

@@ -131,7 +131,7 @@ Parameters for both training and evaluation can be set in config.py
 
 | Model                 | MindSpore + Ascend                        | TensorFlow+GPU                       |
 | -------------------------- | ----------------------------- | ------------------------- |
-| Resource                   | Ascend 910                    | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910; OS Euler2.8                    | NV SMX2 V100-32G          |
 | Version          | 1.0.1                         | 1.4.0                     |
 | Dataset                    | Sentence polarity dataset v1.0                    | Sentence polarity dataset v1.0            |
 | batch_size                 | 64                        | 64                   |

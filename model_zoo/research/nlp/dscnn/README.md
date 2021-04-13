@@ -271,7 +271,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | DS-CNN                                                       |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
 | uploaded Date              | 27/09/2020 (month/day/year)                                  |
 | MindSpore Version          | 1.0.0                                                        |  
 | Dataset                    | Speech commands dataset version 1                            |
@@ -291,7 +291,7 @@ Parameters for both training and evaluation can be set in config.py.
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | DS-CNN                      |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 09/27/2020  |
 | MindSpore Version   | 1.0.0                         |
 | Dataset             |Speech commands dataset version 1     |

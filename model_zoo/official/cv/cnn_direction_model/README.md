@@ -151,7 +151,7 @@ Results of evaluation will be printed after evaluation process is completed.
 
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ------------------------------------------------------------|
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G              |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 01/15/2021 (month/day/year)                                 |
 | MindSpore Version          | 1.1                                                  |
 | Dataset                    | FSNS                                                   |

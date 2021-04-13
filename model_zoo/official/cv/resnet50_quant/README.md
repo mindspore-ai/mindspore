@@ -178,7 +178,7 @@ result: {'acc': 0.76576314102564111}
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | ResNet50 V1.5                                               |
-| Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
 | uploaded Date              | 06/06/2020 (month/day/year)                                 |
 | MindSpore Version          | 0.3.0-alpha                                                 |
 | Dataset                    | ImageNet                                                    |
@@ -198,7 +198,7 @@ result: {'acc': 0.76576314102564111}
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | ResNet50 V1.5               |
-| Resource            | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G    |
+| Resource            | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8    |
 | Uploaded Date       | 06/06/2020 (month/day/year) |
 | MindSpore Version   | 0.3.0-alpha                 |
 | Dataset             | ImageNet                    |

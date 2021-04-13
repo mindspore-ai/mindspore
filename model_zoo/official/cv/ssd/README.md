@@ -454,7 +454,7 @@ mAP: 0.33880018942412393
 | Parameters          | Ascend                                                                        | GPU                                                                           | Ascend                                                                        |
 | ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Model Version       | SSD V1                                                                        | SSD V1                                                                        | SSD-Mobilenet-V1-Fpn                                                          |
-| Resource            | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G                              | NV SMX2 V100-16G                                                              | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G                              |
+| Resource            | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                               | NV SMX2 V100-16G                                                              | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
 | uploaded Date       | 09/15/2020 (month/day/year)                                                   | 09/24/2020 (month/day/year)                                                   | 01/13/2021 (month/day/year)                                                   |
 | MindSpore Version   | 1.0.0                                                                         | 1.0.0                                                                         | 1.1.0                                                                         |
 | Dataset             | COCO2017                                                                      | COCO2017                                                                      | COCO2017                                                                      |
@@ -471,7 +471,7 @@ mAP: 0.33880018942412393
 | Parameters          | Ascend                      | GPU                         | Ascend                      |
 | ------------------- | --------------------------- | --------------------------- | --------------------------- |
 | Model Version       | SSD V1                      | SSD V1                      | SSD-Mobilenet-V1-Fpn        |
-| Resource            | Ascend 910                  | GPU                         | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  | GPU                         |Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 09/24/2020 (month/day/year) | 09/24/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       | 1.0.0                       | 1.1.0                       |
 | Dataset             | COCO2017                    | COCO2017                    | COCO2017                    |

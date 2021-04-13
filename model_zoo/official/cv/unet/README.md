@@ -290,7 +290,7 @@ The above python command will run in the background. You can view the results th
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | Unet                                                         |
-| Resource                   | Ascend 910 ;CPU 2.60GHz,192cores; Memory,755G                 |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                 |
 | uploaded Date              | 09/15/2020 (month/day/year)                                  |
 | MindSpore Version          | 1.0.0                                                        |
 | Dataset                    | ISBI                                                         |

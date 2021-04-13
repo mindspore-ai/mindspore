@@ -407,7 +407,7 @@ CenterNet on 11.8K images(The annotation and data format must be the same as coc
 
 | Parameters                 | CenterNet                                                      |
 | -------------------------- | ---------------------------------------------------------------|
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G                |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8               |
 | uploaded Date              | 3/27/2021 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | 11.8K images                                                   |
@@ -428,7 +428,7 @@ CenterNet on validation(5K images) and test-dev(40K images)
 
 | Parameters                 | CenterNet                                                       |
 | -------------------------- | ----------------------------------------------------------------|
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G                 |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                 |
 | uploaded Date              | 3/27/2021 (month/day/year)                                     |
 | MindSpore Version          | 1.1.0                                                           |
 | Dataset                    | 5K images(val), 40K images(test-dev)                            |

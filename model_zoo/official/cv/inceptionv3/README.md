@@ -247,7 +247,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Parameters                 | Ascend                                    |
 | -------------------------- | ---------------------------------------------- |
 | Model Version              | InceptionV3                                    |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G   |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8   |
 | uploaded Date              | 08/21/2020                                     |
 | MindSpore Version          | 0.6.0-beta                                     |
 | Dataset                    | 1200k images                                   |
@@ -269,7 +269,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
 | Model Version       | InceptionV3                 |
-| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G                  |
+| Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                   |
 | Uploaded Date       | 08/22/2020                  |
 | MindSpore Version   | 0.6.0-beta                  |
 | Dataset             | 50k images                  |

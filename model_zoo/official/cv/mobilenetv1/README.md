@@ -164,7 +164,7 @@ result: {'top_5_accuracy': 0.9010016025641026, 'top_1_accuracy': 0.7128004807692
 | Parameters                 | MobilenetV1                                                                                 |
 | -------------------------- | ------------------------------------------------------------------------------------------- |
 | Model Version              | V1                                                                                          |
-| Resource                   | Ascend 910 * 4, cpu:2.60GHz 192cores, memory:755G                                           |
+| Resource                   | Ascend 910 * 4; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                                           |
 | uploaded Date              | 11/28/2020                                                                                  |
 | MindSpore Version          | 1.0.0                                                                                       |
 | Dataset                    | ImageNet2012                                                                                |

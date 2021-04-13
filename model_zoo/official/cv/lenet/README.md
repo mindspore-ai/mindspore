@@ -165,7 +165,7 @@ You can view the results through the file "log.txt". The accuracy of the test da
 
 | Parameters                 | LeNet                                                   |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
 | uploaded Date              | 09/16/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                      |
 | Dataset                    | MNIST                                                    |

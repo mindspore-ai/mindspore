@@ -169,7 +169,7 @@ Annotation precision precision = 0.635204
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                |
 | uploaded Date              | 02/11/2021 (month/day/year)                                 |
 | MindSpore Version          | 1.2.0                                                       |
 | Dataset                    | FSNS                                                        |

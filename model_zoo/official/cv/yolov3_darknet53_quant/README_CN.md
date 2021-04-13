@@ -275,7 +275,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | 参数                 | Ascend                                                                                         |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
 | 模型版本              | YOLOv3_Darknet53_Quant V1                                                                      |
-| 资源                   | Ascend 910; CPU 2.60GHz，192核; 内存：755G                                                |
+| 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8                                                  |
 | 上传日期              | 2020-06-31                                                                    |
 | MindSpore版本          | 0.6.0-alpha                                                                                    |
 | 数据集                    | COCO2014                                                                                       |
@@ -295,7 +295,7 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | 参数          | Ascend                      |
 | ------------------- | --------------------------- |
 | 模型版本       | YOLOv3_Darknet53_Quant V1   |
-| 资源            | Ascend 910                  |
+| 资源            |Ascend 910；系统 Euler2.8                  |
 | 上传日期       | 2020-06-31 |
 | MindSpore版本   | 0.6.0-alpha                 |
 | 数据集             | COCO2014，40,504张图片    |

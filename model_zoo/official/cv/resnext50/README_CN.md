@@ -226,7 +226,7 @@ python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_forma
 
 | 参数 | ResNeXt50 | |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：755GB              | NV SMX2 V100-32G          |
+| 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755GB；系统 Euler2.8              | NV SMX2 V100-32G          |
 | 上传日期              | 2020-6-30                                           | 2020-7-23      |
 | MindSpore版本          | 0.5.0                                                      | 0.6.0                     |
 | 数据集 | ImageNet | ImageNet |
@@ -242,7 +242,7 @@ python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_forma
 
 | 参数                 |                               |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
-| 资源                   | Ascend 910                    | NV SMX2 V100-32G          | Ascend 310           |
+| 资源                   | Ascend 910；系统 Euler2.8                    | NV SMX2 V100-32G          | Ascend 310           |
 | 上传日期              | 2020-6-30                                           | 2020-7-23   | 2020-7-23      |
 | MindSpore版本         | 0.5.0                         | 0.6.0                     | 0.6.0                |
 | 数据集 | ImageNet， 1.2万 | ImageNet， 1.2万 | ImageNet， 1.2万 |

@@ -380,7 +380,7 @@ Inference result is saved in current path, you can find result like this in acc.
 | Parameters                 | Ascend                                                   | GPU                                                 |
 | -------------------------- | ----------------------------------------------------------- |----------------------------------------------------------- |
 | Model Version              | V1                                                | V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |V100-PCIE 32G            |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |V100-PCIE 32G            |
 | uploaded Date              | 08/31/2020 (month/day/year)                                 |02/10/2021 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |1.2.0                                                       |
 | Dataset                    | COCO2017                                                   |COCO2017                                                   |
@@ -397,7 +397,7 @@ Inference result is saved in current path, you can find result like this in acc.
 | Parameters          | Ascend                |GPU                |
 | ------------------- | --------------------------- |--------------------------- |
 | Model Version       | V1                | V1                |
-| Resource            | Ascend 910                  |GPU                   |
+| Resource            | Ascend 910; OS Euler2.8                  |GPU                   |
 | Uploaded Date       | 08/31/2020 (month/day/year) |02/10/2021 (month/day/year) |
 | MindSpore Version   | 1.0.0                       | 1.2.0                       |
 | Dataset             | COCO2017    |COCO2017    |

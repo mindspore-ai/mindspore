@@ -265,7 +265,7 @@ Parameters for both training and evaluation can be set in config.py
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | DeepFM                                                      | To do                  |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G              | To do                  |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                | To do                  |
 | uploaded Date              | 09/15/2020 (month/day/year)                                 | To do                  |
 | MindSpore Version          | 1.0.0                                                 | To do                  |
 | Dataset                    | [1]                                                         | To do                  |
@@ -285,7 +285,7 @@ Parameters for both training and evaluation can be set in config.py
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | DeepFM                      | To do                       |
-| Resource            | Ascend 910                  | To do                       |
+| Resource            | Ascend 910; OS Euler2.8                    | To do                       |
 | Uploaded Date       | 05/27/2020 (month/day/year) | To do                       |
 | MindSpore Version   | 0.3.0-alpha                 | To do                       |
 | Dataset             | [1]                         | To do                       |

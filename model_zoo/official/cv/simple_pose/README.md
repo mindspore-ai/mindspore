@@ -314,7 +314,7 @@ Total boxes: 104125
 | Parameters          | Standalone                  | Distributed                 |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | SimplePoseNet               | SimplePoseNet               |
-| Resource            | Ascend 910                  | 4 Ascend 910 cards          |
+| Resource            | Ascend 910; OS Euler2.8                  | 4 Ascend 910 cards; OS Euler2.8          |
 | Uploaded Date       | 12/18/2020 (month/day/year) | 12/18/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       | 1.1.0                       |
 | Dataset             | COCO2017                    | COCO2017                    |

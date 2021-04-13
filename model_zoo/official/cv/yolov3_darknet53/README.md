@@ -340,7 +340,7 @@ This the standard format from `pycocotools`, you can refer to [cocodataset](http
 | Parameters                 | YOLO                                                        |YOLO                                                         |
 | -------------------------- | ----------------------------------------------------------- |------------------------------------------------------------ |
 | Model Version              | YOLOv3                                                      |YOLOv3                                                       |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G        |
+| Resource                   |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8               | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G        |
 | uploaded Date              | 09/15/2020 (month/day/year)                                 | 09/02/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.1.1                                                       | 1.1.1                                                       |
 | Dataset                    | COCO2014                                                    | COCO2014                                                    |
@@ -360,7 +360,7 @@ This the standard format from `pycocotools`, you can refer to [cocodataset](http
 | Parameters          | YOLO                        |YOLO                          |
 | ------------------- | --------------------------- |------------------------------|
 | Model Version       | YOLOv3                      | YOLOv3                       |
-| Resource            | Ascend 910                  | NV SMX2 V100-16G             |
+| Resource            |  Ascend 910; OS Euler2.8                  | NV SMX2 V100-16G             |
 | Uploaded Date       | 09/15/2020 (month/day/year) | 08/20/2020 (month/day/year)  |
 | MindSpore Version   | 1.1.1                       | 1.1.1                        |
 | Dataset             | COCO2014, 40,504  images    | COCO2014, 40,504  images     |

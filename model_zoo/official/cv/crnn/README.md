@@ -275,7 +275,7 @@ result CRNNAccuracy is: 0.806666666666
 | Parameters                 | Ascend 910                                        |
 | -------------------------- | --------------------------------------------------|
 | Model Version              | v1.0                                              |
-| Resource                   | Ascend 910, CPU 2.60GHz 192cores, Memory 755G     |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8     |
 | uploaded Date              | 12/15/2020 (month/day/year)                       |
 | MindSpore Version          | 1.0.1                                             |
 | Dataset                    | Synth                                             |
@@ -295,7 +295,7 @@ result CRNNAccuracy is: 0.806666666666
 | Parameters          | SVT                         | IIIT5K                      |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | V1.0                        | V1.0                        |
-| Resource            | Ascend 910                  | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  | Ascend 910                  |
 | Uploaded Date       | 12/15/2020 (month/day/year) | 12/15/2020 (month/day/year) |
 | MindSpore Version   | 1.0.1                       | 1.0.1                       |
 | Dataset             | SVT                         | IIIT5K                      |

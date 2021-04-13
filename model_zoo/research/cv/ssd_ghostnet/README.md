@@ -178,7 +178,7 @@ python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.c
 | Parameters                 | Ascend                                                       |
 | -------------------------- | -------------------------------------------------------------|
 | Model Version              | SSD ghostnet                                                 |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
 | MindSpore Version          | 0.7.0                                                        |
 | Dataset                    | COCO2017                                                     |
 | Training Parameters        | epoch = 500,  batch_size = 32                                |
@@ -191,7 +191,7 @@ python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.c
 | Parameters          | Ascend                      |
 | ------------------- | ----------------------------|
 | Model Version       | SSD ghostnet                |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 09/08/2020 (month/day/year) |
 | MindSpore Version   | 0.7.0                       |
 | Dataset             | COCO2017                    |

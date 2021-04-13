@@ -197,7 +197,7 @@ sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 | Parameters                 | Face Recognition For Tracking                               |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
 | uploaded Date              | 09/30/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | 10K images                                                  |
@@ -214,7 +214,7 @@ sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 | Parameters          |Face Recognition For Tracking|
 | ------------------- | --------------------------- |
 | Model Version       | V1                          |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 09/30/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | 2K images                   |

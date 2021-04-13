@@ -353,7 +353,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | Parameters                 | VGG16(Ascend)                                  | VGG16(GPU)                                      |
 | -------------------------- | ---------------------------------------------- |------------------------------------|
 | Model Version              | VGG16                                          | VGG16                                           |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G  |NV SMX2 V100-32G                                 |
+| Resource                   |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |NV SMX2 V100-32G                                 |
 | uploaded Date              | 10/28/2020                                     | 10/28/2020                                       |
 | MindSpore Version          | 1.0.0                                          | 1.0.0                                             |
 | Dataset                    | CIFAR-10                                        |ImageNet2012                                     |
@@ -372,7 +372,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | Parameters          | VGG16(Ascend)               | VGG16(GPU)
 | ------------------- | --------------------------- |---------------------
 | Model Version       | VGG16                       |    VGG16                       |
-| Resource            | Ascend 910                  |   GPU                          |
+| Resource            | Ascend 910; OS Euler2.8                    |   GPU                          |
 | Uploaded Date       | 10/28/2020                  | 10/28/2020                     |
 | MindSpore Version   | 1.0.0                       | 1.0.0                          |
 | Dataset             | CIFAR-10, 10,000 images     |ImageNet2012, 5000 images       |

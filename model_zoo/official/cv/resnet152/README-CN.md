@@ -179,7 +179,7 @@ result: {'top_5_accuracy': 0.9438420294494239, 'top_1_accuracy': 0.78817221518} 
 | 参数 | Ascend 910  |
 |---|---|
 | 模型版本  | ResNet152  |
-| 资源  |  Ascend 910；CPU：2.60GHz，192核；内存：755G |
+| 资源  |   Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
 | 上传日期  |2021-02-10 ;  |
 | MindSpore版本  | 1.0.1 |
 | 数据集  |  ImageNet2012 |

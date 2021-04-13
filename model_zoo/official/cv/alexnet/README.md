@@ -193,7 +193,7 @@ Before running the command below, please check the checkpoint path used for eval
 
 | Parameters                 | Ascend                                                      | GPU                                              |
 | -------------------------- | ------------------------------------------------------------| -------------------------------------------------|
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G              | NV SMX2 V100-32G                                 |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             | NV SMX2 V100-32G                                 |
 | uploaded Date              | 06/09/2020 (month/day/year)                                 | 17/09/2020 (month/day/year)                      |
 | MindSpore Version          | 1.0.0                                                  | 0.7.0-beta                                       |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10                                         |

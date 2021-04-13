@@ -332,7 +332,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-32G       |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             | NV SMX2 V100-32G       |
 | uploaded Date              | 10/28/2020 (month/day/year)                                 | 10/28/2020 (month/day/year) |
 | MindSpore Version          | 1.0.0                                                       | 1.0.0                  |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |
@@ -353,7 +353,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | Inception V1                                                |
-| Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
 | uploaded Date              | 10/28/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | 1200k images                                                |
@@ -375,7 +375,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | Inception V1                | Inception V1                |
-| Resource            | Ascend 910                  | GPU                         |
+| Resource            | Ascend 910; OS Euler2.8                  | GPU                         |
 | Uploaded Date       | 10/28/2020 (month/day/year) | 10/28/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       | 1.0.0                       |
 | Dataset             | CIFAR-10, 10,000 images     | CIFAR-10, 10,000 images     |
@@ -389,7 +389,7 @@ For more configuration details, please refer the script `config.py`.
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | Inception V1                |
-| Resource            | Ascend 910                  |
+| Resource            | Ascend 910; OS Euler2.8                  |
 | Uploaded Date       | 10/28/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | 1200k images                |

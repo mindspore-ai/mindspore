@@ -232,7 +232,7 @@ metric: {'Loss': 0.8144, 'Top1-Acc': 0.8009, 'Top5-Acc': 0.9457}
 | Parameters                 | Ascend                                        | GPU                              |
 | -------------------------- | --------------------------------------------- | -------------------------------- |
 | Model Version              | InceptionV4                                   | InceptionV4                      |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G | NV SMX2 V100-32G                 |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8  | NV SMX2 V100-32G                 |
 | uploaded Date              | 11/04/2020                                    | 03/05/2021                       |
 | MindSpore Version          | 1.0.0                                         | 1.0.0                            |
 | Dataset                    | 1200k images                                  | 1200K images                     |
@@ -253,7 +253,7 @@ metric: {'Loss': 0.8144, 'Top1-Acc': 0.8009, 'Top5-Acc': 0.9457}
 | Parameters          | Ascend                                        | GPU                                |
 | ------------------- | --------------------------------------------- | ---------------------------------- |
 | Model Version       | InceptionV4                                   | InceptionV4                        |
-| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G | NV SMX2 V100-32G                   |
+| Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8 | NV SMX2 V100-32G                   |
 | Uploaded Date       | 11/04/2020                                    | 03/05/2021                         |
 | MindSpore Version   | 1.0.0                                         | 1.0.0                              |
 | Dataset             | 50k images                                    | 50K images                         |

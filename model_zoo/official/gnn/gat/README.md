@@ -183,7 +183,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 | Parameter                            | GAT                                       |
 | ------------------------------------ | ----------------------------------------- |
-| Resource                             | Ascend 910                                |
+| Resource                             | Ascend 910; OS Euler2.8                                 |
 | uploaded Date                        | 06/16/2020(month/day/year)                |
 | MindSpore Version                    | 1.0.0                              |
 | Dataset                              | Cora/Citeseer                             |

@@ -361,7 +361,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | 参数           | VGG16(Ascend)                                  | VGG16(GPU)                                      |
 | -------------------------- | ---------------------------------------------- |------------------------------------|
 | 模型版本                | VGG16                                          | VGG16                                           |
-| 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：755 GB    |NV SMX2 V100-32G                                 |
+| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755GB；系统 Euler2.8    |NV SMX2 V100-32G                                 |
 | 上传日期              | 2020-08-20                                           | 2020-08-20    |
 | MindSpore版本        | 0.5.0-alpha                                     |0.5.0-alpha                                             |
 | 数据集                | CIFAR-10                                        |ImageNet2012                                     |
@@ -380,7 +380,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | 参数  | VGG16(Ascend)               | VGG16(GPU)
 | ------------------- | --------------------------- |---------------------
 | 模型版本      | VGG16                       |    VGG16                       |
-| 资源        | Ascend 910                  |   GPU                          |
+| 资源        | Ascend 910；系统 Euler2.8           |   GPU                          |
 | 上传日期              | 2020-08-20                    | 2020-08-20                 |
 | MindSpore版本   | 0.5.0-alpha                 |0.5.0-alpha                     |
 | 数据集 | CIFAR-10，10000张图像 | ImageNet2012，5000张图像 |

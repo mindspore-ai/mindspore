@@ -167,7 +167,7 @@ python eval.py
 
 | Parameters               | Single <br />Ascend             | Data-Parallel-8P                |
 | ------------------------ | ------------------------------- | ------------------------------- |
-| Resource                 | Ascend 910                      | Ascend 910                      |
+| Resource                 | Ascend 910; OS Euler2.8                        | Ascend 910                      |
 | Uploaded Date            | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     |
 | MindSpore Version        | 1.0                             | 1.0                             |
 | Dataset                  | [1]                             | [1]                             |
@@ -187,7 +187,7 @@ All executable scripts can be found in [here](https://gitee.com/mindspore/mindsp
 
 | Parameters        | Wide&Deep                   |
 | ----------------- | --------------------------- |
-| Resource          | Ascend 910                  |
+| Resource          | Ascend 910; OS Euler2.8                    |
 | Uploaded Date     | 10/27/2020 (month/day/year) |
 | MindSpore Version | 1.0                  |
 | Dataset           | [1]                         |
