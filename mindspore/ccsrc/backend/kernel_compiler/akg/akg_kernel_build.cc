@@ -102,7 +102,8 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
     return true;
   }
 
-  kernel::KernelBuildClient *client = GetClient();
+  auto client = GetClient();
+  MS_EXCEPTION_IF_NULL(client);
   if (!client->AkgStart(PROCESS_NUM, TIME_OUT)) {
     MS_LOG(ERROR) << "Akg start failed.";
     return false;
