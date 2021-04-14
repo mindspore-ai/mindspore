@@ -27,6 +27,8 @@
 #include "src/common/utils.h"
 #include "src/tensor.h"
 
+static constexpr int kPerTensor = 1;
+
 namespace mindspore::lite {
 class WeightDecoder {
  public:
