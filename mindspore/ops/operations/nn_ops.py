@@ -2350,7 +2350,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
+        >>> logits = Tensor([[2, 3, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
         >>> labels = Tensor([0, 1], mindspore.int32)
         >>> sparse_softmax_cross = ops.SparseSoftmaxCrossEntropyWithLogits()
         >>> loss = sparse_softmax_cross(logits, labels)
