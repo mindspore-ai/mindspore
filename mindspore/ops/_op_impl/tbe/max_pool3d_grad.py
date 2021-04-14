@@ -26,7 +26,8 @@ max_pool3d_grad_op_info = TBERegOp("MaxPool3DGrad") \
     .partial_flag(True) \
     .attr("kernel_size", "required", "listInt", "all") \
     .attr("strides", "required", "listInt", "all") \
-    .attr("pad_list", "required", "listInt", "all") \
+    .attr("pad_mode", "optional", "str", "all") \
+    .attr("pad_list", "required", "listInt", "all", "0,0,0") \
     .attr("format", "optional", "str", "all") \
     .input(0, "orig_x", False, "required", "all") \
     .input(1, "orig_y", False, "required", "all") \
