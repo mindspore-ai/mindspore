@@ -378,6 +378,7 @@ def divide(x1, x2, dtype=None):
         [0.33333334 0.5       ]
         [0.33333334 0.5       ]]
     """
+    x1, x2 = _to_tensor(x1, x2)
     if not _check_is_float(F.dtype(x1)) and not _check_is_float(F.dtype(x2)):
         x1 = F.cast(x1, mstype.float32)
         x2 = F.cast(x2, mstype.float32)
@@ -2427,7 +2428,7 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     Applies comparison based on cmp_fn and reduction based on reduce_fn.
     If cmp_fn is None, only reduction is performed.
     """
-    _check_input_tensor(a)
+    a = _to_tensor(a)
 
     shape = F.shape(a)
     ndim = F.rank(a)
@@ -2458,8 +2459,6 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     if initial is not None:
         initial = full(shape, initial, dtype)
         a = cmp_fn(a, initial)
-    if not axes:
-        return a.astype(dtype)
     if isinstance(where, Tensor):
         if initial is None:
             return _raise_value_error('initial value must be provided for where masks')
@@ -2580,6 +2579,8 @@ def nanmean(a, axis=None, dtype=None, keepdims=False):
         >>> print(output)
         [1.  3.5]
     """
+    if dtype is None:
+        dtype = mstype.float32
     a = _to_tensor(a)
     axis = _check_axis_valid(axis, F.rank(a))
     sum_a = nansum(a, axis=axis, dtype=dtype, keepdims=keepdims)
@@ -2592,7 +2593,7 @@ def _nanvar(a, axis, ddof=0, keepdims=False):
     pow_a = F.tensor_pow(F.tensor_sub(a, mean_a), 2)
     sum_a = _reduce_nansum(pow_a, axis, keepdims)
     count = _count_nonnan(a, axis, keepdims)
-    return F.tensor_div(sum_a, F.tensor_sub(count, ddof))
+    return divide(sum_a, F.tensor_sub(count, ddof))
 
 
 def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
@@ -2633,16 +2634,18 @@ def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
     Examples:
         >>> import mindspore.numpy as np
         >>> a = np.array([[1, np.nan], [3, 4]])
-        >>> output = np.nanstd(a)
+        >>> output = np.nanvar(a)
         >>> print(output)
-        1.2472192
-        >>> output = np.nanstd(a, axis=0)
+        1.5555557
+        >>> output = np.nanvar(a, axis=0)
         >>> print(output)
         [1. 0.]
-        >>> output = np.nanstd(a, axis=1)
+        >>> output = np.nanvar(a, axis=1)
         >>> print(output)
-        [0.  0.5]
+        [0.   0.25]
     """
+    if dtype is None:
+        dtype = mstype.float32
     return _reduce(a, functools.partial(_nanvar, ddof=ddof, keepdims=keepdims), axis=axis,
                    keepdims=keepdims, dtype=dtype)
 
@@ -2686,16 +2689,18 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
     Examples:
         >>> import mindspore.numpy as np
         >>> a = np.array([[1, np.nan], [3, 4]])
-        >>> output = np.nanvar(a)
+        >>> output = np.nanstd(a)
         >>> print(output)
-        1.5555557
-        >>> output = np.nanvar(a, axis=0)
+        1.2472192
+        >>> output = np.nanstd(a, axis=0)
         >>> print(output)
         [1. 0.]
-        >>> output = np.nanvar(a, axis=1)
+        >>> output = np.nanstd(a, axis=1)
         >>> print(output)
-        [0.   0.25]
+        [0.  0.5]
     """
+    if dtype is None:
+        dtype = mstype.float32
     return _reduce(a, lambda a, axis: F.sqrt(_nanvar(a, axis, ddof=ddof, keepdims=keepdims)),
                    axis=axis, keepdims=keepdims, dtype=dtype)
 

@@ -669,7 +669,7 @@ def where(condition, x=None, y=None):
 
     Args:
         condition (Tensor): where True, yield `x`, otherwise yield `y`.
-        x (Tensor)
+        x (Tensor): Values from which to choose.
         y (Tensor): Values from which to choose. `x`, `y` and `condition` need
             to be broadcastable to some shape.
 
