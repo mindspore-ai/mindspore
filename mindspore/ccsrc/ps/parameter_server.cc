@@ -548,8 +548,9 @@ void ParameterServer::ServerHandler::HandlePullReq(DataPtr data, size_t size, Ve
   auto weight = ps_->weight(key);
   *res_data.mutable_values() = {weight->begin(), weight->end()};
   res->resize(res_data.ByteSizeLong());
-  int ret =
-    memcpy_s(res->data(), res_data.ByteSizeLong(), res_data.SerializeAsString().data(), res_data.ByteSizeLong());
+  size_t dest_size = res_data.ByteSizeLong();
+  size_t src_size = res_data.ByteSizeLong();
+  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
@@ -662,8 +663,9 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPush(DataPtr data, size_
   res_data.add_keys(key);
   res_data.add_values(ready);
   res->resize(res_data.ByteSizeLong());
-  int ret =
-    memcpy_s(res->data(), res_data.ByteSizeLong(), res_data.SerializeAsString().data(), res_data.ByteSizeLong());
+  size_t dest_size = res_data.ByteSizeLong();
+  size_t src_size = res_data.ByteSizeLong();
+  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
@@ -679,8 +681,9 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPull(DataPtr data, size_
   res_data.add_keys(key);
   res_data.add_values(ready);
   res->resize(res_data.ByteSizeLong());
-  int ret =
-    memcpy_s(res->data(), res_data.ByteSizeLong(), res_data.SerializeAsString().data(), res_data.ByteSizeLong());
+  size_t dest_size = res_data.ByteSizeLong();
+  size_t src_size = res_data.ByteSizeLong();
+  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
@@ -699,8 +702,9 @@ void ParameterServer::ServerHandler::HandleEmbeddingLookup(DataPtr data, size_t 
   ps_->DoEmbeddingLookup(key, keys, &res_data);
 
   res->resize(res_data.ByteSizeLong());
-  int ret =
-    memcpy_s(res->data(), res_data.ByteSizeLong(), res_data.SerializeAsString().data(), res_data.ByteSizeLong());
+  size_t dest_size = res_data.ByteSizeLong();
+  size_t src_size = res_data.ByteSizeLong();
+  int ret = memcpy_s(res->data(), dest_size, res_data.SerializeAsString().data(), src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }

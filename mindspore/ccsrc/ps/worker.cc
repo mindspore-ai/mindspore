@@ -84,7 +84,9 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
     MS_EXCEPTION_IF_NULL(dst_data);
     MS_EXCEPTION_IF_NULL(src_data);
     int size = sizes[i] * sizeof(float);
-    auto ret = memcpy_s(dst_data, size, src_data, size);
+    size_t dest_size = IntToSize(size);
+    size_t src_size = IntToSize(size);
+    auto ret = memcpy_s(dst_data, dest_size, src_data, src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return;
@@ -222,7 +224,8 @@ void Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &
   std::string kv_data = embedding_table_meta.SerializeAsString();
 
   std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-  int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+  size_t dest_size = kv_data.length();
+  int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
   if (ret != 0) {
     MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -288,7 +291,8 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-      int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+      size_t dest_size = kv_data.length();
+      int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -371,7 +375,8 @@ void Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-      int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+      size_t dest_size = kv_data.length();
+      int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -391,7 +396,8 @@ void Worker::Finalize() {
     kvs.add_values(0.0f);
     std::string kv_data = kvs.SerializeAsString();
     std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-    int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+    size_t dest_size = kv_data.length();
+    int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return;
@@ -482,7 +488,7 @@ void Worker::InitPSOptimInputShapes(const size_t key) {
   PushData(keys, all_shape, shape_len, kInitOptimInputsShapeCmd);
 }
 
-void Worker::InitPSParamData(const std::vector<size_t> &keys, void *origin_addr, size_t size) {
+void Worker::InitPSParamData(const std::vector<size_t> &keys, void *const origin_addr, size_t size) {
   MS_EXCEPTION_IF_NULL(origin_addr);
   std::vector<float> addr{reinterpret_cast<float *>(origin_addr),
                           reinterpret_cast<float *>(origin_addr) + size / sizeof(float)};
@@ -632,7 +638,8 @@ void Worker::PushData(const std::vector<Key> &keys, const std::vector<float> &va
     } else {
       std::string kv_data = kvs.SerializeAsString();
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-      int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+      size_t dest_size = kv_data.length();
+      int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -658,7 +665,7 @@ void Worker::PushSparseData(const std::vector<Key> &keys, const std::vector<floa
   }
 }
 
-void Worker::PullData(const std::vector<Key> &keys, std::vector<float> *vals, std::vector<int> *lens, int cmd,
+void Worker::PullData(const std::vector<Key> &keys, std::vector<float> *const vals, std::vector<int> *lens, int cmd,
                       int64_t priority) {
   MS_EXCEPTION_IF_NULL(vals);
   KVMessage kvs;
@@ -933,7 +940,8 @@ void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &pa
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-      int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+      size_t dest_size = kv_data.length();
+      int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return;
@@ -959,7 +967,8 @@ void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &pa
       std::string kv_data = messages.at(i).second.SerializeAsString();
 
       std::shared_ptr<unsigned char[]> res(new unsigned char[kv_data.length()]);
-      int ret = memcpy_s(res.get(), kv_data.length(), kv_data.data(), kv_data.length());
+      size_t dest_size = kv_data.length();
+      int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return;
