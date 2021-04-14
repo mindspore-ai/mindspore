@@ -63,10 +63,9 @@ class MirrorPadGradCPUKernel : public CPUKernel {
                                   const int dy_width, const int padd_dim, const int64_t *paddings_arg, int mode, T *dx);
 
   template <typename T>
-  void MirrorPadGradBatchChannel(const size_t size, T *const dy, T *const interim_dy, const int dx_batches,
-                                 const int dx_channels, const int dx_height, const int dx_width, const int dy_height,
-                                 const int dy_width, const int padd_dim, const int64_t *paddings_arg, int mode,
-                                 T *const dx);
+  void MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_dy, const int dx_batches, const int dx_channels,
+                                 const int dx_height, const int dx_width, const int dy_height, const int dy_width,
+                                 const int padd_dim, const int64_t *paddings_arg, int mode, T *const dx);
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
