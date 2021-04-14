@@ -28,7 +28,7 @@
 
 ## [Unet Description](#contents)
 
-Unet Medical model for 2D image segmentation. This implementation is as described  in the original paper [UNet: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597). Unet, in the 2015 ISBI cell tracking competition, many of the best are obtained. In this paper, a network model for medical image segmentation is proposed, and a data enhancement method is proposed to effectively use the annotation data to solve the problem of insufficient annotation data in the medical field. A U-shaped network structure is also used to extract the context and location information.
+Unet for 2D image segmentation. This implementation is as described  in the original paper [UNet: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597). Unet, in the 2015 ISBI cell tracking competition, many of the best are obtained. In this paper, a network model for medical image segmentation is proposed, and a data enhancement method is proposed to effectively use the annotation data to solve the problem of insufficient annotation data in the medical field. A U-shaped network structure is also used to extract the context and location information.
 
 UNet++ is a neural architecture for semantic and instance segmentation with re-designed skip pathways and  deep supervision.
 
@@ -71,7 +71,8 @@ After installing MindSpore via the official website, you can start training and 
 
 - Select the network and dataset to use
 
-Refer to `src/config.py`. We support some parameter configurations for quick start. You can set `'model'` to `'unet_medical'`,`'unet_nested'` or `'unet_simple'` to select which net to use. We support `ISBI` and `Cell_nuclei` two dataset, you can set `'dataset'` to `'Cell_nuclei'` to use `Cell_nuclei` dataset, default is `ISBI`.
+1. Select `cfg_unet` in `src/config.py`. We support unet and unet++, and we provide some parameter configurations for quick start.
+2. If you want other parameters, please refer to `src/config.py`. You can set `'model'` to `'unet_nested'` or `'unet_simple'` to select which net to use. We support `ISBI` and `Cell_nuclei` two dataset, you can set `'dataset'` to `'Cell_nuclei'` to use `Cell_nuclei` dataset, default is `ISBI`.
 
 - Run on Ascend
 
@@ -157,6 +158,7 @@ Parameters for both training and evaluation can be set in config.py
   'name': 'Unet',                     # model name
   'lr': 0.0001,                       # learning rate
   'epochs': 400,                      # total training epochs when run 1p
+  'repeat': 400,                      # Repeat times pre one epoch
   'distribute_epochs': 1600,          # total training epochs when run 8p
   'batchsize': 16,                    # training batch size
   'cross_valid_ind': 1,               # cross valid ind
@@ -185,6 +187,7 @@ Parameters for both training and evaluation can be set in config.py
   'img_size': [96, 96],               # image size
   'lr': 3e-4,                         # learning rate
   'epochs': 200,                      # total training epochs when run 1p
+  'repeat': 10,                       # Repeat times pre one epoch
   'distribute_epochs': 1600,          # total training epochs when run 8p
   'batchsize': 16,                    # batch size
   'num_classes': 2,                   # the number of classes in the dataset
@@ -205,6 +208,8 @@ Parameters for both training and evaluation can be set in config.py
   'eval_start_epoch': 0               # Evaluation start epoch when run_eval is True
   'eval_interval': 1                  # valuation interval when run_eval is True
   ```
+
+*Note: total steps pre epoch is floor(epochs / repeat), because unet dataset usually is small, we repeat the dataset to avoid drop too many images when add batch size.*
 
 ## [Training Process](#contents)
 
@@ -269,7 +274,7 @@ You can add `run_eval` to start shell and set it True, if you want evaluation wh
 Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/unet/ckpt_unet_medical_adam-48_600.ckpt".
 
 ```shell
-python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/checkpoint/ > eval.log 2>&1 &
+python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/unet.ckpt > eval.log 2>&1 &
 OR
 bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
 ```
@@ -278,7 +283,7 @@ The above python command will run in the background. You can view the results th
 
 ```shell
 # grep "Cross valid dice coeff is:" eval.log
-============== Cross valid dice coeff is: {'dice_coeff': 0.9085704886070473}
+============== Cross valid dice coeff is: {'dice_coeff': 0.9111}
 ```
 
 ## [Model Description](#contents)
@@ -292,17 +297,16 @@ The above python command will run in the background. You can view the results th
 | Model Version              | Unet                                                         |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                 |
 | uploaded Date              | 09/15/2020 (month/day/year)                                  |
-| MindSpore Version          | 1.0.0                                                        |
+| MindSpore Version          | 1.2.0                                                        |
 | Dataset                    | ISBI                                                         |
 | Training Parameters        | 1pc: epoch=400, total steps=600, batch_size = 16, lr=0.0001  |
-|                            | 8pc: epoch=1600, total steps=300, batch_size = 16, lr=0.0001 |
-| Optimizer                  | ADAM                                                         |
+| Optimizer                  | Adam                                                         |
 | Loss Function              | Softmax Cross Entropy                                        |
 | outputs                    | probability                                                  |
 | Loss                       | 0.22070312                                                   |
-| Speed                      | 1pc: 267 ms/step; 8pc: 280 ms/step;                          |
-| Total time                 | 1pc: 2.67 mins;   8pc: 1.40 mins                             |
-| Parameters (M)             | 93M                                                       |
+| Speed                      | 1pc: 267 ms/step                                             |
+| Total time                 | 1pc: 2.67 mins                                               |
+| Parameters (M)             | 93M                                                          |
 | Checkpoint for Fine tuning | 355.11M (.ckpt file)                                         |
 | Scripts                    | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
 
@@ -345,7 +349,7 @@ Set options `resume` to True in `config.py`, and set `resume_ckpt` to the path o
 
 ```python
   'resume': True,
-  'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+  'resume_ckpt': 'ckpt_0/ckpt_unet_sample_adam_1-1_600.ckpt',
   'transfer_training': False,
   'filter_weight': ["final.weight"]
 ```
@@ -356,7 +360,7 @@ Do the same thing as resuming traing above. In addition, set `transfer_training`
 
 ```python
   'resume': True,
-  'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+  'resume_ckpt': 'ckpt_0/ckpt_unet_sample_adam_1-1_600.ckpt',
   'transfer_training': True,
   'filter_weight': ["final.weight"]
 ```
