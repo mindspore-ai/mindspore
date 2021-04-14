@@ -159,9 +159,9 @@ class Compose final : public TensorTransform {
 class Concatenate final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] axis Concatenate the tensors along given axis (Default=0).
-  /// \param[in] prepend MSTensor to be prepended to the already concatenated tensors (Default={}).
-  /// \param[in] append MSTensor to be appended to the already concatenated tensors (Default={}).
+  /// \param[in] axis Concatenate the tensors along given axis, only support 0 or -1 so far (default=0).
+  /// \param[in] prepend MSTensor to be prepended to the already concatenated tensors (default={}).
+  /// \param[in] append MSTensor to be appended to the already concatenated tensors (default={}).
   explicit Concatenate(int8_t axis = 0, MSTensor prepend = {}, MSTensor append = {});
 
   /// \brief Destructor
@@ -227,7 +227,8 @@ class Mask final : public TensorTransform {
   /// \param[in] op One of the relational operators EQ, NE LT, GT, LE or GE.
   /// \param[in] constant Constant to be compared to.
   ///               Can only be MSTensor of str, int, float, bool.
-  /// \param[in] de_type Type of the generated mask (Default to be mindspore::DataType::kNumberTypeBool).
+  /// \param[in] de_type Type of the generated mask. Can only be numeric or boolean datatype.
+  ///               (default=mindspore::DataType::kNumberTypeBool)
   explicit Mask(RelationalOp op, MSTensor constant,
                 mindspore::DataType ms_type = mindspore::DataType(mindspore::DataType::kNumberTypeBool));
 
@@ -273,7 +274,7 @@ class PadEnd final : public TensorTransform {
   /// \param[in] pad_shape List of integers representing the shape needed.
   ///               Dimensions that set to `None` will not be padded (i.e., original dim will be used).
   ///               Shorter dimensions will truncate the values.
-  /// \param[in] pad_value Value used to pad. Default to be {}.
+  /// \param[in] pad_value Value used to pad (default={}).
   explicit PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value = {});
 
   /// \brief Destructor

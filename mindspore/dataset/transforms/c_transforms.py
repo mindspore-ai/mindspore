@@ -163,7 +163,7 @@ class _SliceOption(cde.SliceOption):
         super().__init__(slice_option)
 
 
-class Slice():
+class Slice(TensorOperation):
     """
     Slice operation to extract a tensor out using the given n slices.
 
@@ -226,7 +226,7 @@ DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
                    Relational.LE: cde.RelationalOp.LE}
 
 
-class Mask():
+class Mask(TensorOperation):
     """
     Mask content of the input tensor with the given predicate.
     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
@@ -264,7 +264,7 @@ class Mask():
         return cde.MaskOperation(DE_C_RELATIONAL[self.operator], self.constant, self.dtype)
 
 
-class PadEnd():
+class PadEnd(TensorOperation):
     """
     Pad input tensor according to pad_shape, need to have same rank.
 
@@ -300,7 +300,7 @@ class PadEnd():
         return cde.PadEndOperation(self.pad_shape, self.pad_value)
 
 
-class Concatenate():
+class Concatenate(TensorOperation):
     """
     Tensor operation that concatenates all columns into a single tensor.
 
