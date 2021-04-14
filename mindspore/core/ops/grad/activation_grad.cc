@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void ActivationGrad::Init(const ActivationType &type, const float alpha) {
   this->set_activation_type(type);
   this->set_alpha(alpha);

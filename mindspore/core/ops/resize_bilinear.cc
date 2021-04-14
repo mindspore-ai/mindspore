@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void ResizeBilinear::set_size(const std::vector<int64_t> &size) { this->AddAttr(kSize, MakeValue(size)); }
 
 std::vector<int64_t> ResizeBilinear::get_size() const {

@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-
 void reduce_one_axis(const int64_t one_axis, const int64_t dim, std::set<int64_t> axis_reduce) {
   CheckAndConvertUtils::CheckInRange("axis", one_axis, kIncludeLeft, {-dim, dim}, "Reduce");
   if (one_axis < 0) {

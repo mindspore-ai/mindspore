@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void Unpack::Init(const int64_t axis) { this->set_axis(axis); }
 void Unpack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
 int64_t Unpack::get_axis() const {

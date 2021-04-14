@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void Permute::set_order(const std::vector<int64_t> &order) { this->AddAttr(kOrder, MakeValue(order)); }
 
 std::vector<int64_t> Permute::get_order() const {

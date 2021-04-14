@@ -26,6 +26,7 @@ constexpr auto kNameScaleFusion = "ScaleFusion";
 class ScaleFusion : public Scale {
  public:
   ScaleFusion() : Scale(kNameScaleFusion) {}
+  ~ScaleFusion() = default;
   MS_DECLARE_PARENT(ScaleFusion, Scale);
   void Init(const int64_t axis = -1, const ActivationType &activation_type = NO_ACTIVATION);
   void set_activation_type(const ActivationType &activation_type);

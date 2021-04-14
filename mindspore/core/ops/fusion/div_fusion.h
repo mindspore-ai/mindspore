@@ -26,6 +26,7 @@ constexpr auto kNameDivFusion = "DivFusion";
 class DivFusion : public Div {
  public:
   DivFusion() : Div(kNameDivFusion) {}
+  ~DivFusion() = default;
   MS_DECLARE_PARENT(DivFusion, Div);
   void Init(const ActivationType &activation_type = NO_ACTIVATION);
   void set_activation_type(const ActivationType &activation_type);

@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-
 AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {

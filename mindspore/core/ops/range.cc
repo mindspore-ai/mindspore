@@ -65,7 +65,7 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim = primitive->cast<PrimRangePtr>();
   MS_EXCEPTION_IF_NULL(prim);
-  int64_t shape_size;
+  int64_t shape_size = 0;
   TypeId dtype;
   if (input_args.size() == 3) {
     MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());

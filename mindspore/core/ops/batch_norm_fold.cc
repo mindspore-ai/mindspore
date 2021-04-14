@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void BatchNormFold::Init(const float momentum, const float epsilon, const bool is_training, const int64_t freeze_bn) {
   set_momentum(momentum);
   set_epsilon(epsilon);
