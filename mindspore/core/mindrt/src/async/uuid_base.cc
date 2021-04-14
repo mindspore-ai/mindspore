@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace uuids {
-
 constexpr int DASH_POS0 = 4;
 constexpr int DASH_POS1 = 6;
 constexpr int DASH_POS2 = 8;
@@ -175,6 +174,5 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
 
   return tmpUUID;
 }
-
 }  // namespace uuids
 }  // namespace mindspore

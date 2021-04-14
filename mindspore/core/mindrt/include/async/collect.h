@@ -26,13 +26,10 @@
 #include "async/future.h"
 #include "async/defer.h"
 #include "async/spinlock.h"
-
 #include "actor/actor.h"
-
 #include "litebus.hpp"
 
 namespace mindspore {
-
 template <typename T>
 class Future;
 
@@ -119,7 +116,5 @@ Future<std::tuple<Ts...>> Collect(const Future<Ts> &... futures) {
 
   return Collect(wrappers).Then(std::bind(f, futures...));
 }
-
 };  // namespace mindspore
-
 #endif

@@ -19,7 +19,6 @@
 #include <climits>
 
 namespace mindspore {
-
 namespace uuid_generator {
 UUID UUID::GetRandomUUID() { return UUID(mindspore::uuids::RandomBasedGenerator::GenerateRandomUuid()); }
 
@@ -55,7 +54,5 @@ int GenHttpServerConnId() {
   return httpServerConnId++;
 }
 #endif
-
 }  // namespace localid_generator
-
 }  // namespace mindspore

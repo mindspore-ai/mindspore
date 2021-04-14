@@ -20,7 +20,6 @@
 #include "actor/iomgr.h"
 
 namespace mindspore {
-
 ActorBase::ActorBase(const std::string &name)
     : actorThread(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
 
@@ -82,7 +81,6 @@ void ActorBase::Run() {
       if (msg == nullptr) {
         continue;
       }
-      //            std::cout << "dequeue message]actor=" << id.Name() << ",msg=" << msg->Name() << std::endl;
       AddMsgRecord(msg->Name());
       switch (msg->GetType()) {
         case MessageBase::Type::KMSG:

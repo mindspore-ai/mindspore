@@ -22,7 +22,6 @@
 #include "async/status.h"
 
 namespace mindspore {
-
 template <typename T, typename F = Failure>
 class Try {
  public:
@@ -49,7 +48,5 @@ class Try {
   Option<T> data;
   Failure errorCode;
 };
-
 }  // namespace mindspore
-
 #endif

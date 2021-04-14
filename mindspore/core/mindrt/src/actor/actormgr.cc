@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+#include <map>
+#include <list>
+#include <string>
+#include <memory>
+#include <utility>
 #include "actor/actormgr.h"
 #include "actor/actorpolicy.h"
 #include "actor/iomgr.h"
@@ -138,7 +143,6 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteL
     } else {
       return ACTOR_NOT_FIND;
     }
-
   } else {
     // send to remote actor
     if (msg->GetType() != MessageBase::Type::KMSG) {
@@ -171,7 +175,6 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
   MS_LOG(DEBUG) << "ACTOR was spawned,a=" << actor->GetAID().Name().c_str();
 
   std::unique_ptr<ActorPolicy> threadPolicy;
-
   if (shareThread) {
     threadPolicy.reset(new (std::nothrow) ShardedThread(actor));
     BUS_OOM_EXIT(threadPolicy);
@@ -218,5 +221,4 @@ void ActorMgr::Wait(const AID &id) {
     actor->Await();
   }
 }
-
 };  // end of namespace mindspore

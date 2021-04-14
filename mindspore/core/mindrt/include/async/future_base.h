@@ -23,7 +23,6 @@
 #include <utility>
 #include <memory>
 #include <list>
-
 #include "actor/actor.h"
 #include "actor/buslog.h"
 #include "async/spinlock.h"
@@ -104,7 +103,6 @@ struct FutureData {
 };
 
 namespace internal {
-
 template <typename T>
 class DeferredHelper;
 
@@ -179,9 +177,6 @@ static void Afterf(const std::function<Future<T>(const Future<T> &)> &f, const s
 }
 
 void Waitf(const AID &aid);
-
 }  // namespace internal
-
 }  // namespace mindspore
-
 #endif

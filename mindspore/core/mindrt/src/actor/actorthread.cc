@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-#include "actor/actorthread.h"
 #include <atomic>
+#include <utility>
+#include <memory>
+
+#include "actor/actorthread.h"
 
 namespace mindspore {
 constexpr int MAXTHREADNAMELEN = 12;
@@ -98,5 +101,4 @@ void ActorThread::Run() {
     }
   } while (!terminate);
 }
-
 };  // end of namespace mindspore

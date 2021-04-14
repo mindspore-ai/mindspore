@@ -18,13 +18,15 @@
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORMGR_H
 
 #include <set>
+#include <utility>
+#include <map>
+#include <memory>
+#include <string>
 #include "actor/actorthread.h"
 
 namespace mindspore {
-
 class ActorBase;
 class IOMgr;
-
 class ActorMgr {
  public:
   static inline std::shared_ptr<ActorMgr> &GetActorMgrRef() { return actorMgr; }
@@ -70,16 +72,12 @@ class ActorMgr {
   // Map of all local spawned and running processes.
   std::map<std::string, ActorReference> actors;
   std::mutex actorsMutex;
-
   ActorThread threadPool;
-
   std::map<std::string, std::string> procotols;
   std::set<std::string> urls;
   std::string delegate;
   static std::shared_ptr<ActorMgr> actorMgr;
   static std::map<std::string, std::shared_ptr<IOMgr> > ioMgrs;
-
 };  // end of class ActorMgr
-
 };  // end of namespace mindspore
 #endif

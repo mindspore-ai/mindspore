@@ -19,11 +19,9 @@
 
 #include <type_traits>
 #include <utility>
-
 #include "actor/buslog.h"
 
 namespace mindspore {
-
 template <typename T>
 struct InnerSome {
   explicit InnerSome(const T &t) : _t(std::move(t)) {}
@@ -105,7 +103,5 @@ class Option {
   T data;
   State state;
 };
-
 }  // namespace mindspore
-
 #endif

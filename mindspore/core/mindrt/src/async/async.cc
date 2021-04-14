@@ -18,7 +18,6 @@
 #include "actor/actormgr.h"
 
 namespace mindspore {
-
 class MessageAsync : public MessageBase {
  public:
   explicit MessageAsync(std::unique_ptr<MessageHandler> h)
@@ -37,5 +36,4 @@ void Async(const AID &aid, std::unique_ptr<std::function<void(ActorBase *)>> han
   BUS_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
 }
-
 }  // namespace mindspore

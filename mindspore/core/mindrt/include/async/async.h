@@ -17,23 +17,21 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_ASYNC_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_ASYNC_H
 
+#include <tuple>
+#include <memory>
+#include <utility>
+#include <string>
 #include "actor/actor.h"
 #include "actor/buslog.h"
-
 #include "async/apply.h"
 #include "async/future.h"
 
 namespace mindspore {
-
 using MessageHandler = std::function<void(ActorBase *)>;
-
 void Async(const AID &aid, std::unique_ptr<MessageHandler> handler);
-
 namespace internal {
-
 template <typename R>
 struct AsyncHelper;
-
 // for defer
 template <>
 struct AsyncHelper<void> {
@@ -77,7 +75,6 @@ struct AsyncHelper {
     return future;
   }
 };
-
 }  // namespace internal
 
 // return void
@@ -132,7 +129,6 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)()) {
   std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
   BUS_OOM_EXIT(promise);
   Future<R> future = promise->GetFuture();
-
   std::unique_ptr<std::function<void(ActorBase *)>> handler(
     new (std::nothrow) std::function<void(ActorBase *)>([promise, method](ActorBase *actor) {
       BUS_ASSERT(actor != nullptr);
@@ -141,7 +137,6 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)()) {
       promise->Associate((t->*method)());
     }));
   BUS_OOM_EXIT(handler);
-
   Async(aid, std::move(handler));
   return future;
 }
@@ -151,7 +146,6 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)(Arg0), Arg1 &&arg) {
   std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
   BUS_OOM_EXIT(promise);
   Future<R> future = promise->GetFuture();
-
   std::unique_ptr<std::function<void(ActorBase *)>> handler(
     new (std::nothrow) std::function<void(ActorBase *)>([promise, method, arg](ActorBase *actor) {
       BUS_ASSERT(actor != nullptr);
@@ -160,7 +154,6 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)(Arg0), Arg1 &&arg) {
       promise->Associate((t->*method)(arg));
     }));
   BUS_OOM_EXIT(handler);
-
   Async(aid, std::move(handler));
   return future;
 }
@@ -170,7 +163,6 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)(Args0...), std::tuple<Arg
   std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
   BUS_OOM_EXIT(promise);
   Future<R> future = promise->GetFuture();
-
   std::unique_ptr<std::function<void(ActorBase *)>> handler(
     new (std::nothrow) std::function<void(ActorBase *)>([promise, method, tuple](ActorBase *actor) {
       BUS_ASSERT(actor != nullptr);
@@ -179,7 +171,6 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)(Args0...), std::tuple<Arg
       promise->Associate(Apply(t, method, tuple));
     }));
   BUS_OOM_EXIT(handler);
-
   Async(aid, std::move(handler));
   return future;
 }
@@ -197,7 +188,6 @@ Future<R> Async(const AID &aid, R (T::*method)()) {
   std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
   BUS_OOM_EXIT(promise);
   Future<R> future = promise->GetFuture();
-
   std::unique_ptr<std::function<void(ActorBase *)>> handler(
     new (std::nothrow) std::function<void(ActorBase *)>([promise, method](ActorBase *actor) {
       BUS_ASSERT(actor != nullptr);
@@ -206,7 +196,6 @@ Future<R> Async(const AID &aid, R (T::*method)()) {
       promise->SetValue((t->*method)());
     }));
   BUS_OOM_EXIT(handler);
-
   Async(aid, std::move(handler));
   return future;
 }
@@ -218,7 +207,6 @@ Future<R> Async(const AID &aid, R (T::*method)(Arg0), Arg1 &&arg) {
   std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
   BUS_OOM_EXIT(promise);
   Future<R> future = promise->GetFuture();
-
   std::unique_ptr<std::function<void(ActorBase *)>> handler(
     new (std::nothrow) std::function<void(ActorBase *)>([promise, method, arg](ActorBase *actor) {
       BUS_ASSERT(actor != nullptr);
@@ -227,7 +215,6 @@ Future<R> Async(const AID &aid, R (T::*method)(Arg0), Arg1 &&arg) {
       promise->SetValue((t->*method)(arg));
     }));
   BUS_OOM_EXIT(handler);
-
   Async(aid, std::move(handler));
   return future;
 }
@@ -239,7 +226,6 @@ Future<R> Async(const AID &aid, R (T::*method)(Args0...), std::tuple<Args1...> &
   std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
   BUS_OOM_EXIT(promise);
   Future<R> future = promise->GetFuture();
-
   std::unique_ptr<std::function<void(ActorBase *)>> handler(
     new (std::nothrow) std::function<void(ActorBase *)>([promise, method, tuple](ActorBase *actor) {
       BUS_ASSERT(actor != nullptr);
@@ -248,7 +234,6 @@ Future<R> Async(const AID &aid, R (T::*method)(Args0...), std::tuple<Args1...> &
       promise->SetValue(Apply(t, method, tuple));
     }));
   BUS_OOM_EXIT(handler);
-
   Async(aid, std::move(handler));
   return future;
 }
@@ -265,7 +250,5 @@ template <typename F, typename R = typename std::result_of<F()>::type>
 auto Async(const AID &aid, F &&f) -> decltype(internal::AsyncHelper<R>()(aid, std::forward<F>(f))) {
   return internal::AsyncHelper<R>()(aid, std::forward<F>(f));
 }
-
 }  // namespace mindspore
-
 #endif

@@ -107,8 +107,6 @@ int MindrtRun(const std::vector<OpDataPtr<T>> &inputData, std::vector<OpDataPtr<
   if (!collect.IsOK()) {
     return -1;
   }
-
   return 0;
 }
-
 }  // namespace mindspore

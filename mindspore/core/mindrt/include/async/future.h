@@ -24,17 +24,13 @@
 
 #include "actor/actor.h"
 #include "actor/buslog.h"
-
 #include "async/spinlock.h"
 #include "async/status.h"
 #include "async/uuid_generator.h"
-
 #include "litebus.hpp"
-
 #include "async/future_base.h"
 
 namespace mindspore {
-
 template <typename T>
 class Promise;
 
@@ -451,7 +447,5 @@ class Promise<void>;
 
 template <typename T>
 class Promise<T &>;
-
 };  // namespace mindspore
-
 #endif

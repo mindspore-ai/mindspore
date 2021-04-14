@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_APPLY_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_APPLY_H
 
-namespace mindspore {
+#include <utility>
 
+namespace mindspore {
 template <typename T, T... Ints>
 struct IntegerSequenceBase {
   static constexpr std::size_t Size() noexcept { return sizeof...(Ints); }
 };
 
 namespace internal {
-
 template <typename T, std::size_t N, std::size_t... Ints>
 struct IntegerSequence : public IntegerSequence<T, N - 1, N - 1, Ints...> {};
 
@@ -33,7 +33,6 @@ template <typename T, std::size_t... Ints>
 struct IntegerSequence<T, 0, Ints...> {
   using type = IntegerSequenceBase<T, Ints...>;
 };
-
 }  // namespace internal
 
 template <typename T, std::size_t N>
@@ -75,7 +74,5 @@ auto Apply(T *ptr, Func &&func, Tuple &&tuple)
   return ApplyHelper(ptr, std::forward<Func>(func), std::forward<Tuple>(tuple),
                      make_index_sequence<std::tuple_size<typename std::decay<Tuple>::type>::value>{});
 }
-
 }  // namespace mindspore
-
 #endif

@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_STATUS_H
 
 namespace mindspore {
-
 class MindrtStatus {
  public:
   typedef int32_t Code;
@@ -63,7 +62,5 @@ class MindrtStatus {
  private:
   Code code;
 };
-
 }  // namespace mindspore
-
 #endif
