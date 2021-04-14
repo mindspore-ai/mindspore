@@ -56,6 +56,7 @@ def ctpn_infer_test(dataset_path='', ckpt_path='', img_dir=''):
         os.mkdir(output_dir)
     for file in os.listdir(img_dir):
         img_basenames.append(os.path.basename(file))
+    img_basenames = sorted(img_basenames)
     for data in ds.create_dict_iterator():
         img_data = data['image']
         img_metas = data['image_shape']
