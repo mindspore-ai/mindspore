@@ -22,6 +22,7 @@ namespace mindspore::lite::micro {
 constexpr auto kDefaultTaskId = 0;
 
 constexpr auto kMaxThreadNumSupported = 4;
+constexpr auto kDefaultThreadNum = 1;
 
 // ParallelLaunch is defined in thread_pool
 constexpr auto kParallelLaunch = "ParallelLaunch";
