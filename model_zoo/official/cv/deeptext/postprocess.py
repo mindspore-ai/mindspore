@@ -36,7 +36,7 @@ def get_pred(file, result_path):
     all_bbox_file = os.path.join(result_path, file_name + "_0.bin")
     all_label_file = os.path.join(result_path, file_name + "_1.bin")
     all_mask_file = os.path.join(result_path, file_name + "_2.bin")
-    all_bbox = np.fromfile(all_bbox_file, dtype=np.float16).reshape(config.test_batch_size, 1000, 5)
+    all_bbox = np.fromfile(all_bbox_file, dtype=np.float32).reshape(config.test_batch_size, 1000, 5)
     all_label = np.fromfile(all_label_file, dtype=np.int32).reshape(config.test_batch_size, 1000, 1)
     all_mask = np.fromfile(all_mask_file, dtype=np.bool).reshape(config.test_batch_size, 1000, 1)
 
