@@ -40,7 +40,7 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestAutoWorkerPass.";
 
   std::shared_ptr<SchemaObj> schema = std::make_shared<SchemaObj>();
-  ASSERT_TRUE(schema->add_column("label", "uint32", {}));
+  ASSERT_OK(schema->add_column("label", "uint32", {}));
   std::shared_ptr<Dataset> map_leaf = ImageFolder("dir")->SetNumWorkers(0);
   std::shared_ptr<Dataset> nonmap_leaf = RandomData(44, schema)->SetNumWorkers(0);
   std::shared_ptr<Dataset> batch = Zip({map_leaf, nonmap_leaf})->Batch(1)->SetNumWorkers(0);

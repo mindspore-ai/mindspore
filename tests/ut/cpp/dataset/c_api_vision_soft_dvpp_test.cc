@@ -51,7 +51,7 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -59,7 +59,7 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess1) {
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     EXPECT_EQ(image.Shape()[0] == 500 && image.Shape()[1] == 500, true);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -93,7 +93,7 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -101,7 +101,7 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess2) {
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     EXPECT_EQ(image.Shape()[0] == 500 && image.Shape()[1] == 600, true);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 6);
@@ -137,14 +137,14 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeResizeJpegSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 12);
@@ -175,14 +175,14 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeResizeJpegSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);

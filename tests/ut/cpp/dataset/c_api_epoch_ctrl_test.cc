@@ -47,17 +47,17 @@ TEST_F(MindDataTestEpochCtrl, TestAutoInjectEpoch) {
 
   for (int epoch = 0; epoch < num_epochs; epoch++) {
     // Iterate the dataset and get each row
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
 
     while (row.size() != 0) {
       auto label = row["label"];
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {});
+      ASSERT_OK(de_label->GetItemAt(&label_value, {}));
       EXPECT_TRUE(img_class[(i % sampler_size) / class_size] == label_value);
 
-      iter->GetNextRow(&row);
+      ASSERT_OK(iter->GetNextRow(&row));
       i++;
     }
   }
@@ -65,7 +65,7 @@ TEST_F(MindDataTestEpochCtrl, TestAutoInjectEpoch) {
   EXPECT_EQ(i, sampler_size * num_epochs);
 
   // Try to fetch data beyond the specified number of epochs.
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 2);
 
   // Manually terminate the pipeline
@@ -94,16 +94,16 @@ TEST_F(MindDataTestEpochCtrl, TestEpoch) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   for (int epoch = 0; epoch < num_epochs; epoch++) {
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     while (row.size() != 0) {
       auto label = row["label"];
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {});
+      ASSERT_OK(de_label->GetItemAt(&label_value, {}));
       EXPECT_TRUE(label_value >= 0 && label_value <= 3);
 
-      iter->GetNextRow(&row);
+      ASSERT_OK(iter->GetNextRow(&row));
       i++;
     }
   }
@@ -112,7 +112,7 @@ TEST_F(MindDataTestEpochCtrl, TestEpoch) {
   EXPECT_EQ(i, sampler_size * num_epochs);
 
   // Try to fetch data beyond the specified number of epochs.
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 2);
 
   // Manually terminate the pipeline
@@ -143,16 +143,16 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatEpoch) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   for (int epoch = 0; epoch < num_epochs; epoch++) {
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     while (row.size() != 0) {
       auto label = row["label"];
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {});
+      ASSERT_OK(de_label->GetItemAt(&label_value, {}));
       EXPECT_TRUE(label_value >= 0 && label_value <= 3);
 
-      iter->GetNextRow(&row);
+      ASSERT_OK(iter->GetNextRow(&row));
       i++;
     }
   }
@@ -161,7 +161,7 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatEpoch) {
   EXPECT_EQ(i, sampler_size * num_repeats * num_epochs);
 
   // Try to fetch data beyond the specified number of epochs.
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 2);
 
   // Manually terminate the pipeline
@@ -192,16 +192,16 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatRepeatEpoch) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   for (int epoch = 0; epoch < num_epochs; epoch++) {
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     while (row.size() != 0) {
       auto label = row["label"];
       std::shared_ptr<Tensor> de_label;
       int64_t label_value;
       ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-      de_label->GetItemAt(&label_value, {});
+      ASSERT_OK(de_label->GetItemAt(&label_value, {}));
       EXPECT_TRUE(label_value >= 0 && label_value <= 3);
 
-      iter->GetNextRow(&row);
+      ASSERT_OK(iter->GetNextRow(&row));
       i++;
     }
   }
@@ -210,7 +210,7 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatRepeatEpoch) {
   EXPECT_EQ(i, sampler_size * num_repeats[0] * num_repeats[1] * num_epochs);
 
   // Try to fetch data beyond the specified number of epochs.
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 2);
 
   // Manually terminate the pipeline

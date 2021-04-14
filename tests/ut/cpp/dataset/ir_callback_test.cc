@@ -236,7 +236,7 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   TensorMap tensor_map;
   size_t num_epochs = 2;
   for (int ep_num = 0; ep_num < num_epochs; ++ep_num) {
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
 
     while (tensor_map.size() != 0) {
@@ -301,7 +301,7 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   TensorMap tensor_map;
   size_t num_epochs = 2;
   for (int ep_num = 0; ep_num < num_epochs; ++ep_num) {
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
 
     while (tensor_map.size() != 0) {

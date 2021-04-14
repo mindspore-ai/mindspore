@@ -41,7 +41,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   EXPECT_NE(row.find("image"), row.end());
   EXPECT_NE(row.find("label"), row.end());
@@ -51,7 +51,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 10);
@@ -96,7 +96,7 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   EXPECT_NE(row.find("image"), row.end());
   EXPECT_NE(row.find("label"), row.end());
@@ -106,7 +106,7 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 20);
@@ -179,7 +179,7 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   EXPECT_NE(row.find("image"), row.end());
   EXPECT_NE(row.find("coarse_label"), row.end());
@@ -190,7 +190,7 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 10);

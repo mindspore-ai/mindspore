@@ -61,14 +61,14 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess1Shr) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 7);
@@ -114,14 +114,14 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess2Auto) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 7);
@@ -171,14 +171,14 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess3Obj) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 7);
@@ -223,14 +223,14 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess4MultiPolicy) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 7);

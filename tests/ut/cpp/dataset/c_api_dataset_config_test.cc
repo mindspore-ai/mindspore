@@ -129,7 +129,7 @@ TEST_F(MindDataTestPipeline, TestShuffleWithSeed) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("text"), row.end());
 
   std::vector<std::string> expected_result = {"Good luck to everyone.", "Be happy every day.", "This is a text file."};
@@ -141,14 +141,14 @@ TEST_F(MindDataTestPipeline, TestShuffleWithSeed) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {});
+    ASSERT_OK(de_text->GetItemAt(&sv, {}));
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
     // Compare against expected result
     EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
 
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Expect 3 samples
@@ -194,7 +194,7 @@ TEST_F(MindDataTestPipeline, TestCallShuffleTwice) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("text"), row.end());
 
   std::vector<std::string> first_copy;
@@ -206,7 +206,7 @@ TEST_F(MindDataTestPipeline, TestCallShuffleTwice) {
     std::shared_ptr<Tensor> de_text;
     ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
     std::string_view sv;
-    de_text->GetItemAt(&sv, {});
+    ASSERT_OK(de_text->GetItemAt(&sv, {}));
     std::string ss(sv);
     MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
 
@@ -218,7 +218,7 @@ TEST_F(MindDataTestPipeline, TestCallShuffleTwice) {
     }
 
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Expect 6 samples

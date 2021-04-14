@@ -634,7 +634,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   // Start the loop of reading tensors from our pipeline
   DatasetIterator di(my_tree_);
   TensorMap tensor_map;
-  di.GetNextAsMap(&tensor_map);
+  ASSERT_OK(di.GetNextAsMap(&tensor_map));
   EXPECT_TRUE(rc.IsOk());
   uint64_t i = 0;
   int32_t label = 0;
@@ -646,7 +646,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
     // Dump all the image into string, to be used as a comparison later.
     result.append((char *)tensor_map["image"]->GetBuffer(), (int64_t)tensor_map["image"]->Size());
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     i++;
   }
   EXPECT_TRUE(i == 88);
@@ -684,7 +684,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
 
   // Start the loop of reading tensors from our pipeline
   DatasetIterator di2(my_tree_2);
-  di2.GetNextAsMap(&tensor_map);
+  ASSERT_OK(di2.GetNextAsMap(&tensor_map));
   EXPECT_TRUE(rc.IsOk());
   i = 0;
   label = 0;
@@ -694,7 +694,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
     MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
     result2.append((char *)tensor_map["image"]->GetBuffer(), (int64_t)tensor_map["image"]->Size());
-    di2.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di2.GetNextAsMap(&tensor_map));
     i++;
   }
   EXPECT_TRUE(i == 88);
@@ -747,7 +747,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   // Start the loop of reading tensors from our pipeline
   DatasetIterator di(my_tree_);
   TensorMap tensor_map;
-  di.GetNextAsMap(&tensor_map);
+  ASSERT_OK(di.GetNextAsMap(&tensor_map));
   EXPECT_TRUE(rc.IsOk());
   uint64_t i = 0;
   int32_t label = 0;
@@ -756,7 +756,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   while (tensor_map.size() != 0) {
     tensor_map["label"]->GetItemAt<int32_t>(&label, {});
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     i++;
   }
   EXPECT_TRUE(i == 88);

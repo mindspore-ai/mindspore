@@ -30,8 +30,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1}));
   std::shared_ptr<Dataset> ds = RandomData(50, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -49,7 +49,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if RandomData() read correct columns
   uint64_t i = 0;
@@ -59,7 +59,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -74,8 +74,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
 
   // Create two RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1}));
   std::shared_ptr<Dataset> ds1 = RandomData(50, schema);
   std::shared_ptr<Dataset> ds2 = RandomData(50, schema);
   EXPECT_NE(ds1, nullptr);
@@ -107,7 +107,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if RandomData() read correct columns
   uint64_t i = 0;
@@ -117,7 +117,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -132,8 +132,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetGetters) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1}));
   std::shared_ptr<Dataset> ds = RandomData(50, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -163,14 +163,14 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     // If no schema specified, RandomData will generate random columns
     // So we don't check columns here
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -203,7 +203,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<int64_t> expect_num = {1};
   std::vector<int64_t> expect_1d = {2};
@@ -252,7 +252,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
     ASSERT_EQ(col_3d.DataType(), mindspore::DataType::kNumberTypeInt64);
     ASSERT_EQ(col_binary.DataType(), mindspore::DataType::kNumberTypeUInt8);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -285,7 +285,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<int64_t> expect_num = {1};
   std::vector<int64_t> expect_1d = {2};
@@ -334,7 +334,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
     ASSERT_EQ(col_3d.DataType(), mindspore::DataType::kNumberTypeInt64);
     ASSERT_EQ(col_binary.DataType(), mindspore::DataType::kNumberTypeUInt8);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -367,7 +367,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<int64_t> expect_num = {1};
   std::vector<int64_t> expect_1d = {2};
@@ -396,7 +396,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
     ASSERT_EQ(col_sint64.DataType(), mindspore::DataType::kNumberTypeInt64);
     ASSERT_EQ(col_1d.DataType(), mindspore::DataType::kNumberTypeInt64);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -425,12 +425,12 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic6) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -459,12 +459,12 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -482,7 +482,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetUInt8) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(963);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(3);
@@ -495,14 +495,14 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetUInt8) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto ind = row["col1"];
     TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -520,7 +520,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetFloat) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(369);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeFloat16, {2, 3});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat16, {2, 3}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -533,14 +533,14 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetFloat) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto ind = row["col1"];
     TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -556,8 +556,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1}));
   std::shared_ptr<Dataset> ds = RandomData(50, schema, {"image", "image"});
   // Expect failure: duplicate column names
   EXPECT_EQ(ds->CreateIterator(), nullptr);

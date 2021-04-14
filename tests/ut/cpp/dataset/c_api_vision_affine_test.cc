@@ -52,7 +52,7 @@ TEST_F(MindDataTestPipeline, TestAffineAPI) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -60,7 +60,7 @@ TEST_F(MindDataTestPipeline, TestAffineAPI) {
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     EXPECT_EQ(row["image"].Shape().at(0), 256);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 15);

@@ -42,7 +42,7 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if CelebA() read correct images/attr
   std::string expect_file[] = {"1.JPEG", "2.jpg"};
@@ -65,7 +65,7 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_attr));
     EXPECT_MSTENSOR_EQ(attr, expect_attr);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -90,7 +90,7 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if CelebA() read correct images/attr
   uint64_t i = 0;
@@ -100,7 +100,7 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor attr shape: " << attr.Shape();
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -220,8 +220,8 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtensionFail) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
   // Expect no data: cannot find files with specified extension
+  EXPECT_ERROR(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 0);
 
   // Manually terminate the pipeline

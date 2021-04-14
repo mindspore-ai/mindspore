@@ -92,7 +92,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     uint32_t label = 0;
@@ -101,7 +101,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
       EXPECT_TRUE(res[i % 10] == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 20);
   }
@@ -130,7 +130,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     while (tensor_map.size() != 0) {
@@ -139,7 +139,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
       EXPECT_TRUE((*label) == (*tensor_map["label"]));
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << *tensor_map["label"] << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 4);
   }

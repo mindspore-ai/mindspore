@@ -100,14 +100,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheImageFolderCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -143,14 +143,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCocoCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 12);
@@ -184,14 +184,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMnistCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 20);
@@ -226,14 +226,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCelebaCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 8);
@@ -267,14 +267,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheManifestCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -308,14 +308,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar10CApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 20);
@@ -349,14 +349,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar100CApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 20);
@@ -391,14 +391,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheVocCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 18);
@@ -435,12 +435,12 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 14);
@@ -460,8 +460,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
 
-  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1}));
   std::shared_ptr<Dataset> ds = RandomData(8, schema, {}, some_cache);
   EXPECT_NE(ds, nullptr);
 
@@ -477,12 +477,12 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 16);
@@ -518,14 +518,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 6);
@@ -569,14 +569,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);
@@ -616,14 +616,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -661,12 +661,12 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTextfileCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -705,12 +705,12 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCsvCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -750,12 +750,12 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -784,14 +784,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {
   EXPECT_NE(iter1, nullptr);
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter1->GetNextRow(&row);
+  ASSERT_OK(iter1->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter1->GetNextRow(&row);
+    ASSERT_OK(iter1->GetNextRow(&row));
   }
   EXPECT_EQ(i, 2);
   // Manually terminate the pipeline
@@ -801,14 +801,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {
   std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
   EXPECT_NE(iter2, nullptr);
   // Iterate the dataset and get each row
-  iter2->GetNextRow(&row);
+  ASSERT_OK(iter2->GetNextRow(&row));
 
   i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter2->GetNextRow(&row);
+    ASSERT_OK(iter2->GetNextRow(&row));
   }
   EXPECT_EQ(i, 2);
 
@@ -839,13 +839,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
   EXPECT_NE(iter1, nullptr);
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter1->GetNextRow(&row);
+  ASSERT_OK(iter1->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
-    iter1->GetNextRow(&row);
+    ASSERT_OK(iter1->GetNextRow(&row));
   }
   EXPECT_EQ(i, 2);
   // Manually terminate the pipeline
@@ -855,13 +855,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
   std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
   EXPECT_NE(iter2, nullptr);
   // Iterate the dataset and get each row
-  iter2->GetNextRow(&row);
+  ASSERT_OK(iter2->GetNextRow(&row));
 
   i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
-    iter2->GetNextRow(&row);
+    ASSERT_OK(iter2->GetNextRow(&row));
   }
   EXPECT_EQ(i, 2);
 
@@ -889,13 +889,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShareFailure1) {
   EXPECT_NE(iter1, nullptr);
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter1->GetNextRow(&row);
+  ASSERT_OK(iter1->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
-    iter1->GetNextRow(&row);
+    ASSERT_OK(iter1->GetNextRow(&row));
   }
   EXPECT_EQ(i, 2);
   // Manually terminate the pipeline

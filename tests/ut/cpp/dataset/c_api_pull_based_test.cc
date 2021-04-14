@@ -42,8 +42,7 @@ TEST_F(MindDataTestPipeline, TestPullBasedBatch) {
   EXPECT_NE(iter, nullptr);
 
   std::vector<mindspore::MSTensor> row;
-  Status rc = iter->GetNextRow(&row);
-  EXPECT_EQ(rc, Status::OK());
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 1);
   auto temp = row[0].Shape();
   std::vector<int64_t> result = {batch_size, 2};
@@ -63,8 +62,7 @@ TEST_F(MindDataTestPipeline, TestPullBasedProject) {
   std::vector<mindspore::MSTensor> row;
   auto iter = ds->CreatePullBasedIterator();
   EXPECT_NE(iter, nullptr);
-  Status rc = iter->GetNextRow(&row);
-  EXPECT_EQ(rc, Status::OK());
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_EQ(row.size(), 2);
 
   std::shared_ptr<Dataset> ds2 = Album(folder_path, schema_file, column_names);
@@ -77,7 +75,6 @@ TEST_F(MindDataTestPipeline, TestPullBasedProject) {
   EXPECT_NE(iter2, nullptr);
 
   std::vector<mindspore::MSTensor> new_row;
-  rc = iter2->GetNextRow(&new_row);
-  EXPECT_EQ(rc, Status::OK());
+  ASSERT_OK(iter2->GetNextRow(&new_row));
   EXPECT_EQ(new_row.size(), 1);
 }

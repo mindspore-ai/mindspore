@@ -72,17 +72,17 @@ TEST_F(MindDataTestCelebaDataset, TestSequentialCeleba) {
     EXPECT_TRUE(false);
   } else {
     DatasetIterator di(tree);
-    TensorMap tersor_map;
-    di.GetNextAsMap(&tersor_map);
+    TensorMap tensor_map;
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
-    while (tersor_map.size() != 0) {
+    while (tensor_map.size() != 0) {
       uint32_t label;
       for (int index = 0; index < 40; index++) {
-        tersor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
+        tensor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
         EXPECT_TRUE(expect_labels[count][index] == label);
       }
       count++;
-      di.GetNextAsMap(&tersor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(count == 4);
   }
@@ -119,17 +119,17 @@ TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
     EXPECT_TRUE(false);
   } else {
     DatasetIterator di(tree);
-    TensorMap tersor_map;
-    di.GetNextAsMap(&tersor_map);
+    TensorMap tensor_map;
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
-    while (tersor_map.size() != 0) {
+    while (tensor_map.size() != 0) {
       uint32_t label;
       for (int index = 0; index < 40; index++) {
-        tersor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
+        tensor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
         EXPECT_TRUE(expect_labels[count][index] == label);
       }
       count++;
-      di.GetNextAsMap(&tersor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(count == 8);
   }
@@ -151,17 +151,17 @@ TEST_F(MindDataTestCelebaDataset, TestSubsetRandomSamplerCeleba) {
     EXPECT_TRUE(false);
   } else {
     DatasetIterator di(tree);
-    TensorMap tersor_map;
-    di.GetNextAsMap(&tersor_map);
+    TensorMap tensor_map;
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
-    while (tersor_map.size() != 0) {
+    while (tensor_map.size() != 0) {
       uint32_t label;
       for (int index = 0; index < 40; index++) {
-        tersor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
+        tensor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
         EXPECT_TRUE(expect_labels[count][index] == label);
       }
       count++;
-      di.GetNextAsMap(&tersor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(count == 1);
   }

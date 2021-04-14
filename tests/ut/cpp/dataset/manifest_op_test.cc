@@ -77,7 +77,7 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     int32_t label = 0;
@@ -86,7 +86,7 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
       EXPECT_TRUE(res[i] == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 4);
   }
@@ -114,7 +114,7 @@ TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
       EXPECT_EQ(label, 1);
     }
     EXPECT_TRUE(i == 1);
@@ -137,7 +137,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestClassIndex) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     int32_t label = 0;
@@ -146,7 +146,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestClassIndex) {
       EXPECT_TRUE(label == res[i]);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 2);
   }
@@ -170,7 +170,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     int32_t label = 0;
@@ -179,7 +179,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
       EXPECT_TRUE(0 == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 4);
   }
@@ -199,7 +199,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     int32_t label = 0;
@@ -208,7 +208,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
       EXPECT_TRUE(0 == label);
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 1);
   }

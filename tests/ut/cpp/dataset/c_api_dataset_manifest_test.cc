@@ -38,14 +38,14 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);
@@ -90,14 +90,14 @@ TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 10);
@@ -157,7 +157,7 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -167,7 +167,7 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
     MS_LOG(INFO) << "Tensor image shape size: " << shape.size();
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     EXPECT_GT(shape.size(), 1);  // Verify decode=true took effect
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);
@@ -191,14 +191,14 @@ TEST_F(MindDataTestPipeline, TestManifestEval) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 1);
@@ -235,7 +235,7 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   int32_t label_idx = 0;
@@ -247,12 +247,12 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
 
     std::shared_ptr<Tensor> de_label;
     ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-    de_label->GetItemAt<int32_t>(&label_idx, {});
+    ASSERT_OK(de_label->GetItemAt<int32_t>(&label_idx, {}));
     MS_LOG(INFO) << "Tensor label value: " << label_idx;
     auto label_it = std::find(expected_label.begin(), expected_label.end(), label_idx);
     EXPECT_NE(label_it, expected_label.end());
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);
@@ -276,14 +276,14 @@ TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 1);
