@@ -33,6 +33,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "utils/config_manager.h"
+#include "debug/env_config_parser.h"
 
 using debugger::Chunk;
 using debugger::EventReply;
@@ -81,10 +82,8 @@ Debugger::Debugger()
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
 
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
     // switch memory reuse on or off
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, partial_memory_);
+    EnvConfigParser::GetInstance().SetSysMemreuse(partial_memory_);
     // print some message about memory reuse to user
     if (partial_memory_) {
       MS_LOG(WARNING)

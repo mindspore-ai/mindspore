@@ -31,6 +31,7 @@
 #include "utils/shape_utils.h"
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
+#include "debug/env_config_parser.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -717,11 +718,11 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_enable_mem_reuse = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE);
+  bool is_enable_mem_reuse = EnvConfigParser::GetInstance().GetSysMemreuse();
   auto mem_type = kDynamicMem;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.e2e_dump_enabled() && dump_json_parser.dump_mode() == 0) {
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, false);
+    EnvConfigParser::GetInstance().SetSysMemreuse(false);
     is_enable_mem_reuse = false;
     MS_LOG(INFO) << "Disable Memory Reuse when e2e dump is enable and dump mode is set to dump all kernels";
   }
