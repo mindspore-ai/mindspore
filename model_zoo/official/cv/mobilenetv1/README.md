@@ -99,6 +99,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
 - Ascend: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
+- CPU: sh run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
@@ -109,10 +110,12 @@ Please follow the instructions in the link [hccn_tools](https://gitee.com/mindsp
 ```shell
 # training example
   python:
-      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH]
+      Ascend: python train.py --device_target Ascend --dataset_path [TRAIN_DATASET_PATH]
+      CPU: python train.py --device_target CPU --dataset_path [TRAIN_DATASET_PATH]
 
   shell:
      Ascend: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     CPU: sh run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 ### Result
@@ -133,6 +136,7 @@ Epoch time: 150950.623, per step time: 120.664
 You can start training using python or shell scripts.If the train method is train or fine tune, should not input the `[CHECKPOINT_PATH]` The usage of shell scripts as follows:
 
 - Ascend: sh run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+- CPU: sh run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
@@ -140,9 +144,11 @@ You can start training using python or shell scripts.If the train method is trai
 # eval example
   python:
       Ascend: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt [CHECKPOINT_PATH]
+      CPU: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt [CHECKPOINT_PATH] --device_target CPU
 
   shell:
       Ascend: sh run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+      CPU: sh run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 > checkpoint can be produced in training process.
