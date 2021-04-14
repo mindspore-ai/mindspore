@@ -1,33 +1,5 @@
 #!/bin/bash
 
-function Run_Converter() {
-    cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64/ || exit 1
-
-    cp tools/converter/converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
-
-    rm -rf ${ms_models_path}
-    mkdir -p ${ms_models_path}
-
-    # Convert tflite models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}
-        if [ $? = 0 ]; then
-            converter_result='converter tflite '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter tflite '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_tflite_config}
-}
-
 function Run_x86() {
     local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64/tools/codegen
 
@@ -92,8 +64,8 @@ function Print_Benchmark_Result() {
 basepath=$(pwd)
 echo ${basepath}
 
-# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
-while getopts "r:m:e:" opt; do
+# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -s /home/temp_test/ms_models -d "8KE5T19620002408"
+while getopts "r:m:e:s:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -102,6 +74,10 @@ while getopts "r:m:e:" opt; do
         m)
             models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
+            ;;
+        s)
+            ms_models_path=${OPTARG}
+            echo "ms_models_path is ${OPTARG}"
             ;;
         e)
             backend=${OPTARG}
@@ -118,7 +94,6 @@ file_name=$(ls ${x86_path}/*inference-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
-ms_models_path=${basepath}/ms_models
 build_path=${basepath}/build
 models_tflite_config=${basepath}/models_tflite.cfg
 
@@ -131,26 +106,6 @@ echo ' ' > ${run_converter_result_file}
 
 run_x86_log_file=${basepath}/run_x86_log.txt
 echo 'run x86 logs: ' > ${run_x86_log_file}
-
-# Run converter
-echo "start Run converter ..."
-Run_Converter
-Run_converter_PID=$!
-sleep 1
-
-wait ${Run_converter_PID}
-Run_converter_status=$?
-
-# Check converter result and return value
-if [[ ${Run_converter_status} = 0 ]];then
-    echo "Run converter success"
-    Print_Converter_Result
-else
-    echo "Run converter failed"
-    cat ${run_converter_log_file}
-    Print_Converter_Result
-    exit 1
-fi
 
 # Write benchmark result to temp file
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
