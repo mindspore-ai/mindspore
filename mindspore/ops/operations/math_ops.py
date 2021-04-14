@@ -4507,8 +4507,8 @@ class MatrixInverse(PrimitiveWithInfer):
         >>> matrix_inverse = ops.MatrixInverse(adjoint=False)
         >>> output = matrix_inverse(x)
         >>> print(output)
-        [[[ 2.408438   -1.535711  ]
-          [-2.4190936   0.97356814]]
+        [[[ 2.4095483  -1.536419  ]
+          [-2.4197974   0.97401696]]
          [[-0.79111797  1.0569006 ]
           [ 0.74180895 -0.2904787 ]]]
     """
