@@ -15,10 +15,13 @@
  */
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 
-#include <memory>
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <set>
 #include <unordered_set>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <string>
 
