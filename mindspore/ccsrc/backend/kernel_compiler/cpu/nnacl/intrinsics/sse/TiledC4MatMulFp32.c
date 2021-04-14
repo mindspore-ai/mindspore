@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_SSE
+#if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
 #include <x86intrin.h>
 #include "nnacl/fp32/common_func_fp32.h"
 
-void TiledC4MatmulFp32_Transfer(__m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4, const __m128 weight,
-                                const float v1, const float v2, const float v3, const float v4) {
+static inline void TiledC4MatmulFp32_Transfer(__m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4,
+                                              const __m128 weight, const float v1, const float v2, const float v3,
+                                              const float v4) {
   *dst1 = _mm_add_ps(*dst1, _mm_mul_ps(weight, _mm_set_ps1(v1)));
   *dst2 = _mm_add_ps(*dst2, _mm_mul_ps(weight, _mm_set_ps1(v2)));
   *dst3 = _mm_add_ps(*dst3, _mm_mul_ps(weight, _mm_set_ps1(v3)));
   *dst4 = _mm_add_ps(*dst4, _mm_mul_ps(weight, _mm_set_ps1(v4)));
 }
 
-void TiledC4MatmulFp32_LoadData(__m128 *src1, __m128 *src2, __m128 *src3, __m128 *src4, const float *src) {
+static inline void TiledC4MatmulFp32_LoadData(__m128 *src1, __m128 *src2, __m128 *src3, __m128 *src4,
+                                              const float *src) {
   *src1 = _mm_loadu_ps(src);
   *src2 = _mm_loadu_ps(src + 4);
   *src3 = _mm_loadu_ps(src + 8);
   *src4 = _mm_loadu_ps(src + 12);
 }
+
 void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t cal_num, size_t ic4, size_t oc4) {
   const float *src_tmp = src;
   for (int i = 0; i < oc4; ++i) {

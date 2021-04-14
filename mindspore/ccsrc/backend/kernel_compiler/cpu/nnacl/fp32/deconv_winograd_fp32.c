@@ -16,6 +16,38 @@
 
 #include "nnacl/fp32/deconv_winograd_fp32.h"
 
+static void TransposeWeight(float *dst, size_t number) {
+#ifdef ENABLE_AVX
+  for (int i = 0; i < number; ++i) {
+    float *addr = dst + 16 * i;
+    __m128 s0 = _mm_loadu_ps(addr + 4 * 0);
+    __m128 s1 = _mm_loadu_ps(addr + 4 * 1);
+    __m128 s2 = _mm_loadu_ps(addr + 4 * 2);
+    __m128 s3 = _mm_loadu_ps(addr + 4 * 3);
+#ifndef _MM_TRANSPOSE4_PS
+#define _MM_TRANSPOSE4_PS(row0, row1, row2, row3) \
+  do {                                            \
+    __m128 tmp3, tmp2, tmp1, tmp0;                \
+    tmp0 = _mm_unpacklo_ps((row0), (row1));       \
+    tmp2 = _mm_unpacklo_ps((row2), (row3));       \
+    tmp1 = _mm_unpackhi_ps((row0), (row1));       \
+    tmp3 = _mm_unpackhi_ps((row2), (row3));       \
+    (row0) = _mm_movelh_ps(tmp0, tmp2);           \
+    (row1) = _mm_movehl_ps(tmp2, tmp0);           \
+    (row2) = _mm_movelh_ps(tmp1, tmp3);           \
+    (row3) = _mm_movehl_ps(tmp3, tmp1);           \
+  } while (0)
+#endif
+    _MM_TRANSPOSE4_PS(s0, s1, s2, s3);
+#undef _MM_TRANSPOSE4_PS
+    _mm_storeu_ps(addr + 4 * 0, s0);
+    _mm_storeu_ps(addr + 4 * 1, s1);
+    _mm_storeu_ps(addr + 4 * 2, s2);
+    _mm_storeu_ps(addr + 4 * 3, s3);
+  }
+#endif
+}
+
 int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
                          const DeConvParam *deconv_param) {
   int tmp_kernel_plane = unit->w_size_ * unit->h_size_;
@@ -121,6 +153,7 @@ int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, cons
       }
     }
   }
+  TransposeWeight(dst_weight, size / 16);
 
   if (current_unit_weight != NULL) {
     free(current_unit_weight);
