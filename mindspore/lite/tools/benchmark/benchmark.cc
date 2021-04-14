@@ -1028,7 +1028,8 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
     }
     columns.push_back(iter.first);
 
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / float_t(flags_->loop_count_));
+    len =
+      snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / static_cast<float>(flags_->loop_count_));
     if (len > columnLenMax.at(1)) {
       columnLenMax.at(1) = len + 4;
     }
