@@ -74,7 +74,6 @@ void ArithmeticFP32Coder::InitRunFunction(int primitive_type) {
       arithmetic_run_bool_ = fun_table[i].bool_func_;
       arithmetic_opt_run_ = fun_table[i].opt_func_;
       arithmetic_opt_run_int_ = fun_table[i].opt_int_func_;
-      return;
     }
   }
   TypeId input_type_id = input_tensor_->data_type();
