@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Face detection network wrapper."""
+import os
 import numpy as np
 
 import mindspore.nn as nn
@@ -27,9 +28,12 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import dtype as mstype
-
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.FaceDetection.yolo_postprocess import YoloPostProcess
+from src.FaceDetection.yolov3 import HwYolov3 as backbone_HwYolov3
+from src.FaceDetection.yolo_loss import YoloLoss
+from src.lrsche_factory import warmup_step_new
 
 _grad_scale = C.MultitypeFuncGraph("grad_scale")
 reciprocal = P.Reciprocal()
@@ -634,3 +638,50 @@ def calc_recall_precision_ap(ground_truth, ret_list, iou_thr=0.5):
         evaluate[cls] = {'recall': recall, 'precision': precision, 'ap': ap}
 
     return evaluate
+
+def define_network(args):
+    """Define train network with TrainOneStepCell."""
+    # backbone and loss
+    num_classes = args.num_classes
+    num_anchors_list = args.num_anchors_list
+    anchors = args.anchors
+    anchors_mask = args.anchors_mask
+    momentum = args.momentum
+    args.logger.info('train opt momentum:{}'.format(momentum))
+    weight_decay = args.weight_decay * float(args.batch_size)
+    args.logger.info('real weight_decay:{}'.format(weight_decay))
+    lr_scale = args.world_size / 8
+    args.logger.info('lr_scale:{}'.format(lr_scale))
+    args.lr = warmup_step_new(args, lr_scale=lr_scale)
+    network = backbone_HwYolov3(num_classes, num_anchors_list, args)
+
+    criterion0 = YoloLoss(num_classes, anchors, anchors_mask[0], 64, 0, head_idx=0.0)
+    criterion1 = YoloLoss(num_classes, anchors, anchors_mask[1], 32, 0, head_idx=1.0)
+    criterion2 = YoloLoss(num_classes, anchors, anchors_mask[2], 16, 0, head_idx=2.0)
+
+    # load pretrain model
+    if os.path.isfile(args.pretrained):
+        param_dict = load_checkpoint(args.pretrained)
+        param_dict_new = {}
+        for key, values in param_dict.items():
+            if key.startswith('moments.'):
+                continue
+            elif key.startswith('network.'):
+                param_dict_new[key[8:]] = values
+            else:
+                param_dict_new[key] = values
+        load_param_into_net(network, param_dict_new)
+        args.logger.info('load model {} success'.format(args.pretrained))
+
+    train_net = BuildTrainNetworkV2(network, criterion0, criterion1, criterion2, args)
+    # optimizer
+    opt = nn.Momentum(params=train_net.trainable_params(), learning_rate=Tensor(args.lr), momentum=momentum,
+                      weight_decay=weight_decay)
+    # package training process
+    if args.use_loss_scale:
+        train_net = TrainOneStepWithLossScaleCell(train_net, opt)
+    else:
+        train_net = nn.TrainOneStepCell(train_net, opt)
+    if args.world_size != 1:
+        train_net.set_broadcast_flag()
+    return train_net

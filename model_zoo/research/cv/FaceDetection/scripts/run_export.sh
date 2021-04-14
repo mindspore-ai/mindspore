@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 3 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]"
+    echo "Usage: bash run_export.sh [PLATFORM] [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]"
     exit 1
 fi
 
@@ -42,9 +42,10 @@ SCRIPT_NAME='export.py'
 
 ulimit -c unlimited
 
-BATCH_SIZE=$1
-USE_DEVICE_ID=$2
-PRETRAINED_BACKBONE=$(get_real_path $3)
+PLATFORM=$1
+BATCH_SIZE=$2
+USE_DEVICE_ID=$3
+PRETRAINED_BACKBONE=$(get_real_path $4)
 
 if [ ! -f $PRETRAINED_BACKBONE ]
     then
@@ -52,6 +53,7 @@ if [ ! -f $PRETRAINED_BACKBONE ]
 exit 1
 fi
 
+echo $PLATFORM
 echo $BATCH_SIZE
 echo $USE_DEVICE_ID
 echo $PRETRAINED_BACKBONE
@@ -65,6 +67,7 @@ cd ${current_exec_path}/device$USE_DEVICE_ID || exit
 dev=`expr $USE_DEVICE_ID + 0`
 export DEVICE_ID=$dev
 python ${dirname_path}/${SCRIPT_NAME} \
+    --run_platform=$PLATFORM \
     --batch_size=$BATCH_SIZE \
     --pretrained=$PRETRAINED_BACKBONE > convert.log  2>&1 &
 

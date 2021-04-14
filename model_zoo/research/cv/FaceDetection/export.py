@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,14 +24,11 @@ from mindspore.train.serialization import export, load_checkpoint, load_param_in
 from src.FaceDetection.yolov3 import HwYolov3 as backbone_HwYolov3
 from src.config import config
 
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
-
-
 def save_air(args):
     '''save air'''
     print('============= yolov3 start save air ==================')
-
+    devid = int(os.getenv('DEVICE_ID', '0')) if args.run_platform != 'CPU' else 0
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.run_platform, save_graphs=False, device_id=devid)
 
     num_classes = config.num_classes
     anchors_mask = config.anchors_mask
@@ -63,6 +60,8 @@ def save_air(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Convert ckpt to air')
+    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "CPU"),
+                        help="run platform, support Ascend and CPU.")
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
     parser.add_argument('--batch_size', type=int, default=8, help='batch size')
 

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import numpy as np
 
 import mindspore.dataset.vision.py_transforms as P
+import mindspore.dataset as de
 
 from src.transforms import RandomCropLetterbox, RandomFlip, HSVShift, ResizeLetterbox
 from src.config import config
@@ -240,5 +241,33 @@ def preprocess_fn(image, annotation):
         t_cls_1, gt_list_1, coord_mask_2, conf_pos_mask_2, conf_neg_mask_2, cls_mask_2, t_coord_2, t_conf_2, \
         t_cls_2, gt_list_2
 
-
 compose_map_func = (preprocess_fn)
+
+def create_dataset(args):
+    """Create dataset object."""
+    args.logger.info('start create dataloader')
+    ds = de.MindDataset(args.mindrecord_path + "0", columns_list=["image", "annotation"], num_shards=args.world_size,
+                        shard_id=args.local_rank)
+
+    ds = ds.map(input_columns=["image", "annotation"],
+                output_columns=["image", "annotation", 'coord_mask_0', 'conf_pos_mask_0', 'conf_neg_mask_0',
+                                'cls_mask_0', 't_coord_0', 't_conf_0', 't_cls_0', 'gt_list_0', 'coord_mask_1',
+                                'conf_pos_mask_1', 'conf_neg_mask_1', 'cls_mask_1', 't_coord_1', 't_conf_1',
+                                't_cls_1', 'gt_list_1', 'coord_mask_2', 'conf_pos_mask_2', 'conf_neg_mask_2',
+                                'cls_mask_2', 't_coord_2', 't_conf_2', 't_cls_2', 'gt_list_2'],
+                column_order=["image", "annotation", 'coord_mask_0', 'conf_pos_mask_0', 'conf_neg_mask_0',
+                              'cls_mask_0', 't_coord_0', 't_conf_0', 't_cls_0', 'gt_list_0', 'coord_mask_1',
+                              'conf_pos_mask_1', 'conf_neg_mask_1', 'cls_mask_1', 't_coord_1', 't_conf_1',
+                              't_cls_1', 'gt_list_1', 'coord_mask_2', 'conf_pos_mask_2', 'conf_neg_mask_2',
+                              'cls_mask_2', 't_coord_2', 't_conf_2', 't_cls_2', 'gt_list_2'],
+                operations=compose_map_func, num_parallel_workers=16, python_multiprocessing=True)
+
+    ds = ds.batch(args.batch_size, drop_remainder=True, num_parallel_workers=8)
+    ds = ds.repeat(args.max_epoch)
+    args.steps_per_epoch = ds.get_dataset_size()
+    args.logger.info('args.steps_per_epoch:{}'.format(args.steps_per_epoch))
+    args.logger.info('args.world_size:{}'.format(args.world_size))
+    args.logger.info('args.local_rank:{}'.format(args.local_rank))
+    args.logger.info('end create dataloader')
+    args.logger.save_args(args)
+    return ds
