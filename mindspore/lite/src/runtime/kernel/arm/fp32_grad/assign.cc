@@ -59,7 +59,8 @@ int AssignRun(void *cdata, int task_id) {
 }
 
 int AssignCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, AssignRun, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, AssignRun,
+                                  this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Assign function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -71,9 +72,10 @@ int AssignCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuAssignFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Assign);
-  auto *kernel = new (std::nothrow) AssignCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) AssignCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new AssignCPUKernel fail!";
     free(opParameter);

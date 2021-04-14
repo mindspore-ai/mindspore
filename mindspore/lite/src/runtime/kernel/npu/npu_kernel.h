@@ -60,7 +60,7 @@ class NPUKernel : public LiteKernel {
 template <class T>
 kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                     const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (!op_parameter->infer_flag_) {
     MS_LOG(ERROR) << "NPU does not support runtime inference shape. Type is:"
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
@@ -72,7 +72,7 @@ kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
     free(op_parameter);
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) T(op_parameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow) T(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << op_parameter->name_ << "is nullptr.";
     free(op_parameter);

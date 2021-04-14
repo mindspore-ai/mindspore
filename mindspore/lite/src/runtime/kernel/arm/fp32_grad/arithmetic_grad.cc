@@ -227,7 +227,8 @@ int ArithmeticGradRun(void *cdata, int task_id) {
 }
 
 int ArithmeticGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ArithmeticGradRun, this, 1);
+  int error_code =
+    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ArithmeticGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic Grad function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -237,13 +238,14 @@ int ArithmeticGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc) {
   MS_ASSERT(nullptr != opParameter);
   if (opParameter == nullptr) {
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ArithmeticGradCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    ArithmeticGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticGradCPUKernel fail!";
     free(opParameter);

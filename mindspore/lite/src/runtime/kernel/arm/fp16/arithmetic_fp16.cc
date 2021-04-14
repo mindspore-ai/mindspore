@@ -127,13 +127,13 @@ void ArithmeticFP16CPUKernel::InitRunFunction(int primitive_type) {
 int ArithmeticFP16CPUKernel::ConstTensorBroadCast() {
   int ret;
   if (in_tensors_[0]->data_c() != nullptr) {
-    ret = ConvertFp32TensorToFp16(in_tensors_[0], context_);
+    ret = ConvertFp32TensorToFp16(in_tensors_[0], static_cast<const lite::InnerContext *>(this->context_));
     if (ret != RET_OK) {
       return ret;
     }
   }
   if (in_tensors_[1]->data_c() != nullptr) {
-    ret = ConvertFp32TensorToFp16(in_tensors_[1], context_);
+    ret = ConvertFp32TensorToFp16(in_tensors_[1], static_cast<const lite::InnerContext *>(this->context_));
     if (ret != RET_OK) {
       return ret;
     }
@@ -167,18 +167,19 @@ int ArithmeticFP16CPUKernel::Run() {
     return RET_ERROR;
   }
   if (!input0_broadcast_) {
-    input0_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
+    input0_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->context_));
   }
   if (!input1_broadcast_) {
-    input1_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(1), context_);
+    input1_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->context_));
   }
   auto output_tensor = out_tensors_.at(0);
-  output_ptr_ = MallocOutputFp16(output_tensor, context_);
+  output_ptr_ = MallocOutputFp16(output_tensor, static_cast<const lite::InnerContext *>(this->context_));
   if (input0_ptr_ == nullptr || input1_ptr_ == nullptr || output_ptr_ == nullptr) {
     FreeFp16Buffer();
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticsRun, this, context_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ArithmeticsRun, this,
+                            context_->thread_num_);
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->MutableData()),
                      output_tensor->ElementsNum());

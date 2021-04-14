@@ -76,7 +76,8 @@ int PowerGradRun(void *cdata, int task_id) {
 }
 
 int PowerGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, PowerGradRun, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, PowerGradRun,
+                                  this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "power grad function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -86,10 +87,11 @@ int PowerGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_PowerGrad);
-  auto *kernel = new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) PowerGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new PowerGradCPUKernel fail!";
     free(opParameter);

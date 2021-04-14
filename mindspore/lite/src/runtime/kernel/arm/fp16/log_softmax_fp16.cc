@@ -95,7 +95,8 @@ int LogSoftmaxLastAxisFp16Run(void *cdata, int task_id) {
 
 int LogSoftmaxFp16CPUKernel::Run() {
   if (in_plane_size_ == 1) {
-    auto ret = ParallelLaunch(this->context_->thread_pool_, LogSoftmaxLastAxisFp16Run, this, context_->thread_num_);
+    auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                              LogSoftmaxLastAxisFp16Run, this, context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "LogSoftmaxFp16CPUKernel ParallelLaunch failed, ret: " << ret;
     }

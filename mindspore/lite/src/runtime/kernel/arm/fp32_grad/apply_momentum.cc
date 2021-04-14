@@ -82,7 +82,8 @@ int ApplyMomentumRun(void *cdata, int task_id) {
 }
 
 int ApplyMomentumCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ApplyMomentumRun, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  ApplyMomentumRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Apply Momentum function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -119,10 +120,11 @@ int ApplyMomentumCPUKernel::OptimizerStep() {
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                      OpParameter *opParameter, const lite::Context *ctx,
                                                       const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ApplyMomentum);
-  auto *kernel = new (std::nothrow) ApplyMomentumCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    ApplyMomentumCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ApplyMomentumCPUKernel fail!";
     free(opParameter);

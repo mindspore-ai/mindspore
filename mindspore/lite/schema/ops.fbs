@@ -841,7 +841,7 @@ table Rsqrt {
 }
 
 table QuantDTypeCast {
-    src_t: long; // deprecated
+    src_t: long;
     dst_t: long;
 }
 

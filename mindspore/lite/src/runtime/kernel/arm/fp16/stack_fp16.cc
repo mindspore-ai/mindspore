@@ -40,14 +40,15 @@ void StackFp16CPUKernel::InitMallocFlags() {
 int StackFp16CPUKernel::MallocAssignBuffer() {
   buffers_.resize(in_tensors_.size(), nullptr);
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
-    buffers_.at(i) = reinterpret_cast<char *>(ConvertInputFp32toFp16(in_tensors_.at(i), context_));
+    buffers_.at(i) = reinterpret_cast<char *>(
+      ConvertInputFp32toFp16(in_tensors_.at(i), static_cast<const lite::InnerContext *>(context_)));
     if (buffers_.at(i) == nullptr) {
       return RET_ERROR;
     }
   }
 
   out_buffer_ = nullptr;
-  out_buffer_ = MallocOutputFp16(out_tensors_.at(0), context_);
+  out_buffer_ = MallocOutputFp16(out_tensors_.at(0), static_cast<const lite::InnerContext *>(this->context_));
   if (out_buffer_ == nullptr) {
     return RET_ERROR;
   }
@@ -100,7 +101,8 @@ int StackFp16CPUKernel::Run() {
   }
   // run stack
   num_threads_ = MSMIN(UP_DIV(outer_size_, 64), this->context_->thread_num_);
-  ret = ParallelLaunch(this->context_->thread_pool_, StackRun, this, num_threads_);
+  ret =
+    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, StackRun, this, num_threads_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
     return RET_ERROR;

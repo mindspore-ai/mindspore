@@ -113,7 +113,8 @@ int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SparseSoftmaxCrossEntropyWithLogitsRun, this, 1);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  SparseSoftmaxCrossEntropyWithLogitsRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogits function error error_code[" << error_code << "]";
     return RET_ERROR;

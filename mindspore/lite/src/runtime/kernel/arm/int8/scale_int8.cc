@@ -319,7 +319,8 @@ int ScaleInt8CPUKernel::Run() {
                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
     }
 
-    auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
+    auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ScaleRunInt8, this,
+                              op_parameter_->thread_num_);
     // free memory malloced from memory pool
     if (!scale_param_->const_scale_) {
       ctx_->allocator->Free(input1_data_);
@@ -339,7 +340,8 @@ int ScaleInt8CPUKernel::Run() {
   if (has_bias_ && !scale_param_->const_offset_) {
     input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(2)->data_c());
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ScaleRunInt8, this,
+                            op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

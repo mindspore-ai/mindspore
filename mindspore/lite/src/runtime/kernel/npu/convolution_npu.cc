@@ -109,15 +109,17 @@ ConvolutionNPUKernel::~ConvolutionNPUKernel() {
 
 kernel::LiteKernel *NpuConvKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                          const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                         const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                         const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::NPUKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
-    kernel = new (std::nothrow) kernel::ConvolutionNPUKernel(op_parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow)
+      kernel::ConvolutionNPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseNPUKernel(op_parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseNPUKernel(op_parameter, inputs, outputs,
+                                                                      static_cast<const lite::InnerContext *>(ctx));
   } else {
     MS_LOG(ERROR) << "npu do not support group conv!";
     kernel = nullptr;

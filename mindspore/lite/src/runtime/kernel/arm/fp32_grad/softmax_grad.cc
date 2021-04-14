@@ -80,7 +80,8 @@ int SoftmaxGradRun(void *cdata, int task_id) {
 }
 
 int SoftmaxGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SoftmaxGradRun, this, 1);
+  int error_code =
+    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SoftmaxGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxGradRun function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -90,10 +91,11 @@ int SoftmaxGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuSoftmaxGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                     const std::vector<lite::Tensor *> &outputs,
-                                                    OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                    OpParameter *opParameter, const lite::Context *ctx,
                                                     const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
-  auto *kernel = new (std::nothrow) SoftmaxGradCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) SoftmaxGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxGradCPUKernel fail!";
     free(opParameter);

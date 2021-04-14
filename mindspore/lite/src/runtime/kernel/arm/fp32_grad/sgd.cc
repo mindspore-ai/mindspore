@@ -146,9 +146,11 @@ int SgdCPUKernel::Run() {
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
   auto error_code = RET_OK;
   if (*stat > 0.0f) {
-    error_code = ParallelLaunch(this->context_->thread_pool_, SgdRunInit, this, thread_count_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SgdRunInit, this,
+                                thread_count_);
   } else {
-    error_code = ParallelLaunch(this->context_->thread_pool_, SgdRun, this, thread_count_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SgdRun, this,
+                                thread_count_);
   }
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SGD function error error_code[" << error_code << "]";
@@ -202,9 +204,10 @@ int SgdCPUKernel::OptimizerStep() {
 
 kernel::LiteKernel *CpuSgdFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                            const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                            const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_SGD);
-  auto *kernel = new (std::nothrow) SgdCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) SgdCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SgdCPUKernel failed!";
     free(opParameter);

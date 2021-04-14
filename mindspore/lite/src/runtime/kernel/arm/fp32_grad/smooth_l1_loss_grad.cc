@@ -70,7 +70,8 @@ int SmoothL1LossGradRun(void *cdata, int task_id) {
 }
 
 int SmoothL1LossGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SmoothL1LossGradRun, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  SmoothL1LossGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1LossGrad function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -82,11 +83,12 @@ int SmoothL1LossGradCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuSmoothL1LossGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                          const std::vector<lite::Tensor *> &outputs,
-                                                         OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                         OpParameter *opParameter, const lite::Context *ctx,
                                                          const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SmoothL1LossGrad);
-  auto *kernel = new (std::nothrow) SmoothL1LossGradCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    SmoothL1LossGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SmoothL1LossGradWithLogitsCPUKernel failed";
     return nullptr;

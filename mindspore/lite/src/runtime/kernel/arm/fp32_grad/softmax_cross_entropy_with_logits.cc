@@ -92,7 +92,8 @@ int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SoftmaxCrossEntropyWithLogitsRun, this, 1);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  SoftmaxCrossEntropyWithLogitsRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxCrossEntropy function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -128,11 +129,12 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
 
 kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                             const std::vector<lite::Tensor *> &outputs,
-                                                            OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                            OpParameter *opParameter, const lite::Context *ctx,
                                                             const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits);
-  auto *kernel = new (std::nothrow) SoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    SoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCrossEntropyWithLogitsCPUKernel failed";
     free(opParameter);

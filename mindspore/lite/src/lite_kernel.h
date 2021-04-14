@@ -30,6 +30,7 @@
 #include "src/tensor.h"
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
+#include "include/context.h"
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH {
@@ -64,7 +65,7 @@ class LiteKernel {
  public:
   LiteKernel() = default;
   LiteKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-             const lite::InnerContext *ctx)
+             const lite::Context *ctx)
       : op_parameter_(parameter),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
@@ -175,7 +176,7 @@ class LiteKernel {
 
   SubGraphType subgraph_type() const { return this->subgraph_type_; }
 
-  const lite::InnerContext *context() const { return this->context_; }
+  const lite::Context *context() const { return this->context_; }
 
   virtual std::string ToString() const;
 
@@ -202,7 +203,7 @@ class LiteKernel {
   // tensor will free in ~lite_session()
   std::vector<lite::Tensor *> in_tensors_;
   std::vector<lite::Tensor *> out_tensors_;
-  const lite::InnerContext *context_ = nullptr;
+  const lite::Context *context_ = nullptr;
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;
@@ -217,13 +218,13 @@ class LiteKernel {
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                     const lite::InnerContext *ctx, const KernelKey &desc);
+                                     const lite::Context *ctx, const KernelKey &desc);
 
 template <class T>
 kernel::LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
-  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx);
+                                      const lite::Context *ctx, const kernel::KernelKey &desc) {
+  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
     free(parameter);

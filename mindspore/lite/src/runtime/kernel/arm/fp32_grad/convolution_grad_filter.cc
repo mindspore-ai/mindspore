@@ -192,7 +192,8 @@ int ConvolutionGradFilterCPUKernel::Run() {
   auto *out_dw = out_tensors_.at(0);
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
   memset(dw_addr, 0, out_dw->Size());
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionGradFilterRun, this, context_->thread_num_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  ConvolutionGradFilterRun, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv filter function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -202,12 +203,13 @@ int ConvolutionGradFilterCPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                       OpParameter *opParameter, const lite::Context *ctx,
                                                        const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DBackpropFilterFusion);
 
-  auto *kernel = new (std::nothrow) ConvolutionGradFilterCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    ConvolutionGradFilterCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new kernel fail!";
     free(opParameter);

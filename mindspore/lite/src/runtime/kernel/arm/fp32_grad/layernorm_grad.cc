@@ -97,7 +97,8 @@ int LayerNormGradRun(void *cdata, int task_id) {
 }
 
 int LayerNormGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, LayerNormGradRun, this, 1);
+  int error_code =
+    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, LayerNormGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LayerNorm function error error_code[" << error_code << "]";
     return RET_ERROR;

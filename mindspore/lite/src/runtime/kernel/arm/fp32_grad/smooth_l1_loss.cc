@@ -73,7 +73,8 @@ int SmoothL1LossRun(void *cdata, int task_id) {
 }
 
 int SmoothL1LossCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SmoothL1LossRun, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  SmoothL1LossRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1Loss function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -85,11 +86,12 @@ int SmoothL1LossCPUKernel::Init() { return RET_OK; }
 
 kernel::LiteKernel *CpuSmoothL1LossFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                      const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                     OpParameter *opParameter, const lite::Context *ctx,
                                                      const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SmoothL1Loss);
-  auto *kernel = new (std::nothrow) SmoothL1LossCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    SmoothL1LossCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SmoothL1Loss failed";
     return nullptr;

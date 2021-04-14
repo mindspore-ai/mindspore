@@ -99,7 +99,8 @@ int ArithmeticSelfInt8CPUKernel::Run() {
   auto out_tensor = out_tensors_.at(0);
   in_ptr_ = reinterpret_cast<int8_t *>(input_tensor->MutableData());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->MutableData());
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfInt8Runs, this, thread_sz_count_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                            ArithmeticSelfInt8Runs, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
     return ret;

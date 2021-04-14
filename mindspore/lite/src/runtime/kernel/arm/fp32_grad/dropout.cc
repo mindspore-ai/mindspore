@@ -101,7 +101,8 @@ int RunDropout(void *cdata, int task_id) {
 }
 
 int DropoutCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, RunDropout, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, RunDropout,
+                                  this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -111,7 +112,7 @@ int DropoutCPUKernel::Run() {
 
 kernel::LiteKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Dropout opParameter nullptr.";
     return nullptr;
@@ -120,7 +121,8 @@ kernel::LiteKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *
     MS_LOG(ERROR) << "Dropout desc type should be " << schema::PrimitiveType_Dropout << " got " << desc.type;
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) DropoutCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) DropoutCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Dropout new kernel failed.";
     return nullptr;

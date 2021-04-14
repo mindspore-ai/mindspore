@@ -61,7 +61,8 @@ int SigmoidCrossEntropyWithLogitsRun(void *cdata, int task_id) {
 }
 
 int SigmoidCrossEntropyWithLogitsCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SigmoidCrossEntropyWithLogitsRun, this, 1);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  SigmoidCrossEntropyWithLogitsRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SigmoidCrossEntropyWithLogits function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -74,11 +75,12 @@ int SigmoidCrossEntropyWithLogitsCPUKernel::Init() { return RET_OK; }
 kernel::LiteKernel *CpuSigmoidCrossEntropyWithLogitsFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                                       const std::vector<lite::Tensor *> &outputs,
                                                                       OpParameter *opParameter,
-                                                                      const lite::InnerContext *ctx,
+                                                                      const lite::Context *ctx,
                                                                       const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SigmoidCrossEntropyWithLogits);
-  auto *kernel = new (std::nothrow) SigmoidCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    SigmoidCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SigmoidCrossEntropyWithLogits failed";
     return nullptr;

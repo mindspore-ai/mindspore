@@ -173,7 +173,7 @@ int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) 
 #endif
 #ifdef SUPPORT_GPU
   // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
-  if (context_->IsGpuEnabled()) {
+  if (static_cast<const lite::InnerContext *>(context_)->IsGpuEnabled()) {
     for (auto tensor : this->in_tensors()) {
       tensor->MutableData();
     }

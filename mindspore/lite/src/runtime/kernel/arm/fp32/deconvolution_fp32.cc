@@ -222,7 +222,8 @@ int DeConvolutionCPUKernel::Run() {
     RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
 #endif
 
-    error_code = ParallelLaunch(this->context_->thread_pool_, DeConvFp32Run, this, thread_count_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, DeConvFp32Run,
+                                this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
       FreeRunBuf();
@@ -236,7 +237,7 @@ int DeConvolutionCPUKernel::Run() {
 
 kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
@@ -245,12 +246,15 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
   if (conv_param->group_ == 1) {
     if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
         (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
-      kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
+                                                                         static_cast<const lite::InnerContext *>(ctx));
     } else {
-      kernel = new (std::nothrow) kernel::DeConvolutionCPUKernel(op_parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow)
+        kernel::DeConvolutionCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
     }
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(op_parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseCPUKernel(op_parameter, inputs, outputs,
+                                                                        static_cast<const lite::InnerContext *>(ctx));
   } else {
     MS_LOG(ERROR) << "deconv do not support group deconv!";
     kernel = nullptr;

@@ -120,7 +120,8 @@ int SplitBaseCPUKernel::Run() {
     output_ptr_.at(i) = output_tensor->data_c();
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, SplitRun, this, thread_n_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SplitRun, this,
+                            thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
   }

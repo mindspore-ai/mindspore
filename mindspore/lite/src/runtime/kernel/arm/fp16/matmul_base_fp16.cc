@@ -286,7 +286,8 @@ int MatmulBaseFP16CPUKernel::Run() {
       batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
       batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
     }
-    auto ret = ParallelLaunch(this->context_->thread_pool_, MatmulBaseFP16Run, this, thread_count_);
+    auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, MatmulBaseFP16Run,
+                              this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
       return ret;

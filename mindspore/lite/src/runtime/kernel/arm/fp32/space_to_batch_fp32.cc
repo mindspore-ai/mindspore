@@ -102,7 +102,8 @@ int SpaceToBatchCPUKernel::Run() {
     }
   }
 
-  ParallelLaunch(this->context_->thread_pool_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
+  ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SpaceToBatchFp32Run, this,
+                 op_parameter_->thread_num_);
 
   return RET_OK;
 }
