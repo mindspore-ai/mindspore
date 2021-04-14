@@ -68,7 +68,7 @@ Status TakeNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   }
   int64_t num_rows;
   RETURN_IF_NOT_OK(children_[0]->GetDatasetSize(size_getter, estimate, &num_rows));
-  *dataset_size = std::min(static_cast<int64_t>(take_count_), num_rows);
+  *dataset_size = take_count_ == -1 ? num_rows : std::min(static_cast<int64_t>(take_count_), num_rows);
   dataset_size_ = *dataset_size;
   return Status::OK();
 }
