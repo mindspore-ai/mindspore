@@ -36,7 +36,6 @@ class AdamWeightDecayFusion : public PatternProcessPass {
     v_ = std::make_shared<Var>();
     gradient_ = std::make_shared<Var>();
     u_ = std::make_shared<Var>();
-    u2_ = std::make_shared<Var>();
   }
   ~AdamWeightDecayFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -55,7 +54,6 @@ class AdamWeightDecayFusion : public PatternProcessPass {
   VarPtr v_;
   VarPtr gradient_;
   VarPtr u_;
-  VarPtr u2_;
 };
 }  // namespace opt
 }  // namespace mindspore
