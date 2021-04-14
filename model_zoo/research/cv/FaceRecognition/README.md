@@ -221,7 +221,7 @@ sh run_export.sh 16 0 ./0-1_1.ckpt
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | Cross Entropy                                               |
 | outputs                    | probability                                                 |
-| Speed                      | 1pc: 300~400 ms/step; 8pcs: 40~50 ms/step                   |
+| Speed                      | 1pc: 350-600 fps; 8pcs: 2500-4500 fps                       |
 | Total time                 | 1pc: NA hours; 8pcs: 10 hours                               |
 | Checkpoint for Fine tuning | 584M (.ckpt file)                                           |
 
