@@ -41,8 +41,8 @@ static inline int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_d
   return copy_num;
 }
 
-static inline size_t GetOuterSize(const std::vector<int> &in_shape, int axis) {
-  size_t outer_size = 1;
+static inline int GetOuterSize(const std::vector<int> &in_shape, int axis) {
+  int outer_size = 1;
   for (int i = 0; i < axis; ++i) {
     outer_size *= in_shape[i];
   }
@@ -72,23 +72,43 @@ int StackBaseCPUKernel::Init() {
   return ReSize();
 }
 
+void StackBaseCPUKernel::Execute(int task_id) {
+  auto output_data = reinterpret_cast<char *>(out_tensors_.at(0)->data_c());
+  auto step = UP_DIV(outer_size_, num_threads_);
+  auto start = task_id * step;
+  auto end = MSMIN(start + step, outer_size_);
+  auto input_num = in_tensors_.size();
+  Stack(all_inputs_, output_data + input_num * start * copy_size_, input_num, copy_size_, start, end);
+}
+
+static int StackRun(void *cdata, int task_id) {
+  auto stack = reinterpret_cast<StackBaseCPUKernel *>(cdata);
+  stack->Execute(task_id);
+  return RET_OK;
+}
+
 int StackBaseCPUKernel::Run() {
   // malloc temporary memory to store all the inputs
   size_t inputs_num = in_tensors_.size();
-  char **all_inputs = static_cast<char **>(context_->allocator->Malloc(inputs_num * sizeof(char *)));
-  if (all_inputs == nullptr) {
+  all_inputs_ = static_cast<char **>(context_->allocator->Malloc(inputs_num * sizeof(char *)));
+  if (all_inputs_ == nullptr) {
     MS_LOG(ERROR) << "malloc all_inputs failed.";
     return RET_ERROR;
   }
   for (size_t j = 0; j < inputs_num; ++j) {
-    all_inputs[j] = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
+    all_inputs_[j] = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
   }
   // run stack
-  auto output_data = reinterpret_cast<char *>(out_tensors_.at(0)->data_c());
-  Stack(all_inputs, output_data, in_tensors_.size(), copy_size_, outer_size_);
+  num_threads_ = MSMIN(UP_DIV(outer_size_, 64), this->context_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, StackRun, this, num_threads_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
+    return RET_ERROR;
+  }
 
   // free temporary variable all_inputs
-  context_->allocator->Free(all_inputs);
+  context_->allocator->Free(all_inputs_);
+  all_inputs_ = nullptr;
   return RET_OK;
 }
 

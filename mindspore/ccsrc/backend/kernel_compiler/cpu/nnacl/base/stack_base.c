@@ -15,14 +15,12 @@
  */
 #include "nnacl/base/stack_base.h"
 
-void Stack(char **inputs, char *output, size_t input_num, size_t copy_size, size_t outter_size) {
-  size_t in_offset = 0;
+void Stack(char **inputs, char *output, size_t input_num, size_t copy_size, int outer_start, int outer_end) {
   size_t out_offset = 0;
-  for (size_t i = 0; i < outter_size; ++i) {
+  for (size_t i = outer_start; i < outer_end; ++i) {
     for (size_t j = 0; j < input_num; ++j) {
-      memcpy(output + out_offset, inputs[j] + in_offset, copy_size);
+      memcpy(output + out_offset, inputs[j] + i * copy_size, copy_size);
       out_offset += copy_size;
     }
-    in_offset += copy_size;
   }
 }

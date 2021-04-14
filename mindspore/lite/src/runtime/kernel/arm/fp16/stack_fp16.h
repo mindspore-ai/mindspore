@@ -29,6 +29,7 @@ class StackFp16CPUKernel : public StackBaseCPUKernel {
   ~StackFp16CPUKernel() override = default;
   int Init() override;
   int Run() override;
+  void Execute(int task_id);
 
  private:
   void InitMallocFlags();

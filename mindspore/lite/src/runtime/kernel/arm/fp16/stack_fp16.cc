@@ -75,6 +75,22 @@ int StackFp16CPUKernel::Init() {
   return ReSize();
 }
 
+void StackFp16CPUKernel::Execute(int task_id) {
+  auto inputs = buffers_.data();
+  char *output = reinterpret_cast<char *>(out_buffer_);
+  auto step = UP_DIV(outer_size_, num_threads_);
+  auto start = task_id * step;
+  auto end = MSMIN(start + step, outer_size_);
+  auto input_num = in_tensors_.size();
+  Stack(inputs, output + input_num * start * copy_size_, input_num, copy_size_, start, end);
+}
+
+static int StackRun(void *cdata, int task_id) {
+  auto stack = reinterpret_cast<StackFp16CPUKernel *>(cdata);
+  stack->Execute(task_id);
+  return RET_OK;
+}
+
 int StackFp16CPUKernel::Run() {
   InitMallocFlags();
   auto ret = MallocAssignBuffer();
@@ -82,7 +98,13 @@ int StackFp16CPUKernel::Run() {
     FreeBuffer();
     return ret;
   }
-  Stack(buffers_.data(), reinterpret_cast<char *>(out_buffer_), in_tensors_.size(), copy_size_, outer_size_);
+  // run stack
+  num_threads_ = MSMIN(UP_DIV(outer_size_, 64), this->context_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, StackRun, this, num_threads_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
+    return RET_ERROR;
+  }
   // if output tensor is fp32, we need to transform
   if (malloc_out_) {
     auto out_tensor = out_tensors_.at(0);
