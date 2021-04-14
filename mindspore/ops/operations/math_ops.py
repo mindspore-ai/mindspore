@@ -2237,7 +2237,7 @@ class MulNoNan(_MathBinaryOp):
     When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Note:
-        The shapes of `input_x` and `input_y` should be same or can be broadcasted.
+        The shapes of `input_x` and `input_y` should be the same or can be broadcasted.
 
     Inputs:
         - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is one of
@@ -2246,8 +2246,9 @@ class MulNoNan(_MathBinaryOp):
           flota16, float32, int32, int64 currently or scalar.
 
     Outputs:
-        Tensor, the shape is same to the shape after broadcasting,
-        the data type is the number with higher precision or higher digits in the two inputs.
+        Tensor, the shape is the same as the shape after broadcasting,
+        and the data type is the one with higher precision among the two inputs.
+
 
     Supported Platforms:
         ``Ascend``
