@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "src/runtime/kernel/arm/fp32/uniform_real_fp32.h"
 #include <stdlib.h>
 #include <string.h>
-#include "src/runtime/kernel/arm/fp32/uniform_real_fp32.h"
+#include <vector>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
@@ -26,28 +27,8 @@ using mindspore::schema::PrimitiveType_UniformReal;
 
 namespace mindspore::kernel {
 
-template <typename T, int ElementCount>
-class Array {
- public:
-  Array() {
-    for (int i = 0; i < ElementCount; ++i) {
-      data_[i] = T(0);
-    }
-  }
-
-  const T &operator[](int index) const { return data_[index]; }
-
-  T &operator[](int index) { return data_[index]; }
-
- private:
-  T data_[ElementCount];
-};
-
 class PhiloxRandom {
  public:
-  using ResultType = Array<uint32_t, 4>;
-  using Key = Array<uint32_t, 2>;
-
   explicit PhiloxRandom(uint64_t seed_lo, uint64_t seed_hi) {
     key_[0] = static_cast<uint32_t>(seed_lo);
     key_[1] = static_cast<uint32_t>(seed_lo >> 32);
@@ -75,9 +56,9 @@ class PhiloxRandom {
 
   // Returns a group of four random numbers using the underlying Philox
   // algorithm.
-  ResultType operator()() {
-    ResultType counter = counter_;
-    Key key = key_;
+  std::vector<uint32_t> operator()() {
+    std::vector<uint32_t> counter = counter_;
+    std::vector<uint32_t> key = key_;
 
     counter = ComputeSingleRound(counter, key);
     RaiseKey(&key);
@@ -129,7 +110,8 @@ class PhiloxRandom {
   }
 
   // Helper function for a single round of the underlying Philox algorithm.
-  static ResultType ComputeSingleRound(const ResultType &counter, const Key &key) {
+  static std::vector<uint32_t> ComputeSingleRound(const std::vector<uint32_t> &counter,
+                                                  const std::vector<uint32_t> &key) {
     uint32_t lo0;
     uint32_t hi0;
     MultiplyHighLow(kPhiloxM4x32A, counter[0], &lo0, &hi0);
@@ -138,7 +120,7 @@ class PhiloxRandom {
     uint32_t hi1;
     MultiplyHighLow(kPhiloxM4x32B, counter[2], &lo1, &hi1);
 
-    ResultType result;
+    std::vector<uint32_t> result = {0, 0, 0, 0};
     result[0] = hi1 ^ counter[1] ^ key[0];
     result[1] = lo1;
     result[2] = hi0 ^ counter[3] ^ key[1];
@@ -146,14 +128,14 @@ class PhiloxRandom {
     return result;
   }
 
-  void RaiseKey(Key *key) {
+  void RaiseKey(std::vector<uint32_t> *key) {
     (*key)[0] += kPhiloxW32A;
     (*key)[1] += kPhiloxW32B;
   }
 
  private:
-  ResultType counter_;
-  Key key_;
+  std::vector<uint32_t> counter_ = {0, 0, 0, 0};
+  std::vector<uint32_t> key_ = {0, 0};
 };
 
 float uint32ToFloat(uint32_t x) {
