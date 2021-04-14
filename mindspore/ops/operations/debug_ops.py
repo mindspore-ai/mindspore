@@ -20,7 +20,7 @@ from mindspore import context
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
-from ..primitive import prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 
 
 def _check_mode(class_name):
@@ -50,7 +50,7 @@ def _check_summary_param(name, value, class_name):
 SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 
-class ScalarSummary(PrimitiveWithInfer):
+class ScalarSummary(Primitive):
     """
     Outputs a scalar to a protocol buffer through a scalar summary operator.
 
@@ -141,7 +141,7 @@ class ImageSummary(PrimitiveWithInfer):
         return SUMMARY_RETURN_VALUE
 
 
-class TensorSummary(PrimitiveWithInfer):
+class TensorSummary(Primitive):
     """
     Outputs a tensor to a protocol buffer through a tensor summary operator.
 

@@ -1306,7 +1306,7 @@ class Ones(PrimitiveWithInfer):
         return out
 
 
-class Zeros(PrimitiveWithInfer):
+class Zeros(Primitive):
     r"""
     Creates a tensor filled with value zeros.
 
@@ -4570,7 +4570,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
         return out_shape
 
 
-class BroadcastTo(PrimitiveWithInfer):
+class BroadcastTo(Primitive):
     """
     Broadcasts input tensor to a given shape.
 
@@ -4628,34 +4628,6 @@ class BroadcastTo(PrimitiveWithInfer):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
             validator.check("shape element", i, "shape element min limit", -1, Rel.GE, self.name)
         self.shape = shape
-
-    def infer_shape(self, x_shape):
-        validator.check("input_x shape length", len(x_shape), "target shape", len(self.shape), Rel.LE, self.name)
-
-        reversed_x_shape = tuple(reversed(x_shape))
-        reversed_filtered_target = []
-        for i, v in enumerate(tuple(reversed(self.shape))):
-            if v == -1:
-                if i >= len(reversed_x_shape):
-                    raise ValueError("-1 is not valid in a leading, non-existing dimension")
-
-                reversed_filtered_target.append(reversed_x_shape[i])
-            else:
-                reversed_filtered_target.append(v)
-
-        self.shape = tuple(reversed(reversed_filtered_target))
-        self.add_prim_attr('shape', self.shape)
-
-        for i, v in enumerate(reversed_x_shape):
-            if v not in (reversed_filtered_target[i], 1):
-                raise ValueError(f"Not supported shapes for broadcast, "
-                                 f"x_shape: {tuple(x_shape)}, target shape {self.shape}.")
-
-        return self.shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
-        return x_dtype
 
 
 class Meshgrid(PrimitiveWithInfer):
@@ -5121,7 +5093,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
             raise ValueError("The dimension of 'params' in EmbeddingLookup must <= 2, but got %d." % len(params_shp))
 
 
-class GatherD(PrimitiveWithInfer):
+class GatherD(Primitive):
     """
     Gathers values along an axis specified by dim.
 

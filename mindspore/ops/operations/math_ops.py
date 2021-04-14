@@ -26,7 +26,7 @@ from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ...common._decorator import deprecated
 from .._utils import get_broadcast_shape
-from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
+from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -1873,7 +1873,7 @@ class Log(PrimitiveWithInfer):
         return None
 
 
-class Log1p(PrimitiveWithInfer):
+class Log1p(Primitive):
     """
     Returns the natural logarithm of one plus the input tensor element-wise.
 
@@ -1900,14 +1900,6 @@ class Log1p(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class Erf(PrimitiveWithInfer):

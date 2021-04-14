@@ -23,13 +23,12 @@ namespace {
 abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto broad_cast_to = primitive->cast<PrimBroadcastToPtr>();
-  MS_EXCEPTION_IF_NULL(broad_cast_to);
-  auto prim_name = broad_cast_to->name();
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  auto input_x = broad_cast_to->get_shape();
+  auto value_ptr = primitive->GetAttr(kShape);
+  auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
   int64_t outer_dim_offset = input_x.size() - x_shape.size();
-  CheckAndConvertUtils::Check("x shape", x_shape, kLessEqual, "input_x", input_x, prim_name);
+  CheckAndConvertUtils::Check("x shape", x_shape.size(), kLessEqual, "input_x", input_x.size(), prim_name);
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {
     flag = false;
@@ -49,7 +48,6 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
       }
     }
   }
-  std::reverse(input_x.begin(), input_x.end());
   return std::make_shared<abstract::Shape>(input_x);
 }
 
@@ -78,8 +76,8 @@ std::vector<int64_t> BroadcastTo::get_shape() const {
 AbstractBasePtr BroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(BroadcastToInferType(primitive, input_args),
-                                                    BroadcastToInferShape(primitive, input_args)->shape());
+                                                    BroadcastToInferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameBroadcastTo, BroadcastTo);
+REGISTER_PRIMITIVE_EVAL_IMPL(BroadcastTo, prim::kPrimBroadcastTo, BroadcastToInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

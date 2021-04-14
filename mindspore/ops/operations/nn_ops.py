@@ -230,7 +230,7 @@ class LogSoftmax(PrimitiveWithInfer):
         return logits
 
 
-class Softplus(PrimitiveWithInfer):
+class Softplus(Primitive):
     r"""
     Softplus activation function.
 
@@ -266,13 +266,6 @@ class Softplus(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Softplus"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.float_type, self.name)
-        return x_dtype
 
 
 class Softsign(PrimitiveWithInfer):
