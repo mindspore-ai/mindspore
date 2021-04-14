@@ -28,6 +28,14 @@ class KPynativeCell {
  public:
   virtual ~KPynativeCell() = default;
   virtual void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) = 0;
+  // Grad for cell which may have user passed front propagate FuncGraph.
+  // c_node: CNode with contains the construct function graph of cell  (index 0) and the formal input parameters of that
+  // cell. op_args: the arguments list of each input parameters.
+  // out: the op result.
+  // fprop_fg: user defined back propagate cnode which output is the bprop_fg.
+  //           Should have prototype: (sens_input1, sens_input2, ...) bprop_fg(input1, input2, ..., out, dout)
+  virtual bool KPynativeWithFProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
+                                  const FuncGraphPtr &fprop_fg) = 0;
 };
 
 using KPynativeCellPtr = std::shared_ptr<KPynativeCell>;
