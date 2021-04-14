@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_TILE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_TILE_NPU_H_
 #include <vector>
-#include <unordered_map>
-#include <utility>
-#include "nnacl/arithmetic.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
+#include "nnacl/base/tile_base.h"
+
 namespace mindspore::kernel {
-class ArithmeticNPUKernel : public NPUKernel {
+class TileNPUKernel : public NPUKernel {
  public:
-  ArithmeticNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  TileNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : NPUKernel(parameter, inputs, outputs, ctx) {
-    activation_type_ = reinterpret_cast<ArithmeticParameter *>(parameter)->activation_type_;
+    param_ = reinterpret_cast<TileParameter *>(parameter);
   }
-  ~ArithmeticNPUKernel() override;
+  ~TileNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
   int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                    const std::vector<ge::Operator *> &npu_inputs) override;
-  int SetNPUInputs(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                   const std::vector<ge::Operator *> &npu_inputs,
-                   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) override;
 
   ge::Operator *GetNPUOp() override;
 
  private:
-  int SetActivation();
-  int activation_type_;
-  ge::Operator *op_ = nullptr;
-  hiai::op::Activation *act_ = nullptr;
+  hiai::op::Tile *op_ = nullptr;
+  hiai::op::Const *multiple_ = nullptr;
+  TileParameter *param_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_TILE_NPU_H_
