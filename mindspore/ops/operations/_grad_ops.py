@@ -977,10 +977,6 @@ class MaxPool3DGrad(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, y_shape, grad_shape):
         validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
-        pad_list = _get_max_pool3d_grad_pads_by_pad_mode(x_shape, self.kernel_size, self.strides, self.pad_mode)
-        for pad in pad_list:
-            validator.check_non_negative_int(pad, 'element of pad_list', self.name)
-        self.add_prim_attr("pad_list", pad_list)
         return x_shape
 
     def infer_dtype(self, x_dtype, y_dtype, grad_dtype):
