@@ -39,7 +39,6 @@ from ...common.parameter import Parameter
 from ...common.tensor import Tensor
 
 
-
 class _ScatterOp(PrimitiveWithInfer):
     """
     Defines Scatter operators
@@ -3547,7 +3546,7 @@ class ScatterUpdate(_ScatterOp_Dynamic):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
@@ -3670,7 +3669,7 @@ class ScatterMax(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
@@ -3719,7 +3718,7 @@ class ScatterMin(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="input_x")
@@ -3767,7 +3766,7 @@ class ScatterAdd(_ScatterOp_Dynamic):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
@@ -3823,7 +3822,7 @@ class ScatterSub(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
@@ -3871,7 +3870,7 @@ class ScatterMul(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
@@ -3919,7 +3918,7 @@ class ScatterDiv(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
