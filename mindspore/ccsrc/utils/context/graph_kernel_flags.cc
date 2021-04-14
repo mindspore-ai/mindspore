@@ -157,14 +157,17 @@ void GraphKernelFlags::Refresh() {
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
   FlagRegister reg(flag_map);
 
+  // Boolean flags
   reg.AddFlag("dump_as_text", &dump_as_text);
-
   reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion);
+  reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion);
 
+  // Integer flags
   reg.AddFlag("opt_level", &opt_level);
   reg.AddFlag("auto_tune", &auto_tune);
   reg.AddFlag("cluster_limit", &cluster_limit);
 
+  // String list flags
   reg.AddFlag("enable_expand_ops", &enable_expand_ops);
   reg.AddFlag("enable_expand_ops_only", &enable_expand_ops_only);
   reg.AddFlag("disable_expand_ops", &disable_expand_ops);
@@ -177,8 +180,10 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 
 std::string GraphKernelFlags::DumpAllFlags() const {
   nlohmann::json json;
+
   json["dump_as_text"] = dump_as_text;
   json["enable_stitch_fusion"] = enable_stitch_fusion;
+  json["enable_parallel_fusion"] = enable_parallel_fusion;
 
   json["opt_level"] = opt_level;
   json["auto_tune"] = auto_tune;
