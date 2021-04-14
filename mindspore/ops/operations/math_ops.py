@@ -4542,11 +4542,11 @@ class IndexAdd(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Parameter) - The input tensor to add to, with data type float64, float32, float16, int32, int16,
           int8, uint8.
-        - **indices** (Tensor) - The index of `input_x` on the `axis`th dimension to add to, with data type int32.
-          The `indices` must be 1D with the same size as the size of the `axis`th dimension of `input_y`. The values
-          of `indices` should be in the range of 0 to the size of the `axis`th dimension of `input_x`.
+        - **indices** (Tensor) - The index of `input_x` on the `axis` th dimension to add to, with data type int32.
+          The `indices` must be 1D with the same size as the size of the `axis` th dimension of `input_y`. The values
+          of `indices` should be in the range of 0 to the size of the `axis` th dimension of `input_x`.
         - **input_y** (Tensor) - The input tensor with the value to add. Must have same data type as `input_x`.
-          The shape must be the same as `input_x` except the `axis`th dimension.
+          The shape must be the same as `input_x` except the `axis` th dimension.
 
     Outputs:
         Tensor, has the same shape and dtype as input_x.
@@ -4558,7 +4558,7 @@ class IndexAdd(PrimitiveWithInfer):
         ValueError: If axis is out of `input_x` rank's range.
         ValueError: If `input_x` rank is not the same as `input_y` rank.
         ValueError: If size of `indices` is not equal to dimension of y[axis].
-        ValueError: If `input_y`'s shape is not the same as `input_x` except the `axis`th dimension.
+        ValueError: If `input_y`'s shape is not the same as `input_x` except the `axis` th dimension.
 
     Supported Platforms:
         ``GPU``
