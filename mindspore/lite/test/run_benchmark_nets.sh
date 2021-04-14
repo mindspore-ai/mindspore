@@ -679,9 +679,9 @@ function Run_x86() {
 
 # Run on x86 sse platform:
 function Run_x86_sse() {
-    cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64-sse.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
+    cd ${x86_path}/sse || exit 1
+    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/sse/mindspore-lite-${version}-inference-linux-x64 || return 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib:./inference/minddata/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
@@ -951,9 +951,9 @@ function Run_x86_sse() {
 
 # Run on x86 avx platform:
 function Run_x86_avx() {
-    cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64-avx.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
+    cd ${x86_path}/avx || exit 1
+    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/avx/mindspore-lite-${version}-inference-linux-x64 || return 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib:./inference/minddata/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
@@ -2043,7 +2043,7 @@ basepath=$(pwd)
 echo ${basepath}
 #set -e
 
-# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408"
+# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
 while getopts "r:m:d:e:" opt; do
     case ${opt} in
         r)
@@ -2071,7 +2071,6 @@ done
 # mkdir train
 
 x86_path=${release_path}/ubuntu_x86
-# mv ${x86_path}/*train-linux-x64* ./train
 file_name=$(ls ${x86_path}/*inference-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
