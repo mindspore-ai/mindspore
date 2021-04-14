@@ -157,7 +157,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
     if (weight_r->data_type() == kNumberTypeFloat32) {
       Float32ToFloat16(reinterpret_cast<float *>(weight_r->data_c()), weight_r_ptr_, weight_r->ElementsNum());
     } else if (weight_r->data_type() == kNumberTypeFloat16) {
-      memcpy(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data_c()), weight_r->ElementsNum());
+      memcpy(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data_c()), weight_r->Size());
     } else {
       MS_LOG(ERROR) << "Unsupported data type of weight_r tensor for gru.";
       return RET_ERROR;
