@@ -46,6 +46,11 @@ struct LossNodeInfo {
   CNodePtr loss_node = nullptr;
 };
 
+struct ParameterSliceInfo {
+  Shape slice_shape;
+  RankList group_ranks;
+};
+
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);

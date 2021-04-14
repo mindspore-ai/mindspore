@@ -3232,7 +3232,24 @@ ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)
   return parameter_users_info;
 }
 
-Shape ParameterSliceShape(const std::pair<AnfNodePtr, int64_t> &param_info) {
+RankList GetGroupByTensorInfo(const TensorInfo &tensor_info) {
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  RankList stage_device_list = g_device_manager->GetDeviceListInThisStage();
+  Shape dev_matrix_shape = tensor_info.tensor_layout().device_arrangement().array();
+  Shape tensor_map = tensor_info.tensor_layout().tensor_map().array();
+
+  DeviceMatrix dev_matrix(rank, stage_device_list, dev_matrix_shape);
+  RankList group_devices;
+  if (dev_matrix.GetDevicesByTensorMap(tensor_map, &group_devices) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Get devices by tensor map failed";
+  }
+
+  std::sort(group_devices.begin(), group_devices.end());
+  return group_devices;
+}
+
+ParameterSliceInfo GetParameterSliceInfo(const std::pair<AnfNodePtr, int64_t> &param_info) {
   auto user_cnode = param_info.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(user_cnode);
   auto user_input_index = param_info.second;
@@ -3245,10 +3262,14 @@ Shape ParameterSliceShape(const std::pair<AnfNodePtr, int64_t> &param_info) {
                       << ", but the index is " << user_input_index - 1;
   }
   TensorInfo tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
+
+  ParameterSliceInfo parameter_slice_info;
+  parameter_slice_info.slice_shape = tensor_info.slice_shape();
+  parameter_slice_info.group_ranks = GetGroupByTensorInfo(tensor_info);
   MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << user_input_index - 1
-                << ", the slice shape is " << ShapeToString(tensor_info.slice_shape()) << ", the origin shape is "
-                << ShapeToString(tensor_info.shape());
-  return tensor_info.slice_shape();
+                << ", the slice shape is " << tensor_info.slice_shape() << ", the origin shape is "
+                << tensor_info.shape() << ", the group rank list is " << parameter_slice_info.group_ranks;
+  return parameter_slice_info;
 }
 
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
@@ -3262,13 +3283,24 @@ void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
     auto parameter_name = parameter_users_info.first;
     MS_LOG(INFO) << "The parameter: " << parameter_name << " has " << users_set.size() << " users";
     auto first_user = users_set.pop();
-    Shape first_user_slice_shape = ParameterSliceShape(first_user);
+    ParameterSliceInfo parameter_slice_info = GetParameterSliceInfo(first_user);
+    Shape first_user_slice_shape = parameter_slice_info.slice_shape;
+    RankList first_user_group_list = parameter_slice_info.group_ranks;
 
     for (auto &user : users_set) {
-      Shape user_slice_shape = ParameterSliceShape(user);
+      ParameterSliceInfo user_slice_info = GetParameterSliceInfo(user);
+      Shape user_slice_shape = user_slice_info.slice_shape;
+      RankList user_group_list = user_slice_info.group_ranks;
       if (first_user_slice_shape != user_slice_shape) {
         MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
-                          << " has multiple users, but the split strategies are different";
+                          << " has multiple users, but the slice shapes are different";
+      }
+
+      if (ParallelContext::GetInstance()->pipeline_stage_split_num() == 1 && first_user_group_list != user_group_list) {
+        MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
+                          << " has multiple users, but the group rank list are different, "
+                          << "the group rank list for first user is " << first_user_group_list
+                          << ", and the group rank list for this user is " << user_group_list;
       }
     }
   }
