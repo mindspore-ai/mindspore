@@ -74,13 +74,6 @@ export DEVICE_ID=0
 export RANK_ID=0
 echo "start training for device 0"
 env > env0.log
-python train.py --data_url $1 --is_modelarts False --run_distribute True > train0.log 2>&1
+python train.py --data_url $1 --is_modelarts False --run_distribute True > train0.log 2>&1 &
 
-if [ $? -eq 0 ];then
-    echo "training success"
-else
-    echo "training failed"
-    exit 2
-fi
-echo "finish"
-cd ../
+echo "Training background..."
