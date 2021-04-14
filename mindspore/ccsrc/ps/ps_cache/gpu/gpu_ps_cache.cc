@@ -56,7 +56,7 @@ bool GPUPsCache::SynchronizeStream() {
   return true;
 }
 
-bool GPUPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
+bool GPUPsCache::CopyHostMemToDevice(void *dst, const void *src, size_t size) {
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(
@@ -65,7 +65,7 @@ bool GPUPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
   return true;
 }
 
-bool GPUPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
+bool GPUPsCache::CopyDeviceMemToHost(void *dst, const void *src, size_t size) {
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(

@@ -156,13 +156,13 @@ class PsCacheManager {
   bool ParseHostDataHostToDevice(size_t id);
   bool ParseHostDataDeviceToHost();
   bool HashSwapDeviceOut(int *swap_out_index, std::vector<float> *swap_out_data, const HashTableInfo &hash_info);
-  bool HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, const HashTableInfo &hash_info, size_t key);
+  bool HashSwapDeviceIn(const int *swap_in_ids, const int *swap_in_index, const HashTableInfo &hash_info, size_t key);
   bool HashSwapHostToDevice(const HashTableInfo &hash_info);
   bool HashSwapDeviceToHost(const HashTableInfo &hash_info);
   bool HashSwapHostToServer(size_t key, const HashTableInfo &hash_info);
   bool HashSwapServerToHost(size_t key, const HashTableInfo &hash_info);
-  bool InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, int *insert_indices, float *insert_data,
-                           float *hash_table_addr);
+  bool InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
+                           const float *insert_data, float *hash_table_addr);
   bool LookUpHostHashTable(size_t embedding_size, size_t indices_lens, const float *hash_table_addr,
                            const int *indices_addr, float *output_addr);
   bool UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *swap_out_ids, size_t key);
