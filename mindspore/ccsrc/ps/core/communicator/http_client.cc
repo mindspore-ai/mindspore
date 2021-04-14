@@ -106,7 +106,7 @@ int HttpClient::ReadHeaderDoneCallback(struct evhttp_request *request, void *arg
   handler->set_request(request);
   struct evkeyvalq *headers = evhttp_request_get_input_headers(request);
   MS_EXCEPTION_IF_NULL(headers);
-  struct evkeyval *header;
+  struct evkeyval *header = nullptr;
   TAILQ_FOREACH(header, headers, next) {
     MS_LOG(DEBUG) << "The key:" << header->key << ",The value:" << header->value;
     std::string len = "Content-Length";
@@ -204,7 +204,6 @@ Status HttpClient::CreateRequest(std::shared_ptr<HttpMessageHandler> handler, st
 
 bool HttpClient::Start() {
   MS_EXCEPTION_IF_NULL(event_base_);
-  // int ret = event_base_dispatch(event_base_);
   int ret = event_base_loop(event_base_, 0);
   if (ret == 0) {
     MS_LOG(DEBUG) << "Event base dispatch success!";
