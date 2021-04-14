@@ -347,7 +347,7 @@ std::vector<std::string> SampleProcess::GetModelExecCostTimeInfo() {
     secondModelAverage = secondModelAverage / infer_cnt;
     std::stringstream timeCost;
     timeCost << "second model inference cost average time: "<< secondModelAverage <<
-        "ms of infer_count " << infer_cnt << std::endl;
+        " ms of infer_count " << infer_cnt << std::endl;
     result.emplace_back(timeCost.str());
 
     double totalCostTime;

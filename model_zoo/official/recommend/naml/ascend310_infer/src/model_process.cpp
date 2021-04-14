@@ -547,7 +547,7 @@ std::string ModelProcess::GetCostTimeInfo() {
     average = average / infer_cnt;
 
     std::stringstream timeCost;
-    timeCost << "first model latency "<< average << "ms; count " << infer_cnt << std::endl;
+    timeCost << "first model latency "<< average << " ms; count " << infer_cnt << std::endl;
 
     return timeCost.str();
 }

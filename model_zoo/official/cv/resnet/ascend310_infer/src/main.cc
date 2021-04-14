@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
   }
   average = average / inferCount;
   std::stringstream timeCost;
-  timeCost << "NN inference cost average time: "<< average << "ms of infer_count " << inferCount << std::endl;
+  timeCost << "NN inference cost average time: "<< average << " ms of infer_count " << inferCount << std::endl;
   std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << inferCount << std::endl;
   std::string fileName = "./time_Result" + std::string("/test_perform_static.txt");
   std::ofstream fileStream(fileName.c_str(), std::ios::trunc);
