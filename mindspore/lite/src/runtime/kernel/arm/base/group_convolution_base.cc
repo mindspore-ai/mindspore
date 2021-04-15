@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/base/group_convolution.h"
+#include "src/runtime/kernel/arm/base/group_convolution_base.h"
 #include "src/runtime/infer_manager.h"
 #include "include/errorcode.h"
 
@@ -22,7 +22,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int GroupConvolutionCPUKernel::Init() {
+int GroupConvolutionBaseCPUKernel::Init() {
   for (int i = 0; i < group_num_; ++i) {
     auto sub_conv = group_convs_.at(i);
     if (sub_conv == nullptr) {
@@ -39,7 +39,7 @@ int GroupConvolutionCPUKernel::Init() {
   return RET_OK;
 }
 
-int GroupConvolutionCPUKernel::ReSize() {
+int GroupConvolutionBaseCPUKernel::ReSize() {
   for (int i = 0; i < group_num_; ++i) {
     auto ret = group_convs_.at(i)->ReSize();
     if (ret != RET_OK) {
@@ -52,7 +52,7 @@ int GroupConvolutionCPUKernel::ReSize() {
   return RET_OK;
 }
 
-void GroupConvolutionCPUKernel::FreeSubKernel() {
+void GroupConvolutionBaseCPUKernel::FreeSubKernel() {
   for (auto &sub_conv : group_convs_) {
     // free sub conv input tensors / output tensors manually
     auto sub_in_tensors = sub_conv->in_tensors();
@@ -72,7 +72,7 @@ void GroupConvolutionCPUKernel::FreeSubKernel() {
   }
 }
 
-int GroupConvolutionCPUKernel::PreProcess() {
+int GroupConvolutionBaseCPUKernel::PreProcess() {
   if (!InferShapeDone()) {
     op_parameter_->infer_flag_ = true;
 
@@ -133,50 +133,28 @@ int GroupConvolutionCPUKernel::PreProcess() {
   return RET_OK;
 }
 
-void GroupConvolutionCPUKernel::SeparateInput(int group_id) {
-  auto in_tensor = in_tensors_.front();
-  int in_plane = in_tensor->Height() * in_tensor->Width() * in_tensor->Batch();
-  int sub_in_channel = conv_param_->input_channel_;
-  int ori_in_channel = sub_in_channel * group_num_;
-  auto sub_in_data = reinterpret_cast<float *>(group_convs_.at(group_id)->in_tensors().front()->data_c());
-  float *src_ptr = reinterpret_cast<float *>(ori_in_data_) + group_id * sub_in_channel;
-  float *dst_ptr = sub_in_data;
-  for (int i = 0; i < in_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_in_channel * sizeof(float));
-    src_ptr += ori_in_channel;
-    dst_ptr += sub_in_channel;
-  }
-}
-
-void GroupConvolutionCPUKernel::PostConcat(int group_id) {
-  auto out_tensor = out_tensors_.front();
-  int out_plane = out_tensor->Height() * out_tensor->Width() * out_tensor->Batch();
-  int sub_out_channel = conv_param_->output_channel_;
-  int ori_out_channel = sub_out_channel * group_num_;
-  auto sub_out_data = reinterpret_cast<float *>(group_convs_.at(group_id)->out_tensors().front()->data_c());
-  float *src_ptr = sub_out_data;
-  float *dst_ptr = reinterpret_cast<float *>(ori_out_data_) + group_id * sub_out_channel;
-  for (int i = 0; i < out_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_out_channel * sizeof(float));
-    src_ptr += sub_out_channel;
-    dst_ptr += ori_out_channel;
-  }
-}
-
-int GroupConvolutionCPUKernel::Run() {
+int GroupConvolutionBaseCPUKernel::Run() {
   ori_in_data_ = in_tensors().front()->data_c();
   ori_out_data_ = out_tensors().front()->data_c();
   for (int i = 0; i < group_num_; ++i) {
     // first, separate group conv input into several parts. This step must be in runtime stage.
-    SeparateInput(i);
+    auto ret = SeparateInput(i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Separate input failed.";
+      return ret;
+    }
     // sun kernels run
-    auto ret = group_convs_.at(i)->Run();
+    ret = group_convs_.at(i)->Run();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "sub kernel " << i << " execute failed.";
       return ret;
     }
     // post process, concat all outputs of sub-kernels into one output
-    PostConcat(i);
+    ret = PostConcat(i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Concat output failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }

@@ -57,7 +57,7 @@ class GroupConvCreator {
   void set_output_shape(const std::vector<int> &shape) { output_shape_ = shape; }
   void set_filter_shape(const std::vector<int> &shape) { filter_shape_ = shape; }
   void set_bias_shape(const std::vector<int> &shape) { bias_shape_ = shape; }
-  bool CheckIfValidPoint(void *ptr);
+  void FreeGroupConvs();
   int NewInputTensor(std::vector<lite::Tensor *> *tensors);
   int NewConstTensor(std::vector<lite::Tensor *> *tensors, int group_id);
   int NewOutputTensor(std::vector<lite::Tensor *> *tensors, lite::Tensor *output);

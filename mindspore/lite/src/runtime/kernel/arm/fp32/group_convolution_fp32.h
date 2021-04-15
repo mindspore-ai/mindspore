@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GROUP_CONVOLUTION_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GROUP_CONVOLUTION_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_FP32_H_
 
 #include <utility>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/arm/base/group_convolution_base.h"
-#include "nnacl/fp16/conv_fp16.h"
 
 namespace mindspore::kernel {
-class GroupConvolutionFP16CPUKernel : public GroupConvolutionBaseCPUKernel {
+class GroupConvolutionFp32CPUKernel : public GroupConvolutionBaseCPUKernel {
  public:
-  GroupConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+  GroupConvolutionFp32CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                 std::vector<kernel::LiteKernel *> group_convs, const int group_num)
       : GroupConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, std::move(group_convs), group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
-
   int SeparateInput(int group_id) override;
   int PostConcat(int group_id) override;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GROUP_CONVOLUTION_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_FP32_H_

@@ -33,7 +33,11 @@ ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
   return conv_parameter;
 }
 
-void FreeMemory(const std::vector<lite::Tensor *> *new_inputs, const std::vector<lite::Tensor *> *new_outputs) {
+void FreeCurrentConv(ConvParameter *conv_param, const std::vector<lite::Tensor *> *new_inputs,
+                     const std::vector<lite::Tensor *> *new_outputs) {
+  if (conv_param != nullptr) {
+    free(conv_param);
+  }
   for (auto &in_tensor : *new_inputs) {
     delete in_tensor;
   }
@@ -99,20 +103,22 @@ void GroupConvCreator::CopyQuantParam(std::vector<lite::Tensor *> *tensors) {
   }
 }
 
-bool GroupConvCreator::CheckIfValidPoint(void *ptr) {
-  if (ptr == nullptr) {
-    for (auto &sub_conv : group_convs_) {
-      delete sub_conv;
+void GroupConvCreator::FreeGroupConvs() {
+  for (auto &sub_conv : group_convs_) {
+    for (auto &in_tensor : sub_conv->in_tensors()) {
+      delete in_tensor;
     }
-    return false;
+    for (auto &out_tensor : sub_conv->out_tensors()) {
+      delete out_tensor;
+    }
+    delete sub_conv;
   }
-  return true;
 }
 
 int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
   auto in_tensor =
     CreateVarTensor({input_shape_, schema::Format_NHWC, data_type_, lite::Tensor::Category::VAR, true}, infered_);
-  if (!CheckIfValidPoint(in_tensor)) {
+  if (in_tensor == nullptr) {
     return lite::RET_ERROR;
   }
   tensors->emplace_back(in_tensor);
@@ -121,7 +127,7 @@ int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
 
 int GroupConvCreator::NewOutputTensor(std::vector<lite::Tensor *> *tensors, lite::Tensor *output) {
   auto out_tensor = CreateVarTensor({output_shape_, output->format(), data_type_, output->category(), false}, infered_);
-  if (!CheckIfValidPoint(out_tensor)) {
+  if (out_tensor == nullptr) {
     return lite::RET_ERROR;
   }
   if (is_quant_) {
@@ -138,7 +144,7 @@ int GroupConvCreator::NewConstTensor(std::vector<lite::Tensor *> *tensors, int g
   }
   for (auto &info : const_tensor_list) {
     auto const_tensor = CreateConstTensor(origin_inputs_.at(info.first), info.second, group_id);
-    if (!CheckIfValidPoint(const_tensor)) {
+    if (const_tensor == nullptr) {
       return lite::RET_ERROR;
     }
     tensors->emplace_back(const_tensor);
@@ -171,26 +177,30 @@ void GroupConvCreator::SetShapeOfTensors() {
 
 int GroupConvCreator::GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
                                          std::vector<lite::Tensor *> *new_outputs, int group_id) {
-  if (!CheckIfValidPoint(conv_param)) {
+  if (conv_param == nullptr) {
+    FreeGroupConvs();
     return lite::RET_ERROR;
   }
   // create new input for each group
   if (NewInputTensor(new_inputs) != lite::RET_OK) {
     MS_LOG(ERROR) << "new input tensor failed.";
-    FreeMemory(new_inputs, {});
+    FreeGroupConvs();
+    FreeCurrentConv(conv_param, new_inputs, {});
     return lite::RET_ERROR;
   }
   // const tensor
   if (NewConstTensor(new_inputs, group_id) != lite::RET_OK) {
     MS_LOG(ERROR) << "new const tensor failed.";
-    FreeMemory(new_inputs, {});
+    FreeGroupConvs();
+    FreeCurrentConv(conv_param, new_inputs, {});
     return lite::RET_ERROR;
   }
   // create new output tensor
   for (auto &output : origin_outputs_) {
     if (NewOutputTensor(new_outputs, output) != lite::RET_OK) {
       MS_LOG(ERROR) << "new output tensor failed.";
-      FreeMemory(new_inputs, new_outputs);
+      FreeGroupConvs();
+      FreeCurrentConv(conv_param, new_inputs, new_outputs);
       return lite::RET_ERROR;
     }
   }
