@@ -101,7 +101,8 @@ int ROIPoolingCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ROIPoolingRun, this, param_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ROIPoolingRun, this,
+                            param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling error: error_code[" << ret << "]";
     return ret;

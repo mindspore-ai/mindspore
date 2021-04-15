@@ -269,7 +269,8 @@ int DeConvInt8CPUKernel::Run() {
     DeConvPackInputSum(input_ptr_, input_sum_, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
                        UP_ROUND(matmul_param_->row_, C4NUM), UP_ROUND(matmul_param_->deep_, C16NUM), support_optimize_);
 
-    error_code = ParallelLaunch(this->context_->thread_pool_, DeConvInt8Run, this, thread_count_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, DeConvInt8Run,
+                                this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv int8 run error! error_code[" << error_code << "]";
     }
@@ -280,7 +281,7 @@ int DeConvInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
@@ -288,9 +289,11 @@ kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *>
   kernel::LiteKernel *kernel = nullptr;
 
   if (conv_param->group_ == 1) {
-    kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow)
+      kernel::DeConvInt8CPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(
+      op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else {
     MS_LOG(ERROR) << "deconv do not support group deconv!";
     kernel = nullptr;

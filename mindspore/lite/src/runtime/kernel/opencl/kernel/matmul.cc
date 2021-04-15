@@ -220,14 +220,16 @@ int MatMulOpenCLKernel::Run() {
 
 kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
   kernel::OpenCLKernel *kernel = nullptr;
   bool infer_shape_done = opParameter->infer_flag_;
   if (infer_shape_done && IsUseStrassenMatmul(inputs)) {
     MS_LOG(DEBUG) << "use_matmul_strassen";
-    kernel = new (std::nothrow) StrassenOpenCLKernel(opParameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow)
+      StrassenOpenCLKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else {
-    kernel = new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs, ctx);
+    kernel =
+      new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";

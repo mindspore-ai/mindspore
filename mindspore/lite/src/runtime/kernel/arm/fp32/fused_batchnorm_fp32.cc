@@ -93,7 +93,8 @@ int FusedBatchnormCPUKernel::Run() {
 
     trained_ = true;  // trained at least once
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, BatchNormRun, this,
+                            op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }

@@ -47,6 +47,7 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
 
  protected:
   virtual int GetInputData() = 0;
+  int ParamInit();
 
  private:
   void FreeAllocatedBuffer();

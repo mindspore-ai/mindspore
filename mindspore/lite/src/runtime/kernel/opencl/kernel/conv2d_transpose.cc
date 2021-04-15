@@ -244,7 +244,7 @@ int Conv2dTransposeOpenCLKernel::InferShape() {
 
 kernel::LiteKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor *> &inputs,
                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);

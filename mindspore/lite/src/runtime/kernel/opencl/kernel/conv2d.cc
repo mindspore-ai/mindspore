@@ -473,7 +473,7 @@ bool UseWinograd4x4To6x6(const ConvParameter *param, const std::vector<lite::Ten
 
 kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);
@@ -484,7 +484,8 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
 
   // case 1: depthwise conv2d
   if (group == input_channel && group == output_channel) {
-    return OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>(inputs, outputs, opParameter, ctx, desc);
+    return OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>(inputs, outputs, opParameter,
+                                                            static_cast<const lite::InnerContext *>(ctx), desc);
   }
 
   // case 2: group conv2d
@@ -499,7 +500,8 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   bool infer_shape_done = opParameter->infer_flag_;
   if (infer_shape_done && UseFcReplaceConv(inputs, outputs, conv_param)) {
     auto *fc_param = CreateFcParam(conv_param, inputs);
-    kernel = new (std::nothrow) FullConnectionOpenCLKernel(fc_param, inputs, outputs, ctx);
+    kernel = new (std::nothrow)
+      FullConnectionOpenCLKernel(fc_param, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "Create FullConnection kernel failed.";
       free(fc_param);
@@ -512,10 +514,11 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
   } else {
     if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
       MS_LOG(DEBUG) << "use Winograd algorithm.";
-      kernel =
-        new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx);
+      kernel = new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
+                                                       static_cast<const lite::InnerContext *>(ctx));
     } else {
-      kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx);
+      kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs,
+                                                     static_cast<const lite::InnerContext *>(ctx));
     }
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "Create Convolution kernel failed.";

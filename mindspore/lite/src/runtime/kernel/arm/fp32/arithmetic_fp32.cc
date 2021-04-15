@@ -418,7 +418,8 @@ int ArithmeticCPUKernel::Run() {
     input1_ptr_ = in_tensors_[1]->data_c();
   }
   output_ptr_ = out_tensors_[0]->data_c();
-  return ParallelLaunch(this->context_->thread_pool_, ArithmeticsRun, this, context_->thread_num_);
+  return ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ArithmeticsRun, this,
+                        context_->thread_num_);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)

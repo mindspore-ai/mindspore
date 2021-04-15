@@ -124,7 +124,8 @@ int StridedSliceGradImpl(void *cdata, int task_id) {
 }
 
 int StridedSliceGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, StridedSliceGradImpl, this, 1);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                  StridedSliceGradImpl, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Strided slice error error_code[" << error_code << "]";
     return RET_ERROR;

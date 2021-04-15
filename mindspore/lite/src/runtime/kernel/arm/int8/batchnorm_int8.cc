@@ -188,8 +188,8 @@ int BatchnormInt8CPUKernel::Run() {
   in_addr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   out_addr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  auto ret =
-    ParallelLaunch(this->context_->thread_pool_, BatchNormInt8Run, this, batchnorm_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, BatchNormInt8Run,
+                            this, batchnorm_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
     return ret;

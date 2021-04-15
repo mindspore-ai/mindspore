@@ -56,7 +56,8 @@ int NegGradCPUKernel::DoNegGrad(int task_id) {
 int NegGradCPUKernel::ReSize() { return RET_OK; }
 
 int NegGradCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_->thread_pool_, NegGradRun, this, thread_count_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, NegGradRun, this,
+                            thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parallel launch fail!ret: " << ret;
     return ret;
@@ -67,12 +68,13 @@ int NegGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *param,
-                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) NegGradCPUKernel(param, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) NegGradCPUKernel(param, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new NegGradCPUKernel fail!";
     free(param);

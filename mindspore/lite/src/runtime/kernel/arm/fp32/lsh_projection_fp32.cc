@@ -61,7 +61,8 @@ int LshProjectionCPUKernel::Run() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, LshProjectionRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, LshProjectionRun, this,
+                       op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LshProjection kernel parallel launch failed";
   }

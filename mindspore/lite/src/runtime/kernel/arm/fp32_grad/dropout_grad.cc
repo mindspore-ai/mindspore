@@ -83,7 +83,8 @@ int RunDropoutGrad(void *cdata, int task_id) {
 }
 
 int DropoutGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, RunDropoutGrad, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, RunDropoutGrad,
+                                  this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout Grad function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -93,7 +94,7 @@ int DropoutGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                     const std::vector<lite::Tensor *> &outputs,
-                                                    OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                    OpParameter *opParameter, const lite::Context *ctx,
                                                     const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "DropoutGrad opParameter nullptr.";
@@ -103,7 +104,8 @@ kernel::LiteKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tens
     MS_LOG(ERROR) << "DropoutGrad desc type should be " << schema::PrimitiveType_DropoutGrad << " got " << desc.type;
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) DropoutGradCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) DropoutGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "DropoutGrad new kernel failed.";
     return nullptr;

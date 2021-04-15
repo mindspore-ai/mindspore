@@ -181,7 +181,8 @@ int OneHotCPUKernel::GetParams() {
 }
 
 int OneHotCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, RunOneHot, this, context_->thread_num_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, RunOneHot,
+                                  this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";
     return RET_ERROR;

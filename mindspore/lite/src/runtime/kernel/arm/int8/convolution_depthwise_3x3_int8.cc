@@ -163,7 +163,8 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Run() {
     ConvDw3x3Int8Pad(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
                      sliding_);
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, ConvDw3x3Int8Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ConvDw3x3Int8Run, this,
+                       conv_param_->thread_num_);
   if (ret != RET_OK) {
     context_->allocator->Free(buffer_);
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";

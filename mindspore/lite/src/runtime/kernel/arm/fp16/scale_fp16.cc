@@ -115,7 +115,8 @@ int ScaleFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_->thread_pool_, ScaleFp16Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ScaleFp16Run, this,
+                       op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     FreeTmpBuffer();
@@ -127,12 +128,12 @@ int ScaleFp16CPUKernel::Run() {
 }
 
 int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
-  scale_ = ConvertInputFp32toFp16(in_tensors_.at(1), context_);
+  scale_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->context_));
   if (scale_ == nullptr) {
     return RET_ERROR;
   }
   if (in_tensors_.size() == 3) {
-    offset_ = ConvertInputFp32toFp16(in_tensors_.at(2), context_);
+    offset_ = ConvertInputFp32toFp16(in_tensors_.at(2), static_cast<const lite::InnerContext *>(this->context_));
     if (offset_ == nullptr) {
       return RET_ERROR;
     }

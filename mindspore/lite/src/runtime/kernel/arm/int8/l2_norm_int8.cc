@@ -48,7 +48,8 @@ int L2NormInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "L2Norm only support reduce on all axis and trailing axis with trailing axis";
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(context_->thread_pool_, L2NormInt8Run, this, context_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, L2NormInt8Run, this,
+                            context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
   }

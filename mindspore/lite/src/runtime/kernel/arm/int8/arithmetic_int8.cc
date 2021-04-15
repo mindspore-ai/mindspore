@@ -149,7 +149,8 @@ int ArithmeticInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                            ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
   if (param->broadcasting_) {
     context_->allocator->Free(tile_data0_);
     context_->allocator->Free(tile_data1_);
@@ -162,15 +163,18 @@ int ArithmeticInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc) {
   kernel::LiteKernel *kernel = nullptr;
   ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(parameter);
   if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_SUM)) {
-    kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow)
+      QuantizedAddCPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_PROD)) {
-    kernel = new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, ctx);
+    kernel =
+      new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else {
-    kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx);
+    kernel = new (std::nothrow)
+      ArithmeticInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;

@@ -102,7 +102,8 @@ int AdamRun(void *cdata, int task_id) {
 }
 
 int AdamCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, AdamRun, this, thread_count_);
+  int error_code =
+    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, AdamRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Adam function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -145,9 +146,10 @@ int AdamCPUKernel::OptimizerStep() {
 
 kernel::LiteKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Adam);
-  auto *kernel = new (std::nothrow) AdamCPUKernel(opParameter, inputs, outputs, ctx);
+  auto *kernel =
+    new (std::nothrow) AdamCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new AdamCPUKernel fail!";
     free(opParameter);

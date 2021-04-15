@@ -73,7 +73,8 @@ int ConstantOfShapeCPUKernel::Run() {
   int thread_count = MSMIN(op_parameter_->thread_num_, param_->element_size_);
   thread_stride_ = UP_DIV(param_->element_size_, thread_count);
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ConstantOfShapeRun, this, thread_count);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ConstantOfShapeRun,
+                            this, thread_count);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error error_code[" << ret << "]";
     return ret;

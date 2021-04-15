@@ -81,7 +81,8 @@ int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
 int ArithmeticSelfGradCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticSelfGradCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfGradRun, this, thread_count_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                            ArithmeticSelfGradRun, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parallel launch fail!ret: " << ret;
     return ret;
@@ -92,13 +93,14 @@ int ArithmeticSelfGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                            const std::vector<lite::Tensor *> &outputs,
-                                                           OpParameter *param, const lite::InnerContext *ctx,
+                                                           OpParameter *param, const lite::Context *ctx,
                                                            const kernel::KernelKey &desc) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ArithmeticSelfGradCPUKernel(param, inputs, outputs, ctx);
+  auto *kernel = new (std::nothrow)
+    ArithmeticSelfGradCPUKernel(param, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfGradCPUKernel fail!";
     free(param);

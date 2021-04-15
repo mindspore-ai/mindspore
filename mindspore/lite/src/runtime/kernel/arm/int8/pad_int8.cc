@@ -267,7 +267,8 @@ int PadInt8CPUKernel::Run() {
   int error_code;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
-    error_code = ParallelLaunch(this->context_->thread_pool_, PadInt8Impl, this, context_->thread_num_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, PadInt8Impl,
+                                this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
       return RET_ERROR;
@@ -280,7 +281,8 @@ int PadInt8CPUKernel::Run() {
       return error_code;
     }
 
-    error_code = ParallelLaunch(this->context_->thread_pool_, MirrorPadImplInt8, this, context_->thread_num_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                                MirrorPadImplInt8, this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << error_code << "]";
       return RET_ERROR;

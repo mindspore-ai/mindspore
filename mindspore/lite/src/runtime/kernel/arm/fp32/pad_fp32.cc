@@ -395,7 +395,8 @@ int PadCPUKernel::Run() {
         output_data[i] = pad_param_->constant_value_;
       }
     }
-    error_code = ParallelLaunch(this->context_->thread_pool_, PadImpl, this, context_->thread_num_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, PadImpl, this,
+                                context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
       return RET_ERROR;
@@ -408,7 +409,8 @@ int PadCPUKernel::Run() {
       return error_code;
     }
 
-    error_code = ParallelLaunch(this->context_->thread_pool_, MirrorPadImpl, this, context_->thread_num_);
+    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, MirrorPadImpl,
+                                this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << error_code << "]";
       return RET_ERROR;

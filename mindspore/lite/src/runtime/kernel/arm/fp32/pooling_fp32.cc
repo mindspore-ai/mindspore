@@ -85,7 +85,8 @@ int PoolingImpl(void *cdata, int task_id) {
 }
 
 int PoolingCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, PoolingImpl, this, thread_count_);
+  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, PoolingImpl,
+                                  this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;

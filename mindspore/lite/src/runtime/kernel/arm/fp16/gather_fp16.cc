@@ -151,7 +151,8 @@ int GatherFp16CPUKernel::Run() {
       Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
     }
   }
-  ret = ParallelLaunch(this->context_->thread_pool_, GatherRunFp16, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, GatherRunFp16, this,
+                       op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << ret << "]";
   }

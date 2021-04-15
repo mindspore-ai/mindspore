@@ -144,17 +144,7 @@ void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
   }
 }
 
-int DetectionPostProcessBaseCPUKernel::Run() {
-  MS_ASSERT(context_->allocator != nullptr);
-  int status = GetInputData();
-  if (status != RET_OK) {
-    return status;
-  }
-  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
-  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
-  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
-
+int DetectionPostProcessBaseCPUKernel::ParamInit() {
   num_boxes_ = in_tensors_.at(0)->shape().at(1);
   num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
   params_->decoded_boxes_ = context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
@@ -221,6 +211,24 @@ int DetectionPostProcessBaseCPUKernel::Run() {
       return RET_ERROR;
     }
   }
+  return RET_OK;
+}
+
+int DetectionPostProcessBaseCPUKernel::Run() {
+  MS_ASSERT(context_->allocator != nullptr);
+  int status = GetInputData();
+  if (status != RET_OK) {
+    return status;
+  }
+  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
+  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
+
+  if (ParamInit() != RET_OK) {
+    MS_LOG(ERROR) << "ParamInit error";
+    return status;
+  }
 
   status = DecodeBoxes(num_boxes_, input_boxes_, params_->anchors_, params_);
   if (status != RET_OK) {
@@ -238,7 +246,8 @@ int DetectionPostProcessBaseCPUKernel::Run() {
       return status;
     }
   } else {
-    status = ParallelLaunch(this->context_->thread_pool_, NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
+    status = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
+                            NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "NmsMultiClassesFastCoreRun error error_code[" << status << "]";
       FreeAllocatedBuffer();

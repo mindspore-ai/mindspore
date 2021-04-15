@@ -89,7 +89,8 @@ int PadFp16CPUKernel::Run() {
         output_[i] = pad_param_->constant_value_;
       }
     }
-    ret = ParallelLaunch(this->context_->thread_pool_, PadImpl, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, PadImpl, this,
+                         op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
     }
@@ -101,7 +102,8 @@ int PadFp16CPUKernel::Run() {
       return ret;
     }
 
-    ret = ParallelLaunch(this->context_->thread_pool_, MirrorPadImpl, this, context_->thread_num_);
+    ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, MirrorPadImpl, this,
+                         context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << ret << "]";
     }

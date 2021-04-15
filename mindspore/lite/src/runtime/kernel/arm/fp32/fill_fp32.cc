@@ -91,7 +91,8 @@ int FillCPUKernel::Run() {
     MS_LOG(ERROR) << "unsupported fill data type " << fill_input->data_type();
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, FillRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, FillRun, this,
+                            thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
     return ret;

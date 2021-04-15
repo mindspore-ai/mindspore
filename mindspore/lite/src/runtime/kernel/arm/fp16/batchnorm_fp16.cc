@@ -51,15 +51,16 @@ int BatchnormFp16CPUKernel::InitConstTensor() {
 int BatchnormFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  input_ = ConvertInputFp32toFp16(input_tensor, context_);
-  output_ = MallocOutputFp16(output_tensor, context_);
+  input_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(this->context_));
+  output_ = MallocOutputFp16(output_tensor, static_cast<const lite::InnerContext *>(this->context_));
   if (input_ == nullptr || output_ == nullptr) {
     FreeInputAndOutput();
     MS_LOG(ERROR) << "input or output is nullptr";
     return RET_ERROR;
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, BatchNormRun, this,
+                            op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
