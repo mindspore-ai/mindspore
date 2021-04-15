@@ -96,7 +96,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchema) {
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                   << tensor_map["label"] << "\n";
     i++;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
   }
   MS_LOG(INFO) << "got rows: " << i << "\n";
   EXPECT_TRUE(i == 14);
@@ -114,7 +114,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaNoOrder) {
   ASSERT_OK(tree->Launch());
   DatasetIterator di(tree);
   TensorMap tensor_map;
-  ASSERT_TRUE(di.GetNextAsMap(&tensor_map));
+  ASSERT_OK(di.GetNextAsMap(&tensor_map));
   uint64_t i = 0;
   std::string_view label;
   while (tensor_map.size() != 0) {
@@ -122,7 +122,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaNoOrder) {
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                   << tensor_map["label"] << "\n";
     i++;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
   }
   MS_LOG(INFO) << "got rows: " << i << "\n";
   EXPECT_TRUE(i == 14);
@@ -151,7 +151,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaFloat) {
     MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "label shape"
                   << tensor_map["label"] << "priority: " << priority << "\n";
     i++;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
   }
   MS_LOG(INFO) << "got rows: " << i << "\n";
   EXPECT_TRUE(i == 14);
@@ -183,7 +183,7 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
                   << tensor_map["label"] << "priority: " << priority
                   << " embedding : " << tensor_map["_embedding"]->shape() << " id: " << id << "\n";
     i++;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
   }
   MS_LOG(INFO) << "got rows: " << i << "\n";
   EXPECT_TRUE(i == 14);

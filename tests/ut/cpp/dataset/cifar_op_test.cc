@@ -75,7 +75,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     uint32_t label = 0;
@@ -84,7 +84,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 100);
   }
@@ -104,7 +104,7 @@ TEST_F(MindDataTestCifarOp, TestRandomSamplerCifar10) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     uint32_t label = 0;
@@ -112,7 +112,7 @@ TEST_F(MindDataTestCifarOp, TestRandomSamplerCifar10) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 12);
   }
@@ -130,7 +130,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar100) {
   } else {
     DatasetIterator di(tree);
     TensorMap tensor_map;
-    di.GetNextAsMap(&tensor_map);
+    ASSERT_OK(di.GetNextAsMap(&tensor_map));
     EXPECT_TRUE(rc.IsOk());
     uint64_t i = 0;
     uint32_t coarse = 0;
@@ -142,7 +142,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar100) {
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << " coarse:"
                 << coarse << " fine:" << fine << "\n";
       i++;
-      di.GetNextAsMap(&tensor_map);
+      ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }
     EXPECT_TRUE(i == 100);
   }

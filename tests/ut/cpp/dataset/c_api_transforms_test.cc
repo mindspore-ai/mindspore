@@ -52,7 +52,7 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -63,7 +63,7 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
     MS_LOG(INFO) << "Label shape: " << label.Shape();
     EXPECT_EQ(image.Shape()[0], 777);
     EXPECT_EQ(image.Shape()[1], 777);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 3);
@@ -144,7 +144,7 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(246);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -176,7 +176,7 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::int16_t>> expected = {
     {1, 2, 31354, 3}, {1, 2, -5655, 3}, {1, 2, -17734, 3}, {1, 2, -17220, 3}};
@@ -190,7 +190,7 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -223,7 +223,7 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -232,7 +232,7 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
     auto image_copy = row["image_copy"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     EXPECT_MSTENSOR_EQ(image, image_copy);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 10);
@@ -248,7 +248,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessInt) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(864);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {6});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {6}));
   std::shared_ptr<Dataset> ds = RandomData(5, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(3);
@@ -270,7 +270,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessInt) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<int32_t>> expected = {
     {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}, {3, 3, 3, 3, 3, 3}};
@@ -285,7 +285,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessInt) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -303,7 +303,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessBool) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(963);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeBool, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeBool, {4}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -325,7 +325,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessBool) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<bool>> expected = {
     {true, true, true, true}, {true, true, true, true}, {true, true, true, true}};
@@ -340,7 +340,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessBool) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -358,7 +358,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(963);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -380,7 +380,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Note: 2**8 -3 = 256 -3 = 253
   std::vector<std::vector<uint8_t>> expected = {{253, 253, 253, 253}, {253, 253, 253, 253}, {253, 253, 253, 253}};
@@ -395,7 +395,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -413,7 +413,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecastZero) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(963);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeUInt8, {4}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -435,7 +435,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecastZero) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Note: 2**8 = 256
   std::vector<std::vector<uint8_t>> expected = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
@@ -450,7 +450,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecastZero) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -468,7 +468,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast16) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(963);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeUInt16, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeUInt16, {4}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -490,7 +490,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast16) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Note: 2**16 -3 = 65536 -3 = 65533
   std::vector<std::vector<uint16_t>> expected = {
@@ -506,7 +506,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast16) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -524,7 +524,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessUpTypecast) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(963);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {2});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {2}));
   std::shared_ptr<Dataset> ds = RandomData((float)4.0, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -546,7 +546,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessUpTypecast) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<float_t>> expected = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
 
@@ -560,7 +560,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessUpTypecast) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -607,7 +607,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessString) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"Hello", "Hello", "Hello", "Hello", "Hello"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -620,7 +620,7 @@ TEST_F(MindDataTestPipeline, TestFillSuccessString) {
     auto ind = row["text"];
     TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -676,7 +676,7 @@ TEST_F(MindDataTestPipeline, TestMaskSuccess) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(246);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {4}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -698,7 +698,7 @@ TEST_F(MindDataTestPipeline, TestMaskSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<bool>> expected = {
     {true, true, true, true}, {false, false, false, false}, {false, false, false, false}, {false, false, false, false}};
@@ -711,7 +711,7 @@ TEST_F(MindDataTestPipeline, TestMaskSuccess) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -764,7 +764,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -778,7 +778,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
               true);
     EXPECT_EQ(label.Shape().size() == 2 && batch_size == label.Shape()[0] && number_of_classes == label.Shape()[1],
               true);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);
@@ -819,14 +819,14 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 2);
@@ -882,7 +882,7 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(246);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -905,7 +905,7 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::int16_t>> expected = {{31354, 0, 0}, {-5655, 0, 0}, {-17734, 0, 0}, {-17220, 0, 0}};
 
@@ -917,7 +917,7 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -951,7 +951,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -960,7 +960,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
     auto label = row["label"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Label shape: " << label.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 5);
@@ -1079,7 +1079,7 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -1088,7 +1088,7 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
     auto label = row["label"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Label shape: " << label.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 3);
@@ -1170,7 +1170,7 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(246);
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {1}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
@@ -1202,7 +1202,7 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::int16_t>> expected = {{1, 3}, {1, 3}, {1, 3}, {1, 3}};
 
@@ -1215,7 +1215,7 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1241,7 +1241,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check original data type of dataset
   auto image = row["image"];
@@ -1266,7 +1266,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   EXPECT_NE(iter2, nullptr);
 
   // Check current data type of dataset
-  iter2->GetNextRow(&row);
+  ASSERT_OK(iter2->GetNextRow(&row));
   auto image2 = row["image"];
   auto cur_type = image2.DataType();
   MS_LOG(INFO) << "Current data type id: " << cur_type;

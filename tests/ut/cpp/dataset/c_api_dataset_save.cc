@@ -41,7 +41,7 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
   std::vector<mindspore::MSTensor> original_data;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Save original data for comparison
   uint64_t i = 0;
@@ -50,7 +50,7 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
     original_data.push_back(label);
     TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -90,7 +90,7 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row_minddata;
-  iter_minddata->GetNextRow(&row_minddata);
+  ASSERT_OK(iter_minddata->GetNextRow(&row_minddata));
 
   // Check column name for each row
   EXPECT_NE(row_minddata.find("image"), row_minddata.end());
@@ -103,7 +103,7 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
     EXPECT_MSTENSOR_EQ(original_data[j], label);
     TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
 
-    iter_minddata->GetNextRow(&row_minddata);
+    ASSERT_OK(iter_minddata->GetNextRow(&row_minddata));
     j++;
   }
 

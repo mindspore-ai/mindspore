@@ -63,7 +63,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"Welcome", "to", "Beijing", "北", "京", "欢", "迎", "您"},
@@ -86,7 +86,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -124,7 +124,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"this", "is", "a", "funky", "string"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -136,7 +136,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess2) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -175,7 +175,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected_tokens = {"this", "is", "a", "funky", "string"};
   std::vector<uint32_t> expected_offsets_start = {0, 5, 8, 10, 16};
@@ -207,7 +207,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess3) {
     auto limit = row["offsets_limit"];
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -257,7 +257,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"床", "前", "明", "月", "光"},
                                                     {"疑", "是", "地", "上", "霜"},
@@ -273,7 +273,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -321,7 +321,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"i",   "am",     "mak",  "##ing", "small", "mistake",
                                        "##s", "during", "work", "##ing", "hour",  "##s"};
@@ -334,7 +334,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess2) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -382,7 +382,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"😀", "嘿", "嘿", "😃", "哈", "哈", "😄", "大", "笑", "😁", "嘻", "嘻"}, {"繁", "體", "字"}};
@@ -396,7 +396,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess3) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -444,7 +444,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess4) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"[UNK]", " ", "[CLS]"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -456,7 +456,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess4) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -504,7 +504,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess5) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"unused", " ", "[CLS]"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -516,7 +516,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess5) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -564,7 +564,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess6) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"unused", " ", "[", "CLS", "]"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -576,7 +576,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess6) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -624,7 +624,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess7) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected_tokens = {"i",   "am",     "mak",  "##ing", "small", "mistake",
                                               "##s", "during", "work", "##ing", "hour",  "##s"};
@@ -657,7 +657,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess7) {
     auto limit = row["offsets_limit"];
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -739,7 +739,7 @@ TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"welcome to beijing!", "北京欢迎您!", "我喜欢english!", "  "};
 
@@ -751,7 +751,7 @@ TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -788,7 +788,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"今天天气", "太好了", "我们", "一起", "去", "外面", "玩吧"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -800,7 +800,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -837,7 +837,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"今天", "天气", "太", "好", "了", "我们", "一起", "去", "外面", "玩", "吧"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -849,7 +849,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess1) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -887,7 +887,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected_tokens = {"今天天气", "太好了", "我们", "一起", "去", "外面", "玩吧"};
   std::vector<uint32_t> expected_offsets_start = {0, 12, 21, 27, 33, 36, 42};
@@ -919,7 +919,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
     auto limit = row["offsets_limit"];
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1061,7 +1061,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"男默女泪", "市", "长江大桥"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -1073,7 +1073,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1113,7 +1113,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"男默女泪", "市", "长江大桥"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -1125,7 +1125,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1165,7 +1165,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"男默女泪", "市", "长江大桥"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -1177,7 +1177,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1217,7 +1217,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"江州", "市长", "江大桥", "参加", "了", "长江大桥", "的", "通车", "仪式"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -1229,7 +1229,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
   while (row.size() != 0) {
     auto ind = row["text"];
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1293,7 +1293,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDict) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"江州", "市长", "江大桥", "参加", "了", "长江大桥", "的", "通车", "仪式"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -1305,7 +1305,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDict) {
   while (row.size() != 0) {
     auto txt = row["text"];
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1349,7 +1349,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDictFromFile) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"今天天气", "太好了", "我们", "一起", "去", "外面", "玩吧"};
   std::shared_ptr<Tensor> de_expected_tensor;
@@ -1361,7 +1361,7 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDictFromFile) {
   while (row.size() != 0) {
     auto txt = row["text"];
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1398,7 +1398,7 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"This", "is", "a", "is", "a", "text", "a", "text", "file."},
                                                     {"Be", "happy", "every", "happy", "every", "day."},
@@ -1415,7 +1415,7 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1452,7 +1452,7 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"This", "is", "is", "a", "a", "text", "text", "file."},
                                                     {"Be", "happy", "happy", "every", "every", "day."},
@@ -1468,7 +1468,7 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1555,7 +1555,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<int64_t> expected = {-121, 14, -2219, 7623, -8162536, 162371864, -1726483716, 98921728421};
 
@@ -1567,7 +1567,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1610,7 +1610,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<double_t> expected = {-1.1, 1.4, -2219.321, 7623.453, -816256.234282, 162371864.243243};
 
@@ -1622,7 +1622,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1667,11 +1667,11 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   // Expect error: input out of bounds of int8
-  iter->GetNextRow(&row);
+  EXPECT_ERROR(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    iter->GetNextRow(&row);
+    EXPECT_ERROR(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1717,11 +1717,11 @@ TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   // Expect error: input out of bounds of float16
-  iter->GetNextRow(&row);
+  EXPECT_ERROR(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    iter->GetNextRow(&row);
+    EXPECT_ERROR(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1763,11 +1763,11 @@ TEST_F(MindDataTestPipeline, TestToNumberFail3) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   // Expect error: invalid input which is non numerical
-  iter->GetNextRow(&row);
+  EXPECT_ERROR(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    iter->GetNextRow(&row);
+    EXPECT_ERROR(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1840,8 +1840,8 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
 
   // Create a RandomDataset which has column names "col1" and "col2"
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {5});
-  schema->add_column("col2", mindspore::DataType::kNumberTypeInt32, {3});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {5}));
+  ASSERT_OK(schema->add_column("col2", mindspore::DataType::kNumberTypeInt32, {3}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -1860,7 +1860,7 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<int16_t>> expected1 = {{-29556, -29556}, {-18505, -18505}, {-25958, -25958}};
   std::vector<std::vector<int32_t>> expected2 = {
@@ -1883,7 +1883,7 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor2));
     EXPECT_MSTENSOR_EQ(ind2, expected_tensor2);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1915,8 +1915,8 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
 
   // Create a RandomDataset which has column names "col1" and "col2"
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {4});
-  schema->add_column("col2", mindspore::DataType::kNumberTypeInt64, {4});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {4}));
+  ASSERT_OK(schema->add_column("col2", mindspore::DataType::kNumberTypeInt64, {4}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -1935,7 +1935,7 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<int32_t>> expected1 = {{1785358954, 1785358954, 1785358954},
                                                  {-1195853640, -1195853640, -1195853640},
@@ -1961,7 +1961,7 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor2));
     EXPECT_MSTENSOR_EQ(ind2, expected_tensor2);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -1983,8 +1983,8 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairFail) {
 
   // Create a RandomDataset which has column names "col1" and "col2"
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::DataType::kNumberTypeInt8, {3});
-  schema->add_column("col2", mindspore::DataType::kNumberTypeInt8, {3});
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt8, {3}));
+  ASSERT_OK(schema->add_column("col2", mindspore::DataType::kNumberTypeInt8, {3}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -2028,7 +2028,7 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"_ This", "This is", "is a", "a text", "text file.", "file. _"},
                                                     {"_ Be", "Be happy", "happy every", "every day.", "day. _"},
@@ -2045,7 +2045,7 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2081,7 +2081,7 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"&-This", "This-is", "is-a", "a-text", "text-file.", "file.-&", "&-&-This", "&-This-is", "This-is-a",
@@ -2103,7 +2103,7 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2252,7 +2252,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"ṩ", "ḍ̇", "q̣̇", "fi", "25", "ṩ"};
 
@@ -2264,7 +2264,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2298,7 +2298,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"ṩ", "ḍ̇", "q̣̇", "ﬁ", "2⁵", "ẛ̣"};
 
@@ -2310,7 +2310,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success1) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2344,7 +2344,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"ṩ", "ḍ̇", "q̣̇", "ﬁ", "2⁵", "ẛ̣"};
 
@@ -2356,7 +2356,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success2) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2390,7 +2390,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"ṩ", "ḍ̇", "q̣̇", "fi", "25", "ṩ"};
 
@@ -2402,7 +2402,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success3) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2436,7 +2436,7 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"Hello_World", "Let's_Go",          "1:hello",        "2:world",
                                        "31:beijing",  "Welcome_to_China!", "_我_不想_长大_", "Welcome_to_Shenzhen!"};
@@ -2449,7 +2449,7 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2483,7 +2483,7 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::string> expected = {"Hello_World", "Let's_Go",          "1:hello",          "2:world",
                                        "31:beijing",  "Welcome_to China!", "_我	不想  长大	", "Welcome_to Shenzhen!"};
@@ -2496,7 +2496,7 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess1) {
     mindspore::MSTensor ms_expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2530,7 +2530,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"Hello", " ", "World"},
                                                     {"Let's", " ", "Go"},
@@ -2552,7 +2552,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2587,7 +2587,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected_tokens = {{"Hello", " ", "World"},
                                                            {"Let's", " ", "Go"},
@@ -2628,7 +2628,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_offsets_limit));
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2662,7 +2662,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"W", "e", "l", "c", "o", "m", "e", " ", "t", "o", " ", "B", "e", "i", "j", "i", "n", "g", "!"},
@@ -2681,7 +2681,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2716,7 +2716,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected_tokens = {
     {"W", "e", "l", "c", "o", "m", "e", " ", "t", "o", " ", "B", "e", "i", "j", "i", "n", "g", "!"},
@@ -2761,7 +2761,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_offsets_limit));
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2809,7 +2809,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"my"}, {"favor", "##ite"}, {"book"}, {"is"}, {"love"}, {"dur", "##ing"}, {"the"}, {"cholera"}, {"era"}, {"[UNK]"}};
@@ -2822,7 +2822,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess1) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2866,7 +2866,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"my"}, {"favor", "##ite"}, {"book"}, {"is"}, {"love"}, {"dur", "##ing"}, {"the"}, {"cholera"}, {"era"}, {"what"}};
@@ -2879,7 +2879,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess2) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2923,7 +2923,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"my"},    {"[UNK]"}, {"book"},  {"is"},  {"love"},
                                                     {"[UNK]"}, {"the"},   {"[UNK]"}, {"era"}, {"[UNK]"}};
@@ -2936,7 +2936,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess3) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -2984,7 +2984,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess4) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"我"}, {"最"}, {"喜"}, {"欢"}, {"的"}, {"书"}, {"是"},   {"霍"},
                                                     {"乱"}, {"时"}, {"期"}, {"的"}, {"爱"}, {"情"}, {"[UNK]"}};
@@ -2997,7 +2997,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess4) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3041,7 +3041,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess5) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"my"}, {"favor", "##ite"}, {"book"}, {"is"}, {"love"}, {"dur", "##ing"}, {"the"}, {"cholera"}, {"era"}, {"[UNK]"}};
@@ -3070,7 +3070,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess5) {
     mindspore::MSTensor expected_limit_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_limit_tensor));
     EXPECT_MSTENSOR_EQ(limit, expected_limit_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3114,7 +3114,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess6) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {{"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"},
                                                     {"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"}, {"[UNK]"}};
@@ -3127,7 +3127,7 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess6) {
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3210,7 +3210,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"Welcome", "to", "Beijing", "!"}, {"北京欢迎您", "！"}, {"我喜欢", "English", "!"}, {""}};
@@ -3226,7 +3226,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3261,7 +3261,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"Welcome", " ", "to", " ", "Beijing", "!"}, {"北京欢迎您", "！"}, {"我喜欢", "English", "!"}, {"  "}};
@@ -3277,7 +3277,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3314,7 +3314,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected_tokens = {
     {"Welcome", "to", "Beijing", "!"}, {"北京欢迎您", "！"}, {"我喜欢", "English", "!"}, {""}};
@@ -3347,7 +3347,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess2) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_offsets_limit));
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3383,7 +3383,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected_tokens = {
     {"Welcome", " ", "to", " ", "Beijing", "!"}, {"北京欢迎您", "！"}, {"我喜欢", "English", "!"}, {"  "}};
@@ -3416,7 +3416,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess3) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_offsets_limit));
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3450,7 +3450,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
     {"This", "is", "a", "text", "file."}, {"Be", "happy", "every", "day."}, {"Good", "luck", "to", "everyone."}};
@@ -3466,7 +3466,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -3501,7 +3501,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected_tokens = {
     {"Welcome", "to", "Beijing!"}, {"北京欢迎您！"}, {"我喜欢English!"}, {""}};
@@ -3534,7 +3534,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess1) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_offsets_limit));
     EXPECT_MSTENSOR_EQ(limit, ms_expected_offsets_limit);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 

@@ -42,7 +42,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
     {"1", "2", "3", "4"},
@@ -57,11 +57,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -109,7 +109,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
     {"17", "18", "19", "20"}, {"1", "2", "3", "4"},     {"5", "6", "7", "8"},
@@ -123,11 +123,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -158,7 +158,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetNumSamples) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {{"1", "2", "3", "4"}, {"5", "6", "7", "8"}};
 
@@ -169,11 +169,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetNumSamples) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -200,7 +200,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {{"1", "2", "3", "4"}, {"5", "6", "7", "8"}};
 
@@ -211,11 +211,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -248,7 +248,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetType) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   std::vector<std::vector<std::shared_ptr<CsvBase>>> expected = {
     {
       std::make_shared<CsvRecord<std::string>>(CsvType::STRING, ""),
@@ -273,20 +273,20 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetType) {
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       if (colum_type[j]->type == CsvType::INT) {
         int val;
-        de_text->GetItemAt(&val, {});
+        ASSERT_OK(de_text->GetItemAt(&val, {}));
         EXPECT_EQ(val, std::dynamic_pointer_cast<CsvRecord<int>>(expected[i][j])->value);
       } else if (colum_type[j]->type == CsvType::FLOAT) {
         float val;
-        de_text->GetItemAt(&val, {});
+        ASSERT_OK(de_text->GetItemAt(&val, {}));
         EXPECT_EQ(val, std::dynamic_pointer_cast<CsvRecord<float>>(expected[i][j])->value);
       } else if (colum_type[j]->type == CsvType::STRING) {
         std::string_view sv;
-        de_text->GetItemAt(&sv, {});
+        ASSERT_OK(de_text->GetItemAt(&sv, {}));
         std::string ss(sv);
         EXPECT_STREQ(ss.c_str(), std::dynamic_pointer_cast<CsvRecord<std::string>>(expected[i][j])->value.c_str());
       }
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -312,7 +312,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetHeader) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
     {"a", "b", "c", "d"},
@@ -326,11 +326,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetHeader) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -421,7 +421,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
     {"13", "14", "15", "16"}, {"1", "2", "3", "4"},     {"17", "18", "19", "20"},
@@ -435,11 +435,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -478,7 +478,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
     {"13", "14", "15", "16"}, {"1", "2", "3", "4"},     {"17", "18", "19", "20"},
@@ -492,12 +492,12 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -536,7 +536,7 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   EXPECT_NE(row.find("col1"), row.end());
   std::vector<std::vector<std::string>> expected_result = {
     {"5", "6", "7", "8"}, {"9", "10", "11", "12"}, {"1", "2", "3", "4"}};
@@ -548,11 +548,11 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
       std::shared_ptr<Tensor> de_text;
       ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
       std::string_view sv;
-      de_text->GetItemAt(&sv, {});
+      ASSERT_OK(de_text->GetItemAt(&sv, {}));
       std::string ss(sv);
       EXPECT_STREQ(ss.c_str(), expected_result[i][j].c_str());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 

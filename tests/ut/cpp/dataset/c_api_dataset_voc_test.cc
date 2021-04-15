@@ -46,7 +46,7 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if VOC() read correct labels
   // When we provide class_index, label of ["car","cat","train"] become [0,1,9]
@@ -65,7 +65,7 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
     mindspore::MSTensor expect_label = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_label));
     EXPECT_MSTENSOR_EQ(label, expect_label);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -133,7 +133,7 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if VOC() read correct images/labels
   std::string expect_file[] = {"15", "32", "33", "39"};
@@ -156,7 +156,7 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
     mindspore::MSTensor expect_label = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_label));
     EXPECT_MSTENSOR_EQ(label, expect_label);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -208,7 +208,7 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check if VOC() read correct images/targets
   std::string expect_file[] = {"32", "33", "39", "32", "33", "39"};
@@ -225,7 +225,7 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
     mindspore::MSTensor expect_target = ReadFileToTensor(folder_path + "/SegmentationClass/" + expect_file[i] + ".png");
     EXPECT_MSTENSOR_EQ(target, expect_target);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 

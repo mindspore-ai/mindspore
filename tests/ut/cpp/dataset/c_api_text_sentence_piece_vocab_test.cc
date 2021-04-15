@@ -68,7 +68,7 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Expected result after tokenization
   std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe", "."};
@@ -84,7 +84,7 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
 
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -128,7 +128,7 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Expected result after tokenization
   std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe", "."};
@@ -144,7 +144,7 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
 
     EXPECT_MSTENSOR_EQ(txt, expected_tensor);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 

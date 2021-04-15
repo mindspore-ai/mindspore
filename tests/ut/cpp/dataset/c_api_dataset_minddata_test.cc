@@ -41,7 +41,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -49,7 +49,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
     auto image = row["file_name"];
     TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Each *.mindrecord file has 5 rows, so there are 20 rows in total(imagenet.mindrecord0 ~ imagenet.mindrecord3)
@@ -91,7 +91,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -99,7 +99,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {
     auto image = row["file_name"];
     TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Only records in imagenet.mindrecord0 are read
@@ -127,7 +127,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess3) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -135,7 +135,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess3) {
     auto image = row["file_name"];
     TEST_MS_LOG_MSTENSOR(INFO, "Tensor image file name: ", image);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Only records in imagenet.mindrecord0 and imagenet.mindrecord1 are read
@@ -162,14 +162,14 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess4) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     auto label = row["label"];
     TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // Shard file "mindrecord0/mindrecord1/mindrecord2/mindrecord3" have same dataset info,
@@ -197,7 +197,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess5) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::shared_ptr<Tensor> de_expect_item;
   ASSERT_OK(Tensor::CreateScalar((int64_t)0, &de_expect_item));
@@ -210,7 +210,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess5) {
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   // SequentialSampler will return 3 samples
@@ -263,14 +263,14 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
 
     // Iterate the dataset and get each row
     std::unordered_map<std::string, mindspore::MSTensor> row;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
 
     uint64_t j = 0;
     while (row.size() != 0) {
       j++;
       auto label = row["label"];
       TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
-      iter->GetNextRow(&row);
+      ASSERT_OK(iter->GetNextRow(&row));
     }
     EXPECT_EQ(j, expected_samples[i]);
 
@@ -306,7 +306,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::shared_ptr<Tensor> de_expect_item;
   ASSERT_OK(Tensor::CreateScalar((int64_t)999, &de_expect_item));
@@ -322,7 +322,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 4);
@@ -377,7 +377,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::shared_ptr<Tensor> de_expect_item;
   ASSERT_OK(Tensor::CreateScalar((int64_t)999, &de_expect_item));
@@ -393,7 +393,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 8);
@@ -452,7 +452,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::shared_ptr<Tensor> de_expect_item;
   ASSERT_OK(Tensor::CreateScalar((int64_t)999, &de_expect_item));
@@ -466,7 +466,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
 
     EXPECT_MSTENSOR_EQ(label, expect_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 20);

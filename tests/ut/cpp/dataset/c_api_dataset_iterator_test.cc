@@ -39,7 +39,7 @@ TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
 
   // Iterate the dataset and get each row
   std::vector<mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   std::vector<int64_t> expect_image = {32, 32, 3};
   std::vector<int64_t> expect_label = {};
 
@@ -49,7 +49,7 @@ TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
     EXPECT_EQ(expect_image, row[0].Shape());
     EXPECT_EQ(expect_label, row[1].Shape());
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -79,7 +79,7 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
 
   // Iterate the dataset and get each row
   std::vector<mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   std::vector<int64_t> expect_image = {2, 28, 28, 1};
 
   uint64_t i = 0;
@@ -88,7 +88,7 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
       MS_LOG(INFO) << "image shape:" << v.Shape();
       EXPECT_EQ(expect_image, v.Shape());
     }
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -117,7 +117,7 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
 
   // Iterate the dataset and get each row
   std::vector<mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   std::vector<int64_t> expect_image = {32, 32, 3};
   std::vector<int64_t> expect_label = {};
 
@@ -127,7 +127,7 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
     MS_LOG(INFO) << "row[0]:" << row[0].Shape() << ", row[1]:" << row[1].Shape();
     EXPECT_EQ(expect_label, row[0].Shape());
     EXPECT_EQ(expect_image, row[1].Shape());
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -158,7 +158,7 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
 
   // Iterate the dataset and get each row
   std::vector<mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
   std::vector<std::vector<int64_t>> expect = {{173673}, {1, 4}, {173673}, {1, 4},
                                               {147025}, {1, 4}, {211653}, {1, 4}};
 
@@ -169,7 +169,7 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
     EXPECT_EQ(2, row.size());
     EXPECT_EQ(expect[j++], row[0].Shape());
     EXPECT_EQ(expect[j++], row[1].Shape());
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
     j = (j == expect.size()) ? 0 : j;
   }
@@ -209,10 +209,10 @@ TEST_F(MindDataTestPipeline, TestIteratorNumEpoch) {
   int32_t inner_row_cnt = 0;
   int32_t total_row_cnt = 0;
   for (int32_t i = 0; i < num_epochs; i++) {
-    ASSERT_TRUE(iter->GetNextRow(&row));
+    ASSERT_OK(iter->GetNextRow(&row));
     inner_row_cnt = 0;
     while (row.size() != 0) {
-      ASSERT_TRUE(iter->GetNextRow(&row));
+      ASSERT_OK(iter->GetNextRow(&row));
       ++inner_row_cnt;
       ++total_row_cnt;
     }

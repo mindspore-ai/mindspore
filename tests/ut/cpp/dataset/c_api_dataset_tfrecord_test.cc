@@ -63,7 +63,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check column
   EXPECT_EQ(row.size(), 1);
@@ -74,7 +74,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
     auto image = row["image"];
 
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -143,9 +143,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row1;
-  iter1->GetNextRow(&row1);
+  ASSERT_OK(iter1->GetNextRow(&row1));
   std::unordered_map<std::string, mindspore::MSTensor> row2;
-  iter2->GetNextRow(&row2);
+  ASSERT_OK(iter2->GetNextRow(&row2));
 
   uint64_t i = 0;
   int64_t value1 = 0;
@@ -154,17 +154,17 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {
     auto scalars1 = row1["scalars"];
     std::shared_ptr<Tensor> de_scalars1;
     ASSERT_OK(Tensor::CreateFromMSTensor(scalars1, &de_scalars1));
-    de_scalars1->GetItemAt(&value1, {0});
+    ASSERT_OK(de_scalars1->GetItemAt(&value1, {0}));
 
     auto scalars2 = row2["scalars"];
     std::shared_ptr<Tensor> de_scalars2;
     ASSERT_OK(Tensor::CreateFromMSTensor(scalars2, &de_scalars2));
-    de_scalars2->GetItemAt(&value2, {0});
+    ASSERT_OK(de_scalars2->GetItemAt(&value2, {0}));
 
     EXPECT_EQ(value1, value2);
 
-    iter1->GetNextRow(&row1);
-    iter2->GetNextRow(&row2);
+    ASSERT_OK(iter1->GetNextRow(&row1));
+    ASSERT_OK(iter2->GetNextRow(&row2));
     i++;
   }
   EXPECT_EQ(i, 10);
@@ -198,7 +198,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle2) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<int> expect = {9, 3, 4, 7, 2, 1, 6, 8, 10, 5};
   std::vector<int> actual = {};
@@ -208,10 +208,10 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle2) {
     auto scalars = row["scalars"];
     std::shared_ptr<Tensor> de_scalars;
     ASSERT_OK(Tensor::CreateFromMSTensor(scalars, &de_scalars));
-    de_scalars->GetItemAt(&value, {0});
+    ASSERT_OK(de_scalars->GetItemAt(&value, {0}));
     actual.push_back(value);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
   ASSERT_EQ(actual, expect);
@@ -241,7 +241,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaPath) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check column
   EXPECT_EQ(row.size(), 8);
@@ -257,7 +257,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaPath) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 9);
@@ -272,9 +272,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaObj) {
   // Create a TFRecord Dataset
   std::string file_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col_sint16", "int16", {1});
-  schema->add_column("col_float", "float32", {1});
-  schema->add_column("col_2d", "int64", {2, 2});
+  ASSERT_OK(schema->add_column("col_sint16", "int16", {1}));
+  ASSERT_OK(schema->add_column("col_float", "float32", {1}));
+  ASSERT_OK(schema->add_column("col_2d", "int64", {2, 2}));
   std::shared_ptr<Dataset> ds = TFRecord({file_path}, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -285,7 +285,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaObj) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check column
   EXPECT_EQ(row.size(), 3);
@@ -317,7 +317,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaObj) {
     ASSERT_EQ(col_float.DataType(), mindspore::DataType::kNumberTypeFloat32);
     ASSERT_EQ(col_2d.DataType(), mindspore::DataType::kNumberTypeInt64);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -343,7 +343,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetNoSchema) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check column
   EXPECT_EQ(row.size(), 2);
@@ -357,7 +357,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetNoSchema) {
 
     MS_LOG(INFO) << "Shape of column [image]:" << image.Shape();
     MS_LOG(INFO) << "Shape of column [label]:" << label.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -383,7 +383,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetColName) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   // Check column
   EXPECT_EQ(row.size(), 1);
@@ -392,7 +392,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetColName) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
   }
 
   EXPECT_EQ(i, 3);
@@ -423,20 +423,20 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShard) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row1;
-  iter1->GetNextRow(&row1);
+  ASSERT_OK(iter1->GetNextRow(&row1));
   std::unordered_map<std::string, mindspore::MSTensor> row2;
-  iter2->GetNextRow(&row2);
+  ASSERT_OK(iter2->GetNextRow(&row2));
 
   uint64_t i = 0;
   uint64_t j = 0;
   while (row1.size() != 0) {
     i++;
-    iter1->GetNextRow(&row1);
+    ASSERT_OK(iter1->GetNextRow(&row1));
   }
 
   while (row2.size() != 0) {
     j++;
-    iter2->GetNextRow(&row2);
+    ASSERT_OK(iter2->GetNextRow(&row2));
   }
 
   EXPECT_EQ(i, 5);
@@ -501,8 +501,8 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {
 TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
   std::string path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", "uint8", {1});
-  schema->add_column("label", "int64", {1});
+  ASSERT_OK(schema->add_column("image", "uint8", {1}));
+  ASSERT_OK(schema->add_column("label", "int64", {1}));
   std::shared_ptr<Dataset> ds = TFRecord({path}, schema);
   EXPECT_NE(ds, nullptr);
   auto itr = ds->CreateIterator();

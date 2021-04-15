@@ -70,7 +70,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
@@ -84,7 +84,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 }
@@ -118,7 +118,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
@@ -132,7 +132,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 }
@@ -218,7 +218,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   std::vector<int32_t> expected = {4, 5, 3, 6, 7, 2};
@@ -232,7 +232,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 }
@@ -268,7 +268,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   std::vector<int32_t> expected = {2, 3, 1, 4, 5, 0};
@@ -290,7 +290,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_not_expected_item));
     EXPECT_MSTENSOR_DATA_NE(ind, ms_not_expected_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 }
@@ -385,7 +385,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   std::vector<int64_t> expected = {2, 3, 1, 4, 5, 0};
@@ -407,7 +407,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_not_expected_item));
     EXPECT_MSTENSOR_DATA_NE(ind, ms_not_expected_item);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 }

@@ -41,7 +41,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -51,7 +51,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor bbox shape: " << bbox.Shape();
     MS_LOG(INFO) << "Tensor category_id shape: " << category_id.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -98,7 +98,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
   while (row.size() != 0) {
@@ -108,7 +108,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor bbox shape: " << bbox.Shape();
     MS_LOG(INFO) << "Tensor category_id shape: " << category_id.Shape();
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -149,7 +149,7 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::string expect_file[] = {"000000391895", "000000318219", "000000554625",
                                "000000574769", "000000060623", "000000309022"};
@@ -182,7 +182,7 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_categoryid));
     EXPECT_MSTENSOR_EQ(category_id, expect_categoryid);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -239,7 +239,7 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::string expect_file[] = {"000000391895", "000000318219"};
   std::vector<std::vector<float>> expect_keypoint_vector = {
@@ -274,7 +274,7 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_num_keypoints));
     EXPECT_MSTENSOR_EQ(num_keypoints, expect_num_keypoints);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -301,7 +301,7 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::string expect_file[] = {"000000391895", "000000574769"};
   std::vector<std::vector<float>> expect_bbox_vector = {{472, 173, 36, 48, 340, 22, 154, 301, 486, 183, 30, 35},
@@ -346,7 +346,7 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_area));
     EXPECT_MSTENSOR_EQ(area, expect_area);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
@@ -396,7 +396,7 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
 
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
+  ASSERT_OK(iter->GetNextRow(&row));
 
   std::string expect_file[] = {"000000391895", "000000318219", "000000554625",
                                "000000574769", "000000060623", "000000309022"};
@@ -424,7 +424,7 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_segmentation));
     EXPECT_MSTENSOR_EQ(segmentation, expect_segmentation);
 
-    iter->GetNextRow(&row);
+    ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
 
