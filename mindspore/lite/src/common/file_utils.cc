@@ -29,7 +29,7 @@ char *ReadFile(const char *file, size_t *size) {
   }
   MS_ASSERT(size != nullptr);
   std::string real_path = RealPath(file);
-  std::ifstream ifs(real_path);
+  std::ifstream ifs(real_path, std::ifstream::in | std::ifstream::binary);
   if (!ifs.good()) {
     MS_LOG(ERROR) << "file: " << real_path << " is not exist";
     return nullptr;

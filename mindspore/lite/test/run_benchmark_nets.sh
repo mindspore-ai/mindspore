@@ -420,8 +420,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -436,8 +436,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -452,8 +452,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -470,8 +470,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -489,8 +489,8 @@ function Run_x86() {
         accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
         echo "---------------------------------------------------------" >> "${run_x86_log_file}"
         echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -505,8 +505,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name}'_train' >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=${models_path}/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -522,19 +522,19 @@ function Run_x86() {
         fi
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
-        transformer_data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input"
+        transformer_data_path="${models_path}/input_output/input"
         echo ${model_name} >> "${run_x86_log_file}"
         if [[ $model_name == "mobilenet.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         fi
         if [[ $model_name == "transformer_20200831_encoder_fp32.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-35.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_35.bin,${transformer_data_path}/encoder_buffer_in_0.bin,${transformer_data_path}/encoder_buffer_in_1.bin,${transformer_data_path}/encoder_buffer_in_4.bin,${transformer_data_path}/encoder_buffer_in_2.bin,${transformer_data_path}/encoder_buffer_in_3.bin,${transformer_data_path}/encoder_buffer_in_7.bin,${transformer_data_path}/encoder_buffer_in_5.bin,${transformer_data_path}/encoder_buffer_in_6.bin,${transformer_data_path}/encoder_buffer_in_10.bin,${transformer_data_path}/encoder_buffer_in_8.bin,${transformer_data_path}/encoder_buffer_in_9.bin,${transformer_data_path}/encoder_buffer_in_11.bin,${transformer_data_path}/encoder_buffer_in_12.bin,${transformer_data_path}/encoder_buffer_in_15.bin,${transformer_data_path}/encoder_buffer_in_13.bin,${transformer_data_path}/encoder_buffer_in_14.bin,${transformer_data_path}/encoder_buffer_in_18.bin,${transformer_data_path}/encoder_buffer_in_16.bin,${transformer_data_path}/encoder_buffer_in_17.bin,${transformer_data_path}/encoder_buffer_in_21.bin,${transformer_data_path}/encoder_buffer_in_19.bin,${transformer_data_path}/encoder_buffer_in_20.bin,${transformer_data_path}/encoder_buffer_in_22.bin,${transformer_data_path}/encoder_buffer_in_23.bin,${transformer_data_path}/encoder_buffer_in_26.bin,${transformer_data_path}/encoder_buffer_in_24.bin,${transformer_data_path}/encoder_buffer_in_25.bin,${transformer_data_path}/encoder_buffer_in_29.bin,${transformer_data_path}/encoder_buffer_in_27.bin,${transformer_data_path}/encoder_buffer_in_28.bin,${transformer_data_path}/encoder_buffer_in_32.bin,${transformer_data_path}/encoder_buffer_in_30.bin,${transformer_data_path}/encoder_buffer_in_31.bin,${transformer_data_path}/encoder_buffer_in_33.bin,${transformer_data_path}/encoder_buffer_in_34.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-35.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_35.bin,${transformer_data_path}/encoder_buffer_in_0.bin,${transformer_data_path}/encoder_buffer_in_1.bin,${transformer_data_path}/encoder_buffer_in_4.bin,${transformer_data_path}/encoder_buffer_in_2.bin,${transformer_data_path}/encoder_buffer_in_3.bin,${transformer_data_path}/encoder_buffer_in_7.bin,${transformer_data_path}/encoder_buffer_in_5.bin,${transformer_data_path}/encoder_buffer_in_6.bin,${transformer_data_path}/encoder_buffer_in_10.bin,${transformer_data_path}/encoder_buffer_in_8.bin,${transformer_data_path}/encoder_buffer_in_9.bin,${transformer_data_path}/encoder_buffer_in_11.bin,${transformer_data_path}/encoder_buffer_in_12.bin,${transformer_data_path}/encoder_buffer_in_15.bin,${transformer_data_path}/encoder_buffer_in_13.bin,${transformer_data_path}/encoder_buffer_in_14.bin,${transformer_data_path}/encoder_buffer_in_18.bin,${transformer_data_path}/encoder_buffer_in_16.bin,${transformer_data_path}/encoder_buffer_in_17.bin,${transformer_data_path}/encoder_buffer_in_21.bin,${transformer_data_path}/encoder_buffer_in_19.bin,${transformer_data_path}/encoder_buffer_in_20.bin,${transformer_data_path}/encoder_buffer_in_22.bin,${transformer_data_path}/encoder_buffer_in_23.bin,${transformer_data_path}/encoder_buffer_in_26.bin,${transformer_data_path}/encoder_buffer_in_24.bin,${transformer_data_path}/encoder_buffer_in_25.bin,${transformer_data_path}/encoder_buffer_in_29.bin,${transformer_data_path}/encoder_buffer_in_27.bin,${transformer_data_path}/encoder_buffer_in_28.bin,${transformer_data_path}/encoder_buffer_in_32.bin,${transformer_data_path}/encoder_buffer_in_30.bin,${transformer_data_path}/encoder_buffer_in_31.bin,${transformer_data_path}/encoder_buffer_in_33.bin,${transformer_data_path}/encoder_buffer_in_34.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         fi
         if [[ $model_name == "transformer_20200831_decoder_fp32.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_0-10.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_0-10.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         fi
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -552,8 +552,8 @@ function Run_x86() {
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${models_path}/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -568,8 +568,8 @@ function Run_x86() {
           continue
         fi
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -586,8 +586,8 @@ function Run_x86() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -604,8 +604,8 @@ function Run_x86() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -622,8 +622,8 @@ function Run_x86() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -642,15 +642,15 @@ function Run_x86() {
         accuracy_limit_9bit=`echo ${line_info}|awk -F ' ' '{print $3}'`
 
         echo ${model_name} >> "${run_x86_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_7bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_7bit}' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_7bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_7bit} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_7bit.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_7bit}' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_7bit.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_7bit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_7bit pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86: '${model_name}'_7bit failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_9bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_9bit}' >> "${run_x86_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_9bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_9bit} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_9bit.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_9bit}' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_9bit.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_9bit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_9bit pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -668,7 +668,7 @@ function Run_x86() {
         input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
-        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        data_path="${models_path}/input_output/"
         for i in $(seq 1 $input_num)
         do
           input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
@@ -697,7 +697,7 @@ function Run_x86() {
         input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
-        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        data_path="${models_path}/input_output/"
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
@@ -727,8 +727,8 @@ function Run_x86_sse() {
           continue
         fi
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -743,8 +743,8 @@ function Run_x86_sse() {
           continue
         fi
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -761,8 +761,8 @@ function Run_x86_sse() {
           continue
         fi
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -780,8 +780,8 @@ function Run_x86_sse() {
         accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
         echo "---------------------------------------------------------" >> "${run_x86_sse_log_file}"
         echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -796,8 +796,8 @@ function Run_x86_sse() {
           continue
         fi
         echo ${model_name}'_train' >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=${models_path}/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -813,19 +813,19 @@ function Run_x86_sse() {
         fi
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
-        transformer_data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input"
+        transformer_data_path="${models_path}/input_output/input"
         echo ${model_name} >> "${run_x86_sse_log_file}"
         if [[ $model_name == "mobilenet.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         fi
         if [[ $model_name == "transformer_20200831_encoder_fp32.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-35.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_35.bin,${transformer_data_path}/encoder_buffer_in_0.bin,${transformer_data_path}/encoder_buffer_in_1.bin,${transformer_data_path}/encoder_buffer_in_4.bin,${transformer_data_path}/encoder_buffer_in_2.bin,${transformer_data_path}/encoder_buffer_in_3.bin,${transformer_data_path}/encoder_buffer_in_7.bin,${transformer_data_path}/encoder_buffer_in_5.bin,${transformer_data_path}/encoder_buffer_in_6.bin,${transformer_data_path}/encoder_buffer_in_10.bin,${transformer_data_path}/encoder_buffer_in_8.bin,${transformer_data_path}/encoder_buffer_in_9.bin,${transformer_data_path}/encoder_buffer_in_11.bin,${transformer_data_path}/encoder_buffer_in_12.bin,${transformer_data_path}/encoder_buffer_in_15.bin,${transformer_data_path}/encoder_buffer_in_13.bin,${transformer_data_path}/encoder_buffer_in_14.bin,${transformer_data_path}/encoder_buffer_in_18.bin,${transformer_data_path}/encoder_buffer_in_16.bin,${transformer_data_path}/encoder_buffer_in_17.bin,${transformer_data_path}/encoder_buffer_in_21.bin,${transformer_data_path}/encoder_buffer_in_19.bin,${transformer_data_path}/encoder_buffer_in_20.bin,${transformer_data_path}/encoder_buffer_in_22.bin,${transformer_data_path}/encoder_buffer_in_23.bin,${transformer_data_path}/encoder_buffer_in_26.bin,${transformer_data_path}/encoder_buffer_in_24.bin,${transformer_data_path}/encoder_buffer_in_25.bin,${transformer_data_path}/encoder_buffer_in_29.bin,${transformer_data_path}/encoder_buffer_in_27.bin,${transformer_data_path}/encoder_buffer_in_28.bin,${transformer_data_path}/encoder_buffer_in_32.bin,${transformer_data_path}/encoder_buffer_in_30.bin,${transformer_data_path}/encoder_buffer_in_31.bin,${transformer_data_path}/encoder_buffer_in_33.bin,${transformer_data_path}/encoder_buffer_in_34.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-35.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_35.bin,${transformer_data_path}/encoder_buffer_in_0.bin,${transformer_data_path}/encoder_buffer_in_1.bin,${transformer_data_path}/encoder_buffer_in_4.bin,${transformer_data_path}/encoder_buffer_in_2.bin,${transformer_data_path}/encoder_buffer_in_3.bin,${transformer_data_path}/encoder_buffer_in_7.bin,${transformer_data_path}/encoder_buffer_in_5.bin,${transformer_data_path}/encoder_buffer_in_6.bin,${transformer_data_path}/encoder_buffer_in_10.bin,${transformer_data_path}/encoder_buffer_in_8.bin,${transformer_data_path}/encoder_buffer_in_9.bin,${transformer_data_path}/encoder_buffer_in_11.bin,${transformer_data_path}/encoder_buffer_in_12.bin,${transformer_data_path}/encoder_buffer_in_15.bin,${transformer_data_path}/encoder_buffer_in_13.bin,${transformer_data_path}/encoder_buffer_in_14.bin,${transformer_data_path}/encoder_buffer_in_18.bin,${transformer_data_path}/encoder_buffer_in_16.bin,${transformer_data_path}/encoder_buffer_in_17.bin,${transformer_data_path}/encoder_buffer_in_21.bin,${transformer_data_path}/encoder_buffer_in_19.bin,${transformer_data_path}/encoder_buffer_in_20.bin,${transformer_data_path}/encoder_buffer_in_22.bin,${transformer_data_path}/encoder_buffer_in_23.bin,${transformer_data_path}/encoder_buffer_in_26.bin,${transformer_data_path}/encoder_buffer_in_24.bin,${transformer_data_path}/encoder_buffer_in_25.bin,${transformer_data_path}/encoder_buffer_in_29.bin,${transformer_data_path}/encoder_buffer_in_27.bin,${transformer_data_path}/encoder_buffer_in_28.bin,${transformer_data_path}/encoder_buffer_in_32.bin,${transformer_data_path}/encoder_buffer_in_30.bin,${transformer_data_path}/encoder_buffer_in_31.bin,${transformer_data_path}/encoder_buffer_in_33.bin,${transformer_data_path}/encoder_buffer_in_34.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         fi
         if [[ $model_name == "transformer_20200831_decoder_fp32.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-10.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-10.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         fi
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -843,8 +843,8 @@ function Run_x86_sse() {
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${models_path}/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -859,8 +859,8 @@ function Run_x86_sse() {
           continue
         fi
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -877,8 +877,8 @@ function Run_x86_sse() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -895,8 +895,8 @@ function Run_x86_sse() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -915,15 +915,15 @@ function Run_x86_sse() {
         accuracy_limit_9bit=`echo ${line_info}|awk -F ' ' '{print $3}'`
 
         echo ${model_name} >> "${run_x86_sse_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_7bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_7bit}' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_7bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_7bit} >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_7bit.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_7bit}' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_7bit.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_7bit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}'_7bit pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86_sse: '${model_name}'_7bit failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_9bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_9bit}' >> "${run_x86_sse_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_9bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_9bit} >> "${run_x86_sse_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_9bit.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_9bit}' >> "${run_x86_sse_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_9bit.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_9bit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}'_9bit pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -942,7 +942,7 @@ function Run_x86_sse() {
         input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
-        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        data_path="${models_path}/input_output/"
         for i in $(seq 1 $input_num)
         do
           input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
@@ -999,8 +999,8 @@ function Run_x86_avx() {
           continue
         fi
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1015,8 +1015,8 @@ function Run_x86_avx() {
           continue
         fi
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1033,8 +1033,8 @@ function Run_x86_avx() {
           continue
         fi
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1052,8 +1052,8 @@ function Run_x86_avx() {
         accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
         echo "---------------------------------------------------------" >> "${run_x86_avx_log_file}"
         echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1068,8 +1068,8 @@ function Run_x86_avx() {
           continue
         fi
         echo ${model_name}'_train' >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=${models_path}/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1085,19 +1085,19 @@ function Run_x86_avx() {
         fi
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
-        transformer_data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input"
+        transformer_data_path="${models_path}/input_output/input"
         echo ${model_name} >> "${run_x86_avx_log_file}"
         if [[ $model_name == "mobilenet.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/mnist_calibration_data/00099.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         fi
         if [[ $model_name == "transformer_20200831_encoder_fp32.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-35.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_35.bin,${transformer_data_path}/encoder_buffer_in_0.bin,${transformer_data_path}/encoder_buffer_in_1.bin,${transformer_data_path}/encoder_buffer_in_4.bin,${transformer_data_path}/encoder_buffer_in_2.bin,${transformer_data_path}/encoder_buffer_in_3.bin,${transformer_data_path}/encoder_buffer_in_7.bin,${transformer_data_path}/encoder_buffer_in_5.bin,${transformer_data_path}/encoder_buffer_in_6.bin,${transformer_data_path}/encoder_buffer_in_10.bin,${transformer_data_path}/encoder_buffer_in_8.bin,${transformer_data_path}/encoder_buffer_in_9.bin,${transformer_data_path}/encoder_buffer_in_11.bin,${transformer_data_path}/encoder_buffer_in_12.bin,${transformer_data_path}/encoder_buffer_in_15.bin,${transformer_data_path}/encoder_buffer_in_13.bin,${transformer_data_path}/encoder_buffer_in_14.bin,${transformer_data_path}/encoder_buffer_in_18.bin,${transformer_data_path}/encoder_buffer_in_16.bin,${transformer_data_path}/encoder_buffer_in_17.bin,${transformer_data_path}/encoder_buffer_in_21.bin,${transformer_data_path}/encoder_buffer_in_19.bin,${transformer_data_path}/encoder_buffer_in_20.bin,${transformer_data_path}/encoder_buffer_in_22.bin,${transformer_data_path}/encoder_buffer_in_23.bin,${transformer_data_path}/encoder_buffer_in_26.bin,${transformer_data_path}/encoder_buffer_in_24.bin,${transformer_data_path}/encoder_buffer_in_25.bin,${transformer_data_path}/encoder_buffer_in_29.bin,${transformer_data_path}/encoder_buffer_in_27.bin,${transformer_data_path}/encoder_buffer_in_28.bin,${transformer_data_path}/encoder_buffer_in_32.bin,${transformer_data_path}/encoder_buffer_in_30.bin,${transformer_data_path}/encoder_buffer_in_31.bin,${transformer_data_path}/encoder_buffer_in_33.bin,${transformer_data_path}/encoder_buffer_in_34.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-35.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_35.bin,${transformer_data_path}/encoder_buffer_in_0.bin,${transformer_data_path}/encoder_buffer_in_1.bin,${transformer_data_path}/encoder_buffer_in_4.bin,${transformer_data_path}/encoder_buffer_in_2.bin,${transformer_data_path}/encoder_buffer_in_3.bin,${transformer_data_path}/encoder_buffer_in_7.bin,${transformer_data_path}/encoder_buffer_in_5.bin,${transformer_data_path}/encoder_buffer_in_6.bin,${transformer_data_path}/encoder_buffer_in_10.bin,${transformer_data_path}/encoder_buffer_in_8.bin,${transformer_data_path}/encoder_buffer_in_9.bin,${transformer_data_path}/encoder_buffer_in_11.bin,${transformer_data_path}/encoder_buffer_in_12.bin,${transformer_data_path}/encoder_buffer_in_15.bin,${transformer_data_path}/encoder_buffer_in_13.bin,${transformer_data_path}/encoder_buffer_in_14.bin,${transformer_data_path}/encoder_buffer_in_18.bin,${transformer_data_path}/encoder_buffer_in_16.bin,${transformer_data_path}/encoder_buffer_in_17.bin,${transformer_data_path}/encoder_buffer_in_21.bin,${transformer_data_path}/encoder_buffer_in_19.bin,${transformer_data_path}/encoder_buffer_in_20.bin,${transformer_data_path}/encoder_buffer_in_22.bin,${transformer_data_path}/encoder_buffer_in_23.bin,${transformer_data_path}/encoder_buffer_in_26.bin,${transformer_data_path}/encoder_buffer_in_24.bin,${transformer_data_path}/encoder_buffer_in_25.bin,${transformer_data_path}/encoder_buffer_in_29.bin,${transformer_data_path}/encoder_buffer_in_27.bin,${transformer_data_path}/encoder_buffer_in_28.bin,${transformer_data_path}/encoder_buffer_in_32.bin,${transformer_data_path}/encoder_buffer_in_30.bin,${transformer_data_path}/encoder_buffer_in_31.bin,${transformer_data_path}/encoder_buffer_in_33.bin,${transformer_data_path}/encoder_buffer_in_34.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         fi
         if [[ $model_name == "transformer_20200831_decoder_fp32.tflite" ]]; then
-            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-10.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
-            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+            echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=${transformer_data_path}/encoder_buffer_in_0-10.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+            ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         fi
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -1115,8 +1115,8 @@ function Run_x86_avx() {
         model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${models_path}/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1131,8 +1131,8 @@ function Run_x86_avx() {
           continue
         fi
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1149,8 +1149,8 @@ function Run_x86_avx() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1167,8 +1167,8 @@ function Run_x86_avx() {
         model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}'_weightquant pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1187,15 +1187,15 @@ function Run_x86_avx() {
         accuracy_limit_9bit=`echo ${line_info}|awk -F ' ' '{print $3}'`
 
         echo ${model_name} >> "${run_x86_avx_log_file}"
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_7bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_7bit}' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_7bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_7bit} >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_7bit.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_7bit}' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_7bit.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_7bit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}'_7bit pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86_avx: '${model_name}'_7bit failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_9bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_9bit}' >> "${run_x86_avx_log_file}"
-        ./benchmark --modelFile=${ms_models_path}/${model_name}_9bit.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_9bit} >> "${run_x86_avx_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_9bit.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit_9bit}' >> "${run_x86_avx_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_9bit.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit_9bit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}'_9bit pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1214,7 +1214,7 @@ function Run_x86_avx() {
         input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
-        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        data_path="${models_path}/input_output/"
         for i in $(seq 1 $input_num)
         do
           input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
@@ -2078,8 +2078,8 @@ function Run_x86_java() {
           continue
         fi
         echo ${model_name} >> "${run_x86_java_log_file}"
-        echo "java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
-        java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin /home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out 1
+        echo "java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64-jar/jar/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
         if [ $? = 0 ]; then
             run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
