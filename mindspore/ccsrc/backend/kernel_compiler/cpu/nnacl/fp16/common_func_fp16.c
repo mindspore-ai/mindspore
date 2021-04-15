@@ -41,32 +41,36 @@ void PostConvFuncCommFp16(float16_t *out_ptr, const float16_t *src_ptr_, const f
 
 void PostConvFuncFp16C8(const float16_t *c8_out, float16_t *nhwc_out, const float16_t *bias, size_t oc, size_t plane,
                         size_t oc_stride, ActType act_type) {
+#ifdef ENABLE_ARM64
   size_t oc8mod = oc % C8NUM;
   size_t oc8div = oc - oc8mod;
   size_t stride_size = oc_stride * sizeof(float16_t);
   PostFuncBiasReluC8Fp16(nhwc_out, c8_out, bias, oc8div, oc8mod, plane, stride_size, act_type);
-  return;
+#else
+  PostConvFuncCommFp16(nhwc_out, c8_out, bias, oc, plane, oc_stride, plane, act_type, C8NUM);
+#endif
 }
 
 void PostConvFuncFp16C4(const float16_t *c4_out, float16_t *nhwc_out, const float16_t *bias, size_t oc, size_t plane,
                         size_t plane_stride, ActType act_type) {
+#ifdef ENABLE_ARM64
   size_t oc4mod = oc % C4NUM;
   size_t oc4div = oc - oc4mod;
   size_t stride_size = (plane_stride - plane) * C4NUM * sizeof(float16_t);
   PostFuncBiasReluC4Fp16(nhwc_out, c4_out, bias, oc4div, oc4mod, plane, stride_size, act_type);
-  return;
+#else
+  PostConvFuncCommFp16(nhwc_out, c4_out, bias, oc, plane, oc, plane_stride, act_type, C4NUM);
+#endif
 }
 
 #ifdef ENABLE_ARM82_A32
 void PostFuncBiasReluC4Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc4div, size_t oc4mod,
                             size_t plane_size, size_t plane_stride, size_t relu_type) {
   // TODO(fun): function
-  return;
 }
 
 void PostFuncBiasReluC8Fp16(float16_t *dst, const float16_t *src, const float16_t *bias, size_t oc8div, size_t oc8mod,
                             size_t plane_size, size_t stride, size_t relu_type) {
   // TODO(fun): function
-  return;
 }
 #endif

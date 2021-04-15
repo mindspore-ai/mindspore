@@ -114,7 +114,12 @@ void MatmulBaseFP16CPUKernel::ResizeParameter() {
     params_->row_align_ = 1;
     params_->col_align_ = params_->col_;
   } else {
-    params_->row_align_ = UP_ROUND(params_->row_, C16NUM);
+#ifdef ENABLE_ARM64
+    int row_tile = C16NUM;
+#else
+    int row_tile = C12NUM;
+#endif
+    params_->row_align_ = UP_ROUND(params_->row_, row_tile);
     params_->col_align_ = UP_ROUND(params_->col_, C8NUM);
   }
   return;
@@ -163,9 +168,17 @@ void MatmulBaseFP16CPUKernel::InitMatrixA(void *src_ptr) {
     int8_t *src = int8_src + i * params_->deep_ * params_->row_ * lite::DataTypeSize(src_data_type);
     float16_t *dst = a_pack_ptr_ + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
+#ifdef ENABLE_ARM64
       RowMajor2Row16MajorFp16(src, dst, params_->deep_, params_->row_, src_data_type == kNumberTypeFloat32);
+#else
+      RowMajor2Row12MajorFp16(src, dst, params_->deep_, params_->row_, src_data_type == kNumberTypeFloat32);
+#endif
     } else {
+#ifdef ENABLE_ARM64
       RowMajor2Col16MajorFp16(src, dst, params_->row_, params_->deep_, src_data_type == kNumberTypeFloat32);
+#else
+      RowMajor2Col12MajorFp16(src, dst, params_->row_, params_->deep_, src_data_type == kNumberTypeFloat32);
+#endif
     }
   }
   return;

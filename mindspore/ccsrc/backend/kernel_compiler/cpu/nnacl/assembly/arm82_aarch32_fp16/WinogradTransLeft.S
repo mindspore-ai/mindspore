@@ -1,0 +1,150 @@
+#ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
+
+.text
+.align 5
+
+// void WinogradTransLeftFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
+//                            size_t length);
+//r0: S
+//r1: B
+//r2: M
+//r3: w
+//r4: h
+//r5: k
+//r6: length
+asm_function WinogradTransLeftFp16
+    push {r0, r3, r4-r11, lr}
+    vpush {q4-q7}
+    add sp, sp, #108
+    ldr r4, [sp]
+    ldr r6, [sp, #8]
+
+    mov r8, #8 // 4 * sizeof(float16_t)
+    mul r8, r6, r8  // length * 4 * 2
+    mul r7, r3, r8  // step for S
+    add r10, r4, r4 // step for B
+
+cmp r4, #1
+blt LoopHEnd
+cmp r3, #1
+blt LoopHEnd
+LoopH:
+    ldr r3, [sp, #-40]  // w
+    ldr r0, [sp, #-44]
+    LoopW:
+        mov r11, r0  // S
+        mov lr, r1 // B_src
+        veor q6, q6, q6
+        ldr r6, [sp, #8]
+        InitZero:
+            vst1.16 {d12}, [r2]!
+            subs r6, r6, #1
+            bne InitZero
+        sub r2, r2, r8
+
+        ldr r5, [sp, #4]
+        cmp r5, #4
+        bge LoopK4
+        cmp r5, #3
+        bge LoopK3
+        cmp r5, #1
+        bge LoopK1
+        b LoopKEnd
+
+        LoopK4:
+            ldr r6, [sp, #8]
+            vld1.16 {d1[0]}, [lr], r10
+            vld1.16 {d3[0]}, [lr], r10
+            vld1.16 {d5[0]}, [lr], r10
+            vld1.16 {d7[0]}, [lr], r10
+
+            add r12, r11, r7
+            add r14, r12, r7
+            add r9, r14, r7
+            LoopK4L4:
+                vld1.16 {d12}, [r2]
+                vld1.16 {d0}, [r11]!
+                vld1.16 {d2}, [r12]!
+                vmla.f16 d12, d0, d1[0]
+                vld1.16 {d4}, [r14]!
+                vmla.f16 d12, d2, d3[0]
+                vld1.16 {d6}, [r9]!
+                vmla.f16 d12, d4, d5[0]
+                vmla.f16 d12, d6, d7[0]
+                vst1.16 {d12}, [r2]!  // dst
+                subs r6, r6, #1  // length
+                bne LoopK4L4
+
+            subs r5, r5, #4  // k
+            beq LoopKEnd
+            sub r2, r2, r8  // dst - step
+            sub r9, r9, r8
+            add r11, r9, r7
+            cmp r5, #4
+            bge LoopK4
+            cmp r5, #3
+            bge LoopK3
+            b LoopK1
+
+        LoopK3:
+            ldr r6, [sp, #8]
+            vld1.16 {d1[0]}, [lr], r10
+            vld1.16 {d3[0]}, [lr], r10
+            vld1.16 {d5[0]}, [lr], r10
+
+            add r12, r11, r7
+            add r9, r12, r7
+            LoopK3L4:
+                vld1.16 {d12}, [r2]
+                vld1.16 {d0}, [r11]!
+                vld1.16 {d2}, [r12]!
+                vmla.f16 d12, d0, d1[0]
+                vld1.16 {d4}, [r9]!
+                vmla.f16 d12, d2, d3[0]
+                vmla.f16 d12, d4, d5[0]
+                vst1.16 {d12}, [r2]!  // dst
+                subs r6, r6, #1  // length
+                bne LoopK3L4
+
+            subs r5, r5, #3  // k
+            beq LoopKEnd
+            sub r2, r2, r8  // dst - step
+            sub r9, r9, r8
+            add r11, r9, r7
+            cmp r5, #3
+            bge LoopK3
+            b LoopK1
+
+        LoopK1:
+            ldr r6, [sp, #8]
+            vld1.16 {d1[0]}, [lr], r10
+
+            LoopK1L4:
+                vld1.16 {d12}, [r2]
+                vld1.16 {d0}, [r11]!
+                vmla.f16 d12, d0, d1[0]
+                vst1.16 {d12}, [r2]!  // dst
+                subs r6, r6, #1  // length
+                bne LoopK1L4
+
+            subs r5, r5, #1  // k
+            beq LoopKEnd
+            sub r2, r2, r8  // dst - step
+            sub r11, r11, r8
+            add r11, r11, r7
+            b LoopK1
+        LoopKEnd:
+            add r0, r0, r8  // S += unitstep
+            subs r3, r3, #1
+            bne LoopW
+    LoopWEnd:
+        subs r4, r4, #1
+        beq LoopHEnd
+        add r1, r1, #2  // B += 1
+        b LoopH
+LoopHEnd:
+    sub sp, sp, #108
+    vpop {q4-q7}
+    pop {r0, r3, r4-r11, pc}
+#endif
