@@ -830,3 +830,14 @@ def normalize_stop(stop, dim_size):
 @constexpr
 def is_ellipsis(x):
     return x is Ellipsis
+
+
+@constexpr
+def tuple_slice(tup, start, end):
+    """get sliced tuple from start and end."""
+    return tup[start:end]
+
+
+@constexpr
+def expanded_shape(shape, expand_size):
+    return (1,)*expand_size + shape
