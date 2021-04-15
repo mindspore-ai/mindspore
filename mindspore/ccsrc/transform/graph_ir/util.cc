@@ -81,6 +81,14 @@ size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
 GeFormat TransformUtil::ConvertFormat(const string &format) {
   if (format == kOpFormat_NCHW) {
     return GeFormat::FORMAT_NCHW;
+  } else if (format == kOpFormat_NDHWC) {
+    return GeFormat::FORMAT_NDHWC;
+  } else if (format == kOpFormat_NCDHW) {
+    return GeFormat::FORMAT_NCDHW;
+  } else if (format == kOpFormat_DHWNC) {
+    return GeFormat::FORMAT_DHWNC;
+  } else if (format == kOpFormat_DHWCN) {
+    return GeFormat::FORMAT_DHWCN;
   } else if (format == kOpFormat_NC1HWC0) {
     return GeFormat::FORMAT_NC1HWC0;
   } else if (format == kOpFormat_NHWC) {
