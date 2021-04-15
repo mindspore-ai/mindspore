@@ -77,18 +77,29 @@ class TensorDataType {
     static TensorDataType tensor_data_type;
     return &tensor_data_type;
   }
-  void UpdateTensorType(int32_t index, int32_t type) { tensor_data_type_map_[index] = type; }
-  int32_t GetTensorType(int32_t index) const {
-    if (tensor_data_type_map_.find(index) == tensor_data_type_map_.end()) {
+
+  void UpdateGraphInputDType(int32_t index, int32_t dtype) { graph_input_data_type_map_[index] = dtype; }
+  int32_t GetGraphInputDType(int32_t index) const {
+    if (graph_input_data_type_map_.find(index) == graph_input_data_type_map_.end()) {
       return TypeId::kTypeUnknown;
     }
-    return tensor_data_type_map_.at(index);
+    return graph_input_data_type_map_.at(index);
+  }
+
+  void UpdateGraphOutputDType(int32_t index, int32_t dtype) { graph_output_data_type_map_[index] = dtype; }
+  int32_t GetGraphOutputDType(int32_t index) const {
+    if (graph_output_data_type_map_.find(index) == graph_output_data_type_map_.end()) {
+      return TypeId::kTypeUnknown;
+    }
+    return graph_output_data_type_map_.at(index);
   }
 
  private:
   TensorDataType() {}
   virtual ~TensorDataType() = default;
   std::map<int32_t, int32_t> tensor_data_type_map_;
+  std::map<int32_t, int32_t> graph_input_data_type_map_;
+  std::map<int32_t, int32_t> graph_output_data_type_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

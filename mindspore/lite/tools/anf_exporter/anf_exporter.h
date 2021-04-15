@@ -57,9 +57,9 @@ class AnfExporter {
   int SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const size_t &subgraph_index);
   int SetGraphoutputIndex(const CNodePtr &cnode, size_t subgraph_index,
                           const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *return_node);
-  static int SetQuantOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                      const std::shared_ptr<mindspore::Primitive> &primitive,
-                                      const std::unique_ptr<schema::CNodeT> &dst_node);
+  static int SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
+                                          const std::shared_ptr<mindspore::Primitive> &primitive,
+                                          const std::unique_ptr<schema::CNodeT> &dst_node);
   static int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                const std::shared_ptr<mindspore::Primitive> &primitive,
                                const std::unique_ptr<schema::CNodeT> &dst_node);

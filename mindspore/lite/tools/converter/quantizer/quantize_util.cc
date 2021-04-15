@@ -248,6 +248,25 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   }
   return quant_params_holder;
 }
+bool QuantParamEqual(const schema::QuantParamT &quant_param1, const schema::QuantParamT &quant_param2) {
+  return quant_param1.inited == quant_param2.inited && quant_param1.scale == quant_param2.scale &&
+         quant_param1.zeroPoint == quant_param2.zeroPoint && quant_param1.min == quant_param2.min &&
+         quant_param1.max == quant_param2.max && quant_param1.narrowRange == quant_param2.narrowRange &&
+         quant_param1.numBits == quant_param2.numBits && quant_param1.inited == quant_param2.inited &&
+         quant_param1.varCorr == quant_param2.varCorr && quant_param1.meanCorr == quant_param2.meanCorr;
+}
+bool TensorQuantParamsInited(const schema::TensorT &tensor) {
+  if (tensor.quantParams.empty()) {
+    return false;
+  }
+
+  for (auto &quant_param : tensor.quantParams) {
+    if (!quant_param->inited) {
+      return false;
+    }
+  }
+  return true;
+}
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
                              int quant_min, int num_bits) {

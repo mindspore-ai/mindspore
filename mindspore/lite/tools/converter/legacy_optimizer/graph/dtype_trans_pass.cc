@@ -23,6 +23,7 @@
 #include "tools/converter/converter_context.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -38,18 +39,17 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
     return status;
   }
 
-  status = DoNodeInoutDTypeTrans(graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "DoNodeInoutDTypeTrans error: " << status;
-    return status;
-  }
-
   status = DoModelOutputDTypeTrans(graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "DoModelOutputDTypeTrans error: " << status;
     return status;
   }
 
+  status = DoNodeInoutDTypeTrans(graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "DoNodeInoutDTypeTrans error: " << status;
+    return status;
+  }
   return RET_OK;
 }
 
@@ -61,15 +61,23 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
     MS_LOG(ERROR) << "Invalid inputDataType: " << this->input_data_dtype;
     return RET_ERROR;
   }
-  for (auto graph_in_idx : graph_in_idxes) {
+  for (size_t i = 0; i < graph_in_idxes.size(); i++) {
+    size_t graph_in_idx = graph_in_idxes.at(i);
     MS_ASSERT(graph_in_idx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graph_in_idx);
-    if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
+    if (!quant::TensorQuantParamsInited(*tensor)) {
       continue;
     }
-    int32_t tensor_data_type = this->input_data_dtype != TypeId::kTypeUnknown
-                                 ? this->input_data_dtype
-                                 : TensorDataType::GetInstance()->GetTensorType(graph_in_idx);
+
+    if (this->input_data_dtype == TypeId::kTypeUnknown) {
+      if (tensor->dataType != TensorDataType::GetInstance()->GetGraphInputDType(i)) {
+        MS_LOG(ERROR) << "Change graph input dtype is not allowed.";
+        return RET_ERROR;
+      }
+      continue;
+    }
+
+    int32_t tensor_data_type = this->input_data_dtype;
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto node_name = (*iter)->name;
       for (size_t input_indexidx = 0; input_indexidx < (*iter)->inputIndex.size(); input_indexidx++) {
@@ -77,7 +85,7 @@ STATUS DTypeTransPass::DoModelInputDTypeTrans(schema::MetaGraphT *graph) {
           STATUS status = RET_OK;
 
           // insert dtype cast node between input tensor and input node
-          if (tensor_data_type != tensor->dataType && tensor_data_type != kTypeUnknown) {
+          if (tensor_data_type != tensor->dataType) {
             iter =
               InsertDTypeTransNode(graph, iter, kBefore, input_indexidx, tensor_data_type, tensor->dataType, &status);
           }
@@ -101,15 +109,23 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
     return RET_ERROR;
   }
   auto &graph_out_idxes = graph->outputIndex;
-  for (auto graph_out_idx : graph_out_idxes) {
+  for (size_t i = 0; i < graph_out_idxes.size(); i++) {
+    size_t graph_out_idx = graph_out_idxes.at(i);
     MS_ASSERT(graph_out_idx < graph->allTensors.size());
     auto &tensor = graph->allTensors.at(graph_out_idx);
-    if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
+    if (!quant::TensorQuantParamsInited(*tensor)) {
       continue;
     }
-    int32_t tensor_data_type = this->output_data_dtype != TypeId::kTypeUnknown
-                                 ? this->output_data_dtype
-                                 : TensorDataType::GetInstance()->GetTensorType(graph_out_idx);
+
+    if (this->output_data_dtype == TypeId::kTypeUnknown) {
+      if (tensor->dataType != TensorDataType::GetInstance()->GetGraphOutputDType(i)) {
+        MS_LOG(ERROR) << "Change graph output dtype is not allowed.";
+        return RET_ERROR;
+      }
+      continue;
+    }
+
+    int32_t tensor_data_type = this->output_data_dtype;
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto node_name = (*iter)->name;
       MS_ASSERT(node != nullptr);
@@ -117,7 +133,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
         if ((*iter)->outputIndex.at(outputIndexIdx) == graph_out_idx) {
           // insert transNode
           STATUS status = RET_OK;
-          if (tensor_data_type != tensor->dataType && tensor_data_type != kTypeUnknown) {
+          if (tensor_data_type != tensor->dataType) {
             iter =
               InsertDTypeTransNode(graph, iter, kAfter, outputIndexIdx, tensor->dataType, tensor_data_type, &status);
           }
@@ -136,27 +152,34 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
 STATUS DTypeTransPass::InsetDTypeTransNodeForWrongDtypeQuantOp(schema::MetaGraphT *graph, NodeIter *iter) {
   auto node_name = (**iter)->name;
   auto status = RET_OK;
-  // insert fp32 to int8 before
+  // insert fp32/uint8 to int8 before
   for (size_t i = 0; i < (**iter)->inputIndex.size(); i++) {
     auto &pre_tensor = graph->allTensors.at((**iter)->inputIndex.at(i));
-    if (pre_tensor->dataType == kNumberTypeFloat32 && !pre_tensor->quantParams.empty() &&
-        pre_tensor->quantParams.front()->inited) {
-      *iter = InsertDTypeTransNode(graph, *iter, kBefore, i, kNumberTypeFloat32, kNumberTypeInt8, &status);
+    // insert quant cast op for tensor which should be int8
+    if ((pre_tensor->dataType == kNumberTypeFloat32 || pre_tensor->dataType == kNumberTypeUInt8) &&
+        quant::TensorQuantParamsInited(*pre_tensor)) {
+      if (!pre_tensor->data.empty()) {
+        MS_LOG(ERROR) << "tensor with float data should be quantized at tensor_quant_pass.";
+        return RET_ERROR;
+      }
+      *iter = InsertDTypeTransNode(graph, *iter, kBefore, i, pre_tensor->dataType, kNumberTypeInt8, &status);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "InsertFloat32ToInt8Node before " << node_name.c_str() << " failed";
+        MS_LOG(ERROR) << "Insert float32 or uint8 to int8 node after before " << node_name.c_str() << " failed";
         return RET_ERROR;
       }
     }
   }
 
-  // insert int8 to fp32 after
+  // insert int8 to fp32/uint8 after
   for (size_t i = 0; i < (**iter)->outputIndex.size(); i++) {
     auto &post_tensor = graph->allTensors.at((**iter)->outputIndex.at(i));
-    if (post_tensor->dataType == kNumberTypeFloat32 && !post_tensor->quantParams.empty() &&
-        post_tensor->quantParams.front()->inited) {
-      *iter = InsertDTypeTransNode(graph, *iter, kAfter, i, kNumberTypeInt8, kNumberTypeFloat32, &status);
+    // insert quant cast op for tensor which should be int8
+    // e.g: reshape's shape tensor don't need insert quant op so its quant param isn't inited
+    if ((post_tensor->dataType == kNumberTypeFloat32 || post_tensor->dataType == kNumberTypeUInt8) &&
+        quant::TensorQuantParamsInited(*post_tensor)) {
+      *iter = InsertDTypeTransNode(graph, *iter, kAfter, i, kNumberTypeInt8, post_tensor->dataType, &status);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "InsertInt8ToFloat32Node before " << node_name.c_str() << " failed";
+        MS_LOG(ERROR) << "Insert int8 to float32 or uint8 node after " << node_name.c_str() << " failed";
         return RET_ERROR;
       }
     }
@@ -170,8 +193,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraph
   // insert int8 to fp32 before
   for (size_t i = 0; i < (**iter)->inputIndex.size(); i++) {
     auto &pre_tensor = graph->allTensors.at((**iter)->inputIndex.at(i));
-    if (pre_tensor->dataType == kNumberTypeInt8 && !pre_tensor->quantParams.empty() &&
-        pre_tensor->quantParams.front()->inited) {
+    if (pre_tensor->dataType == kNumberTypeInt8 && quant::TensorQuantParamsInited(*pre_tensor)) {
       *iter = InsertDTypeTransNode(graph, *iter, kBefore, i, kNumberTypeInt8, kNumberTypeFloat32, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertInt8ToFloat32Node before " << node_name.c_str() << " failed";
@@ -183,8 +205,7 @@ STATUS DTypeTransPass::InsetDTypeTransNodeForUnsupportedInt8Op(schema::MetaGraph
   // insert fp32 to int8 after
   for (size_t i = 0; i < (**iter)->outputIndex.size(); i++) {
     auto &post_tensor = graph->allTensors.at((**iter)->outputIndex.at(i));
-    if (post_tensor->dataType == kNumberTypeInt8 && !post_tensor->quantParams.empty() &&
-        post_tensor->quantParams.front()->inited) {
+    if (post_tensor->dataType == kNumberTypeInt8 && quant::TensorQuantParamsInited(*post_tensor)) {
       *iter = InsertDTypeTransNode(graph, *iter, kAfter, i, kNumberTypeInt8, kNumberTypeFloat32, &status);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertFloat32ToInt8Node before " << node_name.c_str() << " failed";
@@ -200,8 +221,8 @@ STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto node_name = (*iter)->name;
     if ((*iter)->inputIndex.empty()) {
-      MS_LOG(ERROR) << "Op " << node_name.c_str() << " should have " << kMinInputNum << " input tensor at least";
-      return RET_ERROR;
+      MS_LOG(WARNING) << "Op " << node_name.c_str() << " should have " << kMinInputNum << " input tensor at least";
+      continue;
     }
 
     if ((*iter)->primitive->value.type == schema::PrimitiveType_QuantDTypeCast ||
@@ -270,6 +291,10 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
     trans_node->name = "uint8toint8_" + tile_name + std::to_string(id_++);
   } else if (input_data_type == TypeId::kNumberTypeInt8 && output_data_type == TypeId::kNumberTypeUInt8) {
     trans_node->name = "int8touint8_" + tile_name + std::to_string(id_++);
+  } else if (input_data_type == TypeId::kNumberTypeUInt8 && output_data_type == TypeId::kNumberTypeFloat32) {
+    trans_node->name = "uint8toft32_" + tile_name + std::to_string(id_++);
+  } else if (input_data_type == TypeId::kNumberTypeFloat32 && output_data_type == TypeId::kNumberTypeUInt8) {
+    trans_node->name = "ft32touint8_" + tile_name + std::to_string(id_++);
   }
   trans_node->primitive->value.value = quant_dtype_cast_param;
   int insert_num = 0;

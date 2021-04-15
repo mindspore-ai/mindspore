@@ -25,6 +25,7 @@
 #include "tools/converter/quantizer/quant_helper/conv_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/default_quant_all_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
+#include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
 
 namespace mindspore::lite {
 void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const schema::CNodeT &node) {
@@ -100,6 +101,7 @@ QuantNodeHelper *QuantHelperRegister::GetQuantHelper(schema::PrimitiveType op_ty
 QuantHelperRegister::QuantHelperRegister() {
   auto base_propogator = std::make_shared<QuantParamPropogator>();
   auto base_determiner = std::make_shared<QuantTypeDeterminer>();
+  auto quant_dtype_cast_propogator = std::make_shared<QuantDtypeCastQuantParamPropogator>();
   auto bias_add_propogator = std::make_shared<BiasAddQuantParamPropogator>();
   auto carry_data_propogator = std::make_shared<CarryDataQuantParamPropogator>();
   auto carry_data_determiner = std::make_shared<CarryDataQuantTypeDeterminer>();
@@ -127,7 +129,7 @@ QuantHelperRegister::QuantHelperRegister() {
   register_map_[schema::PrimitiveType_MatMul] = new QuantNodeHelper(conv_propogator, conv_determiner);
 
   register_map_[schema::PrimitiveType_QuantDTypeCast] =
-    new QuantNodeHelper(base_propogator, default_quant_all_determiner);
+    new QuantNodeHelper(quant_dtype_cast_propogator, default_quant_all_determiner);
 
   register_map_[schema::PrimitiveType_DetectionPostProcess] =
     new QuantNodeHelper(base_propogator, only_need_inputs_determiner);

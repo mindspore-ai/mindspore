@@ -446,5 +446,20 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
   }
   return RET_OK;
 }
+
+size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag) {
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (train_flag &&
+      (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))) {
+    return 1;
+  }
+  if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
+    auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
+    return tuple->elements().size();
+  } else {
+    return 1;
+  }
+}
+
 }  // namespace lite
 }  // namespace mindspore

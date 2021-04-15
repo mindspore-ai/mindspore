@@ -175,6 +175,10 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   }();
 }
 
+bool QuantParamEqual(const schema::QuantParamT &quant_param1, const schema::QuantParamT &quant_param2);
+
+bool TensorQuantParamsInited(const schema::TensorT &tensor);
+
 template <typename T>
 STATUS DoPerChannelQuant(const tensor::TensorPtr &weight, const QuantType &quant_type,
                          std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,

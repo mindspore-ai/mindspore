@@ -17,6 +17,16 @@
 #include "nnacl/infer/arithmetic_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+void SetOutputDtypeFormat(const TensorC *input0, const TensorC *input1, TensorC *output) {
+  output->format_ = input0->format_;
+  output->data_type_ = input0->data_type_;
+  // when input0 is const, it is quanted before insert quant trans op, so use input1 data type instead
+  if (input0->data_ != NULL ||
+      ((input0->data_type_ == kNumberTypeInt8) && (input1->data_type_ == kNumberTypeFloat32))) {
+    output->data_type_ = input1->data_type_;
+  }
+}
+
 void UpdateInputShape(const int input_shape0_size, const int input_shape1_size, int *ndim, const int *input_shape0,
                       const int *input_shape1, int *in_shape0, int *in_shape1) {
   if (input_shape0_size < input_shape1_size) {
@@ -71,11 +81,7 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   size_t input_shape0_size = input0->shape_size_;
   const int *input_shape1 = input1->shape_;
   size_t input_shape1_size = input1->shape_size_;
-  output->format_ = input0->format_;
-  output->data_type_ = input0->data_type_;
-  if ((input0->data_type_ == kNumberTypeInt8) && (input1->data_type_ == kNumberTypeFloat32)) {
-    output->data_type_ = input1->data_type_;
-  }
+  SetOutputDtypeFormat(input0, input1, output);
 
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
