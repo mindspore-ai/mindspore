@@ -131,7 +131,7 @@ class Proposal(nn.Cell):
 
         self.topKv2 = P.TopK(sorted=True)
         self.topK_shape_stage2 = (self.max_num, 1)
-        self.min_float_num = -65536.0
+        self.min_float_num = -65500.0
         self.topK_mask = Tensor(self.min_float_num * np.ones(total_max_topk_input, np.float32))
 
     def construct(self, rpn_cls_score_total, rpn_bbox_pred_total, anchor_list):
