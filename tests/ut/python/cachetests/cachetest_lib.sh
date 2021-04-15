@@ -18,9 +18,9 @@
 # test scenarios for cache op testing.
 
 # Set any path variables here
-CURRPATH=$(cd "$(dirname $0)"; pwd)
-TESTPATH=$(cd "${CURRPATH}/../dataset"; pwd)
-PROJECT_PATH=$(cd "${CURRPATH}/../../../../"; pwd)
+CURRPATH=$(cd "$(dirname $0)" || exit; pwd)
+TESTPATH=$(cd "${CURRPATH}/../dataset" || exit; pwd)
+PROJECT_PATH=$(cd "${CURRPATH}/../../../../" || exit; pwd)
 
 if [ "x${BUILD_PATH}" == "x" ]; then
    BUILD_PATH=${PROJECT_PATH}/build
@@ -202,13 +202,13 @@ PytestCmd()
    if [ ${rc} -ne 0 ]; then
       MsgFail "FAILED"
       MsgError "pytest call had failure!" "${rc}" "${result}"
-      cd ${CURRPATH}
+      cd ${CURRPATH} || exit
       return 1
    else
       MsgOk "OK"
    fi
    echo
-   cd ${CURRPATH}
+   cd ${CURRPATH} || exit
    return 0
 }
 

@@ -47,7 +47,7 @@ HandleRcExit $? 1 1
 export SESSION_ID=$session_id
 
 test_count=$(($test_count+1))
-cd ${UT_TEST_DIR} 
+cd ${UT_TEST_DIR} || exit
 cmd="${UT_TEST_DIR}/ut_tests"
 echo "Test ${test_count}: ${cmd}"
 MsgEnter "Run test ${test_count}"
@@ -62,7 +62,7 @@ fi
 echo
 HandleRcExit $rc 1 0
 
-cd ${CURRPATH}
+cd ${CURRPATH} || exit
 
 StopServer
 HandleRcExit $? 1 0
