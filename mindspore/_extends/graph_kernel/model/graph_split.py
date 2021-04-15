@@ -575,6 +575,15 @@ class GraphSplitAscend(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
+        def _matmul_depth(dom):
+            if dom.dom_op().prim != "MatMul":
+                return None
+            fused = []
+            for a, _ in dom.out_relations.items():
+                if a.pattern == PrimLib.ELEMWISE and a.check_acyclic(dom):
+                    fused.append(a)
+            return fused, False
+
         changed = True
         while changed:
             changed = self.fuse(_reshape)
@@ -584,6 +593,7 @@ class GraphSplitAscend(GraphSplitByPattern):
             changed = self.fuse(_reduce_width) or changed
             changed = self.fuse(_broadcast_depth) or changed
             changed = self.fuse(_broadcast_width) or changed
+            changed = self.fuse(_matmul_depth) or changed
 
 def split(graph, target, flags):
     """Split graph"""

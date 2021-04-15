@@ -49,7 +49,7 @@ def test_basic():
     output = get_output(i0, i1, i2, True)
     expect_np = expect.asnumpy().copy()
     output_np = output.asnumpy().copy()
-    assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
+    assert np.allclose(expect_np, output_np, 5.e-3, 5.e-3)
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
