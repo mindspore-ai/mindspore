@@ -28,6 +28,7 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/cpu/insert_cast_cpu.h"
+#include "backend/optimizer/cpu/insert_format_transform_op.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
 #include "debug/anf_ir_dump.h"
@@ -87,8 +88,10 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   }
 #endif
   pm->AddPass(std::make_shared<opt::InsertCastCPU>());
-  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   MS_LOG(INFO) << "insert cast pass";
+  pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
+  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
+
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

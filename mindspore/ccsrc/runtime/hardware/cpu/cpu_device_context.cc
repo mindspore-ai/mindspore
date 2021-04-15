@@ -24,6 +24,7 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/cpu/insert_cast_cpu.h"
+#include "backend/optimizer/cpu/insert_format_transform_op.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
 
@@ -89,6 +90,7 @@ void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertCastCPU>());
+  pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
