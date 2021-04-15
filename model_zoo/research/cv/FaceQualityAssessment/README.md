@@ -213,7 +213,7 @@ sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | MSELoss, Softmax Cross Entropy                              |
 | outputs                    | probability and point                                       |
-| Speed                      | 1pc: 200~240 ms/step; 8pcs: 35~40 ms/step                   |
+| Speed                      | 1pc: 200-240 ms/step; 8pcs: 35-40 ms/step                   |
 | Total time                 | 1ps: 2.5 hours; 8pcs: 0.5 hours                             |
 | Checkpoint for Fine tuning | 16M (.ckpt file)                                            |
 
