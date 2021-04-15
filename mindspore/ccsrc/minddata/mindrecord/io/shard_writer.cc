@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/util/random.h"
 #include "minddata/mindrecord/include/shard_writer.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
@@ -1156,8 +1157,8 @@ std::vector<std::pair<int, int>> ShardWriter::BreakIntoShards() {
 
   std::vector<int> v_list(shard_count_);
   std::iota(v_list.begin(), v_list.end(), 0);
-  std::random_device rd;
-  std::mt19937 g(rd());
+
+  std::mt19937 g = mindspore::dataset::GetRandomDevice();
   std::shuffle(v_list.begin(), v_list.end(), g);
   std::unordered_set<int> set(v_list.begin(), v_list.begin() + remains);
 

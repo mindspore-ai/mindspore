@@ -17,6 +17,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_RANDOM_H_
 
 #if defined(_WIN32) || defined(_WIN64)
+#ifndef _CRT_RAND_S
+#define _CRT_RAND_S
+#endif
 #include <stdlib.h>
 #endif
 #include <chrono>
