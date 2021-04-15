@@ -67,7 +67,7 @@ ResNet的总体网络架构如下：
 使用的数据集：[ImageNet2012](http://www.image-net.org/)
 
 - 数据集大小：共1000个类、224*224彩色图像
-    - 训练集：共1,281,167张图像  
+    - 训练集：共1,281,167张图像
     - 测试集：共50,000张图像
 - 数据格式：JPEG
     - 注：数据在dataset.py中处理。
@@ -143,7 +143,8 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
     ├── run_distribute_train_gpu.sh        # 启动GPU分布式训练（8卡）
     ├── run_parameter_server_train_gpu.sh  # 启动GPU参数服务器训练（8卡）
     ├── run_eval_gpu.sh                    # 启动GPU评估
-    └── run_standalone_train_gpu.sh        # 启动GPU单机训练（单卡）
+    ├── run_standalone_train_gpu.sh        # 启动GPU单机训练（单卡）
+    └── cache_util.sh                      # 使用单节点緩存的帮助函数
   ├── src
     ├── config.py                          # 参数配置
     ├── dataset.py                         # 数据预处理
@@ -304,7 +305,25 @@ bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet201
 
 #### 训练时推理
 
-训练时推理需要在启动文件中添加`run_eval` 并设置为True。与此同时需要设置: `eval_dataset_path`, `save_best_ckpt`, `eval_start_epoch`, `eval_interval` 。
+```bash
+# Ascend 分布式训练时推理示例:
+bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+
+# Ascend 单机训练时推理示例:
+bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+
+# GPU 分布式训练时推理示例:
+bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+
+# GPU 单机训练时推理示例:
+bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+```
+
+训练时推理需要在设置`RUN_EVAL`为True，与此同时还需要设置`EVAL_DATASET_PATH`。此外，当设置`RUN_EVAL`为True时还可为python脚本设置`save_best_ckpt`, `eval_start_epoch`, `eval_interval`等参数。
+
+默认情况下我们将启动一个独立的缓存服务器将推理数据集的图片以tensor的形式保存在内存中以带来推理性能的提升。用户在使用缓存前需确保内存大小足够缓存推理集中的图片（缓存ImageNet2012的推理集大约需要30GB的内存，缓存CIFAR-10的推理集约需要使用6GB的内存）。
+
+在训练结束后，可以选择关闭缓存服务器或不关闭它以继续为未来的推理提供缓存服务。
 
 ### 结果
 
