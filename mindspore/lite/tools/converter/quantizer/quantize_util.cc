@@ -186,12 +186,12 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   QuantParamHolderPtr quant_params_holder = nullptr;
   auto quant_params_valueptr = primitive->GetAttr("quant_params");
   if (quant_params_valueptr == nullptr) {
-    quant_params_holder = std::make_shared<QuantParamHolder>();
+    quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
     primitive->AddAttr("quant_params", quant_params_holder);
   } else {
     quant_params_holder = quant_params_valueptr->cast<QuantParamHolderPtr>();
     if (quant_params_holder == nullptr) {
-      quant_params_holder = std::make_shared<QuantParamHolder>();
+      quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
       primitive->AddAttr("quant_params", quant_params_holder);
     }
   }

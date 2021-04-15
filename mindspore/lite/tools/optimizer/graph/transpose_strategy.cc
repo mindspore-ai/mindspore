@@ -93,9 +93,7 @@ AnfNodePtr TransposeStrategy::TransposeDependOnShape(const FuncGraphPtr &func_gr
   std::string trans_name =
     before ? cnode->fullname_with_scope() + "_pre" + std::to_string(index - 1) : cnode->fullname_with_scope() + "_post";
   auto trans_insert_node = GenTransposeNode(func_graph, trans_input_node, perm, trans_name);
-  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>();
-  quant_params_holder->AddInputQuantParam(std::vector<schema::QuantParamT>(1));
-  quant_params_holder->AddOutputQuantParam(std::vector<schema::QuantParamT>(1));
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(1, 1);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(trans_insert_node->input(0));
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
   return trans_insert_node;

@@ -535,7 +535,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, o
     return RET_ERROR;
   }
   // set input tensors
-  auto quant_params_holder = std::make_shared<QuantParamHolder>();
+  auto quant_params_holder = std::make_shared<QuantParamHolder>(onnx_node.input_size(), onnx_node.output_size());
   for (int i = 0; i < onnx_node.input_size(); ++i) {
     const auto &input_name = onnx_node.input(i);
     std::vector<schema::QuantParamT> quant_params;
@@ -544,7 +544,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, o
       MS_LOG(ERROR) << "set input tensor quant param failed.";
       return status;
     }
-    quant_params_holder->AddInputQuantParam(quant_params);
+    quant_params_holder->set_input_quant_param(i, quant_params);
   }
   // set out tensors
   for (int i = 0; i < onnx_node.output_size(); ++i) {
@@ -555,7 +555,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, o
       MS_LOG(ERROR) << "set output tensor quant param failed.";
       return status;
     }
-    quant_params_holder->AddOutputQuantParam(quant_params);
+    quant_params_holder->set_output_quant_param(i, quant_params);
   }
   primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;

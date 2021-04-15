@@ -25,12 +25,17 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kDoubleNum = 2;
-int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
-  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
-  if (quant_tensor_info_ptr == nullptr) {
-    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
+size_t GetCNodeOutputsSize(std::shared_ptr<AnfNode> anf_node) {
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
+    auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
+    return tuple->elements().size();
+  } else {
+    return 1;
   }
+}
+
+int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
@@ -50,10 +55,7 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
       return ret;
     }
     quants.emplace_back(quant_param);
-    quant_param_holder->AddInputQuantParam(quants);
-  } else {
-    std::vector<schema::QuantParamT> notinited_quant_params(1);
-    quant_param_holder->AddInputQuantParam(notinited_quant_params);
+    quant_param_holder->set_input_quant_param(0, quants);
   }
 
   quants.clear();
@@ -78,19 +80,12 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
       return ret;
     }
     quants.emplace_back(quant_param);
-    quant_param_holder->AddInputQuantParam(quants);
-  } else {
-    std::vector<schema::QuantParamT> notinited_quant_params(1);
-    quant_param_holder->AddInputQuantParam(notinited_quant_params);
+    quant_param_holder->set_input_quant_param(1, quants);
   }
   return lite::RET_OK;
 }
 
 int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
-  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
-  if (quant_tensor_info_ptr == nullptr) {
-    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
-  }
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
@@ -110,22 +105,14 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
       return ret;
     }
     quants.emplace_back(quant_param);
-    quant_param_holder->AddOutputQuantParam(quants);
-  } else {
-    schema::QuantParamT tmpQuantParam;
-    quants.emplace_back(tmpQuantParam);
-    quant_param_holder->AddOutputQuantParam(quants);
+    quant_param_holder->set_output_quant_param(0, quants);
   }
   return lite::RET_OK;
 }
 
 void CheckQuantParams(const PrimitivePtr &prim) {
-  auto quant_tensor_info_ptr = prim->GetAttr("quant_params");
-  if (quant_tensor_info_ptr == nullptr) {
-    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
-  }
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
-  auto input_quant_params = quant_param_holder->input_quant_params();
+  auto input_quant_params = quant_param_holder->get_input_quant_params();
   bool is_quant = false;
   for (size_t i = 0; i < input_quant_params.size(); ++i) {
     if (!input_quant_params.at(i).empty() && input_quant_params.at(i).at(0).inited) {
@@ -133,7 +120,7 @@ void CheckQuantParams(const PrimitivePtr &prim) {
       break;
     }
   }
-  auto output_quant_params = quant_param_holder->output_quant_params();
+  auto output_quant_params = quant_param_holder->get_output_quant_params();
   for (size_t i = 0; i < output_quant_params.size(); ++i) {
     if (!output_quant_params.at(i).empty() && output_quant_params.at(i).at(0).inited) {
       is_quant = true;
@@ -145,8 +132,6 @@ void CheckQuantParams(const PrimitivePtr &prim) {
 }
 
 int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs) {
-  auto quant_param_holder = std::make_shared<lite::QuantParamHolder>();
-  prim->AddAttr("quant_params", quant_param_holder);
   auto narrow_range = prim->GetAttr("narrow_range");
   bool narrow_range_param = false;
   if (narrow_range != nullptr) {
@@ -248,6 +233,10 @@ int MindirAdjustPass::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   }
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
+
+  auto quant_param_holder = std::make_shared<lite::QuantParamHolder>(inputs.size(), GetCNodeOutputsSize(anf_node));
+  primitive->AddAttr("quant_params", quant_param_holder);
+
   if (ConvertQuantParam(primitive, inputs) != lite::RET_OK) {
     MS_LOG(ERROR) << "compute quant param failed.";
     return lite::RET_ERROR;

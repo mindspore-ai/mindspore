@@ -311,19 +311,8 @@ STATUS CaffeModelParser::ConvertLayerQuantParams(const caffe::LayerParameter &la
     MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
     return RET_NULL_PTR;
   }
-  auto quant_params_holder = std::make_shared<QuantParamHolder>();
-  for (auto input_idx : layer.bottom()) {
-    std::vector<schema::QuantParamT> notinited_quant_params(1);
-    quant_params_holder->AddInputQuantParam(notinited_quant_params);
-  }
-  for (auto input_idx : weight.blobs()) {
-    std::vector<schema::QuantParamT> notinited_quant_params(1);
-    quant_params_holder->AddInputQuantParam(notinited_quant_params);
-  }
-  for (auto output_idx : layer.top()) {
-    std::vector<schema::QuantParamT> notinited_quant_params(1);
-    quant_params_holder->AddOutputQuantParam(notinited_quant_params);
-  }
+  auto quant_params_holder =
+    std::make_shared<QuantParamHolder>(layer.bottom_size() + weight.blobs_size(), layer.top_size());
   primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }

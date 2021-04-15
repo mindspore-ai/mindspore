@@ -29,6 +29,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
@@ -74,6 +75,8 @@ class TFModelParser : public ModelParser {
 
   STATUS ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &first_func_map,
                                     const std::map<CNodePtr, FuncGraphPtr> &second_func_map);
+
+  STATUS ConvertQuantParams(const size_t &input_size, const size_t &output_size, ops::PrimitiveC *primitive_c);
 
   static STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
 

@@ -243,7 +243,8 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops:
     round_type = 2;
   }
   const auto &tflite_subgraph = tflite_model_->subgraphs.front();
-  auto quant_params_holder = std::make_shared<QuantParamHolder>();
+  auto quant_params_holder = std::make_shared<QuantParamHolder>(op->inputs.size(), op->outputs.size());
+  size_t idx = 0;
   for (auto input_idx : op->inputs) {
     if (input_idx < 0) {
       input_idx += tflite_subgraph->tensors.size();
@@ -255,8 +256,10 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops:
       MS_LOG(ERROR) << "set input tensor quant param failed.";
       return status;
     }
-    quant_params_holder->AddInputQuantParam(quant_params);
+    quant_params_holder->set_input_quant_param(idx, quant_params);
+    idx++;
   }
+  idx = 0;
   for (auto output_idx : op->outputs) {
     if (output_idx < 0) {
       output_idx += tflite_subgraph->tensors.size();
@@ -268,7 +271,8 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops:
       MS_LOG(ERROR) << "set output tensor quant param failed.";
       return status;
     }
-    quant_params_holder->AddOutputQuantParam(quant_params);
+    quant_params_holder->set_output_quant_param(idx, quant_params);
+    idx++;
   }
   primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
