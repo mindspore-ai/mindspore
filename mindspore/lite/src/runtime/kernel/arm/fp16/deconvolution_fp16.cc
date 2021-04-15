@@ -32,9 +32,9 @@ DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
     delete matmul_param_;
     matmul_param_ = nullptr;
   }
-  if (execute_weight_ != nullptr) {
-    free(execute_weight_);
-    execute_weight_ = nullptr;
+  if (pack_weight_ != nullptr) {
+    free(pack_weight_);
+    pack_weight_ = nullptr;
   }
   return;
 }
@@ -78,17 +78,17 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   }
 
   size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
-  execute_weight_ = reinterpret_cast<float16_t *>(malloc(weight_pack_size));
-  if (execute_weight_ == nullptr) {
-    MS_LOG(ERROR) << "deconv malloc execute_weight_ error!";
+  pack_weight_ = reinterpret_cast<float16_t *>(malloc(weight_pack_size));
+  if (pack_weight_ == nullptr) {
+    MS_LOG(ERROR) << "deconv malloc pack_weight_ error!";
     return RET_ERROR;
   }
-  memset(execute_weight_, 0, weight_pack_size);
+  memset(pack_weight_, 0, weight_pack_size);
   if (in_tensors_.at(1)->data_type() != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "deconv fp16 kernel require fp16 weight";
     return RET_ERROR;
   }
-  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), execute_weight_, input_channel,
+  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), pack_weight_, input_channel,
                            kernel_w * kernel_h, output_channel);
   return RET_OK;
 }
@@ -169,7 +169,7 @@ int DeConvolutionFp16CPUKernel::DoDeconv(int task_id) {
   }
 
   auto tmp_buf = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_16_;
-  MatMulFp16(pack_input_, execute_weight_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+  MatMulFp16(pack_input_, pack_weight_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
              tmp_buf, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_, oc * C8NUM * kernel_plane_, 0,
              OutType_C8);
 
@@ -197,7 +197,12 @@ int DeConvolutionFp16CPUKernel::Init() {
 }
 
 int DeConvolutionFp16CPUKernel::Run() {
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_ptr == nullptr || output_ptr == nullptr) {
+    MS_LOG(ERROR) << "DeConvolution Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
 
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
@@ -207,8 +212,8 @@ int DeConvolutionFp16CPUKernel::Run() {
   }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    batch_input_ = execute_input_ + batch_index * conv_param_->input_channel_ * input_plane_;
-    batch_output_ = execute_output_ + batch_index * conv_param_->output_channel_ * output_plane_;
+    batch_input_ = input_ptr + batch_index * conv_param_->input_channel_ * input_plane_;
+    batch_output_ = output_ptr + batch_index * conv_param_->output_channel_ * output_plane_;
 
     RowMajor2Col16MajorFp16Opt(batch_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
@@ -228,25 +233,17 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
-  auto weight_data_type = inputs.at(1)->data_type();
-  TypeId bias_data_type = kTypeUnknown;
-  if (inputs.size() == 3) {
-    bias_data_type = inputs.at(2)->data_type();
-  }
   kernel::LiteKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   if (conv_param->group_ == 1) {
     if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
         (conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1)) {
-      kernel = new (std::nothrow)
-        kernel::DeConvWinogradFp16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
+      kernel = new (std::nothrow) kernel::DeConvWinogradFp16CPUKernel(op_parameter, inputs, outputs, ctx);
     } else {
-      kernel = new (std::nothrow)
-        kernel::DeConvolutionFp16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
+      kernel = new (std::nothrow) kernel::DeConvolutionFp16CPUKernel(op_parameter, inputs, outputs, ctx);
     }
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = new (std::nothrow)
-      DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
+    kernel = new (std::nothrow) DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, ctx);
   }
 
   if (kernel == nullptr) {

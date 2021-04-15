@@ -15,10 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
-#include "src/runtime/kernel/arm/base/group_convolution.h"
-#include "src/runtime/kernel/arm/int8/convolution_int8_creator.h"
-#include "src/runtime/kernel/arm/fp32/convolution_delegate_fp32.h"
-#include "src/runtime/kernel/arm/int8/group_convolution_int8.h"
 
 namespace mindspore::kernel {
 void CopyTensorQuantParam(lite::Tensor *dst, lite::Tensor *src) {
@@ -37,15 +33,11 @@ ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
   return conv_parameter;
 }
 
-void FreeMemory(ConvParameter *conv_param, const std::vector<lite::Tensor *> &new_inputs,
-                const std::vector<lite::Tensor *> &new_outputs) {
-  if (conv_param != nullptr) {
-    free(conv_param);
-  }
-  for (auto &in_tensor : new_inputs) {
+void FreeMemory(const std::vector<lite::Tensor *> *new_inputs, const std::vector<lite::Tensor *> *new_outputs) {
+  for (auto &in_tensor : *new_inputs) {
     delete in_tensor;
   }
-  for (auto &out_tensor : new_outputs) {
+  for (auto &out_tensor : *new_outputs) {
     delete out_tensor;
   }
 }
@@ -106,6 +98,7 @@ void GroupConvCreator::CopyQuantParam(std::vector<lite::Tensor *> *tensors) {
     CopyTensorQuantParam(tensors->at(j), origin_inputs_.at(j));
   }
 }
+
 bool GroupConvCreator::CheckIfValidPoint(void *ptr) {
   if (ptr == nullptr) {
     for (auto &sub_conv : group_convs_) {
@@ -117,18 +110,17 @@ bool GroupConvCreator::CheckIfValidPoint(void *ptr) {
 }
 
 int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
-  auto in_tensor = CreateVarTensor(
-    {input_shape_, schema::Format_NHWC, origin_inputs_.at(0)->data_type(), lite::Tensor::Category::VAR, true},
-    infered_);
+  auto in_tensor =
+    CreateVarTensor({input_shape_, schema::Format_NHWC, data_type_, lite::Tensor::Category::VAR, true}, infered_);
   if (!CheckIfValidPoint(in_tensor)) {
     return lite::RET_ERROR;
   }
   tensors->emplace_back(in_tensor);
   return lite::RET_OK;
 }
+
 int GroupConvCreator::NewOutputTensor(std::vector<lite::Tensor *> *tensors, lite::Tensor *output) {
-  auto out_tensor =
-    CreateVarTensor({output_shape_, output->format(), output->data_type(), output->category(), false}, infered_);
+  auto out_tensor = CreateVarTensor({output_shape_, output->format(), data_type_, output->category(), false}, infered_);
   if (!CheckIfValidPoint(out_tensor)) {
     return lite::RET_ERROR;
   }
@@ -153,6 +145,7 @@ int GroupConvCreator::NewConstTensor(std::vector<lite::Tensor *> *tensors, int g
   }
   return lite::RET_OK;
 }
+
 void GroupConvCreator::SetShapeOfTensors() {
   int new_in_channel = origin_inputs_.at(kWeightIndex)->Channel();
   int new_out_channel;
@@ -176,71 +169,31 @@ void GroupConvCreator::SetShapeOfTensors() {
   }
 }
 
-int GroupConvCreator::CreatGroupConv() {
-  for (int i = 0; i < conv_param_->group_; ++i) {
-    auto new_conv_parameter = CreateNewConvParameter(conv_param_);
-    if (!CheckIfValidPoint(new_conv_parameter)) {
+int GroupConvCreator::GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
+                                         std::vector<lite::Tensor *> *new_outputs, int group_id) {
+  if (!CheckIfValidPoint(conv_param)) {
+    return lite::RET_ERROR;
+  }
+  // create new input for each group
+  if (NewInputTensor(new_inputs) != lite::RET_OK) {
+    MS_LOG(ERROR) << "new input tensor failed.";
+    FreeMemory(new_inputs, {});
+    return lite::RET_ERROR;
+  }
+  // const tensor
+  if (NewConstTensor(new_inputs, group_id) != lite::RET_OK) {
+    MS_LOG(ERROR) << "new const tensor failed.";
+    FreeMemory(new_inputs, {});
+    return lite::RET_ERROR;
+  }
+  // create new output tensor
+  for (auto &output : origin_outputs_) {
+    if (NewOutputTensor(new_outputs, output) != lite::RET_OK) {
+      MS_LOG(ERROR) << "new output tensor failed.";
+      FreeMemory(new_inputs, new_outputs);
       return lite::RET_ERROR;
-    }
-    // create new input for each group
-    std::vector<lite::Tensor *> new_inputs;
-    if (NewInputTensor(&new_inputs) != lite::RET_OK) {
-      MS_LOG(ERROR) << "new input tensor failed.";
-      FreeMemory(new_conv_parameter, new_inputs, {});
-      return lite::RET_ERROR;
-    }
-    // const tensor
-    if (NewConstTensor(&new_inputs, i) != lite::RET_OK) {
-      MS_LOG(ERROR) << "new const tensor failed.";
-      FreeMemory(new_conv_parameter, new_inputs, {});
-      return lite::RET_ERROR;
-    }
-    // create new output tensor
-    std::vector<lite::Tensor *> new_outputs;
-    for (auto &output : origin_outputs_) {
-      if (NewOutputTensor(&new_outputs, output) != lite::RET_OK) {
-        MS_LOG(ERROR) << "new output tensor failed.";
-        FreeMemory(new_conv_parameter, new_inputs, new_outputs);
-        return lite::RET_ERROR;
-      }
-    }
-
-    if (is_quant_) {
-      CopyQuantParam(&new_inputs);
-      group_convs_.emplace_back(CpuConvInt8KernelSelect(new_inputs, new_outputs,
-                                                        reinterpret_cast<OpParameter *>(new_conv_parameter), context_));
-    } else {
-      group_convs_.emplace_back(new (std::nothrow) kernel::ConvolutionDelegateCPUKernel(
-        reinterpret_cast<OpParameter *>(new_conv_parameter), new_inputs, new_outputs, context_));
     }
   }
   return lite::RET_OK;
-}
-
-kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                  const lite::InnerContext *ctx) {
-  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, false);
-  group_conv_creator.SetShapeOfTensors();
-  if (group_conv_creator.CreatGroupConv() != lite::RET_OK) {
-    MS_LOG(ERROR) << "Create fp32 group conv failed.";
-    return nullptr;
-  }
-  return new (std::nothrow)
-    GroupConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator.get_group_conv(),
-                              reinterpret_cast<ConvParameter *>(op_parameter)->group_);
-}
-
-kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                  const lite::InnerContext *ctx, int group) {
-  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, true);
-  group_conv_creator.SetShapeOfTensors();
-  if (group_conv_creator.CreatGroupConv() != lite::RET_OK) {
-    MS_LOG(ERROR) << "Create int8 group conv failed.";
-    return nullptr;
-  }
-  return new (std::nothrow)
-    GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator.get_group_conv(), group);
 }
 }  // namespace mindspore::kernel

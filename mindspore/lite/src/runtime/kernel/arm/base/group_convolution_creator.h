@@ -34,12 +34,12 @@ struct TensorInfo {
 class GroupConvCreator {
  public:
   GroupConvCreator(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs, OpParameter *op_parameter,
-                   const lite::InnerContext *ctx, bool is_quant)
+                   const lite::InnerContext *ctx, bool is_quant, TypeId data_type)
       : origin_inputs_(std::move(inputs)),
         origin_outputs_(std::move(outputs)),
-        context_(ctx),
         infered_(op_parameter->infer_flag_),
-        is_quant_(is_quant) {
+        is_quant_(is_quant),
+        data_type_(data_type) {
     conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter);
   }
 
@@ -47,15 +47,16 @@ class GroupConvCreator {
 
  public:
   void SetShapeOfTensors();
-  int CreatGroupConv();
-  std::vector<kernel::LiteKernel *> get_group_conv() { return group_convs_; }
+  std::vector<kernel::LiteKernel *> *get_group_conv() { return &group_convs_; }
+  void CopyQuantParam(std::vector<lite::Tensor *> *tensors);
+  int GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
+                         std::vector<lite::Tensor *> *new_outputs, int group_id);
 
  protected:
   void set_input_shape(const std::vector<int> &shape) { input_shape_ = shape; }
   void set_output_shape(const std::vector<int> &shape) { output_shape_ = shape; }
   void set_filter_shape(const std::vector<int> &shape) { filter_shape_ = shape; }
   void set_bias_shape(const std::vector<int> &shape) { bias_shape_ = shape; }
-  void CopyQuantParam(std::vector<lite::Tensor *> *tensors);
   bool CheckIfValidPoint(void *ptr);
   int NewInputTensor(std::vector<lite::Tensor *> *tensors);
   int NewConstTensor(std::vector<lite::Tensor *> *tensors, int group_id);
@@ -69,20 +70,13 @@ class GroupConvCreator {
   std::vector<int> output_shape_;
   std::vector<int> filter_shape_;
   std::vector<int> bias_shape_;
-  const lite::InnerContext *context_;
   ConvParameter *conv_param_;
-  bool infered_;
-  bool is_quant_;
+  bool infered_ = false;
+  bool is_quant_ = false;
+  TypeId data_type_;
 };
 
-LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                          const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                          const lite::InnerContext *ctx);
-
-LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                          const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                          const lite::InnerContext *ctx, int group);
-
+ConvParameter *CreateNewConvParameter(ConvParameter *parameter);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_CREATOR_H_

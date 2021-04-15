@@ -45,8 +45,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float16_t));
-  RowMajor2Col8MajorFp16(origin_weight_, packed_weight_, out_channel, in_channel * kernel_plane,
-                         origin_weight_data_type_ == kNumberTypeFloat32);
+  RowMajor2Col8MajorFp16(origin_weight_, packed_weight_, out_channel, in_channel * kernel_plane, false);
 
   // init bias
   bias_data_ = malloc(oc8 * sizeof(float16_t));
@@ -56,14 +55,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, oc8 * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
-    if (origin_bias_data_type_ == kNumberTypeFloat16) {
-      memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
-    } else {
-      MS_LOG(ERROR) << "Conv fp16 only support fp16 bias";
-      return RET_ERROR;
-    }
-  } else {
-    MS_ASSERT(in_tensors_.size() == kInputSize1);
+    memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
   }
   return RET_OK;
 }
@@ -123,8 +115,14 @@ int ConvolutionFP16CPUKernel::ReSize() {
 }
 
 int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
-  ConvFp16(execute_input_, packed_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), col_major_input_,
-           execute_output_, task_id, conv_param_);
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_ptr == nullptr || output_ptr == nullptr) {
+    MS_LOG(ERROR) << "Convolution Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
+  ConvFp16(input_ptr, packed_input_, packed_weight_, reinterpret_cast<float16_t *>(bias_data_), col_major_input_,
+           output_ptr, task_id, conv_param_);
   return RET_OK;
 }
 
@@ -139,8 +137,6 @@ static int ConvolutionFp16Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionFP16CPUKernel::Run() {
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";

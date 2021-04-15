@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
+#include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "nnacl/fp16/conv_depthwise_fp16.h"
 
 #ifdef __cplusplus
@@ -33,15 +33,11 @@ void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const flo
 #endif
 
 namespace mindspore::kernel {
-class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
+class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseSWFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                                      void *origin_weight, void *origin_bias, TypeId origin_weight_data_type,
-                                      TypeId origin_bias_data_type)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, origin_weight_data_type, origin_bias_data_type),
-        origin_weight_(origin_weight),
-        origin_bias_(origin_bias) {}
+                                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDepthwiseSWFp16CPUKernel() override;
 
   int Init() override;
@@ -54,8 +50,6 @@ class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseFP16CPUKernel 
 
  private:
   void FreePackedInputOutput();
-  void *origin_weight_;  // do not free
-  void *origin_bias_;    // do not free
   SlidingWindowParam *sliding_ = nullptr;
   float16_t *packed_weight_ = nullptr;
   float16_t *packed_input_ = nullptr;

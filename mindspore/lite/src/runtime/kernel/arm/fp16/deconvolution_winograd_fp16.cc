@@ -317,15 +317,11 @@ int DeConvWinogradFp16CPUKernel::InitComputeParam() {
 int DeConvWinogradFp16CPUKernel::InitDataParam() {
   /* unit data : weight & winograd data*/
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter(weight_tensor, weight_tensor->data_c());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Execute filter failed.";
-    return ret;
-  }
+  auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
 
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
-    ret = PackDeConvWgDataFp16(execute_weight_, unit, conv_param_, deconv_param_);
+    auto ret = PackDeConvWgDataFp16(origin_weight, unit, conv_param_, deconv_param_);
     if (ret != RET_OK) {
       return ret;
     }
@@ -338,18 +334,11 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float16_t));
-  auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
       in_tensors_.at(kBiasIndex)->DimensionSize(0) == conv_param_->output_channel_) {
-    auto src_bias = reinterpret_cast<float16_t *>(in_tensors_.at(kBiasIndex)->MutableData());
-    MS_ASSERT(src_bias);
-    for (int i = 0; i < conv_param_->output_channel_; ++i) {
-      fp16_bias_data[i] = (float16_t)src_bias[i];
-    }
-  } else {
-    MS_ASSERT(in_tensors_.size() == kInputSize1);
+    auto src_bias = reinterpret_cast<float16_t *>(in_tensors_.at(kBiasIndex)->data_c());
+    memcpy(bias_data_, src_bias, in_tensors_.at(kBiasIndex)->Size());
   }
-
   return RET_OK;
 }
 
@@ -391,11 +380,16 @@ int DeConvWinogradFp16CPUKernel::Init() {
 }
 
 int DeConvWinogradFp16CPUKernel::Run() {
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_ptr == nullptr || output_ptr == nullptr) {
+    MS_LOG(ERROR) << "Deconvolution Winograd Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    nhwc_input_ = execute_input_ + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
-    nhwc_output_ = execute_output_ + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
+    nhwc_input_ = input_ptr + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
+    nhwc_output_ = output_ptr + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float16_t));
     ParallelLaunch(this->context_->thread_pool_, DeConvWgFp16Run, this, deconv_param_->thread_num_);

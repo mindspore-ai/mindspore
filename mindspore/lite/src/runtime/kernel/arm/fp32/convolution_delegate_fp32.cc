@@ -24,6 +24,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
+#include "src/runtime/kernel/arm/base/group_convolution.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 
@@ -161,9 +162,9 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
   return kernel;
 }
 
-kernel::LiteKernel *DispatchConvDw(const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                   const InnerContext *ctx) {
+kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const InnerContext *ctx) {
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
   if (opParameter != nullptr && opParameter->infer_flag_) {
@@ -187,6 +188,29 @@ kernel::LiteKernel *DispatchConvDw(const std::vector<lite::Tensor *> &inputs,
   return kernel;
 }
 
+kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::InnerContext *ctx) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat32);
+  group_conv_creator.SetShapeOfTensors();
+  for (int i = 0; i < conv_param->group_; ++i) {
+    ConvParameter *new_conv_param = CreateNewConvParameter(conv_param);
+    std::vector<lite::Tensor *> new_inputs;
+    std::vector<lite::Tensor *> new_outputs;
+    auto ret = group_conv_creator.GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetSingleConv for fp32 group conv failed.";
+      return nullptr;
+    }
+    group_conv_creator.get_group_conv()->emplace_back(new (std::nothrow) ConvolutionDelegateCPUKernel(
+      reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx));
+  }
+  return new (std::nothrow)
+    GroupConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()),
+                              reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+}
+
 /* creator func */
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
@@ -200,7 +224,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   if (conv_param->group_ == 1) {
     kernel = new (std::nothrow) kernel::ConvolutionDelegateCPUKernel(op_parameter, inputs, outputs, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = DispatchConvDw(inputs, outputs, op_parameter, ctx);
+    kernel = CpuConvDwFp32KernelCreator(inputs, outputs, op_parameter, ctx);
   } else {
     kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, ctx);
   }

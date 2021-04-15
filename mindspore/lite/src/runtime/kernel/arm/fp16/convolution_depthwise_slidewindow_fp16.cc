@@ -62,14 +62,15 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
+  auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNCHWFp16ToNC8HW8Fp16(reinterpret_cast<float16_t *>(origin_weight_), packed_weight_, 1,
-                           weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
+  PackNCHWFp16ToNC8HW8Fp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
+                           weight_tensor->Batch());
 
   bias_data_ = reinterpret_cast<float16_t *>(malloc(C8NUM * OC8 * sizeof(float16_t)));
   if (bias_data_ == nullptr) {
@@ -77,14 +78,10 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
-  auto bias_fp16 = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    MS_ASSERT(origin_bias_);
-    auto ori_bias = reinterpret_cast<float16_t *>(origin_bias_);
-    for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
-      bias_fp16[i] = (float16_t)ori_bias[i];
-    }
+    auto ori_bias = reinterpret_cast<float16_t *>(bias_tensor->data_c());
+    memcpy(bias_data_, ori_bias, bias_tensor->Size());
   }
 
   conv_param_->thread_num_ = MSMIN(thread_count_, OC8);
@@ -143,14 +140,19 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     return ret;
   }
 
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_ptr == nullptr || output_ptr == nullptr) {
+    MS_LOG(ERROR) << "Convolution depthwise Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
 
   if (need_align_) {
-    PackNHWCToNHWC8Fp16(execute_input_, packed_input_, conv_param_->input_batch_,
+    PackNHWCToNHWC8Fp16(input_ptr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
   } else {
-    packed_input_ = execute_input_;
-    packed_output_ = execute_output_;
+    packed_input_ = input_ptr;
+    packed_output_ = output_ptr;
   }
 
   ret = ParallelLaunch(this->context_->thread_pool_, ConvDwSWFp16Run, this, conv_param_->thread_num_);
@@ -158,7 +160,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "ConvDwSWFp16Run error: error_code[" << ret << "]";
   }
   if (need_align_) {
-    PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
+    PackNHWC8ToNHWCFp16(packed_output_, output_ptr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }
 

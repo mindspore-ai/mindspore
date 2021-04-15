@@ -33,9 +33,9 @@ int ConvolutionWinogradFP16CPUKernel::WinogradFilterTransformFp16(const float16_
 }
 
 int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
-  auto filter_tensor = in_tensors_.at(kWeightIndex);
-  int in_channel = filter_tensor->Channel();
-  int out_channel = filter_tensor->Batch();
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  int in_channel = weight_tensor->Channel();
+  int out_channel = weight_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   int oc_block_num = UP_DIV(out_channel, col_tile_);
@@ -65,20 +65,10 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
     return ret;
   }
-  ret = GetExecuteFilter(filter_tensor, origin_weight_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "get execute filter failed.";
-    return ret;
-  }
-  ret = WinogradFilterTransformFp16(execute_weight_, matrix_g, matrix_gt, col_tile_);
+  ret = WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(origin_weight_), matrix_g, matrix_gt, col_tile_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transform failed.";
     return ret;
-  }
-  // if fp16_weight is malloced, free it. It will not be used in runtime anymore.
-  if (fp16_weight_ != nullptr) {
-    free(fp16_weight_);
-    fp16_weight_ = nullptr;
   }
 
   // init bias
@@ -88,16 +78,8 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, oc_block_num * col_tile_ * sizeof(float16_t));
-
   if (in_tensors_.size() == kInputSize2) {
-    if (origin_bias_data_type_ == kNumberTypeFloat16) {
-      memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
-    } else {
-      MS_LOG(ERROR) << "Conv winograd fp16 only support fp16 bias";
-      return RET_ERROR;
-    }
-  } else {
-    MS_ASSERT(in_tensors_.size() == kInputSize1);
+    memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
   }
   return RET_OK;
 }
@@ -202,7 +184,13 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
-  ConvWinogardFp16(execute_input_, trans_weight_, reinterpret_cast<const float16_t *>(bias_data_), execute_output_,
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  if (input_ptr == nullptr || output_ptr == nullptr) {
+    MS_LOG(ERROR) << "Convolution Winograd Fp16 get null tensor data!";
+    return RET_ERROR;
+  }
+  ConvWinogardFp16(input_ptr, trans_weight_, reinterpret_cast<const float16_t *>(bias_data_), output_ptr,
                    tmp_buffer_address_list_, task_id, conv_param_, in_func_, out_func_);
   return RET_OK;
 }
@@ -218,8 +206,6 @@ static int ConvolutionWinogradFp16Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Run() {
-  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";

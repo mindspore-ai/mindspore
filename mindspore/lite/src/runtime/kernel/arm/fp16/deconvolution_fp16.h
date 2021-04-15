@@ -21,15 +21,14 @@
 #include "nnacl/fp16/deconv_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
+#include "src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore::kernel {
-class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
+class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvolutionFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                             TypeId origin_weight_data_type, TypeId origin_bias_data_type)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, origin_weight_data_type, origin_bias_data_type) {}
+                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DeConvolutionFp16CPUKernel() override;
   int Init() override;
   int Run() override;
@@ -52,6 +51,7 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int thread_count_;
   int thread_stride_;
   float16_t *pack_input_;
+  float16_t *pack_weight_;
   float16_t *pack_output_;
   float16_t *tmp_buffer_;
   float16_t *batch_input_;

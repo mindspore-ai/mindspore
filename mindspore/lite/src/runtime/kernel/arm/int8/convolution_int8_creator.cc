@@ -21,6 +21,7 @@
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_3x3_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_slidewindow_int8.h"
+#include "src/runtime/kernel/arm/int8/group_convolution_int8.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -81,6 +82,29 @@ kernel::LiteKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &i
     kernel = new (std::nothrow) ConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx);
   }
   return kernel;
+}
+
+kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::InnerContext *ctx, int group) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, true, kNumberTypeInt8);
+  group_conv_creator.SetShapeOfTensors();
+  for (int i = 0; i < conv_param->group_; ++i) {
+    ConvParameter *new_conv_param = CreateNewConvParameter(conv_param);
+    std::vector<lite::Tensor *> new_inputs;
+    std::vector<lite::Tensor *> new_outputs;
+    auto ret = group_conv_creator.GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetSingleConv for int8 group conv failed.";
+      return nullptr;
+    }
+    group_conv_creator.CopyQuantParam(&new_inputs);
+    group_conv_creator.get_group_conv()->emplace_back(
+      CpuConvInt8KernelSelect(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_param), ctx));
+  }
+  return new (std::nothrow)
+    GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()), group);
 }
 
 kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
