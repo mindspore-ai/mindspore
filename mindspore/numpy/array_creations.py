@@ -425,10 +425,10 @@ def arange(start, stop=None, step=None, dtype=None):
         num = _ceil(stop - start)
         out = _iota(mstype.float32, num) + start
     elif stop is None: # (start, stop, step) -> (0, start, step)
-        num = _ceil(start / step)
+        num = _ceil((start + 0.0) / step)
         out = _iota(mstype.float32, num) * step
     else:
-        num = _ceil((stop - start) / step)
+        num = _ceil((stop - start + 0.0) / step)
         out = _iota(mstype.float32, num) * step + start
     return out.astype(dtype)
 
