@@ -15,7 +15,7 @@
 # ============================================================================
 
 # This script is the driver of the individual test scenarios
-CURRPATH=$(cd "$(dirname $0)"; pwd)
+CURRPATH=$(cd "$(dirname $0)" || exit; pwd)
 
 echo "----------------------------------------------"
 echo "Invalid syntax and cache_admin failure testing"
