@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSoftplus = "Softplus";
 class Softplus : public PrimitiveC {
  public:
-  Softplus() : PrimitiveC(kNameSoftplus) { InitIOName({"x"}, {"output"}); }
+  Softplus() : PrimitiveC(prim::kPrimSoftplus->name()) { InitIOName({"x"}, {"output"}); }
   ~Softplus() = default;
   MS_DECLARE_PARENT(Softplus, PrimitiveC);
   void Init() {}

@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGatherD = "GatherD";
 class GatherD : public PrimitiveC {
  public:
-  GatherD() : PrimitiveC(kNameGatherD) { InitIOName({"x", "dim", "index"}, {"output"}); }
+  GatherD() : PrimitiveC(prim::kPrimGatherD->name()) { InitIOName({"x", "dim", "index"}, {"output"}); }
   ~GatherD() = default;
   MS_DECLARE_PARENT(GatherD, PrimitiveC);
   void Init() {}

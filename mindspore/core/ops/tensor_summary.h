@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameTensorSummary = "TensorSummary";
 class TensorSummary : public PrimitiveC {
  public:
-  TensorSummary() : PrimitiveC(kNameTensorSummary) {}
+  TensorSummary() : PrimitiveC(prim::kPrimTensorSummary->name()) {}
   ~TensorSummary() = default;
   MS_DECLARE_PARENT(TensorSummary, PrimitiveC);
   void Init();

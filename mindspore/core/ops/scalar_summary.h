@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameScalarSummary = "ScalarSummary";
 class ScalarSummary : public PrimitiveC {
  public:
-  ScalarSummary() : PrimitiveC(kNameScalarSummary) {}
+  ScalarSummary() : PrimitiveC(prim::kPrimScalarSummary->name()) {}
   ~ScalarSummary() = default;
   MS_DECLARE_PARENT(ScalarSummary, PrimitiveC);
   void Init();

@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameZeros = "Zeros";
 class Zeros : public PrimitiveC {
  public:
-  Zeros() : PrimitiveC(kNameZeros) {}
+  Zeros() : PrimitiveC(prim::kPrimZeros->name()) {}
   ~Zeros() = default;
   MS_DECLARE_PARENT(Zeros, PrimitiveC);
   void Init() {}
