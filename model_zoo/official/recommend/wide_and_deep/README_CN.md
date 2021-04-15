@@ -347,6 +347,22 @@ python eval.py
 | 输出           | AUC                         |
 | 准确率          | AUC=0.809                   |
 
+### 极致性能体验
+
+MindSpore从1.1.1版本之后，支持通过开启numa亲和获得极致的性能，需要安装numa库：
+
+- ubuntu : sudo apt-get install libnuma-dev
+- centos/euleros : sudo yum install numactl-devel
+
+1.1.1版本支持设置config的方式开启numa亲和：
+
+import mindspore.dataset as de
+de.config.set_numa_enable(True)
+
+1.2.0版本进一步支持了环境变量开启numa亲和：
+
+export DATASET_ENABLE_NUMA=True
+
 # 随机情况说明
 
 以下三种随机情况：

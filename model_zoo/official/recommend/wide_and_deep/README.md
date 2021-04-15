@@ -345,6 +345,22 @@ Note: The result of GPU is tested under the master version. The parameter server
 | Outputs           | AUC                         |
 | Accuracy          | AUC=0.809                   |
 
+### Ultimate performance experience
+
+MindSpore support numa bind feature to get better performance from v1.1.1. Need to install numa library:
+
+- ubuntu : sudo apt-get install libnuma-dev
+- centos/euleros : sudo yum install numactl-devel
+
+v1.1.1 support config interface to open numa bind feature：
+
+import mindspore.dataset as de
+de.config.set_numa_enable(True)
+
+v1.2.0 support environment variable further to open numa bind feature：
+
+export DATASET_ENABLE_NUMA=True
+
 # [Description of Random Situation](#contents)
 
 There are three random situations:
