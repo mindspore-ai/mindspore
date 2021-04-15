@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,4 +44,5 @@ template void CalSelect<half>(const size_t size, const bool* cond, const half* i
                               half* output, cudaStream_t cuda_stream);
 template void CalSelect<int64_t>(const size_t size, const bool* cond, const int64_t* input_X, const int64_t* input_y,
                               int64_t* output, cudaStream_t cuda_stream);
-
+template void CalSelect<bool>(const size_t size, const bool *cond, const bool *input_X, const bool *input_y,
+                                 bool *output, cudaStream_t cuda_stream);
