@@ -42,7 +42,7 @@ checkopts()
   SUPPORT_NPU="off"
   MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-android-aarch64"
   MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-  MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}-rc1/MindSpore/lite/release/android/${MINDSPORE_FILE}"
+  MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/gpu/${MINDSPORE_FILE}"
   # Process the options
   while getopts 'e:h' opt
   do
@@ -54,8 +54,7 @@ checkopts()
           continue
         elif [[ "X${DEVICE}" == "Xnpu" ]]; then
           MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-android-aarch64"
-          MINDSPORE_FILE="${MINDSPORE_FILE_NAME}-npu.tar.gz"
-          MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}-rc1/MindSpore/lite/release/android/${MINDSPORE_FILE}"
+          MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/${MINDSPORE_FILE}"
           SUPPORT_NPU="on"
         else
           echo "Unknown DEVICE option ${OPTARG}!"
