@@ -37,10 +37,10 @@ class Net(Cell):
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
 def test_l2normalize_float32():
-    x = np.arange(96).astype(np.float32).reshape(2, 3, 4, 4)
+    x = np.arange(20*20*20*20).astype(np.float32).reshape(20, 20, 20, 20)
     expect = x / np.sqrt(np.sum(x**2, axis=0, keepdims=True))
     x = Tensor(x)
-    error = np.ones(shape=[2, 3, 4, 4]) * 1.0e-5
+    error = np.ones(shape=[20, 20, 20, 20]) * 1.0e-5
 
     norm_op = Net(axis=0)
     output = norm_op(x)
