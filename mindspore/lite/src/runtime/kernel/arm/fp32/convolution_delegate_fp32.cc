@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
-#include "src/runtime/kernel/arm/base/group_convolution.h"
+#include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 
@@ -207,8 +207,8 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
       reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx));
   }
   return new (std::nothrow)
-    GroupConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()),
-                              reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+    GroupConvolutionFp32CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()),
+                                  reinterpret_cast<ConvParameter *>(op_parameter)->group_);
 }
 
 /* creator func */

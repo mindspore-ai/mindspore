@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_BASE_H_
 
 #include <utility>
 #include <vector>
@@ -25,23 +25,23 @@
 #include "nnacl/fp32/conv_common_fp32.h"
 
 namespace mindspore::kernel {
-class GroupConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
+class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
  public:
-  GroupConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                            std::vector<kernel::LiteKernel *> group_convs, const int group_num)
+  GroupConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                                std::vector<kernel::LiteKernel *> group_convs, const int group_num)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
         group_convs_(std::move(group_convs)),
         group_num_(group_num) {}  // opParameter(in channel, out channel) in this kernel has been split to groups, if
                                   // you want to get real params, multiply in channel / out channel with group num
-  ~GroupConvolutionCPUKernel() override { FreeSubKernel(); }
+  ~GroupConvolutionBaseCPUKernel() override { FreeSubKernel(); }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int PreProcess() override;
-  virtual void SeparateInput(int group_id);
-  virtual void PostConcat(int group_id);
+  virtual int SeparateInput(int group_id) = 0;
+  virtual int PostConcat(int group_id) = 0;
   void FreeSubKernel();
 
  protected:
@@ -52,4 +52,4 @@ class GroupConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_GROUP_CONVOLUTION_BASE_H_
