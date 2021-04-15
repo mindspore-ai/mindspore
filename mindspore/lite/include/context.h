@@ -65,6 +65,7 @@ struct DeviceContext {
 struct Context {
   String vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
+  bool enable_parallel_ = false;
   AllocatorPtr allocator = nullptr;
 #ifndef NOT_USE_STL
   DeviceContextVector device_list_ = {{DT_CPU, {false, MID_CPU}}};
