@@ -135,7 +135,8 @@ def _auto_enable_graph_kernel(device_target, graph_kernel_mode):
 def _set_graph_kernel_context(device_target, enable_graph_kernel, is_auto_enable_graph_kernel):
     if enable_graph_kernel == "true" or is_auto_enable_graph_kernel:
         if device_target == 'GPU':
-            context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_stitch_fusion=true")
+            context.set_context(enable_graph_kernel=True,
+                                graph_kernel_flags="--enable_stitch_fusion=true --enable_parallel_fusion=true")
         else:
             logger.warning('Graph kernel only supports GPU back-end now, run with graph kernel off.')
 

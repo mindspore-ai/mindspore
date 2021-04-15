@@ -21,6 +21,7 @@
 
 #include "ir/func_graph.h"
 #include "utils/ms_context.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
@@ -138,7 +139,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() {
 PassManagerPtr GraphKernelOptimizer::Combine() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage6_combine");
   // Enable parallel fusion
-  if (is_gpu) {
+  if (is_gpu && context::GraphKernelFlags::GetInstance().enable_parallel_fusion) {
     // Do parallel fusion for gpu device
     pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)));
   }
