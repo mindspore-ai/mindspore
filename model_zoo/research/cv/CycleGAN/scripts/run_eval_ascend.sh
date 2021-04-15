@@ -1,4 +1,5 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+#!/bin/bash
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +12,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ============================================================================
-"""init file."""
-from .cycle_gan import get_generator, get_discriminator, Generator, TrainOneStepG, TrainOneStepD
-from .losses import DiscriminatorLoss, GeneratorLoss, GANLoss
-from .networks import init_weights
+
+python eval.py --platform Ascend --device_id 0 --model DepthResNet --G_A_ckpt ./outputs/ckpt/G_A_200.ckpt --G_B_ckpt ./outputs/ckpt/G_B_200.ckpt
