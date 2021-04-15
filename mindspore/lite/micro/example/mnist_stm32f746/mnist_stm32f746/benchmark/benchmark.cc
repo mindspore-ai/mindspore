@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 
 #include "load_input.h"
+#include "calib_output.h"
 
 using namespace mindspore;
 
@@ -34,8 +35,9 @@ void usage() {
     "args[1]: inputs binary file\n"
     "args[2]: model weight binary file\n"
     "args[3]: loop count for performance test\n"
-    "args[4]: runtime thread num\n"
-    "args[5]: runtime thread bind mode\n\n");
+    "args[4]: calibration file\n"
+    "args[5]: runtime thread num\n"
+    "args[6]: runtime thread bind mode\n\n");
 }
 
 uint64_t GetTimeUs() {
@@ -111,15 +113,15 @@ int main(int argc, const char **argv) {
   }
 
   lite::Context *context = nullptr;
-  if (argc >= 6) {
+  if (argc >= 7) {
     // config benchmark context
     context = new (std::nothrow) lite::Context();
     if (context == nullptr) {
       return lite::RET_ERROR;
     }
-    context->thread_num_ = atoi(argv[4]);
+    context->thread_num_ = atoi(argv[5]);
     context->device_list_.resize(1);
-    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[5]))}}};
+    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[6]))}}};
     printf("context: ThreadNum: %d, BindMode: %d\n", context->thread_num_,
            context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
   }
@@ -167,11 +169,28 @@ int main(int argc, const char **argv) {
     return lite::RET_ERROR;
   }
 
-  Vector<String> outputs_name = session->GetOutputTensorNames();
   printf("\noutputs: \n");
+  Vector<String> outputs_name = session->GetOutputTensorNames();
+  Vector<tensor::MSTensor *> outputs;
   for (const auto &name : outputs_name) {
     auto output = session->GetOutputByTensorName(name);
+    outputs.push_back(output);
     TensorToString(output);
+  }
+  if (argc >= 5) {
+    lite::Calibrator *calibrator = new (std::nothrow) lite::Calibrator();
+    if (calibrator == nullptr) {
+      return lite::RET_NULL_PTR;
+    }
+    ret = calibrator->ReadCalibData(argv[4]);
+    if (ret != lite::RET_OK) {
+      return lite::RET_ERROR;
+    }
+    ret = calibrator->CompareOutputs(outputs);
+    if (ret != lite::RET_OK) {
+      return lite::RET_ERROR;
+    }
+    delete calibrator;
   }
   printf("========run success=======\n");
   delete session;
