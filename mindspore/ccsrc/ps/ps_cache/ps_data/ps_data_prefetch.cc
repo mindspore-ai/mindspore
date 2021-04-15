@@ -118,7 +118,7 @@ bool PsDataPrefetch::QueryData(const std::string &channel_name, void **data_ptr)
     *data_ptr = nullptr;
     return true;
   }
-  *data_ptr = channel->data();
+  *data_ptr = const_cast<void *>(channel->data());
   return true;
 }
 

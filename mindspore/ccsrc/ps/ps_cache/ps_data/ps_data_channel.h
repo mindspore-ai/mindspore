@@ -33,8 +33,8 @@ class PsDataChannel {
         data_(nullptr),
         data_size_(0) {}
   virtual ~PsDataChannel() = default;
-  void set_data(void *data, const size_t data_size);
-  void *data() const { return data_; }
+  void set_data(const void *data, const size_t data_size);
+  const void *data() const { return data_; }
   size_t data_size() const { return data_size_; }
   void ResetData() { data_ = nullptr; }
   void set_step_num(size_t step_num) { step_num_ = step_num; }

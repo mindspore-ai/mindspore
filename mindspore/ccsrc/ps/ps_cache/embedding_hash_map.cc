@@ -18,8 +18,9 @@
 
 namespace mindspore {
 namespace ps {
-int EmbeddingHashMap::ParseData(const int id, int *swap_out_index, int *swap_out_ids, const size_t data_step,
-                                const size_t graph_running_step, size_t *swap_out_size, bool *need_wait_graph) {
+int EmbeddingHashMap::ParseData(const int id, int *const swap_out_index, int *const swap_out_ids,
+                                const size_t data_step, const size_t graph_running_step, size_t *const swap_out_size,
+                                bool *const need_wait_graph) {
   MS_EXCEPTION_IF_NULL(swap_out_index);
   MS_EXCEPTION_IF_NULL(swap_out_ids);
   MS_EXCEPTION_IF_NULL(swap_out_size);
@@ -47,8 +48,8 @@ int EmbeddingHashMap::ParseData(const int id, int *swap_out_index, int *swap_out
   return hash_index;
 }
 
-int EmbeddingHashMap::FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *need_swap,
-                                       bool *need_wait_graph) {
+int EmbeddingHashMap::FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *const need_swap,
+                                       bool *const need_wait_graph) {
   MS_EXCEPTION_IF_NULL(need_swap);
   MS_EXCEPTION_IF_NULL(need_wait_graph);
   int hash_index = INVALID_INDEX_VALUE;
