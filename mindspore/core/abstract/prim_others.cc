@@ -545,22 +545,6 @@ AbstractBasePtr InferImplGpuConvertToDynamicShape(const AnalysisEnginePtr &, con
   return std::make_shared<AbstractTensor>(input->element(), shape);
 }
 
-AbstractBasePtr InferImplDType(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  auto type = args_spec_list[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  auto tensor_type = type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto value = tensor_type->element();
-  auto abstract = std::make_shared<abstract::AbstractType>(value);
-  abstract->set_value(value);
-  return abstract;
-}
-
 AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: Ref/Tensor, universal

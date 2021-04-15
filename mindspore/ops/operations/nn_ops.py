@@ -178,7 +178,7 @@ class Softmax(Primitive):
             validator.check_value_type("item of axis", item, [int], self.name)
 
 
-class LogSoftmax(PrimitiveWithInfer):
+class LogSoftmax(Primitive):
     r"""
     Log Softmax activation function.
 
@@ -219,15 +219,6 @@ class LogSoftmax(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=-1):
         validator.check_value_type("axis", axis, [int], self.name)
-
-    def infer_shape(self, logits):
-        rank = len(logits)
-        validator.check_int_range(self.axis, -rank, rank, Rel.INC_LEFT, 'axis', self.name)
-        return logits
-
-    def infer_dtype(self, logits):
-        validator.check_tensor_dtype_valid("logits", logits, (mstype.float16, mstype.float32), self.name)
-        return logits
 
 
 class Softplus(Primitive):
