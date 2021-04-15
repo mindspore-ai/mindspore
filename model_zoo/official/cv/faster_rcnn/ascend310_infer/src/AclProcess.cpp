@@ -253,7 +253,7 @@ int AclProcess::Preprocess(const std::string& imageFile) {
     resizeOutData.height = modelInfo_.modelHeight;
     resizeOutData.width = modelInfo_.modelWidth;
     resizeOutData.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
-    ret = dvppCommon_->CombineResizeProcess(decodeOutData, resizeOutData, true, VPC_PT_DEFAULT);
+    ret = dvppCommon_->CombineResizeProcess(decodeOutData, resizeOutData, true, VPC_PT_PADDING);
     if (ret != OK) {
         std::cout << "Failed to execute image resized of preprocess module, ret = " << ret << "." << std::endl;
         return ret;
@@ -304,7 +304,7 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
     }
 
     std::vector<void *> inputBuffers({resizeOutData->data, imInfo_dst});
-    std::vector<size_t> inputSizes({resizeOutData->dataSize, 4 * 2});
+    std::vector<size_t> inputSizes({resizeOutData->dataSize, 4 * 4});
 
     for (size_t i = 0; i < modelInfo_.outputNum; i++) {
         aclrtMemset(outputBuffers_[i], outputSizes_[i], 0, outputSizes_[i]);
