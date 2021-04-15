@@ -256,18 +256,20 @@ class KPynativeCellImpl : public KPynativeCell {
   bool KPynativeWithFProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
                           const FuncGraphPtr &fprop_fg) override;
   void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) override;
-  // Build a back propagate funcgraph with each cnode in primal funcgraph is replaced by value node;
-  FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights, bool has_sens_arg);
-  // Build a back propagate funcgraph with formal cnode;
-  FuncGraphPtr BuildFormalBProp(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
+  // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
+  // can be grad again.
+  FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights, bool has_sens_arg,
+                      bool build_formal_param);
 
  private:
-  FuncGraphPtr tape_;
-  OrderedMap<AnfNodePtr, PynativeAdjointPtr> anfnode_to_adjoin_;
-  AnfNodePtrList cell_inputs_;
+  bool need_propagate_stop_gradient_{false};
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AnfNodePtr last_node_{nullptr};
-  bool need_propagate_stop_gradient_{false};
+  FuncGraphPtr tape_;
+  AnfNodePtrList cell_inputs_;
+  // These weights need to calculate gradient.
+  std::unordered_set<AnfNodePtr> need_grad_weights_;
+  OrderedMap<AnfNodePtr, PynativeAdjointPtr> anfnode_to_adjoin_;
 
   // For CNode like TupleGetItem, ListGetItem, MakeTuple, MakeList, it's bypassed by caller so
   // no KPynativeOp is called for these CNode. Here we forge Adjoint for these CNode.
@@ -289,12 +291,16 @@ class KPynativeCellImpl : public KPynativeCell {
   bool BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint,
                                                const FuncGraphPtr &fprop_fg, bool by_value);
   bool BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app);
-  const AnfNodePtrList BuildKNodeListFromPrimalCNode(const CNodePtr &cnode);
+  AnfNodePtr BuildKNodeForCNodeInput(const PynativeAdjointPtr &cnode_adjoint, const AnfNodePtr &input_node,
+                                     size_t input_index);
+  const AnfNodePtrList BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint);
   FuncGraphPtr BuildBPropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode);
   // Back propagate for MakeList or MakeTuple is generated from MetaFuncGraph.
   FuncGraphPtr BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode);
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
   void ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg);
+  // Set sens and weights parameter nodes by user input info
+  void SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg);
   // Set return node according to grad flag
   void SetOutput(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
 
@@ -321,44 +327,24 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 }
 
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
-                                 bool grad_weights, bool has_sens_arg) {
+                                 bool grad_weights, bool has_sens_arg, bool build_formal_param) {
   auto k_cell_impl = std::dynamic_pointer_cast<KPynativeCellImpl>(k_cell);
-  return k_cell_impl->Finish(weights, grad_inputs, grad_weights, has_sens_arg);
+  return k_cell_impl->Finish(weights, grad_inputs, grad_weights, has_sens_arg, build_formal_param);
 }
 
 FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights,
-                                       bool has_sens_arg) {
+                                       bool has_sens_arg, bool build_formal_param) {
   // propagate stop_gradient flag to cnode before back propagate;
   PropagateStopGradient();
-  MS_EXCEPTION_IF_NULL(last_node_);
-  MS_LOG(DEBUG) << "Last node info " << last_node_->DebugString();
-  auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
-  if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
-    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
+  // Set sens node and weights node
+  SetSensAndWeights(weights, has_sens_arg);
+  // Build forward CNode;
+  if (build_formal_param) {
+    BuildKNode();
   }
-  if (has_sens_arg) {
-    // sens parameter;
-    auto sens_param = tape_->add_parameter();
-    sens_param->debug_info()->set_name("sens");
-    sens_param->set_abstract(last_node_adjoint_iter->second->out()->ToAbstract()->Broaden());
-    // Set dout of last node to sens;
-    last_node_adjoint_iter->second->AccumulateDout(sens_param);
-  } else {
-    auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out());
-    last_node_adjoint_iter->second->AccumulateDout(sens_node);
-  }
-  // Add weights parameter
-  for (const auto &weight : weights) {
-    TraceGuard trace_guard(std::make_shared<TraceCopy>(weight->debug_info()));
-    auto p = tape_->add_parameter();
-    auto input_w = weight->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(input_w);
-    p->set_default_param(input_w->default_param());
-  }
-
   // BackPropagate sensitivity, except when the last node is a valuenode which may be obtained by constant folding;
   if (!last_node_->isa<ValueNode>()) {
-    BackPropagate(true);
+    BackPropagate(!build_formal_param);
   }
   // Return the gradient;
   SetOutput(weights, grad_inputs, grad_weights);
@@ -367,48 +353,6 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("before_final_opt.ir", tape_);
-  }
-  return tape_;
-}
-
-FuncGraphPtr GradPynativeCellBuildFormalBProp(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights,
-                                              bool grad_inputs, bool grad_weights) {
-  auto k_cell_impl = std::dynamic_pointer_cast<KPynativeCellImpl>(k_cell);
-  return k_cell_impl->BuildFormalBProp(weights, grad_inputs, grad_weights);
-}
-
-FuncGraphPtr KPynativeCellImpl::BuildFormalBProp(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights) {
-  // propagate stop_gradient flag to cnode before back propagate;
-  PropagateStopGradient();
-  MS_LOG(DEBUG) << "Last node info " << last_node_->DebugString();
-  auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
-  if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
-    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
-  }
-  // Build forward CNode;
-  BuildKNode();
-  // Add weights parameter
-  for (const auto &weight : weights) {
-    TraceGuard trace_guard(std::make_shared<TraceCopy>(weight->debug_info()));
-    auto p = tape_->add_parameter();
-    auto input_w = weight->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(input_w);
-    // Use name to match weight parameter.
-    p->set_name(input_w->name());
-    p->set_default_param(input_w->default_param());
-  }
-  auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out());
-  last_node_adjoint_iter->second->AccumulateDout(sens_node);
-
-  // BackPropagate sensitivity;
-  BackPropagate(false);
-  // Return the gradient;
-  SetOutput(weights, grad_inputs, grad_weights);
-  // Replace Parameter of primal funcgraph  with parameter of tape_;
-  ReplacePrimalParameter(weights, false);
-
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    DumpIR("formal_bprop_before_final_opt.ir", tape_);
   }
   return tape_;
 }
@@ -540,7 +484,7 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeGetItemAdjoint(const CNodePtr &cnode)
   }
   if (!input_1_adjoint->out()->isa<ValueSequeue>()) {
     MS_LOG(EXCEPTION) << "Input of CNode should be evaluated to a ValueSequence. CNode: " << cnode->DebugString()
-                      << ", out of input1: " << input_1_adjoint->out();
+                      << ", out of input1: " << input_1_adjoint->out()->ToString();
   }
   auto input_1_out = input_1_adjoint->out()->cast<ValueSequeuePtr>();
 
@@ -738,20 +682,36 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
   return true;
 }
 
-const AnfNodePtrList KPynativeCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode) {
+AnfNodePtr KPynativeCellImpl::BuildKNodeForCNodeInput(const PynativeAdjointPtr &cnode_adjoint,
+                                                      const AnfNodePtr &input_node, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(cnode_adjoint);
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (input_node->isa<CNode>()) {
+    auto input_adjoint_iter = anfnode_to_adjoin_.find(input_node);
+    if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+      MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input_node->DebugString();
+    }
+    return input_adjoint_iter->second->k_node();
+  } else {
+    if (input_node->isa<Parameter>()) {
+      bool is_weight = input_node->cast<ParameterPtr>()->has_default();
+      // If weight does not need to calculate gradient, it will be converted to value node.
+      if (is_weight && need_grad_weights_.find(input_node) == need_grad_weights_.end()) {
+        return NewValueNode(cnode_adjoint->op_args()[input_index - 1]);
+      }
+    }
+    return input_node;
+  }
+}
+
+const AnfNodePtrList KPynativeCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode,
+                                                                      const PynativeAdjointPtr &adjoint) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(adjoint);
   AnfNodePtrList node_list;
-  std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(node_list),
-                 [this](const AnfNodePtr &input) {
-                   if (input->isa<CNode>()) {
-                     auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
-                     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-                       MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input->DebugString();
-                     }
-                     return input_adjoint_iter->second->k_node();
-                   } else {
-                     return input;
-                   }
-                 });
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    node_list.emplace_back(BuildKNodeForCNodeInput(adjoint, cnode->input(i), i));
+  }
   return node_list;
 }
 
@@ -782,7 +742,7 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &
     node_list.push_back(out_node);
     node_list.push_back(adjoint->RealDout());
   } else {
-    const auto &k_node_list = BuildKNodeListFromPrimalCNode(cnode);
+    const auto &k_node_list = BuildKNodeListFromPrimalCNode(cnode, adjoint);
     node_list.insert(node_list.end(), k_node_list.begin(), k_node_list.end());
     // out;
     node_list.push_back(adjoint->k_node());
@@ -814,7 +774,7 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &
 
     bprop_cnode = GetBPropFromFProp(fprop_fg, args_node_list);
   } else {
-    const auto &k_node_list = BuildKNodeListFromPrimalCNode(cnode);
+    const auto &k_node_list = BuildKNodeListFromPrimalCNode(cnode, adjoint);
     bprop_cnode = GetBPropFromFProp(fprop_fg, k_node_list);
   }
   node_list.push_back(bprop_cnode);
@@ -964,6 +924,37 @@ FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim,
   return b;
 }
 
+void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg) {
+  MS_EXCEPTION_IF_NULL(last_node_);
+  MS_LOG(DEBUG) << "Last node info " << last_node_->DebugString();
+  auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
+  if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
+    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
+  }
+  // Add sens parameter
+  if (has_sens_arg) {
+    // sens parameter;
+    auto sens_param = tape_->add_parameter();
+    sens_param->debug_info()->set_name("sens");
+    sens_param->set_abstract(last_node_adjoint_iter->second->out()->ToAbstract()->Broaden());
+    // Set dout of last node to sens;
+    last_node_adjoint_iter->second->AccumulateDout(sens_param);
+  } else {
+    auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out());
+    last_node_adjoint_iter->second->AccumulateDout(sens_node);
+  }
+  // Add weights parameter
+  need_grad_weights_.clear();
+  for (const auto &weight : weights) {
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(weight->debug_info()));
+    auto p = tape_->add_parameter();
+    need_grad_weights_.emplace(weight);
+    auto input_w = weight->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(input_w);
+    p->set_default_param(input_w->default_param());
+  }
+}
+
 void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights) {
   AnfNodePtrList grad_inputs_list{NewValueNode(prim::kPrimMakeTuple)};
   AbstractBasePtr grad_inputs_spec;
@@ -1042,19 +1033,12 @@ bool KPynativeCellImpl::BuildKNode() {
     if (!iter->first->isa<CNode>()) {
       continue;
     }
-    auto cnode = iter->first->cast<CNodePtr>();
+
     AnfNodePtrList node_list;
-    // Update abstract info of valuenode with its value
-    for (const auto &input : cnode->inputs()) {
-      if (input->isa<CNode>()) {
-        auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
-        if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-          MS_LOG(EXCEPTION) << "cannot find input in adjoint map, input: " << input->DebugString();
-        }
-        node_list.push_back(input_adjoint_iter->second->k_node());
-      } else {
-        node_list.push_back(input);
-      }
+    auto cnode = iter->first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+      node_list.emplace_back(BuildKNodeForCNodeInput(iter->second, cnode->input(i), i));
     }
     auto k_node = tape_->NewCNode(node_list);
     k_node->set_abstract(iter->second->out()->ToAbstract()->Broaden());

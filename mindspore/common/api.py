@@ -214,7 +214,10 @@ class _MindSporeFunction:
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
-        return self._executor(tuple(new_inputs), phase)
+        output = self._executor(tuple(new_inputs), phase)
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            _pynative_exec.set_graph_phase(phase)
+        return output
 
 
 def ms_function(fn=None, obj=None, input_signature=None):
@@ -272,10 +275,15 @@ def ms_function(fn=None, obj=None, input_signature=None):
     def wrap_mindspore(func):
         @wraps(func)
         def staging_specialize(*args):
+            input_args = args
             process_obj = obj
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
+                input_args = args[1:]
                 process_obj = args[0]
-            return _MindSporeFunction(func, input_signature, process_obj)(*args)
+            out = _MindSporeFunction(func, input_signature, process_obj)(*args)
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                _pynative_exec.grad_ms_function(out, *input_args)
+            return out
 
         return staging_specialize
 
@@ -375,6 +383,12 @@ class _PynativeExecutor:
 
     def sync(self):
         self._executor.sync()
+
+    def grad_ms_function(self, output, *args):
+        self._executor.grad_ms_function(output, *args)
+
+    def set_graph_phase(self, phase):
+        self._executor.set_graph_phase(phase)
 
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)

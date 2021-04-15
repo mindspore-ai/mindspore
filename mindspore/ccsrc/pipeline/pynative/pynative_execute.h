@@ -90,6 +90,8 @@ class TopCellInfo {
   void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   bool vm_compiled() const { return vm_compiled_; }
   void set_vm_compiled(bool vm_compiled) { vm_compiled_ = vm_compiled; }
+  bool ms_function_flag() const { return ms_function_flag_; }
+  void set_ms_function_flag(bool ms_function_flag) { ms_function_flag_ = ms_function_flag; }
   bool need_compile_graph() const { return need_compile_graph_; }
   void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
   bool forward_already_run() const { return forward_already_run_; }
@@ -118,6 +120,7 @@ class TopCellInfo {
   bool is_topest_{false};
   bool is_dynamic_{false};
   bool vm_compiled_{false};
+  bool ms_function_flag_{false};
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
@@ -189,6 +192,10 @@ class GradExecutor {
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out);
+  void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &fprop_g, const py::object &out,
+                                const py::args &args);
+  void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
+                              CNodePtr *ms_function_cnode);
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource);
   py::object CheckGraph(const py::object &cell, const py::args &args);
@@ -351,6 +358,9 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   ForwardExecutorPtr forward_executor();
 
   void set_grad_flag(bool flag);
+  std::string graph_phase() const { return graph_phase_; }
+  void set_graph_phase(std::string graph_phase) { graph_phase_ = graph_phase; }
+  void GradMsFunction(const py::object &out, const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
@@ -371,6 +381,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
  private:
   PynativeExecutor() = default;
 
+  // The graph phase is used to obtain backend graph that is complied by ms_function
+  std::string graph_phase_;
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;

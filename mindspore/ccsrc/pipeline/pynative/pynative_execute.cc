@@ -44,6 +44,7 @@
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
+#include "pipeline/jit/pipeline.h"
 #include "backend/session/session_factory.h"
 #include "backend/optimizer/common/const_input_to_attr_registry.h"
 #include "backend/optimizer/common/helper.h"
@@ -683,6 +684,7 @@ void TopCellInfo::clear() {
   op_num_ = 0;
   is_dynamic_ = false;
   vm_compiled_ = false;
+  ms_function_flag_ = false;
   is_init_kpynative_ = false;
   need_compile_graph_ = false;
   forward_already_run_ = false;
@@ -1332,6 +1334,67 @@ void GradExecutor::DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr 
   }
 }
 
+void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
+                                          ValuePtrList *input_values, CNodePtr *ms_function_cnode) {
+  // Get input node info of ms_function
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
+  MS_EXCEPTION_IF_NULL(input_values);
+  for (size_t i = 0; i < args.size(); ++i) {
+    auto input_i_node = GetInput(args[i], false);
+    MS_EXCEPTION_IF_NULL(input_i_node);
+    MS_LOG(DEBUG) << "The input " << i << " node of ms_function graph is: " << input_i_node->DebugString();
+    input_nodes.emplace_back(input_i_node);
+    auto inp_i_value = parse::data_converter::PyDataToValue(args[i]);
+    MS_EXCEPTION_IF_NULL(inp_i_value);
+    MS_LOG(DEBUG) << "The input " << i << " value of ms_function graph is: " << inp_i_value->ToString();
+    (*input_values).emplace_back(inp_i_value);
+  }
+  // Get weights info of ms_function
+  auto df_builder = GetDfbuilder(top_cell()->cell_id());
+  MS_EXCEPTION_IF_NULL(df_builder);
+  for (const auto &anf_node : ms_func_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto param = anf_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    if (param->has_default()) {
+      input_nodes.emplace_back(param);
+      auto default_value = param->default_param();
+      MS_EXCEPTION_IF_NULL(default_value);
+      (*input_values).emplace_back(default_value);
+      // Add weights to df_builder
+      SetParamNodeMapInGraphInfoMap(df_builder, param->name(), param);
+      MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
+                    << default_value->ToString() << ". Its name is: " << param->name();
+    }
+  }
+  // Make a CNode which includes ms_function fprop graph and inputs node
+  MS_EXCEPTION_IF_NULL(ms_function_cnode);
+  *ms_function_cnode = curr_g_->NewCNode(input_nodes);
+  MS_LOG(DEBUG) << "Make a nested cnode: " << (*ms_function_cnode)->DebugString(2);
+}
+
+// Make adjoint for ms_function fprop graph and connect it with previous op
+void GradExecutor::MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &fprop_g,
+                                            const py::object &out, const py::args &args) {
+  ValuePtrList input_values;
+  CNodePtr ms_function_cnode = nullptr;
+  MakeCNodeForMsFunction(ms_func_graph, args, &input_values, &ms_function_cnode);
+  MS_EXCEPTION_IF_NULL(ms_function_cnode);
+  SetTupleArgsToGraphInfoMap(curr_g_, out, ms_function_cnode);
+  SetNodeMapInGraphInfoMap(curr_g_, GetId(out), ms_function_cnode);
+  // Add out and dout
+  auto out_value = parse::data_converter::PyDataToValue(out);
+  MS_EXCEPTION_IF_NULL(out_value);
+  auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
+  MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
+  if (!k_pynative_cell_ptr->KPynativeWithFProp(ms_function_cnode, input_values, out_value, fprop_g)) {
+    MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
+                      << ms_function_cnode->DebugString(2);
+  }
+  top_cell()->set_ms_function_flag(true);
+}
+
 void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real) {
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "The grad flag is false, no need to update forward op info in bprop graph";
@@ -1874,8 +1937,8 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
     if (already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
       // top cell
       const auto &pre_top_cell = already_run_top_cell_.at(cell_id);
-      if (!pre_top_cell->is_dynamic()) {
-        MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic, no need to run NewGraphInner again";
+      if (!pre_top_cell->is_dynamic() && !pre_top_cell->ms_function_flag()) {
+        MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic or ms_function, no need to run NewGraphInner again";
         ResetTopCellInfo(pre_top_cell, args);
         set_top_cell(pre_top_cell);
         return;
@@ -2192,13 +2255,19 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
     AnfNodePtr para_node = nullptr;
     if (graph_info->params.find(param_id) != graph_info->params.end()) {
       para_node = graph_info->params.at(param_id);
+      w_args.emplace_back(para_node);
+      continue;
+    }
+    auto name_attr = parse::python_adapter::GetPyObjAttr(param, "name");
+    if (py::isinstance<py::none>(name_attr)) {
+      MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
+    }
+    auto param_name = py::cast<std::string>(name_attr);
+    MS_LOG(DEBUG) << "The input " << it << " parameter weight name " << param_name;
+    if (graph_info->params.find(param_name) != graph_info->params.end()) {
+      para_node = graph_info->params.at(param_name);
     } else {
-      auto name_attr = parse::python_adapter::GetPyObjAttr(param, "name");
-      if (py::isinstance<py::none>(name_attr)) {
-        MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
-      }
       MS_LOG(DEBUG) << "Can not find input param in graph info map, make a new parameter";
-      auto param_name = py::cast<std::string>(name_attr);
       auto free_param = df_builder->add_parameter();
       free_param->set_name(param_name);
       auto value = py::cast<tensor::TensorPtr>(param);
@@ -2248,18 +2317,18 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
 FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const py::object &cell,
                                          const std::vector<AnfNodePtr> &weights, size_t arg_size,
                                          const py::args &args) {
-  MS_EXCEPTION_IF_NULL(grad);
+  bool build_formal_param_ = false;
+  if ((!py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !cell_stack_.empty() && IsNestedGrad()) ||
+      top_cell()->ms_function_flag()) {
+    build_formal_param_ = true;
+    need_renormalize_ = true;
+  }
+
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-  FuncGraphPtr bprop_graph = nullptr;
-  if (!py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !cell_stack_.empty() && IsNestedGrad()) {
-    bprop_graph =
-      ad::GradPynativeCellBuildFormalBProp(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_);
-    need_renormalize_ = true;
-  } else {
-    bprop_graph =
-      ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_, grad->sens_param_);
-  }
+  MS_EXCEPTION_IF_NULL(grad);
+  FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_,
+                                                     grad->sens_param_, build_formal_param_);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << arg_size;
@@ -2352,8 +2421,8 @@ void GradExecutor::CheckNeedCompileGraph() {
   auto new_all_op_info = new_top_cell->all_op_info();
   MS_LOG(DEBUG) << "Pre all op info " << pre_all_op_info;
   MS_LOG(DEBUG) << "New all op info " << new_all_op_info;
-  if (pre_all_op_info != new_all_op_info) {
-    MS_LOG(DEBUG) << "The op info has been changed, need to compile graph again";
+  if (pre_all_op_info != new_all_op_info || new_top_cell->ms_function_flag()) {
+    MS_LOG(DEBUG) << "The op info has been changed or new top cell has ms_function, need to compile graph again";
     EraseTopCellFromTopCellList(pre_top_cell);
     pre_top_cell->clear();
     already_run_top_cell_[top_cell_id] = new_top_cell;
@@ -2621,6 +2690,38 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   MS_LOG(DEBUG) << "Leave end graph process.";
 }
 
+void PynativeExecutor::GradMsFunction(const py::object &out, const py::args &args) {
+  if (!grad_executor()->grad_flag()) {
+    MS_LOG(DEBUG) << "The grad flag is set to false, only run forward process. No need to make grad for ms_function";
+    set_graph_phase("");
+    return;
+  }
+  // Get ms_function graph by phase
+  if (graph_phase().empty()) {
+    MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain backend graph which is complied by ms_function";
+  }
+  // Get ms_function graph
+  auto executor = pipeline::ExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(executor);
+  auto ms_func_graph = BasicClone(executor->GetFuncGraph(graph_phase()));
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("before_grad_ms_function.ir", ms_func_graph);
+  }
+  // Get fprop graph of ms_function
+  ResourcePtr res = std::make_shared<pipeline::Resource>();
+  res->set_func_graph(ms_func_graph);
+  res->manager()->AddFuncGraph(ms_func_graph, true);
+  auto fprop_g = ad::Grad(ms_func_graph, res, true);
+  MS_EXCEPTION_IF_NULL(fprop_g);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("after_grad_ms_function.ir", fprop_g);
+  }
+  // Make adjoint for fprop graph of ms function graph
+  grad_executor()->MakeAdjointForMsFunction(ms_func_graph, fprop_g, out, args);
+  set_graph_phase("");
+}
+
 void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                                const py::args &args) {
   py::object *ret = nullptr;
@@ -2657,11 +2758,13 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("end_graph", &PynativeExecutor::EndGraph, "pynative end a graph.")
                            .def("check_graph", &PynativeExecutor::CheckGraph, "pynative check a grad graph.")
                            .def("check_run", &PynativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
+                           .def("grad_ms_function", &PynativeExecutor::GradMsFunction, "pynative grad for ms_function.")
                            .def("grad_net", &PynativeExecutor::GradNet, "pynative grad graph.")
                            .def("clear_cell", &PynativeExecutor::ClearCell, "pynative clear status.")
                            .def("clear_grad", &PynativeExecutor::ClearGrad, "pynative clear grad status.")
                            .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
+                           .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
                                 "Executor set grad flag.")
                            .def("enter_construct", &PynativeExecutor::EnterConstruct,
