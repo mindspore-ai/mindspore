@@ -621,7 +621,7 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
 bool CheckProcessor(const AnfNodePtr &node, kernel::Processor processor = kernel::Processor::AICORE) {
   MS_EXCEPTION_IF_NULL(node);
 
-  auto node_kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  auto node_kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   if (node_kernel_info == nullptr) {
     return false;
   }
@@ -867,7 +867,6 @@ bool IsKeepBasicNode(const AnfNodePtr &node) {
                                                       "aggregate", "aggregate_input_indexx"};
   static std::vector<std::function<bool(const AnfNodePtr &node)>> attrs_with_value = {
     [](const AnfNodePtr &n) -> bool { return AnfAlgo::GetBooleanAttr(n, "skip"); }};
-
   // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
   // If node contain attribute in attrs_with_value, it only have to keep basic when the check result is true.
   if (std::any_of(contagious_attrs.cbegin(), contagious_attrs.cend(),
