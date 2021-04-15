@@ -1,4 +1,4 @@
-# MindSpore 1.2.0-rc1
+# MindSpore 1.2.0
 
 ## MindSpore 1.2.0 Release Notes
 
