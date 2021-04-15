@@ -20,6 +20,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 namespace {
+enum RemoveNodeType { kOtherNode = 0, kOptimizerNode };
 const char kLessBatchNormalizationPassName[] = "less_bn";
 constexpr auto kValidResidualStructureIndex = 1;
 constexpr auto kBNParametersStartIndex = 2;
@@ -63,6 +64,11 @@ const std::vector<kStructureTuple> ResidualStructureFirstStepPattern{
   {kSecondBranchPattern3, {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, prim::kPrimConv2D}, {SIZE_MAX, SIZE_MAX}}};
 static const std::vector<std::vector<kStructureTuple>> kNeedMatchPattern = {
   ResidualStructureBasePattern, ResidualStructureShortCutPattern, ResidualStructureFirstStepPattern};
+const std::set<PrimitivePtr> kNeedRemoveNodeSet{
+  prim::kPrimLoad,      prim::kPrimRefToEmbed, prim::kPrimApplyMomentum, prim::kPrimMomentum,
+  prim::kPrimApplyFtrl, prim::kPrimSGD,        prim::kPrimApplyRMSProp,  prim::kPrimAdam};
+static std::unordered_map<RemoveNodeType, std::unordered_set<size_t>> kRemoveIndex{
+  {RemoveNodeType::kOtherNode, {2}}, {RemoveNodeType::kOptimizerNode, {3, 5, 6}}};
 
 bool NeedRemove(const ParameterPtr &a, const std::vector<AnfNodePtr> &parameter_list) {
   if (a == nullptr) {
@@ -73,13 +79,56 @@ bool NeedRemove(const ParameterPtr &a, const std::vector<AnfNodePtr> &parameter_
   });
 }
 
+bool IsNotRealUseNode(const AnfNodePtr &node) {
+  for (const auto &prim : kNeedRemoveNodeSet) {
+    if (IsPrimitiveCNode(node, prim)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+CNodePtr ConvertRemoveNodeToVirtualNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> args;
+  size_t index = 0;
+  const auto &inputs = cnode->inputs();
+  auto remove_index = kRemoveIndex[RemoveNodeType::kOptimizerNode];
+  if (IsPrimitiveCNode(cnode, prim::kPrimLoad) || IsPrimitiveCNode(cnode, prim::kPrimRefToEmbed)) {
+    remove_index = kRemoveIndex[RemoveNodeType::kOtherNode];
+  }
+
+  (void)std::copy_if(
+    inputs.begin(), inputs.end(), std::back_inserter(args),
+    [&remove_index, &index](const AnfNodePtr &) { return remove_index.find(index++) != remove_index.end(); });
+
+  (void)args.insert(args.begin(), NewValueNode(prim::kPrimMakeTuple));
+  const auto &fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto new_make_tuple = fg->NewCNode(args);
+  return new_make_tuple;
+}
+
 bool IsRealRemoveParameterNode(const FuncGraphManagerPtr &manager, const AnfNodePtr &parameter) {
   auto param_output = manager->node_users().find(parameter);
   if (param_output == manager->node_users().end()) {
     return true;
   }
 
-  return false;
+  bool need_remove = true;
+  auto output_info_list = param_output->second;
+  for (const auto &output_info : output_info_list) {
+    const auto &node = output_info.first;
+    if (IsNotRealUseNode(node)) {
+      const auto &cnode = node->cast<CNodePtr>();
+      const auto &new_cnode = ConvertRemoveNodeToVirtualNode(cnode);
+      manager->Replace(cnode, new_cnode);
+      continue;
+    }
+    need_remove = false;
+  }
+
+  return need_remove;
 }
 
 void RemoveBatchNormalizetionNotUseParameters(const FuncGraphManagerPtr &manager,
@@ -98,12 +147,20 @@ void RemoveBatchNormalizetionNotUseParameters(const FuncGraphManagerPtr &manager
                [&manager](const AnfNodePtr &param) { return IsRealRemoveParameterNode(manager, param); });
 
   auto root_parameters = root_graph->parameters();
+  size_t origin_param_count = root_parameters.size();
   root_parameters.erase(std::remove_if(root_parameters.begin(), root_parameters.end(),
                                        [&real_remove_parameter_list](const AnfNodePtr &node) {
                                          return NeedRemove(node->cast<ParameterPtr>(), real_remove_parameter_list);
                                        }),
                         root_parameters.end());
-
+  size_t remove_param_count = origin_param_count - root_parameters.size();
+  size_t hyper_param_count = root_graph->hyper_param_count();
+  if (remove_param_count > hyper_param_count) {
+    MS_LOG(ERROR) << "The number of deleted parameters cannot exceed the number of original parameters.";
+    return;
+  }
+  hyper_param_count = hyper_param_count - remove_param_count;
+  root_graph->set_hyper_param_count(hyper_param_count);
   manager->SetParameters(root_graph, root_parameters);
 }
 }  // namespace

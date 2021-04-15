@@ -222,9 +222,9 @@ class FTRL(Optimizer):
         moments = self.moments
         linear = self.linear
         grads = self.decay_weight(grads)
+        grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)
         grads = self._grad_sparse_indices_deduplicate(grads)
-        grads = self.gradients_centralization(grads)
         lr = self.get_lr()
 
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,

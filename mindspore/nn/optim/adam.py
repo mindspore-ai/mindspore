@@ -342,9 +342,9 @@ class Adam(Optimizer):
         moment1 = self.moment1
         moment2 = self.moment2
         gradients = self.decay_weight(gradients)
+        gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         gradients = self._grad_sparse_indices_deduplicate(gradients)
-        gradients = self.gradients_centralization(gradients)
         lr = self.get_lr()
 
         beta1_power = self.beta1_power * self.beta1
