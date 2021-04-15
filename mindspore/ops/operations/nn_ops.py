@@ -2696,7 +2696,7 @@ class SGD(PrimitiveWithCheck):
                    float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> sgd = ops.SGD()
