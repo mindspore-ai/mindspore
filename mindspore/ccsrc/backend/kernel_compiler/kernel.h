@@ -115,7 +115,7 @@ using KernelPackPtr = std::shared_ptr<KernelPack>;
  * @brief base class for autotensor kernel and cce kernel.
  */
 struct Address {
-  Address() {}
+  Address() : addr(nullptr), size(0) {}
   Address(void *address_addr, size_t address_size) : addr(address_addr), size(address_size) {}
   void *addr;
   size_t size;

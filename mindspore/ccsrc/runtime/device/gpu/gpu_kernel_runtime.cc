@@ -103,7 +103,6 @@ bool GPUKernelRuntime::Init() {
 }
 
 namespace {
-
 std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
   // define a vector containing real output number
   std::vector<int> real_outputs;
