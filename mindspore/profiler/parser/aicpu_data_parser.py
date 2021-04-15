@@ -35,7 +35,8 @@ class DataPreProcessParser:
     _source_file_target = 'DATA_PREPROCESS.AICPU.'
     _dst_file_title = 'title:DATA_PREPROCESS AICPU'
     _dst_file_column_title = ['serial_number', 'node_type_name', 'total_time(ms)',
-                              'dispatch_time(ms)', 'run_start', 'run_end']
+                              'dispatch_time(ms)', 'execution_time(ms)', 'run_start',
+                              'run_end']
     _ms_unit = 1000
 
     def __init__(self, input_path, output_filename):
@@ -75,13 +76,17 @@ class DataPreProcessParser:
                 logger.warning("the data format can't support 'node_list':%s", str(node_list))
                 return None
 
+            us_unit = 100  # Convert 10ns to 1us.
+            run_start_counter = float(node_list[1].split(':')[-1].split(' ')[1]) / us_unit
+            run_end_counter = float(node_list[run_end_index].split(':')[-1].split(' ')[1]) / us_unit
             run_start = node_list[1].split(':')[-1].split(' ')[0]
             run_end = node_list[run_end_index].split(':')[-1].split(' ')[0]
+            exe_time = (float(run_end) - float(run_start)) / self._ms_unit
             total_time = float(thread_list[-1].split('=')[-1].split()[0]) / self._ms_unit
             dispatch_time = float(thread_list[-2].split('=')[-1].split()[0]) / self._ms_unit
 
-            return [number, node_type_name, total_time, dispatch_time,
-                    run_start, run_end]
+            return [number, node_type_name, total_time, dispatch_time, exe_time,
+                    run_start_counter, run_end_counter]
         except IndexError as e:
             logger.error(e)
             return None
@@ -142,7 +147,6 @@ class DataPreProcessParser:
         """
         stream_id = 0  # Default stream id for AI CPU.
         pid = 9000  # Default pid for AI CPU.
-        factor = 1000  # Convert time unit from 1us to 1ms
         total_time = 0
         min_cycle_counter = float('inf')
         aicpu_info = []
@@ -153,10 +157,9 @@ class DataPreProcessParser:
                 continue
 
             op_name = aicpu_item[1]
-            start_time = float(aicpu_item[4]) / factor
+            start_time = float(aicpu_item[5]) / self._ms_unit
             min_cycle_counter = min(min_cycle_counter, start_time)
-            end_time = float(aicpu_item[5]) / factor
-            duration = end_time - start_time
+            duration = aicpu_item[4]
             aicpu_info.append([op_name, stream_id, start_time, duration, pid])
 
             # Record the number of operator types.

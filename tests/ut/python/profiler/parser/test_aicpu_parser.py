@@ -33,6 +33,7 @@ def get_result(file_path):
         list[list], the parsed aicpu information.
     """
     result = []
+    file = None
     try:
         file = open(file_path, 'r')
         result.append(file.read())
