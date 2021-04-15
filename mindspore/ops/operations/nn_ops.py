@@ -129,7 +129,7 @@ class Flatten(PrimitiveWithInfer):
         return input_x
 
 
-class Softmax(PrimitiveWithInfer):
+class Softmax(Primitive):
     r"""
     Softmax operation.
 

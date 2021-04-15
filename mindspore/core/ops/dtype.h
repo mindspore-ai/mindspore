@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SHAPE_H_
-#define MINDSPORE_CORE_OPS_SHAPE_H_
+#ifndef MINDSPORE_CORE_OPS_DTYPE_H_
+#define MINDSPORE_CORE_OPS_DTYPE_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -26,15 +26,15 @@
 
 namespace mindspore {
 namespace ops {
-class Shape : public PrimitiveC {
+class DType : public PrimitiveC {
  public:
-  Shape() : PrimitiveC(prim::kPrimShape->name()) {}
-  ~Shape() = default;
-  MS_DECLARE_PARENT(Shape, PrimitiveC);
+  DType() : PrimitiveC(prim::kPrimDType->name()) { InitIOName({"x"}, {"output"}); }
+  ~DType() = default;
+  MS_DECLARE_PARENT(DType, PrimitiveC);
   void Init() {}
 };
-using PrimShapePtr = std::shared_ptr<Shape>;
+using PrimDTypePtr = std::shared_ptr<DType>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SHAPE_H_
+#endif  // MINDSPORE_CORE_OPS_DTYPE_H_

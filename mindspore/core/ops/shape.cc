@@ -31,7 +31,10 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), op_name);
+  CheckAndConvertUtils::CheckInteger("shape infer", input_args.size(), kEqual, 1, op_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto in_shape = shape_map[kShape];
   // infer type
   AbstractBasePtrList abs_list;
   std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(abs_list),
@@ -39,9 +42,20 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                    return std::make_shared<abstract::AbstractScalar>(item);
                  });
   auto abs = std::make_shared<abstract::AbstractTuple>(abs_list);
-  abs->set_value(MakeValue(in_shape));
   return abs;
 }
-REGISTER_PRIMITIVE_C(kNameShape, Shape);
+
+ValuePtr ShapeInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                         const AbstractBasePtr &infer) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("shape infer", input_args.size(), kEqual, 1, op_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto inshape = shape_map[kShape];
+  auto value = MakeValue(inshape);
+  return value;
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(Shape, prim::kPrimShape, ShapeInfer, ShapeInferValue, false);
 }  // namespace ops
 }  // namespace mindspore

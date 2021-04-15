@@ -197,7 +197,7 @@ class ExpandDims(PrimitiveWithInfer):
         return out
 
 
-class DType(PrimitiveWithInfer):
+class DType(Primitive):
     """
     Returns the data type of the input tensor as mindspore.dtype.
 
@@ -223,14 +223,6 @@ class DType(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize DType"""
-
-    def __infer__(self, x):
-        addition_error_info = 'Perhaps you are using a mixture of tensors and scalars to operate.'
-        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name, addition_error_info)
-        out = {'shape': (),
-               'dtype': mstype.type_type,
-               'value': x['dtype'].element_type()}
-        return out
 
 
 class SameTypeShape(PrimitiveWithInfer):
@@ -549,7 +541,7 @@ class Reshape(PrimitiveWithInfer):
         return out
 
 
-class Shape(PrimitiveWithInfer):
+class Shape(Primitive):
     """
     Returns the shape of the input tensor.
 
@@ -577,13 +569,6 @@ class Shape(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Shape"""
-
-    def __infer__(self, x):
-        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
-        out = {'shape': (),
-               'dtype': mstype.tuple_,
-               'value': tuple(x['shape'])}
-        return out
 
 
 class DynamicShape(Primitive):
