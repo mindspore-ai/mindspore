@@ -20,7 +20,7 @@ from mindspore.ops import _constants as Constants
 depend = P.Depend()
 all_reduce = P.AllReduce()
 broadcast = P.Broadcast(1)
-memcpy_async = Primitive('memcpy_async')
+tensor_move = Primitive('TensorMove')
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 assign_add = P.AssignAdd()
@@ -39,7 +39,7 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_insert_memcpy_async_for_hccl_op_cond1(tag):
+def test_insert_tensor_move_for_hccl_op_cond1(tag):
     fns = FnDict()
 
     @fns
@@ -57,14 +57,14 @@ def test_insert_memcpy_async_for_hccl_op_cond1(tag):
     @fns
     def after(x):
         res1 = relu(x)
-        res2 = memcpy_async(res1)
+        res2 = tensor_move(res1)
         res2 = all_reduce(res2)
         return make_tuple(make_tuple(res1, res2))
 
     return fns[tag]
 
 
-def test_insert_memcpy_async_for_hccl_op_cond2(tag):
+def test_insert_tensor_move_for_hccl_op_cond2(tag):
     fns = FnDict()
 
     @fns
@@ -74,14 +74,14 @@ def test_insert_memcpy_async_for_hccl_op_cond2(tag):
 
     @fns
     def after(x):
-        res = memcpy_async(x)
+        res = tensor_move(x)
         res = all_reduce(res)
         return make_tuple(res)
 
     return fns[tag]
 
 
-def test_insert_memcpy_async_for_hccl_op_cond3(tag):
+def test_insert_tensor_move_for_hccl_op_cond3(tag):
     fns = FnDict()
 
     @fns
@@ -93,14 +93,14 @@ def test_insert_memcpy_async_for_hccl_op_cond3(tag):
     @fns
     def after(a, b):
         res = assign_add(a, b)
-        res = memcpy_async(res)
+        res = tensor_move(res)
         res = all_reduce(res)
         return make_tuple(res)
 
     return fns[tag]
 
 
-def test_insert_memcpy_async_for_hccl_op_cond4(tag):
+def test_insert_tensor_move_for_hccl_op_cond4(tag):
     fns = FnDict()
 
     @fns
@@ -113,7 +113,7 @@ def test_insert_memcpy_async_for_hccl_op_cond4(tag):
     @fns
     def after(a, b):
         x = relu(a)
-        y1 = memcpy_async(b)
+        y1 = tensor_move(b)
         y2 = all_reduce(y1)
         res = depend(x, y2)
         return make_tuple(res)
@@ -121,7 +121,7 @@ def test_insert_memcpy_async_for_hccl_op_cond4(tag):
     return fns[tag]
 
 
-def test_insert_memcpy_async_for_hccl_op_cond5(tag):
+def test_insert_tensor_move_for_hccl_op_cond5(tag):
     fns = FnDict()
 
     @fns
@@ -134,8 +134,8 @@ def test_insert_memcpy_async_for_hccl_op_cond5(tag):
     @fns
     def after(a, b, c):
         x = relu(a)
-        m1 = memcpy_async(b)
-        m2 = memcpy_async(c)
+        m1 = tensor_move(b)
+        m2 = tensor_move(c)
         y = broadcast(m1, m2)
         y0 = tuple_getitem(y, 0)
         y1 = tuple_getitem(y, 1)

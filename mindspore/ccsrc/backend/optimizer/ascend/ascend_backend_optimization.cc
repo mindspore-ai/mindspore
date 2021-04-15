@@ -100,13 +100,13 @@
 #include "backend/optimizer/ascend/buffer_fusion/reduce_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/format_type/deal_ref_and_split_unsupported_transdata.h"
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_cascade.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_hccl_op.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_cascade.h"
 #include "backend/optimizer/ascend/enhancer/insert_pad_for_nms_with_mask.h"
 #include "backend/optimizer/ascend/format_type/insert_transdata_for_runop.h"
-#include "backend/optimizer/ascend/enhancer/getnext_memcpy_elimination.h"
+#include "backend/optimizer/ascend/enhancer/getnext_tensor_move_elimination.h"
 #include "backend/optimizer/ascend/ir_fission/addn_fission.h"
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_getnext.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_getnext.h"
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_infer_fission.h"
 #include "backend/optimizer/ascend/ir_fission/split_fission.h"
 #include "backend/optimizer/ascend/ir_fission/splitv_fission.h"
@@ -292,11 +292,11 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
 
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) &&
       ConfigManager::GetInstance().iter_num() > 1) {
-    ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForGetNext>());
+    ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForGetNext>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   }
-  ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForHcclOp>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTranspose>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
@@ -370,7 +370,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
-  other_pm->AddPass(std::make_shared<InsertMemcpyAsyncForCascade>());
+  other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
@@ -387,7 +387,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other2_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) &&
       ConfigManager::GetInstance().iter_num() > 1) {
-    other2_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
+    other2_pm->AddPass(std::make_shared<GetnextTensorMoveElimination>());
   }
   other2_pm->AddPass(std::make_shared<CheckConsistency>());
   optimizer2->AddPassManager(other2_pm);

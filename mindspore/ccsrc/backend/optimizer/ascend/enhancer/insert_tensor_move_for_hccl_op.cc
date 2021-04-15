@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_hccl_op.h"
 #include <vector>
 #include <set>
 #include <string>
@@ -25,9 +25,9 @@
 namespace mindspore {
 namespace opt {
 namespace {
-// insert memcpy for some cnode even if not a Ref cnode
-const std::set<std::string> kNeedInsertMemcpyOpSet = {kLambNextMVOpName, kLambNextMVWithDecayOpName,
-                                                      kLambUpdateWithLROpName};
+// insert tensormove for some cnode even if not a Ref cnode
+const std::set<std::string> kNeedInsertTensorMoveOpSet = {kLambNextMVOpName, kLambNextMVWithDecayOpName,
+                                                          kLambUpdateWithLROpName};
 
 bool IsParameterOrValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -43,7 +43,7 @@ bool IsParameterOrValueNode(const AnfNodePtr &node) {
 // NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
 bool IsNodeOutPutUsedByOtherRealKernel(const AnfNodeIndexSet &node_users) {
   if (node_users.size() == 1) {
-    MS_LOG(INFO) << "This node only used once, no need to insert memcpy node.";
+    MS_LOG(INFO) << "This node only used once, no need to insert tensormove node.";
     return false;
   }
   for (const auto &node_pair : node_users) {
@@ -53,13 +53,13 @@ bool IsNodeOutPutUsedByOtherRealKernel(const AnfNodeIndexSet &node_users) {
       return true;
     }
   }
-  MS_LOG(INFO) << "This node used by other node, but the node is not real kernel, no need to insert memcpy node.";
+  MS_LOG(INFO) << "This node used by other node, but the node is not real kernel, no need to insert tensormove node.";
   return false;
 }
 }  // namespace
 
-bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input,
-                                                  const CNodePtr &cur_node) const {
+bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, const AnfNodePtr &input,
+                                                     const CNodePtr &cur_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(cur_node);
@@ -79,7 +79,7 @@ bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, con
     }
 
     // when input is some special cnodes
-    if (kNeedInsertMemcpyOpSet.find(AnfAlgo::GetCNodeName(input)) != kNeedInsertMemcpyOpSet.end()) {
+    if (kNeedInsertTensorMoveOpSet.find(AnfAlgo::GetCNodeName(input)) != kNeedInsertTensorMoveOpSet.end()) {
       return true;
     }
 
@@ -96,29 +96,29 @@ bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, con
   return false;
 }
 
-void InsertMemcpyAsyncForHcclOp::InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
+void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(hccl_node);
-  bool need_memcpy_async = false;
+  bool need_tensor_move_async = false;
   std::vector<AnfNodePtr> new_inputs = {hccl_node->input(0)};
   for (size_t i = 1; i < hccl_node->size(); ++i) {
     auto input = hccl_node->input(i);
-    if (NeedInsertMemcpy(graph, input, hccl_node)) {
-      auto memcpy_async = CreateMemcpyAsyncOp(graph, input);
-      if (memcpy_async == nullptr) {
-        MS_LOG(EXCEPTION) << "Create memcpy_async op failed.";
+    if (NeedInsertTensorMove(graph, input, hccl_node)) {
+      auto tensor_move = CreateTensorMoveOp(graph, input);
+      if (tensor_move == nullptr) {
+        MS_LOG(EXCEPTION) << "Create tensor_move op failed.";
       }
       if (input->isa<CNode>() && AnfAlgo::IsNodeDynamicShape(input)) {
-        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), memcpy_async);
+        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), tensor_move);
       }
-      new_inputs.push_back(memcpy_async);
-      need_memcpy_async = true;
+      new_inputs.push_back(tensor_move);
+      need_tensor_move_async = true;
     } else {
       new_inputs.push_back(input);
     }
   }
 
-  if (need_memcpy_async) {
+  if (need_tensor_move_async) {
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
     new_hccl_node->set_inputs(new_inputs);
     auto manager = graph->manager();
@@ -129,15 +129,15 @@ void InsertMemcpyAsyncForHcclOp::InsertMemcpyAsync(const FuncGraphPtr &graph, co
   }
 }
 
-const AnfNodePtr InsertMemcpyAsyncForHcclOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                     const EquivPtr &) const {
+const AnfNodePtr InsertTensorMoveForHcclOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                    const EquivPtr &) const {
   if (func_graph == nullptr || node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
   if (!AnfAlgo::IsCommunicationOp(node)) {
     return nullptr;
   }
-  InsertMemcpyAsync(func_graph, node->cast<CNodePtr>());
+  InsertTensorMove(func_graph, node->cast<CNodePtr>());
   return nullptr;
 }
 }  // namespace opt

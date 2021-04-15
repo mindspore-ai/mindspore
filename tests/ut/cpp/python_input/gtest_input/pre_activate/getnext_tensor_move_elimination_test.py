@@ -18,9 +18,9 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 get_next = P.GetNext([ms.float32], [[1, 64, 112, 112]], 1, "")
-memcpy_async_attr = Primitive('memcpy_async')
-memcpy_async_attr.add_prim_attr("label_for_insert_stream_active", True)
-memcpy_async = Primitive('memcpy_async')
+tensor_move_attr = Primitive('TensorMove')
+tensor_move_attr.add_prim_attr("label_for_insert_stream_active", True)
+tensor_move = Primitive('tensor_move')
 cast = P.Cast()
 add = P.Add()
 
@@ -36,13 +36,13 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_getnext_memcpy_elimination(tag):
+def test_getnext_tensor_move_elimination(tag):
     fns = FnDict()
 
     @fns
     def before():
         res = get_next()
-        res = memcpy_async_attr(res)
+        res = tensor_move_attr(res)
         res = cast(res)
         res = add(res)
         return res
@@ -57,63 +57,63 @@ def test_getnext_memcpy_elimination(tag):
     return fns[tag]
 
 
-def test_getnext_memcpy_elimination_no_attr(tag):
+def test_getnext_tensor_move_elimination_no_attr(tag):
     fns = FnDict()
 
     @fns
     def before():
         res = get_next()
-        res = memcpy_async(res)
+        res = tensor_move(res)
         res = cast(res)
         return res
 
     @fns
     def after():
         res = get_next()
-        res = memcpy_async(res)
+        res = tensor_move(res)
         res = cast(res)
         return res
 
     return fns[tag]
 
 
-def test_getnext_memcpy_elimination_memcpy_multi_users(tag):
+def test_getnext_tensor_move_elimination_tensor_move_multi_users(tag):
     fns = FnDict()
 
     @fns
     def before():
         res = get_next()
-        memcpy_out = memcpy_async_attr(res)
-        res = cast(memcpy_out)
-        res = add(memcpy_out, res)
+        tensor_move_out = tensor_move_attr(res)
+        res = cast(tensor_move_out)
+        res = add(tensor_move_out, res)
         return res
 
     @fns
     def after():
         res = get_next()
-        memcpy_out = memcpy_async_attr(res)
-        res = cast(memcpy_out)
-        res = add(memcpy_out, res)
+        tensor_move_out = tensor_move_attr(res)
+        res = cast(tensor_move_out)
+        res = add(tensor_move_out, res)
         return res
 
     return fns[tag]
 
 
-def test_getnext_memcpy_elimination_next_multi_inputs(tag):
+def test_getnext_tensor_move_elimination_next_multi_inputs(tag):
     fns = FnDict()
 
     @fns
     def before():
         res = get_next()
-        memcpy_out = memcpy_async_attr(res)
-        res = add(memcpy_out, res)
+        tensormove_out = tensor_move_attr(res)
+        res = add(tensormove_out, res)
         return res
 
     @fns
     def after():
         res = get_next()
-        memcpy_out = memcpy_async_attr(res)
-        res = add(memcpy_out, res)
+        tensormove_out = tensor_move_attr(res)
+        res = add(tensormove_out, res)
         return res
 
     return fns[tag]

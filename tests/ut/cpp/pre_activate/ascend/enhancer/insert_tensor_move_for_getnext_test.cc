@@ -24,23 +24,23 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_getnext.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_getnext.h"
 
 namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 
-class TestHWInsertMemcpyAsyncForGetNext : public BackendCommon {
+class TestHWInsertTensorMoveForGetNext : public BackendCommon {
  public:
-  TestHWInsertMemcpyAsyncForGetNext() : get_py_fun_("gtest_input.pre_activate.insert_memcpy_async_for_getnext", true) {}
-  ~TestHWInsertMemcpyAsyncForGetNext() override = default;
+  TestHWInsertTensorMoveForGetNext() : get_py_fun_("gtest_input.pre_activate.insert_tensor_move_for_getnext", true) {}
+  ~TestHWInsertTensorMoveForGetNext() override = default;
 
  public:
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWInsertMemcpyAsyncForGetNext, test_insert_memcpy_async_for_getnext_multi_output) {
-  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_getnext", "getnext_multi_output_before");
+TEST_F(TestHWInsertTensorMoveForGetNext, test_insert_tensor_move_for_getnext_multi_output) {
+  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_getnext", "getnext_multi_output_before");
 
   AbstractBasePtrList args_spec_list{};
   auto kernel_graph = GetKernelGraph(g_before, args_spec_list);
@@ -57,11 +57,11 @@ TEST_F(TestHWInsertMemcpyAsyncForGetNext, test_insert_memcpy_async_for_getnext_m
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::InsertMemcpyAsyncForGetNext>());
+  pm->AddPass(std::make_shared<opt::InsertTensorMoveForGetNext>());
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kernel_graph);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_getnext", "getnext_multi_output_after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_getnext", "getnext_multi_output_after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt

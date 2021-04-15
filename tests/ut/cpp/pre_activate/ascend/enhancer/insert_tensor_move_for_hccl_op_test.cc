@@ -25,24 +25,24 @@
 #include "ir/param_info.h"
 #define private public
 #define protected public
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_hccl_op.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_hccl_op.h"
 #undef private
 #undef protected
 namespace mindspore {
 namespace opt {
-class TestHWInsertMemcpyForHccl : public BackendCommon {
+class TestHWInsertTensorMoveForHccl : public BackendCommon {
  public:
-  TestHWInsertMemcpyForHccl() : get_py_fun_("gtest_input.pre_activate.insert_memcpy_async_for_hccl_op", true) {}
-  ~TestHWInsertMemcpyForHccl() override = default;
+  TestHWInsertTensorMoveForHccl() : get_py_fun_("gtest_input.pre_activate.insert_tensor_move_for_hccl_op", true) {}
+  ~TestHWInsertTensorMoveForHccl() override = default;
 
  public:
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-class MockInsertMemcpyForHcclKernelQuery : public KernelQuery {
+class MockInsertTensorMoveForHcclKernelQuery : public KernelQuery {
  public:
-  MockInsertMemcpyForHcclKernelQuery() = default;
-  ~MockInsertMemcpyForHcclKernelQuery() override = default;
+  MockInsertTensorMoveForHcclKernelQuery() = default;
+  ~MockInsertTensorMoveForHcclKernelQuery() override = default;
   bool IsTbeRef(const AnfNodePtr &node) override {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -53,9 +53,9 @@ class MockInsertMemcpyForHcclKernelQuery : public KernelQuery {
   }
 };
 
-TEST_F(TestHWInsertMemcpyForHccl, test_cond1_no_insert) {
+TEST_F(TestHWInsertTensorMoveForHccl, test_cond1_no_insert) {
   get_py_fun_.SetDoResolve(true);
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond1", "before2");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond1", "before2");
   ASSERT_TRUE(g != nullptr);
   std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -66,7 +66,7 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond1_no_insert) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::InsertMemcpyAsyncForHcclOp>();
+  auto pass = std::make_shared<opt::InsertTensorMoveForHcclOp>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kg);
@@ -74,9 +74,9 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond1_no_insert) {
   EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
 }
 
-TEST_F(TestHWInsertMemcpyForHccl, test_cond2) {
+TEST_F(TestHWInsertTensorMoveForHccl, test_cond2) {
   get_py_fun_.SetDoResolve(true);
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond2", "before");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond2", "before");
   ASSERT_TRUE(g != nullptr);
   std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -90,19 +90,19 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond2) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::InsertMemcpyAsyncForHcclOp>();
-  pass->kernel_query_ = std::make_shared<MockInsertMemcpyForHcclKernelQuery>();
+  auto pass = std::make_shared<opt::InsertTensorMoveForHcclOp>();
+  pass->kernel_query_ = std::make_shared<MockInsertTensorMoveForHcclKernelQuery>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kg);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond2", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond2", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWInsertMemcpyForHccl, test_cond3) {
+TEST_F(TestHWInsertTensorMoveForHccl, test_cond3) {
   get_py_fun_.SetDoResolve(true);
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond3", "before");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond3", "before");
   ASSERT_TRUE(g != nullptr);
   std::vector<int64_t> shp_x{3, 2};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -112,19 +112,19 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond3) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::InsertMemcpyAsyncForHcclOp>();
-  pass->kernel_query_ = std::make_shared<MockInsertMemcpyForHcclKernelQuery>();
+  auto pass = std::make_shared<opt::InsertTensorMoveForHcclOp>();
+  pass->kernel_query_ = std::make_shared<MockInsertTensorMoveForHcclKernelQuery>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kg);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond3", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond3", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWInsertMemcpyForHccl, test_cond4) {
+TEST_F(TestHWInsertTensorMoveForHccl, test_cond4) {
   get_py_fun_.SetDoResolve(true);
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond4", "before");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond4", "before");
   ASSERT_TRUE(g != nullptr);
   std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -139,19 +139,19 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond4) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::InsertMemcpyAsyncForHcclOp>();
-  pass->kernel_query_ = std::make_shared<MockInsertMemcpyForHcclKernelQuery>();
+  auto pass = std::make_shared<opt::InsertTensorMoveForHcclOp>();
+  pass->kernel_query_ = std::make_shared<MockInsertTensorMoveForHcclKernelQuery>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kg);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond4", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond4", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWInsertMemcpyForHccl, test_cond5) {
+TEST_F(TestHWInsertTensorMoveForHccl, test_cond5) {
   get_py_fun_.SetDoResolve(true);
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond5", "before");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond5", "before");
   ASSERT_TRUE(g != nullptr);
   std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
@@ -166,14 +166,14 @@ TEST_F(TestHWInsertMemcpyForHccl, test_cond5) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::InsertMemcpyAsyncForHcclOp>();
-  pass->kernel_query_ = std::make_shared<MockInsertMemcpyForHcclKernelQuery>();
+  auto pass = std::make_shared<opt::InsertTensorMoveForHcclOp>();
+  pass->kernel_query_ = std::make_shared<MockInsertTensorMoveForHcclKernelQuery>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(kg);
   kg->SetExecOrderByDefault();
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_memcpy_async_for_hccl_op_cond5", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_insert_tensor_move_for_hccl_op_cond5", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt

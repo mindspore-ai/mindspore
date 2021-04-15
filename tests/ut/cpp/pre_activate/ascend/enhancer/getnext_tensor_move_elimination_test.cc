@@ -22,75 +22,75 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/common/optimizer.h"
-#include "mindspore/ccsrc/backend/optimizer/ascend/enhancer/getnext_memcpy_elimination.h"
+#include "mindspore/ccsrc/backend/optimizer/ascend/enhancer/getnext_tensor_move_elimination.h"
 
 namespace mindspore {
 namespace opt {
-class TestGetNextMemcpyElimination : public BackendCommon {
+class TestGetNextTensorMoveElimination : public BackendCommon {
  public:
-  TestGetNextMemcpyElimination() : get_py_fun_("gtest_input.pre_activate.getnext_memcpy_elimination_test", true) {}
+  TestGetNextTensorMoveElimination() : get_py_fun_("gtest_input.pre_activate.getnext_tensor_move_elimination_test", true) {}
 
  public:
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestGetNextMemcpyElimination, test_getnext_memcpy_elimination) {
-  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination", "before");
+TEST_F(TestGetNextTensorMoveElimination, test_getnext_tensormove_elimination) {
+  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination", "before");
   ASSERT_TRUE(g_before != nullptr);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::GetnextMemcpyElimination>();
+  auto pass = std::make_shared<opt::GetnextTensorMoveElimination>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(g_before);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestGetNextMemcpyElimination, test_getnext_memcpy_elimination_no_attr) {
-  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination_no_attr", "before");
+TEST_F(TestGetNextTensorMoveElimination, test_getnext_tensor_move_elimination_no_attr) {
+  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination_no_attr", "before");
   ASSERT_TRUE(g_before != nullptr);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::GetnextMemcpyElimination>();
+  auto pass = std::make_shared<opt::GetnextTensorMoveElimination>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(g_before);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination_no_attr", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination_no_attr", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestGetNextMemcpyElimination, test_getnext_memcpy_elimination_memcpy_multi_users) {
-  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination_memcpy_multi_users", "before");
+TEST_F(TestGetNextTensorMoveElimination, test_getnext_tensor_move_elimination_tensor_move_multi_users) {
+  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination_tensor_move_multi_users", "before");
   ASSERT_TRUE(g_before != nullptr);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::GetnextMemcpyElimination>();
+  auto pass = std::make_shared<opt::GetnextTensorMoveElimination>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(g_before);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination_memcpy_multi_users", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination_tensor_move_multi_users", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestGetNextMemcpyElimination, test_getnext_memcpy_elimination_next_multi_inputs) {
-  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination_next_multi_inputs", "before");
+TEST_F(TestGetNextTensorMoveElimination, test_getnext_tensor_move_elimination_next_multi_inputs) {
+  FuncGraphPtr g_before = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination_next_multi_inputs", "before");
   ASSERT_TRUE(g_before != nullptr);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  auto pass = std::make_shared<opt::GetnextMemcpyElimination>();
+  auto pass = std::make_shared<opt::GetnextTensorMoveElimination>();
   pm->AddPass(pass);
   optimizer->AddPassManager(pm);
   auto new_graph = optimizer->Optimize(g_before);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_memcpy_elimination_next_multi_inputs", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_getnext_tensor_move_elimination_next_multi_inputs", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 

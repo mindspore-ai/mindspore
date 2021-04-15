@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_cascade.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_cascade.h"
 #include <vector>
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -69,36 +69,36 @@ bool IsPartOutputsOfHcclOp(const AnfNodePtr &node, const CNodePtr &cur_hccl, con
 }
 }  // namespace
 
-AnfNodePtr InsertMemcpyAsyncForCascade::InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
+AnfNodePtr InsertTensorMoveForCascade::InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(hccl_node);
-  std::vector<AnfNodePtr> memcpy_async_list;
+  std::vector<AnfNodePtr> tensor_move_list;
   std::vector<AnfNodePtr> new_inputs = {hccl_node->input(0)};
   for (size_t i = 1; i < hccl_node->size(); ++i) {
     auto input = hccl_node->input(i);
     MS_EXCEPTION_IF_NULL(input);
     // when input is also a hccl op and just part outputs of it linking with cur_hccl_op
     if (IsPartOutputsOfHcclOp(input, hccl_node, graph)) {
-      auto memcpy_async = CreateMemcpyAsyncOp(graph, input);
-      if (memcpy_async == nullptr) {
-        MS_LOG(EXCEPTION) << "Create memcpy_async op failed."
+      auto tensor_move = CreateTensorMoveOp(graph, input);
+      if (tensor_move == nullptr) {
+        MS_LOG(EXCEPTION) << "Create tensor_move op failed."
                           << " trace: " << trace::DumpSourceLines(hccl_node);
       }
       if (AnfAlgo::IsNodeDynamicShape(input)) {
-        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), memcpy_async);
+        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), tensor_move);
       }
       auto kernel_info = std::make_shared<device::KernelInfo>();
-      memcpy_async->set_kernel_info(kernel_info);
+      tensor_move->set_kernel_info(kernel_info);
       MS_EXCEPTION_IF_NULL(kernel_select_);
-      kernel_select_->SelectKernel(memcpy_async->cast<CNodePtr>());
-      new_inputs.push_back(memcpy_async);
-      memcpy_async_list.push_back(memcpy_async);
+      kernel_select_->SelectKernel(tensor_move->cast<CNodePtr>());
+      new_inputs.push_back(tensor_move);
+      tensor_move_list.push_back(tensor_move);
     } else {
       new_inputs.push_back(input);
     }
   }
 
-  if (!memcpy_async_list.empty()) {
+  if (!tensor_move_list.empty()) {
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
     new_hccl_node->set_inputs(new_inputs);
     return new_hccl_node;
@@ -106,8 +106,8 @@ AnfNodePtr InsertMemcpyAsyncForCascade::InsertMemcpyAsync(const FuncGraphPtr &gr
   return nullptr;
 }
 
-const AnfNodePtr InsertMemcpyAsyncForCascade::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                      const EquivPtr &) const {
+const AnfNodePtr InsertTensorMoveForCascade::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                     const EquivPtr &) const {
   if (func_graph == nullptr || node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
@@ -115,7 +115,7 @@ const AnfNodePtr InsertMemcpyAsyncForCascade::Process(const FuncGraphPtr &func_g
   if (!AnfAlgo::IsCommunicationOp(node)) {
     return nullptr;
   }
-  return InsertMemcpyAsync(func_graph, cnode);
+  return InsertTensorMove(func_graph, cnode);
 }
 }  // namespace opt
 }  // namespace mindspore

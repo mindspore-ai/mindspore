@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_TENSOR_MOVE_FOR_HCCL_OP_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_TENSOR_MOVE_FOR_HCCL_OP_H_
 
 #include <memory>
 #include "backend/optimizer/common/optimizer.h"
@@ -22,19 +22,19 @@
 
 namespace mindspore {
 namespace opt {
-class InsertMemcpyAsyncForHcclOp : public PatternProcessPass {
+class InsertTensorMoveForHcclOp : public PatternProcessPass {
  public:
-  explicit InsertMemcpyAsyncForHcclOp(bool multigraph = true)
-      : PatternProcessPass("insert_memcpy_async_for_hccl_op", multigraph),
+  explicit InsertTensorMoveForHcclOp(bool multigraph = true)
+      : PatternProcessPass("insert_tensor_move_for_hccl_op", multigraph),
         kernel_query_(std::make_shared<KernelQuery>()) {}
-  ~InsertMemcpyAsyncForHcclOp() override = default;
+  ~InsertTensorMoveForHcclOp() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  void InsertMemcpyAsync(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
-  bool NeedInsertMemcpy(const FuncGraphPtr &graph, const AnfNodePtr &input, const CNodePtr &cur_node) const;
+  void InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
+  bool NeedInsertTensorMove(const FuncGraphPtr &graph, const AnfNodePtr &input, const CNodePtr &cur_node) const;
   KernelQueryPtr kernel_query_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_MEMCPY_ASYNC_FOR_HCCL_OP_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_TENSOR_MOVE_FOR_HCCL_OP_H_
