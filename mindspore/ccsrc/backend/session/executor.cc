@@ -29,38 +29,6 @@ using mindspore::tensor::TensorPy;
 namespace mindspore {
 namespace session {
 namespace {
-void UpdateOutputTensors(const VectorRef *outputs,
-                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
-  MS_EXCEPTION_IF_NULL(outputs);
-  for (auto &item : *outputs) {
-    if (utils::isa<VectorRefPtr>(item)) {
-      auto vector_ref = utils::cast<VectorRef>(item);
-      UpdateOutputTensors(&vector_ref, tensor_to_node);
-    } else if (utils::isa<tensor::TensorPtr>(item)) {
-      auto tensor = utils::cast<tensor::TensorPtr>(item);
-      MS_EXCEPTION_IF_NULL(tensor);
-      auto iter = tensor_to_node.find(tensor);
-      if (iter != tensor_to_node.end()) {
-        auto &node = iter->second.first;
-        auto &output_index = iter->second.second;
-        auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
-        tensor->set_device_address(address);
-        if (AnfAlgo::IsDynamicShape(node)) {
-          auto updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
-          ShapeVector int_shape;
-          std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-          tensor->set_shape(int_shape);
-        }
-      }
-      if (tensor->NeedSyncDeviceToHostImmediately()) {
-        tensor->data_sync(false);
-        tensor->set_device_address(nullptr);
-        tensor->set_sync_status(kNeedSyncHostToDevice);
-      }
-    }
-  }
-}
-
 void SetOutputTensorsWaitStatus(const VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item : *outputs) {
@@ -163,7 +131,7 @@ void RunGraphTask::Run() {
   try {
     session_->LoadInputs(graph_id_, input_tensors_);
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
-    UpdateOutputTensors(&outputs_, tensor_to_node_);
+    session_->UpdateOutputTensors(&outputs_, tensor_to_node_);
   } catch (const std::exception &e) {
     ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
     MsException::Instance().SetException();

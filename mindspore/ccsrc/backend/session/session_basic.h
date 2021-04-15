@@ -73,6 +73,7 @@ struct OutputTensorInfo {
 };
 
 using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
+using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 class Executor;
 
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
@@ -169,6 +170,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,
                                    std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
+  virtual void UpdateOutputTensors(const VectorRef *outputs,
+                                   const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node);
   virtual void UnifyMindIR(const KernelGraphPtr &graph) {}
   virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) { return 0; }
   virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
