@@ -49,6 +49,7 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   TensorListC *output0 = (TensorListC *)(outputs[0]);
   output0->data_type_ = input0->data_type_;
   output0->format_ = input0->format_;
+  output0->tensors_data_type_ = value_tensor->data_type_;
 
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;

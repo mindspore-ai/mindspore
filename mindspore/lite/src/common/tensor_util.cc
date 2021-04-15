@@ -67,6 +67,11 @@ void SetOutputTensorAttr(const std::vector<TensorC *> &tensors_in, std::vector<l
       tensors_out->at(i)->set_format(static_cast<schema::Format>(tensors_in[i]->format_));
       tensors_out->at(i)->set_data_type(static_cast<TypeId>(tensors_in[i]->data_type_));
       tensors_out->at(i)->set_shape({tensors_in[i]->shape_, tensors_in[i]->shape_ + tensors_in[i]->shape_size_});
+      if (tensors_in.at(i)->data_type_ == TypeIdC::kObjectTypeTensorType) {
+        auto tensor_list_in = reinterpret_cast<TensorListC *>(tensors_in.at(i));
+        auto tensor_list_out = reinterpret_cast<TensorList *>(tensors_out->at(i));
+        tensor_list_out->set_tensors_data_type(TypeId(tensor_list_in->tensors_data_type_));
+      }
     }
   }
 }
