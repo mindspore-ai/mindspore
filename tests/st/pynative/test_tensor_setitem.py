@@ -129,6 +129,7 @@ def test_setitem_by_tuple_with_list():
         x[0, True, 0, None, True] = [-2, -2, -2, -2]
         x[0, ..., None] = [[-3], [-3], [-3], [-3]]
         x[..., 0, None, 1, True, True, None] = [[[-4]], [[-4]]]
+        x[None, True, [1, 0], (False, True, True), [2]] = [[2, 3]]
         return x
     setup_testcase(x, cases)
 
