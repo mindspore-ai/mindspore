@@ -548,7 +548,7 @@ class PReLU(Cell):
         ValueError: If length of shape of `input_data` is equal to 1.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)

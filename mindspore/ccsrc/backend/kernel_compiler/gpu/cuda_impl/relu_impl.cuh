@@ -25,4 +25,7 @@ template <typename T>
 void ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream);
 template <typename T>
 void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream);
+
+template <typename T>
+void CalPReLU(int input_size, T *input_addr, T *weight_addr, T *output_addr, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
