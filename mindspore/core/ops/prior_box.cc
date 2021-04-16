@@ -24,10 +24,7 @@ namespace mindspore {
 namespace ops {
 void PriorBox::set_min_sizes(const std::vector<int64_t> &min_sizes) { this->AddAttr(kMinSizes, MakeValue(min_sizes)); }
 
-std::vector<int64_t> PriorBox::get_min_sizes() const {
-  auto value_ptr = GetAttr(kMinSizes);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> PriorBox::get_min_sizes() const { return GetValue<std::vector<int64_t>>(GetAttr(kMinSizes)); }
 
 void PriorBox::set_max_sizes(const std::vector<int64_t> &max_sizes) { this->AddAttr(kMaxSizes, MakeValue(max_sizes)); }
 
@@ -40,10 +37,7 @@ void PriorBox::set_aspect_ratios(const std::vector<float> &aspect_ratios) {
   this->AddAttr(kAspectRatios, MakeValue(aspect_ratios));
 }
 
-std::vector<float> PriorBox::get_aspect_ratios() const {
-  auto value_ptr = GetAttr(kAspectRatios);
-  return GetValue<std::vector<float>>(value_ptr);
-}
+std::vector<float> PriorBox::get_aspect_ratios() const { return GetValue<std::vector<float>>(GetAttr(kAspectRatios)); }
 
 void PriorBox::set_variances(const std::vector<float> &variances) { this->AddAttr(kVariances, MakeValue(variances)); }
 
@@ -89,10 +83,7 @@ bool PriorBox::get_clip() const {
 
 void PriorBox::set_flip(const bool flip) { this->AddAttr(kFlip, MakeValue(flip)); }
 
-bool PriorBox::get_flip() const {
-  auto value_ptr = GetAttr(kFlip);
-  return GetValue<bool>(value_ptr);
-}
+bool PriorBox::get_flip() const { return GetValue<bool>(GetAttr(kFlip)); }
 
 void PriorBox::set_offset(const float offset) { this->AddAttr(kOffset, MakeValue(offset)); }
 
@@ -121,25 +112,23 @@ void PriorBox::Init(const std::vector<int64_t> &min_sizes, const std::vector<int
 AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto PriorBox_prim = primitive->cast<PrimPriorBoxPtr>();
-  MS_EXCEPTION_IF_NULL(PriorBox_prim);
-  auto op_name = PriorBox_prim->name();
+  auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   std::vector<float> different_aspect_ratios{1.0f};
-  auto aspect_ratios = PriorBox_prim->get_aspect_ratios();
+  auto aspect_ratios = GetValue<std::vector<float>>(primitive->GetAttr(kAspectRatios));
   for (int64_t i = 0; i < (int64_t)aspect_ratios.size(); i++) {
     float ratio = aspect_ratios[i];
     bool exist = std::any_of(different_aspect_ratios.begin(), different_aspect_ratios.end(),
                              [&](float v) { return abs(ratio - v) < 1e-6; });
     if (!exist) {
       different_aspect_ratios.emplace_back(ratio);
-      if (PriorBox_prim->get_flip()) {
+      if (GetValue<bool>(primitive->GetAttr(kFlip))) {
         different_aspect_ratios.emplace_back(1.0f / ratio);
       }
     }
   }
-  int64_t num_priors_box =
-    PriorBox_prim->get_min_sizes().size() * different_aspect_ratios.size() + PriorBox_prim->get_max_sizes().size();
+  auto min_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kMinSizes));
+  int64_t num_priors_box = min_sizes.size() * different_aspect_ratios.size() + min_sizes.size();
   auto input = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   int64_t h = input[0] * input[1] * num_priors_box * 4;
   std::vector<int64_t> output_shape{1, h, 1, 2};

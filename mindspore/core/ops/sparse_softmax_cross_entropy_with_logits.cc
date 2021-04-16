@@ -31,18 +31,13 @@ void SparseSoftmaxCrossEntropyWithLogits::set_is_grad(const bool is_grad) {
   this->AddAttr(kIsGrad, MakeValue(is_grad));
 }
 
-bool SparseSoftmaxCrossEntropyWithLogits::get_is_grad() const {
-  auto value_ptr = GetAttr(kIsGrad);
-  return GetValue<bool>(value_ptr);
-}
+bool SparseSoftmaxCrossEntropyWithLogits::get_is_grad() const { return GetValue<bool>(GetAttr(kIsGrad)); }
 
 AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
                                                          const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto sparse_softmax_cross_entropy_prim = primitive->cast<PrimSparseSoftmaxCrossEntropyWithLogitsPtr>();
-  MS_EXCEPTION_IF_NULL(sparse_softmax_cross_entropy_prim);
-  auto prim_name = sparse_softmax_cross_entropy_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -51,7 +46,7 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::Analysi
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   std::vector<int64_t> output_shape;
-  if (sparse_softmax_cross_entropy_prim->get_is_grad() != 0) {
+  if (GetValue<bool>(primitive->GetAttr(kIsGrad)) != 0) {
     output_shape = input_shape;
   } else {
     output_shape.push_back(1);

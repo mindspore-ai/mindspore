@@ -23,10 +23,8 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto pad_prim = primitive->cast<PrimPadPtr>();
-  MS_EXCEPTION_IF_NULL(pad_prim);
-  auto prim_name = pad_prim->name();
-  auto paddings_attr = pad_prim->get_paddings();
+  auto prim_name = primitive->name();
+  auto paddings_attr = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), "Pad");
   CheckAndConvertUtils::CheckInteger("paddings_size", paddings_attr.size(), kEqual, int64_t(2 * x_shape.size()),
                                      prim_name);
@@ -59,8 +57,7 @@ void Pad::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
   this->AddAttr(kPaddings, MakeValue(paddings));
 }
 std::vector<std::vector<int64_t>> Pad::get_paddings() const {
-  auto value_ptr = GetAttr(kPaddings);
-  return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
+  return GetValue<std::vector<std::vector<int64_t>>>(GetAttr(kPaddings));
 }
 AbstractBasePtr PadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {

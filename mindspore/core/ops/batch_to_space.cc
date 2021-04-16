@@ -47,9 +47,7 @@ std::vector<std::vector<int64_t>> BatchToSpace::get_crops() const {
 AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim = primitive->cast<PrimBatchToSpacePtr>();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -59,8 +57,8 @@ AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kEqual, 4, prim_name);
-  auto block_size = prim->get_block_size();
-  auto crops = prim->get_crops();
+  auto block_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
+  auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
   auto out_shape = x_shape;
   for (size_t i = 0; i < 2; ++i) {
     auto x_block_prod = out_shape[i + 2] * block_size[i];

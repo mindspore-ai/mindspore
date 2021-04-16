@@ -32,9 +32,7 @@ std::vector<int64_t> SliceFusion::get_axes() const {
 AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto SliceFusion_prim = primitive->cast<PrimSliceFusionPtr>();
-  MS_EXCEPTION_IF_NULL(SliceFusion_prim);
-  auto op_name = SliceFusion_prim->name();
+  auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), op_name);
   auto x_shape_len = (int64_t)x_shape.size();
   auto begin_v = input_args[1]->BuildValue();

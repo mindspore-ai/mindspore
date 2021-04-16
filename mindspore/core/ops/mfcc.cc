@@ -24,16 +24,15 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto mfcc_prim = primitive->cast<PrimMfccPtr>();
-  MS_EXCEPTION_IF_NULL(mfcc_prim);
-  auto prim_name = mfcc_prim->name();
+  auto prim_name = primitive->name();
   auto first_input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("first_input_shape", input_args[0]->BuildShape(), prim_name);
   auto second_input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("second_input_shape", input_args[1]->BuildShape(), prim_name);
   CheckAndConvertUtils::CheckInteger("first input rank", first_input_shape.size(), kEqual, 3, prim_name);
   CheckAndConvertUtils::CheckInteger("second input rank", second_input_shape.size(), kEqual, 1, prim_name);
-  std::vector<int64_t> out_shape = {first_input_shape[0], first_input_shape[1], mfcc_prim->get_dct_coeff_num()};
+  std::vector<int64_t> out_shape = {first_input_shape[0], first_input_shape[1],
+                                    GetValue<int64_t>(primitive->GetAttr(kDctCoeffNum))};
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -83,10 +82,7 @@ int64_t Mfcc::get_filter_bank_channel_num() const {
 
 void Mfcc::set_dct_coeff_num(const int64_t dct_coeff_num) { this->AddAttr(kDctCoeffNum, MakeValue(dct_coeff_num)); }
 
-int64_t Mfcc::get_dct_coeff_num() const {
-  auto value_ptr = this->GetAttr(kDctCoeffNum);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t Mfcc::get_dct_coeff_num() const { return GetValue<int64_t>(GetAttr(kDctCoeffNum)); }
 
 AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {

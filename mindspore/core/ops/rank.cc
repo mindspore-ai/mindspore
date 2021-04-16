@@ -21,9 +21,7 @@ namespace ops {
 namespace {
 TypePtr RankInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto Rank_prim = prim->cast<PrimRankPtr>();
-  MS_EXCEPTION_IF_NULL(Rank_prim);
-  auto op_name = Rank_prim->name();
+  auto op_name = prim->name();
   auto infer_dtype = input_args[0]->BuildType();
   CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, {kTensorType}, op_name);
   return kTypeNone;

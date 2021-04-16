@@ -25,17 +25,12 @@ namespace ops {
 void OneHot::Init(const int64_t axis) { this->set_axis(axis); }
 void OneHot::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
 
-int64_t OneHot::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t OneHot::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 namespace {
 abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto OneHot_prim = primitive->cast<PrimOneHotPtr>();
-  MS_EXCEPTION_IF_NULL(OneHot_prim);
-  auto op_name = OneHot_prim->name();
-  int64_t axis = OneHot_prim->get_axis();
+  auto op_name = primitive->name();
+  int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
   auto depth_val = GetValue<int64_t>(input_args[1]->BuildValue());
@@ -50,9 +45,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto OneHot_prim = prim->cast<PrimOneHotPtr>();
-  MS_EXCEPTION_IF_NULL(OneHot_prim);
-  auto op_name = OneHot_prim->name();
+  auto op_name = prim->name();
   CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), {kInt32}, op_name);
   CheckAndConvertUtils::CheckTypeValid("depth", input_args[1]->BuildType(), {kInt8, kInt16, kInt32, kInt64}, op_name);
   std::map<std::string, TypePtr> args = {{"on_value", input_args[2]->BuildType()},

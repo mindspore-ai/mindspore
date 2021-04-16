@@ -24,13 +24,11 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto rfft_prim = primitive->cast<PrimRfftPtr>();
-  MS_EXCEPTION_IF_NULL(rfft_prim);
-  auto prim_name = rfft_prim->name();
+  auto prim_name = primitive->name();
   auto first_input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("first_input_shape", input_args[0]->BuildShape(), prim_name);
   auto out_shape = first_input_shape;
-  out_shape[out_shape.size() - 1] = rfft_prim->get_fft_length() / 2 + 1;
+  out_shape[out_shape.size() - 1] = GetValue<int64_t>(primitive->GetAttr(kFftLength)) / 2 + 1;
   out_shape.push_back(2);
   return std::make_shared<abstract::Shape>(out_shape);
 }
@@ -47,10 +45,7 @@ void Rfft::Init(const int64_t fft_length) { this->set_fft_length(fft_length); }
 
 void Rfft::set_fft_length(const int64_t fft_length) { this->AddAttr(kFftLength, MakeValue(fft_length)); }
 
-int64_t Rfft::get_fft_length() const {
-  auto value_ptr = this->GetAttr(kFftLength);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t Rfft::get_fft_length() const { return GetValue<int64_t>(GetAttr(kFftLength)); }
 
 AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {

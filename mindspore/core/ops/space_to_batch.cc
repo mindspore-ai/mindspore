@@ -28,15 +28,13 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto spacetobatch_prim = primitive->cast<PrimSpaceToBatchPtr>();
-  MS_EXCEPTION_IF_NULL(spacetobatch_prim);
-  auto prim_name = spacetobatch_prim->name();
+  auto prim_name = primitive->name();
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   CheckAndConvertUtils::CheckInteger("input shape", input_shape.size(), kEqual, 4, prim_name);
   std::vector<int64_t> output_shape(input_shape.size());
-  auto block_shape_vector = spacetobatch_prim->get_block_size();
-  auto paddings = spacetobatch_prim->get_paddings();
+  auto block_shape_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
+  auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   for (size_t i = 0; i < 2; i++) {
     auto padded = output_shape[i + 2] + paddings[i][0] + paddings[i][1];
     CheckAndConvertUtils::CheckInteger("padded shape", padded % block_shape_vector.size(), kEqual, 0, prim_name);
@@ -77,8 +75,7 @@ void SpaceToBatch::set_block_size(const std::vector<int64_t> block_size) {
 }
 
 std::vector<int64_t> SpaceToBatch::get_block_size() const {
-  auto value_ptr = GetAttr(kBlockSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(GetAttr(kBlockSize));
 }
 
 void SpaceToBatch::Init(const std::vector<int64_t> block_size, const std::vector<std::vector<int64_t>> &paddings) {

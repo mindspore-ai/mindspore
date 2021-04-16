@@ -30,25 +30,25 @@ namespace {
 abstract::ShapePtr AudioSpectrogramInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto audio_spectrogram_prim = primitive->cast<PrimAudioSpectrogramPtr>();
-  MS_EXCEPTION_IF_NULL(audio_spectrogram_prim);
-  auto prim_name = audio_spectrogram_prim->name();
+  auto prim_name = primitive->name();
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   if (input_shape.size() != 2) {
     MS_LOG(ERROR) << "input shape is error, which need to be 2 dimensions";
   }
-  if (audio_spectrogram_prim->get_window_size() < 2) {
-    MS_LOG(ERROR) << "window size is too short, now is " << audio_spectrogram_prim->get_window_size();
+  auto window_size = GetValue<int64_t>(primitive->GetAttr(kWindowSize));
+  if (window_size < 2) {
+    MS_LOG(ERROR) << "window size is too short, now is " << window_size;
   }
-  if (audio_spectrogram_prim->get_stride() < 1) {
-    MS_LOG(ERROR) << "stride must be positive, now is " << audio_spectrogram_prim->get_stride();
+  auto stride_size = GetValue<int64_t>(primitive->GetAttr(kStride));
+  if (stride_size < 1) {
+    MS_LOG(ERROR) << "stride must be positive, now is " << stride_size;
   }
   std::vector<int64_t> infer_shape;
   infer_shape.push_back(input_shape[1]);
-  int64_t sample_sub_window = input_shape[0] - audio_spectrogram_prim->get_window_size();
-  infer_shape.push_back(sample_sub_window < 0 ? 0 : 1 + sample_sub_window / audio_spectrogram_prim->get_stride());
-  int64_t fft_length = audio_spectrogram_prim->GetFftLength(audio_spectrogram_prim->get_window_size());
+  int64_t sample_sub_window = input_shape[0] - window_size;
+  infer_shape.push_back(sample_sub_window < 0 ? 0 : 1 + sample_sub_window / stride_size);
+  int64_t fft_length = GetFftLength(window_size);
   infer_shape.push_back(fft_length / 2 + 1);
   MS_LOG(ERROR) << infer_shape;
   return std::make_shared<abstract::Shape>(infer_shape);
@@ -81,7 +81,7 @@ int64_t AudioSpectrogram::get_stride() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-int64_t AudioSpectrogram::Log2Ceil(int64_t length) {
+int64_t Log2Ceil(int64_t length) {
   if (length == 0) {
     return -1;
   }
@@ -97,7 +97,7 @@ int64_t AudioSpectrogram::Log2Ceil(int64_t length) {
   return length == (length & ~(unsigned int)(length - 1)) ? floor : floor + 1;
 }
 
-int64_t AudioSpectrogram::GetFftLength(int64_t length) {
+int64_t GetFftLength(int64_t length) {
   int64_t shift = Log2Ceil(length);
   return 1 << (unsigned int)shift;
 }

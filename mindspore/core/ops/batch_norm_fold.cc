@@ -67,9 +67,7 @@ int64_t BatchNormFold::get_freeze_bn() const {
 AbstractBasePtr BatchNormFoldInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto BatchNormFold_prim = primitive->cast<PrimBatchNormFoldPtr>();
-  MS_EXCEPTION_IF_NULL(BatchNormFold_prim);
-  auto op_name = BatchNormFold_prim->name();
+  auto op_name = primitive->name();
   auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShape("mean_shape", input_args[1]->BuildShape(), op_name);
   auto variance_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("variance_shape", input_args[2]->BuildShape(), op_name);

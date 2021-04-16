@@ -28,9 +28,7 @@ namespace ops {
 AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto Merge_prim = primitive->cast<PrimMergePtr>();
-  MS_EXCEPTION_IF_NULL(Merge_prim);
-  auto op_name = Merge_prim->name();
+  auto op_name = primitive->name();
   auto inputs_type = input_args[0]->BuildType()->cast<TuplePtr>()->elements();
   auto inputs_shape = input_args[0]->BuildShape()->cast<abstract::TupleShapePtr>()->shape();
   std::map<std::string, TypePtr> args;

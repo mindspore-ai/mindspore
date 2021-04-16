@@ -39,9 +39,7 @@ float Dropout::get_keep_prob() const {
 AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto dropout_prim = primitive->cast<PrimDropoutPtr>();
-  MS_EXCEPTION_IF_NULL(dropout_prim);
-  auto prim_name = dropout_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("dropout_infer", input_args.size(), kEqual, 1, prim_name);
 
   // Infer shape

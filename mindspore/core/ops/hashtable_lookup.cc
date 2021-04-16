@@ -24,12 +24,10 @@ namespace ops {
 AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto HashtableLookup_prim = primitive->cast<PrimHashtableLookupPtr>();
-  MS_EXCEPTION_IF_NULL(HashtableLookup_prim);
   for (auto input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  auto op_name = HashtableLookup_prim->name();
+  auto op_name = primitive->name();
   std::vector<int64_t> hits_shape;
   auto input = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   hits_shape.push_back(input[0]);

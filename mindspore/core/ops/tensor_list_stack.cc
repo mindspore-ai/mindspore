@@ -49,12 +49,10 @@ int64_t TensorListStack::get_element_dtype() const {
 AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto TensorListStack_prim = primitive->cast<PrimTensorListStackPtr>();
-  MS_EXCEPTION_IF_NULL(TensorListStack_prim);
-  for (auto input : input_args) {
+  for (const auto &input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  auto op_name = TensorListStack_prim->name();
+  auto op_name = primitive->name();
   auto input0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input_args[0]->BuildShape(), op_name);
   int64_t num = std::accumulate(input0_shape.begin(), input0_shape.end(), 1LL, std::multiplies<int64_t>());

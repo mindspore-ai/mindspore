@@ -27,10 +27,7 @@ void ArgMin::Init(const int64_t axis, const TypeId output_type) {
 void ArgMin::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
 void ArgMin::set_output_type(const TypeId output_type) { this->AddAttr(kOutputType, TypeIdToType(output_type)); }
 
-int64_t ArgMin::get_axis() const {
-  auto value_ptr = GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t ArgMin::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 TypeId ArgMin::get_output_type() const {
   auto type_ptr = GetAttr(kOutputType)->cast<TensorTypePtr>()->element();
@@ -40,13 +37,11 @@ TypeId ArgMin::get_output_type() const {
 AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto argmin_prim = primitive->cast<PrimArgMin>();
-  MS_EXCEPTION_IF_NULL(argmin_prim);
-  auto prim_name = argmin_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("arg_min_infer", input_args.size(), kEqual, 1, prim_name);
 
   // Infer shape
-  auto axis = argmin_prim->get_axis();
+  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto x_rank = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);

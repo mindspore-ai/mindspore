@@ -28,9 +28,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto logicaland_prim = primitive->cast<PrimLogicalAndPtr>();
-  MS_EXCEPTION_IF_NULL(logicaland_prim);
-  auto op_name = logicaland_prim->name();
+  auto op_name = primitive->name();
   return BroadCastInferShape(op_name, input_args);
 }
 

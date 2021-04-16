@@ -24,13 +24,8 @@ namespace {
 abstract::ShapePtr CustomNormalizeInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto custom_normalize_prim = primitive->cast<PrimCustomNormalizePtr>();
-  MS_EXCEPTION_IF_NULL(custom_normalize_prim);
-  // auto prim_name = custom_normalize_prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[0]->BuildShape());
-  //  auto input_shape =
-  //    CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   if (input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c() == nullptr) {
     MS_LOG(ERROR) << "Do infer shape in runtime.";
   }

@@ -31,9 +31,6 @@ void NonMaxSuppression::Init(const int64_t center_point_box) { this->set_center_
 
 AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto non_max_suppression_prim = primitive->cast<PrimNonMaxSuppressionPtr>();
-  MS_EXCEPTION_IF_NULL(non_max_suppression_prim);
   MS_LOG(INFO) << "NonMaxSuppression infer shape in runtime.";
   return std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>{});
 }

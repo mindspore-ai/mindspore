@@ -72,13 +72,12 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   // Infer shape
   MS_EXCEPTION_IF_NULL(primitive);
-  auto batch_prim = primitive->cast<PrimBatchNormPtr>();
-  MS_EXCEPTION_IF_NULL(batch_prim);
-  auto prim_name = batch_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("batch_norm_infer", input_args.size(), kEqual, 5, prim_name);
 
   auto input_x = CheckAndConvertUtils::ConvertShapePtrToShape("input_x", input_args[0]->BuildShape(), prim_name);
-  if (batch_prim->get_format() == NHWC) {
+  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
+  if (format == NHWC) {
     input_x = {input_x[0], input_x[3], input_x[1], input_x[2]};
   }
   auto scale = CheckAndConvertUtils::ConvertShapePtrToShape("scale", input_args[1]->BuildShape(), prim_name);
@@ -87,7 +86,7 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto variance = CheckAndConvertUtils::ConvertShapePtrToShape("variance", input_args[4]->BuildShape(), prim_name);
 
   std::vector<int64_t> input_shape_norm;
-  if (batch_prim->get_format() == NCHW) {
+  if (format == NCHW) {
     input_shape_norm =
       CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->GetShapeTrack(), prim_name);
   } else {
@@ -100,7 +99,8 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   CheckAndConvertUtils::Check("scale shape", scale, kEqual, "bias shape", bias, prim_name, TypeError);
   CheckAndConvertUtils::Check("scale shape[0]", scale[0], kEqual, "input_x channel", input_shape_norm[1], prim_name,
                               TypeError);
-  if (!batch_prim->get_is_training()) {
+
+  if (!GetValue<bool>(primitive->GetAttr(kIsTraining))) {
     CheckAndConvertUtils::CheckInteger("mean rank", mean.size(), kEqual, 1, prim_name);
     CheckAndConvertUtils::Check("mean shape", mean, kEqual, "variance shape", variance, prim_name, TypeError);
     CheckAndConvertUtils::Check("mean shape", mean, kEqual, "scale shape", scale, prim_name, TypeError);
@@ -126,7 +126,7 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto output1 = std::make_shared<abstract::AbstractTensor>(scale_type, scale);
   auto output2 = std::make_shared<abstract::AbstractTensor>(bias_type, scale);
   auto output3 = std::make_shared<abstract::AbstractTensor>(input_x_type, scale);
-  if (batch_prim->get_format() == NHWC) {
+  if (format == NHWC) {
     output2 = std::make_shared<abstract::AbstractTensor>(scale_type, scale);
     output3 = std::make_shared<abstract::AbstractTensor>(bias_type, scale);
     output1 = std::make_shared<abstract::AbstractTensor>(input_x_type, scale);

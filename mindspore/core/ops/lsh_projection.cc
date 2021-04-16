@@ -26,20 +26,12 @@ void LshProjection::set_type(const LshProjectionType &type) {
   AddAttr(kType, MakeValue(swi));
 }
 
-LshProjectionType LshProjection::get_type() const {
-  auto value_ptr = GetAttr(kType);
-  return LshProjectionType(GetValue<int64_t>(value_ptr));
-}
+LshProjectionType LshProjection::get_type() const { return LshProjectionType(GetValue<int64_t>(GetAttr(kType))); }
 
 AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto LshProjection_prim = primitive->cast<PrimLshProjectionPtr>();
-  MS_EXCEPTION_IF_NULL(LshProjection_prim);
-  //  if (input_args.size() != 2 && input_args.size() != 3) {
-  //    MS_LOG(ERROR) << "inputs to LshProjection operator should be 2 or 3, but " << input_args.size() << " is given.";
-  //  }
-  auto op_name = LshProjection_prim->name();
+  auto op_name = primitive->name();
   auto input0 = CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input_args[0]->BuildShape(), op_name);
   auto input1 = CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input_args[1]->BuildShape(), op_name);
   CheckAndConvertUtils::CheckInteger("input0_shape", input0.size(), kEqual, 2, op_name);
@@ -53,7 +45,7 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
   }
 
   std::vector<int64_t> out_shape;
-  switch ((int64_t)LshProjection_prim->get_type()) {
+  switch ((int64_t)LshProjectionType(GetValue<int64_t>(primitive->GetAttr(kType)))) {
     case (int64_t)LshProjectionType::SPARSE:
       out_shape.push_back(input0[0]);
       break;

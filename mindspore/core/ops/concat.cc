@@ -32,9 +32,7 @@ void Concat::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)
 AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim = primitive->cast<PrimConcatPtr>();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -48,7 +46,7 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto element0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("element0 shape", element0->BuildShape(), prim_name);
   auto element0_rank = SizeToLong(element0_shape.size());
-  auto axis = prim->get_axis();
+  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis, kIncludeBoth, {-element0_rank - 1, element0_rank},
                                               prim_name);
   axis = axis < 0 ? axis + element0_rank : axis;

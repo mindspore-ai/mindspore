@@ -31,9 +31,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto constant_prim = primitive->cast<PrimConstantOfShapePtr>();
-  MS_EXCEPTION_IF_NULL(constant_prim);
-  auto data_type = TypeId(constant_prim->get_data_type());
+  auto data_type = TypeId(GetValue<int64_t>(primitive->GetAttr(kDataType)));
   return TypeIdToType(data_type);
 }
 }  // namespace

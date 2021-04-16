@@ -28,9 +28,7 @@ namespace ops {
 AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto unsortedsegmentsum_prim = primitive->cast<PrimUnsortedSegmentSumPtr>();
-  MS_EXCEPTION_IF_NULL(unsortedsegmentsum_prim);
-  auto prim_name = unsortedsegmentsum_prim->name();
+  auto prim_name = primitive->name();
 
   // Infer type
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();

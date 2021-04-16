@@ -31,37 +31,25 @@ void AvgPool::set_pad_mode(const PadMode &pad_mode) {
   this->AddAttr(kPadMode, MakeValue(swi));
 }
 
-PadMode AvgPool::get_pad_mode() const {
-  auto value_ptr = GetAttr(kPadMode);
-  return PadMode(GetValue<int64_t>(value_ptr));
-}
+PadMode AvgPool::get_pad_mode() const { return PadMode(GetValue<int64_t>(GetAttr(kPadMode))); }
 void AvgPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   this->AddAttr(kKernelSize,
                 MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
 }
 
-std::vector<int64_t> AvgPool::get_kernel_size() const {
-  auto value_ptr = GetAttr(kKernelSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> AvgPool::get_kernel_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kKernelSize)); }
 void AvgPool::set_strides(const std::vector<int64_t> &strides) {
   this->AddAttr(kStrides, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
 }
 
-std::vector<int64_t> AvgPool::get_strides() const {
-  auto value_ptr = GetAttr(kStrides);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> AvgPool::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr(kStrides)); }
 
 void AvgPool::set_format(const Format &format) {
   int64_t f = format;
   this->AddAttr(kFormat, MakeValue(f));
 }
 
-Format AvgPool::get_format() const {
-  auto value_ptr = GetAttr(kFormat);
-  return Format(GetValue<int64_t>(value_ptr));
-}
+Format AvgPool::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
 
 void AvgPool::set_pad(const std::vector<int64_t> &pad) { this->AddAttr(kPad, MakeValue(pad)); }
 
@@ -93,22 +81,20 @@ void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto pool_prim = primitive->cast<PrimAvgPoolPtr>();
-  MS_EXCEPTION_IF_NULL(pool_prim);
-  auto op_name = pool_prim->name();
+  auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->GetShapeTrack(), op_name);
-  if (pool_prim->get_format() == NHWC) {
+  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
+  if (format == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
   CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
-  auto kernel_size = pool_prim->get_kernel_size();
-  auto pad_mode = pool_prim->get_pad_mode();
+  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
+  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
   auto batch = in_shape[0];
   auto channel = in_shape[1];
   auto in_h = in_shape[2];
   auto in_w = in_shape[3];
-
-  auto strides = pool_prim->get_strides();
+  auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
   auto kernel_h = kernel_size[2];
   auto kernel_w = kernel_size[3];
   auto stride_h = strides[2];
@@ -123,7 +109,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     out_w = ceil(in_w / stride_w);
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
-  if (pool_prim->get_format() == NHWC) {
+  if (format == NHWC) {
     out_shape = {batch, out_h, out_w, channel};
   }
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {

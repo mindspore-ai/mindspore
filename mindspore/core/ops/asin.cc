@@ -25,9 +25,7 @@ namespace ops {
 AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto asin_prim = primitive->cast<PrimAsinPtr>();
-  MS_EXCEPTION_IF_NULL(asin_prim);
-  auto prim_name = asin_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("Asin_infer", input_args.size(), kEqual, 1, prim_name);
 
   // Infer Shape

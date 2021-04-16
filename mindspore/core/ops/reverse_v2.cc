@@ -24,9 +24,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto reverseV2_prim = primitive->cast<PrimReverseV2Ptr>();
-  MS_EXCEPTION_IF_NULL(reverseV2_prim);
-  auto prim_name = reverseV2_prim->name();
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
 }

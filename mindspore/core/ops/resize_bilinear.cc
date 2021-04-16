@@ -27,10 +27,7 @@ namespace mindspore {
 namespace ops {
 void ResizeBilinear::set_size(const std::vector<int64_t> &size) { this->AddAttr(kSize, MakeValue(size)); }
 
-std::vector<int64_t> ResizeBilinear::get_size() const {
-  auto value_ptr = GetAttr(kSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> ResizeBilinear::get_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kSize)); }
 
 void ResizeBilinear::set_align_corners(const bool align_corners) {
   this->AddAttr(kAlignCorners, MakeValue(align_corners));
@@ -48,9 +45,7 @@ void ResizeBilinear::Init(const std::vector<int64_t> &size, const bool align_cor
 AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto resize_prim = primitive->cast<PrimResizeBilinearPtr>();
-  MS_EXCEPTION_IF_NULL(resize_prim);
-  auto prim_name = resize_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("resize_bilinear_infer", input_args.size(), kEqual, 1, prim_name);
 
   // Infer shape
@@ -58,7 +53,7 @@ AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const P
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   CheckAndConvertUtils::CheckInteger("input_shape_rank", input_shape.size(), kEqual, 4, prim_name);
   std::vector<int64_t> out_shape = {input_shape[0], input_shape[1]};
-  auto size = resize_prim->get_size();
+  auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSize));
   out_shape.insert(out_shape.end(), size.begin(), size.end());
 
   // Infer type

@@ -26,9 +26,7 @@ namespace {
 abstract::ShapePtr BinaryCrossEntroyGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto binary_cross_entropy_grad_prim = primitive->cast<PrimBinaryCrossEntropyGradPtr>();
-  MS_EXCEPTION_IF_NULL(binary_cross_entropy_grad_prim);
-  auto prim_name = binary_cross_entropy_grad_prim->name();
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShape("y_shape", input_args[1]->BuildShape(), prim_name);
   auto weight_shape =

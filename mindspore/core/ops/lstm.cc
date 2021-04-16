@@ -19,28 +19,34 @@
 namespace mindspore {
 namespace ops {
 namespace {
+int64_t get_good_ld(const int64_t dim, const int64_t type_size) {
+  int64_t ld = ((dim + (64 / type_size) - 1) / (64 / type_size)) * (64 / type_size);
+  if (ld * 256 == 0) {
+    return ld + 64 / type_size;
+  }
+  return ld;
+}
+
 AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
-  auto lstm_prim = primitive->cast<PrimLstmPtr>();
-  MS_EXCEPTION_IF_NULL(lstm_prim);
-  auto prim_name = lstm_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("lstm_prim_infer", input_args.size(), kEqual, 4, prim_name);
   auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("h_shape", input_args[1]->BuildShape(), prim_name);
   auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("c_shape", input_args[2]->BuildShape(), prim_name);
 
-  int64_t input_x_size = lstm_prim->get_input_size();
+  int64_t input_x_size = GetValue<int64_t>(primitive->GetAttr(kInput_size));
   CheckAndConvertUtils::CheckInteger("x_shape.size()", x_input_shape.size(), kEqual, 3, prim_name);
   CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[2], kEqual, input_x_size, prim_name);
 
   CheckAndConvertUtils::CheckInteger("h_shape.size()", h_input_shape.size(), kEqual, 3, prim_name);
-  CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, "c_shape", c_input_shape, lstm_prim->name());
+  CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, "c_shape", c_input_shape, prim_name);
 
-  int64_t num_layers = lstm_prim->get_num_layers();
-  int64_t num_directions = lstm_prim->get_num_directions();
-  int64_t hidden_size = lstm_prim->get_hidden_size();
-  int64_t input_size = lstm_prim->get_input_size();
+  int64_t num_layers = GetValue<int64_t>(primitive->GetAttr(kNumLayers));
+  int64_t num_directions = GetValue<int64_t>(primitive->GetAttr(kNumDirections));
+  int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
+  int64_t input_size = input_x_size;
   CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions, prim_name);
   CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
   CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
@@ -48,8 +54,8 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   std::vector<int64_t> y_shape = {x_input_shape[0], x_input_shape[1], hidden_size * num_directions};
 
   int64_t type_size = 4;
-  int64_t gates_ws_ld = lstm_prim->get_good_ld(hidden_size * 4, type_size);
-  int64_t states_ws_ld = lstm_prim->get_good_ld(std::max(hidden_size, input_size), type_size);
+  int64_t gates_ws_ld = get_good_ld(hidden_size * 4, type_size);
+  int64_t states_ws_ld = get_good_ld(std::max(hidden_size, input_size), type_size);
   int64_t ws_gates_size = num_layers * num_directions * x_input_shape[0] * x_input_shape[1] * gates_ws_ld * type_size;
   int64_t ws_states_size =
     (num_layers + 1) * num_directions * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
@@ -99,26 +105,17 @@ void LSTM::set_input_size(const int64_t input_size) {
   CheckAndConvertUtils::CheckInteger(kInput_size, input_size, kGreaterThan, 0, this->name());
   AddAttr(kInput_size, MakeValue(input_size));
 }
-int64_t LSTM::get_input_size() const {
-  auto value_ptr = this->GetAttr(kInput_size);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t LSTM::get_input_size() const { return GetValue<int64_t>(GetAttr(kInput_size)); }
 void LSTM::set_hidden_size(const int64_t hidden_size) {
   CheckAndConvertUtils::CheckInteger(kHidden_size, hidden_size, kGreaterThan, 0, this->name());
   AddAttr(kHidden_size, MakeValue(hidden_size));
 }
-int64_t LSTM::get_hidden_size() const {
-  auto value_ptr = this->GetAttr(kHidden_size);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t LSTM::get_hidden_size() const { return GetValue<int64_t>(GetAttr(kHidden_size)); }
 void LSTM::set_num_layers(const int64_t num_layers) {
   CheckAndConvertUtils::CheckInteger(kNumLayers, num_layers, kGreaterThan, 0, this->name());
   AddAttr(kNumLayers, MakeValue(num_layers));
 }
-int64_t LSTM::get_num_layers() const {
-  auto value_ptr = this->GetAttr(kNumLayers);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t LSTM::get_num_layers() const { return GetValue<int64_t>(GetAttr(kNumLayers)); }
 void LSTM::set_has_bias(const bool has_bias) { AddAttr(kHasBias, MakeValue(has_bias)); }
 bool LSTM::get_has_bias() const {
   auto value_ptr = this->GetAttr(kHasBias);
@@ -138,10 +135,7 @@ bool LSTM::get_bidirectional() const {
   return GetValue<bool>(value_ptr);
 }
 void LSTM::set_num_directions(const int64_t num_directions) { AddAttr(kNumDirections, MakeValue(num_directions)); }
-int64_t LSTM::get_num_directions() const {
-  auto value_ptr = this->GetAttr(kNumDirections);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t LSTM::get_num_directions() const { return GetValue<int64_t>(GetAttr(kNumDirections)); }
 void LSTM::set_zoneout_cell(float zoneout_cell) { AddAttr(kZoneoutCell, MakeValue(zoneout_cell)); }
 
 float LSTM::get_zoneout_cell() const { return GetValue<float>(this->GetAttr(kZoneoutCell)); }
@@ -165,14 +159,6 @@ void LSTM::Init(const int64_t input_size, const int64_t hidden_size, const int64
   }
   this->set_zoneout_cell(zoneout_cell);
   this->set_zoneout_hidden(zoneout_hidden);
-}
-
-int64_t LSTM::get_good_ld(const int64_t dim, const int64_t type_size) {
-  int64_t ld = ((dim + (64 / type_size) - 1) / (64 / type_size)) * (64 / type_size);
-  if (ld * 256 == 0) {
-    return ld + 64 / type_size;
-  }
-  return ld;
 }
 
 AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

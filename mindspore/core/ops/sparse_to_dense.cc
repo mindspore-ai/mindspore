@@ -27,9 +27,7 @@ namespace ops {
 AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto spasetodense_prim = primitive->cast<PrimSparseToDensePtr>();
-  MS_EXCEPTION_IF_NULL(spasetodense_prim);
-  auto prim_name = spasetodense_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 3, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);

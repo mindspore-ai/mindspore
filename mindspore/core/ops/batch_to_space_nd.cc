@@ -28,16 +28,14 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto batch_prim = primitive->cast<PrimBatchToSpaceNDPtr>();
-  MS_EXCEPTION_IF_NULL(batch_prim);
-  auto prim_name = batch_prim->name();
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   CheckAndConvertUtils::CheckInteger("input_x rank", x_shape.size(), kEqual, 4, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
   int64_t offset = 2;
-  auto block_shape = batch_prim->get_block_shape();
-  auto crops = batch_prim->get_crops();
+  auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
+  auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
   int64_t size = block_shape.size();
   for (int64_t i = 0; i < size; i++) {
     block_shape_prod = block_shape_prod * block_shape[i];

@@ -29,10 +29,7 @@ void L2Normalize::set_axis(const std::vector<int64_t> &axis) { AddAttr(kAxis, Ma
 
 void L2Normalize::set_epsilon(const float epsilon) { AddAttr(kEpsilon, MakeValue(epsilon)); }
 
-std::vector<int64_t> L2Normalize::get_axis() const {
-  auto value_ptr = GetAttr(kAxis);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> L2Normalize::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 
 float L2Normalize::get_epsilon() const {
   auto value_ptr = GetAttr(kEpsilon);
@@ -42,9 +39,7 @@ float L2Normalize::get_epsilon() const {
 AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim = primitive->cast<PrimL2NormalizePtr>();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -53,7 +48,7 @@ AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const Prim
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto x_rank = SizeToLong(x_shape.size());
-  auto axiss = prim->get_axis();
+  auto axiss = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   for (auto &axis : axiss) {
     CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
   }

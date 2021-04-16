@@ -23,9 +23,7 @@ namespace ops {
 namespace {
 abstract::AbstractBasePtr AdamInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto Adam_prim = primitive->cast<PrimAdamPtr>();
-  MS_EXCEPTION_IF_NULL(Adam_prim);
-  auto prim_name = Adam_prim->name();
+  auto prim_name = primitive->name();
 
   // infer shape
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShape("var_shape", input_args[0]->GetShapeTrack(), prim_name);

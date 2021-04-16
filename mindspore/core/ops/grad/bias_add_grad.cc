@@ -41,9 +41,7 @@ Format BiasAddGrad::get_format() const {
 AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto bias_prim = primitive->cast<PrimBiasAddGradPtr>();
-  MS_EXCEPTION_IF_NULL(bias_prim);
-  auto prim_name = bias_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("bias_grad_infer", input_args.size(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
 

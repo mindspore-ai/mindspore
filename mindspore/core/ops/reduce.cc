@@ -70,13 +70,11 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto axis_value = input_args[1]->BuildValue();
 
   MS_EXCEPTION_IF_NULL(primitive);
-  auto reduce_prim = primitive->cast<PrimReducePtr>();
-  MS_EXCEPTION_IF_NULL(reduce_prim);
-  auto prim_name = reduce_prim->name();
+  auto prim_name = primitive->name();
   auto input_x_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_x_shape", input_args[0]->BuildShape(), prim_name);
 
-  auto keep_dims = reduce_prim->get_keep_dims();
+  auto keep_dims = GetValue<bool>(primitive->GetAttr(kKeepDims));
   auto out_shape = infer_shape_reduce(input_x_shape, axis_value, keep_dims, prim_name);
 
   return std::make_shared<abstract::Shape>(out_shape);
@@ -93,10 +91,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 void Reduce::set_keep_dims(const bool keep_dims) { this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
 
-bool Reduce::get_keep_dims() const {
-  auto value_ptr = GetAttr(kKeepDims);
-  return GetValue<bool>(value_ptr);
-}
+bool Reduce::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
 
 void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
