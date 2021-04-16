@@ -7681,7 +7681,7 @@ class Conv3D(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple of six.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
