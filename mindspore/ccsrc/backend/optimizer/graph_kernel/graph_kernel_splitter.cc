@@ -172,7 +172,7 @@ class AreaGraph {
   // Build an area graph to maintain the relation between areas.
   // Input node_groups: A group list, each element is a AnfNode list representing the node set in this group.
   static AreaGraphPtr BuildAreaGraph(const std::vector<AnfNodePtrList> &node_groups) {
-    auto area_graph = AreaGraphPtr(new AreaGraph(node_groups));
+    auto area_graph = std::make_shared<AreaGraph>(node_groups);
     if (area_graph == nullptr) return nullptr;
     if (!area_graph->TopoSort()) {
       MS_LOG(WARNING) << "The groups have a cycle.";
@@ -209,9 +209,6 @@ class AreaGraph {
     return;
   }
 
-  ~AreaGraph() = default;
-
- private:
   explicit AreaGraph(const std::vector<AnfNodePtrList> &node_groups) : edge_prev_(node_groups.size()) {
     for (size_t i = 0; i < node_groups.size(); ++i) {
       areas_.emplace_back(node_groups[i]);
@@ -237,7 +234,9 @@ class AreaGraph {
       }
     }
   }
+  ~AreaGraph() = default;
 
+ private:
   // Topological sort the areas.
   bool TopoSort() {
     std::vector<int> out_degree(edge_prev_.size(), 0);
@@ -350,15 +349,14 @@ class Splitter {
     MS_EXCEPTION_IF_NULL(main_cnode);
     MS_EXCEPTION_IF_NULL(main_cnode->func_graph());
     MS_EXCEPTION_IF_NULL(split_schemer);
-    return SplitterPtr(new Splitter(main_cnode, split_schemer));
+    return std::make_shared<Splitter>(main_cnode, split_schemer);
   }
 
+  Splitter(const CNodePtr &main_cnode, SplitSchemerPtr split_schemer)
+      : main_func_graph_(main_cnode->func_graph()), old_subgraph_cnode_(main_cnode), split_schemer_(split_schemer) {}
   ~Splitter() = default;
 
  private:
-  Splitter(const CNodePtr &main_cnode, SplitSchemerPtr split_schemer)
-      : main_func_graph_(main_cnode->func_graph()), old_subgraph_cnode_(main_cnode), split_schemer_(split_schemer) {}
-
   void ResetInlinedNodesKernelInfo() {
     for (const auto &node : inlined_nodes_) {
       ResetKernelInfo(node);
