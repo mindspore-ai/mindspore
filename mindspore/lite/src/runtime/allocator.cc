@@ -55,7 +55,7 @@ void *DefaultAllocator::Malloc(size_t size) {
   }
   Lock();
   auto iter = freeList_.lower_bound(size);
-  if (iter != freeList_.end() && (iter->second->size >= size) && (iter->second->size < (size << shiftFactor_))) {
+  if (iter != freeList_.end() && (iter->second->size >= size) && (iter->second->size <= (size << shiftFactor_))) {
     auto membuf = iter->second;
     freeList_.erase(iter);
     allocatedList_[membuf->buf] = membuf;
