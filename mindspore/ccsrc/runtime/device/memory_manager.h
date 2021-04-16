@@ -64,7 +64,7 @@ class MemoryManager {
   size_t GetCommunicationAlignSize(size_t input_size) const;
 
  protected:
-  virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId);
+  virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) = 0;
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
   uint8_t *device_mem_base_{nullptr};
   uint64_t device_mem_size_{0};

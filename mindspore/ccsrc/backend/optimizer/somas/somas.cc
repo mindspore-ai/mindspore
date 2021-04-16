@@ -447,6 +447,7 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_sizes = kernel_mod->GetOutputSizeList();
+    auto index = 0;
     for (const auto &size : output_sizes) {
       auto output_tensor_index = tensor_index;
       tensor_index++;
@@ -455,15 +456,21 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph
       tensor->lifetime_.start_ = node->GetId();
       tensor->lifetime_.end_ = node->GetId();
       tensor->type_ = kOutputOnly;
+      if (AnfAlgo::OutputAddrExist(kernel, index)) {
+        tensor->aligned_size_ = 0;
+      }
+
       tensors_list_.push_back(tensor);
       tensors_map_[output_tensor_index] = tensor;
       stream->tensors_.push_back(tensor);
       node->tensors_.insert(tensor);
       node->output_tensors_.push_back(tensor);
+      index++;
     }
 
     // WorkSpace Tensor
     auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+    index = 0;
     for (const auto &size : workspace_sizes) {
       auto workspace_tensor_index = tensor_index;
       tensor_index++;
@@ -471,11 +478,15 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph
       tensor->type_ = kWorkspace;
       tensor->lifetime_.start_ = node->GetId();
       tensor->lifetime_.end_ = node->GetId();
+      if (AnfAlgo::WorkspaceAddrExist(kernel, index)) {
+        tensor->aligned_size_ = 0;
+      }
       tensors_list_.push_back(tensor);
       tensors_map_[workspace_tensor_index] = tensor;
       stream->tensors_.push_back(tensor);
       node->tensors_.insert(tensor);
       node->workspace_tensors_.push_back(tensor);
+      index++;
     }
   }
 }
@@ -874,8 +885,12 @@ void Somas::GenContiguousList(const session::KernelGraph *graph) {
 
     // Contiguous input
     if ((!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
-      node->input_tensors_[0]->aligned_size_ += kGapSize;
-      node->input_tensors_[node->input_tensors_.size() - 1]->aligned_size_ += kGapSize;
+      if (node->input_tensors_[0]->aligned_size_) {
+        node->input_tensors_[0]->aligned_size_ += kGapSize;
+      }
+      if (node->input_tensors_[node->input_tensors_.size() - 1]->aligned_size_) {
+        node->input_tensors_[node->input_tensors_.size() - 1]->aligned_size_ += kGapSize;
+      }
       std::vector<size_t> inputs;
       for (const auto &input_tensor : node->input_tensors_) {
         comm_input_total_size_ += input_tensor->aligned_size_;
@@ -887,8 +902,12 @@ void Somas::GenContiguousList(const session::KernelGraph *graph) {
 
     // Contiguous output
     if ((!node->output_tensors_.empty()) && (!node->output_tensors_[0]->contiguous_)) {
-      node->output_tensors_[0]->aligned_size_ += kGapSize;
-      node->output_tensors_[node->output_tensors_.size() - 1]->aligned_size_ += kGapSize;
+      if (node->output_tensors_[0]->aligned_size_) {
+        node->output_tensors_[0]->aligned_size_ += kGapSize;
+      }
+      if (node->output_tensors_[node->output_tensors_.size() - 1]->aligned_size_) {
+        node->output_tensors_[node->output_tensors_.size() - 1]->aligned_size_ += kGapSize;
+      }
       std::vector<size_t> outputs;
       for (const auto &output_tensor : node->output_tensors_) {
         comm_output_total_size_ += output_tensor->aligned_size_;
@@ -1097,17 +1116,33 @@ bool Somas::Assign(const session::KernelGraph *graph) {
   // Ref Node Preprocessing
   UpdateRefTensorsConflict();
   std::map<size_t, size_t> contiguous_list_with_ref_index_map = GetContiguousListContainRefTensor();
-  vector<vector<size_t>> contiguous_tensors_list_removed_ref = contiguous_tensors_list_;
+  vector<vector<size_t>> contiguous_tensors_list_removed = contiguous_tensors_list_;
   std::set<vector<size_t>> contiguous_tensors_list_to_remove;
   for (auto ref_list_pair : contiguous_list_with_ref_index_map) {
     contiguous_tensors_list_to_remove.insert(contiguous_tensors_list_[ref_list_pair.second]);
   }
 
+  // remove the contiguous list which all tensors' align size is 0
+  for (auto contiguous_list : contiguous_tensors_list_) {
+    bool all_outputs = true;
+    for (auto tensor_id : contiguous_list) {
+      auto tensor = tensors_list_[tensor_id];
+      if (tensor->aligned_size_ != 0) {
+        all_outputs = false;
+        break;
+      }
+    }
+
+    if (all_outputs) {
+      contiguous_tensors_list_to_remove.insert(contiguous_list);
+    }
+  }
+
   for (auto contiguous_list : contiguous_tensors_list_to_remove) {
-    auto iterator = std::find(contiguous_tensors_list_removed_ref.begin(), contiguous_tensors_list_removed_ref.end(),
-                              contiguous_list);
-    if (iterator != contiguous_tensors_list_removed_ref.end()) {
-      contiguous_tensors_list_removed_ref.erase(iterator);
+    auto iterator =
+      std::find(contiguous_tensors_list_removed.begin(), contiguous_tensors_list_removed.end(), contiguous_list);
+    if (iterator != contiguous_tensors_list_removed.end()) {
+      contiguous_tensors_list_removed.erase(iterator);
     } else {
       MS_LOG(WARNING) << "Could not find contiguous list to remove for ref";
     }
@@ -1142,7 +1177,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
 
   somas_solver_ = std::make_shared<SomasSolverPre>();
   auto status =
-    somas_solver_->Solving(graph, &solver_tensor_desc_map_, &reuse_matrix_, contiguous_tensors_list_removed_ref, false);
+    somas_solver_->Solving(graph, &solver_tensor_desc_map_, &reuse_matrix_, contiguous_tensors_list_removed, false);
   MS_LOG(INFO) << "End Solving";
   if (status != SUCCESS) {
     GenGraphStatisticInfo();

@@ -340,7 +340,8 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
 #endif
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
-      MS_LOG(DEBUG) << "Malloc static memory for " << item->fullname_with_scope();
+      MS_LOG(INFO) << "Malloc Input for graph " << graph->graph_id() << ", node: " << item->fullname_with_scope()
+                   << " index: " << index << " size: " << tensor_size;
       if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }

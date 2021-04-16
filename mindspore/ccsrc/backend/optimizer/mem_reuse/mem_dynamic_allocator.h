@@ -109,16 +109,16 @@ class DynamicMemPoolBestFit {
  protected:
   // The real size by memory alloc aligned.
   virtual size_t AlignMemorySize(size_t size) const;
-  // Get the minimum memory unit size using for dynamic extend.
-  virtual size_t mem_alloc_unit_size() const { return DYNAMIC_MEM_ALLOC_UNIT_SIZE; }
+  // Calculate memory block required alloc size when adding the memory block.
+  virtual size_t CalMemBlockAllocSize(size_t size);
 
  private:
+  // Get the minimum memory unit size using for dynamic extend.
+  size_t mem_alloc_unit_size() const { return DYNAMIC_MEM_ALLOC_UNIT_SIZE; }
   // Find the idle memory buf by aligned size when memory alloc.
   DeviceMemPtr FindIdleMemBuf(size_t size);
   // Add the memory block and memory buf when memory alloc not find the idle memory buf.
   DeviceMemPtr AddMemBlockAndMemBuf(size_t size);
-  // Calculate memory block required alloc size when adding the memory block.
-  size_t CalMemBlockAllocSize(size_t size);
   // Judge whether need divide the memory buf by alloc size and memory buf size.
   bool IsDivide(size_t tensor_size, size_t mem_buf_size) const;
   // Divide the memory buf by alloc size.
