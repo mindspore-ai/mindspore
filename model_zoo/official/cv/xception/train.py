@@ -29,7 +29,7 @@ from mindspore.common import set_seed
 
 from src.lr_generator import get_lr
 from src.Xception import xception
-from src.config import config
+from src.config import config_gpu, config_ascend
 from src.dataset import create_dataset
 from src.loss import CrossEntropySmooth
 
@@ -38,83 +38,103 @@ set_seed(1)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='image classification training')
     parser.add_argument('--is_distributed', action='store_true', default=False, help='distributed training')
-    parser.add_argument('--device_target', type=str, default='Ascend', help='run platform')
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'], 
+                        help='run platform, (Default: Ascend)')
     parser.add_argument('--dataset_path', type=str, default=None, help='dataset path')
+    parser.add_argument("--is_fp32", action='store_true', default=False, help='fp32 training, add --is_fp32')
     parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
+
     args_opt = parser.parse_args()
-
     if args_opt.device_target == "Ascend":
-        #train on Ascend
-        context.set_context(mode=context.GRAPH_MODE, device_target='Ascend', save_graphs=False)
-
-        # init distributed
-        if args_opt.is_distributed:
-            if os.getenv('DEVICE_ID', "not_set").isdigit():
-                context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-            init()
-            rank = get_rank()
-            group_size = get_group_size()
-            parallel_mode = ParallelMode.DATA_PARALLEL
-            context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=group_size, gradients_mean=True)
-        else:
-            rank = 0
-            group_size = 1
-            if os.getenv('DEVICE_ID', "not_set").isdigit():
-                context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-
-        # define network
-        net = xception(class_num=config.class_num)
-        net.to_float(mstype.float16)
-
-        # define loss
-        if not config.use_label_smooth:
-            config.label_smooth_factor = 0.0
-        loss = CrossEntropySmooth(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
-
-        # define dataset
-        dataset = create_dataset(args_opt.dataset_path, do_train=True, batch_size=config.batch_size,
-                                 device_num=group_size, rank=rank)
-        step_size = dataset.get_dataset_size()
-
-        # resume
-        if args_opt.resume:
-            ckpt = load_checkpoint(args_opt.resume)
-            load_param_into_net(net, ckpt)
-
-        # get learning rate
-        loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(lr_init=config.lr_init,
-                           lr_end=config.lr_end,
-                           lr_max=config.lr_max,
-                           warmup_epochs=config.warmup_epochs,
-                           total_epochs=config.epoch_size,
-                           steps_per_epoch=step_size,
-                           lr_decay_mode=config.lr_decay_mode,
-                           global_step=config.finish_epoch * step_size))
-
-        # define optimization
-        opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay, config.loss_scale)
-
-        # define model
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                      amp_level='O3', keep_batchnorm_fp32=True)
-
-        # define callbacks
-        cb = [TimeMonitor(), LossMonitor()]
-        if config.save_checkpoint:
-            save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
-            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
-                                         keep_checkpoint_max=config.keep_checkpoint_max)
-            ckpt_cb = ModelCheckpoint(f"Xception-rank{rank}", directory=save_ckpt_path, config=config_ck)
-
-        # begin train
-        if args_opt.is_distributed:
-            if rank == 0:
-                cb += [ckpt_cb]
-            model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
-        else:
-            cb += [ckpt_cb]
-            model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
-        print("train success")
+        config = config_ascend
+    elif args_opt.device_target == "GPU":
+        config = config_gpu
     else:
         raise ValueError("Unsupported device_target.")
+
+    # init distributed
+    if args_opt.is_distributed:
+        if os.getenv('DEVICE_ID', "not_set").isdigit():
+            context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+        init()
+        rank = get_rank()
+        group_size = get_group_size()
+        parallel_mode = ParallelMode.DATA_PARALLEL
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=group_size, gradients_mean=True)
+    else:
+        rank = 0
+        group_size = 1
+        context.set_context(device_id=0)
+        #     if os.getenv('DEVICE_ID', "not_set").isdigit():
+        #         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, save_graphs=False)
+    # define network
+    net = xception(class_num=config.class_num)
+    if args_opt.device_target == "Ascend":
+        net.to_float(mstype.float16)
+
+    # define loss
+    if not config.use_label_smooth:
+        config.label_smooth_factor = 0.0
+    loss = CrossEntropySmooth(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+
+    # define dataset
+    dataset = create_dataset(args_opt.dataset_path, do_train=True, batch_size=config.batch_size,
+                             device_num=group_size, rank=rank)
+    step_size = dataset.get_dataset_size()
+
+    # resume
+    if args_opt.resume:
+        ckpt = load_checkpoint(args_opt.resume)
+        load_param_into_net(net, ckpt)
+
+    # get learning rate
+    loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+    lr = Tensor(get_lr(lr_init=config.lr_init,
+                       lr_end=config.lr_end,
+                       lr_max=config.lr_max,
+                       warmup_epochs=config.warmup_epochs,
+                       total_epochs=config.epoch_size,
+                       steps_per_epoch=step_size,
+                       lr_decay_mode=config.lr_decay_mode,
+                       global_step=config.finish_epoch * step_size))
+
+    # define optimization and model
+    if args_opt.device_target == "Ascend":
+        opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay, config.loss_scale)
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
+                      amp_level='O3', keep_batchnorm_fp32=True)
+    elif args_opt.device_target == "GPU":
+        if args_opt.is_fp32:
+            opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay)
+            model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
+        else:
+            opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay, config.loss_scale)
+            model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
+                          amp_level='O2', keep_batchnorm_fp32=True)
+
+    # define callbacks
+    cb = [TimeMonitor(), LossMonitor()]
+    if config.save_checkpoint:
+        if args_opt.device_target == "Ascend":
+            save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
+        elif args_opt.device_target == "GPU":
+            if args_opt.is_fp32:
+                save_ckpt_path = os.path.join(config.save_checkpoint_path, 'fp32/' + 'model_' + str(rank))
+            else:
+                save_ckpt_path = os.path.join(config.save_checkpoint_path, 'fp16/' + 'model_' + str(rank))
+        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
+                                     keep_checkpoint_max=config.keep_checkpoint_max)
+        ckpt_cb = ModelCheckpoint(f"Xception-rank{rank}", directory=save_ckpt_path, config=config_ck)
+
+    # begin train
+    print("begin train")
+    if args_opt.is_distributed:
+        if rank == 0:
+            cb += [ckpt_cb]
+        model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
+    else:
+        cb += [ckpt_cb]
+        model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
+    print("train success")

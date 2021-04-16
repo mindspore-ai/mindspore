@@ -5,7 +5,7 @@
 - [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
-    - [Mixed Precision(Ascend)](#mixed-precisionascend)
+    - [Mixed Precision](#mixed-precisionascend)
 - [Environment Requirements](#environment-requirements)
 - [Script description](#script-description)
     - [Script and sample code](#script-and-sample-code)
@@ -49,7 +49,7 @@ Dataset used can refer to paper.
 
 # [Features](#contents)
 
-## [Mixed Precision(Ascend)](#contents)
+## [Mixed Precision](#contents)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 
@@ -57,8 +57,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend, GPU or CPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -74,22 +74,29 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 └─Xception
   ├─README.md
   ├─scripts
-    ├─run_standalone_train.sh         # launch standalone training with ascend platform(1p)
-    ├─run_distribute_train.sh         # launch distributed training with ascend platform(8p)
-    └─run_eval.sh                     # launch evaluating with ascend platform
+    ├─run_standalone_train.sh      # launch standalone training with ascend platform(1p)
+    ├─run_distribute_train.sh      # launch distributed training with ascend platform(8p)
+    ├─run_train_gpu_fp32.sh        # launch standalone or distributed fp32 training with gpu platform(1p or 8p)
+    ├─run_train_gpu_fp16.sh        # launch standalone or distributed fp16 training with gpu platform(1p or 8p)
+    ├─run_eval.sh                  # launch evaluating with ascend platform
+    └─run_eval_gpu.sh              # launch evaluating with gpu platform
   ├─src
-    ├─config.py                       # parameter configuration
-    ├─dataset.py                      # data preprocessing
-    ├─Xception.py                     # network definition
-    ├─loss.py                         # Customized CrossEntropy loss function
-    └─lr_generator.py                 # learning rate generator
-  ├─train.py                          # train net
-  ├─export.py                         # export net
-  └─eval.py                           # eval net
+    ├─config.py                    # parameter configuration
+    ├─dataset.py                   # data preprocessing
+    ├─Xception.py                  # network definition
+    ├─loss.py                      # Customized CrossEntropy loss function
+    └─lr_generator.py              # learning rate generator
+  ├─train.py                       # train net
+  ├─export.py                      # export net
+  └─eval.py                        # eval net
 
 ```
 
 ## [Script Parameters](#contents)
+
+Parameters for both training and evaluation can be set in config.py.
+
+- Config on ascend
 
 ```python
 Major parameters in train.py and config.py are:
@@ -113,6 +120,30 @@ Major parameters in train.py and config.py are:
 'lr_end': 0.00004                  # min bound of learning rate
 ```
 
+- Config on gpu
+
+```python
+Major parameters in train.py and config.py are:
+'num_classes': 1000                # dataset class numbers
+'batch_size': 64                  # input batchsize
+'loss_scale': 1024                 # loss scale
+'momentum': 0.9                    # momentum
+'weight_decay': 1e-4               # weight decay
+'epoch_size': 250                  # total epoch numbers
+'save_checkpoint': True            # save checkpoint
+'save_checkpoint_epochs': 1        # save checkpoint epochs
+'keep_checkpoint_max': 5           # max numbers to keep checkpoints
+'save_checkpoint_path': "./gpu-ckpt"       # save checkpoint path
+'warmup_epochs': 1                 # warmup epoch numbers
+'lr_decay_mode': "linear"           # lr decay mode
+'use_label_smooth': True           # use label smooth
+'finish_epoch': 0                  # finished epochs numbers
+'label_smooth_factor': 0.1         # label smoothing factor
+'lr_init': 0.00004                 # initiate learning rate
+'lr_max': 0.4                      # max bound of learning rate
+'lr_end': 0.00004                  # min bound of learning rate
+```
+
 ## [Training process](#contents)
 
 ### Usage
@@ -128,6 +159,25 @@ sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
+- GPU:
+
+```shell
+# fp32 distributed training example(8p)
+sh scripts/run_train_gpu_fp32.sh DEVICE_NUM DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+
+# fp32 standalone training example
+sh scripts/run_train_gpu_fp32.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+
+# fp16 distributed training example(8p)
+sh scripts/run_train_gpu_fp16.sh DEVICE_NUM DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+
+# fp16 standalone training example
+sh scripts/run_train_gpu_fp16.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+
+# infer example
+sh run_eval_gpu.sh DEVICE_ID DATASET_PATH CHECKPOINT_PATH
+```
+
 > Notes: RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
 ### Launch
@@ -137,6 +187,8 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
   python:
       Ascend:
       python train.py --device_target Ascend --dataset_path /dataset/train
+      GPU:
+      python train.py --device_target GPU --dataset_path /dataset/train
 
   shell:
       Ascend:
@@ -144,11 +196,18 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
       sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # standalone training
       sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+      GPU:
+      # fp16 training example(8p)
+      sh scripts/run_train_gpu_fp16.sh DEVICE_NUM DATA_PATH
+      # fp32 training example(8p)
+      sh scripts/run_train_gpu_fp32.sh DEVICE_NUM DATA_PATH
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /ckpt_0` by default, and training log will be redirected to `log.txt` like following.
+Training result will be stored in the example path. Checkpoints will be stored at `./ckpt_0` for Ascend and `./gpu_ckpt` for GPU by default, and training log will be redirected to `log.txt` fo Ascend and `log_gpu.txt` for GPU like following.
+
+- Ascend:
 
 ``` shell
 epoch: 1 step: 1251, loss is 4.8427444
@@ -157,14 +216,31 @@ epoch: 2 step: 1251, loss is 4.0637593
 epoch time: 598591.422 ms, per step time: 478.490 ms
 ```
 
+- GPU:
+
+``` shell
+epoch: 1 step: 20018, loss is 5.479554
+epoch time: 5664051.330 ms, per step time: 282.948 ms
+epoch: 2 step: 20018, loss is 5.179064
+epoch time: 5628609.779 ms, per step time: 281.177 ms
+```
+
 ## [Eval process](#contents)
 
 ### Usage
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
+- Ascend:
+
 ```shell
 sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+```
+
+- GPU:
+
+```shell
+sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 ### Launch
@@ -173,19 +249,29 @@ sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 # eval example
   python:
       Ascend: python eval.py --device_target Ascend --checkpoint_path PATH_CHECKPOINT --dataset_path DATA_DIR
+      GPU: python eval.py --device_target GPU --checkpoint_path PATH_CHECKPOINT --dataset_path DATA_DIR
 
   shell:
       Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      GPU: sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process.
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the following in `eval.log`.
+Evaluation result will be stored in the example path, you can find result like the following in `eval.log` on ascend and `eval_gpu.log` on gpu.
+
+- Evaluating with ascend
 
 ```shell
 result: {'Loss': 1.7797744848789312, 'Top_1_Acc': 0.7985777243589743, 'Top_5_Acc': 0.9485777243589744}
+```
+
+- Evaluating with gpu
+
+```shell
+result: {'Loss': 1.7846775874590903, 'Top_1_Acc': 0.798735595390525, 'Top_5_Acc': 0.9498439500640204}
 ```
 
 # [Model description](#contents)
@@ -194,36 +280,36 @@ result: {'Loss': 1.7797744848789312, 'Top_1_Acc': 0.7985777243589743, 'Top_5_Acc
 
 ### Training Performance
 
-| Parameters                 | Ascend                                         |
-| -------------------------- | ---------------------------------------------- |
-| Model Version              | Xception                                       |
-| Resource                   | HUAWEI CLOUD Modelarts                         |
-| uploaded Date              | 12/10/2020                                     |
-| MindSpore Version          | 1.1.0                                          |
-| Dataset                    | 1200k images                                   |
-| Batch_size                 | 128                                            |
-| Training Parameters        | src/config.py                                  |
-| Optimizer                  | Momentum                                       |
-| Loss Function              | CrossEntropySmooth                             |
-| Loss                       | 1.78                                           |
-| Accuracy (8p)              | Top1[79.8%] Top5[94.8%]                        |
-| Per step time (8p)         | 479 ms/step                                    |
-| Total time (8p)            | 42h                                            |
-| Params (M)                 | 180M                                           |
-| Scripts                    | [Xception script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/xception) |
+| Parameters                 | Ascend                    | GPU                       |
+| -------------------------- | ------------------------- | ------------------------- |
+| Model Version              | Xception                  | Xception                  |
+| Resource                   | HUAWEI CLOUD Modelarts    | HUAWEI CLOUD Modelarts    |
+| uploaded Date              | 12/10/2020                | 02/09/2021                |
+| MindSpore Version          | 1.1.0                     | 1.1.0                     |
+| Dataset                    | 1200k images              | 1200k images              |
+| Batch_size                 | 128                       | 64                        |
+| Training Parameters        | src/config.py             | src/config.py             |
+| Optimizer                  | Momentum                  | Momentum                  |
+| Loss Function              | CrossEntropySmooth        | CrossEntropySmooth        |
+| Loss                       | 1.78                      | 1.78                       |
+| Accuracy (8p)              | Top1[79.8%] Top5[94.8%]   | Top1[79.8%] Top5[94.9%]   |
+| Per step time (8p)         | 479 ms/step               | 282 ms/step               |
+| Total time (8p)            | 42h                       | 51h                       |
+| Params (M)                 | 180M                      | 180M                      |
+| Scripts                    | [Xception script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/xception) | [Xception script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/xception) |
 
 #### Inference Performance
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | Xception                    |
-| Resource            | HUAWEI CLOUD Modelarts      |
-| Uploaded Date       | 12/10/2020                  |
-| MindSpore Version   | 1.1.0                       |
-| Dataset             | 50k images                  |
-| Batch_size          | 128                         |
-| Accuracy            | Top1[79.8%] Top5[94.8%]     |
-| Total time          | 3mins                       |
+| Parameters          | Ascend                      | GPU                      |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | Xception                    | Xception                    |
+| Resource            | HUAWEI CLOUD Modelarts      | HUAWEI CLOUD Modelarts      |
+| Uploaded Date       | 12/10/2020                  | 02/09/2021                  |
+| MindSpore Version   | 1.1.0                       | 1.1.0                       |
+| Dataset             | 50k images                  | 50k images                  |
+| Batch_size          | 128                         | 64                         |
+| Accuracy            | Top1[79.8%] Top5[94.8%]     | Top1[79.8%] Top5[94.9%]     |
+| Total time          | 3mins                       | 4.7mins                       |
 
 # [Description of Random Situation](#contents)
 
