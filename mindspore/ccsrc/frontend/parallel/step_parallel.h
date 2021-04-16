@@ -139,7 +139,7 @@ bool IsLastStage();
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
 
-std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node);
+std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index = -1);
 
 void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes);
 

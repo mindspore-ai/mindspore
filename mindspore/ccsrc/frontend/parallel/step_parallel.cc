@@ -2760,15 +2760,16 @@ bool IsCohesiveNode(const CNodePtr &cnode) {
          IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather);
 }
 
-std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node) {
+std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index) {
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   std::vector<std::pair<std::string, int64_t>> param_names;
   for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
+    int64_t idx = index > i ? index : i;
     auto input = node_inputs[i];
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default() && ParameterRequireGrad(input_parameter)) {
-        param_names.push_back({input_parameter->name(), i});
+        param_names.push_back({input_parameter->name(), idx});
       }
     } else if (input->isa<CNode>()) {
       CNodePtr cnode = input->cast<CNodePtr>();
@@ -2776,7 +2777,7 @@ std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &n
         continue;
       }
       if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
-        auto input_param_names = NodeParameterName(cnode);
+        auto input_param_names = NodeParameterName(cnode, idx);
         param_names.insert(param_names.end(), input_param_names.begin(), input_param_names.end());
       }
     }
