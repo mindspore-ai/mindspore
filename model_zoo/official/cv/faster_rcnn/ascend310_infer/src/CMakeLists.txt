@@ -23,10 +23,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SRC_ROOT}/out)
 
 # Set include directory and library directory
 set(ACL_LIB_DIR $ENV{ASCEND_HOME}/acllib)
-set(ATLAS_ACL_LIB_DIR ${ASCEND_HOME}/ascend-toolkit/latest/acllib)
+set(ATLAS_ACL_LIB_DIR $ENV{ASCEND_HOME}/ascend-toolkit/latest/acllib)
 # Header path
 include_directories(${ACL_LIB_DIR}/include/)
-include_directories(${ATLAS_ACL_LIB_DIR}/include/})
+include_directories(${ATLAS_ACL_LIB_DIR}/include/)
 include_directories(${PROJECT_SRC_ROOT}/../inc)
 
 # add host lib path
