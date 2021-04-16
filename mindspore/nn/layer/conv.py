@@ -561,7 +561,7 @@ class Conv3d(_Conv):
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple of six.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
         ValueError: If `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
