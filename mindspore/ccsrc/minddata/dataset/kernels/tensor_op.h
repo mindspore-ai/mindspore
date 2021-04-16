@@ -145,6 +145,7 @@ constexpr char kUniqueOp[] = "UniqueOp";
 // other
 constexpr char kCFuncOp[] = "CFuncOp";
 constexpr char kPyFuncOp[] = "PyFuncOp";
+constexpr char kPluginOp[] = "PluginOp";
 constexpr char kNoOp[] = "NoOp";
 
 // A class that does a computation on a Tensor

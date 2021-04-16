@@ -272,7 +272,7 @@ def check_random_apply(method):
         for i, transform in enumerate(transforms):
             if str(transform).find("c_transform") >= 0:
                 raise ValueError("transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
-                    .format(i))
+                                 .format(i))
 
         if prob is not None:
             type_check(prob, (float, int,), "prob")
@@ -294,7 +294,24 @@ def check_transforms_list(method):
         for i, transform in enumerate(transforms):
             if str(transform).find("c_transform") >= 0:
                 raise ValueError("transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
-                    .format(i))
+                                 .format(i))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_plugin(method):
+    """Wrapper method to check the parameters of plugin."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [lib_path, func_name, user_args], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(lib_path, (str,), "lib_path")
+        type_check(func_name, (str,), "func_name")
+        if user_args is not None:
+            type_check(user_args, (str,), "user_args")
+
         return method(self, *args, **kwargs)
 
     return new_method

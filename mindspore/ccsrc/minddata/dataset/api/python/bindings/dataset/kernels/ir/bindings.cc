@@ -19,9 +19,10 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/core/global_context.h"
 
-#include "minddata/dataset/kernels/py_func_op.h"
+#include "minddata/dataset/kernels/data/no_op.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
+#include "minddata/dataset/kernels/py_func_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -50,6 +51,17 @@ Status PyListToTensorOperations(const py::list &py_ops, std::vector<std::shared_
 PYBIND_REGISTER(TensorOperation, 0, ([](const py::module *m) {
                   (void)py::class_<TensorOperation, std::shared_ptr<TensorOperation>>(*m, "TensorOperation");
                   py::arg("TensorOperation");
+                }));
+
+PYBIND_REGISTER(
+  PluginOperation, 1, ([](const py::module *m) {
+    (void)py::class_<transforms::PluginOperation, TensorOperation, std::shared_ptr<transforms::PluginOperation>>(
+      *m, "PluginOperation")
+      .def(py::init<std::string, std::string, std::string>());
+  }));
+
+PYBIND_REGISTER(NoOp, 1, ([](const py::module *m) {
+                  (void)py::class_<NoOp, TensorOp, std::shared_ptr<NoOp>>(*m, "NoOp").def(py::init<>());
                 }));
 
 PYBIND_REGISTER(

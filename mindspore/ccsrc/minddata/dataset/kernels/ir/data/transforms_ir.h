@@ -41,6 +41,7 @@ constexpr char kRandomApplyOperation[] = "RandomApply";
 constexpr char kRandomChoiceOperation[] = "RandomChoice";
 constexpr char kTypeCastOperation[] = "TypeCast";
 constexpr char kUniqueOperation[] = "Unique";
+constexpr char kPluginOperation[] = "Plugin";
 
 // Transform operations for performing data transformation.
 namespace transforms {
@@ -264,7 +265,28 @@ class UniqueOperation : public TensorOperation {
 
   std::string Name() const override { return kUniqueOperation; }
 };
+
+class PluginOperation : public TensorOperation {
+ public:
+  explicit PluginOperation(const std::string &lib_path, const std::string &func_name, const std::string &user_args)
+      : lib_path_(lib_path), func_name_(func_name), user_args_(user_args) {}
+
+  ~PluginOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kPluginOperation; }
+
+ private:
+  std::string lib_path_;
+  std::string func_name_;
+  std::string user_args_;
+};
+
 #endif
+
 }  // namespace transforms
 }  // namespace dataset
 }  // namespace mindspore
