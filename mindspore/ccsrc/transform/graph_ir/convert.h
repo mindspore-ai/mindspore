@@ -151,6 +151,7 @@ class DfGraphConvertor {
   void GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node);
   void ConvertTupleGetItem(const CNodePtr node);
   void ConvertMakeTuple(const CNodePtr node);
+  void ConvertTopK(const CNodePtr node);
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void TraceOutput(AnfNodePtr node);
   void TraceOutputFromParameter(const AnfNodePtr &anf_out);
