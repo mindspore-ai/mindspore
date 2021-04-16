@@ -34,10 +34,10 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                            auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
                            THROW_IF_ERROR(self(ms_tensor, &ms_tensor));
                            std::shared_ptr<dataset::Tensor> de_output_tensor;
-                           dataset::Tensor::CreateFromMemory(dataset::TensorShape(ms_tensor.Shape()),
-                                                             MSTypeToDEType(static_cast<TypeId>(ms_tensor.DataType())),
-                                                             (const uchar *)(ms_tensor.Data().get()),
-                                                             ms_tensor.DataSize(), &de_output_tensor);
+                           THROW_IF_ERROR(dataset::Tensor::CreateFromMemory(
+                             dataset::TensorShape(ms_tensor.Shape()),
+                             MSTypeToDEType(static_cast<TypeId>(ms_tensor.DataType())),
+                             (const uchar *)(ms_tensor.Data().get()), ms_tensor.DataSize(), &de_output_tensor));
                            return de_output_tensor;
                          })
                     .def("__call__", [](Execute &self, const std::vector<std::shared_ptr<Tensor>> &input_tensor_list) {
@@ -51,9 +51,9 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       std::vector<std::shared_ptr<dataset::Tensor>> de_output_tensor_list;
                       for (auto &tensor : ms_output_tensor_list) {
                         std::shared_ptr<dataset::Tensor> de_output_tensor;
-                        dataset::Tensor::CreateFromMemory(
+                        THROW_IF_ERROR(dataset::Tensor::CreateFromMemory(
                           dataset::TensorShape(tensor.Shape()), MSTypeToDEType(static_cast<TypeId>(tensor.DataType())),
-                          (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_output_tensor);
+                          (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_output_tensor));
                         de_output_tensor_list.emplace_back(std::move(de_output_tensor));
                       }
                       return de_output_tensor_list;

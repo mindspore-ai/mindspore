@@ -100,9 +100,9 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   if (!schema_file_path.empty() || !schema_json_string.empty()) {
     data_schema_ = std::make_unique<DataSchema>();
     if (!schema_file_path.empty()) {
-      data_schema_->LoadSchemaFile(schema_file_path, columns_to_load);
+      RETURN_IF_NOT_OK(data_schema_->LoadSchemaFile(schema_file_path, columns_to_load));
     } else if (!schema_json_string.empty()) {
-      data_schema_->LoadSchemaString(schema_json_string, columns_to_load);
+      RETURN_IF_NOT_OK(data_schema_->LoadSchemaString(schema_json_string, columns_to_load));
     }
   }
 

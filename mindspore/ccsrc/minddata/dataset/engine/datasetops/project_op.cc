@@ -144,7 +144,7 @@ Status ProjectOp::ComputeColMap() {
 }
 
 Status ProjectOp::GetNextRowPullMode(TensorRow *const row) {
-  ComputeColMap();
+  RETURN_IF_NOT_OK(ComputeColMap());
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
   (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(), std::back_inserter(*row),

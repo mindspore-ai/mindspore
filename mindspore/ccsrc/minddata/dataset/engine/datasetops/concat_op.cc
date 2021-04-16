@@ -203,7 +203,7 @@ Status ConcatOp::GetNumClasses(int64_t *num_classes) {
   for (const auto &child : child_) {
     // Choose a dataset which can get valid num_classes
     int64_t tmp_num_classes = -1;
-    child->GetNumClasses(&tmp_num_classes);
+    RETURN_IF_NOT_OK(child->GetNumClasses(&tmp_num_classes));
     if (tmp_num_classes > max_num_classes) {
       max_num_classes = tmp_num_classes;
     }

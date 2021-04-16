@@ -118,8 +118,8 @@ Status DeviceTensor::SetAttributes(uint8_t *data_ptr, const uint32_t &dataSize, 
                                    const uint32_t &widthStride, const uint32_t &height, const uint32_t &heightStride) {
   device_data_ = data_ptr;
   CHECK_FAIL_RETURN_UNEXPECTED(device_data_ != nullptr, "Fail to get the device data.");
-  SetSize_(dataSize);
-  SetYuvStrideShape_(width, widthStride, height, heightStride);
+  RETURN_IF_NOT_OK(SetSize_(dataSize));
+  RETURN_IF_NOT_OK(SetYuvStrideShape_(width, widthStride, height, heightStride));
   return Status::OK();
 }
 

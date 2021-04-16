@@ -49,7 +49,7 @@ Status AlbumOp::Builder::Build(std::shared_ptr<AlbumOp> *ptr) {
     RETURN_STATUS_UNEXPECTED("Invalid file, schema_file is invalid or not set: " + builder_schema_file_);
   } else {
     MS_LOG(INFO) << "Schema file provided: " << builder_schema_file_ << ".";
-    builder_schema_->LoadSchemaFile(builder_schema_file_, builder_columns_to_load_);
+    RETURN_IF_NOT_OK(builder_schema_->LoadSchemaFile(builder_schema_file_, builder_columns_to_load_));
   }
   *ptr = std::make_shared<AlbumOp>(builder_num_workers_, builder_dir_, builder_op_connector_size_, builder_decode_,
                                    builder_extensions_, std::move(builder_schema_), std::move(builder_sampler_));
@@ -484,7 +484,7 @@ Status AlbumOp::ComputeColMap() {
 }
 
 Status AlbumOp::GetNextRowPullMode(TensorRow *const row) {
-  if (image_rows_.empty()) PrescanEntry();
+  if (image_rows_.empty()) RETURN_IF_NOT_OK(PrescanEntry());
   if (sample_ids_ == nullptr) {
     RETURN_IF_NOT_OK(this->InitSampler());
     TensorRow sample_row;

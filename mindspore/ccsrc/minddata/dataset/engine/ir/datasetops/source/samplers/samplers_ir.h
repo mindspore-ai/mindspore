@@ -95,14 +95,7 @@ class DistributedSamplerObj : public SamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_,
-                                                           offset_, even_dist_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -137,13 +130,7 @@ class PKSamplerObj : public SamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -198,13 +185,7 @@ class RandomSamplerObj : public SamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -231,13 +212,7 @@ class SequentialSamplerObj : public SamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -263,13 +238,7 @@ class SubsetSamplerObj : public SamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -297,13 +266,7 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -320,13 +283,7 @@ class WeightedRandomSamplerObj : public SamplerObj {
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes

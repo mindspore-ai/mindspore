@@ -104,9 +104,9 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
                        [this](const std::string &label_name) { return label_index_[label_name]; });
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(label_index, &label));
   if (label_index.size() == 1) {
-    label->Reshape(TensorShape({}));
+    RETURN_IF_NOT_OK(label->Reshape(TensorShape({})));
   } else {
-    label->Reshape(TensorShape(std::vector<dsize_t>(1, label_index.size())));
+    RETURN_IF_NOT_OK(label->Reshape(TensorShape(std::vector<dsize_t>(1, label_index.size()))));
   }
 
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(data.first, &image));

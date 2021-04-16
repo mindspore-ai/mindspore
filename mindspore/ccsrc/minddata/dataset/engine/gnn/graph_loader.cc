@@ -130,7 +130,7 @@ Status GraphLoader::InitAndLoad() {
     RETURN_IF_NOT_OK(vg.CreateAsyncTask("GraphLoader", std::bind(&GraphLoader::WorkerEntry, this, wkr_id)));
   }
   // wait for threads to finish and check its return code
-  vg.join_all(Task::WaitFlag::kBlocking);
+  RETURN_IF_NOT_OK(vg.join_all(Task::WaitFlag::kBlocking));
   RETURN_IF_NOT_OK(vg.GetTaskErrorIfAny());
   return Status::OK();
 }

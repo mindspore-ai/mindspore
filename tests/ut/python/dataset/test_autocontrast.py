@@ -195,7 +195,7 @@ def test_auto_contrast_one_channel_c(plot=False):
     num_samples = images_auto_contrast_c.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = diff_mse(images_auto_contrast_c[i], images_auto_contrast_py[i])
+        mse[i] = diff_mse(np.squeeze(images_auto_contrast_c[i]), images_auto_contrast_py[i])
     logger.info("MSE= {}".format(str(np.mean(mse))))
     np.testing.assert_equal(np.mean(mse), 0.0)
 

@@ -129,8 +129,8 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
 
   if (tracing_ != nullptr) {
     cur_batch_num_++;
-    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_,
-                     ProfilingTime::GetCurMilliSecond());
+    RETURN_IF_NOT_OK(tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_,
+                                      ProfilingTime::GetCurMilliSecond()));
   }
   return Status::OK();
 }

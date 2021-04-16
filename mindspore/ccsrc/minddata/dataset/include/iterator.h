@@ -87,12 +87,7 @@ class Iterator {
 
   class _Iterator {
    public:
-    explicit _Iterator(Iterator *lt) : lt_{lt}, cur_row_{nullptr} {
-      if (lt_) {
-        cur_row_ = new MSTensorMap();
-        lt_->GetNextRow(cur_row_);
-      }
-    }
+    explicit _Iterator(Iterator *lt);
 
     // Destructor
     ~_Iterator() {
@@ -101,17 +96,7 @@ class Iterator {
       }
     }
 
-    _Iterator &operator++() {
-      if (lt_) {
-        ++ind_;
-        lt_->GetNextRow(cur_row_);
-      }
-      if (cur_row_ && cur_row_->size() == 0) {
-        delete cur_row_;
-        cur_row_ = nullptr;
-      }
-      return *this;
-    }                                               // prefix ++ overload
+    _Iterator &operator++();                        // prefix ++ overload
     MSTensorMap &operator*() { return *cur_row_; }  // dereference operator
     MSTensorMap *operator->() { return cur_row_; }
 

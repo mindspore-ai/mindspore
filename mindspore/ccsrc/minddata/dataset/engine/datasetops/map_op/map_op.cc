@@ -124,7 +124,7 @@ Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job)
     if (map_job == nullptr) {
       map_job = std::make_shared<CpuMapJob>();
     }
-    map_job->AddOperation(tfuncs_[i]);
+    RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[i]));
 
     // Push map_job into worker_job if one of the two conditions is true:
     // 1) It is the last tensor operation in tfuncs_

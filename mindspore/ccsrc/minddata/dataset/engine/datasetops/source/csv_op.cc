@@ -103,9 +103,7 @@ CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, char 
       total_rows_(0),
       start_offset_(0),
       end_offset_(std::numeric_limits<int64_t>::max()),
-      err_message_("unknown") {
-  InitCsvParser();
-}
+      err_message_("unknown") {}
 
 void CsvOp::CsvParser::Reset() {
   cur_state_ = START_OF_FILE;
@@ -154,15 +152,28 @@ int CsvOp::CsvParser::PutRecord(int c) {
     err_message_ = "Number of file columns does not match the default records";
     return -1;
   }
+  Status rc;
   switch (column_default_[cur_col_]->type) {
     case CsvOp::INT:
-      Tensor::CreateScalar(std::stoi(s), &t);
+      rc = Tensor::CreateScalar(std::stoi(s), &t);
+      if (rc.IsError()) {
+        err_message_ = rc.ToString();
+        return -1;
+      }
       break;
     case CsvOp::FLOAT:
-      Tensor::CreateScalar(std::stof(s), &t);
+      rc = Tensor::CreateScalar(std::stof(s), &t);
+      if (rc.IsError()) {
+        err_message_ = rc.ToString();
+        return -1;
+      }
       break;
     default:
-      Tensor::CreateScalar(s, &t);
+      rc = Tensor::CreateScalar(s, &t);
+      if (rc.IsError()) {
+        err_message_ = rc.ToString();
+        return -1;
+      }
       break;
   }
   if (cur_col_ >= cur_row_.size()) {
@@ -200,7 +211,11 @@ int CsvOp::CsvParser::PutRow(int c) {
   total_rows_++;
   cur_col_ = 0;
 
-  rows_connector_->Add(worker_id_, std::move(cur_row_));
+  Status s = rows_connector_->Add(worker_id_, std::move(cur_row_));
+  if (s.IsError()) {
+    err_message_ = s.ToString();
+    return -1;
+  }
 
   return 0;
 }
@@ -468,6 +483,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
 
 Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   CsvParser csv_parser(worker_id, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
+  RETURN_IF_NOT_OK(csv_parser.InitCsvParser());
   csv_parser.SetStartOffset(start_offset);
   csv_parser.SetEndOffset(end_offset);
   std::ifstream ifs;
@@ -589,6 +605,11 @@ Status CsvOp::CalculateNumRowsPerShard() {
 
 int64_t CsvOp::CountTotalRows(const std::string &file) {
   CsvParser csv_parser(0, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
+  Status rc = csv_parser.InitCsvParser();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to initialize CSV Parser. Error:" << rc;
+    return 0;
+  }
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
   if (!ifs.is_open()) {

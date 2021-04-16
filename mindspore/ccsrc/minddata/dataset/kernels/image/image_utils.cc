@@ -444,7 +444,7 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     int width = input_cv->shape()[1];
 
     std::shared_ptr<CVTensor> output_cv;
-    CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, input_cv->type(), &output_cv);
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, input_cv->type(), &output_cv));
     for (int i = 0; i < num_channels; ++i) {
       cv::Mat mat;
       RETURN_IF_NOT_OK(output_cv->MatAtIndex({i}, &mat));
@@ -879,7 +879,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
-    (*output)->Reshape(input->shape());
+    RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("AutoContrast: " + std::string(e.what()));
   }
@@ -980,7 +980,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
-    (*output)->Reshape(input->shape());
+    RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Equalize: " + std::string(e.what()));
   }
@@ -1077,7 +1077,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
     int num_channels = input_cv->shape()[2];
-    if (input_cv->Rank() == 3 && num_channels == 1 && output_cv->Rank() == 2) output_cv->ExpandDim(2);
+    if (input_cv->Rank() == 3 && num_channels == 1 && output_cv->Rank() == 2) RETURN_IF_NOT_OK(output_cv->ExpandDim(2));
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {

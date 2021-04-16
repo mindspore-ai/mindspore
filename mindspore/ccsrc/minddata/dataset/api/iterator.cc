@@ -130,5 +130,30 @@ Status PullIterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
   return Status::OK();
 }
 
+Iterator::_Iterator::_Iterator(Iterator *lt) : lt_{lt}, cur_row_{nullptr} {
+  if (lt_) {
+    cur_row_ = new MSTensorMap();
+    Status rc = lt_->GetNextRow(cur_row_);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "Error getting next row. Message: " << rc;
+      cur_row_ = nullptr;
+    }
+  }
+}
+Iterator::_Iterator &Iterator::_Iterator::operator++() {
+  if (lt_) {
+    ++ind_;
+    Status rc = lt_->GetNextRow(cur_row_);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "Error getting next row. Message: " << rc;
+      cur_row_ = nullptr;
+    }
+  }
+  if (cur_row_ && cur_row_->size() == 0) {
+    delete cur_row_;
+    cur_row_ = nullptr;
+  }
+  return *this;
+}
 }  // namespace dataset
 }  // namespace mindspore

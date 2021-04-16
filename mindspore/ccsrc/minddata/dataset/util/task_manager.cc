@@ -82,7 +82,8 @@ void TaskManager::interrupt_all() noexcept {
     auto svc = vg->GetIntrpService();
     if (svc) {
       // Stop the interrupt service. No new request is accepted.
-      svc->ServiceStop();
+      Status rc = svc->ServiceStop();
+      if (rc.IsError()) MS_LOG(ERROR) << "Error while stopping the service. Message: " << rc;
       svc->InterruptAll();
     }
   }
@@ -141,7 +142,7 @@ TaskManager::TaskManager() try : global_interrupt_(0),
 TaskManager::~TaskManager() {
   if (watchdog_) {
     WakeUpWatchDog();
-    watchdog_->Join();
+    (void)watchdog_->Join();
     // watchdog_grp_ and watchdog_ pointers come from Services::GetInstance().GetServiceMemPool() which we will free it
     // on shutdown. So no need to free these pointers one by one.
     watchdog_grp_ = nullptr;

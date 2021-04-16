@@ -73,8 +73,16 @@ Concatenate::Concatenate(int8_t axis, MSTensor prepend, MSTensor append)
 
 std::shared_ptr<TensorOperation> Concatenate::Parse() {
   std::shared_ptr<Tensor> out_prepend, out_append;
-  Tensor::CreateFromMSTensor(data_->prepend_, &out_prepend);
-  Tensor::CreateFromMSTensor(data_->append_, &out_append);
+  Status rc = Tensor::CreateFromMSTensor(data_->prepend_, &out_prepend);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error creating prepend constant tensor. " << rc;
+    return nullptr;
+  }
+  rc = Tensor::CreateFromMSTensor(data_->append_, &out_append);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error creating append constant tensor. " << rc;
+    return nullptr;
+  }
   return std::make_shared<ConcatenateOperation>(data_->axis_, out_prepend, out_append);
 }
 #endif  // not ENABLE_ANDROID
@@ -95,7 +103,11 @@ Fill::Fill(MSTensor fill_value) : data_(std::make_shared<Data>(fill_value)) {}
 
 std::shared_ptr<TensorOperation> Fill::Parse() {
   std::shared_ptr<Tensor> out_fill_value;
-  Tensor::CreateFromMSTensor(data_->fill_value_, &out_fill_value);
+  Status rc = Tensor::CreateFromMSTensor(data_->fill_value_, &out_fill_value);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error creating fill value tensor. " << rc;
+    return nullptr;
+  }
   return std::make_shared<FillOperation>(out_fill_value);
 }
 
@@ -113,7 +125,12 @@ Mask::Mask(RelationalOp op, MSTensor constant, mindspore::DataType ms_type)
 
 std::shared_ptr<TensorOperation> Mask::Parse() {
   std::shared_ptr<Tensor> out_constant;
-  Tensor::CreateFromMSTensor(data_->constant_, &out_constant);
+  Status rc = Tensor::CreateFromMSTensor(data_->constant_, &out_constant);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error creating constant tensor. " << rc;
+    return nullptr;
+  }
+
   DataType de_type = dataset::MSTypeToDEType(static_cast<TypeId>(data_->ms_type_));
   return std::make_shared<MaskOperation>(data_->op_, out_constant, de_type);
 }
@@ -143,7 +160,11 @@ PadEnd::PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value)
 
 std::shared_ptr<TensorOperation> PadEnd::Parse() {
   std::shared_ptr<Tensor> pad_value;
-  Tensor::CreateFromMSTensor(data_->pad_value_, &pad_value);
+  Status rc = Tensor::CreateFromMSTensor(data_->pad_value_, &pad_value);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error creating value constant tensor. " << rc;
+    return nullptr;
+  }
   return std::make_shared<PadEndOperation>(TensorShape(data_->pad_shape_), pad_value);
 }
 #endif  // not ENABLE_ANDROID

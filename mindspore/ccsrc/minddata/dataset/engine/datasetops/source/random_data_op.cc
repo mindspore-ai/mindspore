@@ -131,7 +131,8 @@ void RandomDataOp::GenerateSchema() {
     std::string colName = "c" + std::to_string(i);
     newCol = std::make_unique<ColDescriptor>(colName, DataType(newType), TensorImpl::kFlexible, rank, newShape.get());
 
-    data_schema_->AddColumn(*newCol);
+    Status rc = data_schema_->AddColumn(*newCol);
+    if (rc.IsError()) MS_LOG(ERROR) << "Failed to generate a schema. Message:" << rc;
   }
 }
 
@@ -197,7 +198,7 @@ Status RandomDataOp::EpochSync(int32_t worker_id, bool *quitting) {
 
   // Sync on the guys_in counter
   // We have to wait the last guy is out.
-  all_out_.Wait();
+  RETURN_IF_NOT_OK(all_out_.Wait());
   // If we are not in a repeat loop, or that was the last repeat already, then setup our exit
   // condition from the master loop.
   if (IsLastIteration()) {

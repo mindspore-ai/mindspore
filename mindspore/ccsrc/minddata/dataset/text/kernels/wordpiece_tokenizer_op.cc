@@ -137,7 +137,7 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
     offsets_start.push_back(0);
     offsets_limit.push_back(0);
   }
-  Tensor::CreateFromVector(out_tokens, &token_tensor);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_tokens, &token_tensor));
   output->push_back(token_tensor);
   if (with_offsets_) {
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));

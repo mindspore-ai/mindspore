@@ -185,7 +185,7 @@ Status BoundingBox::UpdateBBoxesForResize(const TensorPtr &bbox_list, size_t bbo
     bbox->SetWidth(bbox->width() * W_aspRatio);
     bbox->SetHeight(bbox->height() * H_aspRatio);
     // reset bounding box values
-    bbox->WriteToTensor(bbox_list, i);
+    RETURN_IF_NOT_OK(bbox->WriteToTensor(bbox_list, i));
   }
   return Status::OK();
 }

@@ -691,7 +691,7 @@ Status GraphDataImpl::RandomWalkBase::GetNodeProbability(const NodeIdType &node_
                                                          std::shared_ptr<StochasticIndex> *node_probability) {
   // Generate alias nodes
   std::shared_ptr<Node> node;
-  graph_->GetNodeByNodeId(node_id, &node);
+  RETURN_IF_NOT_OK(graph_->GetNodeByNodeId(node_id, &node));
   std::vector<NodeIdType> neighbors;
   RETURN_IF_NOT_OK(node->GetAllNeighbors(node_type, &neighbors, true));
   std::sort(neighbors.begin(), neighbors.end());
@@ -706,12 +706,12 @@ Status GraphDataImpl::RandomWalkBase::GetEdgeProbability(const NodeIdType &src, 
                                                          std::shared_ptr<StochasticIndex> *edge_probability) {
   // Get the alias edge setup lists for a given edge.
   std::shared_ptr<Node> src_node;
-  graph_->GetNodeByNodeId(src, &src_node);
+  RETURN_IF_NOT_OK(graph_->GetNodeByNodeId(src, &src_node));
   std::vector<NodeIdType> src_neighbors;
   RETURN_IF_NOT_OK(src_node->GetAllNeighbors(meta_path_[meta_path_index], &src_neighbors, true));
 
   std::shared_ptr<Node> dst_node;
-  graph_->GetNodeByNodeId(dst, &dst_node);
+  RETURN_IF_NOT_OK(graph_->GetNodeByNodeId(dst, &dst_node));
   std::vector<NodeIdType> dst_neighbors;
   RETURN_IF_NOT_OK(dst_node->GetAllNeighbors(meta_path_[meta_path_index + 1], &dst_neighbors, true));
 
