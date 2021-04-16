@@ -46,9 +46,11 @@ bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name
 
 bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cache);
 
-bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index);
+bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index,
+                                 size_t curr_depth);
 
-bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index);
+bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
+                                  size_t curr_depth);
 }  // namespace parallel
 }  // namespace mindspore
 

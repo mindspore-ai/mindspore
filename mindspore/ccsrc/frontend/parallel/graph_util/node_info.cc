@@ -299,7 +299,13 @@ bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cach
 }
 
 // Find previous node of Reshape, then obtain its strategy_cost_ vector to get its layout vector.
-bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index) {
+bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index,
+                                 size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding Reshape's previous node, exceeded the max recursive depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return false;
+  }
   // if previous node is a parameter, handle it in the outsize.
   if (node->isa<Parameter>()) {
     return false;
@@ -338,7 +344,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
-    if (!FindReshapePreNodeStraCosts(cnode->inputs()[index], pre_operator_info, out_index)) {
+    if (!FindReshapePreNodeStraCosts(cnode->inputs()[index], pre_operator_info, out_index, ++curr_depth)) {
       continue;
     }
     return true;
@@ -350,7 +356,12 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
 
 // Find next node of Reshape, then obtain its strategy_cost_ vector to get its layout vector.
 // if reshape's output connect to several primitive, return the first layout found
-bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index) {
+bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
+                                  size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding Reshape's next node, exceeded the max recursive depth: " << MAX_RECURSIVE_DEPTH;
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
@@ -379,7 +390,7 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
     MS_LOG(DEBUG) << "FindReshapeNextNodeStraCosts failed prim " << node_prim->name() << "  "
                   << IsParallelCareNode(use_apply) << "   " << (op_info != nullptr);
 
-    if (FindReshapeNextNodeStraCosts(use_apply, next_operator_info, in_index)) {
+    if (FindReshapeNextNodeStraCosts(use_apply, next_operator_info, in_index, ++curr_depth)) {
       return true;
     }
   }
