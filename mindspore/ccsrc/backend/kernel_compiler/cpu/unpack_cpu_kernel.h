@@ -41,7 +41,6 @@ class UnpackCPUKernel : public CPUKernel {
 
  protected:
   virtual void CheckParam(const CNodePtr &kernel_node);
-  virtual void UnpackResult(const size_t start, const size_t end);
   size_t input_size_{1};
   size_t output_num_{0};
   size_t dims_after_axis_{1};
