@@ -238,7 +238,7 @@ void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   // set global
   size_t CO4 = UP_DIV(out_info.C, C4NUM * block_size_.C);
   global_size_ = {CO4, (size_t)UP_DIV(out_info.W, block_size_.W),
-                  (size_t)UP_DIV(out_info.H * out_info.N, block_size_.H)};
+                  (size_t)UP_DIV(out_info.H, block_size_.H) * out_info.N};
   // set local
   const int max_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
   int z = global_size_[0];
