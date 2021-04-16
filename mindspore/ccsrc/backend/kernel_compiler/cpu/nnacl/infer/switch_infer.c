@@ -31,10 +31,6 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 #endif
 
-  if (!parameter->infer_flag_) {
-    return NNACL_INFER_INVALID;
-  }
-
   for (size_t i = 0; i < outputs_size / 2; i++) {
     outputs[i] = (TensorC *)inputs[i + 1];
     if (inputs[i + 1]->data_type_ == kObjectTypeTensorType) {
@@ -63,7 +59,9 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     }
     *((const TensorC **)inputs + i + 1) = NULL;
   }
-
+  if (!parameter->infer_flag_) {
+    return NNACL_INFER_INVALID;
+  }
   return NNACL_OK;
 }
 

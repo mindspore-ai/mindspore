@@ -25,11 +25,13 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return check_ret;
   }
 #endif
-
+  TensorC *output = outputs[0];
+  TensorListC *input0 = (TensorListC *)(inputs[0]);
+  output->data_type_ = input0->tensors_data_type_;
+  output->format_ = input0->format_;
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-  TensorListC *input0 = (TensorListC *)(inputs[0]);
   if (input0->element_num_ == 0) {
     return NNACL_ERR;
   }
@@ -63,9 +65,6 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
       }
     }
   }
-  TensorC *output = outputs[0];
-  output->data_type_ = input0->tensors_data_type_;
-  output->format_ = input0->format_;
   ShapeInsert(output_shape, &output_shape_size, 0, input0->element_num_);
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;

@@ -27,13 +27,14 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
 #endif
 
   TensorListC *output = (TensorListC *)(outputs[0]);
+  const TensorC *input0 = inputs[0];
   output->data_type_ = kObjectTypeTensorType;
   output->format_ = Format_NHWC;
+  output->tensors_data_type_ = input0->data_type_;
 
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-  const TensorC *input0 = inputs[0];
 
   if (input0->shape_size_ < 1) {
     return NNACL_ERR;
