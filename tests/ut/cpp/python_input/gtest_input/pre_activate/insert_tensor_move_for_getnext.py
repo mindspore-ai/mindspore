@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 from mindspore.ops import operations as P
 
 get_next = P.GetNext([ms.float32, ms.int32], [[32, 64], [32]], 2, "")
-memcpy_async = Primitive('memcpy_async')
+tensor_move = Primitive('TensorMove')
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
@@ -35,7 +35,7 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_insert_memcpy_async_for_getnext(tag):
+def test_insert_tensor_move_for_getnext(tag):
     fns = FnDict()
 
     @fns
@@ -48,9 +48,9 @@ def test_insert_memcpy_async_for_getnext(tag):
         res = get_next()
         data = tuple_getitem(res, 0)
         label = tuple_getitem(res, 1)
-        memcpy_async_data = memcpy_async(data)
-        memcpy_async_label = memcpy_async(label)
-        bind_tuple = make_tuple(memcpy_async_data, memcpy_async_label)
+        tensor_move_data = tensor_move(data)
+        tensor_move_label = tensor_move(label)
+        bind_tuple = make_tuple(tensor_move_data, tensor_move_label)
         get_item0 = tuple_getitem(bind_tuple, 0)
         get_item1 = tuple_getitem(bind_tuple, 1)
         bind_tuple = make_tuple(make_tuple(get_item0, get_item1))

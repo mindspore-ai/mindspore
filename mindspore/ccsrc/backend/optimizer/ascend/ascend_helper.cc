@@ -383,10 +383,10 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   return new_node;
 }
 
-AnfNodePtr CreateMemcpyAsyncOp(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto prim = std::make_shared<Primitive>(kMemCpyAsyncOpName);
+  auto prim = std::make_shared<Primitive>(kTensorMoveOpName);
   std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim), node};
   auto new_node = graph->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);

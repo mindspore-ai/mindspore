@@ -14,49 +14,49 @@
  * limitations under the License.
  */
 
-#include "backend/optimizer/ascend/enhancer/getnext_memcpy_elimination.h"
+#include "backend/optimizer/ascend/enhancer/getnext_tensor_move_elimination.h"
 #include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 
 namespace mindspore::opt {
 
-const BaseRef GetnextMemcpyElimination::DefinePattern() const {
-  auto prim_memcpy = std::make_shared<Primitive>(kMemCpyAsyncOpName);
+const BaseRef GetnextTensorMoveElimination::DefinePattern() const {
+  auto prim_tensor_move = std::make_shared<Primitive>(kTensorMoveOpName);
   VarPtr x = std::make_shared<SeqVar>();
-  VectorRef memcpy_async({prim_memcpy, x});
-  return memcpy_async;
+  VectorRef tensor_move({prim_tensor_move, x});
+  return tensor_move;
 }
 
-const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                   const EquivPtr &equiv) const {
+const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                       const EquivPtr &equiv) const {
   if (graph == nullptr || node == nullptr || equiv == nullptr) {
     return nullptr;
   }
-  auto memcpy_cnode = node->cast<CNodePtr>();
-  if (memcpy_cnode == nullptr) {
+  auto tensor_move_node = node->cast<CNodePtr>();
+  if (tensor_move_node == nullptr) {
     return nullptr;
   }
 
-  // 1. memcpy has attr kAttrLabelForInsertStreamActive
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, memcpy_cnode)) {
+  // 1. tensor move has attr kAttrLabelForInsertStreamActive
+  if (!AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, tensor_move_node)) {
     MS_LOG(DEBUG) << "node has no label_for_insert_stream_active attr";
     return nullptr;
   }
 
-  // 2. memcpy's output has only one user next_node
+  // 2. tensor move's output has only one user next_node
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  if (manager->node_users().find(memcpy_cnode) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "memcpy has no output in manager";
+  if (manager->node_users().find(tensor_move_node) == manager->node_users().end()) {
+    MS_LOG(EXCEPTION) << "tensor move has no output in manager";
   }
-  auto next_nodes = manager->node_users()[memcpy_cnode];
+  auto next_nodes = manager->node_users()[tensor_move_node];
   if (next_nodes.size() > 1) {
     MS_LOG(DEBUG) << "node's output has more than one users";
     return nullptr;
   }
 
-  // 3. next_node is not nop node, not graph output and it has only one input which is memcpy's output
+  // 3. next_node is not nop node, not graph output and it has only one input which is tensor move's output
   for (auto &item : next_nodes) {
     auto next_node = item.first->cast<CNodePtr>();
     if (opt::IsNopNode(next_node)) {
@@ -77,6 +77,6 @@ const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, co
     AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), next_node);
   }
 
-  return memcpy_cnode->input(1);
+  return tensor_move_node->input(1);
 }
 }  // namespace mindspore::opt

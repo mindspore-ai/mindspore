@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_MEMCPY_ELIMINATION_H
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_MEMCPY_ELIMINATION_H
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_TENSORMOVE_ELIMINATION_H
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_TENSORMOVE_ELIMINATION_H
 
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class GetnextMemcpyElimination : public PatternProcessPass {
+class GetnextTensorMoveElimination : public PatternProcessPass {
  public:
-  explicit GetnextMemcpyElimination(bool multigraph = true)
-      : PatternProcessPass("getnext_memcpy_elimination", multigraph) {}
-  ~GetnextMemcpyElimination() override = default;
+  explicit GetnextTensorMoveElimination(bool multigraph = true)
+      : PatternProcessPass("getnext_tensormove_elimination", multigraph) {}
+  ~GetnextTensorMoveElimination() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_MEMCPY_ELIMINATION_H
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_TENSORMOVE_ELIMINATION_H

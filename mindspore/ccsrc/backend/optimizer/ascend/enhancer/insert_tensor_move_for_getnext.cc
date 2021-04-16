@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_getnext.h"
+#include "backend/optimizer/ascend/enhancer/insert_tensor_move_for_getnext.h"
 #include <vector>
 #include <memory>
 #include "backend/optimizer/ascend/ascend_helper.h"
@@ -22,14 +22,14 @@
 
 namespace mindspore {
 namespace opt {
-AnfNodePtr InsertMemcpyAsyncForGetNextOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+AnfNodePtr InsertTensorMoveForGetNextOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   if (func_graph == nullptr || node == nullptr) {
     return nullptr;
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   if (output_num == 0) {
-    MS_LOG(DEBUG) << "Output number is zero, no need to insert memcpy_async!";
+    MS_LOG(DEBUG) << "Output number is zero, no need to insert tensor_move!";
     return node;
   }
 
@@ -39,9 +39,9 @@ AnfNodePtr InsertMemcpyAsyncForGetNextOutputs(const FuncGraphPtr &func_graph, co
 
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     auto tuple_get_item = CreatTupleGetItemNode(func_graph, node, output_index);
-    auto new_node = CreateMemcpyAsyncOp(func_graph, tuple_get_item);
+    auto new_node = CreateTensorMoveOp(func_graph, tuple_get_item);
     if (new_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Create memcpy_async op failed!";
+      MS_LOG(EXCEPTION) << "Create tensor move op failed!";
     }
     if (AnfAlgo::IsNodeDynamicShape(tuple_get_item)) {
       AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), new_node);
@@ -53,15 +53,15 @@ AnfNodePtr InsertMemcpyAsyncForGetNextOutputs(const FuncGraphPtr &func_graph, co
   return make_tuple;
 }
 
-const BaseRef InsertMemcpyAsyncForGetNext::DefinePattern() const {
+const BaseRef InsertTensorMoveForGetNext::DefinePattern() const {
   std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
   auto prim = std::make_shared<Primitive>(kGetNextOpName);
 
   return VectorRef({prim, Xs});
 }
 
-const AnfNodePtr InsertMemcpyAsyncForGetNext::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                      const EquivPtr &) const {
+const AnfNodePtr InsertTensorMoveForGetNext::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                     const EquivPtr &) const {
   if (func_graph == nullptr || node == nullptr || !AnfAlgo::IsRealKernel(node)) {
     return nullptr;
   }
@@ -73,7 +73,7 @@ const AnfNodePtr InsertMemcpyAsyncForGetNext::Process(const FuncGraphPtr &func_g
   }
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cnode);
 
-  return InsertMemcpyAsyncForGetNextOutputs(func_graph, cnode);
+  return InsertTensorMoveForGetNextOutputs(func_graph, cnode);
 }
 }  // namespace opt
 }  // namespace mindspore
