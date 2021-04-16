@@ -1541,7 +1541,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("int64");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt64);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1596,7 +1596,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("float64");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeFloat64);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1651,7 +1651,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("int8");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt8);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1701,7 +1701,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("float16");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeFloat16);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1747,7 +1747,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail3) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("int64");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt64);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1789,7 +1789,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("string");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kObjectTypeString);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1812,7 +1812,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail5) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("bool");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeBool);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds

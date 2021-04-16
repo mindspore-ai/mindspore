@@ -89,6 +89,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   }
 
   EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
@@ -149,6 +152,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
   }
 
   EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestSentencePieceVocabFail) {

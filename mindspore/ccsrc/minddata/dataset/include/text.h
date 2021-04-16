@@ -207,13 +207,14 @@ class Lookup final : public TensorTransform {
   /// \param[in] unknown_token word to use for lookup if the word being looked up is out of Vocabulary (oov).
   ///   If unknown_token is oov, runtime error will be thrown. If unknown_token is {}, which means that not to
   ///    specify unknown_token when word being out of Vocabulary (default={}).
-  /// \param[in] data_type type of the tensor after lookup, typically int32.
+  /// \param[in] data_type mindspore::DataType of the tensor after lookup; must be numeric, including bool.
+  ///   (default=mindspore::DataType::kNumberTypeInt32).
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token = {},
-                  const std::string &data_type = "int32")
-      : Lookup(vocab, OptionalStringToChar(unknown_token), StringToChar(data_type)) {}
+                  mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32)
+      : Lookup(vocab, OptionalStringToChar(unknown_token), data_type) {}
 
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
-                  const std::vector<char> &data_type);
+                  mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32);
 
   /// \brief Destructor
   ~Lookup() = default;
@@ -405,10 +406,8 @@ class SlidingWindow final : public TensorTransform {
 class ToNumber final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] data_type of the tensor to be cast to. Must be a numeric type.
-  explicit ToNumber(const std::string &data_type) : ToNumber(StringToChar(data_type)) {}
-
-  explicit ToNumber(const std::vector<char> &data_type);
+  /// \param[in] data_type mindspore::DataType of the tensor to be cast to. Must be a numeric type, excluding bool.
+  explicit ToNumber(mindspore::DataType data_type);
 
   /// \brief Destructor
   ~ToNumber() = default;
