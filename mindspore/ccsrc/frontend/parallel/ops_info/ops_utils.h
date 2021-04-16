@@ -325,6 +325,7 @@ constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char DROPOUT[] = "Dropout";
 constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
+constexpr char GATHERND[] = "GatherNd";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
