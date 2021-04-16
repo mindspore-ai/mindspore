@@ -18,7 +18,6 @@
 #include <utility>
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"
-#include "./securec.h"
 
 namespace mindspore {
 namespace dataset {

@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/util/intrp_service.h"
 #include <sstream>
-#include "utils/ms_utils.h"
 #include "minddata/dataset/util/services.h"
 #include "minddata/dataset/util/task_manager.h"
 

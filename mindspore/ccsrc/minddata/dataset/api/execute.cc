@@ -18,8 +18,6 @@
 #include <fstream>
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/core/de_tensor.h"
-#include "minddata/dataset/core/device_resource.h"
-#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/type_id.h"

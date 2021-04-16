@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 #include <cmath>
 #include <random>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/kernels/image/random_affine_op.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#else
-#include "minddata/dataset/kernels/image/lite_image_utils.h"
-#endif
+
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/util/random.h"
 

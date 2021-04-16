@@ -15,7 +15,6 @@
  */
 
 #include <string>
-#include <nlohmann/json.hpp>
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
 

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -21,16 +20,8 @@
 #include "common/common.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/source/coco_op.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/pk_sampler.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
-#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

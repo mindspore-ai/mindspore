@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <iostream>
 #include <memory>
 
 #include "mindspore/core/utils/log_adapter.h"

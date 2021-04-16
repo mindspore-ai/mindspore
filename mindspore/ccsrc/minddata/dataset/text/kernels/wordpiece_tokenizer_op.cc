@@ -15,8 +15,6 @@
  */
 
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
-#include <algorithm>
-#include <utility>
 
 namespace mindspore {
 namespace dataset {

@@ -19,8 +19,6 @@
 
 #include "minddata/dataset/util/memory_pool.h"
 #include "minddata/dataset/util/log_adapter.h"
-#include "minddata/dataset/util/system_pool.h"
-#include "./securec.h"
 
 inline uint64_t BitLeftShift(uint64_t v, uint64_t n) { return (v << n); }
 

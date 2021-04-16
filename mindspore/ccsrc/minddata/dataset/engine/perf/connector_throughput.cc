@@ -15,13 +15,11 @@
  */
 
 #include <sys/stat.h>
-#include <fstream>
 #include <iterator>
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <nlohmann/json.hpp>
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/perf/connector_throughput.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/path.h"

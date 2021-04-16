@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"

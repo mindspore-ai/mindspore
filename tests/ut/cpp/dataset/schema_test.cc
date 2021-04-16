@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 #include "common/common.h"
 #include "utils/ms_utils.h"
-#include "minddata/dataset/core/client.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_schema.h"
-#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

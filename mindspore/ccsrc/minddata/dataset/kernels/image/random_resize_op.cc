@@ -19,7 +19,6 @@
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/cv_tensor.h"
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

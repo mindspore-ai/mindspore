@@ -15,11 +15,9 @@
  */
 
 #include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
-#include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "minddata/dataset/text/vocab.h"
 

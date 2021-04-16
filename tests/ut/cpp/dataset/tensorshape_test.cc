@@ -15,7 +15,6 @@
  */
 #include <string>
 #include "./securec.h"
-#include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/data_schema.h"

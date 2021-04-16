@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/util/services.h"
-#include "minddata/dataset/util/sig_handler.h"
 
 namespace mindspore {
 namespace dataset {

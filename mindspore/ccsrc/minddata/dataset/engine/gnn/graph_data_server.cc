@@ -18,10 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
-#include <numeric>
-#include <utility>
 
-#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/gnn/graph_data_impl.h"
 #include "minddata/dataset/util/random.h"
 

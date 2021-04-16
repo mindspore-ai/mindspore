@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 
-#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <iomanip>

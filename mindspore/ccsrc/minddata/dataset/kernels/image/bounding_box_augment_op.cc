@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include <utility>
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
 #include "minddata/dataset/kernels/image/bounding_box.h"

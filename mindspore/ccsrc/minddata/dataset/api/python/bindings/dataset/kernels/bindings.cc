@@ -19,10 +19,7 @@
 #include "minddata/dataset/core/global_context.h"
 
 #include "mindspore/ccsrc/minddata/dataset/kernels/data/compose_op.h"
-#include "mindspore/ccsrc/minddata/dataset/kernels/data/no_op.h"
 #include "minddata/dataset/kernels/py_func_op.h"
-#include "mindspore/ccsrc/minddata/dataset/kernels/data/random_apply_op.h"
-#include "mindspore/ccsrc/minddata/dataset/kernels/data/random_choice_op.h"
 
 namespace mindspore {
 namespace dataset {

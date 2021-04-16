@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <iomanip>
-#include <limits>
 #include <utility>
 
 #include "utils/ms_utils.h"
@@ -26,7 +25,6 @@
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/global_context.h"
 
-#include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"

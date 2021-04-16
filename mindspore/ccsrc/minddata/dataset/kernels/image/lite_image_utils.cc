@@ -17,8 +17,6 @@
 #include <algorithm>
 #include <vector>
 #include <stdexcept>
-#include <utility>
-#include "utils/ms_utils.h"
 #include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 #include "minddata/dataset/include/constants.h"

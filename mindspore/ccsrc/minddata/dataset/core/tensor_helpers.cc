@@ -15,7 +15,6 @@
  */
 #include <string>
 #include <vector>
-#include <iostream>
 #include "minddata/dataset/core/tensor_helpers.h"
 
 namespace mindspore {

@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/util/cond_var.h"
 #include <exception>
-#include <utility>
 #include "minddata/dataset/util/services.h"
 #include "minddata/dataset/util/task_manager.h"
 

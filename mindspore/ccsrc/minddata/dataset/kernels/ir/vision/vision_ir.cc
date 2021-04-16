@@ -18,7 +18,6 @@
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
 #endif
 // Kernel image headers (in alphabetical order)
 #include "minddata/dataset/kernels/image/affine_op.h"

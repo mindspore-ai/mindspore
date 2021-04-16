@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #include "minddata/dataset/util/status.h"
-#include <sstream>
+
 #include <string>
-#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils/ms_utils.h"
 #include "./securec.h"
 
 #ifndef ENABLE_ANDROID

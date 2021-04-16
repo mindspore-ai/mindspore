@@ -15,14 +15,11 @@
  */
 #include "minddata/dataset/text/kernels/case_fold_op.h"
 #include <memory>
-#include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include "unicode/errorcode.h"
 #include "unicode/normalizer2.h"
-#include "unicode/utypes.h"
 
 namespace mindspore {
 namespace dataset {

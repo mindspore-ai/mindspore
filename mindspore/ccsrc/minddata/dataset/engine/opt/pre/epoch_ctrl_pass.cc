@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include <algorithm>
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
 #include "minddata/dataset/engine/ir/datasetops/epoch_ctrl_node.h"

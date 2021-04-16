@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <fstream>
 #include <future>
-#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -33,7 +32,6 @@
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/jagged_connector.h"
-#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/util/wait_post.h"

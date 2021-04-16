@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "common/cvop_common.h"
 #include "gtest/gtest.h"
 #include "securec.h"
 #include "minddata/dataset/engine/perf/cyclic_array.h"

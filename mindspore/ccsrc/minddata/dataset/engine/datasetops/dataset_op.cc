@@ -23,7 +23,6 @@
 #include <string>
 #include <algorithm>
 
-#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 

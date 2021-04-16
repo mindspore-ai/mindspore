@@ -31,10 +31,6 @@
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
-// IR leaf nodes
-
-#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;

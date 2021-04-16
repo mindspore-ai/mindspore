@@ -27,7 +27,6 @@
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
-#include "minddata/dataset/util/random.h"
 
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
 namespace mindspore {
