@@ -16,6 +16,7 @@
 #include "debugger/offline_debug/dbg_services.h"
 
 #include <algorithm>
+#include <chrono>
 
 DbgServices::DbgServices(bool verbose) {
   DbgLogger::verbose = verbose;
@@ -174,10 +175,20 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   // #endif
 
   std::vector<std::shared_ptr<TensorData>> tensor_list;
-  tensor_list = debug_services->ReadNeededDumpedTensors(iteration);
+  std::vector<std::string> file_paths;
+  auto t1 = std::chrono::high_resolution_clock::now();
+
+  tensor_list = debug_services->ReadNeededDumpedTensors(iteration, &file_paths);
 
   debug_services->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                   &tensor_list, false, true, true, &device_id, &root_graph_id);
+                                   file_paths, &tensor_list, false, true, true, &device_id, &root_graph_id);
+
+  auto t2 = std::chrono::high_resolution_clock::now();
+
+  /* Getting number of milliseconds as a double. */
+  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+  MS_LOG(INFO) << "CheckWatchpoints Took: " << ms_double.count() / 1000 << "s";
 
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
@@ -249,7 +260,15 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> i
   std::transform(info.begin(), info.end(), std::back_inserter(iteration), GetTensorIteration);
 
   MS_LOG(INFO) << "cpp before";
-  debug_services->ReadDumpedTensor(backend_name, slot, device_id, iteration, root_graph_id, &result_list);
+  std::vector<std::string> file_paths;
+  auto t1 = std::chrono::high_resolution_clock::now();
+  debug_services->ConvertReadTensors(backend_name, slot, device_id, iteration, root_graph_id, &file_paths);
+  debug_services->ReadDumpedTensor(backend_name, slot, device_id, iteration, root_graph_id, file_paths, &result_list);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  /* Getting number of milliseconds as a double. */
+  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+  MS_LOG(INFO) << "ReadTensors Took: " << ms_double.count() / 1000 << "s";
   MS_LOG(INFO) << "cpp after";
 
   for (auto result : result_list) {

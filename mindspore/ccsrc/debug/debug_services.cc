@@ -15,9 +15,12 @@
  */
 #include "debug/debug_services.h"
 #include <dirent.h>
-#include <fstream>
 #include <algorithm>
+#include <functional>
+#include <fstream>
+#include <iterator>
 #include <map>
+#include <numeric>
 #include <unordered_set>
 #ifdef ONLINE_DBG_MODE
 #include "backend/session/anf_runtime_algorithm.h"
@@ -128,11 +131,18 @@ void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bo
   std::shared_ptr<TensorData> tensor_prev;
   if (previous_iter_tensor_needed && tensor->GetIteration() > 1) {
     // read data in offline mode
+    std::vector<std::string> file_paths;
+    if (!is_sync_mode) {
+      ConvertReadTensors(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
+                         std::vector<unsigned int>{tensor->GetDeviceId()},
+                         std::vector<unsigned int>{tensor->GetIteration() - 1},
+                         std::vector<unsigned int>{tensor->GetRootGraphId()}, &file_paths);
+    }
     std::vector<std::shared_ptr<TensorData>> result_list_prev;
     ReadDumpedTensor(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
                      std::vector<unsigned int>{tensor->GetDeviceId()},
                      std::vector<unsigned int>{tensor->GetIteration() - 1},
-                     std::vector<unsigned int>{tensor->GetRootGraphId()}, &result_list_prev);
+                     std::vector<unsigned int>{tensor->GetRootGraphId()}, file_paths, &result_list_prev);
     tensor_prev = result_list_prev[0];
     if (!tensor_prev->GetByteSize()) {
       tensor_prev.reset();
@@ -185,6 +195,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                                      std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
                                      std::vector<std::vector<parameter_t>> *parameters,
                                      std::vector<int32_t> *error_codes, const std::vector<std::string> &op_overflows,
+                                     const std::vector<std::string> &async_file_pool,
                                      std::vector<std::shared_ptr<TensorData>> *tensor_list, const bool init_dbg_suspend,
                                      const bool step_end, const bool recheck, std::vector<unsigned int> *device_id,
                                      std::vector<unsigned int> *root_graph_id) {
@@ -198,7 +209,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
     ReadDumpedTensor(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
                      std::vector<unsigned int>{tensor->GetDeviceId()},
                      std::vector<unsigned int>{tensor->GetIteration()},
-                     std::vector<unsigned int>{tensor->GetRootGraphId()}, &result_list);
+                     std::vector<unsigned int>{tensor->GetRootGraphId()}, async_file_pool, &result_list);
     tensor = result_list[0];
     if (!tensor->GetByteSize()) {
       tensor.reset();
@@ -278,55 +289,233 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
 #ifdef OFFLINE_DBG_MODE
 void DebugServices::GetSlotInfo(const std::string &file_name, const std::string &dump_name,
                                 const std::string &specific_dump_dir, std::vector<size_t> *slot_list) {
-  if (is_sync_mode) {
-    // get the slot from the name
-    std::string delimiter = "_";
-    unsigned int start_pos = dump_name.length();
-    unsigned int end_pos = file_name.find(delimiter, start_pos);
-    std::string item = file_name.substr(start_pos, end_pos - start_pos);
-    slot_list->push_back(std::stoul(item));
-  } else {
-    std::string out_dir = "/tmp/" + file_name;
-    std::string input_file = specific_dump_dir + "/" + file_name;
-    std::string log_enabled = DbgLogger::verbose ? "" : "> /dev/null";
-    std::string convert_command =
-      "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " + input_file + " -out " +
-      out_dir + " -t bin " + log_enabled;
-    (void)(system(convert_command.c_str()) + 1);
-    convert_command = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " +
-                      input_file + " -out " + out_dir + " -f NCHW -t bin " + log_enabled;
-    (void)(system(convert_command.c_str()) + 1);
+  // get the slot from the name
+  std::string delimiter = "_";
+  unsigned int start_pos = dump_name.length();
+  unsigned int end_pos = file_name.find(delimiter, start_pos);
+  std::string item = file_name.substr(start_pos, end_pos - start_pos);
+  slot_list->push_back(std::stoul(item));
+}
 
-    std::string prefix_converted_dump_file_name = file_name + ".output.";
-    DIR *convert_dir_ptr = opendir(out_dir.c_str());
-    if (convert_dir_ptr != nullptr) {
-      struct dirent *convert_dir_contents = nullptr;
-      while ((convert_dir_contents = readdir(convert_dir_ptr)) != NULL) {
-        if (convert_dir_contents->d_type == DT_REG) {
-          std::string converted_file_name = convert_dir_contents->d_name;
-          std::size_t nd_file = converted_file_name.rfind(".ND.bin");
-          std::size_t fractal_z_file = converted_file_name.rfind(".FRACTAL_Z.bin");
-          std::size_t nchw_file = converted_file_name.rfind(".NCHW.bin");
-          if (nd_file == std::string::npos && nchw_file == std::string::npos && fractal_z_file == std::string::npos) {
-            continue;
-          }
-          std::size_t found_c = converted_file_name.find(prefix_converted_dump_file_name);
-          if (found_c != 0) {
-            continue;
-          }
-          std::size_t slot_start_pos = prefix_converted_dump_file_name.length();
-          std::size_t slot_end_pos = converted_file_name.find(".", slot_start_pos) - 1;
-          std::string slot_item = converted_file_name.substr(slot_start_pos, slot_end_pos - slot_start_pos + 1);
-          slot_list->push_back(std::stoul(slot_item));
+void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string *tensor_type, std::size_t *size,
+                                      std::vector<int64_t> *shape, std::vector<char> **data_buffer) {
+  std::ifstream infile;
+  std::string file_path = file_name;
+  MS_LOG(INFO) << "Reading in file: " << file_path;
+  infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
+  if (!infile.is_open()) {
+    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path;
+    return;
+  }
+  uint64_t file_size = infile.tellg();
+  infile.seekg(0, std::ios::beg);
+  std::unique_ptr<std::vector<char>> buffer(new std::vector<char>(file_size));
+  if (!infile.read(buffer->data(), file_size)) {
+    MS_LOG(ERROR) << "Failed to read file (In ReadTensorFromNpy) " << file_path;
+    return;
+  }
+  uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer->data() + 8);
+  std::string header(buffer->data() + 9, header_len);
+  std::size_t type_i = header.find("descr") + 10;
+  *tensor_type = header.substr(type_i, 2);
+  std::size_t shape_i_open = header.find("(");
+  std::size_t shape_i_close = header.find(")");
+  std::string shape_str = header.substr(shape_i_open + 1, shape_i_close - shape_i_open - 1);
+  std::string intermediate;
+  std::stringstream check_shape(shape_str);
+  MS_LOG(INFO) << "Shape of " << file_name << " is: [" << shape_str << "]";
+  while (getline(check_shape, intermediate, ',')) {
+    shape->push_back(std::stoi(intermediate));
+  }
+  std::size_t word_size = std::stoul(std::string(1, (*tensor_type)[1]));
+  std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
+  std::size_t data_size = data_len * word_size;
+  infile.seekg(header_len + 10);
+  *data_buffer = new std::vector<char>(data_size);
+  if (!infile.read((*data_buffer)->data(), data_size)) {
+    MS_LOG(ERROR) << "Unable to get tensor data from npy";
+  }
+  *size = data_size;
+}
+
+void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
+                                        std::vector<std::string> *result_list) {
+  std::string file_format = "npy";
+  for (auto const &d : dir_to_files_map) {
+    std::vector<std::string> files_to_convert_in_dir;
+    std::string dump_key = d.first;
+    for (auto const &file_name : d.second) {
+      bool already_converted = false;
+      for (std::string &file_found : *result_list) {
+        if (file_found.find(file_name) != std::string::npos) {
+          already_converted = true;
         }
       }
-    } else {
-      MS_LOG(INFO) << out_dir << " directory does not exist!";
+      if (!already_converted) {
+        files_to_convert_in_dir.push_back(dump_key + "/" + file_name);
+      }
     }
-    closedir(convert_dir_ptr);
+    std::string current_working_dir(__FILE__);
+    std::size_t pos = current_working_dir.find_last_of("\\/");
+    current_working_dir = (std::string::npos == pos) ? "" : current_working_dir.substr(0, pos);
+    MS_LOG(INFO) << current_working_dir;
+    std::ostringstream input_file_o;
+    const char *const delim = " ";
+    std::copy(files_to_convert_in_dir.begin(), files_to_convert_in_dir.end(),
+              std::ostream_iterator<std::string>(input_file_o, delim));
+    std::string input_files = input_file_o.str();
+    MS_LOG(INFO) << "Ops to convert: " << input_files;
+    if (input_files != "") {
+      std::string convert_command = "python " + current_working_dir + "/convert_async.py -out " + dump_key + " -t " +
+                                    file_format + " -d " + dump_key + " -f NCHW -l " + input_files;
+      (void)(system(convert_command.c_str()) + 1);
+      DIR *d_handle;
+      d_handle = opendir(dump_key.c_str());
+      if (d_handle != nullptr) {
+        struct dirent *dir = nullptr;
+        while ((dir = readdir(d_handle)) != NULL) {
+          if (dir->d_type == DT_REG) {
+            std::string candidate = dir->d_name;
+            for (const std::string &file_to_find : files_to_convert_in_dir) {
+              std::string file_n = file_to_find.substr(file_to_find.find_last_of("\\/") + 1);
+              if (candidate.find(file_n) != std::string::npos && candidate.rfind(file_format) != std::string::npos) {
+                // we found a converted file for this op
+                result_list->push_back(dump_key + "/" + candidate);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-    // std::string delete_cmd = "rm -rf " + out_dir;
-    // system(delete_cmd.c_str());
+void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
+                                       std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
+                                       std::vector<unsigned int> root_graph_id, std::vector<std::string> *result_list) {
+  std::string file_format = "npy";
+  std::map<std::string, std::vector<std::string>> dir_to_files_map;
+  for (unsigned int i = 0; i < backend_name.size(); i++) {
+    // form prefix of the tensor file to read from graph pb node name
+    std::string dump_style_kernel_name = backend_name[i];
+    const std::string strsrc = "/";
+
+    std::string strdst = "_";
+
+    std::string::size_type pos = 0;
+    std::string::size_type srclen = strsrc.size();
+    std::string::size_type dstlen = strdst.size();
+
+    // remove slot from name
+    std::size_t found_colon = dump_style_kernel_name.find_last_of(":");
+    dump_style_kernel_name = dump_style_kernel_name.substr(0, found_colon);
+
+    while ((pos = dump_style_kernel_name.find(strsrc, pos)) != std::string::npos) {
+      dump_style_kernel_name.replace(pos, srclen, strdst);
+      pos += dstlen;
+    }
+
+    std::string prefix_dump_file_name = dump_style_kernel_name;
+
+    std::string specific_dump_dir = dump_dir + "/device_" + std::to_string(device_id[i]) + "/" + net_name + "_graph_" +
+                                    std::to_string(root_graph_id[i]) + "/" + std::to_string(root_graph_id[i]) + "/" +
+                                    std::to_string(iteration[i]);
+
+    // search files in dir for the one that meets the filename prefix and read the file into memory
+    DIR *d;
+    d = opendir(specific_dump_dir.c_str());
+    if (d != nullptr) {
+      struct dirent *dir = nullptr;
+      while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG) {
+          std::string file_name = dir->d_name;
+          std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
+          if (file_name_w_o_perfix.rfind(prefix_dump_file_name, 0) == 0 &&
+              file_name.rfind(file_format) == std::string::npos) {
+            // if file matches prefix and is in device format add to candidate files to convert.
+            dir_to_files_map[specific_dump_dir].push_back(file_name);
+          } else if (file_name_w_o_perfix.rfind(prefix_dump_file_name, 0) == 0 &&
+                     file_name.rfind(file_format) != std::string::npos) {
+            // otherwise, if file matches prefix and already has been converted to host format
+            // add to result of converted files.
+            result_list->push_back(specific_dump_dir + "/" + file_name);
+          }
+        }
+      }
+    }
+    closedir(d);
+  }
+  ConvertToHostFormat(dir_to_files_map, result_list);
+}
+
+void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
+                                           const std::string &specific_dump_dir,
+                                           std::vector<std::string> *result_list) {
+  std::string file_format = "npy";
+  std::map<std::string, std::vector<std::string>> dir_to_files_map;
+  for (const auto &node : proto_dump) {
+    std::string dump_name = std::get<1>(node);
+    // search files in dir for the one that meets the filename prefix and read the file into memory
+    DIR *d;
+    d = opendir(specific_dump_dir.c_str());
+    if (d != nullptr) {
+      struct dirent *dir = nullptr;
+      while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG) {
+          std::string file_name = dir->d_name;
+          std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
+          if (file_name_w_o_perfix.rfind(dump_name, 0) == 0 && file_name.rfind(file_format) == std::string::npos) {
+            // if file matches prefix and is in device format add to candidate files to convert.
+            dir_to_files_map[specific_dump_dir].push_back(file_name);
+          } else if (file_name_w_o_perfix.rfind(dump_name, 0) == 0 &&
+                     file_name.rfind(file_format) != std::string::npos) {
+            // otherwise, if file matches prefix and already has been converted to host format
+            // add to result of converted files.
+            result_list->push_back(specific_dump_dir + "/" + file_name);
+          }
+        }
+      }
+    }
+    closedir(d);
+  }
+  ConvertToHostFormat(dir_to_files_map, result_list);
+}
+
+void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
+                                           uint32_t iteration, uint32_t device_id, uint32_t root_graph_id,
+                                           const std::vector<std::string> &async_file_pool,
+                                           std::vector<std::shared_ptr<TensorData>> *tensor_list) {
+  for (auto &node : proto_dump) {
+    std::vector<size_t> slot_list;
+    for (const std::string &file_name : async_file_pool) {
+      std::string dump_name = std::get<1>(node);
+      std::size_t found = file_name.find(dump_name);
+      std::size_t found_out = file_name.find("output");
+      std::size_t found_dot_start = file_name.find(".", found_out);
+      std::size_t found_dot_end = file_name.find(".", found_dot_start);
+
+      if (found != std::string::npos && found_out != std::string::npos) {
+        slot_list.push_back(std::stoul(file_name.substr(found_dot_start + 1, found_dot_end - found_dot_start - 1)));
+      }
+    }
+    for (auto slot : slot_list) {
+      // add a TensorData entry (data will be read when needed)
+      std::vector<int64_t> shape;
+      std::string orig_name = std::get<0>(node);
+      auto tensor_data = std::make_shared<TensorData>();
+      tensor_data->SetName(orig_name);
+      tensor_data->SetExecutionOrder(0);
+      tensor_data->SetSlot(slot);
+      tensor_data->SetIteration(iteration);
+      tensor_data->SetDeviceId(device_id);
+      tensor_data->SetRootGraphId(root_graph_id);
+      tensor_data->SetDataPtr(NULL);
+      tensor_data->SetByteSize(0);
+      tensor_data->SetType("");
+      tensor_data->SetShape(shape);
+
+      tensor_list->push_back(tensor_data);
+    }
   }
 }
 
@@ -334,106 +523,71 @@ std::size_t DebugServices::GetShapeTypeInfo(const std::string &specific_dump_dir
                                             const std::string &prefix_dump_file_name, std::string *file_name,
                                             std::string *type_name, std::string *out_dir, std::vector<int64_t> *shape) {
   std::size_t found = 0;
-  if (is_sync_mode) {
-    found = file_name->rfind(prefix_dump_file_name, 0);
-  } else {
-    std::string file_name_w_o_prefix = file_name->substr(file_name->find('.') + 1);
-    found = file_name_w_o_prefix.rfind(prefix_dump_file_name, 0);
-  }
+  found = file_name->rfind(prefix_dump_file_name, 0);
+
   if (found != 0) {
     return found;
   }
-  if (is_sync_mode) {
-    // found a file, now get the shape and type
-    // find "_shape_" in the filename
-    std::string shape_delimiter = "_shape_";
-    unsigned int str_pos = file_name->find(shape_delimiter) + shape_delimiter.length();
 
-    // read numbers with '_' delimter until you read a non-number, that will be the type name
-    bool number_found = true;
-    std::string delimiter = "_";
-    while (number_found) {
-      unsigned int end_pos = file_name->find(delimiter, str_pos);
-      std::string item = file_name->substr(str_pos, end_pos - str_pos);
-      bool is_number = !item.empty() && std::find_if(item.begin(), item.end(),
-                                                     [](unsigned char c) { return !std::isdigit(c); }) == item.end();
+  // found a file, now get the shape and type
+  // find "_shape_" in the filename
+  std::string shape_delimiter = "_shape_";
+  unsigned int str_pos = file_name->find(shape_delimiter) + shape_delimiter.length();
 
-      if (is_number) {
-        shape->push_back(std::stoul(item));
-        str_pos = end_pos + 1;
-      } else {
-        *type_name = item;
-        number_found = false;
-      }
-    }
-  } else {
-    *out_dir = "/tmp/" + *file_name;
-    std::string input_file = specific_dump_dir + "/" + *file_name;
-    std::string log_enabled = DbgLogger::verbose ? "" : "> /dev/null";
-    std::string convert_command =
-      "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " + input_file + " -out " +
-      *out_dir + " -t bin " + log_enabled;
-    (void)(system(convert_command.c_str()) + 1);
-    convert_command = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.py convert -d " +
-                      input_file + " -out " + *out_dir + " -f NCHW -t bin " + log_enabled;
-    (void)(system(convert_command.c_str()) + 1);
+  // read numbers with '_' delimter until you read a non-number, that will be the type name
+  bool number_found = true;
+  std::string delimiter = "_";
+  while (number_found) {
+    unsigned int end_pos = file_name->find(delimiter, str_pos);
+    std::string item = file_name->substr(str_pos, end_pos - str_pos);
+    bool is_number = !item.empty() && std::find_if(item.begin(), item.end(),
+                                                   [](unsigned char c) { return !std::isdigit(c); }) == item.end();
 
-    std::string prefix_converted_dump_file_name = *file_name + ".output." + std::to_string(slot);
-    *file_name = "";
-    DIR *convert_dir_ptr = opendir(out_dir->c_str());
-    if (convert_dir_ptr != nullptr) {
-      struct dirent *convert_dir_contents = nullptr;
-      while ((convert_dir_contents = readdir(convert_dir_ptr)) != NULL) {
-        if (convert_dir_contents->d_type == DT_REG) {
-          std::string converted_file_name = convert_dir_contents->d_name;
-          std::size_t nd_file = converted_file_name.rfind(".ND.bin");
-          std::size_t fractal_z_file = converted_file_name.rfind(".FRACTAL_Z.bin");
-          std::size_t nchw_file = converted_file_name.rfind(".NCHW.bin");
-          if (nd_file == std::string::npos && nchw_file == std::string::npos && fractal_z_file == std::string::npos) {
-            continue;
-          }
-          std::size_t found_c = converted_file_name.rfind(prefix_converted_dump_file_name, 0);
-          if (found_c != 0) {
-            continue;
-          }
-          *file_name = converted_file_name;
-        }
-      }
+    if (is_number) {
+      shape->push_back(std::stoul(item));
+      str_pos = end_pos + 1;
     } else {
-      MS_LOG(INFO) << *out_dir << " directory does not exist!";
-    }
-    closedir(convert_dir_ptr);
-
-    if (*file_name == "") {
-      MS_LOG(WARNING) << out_dir << ": no valid files found post msaccucmp exec";
-      return 1;
-    }
-
-    // std::string delete_cmd = "rm -rf " + out_dir;
-    // system(delete_cmd.c_str());
-
-    // found a file, now get the shape and type
-    std::stringstream check_filename(*file_name);
-    std::vector<std::string> tokens;
-    std::string intermediate;
-
-    while (getline(check_filename, intermediate, '.')) {
-      tokens.push_back(intermediate);
-    }
-    *type_name = tokens[8];
-
-    std::string shape_str = tokens[7];
-    std::stringstream check_shape(shape_str);
-    while (getline(check_shape, intermediate, '_')) {
-      shape->push_back(std::stoul(intermediate));
+      *type_name = item;
+      number_found = false;
     }
   }
+
   return 0;
+}
+
+void DebugServices::AddToTensorData(const std::string &backend_name, const std::size_t slot,
+                                    const unsigned int iteration, const unsigned int device_id,
+                                    const unsigned int root_graph_id, const std::size_t data_size,
+                                    const std::string &type_name, const std::vector<int64_t> &shape,
+                                    std::vector<char> *buffer, std::vector<std::shared_ptr<TensorData>> *result_list) {
+  // call LoadNewTensor to store tensor in internal cache
+  auto tensor_data = std::make_shared<TensorData>();
+  tensor_data->SetName(backend_name);
+  tensor_data->SetExecutionOrder(0);
+  tensor_data->SetSlot(slot);
+  tensor_data->SetIteration(iteration);
+  tensor_data->SetDeviceId(device_id);
+  tensor_data->SetRootGraphId(root_graph_id);
+  if (data_size) {
+    tensor_data->SetDataPtr(buffer->data());
+  } else {
+    tensor_data->SetDataPtr(NULL);
+  }
+  tensor_data->SetByteSize(data_size);
+  tensor_data->SetType(type_name);
+  tensor_data->SetShape(shape);
+  if (data_size) {
+    tensor_loader_->LoadNewTensor(tensor_data, false);
+  }
+
+  // add to result_list
+  result_list->push_back(tensor_data);
 }
 
 void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                      std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                      std::vector<unsigned int> root_graph_id,
+                                     const std::vector<std::string> &async_file_pool,
                                      std::vector<std::shared_ptr<TensorData>> *result_list) {
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
@@ -465,87 +619,67 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       prefix_dump_file_name += "_output_" + std::to_string(slot[i]) + "_";
     }
 
-    std::string specific_dump_dir;
-    if (is_sync_mode) {
-      specific_dump_dir =
-        dump_dir + "/device_" + std::to_string(device_id[i]) + "/iteration_" + std::to_string(iteration[i]);
-    } else {
-      specific_dump_dir = dump_dir + "/device_" + std::to_string(device_id[i]) + "/" + net_name + "_graph_" +
-                          std::to_string(root_graph_id[i]) + "/" + std::to_string(root_graph_id[i]) + "/" +
-                          std::to_string(iteration[i]);
-    }
+    std::string specific_dump_dir =
+      dump_dir + "/device_" + std::to_string(device_id[i]) + "/iteration_" + std::to_string(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
-    DIR *d;
-    d = opendir(specific_dump_dir.c_str());
     std::vector<char> *buffer = NULL;
     std::string type_name = "";
     std::vector<int64_t> shape;
     uint64_t data_size = 0;
-    if (d != nullptr) {
-      struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG) {
-          std::string file_name = dir->d_name;
-          std::string out_dir;
-          std::size_t found = GetShapeTypeInfo(specific_dump_dir, slot[i], prefix_dump_file_name, &file_name,
-                                               &type_name, &out_dir, &shape);
-          if (found != 0) {
-            continue;
-          }
+    if (is_sync_mode) {
+      DIR *d;
+      d = opendir(specific_dump_dir.c_str());
+      if (d != nullptr) {
+        struct dirent *dir = nullptr;
+        while ((dir = readdir(d)) != NULL) {
+          if (dir->d_type == DT_REG) {
+            std::string file_name = dir->d_name;
+            std::string out_dir;
+            std::size_t found = GetShapeTypeInfo(specific_dump_dir, slot[i], prefix_dump_file_name, &file_name,
+                                                 &type_name, &out_dir, &shape);
+            if (found != 0) {
+              continue;
+            }
 
-          // read the tensor data from the file
-          std::string file_path;
-          if (is_sync_mode) {
-            file_path = specific_dump_dir + "/" + file_name;
-          } else {
-            file_path = out_dir + "/" + file_name;
-          }
+            // read the tensor data from the file
+            std::string file_path = specific_dump_dir + "/" + file_name;
 
-          std::ifstream infile;
-          infile.open(file_path.c_str(), std::ios::binary | std::ios::ate);
-          if (!infile.is_open()) {
-            MS_LOG(ERROR) << "Failed to open bin file " << file_name;
-            break;
+            std::ifstream infile;
+            infile.open(file_path.c_str(), std::ios::binary | std::ios::ate);
+            if (!infile.is_open()) {
+              MS_LOG(ERROR) << "Failed to open bin file " << file_name;
+              break;
+            }
+            uint64_t file_size = infile.tellg();
+            infile.seekg(0, std::ios::beg);
+            buffer = new std::vector<char>(file_size);
+            if (!infile.read(buffer->data(), file_size)) {
+              MS_LOG(ERROR) << "Failed to read in bin file " << file_name;
+              break;
+            }
+            data_size = file_size;
+            infile.close();
+            AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], data_size,
+                            type_name, shape, buffer, result_list);
           }
-          uint64_t file_size = infile.tellg();
-          infile.seekg(0, std::ios::beg);
-          buffer = new std::vector<char>(file_size);
-          if (!infile.read(buffer->data(), file_size)) {
-            MS_LOG(ERROR) << "Failed to read in bin file " << file_name;
-            break;
-          }
-          data_size = file_size;
-          infile.close();
+        }
+      } else {
+        MS_LOG(INFO) << "directory does not exist!";
+      }
+      closedir(d);
+    } else {
+      // if async mode
+      for (const std::string &file_path : async_file_pool) {
+        if (file_path.find(prefix_dump_file_name) != std::string::npos &&
+            file_path.find(".output." + std::to_string(slot[i])) != std::string::npos) {
+          shape.clear();
+          ReadTensorFromNpy(file_path, &type_name, &data_size, &shape, &buffer);
+          AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], data_size, type_name,
+                          shape, buffer, result_list);
         }
       }
-    } else {
-      MS_LOG(INFO) << "directory does not exist!";
     }
-    closedir(d);
-
-    // call LoadNewTensor to store tensor in internal cache
-    auto tensor_data = std::make_shared<TensorData>();
-    tensor_data->SetName(backend_name[i]);
-    tensor_data->SetExecutionOrder(0);
-    tensor_data->SetSlot(slot[i]);
-    tensor_data->SetIteration(iteration[i]);
-    tensor_data->SetDeviceId(device_id[i]);
-    tensor_data->SetRootGraphId(root_graph_id[i]);
-    if (data_size) {
-      tensor_data->SetDataPtr(buffer->data());
-    } else {
-      tensor_data->SetDataPtr(NULL);
-    }
-    tensor_data->SetByteSize(data_size);
-    tensor_data->SetType(type_name);
-    tensor_data->SetShape(shape);
-    if (data_size) {
-      tensor_loader_->LoadNewTensor(tensor_data, false);
-    }
-
-    // add to result_list
-    result_list->push_back(tensor_data);
   }
 }
 
@@ -567,7 +701,8 @@ void ReplaceSrcFileName(const bool is_sync_mode, std::string *dump_style_name) {
   }
 }
 
-std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(unsigned int iteration) {
+std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
+  unsigned int iteration, std::vector<std::string> *async_file_pool) {
   // get a list of nodes and the devices they are on to monitor
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::tuple<uint32_t, uint32_t>, std::unordered_set<std::string>> device_and_graph_to_nodes;
@@ -628,51 +763,54 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
       proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
     }
 
-    // search files in dir for the one that meets the filename prefix and read the file into memory
-    DIR *d;
-    d = opendir(specific_dump_dir.c_str());
-    if (d != nullptr) {
-      struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG) {
-          std::string file_name = dir->d_name;
-          for (auto &node : proto_to_dump) {
-            std::string dump_name = std::get<1>(node);
-            std::size_t found = 0;
+    if (!is_sync_mode) {
+      // convert all files in proto_to_dump to npy and add to pool of async file names
+      ConvertWatchPointNodes(proto_to_dump, specific_dump_dir, async_file_pool);
+    }
+    if (is_sync_mode) {
+      // search files in dir for the one that meets the filename prefix and read the file into memory
+      DIR *d;
+      d = opendir(specific_dump_dir.c_str());
+      if (d != nullptr) {
+        struct dirent *dir = nullptr;
+        while ((dir = readdir(d)) != NULL) {
+          if (dir->d_type == DT_REG) {
+            std::string file_name = dir->d_name;
+            for (auto &node : proto_to_dump) {
+              std::string dump_name = std::get<1>(node);
+              std::size_t found = 0;
 
-            if (is_sync_mode) {
               found = file_name.rfind(dump_name, 0);
-            } else {
-              std::string file_name_w_o_prefix = file_name.substr(file_name.find('.') + 1);
-              found = file_name_w_o_prefix.rfind(dump_name, 0);
-            }
 
-            if (found == 0) {
-              std::vector<size_t> slot_list;
-              GetSlotInfo(file_name, dump_name, specific_dump_dir, &slot_list);
-              for (auto slot : slot_list) {
-                // add a TensorData entry (data will be read when needed)
-                std::vector<int64_t> shape;
-                std::string orig_name = std::get<0>(node);
-                auto tensor_data = std::make_shared<TensorData>();
-                tensor_data->SetName(orig_name);
-                tensor_data->SetExecutionOrder(0);
-                tensor_data->SetSlot(slot);
-                tensor_data->SetIteration(iteration);
-                tensor_data->SetDeviceId(device_id);
-                tensor_data->SetRootGraphId(root_graph_id);
-                tensor_data->SetDataPtr(NULL);
-                tensor_data->SetByteSize(0);
-                tensor_data->SetType("");
-                tensor_data->SetShape(shape);
+              if (found == 0) {
+                std::vector<size_t> slot_list;
+                GetSlotInfo(file_name, dump_name, specific_dump_dir, &slot_list);
+                for (auto slot : slot_list) {
+                  // add a TensorData entry (data will be read when needed)
+                  std::vector<int64_t> shape;
+                  std::string orig_name = std::get<0>(node);
+                  auto tensor_data = std::make_shared<TensorData>();
+                  tensor_data->SetName(orig_name);
+                  tensor_data->SetExecutionOrder(0);
+                  tensor_data->SetSlot(slot);
+                  tensor_data->SetIteration(iteration);
+                  tensor_data->SetDeviceId(device_id);
+                  tensor_data->SetRootGraphId(root_graph_id);
+                  tensor_data->SetDataPtr(NULL);
+                  tensor_data->SetByteSize(0);
+                  tensor_data->SetType("");
+                  tensor_data->SetShape(shape);
 
-                tensor_list.push_back(tensor_data);
+                  tensor_list.push_back(tensor_data);
+                }
+                break;
               }
-              break;
             }
           }
         }
       }
+    } else {
+      GetTensorDataInfoAsync(proto_to_dump, iteration, device_id, root_graph_id, *async_file_pool, &tensor_list);
     }
   }
 
