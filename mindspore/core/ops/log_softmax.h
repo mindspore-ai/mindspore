@@ -37,9 +37,6 @@ class LogSoftmax : public PrimitiveC {
   void set_axis(const int64_t axis);
   int64_t get_axis() const;
 };
-
-AbstractBasePtr LogSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
 using PrimLogSoftmaxPtr = std::shared_ptr<LogSoftmax>;
 }  // namespace ops
 }  // namespace mindspore
