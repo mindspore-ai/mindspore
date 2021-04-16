@@ -121,7 +121,7 @@ def test_mask_exceptions_str():
 
     with pytest.raises(RuntimeError) as info:
         mask_compare(["1", "2", "3", "4", "5"], ops.Relational.EQ, "3.5", mstype.string)
-    assert "only support numeric datatype of input." in str(info.value)
+    assert "Only supports bool or numeric datatype for generated mask type." in str(info.value)
 
 
 if __name__ == "__main__":

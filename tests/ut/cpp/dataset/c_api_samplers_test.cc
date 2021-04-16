@@ -325,3 +325,119 @@ TEST_F(MindDataTestPipeline, TestSamplerAddChild) {
   EXPECT_EQ(ds->GetDatasetSize(), 5);
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerSuccess1.";
+  // Test basic setting of subset_sampler with default num_samples
+
+  std::vector<int64_t> indices = {2, 4, 6, 8, 10, 12};
+  std::shared_ptr<Sampler> sampl = std::make_shared<SubsetSampler>(indices);
+  EXPECT_NE(sampl, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampl);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 6);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerSuccess2.";
+  // Test subset_sampler with num_samples
+
+  std::vector<int64_t> indices = {2, 4, 6, 8, 10, 12};
+  std::shared_ptr<Sampler> sampl = std::make_shared<SubsetSampler>(indices, 3);
+  EXPECT_NE(sampl, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampl);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 3);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerSuccess3.";
+  // Test subset_sampler with num_samples larger than the indices size.
+
+  std::vector<int64_t> indices = {2, 4, 6, 8, 10, 12};
+  std::shared_ptr<Sampler> sampl = std::make_shared<SubsetSampler>(indices, 8);
+  EXPECT_NE(sampl, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampl);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 6);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestSubsetSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerFail.";
+  // Test subset_sampler with index out of bounds.
+
+  std::vector<int64_t> indices = {2, 4, 6, 8, 10, 100};  // Sample ID (100) is out of bound
+  std::shared_ptr<Sampler> sampl = std::make_shared<SubsetSampler>(indices);
+  EXPECT_NE(sampl, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampl);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  // Expect failure: index 100 is out of dataset bounds
+  EXPECT_ERROR(iter->GetNextRow(&row));
+
+  iter->Stop();
+}

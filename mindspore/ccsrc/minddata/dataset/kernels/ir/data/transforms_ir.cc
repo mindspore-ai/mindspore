@@ -141,7 +141,14 @@ Status FillOperation::to_json(nlohmann::json *out_json) {
 MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype)
     : op_(op), constant_(constant), dtype_(dtype) {}
 
-Status MaskOperation::ValidateParams() { return Status::OK(); }
+Status MaskOperation::ValidateParams() {
+  if (!dtype_.IsBool() && !dtype_.IsFloat() && !dtype_.IsInt()) {
+    std::string err_msg = "Mask: Only supports bool or numeric datatype for generated mask type.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
 
 std::shared_ptr<TensorOp> MaskOperation::Build() { return std::make_shared<MaskOp>(op_, constant_, dtype_); }
 #endif
