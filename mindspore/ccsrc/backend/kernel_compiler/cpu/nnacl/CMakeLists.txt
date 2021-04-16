@@ -7,19 +7,20 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND DEFINED ARCHS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fstrict-aliasing \
         -ffunction-sections -fdata-sections -ffast-math -Wno-shorten-64-to-32")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fstrict-aliasing \
-        -ffunction-sections -fdata-sections -ffast-math -Wno-shorten-64-to-32")
     endif()
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT DEFINED ARCHS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
         -ffunction-sections -fdata-sections -ffast-math")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
-        -ffunction-sections -fdata-sections -ffast-math")
     endif()
 endif()
+if(ENABLE_CPU)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+endif()
 if("${X86_64_SIMD}" STREQUAL "avx")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
-    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2 -mfma")
+endif()
+if("${X86_64_SIMD}" STREQUAL "sse")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1")
 endif()
 
 ########################### files ###########################
@@ -63,10 +64,16 @@ endif()
 
 ########################### build nnacl static library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-add_library(nnacl STATIC ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+if(ENABLE_CPU)
+    add_library(nnacl SHARED ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+else()
+    add_library(nnacl STATIC ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+endif()
 add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
-add_dependencies(nnacl fbs_src)
-add_dependencies(nnacl_mid fbs_src)
+if(NOT ENABLE_CPU)
+    add_dependencies(nnacl fbs_src)
+    add_dependencies(nnacl_mid fbs_src)
+endif()
 
 ########################### arm fp16 build optimize library ########################
 if(ENABLE_FP16)
