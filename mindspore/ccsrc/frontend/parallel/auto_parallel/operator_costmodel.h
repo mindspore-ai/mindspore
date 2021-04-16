@@ -608,6 +608,7 @@ using GreaterCost = SubCost;
 using GreaterEqualCost = SubCost;
 using LessCost = SubCost;
 using LessEqualCost = SubCost;
+using GatherNdCost = SubCost;
 
 class MulCost : public SubCost {
  public:
