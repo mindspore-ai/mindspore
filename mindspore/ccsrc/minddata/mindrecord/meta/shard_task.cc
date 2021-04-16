@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/util/random.h"
 #include "minddata/mindrecord/include/shard_task.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
@@ -65,8 +66,7 @@ std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTa
 }
 
 std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetRandomTask() {
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  std::mt19937 gen = mindspore::dataset::GetRandomDevice();
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
   return task_list_[dis(gen)];
 }
