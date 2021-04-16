@@ -23,12 +23,17 @@ namespace {
 constexpr size_t kTripleNum = 3;
 constexpr size_t kConvWeightIndex = 2;
 }  // namespace
-lite::STATUS Conv1DWeightExpandingPass::ExpandFilterShape(const tensor::TensorPtr &tensor,
-                                                          const schema::Format &format) {
-  if (tensor == nullptr) {
-    return lite::RET_NULL_PTR;
+lite::STATUS Conv1DWeightExpandingPass::ExpandFilterShape(const AnfNodePtr &weight_node, const schema::Format &format) {
+  MS_ASSERT(weight_node != nullptr);
+  auto weight_tensor = GetTensorInfo(weight_node);
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "weight node must be param value.";
+    return lite::RET_ERROR;
   }
-  auto shape = tensor->shape();
+  auto shape = weight_tensor->shape();
+  if (shape.size() != kTripleNum) {
+    return lite::RET_OK;
+  }
   std::vector<int64_t> new_shape(shape);
   switch (format) {
     case schema::Format_NCHW:
@@ -43,7 +48,13 @@ lite::STATUS Conv1DWeightExpandingPass::ExpandFilterShape(const tensor::TensorPt
       MS_LOG(ERROR) << "Unsupported format.";
       return RET_ERROR;
   }
-  tensor->set_shape(new_shape);
+  weight_tensor->set_shape(new_shape);
+  if (!utils::isa<ParameterPtr>(weight_node)) {
+    return lite::RET_OK;
+  }
+  auto weight_param = weight_node->cast<ParameterPtr>();
+  auto type = weight_tensor->data_type();
+  weight_param->set_abstract(std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), new_shape));
   return RET_OK;
 }
 
@@ -62,25 +73,18 @@ bool Conv1DWeightExpandingPass::Run(const FuncGraphPtr &func_graph) {
     MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
     auto weight_node = conv_cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
-    auto weight_value = GetTensorInfo(weight_node);
-    if (weight_value == nullptr) {
-      MS_LOG(ERROR) << "weight node must be param value.";
-      return false;
-    }
+
     auto prim = GetValueNode<PrimitivePtr>(conv_cnode->input(0));
     MS_ASSERT(prim != nullptr);
-
     schema::Format schema_format = schema::Format::Format_KCHW;
     if (prim->GetAttr(opt::kWeightFormat) != nullptr) {
       schema_format = static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(opt::kWeightFormat)));
     }
     // expand weight tensor to 4 dimensions.
-    if (weight_value->shape().size() == kTripleNum) {
-      auto status = ExpandFilterShape(weight_value, schema_format);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "Expand filter shape failed.";
-        return false;
-      }
+    auto status = ExpandFilterShape(weight_node, schema_format);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Expand filter shape failed.";
+      return false;
     }
   }
   return RET_OK;

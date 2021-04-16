@@ -22,6 +22,8 @@
 #include <string>
 #include "Eigen/Core"
 #include "ops/fusion/conv2d_fusion.h"
+#include "ops/transpose.h"
+#include "ops/tuple_get_item.h"
 #include "src/common/common.h"
 #include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
@@ -1350,6 +1352,28 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   return param_node;
+}
+
+CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &perm,
+                          const std::string &cnode_name) {
+  MS_ASSERT(func_graph != nullptr && input_node != nullptr);
+  auto perm_node = BuildIntVecParameterNode(func_graph, perm, cnode_name + "_perm");
+  MS_ASSERT(perm_node != nullptr);
+  auto trans_prim = std::make_shared<ops::Transpose>();
+  MS_ASSERT(trans_prim != nullptr);
+  auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm_node});
+  MS_ASSERT(cnode != nullptr);
+  cnode->set_fullname_with_scope(cnode_name);
+  return cnode;
+}
+
+CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input, size_t index) {
+  MS_ASSERT(func_graph != nullptr && input != nullptr);
+  auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
+  auto second_input = NewValueNode(MakeValue<int>(index));
+  auto tuple_cnode = func_graph->NewCNode(tuple_get_item_prim, {input, second_input});
+  tuple_cnode->set_fullname_with_scope(input->fullname_with_scope() + "_getitem_" + std::to_string(index));
+  return tuple_cnode;
 }
 }  // namespace opt
 }  // namespace mindspore

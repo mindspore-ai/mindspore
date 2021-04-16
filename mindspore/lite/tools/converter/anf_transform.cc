@@ -61,6 +61,7 @@
 #include "tools/optimizer/graph/if_pass.h"
 #include "tools/optimizer/graph/functionalize_control_op_pass.h"
 #include "tools/optimizer/graph/inputs_adjust_pass.h"
+#include "tools/optimizer/graph/unify_format_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -71,7 +72,8 @@ AnfTransform::AnfTransform() = default;
 
 AnfTransform::~AnfTransform() = default;
 
-int AnfTransform::AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config) {
+int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
 
   // for now - training is not supporting fuse operations
@@ -106,24 +108,20 @@ int AnfTransform::AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &opti
     remove_unused_cast_pass->SetFmkType(config->fmk);
     fusion_pm->AddPass(remove_unused_cast_pass);
   }
-  if (config->fmk == lite::converter::FmkType_ONNX) {
-    auto remove_unused_transpose_pass = std::make_shared<opt::RemoveUnusedTransposeOpPass>();
-    if (remove_unused_transpose_pass == nullptr) {
-      MS_LOG(ERROR) << "RemoveUnusedTransposeOpPass should be specified";
-      return RET_ERROR;
-    }
-    remove_unused_transpose_pass->SetFmkType(config->fmk);
-    fusion_pm->AddPass(remove_unused_transpose_pass);
-  }
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   if (!config->trainModel) {
     fusion_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
   }
   optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run op fusion failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config) {
+int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF ||
       config->fmk == lite::converter::FmkType_ONNX) {
@@ -134,8 +132,6 @@ int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optim
   weight_format_hardcode_pass->SetFmkType(config->fmk);
   weight_format_hardcode_pass->SetQuantType(config->quantType);
   graph_pm->AddPass(weight_format_hardcode_pass);
-  auto conv1d_weight_expanding_pass = std::make_shared<opt::Conv1DWeightExpandingPass>();
-  graph_pm->AddPass(conv1d_weight_expanding_pass);
   auto weight_format_transform_pass = std::make_shared<opt::WeightFormatTransformPass>();
   weight_format_transform_pass->SetFmkType(config->fmk);
   weight_format_transform_pass->SetQuantType(config->quantType);
@@ -144,11 +140,15 @@ int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optim
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
   optimizer->AddPassManager(graph_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run  graph pass failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-int AnfTransform::AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer,
-                                 const converter::Flags *config) {
+int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   if (config->fmk == lite::converter::FmkType_TFLITE) {
@@ -156,11 +156,15 @@ int AnfTransform::AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &opt
     convert_pm->AddPass(std::make_shared<opt::TfliteInputsAdjustPass>());
   }
   optimizer->AddPassManager(convert_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run graph convert pass failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer,
-                                   const converter::Flags *config) {
+int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
   const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
   if (!config->trainModel) {
@@ -179,6 +183,10 @@ int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &o
   infershape_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(infershape_pass);
   optimizer->AddPassManager(const_fold_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run const fold failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -203,12 +211,18 @@ int AnfTransform::RunAdjustPass(const FuncGraphPtr &old_graph, const converter::
   }
 }
 
-int AnfTransform::AddConv1DAdjustPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer,
-                                      const converter::Flags *config) {
+int AnfTransform::RunConv1DAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto conv1d_pm = std::make_shared<opt::PassManager>("conv1d adjust pass manager", true);
   conv1d_pm->AddPass(std::make_shared<opt::Conv1DInOutAdjustPass>());
   conv1d_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
+  auto conv1d_weight_expanding_pass = std::make_shared<opt::Conv1DWeightExpandingPass>();
+  conv1d_pm->AddPass(conv1d_weight_expanding_pass);
   optimizer->AddPassManager(conv1d_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run conv1d adjust failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -276,18 +290,17 @@ int AnfTransform::RunPrecedingPass(const FuncGraphPtr &old_graph, const converte
   return RET_OK;
 }
 
-int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config,
-                             const FuncGraphPtr &new_graph) {
+int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
   if (config->quantType == schema::QuantType_PostTraining) {
-    this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, config->bitNum);
+    this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(old_graph, config->configFile, config->bitNum);
     if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
   } else if (config->quantType == schema::QuantType_WeightQuant) {
-    this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(new_graph, *config);
+    this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
     if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
@@ -296,7 +309,7 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
   }
   if (m_quantizer_ != nullptr) {
     m_quantizer_->flags = *config;
-    auto status = m_quantizer_->DoQuantize(new_graph);
+    auto status = m_quantizer_->DoQuantize(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Quant failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -306,70 +319,72 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
   return RET_OK;
 }
 
-FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_ASSERT(nullptr != old_graph);
   if (config == nullptr) {
     MS_LOG(ERROR) << "config should be specified";
     return nullptr;
   }
+  int status;
+  for (auto &fg : func_graphs_) {
+    status = RunPrecedingPass(fg, *config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run Preceding pass failed.";
+      return nullptr;
+    }
 
-  auto status = RunPrecedingPass(old_graph, *config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run Preceding pass failed.";
+    status = RunAdjustPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run Adjust pass failed.";
+      return nullptr;
+    }
+
+    status = RunConstFoldPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run const fold pass failed.";
+      return nullptr;
+    }
+
+    status = RunConvertPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run convert pass failed.";
+      return nullptr;
+    }
+
+    status = RunFusionPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run fusion pass failed.";
+      return nullptr;
+    }
+
+    status = RunConv1DAdjustPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run conv1d adjust pass failed.";
+      return nullptr;
+    }
+  }
+
+  auto format_pass = std::make_shared<opt::UnifyFormatPass>();
+  format_pass->Init(config->fmk, config->trainModel);
+  if (!format_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run format pass failed.";
     return nullptr;
   }
 
-  status = RunAdjustPass(old_graph, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run Adjust pass failed.";
-    return nullptr;
+  for (auto &fg : func_graphs_) {
+    status = RunGraphPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run convert pass failed.";
+      return nullptr;
+    }
+
+    status = DoQuantize(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do Quantize failed.";
+      return nullptr;
+    }
   }
-
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-
-  status = AddConstFoldPass(optimizer, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add const fold pass failed.";
-    return nullptr;
-  }
-
-  status = AddConvertPass(optimizer, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add convert pass failed.";
-    return nullptr;
-  }
-
-  status = AddFusionPass(optimizer, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add fusion pass failed.";
-    return nullptr;
-  }
-
-  status = AddGraphPass(optimizer, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add graph pass failed.";
-    return nullptr;
-  }
-
-  status = AddConv1DAdjustPass(optimizer, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add conv1d adjust pass failed.";
-    return nullptr;
-  }
-
-  auto new_graph = optimizer->Optimize(old_graph);
-  if (new_graph == nullptr) {
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
-    return nullptr;
-  }
-
-  status = DoQuantize(old_graph, config, new_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Do Quantize failed.";
-    return nullptr;
-  }
-
-  return new_graph;
+  return old_graph;
 }
 
 void AnfTransform::GetAllFuncGraph(const FuncGraphPtr &func_graph) {
@@ -401,15 +416,11 @@ void AnfTransform::GetAllFuncGraph(const FuncGraphPtr &func_graph) {
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
   GetAllFuncGraph(main_graph);
-
-  for (auto &fg : func_graphs_) {
-    auto new_main_graph = TransformSingleFuncGraph(fg, config);
-    if (new_main_graph == nullptr) {
-      MS_LOG(ERROR) << "TransformSingleFuncGraph failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-      return nullptr;
-    }
+  auto new_graph = TransformFuncGraph(main_graph, config);
+  if (new_graph == nullptr) {
+    MS_LOG(ERROR) << "optimizer failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
   }
-  return main_graph;
+  return new_graph;
 }
 }  // namespace mindspore::lite

@@ -26,7 +26,6 @@ namespace mindspore {
 namespace lite {
 int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
-void SetOutputTensorAttr(const std::vector<TensorC *> &tensors_in, std::vector<lite::Tensor *> *tensors_out);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
 void FreeTensorListC(TensorListC *tensorListC);
 void Tensor2TensorC(Tensor *src, TensorC *dst);

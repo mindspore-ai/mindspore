@@ -16,7 +16,6 @@
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include <memory>
 #include "ops/fusion/conv2d_fusion.h"
-#include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
@@ -33,7 +32,6 @@ using mindspore::schema::QuantType_WeightQuant;
 namespace mindspore::opt {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
-const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
 }  // namespace
 void WeightFormatHardCodePass::SetQuantType(QuantType type) { this->quant_type = type; }
 void WeightFormatHardCodePass::SetFmkType(FmkType type) { this->fmk_type = type; }

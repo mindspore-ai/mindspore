@@ -19,6 +19,13 @@
 
 int FusedBatchNormInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
+#ifdef Debug
+  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (check_ret != NNACL_OK) {
+    return check_ret;
+  }
+#endif
+
   for (size_t i = 0; i < inputs_size; i++) {
     if (outputs_size <= i) {
       break;
@@ -31,7 +38,10 @@ int FusedBatchNormInferShape(const TensorC *const *inputs, size_t inputs_size, T
     outputs[5]->shape_size_ = 1;
     outputs[5]->shape_[0] = 1;
   }
-  return 0;
+  if (!parameter->infer_flag_) {
+    return NNACL_INFER_INVALID;
+  }
+  return NNACL_OK;
 }
 
 REG_INFER(FusedBatchNorm, PrimType_FusedBatchNorm, FusedBatchNormInferShape)
