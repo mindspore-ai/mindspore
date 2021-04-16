@@ -65,10 +65,12 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
 
   size_t total_allocated_size = somas_reuse_util_ptr->GetTotalMemSize();
   MS_LOG(INFO) << "Graph " << graph->graph_id() << ": TotalSomasReuseDynamicSize [" << total_allocated_size << "]";
-  auto base_ptr = MallocDynamicMem(total_allocated_size, false);
-  MS_LOG(INFO) << "Somas Reuse Memory Base Address [" << static_cast<void *>(base_ptr) << "], End Address ["
-               << static_cast<void *>(base_ptr + total_allocated_size) << "]";
-  somas_reuse_util_ptr->set_mem_base_addr(base_ptr);
+  if (total_allocated_size > 0) {
+    auto base_ptr = MallocDynamicMem(total_allocated_size, false);
+    MS_LOG(INFO) << "Somas Reuse Memory Base Address [" << static_cast<void *>(base_ptr) << "], End Address ["
+                 << static_cast<void *>(base_ptr + total_allocated_size) << "]";
+    somas_reuse_util_ptr->set_mem_base_addr(base_ptr);
+  }
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -166,66 +168,7 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
   return ptr;
 }
 
-uint8_t *MemoryManager::MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) {
-  size_t align_size = 0;
-  if (communication_mem) {
-    align_size = GetCommunicationAlignSize(size);
-  } else {
-    align_size = GetCommonAlignSize(size);
-  }
-
-  MS_LOG(INFO) << "Malloc Memory for Static: total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-               << "] static[" << total_static_size_ << "])"
-               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
-
-  if (static_mem_offset_ < align_size) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  total_static_size_ += align_size;
-  auto offset = static_mem_offset_ - align_size;
-  if (dynamic_mem_offset_ > offset) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  static_mem_offset_ = offset;
-  if (communication_mem) {
-    return device_mem_base_ + offset + kMemAlignSize;
-  } else {
-    return device_mem_base_ + offset;
-  }
-}
-
-uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
-  size_t align_size = 0;
-  if (communication_mem) {
-    align_size = GetCommunicationAlignSize(size);
-  } else {
-    align_size = GetCommonAlignSize(size);
-  }
-
-  MS_LOG(INFO) << "Malloc Memory for Dynamic: total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-               << "] static[" << total_static_size_ << "])"
-               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
-
-  uint64_t offset = dynamic_mem_offset_;
-  auto new_offset = dynamic_mem_offset_ + align_size;
-  if (new_offset > static_mem_offset_) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  total_dynamic_size_ += align_size;
-  dynamic_mem_offset_ = new_offset;
-
-  if (communication_mem) {
-    return device_mem_base_ + offset + kMemAlignSize;
-  } else {
-    return device_mem_base_ + offset;
-  }
-}
+uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) { return nullptr; }
 
 bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t size) {
   auto device_ptr = MallocMemFromMemPool(size);

@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
-context.set_context(device_target="Ascend")
+context.set_context(device_target="Ascend", mode=context.GRAPH_MODE, variable_memory_max_size="31GB")
 
 
 class Net(nn.Cell):
@@ -34,8 +34,12 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(2, 3, 3, 4).astype(np.float32)
+    # size (31GB/2/-512)s/ize(float32) 4160749440
+    x = np.random.randn(16, 120, 2167057).astype(np.float32)
     relu = Net()
     output = relu(Tensor(x))
+    expect = 1 * (x > 0) * x
     print(x)
     print(output.asnumpy())
+    print(expect)
+    assert (output.asnumpy() == expect).all()

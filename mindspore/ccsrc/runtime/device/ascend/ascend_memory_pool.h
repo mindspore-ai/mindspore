@@ -50,8 +50,8 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
  protected:
   // The real size by memory alloc aligned.
   size_t AlignMemorySize(size_t size) const override;
-  // Get the minimum memory unit size using for dynamic extend.
-  size_t mem_alloc_unit_size() const override;
+  // Calculate memory block required alloc size when adding the memory block.
+  size_t CalMemBlockAllocSize(size_t size) override;
 
  private:
   AscendMemoryPool() = default;
