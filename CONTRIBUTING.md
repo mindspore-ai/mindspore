@@ -38,6 +38,15 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
 
     The *Python* unittest style suggested by [pytest](http://www.pytest.org/en/latest/) and *C++* unittest style suggested by [Googletest Primer](https://github.com/google/googletest/blob/master/docs/primer.md) are used in MindSpore community.
 
+- Document guidelines
+
+    We use *MarkdownLint* to check the format of markdown documents. MindSpore CI modifies the following rules based on the default configuration.
+    - MD007 (unordered list indentation): The **indent** parameter is set to **4**, indicating that all content in the unordered list needs to be indented using four spaces.
+    - MD009 (spaces at the line end): The **br_spaces** parameter is set to **2**, indicating that there can be 0 or 2 spaces at the end of a line.
+    - MD029 (sequence numbers of an ordered list): The **style** parameter is set to **ordered**, indicating that the sequence numbers of the ordered list are in ascending order.
+
+    For details, please refer to [RULES](https://github.com/markdownlint/markdownlint/blob/master/docs/RULES.md).
+
 ### Fork-Pull development model
 
 - Fork MindSpore repository
