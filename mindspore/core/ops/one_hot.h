@@ -25,19 +25,17 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameOneHot = "OneHot";
 class OneHot : public PrimitiveC {
  public:
-  OneHot() : PrimitiveC(kNameOneHot) { InitIOName({"indices", "depth", "on_value", "off_value"}, {"output"}); }
+  OneHot() : PrimitiveC(prim::kPrimOneHot->name()) {
+    InitIOName({"indices", "depth", "on_value", "off_value"}, {"output"});
+  }
   ~OneHot() = default;
   MS_DECLARE_PARENT(OneHot, PrimitiveC);
   void Init(const int64_t axis);
   void set_axis(const int64_t axis);
   int64_t get_axis() const;
 };
-
-AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
 using PrimOneHotPtr = std::shared_ptr<OneHot>;
 }  // namespace ops
 }  // namespace mindspore
