@@ -386,10 +386,8 @@ static void DrawValueNode(Graphviz *const graph_obj, const ValueNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_obj);
   graph_obj->buffer() << "label=<<table port='core' cellborder='0' cellspacing='2' bgcolor='" << graph_obj->Color(node)
                       << "'>";
-  graph_obj->buffer() << "<tr><td bgcolor='white'>";
-  graph_obj->buffer() << ValueType(node);
-  graph_obj->buffer() << "</td></tr>";
-  graph_obj->buffer() << "<tr><td>";
+  graph_obj->buffer() << "<tr><td bgcolor='white'>" << ValueType(node) << "</td></tr>"
+                      << "<tr><td>";
   if (IsValueNode<MetaFuncGraph>(node)) {
     graph_obj->buffer() << node->value()->cast<MetaFuncGraphPtr>()->name();
   } else if (IsValueNode<parse::NameSpace>(node)) {
@@ -404,18 +402,16 @@ static void DrawValueNode(Graphviz *const graph_obj, const ValueNodePtr &node) {
     ValuePtr value = node->value();
     if (value->isa<Primitive>()) {
       PrimitivePtr primitive = value->cast<PrimitivePtr>();
-      graph_obj->buffer() << "</td></tr>";
-      graph_obj->buffer() << "<tr><td align='left'>";
+      graph_obj->buffer() << "</td></tr>"
+                          << "<tr><td align='left'>";
       if (!primitive->instance_name().empty()) {
         graph_obj->buffer() << "instance name:"
-                            << " ";
-        graph_obj->buffer() << primitive->instance_name();
-        graph_obj->buffer() << "<br/>";
+                            << " " << primitive->instance_name() << "<br/>";
       }
       auto attrs = primitive->attrs();
       if (attrs.size() > 0) {
-        graph_obj->buffer() << "</td></tr>";
-        graph_obj->buffer() << "<tr><td align='left'>";
+        graph_obj->buffer() << "</td></tr>"
+                            << "<tr><td align='left'>";
         int i = 0;
         for (const auto &attr : attrs) {
           if (i != 0) {
@@ -432,8 +428,8 @@ static void DrawValueNode(Graphviz *const graph_obj, const ValueNodePtr &node) {
       }
     }
   }
-  graph_obj->buffer() << "</td></tr>";
-  graph_obj->buffer() << "</table>>,";
+  graph_obj->buffer() << "</td></tr>"
+                      << "</table>>,";
 }
 
 static void DrawParallelInfo(Graphviz *const graph_obj, const CNodePtr &node) {
