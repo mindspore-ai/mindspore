@@ -70,7 +70,7 @@ def main():
     parser.add_argument("--output_file", type=str, required=True, help='Output MindRecord file. ')
     parser.add_argument("--num_splits", type=int, default=1,
                         help='The MindRecord file will be split into the number of partition. ')
-    parser.add_argument("--max_seq_length", type=int, required=True, help='Maximum sequence length. ')
+    parser.add_argument("--max_length", type=int, required=True, help='Maximum sequence length. ')
     parser.add_argument("--vocab_file", type=str, required=True, default='', help='url of gpt2-vocab.json ')
     parser.add_argument("--merge_file", type=str, required=True, default='', help='url of gpt2-merges.txt ')
     args = parser.parse_args()
@@ -105,7 +105,7 @@ def main():
             if total_read % 500 == 0:
                 logging.info("%d ...", total_read)
 
-            output = create_instance(tokenizer, line, args.max_seq_length)
+            output = create_instance(tokenizer, line, args.max_length)
             features = write_instance_to_file(writer, instance=output)
             total_written += 1
 
