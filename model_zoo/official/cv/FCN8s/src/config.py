@@ -38,11 +38,11 @@ FCN8s_VOC2012_cfg = edict({
 
     # model
     'model': 'FCN8s',
-    'ckpt_vgg16': '/data/workspace/mindspore_dataset/FCN/FCN/model/0-150_5004.ckpt',
-    'ckpt_pre_trained': '/data/workspace/mindspore_dataset/FCN/FCN/model_new/FCN8s-500_82.ckpt',
+    'ckpt_vgg16': '',
+    'ckpt_pre_trained': '',
 
     # train
     'save_steps': 330,
-    'keep_checkpoint_max': 500,
-    'train_dir': '/data/workspace/mindspore_dataset/FCN/FCN/model_new/',
+    'keep_checkpoint_max': 5,
+    'ckpt_dir': './ckpt',
 })

@@ -128,7 +128,7 @@ def train():
     if args.rank == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_steps,
                                      keep_checkpoint_max=cfg.keep_checkpoint_max)
-        ckpoint_cb = ModelCheckpoint(prefix=cfg.model, directory=cfg.train_dir, config=config_ck)
+        ckpoint_cb = ModelCheckpoint(prefix=cfg.model, directory=cfg.ckpt_dir, config=config_ck)
         cbs.append(ckpoint_cb)
 
     model.train(cfg.train_epochs, dataset, callbacks=cbs)
