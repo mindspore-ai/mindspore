@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <memory>
 #include "src/common/prim_util.h"
+#include "src/common/graph_util.h"
 #ifdef ENABLE_V0
 #include "src/ops/compat/compat_register.h"
 #endif
@@ -218,6 +219,12 @@ int LiteModel::NodeVerify() const {
 int LiteModel::SubGraphVerify() const {
   auto tensor_size = this->all_tensors_.size();
   auto node_size = this->all_nodes_.size();
+
+  if (sub_graphs_[0]->input_indices_.size() == 0 || GetGraphInputNodes(this).size() == 0 ||
+      sub_graphs_[0]->output_indices_.size() == 0 || GetGraphOutputNodes(this).size() == 0) {
+    MS_LOG(ERROR) << "The model has invalid input and output, please check";
+    return RET_ERROR;
+  }
 
   for (auto &graph : this->sub_graphs_) {
     if (graph == nullptr) {
