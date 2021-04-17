@@ -60,7 +60,7 @@
 
 # 快速入门
 
-通过官方网站安装MindSpore后，您可以按照如下步骤进行培训和评估：
+通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
 ```python
 # 分布式训练运行示例
@@ -91,31 +91,34 @@ sh scripts/run_eval_ascend.sh
 ## 脚本和样例代码
 
 ```path
-└── PSENet  
- ├── README.md                           // PSENet相关描述
- ├── scripts  
+└── PSENet
+ ├── export.py                           // mindir转换脚本
+ ├── mindspore_hub_conf.py               // 网络模型
+ ├── README.md                           // PSENet相关描述英文版
+ ├── README_CN.md                        // PSENet相关描述中文版
+ ├── scripts
   ├── run_distribute_train.sh    // 用于分布式训练的shell脚本
   └── run_eval_ascend.sh     // 用于评估的shell脚本
- ├──src  
-  ├── __init__.py  
-        ├── generate_hccn_file.py           // 创建rank.json文件
-  ├── ETSNET  
-   ├── __init__.py  
+ ├── src
+  ├── config.py                       // 参数配置
+  ├── dataset.py                      // 创建数据集
+  ├── ETSNET
    ├── base.py                     // 卷积和BN算子
    ├── dice_loss.py                // 计算PSENet损耗值
    ├── etsnet.py                   // PSENet中的子网
    ├── fpn.py                      // PSENet中的子网
-   ├── resnet50.py                 // PSENet中的子网
+   ├── __init__.py
    ├── pse                         // PSENet中的子网
-                ├── __init__.py
                 ├── adaptor.cpp
                 ├── adaptor.h
+                ├── __init__.py
                 ├── Makefile
-  ├──config.py                       // 参数配置
-  ├──dataset.py                      // 创建数据集
-  ├──network_define.py               // PSENet架构
- ├──test.py                             // 测试脚本
- ├──train.py                            // 训练脚本
+   ├── resnet50                    // PSENet中的子网
+  ├── __init__.py
+  ├── lr_schedule.py                  // 学习率
+  ├── network_define.py               // PSENet架构
+ ├── test.py                             // 测试脚本
+ ├── train.py                            // 训练脚本
 
 ```
 
@@ -162,7 +165,9 @@ python test.py --ckpt=./device*/ckpt*/ETSNet-*.ckpt
 #### 用法
 
 第一步：单击[此处](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization)下载评估方法。  
+
 第二步：单击"我的方法"按钮，下载评估脚本。
+
 第三步：建议将评估方法根符号链接到$MINDSPORE/model_zoo/psenet/eval_ic15/。如果您的文件夹结构不同，您可能需要更改评估脚本文件中的相应路径。  
 
 ```shell
@@ -179,35 +184,35 @@ Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"h
 
 ### 评估性能
 
-| 参数 | PSENet |
+| 参数 | Ascend |
 | -------------------------- | ----------------------------------------------------------- |
-| 模型版本 | Inception V1 |
-| 资源 | Ascend 910； CPU： 2.60GHz，192内核；内存，755G |
+| 模型版本 | PSENet |
+| 资源 | Ascend 910； CPU 2.60GHz，192内核；内存 755G；系统 Euler2.8 |
 | 上传日期 | 2020-09-15 |
-| MindSpore版本 | 1.0-alpha |
+| MindSpore版本 | 1.0.0 |
 | 数据集 | ICDAR2015 |
 | 训练参数 | start_lr=0.1; lr_scale=0.1 |
 | 优化器 | SGD |
 | 损失函数 | LossCallBack |
 | 输出 | 概率 |
 | 损失 | 0.35 |
-| 速度 | 1卡：444毫秒/步；4卡：446毫秒/步
-| 总时间 | 1卡：75.48小时；4卡：18.87小时|
+| 速度 | 1卡：444毫秒/步；8卡：446毫秒/步
+| 总时间 | 1卡：75.48小时；8卡：7.11小时|
 | 参数(M) | 27.36 |
 | 微调检查点 | 109.44M （.ckpt file） |
 | 脚本 | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |
 
 ### 推理性能
 
-| 参数 | PSENet |
+| 参数 | Ascend |
 | ------------------- | --------------------------- |
-| 模型版本 | Inception V1 |
-| 资源 | Ascend 910 |
+| 模型版本 | PSENet |
+| 资源 | Ascend 910；系统 Euler2.8 |
 | 上传日期 | 2020/09/15 |
-| MindSpore版本 | 1.0-alpha |
+| MindSpore版本 | 1.0.0 |
 | 数据集| ICDAR2015 |
 | 输出 | 概率 |
-| 准确性 | 1卡：81%; 4卡：81% |
+| 准确性 | 1卡：81%; 8卡：81% |
 
 ## 使用方法
 
