@@ -25,99 +25,150 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/runtime/infer_manager.h"
 #include "tools/common/node_util.h"
+#include "tools/converter/converter_flags.h"
+#include "src/common/string_util.h"
 
-using mindspore::lite::Tensor;
+using mindspore::lite::converter::FmkType_TF;
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr int DEFAULT_DIM_VALUE = -1;
 constexpr size_t kInitialSize = 1024;
 
-void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
-  for (auto &tensor : input_tensors) {
+void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *output_tensors) {
+  if (input_tensors == nullptr) {
+    return;
+  }
+  for (auto &tensor : *input_tensors) {
     delete tensor;
     tensor = nullptr;
   }
-  for (auto &tensor : output_tensors) {
+  if (output_tensors == nullptr) {
+    return;
+  }
+  for (auto &tensor : *output_tensors) {
     delete tensor;
     tensor = nullptr;
   }
-  input_tensors.clear();
-  input_tensors.shrink_to_fit();
-  output_tensors.clear();
-  output_tensors.shrink_to_fit();
+  input_tensors->resize(0);
+  output_tensors->resize(0);
 }
 
-std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs,
-                                                const schema::PrimitiveType node_type) {
+void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, std::vector<Tensor *> *lite_tensors) {
+  std::unique_ptr<Tensor> lite_tensor = nullptr;
+  auto &tensorT = graph->allTensors.at(index);
+  auto tensor_shape = tensorT->dims;
+  TypeId type = kTypeUnknown;
+  std::vector<int> element_shape;
+  if (!tensorT->data.empty()) {
+    int *data = reinterpret_cast<int *>(tensorT->data.data());
+    type = TypeId(data[0]);
+    if (tensorT->data.size() < 8 || (data[1] + 2) * 4 != static_cast<int>(tensorT->data.size())) {
+      MS_LOG(ERROR) << "tensorlist data length illegal";
+      *convert_succ = false;
+      return;
+    }
+    for (int j = 0; j < data[1]; ++j) {
+      element_shape.push_back(data[j + 2]);
+    }
+  }
+  lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
+  if (lite_tensor == nullptr) {
+    MS_LOG(ERROR) << "lite tensorlist is nullptr";
+    *convert_succ = false;
+    return;
+  }
+  reinterpret_cast<TensorList *>(lite_tensor.get())->set_tensors_data_type(type);
+  lite_tensors->emplace_back(lite_tensor.release());
+}
+
+void ConvertString(MetaGraphT *graph, uint32_t index, bool *convert_succ, std::vector<Tensor *> *lite_tensors) {
+  std::unique_ptr<Tensor> lite_tensor = nullptr;
+  auto &tensorT = graph->allTensors.at(index);
+  auto tensor_shape = tensorT->dims;
+  lite_tensor = std::make_unique<Tensor>(
+    TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+    TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
+  if (lite_tensor == nullptr) {
+    MS_LOG(ERROR) << "lite tensor is nullptr";
+    *convert_succ = false;
+    return;
+  }
+  auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
+  // when tensorT as param input
+  if (lite_tensor_size == 0) {
+    lite_tensors->emplace_back(lite_tensor.release());
+    return;
+  }
+  auto string_buffer = ParseStringBuffer(tensorT->data.data());
+  auto ret = WriteStringsToTensor(lite_tensor.get(), string_buffer);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "WriteStringsToTensor failed";
+    *convert_succ = false;
+    return;
+  }
+  lite_tensors->emplace_back(lite_tensor.release());
+}
+
+void ConvertOtherTensor(MetaGraphT *graph, uint32_t index, bool *convert_succ, std::vector<Tensor *> *lite_tensors) {
+  std::unique_ptr<Tensor> lite_tensor = nullptr;
+  auto &tensorT = graph->allTensors.at(index);
+  auto tensor_shape = tensorT->dims;
+  lite_tensor = std::make_unique<Tensor>(
+    TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+    TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
+  if (lite_tensor == nullptr) {
+    MS_LOG(ERROR) << "lite tensor is nullptr";
+    *convert_succ = false;
+    return;
+  }
+  auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
+  // when tensorT as param input
+  if (lite_tensor_size == 0) {
+    lite_tensors->emplace_back(lite_tensor.release());
+    return;
+  }
+  auto ret = lite_tensor->MallocData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Malloc tensor data failed";
+    *convert_succ = false;
+    return;
+  }
+  if (memcpy_s(lite_tensor->data_c(), lite_tensor->Size(), tensorT->data.data(), tensorT->data.size()) != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed";
+    *convert_succ = false;
+    return;
+  }
+  lite_tensors->emplace_back(lite_tensor.release());
+}
+
+std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs) {
   MS_ASSERT(graph != nullptr);
   std::vector<Tensor *> lite_tensors;
   bool convert_succ = true;
   for (size_t i = 0; i < tensor_indexs.size(); i++) {
-    std::unique_ptr<Tensor> lite_tensor = nullptr;
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);
-    if (tensorT->dataType != kObjectTypeTensorType) {  // convert to lite::Tensor
-      auto tensor_shape = tensorT->dims;
-      lite_tensor = std::make_unique<Tensor>(
-        TypeId(tensorT->dataType), tensor_shape, tensorT->format,
-        TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
-      if (lite_tensor == nullptr) {
-        MS_LOG(ERROR) << "lite tensor is nullptr";
-        convert_succ = false;
+    switch (tensorT->dataType) {
+      case kObjectTypeTensorType:
+        ConvertTensorList(graph, tensor_indexs[i], &convert_succ, &lite_tensors);
         break;
-      }
-      auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
-      // when tensorT as param input
-      if (lite_tensor_size == 0) {
-        lite_tensors.emplace_back(lite_tensor.release());
-        continue;
-      }
-      auto ret = lite_tensor->MallocData();
-      if (ret != 0) {
-        MS_LOG(ERROR) << "Malloc tensor data failed";
-        convert_succ = false;
+      case kObjectTypeString:
+        ConvertString(graph, tensor_indexs[i], &convert_succ, &lite_tensors);
         break;
-      }
-      if (memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size) != EOK) {
-        MS_LOG(ERROR) << "memcpy_s failed";
-        convert_succ = false;
+      default:
+        ConvertOtherTensor(graph, tensor_indexs[i], &convert_succ, &lite_tensors);
         break;
-      }
-    } else {  // convert to lite::TensorList
-      auto tensor_shape = tensorT->dims;
-      TypeId type = kTypeUnknown;
-      std::vector<int> element_shape;
-      if (!tensorT->data.empty()) {
-        int *data = reinterpret_cast<int *>(tensorT->data.data());
-        type = TypeId(data[0]);
-        if (tensorT->data.size() < 8 || (data[1] + 2) * 4 != static_cast<int>(tensorT->data.size())) {
-          MS_LOG(ERROR) << "tensorlist data length illegal";
-          convert_succ = false;
-          break;
-        }
-        for (int j = 0; j < data[1]; ++j) {
-          element_shape.push_back(data[j + 2]);
-        }
-      }
-      lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
-      if (lite_tensor == nullptr) {
-        MS_LOG(ERROR) << "lite tensorlist is nullptr";
-        convert_succ = false;
-        break;
-      }
-      reinterpret_cast<TensorList *>(lite_tensor.get())->set_tensors_data_type(type);
     }
-    lite_tensors.emplace_back(lite_tensor.release());
   }
   if (!convert_succ) {
-    FreeTensors(lite_tensors, {});
+    FreeTensors(&lite_tensors, {});
     return {};
   }
   return lite_tensors;
 }
 
 STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::vector<Tensor *> &inputs,
-                      std::vector<Tensor *> *outputs) {
+                      std::vector<Tensor *> *outputs, bool infer_interrupt) {
   flatbuffers::FlatBufferBuilder fbb(kInitialSize);
   auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
   if (prim == nullptr) {
@@ -138,13 +189,18 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     return RET_ERROR;
   }
   parameter->quant_type_ = node->quantType;
-  parameter->infer_flag_ = true;
+  if (infer_interrupt) {
+    parameter->infer_flag_ = false;
+  } else {
+    parameter->infer_flag_ = true;
+  }
   auto ret = KernelInferShape(inputs, outputs, parameter);
   fbb.Clear();
   free(parameter);
   return ret;
 }
 
+#ifdef Debug
 void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vector<Tensor *> &output_tensors) {
   int i = 0;
   for (auto input_tensor : input_tensors) {
@@ -163,9 +219,26 @@ void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vec
     MS_LOG(DEBUG) << "output shape" << i++ << ":" << oss.str();
   }
 }
+#endif
+
+void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, std::vector<InferTensor> *tensors_,
+                 uint32_t i, uint32_t infer_node_index) {
+  auto &node = graph->nodes.at(infer_node_index);
+  auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
+  output_tensor->format = output_tensors[i]->format();
+  output_tensor->dataType = output_tensors[i]->data_type();
+  if (output_tensors[i]->data_type() == kObjectTypeTensorType) {
+    auto tensor_list = reinterpret_cast<TensorList *>(output_tensors[i]);
+    if (tensor_list->tensors_data_type() == kTypeUnknown) {
+      tensors_->at(node->outputIndex[i]).is_infer_ = false;
+    }
+  }
+}
 }  // namespace
 
 STATUS InferShapePass::Run(MetaGraphT *graph) {
+  graph_ = graph;
+  InitSearchTensor(graph);
   MS_ASSERT(graph != nullptr);
   for (auto idx : graph->inputIndex) {
     auto input_tensor = graph->allTensors[idx].get();
@@ -178,51 +251,147 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
   }
   for (auto g_input_idx : graph->inputIndex) {
     auto g_input_shape = graph->allTensors.at(g_input_idx)->dims;
-    if (std::find(g_input_shape.begin(), g_input_shape.end(), -1) != g_input_shape.end()) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime";
-      return RET_OK;
+    if (std::find(g_input_shape.begin(), g_input_shape.end(), -1) != g_input_shape.end() || fmk_type_ == FmkType_TF) {
+      infer_interrupt_ = true;
     }
   }
-  for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
-    auto &node = *iter;
-    auto input_tensors = ConvertTensorToLiteTensor(graph, node->inputIndex, node->primitive->value.type);
-    std::vector<Tensor *> output_tensors;
-    if (input_tensors.empty() || input_tensors.size() != node->inputIndex.size()) {
-      MS_LOG(ERROR) << "convert input lite tensor error";
-      FreeTensors(input_tensors, output_tensors);
+  while (!infer_node_indexes_.empty()) {
+    auto infer_node_index = infer_node_indexes_.front();
+    auto &node = graph->nodes.at(infer_node_index);
+    auto node_type = node->primitive->value.type;
+    if (node_type == PrimitiveType_Switch && node->outputIndex.size() != 2 * (node->inputIndex.size() - 1)) {
+      MS_LOG(WARNING) << "do infershape after switch pass.";
+      return RET_OK;
+    }
+    infer_node_indexes_.erase(infer_node_indexes_.begin());
+    if (node_type == PrimitiveType_PartialFusion) {
+      continue;
+    }
+    auto input_tensors = ConvertTensorToLiteTensor(graph, node->inputIndex);
+    auto output_tensors = ConvertTensorToLiteTensor(graph, node->outputIndex);
+    if (output_tensors.empty() || output_tensors.size() != node->outputIndex.size() || input_tensors.empty() ||
+        input_tensors.size() != node->inputIndex.size()) {
+      MS_LOG(ERROR) << "convert lite tensor error";
+      FreeTensors(&input_tensors, &output_tensors);
       return RET_INFER_ERR;
     }
-    output_tensors = ConvertTensorToLiteTensor(graph, node->outputIndex, node->primitive->value.type);
-    if (output_tensors.empty() || output_tensors.size() != node->outputIndex.size()) {
-      MS_LOG(ERROR) << "convert output lite tensor error";
-      FreeTensors(input_tensors, output_tensors);
-      return RET_INFER_ERR;
-    }
-    auto status = NodeInferShape(node, input_tensors, &output_tensors);
+    auto status = NodeInferShape(node, input_tensors, &output_tensors, infer_interrupt_);
     MS_LOG(DEBUG) << "cur node:" << node->name;
-    if (status == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name
-                   << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type) << "flag set to false.";
-      FreeTensors(input_tensors, output_tensors);
-      return RET_INFER_INVALID;
-    } else if (status != RET_OK) {
+    if (status == RET_OK) {
+#ifdef Debug
+      PrintTensorShape(input_tensors, output_tensors);
+#endif
+      // copy output shape to tensorT
+      for (size_t i = 0; i < output_tensors.size(); i++) {
+        auto output_dims = output_tensors[i]->shape();
+        auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
+        output_tensor->dims.swap(output_dims);
+        SetDataType(graph_, output_tensors, &tensors_, i, infer_node_index);
+      }
+    } else if (status == RET_INFER_INVALID) {
+      for (size_t i = 0; i < output_tensors.size(); i++) {
+        SetDataType(graph_, output_tensors, &tensors_, i, infer_node_index);
+      }
+      infer_interrupt_ = true;
+    } else {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
                       << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type);
-      FreeTensors(input_tensors, output_tensors);
+      FreeTensors(&input_tensors, &output_tensors);
       return RET_INFER_ERR;
     }
-    PrintTensorShape(input_tensors, output_tensors);
-    // copy output shape to tensorT
-    for (size_t i = 0; i < output_tensors.size(); i++) {
-      auto output_dims = output_tensors[i]->shape();
-      auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
-      output_tensor->dims.swap(output_dims);
-      output_tensor->format = output_tensors[i]->format();
-      output_tensor->dataType = output_tensors[i]->data_type();
-    }
-    FreeTensors(input_tensors, output_tensors);
+    FreeTensors(&input_tensors, &output_tensors);
+    AddOutputNode(infer_node_index);
   }
   return RET_OK;
 }
+
+void InferShapePass::InitSearchTensor(MetaGraphT *graph) {
+  std::vector<uint32_t> all_node_output_tensor_indexes = {};
+  tensors_.resize(graph->allTensors.size());
+  for (size_t i = 0; i < graph->nodes.size(); i++) {
+    auto &node = graph->nodes.at(i);
+    auto node_input_indexes = node->inputIndex;
+    //  init in_nodes index
+    for (size_t j = 0; j < node_input_indexes.size(); j++) {
+      tensors_[node_input_indexes[j]].in_nodes_.push_back(i);
+    }
+    auto node_output_indexes = node->outputIndex;
+    for (size_t j = 0; j < node_output_indexes.size(); j++) {
+      tensors_[node_output_indexes[j]].out_nodes_.push_back(i);
+      all_node_output_tensor_indexes.insert(all_node_output_tensor_indexes.end(), node_output_indexes.begin(),
+                                            node_output_indexes.end());
+    }
+  }
+  for (size_t i = 0; i < graph->nodes.size(); i++) {
+    auto &node = graph->nodes[i];
+    if (std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
+                    [&](uint32_t index) { return !IsContain(all_node_output_tensor_indexes, index); })) {
+      infer_node_indexes_.push_back(i);
+    }
+  }
+  for (size_t i = 0; i < tensors_.size(); i++) {
+    if (tensors_[i].out_nodes_.empty()) {
+      tensors_[i].is_infer_ = true;
+    }
+  }
+}
+
+void InferShapePass::AddOutputNode(uint32_t infer_node_index) {
+  auto &node = graph_->nodes[infer_node_index];
+  for (size_t i = 0; i < node->outputIndex.size(); i++) {
+    auto output_tensor_node_indexes = tensors_[node->outputIndex[i]].in_nodes_;
+    tensors_[node->outputIndex[i]].is_infer_ = true;
+    for (size_t j = 0; j < output_tensor_node_indexes.size(); j++) {
+      bool flag = false;
+      auto &output_tensor_node = graph_->nodes[output_tensor_node_indexes[j]];
+      for (size_t k = 0; k < output_tensor_node->outputIndex.size(); k++) {
+        if (graph_->allTensors.at(output_tensor_node->outputIndex[k])->dataType != kObjectTypeTensorType) {
+          if (graph_->allTensors.at(output_tensor_node->outputIndex[k])->dataType == kTypeUnknown ||
+              tensors_[output_tensor_node->outputIndex[k]].is_infer_ == false) {
+            flag = true;
+            break;
+          }
+        } else {
+          if (tensors_[output_tensor_node->outputIndex[k]].is_infer_ == false) {
+            flag = true;
+            break;
+          }
+        }
+      }
+      if (flag) {
+        AddNextInferShapeNode(output_tensor_node_indexes, j);
+      }
+    }
+  }
+}
+
+void InferShapePass::AddNextInferShapeNode(std::vector<uint32_t> output_tensor_node_indexes, size_t index) {
+  auto &output_tensor_node = graph_->nodes.at(output_tensor_node_indexes[index]);
+  if (find(infer_node_indexes_.begin(), infer_node_indexes_.end(), output_tensor_node_indexes[index]) ==
+      infer_node_indexes_.end()) {
+    auto output_tensor_node_type = output_tensor_node->primitive->value.type;
+    if (output_tensor_node_type == schema::PrimitiveType_Merge) {
+      if (std::all_of(output_tensor_node->inputIndex.begin(),
+                      output_tensor_node->inputIndex.begin() + output_tensor_node->inputIndex.size() / 2,
+                      [&](uint32_t k) { return tensors_[k].is_infer_; }) ||
+          std::all_of(output_tensor_node->inputIndex.begin() + output_tensor_node->inputIndex.size() / 2,
+                      output_tensor_node->inputIndex.end(), [&](uint32_t k) { return tensors_[k].is_infer_; })) {
+        infer_node_indexes_.push_back(output_tensor_node_indexes[index]);
+      }
+    } else {
+      bool flag = true;
+      for (size_t i = 0; i < output_tensor_node->inputIndex.size(); i++) {
+        if (!(tensors_[output_tensor_node->inputIndex[i]].is_infer_)) {
+          flag = false;
+          break;
+        }
+      }
+      if (flag) {
+        infer_node_indexes_.push_back(output_tensor_node_indexes[index]);
+      }
+    }
+  }
+}
+
 }  // namespace lite
 }  // namespace mindspore
