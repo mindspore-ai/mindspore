@@ -48,6 +48,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/loader_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.c
@@ -275,6 +276,10 @@ if(DEFINED ARCHS)
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/ir/dtype/)
     ENDFOREACH()
     target_link_libraries(mindspore_lite)
+endif()
+
+if(NOT WIN32)
+    target_link_libraries(mindspore-lite dl)
 endif()
 
 if(SUPPORT_TRAIN)
