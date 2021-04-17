@@ -235,7 +235,6 @@ std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const la
     // Get a pointer to the first score.
     float *temp_scores = static_cast<float *>(outputTensor->MutableData());
 
-    // float scores[RET_CATEGORY_SUM];
     float scores = temp_scores[0];
     int cat_loc = 0;
     for (int i = 0; i < RET_CATEGORY_SUM; ++i) {

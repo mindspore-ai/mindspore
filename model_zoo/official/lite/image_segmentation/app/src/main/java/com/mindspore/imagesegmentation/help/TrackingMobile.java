@@ -111,7 +111,6 @@ public class TrackingMobile {
         ByteBuffer contentArray = BitmapUtils.bitmapToByteBuffer(scaledBitmap, imageSize, imageSize, IMAGE_MEAN, IMAGE_STD);
 
         MSTensor inTensor = inputs.get(0);
-        //    int byteLen = (int) inTensor.size();
         inTensor.setData(contentArray);
 
         // Run graph to infer results.

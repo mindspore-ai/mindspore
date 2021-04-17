@@ -278,7 +278,7 @@ void Conv2DOpenCLKernel::InitFilter() {
     allocator->UnmapBuffer(packed_filter_);
   }
 
-  FreeTmpWeight(in_tensors_.at(kWeightIndex)->data_c());
+  FreeTmpWeight(in_tensors_.at(kWeightIndex));
 }
 
 void Conv2DOpenCLKernel::InitBias() {
@@ -315,7 +315,7 @@ void Conv2DOpenCLKernel::InitBias() {
     }
   }
   allocator->UnmapBuffer(packed_bias_);
-  FreeTmpWeight(in_tensors_.at(kBiasIndex)->data_c());
+  FreeTmpWeight(in_tensors_.at(kBiasIndex));
 }
 
 void Conv2DOpenCLKernel::SetConstArgs() {

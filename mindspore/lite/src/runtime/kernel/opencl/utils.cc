@@ -300,7 +300,7 @@ static std::set<void *> tmp_weights;
 
 void StoreTmpWeight(lite::Tensor *tensor) {
   MS_LOG(WARNING) << "store weight when kernel don't infer shape!";
-  if (tensor != nullptr && tensor->data_c() != nullptr && tensor->Size() > 0) {
+  if ((tensor != nullptr) && (tensor->data_c() != nullptr) && (tensor->Size() > 0)) {
     void *new_data = malloc(tensor->Size());
     MS_ASSERT(new_data);
     if (new_data == nullptr) {
@@ -312,10 +312,13 @@ void StoreTmpWeight(lite::Tensor *tensor) {
   }
 }
 
-void FreeTmpWeight(void *data) {
+void FreeTmpWeight(lite::Tensor *tensor) {
+  MS_ASSERT(tensor != nullptr);
+  auto data = tensor->data_c();
   if (tmp_weights.count(data)) {
     tmp_weights.erase(data);
     free(data);
+    tensor->set_data(nullptr);
   }
 }
 

@@ -25,7 +25,6 @@ from mindspore.train.serialization import export
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
 batch = 16
 
-#n = MobileNetV2()
 backbone_net = MobileNetV2Backbone()
 head_net = MobileNetV2Head(input_channel=backbone_net.out_channels, num_classes=10)
 n = mobilenet_v2(backbone_net, head_net)

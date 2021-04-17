@@ -25,15 +25,16 @@
 namespace mindspore::lite {
 class CaffeNodeParserRegistry {
  public:
-  CaffeNodeParserRegistry();
-
-  virtual ~CaffeNodeParserRegistry();
-
   static CaffeNodeParserRegistry *GetInstance();
 
   CaffeNodeParser *GetNodeParser(const std::string &name);
 
   std::unordered_map<std::string, CaffeNodeParser *> parsers;
+
+ private:
+  CaffeNodeParserRegistry();
+
+  virtual ~CaffeNodeParserRegistry();
 };
 
 class CaffeNodeRegistrar {

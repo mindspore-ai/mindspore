@@ -62,7 +62,6 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
       }
       in_shape1_[i] = input_shape1[i];
     }
-    // format = input0->format();
   } else if (input_shape0_size > input_shape1_size) {
     ndim_ = input_shape0_size;
     int fill_dim_num = input_shape0_size - input_shape1_size;

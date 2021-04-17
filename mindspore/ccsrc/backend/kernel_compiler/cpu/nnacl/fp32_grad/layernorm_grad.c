@@ -16,12 +16,16 @@
 #include "nnacl/fp32_grad/layernorm_grad.h"
 #include <stddef.h>
 #include <math.h>
+#include "nnacl/errorcode.h"
 
-void LayerNormGrad(const float *x, const float *dy, const float *var, const float *mean, const float *gamma,
-                   int param_num, int param_size, int block_num, int block_size, float *dx, float *dg, float *db) {
+int LayerNormGrad(const float *x, const float *dy, const float *var, const float *mean, const float *gamma,
+                  int param_num, int param_size, int block_num, int block_size, float *dx, float *dg, float *db) {
   // var is actually layer_norm forward output var
   const float eps = 1e-12;
   const float *var_sqrt_rev = var;
+  if (block_size <= 0) {
+    return NNACL_ERRCODE_DIVISOR_ZERO;
+  }
   for (size_t i = 0; i < param_num; ++i) {
     float dgamma = 0.0f;
     float dbeta = 0.0f;
@@ -56,4 +60,5 @@ void LayerNormGrad(const float *x, const float *dy, const float *var, const floa
       dx[index] = dx1 + dx2 + dx3;
     }
   }
+  return NNACL_OK;
 }

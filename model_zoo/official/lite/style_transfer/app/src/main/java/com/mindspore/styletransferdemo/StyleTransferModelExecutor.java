@@ -127,20 +127,16 @@ public class StyleTransferModelExecutor {
     }
 
     @SuppressLint("LongLogTag")
-//    public ModelExecutionResult execute(String contentImagePath, String styleImageName) {
     public ModelExecutionResult execute(Bitmap contentImage, Bitmap styleBitmap) {
         Log.i(TAG, "running models");
 
         fullExecutionTime = SystemClock.uptimeMillis();
         preProcessTime = SystemClock.uptimeMillis();
 
-//        Bitmap contentImage = ImageUtils.decodeBitmap(new File(contentImagePath));
         ByteBuffer contentArray =
                 ImageUtils.bitmapToByteBuffer(contentImage, CONTENT_IMAGE_SIZE, CONTENT_IMAGE_SIZE, 0, 255);
 
 
-//        Bitmap styleBitmap =
-//                ImageUtils.loadBitmapFromResources(context, "thumbnails/" + styleImageName);
         ByteBuffer input = ImageUtils.bitmapToByteBuffer(styleBitmap, STYLE_IMAGE_SIZE, STYLE_IMAGE_SIZE, 0, 255);
 
 

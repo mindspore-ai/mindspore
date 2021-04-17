@@ -25,15 +25,16 @@ namespace mindspore {
 namespace lite {
 class TfliteNodeParserRegistry {
  public:
-  TfliteNodeParserRegistry();
-
-  virtual ~TfliteNodeParserRegistry();
-
   static TfliteNodeParserRegistry *GetInstance();
 
   TfliteNodeParser *GetNodeParser(const tflite::BuiltinOperator &type);
 
   std::unordered_map<tflite::BuiltinOperator, TfliteNodeParser *> parsers;
+
+ private:
+  TfliteNodeParserRegistry();
+
+  virtual ~TfliteNodeParserRegistry();
 };
 
 class TfliteNodeRegister {

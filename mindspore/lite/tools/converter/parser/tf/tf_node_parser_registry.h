@@ -25,14 +25,16 @@ namespace mindspore {
 namespace lite {
 class TFNodeParserRegistry {
  public:
-  TFNodeParserRegistry() = default;
-
-  virtual ~TFNodeParserRegistry();
-
   static TFNodeParserRegistry *GetInstance();
+
   TFNodeParser *GetNodeParser(const std::string &name);
 
   std::unordered_map<std::string, TFNodeParser *> parsers;
+
+ private:
+  TFNodeParserRegistry() = default;
+
+  virtual ~TFNodeParserRegistry();
 };
 
 class TFNodeRegistrar {

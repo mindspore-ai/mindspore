@@ -64,7 +64,7 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
                          TypeId expect_data_type, const std::vector<int> &expect_shape);
 
 void StoreTmpWeight(lite::Tensor *tensor);
-void FreeTmpWeight(void *tensor);
+void FreeTmpWeight(lite::Tensor *tensor);
 
 template <class T1, class T2>
 void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane_in, int plane_out, int channel,
