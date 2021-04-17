@@ -85,10 +85,10 @@ int SoftmaxOpenCLKernel::Prepare() {
   std::string program_name = "Softmax";
   ocl_runtime_->LoadSource(program_name, source);
   std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
+  if (this->registry_data_type_ == kNumberTypeFloat32) {
     build_options_ext = {
       " -DOUT_FLT4=convert_float4 -DWRITE_IMAGEOUT=write_imagef -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
+  } else if (this->registry_data_type_ == kNumberTypeFloat16) {
     build_options_ext = {
       " -DOUT_FLT4=convert_half4 -DWRITE_IMAGEOUT=write_imageh -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
   }

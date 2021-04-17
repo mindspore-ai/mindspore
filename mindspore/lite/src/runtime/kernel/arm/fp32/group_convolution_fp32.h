@@ -19,7 +19,7 @@
 
 #include <utility>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/arm/base/group_convolution_base.h"
 
@@ -28,7 +28,7 @@ class GroupConvolutionFp32CPUKernel : public GroupConvolutionBaseCPUKernel {
  public:
   GroupConvolutionFp32CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                std::vector<kernel::LiteKernel *> group_convs, const int group_num)
+                                std::vector<kernel::InnerKernel *> group_convs, const int group_num)
       : GroupConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, std::move(group_convs), group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num

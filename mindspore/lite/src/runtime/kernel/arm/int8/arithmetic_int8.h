@@ -18,19 +18,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARITHMETIC_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "schema/model_generated.h"
 #include "nnacl/int8/arithmetic_int8.h"
 
 namespace mindspore::kernel {
-class ArithmeticInt8CPUKernel : public LiteKernel {
+class ArithmeticInt8CPUKernel : public InnerKernel {
   typedef int (*ArithmeticRunInt8)(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
                                    ArithmeticQuantArg *quant_arg);
 
  public:
   ArithmeticInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ArithmeticInt8CPUKernel() = default;
 
   int Init() override;

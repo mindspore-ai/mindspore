@@ -150,17 +150,17 @@ int TensorListC2TensorList(TensorListC *src, TensorList *dst) {
   return RET_OK;
 }
 
-int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                   std::vector<TensorC *> *out_tensor_c) {
   int ret = RET_OK;
-  for (size_t i = 0; i < outputs->size(); i++) {
+  for (size_t i = 0; i < outputs.size(); i++) {
     out_tensor_c->push_back(nullptr);
   }
   return ret;
 }
 
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                       std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *out_tensor_c) {
+                       const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c) {
   int ret = RET_OK;
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
@@ -176,13 +176,13 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
              parameter->type_ == mindspore::schema::PrimitiveType_Switch) {
     ret = GenerateMergeSwitchOutTensorC(inputs, outputs, out_tensor_c);
   } else {
-    ret = OutputTensor2TensorC(*outputs, out_tensor_c);
+    ret = OutputTensor2TensorC(outputs, out_tensor_c);
   }
   return ret;
 }
 
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *in_tensor_c) {
+                      const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *in_tensor_c) {
   int ret = RET_OK;
   for (auto input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {

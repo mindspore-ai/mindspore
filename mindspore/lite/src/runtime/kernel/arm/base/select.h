@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/carry_data.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "src/tensorlist.h"
 
 namespace mindspore::kernel {

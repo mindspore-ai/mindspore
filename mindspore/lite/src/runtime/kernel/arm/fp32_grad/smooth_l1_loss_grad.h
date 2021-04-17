@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SMOOTH_L1_LOSS_GRAD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
 
 namespace mindspore::kernel {
-class SmoothL1LossGradCPUKernel : public LiteKernel {
+class SmoothL1LossGradCPUKernel : public InnerKernel {
  public:
   explicit SmoothL1LossGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), smooth_l1_param_(nullptr), thread_count_(ctx->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), smooth_l1_param_(nullptr), thread_count_(ctx->thread_num_) {
     smooth_l1_param_ = reinterpret_cast<SmoothL1LossParameter *>(parameter);
   }
   ~SmoothL1LossGradCPUKernel() override {}

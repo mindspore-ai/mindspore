@@ -19,13 +19,14 @@
 
 #include <string>
 #include <vector>
+#include "schema/ops_generated.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-typedef kernel::LiteKernel *(*CreateKernel)(const std::vector<tensor::MSTensor *> &inputs,
-                                            const std::vector<tensor::MSTensor *> &outputs,
-                                            const schema::Primitive *primitive, const lite::Context *ctx);
+typedef kernel::Kernel *(*CreateKernel)(const std::vector<tensor::MSTensor *> &inputs,
+                                        const std::vector<tensor::MSTensor *> &outputs,
+                                        const schema::Primitive *primitive, const lite::Context *ctx);
 class RegisterKernel {
  public:
   static RegisterKernel *GetInstance();

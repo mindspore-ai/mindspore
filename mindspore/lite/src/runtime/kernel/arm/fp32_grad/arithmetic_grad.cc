@@ -36,16 +36,16 @@ int ArithmeticGradCPUKernel::Init() {
   MS_ASSERT(dx1 != nullptr);
   MS_ASSERT(dx2 != nullptr);
 
-  if ((Type() == PrimitiveType_MulGrad) || (Type() == PrimitiveType_DivGrad)) {
+  if ((type() == PrimitiveType_MulGrad) || (type() == PrimitiveType_DivGrad)) {
     if (dx1->ElementsNum() < dx2->ElementsNum()) {
-      if (Type() == PrimitiveType_MulGrad)
+      if (type() == PrimitiveType_MulGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul2L;
-      else if (Type() == PrimitiveType_DivGrad)
+      else if (type() == PrimitiveType_DivGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradDiv2L;
     } else if (dx2->ElementsNum() < dx1->ElementsNum()) {
-      if (Type() == PrimitiveType_MulGrad)
+      if (type() == PrimitiveType_MulGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul1L;
-      else if (Type() == PrimitiveType_DivGrad)
+      else if (type() == PrimitiveType_DivGrad)
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradDiv1L;
     }
 
@@ -60,7 +60,7 @@ int ArithmeticGradCPUKernel::Init() {
       return RET_ERROR;
     }
 
-    if (Type() == PrimitiveType_DivGrad) {
+    if (type() == PrimitiveType_DivGrad) {
       tile_data2 = new (std::nothrow) float[in_tensors_.at(0)->ElementsNum()];
       if (tile_data2 == nullptr) {
         MS_LOG(ERROR) << "new data2 fail!";
@@ -236,10 +236,10 @@ int ArithmeticGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                       const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::Context *ctx,
-                                                       const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                        const std::vector<lite::Tensor *> &outputs,
+                                                        OpParameter *opParameter, const lite::Context *ctx,
+                                                        const kernel::KernelKey &desc) {
   MS_ASSERT(nullptr != opParameter);
   if (opParameter == nullptr) {
     return nullptr;

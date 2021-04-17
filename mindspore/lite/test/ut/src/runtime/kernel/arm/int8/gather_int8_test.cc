@@ -78,8 +78,7 @@ TEST_F(TestGatherInt8, GatherTest) {
   lite::InnerContext ctx;
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
-  kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();

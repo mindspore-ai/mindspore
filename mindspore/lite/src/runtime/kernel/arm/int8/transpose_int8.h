@@ -20,18 +20,18 @@
 #include "nnacl/int8/pack_int8.h"
 #include "nnacl/int8/transpose_int8.h"
 #include "src/kernel_registry.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/errorcode.h"
 
 namespace mindspore::kernel {
 
 typedef void (*TransposeFunc)(const void *src, void *dst, int batch, int plane, int channel);
 
-class TransposeInt8CPUKernel : public LiteKernel {
+class TransposeInt8CPUKernel : public InnerKernel {
  public:
   TransposeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     transpose_param_ = reinterpret_cast<TransposeParameter *>(op_parameter_);
   }
   ~TransposeInt8CPUKernel() = default;

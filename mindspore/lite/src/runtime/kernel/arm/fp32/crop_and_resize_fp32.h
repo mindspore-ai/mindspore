@@ -19,14 +19,14 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/resize_parameter.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-class CropAndResizeCPUKernel : public LiteKernel {
+class CropAndResizeCPUKernel : public InnerKernel {
  public:
   CropAndResizeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<CropAndResizeParameter *>(op_parameter_);
   }
 

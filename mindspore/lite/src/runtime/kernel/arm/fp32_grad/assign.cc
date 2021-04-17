@@ -70,9 +70,9 @@ int AssignCPUKernel::Run() {
 
 int AssignCPUKernel::Init() { return RET_OK; }
 
-kernel::LiteKernel *CpuAssignFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuAssignFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Assign);
   auto *kernel =
     new (std::nothrow) AssignCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

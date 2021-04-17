@@ -17,14 +17,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_DROPOUT_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-class DropoutCPUKernel : public LiteKernel {
+class DropoutCPUKernel : public InnerKernel {
  public:
   DropoutCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
 
   ~DropoutCPUKernel() override = default;
 

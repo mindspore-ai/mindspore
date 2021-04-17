@@ -17,17 +17,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DELEGATE_FP32_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class ConvolutionDelegateCPUKernel : public LiteKernel {
+class ConvolutionDelegateCPUKernel : public InnerKernel {
  public:
   ConvolutionDelegateCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateCPUKernel() override {
     FreeCopiedData();
     if (conv_kernel_ != nullptr) {
@@ -46,7 +46,7 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
   int GetBiasData();
 
   void SetInputOutputShapeInfo();
-  kernel::LiteKernel *CpuConvFp32KernelSelect();
+  kernel::InnerKernel *CpuConvFp32KernelSelect();
 
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
   // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
@@ -65,20 +65,20 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
 
   // Train API
   int Eval() override {
-    LiteKernel::Eval();
+    InnerKernel::Eval();
     return conv_kernel_->Eval();
   }
   int Train() override {
-    LiteKernel::Train();
+    InnerKernel::Train();
     return conv_kernel_->Train();
   }
   void set_trainable(bool trainable) override {
-    LiteKernel::set_trainable(trainable);
+    InnerKernel::set_trainable(trainable);
     return conv_kernel_->set_trainable(trainable);
   }
 
  protected:
-  kernel::LiteKernel *conv_kernel_{nullptr};
+  kernel::InnerKernel *conv_kernel_{nullptr};
   float *origin_weight_{nullptr};
   float *origin_bias_{nullptr};
   bool need_free_weight_{false};

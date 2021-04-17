@@ -32,7 +32,8 @@ int StrassenOpenCLKernel::Prepare() {
   std::string source = strassen_source;
   std::string program_name = "MatMul";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
+
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   ocl_runtime_->BuildKernel(kernel_IMG_add_sub_2, program_name, "MatMul_IMG_Add_Sub_2", build_options_ext);
   ocl_runtime_->BuildKernel(kernel_BUF_add_sub_2, program_name, "MatMul_BUF_Add_Sub_2", build_options_ext);

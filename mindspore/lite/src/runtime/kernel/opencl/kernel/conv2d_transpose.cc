@@ -65,7 +65,7 @@ int Conv2dTransposeOpenCLKernel::Prepare() {
   std::string source = GetActDefines() + conv2d_transpose_source;
   std::string program_name = "conv2d_transpose";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   auto ret = InitWeights();
@@ -264,9 +264,9 @@ int Conv2dTransposeOpenCLKernel::StoreConstData() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor *> &inputs,
-                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                  const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);

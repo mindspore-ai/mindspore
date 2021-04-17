@@ -34,18 +34,13 @@ int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *>
 static int RunKernel(void *data, int index) {
   auto *executor = reinterpret_cast<ParallelExecutor *>(data);
   auto kernel = executor->GetReadyKernel(index);
-  auto ret = kernel->Run();
+  auto ret = kernel->Execute();
   executor->SetResult(index, ret);
   if (0 != ret) {
     MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
     return 0;
   }
 
-  ret = kernel->FreeInWorkTensor();
-  if (RET_OK != ret) {
-    MS_LOG(ERROR) << "FreeInWorkTensor failed, name: " << kernel->name();
-    return ret;
-  }
   return 0;
 }
 
@@ -95,12 +90,6 @@ int ParallelExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::ve
           newReadyKernels.emplace_back(iter->first);
           refCount.erase(iter);
         }
-      }
-
-      auto ret = completed->FreeInWorkTensor();
-      if (RET_OK != ret) {
-        MS_LOG(ERROR) << "FreeInWorkTensor failed, name: " << completed->name();
-        return ret;
       }
     }
     readyKernels.clear();

@@ -49,16 +49,16 @@ std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
   LiteKernel *node, bool create_param = false,
   const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {}) {
   MS_ASSERT(node);
-  PrimitiveType node_type = node->Type();
+  PrimitiveType node_type = node->type();
   auto operator_ = static_cast<const EltwiseOperator>(node_type);
-  auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node)->GetParameter();
+  auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter();
   bool support = false;
   FusionEltwiseParameter *param = nullptr;
 
   if (node_type == PrimitiveType_FusionEltwise) {
     support = true;
     if (create_param) {
-      auto *eltwise = reinterpret_cast<FusionEltwiseOpenCLKernel *>(node);
+      auto *eltwise = reinterpret_cast<FusionEltwiseOpenCLKernel *>(node->kernel());
       param = reinterpret_cast<FusionEltwiseParameter *>(eltwise->GetParameter());
       eltwise->ClearParameter();
     }
@@ -118,7 +118,7 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
   if (node->out_tensors().size() != 1) {
     return false;
   }
-  auto *output_tensor = node->out_tensors().front();
+  auto *output_tensor = node->out_tensors()[0];
   MS_ASSERT(output_tensor);
   auto output_info = GpuTensorInfo(output_tensor);
   auto output_shape = output_tensor->shape();
@@ -418,19 +418,21 @@ int FusionEltwiseOpenCLKernel::GetTensorIdx(lite::Tensor *in_tensor) {
   if (pos != in_tensors_.end()) {
     return pos - in_tensors_.begin();
   } else {
-    for (const auto &in_kernel : in_kernels_) {
+    auto in_kernels = *this->in_kernels_;
+    for (const auto &in_kernel : in_kernels) {
       MS_ASSERT(in_kernel);
       MS_ASSERT(in_kernel->in_tensors().size());
       MS_ASSERT(in_kernel->out_tensors().size());
-      if (static_cast<int>(in_kernel->Type()) == lite::PRIM_TO_FORMAT) {
+      if (static_cast<int>(in_kernel->type()) == lite::PRIM_TO_FORMAT) {
         if (in_tensor == in_kernel->in_tensors().front()) {
           return std::find(in_tensors_.begin(), in_tensors_.end(), in_kernel->out_tensors().front()) -
                  in_tensors_.begin();
         }
       }
     }
-    return 0;
+    MS_LOG(ERROR) << "FusionEltwise can't find index ";
   }
+  return 0;
 }
 
 }  // namespace mindspore::kernel

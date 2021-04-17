@@ -17,16 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DIV_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/int8/div_int8.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
-class DivInt8CPUKernel : public LiteKernel {
+class DivInt8CPUKernel : public InnerKernel {
  public:
   explicit DivInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~DivInt8CPUKernel() override;
 
   int Init() override;

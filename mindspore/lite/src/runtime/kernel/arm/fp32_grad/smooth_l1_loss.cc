@@ -84,10 +84,10 @@ int SmoothL1LossCPUKernel::Run() {
 
 int SmoothL1LossCPUKernel::Init() { return RET_OK; }
 
-kernel::LiteKernel *CpuSmoothL1LossFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuSmoothL1LossFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                      const std::vector<lite::Tensor *> &outputs,
+                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SmoothL1Loss);
   auto *kernel = new (std::nothrow)

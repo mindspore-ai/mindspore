@@ -16,8 +16,9 @@
 
 #ifndef MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
-#include "src/lite_kernel.h"
 #include <vector>
+#include "src/lite_kernel.h"
+
 namespace mindspore::kernel {
 
 class LiteKernelUtil {

@@ -22,11 +22,11 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class CumSumCPUKernel : public LiteKernel {
+class CumSumCPUKernel : public InnerKernel {
  public:
   CumSumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<CumSumParameter *>(op_parameter_);
   }
   ~CumSumCPUKernel() = default;

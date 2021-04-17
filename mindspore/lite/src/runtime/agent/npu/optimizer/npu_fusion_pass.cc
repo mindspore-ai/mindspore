@@ -339,7 +339,7 @@ int NPUFusionPass::Run() {
   for (size_t i = 0; i < kernels->size(); i++) {
     auto kernel = (*kernels)[i];
     if (CheckFusion(kernel)) {
-      switch (kernel->Type()) {
+      switch (kernel->type()) {
         case schema::PrimitiveType_Split:
           i -= kernel->in_kernels().size();
           SplitFusion(kernel);

@@ -113,8 +113,15 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     free(op_parameter);
     FAIL();
   }
-  auto *kernel = creator(kernel_inputs, outputs, op_parameter, nullptr, key);
+  auto *inner_kernel = creator(kernel_inputs, outputs, op_parameter, nullptr, key);
+  if (inner_kernel == nullptr) {
+    std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
+    free(op_parameter);
+    FAIL();
+  }
+  auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (kernel == nullptr) {
+    delete inner_kernel;
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
     FAIL();
@@ -124,8 +131,14 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
   std::vector<LiteKernel *> kernels{kernel};
-  auto sub_graph = new (std::nothrow) OpenCLSubGraph(subgraph_inputs, outputs, kernels, kernels, kernels);
+  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, subgraph_inputs, outputs, nullptr);
+  if (sub_inner_kernel == nullptr) {
+    return;
+  }
+
+  auto sub_graph = new (std::nothrow) OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
   if (sub_graph == nullptr) {
+    delete sub_inner_kernel;
     return;
   }
 
@@ -159,7 +172,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
 
   // simulating benchmark:  MarkAccuracy() -> session_->RunGraph() -> executor_->Run() -> OpenCLSubGraph->Run()
   MS_LOG(DEBUG) << "run SubGraph & compare result";
-  EXPECT_TRUE(sub_graph->Run() == RET_OK);  // will call UnmapBuffer() for input
+  EXPECT_TRUE(sub_graph->Execute() == RET_OK);  // will call UnmapBuffer() for input
 
   for (int i = 0; i < outputs.size(); ++i) {
     ocl_runtime->GetAllocator()->MapBuffer(outputs[i]->data_c(), CL_MAP_READ, nullptr, true);
@@ -259,8 +272,16 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     free(op_parameter);
     FAIL();
   }
-  auto *kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key);
+  auto *inner_kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key);
+  if (inner_kernel == nullptr) {
+    std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
+    free(op_parameter);
+    FAIL();
+  }
+  inner_kernel->set_registry_data_type(key.data_type);
+  auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (kernel == nullptr) {
+    delete inner_kernel;
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
     FAIL();
@@ -270,8 +291,13 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
   std::vector<LiteKernel *> kernels{kernel};
-  auto sub_graph = new (std::nothrow) OpenCLSubGraph(subgraph_inputs, {&output}, kernels, kernels, kernels);
+  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, subgraph_inputs, {&output}, nullptr);
+  if (sub_inner_kernel == nullptr) {
+    return;
+  }
+  auto sub_graph = new (std::nothrow) OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
   if (sub_graph == nullptr) {
+    delete sub_inner_kernel;
     return;
   }
 
@@ -305,7 +331,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   // simulating benchmark:  MarkAccuracy() -> session_->RunGraph() -> executor_->Run() -> OpenCLSubGraph->Run()
   MS_LOG(DEBUG) << "run SubGraph & compare result";
-  EXPECT_TRUE(sub_graph->Run() == RET_OK);  // will call UnmapBuffer() for input
+  EXPECT_TRUE(sub_graph->Execute() == RET_OK);  // will call UnmapBuffer() for input
 
   // check result
   ocl_runtime->GetAllocator()->MapBuffer(output.data_c(), CL_MAP_READ, nullptr, true);

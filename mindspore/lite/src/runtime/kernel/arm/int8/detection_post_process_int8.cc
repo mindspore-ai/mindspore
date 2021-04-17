@@ -89,6 +89,49 @@ int DetectionPostProcessInt8CPUKernel::GetInputData() {
   return RET_OK;
 }
 
+void DetectionPostProcessInt8CPUKernel::FreeAllocatedBuffer() {
+  if (params_->decoded_boxes_ != nullptr) {
+    context_->allocator->Free(params_->decoded_boxes_);
+    params_->decoded_boxes_ = nullptr;
+  }
+  if (params_->nms_candidate_ != nullptr) {
+    context_->allocator->Free(params_->nms_candidate_);
+    params_->nms_candidate_ = nullptr;
+  }
+  if (params_->indexes_ != nullptr) {
+    context_->allocator->Free(params_->indexes_);
+    params_->indexes_ = nullptr;
+  }
+  if (params_->scores_ != nullptr) {
+    context_->allocator->Free(params_->scores_);
+    params_->scores_ = nullptr;
+  }
+  if (params_->all_class_indexes_ != nullptr) {
+    context_->allocator->Free(params_->all_class_indexes_);
+    params_->all_class_indexes_ = nullptr;
+  }
+  if (params_->all_class_scores_ != nullptr) {
+    context_->allocator->Free(params_->all_class_scores_);
+    params_->all_class_scores_ = nullptr;
+  }
+  if (params_->single_class_indexes_ != nullptr) {
+    context_->allocator->Free(params_->single_class_indexes_);
+    params_->single_class_indexes_ = nullptr;
+  }
+  if (params_->selected_ != nullptr) {
+    context_->allocator->Free(params_->selected_);
+    params_->selected_ = nullptr;
+  }
+  if (input_boxes_ != nullptr) {
+    context_->allocator->Free(input_boxes_);
+    input_boxes_ = nullptr;
+  }
+  if (input_scores_ != nullptr) {
+    context_->allocator->Free(input_scores_);
+    input_scores_ = nullptr;
+  }
+}
+
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DetectionPostProcess,
            LiteKernelCreator<DetectionPostProcessInt8CPUKernel>)
 }  // namespace mindspore::kernel

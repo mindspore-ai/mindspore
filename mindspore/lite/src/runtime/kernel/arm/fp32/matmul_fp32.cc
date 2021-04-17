@@ -107,7 +107,7 @@ int MatmulCPUKernel::Eval() {
   // Copy weights after training
   auto a_src = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   auto b_src = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-  LiteKernel::Eval();
+  InnerKernel::Eval();
 
   if (params_->a_const_) {
     if (RET_OK != InitBufferA()) {

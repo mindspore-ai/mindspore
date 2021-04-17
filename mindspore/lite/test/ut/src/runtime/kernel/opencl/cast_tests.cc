@@ -72,9 +72,22 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto *cast_kernel =
+  auto *inner_kernel =
     new (std::nothrow) kernel::CastOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  if (inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    return;
+  }
+  auto *cast_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (cast_kernel == nullptr) {
+    delete inner_kernel;
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
@@ -92,9 +105,9 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{cast_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(inputs, outputs, kernels, kernels, kernels);
-  if (sub_graph == nullptr) {
-    MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
+  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, inputs, outputs, nullptr);
+  if (sub_inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
     }
@@ -105,12 +118,26 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete cast_kernel;
     return;
   }
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
+  if (sub_graph == nullptr) {
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete cast_kernel;
+    delete sub_inner_kernel;
+    return;
+  }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
   memcpy(inputs[0]->data_c(), input_data, input1_size);
 
   std::cout << "==================output data================" << std::endl;
-  sub_graph->Run();
+  sub_graph->Execute();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
@@ -158,9 +185,22 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto *cast_kernel =
+  auto *inner_kernel =
     new (std::nothrow) kernel::CastOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  if (inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    return;
+  }
+  auto *cast_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (cast_kernel == nullptr) {
+    delete inner_kernel;
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
@@ -178,9 +218,9 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{cast_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(inputs, outputs, kernels, kernels, kernels);
-  if (sub_graph == nullptr) {
-    MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
+  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, inputs, outputs, nullptr);
+  if (sub_inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
     }
@@ -191,12 +231,27 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     delete cast_kernel;
     return;
   }
+
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
+  if (sub_graph == nullptr) {
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
+    for (auto tensor : inputs) {
+      delete tensor;
+    }
+    for (auto tensor : outputs) {
+      delete tensor;
+    }
+    delete param;
+    delete cast_kernel;
+    delete sub_inner_kernel;
+    return;
+  }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
   memcpy(inputs[0]->data_c(), input_data, input1_size);
 
   std::cout << "==================output data================" << std::endl;
-  sub_graph->Run();
+  sub_graph->Execute();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {

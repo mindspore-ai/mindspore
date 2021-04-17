@@ -23,12 +23,12 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 
-class OptimizerKernel : public LiteKernel {
+class OptimizerKernel : public InnerKernel {
  public:
   OptimizerKernel() = default;
   OptimizerKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx, int lr_idx, int grad_idx)
-      : LiteKernel(parameter, inputs, outputs, ctx), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
   ~OptimizerKernel() = default;
 
   enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH };
@@ -100,7 +100,7 @@ class OptimizerKernel : public LiteKernel {
 
   int Eval() override {
     OptimizerStep();
-    return LiteKernel::Eval();
+    return InnerKernel::Eval();
   }
 
  protected:

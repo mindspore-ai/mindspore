@@ -62,11 +62,11 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (!IsArithmetic(Type())) {
-    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(Type());
+  if (!IsArithmetic(type())) {
+    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
   }
-  if (Type() == schema::PrimitiveType_Eltwise) {
+  if (type() == schema::PrimitiveType_Eltwise) {
     auto mode = param->eltwise_mode_;
     if (mode != EltwiseMode_PROD && mode != EltwiseMode_SUM && mode != EltwiseMode_MAXIMUM) {
       MS_LOG(ERROR) << "Eltwise mode not support, mode:" << mode;
@@ -148,12 +148,12 @@ int ArithmeticOpenCLKernel::Prepare() {
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (Type() == PrimitiveType_BiasAdd) {
+  if (type() == PrimitiveType_BiasAdd) {
     const_cast<ArithmeticParameter *>(param)->broadcasting_ = true;
   }
   element_flag_ = !param->broadcasting_;
   kernel_name_ = param->broadcasting_ ? "BroadcastNHWC4" : "Element";
-  switch (Type()) {
+  switch (type()) {
     case PrimitiveType_MulFusion:
       kernel_name_ += "Mul";
       break;
@@ -178,7 +178,7 @@ int ArithmeticOpenCLKernel::Prepare() {
       break;
     }
     default:
-      kernel_name_ += schema::EnumNamePrimitiveType(Type());
+      kernel_name_ += schema::EnumNamePrimitiveType(type());
   }
 
   if (param->activation_type_ == ActivationType_RELU) {
@@ -191,7 +191,7 @@ int ArithmeticOpenCLKernel::Prepare() {
   std::string program_name = "Arithmetic";
   std::string source = arithmetic_source;
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   int error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_, build_options_ext);
 #endif
   if (error_code != RET_OK) {
@@ -200,7 +200,7 @@ int ArithmeticOpenCLKernel::Prepare() {
 
   SetGlobalLocal();
   // BiasAdd InitWeight will be called in opencl_subgraph prepare
-  if (Type() != PrimitiveType_BiasAdd) {
+  if (type() != PrimitiveType_BiasAdd) {
     InitWeights();
   }
   SetConstArgs();

@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "src/runtime/runtime_api.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/pad_parameter.h"
@@ -27,11 +27,11 @@
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::kernel {
-class PadInt8CPUKernel : public LiteKernel {
+class PadInt8CPUKernel : public InnerKernel {
  public:
   explicit PadInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     op_parameter_->thread_num_ = ctx->thread_num_;
     pad_param_ = reinterpret_cast<PadParameter *>(op_parameter_);
   }

@@ -42,7 +42,7 @@ class TestNormalize : public mindspore::CommonTest {
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CustomNormalize};
   kernel::KernelCreator creator_ = nullptr;
-  kernel::LiteKernel *kernel_ = nullptr;
+  kernel::InnerKernel *kernel_ = nullptr;
 };
 
 void TestNormalize::NormalizeTestInit() {

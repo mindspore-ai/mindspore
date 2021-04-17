@@ -86,7 +86,7 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel_obj->workspace_size());
 
   kernel_obj->Run();
   std::cout << "==========dx==========\n";
@@ -111,7 +111,7 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
     v->set_data(nullptr);
     delete v;
   }
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel_obj;
   MS_LOG(INFO) << "BNGradFp32 passed";
 }
@@ -179,7 +179,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel_obj->workspace_size());
   float *save_mean = reinterpret_cast<float *>(save_mean_tensor.MutableData());
   float *save_var = reinterpret_cast<float *>(save_var_tensor.MutableData());
   for (int i = 0; i < channels; i++) {
@@ -207,7 +207,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
 
   x_tensor->set_data(nullptr);
   delete x_tensor;
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel_obj;
 }
 }  // namespace mindspore

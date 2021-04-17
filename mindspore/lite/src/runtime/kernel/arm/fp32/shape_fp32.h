@@ -18,14 +18,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SHAPE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-class ShapeCPUKernel : public LiteKernel {
+class ShapeCPUKernel : public InnerKernel {
  public:
   ShapeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ShapeCPUKernel() override = default;
 
   int Init() override;

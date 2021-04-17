@@ -23,16 +23,16 @@
 #include "nnacl/base/concat_base.h"
 #include "nnacl/concat_parameter.h"
 #include "nnacl/fp16/cast_fp16.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class ConcatFp16CPUKernel : public LiteKernel {
+class ConcatFp16CPUKernel : public InnerKernel {
  public:
   ConcatFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
   }
   ~ConcatFp16CPUKernel() = default;

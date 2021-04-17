@@ -85,7 +85,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
                         const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                         const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
-  if (kernels.front()->Type() != schema::PrimitiveType_Merge) {
+  if (kernels.front()->type() != schema::PrimitiveType_Merge) {
     auto ret = CheckTensorsInvalid(in_tensors);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "CheckInputs failed";

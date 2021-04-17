@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SOFTMAX_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/softmax_parameter.h"
 
 namespace mindspore::kernel {
-class SoftmaxBaseCPUKernel : public LiteKernel {
+class SoftmaxBaseCPUKernel : public InnerKernel {
  public:
   SoftmaxBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
     softmax_param_ = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
   }
   ~SoftmaxBaseCPUKernel() = default;

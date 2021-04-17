@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_INT8_SIGMOID_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/int8/sigmoid_int8.h"
 
 namespace mindspore::kernel {
-class SigmoidInt8CPUKernel : public LiteKernel {
+class SigmoidInt8CPUKernel : public InnerKernel {
  public:
   SigmoidInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~SigmoidInt8CPUKernel() override = default;
 
   int Init() override;

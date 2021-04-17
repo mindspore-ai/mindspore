@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,40 +21,19 @@
 #include "src/common/utils.h"
 #include "src/runtime/infer_manager.h"
 #include "src/common/version_manager.h"
+#include "src/runtime/kernel/arm/base/merge.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-#ifdef SUPPORT_TRAIN
-void *LiteKernel::workspace_ = nullptr;
 
-void LiteKernel::AllocWorkspace(size_t size) {
-  if (size == 0) {
-    return;
-  }
-  workspace_ = malloc(size);
-  if (workspace_ == nullptr) {
-    MS_LOG(ERROR) << "fail to alloc " << size;
-  }
-}
-
-void LiteKernel::FreeWorkspace() {
-  free(workspace_);
-  workspace_ = nullptr;
-}
-
-int LiteKernel::DecOutTensorRefCount() {
-  for (auto *tensor : this->out_tensors_) {
-    tensor->set_ref_count(tensor->ref_count() - 1);
-    if (0 >= tensor->ref_count()) {
-      tensor->FreeData();
-    }
-  }
-  return 0;
-}
-#endif
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
-  return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *in_tensor) {
+  MS_ASSERT(kernel_ != nullptr);
+  if ((desc_.provider == kBuiltin) && (kernel_->type() == schema::PrimitiveType_Merge)) {
+    return static_cast<MergeCPUKernel *>(kernel_)->IsReady(scope_tensors);
+  }
+  auto &in_tensors = this->in_tensors();
+  return std::all_of(in_tensors.begin(), in_tensors.end(), [&](lite::Tensor *in_tensor) {
     if (IsContain(scope_tensors, in_tensor)) {
       return in_tensor->IsReady();
     } else {
@@ -64,120 +43,37 @@ bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
 }
 
 void LiteKernel::InitOutTensorInitRefCount() {
-  for (auto *tensor : this->out_tensors_) {
+  for (auto *tensor : this->out_tensors()) {
     size_t init_ref_count = 0;
     for (auto *post_kernel : this->out_kernels_) {
+      auto &post_in_tensors = post_kernel->in_tensors();
       init_ref_count +=
-        std::count_if(post_kernel->in_tensors_.begin(), post_kernel->in_tensors_.end(),
+        std::count_if(post_in_tensors.begin(), post_in_tensors.end(),
                       [&tensor](const lite::Tensor *post_kernel_in_tensor) { return post_kernel_in_tensor == tensor; });
     }
     tensor->set_init_ref_count(init_ref_count);
   }
 }
 
-int LiteKernel::FreeInWorkTensor() const {
-  for (auto &in_tensor : this->in_tensors_) {
-    MS_ASSERT(in_tensor != nullptr);
-    if (in_tensor->root_tensor() == in_tensor) {
-      continue;
-    }
-    in_tensor->DecRefCount();
-  }
-  return RET_OK;
-}
-
-int LiteKernel::PreProcess() {
-  if (!InferShapeDone()) {
-    auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "InferShape fail!";
-      return ret;
-    }
-    ret = ReSize();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
-      return ret;
-    }
-  }
-
-  for (auto *output : this->out_tensors()) {
-    MS_ASSERT(output != nullptr);
-    if (desc_.data_type == kNumberTypeFloat16 && output->data_type() == kNumberTypeFloat32) {
-      output->set_data_type(kNumberTypeFloat16);
-    }
-    if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
-      MS_LOG(ERROR) << "The size of output tensor is too big";
-      return RET_ERROR;
-    }
-    auto ret = output->MallocData();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "MallocData failed";
-      return ret;
-    }
-  }
-  return RET_OK;
-}
-
-int LiteKernel::PostProcess() {
-  for (auto *output : this->out_tensors()) {
-    MS_ASSERT(output != nullptr);
-    output->ResetRefCount();
-  }
-  return FreeInWorkTensor();
-}
-
-int LiteKernel::Run(const KernelCallBack &before, const KernelCallBack &after) {
-  if (before != nullptr) {
-    if (!before(TensorVectorCast(this->in_tensors_), TensorVectorCast(this->out_tensors_),
-                {this->name_, this->type_str()})) {
-      MS_LOG(WARNING) << "run kernel before_callback failed, name: " << this->name_;
-    }
-  }
-  // Support ZeroShape
-  size_t zero_shape_num = 0;
-  for (auto tensor : this->out_tensors_) {
-    for (size_t i = 0; i < tensor->shape().size(); i++) {
-      if (tensor->shape()[i] == 0) {
-        zero_shape_num++;
-        break;
-      }
-    }
-  }
-  if (zero_shape_num != this->out_tensors_.size()) {
-    auto ret = Run();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << this->name_;
-      return ret;
-    }
-  }
-  if (after != nullptr) {
-    if (!after(TensorVectorCast(this->in_tensors_), TensorVectorCast(this->out_tensors_),
-               {this->name_, this->type_str()})) {
-      MS_LOG(WARNING) << "run kernel after_callback failed, name: " << this->name_;
-    }
-  }
-  return RET_OK;
-}
-
 std::string LiteKernel::ToString() const {
   std::ostringstream oss;
-  oss << "LiteKernel: " << this->name_;
+  oss << "LiteKernel: " << this->name();
   oss << ", Type: " << this->type_str();
-  oss << ", " << this->in_tensors_.size() << " InputTensors:";
-  for (auto tensor : in_tensors_) {
+  oss << ", " << this->in_tensors().size() << " InputTensors:";
+  for (auto tensor : in_tensors()) {
     oss << " " << tensor;
   }
-  oss << ", " << this->out_tensors_.size() << " OutputTensors:";
-  for (auto tensor : out_tensors_) {
+  oss << ", " << this->out_tensors().size() << " OutputTensors:";
+  for (auto tensor : out_tensors()) {
     oss << " " << tensor;
   }
   oss << ", " << this->in_kernels_.size() << " InputKernels:";
   for (auto in_kernel : in_kernels_) {
-    oss << " " << in_kernel->name_;
+    oss << " " << in_kernel->name();
   }
   oss << ", " << this->out_kernels_.size() << " OutputKernels:";
   for (auto out_kernel : out_kernels_) {
-    oss << " " << out_kernel->name_;
+    oss << " " << out_kernel->name();
   }
   return oss.str();
 }
@@ -187,7 +83,7 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
   this->in_kernels_.clear();
   this->out_kernels_.clear();
   // find io kernels, need optimize time
-  for (auto *tensor : this->in_tensors_) {
+  for (auto *tensor : this->in_tensors()) {
     for (auto *scope_kernel : scope_kernels) {
       if (scope_kernel == this) {
         continue;
@@ -198,7 +94,7 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
     }
   }
 
-  for (auto *tensor : this->out_tensors_) {
+  for (auto *tensor : this->out_tensors()) {
     for (auto *scope_kernel : scope_kernels) {
       if (scope_kernel == this) {
         continue;

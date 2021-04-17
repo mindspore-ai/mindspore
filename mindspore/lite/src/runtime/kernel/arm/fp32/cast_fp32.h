@@ -18,17 +18,17 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "src/tensor.h"
 #include "nnacl/op_base.h"
 #include "nnacl/base/cast_base.h"
 
 namespace mindspore::kernel {
-class CastCPUKernel : public LiteKernel {
+class CastCPUKernel : public InnerKernel {
  public:
   CastCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
 
   ~CastCPUKernel() = default;
 

@@ -70,7 +70,7 @@ int ResizeOpenCLKernel::Prepare() {
   std::string source = resize_source;
   std::string program_name = "Resize";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   SetConstArgs();
@@ -121,7 +121,7 @@ int ResizeOpenCLKernel::Run() {
 }
 
 int ResizeOpenCLKernel::PreProcess() {
-  if (Type() == PrimitiveType_Resize && !InferShapeDone() && in_tensors_.size() == 2) {
+  if (type() == PrimitiveType_Resize && !InferShapeDone() && in_tensors_.size() == 2) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
       ocl_runtime_->SyncCommandQueue();

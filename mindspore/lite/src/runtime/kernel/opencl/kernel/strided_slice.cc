@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_StridedSlice;
 namespace mindspore::kernel {
 
 int StridedSliceOpenCLKernel::CheckSpecs() {
-  if (Type() == PrimitiveType_SliceFusion) {
+  if (type() == PrimitiveType_SliceFusion) {
     if (in_tensors_.size() != 3) {
       MS_LOG(ERROR) << "Slice only supports 3 input Tensor.";
       return RET_ERROR;
@@ -45,7 +45,7 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
     if (CheckParamLikeTensor("Slice", "size", in_tensors_.at(2), kNumberTypeInt32, {in_ndim}) != RET_OK) {
       return RET_ERROR;
     }
-  } else if (Type() == PrimitiveType_StridedSlice) {
+  } else if (type() == PrimitiveType_StridedSlice) {
     if (in_tensors_.size() != 4) {
       MS_LOG(ERROR) << "StridedSlice only supports 4 input Tensor.";
       return RET_ERROR;
@@ -61,10 +61,10 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   } else {
-    MS_LOG(ERROR) << "Type error.";
+    MS_LOG(ERROR) << "type error.";
     return RET_ERROR;
   }
-  const std::string kernel_name = Type() == PrimitiveType_SliceFusion ? "Slice" : "StridedSlice";
+  const std::string kernel_name = type() == PrimitiveType_SliceFusion ? "Slice" : "StridedSlice";
   if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << kernel_name + " only supports 1 output Tensor.";
     return RET_ERROR;
@@ -89,7 +89,8 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
 int StridedSliceOpenCLKernel::Prepare() {
   std::string program_name = "strided_slice";
   ocl_runtime_->LoadSource(program_name, strided_slice_source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
+
   ocl_runtime_->BuildKernel(kernel_, program_name, "strided_slice", build_options_ext);
   SetConstArgs();
   SetGlobalLocal();
@@ -105,7 +106,7 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
                    static_cast<cl_int>(output_info.W), static_cast<cl_int>(output_info.C)};
   io_slices_ = {static_cast<cl_int>(input_info.Slice), static_cast<cl_int>(output_info.Slice)};
 
-  if (Type() == PrimitiveType_SliceFusion) {
+  if (type() == PrimitiveType_SliceFusion) {
     auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
     auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
