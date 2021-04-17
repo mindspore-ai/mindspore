@@ -629,6 +629,11 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
 void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   const std::string local_path = std::string("./task_error_dump/") + std::to_string(task_fail_infoes_.at(0).deviceid);
+  if (access(local_path.c_str(), F_OK) == 0) {
+    if (!DeleteDumpDir(local_path)) {
+      MS_LOG(ERROR) << "Delete dump directory " << local_path << " failed";
+    }
+  }
   for (const auto &task_fail_info : task_fail_infoes_) {
     MS_LOG(ERROR) << "Task fail infos task_id: " << task_fail_info.taskid << ", stream_id: " << task_fail_info.streamid
                   << ", tid: " << task_fail_info.tid << ", device_id: " << task_fail_info.deviceid
@@ -987,4 +992,52 @@ uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
   return ascend_mem_manager->GetDeviceMemSize();
 }
 
+bool AscendKernelRuntime::DeleteDumpDir(std::string path) {
+  string real_path = GetRealPath(path);
+  if (DeleteDumpFile(real_path) == -1) {
+    return false;
+  }
+  rmdir(real_path.c_str());
+  return true;
+}
+
+int AscendKernelRuntime::DeleteDumpFile(std::string path) {
+  DIR *dir;
+  struct dirent *dirinfo;
+  struct stat statbuf;
+  string filepath;
+  int result = 0;
+  lstat(path.c_str(), &statbuf);
+
+  if (S_ISREG(statbuf.st_mode)) {
+    result = remove(path.c_str());
+  } else if (S_ISDIR(statbuf.st_mode)) {
+    if ((dir = opendir(path.c_str())) == NULL) {
+      return -1;
+    }
+
+    while (!result && (dirinfo = readdir(dir))) {
+      if (path[path.size() - 1] != '/') {
+        path = path + "/";
+      }
+      filepath = path + dirinfo->d_name;
+      if (strcmp(dirinfo->d_name, ".") == 0 || strcmp(dirinfo->d_name, "..") == 0) continue;
+      result = DeleteDumpFile(filepath);
+      if (!result) {
+        rmdir(filepath.c_str());
+      }
+    }
+    closedir(dir);
+  }
+  return result;
+}
+
+std::string AscendKernelRuntime::GetRealPath(std::string path) {
+  char real_path_mem[PATH_MAX] = {0};
+  char *real_path_ret = realpath(path.c_str(), real_path_mem);
+  if (real_path_ret == nullptr) {
+    return "";
+  }
+  return std::string(real_path_mem);
+}
 }  // namespace mindspore::device::ascend
