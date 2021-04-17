@@ -59,7 +59,7 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
   MS_ASSERT(quant_params != nullptr && quant_datas != nullptr);
   double bias_scale_tmp;
   const constexpr int32_t quanted_bias_abs_limit = 0.5 * INT32_MAX;
-  auto active_weight_quant_params = quant_param_holder->input_quant_params();
+  auto weight_quant_params = quant_param_holder->get_input_quant_params().at(1);
   auto shape_size = quant_datas->size();
   if (bias_scales.size() == shape_size) {
     for (size_t i = 0; i < shape_size; i++) {
@@ -69,14 +69,14 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
         return RET_ERROR;
       }
       if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
-        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][i].scale
+        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[i].scale
                       << " is too small, need to update";
         // update filter scale and zp
         double activate_scale = input_scales[0];
         double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
-        active_weight_quant_params[1][i].scale = filter_scale;
-        active_weight_quant_params[1][i].zeroPoint = 0;
-        quant_param_holder->set_input_quant_params(active_weight_quant_params);
+        weight_quant_params[i].scale = filter_scale;
+        weight_quant_params[i].zeroPoint = 0;
+        quant_param_holder->set_input_quant_param(1, weight_quant_params);
         bias_scale_tmp = std::abs(raw_datas[i]) / quanted_bias_abs_limit;
         quant_params->at(i).scale = bias_scale_tmp;
         MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
@@ -99,13 +99,13 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
       return RET_ERROR;
     }
     if (std::abs(max_raw_data / bias_scale_tmp) >= quanted_bias_abs_limit) {
-      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][0].scale
+      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[0].scale
                     << " is too small, need to update";
       double activate_scale = input_scales[0];
       double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
-      active_weight_quant_params[1][0].scale = filter_scale;
-      active_weight_quant_params[1][0].zeroPoint = 0;
-      quant_param_holder->set_input_quant_params(active_weight_quant_params);
+      weight_quant_params[0].scale = filter_scale;
+      weight_quant_params[0].zeroPoint = 0;
+      quant_param_holder->set_input_quant_param(1, weight_quant_params);
       bias_scale_tmp = max_raw_data / quanted_bias_abs_limit;
       quant_params->front().scale = bias_scale_tmp;
       MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
@@ -117,7 +117,7 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
     return RET_OK;
   }
   MS_LOG(ERROR) << "unexpected input_scales size: " << input_scales.size()
-                << " weight_scales size: " << active_weight_quant_params[1].size();
+                << " weight_scales size: " << weight_quant_params.size();
   return RET_ERROR;
 }
 }  // namespace
@@ -620,7 +620,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const Primitiv
   MS_ASSERT(bias_parameter != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_ASSERT(quant_param_holder != nullptr);
-  auto active_weight_quant_params = quant_param_holder->input_quant_params();
+  auto active_weight_quant_params = quant_param_holder->get_input_quant_params();
   if (active_weight_quant_params.size() != 2) {
     MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
     return RET_ERROR;
@@ -731,7 +731,7 @@ STATUS PostTrainingQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
       MS_ASSERT(input_primitive_quant_holder != nullptr);
       if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
-        auto quant_param = input_primitive_quant_holder->output_quant_params().front();
+        auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
         primitive_quant_holder->AddInputQuantParam(quant_param);
       } else {
         // do input quant
@@ -820,14 +820,14 @@ STATUS PostTrainingQuantizer::QuantNode() {
       }
       auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
       MS_ASSERT(input_primitive_quant_holder != nullptr);
-      if (input_primitive_quant_holder->output_quant_params().size() > index) {
-        auto quant_param = input_primitive_quant_holder->output_quant_params()[index];
+      if (input_primitive_quant_holder->get_output_quant_params().size() > index) {
+        auto quant_param = input_primitive_quant_holder->get_output_quant_params()[index];
         primitive_quant_holder->AddInputQuantParam(quant_param);
         primitive_quant_holder->AddOutputQuantParam(quant_param);
       } else {
         MS_LOG(WARNING) << "this TupleGetItem node's input node: " << input_cnode->fullname_with_scope()
-                        << "'s output quant_params size: " << input_primitive_quant_holder->output_quant_params().size()
-                        << ", but index: " << index;
+                        << "'s output quant_params size: "
+                        << input_primitive_quant_holder->get_output_quant_params().size() << ", but index: " << index;
       }
       primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
       continue;
@@ -1125,7 +1125,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, con
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_ASSERT(quant_param_holder != nullptr);
-  auto input_quant_params = quant_param_holder->input_quant_params();
+  auto input_quant_params = quant_param_holder->get_input_quant_params();
   if (input_quant_params.size() == 3) {
     // compensate the existed
     auto bias_quant_params = input_quant_params[2];
@@ -1191,7 +1191,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, con
     cnode->add_input(parameter);
     DoBiasQuant(parameter, primitive);
   } else {
-    MS_LOG(ERROR) << "unexpected input_quant_params size: " << input_quant_params.size();
+    MS_LOG(ERROR) << "unexpected get_input_quant_params size: " << input_quant_params.size();
   }
   return RET_OK;
 }

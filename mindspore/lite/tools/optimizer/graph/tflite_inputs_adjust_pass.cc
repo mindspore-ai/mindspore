@@ -56,12 +56,16 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   std::vector<AnfNodePtr> new_inputs = {cnode->input(0)};
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   auto input_quant_params = primitive->GetAttr("quant_params");
-  auto input_quant_params_holder = input_quant_params == nullptr
-                                     ? std::make_shared<lite::QuantParamHolder>()
-                                     : input_quant_params->cast<lite::QuantParamHolderPtr>();
-  auto old_quant_params = input_quant_params_holder->input_quant_params();
-  auto new_input_quant_holder = std::make_shared<lite::QuantParamHolder>();
+  if (input_quant_params == nullptr) {
+    MS_LOG(ERROR) << "quant params holder is null";
+    return RET_ERROR;
+  }
+  auto input_quant_params_holder = input_quant_params->cast<lite::QuantParamHolderPtr>();
+  auto old_quant_params = input_quant_params_holder->get_input_quant_params();
+  auto new_input_quant_holder =
+    std::make_shared<lite::QuantParamHolder>(perm.size(), input_quant_params_holder->get_output_quant_params().size());
   // add inputs as perm order
+  size_t new_idx = 0;
   for (size_t idx : perm) {
     if (idx > cnode->inputs().size() - 1) {
       MS_LOG(ERROR) << "Idx " << idx << " is larger than inputs size: " << cnode->inputs().size() - 1;
@@ -69,7 +73,12 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
     }
     new_inputs.emplace_back(cnode->input(idx));
     auto quant_param = idx < old_quant_params.size() ? old_quant_params.at(idx) : std::vector<schema::QuantParamT>();
-    new_input_quant_holder->AddInputQuantParam(quant_param);
+    new_input_quant_holder->set_input_quant_param(new_idx, quant_param);
+    new_idx++;
+  }
+
+  for (size_t i = 0; i < input_quant_params_holder->get_output_quant_params().size(); i++) {
+    new_input_quant_holder->set_output_quant_param(i, input_quant_params_holder->get_output_quant_params().at(i));
   }
   cnode->set_inputs(new_inputs);
   primitive->set_attr("quant_params", new_input_quant_holder);

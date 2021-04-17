@@ -953,7 +953,23 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert output tensors for " << anf_node->fullname_with_scope() << " failed.";
   }
+
+  status = ConvertQuantParams(inputs.size() - 1, output_size, primitiveC);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Convert quant params for " << anf_node->fullname_with_scope() << " failed.";
+  }
   return status;
+}
+
+STATUS TFModelParser::ConvertQuantParams(const size_t &input_size, const size_t &output_size,
+                                         ops::PrimitiveC *primitive_c) {
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
+    return RET_NULL_PTR;
+  }
+  auto quant_params_holder = std::make_shared<QuantParamHolder>(input_size, output_size);
+  primitive_c->AddAttr("quant_params", quant_params_holder);
+  return RET_OK;
 }
 
 STATUS TFModelParser::ConvertRootGraphOutputs() {

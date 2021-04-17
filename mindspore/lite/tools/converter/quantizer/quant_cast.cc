@@ -25,7 +25,7 @@ namespace mindspore::lite::quant {
 ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params) {
   auto prim_c = std::make_shared<ops::QuantDTypeCast>();
   prim_c->Init(src_type, dst_type);
-  auto quant_params_holder = std::make_shared<QuantParamHolder>();
+  auto quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
   quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
   for (auto &quant_param : quant_params) {
     std::vector<schema::QuantParamT> quant_params_in = {quant_param};
@@ -82,17 +82,17 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
         ValueNodePtr value_node = nullptr;
         if (curnode_quant_type == schema::QuantType_QUANT_ALL &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
-          if (primitive_quant_param_holder->input_quant_params().size() < i) {
+          if (primitive_quant_param_holder->get_input_quant_params().size() < i) {
             MS_LOG(ERROR) << "quant param is invalid.";
             return RET_ERROR;
           }
           value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
-                                             primitive_quant_param_holder->input_quant_params()[i - 1]);
+                                             primitive_quant_param_holder->get_input_quant_params()[i - 1]);
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
                    input_cnode_quant_type == schema::QuantType_QUANT_ALL) {
           auto input_primitive_quant_param_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                             input_primitive_quant_param_holder->output_quant_params().front());
+                                             input_primitive_quant_param_holder->get_output_quant_params().front());
         }
         if (value_node == nullptr) {
           MS_LOG(WARNING) << "value_node is null! "

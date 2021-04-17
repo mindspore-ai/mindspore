@@ -274,8 +274,8 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       MS_LOG(ERROR) << "quant param is invalid.";
       return RET_ERROR;
     }
-    input_quant_params = quant_param_holder->input_quant_params();
-    output_quant_params = quant_param_holder->output_quant_params();
+    input_quant_params = quant_param_holder->get_input_quant_params();
+    output_quant_params = quant_param_holder->get_output_quant_params();
     dst_node->quantType = quant_param_holder->quant_type();
   }
   // add quant param

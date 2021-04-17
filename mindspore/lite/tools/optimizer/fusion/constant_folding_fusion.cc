@@ -205,7 +205,7 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
     MS_LOG(ERROR) << "quant param is invalid.";
     return lite::RET_ERROR;
   }
-  auto input_quant_params = quant_param_holder->input_quant_params();
+  auto input_quant_params = quant_param_holder->get_input_quant_params();
   for (size_t m = 0; m < input_quant_params.size(); m++) {
     for (auto inputQuantParam : input_quant_params[m]) {
       lite::QuantArg quant_arg{};
@@ -216,7 +216,7 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
       inputs[m]->AddQuantParam(quant_arg);
     }
   }
-  auto output_quant_params = quant_param_holder->output_quant_params();
+  auto output_quant_params = quant_param_holder->get_output_quant_params();
   for (size_t m = 0; m < output_quant_params.size(); m++) {
     for (auto outputQuantParam : output_quant_params[m]) {
       lite::QuantArg quant_arg{};
