@@ -496,7 +496,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.dilation = twice(dilation)
         self.group = group
         self.eps = eps
-        self.momentum = momentum
+        self.momentum = 1 - momentum
         self.has_bias = has_bias
         self.fake = fake
         self.quant_config = quant_config

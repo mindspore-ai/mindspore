@@ -36,7 +36,7 @@ def _conv_bn_relu(in_channel,
                   padding=0,
                   dilation=1,
                   alpha=0.1,
-                  momentum=0.9,
+                  momentum=0.1,
                   eps=1e-5,
                   pad_mode="same"):
     """Get a conv2d batchnorm and relu layer"""
