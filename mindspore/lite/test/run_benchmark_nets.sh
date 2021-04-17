@@ -408,7 +408,7 @@ function Run_Converter() {
 function Run_x86() {
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
     cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib:./inference/minddata/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
     # Run tf converted models:
@@ -717,7 +717,7 @@ function Run_x86_sse() {
     cd ${x86_path}/sse || exit 1
     tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
     cd ${x86_path}/sse/mindspore-lite-${version}-inference-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib:./inference/minddata/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite converted models:
@@ -989,7 +989,7 @@ function Run_x86_avx() {
     cd ${x86_path}/avx || exit 1
     tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
     cd ${x86_path}/avx/mindspore-lite-${version}-inference-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib:./inference/minddata/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite converted models:
@@ -1263,8 +1263,8 @@ function Run_arm64() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
@@ -1682,8 +1682,8 @@ function Run_arm32() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libminddata-lite.so ]; then
+        cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
 
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
@@ -1736,8 +1736,8 @@ function Run_arm64_fp16() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
@@ -1907,8 +1907,8 @@ function Run_gpu() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
@@ -2004,8 +2004,8 @@ function Run_npu() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1

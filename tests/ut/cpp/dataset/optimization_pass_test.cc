@@ -24,9 +24,9 @@
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
-#include "minddata/dataset/include/vision_lite.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/vision.h"
+#include "minddata/dataset/include/dataset/vision_lite.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 

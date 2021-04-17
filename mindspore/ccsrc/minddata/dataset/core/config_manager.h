@@ -23,7 +23,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 

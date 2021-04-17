@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <vector>
 #include <utility>
@@ -26,7 +27,7 @@
 #include "minddata/dataset/core/type_id.h"
 
 #include "utils/ms_utils.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"

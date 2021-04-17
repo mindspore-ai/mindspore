@@ -24,8 +24,8 @@
 #include <vector>
 
 #include "include/api/status.h"
-#include "minddata/dataset/include/constants.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 
 namespace mindspore {

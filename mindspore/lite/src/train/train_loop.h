@@ -23,8 +23,8 @@
 #include "include/errorcode.h"
 #include "include/train/train_loop.h"
 #include "include/train/metrics.h"
-#include "include/datasets.h"
-#include "include/iterator.h"
+#include "include/dataset/datasets.h"
+#include "include/dataset/iterator.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {

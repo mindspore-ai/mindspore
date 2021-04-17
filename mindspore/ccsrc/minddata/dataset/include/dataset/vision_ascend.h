@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_ASCEND_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_ASCEND_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_
 
 #include <map>
 #include <memory>
@@ -23,8 +23,8 @@
 #include <utility>
 #include <vector>
 #include "include/api/status.h"
-#include "minddata/dataset/include/constants.h"
-#include "minddata/dataset/include/transforms.h"
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -97,4 +97,4 @@ class DvppDecodePng final : public TensorTransform {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_ASCEND_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_ASCEND_H_

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #ifdef ENABLE_ACL
-#include "minddata/dataset/include/vision_ascend.h"
+#include "minddata/dataset/include/dataset/vision_ascend.h"
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 #endif
 
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 
 #ifndef ENABLE_ANDROID

@@ -20,9 +20,9 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/engine/tree_adapter.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 using namespace mindspore::dataset;

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "minddata/dataset/include/config.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/config.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/vision.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::InterpolationMode;

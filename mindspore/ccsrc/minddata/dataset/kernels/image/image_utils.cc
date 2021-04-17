@@ -24,7 +24,7 @@
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 

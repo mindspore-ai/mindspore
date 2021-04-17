@@ -16,7 +16,7 @@
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/include/config.h"
+#include "minddata/dataset/include/dataset/config.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
 

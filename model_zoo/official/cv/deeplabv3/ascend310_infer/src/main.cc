@@ -28,8 +28,8 @@
 #include "include/api/model.h"
 #include "include/api/types.h"
 #include "include/api/serialization.h"
-#include "include/minddata/dataset/include/vision.h"
-#include "include/minddata/dataset/include/execute.h"
+#include "include/minddata/dataset/include/dataset/vision.h"
+#include "include/minddata/dataset/include/dataset/execute.h"
 #include "../inc/utils.h"
 
 using mindspore::Context;

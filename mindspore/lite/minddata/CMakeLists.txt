@@ -102,6 +102,7 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMA
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/ir MINDDATA_KERNELS_IR_SRC_FILES)
 
 if(BUILD_MINDDATA STREQUAL "full")
+    include_directories("${MINDDATA_DIR}")
     include_directories("${MINDDATA_DIR}/kernels/image")
     include_directories("${MINDDATA_DIR}/liteapi")
     include_directories("${TOP_DIR}")

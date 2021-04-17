@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_H_
 
 #include <map>
 #include <memory>
@@ -25,9 +25,9 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
-#include "minddata/dataset/include/constants.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision_lite.h"
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
+#include "include/dataset/vision_lite.h"
 
 namespace mindspore {
 namespace dataset {
@@ -952,4 +952,4 @@ class UniformAugment final : public TensorTransform {
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_H_

@@ -16,9 +16,9 @@
 #include "common/common.h"
 #include "include/api/types.h"
 #include "minddata/dataset/core/de_tensor.h"
-#include "minddata/dataset/include/execute.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/execute.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

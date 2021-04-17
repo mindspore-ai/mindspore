@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TRANSFORMS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TRANSFORMS_H_
 
 #include <map>
 #include <memory>
@@ -25,7 +25,7 @@
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "include/api/types.h"
-#include "minddata/dataset/include/constants.h"
+#include "include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {
@@ -410,4 +410,4 @@ class Unique final : public TensorTransform {
 }  // namespace transforms
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TRANSFORMS_H_

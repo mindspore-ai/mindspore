@@ -18,11 +18,11 @@
 #include <vector>
 #include "common/common_test.h"
 #include "include/api/types.h"
-#include "minddata/dataset/include/execute.h"
-#include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/execute.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #ifdef ENABLE_ACL
-#include "minddata/dataset/include/vision_ascend.h"
+#include "minddata/dataset/include/dataset/vision_ascend.h"
 #endif
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "include/api/model.h"

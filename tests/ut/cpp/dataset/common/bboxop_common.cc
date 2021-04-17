@@ -28,7 +28,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/path.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;

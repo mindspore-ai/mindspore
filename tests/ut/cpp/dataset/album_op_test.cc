@@ -23,8 +23,8 @@
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "securec.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
 using mindspore::MsLogLevel::ERROR;

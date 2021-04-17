@@ -22,7 +22,7 @@
 #include <vector>
 #include <unordered_map>
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {

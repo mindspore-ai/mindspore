@@ -26,10 +26,10 @@
 #include <utility>
 #include <vector>
 
-#include "include/datasets.h"
-#include "include/iterator.h"
-#include "include/vision_lite.h"
-#include "include/transforms.h"
+#include "include/dataset/datasets.h"
+#include "include/dataset/iterator.h"
+#include "include/dataset/vision_lite.h"
+#include "include/dataset/transforms.h"
 #include "include/api/types.h"
 
 using mindspore::dataset::Album;

@@ -15,7 +15,7 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "mindspore/ccsrc/minddata/dataset/include/transforms.h"
+#include "mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/core/global_context.h"
 

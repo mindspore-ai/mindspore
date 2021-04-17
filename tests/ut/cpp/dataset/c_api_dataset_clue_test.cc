@@ -15,7 +15,7 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::GlobalContext;

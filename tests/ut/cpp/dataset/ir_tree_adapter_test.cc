@@ -17,8 +17,8 @@
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "common/common.h"
 #include "minddata/dataset/core/tensor_row.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 // IR non-leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_LITE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_LITE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_LITE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_LITE_H_
 
 #include <map>
 #include <memory>
@@ -23,8 +23,8 @@
 #include <utility>
 #include <vector>
 #include "include/api/status.h"
-#include "include/constants.h"
-#include "include/transforms.h"
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -91,32 +91,9 @@ class CenterCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief ResizePreserveAR TensorTransform.
-/// \notes Keep the original picture ratio and fill the rest.
-class ResizePreserveAR final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] height The height of image output value after resizing.
-  /// \param[in] width The width of image output value after resizing.
-  /// \param[in] img_orientation Angle method of image rotation.
-  ResizePreserveAR(int32_t height, int32_t width, int32_t img_orientation = 0);
-
-  /// \brief Destructor.
-  ~ResizePreserveAR() = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief RGB2GRAY TensorTransform.
 /// \notes Convert RGB image or color image to grayscale image
-class RGB2GRAY : public TensorTransform {
+class RGB2GRAY final : public TensorTransform {
  public:
   /// \brief Constructor.
   RGB2GRAY() = default;
@@ -267,6 +244,29 @@ class Resize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief ResizePreserveAR TensorTransform.
+/// \notes Keep the original picture ratio and fill the rest.
+class ResizePreserveAR final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] height The height of image output value after resizing.
+  /// \param[in] width The width of image output value after resizing.
+  /// \param[in] img_orientation Angle method of image rotation.
+  ResizePreserveAR(int32_t height, int32_t width, int32_t img_orientation = 0);
+
+  /// \brief Destructor.
+  ~ResizePreserveAR() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Rotate TensorTransform.
 /// \notes Rotate the input image using a specified angle id.
 class Rotate final : public TensorTransform {
@@ -289,4 +289,4 @@ class Rotate final : public TensorTransform {
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_LITE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_VISION_LITE_H_

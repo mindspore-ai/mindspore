@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"

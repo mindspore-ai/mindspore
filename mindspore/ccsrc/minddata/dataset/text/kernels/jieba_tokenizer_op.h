@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include "cppjieba/Jieba.hpp"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 

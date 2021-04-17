@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
