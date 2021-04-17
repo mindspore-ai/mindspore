@@ -49,13 +49,20 @@ Dataset used: [imagenet](http://www.image-net.org/)
 The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
+## [Learned Step Size Quantization](#contents)
+
+Inspired by paper [Learned Step Size Quantization](https://arxiv.org/abs/1902.08153)
+, we proposed an optimize option, whose quantization scale is learned during the fine-tune process.
+This feature has good benefits for low bits quantization scenarios, which is referred to as LSQ.
+Users are free to choose whether to use the LEARNED_SCALE optimize option for quantization.
+
 # [Environment Requirements](#contents)
 
-- Hardware:Ascend
-    - Prepare hardware environment with Ascend.
+- Hardware (Ascend/GPU)
+    - Prepare hardware environment with Ascend or GPU.
 - Framework
   - [MindSpore](https://www.mindspore.cn/install/en)
-- For more information, please check the resources below
+- For more information, please check the resources below:
   - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
   - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
@@ -67,8 +74,10 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ├── mobileNetv2_quant
   ├── Readme.md     # descriptions about MobileNetV2-Quant
   ├── scripts
-  │   ├──run_train.sh   # shell script for train on Ascend
-  │   ├──run_infer.sh    # shell script for evaluation on Ascend
+  │   ├──run_train.sh    # shell script for train on Ascend or GPU
+  │   ├──run_infer.sh    # shell script for evaluation on Ascend or GPU
+  │   ├──run_lsq_train.sh    # shell script for train (using the LEARNED_SCALE optimize option) on Ascend or GPU
+  │   ├──run_lsq_infer.sh    # shell script for evaluation (using the LEARNED_SCALE optimize option) on Ascend or GPU
   ├── src
   │   ├──config.py      # parameter configuration
   │   ├──dataset.py     # creating dataset
@@ -85,7 +94,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 Parameters for both training and evaluation can be set in config.py
 
-- config for MobileNetV2-quant, ImageNet2012 dataset
+- config for MobileNetV2-quant, ImageNet2012 dataset（We take the environment configuration of ascend as an example here, and you will get more detail in src/config.py）
 
   ```python
   'num_classes': 1000       # the number of classes in the dataset
@@ -111,15 +120,44 @@ Parameters for both training and evaluation can be set in config.py
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
+For quantization aware training (default):
+
 - bash run_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
 - bash run_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
+
+For Learned Step Size Quantization:
+
+- bash run_lsq_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]
+- bash run_lsq_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]
+
+`PRETRAINED_CKPT_PATH`  is optional. If it is given, quantization is based on the specified pre training ckpt file. We recommend users to execute quantization based on the pre training ckpt file.
+
+`RANK_TABLE_FILE` is HCCL configuration file when running on Ascend.
+> The common restrictions on using the distributed service are as follows. For details, see the HCCL documentation.
+>
+> - In a single-node system, a cluster of 1, 2, 4, or 8 devices is supported. In a multi-node system, a cluster of 8 x N devices is supported.
+> - Each host has four devices numbered 0 to 3 and four devices numbered 4 to 7 deployed on two different networks. During training of 2 or 4 devices, the devices must be connected and clusters cannot be created across networks.
 
 ### Launch
 
 ``` bash
-  # training example
-  >>> bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
-  >>> bash run_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
+  # training example for quantization aware training (default)
+  python：
+          Ascend:  python train.py --device_target Ascend --dataset_path ~/imagenet/train/
+          GPU:  python train.py --device_target GPU --dataset_path ~/imagenet/train/
+  shell：
+          Ascend: bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
+          GPU: bash run_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
+
+  # training example for Learned Step Size Quantization
+  python：
+          Ascend:  python train.py --device_target Ascend --dataset_path ~/imagenet/train/ \
+                   --pre_trained ~/mobilenet.ckpt --optim_option "LEARNED_SCALE"
+          GPU:  python train.py --device_target GPU --dataset_path ~/imagenet/train/ \
+                --pre_trained ~/mobilenet.ckpt --optim_option "LEARNED_SCALE"
+  shell：
+          Ascend: bash run_lsq_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
+          GPU: bash run_lsq_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
 ```
 
 ### Result
@@ -138,16 +176,40 @@ epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
 
 ### Usage
 
-You can start training using python or shell scripts. The usage of shell scripts as follows:
+You can start evaluating using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: sh run_infer_quant.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+For quantization aware training (default):
+
+- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+
+For Learned Step Size Quantization:
+
+- Ascend: sh run_lsq_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: sh run_lsq_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
-``` bash
-# infer example
-  shell:
-      Ascend: sh run_infer_quant.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+```bash
+# training example for quantization aware training (default)
+python：
+       Ascend:  python eval.py --device_target Ascend --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
+       GPU:  python eval.py --device_target GPU --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
+
+shell:
+      Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+
+# training example for Learned Step Size Quantization
+python：
+       Ascend:  python eval.py --device_target Ascend --dataset_path ~/imagenet/val/ \
+                --checkpoint_path ~/train/mobilenet-60_1601.ckpt --optim_option "LEARNED_SCALE"
+       GPU:  python eval.py --device_target GPU --dataset_path ~/imagenet/val/ \
+             --checkpoint_path ~/train/mobilenet-60_1601.ckpt --optim_option "LEARNED_SCALE"
+
+shell:
+      Ascend: sh run_lsq_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: sh run_lsq_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
 ```
 
 > checkpoint can be produced in training process.
@@ -160,45 +222,58 @@ Inference result will be stored in the example path, you can find result like th
 result: {'acc': 0.71976314102564111}
 ```
 
+## [Model Export](#contents)
+
+```shell
+python export.py --checkpoint_path [CKPT_PATH] --file_format [EXPORT_FORMAT] --device_target [PLATFORM] --optim_option [OptimizeOption]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+`OptimizeOption` should be in ["QAT", "LEARNED_SCALE"].
+
 # [Model description](#contents)
 
 ## [Performance](#contents)
 
 ### Training Performance
 
-| Parameters                 | MobilenetV2                                                |
-| -------------------------- | ---------------------------------------------------------- |
-| Model Version              | V2                                                         |
-| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8               |
-| uploaded Date              | 06/06/2020                                                 |
-| MindSpore Version          | 0.3.0                                                      |
-| Dataset                    | ImageNet                                                   |
-| Training Parameters        | src/config.py                                              |
-| Optimizer                  | Momentum                                                   |
-| Loss Function              | SoftmaxCrossEntropy                                        |
-| outputs                    | ckpt file                                                  |
-| Loss                       | 1.913                                                      |
-| Accuracy                   |                                                            |
-| Total time                 | 16h                                                        |
-| Params (M)                 | batch_size=192, epoch=60                                   |
-| Checkpoint for Fine tuning |                                                            |
-| Model for inference        |                                                            |
+| Parameters                 | MobilenetV2                                       | MobilenetV2                                       |
+| -------------------------- | --------------------------------------------------| --------------------------------------------------|
+| Model Version              | V2                                                | V2                                                |
+| Optimize Option            | QAT                                               | LEARNED_SCALE                                     |
+| Quantization Strategy      | W:8bit, A:8bit                                    | W:4bit (The first and last layers are 8bit), A:8bit|
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8     | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8     |
+| uploaded Date              | 06/06/2020                                        | 04/30/2021                                        |
+| MindSpore Version          | 0.3.0                                             | 1.3.0                                             |
+| Dataset                    | ImageNet                                          | ImageNet                                          |
+| Training Parameters        | src/config.py                                     | src/config.py                                     |
+| Optimizer                  | Momentum                                          | Momentum                                          |
+| Loss Function              | SoftmaxCrossEntropy                               | SoftmaxCrossEntropy                               |
+| outputs                    | ckpt file                                         | ckpt file                                         |
+| Loss                       | 1.913                                             |                                                   |
+| Accuracy                   |                                                   |                                                   |
+| Total time                 | 16h                                               |                                                   |
+| Params (M)                 | batch_size=192, epoch=60                          | batch_size=192, epoch=40                          |
+| Checkpoint for Fine tuning |                                                   |                                                   |
+| Model for inference        |                                                   |                                                   |
 
 #### Evaluation Performance
 
-| Parameters                 |                               |
-| -------------------------- | ----------------------------- |
-| Model Version              | V2                            |
-| Resource                   | Ascend 910; OS Euler2.8                     |
-| uploaded Date              | 06/06/2020                    |
-| MindSpore Version          | 0.3.0                         |
-| Dataset                    | ImageNet, 1.2W                |
-| batch_size                 | 130(8P)                       |
-| outputs                    | probability                   |
-| Accuracy                   | ACC1[71.78%] ACC5[90.90%]     |
-| Speed                      | 200ms/step                    |
-| Total time                 | 5min                          |
-| Model for inference        |                               |
+| Parameters                 |                               |                               |
+| -------------------------- | ----------------------------- | ----------------------------- |
+| Model Version              | V2                            | V2                            |
+| Optimize Option            | QAT                           | LEARNED_SCALE                 |
+| Quantization Strategy      | W:8bit, A:8bit                | W:4bit (The first and last layers are 8bit), A:8bit|
+| Resource                   | Ascend 910; OS Euler2.8       | Ascend 910; OS Euler2.8       |
+| uploaded Date              | 06/06/2020                    | 04/30/2021                    |
+| MindSpore Version          | 0.3.0                         | 1.3.0                         |
+| Dataset                    | ImageNet, 1.2W                | ImageNet, 1.2W                |
+| batch_size                 | 130(8P)                       |                               |
+| outputs                    | probability                   | probability                   |
+| Accuracy                   | ACC1[71.78%] ACC5[90.90%]     |                               |
+| Speed                      | 200ms/step                    |                               |
+| Total time                 | 5min                          |                               |
+| Model for inference        |                               |                               |
 
 # [Description of Random Situation](#contents)
 

@@ -59,13 +59,20 @@ MobileNetV2总体网络架构如下：
 
 ## 混合精度
 
-采用[混合精度](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html)
+的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
+
+## 量化步长可学习的量化感知训练
+
+参考论文[Learned Step Size Quantization](https://arxiv.org/abs/1902.08153)
+对量化感知训练进优化，量化步长由训练学习得到，该特性对低比特量化场景有较好收益，下述中简称为LSQ。
+用户可自由选择是否使用LSQ量化方案进行量化。
 
 # 环境要求
 
-- 硬件：昇腾处理器（Ascend）
-    - 使用昇腾处理器来搭建硬件环境。
+- 硬件  (Ascend/GPU)
+    - 使用Ascend或GPU来搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源
@@ -80,8 +87,10 @@ MobileNetV2总体网络架构如下：
 ├── mobileNetv2_quant
   ├── Readme.md     # MobileNetV2-Quant相关描述
   ├── scripts
-  │   ├──run_train.sh   # 使用昇腾处理器进行训练的shell脚本
-  │   ├──run_infer.sh    # 使用昇腾处理器进行评估的shell脚本
+  │   ├──run_train.sh    # 使用Ascend或GPU进行训练的shell脚本
+  │   ├──run_infer.sh    # 使用Ascend或GPU进行评估的shell脚本
+  │   ├──run_lsq_train.sh    # 使用Ascend或GPU进行LSQ训练的shell脚本
+  │   ├──run_lsq_infer.sh    # 使用Ascend或GPU进行LSQ评估的shell脚本
   ├── src
   │   ├──config.py      # 参数配置
   │   ├──dataset.py     # 创建数据集
@@ -91,14 +100,14 @@ MobileNetV2总体网络架构如下：
   │   ├──utils.py       # 提供监控模块
   ├── train.py      # 训练脚本
   ├── eval.py       # 评估脚本
-  ├── export.py     # 导出检查点文件到air/onnx中
+  ├── export.py     # 导出检查点文件到air/mindir中
 ```
 
 ## 脚本参数
 
 在config.py中可以同时配置训练参数和评估参数。
 
-- 配置MobileNetV2-quant和ImageNet2012数据集。
+- 配置MobileNetV2-quant和ImageNet2012数据集（以Ascend环境配置为例，详见src/config.py ）。
 
   ```python
   'num_classes':1000       # 数据集类数
@@ -124,15 +133,42 @@ MobileNetV2总体网络架构如下：
 
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
+传统量化感知训练（默认）：
+
 - bash run_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
+
 - bash run_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
+
+量化步长可学习的量化感知训练：
+
+- bash run_lsq_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]
+
+- bash run_lsq_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]
+
+ `PRETRAINED_CKPT_PATH` 是可选择的选项，如果用户配置该选项，则基于用户指定的预训练模型进行量化，我们更推荐用户基于预训练模型量化。
+
+ `RANK_TABLE_FILE` 是在Ascned上运行分布式任务时HCCL的配置文件。
 
 ### 启动
 
 ``` bash
-  # 训练示例
-  >>> bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
-  >>> bash run_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
+  # 训练示例-传统量化感知训练（默认）
+  python：
+          Ascend:  python train.py --device_target Ascend --dataset_path ~/imagenet/train/
+          GPU:  python train.py --device_target GPU --dataset_path ~/imagenet/train/
+  shell：
+          Ascend: bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
+          GPU: bash run_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
+
+  # 训练示例-量化步长可学习的量化感知训练  
+  python：
+          Ascend:  python train.py --device_target Ascend --dataset_path ~/imagenet/train/ \
+                   --pre_trained ~/mobilenet.ckpt --optim_option "LEARNED_SCALE"
+          GPU:  python train.py --device_target GPU --dataset_path ~/imagenet/train/ \
+                --pre_trained ~/mobilenet.ckpt --optim_option "LEARNED_SCALE"
+  shell：
+          Ascend: bash run_lsq_train.sh Ascend ~/hccl_4p_0123_x.x.x.x.json ~/imagenet/train/ ~/mobilenet.ckpt
+          GPU: bash run_lsq_train.sh GPU 1,2 ~/imagenet/train/ ~/mobilenet.ckpt
 ```
 
 ### 结果
@@ -151,16 +187,38 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 ### 用法
 
-使用python或shell脚本开始训练。shell脚本的使用方法如下：
+使用python或shell脚本开始评估。shell脚本的使用方法如下：
 
-- Ascend: sh run_infer_quant.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+传统量化感知训练（默认）：
+
+- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+
+量化步长可学习的量化感知训练：
+
+- Ascend: sh run_lsq_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: sh run_lsq_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### 启动
 
 ```bash
-# 推理示例
-  shell:
-      Ascend: sh run_infer_quant.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+# 推理示例-传统量化感知训练（默认）
+python：
+       Ascend:  python eval.py --device_target Ascend --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
+       GPU:  python eval.py --device_target GPU --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
+shell:
+      Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+
+# 推理示例-量化步长可学习的量化感知训练
+python：
+       Ascend:  python eval.py --device_target Ascend --dataset_path ~/imagenet/val/ \
+                --checkpoint_path ~/train/mobilenet-60_1601.ckpt --optim_option "LEARNED_SCALE"
+       GPU:  python eval.py --device_target GPU --dataset_path ~/imagenet/val/ \
+             --checkpoint_path ~/train/mobilenet-60_1601.ckpt --optim_option "LEARNED_SCALE"
+shell:
+      Ascend: sh run_lsq_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: sh run_lsq_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
 ```
 
 > 训练过程中可以生成检查点。
@@ -173,45 +231,59 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 result:{'acc':0.71976314102564111}
 ```
 
+## 模型导出
+
+```shell
+python export.py --checkpoint_path [CKPT_PATH] --file_format [EXPORT_FORMAT] --device_target [PLATFORM] --optim_option [OptimizeOption]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
+
+`OptimizeOption` 可选 ["QAT", "LEARNED_SCALE"].
+
 # 模型描述
 
 ## 性能
 
 ### 训练性能
 
-| 参数                 | MobilenetV2                                                |
-| -------------------------- | ---------------------------------------------------------- |
-| 模型版本              | V2                                                         |
-| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8               |
-| 上传日期              | 2020-06-06                                                 |
-| MindSpore版本          | 0.3.0                                                      |
-| 数据集                    | ImageNet                                                   |
-| 训练参数        | src/config.py                                              |
-| 优化器                  | Momentum                                                   |
-| 损失函数              | Softmax交叉熵                                        |
-| 输出                    | ckpt文件                                                  |
-| 损失                       | 1.913                                                      |
-| 准确率                   |                                                            |
-| 总时长                 | 16 h                                                        |
-| 参数(M)                 | batch_size=192, epoch=60                                   |
-| 微调检查点 |                                                            |
-| 推理模型        |                                                            |
+| 参数            | MobilenetV2                             |   MobilenetV2                |
+| ---------------| ----------------------------------------| ---------------------------- |
+| 模型版本         | V2                                     | V2                          |
+| 量化方案         | 传统量化感知训练（默认）                    |量化步长可学习的量化感知训练      |
+| 量化策略         | W:8bit, A:8bit                          | W:4bit (首尾层为 8bit), A:8bit|
+| 资源            | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  |Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
+| 上传日期         | 2020-06-06                             |2021-04-30                   |
+| MindSpore版本   | 0.3.0                                  |1.3.0                         |
+| 数据集          | ImageNet                               |ImageNet                      |
+| 训练参数         | src/config.py                          |src/config.py                 |
+| 优化器           | Momentum                              |Momentum                      |
+| 损失函数         | Softmax交叉熵                          |Softmax交叉熵                  |
+| 输出            | ckpt文件                               |ckpt文件                       |
+| 损失            | 1.913                                 |                              |
+| 准确率          |                                       |                              |
+| 总时长          | 16 h                                  |                              |
+| 参数(M)         | batch_size=192, epoch=60             |batch_size=192, epoch=40      |
+| 微调检查点       |                                      |                              |
+| 推理模型        |                                       |                               |
 
 #### 评估性能
 
-| 参数                 |                               |
-| -------------------------- | ----------------------------- |
-| 模型版本              | V2                            |
-| 资源                   | Ascend 910；系统 Euler2.8                     |
-| 上传日期              | 2020-06-06                    |
-| MindSpore版本          | 0.3.0                         |
-| 数据集                    | ImageNet, 1.2W                |
-| 批次大小                 | 130（8P）                       |
-| 输出                    | 概率                   |
-| 准确率                   | ACC1[71.78%] ACC5[90.90%]     |
-| 速度                      | 200毫秒/步                    |
-| 总时长                 | 5分钟                          |
-| 推理模型        |                               |
+| 参数                |                           |                               |
+| ------------------ | --------------------------|------------------------------ |
+| 模型版本            | V2                         |V2                            |
+| 量化方案            | 传统量化感知训练（默认）       |量化步长可学习的量化感知训练       |
+| 量化策略            | W:8bit, A:8bit             | W:4bit (首尾层为 8bit), A:8bit|
+| 资源               | Ascend 910；系统 Euler2.8   |  Ascend 910；系统 Euler2.8    |
+| 上传日期            | 2020-06-06                |2021-04-30                    |
+| MindSpore版本      | 0.3.0                     |  1.3.0                       |
+| 数据集             | ImageNet, 1.2W            |  ImageNet, 1.2W              |
+| 批次大小           | 130（8P）                  |                              |
+| 输出              | 概率                       |  概率                         |
+| 准确率            | ACC1[71.78%] ACC5[90.90%] |                              |
+| 速度              | 200毫秒/步                |                              |
+| 总时长            | 5分钟                     |                              |
+| 推理模型          |                          |                               |
 
 # 随机情况说明
 

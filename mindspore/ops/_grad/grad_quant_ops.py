@@ -200,3 +200,30 @@ def get_bprop_wts_arq(self):
         return (dout, zeros_like(w_min), zeros_like(w_max))
 
     return bprop
+
+
+@bprop_getters.register(Q.FakeLearnedScaleQuantPerLayer)
+def get_bprop_fakequant_with_learned_scale_perlayer(self):
+    """Generate bprop for FakeLearnedScaleQuantPerLayer for GPU"""
+    op = Q.FakeLearnedScaleQuantPerLayerGrad(quant_delay=self.quant_delay,
+                                             neg_trunc=self.neg_trunc)
+
+    def bprop(x, x_alpha, x_quant_max, out, dout):
+        dx, dalpha = op(dout, x, x_alpha, x_quant_max)
+        return dx, dalpha, zeros_like(x_quant_max)
+
+    return bprop
+
+
+@bprop_getters.register(Q.FakeLearnedScaleQuantPerChannel)
+def get_bprop_fakequant_with_learned_scale_perchannel(self):
+    """Generate bprop for FakeLearnedScaleQuantPerChannel for GPU"""
+    op = Q.FakeLearnedScaleQuantPerChannelGrad(quant_delay=self.quant_delay,
+                                               neg_trunc=self.neg_trunc,
+                                               channel_axis=self.channel_axis)
+
+    def bprop(x, x_alpha, x_quant_max, out, dout):
+        dx, dalpha = op(dout, x, x_alpha, x_quant_max)
+        return dx, dalpha, zeros_like(x_quant_max)
+
+    return bprop

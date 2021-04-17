@@ -30,6 +30,7 @@ import mindspore.context as context
 from .normalization import BatchNorm2d
 from .activation import get_activation, ReLU
 from ..cell import Cell
+from ... import nn
 from ...ops.operations import _quant_ops as Q
 
 __all__ = [
@@ -215,6 +216,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     r"""
     Quantization aware operation which provides the fake quantization observer function on data with min and max.
 
+    The detail of the quantization mode `DEFAULT` is described as below:
+
     The running min/max :math:`x_{min}` and :math:`x_{max}` are computed as:
 
     .. math::
@@ -269,10 +272,59 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
             output = u_X * scale + u_{min}
         \end{array}
 
+    The detail of the quantization mode `LEARNED_SCALE` is described as below:
+
+    The fake quant output is computed as:
+
+    .. math::
+
+        \bar{X}=\left\{\begin{matrix}
+        clip\left ( \frac{X}{maxq},0,1\right ) \qquad \quad if\quad neg\_trunc\\
+        clip\left ( \frac{X}{maxq},-1,1\right )\qquad \ if\quad otherwise
+        \end{matrix}\right. \\
+
+        output=\frac{floor\left ( \bar{X}\ast  Q_{max}+0.5  \right ) \ast scale }{Q_{max}}
+
+    where X is the input tensor.
+    where :math:`Q_{max}` (quant_max) is decided by quant_dtype and neg_trunc, for example, if quant_dtype=INT8
+    and neg_trunc works, :math:`Q_{max} = 256` , otherwise math:`Q_{max} = 127`.
+
+    The maxq is updated by training, and its gradient is calculated as follows:
+
+    .. math::
+
+        \frac{\partial \ output}{\partial \ maxq} & = \left\{\begin{matrix}
+        -\frac{X}{maxq}+\left \lfloor \frac{X}{maxq} \right \rceil \qquad if\quad bound_{lower}< \frac{X}{maxq}< 1\\
+        -1 \qquad \quad \qquad \quad if\quad \frac{X}{maxq}\le bound_{lower}\\
+         1  \qquad \quad \qquad \quad if\quad \frac{X}{maxq}\ge  1 \qquad \quad
+        \end{matrix}\right. \\
+
+        bound_{lower}=
+        \end{align}\left\{\begin{matrix}
+         0\qquad \quad if\quad neg\_trunc\\
+        -1\qquad if\quad otherwise
+        \end{matrix}\right.
+
+    Then minq is computed as:
+
+    .. math::
+
+        minq=\left\{\begin{matrix}
+        0  \qquad \qquad \quad if\quad neg\_trunc\\
+        -maxq\qquad if\quad otherwise
+        \end{matrix}\right.
+
+    When exporting, the scale and zero point zp is computed as:
+
+    .. math::
+
+        scale=\frac{maxq}{quant\_max} ,\quad zp=0 \\
+
+    zp is equal to 0 consistently, due to the LEARNED_SCALE`s symmetric nature.
 
     Args:
-        min_init (int, float): The initialized min value. Default: -6.
-        max_init (int, float): The initialized max value. Default: 6.
+        min_init (int, float, list): The initialized min value. Default: -6.
+        max_init (int, float, list): The initialized max value. Default: 6.
         ema (bool): The exponential Moving Average algorithm updates min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         per_channel (bool):  Quantization granularity based on layer or on channel. Default: False.
@@ -282,7 +334,9 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
-
+        neg_trunc (bool): Whether the quantization algorithm uses nagetive truncation or not. Default: False.
+        mode (string): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
+            Default: ("DEFAULT")
     Inputs:
         - **input** (Tensor) - The input of FakeQuantWithMinMaxObserver.
 
@@ -290,7 +344,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If `min_init` or `max_init` is neither int nor float.
+        TypeError: If `min_init` or `max_init` is not int, float or list.
         TypeError: If `quant_delay` is not an int.
         TypeError: If `min_init` is not less than `max_init`.
         TypeError: If `quant_delay` is not greater than or equal to 0.
@@ -318,18 +372,24 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
                  quant_dtype=QuantDtype.INT8,
                  symmetric=False,
                  narrow_range=False,
-                 quant_delay=0):
+                 quant_delay=0,
+                 neg_trunc=False,
+                 mode="DEFAULT"):
         """Initialize FakeQuantWithMinMaxObserver"""
         super(FakeQuantWithMinMaxObserver, self).__init__(quant_dtype=quant_dtype, per_channel=per_channel,
                                                           symmetric=symmetric, narrow_range=narrow_range,
                                                           num_channels=num_channels)
-        Validator.check_value_type("min_init", min_init, [int, float], type(self).__name__)
-        Validator.check_value_type("max_init", max_init, [int, float], type(self).__name__)
-        Validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
+        Validator.check_value_type("min_init", min_init, [int, float, list], type(self).__name__)
+        Validator.check_value_type("max_init", max_init, [int, float, list], type(self).__name__)
+        if isinstance(max_init, (int, float)) and isinstance(min_init, (int, float)):
+            Validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
+        elif not np.greater(max_init, min_init).all():
+            raise ValueError("`min_init` is not less than `max_init`, please reset the initial value.")
         Validator.check_non_negative_int(quant_delay, 'quant_delay')
         self.min_init = min_init
         self.max_init = max_init
         self.quant_dtype = quant_dtype
+        self.num_bits = quant_dtype.num_bits
         self.ema = ema
         self.ema_decay = ema_decay
         self.per_channel = per_channel
@@ -338,43 +398,124 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         self.quant_delay = quant_delay
         self.symmetric = symmetric
         self.narrow_range = narrow_range
+        self.neg_trunc = neg_trunc
+        self.mode = mode
         self.is_ascend = context.get_context('device_target') == "Ascend"
+        self.Neg = P.Neg()
 
-        # init tensor min and max for fake quantized operation
-        if self.per_channel:
-            min_array = np.array([self.min_init] * self.num_channels).astype(np.float32)
-            max_array = np.array([self.max_init] * self.num_channels).astype(np.float32)
-        else:
-            min_array = np.array([self.min_init]).astype(np.float32)
-            max_array = np.array([self.max_init]).astype(np.float32)
-        self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
-        self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
+        min_array = self._get_init_array(self.min_init)
+        max_array = self._get_init_array(self.max_init)
 
-        # init fake quant relative op
-        if self.per_channel:
-            quant_fun = partial(Q.FakeQuantPerChannel, channel_axis=self.channel_axis)
-            ema_fun = partial(Q.MinMaxUpdatePerChannel, channel_axis=self.channel_axis)
-        else:
-            quant_fun = Q.FakeQuantPerLayer
-            ema_fun = Q.MinMaxUpdatePerLayer
+        if self.mode == "DEFAULT":
+            # init tensor min and max for fake quantized operation
+            self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
+            self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
 
-        self.ema_update = ema_fun(ema=self.ema, ema_decay=self.ema_decay)
-        if self.is_ascend:
-            self.fake_quant_train = quant_fun(num_bits=self.quant_dtype.num_bits,
-                                              symmetric=self.symmetric,
-                                              narrow_range=self.narrow_range,
-                                              quant_delay=self.quant_delay)
-            self.fake_quant_infer = self.fake_quant_train
-        else:
+            # init fake quant relative op
+            if self.per_channel:
+                quant_fun = partial(Q.FakeQuantPerChannel, channel_axis=self.channel_axis)
+                ema_fun = partial(Q.MinMaxUpdatePerChannel, channel_axis=self.channel_axis)
+            else:
+                quant_fun = Q.FakeQuantPerLayer
+                ema_fun = Q.MinMaxUpdatePerLayer
+
+            self.ema_update = ema_fun(ema=self.ema, ema_decay=self.ema_decay)
+            if self.is_ascend:
+                self.fake_quant_train = quant_fun(num_bits=self.quant_dtype.num_bits,
+                                                  symmetric=self.symmetric,
+                                                  narrow_range=self.narrow_range,
+                                                  quant_delay=self.quant_delay)
+                self.fake_quant_infer = self.fake_quant_train
+            else:
+                quant_fun = partial(quant_fun,
+                                    ema=self.ema,
+                                    ema_decay=ema_decay,
+                                    num_bits=self.quant_dtype.num_bits,
+                                    symmetric=self.symmetric,
+                                    narrow_range=self.narrow_range,
+                                    quant_delay=self.quant_delay)
+                self.fake_quant_train = quant_fun(training=True)
+                self.fake_quant_infer = quant_fun(training=False)
+        elif self.mode == "LEARNED_SCALE":
+            if not self.symmetric:
+                raise ValueError("The 'LEARNED_SCALE' mode only support symmetric quant, please set symmetric to True.")
+            if self.neg_trunc:
+                min_array = self._get_init_array(0)
+                self.narrow_range = False
+            elif not self.narrow_range:
+                raise ValueError("The 'LEARNED_SCALE' mode only support narrow_range=True config, "
+                                 "except for neg_trunc=True scenario.")
+
+            self._calculate_quant_max()
+
+            self.minq = Parameter(Tensor(min_array), name='minq')
+            self.maxq = Parameter(Tensor(max_array), name='maxq')
+            self.quant_max = Parameter(Tensor(np.array([self._quant_max]).astype(np.float32)),
+                                       name="quant_max", requires_grad=False)
+
+            # init fake quant relative op
+            if self.per_channel:
+                quant_fun = partial(Q.FakeLearnedScaleQuantPerChannel, channel_axis=self.channel_axis)
+            else:
+                quant_fun = Q.FakeLearnedScaleQuantPerLayer
+
             quant_fun = partial(quant_fun,
-                                ema=self.ema,
-                                ema_decay=ema_decay,
-                                num_bits=self.quant_dtype.num_bits,
-                                symmetric=self.symmetric,
-                                narrow_range=self.narrow_range,
-                                quant_delay=self.quant_delay)
+                                quant_delay=self.quant_delay,
+                                neg_trunc=self.neg_trunc)
             self.fake_quant_train = quant_fun(training=True)
             self.fake_quant_infer = quant_fun(training=False)
+        else:
+            raise ValueError("Invalid mode, currently only valid for `DEFAULT` and `LEARNED_SCALE` mode.")
+
+    def reset(self, quant_dtype=QuantDtype.INT8, min_init=-6, max_init=6):
+        r"""
+        Reset the quant max parameter (eg. 256) and the initial value of the minq parameter and maxq parameter,
+        this function is currently only valid for `LEARNED_SCALE` mode.
+        """
+        if self.mode == "LEARNED_SCALE":
+            self.quant_dtype = quant_dtype
+            self.num_bits = quant_dtype.num_bits
+            self._calculate_quant_max()
+            if self.neg_trunc:
+                min_init = 0
+
+            self.min_init = min_init
+            self.max_init = max_init
+            min_array = self._get_init_array(self.min_init)
+            max_array = self._get_init_array(self.max_init)
+            self.minq.set_data(Tensor(min_array))
+            self.maxq.set_data(Tensor(max_array))
+            self.quant_max.set_data(Tensor(np.array([self._quant_max]).astype(np.float32)))
+        else:
+            raise ValueError("The `reset` function is currently only valid for `LEARNED_SCALE` mode.")
+
+    def _get_init_array(self, init_date):
+        """
+        Convert the initial value to array.
+        """
+        if isinstance(init_date, list) and self.per_channel and len(init_date) != self.num_channels:
+            raise ValueError("The length of the min_init/max_init list shuold be equal to num_channels for "
+                             "perchannel quant scenario, but get {}".format(len(init_date)))
+        if isinstance(init_date, list) and not self.per_channel and len(init_date) != 1:
+            raise ValueError("The length of the min_init/max_init list shuold be 1 for perlayer quant "
+                             "scenario, but get {}".format(len(init_date)))
+
+        if isinstance(init_date, list):
+            min_max_array = np.array(init_date).astype(np.float32)
+        elif self.per_channel and not isinstance(init_date, list):
+            min_max_array = np.array([init_date] * self.num_channels).astype(np.float32)
+        else:
+            min_max_array = np.array([init_date]).astype(np.float32)
+        return min_max_array
+
+    def _calculate_quant_max(self):
+        """
+        The quantization range is calculated according to num_bits.
+        """
+        if not self.neg_trunc:
+            self._quant_max = (1 << (self.num_bits - 1)) - 1
+        else:
+            self._quant_max = (1 << self.num_bits) - 1
 
     def extend_repr(self):
         s = 'quant_dtype={}, symmetric={}, narrow_range={}, ema={}({}), per_channel={}({}, {}), ' \
@@ -385,13 +526,21 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         return s
 
     def construct(self, x):
-        if self.training:
-            min_up, max_up = self.ema_update(x, self.minq, self.maxq)
-            self.minq = min_up
-            self.maxq = max_up
-            out = self.fake_quant_train(x, self.minq, self.maxq)
+        if self.mode == "LEARNED_SCALE":
+            if self.training:
+                out = self.fake_quant_train(x, self.maxq, self.quant_max)
+                if not self.neg_trunc:
+                    self.minq = self.Neg(self.maxq)
+            else:
+                out = self.fake_quant_infer(x, self.maxq, self.quant_max)
         else:
-            out = self.fake_quant_infer(x, self.minq, self.maxq)
+            if self.training:
+                min_up, max_up = self.ema_update(x, self.minq, self.maxq)
+                self.minq = min_up
+                self.maxq = max_up
+                out = self.fake_quant_train(x, self.minq, self.maxq)
+            else:
+                out = self.fake_quant_infer(x, self.minq, self.maxq)
         return out
 
 
@@ -539,12 +688,13 @@ class Conv2dBnFoldQuantOneConv(Cell):
                                          requires_grad=False)
 
         # initialize fake ops
-        self.fake_quant_weight = quant_config.weight(min_init=-6,
-                                                     max_init=6,
-                                                     ema=False,
+        self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
+        self.freeze_bn = False
+        if self.fake_quant_weight.mode == "LEARNED_SCALE":
+            self.freeze_bn = True
         self.bn_train = P.BatchNorm(is_training=True, epsilon=self.eps,
                                     momentum=self.momentum, data_format=self.format)
 
@@ -579,6 +729,9 @@ class Conv2dBnFoldQuantOneConv(Cell):
         if self.fake:
             weight = self.fake_quant_weight(weight)
         conv = self.conv(x, weight)
+
+        if self.freeze_bn:
+            return conv + self.reshape((self.beta - self.gamma * self.moving_mean / running_std), (1, -1, 1, 1))
         scale_factor = self.reshape(scale_factor, (1, -1, 1, 1))
         if self.enable_default_train:
             scale_factor = P.Reciprocal()(scale_factor)
@@ -730,9 +883,7 @@ class Conv2dBnFoldQuant(Cell):
                                          requires_grad=False)
 
         # initialize fake ops
-        self.fake_quant_weight = quant_config.weight(min_init=-6,
-                                                     max_init=6,
-                                                     ema=False,
+        self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
@@ -886,9 +1037,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         weight_shape = [out_channels, in_channels // group, *self.kernel_size]
         channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
-        self.fake_quant_weight = quant_config.weight(min_init=-6,
-                                                     max_init=6,
-                                                     ema=False,
+        self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
@@ -1005,9 +1154,7 @@ class Conv2dQuant(Cell):
                              dilation=self.dilation,
                              group=self.group)
         channel_axis = 0
-        self.fake_quant_weight = quant_config.weight(min_init=-6,
-                                                     max_init=6,
-                                                     ema=False,
+        self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
@@ -1111,9 +1258,7 @@ class DenseQuant(Cell):
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
             raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
         self.activation_flag = self.activation is not None
-        self.fake_quant_weight = quant_config.weight(min_init=-6,
-                                                     max_init=6,
-                                                     ema=False,
+        self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=0,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
@@ -1198,6 +1343,8 @@ class ActQuant(_QuantActivation):
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
         super(ActQuant, self).__init__()
+        act_class = activation.__class__
+        act_list = [nn.ReLU, nn.ReLU6]
         self.act = Validator.check_isinstance("activation", activation, Cell)
         self.fake_before = Validator.check_bool(fake_before, "fake_before")
         if self.fake_before:
@@ -1206,11 +1353,14 @@ class ActQuant(_QuantActivation):
                                                                  ema=ema,
                                                                  ema_decay=ema_decay,
                                                                  quant_dtype=quant_dtype)
+
+        neg_trunc = bool(act_class in act_list)
         self.fake_quant_act = quant_config.activation(min_init=-6,
                                                       max_init=6,
                                                       ema=ema,
                                                       ema_decay=ema_decay,
-                                                      quant_dtype=quant_dtype)
+                                                      quant_dtype=quant_dtype,
+                                                      neg_trunc=neg_trunc)
 
     def construct(self, x):
         if self.fake_before:

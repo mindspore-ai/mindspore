@@ -15,9 +15,10 @@
 """Quantization utils."""
 
 import numpy as np
+from mindspore._checkparam import Validator
+from ... import nn
 
-
-__all__ = ["load_nonquant_param_into_quant_net"]
+__all__ = ["load_nonquant_param_into_quant_net", "query_quant_layers"]
 
 
 def cal_quantization_params(input_min,
@@ -25,7 +26,8 @@ def cal_quantization_params(input_min,
                             data_type,
                             num_bits=8,
                             symmetric=False,
-                            narrow_range=False):
+                            narrow_range=False,
+                            neg_trunc=False):
     r"""
     Calculate quantization params for scale and zero point.
 
@@ -36,6 +38,7 @@ def cal_quantization_params(input_min,
         num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
+        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: False.
 
     Returns:
         scale (numpy.ndarray): quantization param.
@@ -65,17 +68,14 @@ def cal_quantization_params(input_min,
         quant_min = quant_min + 1
 
     # calculate scale
-    if symmetric:
+    if symmetric and not neg_trunc:
         input_max = np.maximum(-input_min, input_max)
         input_min = -input_max
     scale = (input_max - input_min) / (quant_max - quant_min)
 
     # calculate zero point
-    if symmetric:
-        zp = np.zeros(input_min.shape)
-    else:
-        zp_double = quant_min - input_min / scale
-        zp = np.floor(zp_double + 0.5)
+    zp_double = quant_min - input_min / scale
+    zp = np.floor(zp_double + 0.5)
 
     return scale, zp
 
@@ -135,16 +135,16 @@ def weight2int(data, scale, zero_point, data_type, num_bits=8, narrow_range=Fals
 
 
 def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
-    """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMax`."""
+    """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMaxObserver`."""
     minq = cell.minq.data.asnumpy()
     maxq = cell.maxq.data.asnumpy()
-    op = cell.fake_quant_infer
 
     scale, zp = cal_quantization_params(
         minq, maxq, data_type,
-        num_bits=op.num_bits,
-        symmetric=op.symmetric,
-        narrow_range=op.narrow_range)
+        num_bits=cell.num_bits,
+        symmetric=cell.symmetric,
+        narrow_range=cell.narrow_range,
+        neg_trunc=cell.neg_trunc)
     return scale, zp, maxq, minq
 
 
@@ -267,6 +267,80 @@ def without_fold_batchnorm(weight, cell_quant):
     return weight, bias
 
 
+def compute_KL_threshold(data, bitwidth):
+    r"""
+    Using KL-J Distance to calculate the clip threshold.
+
+    Args:
+        - **data** (NumpyArray) - Data observed to calculate the threshold for quantization,
+        - **bitwidth** (QuantDtype) - The datatype of quantization.
+    Outputs:
+        Tensor with Shape 1. Threshold to calculate the data.
+    """
+    bitwidth = bitwidth.num_bits
+
+    data_min = 0
+    data_max = np.abs(data).max()
+    if data_max < 1e-5:
+        return 1e-5
+    hist, bin_edges = np.histogram(np.abs(data), bins='sqrt', range=(data_min, data_max), density=True)
+    hist = hist / np.sum(hist)
+    cumsum = np.cumsum(hist)
+    bit_pow_range = pow(2, int(bitwidth) - 1)
+    threshold = []
+    scaling_factor = []
+    kl = []
+    if bit_pow_range + 1 > len(bin_edges) - 1:
+        th_layer_out = bin_edges[-1]
+        return float(th_layer_out)
+    for i in range(bit_pow_range + 1, len(bin_edges), 1):
+        threshold_tmp = (i + 0.5) * (bin_edges[1] - bin_edges[0])
+        threshold = np.concatenate((threshold, [threshold_tmp]))
+        scaling_factor_tmp = threshold_tmp / (bit_pow_range - 1)
+        scaling_factor = np.concatenate((scaling_factor, [scaling_factor_tmp]))
+        # forward interpolation
+        cumsum_tmp = np.copy(cumsum)
+        cumsum_tmp[(i - 1):] = 1
+        fwd_x = np.linspace(0.0, 1.0, bit_pow_range)
+        fwd_xp = np.linspace(0.0, 1.0, i)
+        fwd_fp = cumsum_tmp[:i]
+        forward_interp = np.interp(fwd_x, fwd_xp, fwd_fp)
+        # backward interpolation
+        bwd_x = np.linspace(0.0, 1.0, i)
+        bwd_xp = np.linspace(0.0, 1.0, bit_pow_range)
+        bwd_fp = forward_interp
+        backward_interp = np.interp(bwd_x, bwd_xp, bwd_fp)
+        cumsum_tmp[:i] = backward_interp
+        kl_tmp = np.sum((cumsum - cumsum_tmp) * np.log2(cumsum / cumsum_tmp))  # Kullback-Leibler-J
+        kl = np.concatenate((kl, [kl_tmp]))
+    th_layer_out = threshold[np.argmin(kl)]
+    threshold = float(th_layer_out)
+    if threshold < 1e-5:
+        threshold = 1e-5
+    return threshold
+
+
+def query_quant_layers(network):
+    r"""
+    Query the network's quantization strategy of each quantized layer and print it to the screen, note that all the
+    quantization layers are queried before graph compile optimization in the graph mode, thus may be appear some
+    redundant quantized layers, which are not exist in practical execution.
+
+    Input:
+        network (Cell): input network
+
+    Returns:
+        None
+    """
+    network = Validator.check_isinstance("network", network, nn.Cell)
+    tplt = "{0:60}\t{1:10}"
+    for cell_and_name in network.cells_and_names():
+        cell_name = cell_and_name[0]
+        cell = cell_and_name[1]
+        if isinstance(cell, nn.FakeQuantWithMinMaxObserver):
+            print(tplt.format(cell_name, cell.quant_dtype))
+
+
 def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_params=None):
     r"""
     Load fp32 model parameters into quantization model.
@@ -287,7 +361,8 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
         'moving_mean': iter(list(filter(lambda item: item[0].endswith('moving_mean'), params_dict.items()))),
         'moving_variance': iter(list(filter(lambda item: item[0].endswith('moving_variance'), params_dict.items()))),
         'minq': iter(list(filter(lambda item: item[0].endswith('minq'), params_dict.items()))),
-        'maxq': iter(list(filter(lambda item: item[0].endswith('maxq'), params_dict.items())))
+        'maxq': iter(list(filter(lambda item: item[0].endswith('maxq'), params_dict.items()))),
+        'quant_max': iter(list(filter(lambda item: item[0].endswith('quant_max'), params_dict.items())))
     }
 
     for name, param in quant_model.parameters_and_names():
@@ -300,3 +375,26 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
         if value_param:
             param.set_data(value_param[1].data)
             print(f'init model param {name} with checkpoint param {value_param[0]}')
+
+
+    # Perform KL_init when learned scale quantization is executed.
+    for cell_and_name in quant_model.cells_and_names():
+        cell = cell_and_name[1]
+        if isinstance(cell, (nn.Conv2dBnFoldQuantOneConv, nn.Conv2dBnFoldQuant, nn.Conv2dBnWithoutFoldQuant,
+                             nn.Conv2dQuant, nn.DenseQuant)) and cell.fake_quant_weight.mode == "LEARNED_SCALE":
+            subcell_weight_para = cell.weight.data.asnumpy()
+            if hasattr(cell, 'gamma'):
+                scale_factor = (cell.gamma.data.asnumpy() /
+                                np.sqrt(cell.moving_variance.data.asnumpy() + 1e-5))
+                subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
+
+            if cell.fake_quant_weight.per_channel:
+                max_init = [compute_KL_threshold(weight_para_each, cell.fake_quant_weight.quant_dtype)
+                            for weight_para_each in subcell_weight_para]
+                min_init = [-x for x in max_init]
+            else:
+                max_init = [compute_KL_threshold(subcell_weight_para, cell.fake_quant_weight.quant_dtype)]
+                min_init = [-x for x in max_init]
+
+            cell.fake_quant_weight.reset(quant_dtype=cell.fake_quant_weight.quant_dtype,
+                                         min_init=min_init, max_init=max_init)

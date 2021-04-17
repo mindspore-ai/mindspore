@@ -56,6 +56,7 @@ class ExportToQuantInferNetwork:
         self.input_zero_point = round(mean)
         self.data_type = mstype.int8
         self.network = copy.deepcopy(network)
+        self.network_bk = copy.deepcopy(network)
         self.all_parameters = {p.name: p for p in self.network.get_parameters()}
         self.get_inputs_table(inputs)
         self.mean = mean
@@ -83,6 +84,7 @@ class ExportToQuantInferNetwork:
         """convert network's quant subcell to deploy subcell"""
         # Calculate the scale and zero point
         w_minq_name = cell_core.fake_quant_weight.minq.name
+        w_maxq_name = cell_core.fake_quant_weight.maxq.name
         np_type = mstype.dtype_to_nptype(self.data_type)
         param_dict = dict()
         param_dict["filter_maxq"] = None
@@ -102,16 +104,23 @@ class ExportToQuantInferNetwork:
                 quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
 
         info = self.quant_info_table.get(w_minq_name, None)
+        if not info:
+            info = self.quant_info_table.get(w_maxq_name, None)
         if info:
-            fake_quant_a_in_op, minq_name = info
+            _, minq_name = info
             if minq_name == 'input':
                 scale_a_in, zp_a_in, param_dict["input_maxq"], param_dict["input_minq"] = \
                     self.input_scale, self.input_zero_point, 'None', 'None'
             else:
-                maxq = self.all_parameters[minq_name[:-4] + "maxq"]
-                minq = self.all_parameters[minq_name]
+                fake_quant_a_in_prefix = minq_name[:-5]
+                cells = self.network_bk.cells_and_names()
+                for cell in cells:
+                    if cell[0].endswith(fake_quant_a_in_prefix):
+                        fake_quant_a_in = cell[1]
+                        break
+
                 scale_a_in, zp_a_in, param_dict["input_maxq"], param_dict["input_minq"] = \
-                    quant_utils.scale_zp_max_min_from_data(fake_quant_a_in_op, minq, maxq, np_type)
+                    quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_in, np_type)
         else:
             # skip quant layer
             scale_a_in, zp_a_in = 1.0, 0.0
@@ -140,9 +149,8 @@ class ExportToQuantInferNetwork:
         weight_b = weight
         bias_b = bias
         # apply the quant
-        fake_quant_weight_op = cell_core.fake_quant_weight.fake_quant_infer
-        weight = quant_utils.weight2int(weight, scale_w, zp_w, np_type, fake_quant_weight_op.num_bits,
-                                        fake_quant_weight_op.narrow_range)
+        weight = quant_utils.weight2int(weight, scale_w, zp_w, np_type, cell_core.fake_quant_weight.num_bits,
+                                        cell_core.fake_quant_weight.narrow_range)
         if bias is not None:
             bias = Tensor(bias / scale_a_in / scale_w, mstype.int32)
 

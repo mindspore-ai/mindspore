@@ -21,6 +21,7 @@ from mindspore import Tensor
 from mindspore import nn
 from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.compression.export import quant_export
+from mindspore.compression.quant.quantizer import OptimizeOption
 from model_zoo.official.cv.mobilenetv2_quant.src.mobilenetV2 import mobilenetV2
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -95,6 +96,59 @@ def test_qat_mobile_per_channel_ff():
     quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[False, False],
                                           symmetric=[True, False])
+    network = quantizer.quantize(network)
+    # should load the checkpoint. mock here
+    network.init_parameters_data()
+    quant_export.export(network, img, file_name="quant.pb")
+
+
+@pytest.mark.skip(reason="no `te.lang.cce` in ut env")
+def test_lsq_lenet():
+    img = Tensor(np.ones((32, 1, 32, 32)).astype(np.float32))
+    net = LeNet5()
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, True],
+                                          narrow_range=[True, True],
+                                          freeze_bn=0,
+                                          quant_delay=0,
+                                          one_conv_fold=True,
+                                          optimize_option=OptimizeOption.LEARNED_SCALE)
+    net = quantizer.quantize(net)
+    # should load the checkpoint. mock here
+    net.init_parameters_data()
+    quant_export.export(net, img, file_name="quant.pb")
+
+
+@pytest.mark.skip(reason="no `te.lang.cce` in ut env")
+def test_lsq_mobile_per_channel_tf():
+    network = mobilenetV2(num_classes=1000)
+    img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, True],
+                                          narrow_range=[True, True],
+                                          freeze_bn=0,
+                                          quant_delay=0,
+                                          one_conv_fold=True,
+                                          optimize_option=OptimizeOption.LEARNED_SCALE)
+    network = quantizer.quantize(network)
+    # should load the checkpoint. mock here
+    network.init_parameters_data()
+    quant_export.export(network, img, file_name="quant.pb")
+
+@pytest.mark.skip(reason="no `te.lang.cce` in ut env")
+def test_lsq_mobile_per_channel_ff():
+    network = mobilenetV2(num_classes=1000)
+    img = Tensor(np.ones((1, 3, 224, 224)).astype(np.float32))
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[False, False],
+                                          symmetric=[True, True],
+                                          narrow_range=[True, True],
+                                          freeze_bn=0,
+                                          quant_delay=0,
+                                          one_conv_fold=True,
+                                          optimize_option=OptimizeOption.LEARNED_SCALE)
     network = quantizer.quantize(network)
     # should load the checkpoint. mock here
     network.init_parameters_data()

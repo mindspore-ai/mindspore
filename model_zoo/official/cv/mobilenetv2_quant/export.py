@@ -19,26 +19,45 @@ import numpy as np
 
 import mindspore
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
+from mindspore.compression.common import QuantDtype
 from mindspore.compression.quant import QuantizationAwareTraining
-
+from mindspore.compression.quant.quantizer import OptimizeOption
 from src.mobilenetV2 import mobilenetV2
+from src.mobilenetv2_mix_quant import mobilenetv2_mix_quant
 from src.config import config_quant
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
 parser.add_argument('--device_target', type=str, default=None, help='Run device target')
+parser.add_argument('--optim_option', type=str, default="QAT", help='OptimizeOption')
 args_opt = parser.parse_args()
 
 if __name__ == '__main__':
     cfg = config_quant(args_opt.device_target)
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=False)
-    # define fusion network
-    network = mobilenetV2(num_classes=cfg.num_classes)
-    # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
+
+    if args_opt.optim_option == "LEARNED_SCALE":
+        # define fusion network
+        network = mobilenetv2_mix_quant(num_classes=cfg.num_classes)
+        # convert fusion network to quantization aware network
+        quant_optim_otions = OptimizeOption.LEARNED_SCALE
+        quantizer = QuantizationAwareTraining(bn_fold=True,
+                                              per_channel=[True, False],
+                                              symmetric=[True, True],
+                                              narrow_range=[True, True],
+                                              quant_dtype=(QuantDtype.INT4, QuantDtype.INT8),
+                                              freeze_bn=0,
+                                              quant_delay=0,
+                                              one_conv_fold=True,
+                                              optimize_option=quant_optim_otions)
+    else:
+        # define fusion network
+        network = mobilenetV2(num_classes=cfg.num_classes)
+        # convert fusion network to quantization aware network
+        quantizer = QuantizationAwareTraining(bn_fold=True,
+                                              per_channel=[True, False],
+                                              symmetric=[True, False])
     network = quantizer.quantize(network)
     # load checkpoint
     param_dict = load_checkpoint(args_opt.checkpoint_path)

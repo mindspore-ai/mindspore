@@ -29,6 +29,9 @@ class OptimizeOption(Enum):
     # using quantization aware training
     QAT = "QAT"
 
+    # using the learned scale quantization
+    LEARNED_SCALE = "LEARNED_SCALE"
+
     def __str__(self):
         return self.value
 
