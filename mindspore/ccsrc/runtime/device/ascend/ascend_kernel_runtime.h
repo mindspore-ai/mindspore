@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_KERNEL_RUNTIME_H_
+#include <dirent.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -88,6 +89,9 @@ class AscendKernelRuntime : public KernelRuntime {
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
   static void TaskFailCallback(rtExceptionInfo *task_fail_info);
   void ReportProfilingData();
+  static bool DeleteDumpDir(std::string path);
+  static int DeleteDumpFile(std::string path);
+  static std::string GetRealPath(std::string path);
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
