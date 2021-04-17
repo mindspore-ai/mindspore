@@ -53,9 +53,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() {
   if (is_ascend) {
     // Remove redundant Cast(bias, fp16) for Matmul input
     pm->AddPass(std::make_shared<CastMatmulFusion>());
-
-    // Reorder TransData-Cast to Cast-TransData
-    pm->AddPass(std::make_shared<ReorderOps>());
   }
 
   // Spread the MakeTuple input of UpdateState
@@ -78,6 +75,9 @@ PassManagerPtr GraphKernelOptimizer::Cluster() {
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage3_highlevelopt1");
+  // Reorder Cast and Type-insensitive node
+  pm->AddPass(std::make_shared<ReorderOps>());
+
   // normalize the Reduce axis
   pm->AddPass(std::make_shared<AxisNormalizer>());
 

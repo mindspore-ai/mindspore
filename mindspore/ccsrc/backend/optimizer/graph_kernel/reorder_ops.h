@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_REORDER_OPS_H_
 
 #include <memory>
+#include <vector>
 #include "backend/optimizer/common/pass.h"
 
 namespace mindspore {
@@ -27,6 +28,16 @@ class ReorderOps : public Pass {
   ReorderOps() : Pass("reorder_ops") {}
   ~ReorderOps() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  void SetTypeInsensitiveNodeInputs(const CNodePtr &node, const std::vector<size_t> &indexes,
+                                    const std::vector<AnfNodePtr> &new_input_in_indexes,
+                                    std::vector<AnfNodePtr> *new_inputs);
+  bool ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
+                                      const CNodePtr &node);
+  bool ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
+                                    const CNodePtr &node);
+  bool ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph);
 };
 using ReorderOpsPtr = std::shared_ptr<ReorderOps>;
 }  // namespace opt
