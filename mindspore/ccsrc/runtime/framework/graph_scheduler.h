@@ -34,6 +34,7 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::session::KernelWithIndex;
+using KernelMapActor = std::unordered_map<std::string, KernelActorPtr>;
 
 enum class GraphExecutionStrategy {
   kPipeline,  // The actor running is triggered only by data.
@@ -118,6 +119,8 @@ class GraphScheduler {
   void LinkControlArrowForKernelActor(KernelActor *from_actor, LoopCountActor *to_actor, const KernelGraphPtr &graph,
                                       GraphExecutionStrategy strategy);
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const KernelGraphPtr &graph);
+  void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node,
+                                   const KernelMapActor &kernel_actors_map);
 
   // Check whether the actor set is valid.
   bool CheckActorValid(const ActorSet *actor_set) const;

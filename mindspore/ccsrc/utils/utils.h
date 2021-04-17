@@ -461,6 +461,9 @@ constexpr auto kDependInputSize = 3;
 // index define of UpdateState
 constexpr auto kUpdateStateStateInput = 1;
 constexpr auto kUpdateStateRealInput = 2;
+// index define of Load
+constexpr auto kLoadRealInput = 1;
+constexpr auto kLoadStateInput = 2;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";

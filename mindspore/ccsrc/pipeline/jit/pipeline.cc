@@ -1051,6 +1051,19 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
 
   auto backend = compile::CreateBackend();
   MS_EXCEPTION_IF_NULL(backend);
+  // The data set graph compiling and running of mindRT.
+  if (compile::IsMindRTUsed()) {
+    ConfigManager::GetInstance().set_iter_num(size);
+    const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
+    MS_EXCEPTION_IF_NULL(mindrt_backend);
+    auto graph_id = mindrt_backend->CompileGraph({app_init});
+    VectorRef args;
+    if (need_run) {
+      (void)mindrt_backend->RunGraph(graph_id, args);
+    }
+    return true;
+  }
+
   auto convert_fn = backend->convert_fn();
   MS_EXCEPTION_IF_NULL(convert_fn);
   // Convert CNodeList to LinConvertResult.
