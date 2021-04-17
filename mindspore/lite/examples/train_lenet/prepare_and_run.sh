@@ -95,6 +95,7 @@ mv mindspore-* msl/
 cp -r $MNIST_DATA_PATH ${PACKAGE}/dataset || exit 1
 
 echo "==========Compiling============"
+make clean
 make TARGET=${TARGET}
  
 # Copy the executable to the package
