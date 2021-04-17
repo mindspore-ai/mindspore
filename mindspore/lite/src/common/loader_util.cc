@@ -24,18 +24,18 @@
 
 namespace mindspore {
 namespace lite {
-int SoLoader::Open(const char *SoPath, int mode) {
-  if ((strlen(SoPath)) >= PATH_MAX) {
+int SoLoader::Open(const char *so_path, int mode) {
+  if ((strlen(so_path)) >= PATH_MAX) {
     MS_LOG(ERROR) << "path is too long";
     return RET_ERROR;
   }
   char resolved_path[PATH_MAX];
-  auto resolve_res = realpath(SoPath, resolved_path);
+  auto resolve_res = realpath(so_path, resolved_path);
   if (resolve_res == nullptr) {
-    MS_LOG(ERROR) << "PATH NOT EXITS";
+    MS_LOG(ERROR) << "path not exist";
     return RET_ERROR;
   }
-  handler_ = dlopen(SoPath, mode);
+  handler_ = dlopen(so_path, mode);
   if (handler_ == nullptr) {
     MS_LOG(ERROR) << "open path failed";
     return RET_ERROR;
@@ -43,7 +43,7 @@ int SoLoader::Open(const char *SoPath, int mode) {
   return RET_OK;
 }
 
-void *SoLoader::GetFunc(const char *FuncName) { return dlsym(handler_, FuncName); }
+void *SoLoader::GetFunc(const char *func_name) { return dlsym(handler_, func_name); }
 
 int SoLoader::Close() {
   auto close_res = dlclose(handler_);
