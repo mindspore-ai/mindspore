@@ -29,9 +29,7 @@ namespace ops {
 AbstractBasePtr ReciprocalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto reciprocal_prim = primitive->cast<PrimReciprocalPtr>();
-  MS_EXCEPTION_IF_NULL(reciprocal_prim);
-  auto prim_name = reciprocal_prim->name();
+  auto prim_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

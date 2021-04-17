@@ -37,9 +37,7 @@ int64_t Assert::get_summarize() const {
 AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto Assert_prim = primitive->cast<PrimAssertPtr>();
-  MS_EXCEPTION_IF_NULL(Assert_prim);
-  auto op_name = Assert_prim->name();
+  auto op_name = primitive->name();
   TypePtr condition;
   if (!(input_args[0]->BuildType()->type_id() == kObjectTypeTensorType)) {
     auto condition_value = GetValue<std::vector<bool>>(input_args[0]->BuildValue());

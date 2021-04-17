@@ -36,9 +36,7 @@ float SmoothL1LossGrad::get_beta() const {
 AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto smooth_prim = primitive->cast<PrimSmoothL1LossGradPtr>();
-  MS_EXCEPTION_IF_NULL(smooth_prim);
-  auto prim_name = smooth_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("smooth_l1_loss_grad_infer", input_args.size(), kEqual, 3, prim_name);
 
   // Infer shape

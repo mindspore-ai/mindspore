@@ -30,19 +30,13 @@ void DepthToSpace::set_block_size(const int64_t block_size) {
   this->AddAttr(kBlockSize, MakeValue(block_size));
 }
 
-int64_t DepthToSpace::get_block_size() const {
-  auto value_ptr = GetAttr(kBlockSize);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t DepthToSpace::get_block_size() const { return GetValue<int64_t>(GetAttr(kBlockSize)); }
 void DepthToSpace::set_format(const Format &format) {
   int64_t f = format;
   this->AddAttr(kFormat, MakeValue(f));
 }
 
-Format DepthToSpace::get_format() const {
-  auto value_ptr = GetAttr(kFormat);
-  return Format(GetValue<int64_t>(value_ptr));
-}
+Format DepthToSpace::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
 
 void DepthToSpace::Init(const int64_t block_size, const Format &format) {
   this->set_block_size(block_size);
@@ -52,9 +46,7 @@ void DepthToSpace::Init(const int64_t block_size, const Format &format) {
 AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim = primitive->cast<PrimDepthToSpacePtr>();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -63,18 +55,19 @@ AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   MS_EXCEPTION_IF_NULL(input_x);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  if (prim->get_format() == NHWC) {
+  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
+  if (format == NHWC) {
     x_shape = {x_shape[0], x_shape[3], x_shape[1], x_shape[2]};
   }
   CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kEqual, 4, prim_name);
-  int64_t block_size = prim->get_block_size();
+  int64_t block_size = GetValue<int64_t>(primitive->GetAttr(kBlockSize));
   CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)", x_shape[1] % (block_size * block_size),
                                      kEqual, 0, prim_name);
   auto out_shape = x_shape;
   out_shape[1] /= block_size * block_size;
   out_shape[2] *= block_size;
   out_shape[3] *= block_size;
-  if (prim->get_format() == NHWC) {
+  if (format == NHWC) {
     out_shape = {out_shape[0], out_shape[2], out_shape[3], out_shape[1]};
   }
   auto ret = input_x->Broaden();

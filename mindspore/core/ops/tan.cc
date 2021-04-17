@@ -29,9 +29,7 @@ namespace ops {
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto tan_prim = primitive->cast<PrimTanPtr>();
-  MS_EXCEPTION_IF_NULL(tan_prim);
-  auto prim_name = tan_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("tan_infer", input_args.size(), kEqual, 1, prim_name);
 
   // Infer Shape

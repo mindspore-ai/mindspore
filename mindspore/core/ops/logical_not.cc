@@ -24,18 +24,14 @@ namespace ops {
 namespace {
 abstract::ShapePtr LogicalNotInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto LogicalNot_prim = primitive->cast<PrimLogicalNotPtr>();
-  MS_EXCEPTION_IF_NULL(LogicalNot_prim);
-  auto op_name = LogicalNot_prim->name();
+  auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr LogicalNotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto LogicalNot_prim = prim->cast<PrimLogicalNotPtr>();
-  MS_EXCEPTION_IF_NULL(LogicalNot_prim);
-  auto op_name = LogicalNot_prim->name();
+  auto op_name = prim->name();
   auto infer_dtype = input_args[0]->BuildType();
   std::set<TypePtr> local_bool = {kBool};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);

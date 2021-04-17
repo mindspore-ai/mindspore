@@ -20,18 +20,13 @@ namespace mindspore {
 namespace ops {
 void Squeeze::Init(const std::vector<int64_t> &axis) { set_axis(axis); }
 void Squeeze::set_axis(const std::vector<int64_t> &axis) { AddAttr(kAxis, MakeValue(axis)); }
-std::vector<int64_t> Squeeze::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> Squeeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto squeeze_prim = primitive->cast<PrimSqueezePtr>();
-  MS_EXCEPTION_IF_NULL(squeeze_prim);
-  auto op_name = squeeze_prim->name();
-  auto axis = squeeze_prim->get_axis();
+  auto op_name = primitive->name();
+  auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   std::vector<int64_t> infer_shape;
 
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->GetShapeTrack(), op_name);

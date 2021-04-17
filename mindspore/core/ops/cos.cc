@@ -24,9 +24,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto cos_prim = primitive->cast<PrimCos>();
-  MS_EXCEPTION_IF_NULL(cos_prim);
-  auto prim_name = cos_prim->name();
+  auto prim_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

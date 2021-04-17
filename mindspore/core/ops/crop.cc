@@ -43,9 +43,7 @@ std::vector<int64_t> Crop::get_offsets() const {
 AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto crop_prim = primitive->cast<PrimCrop>();
-  MS_EXCEPTION_IF_NULL(crop_prim);
-  auto prim_name = crop_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);

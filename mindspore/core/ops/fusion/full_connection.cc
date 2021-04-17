@@ -21,22 +21,13 @@
 namespace mindspore {
 namespace ops {
 void FullConnection::set_has_bias(const bool has_bias) { this->AddAttr(kHasBias, MakeValue(has_bias)); }
-bool FullConnection::get_has_bias() const {
-  auto value_ptr = GetAttr(kHasBias);
-  return GetValue<bool>(value_ptr);
-}
+bool FullConnection::get_has_bias() const { return GetValue<bool>(GetAttr(kHasBias)); }
 
 void FullConnection::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
-int64_t FullConnection::get_axis() const {
-  auto value_ptr = GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t FullConnection::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 void FullConnection::set_use_axis(const bool use_axis) { this->AddAttr(kUseAxis, MakeValue(use_axis)); }
-bool FullConnection::get_use_axis() const {
-  auto value_ptr = GetAttr(kUseAxis);
-  return GetValue<bool>(value_ptr);
-}
+bool FullConnection::get_use_axis() const { return GetValue<bool>(GetAttr(kUseAxis)); }
 
 void FullConnection::set_activation_type(const ActivationType &activation_type) {
   int64_t swi;
@@ -57,26 +48,26 @@ void FullConnection::Init(const bool has_bias, const int64_t axis, const bool us
 AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto full_prim = primitive->cast<PrimFullConnectionPtr>();
-  MS_EXCEPTION_IF_NULL(full_prim);
-  auto prim_name = full_prim->name();
+  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   auto input0 = input_args[0];
   auto input1 = input_args[1];
   auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input0->BuildShape(), prim_name);
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input1->BuildShape(), prim_name);
-  auto prim_axis = full_prim->get_axis();
-  if (full_prim->get_has_bias()) {
+  auto prim_axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  auto has_bias = GetValue<bool>(primitive->GetAttr(kHasBias));
+  if (has_bias) {
     CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 3, prim_name);
   } else {
     CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 2, prim_name);
   }
-  if (full_prim->get_use_axis() && (prim_axis < 1 || prim_axis > (int64_t)input0_shape.size())) {
+  auto use_axis = GetValue<bool>(primitive->GetAttr(kUseAxis));
+  if (use_axis && (prim_axis < 1 || prim_axis > (int64_t)input0_shape.size())) {
     MS_EXCEPTION(ValueError) << "Full Connection axis invalid";
   }
   int64_t new_k = 1;
-  if (full_prim->get_use_axis()) {
+  if (use_axis) {
     for (size_t t = prim_axis; t < input0_shape.size(); t++) {
       new_k *= input0_shape[t];
     }
@@ -86,7 +77,7 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   } else {
     new_k = input1_shape[1];
   }
-  if (full_prim->get_has_bias()) {
+  if (has_bias) {
     auto input2_shape =
       CheckAndConvertUtils::ConvertShapePtrToShape("input2_shape", input_args[2]->BuildShape(), prim_name);
     if (input2_shape[0] != input1_shape[0]) {
@@ -94,7 +85,7 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
     }
   }
   std::vector<int64_t> out_shape = {(int64_t)input0_shape.size()};
-  if (full_prim->get_use_axis()) {
+  if (use_axis) {
     out_shape.resize(prim_axis + 1);
     out_shape[prim_axis] = input1_shape[0];
   } else {

@@ -30,9 +30,7 @@ namespace ops {
 AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto expand_dims_prim = primitive->cast<PrimExpandDims>();
-  MS_EXCEPTION_IF_NULL(expand_dims_prim);
-  auto prim_name = expand_dims_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);

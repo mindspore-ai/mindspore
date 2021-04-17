@@ -24,9 +24,7 @@ namespace ops {
 AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto extract_prim = primitive->cast<PrimCustomExtractFeaturesPtr>();
-  MS_EXCEPTION_IF_NULL(extract_prim);
-  auto prim_name = extract_prim->name();
+  auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   // auto input = input_args[0];
 

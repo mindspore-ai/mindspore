@@ -30,9 +30,7 @@ AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisE
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto sigmoid_prim = primitive->cast<PrimSigmoidCrossEntropyWithLogitsGradPtr>();
-  MS_EXCEPTION_IF_NULL(sigmoid_prim);
-  auto prim_name = sigmoid_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("sigmoid_cross_entropy_with_logits_grad_infer", input_args.size(), kEqual, 3,
                                      prim_name);
 

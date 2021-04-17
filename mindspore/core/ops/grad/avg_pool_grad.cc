@@ -22,8 +22,6 @@ namespace ops {
 AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto AvgPoolGrad_prim = primitive->cast<PrimAvgPoolGradPtr>();
-  MS_EXCEPTION_IF_NULL(AvgPoolGrad_prim);
   MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());
   auto origin_input_shape = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
   auto tensor_type = input_args[1]->BuildType()->cast<TensorTypePtr>();

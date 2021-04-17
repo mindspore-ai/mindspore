@@ -31,37 +31,25 @@ void MaxPool::set_pad_mode(const PadMode &pad_mode) {
   this->AddAttr(kPadMode, MakeValue(swi));
 }
 
-PadMode MaxPool::get_pad_mode() const {
-  auto value_ptr = GetAttr(kPadMode);
-  return PadMode(GetValue<int64_t>(value_ptr));
-}
+PadMode MaxPool::get_pad_mode() const { return PadMode(GetValue<int64_t>(GetAttr(kPadMode))); }
 void MaxPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   this->AddAttr(kKernelSize,
                 MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
 }
 
-std::vector<int64_t> MaxPool::get_kernel_size() const {
-  auto value_ptr = GetAttr(kKernelSize);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> MaxPool::get_kernel_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kKernelSize)); }
 void MaxPool::set_strides(const std::vector<int64_t> &strides) {
   this->AddAttr(kStrides, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
 }
 
-std::vector<int64_t> MaxPool::get_strides() const {
-  auto value_ptr = GetAttr(kStrides);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> MaxPool::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr(kStrides)); }
 
 void MaxPool::set_format(const Format &format) {
   int64_t f = format;
   this->AddAttr(kFormat, MakeValue(f));
 }
 
-Format MaxPool::get_format() const {
-  auto value_ptr = GetAttr(kFormat);
-  return Format(GetValue<int64_t>(value_ptr));
-}
+Format MaxPool::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
 
 void MaxPool::set_pad(const std::vector<int64_t> &pad) { this->AddAttr(kPad, MakeValue(pad)); }
 

@@ -30,9 +30,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto zeroslike_prim = primitive->cast<PrimZerosLike>();
-  MS_EXCEPTION_IF_NULL(zeroslike_prim);
-  auto prim_name = zeroslike_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);

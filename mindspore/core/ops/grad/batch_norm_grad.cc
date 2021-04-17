@@ -47,9 +47,7 @@ bool BatchNormGrad::get_is_training() const {
 AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto BatchNormGrad_prim = primitive->cast<PrimBatchNormGradPtr>();
-  MS_EXCEPTION_IF_NULL(BatchNormGrad_prim);
-  auto op_name = BatchNormGrad_prim->name();
+  auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[1]);
   MS_EXCEPTION_IF_NULL(input_args[2]);
   MS_EXCEPTION_IF_NULL(input_args[3]);

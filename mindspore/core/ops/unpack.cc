@@ -20,22 +20,17 @@ namespace mindspore {
 namespace ops {
 void Unpack::Init(const int64_t axis) { this->set_axis(axis); }
 void Unpack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
-int64_t Unpack::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t Unpack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto unpack_prim = primitive->cast<PrimUnpackPtr>();
-  MS_EXCEPTION_IF_NULL(unpack_prim);
-  auto prim_name = unpack_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckSubClass("x", input_args[0]->BuildType(), {TypeIdToType(kObjectTypeTensorType)},
                                       prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   int64_t dim = x_shape.size();
-  int64_t axis = unpack_prim->get_axis();
+  int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   //  CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-dim, dim}, prim_name);
   if (axis < 0) {
     axis = axis + dim;

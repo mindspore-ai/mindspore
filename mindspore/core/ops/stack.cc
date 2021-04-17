@@ -21,9 +21,7 @@ namespace ops {
 namespace {
 abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto stack_prim = primitive->cast<PrimStackPtr>();
-  MS_EXCEPTION_IF_NULL(stack_prim);
-  auto prim_name = stack_prim->name();
+  auto prim_name = primitive->name();
 
   if (input_args.size() != 1) {
     MS_LOG(ERROR) << "Invalid output size:" << input_args.size();
@@ -46,7 +44,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
     }
   }
   std::vector<int64_t> infer_shape = input_shape;
-  infer_shape.insert(infer_shape.begin() + stack_prim->get_axis(), input_args.size());
+  infer_shape.insert(infer_shape.begin() + GetValue<int64_t>(primitive->GetAttr(kAxis)), input_args.size());
 
   auto infer_type0 = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   for (int64_t i = 1; i < (int64_t)input_args.size(); i++) {
@@ -64,10 +62,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
 
 void Stack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
 
-int64_t Stack::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t Stack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 void Stack::Init(const int64_t axis) { this->set_axis(axis); }
 

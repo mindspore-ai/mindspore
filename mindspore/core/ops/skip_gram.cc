@@ -23,9 +23,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto SkipGram_prim = primitive->cast<PrimSkipGramPtr>();
-  MS_EXCEPTION_IF_NULL(SkipGram_prim);
-  auto prim_name = SkipGram_prim->name();
+  auto prim_name = primitive->name();
   if (input_args.size() != 1) {
     MS_LOG(ERROR) << "Skip Gram should have one input";
   }

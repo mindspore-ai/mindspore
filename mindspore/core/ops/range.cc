@@ -34,10 +34,7 @@ int64_t Range::get_d_type() const {
 
 void Range::set_start(const int64_t start) { this->AddAttr(kStart, MakeValue(start)); }
 
-int64_t Range::get_start() const {
-  auto value_ptr = GetAttr(kStart);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t Range::get_start() const { return GetValue<int64_t>(GetAttr(kStart)); }
 
 void Range::set_limit(const int64_t limit) { this->AddAttr(kLimit, MakeValue(limit)); }
 
@@ -63,10 +60,7 @@ void Range::Init(const int64_t d_type, const int64_t start, const int64_t limit,
 AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim = primitive->cast<PrimRangePtr>();
-  MS_EXCEPTION_IF_NULL(prim);
   int64_t shape_size = 0;
-  TypeId dtype;
   if (input_args.size() == 3) {
     MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());
     MS_EXCEPTION_IF_NULL(input_args[1]->BuildValue());
@@ -74,7 +68,7 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
     auto start_tensor = input_args[0]->BuildValue()->cast<tensor::TensorPtr>();
     auto limit_tensor = input_args[1]->BuildValue()->cast<tensor::TensorPtr>();
     auto delta_tensor = input_args[2]->BuildValue()->cast<tensor::TensorPtr>();
-    dtype = static_cast<TypeId>(start_tensor->data_type_c());
+    auto dtype = start_tensor->data_type();
     switch (dtype) {
       case kNumberTypeInt:
       case kNumberTypeInt32: {
@@ -97,9 +91,9 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
       }
     }
   } else {
-    int64_t start = prim->get_start();
-    int64_t limit = prim->get_limit();
-    int64_t delta = prim->get_delta();
+    int64_t start = GetValue<int64_t>(primitive->GetAttr(kStart));
+    int64_t limit = GetValue<int64_t>(primitive->GetAttr(kLimit));
+    int64_t delta = GetValue<int64_t>(primitive->GetAttr(kDelta));
     shape_size =
       std::max(static_cast<int64_t>(std::ceil(LongToDouble(limit - start) / delta)), static_cast<int64_t>(0));
   }

@@ -50,23 +50,18 @@ std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::ve
 
 void Pack::set_axis(const int64_t &axis) { AddAttr(kAxis, MakeValue(axis)); }
 
-int64_t Pack::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 void Pack::Init(const int64_t &axis) { this->set_axis(axis); }
 
 AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto pack_prim = primitive->cast<PrimPackPtr>();
-  MS_EXCEPTION_IF_NULL(pack_prim);
-  auto prim_name = pack_prim->name();
+  auto prim_name = primitive->name();
 
   auto x_shapes = input_args[0]->BuildShape()->cast<abstract::TupleShapePtr>()->shape();
   auto x_types = input_args[0]->BuildType()->cast<TuplePtr>()->elements();
-  auto all_shape = _get_pack_shape(x_shapes, x_types, pack_prim->get_axis(), prim_name);
+  auto all_shape = _get_pack_shape(x_shapes, x_types, GetValue<int64_t>(primitive->GetAttr(kAxis)), prim_name);
   auto tensor_type = x_types[0]->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto data_type = tensor_type->element();

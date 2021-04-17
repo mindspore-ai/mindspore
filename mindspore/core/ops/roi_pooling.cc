@@ -27,10 +27,7 @@ namespace mindspore {
 namespace ops {
 void ROIPooling::set_pooled_h(const int64_t pooled_h) { this->AddAttr(kPooledH, MakeValue(pooled_h)); }
 
-int64_t ROIPooling::get_pooled_h() const {
-  auto value_ptr = GetAttr(kPooledH);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t ROIPooling::get_pooled_h() const { return GetValue<int64_t>(GetAttr(kPooledH)); }
 
 void ROIPooling::set_pooled_w(const int64_t pooled_w) { this->AddAttr(kPooledW, MakeValue(pooled_w)); }
 
@@ -54,9 +51,7 @@ void ROIPooling::Init(const int64_t pooled_h, const int64_t pooled_w, const floa
 AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto roi_prim = primitive->cast<PrimROIPoolingPtr>();
-  MS_EXCEPTION_IF_NULL(roi_prim);
-  auto prim_name = roi_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("roi_pooling_infer", input_args.size(), kEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
@@ -65,8 +60,8 @@ AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto output_data_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
 
   // Infer shape
-  auto new_h = roi_prim->get_pooled_h();
-  auto new_w = roi_prim->get_pooled_w();
+  auto new_h = GetValue<int64_t>(primitive->GetAttr(kPooledH));
+  auto new_w = GetValue<int64_t>(primitive->GetAttr(kPooledW));
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShape("roi_shape", input_args[1]->BuildShape(), prim_name);

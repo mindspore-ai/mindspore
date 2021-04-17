@@ -25,12 +25,10 @@ namespace ops {
 AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto Where_prim = primitive->cast<PrimWherePtr>();
-  MS_EXCEPTION_IF_NULL(Where_prim);
   for (auto input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  auto op_name = Where_prim->name();
+  auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 3, op_name);
   auto input0_type_ = input_args[0]->BuildType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input0_type_);

@@ -35,18 +35,14 @@ namespace {
 abstract::ShapePtr DropoutGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto DropoutGrad_prim = primitive->cast<PrimDropoutGradPtr>();
-  MS_EXCEPTION_IF_NULL(DropoutGrad_prim);
-  auto op_name = DropoutGrad_prim->name();
+  auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto DropoutGrad_prim = prim->cast<PrimDropoutGradPtr>();
-  MS_EXCEPTION_IF_NULL(DropoutGrad_prim);
-  auto op_name = DropoutGrad_prim->name();
+  auto op_name = prim->name();
   auto mask_dtype = input_args[1]->BuildType();
   auto dy_dtype = input_args[0]->BuildType();
   CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_dtype, {kTensorType}, op_name);

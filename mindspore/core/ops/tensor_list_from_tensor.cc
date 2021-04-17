@@ -24,9 +24,7 @@ namespace {
 abstract::ShapePtr TensorListFromTensorInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto tensor_list_from_tensor_prim = primitive->cast<PrimTensorListFromTensorPtr>();
-  MS_EXCEPTION_IF_NULL(tensor_list_from_tensor_prim);
-  auto prim_name = tensor_list_from_tensor_prim->name();
+  auto prim_name = primitive->name();
   auto input0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input0 shape", input_args[0]->BuildShape(), prim_name);
   auto input1_shape =

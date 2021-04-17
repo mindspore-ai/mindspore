@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAudioSpectrogram = "AudioSpectrogram";
+int64_t Log2Ceil(int64_t length);
+int64_t GetFftLength(int64_t length);
 class AudioSpectrogram : public PrimitiveC {
  public:
   AudioSpectrogram() : PrimitiveC(kNameAudioSpectrogram) {}
@@ -39,8 +41,6 @@ class AudioSpectrogram : public PrimitiveC {
   int64_t get_window_size() const;
   int64_t get_stride() const;
   bool get_mag_square() const;
-  int64_t Log2Ceil(int64_t length);
-  int64_t GetFftLength(int64_t length);
 };
 AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args);

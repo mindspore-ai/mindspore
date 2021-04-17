@@ -30,10 +30,7 @@ void ReverseSequence::Init(const int64_t seq_dim, const int64_t batch_dim) {
 void ReverseSequence::set_seq_dim(const int64_t seq_dim) { this->AddAttr(kSeqDim, MakeValue(seq_dim)); }
 void ReverseSequence::set_batch_dim(const int64_t batch_dim) { this->AddAttr(kBatchDim, MakeValue(batch_dim)); }
 
-int64_t ReverseSequence::get_seq_dim() const {
-  auto value_ptr = this->GetAttr(kSeqDim);
-  return GetValue<int64_t>(value_ptr);
-}
+int64_t ReverseSequence::get_seq_dim() const { return GetValue<int64_t>(GetAttr(kSeqDim)); }
 int64_t ReverseSequence::get_batch_dim() const {
   auto value_ptr = this->GetAttr(kBatchDim);
   return GetValue<int64_t>(value_ptr);
@@ -41,9 +38,7 @@ int64_t ReverseSequence::get_batch_dim() const {
 AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto reverse_prim = primitive->cast<PrimReverseSequence>();
-  MS_EXCEPTION_IF_NULL(reverse_prim);
-  auto prim_name = reverse_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -53,8 +48,8 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   auto seq_lengths =
     CheckAndConvertUtils::ConvertShapePtrToShape("seq_lengths", input_args[1]->BuildShape(), prim_name);
-  auto seq_dim = reverse_prim->get_seq_dim();
-  auto batch_dim = reverse_prim->get_batch_dim();
+  auto seq_dim = GetValue<int64_t>(primitive->GetAttr(kSeqDim));
+  auto batch_dim = GetValue<int64_t>(primitive->GetAttr(kBatchDim));
   CheckAndConvertUtils::CheckInteger("seq_dim", seq_dim, kLessEqual, input_shape.size(), prim_name);
   CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kLessEqual, input_shape.size(), prim_name);
   CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kNotEqual, seq_dim, prim_name);

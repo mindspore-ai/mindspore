@@ -45,13 +45,11 @@ float CustomPredict::get_weight_threshold() const {
 AbstractBasePtr CustomPredictInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto CustomPredict_prim = primitive->cast<PrimCustomPredictPtr>();
-  MS_EXCEPTION_IF_NULL(CustomPredict_prim);
   for (const auto &input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
   std::vector<int64_t> shape;
-  shape.push_back(CustomPredict_prim->get_output_num());
+  shape.push_back(GetValue<int64_t>(primitive->GetAttr(kOutputNum)));
 
   auto output0 = std::make_shared<abstract::AbstractTensor>(kInt32, shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);

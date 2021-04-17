@@ -22,9 +22,7 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto prim = primitive->cast<PrimArgMaxPtr>();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto axis = prim->get_axis();
+  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto x_rank = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("argmax axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);

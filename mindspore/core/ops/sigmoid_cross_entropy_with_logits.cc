@@ -29,9 +29,7 @@ namespace ops {
 AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto sigmoid_prim = primitive->cast<PrimSigmoidCrossEntropyWithLogitsPtr>();
-  MS_EXCEPTION_IF_NULL(sigmoid_prim);
-  auto prim_name = sigmoid_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer", input_args.size(), kEqual, 2,
                                      prim_name);
 

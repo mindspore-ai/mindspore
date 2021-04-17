@@ -25,16 +25,11 @@ void Unsqueeze::Init(const std::vector<int64_t> axis) { this->set_axis(axis); }
 
 void Unsqueeze::set_axis(std::vector<int64_t> axis) { this->AddAttr(kAxis, MakeValue(axis)); }
 
-std::vector<int64_t> Unsqueeze::get_axis() const {
-  auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
+std::vector<int64_t> Unsqueeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto unsqueeze_prim = primitive->cast<PrimUnsqueezePtr>();
-  MS_EXCEPTION_IF_NULL(unsqueeze_prim);
-  auto prim_name = unsqueeze_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("unsqueeze_infer", input_args.size(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto input = input_args[0];
@@ -43,7 +38,7 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto input_type = input->BuildType()->cast<TensorTypePtr>()->element();
 
   // Infer shape
-  auto dims = unsqueeze_prim->get_axis();
+  auto dims = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input", input->BuildShape(), prim_name);
   auto input_rank = input_shape.size();
   auto dim_rank = dims.size();

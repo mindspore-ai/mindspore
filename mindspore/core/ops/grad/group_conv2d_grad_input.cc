@@ -114,8 +114,7 @@ void GroupConv2DGradInput::set_input_shape(const std::vector<int64_t> &input_sha
 }
 
 std::vector<int64_t> GroupConv2DGradInput::get_input_shape() const {
-  auto value_ptr = GetAttr(kInputShape);
-  return GetValue<std::vector<int64_t>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(GetAttr(kInputShape));
 }
 
 void GroupConv2DGradInput::set_format(const Format &format) {
@@ -147,14 +146,12 @@ bool GroupConv2DGradInput::get_has_bias() const {
 AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto group_prim = primitive->cast<PrimGroupConv2DGradInputPtr>();
-  MS_EXCEPTION_IF_NULL(group_prim);
-  auto prim_name = group_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", input_args.size(), kGreaterEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
 
   // Infer shape
-  auto shape = group_prim->get_input_shape();
+  auto shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kInputShape));
 
   // Infer type
   auto type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();

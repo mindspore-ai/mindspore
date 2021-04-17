@@ -43,9 +43,7 @@ AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisE
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto FakeQuantWithMinMaxVarsPerChannel_prim = primitive->cast<PrimFakeQuantWithMinMaxVarsPerChannelPtr>();
-  MS_EXCEPTION_IF_NULL(FakeQuantWithMinMaxVarsPerChannel_prim);
-  auto op_name = FakeQuantWithMinMaxVarsPerChannel_prim->name();
+  auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), op_name);
   auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShape("min_shape", input_args[1]->BuildShape(), op_name);
   auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShape("max_shape", input_args[2]->BuildShape(), op_name);
