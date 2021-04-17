@@ -14,7 +14,8 @@ mindspore_add_pkg(c-ares
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release
         -DCARES_SHARED:BOOL=OFF
         -DCARES_STATIC:BOOL=ON
-        -DCARES_STATIC_PIC:BOOL=ON)
+        -DCARES_STATIC_PIC:BOOL=ON
+        -DHAVE_LIBNSL:BOOL=OFF)
 
 include_directories(${c-ares_INC})
 add_library(mindspore::cares ALIAS c-ares::cares)
