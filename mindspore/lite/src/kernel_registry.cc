@@ -39,11 +39,11 @@ KernelRegistry *KernelRegistry::GetInstance() {
 
   std::unique_lock<std::mutex> malloc_creator_array(instance.lock_);
   if (instance.creator_arrays_ == nullptr) {
-    instance.creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelRegistry)));
+    instance.creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelCreator)));
     if (instance.creator_arrays_ == nullptr) {
       return nullptr;
     }
-    memset(instance.creator_arrays_, 0, array_size_ * sizeof(KernelRegistry));
+    memset(instance.creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
   }
   return &instance;
 }
