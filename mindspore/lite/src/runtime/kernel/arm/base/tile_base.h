@@ -38,8 +38,9 @@ class TileCPUKernel : public LiteKernel {
   void ComputeStrides(const int *shape, int *strides, int ndim);
   void FillOneDimTileParam();
   bool one_dim_tile_;
-  uint8_t *input_addr_;
-  uint8_t *output_addr_;
+  uint8_t *input_addr_ = nullptr;
+  uint8_t *output_addr_ = nullptr;
+  TileParameter *tile_parameter_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
