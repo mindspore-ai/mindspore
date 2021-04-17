@@ -50,7 +50,7 @@ AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const Primit
     MS_EXCEPTION_IF_NULL(item);
   }
   // infer shape
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   // infer type
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   std::vector<TypePtr> output_types;

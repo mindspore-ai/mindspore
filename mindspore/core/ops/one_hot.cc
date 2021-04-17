@@ -31,7 +31,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
   auto depth_val = GetValue<int64_t>(input_args[1]->BuildValue());
   CheckAndConvertUtils::CheckInteger("depth", depth_val, kGreaterEqual, 0, op_name);

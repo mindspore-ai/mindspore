@@ -52,9 +52,8 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args,
                          const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
   // check
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShape("output shape", abs->BuildShape(), prim_name);
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
   auto out_type = abs->BuildType();
   MS_EXCEPTION_IF_NULL(out_type);
   return TensorConstructUtils::CreateZerosTensor(out_type, out_shape);

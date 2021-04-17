@@ -46,7 +46,7 @@ AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   MS_EXCEPTION_IF_NULL(input_args[0]);
 
   // Infer shape
-  auto inshape = CheckAndConvertUtils::ConvertShapePtrToShape("inshape", input_args[0]->BuildShape(), prim_name);
+  auto inshape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   for (size_t i = 0; i < inshape.size() - 1; i++) {
     inshape[i] = 1;
   }

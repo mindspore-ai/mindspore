@@ -62,9 +62,8 @@ AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const Primi
   // Infer shape
   auto new_h = GetValue<int64_t>(primitive->GetAttr(kPooledH));
   auto new_w = GetValue<int64_t>(primitive->GetAttr(kPooledW));
-  auto input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
-  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShape("roi_shape", input_args[1]->BuildShape(), prim_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   std::vector<int64_t> output_shape;
   output_shape.push_back(roi_shape[0]);
   output_shape.push_back(new_h);

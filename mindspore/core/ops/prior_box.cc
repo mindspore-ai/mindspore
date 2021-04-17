@@ -112,7 +112,6 @@ void PriorBox::Init(const std::vector<int64_t> &min_sizes, const std::vector<int
 AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   std::vector<float> different_aspect_ratios{1.0f};
   auto aspect_ratios = GetValue<std::vector<float>>(primitive->GetAttr(kAspectRatios));
@@ -129,7 +128,7 @@ AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const Primiti
   }
   auto min_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kMinSizes));
   int64_t num_priors_box = min_sizes.size() * different_aspect_ratios.size() + min_sizes.size();
-  auto input = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
+  auto input = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t h = input[0] * input[1] * num_priors_box * 4;
   std::vector<int64_t> output_shape{1, h, 1, 2};
   return std::make_shared<abstract::AbstractTensor>(kFloat32, output_shape);
