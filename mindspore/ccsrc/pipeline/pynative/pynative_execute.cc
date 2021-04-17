@@ -689,13 +689,18 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
     }
     grad()->op_index_map()[op_name]++;
   }
-  auto prim = py::cast<PrimitivePyPtr>(args[PY_PRIM]);
-  MS_EXCEPTION_IF_NULL(prim);
+  auto adapter = py::cast<PrimitivePyAdapterPtr>(args[PY_PRIM]);
+  MS_EXCEPTION_IF_NULL(adapter);
+  auto prim = adapter->attached_primitive();
+  if (prim == nullptr) {
+    prim = std::make_shared<PrimitivePy>(args[PY_PRIM], adapter);
+    adapter->set_attached_primitive(prim);
+  }
+
   if (!prim->HasPyObj()) {
     MS_LOG(EXCEPTION) << "Pyobj is empty";
   }
   op_exec_info->py_primitive = prim;
-  op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
   op_exec_info->op_inputs = args[PY_INPUTS];
   return op_exec_info;
 }
@@ -3264,10 +3269,7 @@ void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
 void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) {
   MS_LOG(DEBUG) << "Enter end graph process.";
   py::object *ret = nullptr;
-  auto &mem_cleaner = pipeline::Resource::mem_cleaner();
-  mem_cleaner.EnterPynativeEndGraphProcess();
   PynativeExecutorTry(grad_executor()->LinkGraph, ret, cell, out, args);
-  mem_cleaner.LeavePynativeEndGraphProcess();
   MS_LOG(DEBUG) << "Leave end graph process.";
 }
 
@@ -3289,7 +3291,6 @@ void PynativeExecutor::EnterConstruct(const py::object &cell) {
     return;
   }
   py_top_cell_ = cell.ptr();
-  pipeline::Resource::mem_cleaner().EnterPynativeConstructProcess();
   MS_LOG(DEBUG) << "Enter construct process.";
 }
 
@@ -3298,7 +3299,6 @@ void PynativeExecutor::LeaveConstruct(const py::object &cell) {
     return;
   }
   py_top_cell_ = nullptr;
-  pipeline::Resource::mem_cleaner().LeavePynativeConstructProcess();
   MS_LOG(DEBUG) << "Leave construct process.";
 }
 

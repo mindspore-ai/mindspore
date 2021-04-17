@@ -1997,20 +1997,25 @@ class IrParser {
 
     // restore python function of PrimitivePy from serialized file
     py::object py_obj = LoadObject(lexer_.GetTokenText());
-    PrimitivePyPtr ptr = nullptr;
+    py::object py_adapter = py_obj;
+    static auto len = strlen("PrimitivePy::");
+    bool cloned = false;
     if (py::hasattr(py_obj, "__setattr_flag__") && py::hasattr(py_obj, "_clone")) {
       auto clone_fn = py_obj.attr("_clone");
-      py::object new_obj = clone_fn();
-      ptr = new_obj.cast<PrimitivePyPtr>();
-      if (ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "Cast to type 'PrimitivePyPtr' error";
-      }
-    } else {
-      auto len = strlen("PrimitivePy::");
-      if (id.size() < len) {
-        return TOK_ERROR;
-      }
-      ptr = std::make_shared<PrimitivePy>(id.substr(len), py_obj);
+      py_adapter = clone_fn();
+      cloned = true;
+    } else if (id.size() < len) {
+      return TOK_ERROR;
+    }
+    auto prim_adapter = py_adapter.cast<PrimitivePyAdapterPtr>();
+    MS_EXCEPTION_IF_NULL(prim_adapter);
+    if (!cloned) {
+      prim_adapter->set_name(id.substr(len));
+    }
+    PrimitivePyPtr ptr = prim_adapter->attached_primitive();
+    if (ptr == nullptr) {
+      ptr = std::make_shared<PrimitivePy>(py_adapter, prim_adapter);
+      prim_adapter->set_attached_primitive(ptr);
     }
     *val_ptr = ptr;
 

@@ -371,7 +371,6 @@ void ExecutorPy::DelNetRes(const std::string &id) {
 
 void ExecutorPy::ClearRes() {
   MS_LOG(INFO) << "Clean executor resource!";
-  Resource::mem_cleaner().ClearPrimitivePyPythonObj();
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::ClearAll();
 #endif
@@ -384,7 +383,7 @@ ExecutorPy::~ExecutorPy() {
 }
 
 void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
-                               std::map<std::string, std::pair<PrimitivePyPtr, std::string>> *fake_quant_table) {
+                               std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) {
   std::string weight_name;
   auto x = root_node->input(1);
   if (IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
@@ -437,15 +436,15 @@ void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weig
     return;
   }
   auto quant_op = quant_op_value->cast<PrimitivePyPtr>();
-  (*fake_quant_table)[weight_name] = std::make_pair(quant_op, fakequant_min_node_name);
+  (*fake_quant_table)[weight_name] = std::make_pair(quant_op->adapter(), fakequant_min_node_name);
 }
 
-std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchInfoForQuantExport(
+std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy::FetchInfoForQuantExport(
   const std::string &phase_s) {
   FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "FetchInfoForQuantExport func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
-  std::map<std::string, std::pair<PrimitivePyPtr, std::string>> fake_quant_table;
+  std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> fake_quant_table;
   auto filter = [](const AnfNodePtr &node) {
     return !(IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimMatMul) ||
              IsPrimitiveCNode(node, prim::kPrimDepthwiseConv2dNative));
@@ -472,7 +471,6 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
     }
     GetWeightInfo(root_node, weight_node, &fake_quant_table);
   }
-
   return fake_quant_table;
 }
 
@@ -1162,9 +1160,6 @@ void StartUpProfiling() {
 }
 
 void InitPipeline() {
-  // If previous pipeline exit with exception, memory cleaner's flags maybe unpredictable, so init when a new pipeline
-  // start.
-  pipeline::Resource::mem_cleaner().Init();
   // set python env flag
   mindspore::parse::python_adapter::set_python_env_flag(true);
   // Startup profiling before open tsd

@@ -119,7 +119,7 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
   auto bprop_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
 
-  auto fake_bprop = std::make_shared<PrimitivePy>("bprop_cut", py::object());
+  auto fake_bprop = std::make_shared<PrimitivePy>("bprop_cut");
   fake_bprop->set_hook(bprop_func);
   (void)fake_bprop->AddAttr(CUSTOM_BPROP_NAME, MakeValue(true));
   outputs.push_back(NewValueNode(fake_bprop));
@@ -236,16 +236,21 @@ ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
     // desc has format "<class xxxx>", strip the '<' and '>' by offset 1;
     return std::make_shared<ClassType>(obj, std::string(desc.begin() + 1, desc.end() - 1));
   }
-  auto primitive = obj.cast<PrimitivePyPtr>();
+  py::object adapter_obj = obj;
+  if (py::hasattr(obj, "__setattr_flag__")) {
+    if (py::hasattr(obj, "_clone")) {
+      auto clone_fn = obj.attr("_clone");
+      adapter_obj = clone_fn();
+    }
+  }
+  auto prim_adapter = adapter_obj.cast<PrimitivePyAdapterPtr>();
+  MS_EXCEPTION_IF_NULL(prim_adapter);
+  auto primitive = prim_adapter->attached_primitive();
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Resolve Primitive error, get ptr is null";
-    return nullptr;
+    primitive = std::make_shared<PrimitivePy>(adapter_obj, prim_adapter);
+    prim_adapter->set_attached_primitive(primitive);
   }
-  if (py::hasattr(obj, "__setattr_flag__") && py::hasattr(obj, "_clone")) {
-    auto clone_fn = obj.attr("_clone");
-    py::object new_obj = clone_fn();
-    primitive = new_obj.cast<PrimitivePyPtr>();
-  }
+
   if (use_signature) {
     return std::make_shared<prim::DoSignaturePrimitive>(primitive->name(), primitive);
   }

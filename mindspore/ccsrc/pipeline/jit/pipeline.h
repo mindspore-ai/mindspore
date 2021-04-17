@@ -105,13 +105,14 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   static void DebugTerminate(bool val) { debugger_terminate_ = val; }
   void TerminateDebugger();
 
-  std::map<std::string, std::pair<PrimitivePyPtr, std::string>> FetchInfoForQuantExport(const std::string &phase_s);
+  std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> FetchInfoForQuantExport(
+    const std::string &phase_s);
 
  private:
   ExecutorPy();
   void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
-                     std::map<std::string, std::pair<PrimitivePyPtr, std::string>> *fake_quant_table);
+                     std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table);
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
   // 'validate' stage
