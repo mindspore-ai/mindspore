@@ -204,6 +204,7 @@ using RsqrtCost = SqrtCost;
 using AsinhCost = SqrtCost;
 using AcoshCost = SqrtCost;
 using ReLUV2Cost = SqrtCost;
+using TopKCost = SqrtCost;
 
 class ReLU6Cost : public CastCost {
  public:
