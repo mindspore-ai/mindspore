@@ -87,9 +87,9 @@ TEST_F(TestAbstract, TestParseDataClass) {
   AbstractBasePtrList args_list = {abs_scalar, abstract_x, abstract_y};
 
   auto eval_impl = GetPrimitiveInferImpl(prim::kPrimMakeRecord);
-  ASSERT_TRUE(nullptr != eval_impl.infer_shape_dtype_impl_);
+  ASSERT_TRUE(nullptr != eval_impl.infer_shape_impl_);
 
-  AbstractBasePtr new_cls = eval_impl.infer_shape_dtype_impl_(nullptr, prim::kPrimMakeRecord, args_list);
+  AbstractBasePtr new_cls = eval_impl.infer_shape_impl_(nullptr, prim::kPrimMakeRecord, args_list);
   ASSERT_TRUE(nullptr != new_cls);
 }
 

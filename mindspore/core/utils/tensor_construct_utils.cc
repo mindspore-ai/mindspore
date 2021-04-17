@@ -17,7 +17,7 @@
 #include <vector>
 #include <memory>
 namespace mindspore {
-tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr type_ptr, const std::vector<int64_t> &shape) {
+tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_id = ExtractTypeId(type_ptr);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
@@ -30,7 +30,7 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr type_ptr
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr type_ptr, const std::vector<int64_t> &shape) {
+tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_id = ExtractTypeId(type_ptr);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
@@ -43,7 +43,7 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr type_ptr,
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr type_ptr, const std::vector<int64_t> &shape,
+tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr &type_ptr, const std::vector<int64_t> &shape,
                                                      void *data) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_id = ExtractTypeId(type_ptr);
@@ -51,7 +51,7 @@ tensor::TensorPtr TensorConstructUtils::CreateTensor(const TypePtr type_ptr, con
   return tensor;
 }
 
-TypeId TensorConstructUtils::ExtractTypeId(const TypePtr type_ptr) {
+TypeId TensorConstructUtils::ExtractTypeId(const TypePtr &type_ptr) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   TypeId type_id;
   if (type_ptr->isa<TensorType>()) {

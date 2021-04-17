@@ -27,8 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
-                         const AbstractBasePtr &infer) {
+ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("dtype infer", input_args.size(), kEqual, 1, op_name);
@@ -41,7 +40,7 @@ ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
 
 AbstractBasePtr DTypeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  auto value = DTypeInferValue(primitive, input_args, nullptr);
+  auto value = DTypeInferValue(primitive, input_args);
   MS_EXCEPTION_IF_NULL(value);
   auto type = value->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(type);

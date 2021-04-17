@@ -28,13 +28,13 @@
 
 namespace mindspore {
 namespace abstract {
-using InferShapeAndTypeImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
-                                                  const AbstractBasePtrList &);
-using InferValueEvalImpl = ValuePtr (*)(const PrimitivePtr &, const AbstractBasePtrList &, const AbstractBasePtr &);
+using InferShapeImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
+                                           const AbstractBasePtrList &);
+using InferValueImpl = ValuePtr (*)(const PrimitivePtr &, const AbstractBasePtrList &);
 
 struct StandardPrimitiveImplReg {
-  InferShapeAndTypeImpl infer_shape_dtype_impl_;  // Implement function of Primitive
-  InferValueEvalImpl infer_value_func_;           // infer value of primitive
+  InferShapeImpl infer_shape_impl_;  // infer shape and type for ops
+  InferValueImpl infer_value_impl_;  // infer value for ops
   // in_white_list_ is true means this primitive can be executed by vm backend
   // else will be optimized by frontend
   bool in_white_list_;
@@ -55,8 +55,8 @@ void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const Standard
 
 class RegisterStandardPrimitiveEvalHelper {
  public:
-  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const InferShapeAndTypeImpl &infer_impl,
-                                      const InferValueEvalImpl &infer_value_impl, const bool is_wight_list = true) {
+  RegisterStandardPrimitiveEvalHelper(const PrimitivePtr &primitive, const InferShapeImpl &infer_impl,
+                                      const InferValueImpl &infer_value_impl, const bool is_wight_list = true) {
     const StandardPrimitiveImplReg impl_reg{infer_impl, infer_value_impl, is_wight_list};
     RegisterStandardPrimitiveImpl(primitive, impl_reg);
   }

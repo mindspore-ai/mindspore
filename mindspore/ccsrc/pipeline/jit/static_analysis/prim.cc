@@ -576,7 +576,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   prim_py->RunCheck(py_args);
 
   prim_->BeginRecordAddAttr();
-  AbstractBasePtr abs_base = eval_impl_.infer_shape_dtype_impl_(engine, prim_, args);
+  AbstractBasePtr abs_base = eval_impl_.infer_shape_impl_(engine, prim_, args);
   prim_->EndRecordAddAttr();
   auto added_attrs = prim_->evaluate_added_attrs();
 
@@ -602,16 +602,21 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool need_infer_value = eval_impl_.in_white_list_ || (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
+  AbstractBasePtr abs_base = nullptr;
+  ValuePtr value = nullptr;
   prim_->BeginRecordAddAttr();
-  AbstractBasePtr abs_base = eval_impl_.infer_shape_dtype_impl_(engine, prim_, args);
-  prim_->EndRecordAddAttr();
-  auto added_attrs = prim_->evaluate_added_attrs();
-  if (need_infer_value) {
-    if (eval_impl_.infer_value_func_ != nullptr) {
-      auto value = eval_impl_.infer_value_func_(prim_, args, abs_base);
-      abs_base->set_value(value);
+  if (need_infer_value && eval_impl_.infer_value_impl_ != nullptr) {
+    value = eval_impl_.infer_value_impl_(prim_, args);
+    if (value != nullptr) {
+      abs_base = value->ToAbstract();
+      prim_->EndRecordAddAttr();
+      auto added_attrs = prim_->evaluate_added_attrs();
+      return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
     }
   }
+  abs_base = eval_impl_.infer_shape_impl_(engine, prim_, args);
+  prim_->EndRecordAddAttr();
+  auto added_attrs = prim_->evaluate_added_attrs();
   auto eval_result = std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
   return eval_result;
 }
