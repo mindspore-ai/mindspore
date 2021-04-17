@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TRANSFER_IMPL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TRANSFER_IMPL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_ATOMCRDTOCV_IMPL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_ATOMCRDTOCV_IMPL_H_
 
 #include "runtime/device/gpu/cuda_common.h"
 
-void Transfer(int start_serial, int end_serial, int number, const float *crd_f, float *g_radial, float *g_angular,
-              cudaStream_t stream);
+void AtomCrdToCV(int atom_numbers, int start_serial, int end_serial, int number, const float *crd_f,
+                 const float *old_crd, float *nowarp_crd, int *box_map_times, float *box, float *g_radial,
+                 float *g_angular, cudaStream_t stream);
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TRANSFER_IMPL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_ATOMCRDTOCV_IMPL_H_
