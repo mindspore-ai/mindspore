@@ -3950,6 +3950,10 @@ class Tan(PrimitiveWithInfer):
     """
     Computes tangent of `input_x` element-wise.
 
+    .. math::
+
+        out_i = tan(x_i)
+
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. Data type must be
           float16, float32 or int32.
