@@ -446,8 +446,8 @@ trans_dict_tf = {
     'h35.mlp.c_fc.w': 'gpt2_decoder.layers.35.feedforward.c_fc.weight',
     'h35.mlp.c_proj.b': 'gpt2_decoder.layers.35.feedforward.c_proj.bias',
     'h35.mlp.c_proj.w': 'gpt2_decoder.layers.35.feedforward.c_proj.weight',
-    'ln_f.b': 'layer_norm.layer_norm.gamma',
-    'ln_f.g': 'layer_norm.layer_norm.beta',
+    'ln_f.b': 'layer_norm.layer_norm.beta',
+    'ln_f.g': 'layer_norm.layer_norm.gamma',
     'wpe': 'gpt2_embedding_postprocess.position_embedding_table',
     'wte': 'gpt2_embedding_lookup.embedding_table'
 }  # transfer dictionary

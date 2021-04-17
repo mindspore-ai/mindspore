@@ -56,7 +56,7 @@ def extract_string_from_tensor(input_ids, mode="single", config=None, tokenizer=
 
         for batch_idx in range(batch_size):
             sentence_tensor = input_ids_np[batch_idx]
-            sentence_list = sentence_tensor.asnumpy().tolist()[1:]
+            sentence_list = sentence_tensor.tolist()[1:]
 
             sentence = tokenizer.decode(sentence_list)
             prompt_start = 0
@@ -73,7 +73,7 @@ def extract_string_from_tensor(input_ids, mode="single", config=None, tokenizer=
     if mode == "single":
         for batch_idx in range(batch_size):
             sentence_tensor = input_ids_np[batch_idx]
-            sentence_list = sentence_tensor.asnumpy().tolist()[1:]
+            sentence_list = sentence_tensor.tolist()[1:]
 
             sentence = tokenizer.decode(sentence_list)
             prompt_start = 0

@@ -36,6 +36,7 @@ from src.utils.lr_schedule import GPT2LearningRate
 from src.utils.tokenization import Tokenizer
 from src.utils.task_utils import clean_hypo, modify_paramdict
 from src.GPT2_generation import GenerateForSummarization
+from src.utils.get_config_setting import get_train_setting, get_model_setting
 
 
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
@@ -272,6 +273,8 @@ def run_summarization():
         raise Exception("Device target error, Ascend is supported.")
 
     if args_opt.do_train.lower() == "true":
+        get_train_setting(cfg)
+        get_model_setting(cfg, gpt2_net_cfg)
         train_data_file_path = args_opt.train_data_file_path
         gpt2_loss = GPT2Summarization(config=gpt2_net_cfg,
                                       is_training=True,
@@ -282,6 +285,7 @@ def run_summarization():
         do_train(train_dataset, gpt2_loss, load_pretrain_ckpt_path, save_finetune_ckpt_path, epoch_num)
 
     if args_opt.do_eval.lower() == "true":
+        get_model_setting(cfg, gpt2_net_cfg)
         eval_dataset_file_path = args_opt.eval_data_file_path
         print("============== Start Loading Evaluation Dataset ============")
         eval_dataset = create_language_model_dataset(do_shuffle=(args_opt.train_data_shuffle.lower() == "true"),

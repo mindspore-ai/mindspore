@@ -33,6 +33,7 @@ from src.dataset import create_language_model_dataset
 from src.utils.lr_schedule import GPT2LearningRate
 from src.utils.tokenization import Tokenizer
 from src.GPT2_generation import GenerateForReadComprehension
+from src.utils.get_config_setting import get_train_setting, get_model_setting
 
 
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
@@ -121,7 +122,7 @@ def do_eval(dataset=None, network=None, metric=None, load_checkpoint_path="", ev
     if load_checkpoint_path == "":
         raise ValueError("Finetune model missed, evaluation task must load finetune model!")
     if metric.lower() == "f1":
-        print("Prepare to calculate the BLEU score ...")
+        print("Prepare to calculate the F1 score ...")
 
         gpt2_rc = network(config=gpt2_net_cfg,
                           is_training=False,
@@ -269,6 +270,8 @@ def run_Readcomprehension():
                          use_one_hot_embeddings=False)
 
     if args_opt.do_train.lower() == "true":
+        get_train_setting(cfg)
+        get_model_setting(cfg, gpt2_net_cfg)
         print("==============   Start Loading Translation Train Dataset   ==============")
         print(" | Train Dataset: {}".format(args_opt.train_data_file_path))
         print(" | Checkpoint: {}".format(args_opt.load_pretrain_ckpt_path))
@@ -277,6 +280,7 @@ def run_Readcomprehension():
         do_train(train_dataset, gpt2_loss, load_pretrain_ckpt_path, save_finetune_ckpt_path, epoch_num)
 
     if args_opt.do_eval.lower() == "true":
+        get_model_setting(cfg, gpt2_net_cfg)
         print("============   Start Loading Translation Evaluation Dataset  ============")
         print(" | Eval Dataset: {}".format(args_opt.eval_data_file_path))
         print(" | Checkpoint: {}".format(args_opt.load_finetune_ckpt_path))
