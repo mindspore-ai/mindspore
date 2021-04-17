@@ -21,6 +21,7 @@
 #include "src/kernel_registry.h"
 #include "nnacl/fp32_grad/layernorm_grad.h"
 #include "nnacl/fp32_grad/layernormgrad_parameter.h"
+#include "nnacl/errorcode.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
@@ -81,7 +82,11 @@ int LayerNormGradCPUKernel::Execute(int task_id) {
   float *dx = reinterpret_cast<float *>(output_dx->MutableData());
   float *dg = reinterpret_cast<float *>(output_dg->MutableData());
   float *db = reinterpret_cast<float *>(output_db->MutableData());
-  LayerNormGrad(x, dy, var, mean, gamma, param_num_, param_size_, block_num_, block_size_, dx, dg, db);
+  int ret = LayerNormGrad(x, dy, var, mean, gamma, param_num_, param_size_, block_num_, block_size_, dx, dg, db);
+  if (ret != NNACL_OK) {
+    MS_LOG(ERROR) << "LayerNormGrad error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

@@ -20,8 +20,8 @@
 extern "C" {
 #endif
 
-void LayerNormGrad(const float *x, const float *dy, const float *var, const float *mean, const float *gamma,
-                   int param_num, int param_size, int block_num, int block_size, float *dx, float *dg, float *db);
+int LayerNormGrad(const float *x, const float *dy, const float *var, const float *mean, const float *gamma,
+                  int param_num, int param_size, int block_num, int block_size, float *dx, float *dg, float *db);
 
 #ifdef __cplusplus
 }

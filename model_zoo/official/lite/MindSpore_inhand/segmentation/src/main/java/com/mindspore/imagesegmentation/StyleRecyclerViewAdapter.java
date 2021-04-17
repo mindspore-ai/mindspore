@@ -46,9 +46,6 @@ public class StyleRecyclerViewAdapter extends RecyclerView.Adapter<StyleRecycler
 
     @Override
     public void onBindViewHolder(@NonNull StyleItemViewHolder holder, int position) {
-//        Glide.with(context).
-//                load(IMAGES[position]).
-//                into(holder.getImageView());
         holder.imageView.setImageResource(IMAGES[position]);
         holder.itemView.setTag(IMAGES[position]);
         holder.itemView.setOnClickListener(view1 -> {

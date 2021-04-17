@@ -622,7 +622,7 @@ int AnfExporter::ProcessTensor(const ValueNodePtr &valueNode, std::unique_ptr<sc
   (*paramTensor)->nodeType = NodeType_ValueNode;
   auto data = value->cast<tensor::TensorPtr>();
   (*paramTensor)->data.resize(data->Size());
-  ret = memcpy_s((*paramTensor)->data.data(), data->Size(), data->data_c(), data->Size());
+  ret = memcpy_s((*paramTensor)->data.data(), (*paramTensor)->data.size(), data->data_c(), data->Size());
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s error.";
     return RET_ERROR;

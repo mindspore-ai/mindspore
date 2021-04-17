@@ -115,8 +115,6 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
         for (int j = 0; j < groups; ++j) {
           const float *mat_b = w_addr + j * nweights / groups;
           float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
-          // float *im = x_addr + i * in_ch * in_h * in_w + j * (in_ch / groups);
-          // RollingIm2ColPackUnitFp32(im, conv_param_, mat_a, real_chunk, ci);
           GemmMatmul(0, 1, real_chunk, n, k, 1, mat_a + (j * kernel_spatial), k * groups, mat_b, k, 0, mat_c, out_ch,
                      mat_workspace);
         }
