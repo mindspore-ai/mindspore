@@ -62,6 +62,17 @@ std::vector<int> GetNpuTensorShape(int dim, std::shared_ptr<hiai::AiTensor> npu_
   return npu_shape;
 }
 
+std::vector<int> ExpandShapeTo4d(const std::vector<int> &shape) {
+  if (shape.size() == 0 || shape.size() >= 4) {
+    return shape;
+  }
+  std::vector<int> ret{shape};
+  for (auto i = shape.size(); i < 4; ++i) {
+    ret.push_back(1);
+  }
+  return ret;
+}
+
 bool IsSameShapeInTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
   if (tensor->shape().size() > 4) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
@@ -73,7 +84,11 @@ bool IsSameShapeInTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_ten
            tensor->Height() == npu_tensor->GetTensorDimension().GetHeight() &&
            tensor->Width() == npu_tensor->GetTensorDimension().GetWidth();
   }
-  return GetNpuTensorShape(tensor->shape().size(), npu_tensor) == tensor->shape();
+  std::vector<int> npu_shape{static_cast<int>(npu_tensor->GetTensorDimension().GetNumber()),
+                             static_cast<int>(npu_tensor->GetTensorDimension().GetChannel()),
+                             static_cast<int>(npu_tensor->GetTensorDimension().GetHeight()),
+                             static_cast<int>(npu_tensor->GetTensorDimension().GetWidth())};
+  return ExpandShapeTo4d(tensor->shape()) == npu_shape;
 }
 
 bool IsSameShapeOutTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {

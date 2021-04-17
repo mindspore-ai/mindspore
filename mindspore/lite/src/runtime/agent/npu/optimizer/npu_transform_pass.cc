@@ -23,16 +23,23 @@ using kernel::KERNEL_ARCH::kNPU;
 
 std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
   schema::PrimitiveType_Conv2DFusion,  schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Resize,
-  schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,         schema::PrimitiveType_ScaleFusion};
+  schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,         schema::PrimitiveType_ScaleFusion,
+  schema::PrimitiveType_CropAndResize};
 
 int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *trans_kernels) {
   bool is_input_kernel = kernel->in_kernels().empty();
-  // single input
-  if (is_input_kernel || kernel->in_kernels()[0]->desc().arch != kNPU ||
-      npu_trans_nodes.find(kernel->in_kernels()[0]->Type()) == npu_trans_nodes.end()) {
+  // not always single input (like CropAndResize), but we care about the input with 4d.
+  auto it = std::find_if(kernel->in_kernels().begin(), kernel->in_kernels().end(), [](const kernel::LiteKernel *k) {
+    return k->out_tensors().size() > 0 && k->out_tensors()[0]->shape().size() == 4;
+  });
+  if (!is_input_kernel && it == kernel->in_kernels().end()) {
+    MS_LOG(ERROR) << "NPU Transform pass does not find in kernel with 4d output";
+    return RET_ERROR;
+  }
+  if (is_input_kernel || (*it)->desc().arch != kNPU || npu_trans_nodes.find((*it)->Type()) == npu_trans_nodes.end()) {
     kernel::LiteKernel *pre_kernel = nullptr;
     if (!is_input_kernel) {
-      pre_kernel = kernel->in_kernels()[0];
+      pre_kernel = *it;
     }
 
     // Create pre transform kernel's out tensor.
