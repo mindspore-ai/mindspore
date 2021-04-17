@@ -52,6 +52,7 @@ int GetOutChannels(const CNodePtr &conv_node) {
 
 void GenerateNewWeightConv2D(float *dst_weight, const float *conv_weight, const float *scale_weight, FmkType fmk,
                              int weight_shape_size, int kernel_num) {
+  MS_ASSERT(kernel_num > 0);
   if (dst_weight == nullptr || conv_weight == nullptr || scale_weight == nullptr) {
     return;
   }
@@ -60,7 +61,6 @@ void GenerateNewWeightConv2D(float *dst_weight, const float *conv_weight, const 
       dst_weight[i] = conv_weight[i] * scale_weight[i % kernel_num];
     }
   } else {
-    MS_ASSERT(kernel_num > 0);
     auto kernel_size = weight_shape_size / kernel_num;
     for (int i = 0; i < kernel_num; i++) {
       for (int j = 0; j < kernel_size; j++) {
@@ -75,6 +75,7 @@ void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weig
   if (dst_weight == nullptr || scale_weight == nullptr || weight_tensor == nullptr) {
     return;
   }
+  MS_ASSERT(group > 0);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->data_c());
   if (fmk == lite::converter::FmkType_TF) {
     auto cin_group = weight_tensor->shape()[3] / group;

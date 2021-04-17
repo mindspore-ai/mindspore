@@ -208,11 +208,11 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
   for (auto &tensor : tensors) {
     if (tensor == nullptr) {
-      MS_LOG(ERROR) << "check tensor is nullptr";
+      MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
     if (tensor->data_type() != kObjectTypeTensorType && tensor->data_c() == nullptr) {
-      MS_LOG(ERROR) << "check tensor data is nullptr " << tensors;
+      MS_LOG(ERROR) << "Graph input tensor is nullptr " << tensors;
       return RET_ERROR;
     }
     auto shape = tensor->shape();

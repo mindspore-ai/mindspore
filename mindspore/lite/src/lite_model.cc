@@ -248,7 +248,29 @@ int LiteModel::SubGraphVerify() const {
   return RET_OK;
 }
 
-bool LiteModel::ModelVerify() const { return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK; }
+bool LiteModel::ModelVerify() const {
+  if (this->sub_graphs_.empty()) {
+    MS_LOG(ERROR) << "Model does not have a main graph.";
+    return false;
+  }
+  auto main_graph = this->sub_graphs_.front();
+  for (auto input_index : main_graph->input_indices_) {
+    if (input_index >= this->all_tensors_.size()) {
+      MS_LOG(ERROR) << "Graph indices is beyond tensor_size.";
+      return false;
+    }
+    auto *tensor = this->all_tensors_.at(input_index);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Tensor in all tensors is nullptr.";
+      return false;
+    }
+    if (tensor->format() != schema::Format_NHWC) {
+      MS_LOG(ERROR) << "Graph input tensor should be NHWC";
+      return false;
+    }
+  }
+  return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK;
+}
 
 const void *LiteModel::GetMetaGraphByVerison() {
   MS_ASSERT(this->buf != nullptr);

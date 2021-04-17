@@ -28,7 +28,6 @@ namespace mindspore {
 namespace lite {
 class ReturnCode {
  public:
-  virtual ~ReturnCode() = default;
   static ReturnCode *GetSingleReturnCode() {
     static ReturnCode return_code;
     return &return_code;
@@ -42,12 +41,12 @@ class ReturnCode {
 
  private:
   ReturnCode() = default;
+  virtual ~ReturnCode() = default;
   int status_code_ = RET_OK;
 };
 
 class NotSupportOp {
  public:
-  virtual ~NotSupportOp() = default;
   static NotSupportOp *GetInstance() {
     static NotSupportOp not_support_op;
     return &not_support_op;
@@ -67,13 +66,13 @@ class NotSupportOp {
 
  private:
   NotSupportOp() = default;
+  virtual ~NotSupportOp() = default;
   std::set<std::string> not_support_ops_;
   std::string fmk_type_;
 };
 
 class TensorDataType {
  public:
-  ~TensorDataType() = default;
   static TensorDataType *GetInstance() {
     static TensorDataType tensor_data_type;
     return &tensor_data_type;
@@ -88,6 +87,7 @@ class TensorDataType {
 
  private:
   TensorDataType() {}
+  virtual ~TensorDataType() = default;
   std::map<int32_t, int32_t> tensor_data_type_map_;
 };
 }  // namespace lite

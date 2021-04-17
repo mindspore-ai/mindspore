@@ -29,8 +29,6 @@ OpParameter *PopulateMulParameter(const void *prim) {
   }
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   param->op_parameter_.type_ = primitive->value_type();
-  // auto mul_prim = primitive->value_as_Mul();
-  // param->activation_type_ = mul_prim->activationType();
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace

@@ -25,15 +25,16 @@ namespace mindspore {
 namespace lite {
 class OnnxNodeParserRegistry {
  public:
-  OnnxNodeParserRegistry();
-
-  virtual ~OnnxNodeParserRegistry();
-
   static OnnxNodeParserRegistry *GetInstance();
 
   OnnxNodeParser *GetNodeParser(const std::string &name);
 
   std::unordered_map<std::string, OnnxNodeParser *> parsers;
+
+ private:
+  OnnxNodeParserRegistry();
+
+  virtual ~OnnxNodeParserRegistry();
 };
 
 class OnnxNodeRegistrar {

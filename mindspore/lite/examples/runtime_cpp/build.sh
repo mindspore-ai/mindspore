@@ -24,7 +24,7 @@ usage()
 }
 
 BASEPATH=$(
-  cd "$(dirname $0)"
+  cd "$(dirname $0)" || exit
   pwd
 )
 get_version() {
@@ -94,7 +94,7 @@ cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/include ${BASEPATH}/
 if [[ "X${DEVICE}" == "Xnpu" ]]; then
     cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/third_party/hiai_ddk/lib/*.so ${BASEPATH}/lib
 fi
-cd ${BASEPATH}/build
+cd ${BASEPATH}/build || exit
 cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19" \
   -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_STL="c++_shared" ${BASEPATH} -DSUPPORT_NPU=${SUPPORT_NPU}
 

@@ -142,6 +142,9 @@ int TensorList::MallocData(const mindspore::Allocator *allocator) {
 void TensorList::FreeData() {
   // free data buf of each tensor in tensors_
   for (auto tensor : tensors_) {
+    if (tensor == nullptr) {
+      continue;
+    }
     tensor->FreeData();
   }
 }
@@ -274,7 +277,11 @@ STATUS TensorList::Decode(const int *data) {
     element_shape_.push_back(data[2 + j]);
   }
   int tensors_num = data[2 + data[1]];
-  tensors_.resize(tensors_num);
+  if (this->ElementsNum() != tensors_num) {
+    MS_LOG(WARNING) << "Input tensorlist data is invalid: shape size(" << this->ElementsNum() << ") != tensors_num("
+                    << tensors_num << ").";
+  }
+  tensors_.reserve(tensors_num);
   int tensor_index = 2 + data[1] + 1;
   for (int i = 0; i < tensors_num; i++) {
     int tensor_dims_size = data[tensor_index++];
@@ -282,11 +289,12 @@ STATUS TensorList::Decode(const int *data) {
     for (int j = 0; j < tensor_dims_size; j++) {
       shape[j] = data[tensor_index++];
     }
-    tensors_[i] = new (std::nothrow) Tensor(tensors_data_type_, shape);
-    if (tensors_[i] == nullptr) {
+    auto tensor = new (std::nothrow) Tensor(tensors_data_type_, shape);
+    if (tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed";
       return RET_NULL_PTR;
     }
+    tensors_.emplace_back(tensor);
   }
   return RET_OK;
 }

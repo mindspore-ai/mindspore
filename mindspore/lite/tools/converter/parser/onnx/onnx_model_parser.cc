@@ -1127,7 +1127,7 @@ STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_t
     return RET_MEMORY_FAILED;
   }
   auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  if (memcpy_s(tensor_data, data_size, onnx_data, data_size) != EOK) {
+  if (memcpy_s(tensor_data, tensor_info->data().nbytes(), onnx_data, data_size) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
     return RET_ERROR;
   }

@@ -49,7 +49,6 @@ class Swish(nn.Cell):
         s = self.sigmoid(x)
         m = x*s
         return m
-        #return x * (1/(1+self.exp(-x)))
 
 
 class AdaptiveAvgPool(nn.Cell):
@@ -75,7 +74,6 @@ class SELayer(nn.Cell):
         self.act2 = nn.Sigmoid()
 
     def construct(self, x):
-        #b, c, _, _ = x.shape()
         o = self.avg_pool(x) #.view(b,c)
         o = self.conv_reduce(o)
         o = self.act1(o)
@@ -119,9 +117,6 @@ class DepthwiseSeparableConv(nn.Cell):
         x = self.bn2(x)
 
         if self.has_residual:
-            # if self.drop_connect_rate > 0.:
-                # x = x
-                # x = drop_connect(x, self.training, self.drop_connect_rate)
             x += residual
         return x
 
@@ -199,8 +194,6 @@ class InvertedResidual(nn.Cell):
         x = self.bn3(x)
 
         if self.has_residual:
-            # if self.drop_connect_rate > 0.:
-            #    x = x
             x += residual
         return x
 

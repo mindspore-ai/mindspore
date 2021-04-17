@@ -753,7 +753,7 @@ int AnfExporter::ProcessTensor(const ValueNodePtr &value_node, std::unique_ptr<s
 
   // process weight tensor
   if (data->Size() > 0) {
-    if (memcpy_s((*schema_tensor)->data.data(), data->Size(), data->data_c(), data->Size()) != EOK) {
+    if (memcpy_s((*schema_tensor)->data.data(), (*schema_tensor)->data.size(), data->data_c(), data->Size()) != EOK) {
       MS_LOG(ERROR) << "memcpy_s error.";
       return RET_ERROR;
     }
