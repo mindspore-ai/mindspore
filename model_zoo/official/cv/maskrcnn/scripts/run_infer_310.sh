@@ -48,7 +48,7 @@ echo $device_id
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
     export PATH=$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/atc/bin:$PATH
-    export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/ascend-toolkit/latest/atc/lib64:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ones:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/ascend-toolkit/latest/atc/lib64:$ASCEND_HOME/ascend-toolkit/latest/acllib/lib64:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ones:$LD_LIBRARY_PATH
     export TBE_IMPL_PATH=${ASCEND_HOME}/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe
     export PYTHONPATH=${TBE_IMPL_PATH}:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/python/site-packages:$PYTHONPATH
     export ASCEND_OPP_PATH=$ASCEND_HOME/ascend-toolkit/latest/opp
