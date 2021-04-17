@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CORE_OPS_GELU_H_
 #define MINDSPORE_CORE_OPS_GELU_H_
 #include <vector>
 #include <memory>
-
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGeLU = "GeLU";
+constexpr auto kNameGeLU = prim::kGeLU;
 class GeLU : public PrimitiveC {
  public:
-  GeLU() : PrimitiveC(kNameGeLU) {}
+  GeLU() : PrimitiveC(kNameGeLU) { InitIOName({"x"}, {"output"}); }
   ~GeLU() = default;
   MS_DECLARE_PARENT(GeLU, PrimitiveC);
   void Init() {}
 };
-AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+
 using PrimGeLUPtr = std::shared_ptr<GeLU>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_GELU_H_

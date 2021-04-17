@@ -3318,7 +3318,7 @@ class Gelu(PrimitiveWithInfer):
         return input_x
 
 
-class GeLU(PrimitiveWithInfer):
+class GeLU(Primitive):
     r"""
     Gaussian Error Linear Units activation function.
 
@@ -3359,12 +3359,7 @@ class GeLU(PrimitiveWithInfer):
         """Initialize GeLU"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, input_x):
-        return input_x
 
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
-        return input_x
 
 
 class FastGelu(PrimitiveWithInfer):
