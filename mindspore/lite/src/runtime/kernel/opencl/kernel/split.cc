@@ -94,13 +94,13 @@ void SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector
   int shape_dim = in_shape.at(param->split_dim_);
   if (num_split_ == 1) {
     size_t num_split = UP_DIV(shape_dim, param->split_sizes_[0]);
-    split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split * sizeof(int)));
+    split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split * sizeof(int), lite::opencl::MemType::BUF));
     for (int i = 0; i < num_split - 1; ++i) {
       split_sizes_[i] = (i + 1) * param->split_sizes_[0];
     }
   } else {
     int sum = 0;
-    split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split_ * sizeof(int)));
+    split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split_ * sizeof(int), lite::opencl::MemType::BUF));
     for (int i = 0; i < num_split_ - 1; ++i) {
       sum += param->split_sizes_[i];
       split_sizes_[i] = sum;

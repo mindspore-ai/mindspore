@@ -62,7 +62,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
   } else {
     auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
     size_t weight_size = UP_ROUND(size, C4NUM) * sizeof_FLT;
-    weight_vector_ = allocator->Malloc(weight_size);
+    weight_vector_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
     allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true);
     memset(weight_vector_, 0x00, weight_size);
     if (weight_tensor->data_type() == kNumberTypeFloat16) {

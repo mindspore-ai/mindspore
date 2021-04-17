@@ -130,7 +130,7 @@ int MatMulOpenCLKernel::InitWeights() {
   int b = weight_shape_4d[1];
 
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);
+  padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size, lite::opencl::MemType::BUF);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);

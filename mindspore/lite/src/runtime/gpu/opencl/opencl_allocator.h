@@ -28,9 +28,17 @@
 #include "CL/cl2.hpp"
 
 namespace mindspore::lite::opencl {
+#define UNLOCK_AND_RETURN_NULL(condition, ptr) \
+  do {                                         \
+    if (condition) {                           \
+      UnLock();                                \
+      return (ptr);                            \
+    }                                          \
+  } while (0)
 
 class OpenCLRuntime;
-enum class MemType : char { BUF, IMG };
+enum class MemType : char { BUF, IMG, SHARED };
+
 struct ImageSize {
   size_t width = 0;
   size_t height = 0;
@@ -45,8 +53,11 @@ class OpenCLAllocator : public mindspore::Allocator {
   explicit OpenCLAllocator(OpenCLRuntime *ocl_runtime);
   ~OpenCLAllocator() override;
   void SetContext(const AllocatorContext &ctx) override;
+  void *Malloc(size_t size, MemType type) { return _Malloc(type, nullptr, size); }
+
+  // malloc shared
+  void *Malloc(size_t size) override { return _Malloc(MemType::SHARED, nullptr, size); }
   // malloc buffer
-  void *Malloc(size_t size) override { return _Malloc(MemType::BUF, nullptr, size); }
   void *Malloc(size_t size, void *data) { return _Malloc(MemType::BUF, data, size); }
   // malloc image
   void *Malloc(const ImageSize &img_size, void *data = nullptr) { return _Malloc(MemType::IMG, data, 0, img_size); }

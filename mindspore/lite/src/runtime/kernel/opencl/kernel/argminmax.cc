@@ -133,8 +133,8 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
 int ArgMinMaxOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   int dtype_size = ocl_runtime_->GetFp16Enable() ? sizeof(int16_t) : sizeof(float);
-  buff_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * dtype_size);
-  ids_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * sizeof(int32_t));
+  buff_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * dtype_size, lite::opencl::MemType::BUF);
+  ids_ = allocator->Malloc(in_tensors_[0]->ElementsNum() * sizeof(int32_t), lite::opencl::MemType::BUF);
   return RET_OK;
 }
 

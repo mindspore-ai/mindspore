@@ -144,7 +144,7 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
 
   // IHWO to OHWI4(I)4(O)(converter format is IHWO)
   // init padWeight_(buffer mem)
-  padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
+  padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size, lite::opencl::MemType::BUF);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   auto origin_weight = in_tensors_.at(kWeightIndex)->data_c();

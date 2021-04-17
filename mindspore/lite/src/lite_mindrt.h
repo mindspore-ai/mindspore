@@ -42,6 +42,10 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
       return;
     }
+    Context *ctx = const_cast<Context *>(kernel_->context());
+    if (kernel_->desc().arch == kernel::kCPU) {
+      BindThreads(static_cast<lite::InnerContext *>(ctx)->thread_pool_, true, 2);
+    }
     auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
                          *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
     if (ret != RET_OK) {
@@ -51,6 +55,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     input_op_datas_.erase(op_uuid);
     AsyncOutput(context);
+    if (kernel_->desc().arch == kernel::kCPU) {
+      BindThreads(static_cast<lite::InnerContext *>(ctx)->thread_pool_, true, 2);
+    }
     SetOutputData(context);
   }
   void Init() {
@@ -82,11 +89,15 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     return ret;
   }
 
+ public:
+  void AddResultIndex(size_t index);
+
  private:
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
 
   kernel::LiteKernel *kernel_;
+  std::vector<size_t> results_index_;
 };
 
 int MindrtInit();

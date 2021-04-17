@@ -106,8 +106,8 @@ int LayerNormOpenCLKernel::Initweight() {
   auto weight_tensor = in_tensors_.at(1);
   size_t weight_size = img_info.Image2DSize;
   // allocated memory for weight and init value
-  gamma_ = allocator->Malloc(weight_size);
-  beta_ = allocator->Malloc(weight_size);
+  gamma_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  beta_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   allocator->MapBuffer(gamma_, CL_MAP_WRITE, nullptr, true);
   allocator->MapBuffer(beta_, CL_MAP_WRITE, nullptr, true);
   memset(gamma_, 0x01, weight_size);
@@ -164,8 +164,8 @@ int LayerNormOpenCLKernel::Prepare() {
   }
   size_t size_dtype = use_fp16_enable_ ? sizeof(float16_t) : sizeof(float);
   mean_size *= size_dtype;
-  mean_ = allocator->Malloc(mean_size);
-  var_ = allocator->Malloc(mean_size);
+  mean_ = allocator->Malloc(mean_size, lite::opencl::MemType::BUF);
+  var_ = allocator->Malloc(mean_size, lite::opencl::MemType::BUF);
   std::string kernel_name = "LayerNormalization_NHWC4";
   std::string kernel_name_mean_var = "ComputeMeanVar";
   std::string source = layer_norm_source;

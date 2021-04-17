@@ -90,6 +90,7 @@ using clRetainKernelFunc = cl_int (*)(cl_kernel kernel);
 using clCreateBufferFunc = cl_mem (*)(cl_context, cl_mem_flags, size_t, void *, cl_int *);
 using clCreateImage2DFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_format *, size_t, size_t, size_t,
                                        void *, cl_int *);
+using clImportMemoryARMFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_format *, void *, ssize_t, cl_int *);
 using clCreateImage3DFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_format *, size_t, size_t, size_t,
                                        size_t, size_t, void *, cl_int *);
 using clCreateProgramWithSourceFunc = cl_program (*)(cl_context, cl_uint, const char **, const size_t *, cl_int *);
@@ -143,6 +144,7 @@ CL_DECLARE_FUNC_PTR(clReleaseKernel);
 CL_DECLARE_FUNC_PTR(clCreateProgramWithSource);
 CL_DECLARE_FUNC_PTR(clCreateBuffer);
 CL_DECLARE_FUNC_PTR(clCreateImage2D);
+CL_DECLARE_FUNC_PTR(clImportMemoryARM);
 CL_DECLARE_FUNC_PTR(clCreateImage3D);
 CL_DECLARE_FUNC_PTR(clRetainKernel);
 CL_DECLARE_FUNC_PTR(clCreateKernel);

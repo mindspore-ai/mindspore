@@ -74,7 +74,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
 #ifdef SUBGRAPH_SPLIT
-  auto search_sub_graph = SearchSubGraph(src_model_, this->graph_output_node_indexes_);
+  auto search_sub_graph = SearchSubGraph(context_, src_model_, this->graph_output_node_indexes_);
   search_sub_graph.SubGraphSplitByOutput();
 #endif
 
@@ -357,6 +357,7 @@ kernel::LiteKernel *Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_ten
                                              const std::vector<Tensor *> &out_tensors, OpParameter *op_parameter,
                                              const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
+
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
     kernel::KernelKey gpu_desc{kGPU, kNumberTypeFloat32, desc.type};
@@ -433,6 +434,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
   kernel::LiteKernel *kernel = nullptr;
 #ifdef SUPPORT_GPU
+  //  if (node->device_type_ == DT_GPU || node->device_type_ == DEFAULT) {
   kernel = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc);
   if (kernel != nullptr) {
     return kernel;
@@ -447,8 +449,10 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       return nullptr;
     }
   }
+//  }
 #endif
 #ifdef SUPPORT_NPU
+  //  if (node->device_type_ == DT_NPU || node->device_type_ == DEFAULT) {
   kernel = FindNpuKernel(in_tensors, out_tensors, op_parameter, desc);
   if (kernel != nullptr) {
     return kernel;
@@ -463,6 +467,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       return nullptr;
     }
   }
+//  }
 #endif
   if (prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) {
     kernel = FindCpuKernel(in_tensors, out_tensors, op_parameter, desc, kNumberTypeFloat16);
@@ -617,34 +622,37 @@ bool Scheduler::KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_typ
 }
 
 std::vector<kernel::LiteKernel *> Scheduler::FindAllSubGraphKernels(
-  kernel::LiteKernel *head_kernel, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map) {
-  MS_ASSERT(head_kernel != nullptr);
-  MS_ASSERT(sinked_kernel_map != nullptr);
+  std::vector<kernel::LiteKernel *> head_kernels, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map) {
   std::vector<kernel::LiteKernel *> sub_kernels;
-  if (head_kernel->Type() == schema::PrimitiveType_Switch || head_kernel->Type() == schema::PrimitiveType_Merge) {
-    (*sinked_kernel_map)[head_kernel] = true;
-    sub_kernels.emplace_back(head_kernel);
-    return sub_kernels;
-  }
-  std::queue<kernel::LiteKernel *> kernel_queue;
-  kernel_queue.emplace(head_kernel);
-  auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
-  while (!kernel_queue.empty()) {
-    auto cur_kernel = kernel_queue.front();
-    kernel_queue.pop();
-    (*sinked_kernel_map)[cur_kernel] = true;
-    sub_kernels.emplace_back(cur_kernel);
-    auto post_kernels = cur_kernel->out_kernels();
-    for (auto post_kernel : post_kernels) {
-      if (post_kernel->subgraph_type() != kernel::kNotSubGraph || post_kernel->Type() == schema::PrimitiveType_Merge ||
-          post_kernel->Type() == schema::PrimitiveType_Switch) {
-        continue;
-      }
-      if (cur_sub_graph_type == mindspore::lite::Scheduler::GetKernelSubGraphType(post_kernel)) {
-        auto post_kernel_inputs = post_kernel->in_kernels();
-        if (std::all_of(post_kernel_inputs.begin(), post_kernel_inputs.end(),
-                        [&](kernel::LiteKernel *kernel) { return (*sinked_kernel_map)[kernel]; })) {
-          kernel_queue.emplace(post_kernel);
+
+  for (kernel::LiteKernel *head_kernel : head_kernels) {
+    MS_ASSERT(head_kernel != nullptr);
+    MS_ASSERT(sinked_kernel_map != nullptr);
+    if (head_kernel->Type() == schema::PrimitiveType_Switch || head_kernel->Type() == schema::PrimitiveType_Merge) {
+      (*sinked_kernel_map)[head_kernel] = true;
+      sub_kernels.emplace_back(head_kernel);
+      return sub_kernels;
+    }
+    std::queue<kernel::LiteKernel *> kernel_queue;
+    kernel_queue.emplace(head_kernel);
+    auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
+    while (!kernel_queue.empty()) {
+      auto cur_kernel = kernel_queue.front();
+      kernel_queue.pop();
+      (*sinked_kernel_map)[cur_kernel] = true;
+      sub_kernels.emplace_back(cur_kernel);
+      auto post_kernels = cur_kernel->out_kernels();
+      for (auto post_kernel : post_kernels) {
+        if (post_kernel->subgraph_type() != kernel::kNotSubGraph ||
+            post_kernel->Type() == schema::PrimitiveType_Merge || post_kernel->Type() == schema::PrimitiveType_Switch) {
+          continue;
+        }
+        if (cur_sub_graph_type == mindspore::lite::Scheduler::GetKernelSubGraphType(post_kernel)) {
+          auto post_kernel_inputs = post_kernel->in_kernels();
+          if (std::all_of(post_kernel_inputs.begin(), post_kernel_inputs.end(),
+                          [&](kernel::LiteKernel *kernel) { return (*sinked_kernel_map)[kernel]; })) {
+            kernel_queue.emplace(post_kernel);
+          }
         }
       }
     }
@@ -659,9 +667,13 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     (*is_kernel_finish)[kernel] = false;
   }
   while (true) {
+    std::vector<kernel::LiteKernel *> head_kernels;
     auto head_kernel_iter = std::find_if(src_kernel.begin(), src_kernel.end(), [&](const kernel::LiteKernel *kernel) {
       auto kernel_inputs = kernel->in_kernels();
       if ((*is_kernel_finish)[kernel]) {
+        return false;
+      }
+      if (std::find(head_kernels.begin(), head_kernels.end(), kernel) != head_kernels.end()) {
         return false;
       }
       // when merge is removed, this if is removed automatically
@@ -675,25 +687,33 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     if (head_kernel_iter == src_kernel.end()) {
       break;
     }
+
     auto head_kernel = *head_kernel_iter;
     if (head_kernel->subgraph_type() != kernel::kNotSubGraph) {
       (*is_kernel_finish)[head_kernel] = true;
       dst_kernel->push_back(head_kernel);
+
+      /* npu support split  */
+      /* ConstructSubGraphs(head_kernel->nodes(), dst_kernel, is_kernel_finish); */
       continue;
     }
     if (head_kernel->desc().arch == mindspore::kernel::kAPU) {
       MS_LOG(ERROR) << "Not support APU now";
       return RET_NOT_SUPPORT;
     }
-    auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
-    auto sub_kernels = FindAllSubGraphKernels(head_kernel, is_kernel_finish);
+
+    head_kernels.push_back(head_kernel);
+
+    auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernels[0]);
+    auto sub_kernels = FindAllSubGraphKernels(head_kernels, is_kernel_finish);
     auto subgraph = CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type);
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";
       return RET_ERROR;
     }
     dst_kernel->emplace_back(subgraph);
-  }
+  } /* end when all kernel converted */
+
   for (auto *subgraph : *dst_kernel) {
     auto ret = subgraph->Init();
     if (ret != RET_OK) {
@@ -702,7 +722,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     }
   }
   return RET_OK;
-}
+}  // namespace mindspore::lite
 
 bool Scheduler::MergeOpIsReady(const kernel::LiteKernel *kernel,
                                std::map<const kernel::LiteKernel *, bool> is_kernel_finish) {

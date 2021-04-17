@@ -55,7 +55,7 @@ void StrassenOpenCLKernel::AllocatorMemoryForStrassen(int NumA, int NumB) {
   size_t dtype_size = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
   size_t memB = NumB * NumB * dtype_size;
   for (int depth = 0; depth < MAXDEPTH; depth++) {
-    B_temp[depth] = allocator->Malloc(memB);
+    B_temp[depth] = allocator->Malloc(memB, lite::opencl::MemType::BUF);
     A_temp[depth] = allocator->Malloc(img_size);
     M1[depth] = allocator->Malloc(img_size);
     M2[depth] = allocator->Malloc(img_size);
@@ -73,7 +73,7 @@ int StrassenOpenCLKernel::InitWeights() {
   int NumA = in_tensors_[0]->shape()[0];
   int NumB = in_tensors_[1]->shape()[0];
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  padWeight_ = allocator->Malloc(NumA * NumB * dtype_size);
+  padWeight_ = allocator->Malloc(NumA * NumB * dtype_size, lite::opencl::MemType::BUF);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);

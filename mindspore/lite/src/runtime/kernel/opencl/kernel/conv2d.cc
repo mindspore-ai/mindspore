@@ -254,7 +254,7 @@ void Conv2DOpenCLKernel::InitFilter() {
     packed_filter_ = allocator->Malloc({width, height, dtype});
   } else {
     size = UP_DIV(CO_SLICES_, Ogroup) * KH_ * KW_ * CI_SLICES_ * Ogroup * CI_TILE * CO_TILE * sizeof_FLT_;
-    packed_filter_ = allocator->Malloc(size);
+    packed_filter_ = allocator->Malloc(size, lite::opencl::MemType::BUF);
   }
 
   // rearrange filter
@@ -287,7 +287,7 @@ void Conv2DOpenCLKernel::InitBias() {
   // align bias from C to C4
   auto bias_tensor = in_tensors_.at(2);
   size_t packed_bias_size = UP_ROUND(CO_SLICES_, block_size_.C) * CO_TILE * sizeof_FLT_;
-  packed_bias_ = allocator->Malloc(packed_bias_size);
+  packed_bias_ = allocator->Malloc(packed_bias_size, lite::opencl::MemType::BUF);
 
   allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true);
   memset(packed_bias_, 0x00, packed_bias_size);

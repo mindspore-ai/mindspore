@@ -183,7 +183,7 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
         auto tensor_info = GpuTensorInfo(tensor);
         size_t num = tensor_info.ElementsNum;
         size_t size = tensor_info.Image2DSize;
-        void *buffer = allocator->Malloc(size);
+        void *buffer = allocator->Malloc(size, lite::opencl::MemType::BUF);
         allocator->MapBuffer(buffer, CL_MAP_WRITE, nullptr, true);
         memset(buffer, 0x00, size);
         if (tensor->data_type() == kNumberTypeFloat16) {
