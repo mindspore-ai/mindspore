@@ -207,7 +207,7 @@ int ConcatOpenCLKernel::Prepare() {
   std::string source = concat_source;
   std::string program_name = "Concat";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {}, out_tensors_[0]->data_type());
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
   SetGlobalLocal();

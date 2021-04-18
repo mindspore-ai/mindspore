@@ -360,12 +360,9 @@ kernel::LiteKernel *Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_ten
 
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
-    kernel::KernelKey gpu_desc{kGPU, kNumberTypeFloat32, desc.type};
+    kernel::KernelKey gpu_desc{kGPU, desc.data_type, desc.type};
     if (context_->IsGpuFloat16Enabled()) {
       gpu_desc.data_type = kNumberTypeFloat16;
-    }
-    if (in_tensors.front()->data_type() == kNumberTypeInt8) {
-      gpu_desc.data_type = kNumberTypeInt8;
     }
 
     // weight dequant

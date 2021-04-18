@@ -39,12 +39,12 @@ int OneHotOpenCLKernel::CheckSpecs() {
 
 int OneHotOpenCLKernel::Prepare() {
   std::string kernel_name = "OneHot";
-  auto param = reinterpret_cast<OneHotParameter *>(op_parameter_);
+  param_ = reinterpret_cast<OneHotParameter *>(op_parameter_);
   in_shape_ = GpuTensorInfo(in_tensors_[0]);
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
-  axis_ = out_shape_.AlignAxis(param->axis_);
-  if (in_tensors_[0]->shape().size() == 1 && axis_ == 0) {
-    kernel_name += "2DAxis0";
+  axis_ = out_shape_.AlignAxis(param_->axis_);
+  if (in_tensors_[0]->shape().size() == 1 && axis_ == 3) {
+    kernel_name += "2DAxis3";
   } else {
     kernel_name += "Axis" + std::to_string(axis_);
   }
@@ -54,7 +54,7 @@ int OneHotOpenCLKernel::Prepare() {
   std::string source = one_hot_source;
   std::string program_name = "OneHot";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
 #endif
   InitWeights();
   SetConstArgs();
@@ -69,10 +69,12 @@ int OneHotOpenCLKernel::InitWeights() {
   if (in_tensors_.size() == 3) {  // onnx
     off_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
     on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[1];
+    param_->support_neg_index_ = true;
   }
   if (in_tensors_.size() == 4) {  // tf
     on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
     off_value_ = static_cast<float *>(in_tensors_[3]->data_c())[0];
+    param_->support_neg_index_ = false;
   }
   return RET_OK;
 }
@@ -87,7 +89,8 @@ void OneHotOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, depth_);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, on_value_);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, off_value_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(out_shape_.C));
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<int>(out_shape_.C));
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(param_->support_neg_index_));
 }
 void OneHotOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
@@ -103,6 +106,5 @@ int OneHotOpenCLKernel::Run() {
   return mindspore::lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_OneHot, OpenCLKernelCreator<OneHotOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_OneHot, OpenCLKernelCreator<OneHotOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_OneHot, OpenCLKernelCreator<OneHotOpenCLKernel>)
 }  // namespace mindspore::kernel

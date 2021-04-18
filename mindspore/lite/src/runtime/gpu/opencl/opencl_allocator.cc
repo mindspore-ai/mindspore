@@ -145,6 +145,8 @@ int OpenCLAllocator::GetImgDtypeSize(const ImageSize &img_size) {
     dtype_size = sizeof(cl_half);
   } else if (img_size.dtype == CL_SIGNED_INT8) {
     dtype_size = sizeof(cl_uchar);
+  } else if (img_size.dtype == CL_SIGNED_INT32) {
+    dtype_size = sizeof(cl_int);
   } else {
     MS_LOG(ERROR) << "Unsupported dtype " << img_size.dtype;
     return RET_ERROR;
