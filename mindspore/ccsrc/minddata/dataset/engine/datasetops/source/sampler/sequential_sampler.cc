@@ -26,7 +26,9 @@ SequentialSamplerRT::SequentialSamplerRT(int64_t start_index, int64_t num_sample
 
 Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
   if (id_count_ > num_samples_) {
-    RETURN_STATUS_UNEXPECTED("SequentialSampler Internal Error");
+    RETURN_STATUS_UNEXPECTED(
+      "Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
+      std::to_string(id_count_) + ", num_samples_: " + std::to_string(num_samples_));
   } else if (id_count_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
@@ -80,9 +82,9 @@ Status SequentialSamplerRT::InitSampler() {
   if (num_samples_ == 0 || num_samples_ > available_row_count) {
     num_samples_ = available_row_count;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    (num_samples_ > 0 && samples_per_tensor_ > 0) || num_samples_ == 0,
-    "Invalid parameter, samples_per_tensor must be greater than 0, but got " + std::to_string(samples_per_tensor_));
+  CHECK_FAIL_RETURN_UNEXPECTED((num_samples_ > 0 && samples_per_tensor_ > 0) || num_samples_ == 0,
+                               "Invalid parameter, samples_per_tensor(num_samplers) must be greater than 0, but got " +
+                                 std::to_string(samples_per_tensor_));
   samples_per_tensor_ = samples_per_tensor_ > num_samples_ ? num_samples_ : samples_per_tensor_;
 
   is_initialized = true;
@@ -90,7 +92,7 @@ Status SequentialSamplerRT::InitSampler() {
 }
 
 Status SequentialSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(id_count_ == num_samples_, "ERROR Reset() called early/late");
+  CHECK_FAIL_RETURN_UNEXPECTED(id_count_ == num_samples_, "[Internal ERROR] Reset() Sampler called early or late.");
   current_id_ = start_index_;
   id_count_ = 0;
 

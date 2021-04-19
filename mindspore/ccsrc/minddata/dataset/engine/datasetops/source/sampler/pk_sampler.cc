@@ -59,7 +59,7 @@ Status PKSamplerRT::InitSampler() {
     std::sort(labels_.begin(), labels_.end());
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
-    num_samples_ > 0, "Invalid parameter, num_class or K (num samples per class) must be greater than 0, but got " +
+    num_samples_ > 0, "Invalid parameter, num_class or num samples per class must be greater than 0, but got " +
                         std::to_string(num_samples_));
   is_initialized = true;
   return Status::OK();
@@ -67,7 +67,9 @@ Status PKSamplerRT::InitSampler() {
 
 Status PKSamplerRT::GetNextSample(TensorRow *out) {
   if (next_id_ > num_samples_ || num_samples_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Index must be less than or equal to num_samples, but got: " + std::to_string(next_id_));
+    RETURN_STATUS_UNEXPECTED(
+      "Sampler index must be less than or equal to num_samples(total rows in dataset), but got: " +
+      std::to_string(next_id_) + ", num_samplers:" + std::to_string(num_samples_));
   } else if (next_id_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
@@ -79,7 +81,7 @@ Status PKSamplerRT::GetNextSample(TensorRow *out) {
     int64_t last_id = (samples_per_tensor_ + next_id_ > num_samples_) ? num_samples_ : samples_per_tensor_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, last_id - next_id_));
     auto id_ptr = sample_ids->begin<int64_t>();
-    CHECK_FAIL_RETURN_UNEXPECTED(samples_per_class_ != 0, "samples cannot be zero.");
+    CHECK_FAIL_RETURN_UNEXPECTED(samples_per_class_ != 0, "Invalid Parameter, num samples per class can't be zero.");
     while (next_id_ < last_id && id_ptr != sample_ids->end<int64_t>()) {
       int64_t cls_id = next_id_++ / samples_per_class_;
       const std::vector<int64_t> &samples = label_to_ids_[labels_[cls_id]];
@@ -100,7 +102,7 @@ Status PKSamplerRT::GetNextSample(TensorRow *out) {
 }
 
 Status PKSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
+  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "[Internal ERROR] Reset() Sampler called early or late.");
   next_id_ = 0;
   rnd_.seed(seed_++);
 

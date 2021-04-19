@@ -107,7 +107,8 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
     for (size_t i = 0; i < number_of_arguments; i++) {
       auto map_item = column_name_id_map_.find(length_dependent_columns_[i]);
       if (map_item == column_name_id_map_.end()) {
-        RETURN_STATUS_UNEXPECTED("BucketBatchByLength: Couldn't find the specified column in the dataset");
+        RETURN_STATUS_UNEXPECTED("BucketBatchByLength: Couldn't find the specified column(" +
+                                 length_dependent_columns_[i] + ") in the dataset.");
       }
       int32_t column_index = map_item->second;
       input.push_back(element[column_index]);
@@ -116,7 +117,8 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
     RETURN_IF_NOT_OK(output.at(0)->GetItemAt(out_element_length, {0}));
     if (*out_element_length < 0) {
       RETURN_STATUS_UNEXPECTED(
-        "Invalid parameter, element_length_function must return an integer greater than or equal to 0.");
+        "Invalid parameter, element_length_function must return an integer greater than or equal to 0, but got" +
+        std::to_string(*out_element_length));
     }
   } else {
     *out_element_length = element[0]->shape()[0];

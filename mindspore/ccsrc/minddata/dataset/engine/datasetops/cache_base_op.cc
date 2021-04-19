@@ -227,7 +227,7 @@ Status CacheBase::UpdateColumnMapFromCache() {
 
 Status CacheBase::GetPrefetchRow(row_id_type row_id, TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  CHECK_FAIL_RETURN_UNEXPECTED(row_id >= 0, "Expect positive row id");
+  CHECK_FAIL_RETURN_UNEXPECTED(row_id >= 0, "Expect positive row id, but got:" + std::to_string(row_id));
   RETURN_IF_NOT_OK(prefetch_.PopFront(row_id, out));
   return Status::OK();
 }
@@ -280,7 +280,7 @@ Status CacheBase::Prefetcher(int32_t worker_id) {
     cache_miss.clear();
     std::unique_ptr<IOBlock> blk;
     RETURN_IF_NOT_OK(prefetch_queues_[worker_id]->PopFront(&blk));
-    CHECK_FAIL_RETURN_UNEXPECTED(!blk->eof(), "Expect eoe or a regular io block");
+    CHECK_FAIL_RETURN_UNEXPECTED(!blk->eof(), "Expect eoe or a regular io block.");
     if (!blk->eoe()) {
       RETURN_IF_NOT_OK(blk->GetKeys(&prefetch_keys));
       Status rc;

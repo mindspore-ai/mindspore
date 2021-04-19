@@ -186,8 +186,13 @@ Status TextFileOp::CalculateNumRowsPerShard() {
     num_rows_ += count;
   }
   if (num_rows_ == 0) {
+    std::stringstream ss;
+    for (int i = 0; i < text_files_list_.size(); ++i) {
+      ss << " " << text_files_list_[i];
+    }
+    std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API TextFileDataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with TextFileDataset API. Check file: " + file_list);
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));

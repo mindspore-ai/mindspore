@@ -119,7 +119,9 @@ Status TFReaderOp::Init() {
     total_rows_ = data_schema_->num_rows();
   }
   if (total_rows_ < 0) {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, num_sample or num_row for TFRecordDataset must be greater than 0.");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, num_samples or num_rows for TFRecordDataset must be greater than 0, but got: " +
+      std::to_string(total_rows_));
   }
 
   // Build the index with our files such that each file corresponds to a key id.
@@ -152,8 +154,13 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
   }
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
   if (num_rows_per_shard_ == 0) {
+    std::stringstream ss;
+    for (int i = 0; i < dataset_files_list_.size(); ++i) {
+      ss << " " << dataset_files_list_[i];
+    }
+    std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API TFRecordDataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with TFRecordDataset API. Check file path." + file_list);
   }
   return Status::OK();
 }
@@ -367,11 +374,11 @@ Status TFReaderOp::LoadFeature(TensorRow *tensor_row, const dataengine::Feature 
       break;
     }
     case dataengine::Feature::KindCase::KIND_NOT_SET: {
-      std::string err_msg = "Invalid data, tf_file column type must be uint8, int64 or float32.";
+      std::string err_msg = "Invalid data, column type in tf record file must be uint8, int64 or float32.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     default: {
-      std::string err_msg = "Invalid data, tf_file column type must be uint8, int64 or float32.";
+      std::string err_msg = "Invalid data, column type in tf record file must be uint8, int64 or float32.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
@@ -587,10 +594,10 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::stri
         break;
 
       case dataengine::Feature::KindCase::KIND_NOT_SET:
-        RETURN_STATUS_UNEXPECTED("Invalid data, tf_file column type must be uint8, int64 or float32.");
+        RETURN_STATUS_UNEXPECTED("Invalid data, column type of tf record file must be uint8, int64 or float32.");
 
       default:
-        RETURN_STATUS_UNEXPECTED("Invalid data, tf_file column type must be uint8, int64 or float32.");
+        RETURN_STATUS_UNEXPECTED("Invalid data, column type of tf record file must be uint8, int64 or float32.");
     }
 
     RETURN_IF_NOT_OK(

@@ -417,12 +417,12 @@ def test_cifar_usage():
     assert test_config("all") == 10000
     assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid")
     assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(["list"])
-    assert "no valid data matching the dataset API Cifar10Dataset" in test_config("test")
+    assert "data file may not suitable to read with Cifar10Dataset API" in test_config("test")
 
     # test the usage of CIFAR10
     assert test_config("test", False) == 10000
     assert test_config("all", False) == 10000
-    assert "no valid data matching the dataset API Cifar100Dataset" in test_config("train", False)
+    assert "data file may not suitable to read with Cifar100Dataset API" in test_config("train", False)
     assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid", False)
 
     # change this directory to the folder that contains all cifar10 files

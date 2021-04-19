@@ -33,7 +33,8 @@ RandomSamplerRT::RandomSamplerRT(bool replacement, int64_t num_samples, bool res
 
 Status RandomSamplerRT::GetNextSample(TensorRow *out) {
   if (next_id_ > num_samples_) {
-    RETURN_STATUS_UNEXPECTED("RandomSampler Internal Error");
+    RETURN_STATUS_UNEXPECTED("Sampler index must be less than or equal to num_samples(total rows in dataset), but got" +
+                             std::to_string(next_id_) + ", num_samplers:" + std::to_string(num_samples_));
   } else if (next_id_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
@@ -77,7 +78,7 @@ Status RandomSamplerRT::InitSampler() {
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_samples_ > 0 && num_rows_ > 0,
-    "Invalid parameter, num_samples & num_rows must be greater than 0, but got num_samples: " +
+    "Invalid parameter, num_samples and num_rows must be greater than 0, but got num_samples: " +
       std::to_string(num_samples_) + ", num_rows: " + std::to_string(num_rows_));
   samples_per_tensor_ = samples_per_tensor_ > num_samples_ ? num_samples_ : samples_per_tensor_;
   rnd_.seed(seed_);
@@ -97,7 +98,7 @@ Status RandomSamplerRT::InitSampler() {
 }
 
 Status RandomSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
+  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "[Internal ERROR] Reset() Sampler called early or late.");
   next_id_ = 0;
 
   if (reshuffle_each_epoch_) {

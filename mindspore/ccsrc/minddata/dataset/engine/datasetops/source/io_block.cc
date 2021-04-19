@@ -36,7 +36,7 @@ IOBlock::IOBlock(IOBlockFlags io_block_flags) : io_block_flags_(io_block_flags) 
 // Fetches the first key from this block
 Status IOBlock::GetKey(int64_t *out_key) const {
   if (out_key == nullptr || index_keys_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Failed to get the key from IOBlock");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to get the key from IOBlock.");
   }
   *out_key = index_keys_[0];
   return Status::OK();
@@ -45,7 +45,7 @@ Status IOBlock::GetKey(int64_t *out_key) const {
 // Fetches the list of keys from this block.
 Status IOBlock::GetKeys(std::vector<int64_t> *out_keys) const {
   if (out_keys == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Output arg for GetKeys is null");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Output arg for GetKeys is null.");
   }
   *out_keys = index_keys_;  // vector copy assign
   return Status::OK();
@@ -64,7 +64,7 @@ FilenameBlock::FilenameBlock(IOBlockFlags io_block_flags)
 // Gets the filename from the block using the provided index container
 Status FilenameBlock::GetFilename(std::string *out_filename, const AutoIndexObj<std::string> &index) const {
   if (out_filename == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Failed to get filename from FilenameBlock");
+    RETURN_STATUS_UNEXPECTED("Failed to get filename from FilenameBlock.");
   }
 
   // a FilenameBlock only has one key.  Call base class method to fetch that key
@@ -77,7 +77,7 @@ Status FilenameBlock::GetFilename(std::string *out_filename, const AutoIndexObj<
     auto &it = r.first;
     *out_filename = it.value();
   } else {
-    RETURN_STATUS_UNEXPECTED("Could not find filename from index");
+    RETURN_STATUS_UNEXPECTED("Could not find filename from index.");
   }
 
   return Status::OK();

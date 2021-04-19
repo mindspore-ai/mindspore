@@ -358,7 +358,7 @@ Status DataSchema::LoadSchemaFile(const std::string &schema_file_path,
     }
   } catch (const std::exception &err) {
     // Catch any exception and convert to Status return code
-    RETURN_STATUS_UNEXPECTED("Schema file failed to load");
+    RETURN_STATUS_UNEXPECTED("Schema file failed to load with JSON tools. File is: " + schema_file_path);
   }
   return Status::OK();
 }

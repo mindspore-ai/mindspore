@@ -113,7 +113,7 @@ Status ProjectOp::ComputeColMap() {
     for (size_t i = 0; i < columns_to_project_.size(); i++) {
       std::string &current_column = columns_to_project_[i];
       if (child_column_name_mapping.find(current_column) == child_column_name_mapping.end()) {
-        std::string err_msg = "Invalid parameter, column name: " + current_column + " does not exist.";
+        std::string err_msg = "Invalid parameter, column name: " + current_column + " does not exist in dataset.";
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       // Setup the new column name mapping for ourself (base class field)

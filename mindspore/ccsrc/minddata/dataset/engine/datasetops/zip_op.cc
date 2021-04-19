@@ -107,7 +107,9 @@ Status ZipOp::ComputeColMap() {
         int32_t old_id = pair.second;
         // check if name already exists in column name descriptor
         if (column_name_id_map_.count(name) == 1) {
-          RETURN_STATUS_UNEXPECTED("Invalid parameter, key: " + name + " already exists when zipping datasets.");
+          RETURN_STATUS_UNEXPECTED("Invalid parameter, key: " + name +
+                                   " already exists when zipping datasets. Check for duplicate key names in different "
+                                   "dataset.");
         }
         column_name_id_map_[name] = old_id + colsCurrent;
       }

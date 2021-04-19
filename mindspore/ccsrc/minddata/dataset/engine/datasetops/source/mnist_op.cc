@@ -114,10 +114,10 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
 Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No image found in dataset, please check if Op read images successfully or not.");
+      RETURN_STATUS_UNEXPECTED("No image found in dataset, try iterate dataset to check if read images success.");
     } else {
       RETURN_STATUS_UNEXPECTED(
-        "Map for storaging image-index pair is nullptr or has been set in other place,"
+        "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
         "it must be empty before using GetClassIds.");
     }
   }
@@ -192,25 +192,26 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   uint32_t num_images, num_labels;
   RETURN_IF_NOT_OK(CheckImage(image_names_[index], image_reader, &num_images));
   RETURN_IF_NOT_OK(CheckLabel(label_names_[index], label_reader, &num_labels));
-  CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels), "Invalid data, num_images is not equal to num_labels.");
+  CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
+                               "Invalid data, num_images is not equal to num_labels. Ensure data file is not damaged.");
   // The image size of the Mnist dataset is fixed at [28,28]
   int64_t size = kMnistImageRows * kMnistImageCols;
   auto images_buf = std::make_unique<char[]>(size * num_images);
   auto labels_buf = std::make_unique<char[]>(num_images);
   if (images_buf == nullptr || labels_buf == nullptr) {
-    std::string err_msg = "Failed to allocate memory for MNIST buffer.";
+    std::string err_msg = "[Internal ERROR] Failed to allocate memory for MNIST buffer.";
     MS_LOG(ERROR) << err_msg.c_str();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (void)image_reader->read(images_buf.get(), size * num_images);
   if (image_reader->fail()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to read image: " + image_names_[index] +
-                             ", size:" + std::to_string(size * num_images));
+                             ", size:" + std::to_string(size * num_images) + ". Ensure data file is not damaged.");
   }
   (void)label_reader->read(labels_buf.get(), num_images);
   if (label_reader->fail()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to read label:" + label_names_[index] +
-                             ", size: " + std::to_string(num_images));
+                             ", size: " + std::to_string(num_images) + ". Ensure data file is not damaged.");
   }
   TensorShape img_tensor_shape = TensorShape({kMnistImageRows, kMnistImageCols, 1});
   for (int64_t j = 0; j != num_images; ++j) {
@@ -247,7 +248,8 @@ Status MnistOp::ParseMnistData() {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API MnistDataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with MnistDataset API. Check file in directory: " +
+      folder_path_);
   }
   return Status::OK();
 }

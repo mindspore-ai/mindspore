@@ -112,8 +112,9 @@ Status MindRecordOp::Init() {
   if (!load_all_cols) {
     std::unique_ptr<DataSchema> tmp_schema = std::make_unique<DataSchema>();
     for (std::string colname : columns_to_load_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(colname_to_ind.find(colname) != colname_to_ind.end(),
-                                   "Invalid parameter, column name: " + colname + " does not exist.");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        colname_to_ind.find(colname) != colname_to_ind.end(),
+        "Invalid data, specified loading column name: " + colname + " does not exist in data file.");
       RETURN_IF_NOT_OK(tmp_schema->AddColumn(data_schema_->column(colname_to_ind[colname])));
     }
     data_schema_ = std::move(tmp_schema);
@@ -276,7 +277,7 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     DataType type = column.type();
 
     // Set shape
-    CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0, "The divisor cannot be 0.");
+    CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0, "Found memory size of column data type is 0.");
     auto num_elements = n_bytes / column_data_type_size;
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};
@@ -328,7 +329,9 @@ Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path,
   std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
   MSRStatus rc = shard_reader->CountTotalRows(dataset_path, load_dataset, op, count, num_padded);
   if (rc == MSRStatus::FAILED) {
-    RETURN_STATUS_UNEXPECTED("Invalid data, MindRecordOp failed to count total rows.");
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, MindRecordOp failed to count total rows. Check whether there are corresponding .db files "
+      "and the value of dataset_file parameter is given correctly.");
   }
   return Status::OK();
 }

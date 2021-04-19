@@ -112,7 +112,7 @@ void RandomDataOp::GenerateSchema() {
 // provide the master loop that drives the logic for performing the work.
 Status RandomDataOp::operator()() {
   CHECK_FAIL_RETURN_UNEXPECTED(total_rows_ >= num_workers_,
-                               "RandomDataOp expects total_rows < num_workers. total_row=" +
+                               "RandomDataOp expects total_rows < num_workers. Try adjust num_workers, total_row=" +
                                  std::to_string(total_rows_) + ", num_workers=" + std::to_string(num_workers_) + " .");
 
   // If the amount of workers we have exceeds the number of rows to produce, then we'll have
@@ -265,7 +265,7 @@ Status RandomDataOp::WorkerEntry(int32_t worker_id) {
 // A helper function to create random data for the row
 Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
   if (new_row == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Missing tensor row output");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "[Internal ERROR] Missing tensor row output.");
   }
 
   // Create a tensor for each column, then add the tensor to the row

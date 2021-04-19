@@ -490,7 +490,7 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
   std::ifstream ifs;
   ifs.open(file, std::ifstream::in);
   if (!ifs.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Error opening file: " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
   if (column_name_list_.empty()) {
     std::string tmp;
@@ -506,17 +506,17 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
       int err = csv_parser.ProcessMessage(chr);
       if (err != 0) {
         if (err == -2) return Status(kMDInterrupted);
-        RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse file: " + file + ":" +
+        RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse file: " + file + ": line " +
                                  std::to_string(csv_parser.GetTotalRows() + 1) +
                                  ". Error message: " + csv_parser.GetErrorMessage());
       }
     }
   } catch (std::invalid_argument &ia) {
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
-    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ":" + err_row + ", type does not match.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ": line " + err_row + ", type does not match.");
   } catch (std::out_of_range &oor) {
     std::string err_row = std::to_string(csv_parser.GetTotalRows() + 1);
-    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ":" + err_row + ", out of range.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + file + ": line " + err_row + ", value out of range.");
   }
   return Status::OK();
 }
@@ -597,8 +597,13 @@ Status CsvOp::CalculateNumRowsPerShard() {
     num_rows_ += count;
   }
   if (num_rows_ == 0) {
+    std::stringstream ss;
+    for (int i = 0; i < csv_files_list_.size(); ++i) {
+      ss << " " << csv_files_list_[i];
+    }
+    std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CsvDataset. Please check file path or CSV format.");
+      "Invalid data, data file may not suitable to read with CSVDataset API. Check file path: " + file_list + ".");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
@@ -662,7 +667,7 @@ Status CsvOp::ComputeColMap() {
   // Set the column name mapping (base class field)
   if (column_name_id_map_.empty()) {
     if (!ColumnNameValidate()) {
-      RETURN_STATUS_UNEXPECTED("Fail to validate column name for input CSV file list");
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to obtain column name from input CSV file list.");
     }
 
     for (auto &csv_file : csv_files_list_) {
@@ -686,9 +691,9 @@ Status CsvOp::ComputeColMap() {
 
   if (column_default_list_.size() != column_name_id_map_.size()) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid parameter, the number of column names does not match the column defaults, column_default_list: " +
+      "Invalid parameter, the number of column names does not match the default column, size of default column_list: " +
       std::to_string(column_default_list_.size()) +
-      ", column_name_id_map: " + std::to_string(column_name_id_map_.size()));
+      ", size of column_name: " + std::to_string(column_name_id_map_.size()));
   }
 
   return Status::OK();

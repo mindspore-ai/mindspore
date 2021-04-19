@@ -58,7 +58,7 @@ Status BuildSentencePieceVocabOp::operator()() {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no op should be after from_dataset (repeat detected)");
+    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no operator should be after from_dataset (repeat detected)");
     eoe_warning = true;
   }
   // add empty tensorRow for quit
@@ -71,12 +71,13 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   TaskManager::FindMe()->Post();
   if (col_names_.empty() == true) {
     auto itr = column_name_id_map_.find("text");
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(), "Invalid data, 'text' column does not exist.");
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
+                                 "Invalid data, 'text' column does not exist in dataset.");
     col_id_ = itr->second;
   } else {
     auto itr = column_name_id_map_.find(col_names_[0]);
     CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                 "Invalid parameter, column name: " + col_names_[0] + " does not exist.");
+                                 "Invalid parameter, column name: " + col_names_[0] + " does not exist in dataset.");
     col_id_ = itr->second;
   }
   std::unique_ptr<DatasetSentenceIterator> sentence_iter = std::make_unique<DatasetSentenceIterator>(this);
@@ -88,7 +89,7 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   } else {
     if (vocab_ == nullptr) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "Invalid parameter, sentencepiece vocab not set.");
+                    "Invalid parameter, SentencePiece vocab not set.");
     }
     vocab_->set_model_proto(model_proto);
   }
