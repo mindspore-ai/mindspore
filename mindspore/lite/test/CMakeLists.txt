@@ -137,6 +137,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/parallel_executor.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
         ${LITE_DIR}/src/tensor.cc
+        ${LITE_DIR}/src/ms_tensor.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/inner_context.cc

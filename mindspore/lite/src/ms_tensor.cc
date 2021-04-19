@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_COMMON_LOADER_UTIL_H_
-#define MINDSPORE_LITE_SRC_COMMON_LOADER_UTIL_H_
-
-#ifndef _WIN32
-#include <dlfcn.h>
+#include "include/ms_tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
-namespace lite {
+namespace tensor {
 
-class SoLoader {
- public:
-  int Open(const char *so_path, int mode = RTLD_LAZY);
-  void *GetFunc(const char *func_name);
-  int Close();
+tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape,
+                                                 const void *data, size_t data_len) {
+  auto tensor = new (std::nothrow) lite::Tensor();
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Failed to allocate tensor.";
+    return nullptr;
+  }
+  tensor->set_data(const_cast<void *>(data));
+  tensor->set_shape(shape);
+  tensor->set_tensor_name(name);
+  tensor->set_data_type(type);
+  return tensor;
+}
 
- private:
-  void *handler_;
-};
-
-}  // namespace lite
+}  // namespace tensor
 }  // namespace mindspore
-
-#endif
-#endif
