@@ -415,7 +415,7 @@ void OnnxExporter::InitModelInfo() {
   model_.set_producer_name("MindSpore");
   model_.set_producer_version("1.0");
   onnx::OperatorSetIdProto *opset_proto = model_.add_opset_import();
-  opset_proto->set_version(9);
+  opset_proto->set_version(11);
 }
 
 void OnnxExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, onnx::GraphProto *const graph_proto) {
@@ -446,13 +446,14 @@ void OnnxExporter::ExportParameters(const FuncGraphPtr &func_graph, onnx::GraphP
       MS_LOG(EXCEPTION) << "Parameter '" << param->ToString() << "' could not cast to parameter.";
     }
 
-    onnx::ValueInfoProto *input_proto = graph_proto->add_input();
-    input_proto->set_name(param_ptr->ToString());
-    SetValueInfoType(param_ptr, input_proto);
-
+    // set onnx input.
     if (!param_ptr->has_default()) {
+      onnx::ValueInfoProto *input_proto = graph_proto->add_input();
+      input_proto->set_name(param_ptr->ToString());
+      SetValueInfoType(param_ptr, input_proto);
       continue;
     }
+
     // parameter with default value is an ONNX initializer
     onnx::TensorProto *initializer_proto = graph_proto->add_initializer();
     initializer_proto->set_name(param_ptr->ToString());
