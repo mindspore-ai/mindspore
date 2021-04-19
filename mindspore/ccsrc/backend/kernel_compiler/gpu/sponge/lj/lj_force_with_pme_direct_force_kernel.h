@@ -50,7 +50,6 @@ class LJForceWithPMEDirectForceGpuKernel : public GpuKernel {
     for (size_t i = 0; i < shape_LJtype.size(); i++) ele_LJtype *= shape_LJtype[i];
     for (size_t i = 0; i < shape_charge.size(); i++) ele_charge *= shape_charge[i];
     for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    // for (size_t i = 0; i < shape_nl.size(); i++) ele_nl *= shape_nl[i];
     for (size_t i = 0; i < shape_d_LJ_a.size(); i++) ele_d_LJ_a *= shape_d_LJ_a[i];
     for (size_t i = 0; i < shape_d_LJ_b.size(); i++) ele_d_LJ_b *= shape_d_LJ_b[i];
 
