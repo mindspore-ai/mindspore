@@ -411,8 +411,8 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
         ema (bool): Uses EMA algorithm update value min and max. Default: False.
         ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
-            simulate quantization aware funcion. After delay step in training time begin simulate the aware
-            quantize funcion. Default: 0.
+            simulate quantization aware function. After delay step in training time begin simulate the aware
+            quantize function. Default: 0.
         symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         training (bool): Training the network or not. Default: True.
@@ -687,7 +687,7 @@ class FakeQuantPerChannelGrad(PrimitiveWithInfer):
 
 class BatchNormFold(PrimitiveWithInfer):
     """
-    Batch normalization folded.
+    Batch Normalization folded.
 
     Args:
         momentum (float): Momentum value must be [0, 1]. Default: 0.9.
