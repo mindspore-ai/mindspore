@@ -51,9 +51,6 @@ class SomasStream {
   // Accessors
   const int64_t &GetId() const { return id_; }
 
-  // Ancestor Computing
-  void ComputeAncestorStreams();  // Given "ancestors at distance one" information, compute "ancestors at any distance"
-
  private:
   const int64_t id_{0};
 };
