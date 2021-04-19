@@ -97,7 +97,13 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     format_trans_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     format_trans_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
     if (ctx.fmk != converter::FmkType_TF) {
-      format_trans_optimizer.AddPass(new (std::nothrow) InferShapePass());
+      auto infer_shape_pass = new (std::nothrow) InferShapePass();
+      if (infer_shape_pass == nullptr) {
+        MS_LOG(ERROR) << "new InferShapePass failed";
+        return RET_MEMORY_FAILED;
+      }
+      infer_shape_pass->set_fmk_type(ctx.fmk);
+      format_trans_optimizer.AddPass(infer_shape_pass);
     }
     status = format_trans_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
@@ -177,7 +183,13 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto old_nodes = GetGraphNodes();
     Optimizer tensor_quant_optimizer;
     tensor_quant_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-    tensor_quant_optimizer.AddPass(new (std::nothrow) InferShapePass());
+    auto infer_shape_pass = new (std::nothrow) InferShapePass();
+    if (infer_shape_pass == nullptr) {
+      MS_LOG(ERROR) << "new InferShapePass failed";
+      return RET_MEMORY_FAILED;
+    }
+    infer_shape_pass->set_fmk_type(ctx.fmk);
+    tensor_quant_optimizer.AddPass(infer_shape_pass);
     tensor_quant_optimizer.AddPass(new (std::nothrow) TensorQuantPass());
     tensor_quant_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     status = tensor_quant_optimizer.Run(graph_defT_);
@@ -194,7 +206,13 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     Optimizer quant_node_optimizer;
     quant_node_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-    quant_node_optimizer.AddPass(new (std::nothrow) InferShapePass());
+    auto infer_shape_pass = new (std::nothrow) InferShapePass();
+    if (infer_shape_pass == nullptr) {
+      MS_LOG(ERROR) << "new InferShapePass failed";
+      return RET_MEMORY_FAILED;
+    }
+    infer_shape_pass->set_fmk_type(ctx.fmk);
+    quant_node_optimizer.AddPass(infer_shape_pass);
     status = quant_node_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run quant_node_optimizer graphPasses Failed";
@@ -277,6 +295,22 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     status = quant_param_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run quant_param_optimizer graphPasses Failed";
+      return status;
+    }
+  }
+
+  {
+    Optimizer infer_shape_optimizer;
+    auto infer_shape_pass = new (std::nothrow) InferShapePass();
+    if (infer_shape_pass == nullptr) {
+      MS_LOG(ERROR) << "new InferShapePass failed";
+      return RET_MEMORY_FAILED;
+    }
+    infer_shape_pass->set_fmk_type(ctx.fmk);
+    infer_shape_optimizer.AddPass(infer_shape_pass);
+    status = infer_shape_optimizer.Run(graph_defT_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run InferShapeOptimizer graphPasses Failed.";
       return status;
     }
   }

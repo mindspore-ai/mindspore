@@ -19,14 +19,24 @@
 
 #include <unordered_map>
 #include <memory>
+#include <vector>
 #include <string>
 #include <utility>
 #include "tools/common/graph_util.h"
 #include "tools/converter/optimizer.h"
+#include "tools/converter/converter_flags.h"
 
+using mindspore::lite::converter::FmkType_TF;
 using mindspore::schema::TensorT;
 namespace mindspore {
 namespace lite {
+
+struct InferTensor {
+  std::vector<uint32_t> in_nodes_; /* used current tensor as input */
+  std::vector<uint32_t> out_nodes_;
+  bool is_infer_;
+};
+
 class InferShapePass : public GraphPass {
  public:
   InferShapePass() = default;
@@ -34,6 +44,19 @@ class InferShapePass : public GraphPass {
   ~InferShapePass() = default;
 
   STATUS Run(MetaGraphT *graph) override;
+
+  void set_fmk_type(converter::FmkType fmk_type) { this->fmk_type_ = fmk_type; }
+
+ private:
+  void InitSearchTensor(MetaGraphT *graph);
+  void AddNextInferShapeNode(std::vector<uint32_t> output_tensor_node_indexes, size_t index);
+  void AddOutputNode(uint32_t infer_node_index);
+
+  lite::converter::FmkType fmk_type_ = FmkType_TF;
+  MetaGraphT *graph_ = nullptr;
+  std::vector<InferTensor> tensors_ = {};
+  std::vector<uint32_t> infer_node_indexes_ = {};
+  bool infer_interrupt_ = false;
 };
 }  // namespace lite
 }  // namespace mindspore
