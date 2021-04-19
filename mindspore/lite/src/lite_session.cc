@@ -347,6 +347,23 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   }
 }
 
+void LiteSession::FreePackOpWeight() {
+  for (auto *kernel : kernels_) {
+    MS_ASSERT(kernel != nullptr);
+    if (!IsPackedOp(kernel->Type())) {
+      continue;
+    }
+    auto inputs = kernel->in_tensors();
+    for (auto *tensor : inputs) {
+      MS_ASSERT(tensor != nullptr);
+      if (!tensor->IsConst()) {
+        continue;
+      }
+      tensor->FreeData();
+    }
+  }
+}
+
 int LiteSession::CompileGraph(Model *model) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
@@ -427,7 +444,8 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-
+  // For reducing runtime RAM, free packop weight because packop will pack weight and will not access to origin weight
+  FreePackOpWeight();
   is_running_.store(false);
   return RET_OK;
 }  // namespace lite

@@ -106,6 +106,8 @@ class LiteSession : public session::LiteSession {
 
   static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
+  void FreePackOpWeight();
+
  private:
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
