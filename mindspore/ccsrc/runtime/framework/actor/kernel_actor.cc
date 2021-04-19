@@ -76,6 +76,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   }
   SendOutput(context);
   FreeMemory(context);
+  EraseInput(context);
 }
 
 bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
