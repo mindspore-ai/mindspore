@@ -69,7 +69,7 @@ PrimitivePy::PrimitivePy(const py::str &name, const py::object &python_obj)
 PrimitivePy::~PrimitivePy() {
   // Erase primitive here to set released flag false, to avoid calling released pointer when clear primitives in
   // resource.
-  pipeline::Resource::mem_cleaner().ReleasePrimitivePyObj(this);
+  pipeline::Resource::mem_cleaner().SetReleasePrimitivePyObj(this);
   MS_LOG(DEBUG) << "Release:" << ToString();
 }
 void PrimitivePy::SetPyObj(const py::object &obj) { python_obj_ = obj; }

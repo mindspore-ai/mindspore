@@ -60,6 +60,7 @@ class MemoryCleaner {
   void Init();
 
   void RecordPrimitivePy(PrimitivePy *prim);
+  bool SetReleasePrimitivePyObj(PrimitivePy *prim);
   void ReleasePrimitivePyObj(PrimitivePy *prim);
   void ClearPrimitivePyPythonObj();
 

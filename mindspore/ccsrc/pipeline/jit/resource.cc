@@ -323,25 +323,48 @@ void MemoryCleaner::RecordPrimitivePy(PrimitivePy *prim) {
   all_primitives_[prim] = true;
 }
 
-void MemoryCleaner::ReleasePrimitivePyObj(PrimitivePy *prim) {
+bool MemoryCleaner::SetReleasePrimitivePyObj(PrimitivePy *prim) {
   if (prim == nullptr) {
-    return;
+    return false;
   }
   auto it = all_primitives_.find(prim);
   if (it == all_primitives_.end()) {
-    return;
+    return false;
   }
   // If flag is false,the pointer hased been released, so it can't be visited.
   if (!it->second) {
-    return;
+    return false;
   }
   all_primitives_[prim] = false;
+  return true;
+}
+
+void MemoryCleaner::ReleasePrimitivePyObj(PrimitivePy *prim) {
+  if (!SetReleasePrimitivePyObj(prim)) {
+    return;
+  }
+  // There is a shared_ptr loop PrimitivePyPtr->Pybind11::Obj->PrimitivePyPtr.
+  // If PrimitivePyPtr use cnt is 1, PrimitivePy::SetPyObj() has a loop too, the loop is:
+  // PrimitivePy::SetPyObj()->Pybind11::Obj::Operator=()->PrimitivePy::~PrimitivePy()
+  // It's like call delete this in PrimitivePy::SetPyObj()
+  // To avoid PrimitivePy::SetPyObj() call PrimitivePy::~PrimitivePy(),using prim_shared add a use cnt to
+  // PrimitivePyPtr.
+  auto prim_shared = prim->shared_from_this();
+  (void)prim_shared;
   prim->SetPyObj(py::none());
 }
 
 void MemoryCleaner::ClearPrimitivePyPythonObj() {
   for (auto &it : all_primitives_) {
+    // There is a shared_ptr loop PrimitivePyPtr->Pybind11::Obj->PrimitivePyPtr.
+    // If PrimitivePyPtr use cnt is 1, PrimitivePy::SetPyObj() has a loop too, the loop is:
+    // PrimitivePy::SetPyObj()->Pybind11::Obj::Operator=()->PrimitivePy::~PrimitivePy()
+    // It's like call delete this in PrimitivePy::SetPyObj()
+    // To avoid PrimitivePy::SetPyObj() call PrimitivePy::~PrimitivePy(),using prim_shared add a use cnt to
+    // PrimitivePyPtr.
     if (it.second) {
+      auto prim_shared = it.first->shared_from_this();
+      (void)prim_shared;
       it.first->SetPyObj(py::none());
     }
   }
