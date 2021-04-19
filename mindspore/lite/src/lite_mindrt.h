@@ -42,10 +42,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
       return;
     }
-    Context *ctx = const_cast<Context *>(kernel_->context());
-    if (kernel_->desc().arch == kernel::kCPU) {
-      BindThreads(static_cast<lite::InnerContext *>(ctx)->thread_pool_, true, 2);
-    }
+    CpuBindMode cpu_bind_mode = kernel_->context()->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
+    BindThreads(static_cast<const lite::InnerContext *>(kernel_->context())->thread_pool_, true, cpu_bind_mode);
+
     auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
                          *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
     if (ret != RET_OK) {
@@ -55,9 +54,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     input_op_datas_.erase(op_uuid);
     AsyncOutput(context);
-    if (kernel_->desc().arch == kernel::kCPU) {
-      BindThreads(static_cast<lite::InnerContext *>(ctx)->thread_pool_, true, 2);
-    }
+
+    BindThreads(static_cast<const lite::InnerContext *>(kernel_->context())->thread_pool_, false, cpu_bind_mode);
     SetOutputData(context);
   }
   void Init() {

@@ -542,18 +542,9 @@ int LiteSession::Init(const Context *context) {
 }
 
 void LiteSession::BindThread(bool if_bind) {
-  if (this->context_->device_list_.empty()) {
-    MS_LOG(ERROR) << "Device list is empty.";
-    return;
-  }
-  if (!this->context_->IsCpuEnabled()) {
-    return;
-  }
-  auto cpu_device_info = this->context_->GetCpuInfo();
-  if (cpu_device_info.cpu_bind_mode_ != NO_BIND) {
-    MS_ASSERT(this->context_->thread_pool_ != NULL);
-    BindThreads(this->context_->thread_pool_, if_bind, cpu_device_info.cpu_bind_mode_);
-  }
+  // Abandoned code
+  // Bind thread in executor
+  return;
 }
 
 LiteSession::~LiteSession() {
