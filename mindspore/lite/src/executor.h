@@ -28,11 +28,17 @@ class Executor {
   Executor() = default;
   virtual ~Executor() = default;
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
+  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
+    ctx_ = static_cast<const lite::InnerContext *>(kernels[0]->context());
+    return RET_OK;
+  }
 
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
+
+ private:
+  const lite::InnerContext *ctx_ = nullptr;
 };
 }  // namespace mindspore::lite
 #endif

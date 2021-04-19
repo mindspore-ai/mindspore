@@ -23,6 +23,9 @@ namespace mindspore::lite {
 int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                   const KernelCallBack &before, const KernelCallBack &after) {
+  CpuBindMode cpu_bind_mode = ctx_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
+  BindThreads(ctx_->thread_pool_, true, cpu_bind_mode);
+
   MS_ASSERT(nullptr != allocator);
   auto ret = CheckTensorsInvalid(in_tensors);
   if (RET_OK != ret) {
@@ -66,6 +69,8 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
       }
     }
   }
+
+  BindThreads(ctx_->thread_pool_, false, cpu_bind_mode);
   return RET_OK;
 }
 }  // namespace mindspore::lite
