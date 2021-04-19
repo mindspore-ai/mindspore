@@ -233,5 +233,32 @@ bool CacheServerHW::numa_enabled() {
   return false;
 #endif
 }
+
+uint64_t CacheServerHW::GetAvailableMemory() {
+  std::ifstream mem_file(kMemInfoFileName);
+  if (mem_file.fail()) {
+    MS_LOG(WARNING) << "Fail to open file: " << kMemInfoFileName;
+    return 0;
+  }
+
+  std::string line;
+  uint64_t mem_available_in_kb = 0L;
+  while (std::getline(mem_file, line)) {
+    // get title
+    std::string::size_type position = line.find(":");
+    std::string title = line.substr(0, position);
+
+    // get the value of MemAvailable
+    if (title == "MemAvailable") {
+      std::string::size_type pos1 = line.find_last_of(" ");
+      std::string::size_type pos2 = line.find_last_of(" ", pos1 - 1);
+      mem_available_in_kb = std::stol(line.substr(pos2, pos1 - pos2));
+      break;
+    }
+  }
+  mem_file.close();
+
+  return mem_available_in_kb * 1024;
+}
 }  // namespace dataset
 }  // namespace mindspore

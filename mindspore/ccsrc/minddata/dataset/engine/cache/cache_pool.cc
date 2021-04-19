@@ -22,7 +22,12 @@
 namespace mindspore {
 namespace dataset {
 CachePool::CachePool(std::shared_ptr<NumaMemoryPool> mp, const std::string &root)
-    : mp_(std::move(mp)), root_(root), subfolder_(Services::GetUniqueID()), sm_(nullptr), tree_(nullptr) {}
+    : mp_(std::move(mp)), root_(root), subfolder_(Services::GetUniqueID()), sm_(nullptr), tree_(nullptr) {
+  // Initialize soft memory cap to the current available memory on the machine.
+  soft_mem_limit_ = CacheServerHW::GetAvailableMemory();
+  temp_mem_usage_ = 0;
+  min_avail_mem_ = CacheServerHW::GetTotalSystemMemory() * (1.0 - mp_->GetMemoryCapRatio());
+}
 
 Status CachePool::DoServiceStart() {
   tree_ = std::make_shared<data_index>();
@@ -83,8 +88,23 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
     sz += v.GetSize();
   }
   bl.sz = sz;
-  rc = mp_->Allocate(sz, reinterpret_cast<void **>(&bl.ptr));
+  // If required memory size exceeds the available size, it gives OOM status. To avoid cache server process got killed
+  // or crashing the machine, set lower bound memory, which means stopping cache once the rest available memory is less
+  // than the lower bound. (The default is 20% of physical RAM)
+  if (soft_mem_limit_ - temp_mem_usage_ - static_cast<uint64_t>(sz) < min_avail_mem_) {
+    MS_LOG(WARNING) << "Memory usage will exceed the upper bound limit of: " << min_avail_mem_
+                    << ". The cache server will not cache any more data.";
+    rc = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+  } else {
+    rc = mp_->Allocate(sz, reinterpret_cast<void **>(&bl.ptr));
+    // Adjust the soft limit and usage counting when every 100M memory are used.
+    if (temp_mem_usage_ + sz >= kMemoryCapAdjustInterval) {
+      soft_mem_limit_ = CacheServerHW::GetAvailableMemory();
+      temp_mem_usage_ = 0;
+    }
+  }
   if (rc.IsOk()) {
+    temp_mem_usage_ += sz;
     // Write down which numa node where we allocate from. It only make sense if the policy is kOnNode.
     if (CacheServerHW::numa_enabled()) {
       auto &cs = CacheServer::GetInstance();

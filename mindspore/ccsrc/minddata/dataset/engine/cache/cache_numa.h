@@ -63,6 +63,9 @@ class NumaMemoryPool : public MemoryPool {
   /// \brief Return maximum available memory
   int64_t GetAvailableMemory() const { return memory_cap_; }
 
+  /// \brief Return the configured or computed memory cap ratio
+  float GetMemoryCapRatio() const { return memory_cap_ratio_; }
+
  private:
   std::shared_ptr<CacheServerHW> hw_;
   float memory_cap_ratio_;

@@ -149,6 +149,11 @@ class CachePool : public Service {
   const std::string subfolder_;
   std::shared_ptr<StorageManager> sm_;
   std::shared_ptr<data_index> tree_;
+  std::atomic<uint64_t> soft_mem_limit_;  // the available memory in the machine
+  std::atomic<uint64_t> temp_mem_usage_;  // temporary count on the amount of memory usage by cache every 100Mb (because
+                                          // we will adjust soft_mem_limit_ every 100Mb based on this parameter)
+  uint64_t min_avail_mem_;                // lower bound of the available memory
+  const int kMemoryCapAdjustInterval = 104857600;
 };
 }  // namespace dataset
 }  // namespace mindspore

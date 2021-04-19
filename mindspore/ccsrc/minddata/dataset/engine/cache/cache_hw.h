@@ -90,8 +90,12 @@ class CacheServerHW {
   /// \return the size (in bytes) of the physical RAM on the machine.
   static int64_t GetTotalSystemMemory();
 
+  /// \brief Get the size (in bytes) of available memory on the machine by reading from file /proc/meminfo.
+  static uint64_t GetAvailableMemory();
+
  private:
   constexpr static char kSysNodePath[] = "/sys/devices/system/node";
+  constexpr static char kMemInfoFileName[] = "/proc/meminfo";
   int32_t num_cpus_;
   std::map<numa_id_t, cpu_set_t> numa_cpuset_;
   std::map<numa_id_t, int32_t> numa_cpu_cnt_;
