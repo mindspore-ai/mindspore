@@ -100,24 +100,6 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
   }
   return nullptr;
 }
-
-AnfNodePtr ProcessGraphKernelOp(const AnfNodePtr &node) {
-  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-  MS_EXCEPTION_IF_NULL(sub_graph);
-  auto mng = sub_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  std::vector<AnfNodePtr> todo;
-  kernel::GetValidKernelNodes(sub_graph, &todo);
-
-  for (auto &t : todo) {
-    auto t_new_node = ConstInputToTensorInput(sub_graph, t->cast<CNodePtr>());
-    if (t_new_node != nullptr && t_new_node != t) {
-      (void)mng->Replace(t, t_new_node);
-    }
-  }
-
-  return node;
-}
 }  // namespace
 
 const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -129,11 +111,8 @@ const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &fun
   if (!node->isa<CNode>()) {
     return nullptr;
   }
-  if (AnfAlgo::IsGraphKernel(node)) {
-    return ProcessGraphKernelOp(node);
-  } else {
-    return ConstInputToTensorInput(func_graph, node->cast<CNodePtr>());
-  }
+
+  return ConstInputToTensorInput(func_graph, node->cast<CNodePtr>());
 }
 }  // namespace opt
 }  // namespace mindspore

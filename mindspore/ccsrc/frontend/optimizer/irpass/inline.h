@@ -103,13 +103,6 @@ class InlinerBase : public AnfVisitor {
       return nullptr;
     }
 
-    // Do not inline GraphKernel to Cell.
-    if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-      // If the GraphKernel only contains a return node, we make it inlined.
-      if (fg->nodes().size() - fg->parameters().size() > 1) {
-        return nullptr;
-      }
-    }
     Reset();
 
     // 'criterions_': {criterion_group_1:{criterion1, criterion2, ...}, criterion_group_2:{...}, ...}

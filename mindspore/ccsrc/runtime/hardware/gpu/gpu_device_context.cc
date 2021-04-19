@@ -216,9 +216,7 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
   }
   pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));

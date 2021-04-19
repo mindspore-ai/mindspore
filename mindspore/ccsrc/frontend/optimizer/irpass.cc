@@ -194,8 +194,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Incorporation
   incorporate_getitem_set_ =
     MakeSubstitution(std::make_shared<IncorporateGetitemSet>(), "incorporate_getitem_set", prim::kPrimTupleGetItem);
-  incorporate_getitem_from_param_ = MakeSubstitution(std::make_shared<IncorporateGetitemFromParam>(),
-                                                     "incorporate_getitem_from_param", IsCNodeGraphKernel);
   incorporate_call_ = MakeSubstitution(std::make_shared<IncorporateCall>(), "incorporate_call", IsCNodeDup);
   incorporate_call_switch_ =
     MakeSubstitution(std::make_shared<IncorporateCallSwitch>(), "incorporate_call_switch", IsCNodeDup);
@@ -211,18 +209,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   print_tuple_wrapper_ =
     MakeSubstitution(std::make_shared<PrintTupleWrapper>(), "print_tuple_wrapper", prim::kPrimPrint);
 
-  // Unused parameter eliminate
-  unused_parameter_eliminate_ =
-    MakeSubstitution(std::make_shared<UnusedParasEliminater>(), "unused_parameter_eliminate", IsCNodeGraphKernel);
-  unused_output_eliminate_ =
-    MakeSubstitution(std::make_shared<UnusedOutputEliminater>(), "unused_output_eliminate", IsCNodeGraphKernel);
-
   // tuple parameter graph transform
   call_graph_tuple_transform_ =
     MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transorm", IsCNode);
-
-  // AddN eliminate
-  addn_eliminate_ = MakeSubstitution(std::make_shared<AddNEliminater>(), "addn_eliminate", IsCNodeGraphKernel);
 
   // RowTensor Eliminate
   row_tensor_eliminate_ = MakeSubstitution(

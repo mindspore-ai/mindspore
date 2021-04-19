@@ -16,7 +16,6 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops import _selected_ops
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
@@ -87,7 +86,7 @@ class Softmax(Cell):
 
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
-        self.softmax = _selected_ops.Softmax(axis)
+        self.softmax = P.Softmax(axis)
 
     def construct(self, x):
         return self.softmax(x)
@@ -137,7 +136,7 @@ class LogSoftmax(Cell):
 
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()
-        self.log_softmax = _selected_ops.LogSoftmax(axis)
+        self.log_softmax = P.LogSoftmax(axis)
 
     def construct(self, x):
         return self.log_softmax(x)
@@ -368,7 +367,7 @@ class Tanh(Cell):
 
     def __init__(self):
         super(Tanh, self).__init__()
-        self.tanh = _selected_ops.Tanh()
+        self.tanh = P.Tanh()
 
     def construct(self, x):
         return self.tanh(x)
@@ -415,7 +414,7 @@ class GELU(Cell):
 
     def __init__(self):
         super(GELU, self).__init__()
-        self.gelu = _selected_ops.GeLU()
+        self.gelu = P.GeLU()
 
     def construct(self, x):
         return self.gelu(x)
@@ -458,7 +457,7 @@ class FastGelu(Cell):
 
     def __init__(self):
         super(FastGelu, self).__init__()
-        self.fast_gelu = _selected_ops.FastGeLU()
+        self.fast_gelu = P.FastGeLU()
 
     def construct(self, x):
         return self.fast_gelu(x)

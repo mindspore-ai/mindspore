@@ -19,7 +19,6 @@ from functools import reduce
 import numpy as np
 import mindspore as ms
 from mindspore import nn
-from mindspore.ops import _selected_grad_ops as SG
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
@@ -590,7 +589,7 @@ def get_bprop_expm1(self):
 @bprop_getters.register(P.Minimum)
 def get_bprop_minimum(self):
     """Grad definition for `Minimum` operation."""
-    input_grad = SG.MinimumGrad()
+    input_grad = G.MinimumGrad()
 
     def bprop(x, y, out, dout):
         dx, dy = input_grad(x, y, dout)
@@ -602,7 +601,7 @@ def get_bprop_minimum(self):
 @bprop_getters.register(P.Maximum)
 def get_bprop_maximum(self):
     """Grad definition for `Maximum` operation."""
-    input_grad = SG.MaximumGrad()
+    input_grad = G.MaximumGrad()
 
     def bprop(x, y, out, dout):
         dx, dy = input_grad(x, y, dout)
@@ -1107,7 +1106,7 @@ def get_bprop_cosh(self):
 @bprop_getters.register(P.Abs)
 def get_bprop_abs(self):
     """Grad definition for `Abs` operation."""
-    abs_grad = SG.AbsGrad()
+    abs_grad = G.AbsGrad()
 
     def bprop(x, out, dout):
         dx = abs_grad(x, dout)

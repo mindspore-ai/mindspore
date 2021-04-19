@@ -15,7 +15,6 @@
  */
 #include "backend/optimizer/pass/convert_const_input_to_attr.h"
 
-#include <vector>
 #include <string>
 #include <memory>
 
@@ -34,40 +33,31 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   if (node == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-  std::vector<AnfNodePtr> todos;
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    MS_EXCEPTION_IF_NULL(sub_graph);
-    kernel::GetValidKernelNodes(sub_graph, &todos);
-  } else {
-    todos.push_back(node);
-  }
 
-  for (auto &t : todos) {
-    CNodePtr cnode = t->cast<CNodePtr>();
-    ConstInputToAttrInfoRegister reg;
-    if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
-      continue;
-    }
-    if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookup->name() ||
-        AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookupCommGrad->name()) {
-      if (!AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
-        continue;
-      }
-    }
-    if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
-      auto ms_context = MsContext::GetInstance();
-      if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
-        continue;
-      }
-    }
-    if (AnfAlgo::IsDynamicShape(cnode) &&
-        DynamicShapeConstInputToAttr.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttr.end()) {
-      MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
-      continue;
-    }
-    ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
+  CNodePtr cnode = node->cast<CNodePtr>();
+  ConstInputToAttrInfoRegister reg;
+  if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
+    return nullptr;
   }
+  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookup->name() ||
+      AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookupCommGrad->name()) {
+    if (!AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
+      return nullptr;
+    }
+  }
+  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
+    auto ms_context = MsContext::GetInstance();
+    if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+      return nullptr;
+    }
+  }
+  if (AnfAlgo::IsDynamicShape(cnode) &&
+      DynamicShapeConstInputToAttr.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttr.end()) {
+    MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
+    return nullptr;
+  }
+  ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
+
   return node;
 }
 }  // namespace opt

@@ -45,10 +45,6 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
     TraceGuard guard(std::make_shared<TraceGradFprop>(primal_graph->debug_info()));
     k_graph_ = std::make_shared<FuncGraph>();
   }
-  if (primal_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-    std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-    k_graph_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
-  }
   // To keep switch_layer's inputs from being inlined
   k_graph_->set_switch_layer_input(primal_graph->switch_layer_input());
   k_graph_->set_stage(primal_graph->stage());
@@ -58,11 +54,6 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
     tape_ = std::make_shared<FuncGraph>();
   }
   tape_->set_stage(primal_graph->stage());
-  // Add "_Grad" postfix
-  if (primal_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-    std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) + "_Grad";
-    tape_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
-  }
 
   dout_ = tape_->add_parameter();
 }

@@ -26,7 +26,6 @@ from mindspore.nn.loss.loss import _Loss
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops import _selected_ops
 from mindspore.parallel._utils import _reset_op_id
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -76,7 +75,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
         self.sparse = sparse
         self.reduction = reduction
-        self.softmax_cross_entropy = _selected_ops.SoftmaxCrossEntropyWithLogits()
+        self.softmax_cross_entropy = P.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0., mstype.float32)

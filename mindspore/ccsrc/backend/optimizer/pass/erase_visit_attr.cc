@@ -30,20 +30,7 @@ const BaseRef EraseVisitAttr::DefinePattern() const {
 }
 
 const AnfNodePtr EraseVisitAttr::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
-  if (node != nullptr && AnfAlgo::IsRealCNodeKernel(node)) {
-    if (AnfAlgo::IsGraphKernel(node)) {
-      auto fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
-      MS_EXCEPTION_IF_NULL(fg);
-      std::vector<AnfNodePtr> todos;
-      kernel::GetValidKernelNodes(fg, &todos);
-      for (auto &t : todos) {
-        AnfAlgo::EraseNodeAttr(kAttrVisited, t);
-      }
-    }
-    AnfAlgo::EraseNodeAttr(kAttrVisited, node);
-  } else {
-    AnfAlgo::EraseNodeAttr(kAttrVisited, node);
-  }
+  AnfAlgo::EraseNodeAttr(kAttrVisited, node);
   return nullptr;
 }
 }  // namespace opt

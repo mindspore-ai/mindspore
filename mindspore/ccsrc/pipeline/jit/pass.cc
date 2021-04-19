@@ -39,7 +39,6 @@
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
-#include "utils/context/graph_kernel_flags.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
@@ -296,31 +295,6 @@ OptPassGroupMap GetOptPassesPynativeElim(const opt::irpass::OptimizeIRPassLib &i
   return map;
 }
 
-OptPassGroupMap GetOptPassesGraphKernelA(const opt::irpass::OptimizeIRPassLib &irpass) {
-  OptPassGroupMap map({
-    {"renormalize", opt::OptPassConfig::Renormalize()},
-    {"cse", opt::OptPassConfig(opt::CSEPass(false))},
-  });
-  return map;
-}
-
-OptPassGroupMap GetOptPassesGraphKernelB(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig elim_1 = opt::OptPassConfig({
-    irpass.addn_eliminate_,
-    irpass.incorporate_getitem_from_param_,
-  });
-  opt::OptPassConfig elim_2 = opt::OptPassConfig({
-    irpass.unused_parameter_eliminate_,
-    irpass.unused_output_eliminate_,
-  });
-  OptPassGroupMap map({
-    {"elim_1", elim_1},
-    {"renormalize", opt::OptPassConfig::Renormalize()},
-    {"elim_2", elim_2},
-  });
-  return map;
-}
-
 OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &irpass) {
   return OptPassGroupMap({{"renormalize", opt::OptPassConfig::Renormalize()}});
 }
@@ -375,10 +349,6 @@ void InitOpt(const ResourcePtr &res) {
       Optimizer::MakeOptimizer("opt_after_cconv", res, GetOptPassesAfterCconv(irpass), false, true);
     g_pass_opts["opt_trans_graph"] =
       Optimizer::MakeOptimizer("opt_trans_graph", res, GetOptPassesTransformGraph(irpass), true, true);
-    g_pass_opts["opt_graph_kernel_a"] =
-      Optimizer::MakeOptimizer("opt_graph_kernel_a", res, GetOptPassesGraphKernelA(irpass), true);
-    g_pass_opts["opt_graph_kernel_b"] =
-      Optimizer::MakeOptimizer("opt_graph_kernel_b", res, GetOptPassesGraphKernelB(irpass), false);
     g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", res, GetOptPassesC(irpass));
     g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), false, true);
     g_pass_opts["opt_grad_epilogue"] =
@@ -386,10 +356,6 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", res, GetAfterRecomputePass(irpass));
-    if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-      g_pass_opts["opt_graph_kernel_a"]->set_enable(false);
-      g_pass_opts["opt_graph_kernel_b"]->set_enable(false);
-    }
   }
 }
 }  // namespace
@@ -424,8 +390,6 @@ bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); 
 bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
 bool OptPassAfterCconvGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_cconv"); }
 bool OptPassTransformGraphGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_trans_graph"); }
-bool OptPassGraphKernelGroupA(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_a"); }
-bool OptPassGraphKernelGroupB(const ResourcePtr &res) { return OptPassGroup(res, "opt_graph_kernel_b"); }
 bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
 bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
 bool OptAfterRecomputeGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_recompute"); }
@@ -559,8 +523,6 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_after_cconv", OptPassAfterCconvGroup},
                                    {"remove_dup_value", RemoveValueNodeDuplicationsPass},
                                    {"tuple_transform", OptPassTransformGraphGroup},
-                                   {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
-                                   {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
                                    {"add_cache_embedding", AddCacheEmbeddingPass},
                                    {"add_recomputation", AddRecomputationPass},
                                    {"cse_after_recomputation", OptAfterRecomputeGroup}};

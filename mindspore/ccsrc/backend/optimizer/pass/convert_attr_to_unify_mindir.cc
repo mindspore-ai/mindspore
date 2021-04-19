@@ -15,7 +15,6 @@
  */
 #include "backend/optimizer/pass/convert_attr_to_unify_mindir.h"
 
-#include <vector>
 #include <string>
 
 #include "utils/check_convert_utils.h"
@@ -29,32 +28,22 @@ const AnfNodePtr ConvertAttrToUnifyMindIR::Process(const FuncGraphPtr &, const A
   if (node == nullptr || !AnfAlgo::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-  std::vector<AnfNodePtr> todos;
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    MS_EXCEPTION_IF_NULL(sub_graph);
-    kernel::GetValidKernelNodes(sub_graph, &todos);
-  } else {
-    todos.push_back(node);
-  }
 
-  for (auto &t : todos) {
-    CNodePtr cnode = t->cast<CNodePtr>();
-    auto inputs = cnode->inputs();
-    AnfNodePtr op = inputs[0];
-    if (IsValueNode<Primitive>(op)) {
-      auto prim = GetValueNode<PrimitivePtr>(op);
-      auto attrs = prim->attrs();
-      std::string type_name = prim->name();
-      for (auto attr : attrs) {
-        bool converted = CheckAndConvertUtils::ConvertAttrValueToString(type_name, attr.first, &attr.second);
-        if (converted) {
-          prim->set_attr(attr.first, attr.second);
-        }
-        bool converted_ir_attr = CheckAndConvertUtils::CheckIrAttrtoOpAttr(type_name, attr.first, &attr.second);
-        if (converted_ir_attr) {
-          prim->set_attr(attr.first, attr.second);
-        }
+  CNodePtr cnode = node->cast<CNodePtr>();
+  auto inputs = cnode->inputs();
+  AnfNodePtr op = inputs[0];
+  if (IsValueNode<Primitive>(op)) {
+    auto prim = GetValueNode<PrimitivePtr>(op);
+    auto attrs = prim->attrs();
+    std::string type_name = prim->name();
+    for (auto attr : attrs) {
+      bool converted = CheckAndConvertUtils::ConvertAttrValueToString(type_name, attr.first, &attr.second);
+      if (converted) {
+        prim->set_attr(attr.first, attr.second);
+      }
+      bool converted_ir_attr = CheckAndConvertUtils::CheckIrAttrtoOpAttr(type_name, attr.first, &attr.second);
+      if (converted_ir_attr) {
+        prim->set_attr(attr.first, attr.second);
       }
     }
   }

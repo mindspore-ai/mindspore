@@ -344,7 +344,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
 
     auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
     auto real_input_node = kernel_with_index.first;
-    if (kernel::IsWeightBoundary(real_input_node) || func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+    if (kernel::IsWeightBoundary(real_input_node)) {
       // weight
       origin_type = AnfAlgo::GetPrevNodeOutputPrecision(cnode, input_index);
       if (origin_type == kTypeUnknown) {
@@ -358,9 +358,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
     const std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
     // In graph kernel, we check parameter,
     // the eliminate pass will not eliminate this case, so we just do not insert the no used cast.
-    if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && IsValueNode<tensor::Tensor>(cur_input)) {
-      new_inputs.push_back(cur_input);
-    } else if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
+    if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
       auto cast =
         AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape, infer_type);
       MS_EXCEPTION_IF_NULL(cast);
