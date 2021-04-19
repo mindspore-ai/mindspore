@@ -60,7 +60,7 @@ fi
 
 function compile_app()
 {
-    cd ../ascend310_infer/src
+    cd ../ascend310_infer/src || exit
     if [ -f "Makefile" ]; then
         make clean
     fi

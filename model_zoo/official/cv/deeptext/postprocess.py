@@ -16,12 +16,11 @@
 """Evaluation for Deeptext"""
 import argparse
 import os
-
+from PIL import Image
 import numpy as np
+import mmcv
 from src.config import config
 from src.utils import metrics
-from PIL import Image
-import mmcv
 
 parser = argparse.ArgumentParser(description="Deeptext evaluation")
 parser.add_argument("--result_path", type=str, required=True, help="result file path")

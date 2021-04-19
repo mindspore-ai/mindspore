@@ -42,7 +42,7 @@ mkdir ${EXECUTE_PATH}/log_standalone_graph
 
 rm -rf ${EXECUTE_PATH}/data_standalone_log_$USE_DEVICE_ID
 mkdir -p ${EXECUTE_PATH}/data_standalone_log_$USE_DEVICE_ID
-cd ${EXECUTE_PATH}/data_standalone_log_$USE_DEVICE_ID
+cd ${EXECUTE_PATH}/data_standalone_log_$USE_DEVICE_ID || exit
 echo "start training for rank $RANK_ID, device $USE_DEVICE_ID"
 env > ${EXECUTE_PATH}/log_standalone_graph/face_recognition_$USE_DEVICE_ID.log
 python ${EXECUTE_PATH}/../train.py \

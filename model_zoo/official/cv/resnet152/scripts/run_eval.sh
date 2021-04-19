@@ -57,7 +57,7 @@ mkdir ./eval
 cp ../*.py ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
-cd ./eval 
+cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
 python eval.py --data_url=$PATH1 --checkpoint_path=$PATH2 &> eval.log &

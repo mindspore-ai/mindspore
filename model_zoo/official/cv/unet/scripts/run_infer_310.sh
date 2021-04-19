@@ -70,7 +70,7 @@ function preprocess_data()
 
 function compile_app()
 {
-    cd ../ascend310_infer/src
+    cd ../ascend310_infer/ || exit
     if [ -f "Makefile" ]; then
         make clean
     fi
