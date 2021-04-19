@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/broadcast_to_fp32.h"
+#include "nnacl/base/broadcast_to.h"
 using mindspore::schema::PrimitiveType_BroadcastTo;
 
 namespace mindspore {

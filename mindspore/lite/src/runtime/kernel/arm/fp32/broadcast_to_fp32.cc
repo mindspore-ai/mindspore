@@ -49,10 +49,10 @@ int BroadcastToCPUKernel::Init() {
 }
 
 int BroadcastToCPUKernel::Run() {
-  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
-  return BroadcastTo(input_data, &shape_info_, output_data);
+  return BroadcastTo(float, input_data, &shape_info_, output_data);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)

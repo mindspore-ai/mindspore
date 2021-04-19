@@ -20,7 +20,7 @@
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "nnacl/errorcode.h"
 
-inline int ReluGrad(float *src0, float *src1, size_t length, float *dst) {
+int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   int i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
@@ -38,7 +38,7 @@ inline int ReluGrad(float *src0, float *src1, size_t length, float *dst) {
   return NNACL_OK;
 }
 
-int Relu6Grad(float *src0, float *src1, size_t length, float *dst) {
+int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst) {
   int i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
@@ -59,28 +59,28 @@ int Relu6Grad(float *src0, float *src1, size_t length, float *dst) {
   return NNACL_OK;
 }
 
-int LReluGrad(float *src0, float *src1, size_t length, float *dst, float alpha) {
+int LReluGrad(const float *src0, const float *src1, size_t length, float *dst, float alpha) {
   for (size_t i = 0; i < length; ++i) {
     dst[i] = src1[i] > 0.0f ? src0[i] : alpha * src0[i];
   }
   return NNACL_OK;
 }
 
-int SigmoidGrad(float *src0, float *src1, size_t length, float *dst) {
+int SigmoidGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (size_t i = 0; i < length; ++i) {
     dst[i] = src0[i] * (src1[i] * (1.0f - src1[i]));
   }
   return NNACL_OK;
 }
 
-int TanhGrad(float *src0, float *src1, size_t length, float *dst) {
+int TanhGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (size_t i = 0; i < length; ++i) {
     dst[i] = (1.0f - (src1[i] * src1[i])) * src0[i];
   }
   return NNACL_OK;
 }
 
-int HSwishGrad(float *src0, float *src1, size_t length, float *dst) {
+int HSwishGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (size_t i = 0; i < length; ++i) {
     float tmp = (src1[i] > 3.0f ? 1.0f : (src1[i] < -3.0f ? 0.0f : (2.0f * src1[i] + 3.0f) / 6.0f));
     dst[i] = tmp * src0[i];
@@ -88,7 +88,7 @@ int HSwishGrad(float *src0, float *src1, size_t length, float *dst) {
   return NNACL_OK;
 }
 
-int HSigmoidGrad(float *src0, float *src1, size_t length, float *dst) {
+int HSigmoidGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (size_t i = 0; i < length; ++i) {
     float tmp = (src1[i] > 3.0f ? 0.0f : (src1[i] < -3.0f ? 0.0f : 1.0f / 6.0f));
     dst[i] = tmp * src0[i];
@@ -96,14 +96,14 @@ int HSigmoidGrad(float *src0, float *src1, size_t length, float *dst) {
   return NNACL_OK;
 }
 
-int EluGrad(float *src0, float *src1, size_t length, float *dst, float alpha) {
+int EluGrad(const float *src0, const float *src1, size_t length, float *dst, float alpha) {
   for (size_t i = 0; i < length; ++i) {
     dst[i] = (src1[i] > 0.0f ? src0[i] : alpha * expm1(src1[i]) * src0[i]);
   }
   return NNACL_OK;
 }
 
-int GeluGrad(float *src0, float *src1, size_t length, float *dst) {
+int GeluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   for (size_t i = 0; i < length; ++i) {
     dst[i] = src0[i] * ((0.5 * (1.0 + erf(src1[i] / 1.4142135623730951))) +
                         (src1[i] * exp(-0.5 * src1[i] * src1[i]) / 2.5066282746));

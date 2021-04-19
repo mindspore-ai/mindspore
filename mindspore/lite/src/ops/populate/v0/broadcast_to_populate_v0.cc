@@ -16,7 +16,7 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/broadcast_to_fp32.h"
+#include "nnacl/base/broadcast_to.h"
 
 namespace mindspore {
 namespace lite {

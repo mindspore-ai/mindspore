@@ -20,14 +20,14 @@
 
 typedef struct BroadcastToParameter {
   OpParameter op_parameter_;
-  int shape_[COMM_SHAPE_SIZE];
+  int shape_[MAX_SHAPE_SIZE];
   size_t shape_size_;
 } BroadcastToParameter;
 
 typedef struct BroadcastShapeInfo {
-  int input_shape_[COMM_SHAPE_SIZE];
+  int input_shape_[MAX_SHAPE_SIZE];
   int input_shape_size_;
-  int output_shape_[COMM_SHAPE_SIZE];
+  int output_shape_[MAX_SHAPE_SIZE];
   int output_shape_size_;
 } BroadcastShapeInfo;
 
