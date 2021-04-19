@@ -18,163 +18,65 @@
 
 namespace mindspore {
 namespace mindrecord {
+static const std::map<MSRStatus, std::string> kErrnoToMessage = {
+  {FAILED, "operator failed"},
+  {SUCCESS, "operator success"},
+  {OPEN_FILE_FAILED, "open file failed"},
+  {CLOSE_FILE_FAILED, "close file failed"},
+  {WRITE_METADATA_FAILED, "write metadata failed"},
+  {WRITE_RAWDATA_FAILED, "write rawdata failed"},
+  {GET_SCHEMA_FAILED, "get schema failed"},
+  {ILLEGAL_RAWDATA, "illegal raw data"},
+  {PYTHON_TO_JSON_FAILED, "pybind: python object to json failed"},
+  {DIR_CREATE_FAILED, "directory create failed"},
+  {OPEN_DIR_FAILED, "open directory failed"},
+  {INVALID_STATISTICS, "invalid statistics object"},
+  {OPEN_DATABASE_FAILED, "open database failed"},
+  {CLOSE_DATABASE_FAILED, "close database failed"},
+  {DATABASE_OPERATE_FAILED, "database operate failed"},
+  {BUILD_SCHEMA_FAILED, "build schema failed"},
+  {DIVISOR_IS_ILLEGAL, "divisor is illegal"},
+  {INVALID_FILE_PATH, "file path is invalid"},
+  {SECURE_FUNC_FAILED, "secure function failed"},
+  {ALLOCATE_MEM_FAILED, "allocate memory failed"},
+  {ILLEGAL_FIELD_NAME, "illegal field name"},
+  {ILLEGAL_FIELD_TYPE, "illegal field type"},
+  {SET_METADATA_FAILED, "set metadata failed"},
+  {ILLEGAL_SCHEMA_DEFINITION, "illegal schema definition"},
+  {ILLEGAL_COLUMN_LIST, "illegal column list"},
+  {SQL_ERROR, "sql error"},
+  {ILLEGAL_SHARD_COUNT, "illegal shard count"},
+  {ILLEGAL_SCHEMA_COUNT, "illegal schema count"},
+  {VERSION_ERROR, "data version is not matched"},
+  {ADD_SCHEMA_FAILED, "add schema failed"},
+  {ILLEGAL_Header_SIZE, "illegal header size"},
+  {ILLEGAL_Page_SIZE, "illegal page size"},
+  {ILLEGAL_SIZE_VALUE, "illegal size value"},
+  {INDEX_FIELD_ERROR, "add index fields failed"},
+  {GET_CANDIDATE_CATEGORYFIELDS_FAILED, "get candidate category fields failed"},
+  {GET_CATEGORY_INFO_FAILED, "get category information failed"},
+  {ILLEGAL_CATEGORY_ID, "illegal category id"},
+  {ILLEGAL_ROWNUMBER_OF_PAGE, "illegal row number of page"},
+  {ILLEGAL_SCHEMA_ID, "illegal schema id"},
+  {DESERIALIZE_SCHEMA_FAILED, "deserialize schema failed"},
+  {DESERIALIZE_STATISTICS_FAILED, "deserialize statistics failed"},
+  {ILLEGAL_DB_FILE, "illegal db file"},
+  {OVERWRITE_DB_FILE, "overwrite db file"},
+  {OVERWRITE_MINDRECORD_FILE, "overwrite mindrecord file"},
+  {ILLEGAL_MINDRECORD_FILE, "illegal mindrecord file"},
+  {PARSE_JSON_FAILED, "parse json failed"},
+  {ILLEGAL_PARAMETERS, "illegal parameters"},
+  {GET_PAGE_BY_GROUP_ID_FAILED, "get page by group id failed"},
+  {GET_SYSTEM_STATE_FAILED, "get system state failed"},
+  {IO_FAILED, "io operate failed"},
+  {MATCH_HEADER_FAILED, "match header failed"}};
+
 std::string ErrnoToMessage(MSRStatus status) {
-  switch (status) {
-    case FAILED:
-      return "operator failed";
-      break;
-    case SUCCESS:
-      return "operator success";
-      break;
-    case OPEN_FILE_FAILED:
-      return "open file failed";
-      break;
-    case CLOSE_FILE_FAILED:
-      return "close file failed";
-      break;
-    case WRITE_METADATA_FAILED:
-      return "write metadata failed";
-      break;
-    case WRITE_RAWDATA_FAILED:
-      return "write rawdata failed";
-      break;
-    case GET_SCHEMA_FAILED:
-      return "get schema failed";
-      break;
-    case ILLEGAL_RAWDATA:
-      return "illegal raw data";
-      break;
-    case PYTHON_TO_JSON_FAILED:
-      return "pybind: python object to json failed";
-      break;
-    case DIR_CREATE_FAILED:
-      return "directory create failed";
-      break;
-    case OPEN_DIR_FAILED:
-      return "open directory failed";
-      break;
-    case INVALID_STATISTICS:
-      return "invalid statistics object";
-      break;
-    case OPEN_DATABASE_FAILED:
-      return "open database failed";
-      break;
-    case CLOSE_DATABASE_FAILED:
-      return "close database failed";
-      break;
-    case DATABASE_OPERATE_FAILED:
-      return "database operate failed";
-      break;
-    case BUILD_SCHEMA_FAILED:
-      return "build schema failed";
-      break;
-    case DIVISOR_IS_ILLEGAL:
-      return "divisor is illegal";
-      break;
-    case INVALID_FILE_PATH:
-      return "file path is invalid";
-      break;
-    case SECURE_FUNC_FAILED:
-      return "secure function failed";
-      break;
-    case ALLOCATE_MEM_FAILED:
-      return "allocate memory failed";
-      break;
-    case ILLEGAL_FIELD_NAME:
-      return "illegal field name";
-      break;
-    case ILLEGAL_FIELD_TYPE:
-      return "illegal field type";
-      break;
-    case SET_METADATA_FAILED:
-      return "set metadata failed";
-      break;
-    case ILLEGAL_SCHEMA_DEFINITION:
-      return "illegal schema definition";
-      break;
-    case ILLEGAL_COLUMN_LIST:
-      return "illegal column list";
-      break;
-    case SQL_ERROR:
-      return "sql error";
-      break;
-    case ILLEGAL_SHARD_COUNT:
-      return "illegal shard count";
-      break;
-    case ILLEGAL_SCHEMA_COUNT:
-      return "illegal schema count";
-      break;
-    case VERSION_ERROR:
-      return "data version is not matched";
-      break;
-    case ADD_SCHEMA_FAILED:
-      return "add schema failed";
-      break;
-    case ILLEGAL_Header_SIZE:
-      return "illegal header size";
-      break;
-    case ILLEGAL_Page_SIZE:
-      return "illegal page size";
-      break;
-    case ILLEGAL_SIZE_VALUE:
-      return "illegal size value";
-      break;
-    case INDEX_FIELD_ERROR:
-      return "add index fields failed";
-      break;
-    case GET_CANDIDATE_CATEGORYFIELDS_FAILED:
-      return "get candidate category fields failed";
-      break;
-    case GET_CATEGORY_INFO_FAILED:
-      return "get category information failed";
-      break;
-    case ILLEGAL_CATEGORY_ID:
-      return "illegal category id";
-      break;
-    case ILLEGAL_ROWNUMBER_OF_PAGE:
-      return "illegal row number of page";
-      break;
-    case ILLEGAL_SCHEMA_ID:
-      return "illegal schema id";
-      break;
-    case DESERIALIZE_SCHEMA_FAILED:
-      return "deserialize schema failed";
-      break;
-    case DESERIALIZE_STATISTICS_FAILED:
-      return "deserialize statistics failed";
-      break;
-    case ILLEGAL_DB_FILE:
-      return "illegal db file";
-      break;
-    case OVERWRITE_DB_FILE:
-      return "overwrite db file";
-      break;
-    case OVERWRITE_MINDRECORD_FILE:
-      return "overwrite mindrecord file";
-      break;
-    case ILLEGAL_MINDRECORD_FILE:
-      return "illegal mindrecord file";
-      break;
-    case PARSE_JSON_FAILED:
-      return "parse json failed";
-      break;
-    case ILLEGAL_PARAMETERS:
-      return "illegal parameters";
-      break;
-    case GET_PAGE_BY_GROUP_ID_FAILED:
-      return "get page by group id failed";
-      break;
-    case GET_SYSTEM_STATE_FAILED:
-      return "get system state failed";
-      break;
-    case IO_FAILED:
-      return "io operate failed";
-      break;
-    case MATCH_HEADER_FAILED:
-      return "match header failed";
-      break;
-    default:
-      return "invalid error no";
+  auto iter = kErrnoToMessage.find(status);
+  if (iter != kErrnoToMessage.end()) {
+    return kErrnoToMessage.at(status);
+  } else {
+    return "invalid error no";
   }
 }
 }  // namespace mindrecord
