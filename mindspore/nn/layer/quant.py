@@ -548,14 +548,12 @@ class Conv2dBnFoldQuantOneConv(Cell):
                                     momentum=self.momentum, data_format=self.format)
 
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
-        data_parallel_strategy = ((1,), (1,))
-        data_parallel_strategy_one = ((1,), ())
-        self.sub_mean = P.Sub().shard(data_parallel_strategy)
-        self.sub_var = P.Sub().shard(data_parallel_strategy)
-        self.mul_mean = P.Mul().shard(data_parallel_strategy_one)
-        self.mul_var = P.Mul().shard(data_parallel_strategy_one)
-        self.assign_sub_mean = P.AssignSub().shard(data_parallel_strategy)
-        self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
+        self.sub_mean = P.Sub()
+        self.sub_var = P.Sub()
+        self.mul_mean = P.Mul()
+        self.mul_var = P.Mul()
+        self.assign_sub_mean = P.AssignSub()
+        self.assign_sub_var = P.AssignSub()
         self.reshape = P.Reshape()
 
     def extend_repr(self):

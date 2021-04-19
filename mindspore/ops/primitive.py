@@ -18,6 +18,7 @@ import inspect
 import copy
 from mindspore.common.api import _wrap_func
 from mindspore import context, log as logger
+from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from .._c_expression import Primitive_, real_run_op, prim_type
 from .._checkparam import Validator
 from . import signature as sig
@@ -143,7 +144,7 @@ class Primitive(Primitive_):
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
         """
         mode = context.get_auto_parallel_context("parallel_mode")
-        if mode not in [context.ParallelMode.AUTO_PARALLEL, context.ParallelMode.SEMI_AUTO_PARALLEL]:
+        if not _is_in_auto_parallel_mode() and strategy:
             logger.warning(f"The shard strategy {strategy} of {self.name} is not valid in {mode}. "
                            f"Please use semi auto or auto parallel mode.")
         self.add_prim_attr("strategy", strategy)

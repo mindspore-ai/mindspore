@@ -30,6 +30,8 @@ def _get_parallel_mode():
     """Get parallel mode."""
     return auto_parallel_context().get_parallel_mode()
 
+def _is_in_auto_parallel_mode():
+    return _get_parallel_mode() in [ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL]
 
 def _get_full_batch():
     """Get whether to use full_batch."""
