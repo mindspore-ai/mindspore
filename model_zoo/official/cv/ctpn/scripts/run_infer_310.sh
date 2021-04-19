@@ -73,7 +73,7 @@ function compile_app()
         echo "compile app code failed"
         exit 1
     fi
-    cd -
+    cd - || exit
 }
 
 function infer()

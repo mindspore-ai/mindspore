@@ -62,7 +62,8 @@ do
     end=`expr $start \+ $gap`
     cmdopt=$start"-"$end
 
-    export DEVICE_ID=`expr $i \+ $start_idx`
+    device_id=`expr $i \+ $start_idx`
+    export DEVICE_ID=$device_id
     export RANK_ID=$i
     rm -rf ./train_parallel$DEVICE_ID
     mkdir ./train_parallel$DEVICE_ID

@@ -21,8 +21,8 @@ import pprint
 import ast
 import html
 import numpy as np
-import spacy
 from sklearn.feature_extraction import FeatureHasher
+import spacy
 from mindspore.mindrecord import FileWriter
 
 
