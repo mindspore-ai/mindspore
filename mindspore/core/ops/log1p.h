@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLog1p = "Log1p";
 class Log1p : public PrimitiveC {
  public:
-  Log1p() : PrimitiveC(kNameLog1p) { InitIOName({"x"}, {"y"}); }
+  Log1p() : PrimitiveC(prim::kPrimLog1p->name()) { InitIOName({"x"}, {"y"}); }
   ~Log1p() = default;
   MS_DECLARE_PARENT(Log1p, PrimitiveC);
   void Init() {}

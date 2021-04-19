@@ -33,7 +33,9 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   int64_t x_rank = x_shape.size();
   CheckAndConvertUtils::Check("x_rank", x_rank, kEqual, "index_rank", index_shape.size(), prim_name);
-  auto dim_v = GetValue<int64_t>(input_args[1]->BuildValue());
+  auto value_ptr = input_args[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto dim_v = GetValue<int64_t>(value_ptr);
   CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, "negative index_rank", -x_rank, prim_name);
   CheckAndConvertUtils::Check("dim value", dim_v, kLessThan, "index_rank", x_rank, prim_name);
 

@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameGather = "Gather";
 class Gather : public PrimitiveC {
  public:
-  Gather() : PrimitiveC(kNameGather) { InitIOName({"x", "dim", "index"}, {"output"}); }
+  Gather() : PrimitiveC(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
   ~Gather() = default;
   MS_DECLARE_PARENT(Gather, PrimitiveC);
   void Init() {}

@@ -791,7 +791,7 @@ class Unique(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class Gather(PrimitiveWithCheck):
+class Gather(Primitive):
     r"""
     Returns a slice of the input tensor based on the specified indices and axis.
 
@@ -835,15 +835,6 @@ class Gather(PrimitiveWithCheck):
     def __init__(self):
         """Initialize index_select"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
-
-    def __check__(self, params, indices, axis):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
-        validator.check_subclass("axis", axis['dtype'], [mstype.number], self.name)
-        axis_v = axis['value']
-        validator.check_value_type('axis', axis_v, [int], self.name)
-        rank = len(params['shape'])
-        validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
 
 
 class GatherV2(PrimitiveWithCheck):

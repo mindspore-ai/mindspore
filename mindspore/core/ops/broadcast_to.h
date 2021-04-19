@@ -27,10 +27,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBroadcastTo = "BroadcastTo";
 class BroadcastTo : public PrimitiveC {
  public:
-  BroadcastTo() : PrimitiveC(kNameBroadcastTo) {}
+  BroadcastTo() : PrimitiveC(prim::kPrimBroadcastTo->name()) {}
   ~BroadcastTo() = default;
   MS_DECLARE_PARENT(BroadcastTo, PrimitiveC);
   void Init(const std::vector<int64_t> &shape);

@@ -77,7 +77,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBroadcastShape, {InferImplBroadCastShape, nullptr, true}},
     {prim::kPrimUnique, {InferImplUnique, nullptr, true}},
     {prim::kPrimUniqueGrad, {InferImplUniqueGrad, nullptr, true}},
-    {prim::kPrimGather, {InferImplGatherV2, nullptr, true}},
     {prim::kPrimEmbeddingLookup, {InferImplEmbeddingLookup, nullptr, true}},
     {prim::kPrimSparseGatherV2, {InferImplGatherV2, nullptr, true}},
     {prim::kPrimUnsortedSegmentMax, {InferImplUnsortedSegmentMax, nullptr, true}},
