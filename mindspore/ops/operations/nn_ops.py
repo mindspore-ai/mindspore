@@ -3228,7 +3228,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         return mstype.tensor_type(mstype.float32)
 
 
-class OneHot(PrimitiveWithInfer):
+class OneHot(Primitive):
     r"""
     Computes a one-hot tensor.
 
@@ -3278,25 +3278,6 @@ class OneHot(PrimitiveWithInfer):
     def __init__(self, axis=-1):
         self.init_prim_io_names(inputs=['indices', 'depth', 'on_value', 'off_value'], outputs=['output'])
         validator.check_value_type("axis", axis, [int], self.name)
-
-    def __infer__(self, indices, depth, on_value, off_value):
-        # check type
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], (mstype.int32, mstype.int64), self.name)
-        validator.check_type_name("depth", depth['dtype'], mstype.int_type, self.name)
-        args = {"on_value": on_value['dtype'], "off_value": off_value['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
-
-        # check shape
-        indices_shp = indices['shape']
-        validator.check_int_range(self.axis, -1, len(indices_shp), Rel.INC_BOTH, "axis", self.name)
-        depth_val = depth['value']
-        validator.check_non_negative_int(depth_val, "depth", self.name)
-        # create new dimension at end if self.axis is -1
-        _ = indices_shp.insert(self.axis, depth_val) if self.axis >= 0 else indices_shp.append(depth_val)
-
-        return {'shape': indices_shp,
-                'dtype': on_value['dtype'],
-                'value': None}
 
 
 class Gelu(PrimitiveWithInfer):
