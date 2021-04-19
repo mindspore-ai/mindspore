@@ -58,7 +58,7 @@ void ValidateOperation(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python evaluator.";
     return;
   }
-  if (prim->prim_type() == PrimType::kPrimTypePyInferCheck) {
+  if (prim->prim_type() == PrimType::kPrimTypePyCheck) {
     MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python inference checking method.";
     return;
   }

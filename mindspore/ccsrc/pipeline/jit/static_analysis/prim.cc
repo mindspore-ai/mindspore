@@ -534,7 +534,7 @@ EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &en
                                                      const AbstractBasePtrList &args) {
   auto prim_py = dyn_cast<PrimitivePy>(prim_);
   if (prim_py == nullptr) {
-    MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyInferCheck' should be a python primitive.";
+    MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyCheck' should be a python primitive.";
   }
   // Call checking method 'infer_value' for python primitive
   MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
@@ -568,7 +568,7 @@ EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &en
 EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
   auto prim_py = dyn_cast<PrimitivePy>(prim_);
   if (prim_py == nullptr) {
-    MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyInferCheck' should be a python primitive.";
+    MS_LOG(EXCEPTION) << "The primitive with type 'kPrimTypePyCheck' should be a python primitive.";
   }
   // Call checking method '__check__' for subclass of 'PrimitiveWithCheck'
   MS_LOG(DEBUG) << "Begin input args checking for: " << prim_py->ToString();
@@ -596,7 +596,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
     }
   }
 
-  if (prim_->prim_type() == PrimType::kPrimTypePyInferCheck) {
+  if (prim_->prim_type() == PrimType::kPrimTypePyCheck) {
     return EvalPyCheckPrim(engine, args);
   }
   auto context = MsContext::GetInstance();
