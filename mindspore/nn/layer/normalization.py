@@ -233,7 +233,7 @@ def _shape_check_bn(in_shape, in_dims):
 
 @constexpr
 def _shape_infer(x_shape, num_feature):
-    """global batch normalization shape and axes infer"""
+    """global Batch Normalization shape and axes infer"""
     if len(x_shape) == 4:
         axes = (0, 2, 3)
         re_shape = (1, num_feature, 1, 1)
@@ -245,7 +245,7 @@ def _shape_infer(x_shape, num_feature):
 
 class BatchNorm1d(_BatchNorm):
     r"""
-    Batch normalization layer over a 2D input.
+    Batch Normalization layer over a 2D input.
 
     Batch Normalization is widely used in convolutional networks. This layer
     applies Batch Normalization over a 2D input (a mini-batch of 1D inputs) to
@@ -334,7 +334,7 @@ class BatchNorm1d(_BatchNorm):
 
 class BatchNorm2d(_BatchNorm):
     r"""
-    Batch normalization layer over a 4D input.
+    Batch Normalization layer over a 4D input.
 
     Batch Normalization is widely used in convolutional networks. This layer
     applies Batch Normalization over a 4D input (a mini-batch of 2D inputs with
@@ -441,7 +441,7 @@ def _check_3d_shape(input_shape):
 
 class BatchNorm3d(Cell):
     r"""
-    Batch normalization layer over a 5D input.
+    Batch Normalization layer over a 5D input.
 
     Batch Normalization is widely used in convolutional networks. This layer
     applies Batch Normalization over a 5D input (a mini-batch of 3D inputs with
@@ -540,7 +540,7 @@ class GlobalBatchNorm(_BatchNorm):
     r"""
     Global normalization layer over a N-dimension input.
 
-    Global Normalization is cross device synchronized batch normalization. The implementation of Batch Normalization
+    Global Normalization is cross device synchronized Batch Normalization. The implementation of Batch Normalization
     only normalizes the data within each device. Global normalization will normalize the input within the group.
     It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
     Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
@@ -653,10 +653,10 @@ class GlobalBatchNorm(_BatchNorm):
 
 class SyncBatchNorm(_BatchNorm):
     r"""
-    Sync Batch normalization layer over a N-dimension input.
+    Sync Batch Normalization layer over a N-dimension input.
 
-    Sync Batch Normalization is cross device synchronized batch normalization. The implementation of Batch
-    Normalization only normalizes the data within each device. Sync Batch normalization will normalize the input
+    Sync Batch Normalization is cross device synchronized Batch Normalization. The implementation of Batch
+    Normalization only normalizes the data within each device. Sync Batch Normalization will normalize the input
     within the group. It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
     Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
     feature using a mini-batch of data and the learned parameters which can be described in the following formula.

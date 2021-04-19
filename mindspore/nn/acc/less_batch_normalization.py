@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""less batch normalization"""
+"""less Batch Normalization"""
 import numpy as np
 from mindspore import nn
 from mindspore.ops import operations as P

@@ -51,12 +51,12 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto prop_kind = dnnl::prop_kind::forward_training;
   auto normalization_flags = dnnl::normalization_flags::use_scale_shift;
 
-  // fused batch normalization forward description
+  // fused Batch Normalization forward description
   dnnl::batch_normalization_forward::desc desc =
     dnnl::batch_normalization_forward::desc(prop_kind, x_desc, epsilon, normalization_flags);
   auto forward_prim_desc = dnnl::batch_normalization_forward::primitive_desc(desc, MKLKernelEngine::Get().engine());
 
-  // fused batch normalization backward description
+  // fused Batch Normalization backward description
   dnnl::batch_normalization_backward::desc backward_desc =
     dnnl::batch_normalization_backward::desc(dnnl::prop_kind::backward, x_desc, x_desc, epsilon, normalization_flags);
   auto backward_prim_desc = dnnl::batch_normalization_backward::primitive_desc(

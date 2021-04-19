@@ -339,7 +339,7 @@ class QuantizationAwareTraining(Quantizer):
                                                          quant_config=self.quant_config,
                                                          quant_dtype=self.weight_dtype,
                                                          fake=True)
-                # change original network BatchNormal OP parameters to quant network
+                # change original network Batch Normalization OP parameters to quant network
                 conv_inner.gamma = subcell.batchnorm.gamma
                 conv_inner.beta = subcell.batchnorm.beta
                 conv_inner.moving_mean = subcell.batchnorm.moving_mean
@@ -363,7 +363,7 @@ class QuantizationAwareTraining(Quantizer):
                                                             bias_init=conv_inner.bias_init,
                                                             quant_config=self.quant_config,
                                                             quant_dtype=self.weight_dtype)
-                # change original network BatchNormal OP parameters to quant network
+                # change original network Batch Normalization OP parameters to quant network
                 conv_inner.batchnorm.gamma = subcell.batchnorm.gamma
                 conv_inner.batchnorm.beta = subcell.batchnorm.beta
                 conv_inner.batchnorm.moving_mean = subcell.batchnorm.moving_mean

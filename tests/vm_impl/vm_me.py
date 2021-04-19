@@ -57,7 +57,7 @@ def avg_pool_grad(dout, origin_shape, pool_h, pool_w, stride):
         stride (int): The stride of the sliding window.
 
     Returns:
-        numpy.ndarray, grad of avgerage pooling.
+        numpy.ndarray, grad of average pooling.
     """
     # pylint: disable=unused-argument
     _, _, height, width = dout.shape
@@ -70,7 +70,7 @@ def avg_pool_grad(dout, origin_shape, pool_h, pool_w, stride):
 
 def _batch_norm(x, scale, shift, running_mean=None, running_var=None,
                 eps=1e-05, momentum=0.1, is_training=True):
-    """Batch normalization over an array."""
+    """Batch Normalization over an array."""
     _, c_h_w = x.shape
     # Handle running_mean and running_var are not None
     # if running_mean is None:
@@ -106,7 +106,7 @@ def _batch_norm(x, scale, shift, running_mean=None, running_var=None,
 
 def batch_norm(x, scale=1, shift=0, mean=None, variance=None,
                eps=1e-05, momentum=0.1, is_training=True):
-    """Batch normalization over an array."""
+    """Batch Normalization over an array."""
     input_shape = x.shape
     if x.ndim != 2:
         batch_num = x.shape[0]
@@ -120,7 +120,7 @@ def batch_norm(x, scale=1, shift=0, mean=None, variance=None,
 
 def _batch_norm_grad(dout, x, scale, save_mean, save_inv_variance, \
                      eps=1e-05, momentum=0.1, is_training=True):
-    """Batch normalization over an array."""
+    """Batch Normalization over an array."""
     if x.ndim != 2:
         batch_num = x.shape[0]
         x = x.reshape(batch_num, -1)
@@ -141,7 +141,7 @@ def _batch_norm_grad(dout, x, scale, save_mean, save_inv_variance, \
 
 
 def batch_norm_grad(dy, x, scale, save_mean, save_inv_variance):
-    """Batch normalization over an array."""
+    """Batch Normalization over an array."""
     if dy.ndim != 2:
         batch_size = dy.shape[0]
         dy = dy.reshape(batch_size, -1)
@@ -275,7 +275,7 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
     col = im2col(x, filter_h, filter_w, stride, pad, dilation)
     col_w = np.reshape(weight, (filter_num, -1)).T
     out = np.dot(col, col_w)
-    out = out.reshape(batch_num, out_h, out_w, -1).transpose(0, 3, 1, 2)
+    out = out.reshape((batch_num, out_h, out_w, -1)).transpose(0, 3, 1, 2)
     if bias is not None:
         out += bias
     return out
@@ -287,7 +287,7 @@ def conv2d_backprop_filter(dout, x, w_size, stride=1, pad=0):
     dout = dout.transpose(0, 2, 3, 1).reshape(-1, filter_num)
     col = im2col(x, filter_height, filter_width, stride, pad)
     dw = np.dot(col.T, dout)
-    dw = dw.transpose(1, 0).reshape(filter_num, channel, filter_height, filter_width)
+    dw = dw.transpose(1, 0).reshape((filter_num, channel, filter_height, filter_width))
     return dw
 
 
