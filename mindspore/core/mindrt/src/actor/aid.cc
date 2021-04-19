@@ -111,7 +111,7 @@ std::string AID::GetIp() const {
   }
   size_t index2 = url.rfind(':');
   if ((index2 == std::string::npos) || (index2 < index1)) {
-    MS_LOG(INFO) << "wrong url:%s,u=" << url.c_str();
+    MS_LOG(DEBUG) << "wrong url:" << url.c_str();
     return url;
   } else {
     return url.substr(index1, index2 - index1);
