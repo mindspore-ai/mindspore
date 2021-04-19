@@ -184,9 +184,8 @@ class Dense_Thor(Cell):
         s = 'input_channels={}, output_channels={}'.format(self.in_channels, self.out_channels)
         if self.has_bias:
             s += ', has_bias={}'.format(self.has_bias)
-        # if self.activation_flag:
-        #     s += ', activation={}'.format(self.activation)
         return s
+
 
 class _Conv(Cell):
     """
@@ -212,7 +211,6 @@ class _Conv(Cell):
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
-        # self.weight_init = weight_init
         self.bias_init = bias_init
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
