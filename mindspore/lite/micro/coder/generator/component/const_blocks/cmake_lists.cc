@@ -94,8 +94,8 @@ set(WRAPPER_LIB ${PKG_PATH}/tools/codegen/lib/libwrapper.a)
 set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/include)
 set(HEADER_PATH ${PKG_PATH}/inference)
 
-message("operator lib path: ${OP_LIB}")
-message("operator header path: ${OP_HEADER_PATH}")
+message(STATUS "operator lib path: ${OP_LIB}")
+message(STATUS "operator header path: ${OP_HEADER_PATH}")
 
 add_compile_definitions(NOT_USE_STL)
 
