@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-BASEPATH=$(cd "$(dirname $0)"; pwd)
+BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
 get_version() {
     VERSION_MAJOR=$(grep "const int ms_version_major =" ${BASEPATH}/../../include/version.h | tr -dc "[0-9]")
     VERSION_MINOR=$(grep "const int ms_version_minor =" ${BASEPATH}/../../include/version.h | tr -dc "[0-9]")
@@ -39,6 +39,6 @@ fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/lib/libmindspore-lite.a ${BASEPATH}/lib
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/include ${BASEPATH}/
-cd ${BASEPATH}/build
+cd ${BASEPATH}/build || exit
 cmake ${BASEPATH}
 make

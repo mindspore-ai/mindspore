@@ -65,7 +65,11 @@ class LiteModel : public Model {
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
       node->primitive_ = c_node->primitive();
       node->quant_type_ = c_node->quantType();
-      node->name_ = c_node->name()->c_str();
+      if (c_node->name() == nullptr) {
+        node->name_ = "";
+      } else {
+        node->name_ = c_node->name()->c_str();
+      }
       auto count = c_node->inputIndex()->size();
       for (uint32_t j = 0; j < count; ++j) {
         node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));

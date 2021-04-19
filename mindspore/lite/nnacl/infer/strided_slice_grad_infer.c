@@ -89,7 +89,7 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
     param->strides_[i] = strides_[i];
   }
   ShapeSet(param->in_shape_, &in_shape_size, input->shape_, input->shape_size_);
-  // ApplyNewAxisMask();
+  // ApplyNewAxisMask;
   for (size_t i = 0; i < ndim_; i++) {
     if (new_axis_mask_[i]) {
       ndim_ += 1;
@@ -107,19 +107,19 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
       ellipsis_mask_[i] = false;
     }
   }
-  // ApplyBeginMask();
+  // ApplyBeginMask;
   for (size_t i = 0; i < ndim_; i++) {
     if (begins_mask_[i]) {
       begins_[i] = 0;
     }
   }
-  // ApplyEndMask();
+  // ApplyEndMask;
   for (size_t i = 0; i < ndim_; i++) {
     if (ends_mask_[i]) {
       ends_[i] = in_shape_[i];
     }
   }
-  // ApplyEllipsisMask();
+  // ApplyEllipsisMask;
   for (size_t i = 0; i < ndim_; i++) {
     if (ellipsis_mask_[i]) {
       begins_[i] = 0;
