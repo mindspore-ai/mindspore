@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-echo "Please run the script as: "
-echo "sh scripts/run_train.sh DATASET_PATH CKPT_FILE"
-echo "for example: sh scripts/run_train.sh /dataset_path /ncf.ckpt"
 
-data_path=$1
-ckpt_file=$2
-python ./train.py --data_path $data_path --dataset 'ml-1m'  --train_epochs 20 --batch_size 256 --output_path './output/' --checkpoint_path $ckpt_file
+"""Device adapter for ModelArts"""
+
+from utils.config import config
+
+if config.enable_modelarts:
+    from utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

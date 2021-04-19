@@ -13,35 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-echo "Please run the script as: "
-echo "sh scripts/run_distribute_train.sh DEVICE_NUM DATASET_PATH RANK_TABLE_FILE"
-echo "for example: sh scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json"
 
-current_exec_path=$(pwd)
-echo ${current_exec_path}
+if [ $# -lt 1 ]; then
+    echo "=============================================================================================================="
+    echo "Please run the script as: "
+    echo "bash run_local_train.sh RANK_TABLE_FILE [OTHER_ARGS]"
+    echo "OTHER_ARGS will be passed to the training scripts directly,"
+    echo "for example: bash run_local_train.sh /path/hccl.json /dataset_path"
+    echo "It is better to use absolute path."
+    echo "=============================================================================================================="
+    exit 1
+fi
 
-export RANK_SIZE=$1
-data_path=$2
-export RANK_TABLE_FILE=$3
+BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 
-for((i=0;i<=RANK_SIZE;i++));
-do
-    rm ${current_exec_path}/device_$i/ -rf
-    mkdir ${current_exec_path}/device_$i
-    cd ${current_exec_path}/device_$i || exit
-    export RANK_ID=$i
-    export DEVICE_ID=$i
-    python -u ${current_exec_path}/train.py  \
-     --data_path $data_path \
-     --dataset 'ml-1m'  \
-     --train_epochs 50 \
-     --output_path './output/' \
-     --eval_file_name 'eval.log' \
-     --loss_file_name 'loss.log'  \
-     --checkpoint_path './checkpoint/' \
-     --device_target="Ascend" \
-     --device_id=$i \
-     --is_distributed=1 \
-     >log_$i.log 2>&1 &
-done
+python3 ${BASE_PATH}/ascend_distributed_launcher/get_distribute_pretrain_cmd.py \
+    --run_script_path=${BASE_PATH}/../train.py \
+    --hccl_config_dir=$1 \
+    --hccl_time_out=600 \
+    --args=" --data_path=$2 \
+--dataset='ml-1m' \
+--train_epochs=50 \
+--output_path='./output/' \
+--eval_file_name='eval.log' \
+--checkpoint_path='./checkpoint/' \
+--device_target='Ascend'" \
+    --cmd_file=distributed_cmd.sh
 
+bash distributed_cmd.sh

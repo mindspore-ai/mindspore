@@ -100,6 +100,33 @@ sh scripts/run_train.sh rank_table.json
 sh run_eval.sh
 ```
 
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the code directory to "/path/ncf" on the website UI interface.
+# (3) Set the startup file to "train.py" on the website UI interface.
+# (4) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (5) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on default_config.yaml file.
+#       b. Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the code directory to "/path/ncf" on the website UI interface.
+# (4) Set the startup file to "eval.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -108,6 +135,9 @@ sh run_eval.sh
 ├── ModelZoo_NCF_ME
     ├── README.md                          // descriptions about NCF
     ├── scripts
+    │   ├──ascend_distributed_launcher
+    │       ├──__init__.py                      // init file
+    │       ├──get_distribute_pretrain_cmd.py   // create distribute shell script
     │   ├──run_train.sh                    // shell script for train
     │   ├──run_distribute_train.sh         // shell script for distribute train
     │   ├──run_eval.sh                     // shell script for evaluation
@@ -116,15 +146,19 @@ sh run_eval.sh
     ├── src
     │   ├──dataset.py                      // creating dataset
     │   ├──ncf.py                          // ncf architecture
-    │   ├──config.py                       // parameter configuration
+    │   ├──config.py                       // parameter analysis
+    │   ├──device_adapter.py               // device adapter
+    │   ├──local_adapter.py                // local adapter
+    │   ├──moxing_adapter.py               // moxing adapter
     │   ├──movielens.py                    // data download file
     │   ├──callbacks.py                    // model loss and eval callback file
     │   ├──constants.py                    // the constants of model
     │   ├──export.py                       // export checkpoint files into geir/onnx
     │   ├──metrics.py                      // the file for auc compute
     │   ├──stat_utils.py                   // the file for data process functions
+    ├── default_config.yaml    // parameter configuration
     ├── train.py               // training script
-    ├── eval.py               //  evaluation script
+    ├── eval.py                //  evaluation script
 ```
 
 ## [Script Parameters](#contents)
@@ -144,7 +178,6 @@ Parameters for both training and evaluation can be set in config.py.
   * `--num_factors`：The Embedding size of MF model.
   * `--output_path`：The location of the output file.
   * `--eval_file_name` : Eval output file.
-  * `--loss_file_name` :  Loss output file.
   ```
 
 ## [Training Process](#contents)
