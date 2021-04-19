@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/kernel_registry.h"
+#include <utility>
 #include "include/errorcode.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
@@ -26,13 +27,20 @@
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #endif
+#include "src/common/tensor_util.h"
 
+using mindspore::kernel::CreateKernel;
+using mindspore::kernel::kBuiltin;
 using mindspore::kernel::kCPU;
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
 
 namespace mindspore::lite {
+namespace {
+static const int kKernelMaxNum = (kNumberTypeEnd - kNumberTypeBegin + 1) * (PrimitiveType_MAX - PrimitiveType_MIN + 1);
+}  // namespace
+
 KernelRegistry *KernelRegistry::GetInstance() {
   static KernelRegistry instance;
 
@@ -45,6 +53,47 @@ KernelRegistry *KernelRegistry::GetInstance() {
     memset(instance.creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
   }
   return &instance;
+}
+
+int KernelRegistry::GetFuncIndex(const kernel::KernelKey &desc) {
+  int dType_index = static_cast<int>(desc.data_type) - kNumberTypeBegin;
+  return dType_index * op_type_length_ + desc.type;
+}
+
+int KernelRegistry::RegKernel(const std::string &arch, const std::string &vendor, const TypeId data_type,
+                              const int type, kernel::CreateKernel creator) {
+  auto vendor_hash = std::hash<std::string>{}(vendor);
+  auto arch_hash = std::hash<std::string>{}(arch);
+  auto iter = kernel_creators_.find(vendor_hash);
+  if (iter == kernel_creators_.end()) {
+    all_vendors_.insert(vendor);
+    kernel_creators_[vendor_hash][arch_hash] =
+      reinterpret_cast<CreateKernel *>(malloc(kKernelMaxNum * sizeof(CreateKernel)));
+    if (kernel_creators_[vendor_hash][arch_hash] == nullptr) {
+      MS_LOG(ERROR) << "malloc kernel creator buffer fail! vendor: " << vendor << ",arch:" << arch;
+      return RET_ERROR;
+    }
+    memset(kernel_creators_[vendor_hash][arch_hash], 0, kKernelMaxNum * sizeof(CreateKernel));
+  } else {
+    auto iter_arch = iter->second.find(arch_hash);
+    if (iter_arch == iter->second.end()) {
+      iter->second[arch_hash] = reinterpret_cast<CreateKernel *>(malloc(kKernelMaxNum * sizeof(CreateKernel)));
+      if (iter->second[arch_hash] == nullptr) {
+        MS_LOG(ERROR) << "malloc kernel creator buffer fail! vendor: " << vendor << ",arch:" << arch;
+        return RET_ERROR;
+      }
+      memset(iter->second[arch_hash], 0, kKernelMaxNum * sizeof(CreateKernel));
+    }
+  }
+
+  KernelKey desc = {kCPU, data_type, type, arch, vendor};
+  int index = GetFuncIndex(desc);
+  if (index >= kKernelMaxNum) {
+    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << data_type << ",op type " << type;
+    return RET_ERROR;
+  }
+  kernel_creators_[vendor_hash][arch_hash][index] = creator;
+  return RET_OK;
 }
 
 int KernelRegistry::Init() {
@@ -66,17 +115,38 @@ int KernelRegistry::Init() {
 }
 
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
-  int index = GetCreatorFuncIndex(desc);
-  if (index >= array_size_ || index < 0) {
-    MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
-                  << desc.type;
+  if (desc.vendor == kBuiltin) {
+    int index = GetCreatorFuncIndex(desc);
+    if (index >= array_size_ || index < 0) {
+      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+                    << desc.type;
+      return nullptr;
+    }
+    return creator_arrays_[index];
+  }
+  MS_LOG(ERROR) << "Call wrong interface!vendor: " << desc.vendor;
+  return nullptr;
+}
+
+kernel::CreateKernel KernelRegistry::GetDelegateCreator(const kernel::KernelKey &desc) {
+  auto vendor_hash = std::hash<std::string>{}(desc.vendor);
+  auto it_by_vendor = kernel_creators_.find(vendor_hash);
+  if (it_by_vendor == kernel_creators_.end()) {
     return nullptr;
   }
-  auto it = creator_arrays_[index];
-  if (it != nullptr) {
-    return it;
+  auto arch_hash = std::hash<std::string>{}(desc.kernel_arch);
+  auto it_by_arch = it_by_vendor->second.find(arch_hash);
+  if (it_by_arch == it_by_vendor->second.end()) {
+    return nullptr;
   }
-  return nullptr;
+  auto index = GetFuncIndex(desc);
+  if (index < 0 || index >= kKernelMaxNum) {
+    MS_LOG(ERROR) << "invalid kernel key, arch " << desc.kernel_arch << ", data_type" << desc.data_type << ",op type "
+                  << desc.type << ", vendor: " << desc.vendor;
+    return nullptr;
+  }
+
+  return it_by_arch->second[index];
 }
 
 int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
@@ -127,15 +197,28 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
 
 kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors,
                                               const std::vector<Tensor *> &out_tensors, const InnerContext *ctx,
-                                              const kernel::KernelKey &key, OpParameter *parameter) {
+                                              const kernel::KernelKey &key, OpParameter *parameter,
+                                              const void *primitive) {
   MS_ASSERT(ctx != nullptr);
-  auto creator = GetCreator(key);
-  if (creator != nullptr) {
-    auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-    if (kernel != nullptr) {
-      kernel->set_desc(key);
-      return kernel;
+  if (key.vendor == kBuiltin) {
+    auto creator = GetCreator(key);
+    if (creator != nullptr) {
+      auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+      if (kernel != nullptr) {
+        kernel->set_desc(key);
+        return kernel;
+      }
     }
+  } else {
+    auto creator = GetDelegateCreator(key);
+    if (creator == nullptr) {
+      return nullptr;
+    }
+    std::vector<tensor::MSTensor *> tensors_in;
+    Tensor2MSTensor(std::move(in_tensors), &tensors_in);
+    std::vector<tensor::MSTensor *> tensors_out;
+    Tensor2MSTensor(std::move(out_tensors), &tensors_out);
+    return creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
   }
   return nullptr;
 }

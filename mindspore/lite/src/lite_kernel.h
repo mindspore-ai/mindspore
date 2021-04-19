@@ -34,14 +34,21 @@
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
+static const char *const kBuiltin = "Builtin";
 
 struct KernelKey {
   KERNEL_ARCH arch;
   TypeId data_type;
   int type;
+  std::string kernel_arch;
+  std::string vendor{kBuiltin};
 
   bool operator<(const KernelKey &dst) const {
-    if (arch != dst.arch) {
+    if (vendor != dst.vendor) {
+      return vendor < dst.vendor;
+    } else if (kernel_arch != dst.kernel_arch) {
+      return kernel_arch < dst.kernel_arch;
+    } else if (arch != dst.arch) {
       return arch < dst.arch;
     } else if (data_type != dst.data_type) {
       return data_type < dst.data_type;
