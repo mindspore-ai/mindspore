@@ -2193,7 +2193,7 @@ class ShuffleDataset(Dataset):
 _GLOBAL_PYFUNC_LIST = []
 _OP_NAME = dict()
 _OP_PROCESS = dict()
-_LOCK = multiprocessing.Lock()
+_LOCK = threading.Lock()
 
 
 # Pyfunc worker init function
