@@ -196,17 +196,17 @@ class SomasSolverPre {
   void Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
            const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
 
-  Status checkTensors(TensorsDescMap *tensors, uint32_t index1, uint32_t index2);
-  Status addContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *tensors);
-  Status addContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v, vector<TensorsDescMap> *vecTensorsMap,
-                                      TensorsDescMap *tensors);
+  Status CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2);
+  Status AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors);
+  Status AddContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v, vector<TensorsDescMap> *vecTensorsMap,
+                                      const TensorsDescMap *pTensors);
 
  private:
   size_t max_offset_;
   void SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,
                       const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
   void SolverOutputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors) const;
-  vector<TensorsDescMap> createTensorsMaps(const TensorsDescMap &tensors, size_t total_sol);
+  vector<TensorsDescMap> CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol);
   void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph *graph);
 };
 using SomasSolverPrePtr = std::shared_ptr<SomasSolverPre>;
