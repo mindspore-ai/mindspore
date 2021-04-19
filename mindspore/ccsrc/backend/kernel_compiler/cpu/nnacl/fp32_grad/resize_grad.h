@@ -35,9 +35,10 @@ typedef struct ResizeGradParameter {
   float width_scale_;
 } ResizeGradParameter;
 
-void ResizeNearestNeighborGrad(float *in_addr, float *out_addr, int batch_size, int channel,
+void ResizeNearestNeighborGrad(float *in_addr, float *out_addr, int batch_size, int channel, int format,
                                ResizeGradParameter *param);
-void ResizeBiLinearGrad(float *in_addr, float *out_addr, int batch_size, int channel, ResizeGradParameter *param);
+void ResizeBiLinearGrad(float *in_addr, float *out_addr, int batch_size, int channel, int format,
+                        ResizeGradParameter *param);
 #ifdef __cplusplus
 }
 #endif

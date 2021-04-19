@@ -50,6 +50,15 @@ struct MS_API CheckTensor {
   std::vector<float> data;
 };
 
+template <typename T>
+T TensorSum(void *data, int size) {
+  T *typed_data = reinterpret_cast<T *>(data);
+  T sum = static_cast<T>(0);
+  for (int i = 0; i < size; i++) {
+    sum += typed_data[i];
+  }
+  return sum;
+}
 class MS_API NetTrainFlags : public virtual FlagParser {
  public:
   NetTrainFlags() {
@@ -67,6 +76,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::accuracy_threshold_, "accuracyThreshold", "Threshold of accuracy", 0.5);
     AddFlag(&NetTrainFlags::layer_checksum_, "layerCheckSum", "layer output checksum print (debug)", false);
     AddFlag(&NetTrainFlags::enable_fp16_, "enableFp16", "Enable float16", false);
+    AddFlag(&NetTrainFlags::loss_name_, "lossName", "loss layer name", "");
   }
 
   ~NetTrainFlags() override = default;
@@ -98,6 +108,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::string resize_dims_in_ = "";
   bool layer_checksum_ = false;
   std::vector<std::vector<int64_t>> resize_dims_;
+  std::string loss_name_ = "";
 };
 
 class MS_API NetTrain {

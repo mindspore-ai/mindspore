@@ -71,9 +71,9 @@ int ResizeGradCPUKernel::Execute(int task_id) {
   auto channel = in_tensors_.at(0)->Channel();
 
   if (param->method == static_cast<int>(schema::ResizeMethod_NEAREST)) {
-    ResizeNearestNeighborGrad(in_addr, out_addr, batch_size, channel, param);
+    ResizeNearestNeighborGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
   } else {
-    ResizeBiLinearGrad(in_addr, out_addr, batch_size, channel, param);
+    ResizeBiLinearGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
   }
   return RET_OK;
 }

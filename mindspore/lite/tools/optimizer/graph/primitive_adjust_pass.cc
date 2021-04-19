@@ -72,6 +72,7 @@
 #include "ops/stack.h"
 #include "ops/tanh.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
+#include "ops/grad/resize_grad.h"
 
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
@@ -140,6 +141,8 @@ constexpr auto kNameSlice = "Slice";
 constexpr auto kNameAvgPoolGradGpu = "AvgPoolGradGpu";
 constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
 constexpr auto kNameTanhGrad = "TanhGrad";
+constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
+constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 
 std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
                                                                    {ops::kNameGeLU, mindspore::GELU},
@@ -489,6 +492,32 @@ int MoveAttrSlice(const CNodePtr &cnode) {
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
+
+int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  auto src_prim = GetValueNode<PrimitivePtr>(value_node);
+  if (src_prim == nullptr) {
+    MS_LOG(ERROR) << "value node is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto dst_prim = std::make_shared<ops::ResizeGrad>();
+  MS_ASSERT(dst_prim != nullptr);
+
+  if (src_prim->name() == kNameResizeBilinearGrad) {
+    dst_prim->set_method(ResizeMethod::LINEAR);
+  } else if (src_prim->name() == kNameResizeNearestNeighborGrad) {
+    dst_prim->set_method(ResizeMethod::NEAREST);
+  } else {
+    MS_LOG(ERROR) << "Resize grad method " << src_prim->name() << "is not supported";
+    return lite::RET_ERROR;
+  }
+  auto align_corners = GetValue<bool>(src_prim->GetAttr(ops::kAlignCorners));
+  dst_prim->set_align_corners(align_corners);
+  value_node->set_value(dst_prim);
+  return lite::RET_OK;
+}
 }  // namespace
 
 bool PrimitiveAdjustPass::Run(const FuncGraphPtr &func_graph) {
@@ -591,5 +620,7 @@ REGIST_PRIMITIVE_ADJUST(kNameTile, MoveAttrMapCommon<ops::TileFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTopK, MoveAttrMapCommon<ops::TopKFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameSparseSoftmaxCrossEntropyWithLogits,
                         MoveAttrMapCommon<ops::SparseSoftmaxCrossEntropyWithLogits>)
+REGIST_PRIMITIVE_ADJUST(kNameResizeBilinearGrad, MoveAttrMapResizeGrad)
+REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighborGrad, MoveAttrMapResizeGrad)
 }  // namespace opt
 }  // namespace mindspore

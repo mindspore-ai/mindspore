@@ -901,6 +901,9 @@ RegistryMSOps g_reduceFusionPrimitiveCreatorRegistry("ReduceFusion", ReduceFusio
 RegistryMSOps g_reshapePrimitiveCreatorRegistry("Reshape", ReshapePrimitiveCreator);
 RegistryMSOps g_resizePrimitiveCreatorRegistry("Resize", ResizePrimitiveCreator);
 RegistryMSOps g_resizeGradPrimitiveCreatorRegistry("ResizeGrad", ResizeGradPrimitiveCreator);
+RegistryMSOps g_resizeBilinearGradPrimitiveCreatorRegistry("ResizeBilinearGrad", ResizeGradPrimitiveCreator);
+RegistryMSOps g_resizeNearestNeighborGradPrimitiveCreatorRegistry("ResizeNearestNeighborGrad",
+                                                                  ResizeGradPrimitiveCreator);
 RegistryMSOps g_reverseV2PrimitiveCreatorRegistry("ReverseV2", ReverseV2PrimitiveCreator);
 RegistryMSOps g_reverseSequencePrimitiveCreatorRegistry("ReverseSequence", ReverseSequencePrimitiveCreator);
 RegistryMSOps g_rfftPrimitiveCreatorRegistry("Rfft", RfftPrimitiveCreator);

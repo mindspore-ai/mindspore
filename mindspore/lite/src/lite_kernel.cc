@@ -121,25 +121,11 @@ int LiteKernel::PreProcess() {
 }
 
 int LiteKernel::PostProcess() {
-#ifdef SUPPORT_TRAIN
-  for (auto input_kernel : this->in_kernels()) {
-    MS_ASSERT(input_kernel != nullptr);
-    if (input_kernel->is_model_output()) {
-      continue;
-    }
-    auto ret = input_kernel->DecOutTensorRefCount();
-    if (0 != ret) {
-      MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << this->name() << " failed";
-    }
-  }
-  return RET_OK;
-#else
   for (auto *output : this->out_tensors()) {
     MS_ASSERT(output != nullptr);
     output->ResetRefCount();
   }
   return FreeInWorkTensor();
-#endif
 }
 
 int LiteKernel::Run(const KernelCallBack &before, const KernelCallBack &after) {

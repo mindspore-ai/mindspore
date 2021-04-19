@@ -340,6 +340,9 @@ int NetTrain::RunExportedNet() {
     std::cout << "CreateSession failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
+  if (flags_->loss_name_ != "") {
+    session_->SetLossName(flags_->loss_name_);
+  }
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();
   MS_LOG(INFO) << "Exported model PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
@@ -409,6 +412,9 @@ int NetTrain::RunNetTrain() {
     return RET_ERROR;
   }
 
+  if (flags_->loss_name_ != "") {
+    session_->SetLossName(flags_->loss_name_);
+  }
   session_->Train();
 
   ms_inputs_ = session_->GetInputs();
@@ -536,10 +542,23 @@ int NetTrain::InitCallbackParameter() {
     op_times_by_name_[call_param.node_name].first++;
     op_times_by_name_[call_param.node_name].second += cost;
     if (layer_checksum_) {
-      float *output = reinterpret_cast<float *>(after_outputs.at(0)->MutableData());
-      float sum = 0;
-      for (int i = 0; i < after_outputs.at(0)->ElementsNum(); i++) sum += output[i];
-      std::cout << call_param.node_type << " shape= " << after_outputs.at(0)->shape() << " sum=" << sum << "\n";
+      auto out_tensor = after_outputs.at(0);
+      void *output = out_tensor->MutableData();
+      int tensor_size = out_tensor->ElementsNum();
+      TypeId type = out_tensor->data_type();
+      std::cout << call_param.node_type << " shape=" << after_outputs.at(0)->shape() << " sum=";
+      switch (type) {
+        case kNumberTypeFloat32:
+          std::cout << TensorSum<float>(output, tensor_size);
+          break;
+        case kNumberTypeInt32:
+          std::cout << TensorSum<int>(output, tensor_size);
+          break;
+        default:
+          std::cout << "unsupported type:" << type;
+          break;
+      }
+      std::cout << std::endl;
     }
     return true;
   };

@@ -153,9 +153,7 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     MS_LOG(ERROR) << "CheckInputs failed";
     return ret;
   }
-  for (auto out_tensor : outputs_) {  // increase RefCount of output tensors, such that Run will not free them
-    out_tensor->set_ref_count(out_tensor->ref_count() + 1);
-  }
+
   for (auto *kernel : run_kernel) {
     MS_ASSERT(nullptr != kernel);
     ret = kernel->PreProcess();
