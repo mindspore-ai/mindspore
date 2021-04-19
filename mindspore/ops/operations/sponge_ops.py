@@ -1376,8 +1376,8 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
     and potential energy for each atom.
 
     The calculation formula of force correction is the same as operator
-    Dihedral14LJForceWithDirectCF(), and the energy correction part is the same
-    as operator Dihedral14LJEnergy() and Dihedral14CFEnergy().
+    :class:`Dihedral14LJForceWithDirectCF`, and the energy correction part is the same
+    as operator :class:`Dihedral14LJEnergy` and :class:`Dihedral14CFEnergy`.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
@@ -1642,7 +1642,7 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
     Add the potential energy caused by Coulumb energy correction for each
     necessary dihedral 1,4 terms to the total potential energy of each atom.
 
-    The calculation formula is the same as operator Dihedral14CFEnergy().
+    The calculation formula is the same as operator :class:`Dihedral14CFEnergy`.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms M.
@@ -2253,7 +2253,7 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
 
-    Agrs:
+    Args:
         atom_numbers(int32): the number of atoms, N.
         cutoff_square(float32): the square value of cutoff.
         pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().

@@ -44,7 +44,7 @@ class Bijector(Cell):
         has to be float type. During initialization, when `dtype` is None, there is no enforcement on the dtype
         of the parameters. All parameters should have the same float type, otherwise a TypeError will be raised.
         Specifically, the parameter type will follow the dtype of the input value, i.e. parameters of the bijector
-        will be casted into the same type as input value when `dtype`is None.
+        will be casted into the same type as input value when `dtype` is None.
         When `dtype` is specified, it is forcing the parameters and input value to be the same dtype as `dtype`.
         When the type of parameters or the type of the input value is not the same as `dtype`, a TypeError will be
         raised. Only subtype of mindspore.float_type can be used to specify bijector's `dtype`.

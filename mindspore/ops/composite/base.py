@@ -111,6 +111,7 @@ class GradOperation(GradOperation_):
     Given an input function `net = Net()` that takes `x` and `y` as inputs, and has a parameter `z`,
     see `Net` in Examples.
 
+
     To generate a gradient function that returns gradients with respect to the first input
     (see `GradNetWrtX` in Examples).
 
@@ -121,6 +122,7 @@ class GradOperation(GradOperation_):
 
     3. Call the gradient function with input function's inputs to get the gradients with respect to the first input:
        `grad_op(net)(x, y)`.
+
 
     To generate a gradient function that returns gradients with respect to all inputs (see `GradNetWrtXY` in Examples).
 
@@ -163,6 +165,7 @@ class GradOperation(GradOperation_):
 
     4. Call the gradient function with input function's inputs
        to get the gradients with respect to all inputs and given parameters: `gradient_function(x, y)`.
+
 
     We can configure the sensitivity(gradient with respect to output) by setting `sens_param` as True and
     passing an extra sensitivity input to the gradient function, the sensitivity input should has the

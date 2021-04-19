@@ -137,6 +137,7 @@ class Compose:
     def reduce(operations):
         """
         Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations
+
         Args:
             operations (list): list of tensor operations
 

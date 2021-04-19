@@ -52,7 +52,7 @@ class SGD(Optimizer):
     .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
 
-    To be noticed, for the first step, v_{t+1} = gradient
+    To be noticed, for the first step, :math:`v_{t+1} = gradient`
 
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
 

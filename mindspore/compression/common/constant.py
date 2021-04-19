@@ -24,7 +24,7 @@ __all__ = ["QuantDtype"]
 @enum.unique
 class QuantDtype(enum.Enum):
     """
-    An enum for quant datatype, contains `INT2`~`INT8`, `UINT2`~`UINT8`.
+    An enum for quant datatype, contains `INT2` ~ `INT8`, `UINT2` ~ `UINT8`.
     """
     INT2 = "INT2"
     INT3 = "INT3"
