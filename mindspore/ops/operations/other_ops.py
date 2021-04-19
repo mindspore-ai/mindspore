@@ -363,7 +363,7 @@ class IOU(PrimitiveWithInfer):
         KeyError: When `mode` is not 'iou' or 'iof'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> iou = ops.IOU()
