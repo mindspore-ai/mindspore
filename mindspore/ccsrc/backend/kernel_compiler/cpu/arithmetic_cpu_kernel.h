@@ -163,6 +163,12 @@ MS_REG_CPU_KERNEL(
   Mul, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
   Equal, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
