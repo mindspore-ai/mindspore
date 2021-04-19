@@ -46,8 +46,8 @@ class Adagrad(Optimizer):
 
     .. math::
         \begin{array}{ll} \\
-            h_{t} = h_{t-1} + g\\
-            w_{t} = w_{t-1} - lr*\frac{1}{\sqrt{h_{t}}}*g
+            h_{t+1} = h_{t} + g\\
+            w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
         \end{array}
 
     :math:`h` represents the cumulative sum of gradient squared, :math:`g` represents `gradients`.

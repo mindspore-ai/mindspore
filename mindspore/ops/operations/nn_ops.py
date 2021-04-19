@@ -2738,14 +2738,14 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            s_{t} = \rho s_{t-1} + (1 - \rho)(\nabla Q_{i}(w))^2 \\
-            m_{t} = \beta m_{t-1} + \frac{\eta} {\sqrt{s_{t} + \epsilon}} \nabla Q_{i}(w) \\
-            w = w - m_{t}
+            s_{t+1} = \rho s_{t} + (1 - \rho)(\nabla Q_{i}(w))^2 \\
+            m_{t+1} = \beta m_{t} + \frac{\eta} {\sqrt{s_{t+1} + \epsilon}} \nabla Q_{i}(w) \\
+            w = w - m_{t+1}
         \end{array}
 
     where :math:`w` represents `var`, which will be updated.
-    :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
-    :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
+    :math:`s_{t+1}` represents `mean_square`, :math:`s_{t}` is the last momentent of :math:`s_{t+1}`,
+    :math:`m_{t+1}` represents `moment`, :math:`m_{t}` is the last momentent of :math:`m_{t+1}`.
     :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
     :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
@@ -2834,16 +2834,16 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            g_{t} = \rho g_{t-1} + (1 - \rho)\nabla Q_{i}(w) \\
-            s_{t} = \rho s_{t-1} + (1 - \rho)(\nabla Q_{i}(w))^2 \\
-            m_{t} = \beta m_{t-1} + \frac{\eta} {\sqrt{s_{t} - g_{t}^2 + \epsilon}} \nabla Q_{i}(w) \\
-            w = w - m_{t}
+            g_{t+1} = \rho g_{t} + (1 - \rho)\nabla Q_{i}(w) \\
+            s_{t+1} = \rho s_{t} + (1 - \rho)(\nabla Q_{i}(w))^2 \\
+            m_{t+1} = \beta m_{t} + \frac{\eta} {\sqrt{s_{t+1} - g_{t+1}^2 + \epsilon}} \nabla Q_{i}(w) \\
+            w = w - m_{t+1}
         \end{array}
 
     where :math:`w` represents `var`, which will be updated.
-    :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
-    :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
-    :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
+    :math:`g_{t+1}` represents `mean_gradient`, :math:`g_{t}` is the last momentent of :math:`g_{t+1}`.
+    :math:`s_{t+1}` represents `mean_square`, :math:`s_{t}` is the last momentent of :math:`s_{t+1}`,
+    :math:`m_{t+1}` represents `moment`, :math:`m_{t}` is the last momentent of :math:`m_{t+1}`.
     :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
     :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
@@ -5001,16 +5001,16 @@ class ApplyAdaMax(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            m_{t} = \beta_1 * m_{t-1} + (1 - \beta_1) * g \\
-            v_{t} = \max(\beta_2 * v_{t-1}, \left| g \right|) \\
-            var = var - \frac{l}{1 - \beta_1^t} * \frac{m_{t}}{v_{t} + \epsilon}
+            m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
+            v_{t+1} = \max(\beta_2 * v_{t}, \left| g \right|) \\
+            var = var - \frac{l}{1 - \beta_1^{t+1} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
         \end{array}
 
-    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
-    is the last momentent of :math:`m_{t}`, :math:`v` represents the 2nd moment vector, :math:`v_{t-1}`
-    is the last momentent of :math:`v_{t}`, :math:`l` represents scaling factor `lr`,
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
+    is the last momentent of :math:`m_{t+1}`, :math:`v` represents the 2nd moment vector, :math:`v_{t}`
+    is the last momentent of :math:`v_{t+1}`, :math:`l` represents scaling factor `lr`,
     :math:`g` represents `grad`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`beta_1^t` represents `beta1_power`, :math:`var` represents the variable to be updated,
+    :math:`beta_1^{t+1}` represents `beta1_power`, :math:`var` represents the variable to be updated,
     :math:`\epsilon` represents `epsilon`.
 
     Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
@@ -5914,13 +5914,13 @@ class ApplyAddSign(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            m_{t} = \beta * m_{t-1} + (1 - \beta) * g \\
+            m_{t+1} = \beta * m_{t} + (1 - \beta) * g \\
             \text{update} = (\alpha + \text{sign_decay} * sign(g) * sign(m)) * g \\
-            var = var - lr_{t} * \text{update}
+            var = var - lr_{t+1} * \text{update}
         \end{array}
 
-    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
-    is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
+    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -6039,13 +6039,13 @@ class ApplyPowerSign(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            m_{t} = \beta * m_{t-1} + (1 - \beta) * g \\
+            m_{t+1} = \beta * m_{t} + (1 - \beta) * g \\
             \text{update} = \exp(\text{logbase} * \text{sign_decay} * sign(g) * sign(m)) * g \\
-            var = var - lr_{t} * \text{update}
+            var = var - lr_{t+1} * \text{update}
         \end{array}
 
-    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t-1}`
-    is the last momentent of :math:`m_{t}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
+    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
 
     All of inputs comply with the implicit type conversion rules to make the data types consistent.
     If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
@@ -7130,12 +7130,12 @@ class DynamicRNN(PrimitiveWithInfer):
 
     .. math::
         \begin{array}{ll} \\
-            i_t = \sigma(W_{ix} x_t + b_{ix} + W_{ih} h_{(t-1)} + b_{ih}) \\
-            f_t = \sigma(W_{fx} x_t + b_{fx} + W_{fh} h_{(t-1)} + b_{fh}) \\
-            \tilde{c}_t = \tanh(W_{cx} x_t + b_{cx} + W_{ch} h_{(t-1)} + b_{ch}) \\
-            o_t = \sigma(W_{ox} x_t + b_{ox} + W_{oh} h_{(t-1)} + b_{oh}) \\
-            c_t = f_t * c_{(t-1)} + i_t * \tilde{c}_t \\
-            h_t = o_t * \tanh(c_t) \\
+            i_{t+1} = \sigma(W_{ix} x_{t+1} + b_{ix} + W_{ih} h_{(t)} + b_{ih}) \\
+            f_{t+1} = \sigma(W_{fx} x_{t+1} + b_{fx} + W_{fh} h_{(t)} + b_{fh}) \\
+            \tilde{c}_{t+1} = \tanh(W_{cx} x_{t+1} + b_{cx} + W_{ch} h_{(t)} + b_{ch}) \\
+            o_{t+1} = \sigma(W_{ox} x_{t+1} + b_{ox} + W_{oh} h_{(t)} + b_{oh}) \\
+            c_{t+1} = f_{t+1} * c_{(t)} + i_t * \tilde{c}_{t+1} \\
+            h_{t+1} = o_{t+1} * \tanh(c_{t+1}) \\
         \end{array}
 
     Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
@@ -7285,16 +7285,16 @@ class DynamicGRUV2(PrimitiveWithInfer):
     .. math::
 
         \begin{array}{ll}
-            r_t = \sigma(W_{ir} x_t + b_{ir} + W_{hr} h_{(t-1)} + b_{hr}) \\
-            z_t = \sigma(W_{iz} x_t + b_{iz} + W_{hz} h_{(t-1)} + b_{hz}) \\
-            n_t = \tanh(W_{in} x_t + b_{in} + r_t * (W_{hn} h_{(t-1)}+ b_{hn})) \\
-            h_t = (1 - z_t) * n_t + z_t * h_{(t-1)}
+            r_{t+1} = \sigma(W_{ir} x_{t+1} + b_{ir} + W_{hr} h_{(t)} + b_{hr}) \\
+            z_{t+1} = \sigma(W_{iz} x_{t+1} + b_{iz} + W_{hz} h_{(t)} + b_{hz}) \\
+            n_{t+1} = \tanh(W_{in} x_{t+1} + b_{in} + r_{t+1} * (W_{hn} h_{(t)}+ b_{hn})) \\
+            h_{t+1} = (1 - z_{t+1}) * n_{t+1} + z_{t+1} * h_{(t)}
         \end{array}
 
-    where :math:`h_t` is the hidden state at time `t`, :math:`x_t` is the input
-    at time `t`, :math:`h_{(t-1)}` is the hidden state of the layer
-    at time `t-1` or the initial hidden state at time `0`, and :math:`r_t`,
-    :math:`z_t`, :math:`n_t` are the reset, update, and new gates, respectively.
+    where :math:`h_{t+1}` is the hidden state at time `t+1`, :math:`x_{t+1}` is the input
+    at time `t+1`, :math:`h_{t}` is the hidden state of the layer
+    at time `t` or the initial hidden state at time `0`, and :math:`r_{t+1}`,
+    :math:`z_{t+1}`, :math:`n_{t+1}` are the reset, update, and new gates, respectively.
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
     Args:

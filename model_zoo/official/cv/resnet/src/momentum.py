@@ -37,17 +37,17 @@ class Momentum(Optimizer):
     Refer to the paper on the importance of initialization and momentum in deep learning for more details.
 
     .. math::
-            v_{t} = v_{t-1} \ast u + gradients
+            v_{t+1} = v_{t} \ast u + gradients
 
     If use_nesterov is True:
 
     .. math::
-            p_{t} =  p_{t-1} - (grad \ast lr + v_{t} \ast u \ast lr)
+            p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
 
     If use_nesterov is False:
 
     .. math::
-            p_{t} = p_{t-1} - lr \ast v_{t}
+            p_{t+1} = p_{t} - lr \ast v_{t+1}
 
     Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
 
