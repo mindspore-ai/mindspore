@@ -69,9 +69,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
         )
-if(DEFINED ARCHS)
-    list(APPEND LITE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ios_reg_ops.cc)
-endif()
 
 if(SUPPORT_GPU STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
