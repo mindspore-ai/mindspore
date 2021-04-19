@@ -29,6 +29,7 @@ using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::ActivationType_SOFTPLUS;
 using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::PrimitiveType_Activation;
 
@@ -38,7 +39,8 @@ int ActivationCPUKernel::Init() {
       type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
       type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
       type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HSIGMOID &&
-      type_ != schema::ActivationType_HARD_TANH && type_ != schema::ActivationType_GELU) {
+      type_ != schema::ActivationType_HARD_TANH && type_ != schema::ActivationType_GELU &&
+      type_ != schema::ActivationType_SOFTPLUS) {
     MS_LOG(ERROR) << "Activation fp32 not support type: " << type_;
     return RET_ERROR;
   }
@@ -80,6 +82,8 @@ int ActivationCPUKernel::DoActivation(int task_id) {
     ret = HardTanh(input_addr + stride * task_id, count, output_addr + stride * task_id, min_val_, max_val_);
   } else if (type_ == schema::ActivationType_GELU) {
     ret = Gelu(input_addr + stride * task_id, count, output_addr + stride * task_id, true);
+  } else if (type_ == schema::ActivationType_SOFTPLUS) {
+    ret = Softplus(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;

@@ -209,6 +209,7 @@ union PrimitiveType {
     LogSoftmax,
     Call,
     Custom,
+    CumSum,
 }
 
 table Abs {
@@ -440,6 +441,11 @@ table ConstantOfShape {
 table Crop {
     axis: long;
     offsets: [long];
+}
+
+table CumSum {
+    exclusive: bool = false;
+    reverse: bool = false;
 }
 
 table CustomExtractFeatures {
