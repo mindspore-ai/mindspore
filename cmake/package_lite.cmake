@@ -204,7 +204,7 @@ elseif(PLATFORM_ARM32)
 elseif(WIN32)
     get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
     file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll
-            ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_seh-1.dll)
+            ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_*-1.dll)
     if(ENABLE_CONVERTER)
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
