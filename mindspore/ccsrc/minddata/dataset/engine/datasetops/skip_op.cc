@@ -43,13 +43,12 @@ Status SkipOp::Builder::SanityCheck() const {
 // The builder "build" method creates the final object.
 Status SkipOp::Builder::Build(std::shared_ptr<SkipOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<SkipOp>(build_max_skips_, builder_op_connector_size_);
+  *ptr = std::make_shared<SkipOp>(build_max_skips_);
   return Status::OK();
 }
 
 // Constructor of the SkipOp.
-SkipOp::SkipOp(int32_t count, int32_t op_connector_size)
-    : PipelineOp(op_connector_size), max_skips_(count), skip_count_(0) {}
+SkipOp::SkipOp(int32_t count) : PipelineOp(0), max_skips_(count), skip_count_(0) {}
 
 // Destructor
 SkipOp::~SkipOp() {}
@@ -69,33 +68,47 @@ void SkipOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-// main entry point for skip
-Status SkipOp::operator()() {
-  TaskManager::FindMe()->Post();
-  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
+Status SkipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
-  TensorRow new_row;
-  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-  while (!new_row.eof()) {
-    // Reset count
-    skip_count_ = 0;
-    while (!new_row.eoe()) {
-      // Drop first count rows
-      if (skip_count_ < max_skips_) {
-        skip_count_++;
-      } else {
-        RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
-      }
-      RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+Status SkipOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  bool eoe_received = false;
+  while (skip_count_ < max_skips_) {
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+    if (row->eoe()) {
+      eoe_received = true;
+      break;
     }
-    // we got eoe, now try again until we got eof
-    MS_LOG(DEBUG) << "Skip operator EOE Received.";
-    RETURN_IF_NOT_OK(out_connector_->SendEOE());
-    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+    skip_count_++;
   }
-  MS_LOG(DEBUG) << "Skip operator EOF Received.";
-  RETURN_IF_NOT_OK(out_connector_->SendEOF());
+  if (!eoe_received) {
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+  }
+  if (row->eoe()) {
+    UpdateRepeatAndEpochCounter();
+    skip_count_ = 0;
+  }
   return Status::OK();
+}
+
+int32_t SkipOp::num_consumers() const {
+  if (parent_.empty()) {
+    MS_LOG(DEBUG) << "Return operator, no parent node, assuming it's the root and returning 1.";
+    return 1;
+  } else if (parent_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to the first parent is null. Returning 0.";
+    return 0;
+  } else {
+    return parent_[0]->num_consumers();
+  }
+}
+
+int32_t SkipOp::num_producers() const {
+  if (child_.empty() || child_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to child node is null. Returning 0.";
+    return 0;
+  } else {
+    return child_[0]->num_producers();
+  }
 }
 
 }  // namespace dataset

@@ -45,106 +45,40 @@ Status ZipOp::Builder::Build(std::shared_ptr<ZipOp> *ptr) {
 }
 
 // Construct ZipOp here, local variables initialized in operator due to tree construction restrictions
-ZipOp::ZipOp(int32_t op_connector_size)
-    : PipelineOp(op_connector_size), children_num_(0), draining_(false), eof_(false) {}
+ZipOp::ZipOp(int32_t op_connector_size) : PipelineOp(0) {}
 
 // destructor
 ZipOp::~ZipOp() {}
 
-// Entry point for Zip, called by launch()
-Status ZipOp::operator()() {
-  // The children_num_ parameter needs to be put here
-  children_num_ = child_.size();
-  // Synchronize with TaskManager once the thread is created.
-  TaskManager::FindMe()->Post();
-
-  // initialize the iterators
-  for (int32_t i = 0; i < children_num_; ++i) {
-    // magic number 0 since Zip is not a parallel Op
-    child_iterators_.push_back(std::make_unique<ChildIterator>(this, 0, i));
-  }
-
-  // Loop until eof is true
-  while (!eof_) {
-    // 1 Prepare new epoch
-    RETURN_IF_NOT_OK(prepare());
-    // 2 fetch first row
-    TensorRow row;
-    RETURN_IF_NOT_OK(getNextTensorRow(&row));
-
-    // If an eof got picked up, then we're done
-    if (eof_) {
-      break;
-    }
-    while (!draining_) {
-      // 3 send new row to the out connector
-      MS_LOG(DEBUG) << "Zip operator finished one row, pushing, cols " << row.size() << ", map "
-                    << column_name_id_map_.size() << ".";
-      RETURN_IF_NOT_OK(out_connector_->Add(std::move(row)));
-      // 4 fetch one more row
-      RETURN_IF_NOT_OK(getNextTensorRow(&row));
-    }
-    // 5 handle drain state.
-    if (draining_) {
-      MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
-      RETURN_IF_NOT_OK(drainPipeline());
-      // Now that we have drained child inputs, send the eoe up.
-      RETURN_IF_NOT_OK(out_connector_->SendEOE());
-    }
-  }
-
-  // 6 handle eof
-  MS_LOG(DEBUG) << "Zip operator got EOF, propagating.";
-  RETURN_IF_NOT_OK(out_connector_->SendEOF());
-  return Status::OK();
-}
-
-// Handles preprocessing of the main loop, used when starting new epoch
-Status ZipOp::prepare() {
-  MS_LOG(DEBUG) << "Zip operator prepares for new epoch.";
-  draining_ = false;
-  return Status::OK();
-}
-
 // fetches next zipped (merged) row
-Status ZipOp::getNextTensorRow(TensorRow *const new_zip_row) {
+Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child, int32_t worker_id,
+                               bool retry_if_eoe) {
+  *new_zip_row = {};
   // iterate over all iterators and generate a row
-  for (int32_t i = 0; i < children_num_; ++i) {
-    TensorRow new_row = {};
-    RETURN_IF_NOT_OK((child_iterators_[i])->FetchNextTensorRow(&new_row));
-    // add each new row to iterator, check if row is empty, if row from iterator is empty return empty row
-    if (new_row.empty()) {
-      // If we did not get a row from any of the children, then it's the end of an epoch and we can move
-      // to drain state.
-      MS_LOG(DEBUG) << "Zip operator child iterator produced empty row.";
-      draining_ = true;
-      new_zip_row->clear();
-      // If we picked up an eof here, then we are completely done.
-      if ((child_iterators_[i])->eof_handled()) {
-        MS_LOG(DEBUG) << "Zip operator iterator got EOF.";
-        eof_ = true;
-      }
+  for (int32_t i = 0; i < child_.size(); ++i) {
+    TensorRow new_row;
+    RETURN_IF_NOT_OK(child_[i]->GetNextRow(&new_row, worker_id, retry_if_eoe));
+    if (new_row.eoe() || new_row.eof()) {
+      *new_zip_row = new_row;
+      *skip_child = i;
       return Status::OK();
     } else {
       MS_LOG(DEBUG) << "Zip operator got row from child " << i << ". Num cols: " << new_row.size() << ".";
-      // if row isn't empty then we can append the fetched row with new_zip_row
       new_zip_row->insert(new_zip_row->end(), new_row.begin(), new_row.end());
     }
   }
-  MS_LOG(DEBUG) << "Zip operator builds a zipped row. Number of columns in row: " << new_zip_row->size() << ".";
   return Status::OK();
 }
 
 // drain end of epoch messages from iterator for this epoch
-Status ZipOp::drainPipeline() {
-  // we don't need to drain if we reached eof
-  if (eof_) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "ZipOp draining should not be done if already at eof!");
-  }
-  for (int32_t con = 0; con < children_num_; ++con) {
+Status ZipOp::drainPipeline(int32_t skip_child, int32_t worker_id, bool retry_if_eoe) {
+  for (int32_t con = 0; con < child_.size(); ++con) {
+    if (con == skip_child) continue;
     MS_LOG(DEBUG) << "Zip operator draining child at " << con << ".";
-    RETURN_IF_NOT_OK(child_iterators_[con]->Drain());
+    TensorRow row;
+    while (!row.eoe()) {
+      RETURN_IF_NOT_OK(child_[con]->GetNextRow(&row, worker_id, retry_if_eoe));
+    }
   }
   // at this point all connectors don't contain end of epoch messages. next iteration should be clean
   return Status::OK();
@@ -161,9 +95,9 @@ void ZipOp::Print(std::ostream &out,      // In: The output stream to print to
   } else {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
-    // Then show any custom derived-internal stuff
-    out << "\nDatasets: " << children_num_ << "\n\n";
   }
+  // Then show any custom derived-internal stuff
+  out << "\nDatasets: " << child_.size() << "\n\n";
 }
 
 // overwrite function and handle eof
@@ -201,6 +135,40 @@ Status ZipOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
+}
+
+Status ZipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
+
+Status ZipOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  int32_t skip_child = -1;
+  RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child, worker_id, retry_if_eoe));
+  if (row->eoe()) {
+    UpdateRepeatAndEpochCounter();
+    MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
+    RETURN_IF_NOT_OK(drainPipeline(skip_child, worker_id, retry_if_eoe));
+  }
+  return Status::OK();
+}
+
+int32_t ZipOp::num_consumers() const {
+  if (parent_.empty()) {
+    MS_LOG(DEBUG) << "Return operator, no parent node, assuming it's the root and returning 1.";
+    return 1;
+  } else if (parent_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to the first parent is null. Returning 0.";
+    return 0;
+  } else {
+    return parent_[0]->num_consumers();
+  }
+}
+
+int32_t ZipOp::num_producers() const {
+  if (child_.empty() || child_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to child node is null. Returning 0.";
+    return 0;
+  } else {
+    return child_[0]->num_producers();
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore

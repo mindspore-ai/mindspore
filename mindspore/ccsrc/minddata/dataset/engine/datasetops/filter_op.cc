@@ -56,21 +56,52 @@ Status FilterOp::Builder::Build(std::shared_ptr<FilterOp> *ptr) {
 
 FilterOp::FilterOp(const std::vector<std::string> &in_col_names, int32_t num_workers, int32_t op_queue_size,
                    std::shared_ptr<TensorOp> predicate_func)
-    : ParallelOp(num_workers, op_queue_size), predicate_func_(std::move(predicate_func)), in_columns_(in_col_names) {}
-
-Status FilterOp::operator()() {
+    : ParallelOp(num_workers, op_queue_size), predicate_func_(std::move(predicate_func)), in_columns_(in_col_names) {
+  worker_queues_.Init(num_workers, op_queue_size);
+}
+Status FilterOp::LaunchThreadsAndInitOp() {
   // The operator class just starts off threads by calling the tree_ function.
   if (tree_ == nullptr) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
   }
   filter_queues_.Init(num_workers_, oc_queue_size_);
   RETURN_IF_NOT_OK(filter_queues_.Register(tree_->AllTasks()));
-  Status rc =
-    tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1), Name(), id());
+  RETURN_IF_NOT_OK(worker_queues_.Register(tree_->AllTasks()));
+
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1), Name(), id()));
+  RETURN_IF_NOT_OK(
+    tree_->AllTasks()->CreateAsyncTask("FilterCollector", std::bind(&FilterOp::Collector, this), nullptr, id()));
+
+  return Status::OK();
+}
+
+Status FilterOp::operator()() {
   // Synchronize with TaskManager.
+  Status rc = LaunchThreadsAndInitOp();
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(rc);
-  RETURN_IF_NOT_OK(Collector());
+
+  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+  int64_t cnt = 0;
+  while (child_iterator_->eof_handled() == false) {
+    while (new_row.empty() == false) {
+      RETURN_IF_NOT_OK(worker_queues_[cnt % num_workers_]->EmplaceBack(new_row));
+      cnt++;
+      RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+    }
+
+    RETURN_IF_NOT_OK(worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::move(TensorRow(TensorRow::kFlagEOE))));
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+  }
+  RETURN_IF_NOT_OK(worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::move(TensorRow(TensorRow::kFlagEOF))));
+  // EOF received, send quit signal to all workers
+  for (int32_t ind = 0; ind < num_workers_; ind++) {
+    RETURN_IF_NOT_OK(worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::move(TensorRow(TensorRow::kFlagQuit))));
+  }
+
   return Status::OK();
 }
 
@@ -110,36 +141,30 @@ void FilterOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status FilterOp::WorkerEntry(int32_t worker_id) {
-  std::unique_ptr<ChildIterator> child_iterator = std::make_unique<ChildIterator>(this, worker_id, 0);
-
-  // Handshake with TaskManager that thread creation is successful.
   TaskManager::FindMe()->Post();
-  bool worker_stop = false;
-  while (worker_stop == false) {
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(worker_queues_[worker_id]->PopFront(&new_row));
+
+  while (!new_row.quit()) {
     // Getting a TensorRow to work on.
-    TensorRow in_row;
-    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&in_row));
+    if (new_row.eoe()) {
+      RETURN_IF_NOT_OK(filter_queues_[worker_id]->EmplaceBack(std::make_pair(new_row, filterCtrl::kFilterEoe)));
+    } else if (new_row.eof()) {
+      RETURN_IF_NOT_OK(filter_queues_[worker_id]->EmplaceBack(std::make_pair(new_row, filterCtrl::kFilterEof)));
+    } else {
+      RETURN_IF_NOT_OK(ValidateInColumns(in_columns_));
 
-    if (in_row.eoe()) {
-      RETURN_IF_NOT_OK(filter_queues_[worker_id]->EmplaceBack(std::make_pair(in_row, filterCtrl::kFilterEoe)));
-      continue;
-    } else if (in_row.eof()) {
-      RETURN_IF_NOT_OK(filter_queues_[worker_id]->EmplaceBack(std::make_pair(in_row, filterCtrl::kFilterEof)));
-      worker_stop = true;
-      continue;
+      bool result;
+      RETURN_IF_NOT_OK(WorkerCompute(new_row, &result));
+
+      if (result)
+        RETURN_IF_NOT_OK(
+          filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(new_row), filterCtrl::kFilterFull)));
+      else
+        RETURN_IF_NOT_OK(
+          filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(new_row), filterCtrl::kFilterEmpty)));
     }
-
-    RETURN_IF_NOT_OK(ValidateInColumns(in_columns_));
-
-    bool result;
-    RETURN_IF_NOT_OK(WorkerCompute(in_row, &result));
-
-    if (result)
-      RETURN_IF_NOT_OK(
-        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_row), filterCtrl::kFilterFull)));
-    else
-      RETURN_IF_NOT_OK(
-        filter_queues_[worker_id]->EmplaceBack(std::make_pair(std::move(in_row), filterCtrl::kFilterEmpty)));
+    RETURN_IF_NOT_OK(worker_queues_[worker_id]->PopFront(&new_row));
   }
   return Status::OK();
 }
@@ -160,15 +185,16 @@ Status FilterOp::WorkerCompute(const TensorRow &in_row, bool *out_predicate) {
 
 // if the filtered TensorRow is written directly to out_connector_,
 // the thread fetching data will block in a queue.
-// Collector function will reorder the TensorRow in order.
+// Collector thread will reorder the TensorRow in order until EOF is received
 // for example in two work queues:
 // int filter_queues_:
-// queue1:  DB(data1 kFilterEmpty)    DB(eoe)                                  DB(data4)   DB(eof)
-// queue2:  DB(data2)                                DB(data3 kFilterEmpty)  DB(eoe)
+// queue1:  TR(data1 kFilterEmpty)    TR(eoe)                                  TR(data4)   TR(eof)
+// queue2:  TR(data2)                                TR(data3 kFilterEmpty)  TR(eoe)
 // after reorder in out_connector_:
-// queue1:  DB(data2)    DB(data4)        DB(eof)
-// queue2:  DB(eoe)        DB(eoe)
+// queue1:  TR(data2)    TR(data4)        TR(eof)
+// queue2:  TR(eoe)        TR(eoe)
 Status FilterOp::Collector() {
+  TaskManager::FindMe()->Post();
   bool collector_stop = false;
   uint64_t task_id_cnt = 0;
   uint64_t out_id_cnt = 0;
@@ -216,6 +242,7 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 
   return Status(StatusCode::kSuccess, "FilterOp predicate func call succeed");
 }
+int32_t FilterOp::num_consumers() const { return 1; }
 
 }  // namespace dataset
 }  // namespace mindspore

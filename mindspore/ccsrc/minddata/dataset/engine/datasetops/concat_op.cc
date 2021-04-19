@@ -37,22 +37,26 @@ Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
   if (builder_sampler_ == nullptr) {
     builder_sampler_ = std::make_shared<DistributedSamplerRT>(0, 1, 0, false);
   }
-  *ptr = std::make_shared<ConcatOp>(builder_op_connector_size_, builder_sampler_, children_flag_and_nums_,
-                                    children_start_end_index_);
+  *ptr = std::make_shared<ConcatOp>(builder_sampler_, children_flag_and_nums_, children_start_end_index_);
   return Status::OK();
 }
 
 // Constructor of the ConcatOp.
-ConcatOp::ConcatOp(int32_t op_connector_size, const std::shared_ptr<SamplerRT> &sampler,
+ConcatOp::ConcatOp(const std::shared_ptr<SamplerRT> &sampler,
                    const std::vector<std::pair<int, int>> &children_flag_and_nums,
                    const std::vector<std::pair<int, int>> &children_start_end_index)
-    : PipelineOp(op_connector_size),
-      children_num_(0),
-      sampler_(sampler),
-      children_flag_and_nums_(children_flag_and_nums),
-      children_start_end_index_(children_start_end_index) {}
+    : ConcatOp() {
+  children_flag_and_nums_ = children_flag_and_nums;
+  children_start_end_index_ = children_start_end_index;
+  std::shared_ptr<DistributedSamplerRT> distribute_sampler = std::dynamic_pointer_cast<DistributedSamplerRT>(sampler);
+  if (distribute_sampler != nullptr) {
+    num_shard_ = distribute_sampler->GetDeviceNum();
+    shard_index_ = distribute_sampler->GetDeviceID();
+  }
+}
 
-ConcatOp::ConcatOp(int32_t op_connector_size) : PipelineOp(op_connector_size), children_num_(0) {}
+ConcatOp::ConcatOp()
+    : PipelineOp(0), cur_child_(0), verified_(false), num_shard_(1), shard_index_(0), sample_number_(0) {}
 
 // A function that prints info about the Operator
 void ConcatOp::Print(std::ostream &out, bool show_all) const {
@@ -65,98 +69,16 @@ void ConcatOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     PipelineOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nDatasets: " << children_num_ << "\n\n";
+    out << "\nDatasets: " << child_.size() << "\n\n";
   }
 }
 
 // This definition is added to pass the cyclomatic complexity rule of <= 20 units
 // The NOLINT directive is to disable cpplint check.
 // Clang format and cpplint give conflicting recommendations on this line below.
-#define f(fv, sv, shard_index)                                                                     \
-  (((fv) == -1 && (sv) == -1) || ((fv) < (sv) && (shard_index) >= (fv) && (shard_index) < (sv)) || \
-   ((fv) > (sv) && ((shard_index) >= (fv) || (shard_index) < (sv))))  // NOLINT
-
-// Main entry point for Concat
-Status ConcatOp::operator()() {
-  TaskManager::FindMe()->Post();
-  children_num_ = static_cast<int32_t>(child_.size());
-  for (int32_t i = 0; i < children_num_; i++) {
-    children_iterators_.push_back(std::make_unique<ChildIterator>(this, 0, i));
-  }
-  TensorRow new_row;
-  int eof_count = 0;
-  int sample_number = 0;
-  bool is_not_mappable = true;
-  bool is_not_mappable_or_second_ne_zero = true;
-  int num_shard = 1;
-  int shard_index = 0;
-  std::shared_ptr<DistributedSamplerRT> distribute_sampler = std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_);
-  if (distribute_sampler != nullptr) {
-    num_shard = distribute_sampler->GetDeviceNum();
-    shard_index = distribute_sampler->GetDeviceID();
-  }
-
-  while (eof_count == 0) {
-    for (int i = 0; i < children_num_; i++) {
-      // 1. Read the first row
-      RETURN_IF_NOT_OK(children_iterators_[i]->FetchNextTensorRow(&new_row));
-      if (new_row.eof()) {
-        eof_count++;
-        continue;
-      }
-      // 2. Do verification as for column name, column data type and rank of column data
-      if (!new_row.eoe()) {
-        RETURN_IF_NOT_OK(Verify(i, new_row));
-      }
-      // 3. Put the data into output_connector
-      if (!children_flag_and_nums_.empty()) {
-        is_not_mappable = children_flag_and_nums_[i].first;
-        is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[i].second);
-      }
-      while (!new_row.eoe() && !new_row.eof()) {
-        // if dataset is not mappable or generator dataset which source is yield, cannot get the number of samples in
-        // python layer), we use filtering to get data
-        if (sample_number % num_shard == shard_index && is_not_mappable_or_second_ne_zero) {
-          RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
-        } else if (!is_not_mappable_or_second_ne_zero) {
-          // if dataset is mappable or generator dataset which source is not yield,
-          // get the start and end subscripts of valid values
-          int fv = children_start_end_index_[i].first, sv = children_start_end_index_[i].second;
-
-          // determine whether the data allocated to the current shard id is false data
-          if (f(fv, sv, shard_index)) {
-            RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
-          }
-        }
-
-        // if dataset is not mappable or generator dataset which source is yield, sample_number+=1
-        if (is_not_mappable_or_second_ne_zero) {
-          sample_number++;
-        }
-
-        RETURN_IF_NOT_OK(children_iterators_[i]->FetchNextTensorRow(&new_row));
-      }
-
-      // if dataset is mappable,We don't use filtering to pick data.
-      // so sample_number plus the length of the entire dataset
-      if (!is_not_mappable_or_second_ne_zero) {
-        sample_number += children_flag_and_nums_[i].second;
-      }
-    }
-
-    // 4. Add eoe row after get rows from all child
-    if (eof_count == 0) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOE());
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-  CHECK_FAIL_RETURN_UNEXPECTED(eof_count == children_num_,
-                               "Something went wrong, eof count does not match the number of children.");
-  // 5. Add eof row in the end manually
-  MS_LOG(DEBUG) << "Add the eof row manually in the end.";
-  RETURN_IF_NOT_OK(out_connector_->SendEOF());
-  return Status::OK();
-}
+#define f(fv, sv, shard_index)                                                     \
+  ((fv == -1 && sv == -1) || (fv < sv && shard_index >= fv && shard_index < sv) || \
+   (fv > sv && (shard_index >= fv || shard_index < sv)))  // NOLINT
 
 Status ConcatOp::Verify(int32_t id, const TensorRow &new_row) {
   if (id == 0) {
@@ -174,6 +96,7 @@ Status ConcatOp::Verify(int32_t id, const TensorRow &new_row) {
       }
     }
   }
+  verified_ = true;
   return Status::OK();
 }
 
@@ -211,6 +134,101 @@ Status ConcatOp::GetNumClasses(int64_t *num_classes) {
   *num_classes = max_num_classes;
   return Status::OK();
 }
+Status ConcatOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
+bool ConcatOp::IgnoreSample() {
+  bool is_not_mappable_or_second_ne_zero = true;
+
+  if (!children_flag_and_nums_.empty()) {
+    bool is_not_mappable = children_flag_and_nums_[cur_child_].first;
+    is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[cur_child_].second);
+  }
+  bool ret = true;
+  if (sample_number_ % num_shard_ == shard_index_ && is_not_mappable_or_second_ne_zero) {
+    ret = false;
+  } else if (!is_not_mappable_or_second_ne_zero) {
+    // if dataset is mappable or generator dataset which source is not yield,
+    // get the start and end subscripts of valid values
+    int fv = children_start_end_index_[cur_child_].first, sv = children_start_end_index_[cur_child_].second;
+
+    // determine whether the data allocated to the current shard id is false data
+    if (f(fv, sv, shard_index_)) {
+      ret = false;
+    }
+  }
+
+  if (is_not_mappable_or_second_ne_zero) {
+    sample_number_++;
+  }
+  return ret;
+}
+
+Status ConcatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  bool is_not_mappable_or_second_ne_zero = true;
+
+  if (!children_flag_and_nums_.empty()) {
+    bool is_not_mappable = children_flag_and_nums_[cur_child_].first;
+    is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[cur_child_].second);
+  }
+  RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row, worker_id, retry_if_eoe));
+
+  if (!row->eoe() && !row->eof()) {
+    if (!verified_) RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+
+    if (IgnoreSample()) {
+      RETURN_IF_NOT_OK(GetNextRow(row, worker_id, retry_if_eoe));
+    }
+
+    return Status::OK();
+  }
+  if (row->eoe()) {
+    // if last child, send out eoe and reset epoch
+    if (cur_child_ == child_.size() - 1) {
+      // reset
+      cur_child_ = 0;
+      verified_ = false;
+      UpdateRepeatAndEpochCounter();
+      return Status::OK();
+    }
+    if (!is_not_mappable_or_second_ne_zero) {
+      sample_number_ += children_flag_and_nums_[cur_child_].second;
+    }
+    cur_child_++;
+    verified_ = false;
+    RETURN_IF_NOT_OK(GetNextRow(row, worker_id, retry_if_eoe));
+    return Status::OK();
+  }
+  if (row->eof()) {
+    CHECK_FAIL_RETURN_UNEXPECTED(cur_child_ == 0, "Received an unexpected EOF.");
+    for (int32_t i = cur_child_ + 1; i < child_.size(); i++) {
+      RETURN_IF_NOT_OK(child_[i]->GetNextRow(row, worker_id, retry_if_eoe));
+      CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "Row must be an EOF.");
+    }
+    return Status::OK();
+  }
+
+  return Status::OK();
+}
+
+int32_t ConcatOp::num_consumers() const {
+  if (parent_.empty()) {
+    MS_LOG(DEBUG) << "Return operator, no parent node, assuming it's the root and returning 1.";
+    return 1;
+  } else if (parent_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to the first parent is null. Returning 0.";
+    return 0;
+  } else {
+    return parent_[0]->num_consumers();
+  }
+}
+
+int32_t ConcatOp::num_producers() const {
+  if (child_.empty() || child_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to child node is null. Returning 0.";
+    return 0;
+  } else {
+    return child_[0]->num_producers();
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

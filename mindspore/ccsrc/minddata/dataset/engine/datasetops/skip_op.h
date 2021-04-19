@@ -50,7 +50,7 @@ class SkipOp : public PipelineOp {
   // Constructor of the SkipOp.
   // @note The builder class should be used to call it
   // @param count - The number of skips to do
-  explicit SkipOp(int32_t count, int32_t op_connector_size);
+  explicit SkipOp(int32_t count);
 
   // Destructor
   ~SkipOp();
@@ -69,6 +69,9 @@ class SkipOp : public PipelineOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kSkipOp; }
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  int32_t num_consumers() const override;
+  int32_t num_producers() const override;
 
  private:
   int32_t max_skips_;   // The number of skips that the user requested

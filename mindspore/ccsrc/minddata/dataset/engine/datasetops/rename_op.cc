@@ -43,41 +43,27 @@ Status RenameOp::Builder::SanityCheck() const { return Status::OK(); }
 // build method for RenameOp
 Status RenameOp::Builder::Build(std::shared_ptr<RenameOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<RenameOp>(builder_in_columns_, builder_out_columns_, builder_op_connector_size_);
+  *ptr = std::make_shared<RenameOp>(builder_in_columns_, builder_out_columns_);
   return Status::OK();
 }
 
 //  constructor
-RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-                   int32_t op_connector_size)
-    : PipelineOp(op_connector_size), in_columns_(in_col_names), out_columns_(out_col_names) {}
+RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names)
+    : PipelineOp(0), in_columns_(in_col_names), out_columns_(out_col_names) {}
 
 // destructor
 RenameOp::~RenameOp() {}
 
-// main entry point for rename
-Status RenameOp::operator()() {
-  TaskManager::FindMe()->Post();
-  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
-
-  TensorRow new_row;
-  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-
-  while (!new_row.eof()) {
-    while (!new_row.eoe()) {
-      MS_LOG(DEBUG) << "Rename operator pushing next row.";
-      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
-      RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    }
-    RETURN_IF_NOT_OK(out_connector_->SendEOE());
-    MS_LOG(DEBUG) << "Rename operator EOE Received.";
-    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    MS_LOG(DEBUG) << "Rename operator fetching row after EOE.";
+// Gets a row from the child operator and projects the row.
+Status RenameOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+  if (row->eoe()) {
+    UpdateRepeatAndEpochCounter();
   }
-  RETURN_IF_NOT_OK(out_connector_->SendEOF());
-  MS_LOG(DEBUG) << "Rename operator EOF Received.";
   return Status::OK();
 }
+
+Status RenameOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. RenameOp is an inlined operator."); }
 
 // Rename core functionality to compute the new column name id map.
 // We need to overwrite the super class ComputeColMap here because we're making a modification of the
@@ -151,15 +137,25 @@ void RenameOp::Print(std::ostream &out,      // In: The output stream to print t
   }
 }
 
-Status RenameOp::EofReceived(int32_t) {
-  MS_LOG(DEBUG) << "Rename operator EOF received, do nothing now.";
-  return Status::OK();
+int32_t RenameOp::num_consumers() const {
+  if (parent_.empty()) {
+    MS_LOG(DEBUG) << "Rename operator, no parent node, assuming it's the root and returning 1.";
+    return 1;
+  } else if (parent_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Rename operator, pointer to the first parent is null. Returning 0.";
+    return 0;
+  } else {
+    return parent_[0]->num_consumers();
+  }
 }
 
-Status RenameOp::EoeReceived(int32_t) {
-  state_ = OpState::kDeOpIdle;
-  return Status::OK();
+int32_t RenameOp::num_producers() const {
+  if (child_.empty() || child_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Rename operator, pointer to child node is null. Returning 0.";
+    return 0;
+  } else {
+    return child_[0]->num_producers();
+  }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -123,12 +123,11 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::shared_ptr<ConcatOp> op;
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
-    op = std::make_shared<ConcatOp>(connector_que_size_);
+    op = std::make_shared<ConcatOp>();
   } else {
     std::shared_ptr<SamplerRT> sampler_rt = nullptr;
     RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
-    op =
-      std::make_shared<ConcatOp>(connector_que_size_, sampler_rt, children_flag_and_nums_, children_start_end_index_);
+    op = std::make_shared<ConcatOp>(sampler_rt, children_flag_and_nums_, children_start_end_index_);
   }
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());

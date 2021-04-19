@@ -80,16 +80,10 @@ class RenameOp : public PipelineOp {
   // @param in_col_names names of columns to rename
   // @param out_col_names names of columns after rename
   // @param op_connector_size connector size
-  RenameOp(const std::vector<std::string> &in_col_names,   // In: Col names to consume
-           const std::vector<std::string> &out_col_names,  // In: Col names to produce
-           int32_t op_connector_size);
+  RenameOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names);
 
   // Destructor
   ~RenameOp();
-
-  Status EofReceived(int32_t) override;
-
-  Status EoeReceived(int32_t) override;
 
   // Print function for Rename
   // @param out output stream to print to
@@ -111,6 +105,13 @@ class RenameOp : public PipelineOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kRenameOp; }
+
+  // Gets a row from the child node and projects that row. The caller is typically our parent node.
+  // @param row - output pointer to the projected row.
+  // @param worker_id - The worker id
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  int32_t num_consumers() const override;
+  int32_t num_producers() const override;
 
  protected:
   // Rename core functionality

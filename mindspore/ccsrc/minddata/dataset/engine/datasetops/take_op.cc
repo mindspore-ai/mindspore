@@ -43,13 +43,12 @@ Status TakeOp::Builder::SanityCheck() const {
 // The builder "build" method creates the final object.
 Status TakeOp::Builder::Build(std::shared_ptr<TakeOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<TakeOp>(build_max_takes_, builder_op_connector_size_);
+  *ptr = std::make_shared<TakeOp>(build_max_takes_);
   return Status::OK();
 }
 
 // Constructor of the TakeOp.
-TakeOp::TakeOp(int32_t count, int32_t op_connector_size)
-    : PipelineOp(op_connector_size), max_takes_(count), take_count_(0) {}
+TakeOp::TakeOp(int32_t count) : PipelineOp(0), max_takes_(count), take_count_(0) {}
 
 // A print method typically used for debugging
 void TakeOp::Print(std::ostream &out, bool show_all) const {
@@ -66,37 +65,53 @@ void TakeOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-// Main entry point for Take
-Status TakeOp::operator()() {
-  TaskManager::FindMe()->Post();
-  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
+Status TakeOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
-  TensorRow new_row;
-  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-
-  while (!new_row.eof()) {
-    while (!new_row.eoe()) {
-      if (take_count_ < max_takes_) {
-        RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
-        take_count_++;
-        RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-      }
-      if (take_count_ == max_takes_) {
-        RETURN_IF_NOT_OK(child_iterator_->Drain());
-        break;
-      }
+Status TakeOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+  bool eoe_received = false;
+  if (take_count_ < max_takes_) {
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+    if (row->eoe()) {
+      eoe_received = true;
+    } else {
+      take_count_++;
+      return Status::OK();
     }
+  }
+  if (take_count_ == max_takes_) {
+    // drain
+    while (!row->eoe()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+    }
+    eoe_received = true;
+  }
+  if (eoe_received) {
     UpdateRepeatAndEpochCounter();
     take_count_ = 0;
-    RETURN_IF_NOT_OK(out_connector_->SendEOE());
-    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   }
 
-  take_count_ = 0;
-  MS_LOG(DEBUG) << "Meet the end and push-back eof row.";
-  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 
+int32_t TakeOp::num_consumers() const {
+  if (parent_.empty()) {
+    MS_LOG(DEBUG) << "Return operator, no parent node, assuming it's the root and returning 1.";
+    return 1;
+  } else if (parent_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to the first parent is null. Returning 0.";
+    return 0;
+  } else {
+    return parent_[0]->num_consumers();
+  }
+}
+
+int32_t TakeOp::num_producers() const {
+  if (child_.empty() || child_[0] == nullptr) {
+    MS_LOG(DEBUG) << "Return operator, pointer to child node is null. Returning 0.";
+    return 0;
+  } else {
+    return child_[0]->num_producers();
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

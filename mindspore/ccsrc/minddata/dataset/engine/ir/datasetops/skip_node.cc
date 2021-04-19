@@ -39,7 +39,7 @@ void SkipNode::Print(std::ostream &out) const { out << Name() + "(skip_count:" +
 
 // Function to build the SkipOp
 Status SkipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  auto op = std::make_shared<SkipOp>(skip_count_, connector_que_size_);
+  auto op = std::make_shared<SkipOp>(skip_count_);
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);

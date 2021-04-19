@@ -126,6 +126,8 @@ class FilterOp : public ParallelOp {
   // @return Name of the current Op
   std::string Name() const override { return kFilterOp; }
 
+  int32_t num_consumers() const override;
+
  private:
   // predicate_func python callable which returns a boolean value.
   std::shared_ptr<TensorOp> predicate_func_;
@@ -135,6 +137,10 @@ class FilterOp : public ParallelOp {
 
   // Internal queue for filter.
   QueueList<std::pair<TensorRow, filterCtrl>> filter_queues_;
+
+  QueueList<TensorRow> worker_queues_;  // internal queue for syncing worker
+
+  std::unique_ptr<ChildIterator> child_iterator_;
 
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of FilterOp, getting the data from previous Op, validating user specified column names,
@@ -168,6 +174,10 @@ class FilterOp : public ParallelOp {
   // @param input_columns The vector of input column names used in the current thread.
   // @return Status The status code returned
   Status ValidateInColumns(const std::vector<std::string> &input_columns);
+
+  // Do the initialization of all queues then start all worker threads
+  // @return Status The status code returned
+  Status LaunchThreadsAndInitOp();
 };
 
 }  // namespace dataset
