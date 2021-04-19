@@ -26,11 +26,13 @@ bool UniqueWithPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
     UniqueCPUKernel::LaunchKernel<int, int>(inputs, workspace, outputs);
     PadOutput<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
-    UniqueCPUKernel::LaunchKernel<int64_t, int>(inputs, workspace, outputs);
+    UniqueCPUKernel::LaunchKernel<int64_t, int64_t>(inputs, workspace, outputs);
     PadOutput<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
+  } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
     UniqueCPUKernel::LaunchKernel<float, int>(inputs, workspace, outputs);
     PadOutput<float>(inputs, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support data type: " << dtype_;
   }
   return true;
 }

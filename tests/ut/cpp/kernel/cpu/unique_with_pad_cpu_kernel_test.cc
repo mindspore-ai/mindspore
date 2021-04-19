@@ -55,7 +55,7 @@ class UniqueWithPadCpuKernelTest : public UT::Common {
   std::vector<int64_t> x_;
   int64_t pad_dim_;
   std::vector<int64_t> out_;
-  std::vector<int> idx_;
+  std::vector<int64_t> idx_;
   std::vector<int64_t> workspace_idx_;
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
@@ -73,8 +73,8 @@ TEST_F(UniqueWithPadCpuKernelTest, compute_test) {
   unique_with_pad_->Launch(inputs_, workspace_, outputs_);
 
   // check compute result
-  std::vector<int64_t> expect_out{1, 2, 3, 4, 5, 8, 8, 8, 8, 8};
-  std::vector<int> expect_idx{0, 0, 4, 4, 3, 3, 2, 2, 1, 1};
+  std::vector<int64_t> expect_out{1, 5, 4, 3, 2, 8, 8, 8, 8, 8};
+  std::vector<int64_t> expect_idx{0, 0, 1, 1, 2, 2, 3, 3, 4, 4};
   EXPECT_TRUE(out_ == expect_out);
   EXPECT_TRUE(idx_ == expect_idx);
 }
