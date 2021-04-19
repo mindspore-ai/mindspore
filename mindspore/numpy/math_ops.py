@@ -726,6 +726,7 @@ def outer(a, b):
 
     Given two vectors, ``a = [a0, a1, ..., aM]`` and ``b = [b0, b1, ..., bN]``,
     the outer product is:
+
     ``[[a0*b0  a0*b1 ... a0*bN ]``
 
     ``[a1*b0    .              ]``

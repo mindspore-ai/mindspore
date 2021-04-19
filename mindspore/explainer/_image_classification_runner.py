@@ -236,7 +236,7 @@ class ImageClassificationRunner:
         """
         Register uncertainty instance to compute the epistemic uncertainty base on the Bayes' theorem.
 
-        Notes:
+        Note:
             Please refer to the documentation of mindspore.nn.probability.toolbox.uncertainty_evaluation for the
             details. The actual output is standard deviation of the classification predictions and the corresponding
             95% confidence intervals. Users have to invoke register_saliency() as well for the uncertainty results are

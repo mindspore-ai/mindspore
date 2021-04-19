@@ -258,7 +258,7 @@ class HausdorffDistance(Metric):
                     predicted binary image. 'y' is the actual binary image. 'label_idx', the data type of `label_idx`
                     is int.
 
-         Raises:
+        Raises:
             ValueError: If the number of the inputs is not 3.
         """
         self._is_update = True

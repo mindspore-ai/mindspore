@@ -96,7 +96,7 @@ class TopKCategoricalAccuracy(Metric):
 class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
     """
     Calculates the top-1 categorical accuracy. This class is a specialized class for TopKCategoricalAccuracy.
-    Refer to class 'TopKCategoricalAccuracy' for more details.
+    Refer to :class:`TopKCategoricalAccuracy` for more details.
 
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
@@ -116,7 +116,7 @@ class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
 class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
     """
     Calculates the top-5 categorical accuracy. This class is a specialized class for TopKCategoricalAccuracy.
-    Refer to class 'TopKCategoricalAccuracy' for more details.
+    Refer to :class:`TopKCategoricalAccuracy` for more details.
 
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],

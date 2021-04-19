@@ -181,7 +181,7 @@ def asfarray(a, dtype=mstype.float32):
     If non-float dtype is defined, this function will return a float32 tensor instead.
 
     Args:
-       a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
+        a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
             be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
             be in format of np.int32, or \'int32\'. If dtype is :class:`None`, the data type

@@ -2746,9 +2746,9 @@ class ApplyRMSProp(PrimitiveWithInfer):
     where :math:`w` represents `var`, which will be updated.
     :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
     :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
-    :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
-    :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
-    :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
+    :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
+    :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
+    :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
@@ -2844,9 +2844,9 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
     :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
     :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
-    :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
-    :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
-    :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
+    :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
+    :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
+    :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
@@ -7101,7 +7101,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
 
 class BasicLSTMCell(PrimitiveWithInfer):
     """
-    It's similar to operator DynamicRNN. BasicLSTMCell will be deprecated in the future.
+    It's similar to operator :class:`DynamicRNN`. BasicLSTMCell will be deprecated in the future.
     Please use DynamicRNN instead.
     """
 

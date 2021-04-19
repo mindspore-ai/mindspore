@@ -222,8 +222,8 @@ class ForwardValueAndGrad(Cell):
     Inputs:
         - **(\*inputs)** (Tuple(Tensor...)) - Tuple of inputs with shape :math:`(N, \ldots)`.
         - **(sens)** - A sensitivity (gradient with respect to output) as the input of backpropagation.
-            If network has single output, the sens is a tensor.
-            If network has multiple outputs, the sens is the tuple(tensor).
+          If network has single output, the sens is a tensor.
+          If network has multiple outputs, the sens is the tuple(tensor).
 
     Outputs:
         - **forward value** - The result of network forward running.
