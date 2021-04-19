@@ -90,31 +90,34 @@ sh scripts/run_eval_ascend.sh
 
 ```path
 └── PSENet  
- ├── README.md                           // descriptions about PSENet
+ ├── export.py                           // export mindir file
+ ├── __init__.py
+ ├── mindspore_hub_conf.py               // hub config file
+ ├── README_CN.md                        // descriptions about PSENet in Chinese
+ ├── README.md                           // descriptions about PSENet in English
  ├── scripts  
   ├── run_distribute_train.sh    // shell script for distributed
   └── run_eval_ascend.sh     // shell script for evaluation
- ├──src  
-  ├── __init__.py  
+ ├── src  
+  ├── config.py                       // parameter configuration
+  ├── dataset.py                      // creating dataset
   ├── ETSNET  
-   ├── __init__.py  
    ├── base.py                     // convolution and BN operator
    ├── dice_loss.py                // calculate PSENet loss value
-   ├── etsnet.py                   // Subnet in  PSENet
-   ├── fpn.py                      // Subnet in  PSENet
-   ├── resnet50.py                 // Subnet in  PSENet
-   ├── pse                         // Subnet in  PSENet
+   ├── etsnet.py                   // Subnet in PSENet
+   ├── fpn.py                      // Subnet in PSENet
+   ├── __init__.py  
+   ├── pse                         // Subnet in PSENet
                 ├── __init__.py
                 ├── adaptor.cpp
                 ├── adaptor.h
                 ├── Makefile
-  ├──config.py                       // parameter configuration
-  ├──dataset.py                      // creating dataset
-  ├──network_define.py               // learning ratio generation
- ├──export.py                           // export mindir file
- ├──mindspore_hub_conf.py               // hub config file
- ├──test.py                             //  test script
- ├──train.py                            // training script
+   ├── resnet50.py                 // Subnet in PSENet
+  ├── __init__.py  
+  ├── lr_schedule.py                 // define learning rate
+  ├── network_define.py               // learning ratio generation
+ ├── test.py                             //  test script
+ ├── train.py                            // training script
 
 ```
 
@@ -164,7 +167,9 @@ python test.py --ckpt=./device*/ckpt*/ETSNet-*.ckpt
 #### Usage
 
 step 1: download eval method from [here](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization).  
+
 step 2: click "My Methods" button,then download Evaluation Scripts.
+
 step 3: it is recommended to symlink the eval method root to $MINDSPORE/model_zoo/psenet/eval_ic15/. if your folder structure is different,you may need to change the corresponding paths in eval script files.  
 
 ```shell
@@ -181,12 +186,12 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 
 ### Evaluation Performance
 
-| Parameters                 | PSENet                                                   |
+| Parameters                 | Ascend                                                   |
 | -------------------------- | ----------------------------------------------------------- |
-| Model Version              | V1                                                |
+| Model Version              | PSENet                                                |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
 | uploaded Date              | 09/30/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                   |
+| MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | ICDAR2015                                                   |
 | Training Parameters        | start_lr=0.1; lr_scale=0.1                                  |
 | Optimizer                  | SGD                                                         |
@@ -194,19 +199,19 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 | outputs                    | probability                                                 |
 | Loss                       | 0.35                                                        |
 | Speed                      | 1pc: 444 ms/step;  8pcs: 446 ms/step                        |
-| Total time                 | 1pc: 75.48 h;  8pcs: 10.01 h                                |
+| Total time                 | 1pc: 75.48 h;  8pcs: 7.11 h                                |
 | Parameters (M)             | 27.36                                                       |
 | Checkpoint for Fine tuning | 109.44M (.ckpt file)                                        |
 | Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |
 
 ### Inference Performance
 
-| Parameters          | PSENet                      |
+| Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Model Version       | V1                |
+| Model Version       | PSENet                |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 09/30/2020 (month/day/year) |
-| MindSpore Version   | 1.0,0                   |
+| MindSpore Version   | 1.0.0                   |
 | Dataset             | ICDAR2015                   |
 | outputs             | probability                 |
 | Accuracy            | 1pc: 81%;  8pcs: 81%   |
