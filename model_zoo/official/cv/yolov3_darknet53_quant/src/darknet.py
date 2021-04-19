@@ -32,7 +32,7 @@ def conv_block(in_channels,
                           padding=padding,
                           dilation=dilation,
                           has_bn=True,
-                          momentum=0.1,
+                          momentum=0.9,
                           activation='relu')
 
 
