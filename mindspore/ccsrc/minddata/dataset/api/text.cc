@@ -19,7 +19,8 @@
 #include <regex>
 
 #include "minddata/dataset/include/text.h"
-
+#include "mindspore/core/ir/dtype/type_id.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 
 namespace mindspore {
@@ -203,16 +204,20 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
 // Lookup
 struct Lookup::Data {
   Data(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
-       const std::vector<char> &data_type)
-      : vocab_(vocab), unknown_token_(OptionalCharToString(unknown_token)), data_type_(CharToString(data_type)) {}
+       mindspore::DataType data_type)
+      : vocab_(vocab),
+        unknown_token_(OptionalCharToString(unknown_token)),
+        data_type_(dataset::MSTypeToDEType(static_cast<TypeId>(data_type))) {}
   std::shared_ptr<Vocab> vocab_;
   std::optional<std::string> unknown_token_;
-  std::string data_type_;
+  dataset::DataType data_type_;
 };
 
 Lookup::Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
-               const std::vector<char> &data_type)
-    : data_(std::make_shared<Data>(vocab, unknown_token, data_type)) {}
+               mindspore::DataType data_type)
+    : data_(std::make_shared<Data>(vocab, unknown_token, data_type)) {
+  data_->data_type_ = dataset::MSTypeToDEType(static_cast<TypeId>(data_type));
+}
 
 std::shared_ptr<TensorOperation> Lookup::Parse() {
   return std::make_shared<LookupOperation>(data_->vocab_, data_->unknown_token_, data_->data_type_);
@@ -331,11 +336,12 @@ std::shared_ptr<TensorOperation> SlidingWindow::Parse() {
 
 // ToNumber
 struct ToNumber::Data {
-  explicit Data(const std::vector<char> &data_type) : data_type_(CharToString(data_type)) {}
-  std::string data_type_;
+  dataset::DataType data_type_;
 };
 
-ToNumber::ToNumber(const std::vector<char> &data_type) : data_(std::make_shared<Data>(data_type)) {}
+ToNumber::ToNumber(mindspore::DataType data_type) : data_(std::make_shared<Data>()) {
+  data_->data_type_ = dataset::MSTypeToDEType(static_cast<TypeId>(data_type));
+}
 
 std::shared_ptr<TensorOperation> ToNumber::Parse() { return std::make_shared<ToNumberOperation>(data_->data_type_); }
 

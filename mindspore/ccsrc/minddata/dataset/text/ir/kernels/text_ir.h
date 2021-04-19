@@ -142,7 +142,9 @@ class JiebaTokenizerOperation : public TensorOperation {
 class LookupOperation : public TensorOperation {
  public:
   explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
-                           const std::string &data_type);
+                           DataType data_type);  // Used for C++ API
+  explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
+                           const std::string &data_type);  // Used for Pybind
 
   ~LookupOperation();
 
@@ -156,7 +158,7 @@ class LookupOperation : public TensorOperation {
   std::shared_ptr<Vocab> vocab_;
   std::optional<std::string> unknown_token_;
   int32_t default_id_;
-  std::string data_type_;
+  DataType data_type_;
 };
 
 class NgramOperation : public TensorOperation {
@@ -273,7 +275,8 @@ class SlidingWindowOperation : public TensorOperation {
 
 class ToNumberOperation : public TensorOperation {
  public:
-  explicit ToNumberOperation(std::string data_type);
+  explicit ToNumberOperation(DataType data_type);     // Used for C++ API
+  explicit ToNumberOperation(std::string data_type);  // Used for Pybind
 
   ~ToNumberOperation() = default;
 
@@ -283,8 +286,10 @@ class ToNumberOperation : public TensorOperation {
 
   std::string Name() const override { return kToNumberOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
-  std::string data_type_;
+  DataType data_type_;
 };
 
 class TruncateSequencePairOperation : public TensorOperation {

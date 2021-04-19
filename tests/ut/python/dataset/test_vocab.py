@@ -202,7 +202,7 @@ def test_lookup_cast_type():
     assert test_config("unk") == np.dtype("int32")
     # test exception, data_type isn't the correct type
     assert "tldr is not of type [<class 'mindspore._c_expression.typing.Type'>]" in test_config("unk", "tldr")
-    assert "Lookup does not support a string to string mapping, data_type can only be numeric." in \
+    assert "Lookup : The parameter data_type must be numeric including bool." in \
            test_config("w1", mstype.string)
 
 

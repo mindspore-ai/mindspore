@@ -42,6 +42,7 @@
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #endif
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/util/path.h"
 
 #include "minddata/dataset/text/ir/validators.h"
@@ -166,9 +167,19 @@ Status JiebaTokenizerOperation::AddWord(const std::string &word, int64_t freq) {
 }
 
 // LookupOperation
+// DataType data_type - required for C++ API
+LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
+                                 DataType data_type)
+    : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
+
+// std::string data_type - required for Pybind
 LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
                                  const std::string &data_type)
-    : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
+    : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists) {
+  // Convert from string to DEType
+  DataType temp_data_type(data_type);
+  data_type_ = temp_data_type;
+}
 
 LookupOperation::~LookupOperation() = default;
 
@@ -187,8 +198,9 @@ Status LookupOperation::ValidateParams() {
     }
   }
 
-  if (!IsTypeNumeric(data_type_)) {
-    std::string err_msg = "Lookup does not support a string to string mapping, data_type can only be numeric.";
+  if (!data_type_.IsNumeric()) {
+    // Note: For DEType, Bool is counted as numeric, and is a valid type for Lookup
+    std::string err_msg = "Lookup : The parameter data_type must be numeric including bool.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -351,11 +363,20 @@ std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
 }
 
 // ToNumberOperation
-ToNumberOperation::ToNumberOperation(std::string data_type) : data_type_(data_type) {}
+// DataType data_type - required for C++ API
+ToNumberOperation::ToNumberOperation(DataType data_type) : data_type_(data_type) {}
+
+// std::string data_type - required for Pybind
+ToNumberOperation::ToNumberOperation(std::string data_type) {
+  // Convert from string to DEType
+  DataType temp_data_type(data_type);
+  data_type_ = temp_data_type;
+}
 
 Status ToNumberOperation::ValidateParams() {
-  if (!IsTypeNumeric(data_type_) || IsTypeBoolean(data_type_)) {
-    std::string err_msg = "ToNumber : The parameter data_type must be a numeric type, got: " + data_type_;
+  if (!data_type_.IsNumeric() || data_type_.IsBool()) {
+    // Note: For DEType, Bool is counted as numeric, but is not a valid type for ToNumber.
+    std::string err_msg = "ToNumber : The parameter data_type must be numeric and excludes bool.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -366,6 +387,13 @@ Status ToNumberOperation::ValidateParams() {
 std::shared_ptr<TensorOp> ToNumberOperation::Build() {
   std::shared_ptr<ToNumberOp> tensor_op = std::make_shared<ToNumberOp>(data_type_);
   return tensor_op;
+}
+
+Status ToNumberOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["data_type"] = data_type_.ToString();
+  *out_json = args;
+  return Status::OK();
 }
 
 // TruncateSequencePairOperation

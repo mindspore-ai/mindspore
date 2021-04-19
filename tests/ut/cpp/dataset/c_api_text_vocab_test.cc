@@ -36,10 +36,10 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 // Macro to compare 2 MSTensors as not equal; compare datasize only
-#define EXPECT_MSTENSOR_DATA_NE(_mstensor1, _mstensor2)       \
-do {                                                          \
-    EXPECT_NE(_mstensor1.DataSize(), _mstensor2.DataSize());  \
-} while (false)
+#define EXPECT_MSTENSOR_DATA_NE(_mstensor1, _mstensor2)      \
+  do {                                                       \
+    EXPECT_NE(_mstensor1.DataSize(), _mstensor2.DataSize()); \
+  } while (false)
 
 TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOp.";
@@ -56,7 +56,8 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "<unk>", "int32");
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "<unk>", mindspore::DataType::kNumberTypeInt32);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -87,6 +88,11 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
@@ -104,7 +110,8 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "", "int32");
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "", mindspore::DataType::kNumberTypeInt32);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -135,6 +142,60 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestVocabLookupBool) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupBool.";
+  // Invoke Lookup with Bool data_type
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::vector<std::string> list = {"home", "IS", "behind", "the", "world", "ahead", "!"};
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {"<pad>", "<unk>"}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create Lookup operation on ds
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "<unk>", mindspore::DataType::kNumberTypeBool);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({lookup}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
@@ -151,7 +212,8 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
   EXPECT_EQ(s, Status::OK());
 
   // Create lookup op for ds
-  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "<unk>", "int32");
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "<unk>", mindspore::DataType::kNumberTypeInt32);
   EXPECT_NE(lookup, nullptr);
 
   // Create a Map operation on ds
@@ -174,7 +236,8 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
   std::shared_ptr<Vocab> vocab;
 
   // Create lookup op
-  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "", "int32");
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "", mindspore::DataType::kNumberTypeInt32);
   EXPECT_NE(lookup, nullptr);
 
   // Create a Map operation on ds
@@ -183,6 +246,33 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid Lookup input (vocab is null)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestVocabLookupOpFail3DataType) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpFail3DataType.";
+  // Create a TextFile Dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Build vocab from vector
+  std::vector<std::string> list = {"home", "IS", "behind", "the", "world", "ahead", "!"};
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {"<pad>", "<unk>"}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create lookup op for ds
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "", mindspore::DataType::kObjectTypeString);
+  EXPECT_NE(lookup, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({lookup});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Lookup input (String is not valid for data_type)
   EXPECT_EQ(iter, nullptr);
 }
 
@@ -204,7 +294,8 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   EXPECT_EQ(home_index, 4);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "<unk>", "int32");
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "<unk>", mindspore::DataType::kNumberTypeInt32);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -235,6 +326,11 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
@@ -254,6 +350,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds
+  // Use default data_type parameter
   std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "home");
   EXPECT_NE(lookup, nullptr);
 
@@ -293,6 +390,11 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
 
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail1) {
@@ -371,7 +473,8 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "home", "int64");
+  std::shared_ptr<TensorTransform> lookup =
+    std::make_shared<text::Lookup>(vocab, "home", mindspore::DataType::kNumberTypeInt64);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -410,4 +513,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
   }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
 }
