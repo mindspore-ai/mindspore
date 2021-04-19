@@ -48,8 +48,6 @@ test_dist_2pcs()
     export RANK_SIZE=2
 }
 
-test_dist_${RANK_SIZE}pcs
-
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
 for((i=1;i<${RANK_SIZE};i++))
