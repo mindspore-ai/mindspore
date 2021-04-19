@@ -55,6 +55,8 @@ class Cell(Cell_):
 
     Args:
         auto_prefix (bool): Recursively generate namespaces. Default: True.
+        flags (dict): Network configuration information, currently it is used for the binding of network and dataset.
+                      Users can also customize network attributes by this parameter. Default: None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
