@@ -47,35 +47,35 @@ class RMSProp(Optimizer):
     The equation is as follows:
 
     .. math::
-        s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
+        s_{t+1} = \\rho s_{t} + (1 - \\rho)(\\nabla Q_{i}(w))^2
 
     .. math::
-        m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} + \\epsilon}} \\nabla Q_{i}(w)
+        m_{t+1} = \\beta m_{t} + \\frac{\\eta} {\\sqrt{s_{t+1} + \\epsilon}} \\nabla Q_{i}(w)
 
     .. math::
-        w = w - m_{t}
+        w = w - m_{t+1}
 
     The first equation calculates moving average of the squared gradient for
-    each weight. Then dividing the gradient by :math:`\\sqrt{ms_{t} + \\epsilon}`.
+    each weight. Then dividing the gradient by :math:`\\sqrt{ms_{t+1} + \\epsilon}`.
 
     if centered is True:
 
     .. math::
-        g_{t} = \\rho g_{t-1} + (1 - \\rho)\\nabla Q_{i}(w)
+        g_{t+1} = \\rho g_{t} + (1 - \\rho)\\nabla Q_{i}(w)
 
     .. math::
-        s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
+        s_{t+1} = \\rho s_{t} + (1 - \\rho)(\\nabla Q_{i}(w))^2
 
     .. math::
-        m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} - g_{t}^2 + \\epsilon}} \\nabla Q_{i}(w)
+        m_{t+1} = \\beta m_{t} + \\frac{\\eta} {\\sqrt{s_{t+1} - g_{t+1}^2 + \\epsilon}} \\nabla Q_{i}(w)
 
     .. math::
-        w = w - m_{t}
+        w = w - m_{t+1}
 
     where :math:`w` represents `params`, which will be updated.
-    :math:`g_{t}` is mean gradients, :math:`g_{t-1}` is the last moment of :math:`g_{t}`.
-    :math:`s_{t}` is the mean square gradients, :math:`s_{t-1}` is the last moment of :math:`s_{t}`,
-    :math:`m_{t}` is moment, the delta of `w`, :math:`m_{t-1}` is the last moment of :math:`m_{t}`.
+    :math:`g_{t+1}` is mean gradients, :math:`g_{t}` is the last moment of :math:`g_{t+1}`.
+    :math:`s_{t+1}` is the mean square gradients, :math:`s_{t}` is the last moment of :math:`s_{t+1}`,
+    :math:`m_{t+1}` is moment, the delta of `w`, :math:`m_{t}` is the last moment of :math:`m_{t+1}`.
     :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
     :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\\eta` is learning rate, represents `learning_rate`. :math:`\\nabla Q_{i}(w)` is gradients,
