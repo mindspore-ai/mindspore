@@ -15,7 +15,7 @@
 """ROC"""
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class ROC(Metric):
@@ -107,6 +107,7 @@ class ROC(Metric):
 
         return y_pred, y, class_num, pos_label
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Update state with predictions and targets.

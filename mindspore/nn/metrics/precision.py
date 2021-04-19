@@ -18,7 +18,7 @@ import sys
 import numpy as np
 
 from mindspore._checkparam import Validator as validator
-from .metric import EvaluationBase
+from .metric import EvaluationBase, rearrange_inputs
 
 
 class Precision(EvaluationBase):
@@ -68,6 +68,7 @@ class Precision(EvaluationBase):
             self._true_positives = 0
             self._positives = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result with `y_pred` and `y`.

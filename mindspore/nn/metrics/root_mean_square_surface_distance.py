@@ -16,7 +16,7 @@
 from scipy.ndimage import morphology
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class RootMeanSquareDistance(Metric):
@@ -86,6 +86,7 @@ class RootMeanSquareDistance(Metric):
 
         return surface_distance
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result 'y_pred', 'y' and 'label_idx'.

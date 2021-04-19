@@ -18,6 +18,7 @@ import numpy as np
 
 from mindspore import Tensor
 from mindspore.nn.metrics import get_metric_fn
+from mindspore.nn.metrics.metric import rearrange_inputs
 
 
 def test_classification_accuracy():
@@ -49,3 +50,38 @@ def test_classification_precision():
     precision = metric.eval()
 
     assert np.equal(precision, np.array([0.5, 1])).all()
+
+
+class RearrangeInputsDemo:
+    def __init__(self):
+        self._indexes = None
+
+    @property
+    def indexes(self):
+        return getattr(self, '_indexes', None)
+
+    def set_indexes(self, indexes):
+        self._indexes = indexes
+        return self
+
+    @rearrange_inputs
+    def update(self, *inputs):
+        return inputs
+
+
+def test_rearrange_inputs_without_arrange():
+    mini_decorator = RearrangeInputsDemo()
+    outs = mini_decorator.update(5, 9)
+    assert outs == (5, 9)
+
+
+def test_rearrange_inputs_with_arrange():
+    mini_decorator = RearrangeInputsDemo().set_indexes([1, 0])
+    outs = mini_decorator.update(5, 9)
+    assert outs == (9, 5)
+
+
+def test_rearrange_inputs_with_multi_inputs():
+    mini_decorator = RearrangeInputsDemo().set_indexes([1, 3])
+    outs = mini_decorator.update(0, 9, 0, 5)
+    assert outs == (9, 5)

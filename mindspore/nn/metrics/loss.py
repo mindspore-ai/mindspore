@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Loss for evaluation"""
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class Loss(Metric):
@@ -40,6 +40,7 @@ class Loss(Metric):
         self._sum_loss = 0
         self._total_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result.

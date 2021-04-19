@@ -35,6 +35,18 @@ def test_classification_accuracy():
     assert math.isclose(accuracy2, 2 / 3)
 
 
+def test_classification_accuracy_indexes_awareness():
+    """A indexes aware version of test_classification_accuracy"""
+    x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
+    y = Tensor(np.array([1, 0, 1]))
+    y2 = Tensor(np.array([0, 0, 1]))
+    metric = Accuracy('classification').set_indexes([0, 2])
+    metric.clear()
+    metric.update(x, y, y2)
+    accuracy = metric.eval()
+    assert math.isclose(accuracy, 1 / 3)
+
+
 def test_multilabel_accuracy():
     x = Tensor(np.array([[0, 1, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]]))
     y = Tensor(np.array([[0, 1, 1, 1], [0, 1, 1, 1], [0, 0, 0, 1]]))

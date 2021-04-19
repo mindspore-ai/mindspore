@@ -16,14 +16,14 @@
 import sys
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class Fbeta(Metric):
     r"""
     Calculates the fbeta score.
 
-    Fbeta score is a weighted mean of precison and recall.
+    Fbeta score is a weighted mean of precision and recall.
 
     .. math::
         F_\beta=\frac{(1+\beta^2) \cdot true\_positive}
@@ -57,6 +57,7 @@ class Fbeta(Metric):
         self._positives = 0
         self._class_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result `y_pred` and `y`.

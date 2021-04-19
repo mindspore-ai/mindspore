@@ -14,7 +14,7 @@
 # ============================================================================
 """Accuracy."""
 import numpy as np
-from .metric import EvaluationBase
+from .metric import EvaluationBase, rearrange_inputs
 
 
 class Accuracy(EvaluationBase):
@@ -54,6 +54,7 @@ class Accuracy(EvaluationBase):
         self._total_num = 0
         self._class_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.

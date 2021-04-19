@@ -20,7 +20,7 @@ from scipy.ndimage import morphology
 import numpy as np
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class _ROISpatialData(metaclass=ABCMeta):
@@ -249,6 +249,7 @@ class HausdorffDistance(Metric):
         self.y_edges = 0
         self._is_update = False
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result 'y_pred', 'y' and 'label_idx'.

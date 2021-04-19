@@ -17,7 +17,7 @@ import numpy as np
 from mindspore import nn
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 try:
     from tqdm import trange
@@ -116,6 +116,7 @@ class OcclusionSensitivity(Metric):
             return np.vstack(scores)
         return np.vstack((sensitivity_im, scores))
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates input, including `model`, `y_pred` and `label`.
