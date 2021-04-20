@@ -19,52 +19,64 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
-from mindspore.common.initializer import initializer
 
-def _conv(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad'):
+
+def _conv(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad', gain=1):
     """Conv2D wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32)
+    # xavier_normal
+    fan_in = in_channels * kernel_size * kernel_size
+    fan_out = out_channels * kernel_size * kernel_size
+    std = gain * (2 / (fan_in + fan_out)) ** 0.5
+    weights = Tensor(np.random.normal(loc=0.0, scale=std, size=shape).astype(np.float32))
     shape_bias = (out_channels,)
     bias = Tensor(np.array(np.zeros(shape_bias)).astype(np.float32))
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=kernel_size, stride=stride, padding=padding,
                      pad_mode=pad_mode, weight_init=weights, has_bias=True, bias_init=bias)
 
-def _convTanspose(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad'):
+
+def _convTanspose(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad',
+                  gain=1):
     """ConvTranspose wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32)
+    # xavier_normal
+    fan_in = in_channels * kernel_size * kernel_size
+    fan_out = out_channels * kernel_size * kernel_size
+    std = gain * (2 / (fan_in + fan_out)) ** 0.5
+    weights = Tensor(np.random.normal(loc=0.0, scale=std, size=shape).astype(np.float32))
     shape_bias = (out_channels,)
     bias = Tensor(np.array(np.zeros(shape_bias)).astype(np.float32))
     return nn.Conv2dTranspose(in_channels, out_channels,
                               kernel_size=kernel_size, stride=stride, padding=padding,
                               pad_mode=pad_mode, weight_init=weights, has_bias=True, bias_init=bias)
 
+
 class FpnMask(nn.Cell):
     """conv layers of mask head"""
+
     def __init__(self, input_channels, output_channels, num_classes):
         super(FpnMask, self).__init__()
-        self.mask_conv1 = _conv(input_channels, output_channels, kernel_size=3,
+        self.mask_conv1 = _conv(input_channels, output_channels, kernel_size=3, gain=2 ** 0.5,
                                 pad_mode="same").to_float(mstype.float16)
         self.mask_relu1 = P.ReLU()
 
-        self.mask_conv2 = _conv(output_channels, output_channels, kernel_size=3,
+        self.mask_conv2 = _conv(output_channels, output_channels, kernel_size=3, gain=2 ** 0.5,
                                 pad_mode="same").to_float(mstype.float16)
         self.mask_relu2 = P.ReLU()
 
-        self.mask_conv3 = _conv(output_channels, output_channels, kernel_size=3,
+        self.mask_conv3 = _conv(output_channels, output_channels, kernel_size=3, gain=2 ** 0.5,
                                 pad_mode="same").to_float(mstype.float16)
         self.mask_relu3 = P.ReLU()
 
-        self.mask_conv4 = _conv(output_channels, output_channels, kernel_size=3,
+        self.mask_conv4 = _conv(output_channels, output_channels, kernel_size=3, gain=2 ** 0.5,
                                 pad_mode="same").to_float(mstype.float16)
         self.mask_relu4 = P.ReLU()
 
-        self.mask_deconv5 = _convTanspose(output_channels, output_channels, kernel_size=2,
+        self.mask_deconv5 = _convTanspose(output_channels, output_channels, kernel_size=2, gain=2 ** 0.5,
                                           stride=2, pad_mode="valid").to_float(mstype.float16)
         self.mask_relu5 = P.ReLU()
-        self.mask_conv6 = _conv(output_channels, num_classes, kernel_size=1, stride=1,
+        self.mask_conv6 = _conv(output_channels, num_classes, kernel_size=1, stride=1, gain=2,
                                 pad_mode="valid").to_float(mstype.float16)
 
     def construct(self, x):
@@ -87,6 +99,7 @@ class FpnMask(nn.Cell):
 
         return x
 
+
 class RcnnMask(nn.Cell):
     """
     Rcnn for mask subnet.
@@ -105,6 +118,7 @@ class RcnnMask(nn.Cell):
         RcnnMask(config=config, representation_size = 1024, batch_size=2, num_classes = 81, \
              target_means=(0., 0., 0., 0.), target_stds=(0.1, 0.1, 0.2, 0.2))
     """
+
     def __init__(self,
                  config,
                  batch_size,
@@ -155,20 +169,19 @@ class RcnnMask(nn.Cell):
 
         return out
 
-
     def loss(self, masks_fb_pred, bbox_weights, weights, masks_fb_targets):
         """Loss method."""
         weights = self.cast(weights, mstype.float16)
         bbox_weights = self.cast(self.onehot(bbox_weights, self.num_classes, self.on_value, self.off_value),
                                  mstype.float16)
-        bbox_weights = bbox_weights * self.rmv_first_tensor   #  * self.rmv_first_tensor  exclude background
+        bbox_weights = bbox_weights * self.rmv_first_tensor  # * self.rmv_first_tensor  exclude background
 
         # loss_mask_fb
         masks_fb_targets = self.cast(masks_fb_targets, mstype.float16)
         loss_mask_fb = self.loss_mask(masks_fb_pred, masks_fb_targets)
         loss_mask_fb = self.mean_loss(loss_mask_fb, (2, 3))
         loss_mask_fb = loss_mask_fb * bbox_weights
-        loss_mask_fb = loss_mask_fb / self.sum_loss(weights, (0,))
+        loss_mask_fb = loss_mask_fb / (self.sum_loss(weights, (0,)) + 1e-5)
         loss_mask_fb = self.sum_loss(loss_mask_fb, (0, 1))
 
         return loss_mask_fb
