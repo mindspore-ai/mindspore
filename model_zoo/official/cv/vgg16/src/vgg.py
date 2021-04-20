@@ -129,7 +129,7 @@ cfg = {
 
 def vgg16(num_classes=1000, args=None, phase="train", **kwargs):
     """
-    Get Vgg16 neural network with batch normalization.
+    Get Vgg16 neural network with Batch Normalization.
 
     Args:
         num_classes (int): Class numbers. Default: 1000.
@@ -137,7 +137,7 @@ def vgg16(num_classes=1000, args=None, phase="train", **kwargs):
         phase(str): train or test mode.
 
     Returns:
-        Cell, cell instance of Vgg16 neural network with batch normalization.
+        Cell, cell instance of Vgg16 neural network with Batch Normalization.
 
     Examples:
         >>> vgg16(num_classes=1000, args=args, **kwargs)

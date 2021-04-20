@@ -65,7 +65,7 @@ class TimeDistributed(Cell):
     There are two cases in the implementation.
     When reshape_with_axis provided, the reshape method will be chosen, which is more efficient;
     otherwise, the method of dividing the inputs along time axis will be used, which is more general.
-    For example, reshape_with_axis could not be provided when deal with batch normal.
+    For example, reshape_with_axis could not be provided when deal with Batch Normalization.
 
     Args:
         layer(Union[Cell, Primitive]): The Cell or Primitive which will be wrapped.

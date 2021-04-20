@@ -739,7 +739,7 @@ class SyncBatchNorm(PrimitiveWithInfer):
     r"""
     Sync Batch Normalization for input data and updated parameters.
 
-    Sync Batch Normalization is cross device synchronized batch normalization. Batch Normalization is
+    Sync Batch Normalization is cross device synchronized Batch Normalization. Batch Normalization is
     widely used in convolutional neural networks. This operation applies Batch Normalization over input
     to avoid internal covariate shift as described in the paper `Batch Normalization: Accelerating
     Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_.
