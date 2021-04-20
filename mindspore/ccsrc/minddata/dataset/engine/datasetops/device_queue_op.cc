@@ -38,7 +38,8 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
       send_finished_(false),
       total_batch_(total_batch),
       create_data_info_queue_(create_data_info_queue),
-      data_info_queue_ptr_(nullptr) {
+      data_info_queue_ptr_(nullptr),
+      first_push_flag_(false) {
 #ifdef ENABLE_GPUQUE
   // Get the total device num of current machine
   int32_t device_count = 0;
@@ -172,6 +173,10 @@ Status DeviceQueueOp::SendDataToAscend() {
       md_channel_info_->RecordPushStartTime();
 #endif
       RETURN_IF_NOT_OK(SendRowToTdt(curr_row, isProfilingEnable, &tdt_cost));
+      if (first_push_flag_ != true) {
+        MS_LOG(INFO) << "Loading dataset and push first batch into device successful";
+        first_push_flag_ = true;
+      }
       ProfilingRecorder(isProfilingEnable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
                         connector_capacity, connector_size);
       send_batch++;
@@ -486,6 +491,10 @@ Status DeviceQueueOp::SendDataToGPU() {
     while (!current_row.eoe() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(current_row)));
+      if (first_push_flag_ != true) {
+        MS_LOG(INFO) << "Loading dataset and push first batch into device successful";
+        first_push_flag_ = true;
+      }
       if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
         RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
       } else {

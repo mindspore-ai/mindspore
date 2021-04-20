@@ -238,6 +238,8 @@ class DeviceQueueOp : public PipelineOp {
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;
 #endif
+
+  bool first_push_flag_;  // default: false, when first push, it will be true
 };
 }  // namespace dataset
 }  // namespace mindspore
