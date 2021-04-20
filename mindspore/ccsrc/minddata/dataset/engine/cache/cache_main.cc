@@ -145,8 +145,15 @@ ms::Status StartServer(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+  // Create the common path for all users
+  ds::Path common_dir = ds::Path(ds::kDefaultCommonPath);
+  ms::Status rc = common_dir.CreateCommonDirectories();
+  if (rc.IsError()) {
+    std::cerr << rc.ToString() << std::endl;
+    return 1;
+  }
   // This executable is not to be called directly, and should be invoked by cache_admin executable.
-  ms::Status rc = StartServer(argc, argv);
+  rc = StartServer(argc, argv);
   // Check result
   if (rc.IsError()) {
     auto errCode = rc.StatusCode();

@@ -94,9 +94,11 @@ class Path {
 
   bool IsDirectory();
 
-  Status CreateDirectory();
+  Status CreateDirectory(bool is_common_dir = false);
 
-  Status CreateDirectories();
+  Status CreateDirectories(bool is_common_dir = false);
+
+  Status CreateCommonDirectories();
 
   std::string Extension() const;
 

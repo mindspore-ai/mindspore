@@ -26,6 +26,13 @@ int main(int argc, char **argv) {
   ms::Status rc;
   ds::CacheAdminArgHandler args;
   std::stringstream arg_stream;
+  // Create the common path for all users
+  ds::Path common_dir = ds::Path(ds::kDefaultCommonPath);
+  rc = common_dir.CreateCommonDirectories();
+  if (rc.IsError()) {
+    std::cerr << rc.ToString() << std::endl;
+    return 1;
+  }
 
 #ifdef USE_GLOG
 #define google mindspore_private
@@ -34,7 +41,7 @@ int main(int argc, char **argv) {
   // Create default log dir
   ds::Path log_dir = ds::Path(FLAGS_log_dir);
   rc = log_dir.CreateDirectories();
-  if (!rc.IsOk()) {
+  if (rc.IsError()) {
     std::cerr << rc.ToString() << std::endl;
     return 1;
   }
