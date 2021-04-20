@@ -25,9 +25,6 @@
 
 namespace mindspore {
 namespace lite {
-#ifdef MS_COMPILE_IOS
-void IosRegisterOps();
-#endif
 typedef OpParameter *(*ParameterGen)(const void *prim);
 class PopulateRegistry {
  public:
@@ -51,12 +48,6 @@ class PopulateRegistry {
     param_creator = iter->second;
     return param_creator;
   }
-#ifdef MS_COMPILE_IOS
-  void IosRegisterAllOps() {
-    static std::once_flag flag_ops;
-    std::call_once(flag_ops, [&]() { IosRegisterOps(); });
-  }
-#endif
 
  protected:
   // key:type * 1000 + schema_version
@@ -71,15 +62,8 @@ class Registry {
   ~Registry() = default;
 };
 
-#ifdef MS_COMPILE_IOS
-#define REG_POPULATE(primitive_type, creator, version)                                     \
-  void _##primitive_type##version() {                                                      \
-    PopulateRegistry::GetInstance()->InsertParameterMap(primitive_type, creator, version); \
-  }
-#else
 #define REG_POPULATE(primitive_type, creator, version) \
   static Registry g_##primitive_type##version(primitive_type, creator, version);
-#endif
 
 }  // namespace lite
 }  // namespace mindspore

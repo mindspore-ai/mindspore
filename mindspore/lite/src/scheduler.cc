@@ -58,10 +58,6 @@ constexpr int kMainSubGraphIndex = 0;
 }  // namespace
 
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
-#ifdef MS_COMPILE_IOS
-  PopulateRegistry::GetInstance()->IosRegisterAllOps();
-  KernelRegistry::GetInstance()->IosRegisterAllKernels();
-#endif
   if (src_model_ == nullptr) {
     MS_LOG(ERROR) << "Input model is nullptr";
     return RET_PARAM_INVALID;

@@ -47,9 +47,6 @@ class KernelRegistry {
   bool SupportKernel(const kernel::KernelKey &key);
   kernel::LiteKernel *GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                 const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter);
-#ifdef MS_COMPILE_IOS
-  void IosRegisterAllKernels();
-#endif
 
  protected:
   static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};
@@ -75,15 +72,8 @@ class KernelRegistrar {
   }
 };
 
-#ifdef MS_COMPILE_IOS
-#define REG_KERNEL(arch, data_type, op_type, kernelCreater)                                  \
-  void _##arch##data_type##op_type() {                                                       \
-    lite::KernelRegistry::GetInstance()->RegKernel(arch, data_type, op_type, kernelCreater); \
-  }
-#else
 #define REG_KERNEL(arch, data_type, op_type, kernelCreater) \
   static KernelRegistrar g_##arch##data_type##op_type##kernelReg(arch, data_type, op_type, kernelCreater);
-#endif
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
