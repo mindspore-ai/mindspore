@@ -471,6 +471,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
       if (iter != tensor_to_node.end()) {
         const auto &node = iter->second.first;
         const auto &output_index = iter->second.second;
+        MS_EXCEPTION_IF_NULL(node);
         const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         // The outputs may have the same tensor, so need skip when the tensor has been set to device address.
         if ((address == nullptr) || (address->GetPtr() == nullptr)) {
@@ -478,10 +479,12 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         }
         tensor->set_device_address(address);
 
-        // When the device address of graph output is set in tensor, the graph output need be set new device address,
-        // to avoid that the device address context of tensor be rewritten in the next step or next loop.
-        auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
-        AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+        // When the device address of graph cnode output is set in tensor, the graph output need be set new device
+        // address, to avoid that the device address context of tensor be rewritten in the next step or next loop.
+        if (node->isa<CNode>()) {
+          auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
+          AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+        }
 
         if (AnfAlgo::IsDynamicShape(node)) {
           const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
