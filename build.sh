@@ -23,7 +23,7 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t ut|st] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|npu] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|npu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] [-H on|off] \\"
   echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
@@ -43,7 +43,6 @@ usage()
   echo "    -p Enable pipeline profile, print to stdout, default off"
   echo "    -R Enable pipeline profile, record to json, default off"
   echo "    -i Enable increment building, default off"
-  echo "    -L Enable load ANF-IR as input of 'infer', default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
   echo "    -e Use cpu, gpu, npu or ascend"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
@@ -93,7 +92,6 @@ checkopts()
   ENABLE_ASAN="off"
   ENABLE_PROFILE="off"
   INC_BUILD="off"
-  ENABLE_LOAD_IR="off"
   ENABLE_TIMELINE="off"
   ENABLE_DUMP2PROTO="on"
   ENABLE_DUMP_IR="on"
@@ -125,7 +123,7 @@ checkopts()
   ENABLE_HIDDEN="on"
   LITE_ENABLE_GPU=""
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:B:En:T:A:C:o:S:k:W:H:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:T:A:C:o:S:k:W:H:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -209,10 +207,6 @@ checkopts()
           exit 1
         fi
         TRAIN_MODE=$(echo "$OPTARG" | tr '[a-z]' '[A-Z]')
-        ;;
-      L)
-        ENABLE_LOAD_IR="on"
-        echo "build with enable load anf ir"
         ;;
       R)
         ENABLE_TIMELINE="on"
@@ -424,7 +418,6 @@ build_mindspore()
     mkdir -pv "${BUILD_PATH}/mindspore"
     cd "${BUILD_PATH}/mindspore"
     CMAKE_ARGS="-DDEBUG_MODE=$DEBUG_MODE -DBUILD_PATH=$BUILD_PATH"
-    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_LOAD_ANF_IR=$ENABLE_LOAD_IR"
     if [[ "X$ENABLE_COVERAGE" = "Xon" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_COVERAGE=ON"
     fi
