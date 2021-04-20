@@ -469,9 +469,9 @@ REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                          (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
                            .value("unknown", PrimType::kPrimTypeUnknown)
                            .value("builtin", PrimType::kPrimTypeBuiltIn)
-                           .value("py_infer_shape", PrimType::kPrimTypePyInferShape)
+                           .value("py_infer_shape", PrimType::kPrimTypePyInfer)
                            .value("user_custom", PrimType::kPrimTypeUserCustom)
-                           .value("py_infer_check", PrimType::kPrimTypePyInferCheck);
+                           .value("py_infer_check", PrimType::kPrimTypePyCheck);
                          (void)py::class_<PrimitivePyAdapter, std::shared_ptr<PrimitivePyAdapter>>(*m, "Primitive_")
                            .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePyAdapter::parse_info_)
                            .def(py::init<py::str &>())

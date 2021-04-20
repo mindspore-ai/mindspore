@@ -382,13 +382,13 @@ TEST_F(TestOps, Conv2dAttrTest) {
 }
 
 TEST_F(TestOps, CustomOpAttrTest) {
-  Primitive prim("CustomOp", true, kPrimTypePyInferShape);
+  Primitive prim("CustomOp", true, kPrimTypePyInfer);
   prim.SetAttrs({
     {"attr1", MakeValue(static_cast<int64_t>(3))},
     {"attr2", MakeValue(static_cast<int64_t>(1))},
   });
   ASSERT_EQ(prim.name(), std::string("CustomOp"));
-  ASSERT_EQ(prim.prim_type(), kPrimTypePyInferShape);
+  ASSERT_EQ(prim.prim_type(), kPrimTypePyInfer);
 
   auto attrs = prim.attrs();
   for (auto attr : attrs) {
