@@ -49,3 +49,5 @@ from .tanh_grad import TanhGrad
 from .tile import Tile
 from .lamb_apply_optimizer_assign import LambApplyOptimizerAssign
 from .lamb_apply_weight_assign import LambApplyWeightAssign
+from .softmax_grad_ext import SoftmaxGradExt
+from .square_sum_v1 import SquareSumV1

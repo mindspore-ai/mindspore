@@ -59,6 +59,8 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimClipByNormNoDivSum,
     prim::kLambApplyOptimizerAssign,
     prim::kLambApplyWeightAssign,
+    prim::kSoftmaxGradExt,
+    prim::kSquareSumV1,
 #elif ENABLE_GPU
     prim::kPrimBiasAdd,
     prim::kPrimFusedAdam,
