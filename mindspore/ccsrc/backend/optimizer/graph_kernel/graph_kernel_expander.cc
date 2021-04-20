@@ -50,6 +50,9 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimLayerNorm,
     prim::kPrimLayerNormGrad,
     prim::kPrimExpandDims,
+    prim::kPrimBiasAddGrad,
+    prim::kPrimGeLU,
+    prim::kPrimSoftmax,
     prim::kPrimTile,
 #if ENABLE_D
     prim::kPrimSqrtGrad,
@@ -58,8 +61,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kLambApplyWeightAssign,
 #elif ENABLE_GPU
     prim::kPrimBiasAdd,
-    prim::kPrimBiasAddGrad,
-    prim::kPrimGeLU,
     prim::kPrimFusedAdam,
     prim::kPrimFusedAdamWeightDecay,
     prim::kPrimBatchNorm,
@@ -69,7 +70,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimMinimumGrad,
     prim::kPrimDropout,
     prim::kPrimDropoutGrad,
-    prim::kPrimSoftmax,
     prim::kPrimRelu,
     prim::kPrimReluGrad,
     prim::kPrimSigmoid,
