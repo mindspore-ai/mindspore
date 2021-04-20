@@ -230,5 +230,5 @@ def test_train_lenet_with_new_interface(num_classes=10, epoch=20, batch_size=32)
         grads = F.identity(grads)
         optimizer(grads)
         losses.append(loss)
-    assert losses[-1].asnumpy() < 0.008
+    assert losses[-1].asnumpy() < 0.01
     assert losses[-1].asnumpy() > 0.001
