@@ -60,6 +60,7 @@ class UniqueCPUKernel : public CPUKernel {
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
   size_t output_size_{0};
+  bool sorted_{false};
   CNodeWeakPtr node_wpt_;
 
   template <typename DataType>
@@ -378,7 +379,7 @@ MS_REG_CPU_KERNEL(
   UniqueCPUKernel);
 
 MS_REG_CPU_KERNEL(
-  Unique, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  Unique, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
   UniqueCPUKernel);
 
 MS_REG_CPU_KERNEL(
