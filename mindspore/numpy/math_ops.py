@@ -1237,9 +1237,7 @@ def log(x, dtype=None):
         On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
 
     Args:
-        x (Tensor): Input array. For integer arguments with absolute value larger
-            than 1 the result is always zero because of the way Python handles
-            integer division. For integer zero the result is an overflow.
+        x (Tensor): Input array.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -2088,7 +2086,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 def _gcd(x1, x2):
     """Calculates gcd without applying keyword arguments."""
     dtype = _promote(F.dtype(x1), F.dtype(x2))
-    if _get_device() == 'CPU' and not _check_is_float(dtype):
+    if not _check_is_float(dtype):
         # F.reduce_sum only supports float
         x1 = F.cast(x1, mstype.float32)
         x2 = F.cast(x2, mstype.float32)
@@ -2173,7 +2171,7 @@ def lcm(x1, x2, dtype=None):
         q2 = F.tensor_div(x2, common_divisor)
         res = F.tensor_mul(F.tensor_mul(q1, q2), common_divisor)
         dtype = F.dtype(res)
-        if _get_device() == 'CPU' and not _check_is_float(dtype):
+        if not _check_is_float(dtype):
             # F.absolute only supports float
             res = F.cast(res, mstype.float32)
         return F.absolute(res).astype(dtype)
@@ -2222,7 +2220,9 @@ def convolve(a, v, mode='full'):
         a = asarray_const(a)
     if not isinstance(v, Tensor):
         v = asarray_const(v)
-    if a.size == 0 or v.size == 0:
+    a_size = F.shape_mul(a.shape)
+    v_size = F.shape_mul(v.shape)
+    if a_size == 0 or v_size == 0:
         _raise_value_error("Inputs cannot be empty.")
     a = _expand(a, 1)
     v = _expand(v, 1)
@@ -2231,22 +2231,22 @@ def convolve(a, v, mode='full'):
     v = v.astype("float32")
     if a.ndim != 1 or v.ndim != 1:
         _raise_value_error("a and v must be 1-D tensor.")
-    if a.size < v.size:
+    if a_size < v_size:
         a, v = v, a
     v = v[::-1]
     if mode not in ('same', 'full', 'valid'):
         _raise_value_error("mode must be one of ['full', 'same', 'valid']")
-    if v.size > 1:
+    if v_size > 1:
         if mode == 'same':
-            pad_left = _to_tensor(_list_comprehensions(v.size // 2, 0.0, True))
-            pad_right = _to_tensor(_list_comprehensions(v.size - v.size // 2 - 1, 0.0, True))
-            a = P.Concat(axis=0)((pad_left, a, pad_right))
+            pad_left = _to_tensor(_list_comprehensions(v_size // 2, 0.0, True))
+            pad_right = _to_tensor(_list_comprehensions(v_size - v_size // 2 - 1, 0.0, True))
+            a = P.Concat(0)((pad_left, a, pad_right))
         elif mode == 'full':
-            pad = _to_tensor(_list_comprehensions(v.size - 1, 0.0, True))
-            a = P.Concat(axis=0)((pad, a, pad))
+            pad = _to_tensor(_list_comprehensions(v_size - 1, 0.0, True))
+            a = P.Concat(0)((pad, a, pad))
     a = a.reshape(1, 1, 1, a.size)
     v = v.reshape(1, 1, 1, v.size)
-    _conv = P.Conv2D(out_channel=1, kernel_size=(1, v.size), pad_mode="valid")
+    _conv = P.Conv2D(1, (1, v.size))
     return _conv(a, v).reshape(-1).astype(final_dtype)
 
 
