@@ -187,7 +187,7 @@ int NetRunner::TrainLoop() {
     if (save_checkpoint_ != 0 && (i + 1) % save_checkpoint_ == 0) {
       auto cpkt_fn =
         ms_head_file_.substr(0, ms_head_file_.find_last_of('.')) + "_trained_" + std::to_string(i + 1) + ".ms";
-      session_->SaveToFile(cpkt_fn);
+      mindspore::lite::Model::Export(head_model_, cpkt_fn.c_str());
     }
 
     std::cout << i + 1 << ": Loss is " << loss << " [min=" << min_loss << "]" << std::endl;
@@ -213,7 +213,7 @@ int NetRunner::Main() {
 
   if (cycles_ > 0) {
     auto trained_fn = ms_head_file_.substr(0, ms_head_file_.find_last_of('.')) + "_trained.ms";
-    session_->SaveToFile(trained_fn);
+    mindspore::lite::Model::Export(head_model_, trained_fn.c_str());
   }
   return 0;
 }

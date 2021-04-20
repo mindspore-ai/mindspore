@@ -176,10 +176,6 @@ int Flags::InitTrainModel() {
       std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 output tensors";
       return RET_INPUT_PARAM_INVALID;
     }
-    if (this->quantType != QuantType_QUANT_NONE) {
-      std::cerr << "INPUT ILLEGAL: train model converter is not supporting quantization";
-      return RET_INPUT_PARAM_INVALID;
-    }
   }
   return RET_OK;
 }

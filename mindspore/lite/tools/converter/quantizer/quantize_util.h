@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_UTIL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
 
 #include <dirent.h>
 #include <sys/stat.h>
@@ -83,6 +83,7 @@ class QuantStrategy {
   bool CanConvOpQuantized(const CNodePtr &node) const;
   bool CanMulOpQuantized(const CNodePtr &node) const;
   bool CanOpPostQuantized(AnfNodePtr &node) const;
+  bool CanTensorQuantized(const AnfNodePtr &inputNode) const;
 
   size_t m_weight_size_;
   size_t m_conv_weight_quant_channel_threshold_;
@@ -417,4 +418,4 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 }  // namespace mindspore::lite::quant
-#endif
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
