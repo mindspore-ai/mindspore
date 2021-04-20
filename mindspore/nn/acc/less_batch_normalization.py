@@ -27,7 +27,7 @@ __all__ = ["LessBN"]
 
 class CommonHeadLastFN(Cell):
     r"""
-    The last full normalization layer.
+    The last full Normalization layer.
 
     This layer implements the operation as:
 

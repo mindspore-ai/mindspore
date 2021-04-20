@@ -75,13 +75,13 @@ Dataset used: [The LJ Speech Dataset](<https://keithito.com/LJ-Speech-Dataset>)
         ├──egs                             // Note the egs folder should be downloaded from the above link  
         ├──utils                           // Note the utils folder should be downloaded from the above link  
         ├── audio.py                       // Audio utils. Note this script should be downloaded from the above link
-        ├── compute-meanvar-stats.py       // Compute mean-variance normalization stats. Note this script should be downloaded from the above link
+        ├── compute-meanvar-stats.py       // Compute mean-variance Normalization stats. Note this script should be downloaded from the above link
         ├── evaluate.py                    // Evaluation
         ├── export.py                      // Convert mindspore model to air model  
         ├── hparams.py                     // Hyper-parameter configuration. Note this script should be downloaded from the above link
         ├── mksubset.py                    // Make subset of dataset. Note this script should be downloaded from the above link
         ├── preprocess.py                  // Preprocess dataset. Note this script should be downloaded from the above link
-        ├── preprocess_normalize.py        // Perform meanvar normalization to preprocessed features. Note this script should be downloaded from the above link
+        ├── preprocess_normalize.py        // Perform meanvar Normalization to preprocessed features. Note this script should be downloaded from the above link
         ├── README.md                      // Descriptions about WaveNet
         ├── train.py                       // Training scripts
         ├── train_pytorch.py               // Note this script should be downloaded from the above link. The initial name of this script is train.py in the project from the link

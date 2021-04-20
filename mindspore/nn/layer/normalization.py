@@ -538,12 +538,12 @@ class BatchNorm3d(Cell):
 
 class GlobalBatchNorm(_BatchNorm):
     r"""
-    Global normalization layer over a N-dimension input.
+    Global Batch Normalization layer over a N-dimension input.
 
-    Global Normalization is cross device synchronized Batch Normalization. The implementation of Batch Normalization
-    only normalizes the data within each device. Global normalization will normalize the input within the group.
-    It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    Global Batch Normalization is cross device synchronized Batch Normalization. The implementation of
+    Batch Normalization only normalizes the data within each device. Global Normalization will normalize
+    the input within the group.It has been described in the paper `Batch Normalization: Accelerating Deep Network
+    Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
     feature using a mini-batch of data and the learned parameters which can be described in the following formula.
 
     .. math::
@@ -1003,9 +1003,9 @@ class GroupNorm(Cell):
     r"""
     Group Normalization over a mini-batch of inputs.
 
-    Group normalization is widely used in recurrent neural networks. It applies
+    Group Normalization is widely used in recurrent neural networks. It applies
     normalization on a mini-batch of inputs for each single training case as described
-    in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group normalization
+    in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
     divides the channels into groups and computes within each group the mean and variance for normalization,
     and it performs very stable over a wide range of batch size. It can be described using the following formula.
 

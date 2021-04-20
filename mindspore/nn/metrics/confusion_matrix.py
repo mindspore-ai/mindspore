@@ -32,7 +32,7 @@ class ConfusionMatrix(Metric):
         num_classes (int): Number of classes in the dataset.
         normalize (str): The parameter of calculating ConfusionMatrix supports four Normalization modes, Choose from:
 
-            - **'no_norm'** (None) - No normalization is used. Default: None.
+            - **'no_norm'** (None) - No Normalization is used. Default: None.
             - **'target'** (str) - Normalization based on target value.
             - **'prediction'** (str) - Normalization based on predicted value.
             - **'all'** (str) - Normalization over the whole matrix.
