@@ -124,7 +124,6 @@ class BatchNormGradGpuKernel : public GpuKernel {
     }
 
     InitResource();
-    mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
 
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
@@ -140,8 +139,8 @@ class BatchNormGradGpuKernel : public GpuKernel {
     }
 
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    if (shape.size() != 4) {
-      MS_LOG(EXCEPTION) << "tensor shape is " << shape.size() << ", BatchNormGradGpuKernel should be 4";
+    if (shape.size() != 4 && shape.size() != 2) {
+      MS_LOG(EXCEPTION) << "tensor shape is " << shape.size() << ", BatchNormGradGpuKernel should be 2D or 4D";
     }
     is_null_input_ = CHECK_NULL_INPUT(shape);
     if (is_null_input_) {
@@ -149,6 +148,12 @@ class BatchNormGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
+    if (shape.size() == 2) {
+      mode_ = CUDNN_BATCHNORM_PER_ACTIVATION;
+    } else {
+      mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
+    }
+
     std::string format = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
     if (format_attr == kOpFormat_NHWC) {
@@ -234,7 +239,13 @@ class BatchNormGradGpuKernel : public GpuKernel {
  private:
   void SetTensorDescriptor(const std::string &format, const std::vector<size_t> &shape) {
     cudnnTensorFormat_t cudnn_format;
-    if (format == kOpFormat_NHWC) {
+    if (shape.size() == 2) {
+      batch_ = SizeToInt(shape[0]);
+      channel_ = SizeToInt(shape[1]);
+      height_ = 1;
+      width_ = 1;
+      cudnn_format = CUDNN_TENSOR_NCHW;
+    } else if (format == kOpFormat_NHWC) {
       batch_ = SizeToInt(shape[0]);
       height_ = SizeToInt(shape[1]);
       width_ = SizeToInt(shape[2]);
