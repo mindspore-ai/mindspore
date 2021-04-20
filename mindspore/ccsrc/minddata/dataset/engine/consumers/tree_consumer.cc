@@ -181,7 +181,8 @@ Status SaveToDisk::ValidateParams() {
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
-  if (access(dir.ParentPath().c_str(), R_OK) == -1) {
+  auto parent_path = dir.ParentPath();
+  if (!parent_path.empty() && access(common::SafeCStr(parent_path), R_OK) == -1) {
     std::string err_msg = "CreateSaver failed, no access to specified dataset path: " + dataset_path_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

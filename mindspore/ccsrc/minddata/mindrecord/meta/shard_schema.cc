@@ -79,20 +79,20 @@ std::vector<std::string> Schema::PopulateBlobFields(json schema) {
 
 bool Schema::ValidateNumberShape(const json &it_value) {
   if (it_value.find("shape") == it_value.end()) {
-    MS_LOG(ERROR) << "%s supports shape only." << it_value["type"].dump();
+    MS_LOG(ERROR) << it_value["type"].dump() << " supports shape only.";
     return false;
   }
 
   auto shape = it_value["shape"];
   if (!shape.is_array()) {
-    MS_LOG(ERROR) << "%s shape format is wrong." << it_value["type"].dump();
+    MS_LOG(ERROR) << "Shape " << it_value["type"].dump() << ", format is wrong.";
     return false;
   }
 
   int num_negtive_one = 0;
   for (const auto &i : shape) {
     if (i == 0 || i < -1) {
-      MS_LOG(ERROR) << "Shape %s, number is wrong." << it_value["shape"].dump();
+      MS_LOG(ERROR) << "Shape " << it_value["shape"].dump() << ", dimension is wrong.";
       return false;
     }
     if (i == -1) {
@@ -101,7 +101,7 @@ bool Schema::ValidateNumberShape(const json &it_value) {
   }
 
   if (num_negtive_one > 1) {
-    MS_LOG(ERROR) << "Shape %s, have at most 1 variable-length dimension." << it_value["shape"].dump();
+    MS_LOG(ERROR) << "Shape " << it_value["shape"].dump() << ", have at most 1 variable-length dimension.";
     return false;
   }
 
