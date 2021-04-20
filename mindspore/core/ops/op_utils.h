@@ -230,6 +230,7 @@ constexpr auto kSpliceContext = "context";
 constexpr auto kSpliceForwardIndexes = "forward_indexes";
 constexpr auto kSpliceOutputDims = "output_dim";
 constexpr auto kSideEffectIO = "side_effect_io";
+constexpr auto kDeviceType = "device_type";
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
 

@@ -26,6 +26,7 @@
 #include "tools/common/tensor_util.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "ops/fusion/partial_fusion.h"
 #include "ops/depend.h"
 #include "ops/make_tuple.h"
@@ -341,6 +342,8 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     }
     node->name = cnode->fullname_with_scope();
     node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
+    auto device_type_attr = cnode->GetAttr(mindspore::ops::kDeviceType);
+    node->deviceType = (device_type_attr != nullptr) ? GetValue<int32_t>(device_type_attr) : -1;
     ret = SetOpInputNode(cnode, meta_graphT, node.get());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SetOpInputNode failed";

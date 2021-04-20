@@ -74,6 +74,7 @@ table CNode {
     inputIndex: [uint];
     outputIndex: [uint];
     quantType: QuantType = QUANT_NONE;
+    deviceType: int = -1; // 1 = CPU, 2 = GPU, 3 = NPU, -1 = UNKNOWN
 }
 
 table SubGraph {
