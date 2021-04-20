@@ -234,6 +234,7 @@ using AsinCost = ReLU6Cost;
 using ErfCost = ReLU6Cost;
 using ErfcCost = ReLU6Cost;
 using ActivationInfoCost = ReLU6Cost;
+using SelectCost = ReLU6Cost;
 
 class TransposeCost : public CastCost {
  public:

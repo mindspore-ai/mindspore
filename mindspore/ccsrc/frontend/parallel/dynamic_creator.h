@@ -191,6 +191,7 @@ REGISTER(StackInfo);
 REGISTER(ConcatInfo);
 REGISTER(SplitInfo);
 REGISTER(UniqueInfo);
+REGISTER(SelectInfo);
 REGISTER(GatherNdInfo);
 REGISTER(TopKInfo);
 REGISTER(ScatterUpdateInfo);
