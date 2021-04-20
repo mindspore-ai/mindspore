@@ -66,10 +66,6 @@ class SomasNode {
   SomasStreamPtr GetStream() { return stream_; }
   const NodeType &GetType() { return type_; }
 
-  // Computing ancestors
-  void PresetAncestorStreams(const std::vector<SomasStreamPtr> stream_vector);
-  void ComputeAncestorNodes();
-
  private:
   const size_t id_{0};
   SomasStreamPtr const stream_;
