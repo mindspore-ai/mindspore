@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/sponge/common/transfer_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/common/atomcrdtocv_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(
-  TransferCrd,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  TransferGpuKernel, float, int)
+MS_REG_GPU_KERNEL_TWO(TransferCrd,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      AtomCrdToCVGpuKernel, float, int)
 }  // namespace kernel
 }  // namespace mindspore

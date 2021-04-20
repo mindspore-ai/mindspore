@@ -34,6 +34,7 @@ from src.particle_mesh_ewald import Particle_Mesh_Ewald
 
 class controller:
     '''controller'''
+
     def __init__(self, args_opt):
         self.input_file = args_opt.i
         self.initial_coordinates_file = args_opt.c
@@ -67,6 +68,7 @@ class controller:
 
 class Simulation(nn.Cell):
     '''simulation'''
+
     def __init__(self, args_opt):
         super(Simulation, self).__init__()
         self.control = controller(args_opt)
@@ -119,6 +121,7 @@ class Simulation(nn.Cell):
         self.exp_gamma = self.liujian_info.exp_gamma
         self.init_Tensor()
         self.op_define()
+        self.update = False
 
     def init_Tensor(self):
         '''init tensor'''
@@ -129,9 +132,12 @@ class Simulation(nn.Cell):
         self.uint_dr_to_dr_cof = Parameter(
             Tensor(np.asarray(self.md_info.uint_dr_to_dr_cof, np.float32), mstype.float32), requires_grad=False)
         self.box_length = Tensor(self.md_info.box_length, mstype.float32)
-        self.charge = Tensor(np.asarray(self.md_info.h_charge, dtype=np.float32), mstype.float32)
+        self.charge = Parameter(Tensor(np.asarray(self.md_info.h_charge, dtype=np.float32), mstype.float32),
+                                requires_grad=False)
         self.old_crd = Parameter(Tensor(np.zeros([self.atom_numbers, 3], dtype=np.float32), mstype.float32),
                                  requires_grad=False)
+        self.last_crd = Parameter(Tensor(np.zeros([self.atom_numbers, 3], dtype=np.float32), mstype.float32),
+                                  requires_grad=False)
         self.uint_crd = Parameter(Tensor(np.zeros([self.atom_numbers, 3], dtype=np.uint32), mstype.uint32),
                                   requires_grad=False)
         self.mass_inverse = Tensor(self.md_info.h_mass_inverse, mstype.float32)
@@ -341,8 +347,65 @@ class Simulation(nn.Cell):
         acc = F.depend(self.acc, crd)
         return vel, crd, acc
 
+    def Main_Print(self, *args):
+        """compute the temperature"""
+        steps, temperature, total_potential_energy, sigma_of_bond_ene, sigma_of_angle_ene, sigma_of_dihedral_ene, \
+        nb14_lj_energy_sum, nb14_cf_energy_sum, LJ_energy_sum, ee_ene = list(args)
+        if steps == 0:
+            print("_steps_ _TEMP_ _TOT_POT_ENE_ _BOND_ENE_ "
+                  "_ANGLE_ENE_ _DIHEDRAL_ENE_ _14LJ_ENE_ _14CF_ENE_ _LJ_ENE_ _CF_PME_ENE_")
+
+        temperature = temperature.asnumpy()
+        total_potential_energy = total_potential_energy.asnumpy()
+        print("{:>7.0f} {:>7.3f} {:>11.3f}".format(steps, float(temperature), float(total_potential_energy)),
+              end=" ")
+        if self.bond.bond_numbers > 0:
+            sigma_of_bond_ene = sigma_of_bond_ene.asnumpy()
+            print("{:>10.3f}".format(float(sigma_of_bond_ene)), end=" ")
+        if self.angle.angle_numbers > 0:
+            sigma_of_angle_ene = sigma_of_angle_ene.asnumpy()
+            print("{:>11.3f}".format(float(sigma_of_angle_ene)), end=" ")
+        if self.dihedral.dihedral_numbers > 0:
+            sigma_of_dihedral_ene = sigma_of_dihedral_ene.asnumpy()
+            print("{:>14.3f}".format(float(sigma_of_dihedral_ene)), end=" ")
+        if self.nb14.nb14_numbers > 0:
+            nb14_lj_energy_sum = nb14_lj_energy_sum.asnumpy()
+            nb14_cf_energy_sum = nb14_cf_energy_sum.asnumpy()
+            print("{:>10.3f} {:>10.3f}".format(float(nb14_lj_energy_sum), float(nb14_cf_energy_sum)), end=" ")
+        LJ_energy_sum = LJ_energy_sum.asnumpy()
+        ee_ene = ee_ene.asnumpy()
+        print("{:>7.3f}".format(float(LJ_energy_sum)), end=" ")
+        print("{:>12.3f}".format(float(ee_ene)))
+        if self.file is not None:
+            self.file.write("{:>7.0f} {:>7.3f} {:>11.3f} {:>10.3f} {:>11.3f} {:>14.3f} {:>10.3f} {:>10.3f} {:>7.3f}"
+                            " {:>12.3f}\n".format(steps, float(temperature), float(total_potential_energy),
+                                                  float(sigma_of_bond_ene), float(sigma_of_angle_ene),
+                                                  float(sigma_of_dihedral_ene), float(nb14_lj_energy_sum),
+                                                  float(nb14_cf_energy_sum), float(LJ_energy_sum), float(ee_ene)))
+        if self.datfile is not None:
+            self.datfile.write(self.crd.asnumpy())
+
+    def Main_Initial(self):
+        """main initial"""
+        if self.control.mdout:
+            self.file = open(self.control.mdout, 'w')
+            self.file.write("_steps_ _TEMP_ _TOT_POT_ENE_ _BOND_ENE_ "
+                            "_ANGLE_ENE_ _DIHEDRAL_ENE_ _14LJ_ENE_ _14CF_ENE_ _LJ_ENE_ _CF_PME_ENE_\n")
+        if self.control.mdcrd:
+            self.datfile = open(self.control.mdcrd, 'wb')
+
+    def Main_Destroy(self):
+        """main destroy"""
+        if self.file is not None:
+            self.file.close()
+            print("Save .out file successfully!")
+        if self.datfile is not None:
+            self.datfile.close()
+            print("Save .dat file successfully!")
+
     def construct(self, step, print_step):
         '''construct'''
+        self.last_crd = self.crd
         if step == 0:
             res = self.neighbor_list_update_init(self.atom_numbers_in_grid_bucket, self.bucket, self.crd,
                                                  self.box_length, self.grid_N, self.grid_length_inverse,
