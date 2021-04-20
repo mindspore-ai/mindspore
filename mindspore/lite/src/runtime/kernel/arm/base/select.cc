@@ -36,27 +36,45 @@ int SelectCPUKernel::Run() {
   auto bool_tensor = in_tensors_.front();
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
-  MS_ASSERT(bool_tensor->Size() == 1);
-  MS_ASSERT(bool_tensor->Size() == 1);
-  auto condition = static_cast<bool *>(bool_tensor->data_c());
-  if (condition == nullptr) {
-    MS_LOG(ERROR) << "data of bool tensor is nullptr";
-    return lite::RET_NULL_PTR;
-  }
-  if (*condition) {
-    auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(), this->in_tensors_.begin() + 1,
-                        this->in_tensors_.begin() + 1 + this->out_tensors_.size());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "carry data error : " << ret;
-      return ret;
+  if (bool_tensor->Size() == 1) {
+    auto condition = static_cast<bool *>(bool_tensor->data_c());
+    if (condition == nullptr) {
+      MS_LOG(ERROR) << "data of bool tensor is nullptr";
+      return lite::RET_NULL_PTR;
+    }
+    if (*condition) {
+      auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(), this->in_tensors_.begin() + 1,
+                          this->in_tensors_.begin() + 1 + this->out_tensors_.size());
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "carry data error : " << ret;
+        return ret;
+      }
+    } else {
+      auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(),
+                          this->in_tensors_.begin() + 1 + this->out_tensors_.size(),
+                          this->in_tensors_.begin() + 1 + 2 * this->out_tensors_.size());
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "carry data error : " << ret;
+        return ret;
+      }
     }
   } else {
-    auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(),
-                        this->in_tensors_.begin() + 1 + this->out_tensors_.size(),
-                        this->in_tensors_.begin() + 1 + 2 * this->out_tensors_.size());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "carry data error : " << ret;
-      return ret;
+    MS_ASSERT(bool_tensor->shape().size() == in_tensors_.at(1)->shape().size());
+    for (size_t i = 0; i < in_tensors_.at(1)->shape().size(); i++) {
+      if (bool_tensor->shape()[i] != in_tensors_.at(1)->shape()[i]) {
+        MS_LOG(ERROR) << "Tensor shapes differ in dim: " << i << " in_tensors_.at(0): " << bool_tensor->shape()[i]
+                      << " in_tensors_.at(1): " << in_tensors_.at(1)->shape()[i];
+        return RET_ERROR;
+      }
+    }
+    MS_ASSERT(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size());
+    auto size = in_tensors_.at(1)->ElementsNum();
+    auto condition = static_cast<bool *>(bool_tensor->data_c());
+    auto input1 = static_cast<float *>(in_tensors_.at(1)->data_c());
+    auto input2 = static_cast<float *>(in_tensors_.at(2)->data_c());
+    auto output = static_cast<float *>(out_tensors_.at(0)->data_c());
+    for (int i = 0; i < size; i++) {
+      output[i] = condition[i] ? input1[i] : input2[i];
     }
   }
   return RET_OK;

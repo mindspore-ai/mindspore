@@ -40,6 +40,7 @@ using mindspore::dataset::transforms::TypeCast;
 using mindspore::dataset::vision::Normalize;
 using mindspore::dataset::vision::Resize;
 using mindspore::lite::AccuracyMetrics;
+using mindspore::lite::Model;
 using mindspore::session::TrainLoopCallBack;
 using mindspore::session::TrainLoopCallBackData;
 
@@ -100,7 +101,10 @@ void NetRunner::InitAndFigureInputs() {
   context.thread_num_ = 2;
 
   model_ = mindspore::lite::Model::Import(ms_file_.c_str());
-  MS_ASSERT(nullptr != model_);
+  if (model_ == nullptr) {
+    std::cout << "import model failed" << std::endl;
+    return;
+  }
   session_ = mindspore::session::TrainSession::CreateSession(model_, &context, true);
 
   MS_ASSERT(nullptr != session_);
@@ -184,7 +188,7 @@ int NetRunner::Main() {
 
   if (epochs_ > 0) {
     auto trained_fn = ms_file_.substr(0, ms_file_.find_last_of('.')) + "_trained.ms";
-    mindspore::lite::Model::Export(model_, trained_fn.c_str());
+    Model::Export(model_, trained_fn.c_str());
   }
   return 0;
 }

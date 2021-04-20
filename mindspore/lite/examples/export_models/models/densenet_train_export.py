@@ -22,11 +22,9 @@ import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, nn
 from mindspore.train.serialization import export
 
-sys.path.append(os.environ['CLOUD_MODEL_ZOO'] + 'official/cv/densenet121/')
+sys.path.append(os.environ['CLOUD_MODEL_ZOO'] + 'official/cv/densenet/')
 #pylint: disable=wrong-import-position
-from official.cv.densenet121.src.network.densenet import DenseNet121
-
-
+from src.network.densenet import DenseNet121
 
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
