@@ -1141,7 +1141,7 @@ class L2NormalizeGrad(PrimitiveWithInfer):
 
 class LayerNormGrad(Primitive):
     """
-    Applies the layer normalization to the input array.
+    Applies the layer Normalization to the input array.
 
     This operator will calculate the input gradients of layernorm.
 

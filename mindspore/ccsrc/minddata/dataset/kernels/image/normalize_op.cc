@@ -39,7 +39,7 @@ NormalizeOp::NormalizeOp(float mean_r, float mean_g, float mean_b, float std_r, 
 
 Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  // Doing the normalization
+  // Doing the Normalization
   return Normalize(input, output, mean_, std_);
 }
 
