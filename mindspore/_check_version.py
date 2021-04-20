@@ -292,9 +292,7 @@ class AscendEnvChecker(EnvChecker):
             return
 
         try:
-            # pylint: disable=unused-import
             import te
-        # pylint: disable=broad-except
         except Exception:
             if Path(self.tbe_path).is_dir():
                 if os.getenv('LD_LIBRARY_PATH'):
@@ -373,6 +371,7 @@ class AscendEnvChecker(EnvChecker):
                     return self.v
         return self.v
 
+
 def check_version_and_env_config():
     """check version and env config"""
     if __package_name__.lower() == "mindspore-ascend":
@@ -384,7 +383,6 @@ def check_version_and_env_config():
         return
 
     try:
-        # pylint: disable=unused-import
         from . import _c_expression
         # check version of ascend site or cuda
         env_checker.check_version()

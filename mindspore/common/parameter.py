@@ -350,7 +350,6 @@ class Parameter(Tensor_):
             Parameter, a new parameter.
         """
         x = copy(self)
-        # pylint: disable=protected-access
         x.param_info = self.param_info.clone()
         x.is_init = False
         x.init = self.init
@@ -426,11 +425,9 @@ class Parameter(Tensor_):
     def _update_tensor_data(self, data):
         "Update the parameter by a Tensor."
         if isinstance(self, Tensor):
-            # for Tensor same shape:
             self.init_flag = False
             self.init = None
             return self.assign_value(data)
-        # create a new tensor
         new_param = Parameter(data, self.name, self.requires_grad)
         new_param.param_info = self.param_info
         return new_param

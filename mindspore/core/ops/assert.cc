@@ -52,7 +52,6 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
     if (condition_shape[0] == 1) {
       auto condition_value = reinterpret_cast<bool *>(input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c());
       MS_EXCEPTION_IF_NULL(condition_value);
-      //      auto condition_value = GetValue<bool>(input_args[0]->BuildValue());
       CheckAndConvertUtils::CheckInteger("condition[0]", *condition_value, kEqual, 1, op_name);
     }
     condition = input_args[0]->BuildType();

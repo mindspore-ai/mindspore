@@ -238,7 +238,6 @@ class _Context:
         graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
         graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
         self.set_param(ms_ctx_param.variable_memory_max_size, variable_memory_max_size_)
-        # pylint: disable=protected-access
         self.set_param(ms_ctx_param._graph_memory_max_size, graph_memory_max_size_)
 
     def set_max_device_memory(self, max_device_memory):

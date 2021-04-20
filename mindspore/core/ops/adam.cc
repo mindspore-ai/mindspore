@@ -43,7 +43,6 @@ abstract::AbstractBasePtr AdamInfer(const PrimitivePtr &primitive, const std::ve
   auto infer_m_type = CheckAndConvertUtils::CheckTensorTypeValid("m_type", m_type, common_valid_types, prim_name);
   auto infer_v_type = CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_type, common_valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grad_type", grad_type, common_valid_types, prim_name);
-  // auto infer_grad_type = grad_type->cast<TensorTypePtr>()->element();
   auto output0 = std::make_shared<abstract::AbstractTensor>(infer_var_type, var_shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(infer_m_type, m_shape);
   auto output2 = std::make_shared<abstract::AbstractTensor>(infer_v_type, v_shape);
