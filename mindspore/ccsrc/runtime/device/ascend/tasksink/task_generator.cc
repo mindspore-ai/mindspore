@@ -151,6 +151,10 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   auto op_name = AnfAlgo::GetCNodeName(anf_node_ptr);
   if ((op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, anf_node_ptr)) {
     MS_LOG(INFO) << "Skip task generation for NonTask op " << anf_node_ptr->fullname_with_scope();
+    auto debug_info = std::make_shared<TaskDebugInfo>();
+    debug_info->op_name_ = anf_node_ptr->fullname_with_scope() + "-NonTask";
+    debug_info->task_num_ = 0;
+    task_debug_info_list_.push_back(debug_info);
     return true;
   }
 
