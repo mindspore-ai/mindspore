@@ -57,6 +57,7 @@ static kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> 
   return *it;
 }
 TrainSession::TrainSession() {
+  is_train_session_ = true;
 #ifdef ENABLE_V0
   if (VersionManager::GetInstance()->CheckV0Schema()) {
     kernel::PopulateTrainV0Parameters();

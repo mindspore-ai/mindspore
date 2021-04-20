@@ -166,11 +166,6 @@ int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) 
     }
   }
 
-#ifdef SUPPORT_TRAIN
-  for (auto out_tensor : out_tensors_) {  // increase RefCount of output tensors, such that Run will not free them
-    out_tensor->set_ref_count(out_tensor->ref_count() + 1);
-  }
-#endif
 #ifdef SUPPORT_GPU
   // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
   if (static_cast<const lite::InnerContext *>(context_)->IsGpuEnabled()) {
