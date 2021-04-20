@@ -133,7 +133,7 @@ int ActorBase::Send(const AID &to, std::string &&name, std::string &&strMsg, boo
 // register the message handle
 void ActorBase::Receive(const std::string &msgName, ActorFunction &&func) {
   if (actionFunctions.find(msgName) != actionFunctions.end()) {
-    MS_LOG(ERROR) << "ACTOR function's name conflicts, a=%s" << id.Name().c_str() << ",f=%s" << msgName.c_str();
+    MS_LOG(ERROR) << "ACTOR function's name conflicts, a=" << id.Name().c_str() << ",f=" << msgName.c_str();
     BUS_EXIT("function's name conflicts");
     return;
   }
