@@ -63,7 +63,7 @@ class Somas {
   std::string hash_id_;
   // Maps
   std::unordered_map<size_t, SomasTensorPtr> tensors_map_;
-  std::map<void *, SomasNodePtr> nodes_map_;
+  std::map<void *, std::vector<SomasNodePtr>> nodes_map_;
   std::map<void *, vector<SomasParameterPtr>> parameters_map_;
 
   // Vectors

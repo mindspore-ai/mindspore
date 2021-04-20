@@ -296,6 +296,15 @@ class AscendAutoMonadContext : public BaseContext {
   // Set flag to indicate whether has already created an stack or not.
   void SetInitedStack(bool flag) { inited_stack_ = flag; }
 
+  // The graphs has recursion.
+  bool HasRecursiveCall() const { return has_recursive_call_; }
+  // The graphs has subgraph multi-call.
+  bool HasSubgraphMultiCall() const { return has_subgraph_multicall_; }
+  // set flag to indicate whether has recursion.
+  void SetRecursiveCall(bool flag) { has_recursive_call_ = flag; }
+  // set flag to indicate whether has multi-call.
+  void SetSubGraphMultiCall(bool flag) { has_subgraph_multicall_ = flag; }
+
   // Map kernel_graph to its call info.
   OrderedMap<KernelGraphPtr, CallInfo> call_info_map;
 
@@ -311,6 +320,10 @@ class AscendAutoMonadContext : public BaseContext {
 
   // Create an stack for multi-call and non-tail recursion.
   bool inited_stack_ = false;
+  // The graphs has recursion or not.
+  bool has_recursive_call_ = false;
+  // The graphs has subgraph multi-call or not.
+  bool has_subgraph_multicall_ = false;
 };
 
 //
@@ -643,6 +656,11 @@ class AscendAutoMonadConverter {
     }
     // Handle recursive call.
     kernel_graph_->SetExecOrderByDefault();
+    if (call_info_.recursive) {
+      const auto &nodes = kernel_graph_->execution_order();
+      AnfAlgo::SetNodeAttr(kAttrRecursiveStart, prim::kValueOne, *nodes.begin());
+      AnfAlgo::SetNodeAttr(kAttrRecursiveEnd, prim::kValueOne, *nodes.rbegin());
+    }
     for (auto &call_site : call_info_.call_sites) {
       if (need_stackops_ && call_site.recursive) {
         MS_LOG(INFO) << "graph:" << kernel_graph_->ToString() << ", loop call_site:" << call_site.cnode->DebugString();
@@ -661,6 +679,7 @@ class AscendAutoMonadConverter {
       auto stack_destroy = StackDestroy(top_graph);
       AnfAlgo::KeepOrder(top_graph, *exec_order.rbegin(), stack_destroy);
       top_graph->SetExecOrderByDefault();
+      context_.SetRecursiveCall(true);
       context_.SetInitedStack(true);
     }
   }
@@ -812,6 +831,9 @@ class AscendAutoMonadConverter {
     // Create LabelGoto or LabelSwitch node.
     auto label_goto_switch = MakeLabelGotoSwitch(cnode, graphes, labels);
     call_site->conversion_cnode = label_goto_switch;
+    if (call_site->recursive) {
+      AnfAlgo::SetNodeAttr(kAttrRecursive, prim::kValueOne, label_goto_switch);
+    }
 
     // Setup return label and output if required.
     if (call_site->return_label != kNoLabel) {
@@ -931,7 +953,11 @@ class AscendAutoMonadConverter {
     MS_EXCEPTION_IF_NULL(label_param);
     auto return_switch = LabelSwitch(label_param, return_labels);
     AnfAlgo::SetNodeAttr(kAttrReturn, prim::kValueOne, return_switch);
+    if (!call_info_.recursive) {
+      AnfAlgo::SetNodeAttr(kAttrMultiCallEnd, prim::kValueOne, return_switch);
+    }
     kernel_graph_->set_end_goto(return_switch);
+    context_.SetSubGraphMultiCall(true);
   }
 
   // Assign graph output to the output parameter.
@@ -1650,6 +1676,8 @@ void AscendAutoMonad::Run() {
   CallInfoFinder::Run(&context);
   AscendAutoMonadConverter::Run(&context);
   kernel_graph_->set_label_num(context.CurrentLabel() + 1);
+  kernel_graph_->set_recursive_call(context.HasRecursiveCall());
+  kernel_graph_->set_subgraph_multi_call(context.HasSubgraphMultiCall());
   MS_LOG(DEBUG) << "Ascend auto-monad finish.";
   DumpGraphForDebug(kernel_graph_);
 }

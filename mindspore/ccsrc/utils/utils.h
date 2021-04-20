@@ -421,6 +421,10 @@ constexpr auto kAttrTopoSortRhsFirst = "topo_sort_rhs_first";
 constexpr auto kAttrIgnoreSideEffect = "ignore_side_effect";
 constexpr auto kAttrSwitchLayer = "switch_layer";
 constexpr auto kAttrReturn = "return";
+constexpr auto kAttrRecursiveStart = "recursive_start";
+constexpr auto kAttrRecursiveEnd = "recursive_end";
+constexpr auto kAttrRecursive = "recursive";
+constexpr auto kAttrMultiCallEnd = "multicall_end";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

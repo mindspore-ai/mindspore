@@ -41,6 +41,7 @@ class KernelGraph : public FuncGraph {
   KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), current_epoch_(0), is_dynamic_shape_(false) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
+    mem_reuse_exec_order_ = {};
     executable_ = true;
     summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
@@ -51,6 +52,7 @@ class KernelGraph : public FuncGraph {
     inputs_ = graph.inputs_;
     child_graph_result_ = graph.child_graph_result_;
     execution_order_ = graph.execution_order_;
+    mem_reuse_exec_order_ = graph.mem_reuse_exec_order_;
     graph_id_ = graph.graph_id_;
     stream_distinction_label_ = graph.stream_distinction_label_;
     front_backend_anf_map_ = graph.front_backend_anf_map_;
@@ -112,6 +114,9 @@ class KernelGraph : public FuncGraph {
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }
   void set_execution_order(std::vector<CNodePtr> &&order) { execution_order_ = std::move(order); }
   const std::vector<CNodePtr> &execution_order() const { return execution_order_; }
+  // Set new exec_order for mem_reuse
+  void set_mem_reuse_exec_order(const std::vector<CNodePtr> &order) { mem_reuse_exec_order_ = order; }
+  const std::vector<CNodePtr> &mem_reuse_exec_order() const { return mem_reuse_exec_order_; }
   void SetExecOrderByDefault();
   uint32_t graph_id() const { return graph_id_; }
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
@@ -278,6 +283,14 @@ class KernelGraph : public FuncGraph {
 
   uint32_t label_num() const { return label_num_; }
   void set_label_num(uint32_t num) { label_num_ = num; }
+  // The graphs has recursion.
+  bool recursive_call() const { return has_recursive_call_; }
+  // The graphs has subgraph multi-call.
+  bool subgraph_multi_call() const { return has_subgraph_multicall_; }
+  // set flag to indicate whether has recursion.
+  void set_recursive_call(bool flag) { has_recursive_call_ = flag; }
+  // set flag to indicate whether has multi-call.
+  void set_subgraph_multi_call(bool flag) { has_subgraph_multicall_ = flag; }
 
  private:
   // remove value node form graph
@@ -307,6 +320,7 @@ class KernelGraph : public FuncGraph {
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<AnfNodePtr> child_graph_result_;
   std::vector<CNodePtr> execution_order_;
+  std::vector<CNodePtr> mem_reuse_exec_order_;
   // extra params and tensors for control flow
   std::vector<std::pair<ParameterPtr, tensor::TensorPtr>> extra_param_tensor_;
   uint32_t graph_id_;
@@ -359,6 +373,10 @@ class KernelGraph : public FuncGraph {
   bool first_step_{true};
   bool has_optimizer_{false};
   bool is_dynamic_shape_{false};
+
+  // Indicate the graphs has recursion or multi-call or not as the root graph.
+  bool has_recursive_call_{false};
+  bool has_subgraph_multicall_{false};
 
   // Number of labels. This is also the 'batch_num' for DavinciModel,
   // It should be 1 if no labels used for control flow.
