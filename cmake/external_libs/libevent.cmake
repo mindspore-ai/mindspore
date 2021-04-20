@@ -1,4 +1,4 @@
-set(libevent_CFLAGS "-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ldl")
+set(libevent_CFLAGS "-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2")
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(libevent_LDFLAGS "-Wl,-z,now")
 endif()
@@ -19,6 +19,7 @@ mindspore_add_pkg(libevent
         LIBS event event_pthreads event_core event_openssl
         URL ${REQ_URL}
         MD5 ${MD5}
+        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/libevent/libevent.patch001
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF -DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT})
 
 include_directories(${libevent_INC})

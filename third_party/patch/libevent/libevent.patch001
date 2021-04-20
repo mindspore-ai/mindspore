@@ -1,0 +1,12 @@
+diff -Npur libevent/CMakeLists.txt libevent-modify/CMakeLists.txt
+--- libevent/CMakeLists.txt	2020-07-05 20:02:46.000000000 +0800
++++ libevent-modify/CMakeLists.txt	2021-04-19 16:36:57.982307500 +0800
+@@ -852,7 +852,7 @@ if (NOT EVENT__DISABLE_OPENSSL)
+ 
+     list(APPEND SRC_OPENSSL bufferevent_openssl.c)
+     list(APPEND HDR_PUBLIC include/event2/bufferevent_ssl.h)
+-    list(APPEND LIB_APPS ${OPENSSL_LIBRARIES})
++    list(APPEND LIB_APPS ${OPENSSL_LIBRARIES} -ldl)
+ endif()
+ 
+ if (NOT EVENT__DISABLE_THREAD_SUPPORT)
