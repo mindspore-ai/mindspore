@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL(UniqueWithPad,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt32),
+                    .AddOutputAttr(kNumberTypeInt64),
                   UniqueWithPadCPUKernel);
 
 MS_REG_CPU_KERNEL(UniqueWithPad,

@@ -57,6 +57,7 @@ const char GROUP[] = "group";
 const char START[] = "start";
 const char LIMIT[] = "limit";
 const char DELTA[] = "delta";
+const char SORTED[] = "sorted";
 
 enum OperateType {
   ADD = 0,
