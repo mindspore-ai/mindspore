@@ -395,9 +395,9 @@ int LiteSession::CompileGraph(Model *model) {
   }
   // scheduler kernels
 #if SUPPORT_NPU
-  Scheduler scheduler(context_, model, &tensors_, npu_manager_, npu_pass_manager_);
+  Scheduler scheduler(context_, model, &tensors_, is_train_session_, npu_manager_, npu_pass_manager_);
 #else
-  Scheduler scheduler(context_, model, &tensors_);
+  Scheduler scheduler(context_, model, &tensors_, is_train_session_);
 #endif
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
@@ -599,7 +599,7 @@ LiteSession::~LiteSession() {
   npu_manager_->Reset();
   delete npu_manager_;
 #endif
-#if GPU_OPENCL && !SUPPORT_TRAIN
+#if GPU_OPENCL
   delete opencl_runtime_wrapper_;
 #endif
   delete (model_);
@@ -737,7 +737,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-#if GPU_OPENCL && !SUPPORT_TRAIN
+#if GPU_OPENCL
   if (this->context_->IsGpuEnabled()) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
     if (opencl_runtime_wrapper_ == nullptr) {
@@ -754,7 +754,7 @@ int LiteSession::InitGPURuntime() {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
     }
   }
-#elif GPU_VULKAN && !SUPPORT_TRAIN
+#elif GPU_VULKAN
   if (this->context_->IsGpuEnabled()) {
     auto gpu_device_info = this->context_->GetGpuInfo();
     vk_runtime_wrap_ = new (std::nothrow) gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime>;

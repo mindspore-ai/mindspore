@@ -134,13 +134,14 @@ class LiteSession : public session::LiteSession {
   Executor *executor_ = nullptr;
   Model *model_ = nullptr;
   std::atomic<bool> is_running_ = false;
+  bool is_train_session_ = false;
 #if SUPPORT_NPU
   NPUManager *npu_manager_ = nullptr;
   NPUPassManager *npu_pass_manager_ = nullptr;
 #endif
-#if GPU_OPENCL && !SUPPORT_TRAIN
+#if GPU_OPENCL
   opencl::OpenCLRuntimeWrapper *opencl_runtime_wrapper_{nullptr};
-#elif GPU_VULKAN && !SUPPORT_TRAIN
+#elif GPU_VULKAN
   gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime> *vk_runtime_wrap_{nullptr};
 #endif
 };

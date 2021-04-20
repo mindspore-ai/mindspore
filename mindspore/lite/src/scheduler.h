@@ -30,16 +30,17 @@
 namespace mindspore::lite {
 class Scheduler {
  public:
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors)
-      : context_(ctx), src_model_(src_model), src_tensors_(src_tensors) {}
+  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session)
+      : context_(ctx), src_model_(src_model), src_tensors_(src_tensors), is_train_session_(is_train_session) {}
 #if SUPPORT_NPU
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors,
+  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session,
             NPUManager *npu_manager = nullptr, NPUPassManager *npu_pass_manager = nullptr)
       : context_(ctx),
         src_model_(src_model),
         src_tensors_(src_tensors),
         npu_manager_(npu_manager),
-        npu_pass_manager_(npu_pass_manager) {}
+        npu_pass_manager_(npu_pass_manager),
+        is_train_session_(is_train_session) {}
 #endif
   ~Scheduler() = default;
 
@@ -113,6 +114,7 @@ class Scheduler {
 #endif
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
+  bool is_train_session_ = false;
 };
 }  // namespace mindspore::lite
 
