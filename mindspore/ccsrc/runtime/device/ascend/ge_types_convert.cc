@@ -31,7 +31,7 @@ ge::proto::DataType GeTypesConvert::GetGeDataType(TypeId type_id) {
     {TypeId::kNumberTypeUInt16, ge::proto::DT_UINT16},   {TypeId::kNumberTypeInt32, ge::proto::DT_INT32},
     {TypeId::kNumberTypeInt64, ge::proto::DT_INT64},     {TypeId::kNumberTypeUInt32, ge::proto::DT_UINT32},
     {TypeId::kNumberTypeUInt64, ge::proto::DT_UINT64},   {TypeId::kNumberTypeBool, ge::proto::DT_BOOL},
-    {TypeId::kNumberTypeFloat64, ge::proto::DT_DOUBLE},
+    {TypeId::kNumberTypeFloat64, ge::proto::DT_DOUBLE},  {TypeId::kObjectTypeString, ge::proto::DT_STRING},
   };
   MS_LOG(INFO) << "Vm origin type_id:" << type_id;
   auto iter = data_type_map.find(type_id);
