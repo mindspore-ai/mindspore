@@ -185,6 +185,7 @@ using ZerosLikeCost = CastCost;
 using OnesLikeCost = CastCost;
 using RangeCost = CastCost;
 using SplitCost = CastCost;
+using ScatterUpdateCost = CastCost;
 
 class SqrtCost : public CastCost {
  public:
