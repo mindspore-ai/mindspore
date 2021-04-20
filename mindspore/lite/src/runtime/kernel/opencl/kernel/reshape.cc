@@ -73,13 +73,18 @@ void ReshapeOpenCLKernel::SetGlobalLocal() {
 
 int ReshapeOpenCLKernel::Prepare() {
   std::string kernel_name = "reshape_NHWC4";
+  if (desc_.data_type == kNumberTypeInt32) {
+    kernel_name += "_int";
+  } else {
+    kernel_name += "_float";
+  }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::string source = reshape_source;
   std::string program_name = "reshape";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {}, out_tensors_[0]->data_type());
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
 #endif
 
   SetGlobalLocal();
@@ -109,10 +114,14 @@ int ReshapeOpenCLKernel::PreProcess() {
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reshape, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reshape, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Reshape, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Squeeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Squeeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Squeeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Unsqueeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Unsqueeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ExpandDims, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ExpandDims, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_ExpandDims, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 }  // namespace mindspore::kernel

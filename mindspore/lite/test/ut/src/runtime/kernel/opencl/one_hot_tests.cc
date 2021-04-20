@@ -42,7 +42,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis3Fp32) {
   float output_data[] = {-1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1};
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -63,7 +63,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis3T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -86,7 +86,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis3T3Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -109,7 +109,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis3T4Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -130,7 +130,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -152,7 +152,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis2T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -173,7 +173,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis2T3Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -196,7 +196,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis2T4Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -219,7 +219,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis1T1Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -240,7 +240,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis1T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -263,7 +263,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis1T3Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -284,7 +284,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis0Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -307,7 +307,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis0T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -332,7 +332,7 @@ TEST_F(TestOpenCL_OneHot, OneHot4DAxis0T3Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -354,7 +354,7 @@ TEST_F(TestOpenCL_OneHot, OneHot3DAxis0Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -377,7 +377,7 @@ TEST_F(TestOpenCL_OneHot, OneHot3DAxis0T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -399,7 +399,7 @@ TEST_F(TestOpenCL_OneHot, OneHot3DAxis1Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -422,7 +422,7 @@ TEST_F(TestOpenCL_OneHot, OneHot3DAxis1T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -443,7 +443,7 @@ TEST_F(TestOpenCL_OneHot, OneHot3DAxis2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -466,7 +466,7 @@ TEST_F(TestOpenCL_OneHot, OneHot3DAxis2T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -487,7 +487,7 @@ TEST_F(TestOpenCL_OneHot, OneHot2DAxis0Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -508,7 +508,7 @@ TEST_F(TestOpenCL_OneHot, OneHot2DAxis0T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -529,7 +529,7 @@ TEST_F(TestOpenCL_OneHot, OneHot2DAxis1Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -551,7 +551,7 @@ TEST_F(TestOpenCL_OneHot, OneHot2DAxis1T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -572,7 +572,7 @@ TEST_F(TestOpenCL_OneHot, OneHot1DAxis0Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},
@@ -593,7 +593,7 @@ TEST_F(TestOpenCL_OneHot, OneHot1DAxis0T2Fp32) {
 
   for (auto fp16_enable : {false}) {
     auto *param = CreateParameter(axis);
-    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+    TestMain({{input_shape, input_data, VAR, kNumberTypeInt32},
               {{}, &depth, CONST_SCALAR, kNumberTypeInt32},
               {{}, &on_value, CONST_SCALAR, kNumberTypeFloat32},
               {{}, &off_value, CONST_SCALAR, kNumberTypeFloat32}},

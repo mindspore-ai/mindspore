@@ -32,8 +32,8 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 
 int GatherOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 2) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel only supports 2 input Tensor but get " << in_tensors_.size();
+  if (in_tensors_.size() != 3) {
+    MS_LOG(ERROR) << "GatherOpenCLKernel only supports 3 input Tensor but get " << in_tensors_.size();
     return RET_ERROR;
   }
   if (out_tensors_.size() != 1) {
@@ -67,6 +67,10 @@ int GatherOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+  if (in_tensors_.at(2)->data_c() == nullptr) {
+    MS_LOG(ERROR) << "GatherOpenCLKernel need Axis.";
+    return RET_ERROR;
+  }
   if (axis_ < 0) {
     axis_ += input_ndim;
   }
@@ -102,6 +106,11 @@ void GatherOpenCLKernel::SetGlobalLocal() {
 
 int GatherOpenCLKernel::Prepare() {
   std::string kernel_name = "gather";
+  if (desc_.data_type == kNumberTypeInt32) {
+    kernel_name += "_int";
+  } else {
+    kernel_name += "_float";
+  }
   if (in_tensors_.at(0)->shape().size() == 1 && axis_ == 0) {
     axis_ = 3;
   }
@@ -110,7 +119,7 @@ int GatherOpenCLKernel::Prepare() {
 #else
   std::string program_name = "gather";
   ocl_runtime_->LoadSource(program_name, gather_source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {}, out_tensors_[0]->data_type());
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
 #endif
   if (in_tensors_.at(1)->IsConst()) {
     intensor1_is_tensor = false;
@@ -130,7 +139,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
   auto indices_tensor = in_tensors_.at(1);
   auto indices_num = indices_tensor->ElementsNum();
   indices_data_ =
-    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num), lite::opencl::MemType::BUF);
+    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num, lite::opencl::MemType::BUF));
   allocator->MapBuffer(indices_data_, CL_MAP_WRITE, nullptr, true);
   if (indices_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -156,7 +165,7 @@ int GatherOpenCLKernel::InitWeights() {
   auto indices_num = indices_tensor->ElementsNum();
   auto allocator = ocl_runtime_->GetAllocator();
   indices_data_ =
-    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num), lite::opencl::MemType::BUF);
+    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num, lite::opencl::MemType::BUF));
   if (indices_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
@@ -198,5 +207,6 @@ int GatherOpenCLKernel::Run() {
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
 
 }  // namespace mindspore::kernel

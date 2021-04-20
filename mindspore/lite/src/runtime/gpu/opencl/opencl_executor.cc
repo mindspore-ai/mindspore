@@ -61,23 +61,35 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
         return ret;
       }
     }
-    if (is_tune) {
-      ret = op_kernel->Tune();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
-        return ret;
+    // Support ZeroShape
+    size_t zero_shape_num = 0;
+    for (auto tensor : kernel->out_tensors()) {
+      for (size_t i = 0; i < tensor->shape().size(); i++) {
+        if (tensor->shape()[i] == 0) {
+          zero_shape_num++;
+          break;
+        }
       }
-    } else {
-      ret = kernel->Run();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
-        return ret;
-      }
-      if (profiling_tmp) {
-        auto execute_time = op_kernel->GetProfilingTimeMs();
-        MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
-                     << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
-        callbackParam.execute_time = execute_time;
+    }
+    if (zero_shape_num != kernel->out_tensors().size()) {
+      if (is_tune) {
+        ret = op_kernel->Tune();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
+          return ret;
+        }
+      } else {
+        ret = kernel->Run();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+          return ret;
+        }
+        if (profiling_tmp) {
+          auto execute_time = op_kernel->GetProfilingTimeMs();
+          MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
+                       << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
+          callbackParam.execute_time = execute_time;
+        }
       }
     }
     ret = kernel->PostProcess();

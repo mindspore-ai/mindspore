@@ -70,15 +70,15 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
   auto img_info = GpuTensorInfo(out_tensors_[idx]);
   size_t img_dtype = CL_FLOAT;
   switch (out_tensors_[idx]->data_type()) {
-    case kNumberTypeFloat32:
-    case kNumberTypeInt32:
-    case kNumberTypeUInt32: {
+    case kNumberTypeFloat32: {
       img_dtype = CL_FLOAT;
       break;
     }
-    case kNumberTypeFloat16:
-    case kNumberTypeInt16:
-    case kNumberTypeUInt16: {
+    case kNumberTypeInt32: {
+      img_dtype = CL_SIGNED_INT32;
+      break;
+    }
+    case kNumberTypeFloat16: {
       img_dtype = CL_HALF_FLOAT;
       break;
     }

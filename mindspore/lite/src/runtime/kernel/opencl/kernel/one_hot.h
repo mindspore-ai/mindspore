@@ -43,6 +43,7 @@ class OneHotOpenCLKernel : public OpenCLKernel {
   int axis_{0};
   GpuTensorInfo in_shape_;
   GpuTensorInfo out_shape_;
+  OneHotParameter *param_;
 };
 }  // namespace mindspore::kernel
 

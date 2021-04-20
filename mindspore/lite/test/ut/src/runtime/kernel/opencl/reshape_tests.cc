@@ -34,7 +34,9 @@ TEST_F(TestOpenCL_Reshape, 4D_2D_test0) {
   float input_data[] = {0, 1, 2, 3, 4, 5, 6};
   float output_data[] = {0, 1, 2, 3, 4, 5, 6};
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -44,7 +46,9 @@ TEST_F(TestOpenCL_Reshape, 4D_4D_test0) {
   float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   float output_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -54,7 +58,9 @@ TEST_F(TestOpenCL_Reshape, 4D_2D_test1) {
   float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   float output_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -64,7 +70,9 @@ TEST_F(TestOpenCL_Reshape, 4D_4D_test1) {
   float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
   float output_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -74,7 +82,9 @@ TEST_F(TestOpenCL_Reshape, 4D_4D_test2) {
   float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
   float output_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -90,7 +100,9 @@ TEST_F(TestOpenCL_Reshape, 4D_4D_test3) {
     20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
   };
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -119,7 +131,9 @@ TEST_F(TestOpenCL_Reshape, 4D_4D_test4) {
     184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199};
 
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -131,7 +145,9 @@ TEST_F(TestOpenCL_Reshape, 4D_4D_test5) {
   float output_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
                          15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 
@@ -152,7 +168,9 @@ TEST_F(TestOpenCL_Reshape, 3D_2D_test6) {
     96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119};
 
   for (auto fp16_enable : {false, true}) {
-    TestMain({{shape_in, input_data, VAR}}, {shape_out, output_data}, CreateParameter(), fp16_enable);
+    TestMain({{shape_in, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(shape_out.size())}, shape_out.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {shape_out, output_data}, CreateParameter(), fp16_enable);
   }
 }
 }  // namespace mindspore::lite::opencl::test
