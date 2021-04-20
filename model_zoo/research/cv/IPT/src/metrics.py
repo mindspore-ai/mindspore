@@ -1,4 +1,4 @@
-'''metrics'''
+"""metrics"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import math
 import numpy as np
 
-
 def quantize(img, rgb_range):
-    '''metrics'''
+    """metrics"""
     pixel_range = 255 / rgb_range
     img = np.multiply(img, pixel_range)
     img = np.clip(img, 0, 255)
@@ -26,15 +26,14 @@ def quantize(img, rgb_range):
     return img
 
 
-def calc_psnr(sr, hr, scale, rgb_range, y_only=False, dataset=None):
-    '''metrics'''
+def calc_psnr(sr, hr, scale, rgb_range):
+    """metrics"""
     hr = np.float32(hr)
     sr = np.float32(sr)
     diff = (sr - hr) / rgb_range
-    gray_coeffs = np.array([65.738, 129.057, 25.064]
-                           ).reshape((1, 3, 1, 1)) / 256
+    gray_coeffs = np.array([65.738, 129.057, 25.064]).reshape((1, 3, 1, 1)) / 256
     diff = np.multiply(diff, gray_coeffs).sum(1)
-    if np.size(hr) == 1:
+    if hr.size == 1:
         return 0
     if scale != 1:
         shave = scale
@@ -49,7 +48,7 @@ def calc_psnr(sr, hr, scale, rgb_range, y_only=False, dataset=None):
 
 
 def rgb2ycbcr(img, y_only=True):
-    '''metrics'''
+    """metrics"""
     img.astype(np.float32)
     if y_only:
         rlt = np.dot(img, [65.481, 128.553, 24.966]) / 255.0 + 16.0

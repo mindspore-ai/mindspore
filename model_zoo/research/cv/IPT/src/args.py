@@ -1,4 +1,4 @@
-'''args'''
+"""args"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import argparse
-from src import template
 
 parser = argparse.ArgumentParser(description='EDSR and MDSR')
 
@@ -24,12 +24,6 @@ parser.add_argument('--template', default='.',
                     help='You can set various templates in option.py')
 
 # Hardware specifications
-parser.add_argument('--n_threads', type=int, default=6,
-                    help='number of threads for data loading')
-parser.add_argument('--cpu', action='store_true',
-                    help='use cpu only')
-parser.add_argument('--n_GPUs', type=int, default=1,
-                    help='number of GPUs')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed')
 
@@ -60,9 +54,8 @@ parser.add_argument('--no_augment', action='store_true',
                     help='do not use data augmentation')
 
 # Model specifications
-parser.add_argument('--model', default='vtip',
+parser.add_argument('--model', default='EDSR',
                     help='model name')
-
 parser.add_argument('--act', type=str, default='relu',
                     help='activation function')
 parser.add_argument('--pre_train', type=str, default='',
@@ -139,6 +132,7 @@ parser.add_argument('--gclip', type=float, default=0,
                     help='gradient clipping threshold (0 = no clipping)')
 
 # Loss specifications
+parser.add_argument('--con_loss', action='store_true')
 parser.add_argument('--loss', type=str, default='1*L1',
                     help='loss function configuration')
 parser.add_argument('--skip_threshold', type=float, default='1e8',
@@ -161,6 +155,7 @@ parser.add_argument('--save_gt', action='store_true',
                     help='save low-resolution and high-resolution images together')
 
 parser.add_argument('--scalelr', type=int, default=0)
+
 # cloud
 parser.add_argument('--moxfile', type=int, default=1)
 parser.add_argument('--imagenet', type=int, default=0)
@@ -169,10 +164,11 @@ parser.add_argument('--train_url', type=str, help='train_dir')
 parser.add_argument('--pretrain', type=str, default='')
 parser.add_argument('--pth_path', type=str, default='')
 parser.add_argument('--load_query', type=int, default=0)
+
 # transformer
 parser.add_argument('--patch_dim', type=int, default=3)
 parser.add_argument('--num_heads', type=int, default=12)
-parser.add_argument('--num_layers', type=int, default=12)
+parser.add_argument('--num_layers', type=int, default=4)
 parser.add_argument('--dropout_rate', type=float, default=0)
 parser.add_argument('--no_norm', action='store_true')
 parser.add_argument('--post_norm', action='store_true')
@@ -192,8 +188,10 @@ parser.add_argument('--sigma', type=float, default=25)
 parser.add_argument('--derain', action='store_true')
 parser.add_argument('--finetune', action='store_true')
 parser.add_argument('--derain_test', type=int, default=10)
+
 # alltask
 parser.add_argument('--alltask', action='store_true')
+parser.add_argument('--task_id', type=int, default=0)
 
 # dehaze
 parser.add_argument('--dehaze', action='store_true')
@@ -201,6 +199,7 @@ parser.add_argument('--dehaze_test', type=int, default=100)
 parser.add_argument('--indoor', action='store_true')
 parser.add_argument('--outdoor', action='store_true')
 parser.add_argument('--nochange', action='store_true')
+
 # deblur
 parser.add_argument('--deblur', action='store_true')
 parser.add_argument('--deblur_test', type=int, default=1000)
@@ -209,6 +208,8 @@ parser.add_argument('--deblur_test', type=int, default=1000)
 parser.add_argument('--init_method', type=str,
                     default=None, help='master address')
 parser.add_argument('--rank', type=int, default=0,
+                    help='Index of current task')
+parser.add_argument('--group_size', type=int, default=0,
                     help='Index of current task')
 parser.add_argument('--world_size', type=int, default=1,
                     help='Total number of tasks')
@@ -223,7 +224,6 @@ parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
 parser.add_argument('--distribute', action='store_true')
 
 args, unparsed = parser.parse_known_args()
-template.set_template(args)
 
 args.scale = [int(x) for x in args.scale.split("+")]
 args.data_train = args.data_train.split('+')

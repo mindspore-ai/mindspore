@@ -1,6 +1,6 @@
 """common"""
 # Copyright 2021 Huawei Technologies Co., Ltd
-
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,13 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import random
-
 import numpy as np
-import skimage.color as sc
 
-
-def get_patch(*args, patch_size=96, scale=2, multi=False, input_large=False):
+def get_patch(*args, patch_size=96, scale=2, input_large=False):
     """common"""
     ih, iw = args[0].shape[:2]
 
@@ -34,25 +32,19 @@ def get_patch(*args, patch_size=96, scale=2, multi=False, input_large=False):
     else:
         tx, ty = ix, iy
 
-    ret = [
-        args[0][iy:iy + ip, ix:ix + ip, :],
-        *[a[ty:ty + tp, tx:tx + tp, :] for a in args[1:]]
-    ]
+    ret = [args[0][iy:iy + ip, ix:ix + ip, :], *[a[ty:ty + tp, tx:tx + tp, :] for a in args[1:]]]
 
     return ret
 
 
 def set_channel(*args, n_channels=3):
     """common"""
-
     def _set_channel(img):
         if img.ndim == 2:
             img = np.expand_dims(img, axis=2)
 
         c = img.shape[2]
-        if n_channels == 1 and c == 3:
-            img = np.expand_dims(sc.rgb2ycbcr(img)[:, :, 0], 2)
-        elif n_channels == 3 and c == 1:
+        if n_channels == 3 and c == 1:
             img = np.concatenate([img] * n_channels, 2)
 
         return img[:, :, :n_channels]
@@ -61,14 +53,11 @@ def set_channel(*args, n_channels=3):
 
 
 def np2Tensor(*args, rgb_range=255):
-    """common"""
-
     def _np2Tensor(img):
         np_transpose = np.ascontiguousarray(img.transpose((2, 0, 1)))
-        tensor = np_transpose.astype(np.float32)
-        tensor = tensor * (rgb_range / 255)
-        return tensor
-
+        input_data = np_transpose.astype(np.float32)
+        output = input_data * (rgb_range / 255)
+        return output
     return [_np2Tensor(a) for a in args]
 
 
@@ -79,6 +68,7 @@ def augment(*args, hflip=True, rot=True):
     rot90 = rot and random.random() < 0.5
 
     def _augment(img):
+        """common"""
         if hflip:
             img = img[:, ::-1, :]
         if vflip:
@@ -88,3 +78,18 @@ def augment(*args, hflip=True, rot=True):
         return img
 
     return [_augment(a) for a in args]
+
+
+def search(root, target="JPEG"):
+    """srdata"""
+    item_list = []
+    items = os.listdir(root)
+    for item in items:
+        path = os.path.join(root, item)
+        if os.path.isdir(path):
+            item_list.extend(search(path, target))
+        elif path.split('/')[-1].startswith(target):
+            item_list.append(path)
+        elif target in (path.split('/')[-2], path.split('/')[-3], path.split('/')[-4]):
+            item_list.append(path)
+    return item_list

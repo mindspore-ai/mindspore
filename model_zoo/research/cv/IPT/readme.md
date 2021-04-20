@@ -45,9 +45,9 @@ The result images are converted into YCbCr color space. The PSNR is evaluated on
 
 ## Requirements
 
-### Hardware (GPU)
+### Hardware (Ascend)
 
-> Prepare hardware environment with GPU.
+> Prepare hardware environment with Ascend.
 
 ### Framework
 
@@ -67,33 +67,72 @@ The result images are converted into YCbCr color space. The PSNR is evaluated on
 ```bash
 IPT
 ├── eval.py # inference entry
+├── train.py # pre-training entry
+├── train_finetune.py # fine-tuning entry
 ├── image
 │   └── ipt.png # the illustration of IPT network
-├── model
-│   ├── IPT_denoise30.ckpt # denoise model weights for noise level 30
-│   ├── IPT_denoise50.ckpt # denoise model weights for noise level 50
-│   ├── IPT_derain.ckpt # derain model weights
-│   ├── IPT_sr2.ckpt # X2 super-resolution model weights
-│   ├── IPT_sr3.ckpt # X3 super-resolution model weights
-│   └── IPT_sr4.ckpt # X4 super-resolution model weights
 ├── readme.md # Readme
 ├── scripts
-│   └── run_eval.sh # inference script for all tasks
+│   ├── run_eval.sh # inference script for all tasks
+│   ├── run_distributed.sh # pre-training script for all tasks
+│   └── run_finetune_distributed.sh # fine-tuning script for all tasks
 └── src
     ├── args.py # options/hyper-parameters of IPT
     ├── data
     │   ├── common.py # common dataset
-    │   ├── __init__.py # Class data init function
-    │   └── srdata.py # flow of loading sr data
-    ├── foldunfold_stride.py # function of fold and unfold operations for images
+    │   ├── bicubic.py # scripts for data pre-processing
+    │   ├── div2k.py # DIV2K dataset
+    │   ├── imagenet.py # Imagenet data for pre-training
+    │   └── srdata.py # All dataset
     ├── metrics.py # PSNR calculator
-    ├── template.py # setting of model selection
-    └── vitm.py # IPT network
+    ├── utils.py # training scripts
+    ├── loss.py # contrastive_loss
+    └── ipt_model.py # IPT network
 ```
 
 ### Script Parameter
 
 > For details about hyperparameters, see src/args.py.
+
+## Training Process
+
+### For pre-training
+
+```bash
+python train.py --distribute --imagenet 1 --batch_size 64 --lr 5e-5 --scale 2+3+4+1+1+1 --alltask --react --model vtip --num_queries 6 --chop_new --num_layers 4 --data_train imagenet --dir_data $DATA_PATH --derain --save $SAVE_PATH
+```
+
+> Or one can run following script for all tasks.
+
+```bash
+sh scripts/run_distributed.sh RANK_TABLE_FILE DATA_PATH
+```
+
+### For fine-tuning
+
+> For SR tasks:
+
+```bash
+python train_finetune.py --distribute --imagenet 0 --batch_size 64 --lr 2e-5 --scale 2+3+4+1+1+1 --model vtip --num_queries 6 --chop_new --num_layers 4 --task_id $TASK_ID --dir_data $DATA_PATH --pth_path $MODEL --epochs 50
+```
+
+> For Denoising tasks:
+
+```bash
+python train_finetune.py --distribute --imagenet 0 --batch_size 64 --lr 2e-5 --scale 2+3+4+1+1+1 --model vtip --num_queries 6 --chop_new --num_layers 4 --task_id $TASK_ID --dir_data $DATA_PATH --pth_path $MODEL --denoise --sigma $Noise --epochs 50
+```
+
+> For deraining tasks:
+
+```bash
+python train_finetune.py --distribute --imagenet 0 --batch_size 64 --lr 2e-5 --scale 2+3+4+1+1+1 --model vtip --num_queries 6 --chop_new --num_layers 4 --task_id $TASK_ID --dir_data $DATA_PATH --pth_path $MODEL --derain --epochs 50
+```
+
+> Or one can run following script for all tasks.
+
+```bash
+sh scripts/run_finetune_distributed.sh RANK_TABLE_FILE DATA_PATH MODEL TASK_ID
+```
 
 ## Evaluation
 
@@ -103,13 +142,13 @@ IPT
 > For SR x4:
 
 ```bash
-python eval.py --dir_data ../../data/ --data_test Set14 --nochange --test_only --ext img --chop_new --scale 4 --pth_path ./model/IPT_sr4.ckpt
+python eval.py --dir_data $DATA_PATH --data_test $DATA_TEST --test_only --ext img --pth_path $MODEL --task_id $TASK_ID --scale $SCALE
 ```
 
 > Or one can run following script for all tasks.
 
 ```bash
-sh scripts/run_eval.sh
+sh scripts/run_eval.sh DATA_PATH DATA_TEST MODEL TASK_ID
 ```
 
 ### Evaluation Result
@@ -117,7 +156,7 @@ sh scripts/run_eval.sh
 The result are evaluated by the value of PSNR (Peak Signal-to-Noise Ratio), and the format is as following.
 
 ```bash
-result: {"Mean psnr of Se5 x4 is 32.68"}
+result: {"Mean psnr of Set5 x4 is 32.68"}
 ```
 
 ## Performance

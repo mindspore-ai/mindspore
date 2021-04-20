@@ -14,18 +14,49 @@
 # limitations under the License.
 # ============================================================================
 
-export DEVICE_ID=$1
-DATA_DIR=$2
-DATA_SET=$3
-PATH_CHECKPOINT=$4
+ulimit -u unlimited
+export DATA_PATH=$1
+export DATA_TEST=$2
+export MODEL=$3
+export TASK_ID=$4
 
-python ../eval.py --dir_data=$DATA_DIR --data_test=$DATA_SET --nochange --test_only --ext img --chop_new --scale 4 --pth_path=$PATH_CHECKPOINT > eval.log 2>&1 &
-python ../eval.py --dir_data=$DATA_DIR --data_test=$DATA_SET --nochange --test_only --ext img --chop_new --scale 3 --pth_path=$PATH_CHECKPOINT > eval.log 2>&1 &
-python ../eval.py --dir_data=$DATA_DIR --data_test=$DATA_SET --nochange --test_only --ext img --chop_new --scale 2 --pth_path=$PATH_CHECKPOINT > eval.log 2>&1 &
+if [[ $TASK_ID -lt 3 ]]; then
+    mkdir ./run_eval$TASK_ID
+    cp -r ../src ./run_eval$TASK_ID
+    cp ../*.py ./run_eval$TASK_ID
+    echo "start evaluation for Task $TASK_ID, device $DEVICE_ID"
+    cd ./run_eval$TASK_ID ||exit
+    env > env$TASK_ID.log
+    SCALE=$[$TASK_ID+2]
+    python eval.py --dir_data $DATA_PATH --data_test $DATA_TEST --test_only --ext img --pth_path $MODEL --task_id $TASK_ID --scale $SCALE > log 2>&1 &
+fi
 
-##denoise
-python ../eval.py --dir_data=$DATA_DIR --data_test=$DATA_SET --nochange --test_only --ext img --chop_new --scale 1 --denoise --sigma 30 --pth_path=$PATH_CHECKPOINT > eval.log 2>&1 &
-python ../eval.py --dir_data=$DATA_DIR --data_test=$DATA_SET --nochange --test_only --ext img --chop_new --scale 1 --denoise --sigma 50 --pth_path=$PATH_CHECKPOINT > eval.log 2>&1 &
+if [[ $TASK_ID -eq 3 ]]; then
+    mkdir ./run_eval$TASK_ID
+    cp -r ../src ./run_eval$TASK_ID
+    cp ../*.py ./run_eval$TASK_ID
+    echo "start evaluation for Task $TASK_ID, device $DEVICE_ID"
+    cd ./run_eval$TASK_ID ||exit
+    env > env$TASK_ID.log
+    python eval.py --dir_data $DATA_PATH --data_test $DATA_TEST --test_only --ext img --pth_path $MODEL --task_id $TASK_ID --scale 1  --derain > log 2>&1 &
+fi
 
-##derain
-python ../eval.py --dir_data=$DATA_DIR --data_test=$DATA_SET --nochange --test_only --ext img --chop_new --scale 1 --derain  --derain_test 1 --pth_path=$PATH_CHECKPOINT > eval.log 2>&1 &
+if [[ $TASK_ID -eq 4 ]]; then
+    mkdir ./run_eval$TASK_ID
+    cp -r ../src ./run_eval$TASK_ID
+    cp ../*.py ./run_eval$TASK_ID
+    echo "start evaluation for Task $TASK_ID, device $DEVICE_ID"
+    cd ./run_eval$TASK_ID ||exit
+    env > env$TASK_ID.log
+    python eval.py --dir_data $DATA_PATH --data_test $DATA_TEST --test_only --ext img --pth_path $MODEL --task_id $TASK_ID --scale 1  --denoise --sigma 30  > log 2>&1 &
+fi
+
+if [[ $TASK_ID -eq 5 ]]; then
+    mkdir ./run_eval$TASK_ID
+    cp -r ../src ./run_eval$TASK_ID
+    cp ../*.py ./run_eval$TASK_ID
+    echo "start evaluation for Task $TASK_ID, device $DEVICE_ID"
+    cd ./run_eval$TASK_ID ||exit
+    env > env$TASK_ID.log
+    python eval.py --dir_data $DATA_PATH --data_test $DATA_TEST --test_only --ext img --pth_path $MODEL --task_id $TASK_ID --scale 1  --denoise --sigma 50  > log 2>&1 &
+fi
