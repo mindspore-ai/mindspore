@@ -40,7 +40,7 @@ class BackwardNet(nn.Cell):
     def __init__(self, net):
         super(BackwardNet, self).__init__(auto_prefix=False)
         self.forward_net = net
-        self.grad = C.GradOperation()
+        self.grad = C.GradOperation(get_all=True)
 
     def construct(self, *inputs):
         grads = self.grad(self.forward_net)(*inputs)
@@ -51,8 +51,13 @@ def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     forward_net = ForwardNet(max_cycles=3)
-    out = forward_net(x, y)
-    print("forward out:", out)
+    # Graph Mode
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_mode_out = forward_net(x, y)
+    # Pynative Mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_mode_out = forward_net(x, y)
+    assert graph_mode_out == pynative_mode_out
 
 
 def test_backward():
@@ -60,5 +65,10 @@ def test_backward():
     y = Tensor(np.array(3), mstype.int32)
     forward_net = ForwardNet(max_cycles=3)
     backward_net = BackwardNet(forward_net)
-    grads = backward_net(x, y)
-    print("grads:", grads)
+    # Graph Mode
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_mode_grads = backward_net(x, y)
+    # Pynative Mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_mode_grads = backward_net(x, y)
+    assert graph_mode_grads == pynative_mode_grads
