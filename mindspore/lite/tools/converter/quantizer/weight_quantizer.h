@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_
 
 #include <future>
 #include <memory>
@@ -43,6 +43,7 @@ class WeightQuantizer : public Quantizer {
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
   STATUS DoConvQuantize(const CNodePtr &);
   STATUS DoMulQuantize(const CNodePtr &);
+  STATUS DoOptimizerQuantize(const CNodePtr &);
   STATUS DoLstmQuantize(const CNodePtr &cnode);
   STATUS DoGatherQuantize(const CNodePtr &cnode);
 
@@ -57,6 +58,7 @@ class WeightQuantizer : public Quantizer {
   std::unique_ptr<QuantStrategy> quant_strategy_;
   size_t bit_num_{8};
   std::string config_file_;
+  std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors;
   PostQuantConfig config_param_;
   std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
@@ -65,6 +67,8 @@ class WeightQuantizer : public Quantizer {
   STATUS SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
                      const PrimitivePtr &primitive);
   STATUS DoFixedQuant(const FuncGraphPtr &);
+  STATUS MarkWeightQuantizationInNodes(const FuncGraphPtr &);
+  STATUS DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
   STATUS RunFp32Graph(const FuncGraphPtr &);
 
   STATUS DoMixedQuantize(const FuncGraphPtr &func_graph);
@@ -74,6 +78,7 @@ class WeightQuantizer : public Quantizer {
   STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info,
                   const PrimitivePtr &primitive);
   STATUS DoQuantSearch(const FuncGraphPtr &func_graph);
+  STATUS DoTensorQuantize(const CNodePtr &);
 };
 }  // namespace mindspore::lite::quant
-#endif
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

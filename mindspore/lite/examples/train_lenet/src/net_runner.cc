@@ -110,6 +110,9 @@ void NetRunner::InitAndFigureInputs() {
   MS_ASSERT(nullptr != session_);
   loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_);
 
+  if (verbose_) {
+    loop_->SetKernelCallBack(nullptr, after_callback);
+  }
   acc_metrics_ = std::shared_ptr<AccuracyMetrics>(new AccuracyMetrics);
 
   loop_->Init({acc_metrics_.get()});
@@ -125,11 +128,11 @@ void NetRunner::InitAndFigureInputs() {
 
 float NetRunner::CalculateAccuracy(int max_tests) {
   test_ds_ = Mnist(data_dir_ + "/test", "all");
-  TypeCast typecast_f("float32");
+  TypeCast typecast_f(mindspore::DataType::kNumberTypeFloat32);
   Resize resize({h_, w_});
   test_ds_ = test_ds_->Map({&resize, &typecast_f}, {"image"});
 
-  TypeCast typecast("int32");
+  TypeCast typecast(mindspore::DataType::kNumberTypeInt32);
   test_ds_ = test_ds_->Map({&typecast}, {"label"});
   test_ds_ = test_ds_->Batch(batch_size_, true);
 
@@ -144,14 +147,14 @@ float NetRunner::CalculateAccuracy(int max_tests) {
 int NetRunner::InitDB() {
   train_ds_ = Mnist(data_dir_ + "/train", "all");
 
-  TypeCast typecast_f("float32");
+  TypeCast typecast_f(mindspore::DataType::kNumberTypeFloat32);
   Resize resize({h_, w_});
   train_ds_ = train_ds_->Map({&resize, &typecast_f}, {"image"});
 
-  TypeCast typecast("int32");
+  TypeCast typecast(mindspore::DataType::kNumberTypeInt32);
   train_ds_ = train_ds_->Map({&typecast}, {"label"});
 
-  train_ds_ = train_ds_->Shuffle(2);
+  // train_ds_ = train_ds_->Shuffle(2);
   train_ds_ = train_ds_->Batch(batch_size_, true);
 
   if (verbose_) {

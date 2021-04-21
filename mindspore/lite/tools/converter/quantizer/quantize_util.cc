@@ -181,6 +181,57 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   return true;
 }
 
+bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &inputNode) const {
+  if (inputNode == nullptr) {
+    MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
+    return false;
+  }
+  ParameterPtr paramNode = nullptr;
+
+  if (inputNode->isa<Parameter>()) {
+    paramNode = inputNode->cast<ParameterPtr>();
+  }
+
+  if (paramNode == nullptr) {
+    MS_LOG(INFO) << "CanTensorQuantized invalid paramNode!";
+    return false;
+  }
+
+  auto abstract_base = paramNode->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(INFO) << "abstract is nullptr";
+    return false;
+  }
+
+  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
+    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
+    return false;
+  }
+
+  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
+  if (weight_shape.size() < 2) {  // do not quant single dim tensors
+    return false;
+  }
+
+  size_t shapeSize = 1;
+  for (auto dim : weight_shape) {
+    shapeSize = shapeSize * dim;
+  }
+  if (shapeSize < m_weight_size_) {
+    MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
+    return false;
+  }
+
+  if (weight_shape.size() == 4) {  // assume Convolution
+    if (weight_shape[0] <= static_cast<int>(m_conv_weight_quant_channel_threshold_)) {
+      MS_LOG(INFO) << "channel less m_conv_weight_quant_channel_threshold_!" << weight_shape[0];
+      return false;
+    }
+  }
+
+  return true;
+}
+
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   MS_ASSERT(primitive != nullptr);
   QuantParamHolderPtr quant_params_holder = nullptr;

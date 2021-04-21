@@ -44,6 +44,8 @@ class NetRunner {
 
   DataSet ds_;
   mindspore::session::TrainSession *session_ = nullptr;
+  mindspore::lite::Model *backbone_model_ = nullptr;
+  mindspore::lite::Model *head_model_ = nullptr;
 
   std::string ms_backbone_file_ = "";
   std::string ms_head_file_ = "";

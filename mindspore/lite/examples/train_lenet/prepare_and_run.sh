@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q]\n"
 }
 
 checkopts()
@@ -10,7 +10,8 @@ checkopts()
   TARGET="arm64"
   DOCKER=""
   MNIST_DATA_PATH=""
-  while getopts 'D:d:r:t:' opt
+  QUANTIZE=""
+  while getopts 'D:d:r:t:q' opt
   do
     case "${opt}" in
       D)
@@ -30,6 +31,9 @@ checkopts()
         ;;
       r)
         TARBALL=$OPTARG
+        ;;
+      q)
+        QUANTIZE="QUANTIZE"
         ;;
       *)
         echo "Unknown option ${opt}!"
@@ -64,7 +68,7 @@ fi
 # Prepare the model
 cd model/ || exit 1
 rm -f *.ms
-./prepare_model.sh $DOCKER || exit 1
+QUANTIZE=${QUANTIZE} ./prepare_model.sh $DOCKER || exit 1
 cd ../
 
 # Copy the .ms model to the package folder

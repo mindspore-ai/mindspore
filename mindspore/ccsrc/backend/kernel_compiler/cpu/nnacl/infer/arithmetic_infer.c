@@ -39,6 +39,10 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   size_t input_shape1_size = input1->shape_size_;
   output->format_ = input0->format_;
   output->data_type_ = input0->data_type_;
+  if ((input0->data_type_ == kNumberTypeInt8) && (input1->data_type_ == kNumberTypeFloat32)) {
+    output->data_type_ = input1->data_type_;
+  }
+
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
