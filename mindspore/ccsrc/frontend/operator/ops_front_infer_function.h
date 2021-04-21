@@ -70,7 +70,7 @@ class RegisterFrontendPrimitiveEvalHelper {
 };
 
 #define REGISTER_FRONTENT_PRIMITIVE_EVAL_IMPL(name, primitive, impl) \
-  static auto helper_##name = RegisterFrontendPrimitiveEvalHelper(primitive, impl)
+  auto helper_##name = RegisterFrontendPrimitiveEvalHelper(primitive, impl)
 }  // namespace abstract
 }  // namespace mindspore
 

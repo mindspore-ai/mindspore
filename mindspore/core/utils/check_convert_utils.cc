@@ -452,7 +452,7 @@ TypeId CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Typ
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);
-    types_id.emplace(element->type_id());
+    (void)types_id.emplace(element->type_id());
   }
   if (types_id.size() > 1) {
     buffer << "'s input type is not same : ";

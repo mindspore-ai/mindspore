@@ -58,7 +58,7 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
       auto new_node = kernel_graph->NewCNode(cnode);
       auto manager = kernel_graph->manager();
       MS_EXCEPTION_IF_NULL(manager);
-      manager->Replace(cnode, new_node);
+      (void)manager->Replace(cnode, new_node);
       changed = true;
     }
   }

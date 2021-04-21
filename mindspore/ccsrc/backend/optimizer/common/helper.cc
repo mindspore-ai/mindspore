@@ -765,7 +765,7 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitiv
       if (input_index >= input_abstract.size()) {
         MS_LOG(EXCEPTION) << " index " << input_index << " is out of range in input abstract " << input_abstract.size();
       }
-      rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
+      (void)rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
     } else {
       if (item < 0) {
         MS_LOG(EXCEPTION) << " the dynamic input size check error the index should be -1 or positive number but got "
@@ -777,9 +777,9 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitiv
           MS_LOG(EXCEPTION) << " index " << input_index << " is out of range in input abstract "
                             << input_abstract.size();
         }
-        dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
+        (void)dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
       }
-      rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(dynamic_inputs_abs));
+      (void)rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(dynamic_inputs_abs));
     }
   }
   return rectifyed_abs_list;

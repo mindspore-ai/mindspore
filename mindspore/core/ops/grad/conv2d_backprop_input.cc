@@ -31,7 +31,7 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   auto pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
   auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
   if (std::all_of(pad_list.begin(), pad_list.end(), [](int64_t elem) -> bool { return elem != 0; })) {
-    primitive->AddAttr(kPadList, MakeValue(pad_list));
+    (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
   } else if (pad_mode == SAME) {
     auto stride_h = stride[0];
     auto stride_w = stride[1];
@@ -51,13 +51,13 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   } else if (pad_mode == PAD) {
     pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
   }
-  primitive->AddAttr(kPadList, MakeValue(pad_list));
+  (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
 }
 AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

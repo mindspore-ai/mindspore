@@ -158,7 +158,7 @@ bool NeedOptimizeCommOp(const AnfNodePtr &node, std::map<std::string, std::strin
 }
 }  // namespace
 
-AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) {
+AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) const {
   auto value_node = node->cast<ValueNodePtr>();
   if (value_node == nullptr) {
     return nullptr;
@@ -535,7 +535,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   std::vector<std::string> formats = {kOpFormat_DEFAULT};
   if (node->isa<ValueNode>()) {
     kernel_info->set_feature_map_flag(false);
-    types.emplace_back(kTypeUnknown);
+    (void)types.emplace_back(kTypeUnknown);
     auto value_node = node->cast<ValueNodePtr>();
     SyncDeviceInfoToValueNode(value_node, &formats, &types);
   }

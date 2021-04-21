@@ -1795,7 +1795,7 @@ void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<
         MS_EXCEPTION_IF_NULL(input_node);
         auto abstract = input_node->abstract();
         MS_EXCEPTION_IF_NULL(abstract);
-        input_abstracts.emplace_back(abstract);
+        (void)input_abstracts.emplace_back(abstract);
       }
       auto prim = AnfAlgo::GetCNodePrimitive(node);
       if (prim->isa<ops::PrimitiveC>()) {

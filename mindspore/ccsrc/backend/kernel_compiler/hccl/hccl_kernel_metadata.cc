@@ -65,7 +65,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
     std::vector<TypeId> inputs_type{};
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      inputs_format.emplace_back(GetKernelFormat(kernel_node, input_index));
+      (void)inputs_format.emplace_back(GetKernelFormat(kernel_node, input_index));
       inputs_type.push_back(type);
     }
     std::vector<std::string> outputs_format;

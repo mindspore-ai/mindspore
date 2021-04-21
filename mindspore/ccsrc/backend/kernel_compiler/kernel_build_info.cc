@@ -209,8 +209,8 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::str
   if (index >= kernel_build_info_->input_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "index outof range!";
   }
-  std::copy(input_reshape_type.begin(), input_reshape_type.end(),
-            std::back_inserter(kernel_build_info_->input_reshape_type_[index]));
+  (void)std::copy(input_reshape_type.begin(), input_reshape_type.end(),
+                  std::back_inserter(kernel_build_info_->input_reshape_type_[index]));
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::string &output_reshape_type,
@@ -218,8 +218,8 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::st
   if (index >= kernel_build_info_->output_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "index outof range!";
   }
-  std::copy(output_reshape_type.begin(), output_reshape_type.end(),
-            std::back_inserter(kernel_build_info_->output_reshape_type_[index]));
+  (void)std::copy(output_reshape_type.begin(), output_reshape_type.end(),
+                  std::back_inserter(kernel_build_info_->output_reshape_type_[index]));
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputDeviceType(const TypeId &output_device_type, size_t index) {

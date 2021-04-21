@@ -17,6 +17,7 @@
 #define MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_
 #include <vector>
 #include "ir/tensor.h"
+#include "ir/dtype/type_id.h"
 namespace mindspore {
 template <typename T>
 void SetTensorData(void *data, T num, size_t data_length) {
