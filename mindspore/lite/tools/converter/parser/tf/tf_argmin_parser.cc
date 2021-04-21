@@ -37,6 +37,7 @@ ops::PrimitiveC *TFArgMinParser::Parse(const tensorflow::NodeDef &tf_op,
   auto &axis_tensor = attr_value.tensor();
   prim->set_axis(axis_tensor.int_val(0));
   prim->set_out_max_value(false);
+  prim->set_top_k(1);
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {

@@ -123,8 +123,6 @@ int TileCPUKernel::SimpleTileImpl(int task_id) {
 }
 
 int TileCPUKernel::RunSimpleTile() {
-  auto data_type = in_tensors_.at(0)->data_type();
-  tile_parameter_->data_size_ = lite::DataTypeSize(data_type);
   auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SimpleTile, this,
                             context_->thread_num_);
   if (ret != RET_OK) {
@@ -135,6 +133,8 @@ int TileCPUKernel::RunSimpleTile() {
 }
 
 int TileCPUKernel::Run() {
+  auto data_type = in_tensors_.at(0)->data_type();
+  tile_parameter_->data_size_ = lite::DataTypeSize(data_type);
   input_addr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data_c());
   output_addr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data_c());
   MS_ASSERT(input_addr_ != nullptr);
