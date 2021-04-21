@@ -55,7 +55,8 @@ class CPUSession : public SessionBasic {
   void Reorder(std::vector<CNodePtr> *node_list);
   void SetKernelInfo(const KernelGraph *kernel_graph);
   void BuildKernel(const KernelGraph *kernel_graph);
-  void SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::TensorPtr> *outputs_tensors);
+  void SetOutputFlags(const VectorRef &base_ref);
+  void UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, KernelWithIndex> &tensor_to_node);
   device::cpu::CPUKernelRuntime runtime_;
 };
 MS_REG_SESSION(kCPUDevice, CPUSession);
