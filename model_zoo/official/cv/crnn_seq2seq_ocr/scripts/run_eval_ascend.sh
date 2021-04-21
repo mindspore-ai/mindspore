@@ -55,6 +55,7 @@ then
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.txt ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
 cd ./eval || exit
