@@ -442,13 +442,8 @@ class Model:
         if sink_size == -1:
             epoch_num = epoch
         else:
-            if is_graph:
-                epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
-                train_dataset.__total_batch__ = epoch * sink_size
-            else:
-                sink_size = -1
-                epoch_num = epoch
-                logger.warning("Loop sink is not supported in PyNative mode, so it will be performed with no loop sink")
+            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
+            train_dataset.__total_batch__ = epoch * sink_size
 
         cb_params.cur_step_num = 0
         cb_params.dataset_sink_mode = True
