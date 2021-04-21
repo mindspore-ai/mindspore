@@ -416,7 +416,7 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 - 使用CIFAR-10数据集评估ResNet18
 
 ```bash
-result: {'acc': 0.9402043269230769} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
+result: {'acc': 0.9363061543521088} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
 ```
 
 - 使用ImageNet2012数据集评估ResNet18
