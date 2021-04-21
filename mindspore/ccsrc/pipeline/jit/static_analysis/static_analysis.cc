@@ -359,7 +359,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
 
   // find prim infer function in the prim function map return a standard evaluator
   auto eval_impl = GetPrimitiveInferImpl(prim);
-  if (eval_impl.infer_shape_dtype_impl_ != nullptr) {
+  if (eval_impl.infer_shape_impl_ != nullptr) {
     return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
   }
 

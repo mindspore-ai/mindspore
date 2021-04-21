@@ -49,17 +49,6 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
                                          kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckSubClass("dtype", output_type, valid_types, prim_name);
 }
-ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args,
-                         const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(prim);
-  // check
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
-  auto out_type = abs->BuildType();
-  MS_EXCEPTION_IF_NULL(out_type);
-  return TensorConstructUtils::CreateZerosTensor(out_type, out_shape);
-}
-}  // namespace
-
 AbstractBasePtr ZerosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -67,6 +56,17 @@ AbstractBasePtr ZerosInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                                                         ZerosInferShape(primitive, input_args));
   return abs;
 }
+
+ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto abs = ZerosInfer(nullptr, prim, input_args);
+  // check
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
+  auto out_type = abs->BuildType();
+  MS_EXCEPTION_IF_NULL(out_type);
+  return TensorConstructUtils::CreateZerosTensor(out_type, out_shape);
+}
+}  // namespace
 REGISTER_PRIMITIVE_EVAL_IMPL(Zeros, prim::kPrimZeros, ZerosInfer, ZerosInferValue, false);
 }  // namespace ops
 }  // namespace mindspore
