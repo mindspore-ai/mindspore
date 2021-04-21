@@ -41,6 +41,55 @@ void DeConvWgInputPackFp16(float16_t *src_ptr, float16_t *dst_ptr, int channel, 
   return;
 }
 
+#ifdef ENABLE_ARM82_A32
+void DeconvWgMergeFp16A32Fun(const float16_t *src_ptr, float16_t *dst_ptr, size_t src_step, size_t dst_step) {
+  asm volatile(
+    "mov r7, %[src_ptr]\n"
+    "mov r8, %[dst_ptr]\n"
+    "mov r10, r8\n"
+
+    "vld1.16 {d0}, [r7], %[src_step]\n"
+    "vld1.16 {d2}, [r8], %[dst_step]\n"
+    "vld1.16 {d4}, [r7], %[src_step]\n"
+    "vld1.16 {d6}, [r8], %[dst_step]\n"
+    "vadd.f16 d0, d0, d2\n"
+    "vld1.16 {d8}, [r7], %[src_step]\n"
+    "vadd.f16 d4, d4, d6\n"
+    "vst1.16 {d0}, [r10], %[dst_step]\n"
+    "vst1.16 {d4}, [r10], %[dst_step]\n"
+
+    "vld1.16 {d10}, [r8], %[dst_step]\n"
+    "vld1.16 {d12}, [r7], %[src_step]\n"
+    "vadd.f16 d8, d8, d10\n"
+    "vld1.16 {d14}, [r8], %[dst_step]\n"
+    "vadd.f16 d12, d12, d14\n"
+    "vld1.16 {d0}, [r7], %[src_step]\n"
+    "vst1.16 {d8}, [r10], %[dst_step]\n"
+    "vst1.16 {d12}, [r10], %[dst_step]\n"
+
+    "vld1.16 {d2}, [r8], %[dst_step]\n"
+    "vld1.16 {d4}, [r7], %[src_step]\n"
+    "vld1.16 {d6}, [r8], %[dst_step]\n"
+    "vadd.f16 d0, d0, d2\n"
+    "vadd.f16 d4, d4, d6\n"
+    "vst1.16 {d0}, [r10], %[dst_step]\n"
+    "vst1.16 {d4}, [r10], %[dst_step]\n"
+
+    "vld1.16 {d8}, [r7], %[src_step]\n"
+    "vld1.16 {d10}, [r8], %[dst_step]\n"
+    "vld1.16 {d12}, [r7], %[src_step]\n"
+    "vld1.16 {d14}, [r8], %[dst_step]\n"
+    "vadd.f16 d8, d8, d10\n"
+    "vadd.f16 d12, d12, d14\n"
+    "vst1.16 {d8}, [r10], %[dst_step]\n"
+    "vst1.16 {d12}, [r10], %[dst_step]\n"
+
+    :
+    : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
+    : "r7", "r8", "r10", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
+}
+#endif
+
 void DeConvWgMergeFp16(const float16_t *src, float16_t *dst, size_t src_stride, size_t dst_stride, size_t count) {
   const float16_t *src_ptr = src;
   float16_t *dst_ptr = dst;
@@ -94,8 +143,18 @@ void DeConvWgMergeFp16(const float16_t *src, float16_t *dst, size_t src_stride, 
       :
       : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
       : "x7", "x8", "x10", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7");
+#elif defined(ENABLE_ARM82_A32)
+    size_t src_step = src_stride * sizeof(float16_t);
+    size_t dst_step = dst_stride * sizeof(float16_t);
+    DeconvWgMergeFp16A32Fun(src_ptr, dst_ptr, src_step, dst_step);
 #else
-    // TODO(fun): arm32
+    for (int j = 0; j < 8; j++) {
+      const float16_t *s = src_ptr + j * src_stride;
+      float16_t *d = dst_ptr + j * dst_stride;
+      for (int k = 0; k < 4; k++) {
+        d[k] += s[k];
+      }
+    }
 #endif
     src_ptr += C8NUM * src_stride;
     dst_ptr += C8NUM * dst_stride;
@@ -377,22 +436,78 @@ void DeconvWgPostFp16(float16_t *tile_out, float16_t *nc4hw4_output, ConvParamet
   return;
 }
 
-#ifdef ENABLE_ARM82_A32
+#ifndef ENABLE_ARM
 void WinogradTransLeftFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
                            size_t length) {
-  // TODO(fun): function
-  return;
+  const int unitStep = 4 * length;
+  for (int y = 0; y < h; ++y) {
+    float16_t *dstY = M + y * w * unitStep;
+    for (int x = 0; x < w; ++x) {
+      float16_t *dstX = dstY + x * unitStep;
+      const float16_t *srcX = S + x * unitStep;
+      memset(dstX, 0, unitStep * sizeof(float16_t));
+      for (int i = 0; i < k; ++i) {
+        float16_t b = B[i * h + y];
+        const float16_t *srcY = srcX + i * w * unitStep;
+        if (0.0f == b) {
+          continue;
+        }
+        for (int j = 0; j < unitStep; ++j) {
+          dstX[j] += srcY[j] * b;
+        }
+      }
+    }
+  }
 }
 
 void WinogradTransRightFp16(const float16_t *S, const float16_t *B, float16_t *M, size_t w, size_t h, size_t k,
                             size_t length) {
-  // TODO(fun): function
-  return;
+  const int unitStep = 4 * length;
+  for (int y = 0; y < h; ++y) {
+    float16_t *dstY = M + y * w * unitStep;
+    const float16_t *srcY = S + y * k * unitStep;
+
+    for (int x = 0; x < w; ++x) {
+      float16_t *dstX = dstY + x * unitStep;
+      memset(dstX, 0, unitStep * sizeof(float16_t));
+      for (int i = 0; i < k; ++i) {
+        const float16_t *srcX = srcY + i * unitStep;
+        float16_t b = B[i * h + x];
+        if (0.0f == b) {
+          continue;
+        }
+        for (int j = 0; j < unitStep; ++j) {
+          dstX[j] += srcX[j] * b;
+        }
+      }
+    }
+  }
 }
 
-void TiledC4MatmulFp16(float16_t *dst, const float16_t *src, const float16_t *weight, size_t ic4, size_t cal_num,
+void TiledC4MatmulFp16(float16_t *dst, const float16_t *src, const float16_t *weight, size_t cal_num, size_t ic4,
                        size_t oc4) {
-  // TODO(fun): function
-  return;
+  int dx, sz, dz;
+  int src_depth_step = 4 * DECONV_WINOGRAD_DEFAULT_TILE;
+  for (dz = 0; dz < oc4; ++dz) {
+    float16_t *dst_z = dst + dz * cal_num;
+    const float16_t *weight_dz = weight + dz * ic4 * 16;
+    for (dx = 0; dx < DECONV_WINOGRAD_DEFAULT_TILE; ++dx) {
+      float16_t *dst_x = dst_z + dx * 4;
+      dst_x[0] = 0.0f;
+      dst_x[1] = 0.0f;
+      dst_x[2] = 0.0f;
+      dst_x[3] = 0.0f;
+      const float16_t *src_dx = src + 4 * dx;
+      for (sz = 0; sz < ic4; ++sz) {
+        const float16_t *src_z = src_dx + sz * src_depth_step;
+        const float16_t *weight_z = weight_dz + sz * 16;
+        for (int i = 0; i < 4; ++i) {
+          for (int j = 0; j < 4; ++j) {
+            dst_x[j] += src_z[i] * weight_z[4 * i + j];
+          }
+        }
+      }
+    }
+  }
 }
 #endif

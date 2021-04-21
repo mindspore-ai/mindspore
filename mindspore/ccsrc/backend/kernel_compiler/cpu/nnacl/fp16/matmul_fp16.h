@@ -19,9 +19,6 @@
 
 #include <float.h>
 #include <string.h>
-#ifdef ENABLE_ARM64
-#include <arm_neon.h>
-#endif
 #include "nnacl/errorcode.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/op_base.h"
@@ -63,6 +60,9 @@ void MatMul12x8A32Fp16(const float16_t *a, const float16_t *b, float16_t *dst, c
 
 void MatVecMulA32Fp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
                       int depth, int col);
+
+void MatVecMulA32NeonFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
+                          int depth, int col);
 #endif
 
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
@@ -79,7 +79,11 @@ void RowMajor2Col12MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, si
 
 void RowMajor2Col16MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
 
+void RowMajor2Col12MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
+
 void RowMajor2Row16MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
+
+void RowMajor2Row12MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
 
 void RowMajor2Row8MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
 
