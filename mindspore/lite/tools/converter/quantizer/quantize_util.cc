@@ -311,7 +311,9 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   }
   const double zeroPointFromMin = quantMinFloat - mMin / scale;
   int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
-
+  if (scale < SCALE_THREASHOLD) {
+    zeroPoint = 0;
+  }
   // The zero point should always be in the range of quantized value,
   // [qmin, qmax].
   MS_ASSERT(zeroPoint >= quantMin);

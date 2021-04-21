@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 #include <queue>
+#include <limits>
+#include <string>
 #include <cmath>
 #include "nnacl/matmul_parameter.h"
 #include "src/lite_kernel.h"
@@ -30,6 +32,94 @@
 static constexpr int kPerTensor = 1;
 
 namespace mindspore::lite {
+
+template <typename T>
+STATUS UnIndexTensorData(const std::vector<int> &unique_values, const std::vector<size_t> &indices, void *dst_data,
+                         size_t dst_data_size) {
+  std::vector<T> un_indexed_data;
+  for (auto index : indices) {
+    if (index >= unique_values.size()) {
+      MS_LOG(ERROR) << "index: " << index << " size: " << unique_values.size();
+      return RET_ERROR;
+    }
+    if (unique_values[index] > std::numeric_limits<T>::max() || unique_values[index] < std::numeric_limits<T>::min()) {
+      MS_LOG(ERROR) << "data: " << unique_values[index] << " max: " << std::numeric_limits<T>::max()
+                    << " min: " << std::numeric_limits<T>::min();
+      return RET_ERROR;
+    }
+    un_indexed_data.push_back(static_cast<T>(unique_values[index]));
+  }
+  if (un_indexed_data.size() * sizeof(T) != dst_data_size) {
+    MS_LOG(ERROR) << "un idnexed data size: " << un_indexed_data.size() * sizeof(T)
+                  << " expected by tensor: " << dst_data_size;
+    return false;
+  }
+  memcpy(dst_data, un_indexed_data.data(), un_indexed_data.size() * sizeof(T));
+
+  return RET_OK;
+}
+
+template <typename T>
+STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vector<size_t> &indices,
+                          const std::vector<size_t> &coors,
+                          const flatbuffers::Vector<flatbuffers::Offset<schema::QuantParam>> *quant_params,
+                          size_t elem_cnt, size_t coor_best_bit, void *dst_data, size_t dst_data_size) {
+  std::vector<T> un_sparsed_data;
+  size_t data_index = 0;
+  auto nz_cnt = indices.size();
+  MS_ASSERT(nz_cnt == coors.size());
+  auto channel_cnt = quant_params->size();
+  auto elem_perchannel = elem_cnt / channel_cnt;
+  for (size_t i = 0; i < nz_cnt; i++) {
+    auto index = indices[i];
+    if (index >= unique_values.size()) {
+      MS_LOG(ERROR) << "index: " << index << " size: " << unique_values.size();
+      return RET_ERROR;
+    }
+    auto nz = unique_values[index];
+    if (nz > std::numeric_limits<T>::max() || nz < std::numeric_limits<T>::min()) {
+      MS_LOG(ERROR) << "data: " << nz << " max: " << std::numeric_limits<T>::max()
+                    << " min: " << std::numeric_limits<T>::min();
+      return RET_ERROR;
+    }
+    auto coor = coors[i];
+    auto cur_channel = data_index / elem_perchannel;
+    auto zp = quant_params->Get(cur_channel)->zeroPoint();
+    for (size_t j = 0; j < coor; j++) {
+      un_sparsed_data.push_back(zp);
+      data_index++;
+    }
+    un_sparsed_data.push_back(static_cast<T>(unique_values[index]));
+    data_index++;
+  }
+  if (un_sparsed_data.size() * sizeof(T) > dst_data_size) {
+    MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T)
+                  << " tensor size: " << dst_data_size;
+    return false;
+  } else if (un_sparsed_data.size() * sizeof(T) < dst_data_size &&
+             (un_sparsed_data.size() + (1 << coor_best_bit) - 1) * sizeof(T) < dst_data_size) {
+    MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T) << " tensor size: " << dst_data_size
+                  << " coor_best_bit: " << coor_best_bit;
+    return false;
+  }
+
+  for (; data_index < dst_data_size / sizeof(T); data_index++) {
+    auto cur_channel = data_index / elem_perchannel;
+    auto zp = quant_params->Get(cur_channel)->zeroPoint();
+    un_sparsed_data.push_back(static_cast<T>(zp));
+  }
+
+  memcpy(dst_data, un_sparsed_data.data(), un_sparsed_data.size() * sizeof(T));
+
+  return RET_OK;
+}
+
+std::vector<bool> StringToBitVector(const std::string &str);
+
+STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
+
+STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
+
 class WeightDecoder {
  public:
   static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);

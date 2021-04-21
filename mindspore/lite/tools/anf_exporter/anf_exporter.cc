@@ -105,6 +105,31 @@ int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::Meta
   return RET_OK;
 }
 
+static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_ptr<schema::CNodeT> &dst_node) {
+  if (!tensor_input->quantParams.empty() && tensor_input->quantParams.front()->inited) {
+    int bit_num = tensor_input->quantParams.at(0)->numBits;
+    // Pack Repetition
+    auto repetition_packed = false;
+    MS_LOG(ERROR) << dst_node->name;
+    if (dst_node->quantType == schema::QuantType_QUANT_WEIGHT) {
+      if (bit_num <= 8) {
+        repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
+      } else {
+        repetition_packed = PackRepetition<int16_t>(bit_num, tensor_input);
+      }
+    }
+
+    if (bit_num != 8 && bit_num != 16 && !repetition_packed) {
+      auto status = DoBitPack(bit_num, tensor_input);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "do bit pack failed. " << status;
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                    const std::shared_ptr<mindspore::Primitive> &primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
@@ -146,16 +171,9 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
         tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
       }
     }
-
-    if (!tensor_input->quantParams.empty()) {
-      int bit_num = tensor_input->quantParams.at(0)->numBits;
-      if (bit_num != 8 && bit_num != 16) {
-        auto status = DoBitPack(bit_num, tensor_input);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "do bit pack failed. " << status;
-          return RET_ERROR;
-        }
-      }
+    if (CompressTensor(tensor_input, dst_node) != RET_OK) {
+      MS_LOG(ERROR) << "CompressTensor error";
+      return RET_ERROR;
     }
   }
 

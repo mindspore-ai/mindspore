@@ -47,7 +47,7 @@
 namespace mindspore::lite::quant {
 static constexpr size_t UINT8_QUANTIZATION = 8;
 static constexpr size_t WEIGHT_INDEX = 1;
-
+static constexpr double SCALE_THREASHOLD = 1e-38;
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
 const char kMethodOutlier[] = "RemovalOutlier";
@@ -163,7 +163,9 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   const auto narrowRange = quantParam.narrowRange;
   const int maxLimit = quant_max;
   const int minLimit = quant_min;
-
+  if (scale <= SCALE_THREASHOLD) {
+    return 0;
+  }
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
     auto quant_data = std::round(originData / scale + zeroPoint);
     if (quant_data > maxLimit) {

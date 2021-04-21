@@ -45,6 +45,12 @@ namespace lite {
 namespace {
 int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
+  if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
+    return IndexingDecompress(src_tensor, dst_tensor);
+  } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
+    return SparseDecompress(src_tensor, dst_tensor);
+  }
+
   bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
                          src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
   if (need_bit_unpack) {
