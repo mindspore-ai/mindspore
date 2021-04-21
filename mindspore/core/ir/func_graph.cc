@@ -50,6 +50,7 @@ FuncGraph::FuncGraph()
       stub_(false),
       stage_(-1) {
   debug_info_ = std::make_shared<GraphDebugInfo>();
+  switch_input_ = std::make_shared<bool>(false);
   switch_layer_input_ = std::make_shared<bool>(false);
 }
 

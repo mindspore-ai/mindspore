@@ -45,7 +45,8 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
     TraceGuard guard(std::make_shared<TraceGradFprop>(primal_graph->debug_info()));
     k_graph_ = std::make_shared<FuncGraph>();
   }
-  // To keep switch_layer's inputs from being inlined
+  // To keep switch or switch_layer's inputs from being inlined
+  k_graph_->set_switch_input(primal_graph->switch_input());
   k_graph_->set_switch_layer_input(primal_graph->switch_layer_input());
   k_graph_->set_stage(primal_graph->stage());
 

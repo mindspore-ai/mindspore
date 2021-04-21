@@ -97,6 +97,7 @@ bool ReAutoMonadWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { r
 
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
+    irpass.switch_defer_inline_,
     irpass.switch_layer_defer_inline_,
     irpass.switch_simplify_,
     irpass.exchange_switch_depend_value_,

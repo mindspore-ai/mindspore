@@ -618,6 +618,9 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
   std::vector<AnfNodePtr> parameters = func_graph->parameters();
   OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> param_map;
 
+  if (*(func_graph->switch_input())) {
+    ofs << "switch_input: " << *(func_graph->switch_input()) << "\n";
+  }
   if (*(func_graph->switch_layer_input())) {
     ofs << "switch_layer_input: " << *(func_graph->switch_layer_input()) << "\n";
   }
