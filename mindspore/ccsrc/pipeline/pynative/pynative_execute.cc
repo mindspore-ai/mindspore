@@ -724,51 +724,7 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
   bool is_find = false;
   GetOpOutputAbstract(op_exec_info, args_spec_list, &is_find);
   MS_LOG(DEBUG) << "Run op infer " << op_exec_info->op_name << " " << op_exec_info->abstract->ToString();
-  // infer output value for const prim
-  auto prim = op_exec_info->py_primitive;
-  MS_EXCEPTION_IF_NULL(prim);
-  py::dict output = abstract::ConvertAbstractToPython(op_exec_info->abstract);
-  if (!output["value"].is_none()) {
-    *ret = output["value"];
-    return;
-  }
-  if (prim->is_const_prim()) {
-    *ret = py::cast("");
-    return;
-  }
-  // add output abstract info into cache
-  if (!is_find && !op_exec_info->is_dynamic_shape) {
-    // const_value need infer every step
-    auto &out = prim_abs_list_[prim->id()];
-    out[args_spec_list].abs = op_exec_info->abstract;
-    out[args_spec_list].attrs = prim->evaluate_added_attrs();
-    MS_LOG(DEBUG) << "Set prim " << op_exec_info->op_name << mindspore::ToString(args_spec_list);
-  }
-  // run op with selected backend
-  auto result = RunOpWithInitBackendPolicy(op_exec_info);
-  py::object out_real;
-  if (result.size() == 1 && op_exec_info->abstract != nullptr &&
-      !op_exec_info->abstract->isa<abstract::AbstractSequeue>()) {
-    out_real = result[0];
-  } else {
-    out_real = result;
-  }
-  // update output abstract for cnode
-  if (cnode != nullptr) {
-    cnode->set_abstract(op_exec_info->abstract);
-  }
-
-  // Save cnode info and build grad graph
-  if (grad()->need_construct_graph() && !grad()->in_cell_with_custom_bprop_()) {
-    std::string obj_id = GetId(out_real);
-    node_abs_map_[obj_id] = op_exec_info->abstract;
-    grad()->SaveOutputNodeMap(obj_id, out_real, cnode);
-    grad()->DoOpGrad(op_exec_info, cnode, out_real);
-  } else {
-    node_abs_map_.clear();
-  }
-  grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real);
-  *ret = out_real;
+  *ret = GetOpOutputObject(op_exec_info, args_spec_list, cnode, is_find);
 }
 
 OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
@@ -939,6 +895,52 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   if (shape->IsDynamic()) {
     op_exec_info->is_dynamic_shape = true;
   }
+}
+
+py::object ForwardExecutor::GetOpOutputObject(const OpExecInfoPtr &op_exec_info,
+                                              const abstract::AbstractBasePtrList &args_spec_list,
+                                              const AnfNodePtr &CNode, bool out_abstract_existed) {
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  auto prim = op_exec_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(prim);
+  // Infer output value by constant folding
+  py::dict output = abstract::ConvertAbstractToPython(op_exec_info->abstract);
+  if (!output["value"].is_none()) {
+    return output["value"];
+  }
+  if (prim->is_const_prim()) {
+    return py::cast("");
+  }
+
+  // Add output abstract info into cache, the const value needs to infer evert step
+  if (!out_abstract_existed && !op_exec_info->is_dynamic_shape) {
+    auto &out = prim_abs_list_[prim->id()];
+    out[args_spec_list].abs = op_exec_info->abstract;
+    out[args_spec_list].attrs = prim->evaluate_added_attrs();
+  }
+
+  // run op with selected backend
+  auto result = RunOpWithInitBackendPolicy(op_exec_info);
+  py::object out_real = result;
+  if (result.size() == 1 && op_exec_info->abstract != nullptr &&
+      !op_exec_info->abstract->isa<abstract::AbstractSequeue>()) {
+    out_real = result[0];
+  }
+
+  // Save cnode info and build grad graph
+  if (grad()->need_construct_graph() && !grad()->in_cell_with_custom_bprop_()) {
+    MS_EXCEPTION_IF_NULL(CNode);
+    std::string obj_id = GetId(out_real);
+    CNode->set_abstract(op_exec_info->abstract);
+    node_abs_map_[obj_id] = op_exec_info->abstract;
+    grad()->SaveOutputNodeMap(obj_id, out_real, CNode);
+    grad()->DoOpGrad(op_exec_info, CNode, out_real);
+  } else {
+    node_abs_map_.clear();
+  }
+  grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real);
+
+  return out_real;
 }
 
 py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name,
@@ -1258,13 +1260,13 @@ TopCellInfoPtr GradExecutor::GetTopCell(std::string cell_id) const {
 }
 
 void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) {
-  MS_EXCEPTION_IF_NULL(op_exec_info);
   // Record op info for judge whether the construct of cell has been changed
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "grad flag is set to false, no need to record op info";
     return;
   }
   // Record input args info (weight or data)
+  MS_EXCEPTION_IF_NULL(op_exec_info);
   std::string input_args_info;
   for (auto mask : op_exec_info->inputs_mask) {
     if (mask) {
@@ -2264,28 +2266,28 @@ bool GradExecutor::CheckNeedCompileGraph() {
   if (already_run_top_cell_.find(top_cell_id) == already_run_top_cell_.end()) {
     MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has never been ran, need compile graph";
     already_run_top_cell_[top_cell_id] = new_top_cell;
-  } else {
-    MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has been ran";
-    auto pre_top_cell = already_run_top_cell_.at(top_cell_id);
-    auto pre_all_op_info = pre_top_cell->all_op_info();
-    auto new_all_op_info = new_top_cell->all_op_info();
-    MS_LOG(DEBUG) << "Pre all op info " << pre_all_op_info;
-    MS_LOG(DEBUG) << "New all op info " << new_all_op_info;
-    if (pre_all_op_info != new_all_op_info) {
-      MS_LOG(DEBUG) << "The op info has been changed, need to compile graph again";
-      EraseTopCellFromTopCellList(pre_top_cell);
-      pre_top_cell->clear();
-      already_run_top_cell_[top_cell_id] = new_top_cell;
-    } else {
-      pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
-      EraseTopCellFromTopCellList(new_top_cell);
-      new_top_cell->clear();
-      set_top_cell(already_run_top_cell_.at(top_cell_id));
-      MS_LOG(DEBUG) << "The op info has not been changed, no need to compile graph again";
-    }
+    return new_top_cell->need_compile_graph();
   }
-  // Update status of top cell
-  top_cell()->set_forward_already_run(true);
+
+  MS_LOG(DEBUG) << "Top cell " << top_cell_id << " has been ran";
+  auto pre_top_cell = already_run_top_cell_.at(top_cell_id);
+  auto pre_all_op_info = pre_top_cell->all_op_info();
+  auto new_all_op_info = new_top_cell->all_op_info();
+  MS_LOG(DEBUG) << "Pre all op info " << pre_all_op_info;
+  MS_LOG(DEBUG) << "New all op info " << new_all_op_info;
+  if (pre_all_op_info != new_all_op_info) {
+    MS_LOG(DEBUG) << "The op info has been changed, need to compile graph again";
+    EraseTopCellFromTopCellList(pre_top_cell);
+    pre_top_cell->clear();
+    already_run_top_cell_[top_cell_id] = new_top_cell;
+  } else {
+    MS_LOG(DEBUG) << "The op info has not been changed, no need to compile graph again";
+    pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
+    EraseTopCellFromTopCellList(new_top_cell);
+    new_top_cell->clear();
+    pre_top_cell->set_forward_already_run(true);
+    set_top_cell(pre_top_cell);
+  }
   return top_cell()->need_compile_graph();
 }
 

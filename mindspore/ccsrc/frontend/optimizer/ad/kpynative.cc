@@ -331,6 +331,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
                                        bool has_sens_arg) {
   // propagate stop_gradient flag to cnode before back propagate;
   PropagateStopGradient();
+  MS_EXCEPTION_IF_NULL(last_node_);
   MS_LOG(DEBUG) << "Last node info " << last_node_->DebugString();
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
@@ -356,8 +357,10 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
     p->set_default_param(input_w->default_param());
   }
 
-  // BackPropagate sensitivity;
-  BackPropagate(true);
+  // BackPropagate sensitivity, except when the last node is a valuenode which may be obtained by constant folding;
+  if (!last_node_->isa<ValueNode>()) {
+    BackPropagate(true);
+  }
   // Return the gradient;
   SetOutput(weights, grad_inputs, grad_weights);
   // Replace Parameter of primal funcgraph  with parameter of tape_;
@@ -489,6 +492,13 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node)
       MS_LOG(DEBUG) << "Build cnode adjoint for anfnode: " << output_node->DebugString();
       auto cnode = output_node->cast<CNodePtr>();
       (void)ForgeGetItemAdjoint(cnode);
+      return;
+    } else if (output_node->isa<ValueNode>()) {
+      auto v_node = output_node->cast<ValueNodePtr>();
+      MS_LOG(DEBUG) << "Build adjoint for valuenode: " << v_node->ToString();
+      auto v_node_pynative_adjoint =
+        std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, v_node->value(), FuncGraphPtr(nullptr));
+      anfnode_to_adjoin_.insert(std::make_pair(output_node, v_node_pynative_adjoint));
       return;
     }
     MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();

@@ -306,6 +306,8 @@ class ForwardExecutor {
                                             const abstract::AbstractBasePtr &abs, const std::string &id, size_t index);
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                            bool *is_find);
+  py::object GetOpOutputObject(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
+                               const AnfNodePtr &CNode, bool out_abstract_existed);
   // Mix precision
   void RunParameterAutoMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
   py::object DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name, size_t index);

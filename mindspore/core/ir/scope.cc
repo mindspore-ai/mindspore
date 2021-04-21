@@ -25,7 +25,7 @@ void ScopeManager::EnterScope(const ScopePtr &scope) {
 }
 
 void ScopeManager::LeaveScope(const ScopePtr &scope) noexcept {
-  if (scope != kDefaultScope) {
+  if (scope != kDefaultScope && !scope_stack_.empty()) {
     scope_stack_.pop();
   }
 }

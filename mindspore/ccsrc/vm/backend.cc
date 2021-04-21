@@ -107,7 +107,7 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   result.graph_id = graph_id;
 
   graph_id_map_[graph_id] = result;
-  if (!pynative::PynativeExecutor::GetInstance()->GetIsDynamicCell()) {
+  if (!pynative_mode) {
     (void)g_ConvertCache.emplace(segment, result);
   }
   return result;
