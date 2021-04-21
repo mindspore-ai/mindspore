@@ -457,7 +457,7 @@ def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="fast
 
 
 def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_id=0, is_training=True,
-                              num_parallel_workers=8):
+                              num_parallel_workers=8, python_multiprocessing=False):
     """Create FasterRcnn dataset with MindDataset."""
     cv2.setNumThreads(0)
     de.config.set_prefetch_size(8)
@@ -471,7 +471,7 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_
         ds = ds.map(input_columns=["image", "annotation"],
                     output_columns=["image", "image_shape", "box", "label", "valid_num"],
                     column_order=["image", "image_shape", "box", "label", "valid_num"],
-                    operations=compose_map_func, python_multiprocessing=False,
+                    operations=compose_map_func, python_multiprocessing=python_multiprocessing,
                     num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True)
     else:

@@ -129,6 +129,10 @@ config = ed({
     "keep_checkpoint_max": 10,
     "save_checkpoint_path": "./",
 
+    # Number of threads used to process the dataset in parallel
+    "num_parallel_workers": 8,
+    # Parallelize Python operations with multiple worker processes
+    "python_multiprocessing": True,
     "mindrecord_dir": "../MindRecord_COCO_TRAIN",
     "coco_root": "./cocodataset/",
     "train_data_type": "train2017",
