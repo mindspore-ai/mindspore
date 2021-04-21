@@ -25,8 +25,7 @@ class Perplexity(Metric):
     sample. A low perplexity indicates the model can predict the sample well. The function is shown as follows:
 
     .. math::
-        b^{\\big(-\\frac{1}{N} \\sum_{i=1}^N \\log_b q(x_i) \\big)}
-        = \\exp \\big(-\\frac{1}{N} \\sum_{i=1}^N \\log q(x_i)\\big)
+        PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
     Args:
         ignore_label (int): Index of an invalid label to be ignored when counting. If set to `None`, it will include all
