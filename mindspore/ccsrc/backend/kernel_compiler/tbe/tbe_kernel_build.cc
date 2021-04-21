@@ -198,7 +198,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
 }
 
 void GenNoneInputDescJson(const std::shared_ptr<OpIOInfo> &input_ptr, size_t input_i,
-                          std::vector<nlohmann::json> *input_list) {
+                          std::vector<nlohmann::json> *const input_list) {
   nlohmann::json input_desc_json;
   auto in_name = input_ptr->name();
   input_desc_json[kJName] = in_name + std::to_string(input_i);
@@ -209,7 +209,7 @@ void GenNoneInputDescJson(const std::shared_ptr<OpIOInfo> &input_ptr, size_t inp
 void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index,
                                                  bool value, const std::shared_ptr<OpIOInfo> &input_ptr,
                                                  const string &op_input_name, size_t input_i,
-                                                 std::vector<nlohmann::json> *input_list) {
+                                                 std::vector<nlohmann::json> *const input_list) {
   auto def_format = kOpFormat_NCHW;
   auto dtype = GetDeviceInputType(anf_node, real_input_index);
   auto format = GetDeviceInputFormat(anf_node, real_input_index);
