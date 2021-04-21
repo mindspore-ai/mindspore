@@ -20,8 +20,8 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_signle_if():
-    class SignleIfNet(nn.Cell):
+def test_single_if():
+    class SingleIfNet(nn.Cell):
         def construct(self, x, y):
             x += 1
             if x < y:
@@ -44,14 +44,14 @@ def test_signle_if():
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    if_net = SignleIfNet()
+    if_net = SingleIfNet()
     net = GradNet(if_net)
     graph_forward_res = if_net(x, y)
     graph_backward_res = net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
-    if_net = SignleIfNet()
+    if_net = SingleIfNet()
     net = GradNet(if_net)
     pynative_forward_res = if_net(x, y)
     pynative_backward_res = net(x, y)

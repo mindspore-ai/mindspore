@@ -16,6 +16,7 @@ import numpy as np
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
+from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 

@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_for_in_if():
+def test_for_in_if_01():
     class ForInIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -40,6 +40,56 @@ def test_for_in_if():
                 for _ in range(0, 5):
                     x = self.add(x, x)
                     self.param_b += 1
+            return x
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([10], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    for_in_if_net = ForInIfNet()
+    net = GradNet(for_in_if_net)
+    graph_forward_res = for_in_if_net(x)
+    graph_backward_res = net(x)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    for_in_if_net = ForInIfNet()
+    net = GradNet(for_in_if_net)
+    pynative_forward_res = for_in_if_net(x)
+    pynative_backward_res = net(x)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+def test_for_in_if_02():
+    class ForInIfNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            param_a = np.full((1,), 5, dtype=np.float32)
+            self.param_a = Parameter(Tensor(param_a), name='a')
+            param_b = np.full((1,), 4, dtype=np.float32)
+            self.param_b = Parameter(Tensor(param_b), name='b')
+
+        def func(self, x):
+            for _ in range(0, 5):
+                x = self.add(x, x)
+                self.param_b += 1
+            return x
+
+        def construct(self, x):
+            if self.param_a > self.func(x):
+                x = self.mul(x, 2)
+                return x
             return x
 
     class GradNet(nn.Cell):

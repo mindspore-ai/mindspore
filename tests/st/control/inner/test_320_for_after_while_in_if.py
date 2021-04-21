@@ -45,7 +45,7 @@ def test_for_after_while_in_if():
             self.assign(self.param_a, x + self.param_a)
             y = self.add(y, self.param_b)
 
-            if self.param_b == y - self.param_a:
+            if self.param_b != y - self.param_a:
                 self.param_c = self.div(self.param_c, self.param_b)
                 while self.param_a > x:
                     self.param_c = self.param_a + 2
