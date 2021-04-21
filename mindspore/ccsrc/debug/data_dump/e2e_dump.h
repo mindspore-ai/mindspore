@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_H_
 
+#include <stdlib.h>
 #include <map>
 #include <string>
 
@@ -33,6 +34,7 @@ class E2eDump {
  public:
   E2eDump() = default;
   ~E2eDump() = default;
+  static void DumpSetup(const session::KernelGraph *graph, uint32_t device_id);
   static bool DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger = nullptr);
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
