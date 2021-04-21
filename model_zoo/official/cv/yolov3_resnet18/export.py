@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
-from src.yolov3 import yolov3_resnet18
+from src.yolov3 import yolov3_resnet18, YoloWithEval
 from src.config import ConfigYOLOV3ResNet18
 
 parser = argparse.ArgumentParser(description='yolov3_resnet18 export')
@@ -38,14 +38,17 @@ if args.device_target == "Ascend":
 
 if __name__ == "__main__":
     config = ConfigYOLOV3ResNet18()
-    network = yolov3_resnet18(config)
+    net = yolov3_resnet18(config)
+    eval_net = YoloWithEval(net, config)
 
     param_dict = load_checkpoint(args.ckpt_file)
-    load_param_into_net(network, param_dict)
+    load_param_into_net(eval_net, param_dict)
 
-    network.set_train(False)
+    eval_net.set_train(False)
 
     shape = [args.batch_size, 3] + config.img_shape
     input_data = Tensor(np.zeros(shape), ms.float32)
+    input_shape = Tensor(np.zeros([1, 2]), ms.float32)
+    inputs = (input_data, input_shape)
 
-    export(network, input_data, file_name=args.file_name, file_format=args.file_format)
+    export(eval_net, *inputs, file_name=args.file_name, file_format=args.file_format)

@@ -12,6 +12,8 @@
         - [Training](#training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export MindIR](#export-mindir)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Evaluation Performance](#evaluation-performance)
@@ -192,6 +194,40 @@ You will get the precision and recall value of each class:
   ```
 
 Note the precision and recall values are results of two-classification(person and face) used our own annotations with coco2017.
+
+## [Export MindIR](#contents)
+
+Currently, batchsize can only set to 1.
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export.py.
+Current batch_Size can only be set to 1. Images to be processed needs to be copied to the to-be-processed folder based on the annotation file.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANNO_PATH] [DEVICE_ID]
+```
+
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result in acc.log file.
+
+  ```bash
+  class 0 precision is 88.18%, recall is 66.00%
+  class 1 precision is 85.34%, recall is 79.13%
+  ```
 
 # [Model Description](#contents)
 
