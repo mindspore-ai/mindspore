@@ -2298,9 +2298,9 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
             a variable, with observations in the columns. Otherwise, the relationship
             is transposed: each column represents a variable, while the rows contain
             observations.
-        bias (bool, optional): Default normalization (``False``) is by :math:`(N - 1)`, where
+        bias (bool, optional): Default Normalization (``False``) is by :math:`(N - 1)`, where
             :math:`N` is the number of observations given (unbiased estimate). If bias is
-            ``True``, then normalization is by `N`. These values can be overridden by
+            ``True``, then Normalization is by `N`. These values can be overridden by
             using the keyword `ddof`.
         ddof (int, optional): If not ``None``, the default value implied by `bias` is
             overridden. Note that :math:`ddof=1` will return the unbiased estimate, even
@@ -2362,7 +2362,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
 
     avg = average(m, axis=1, weights=w)
 
-    # Determine the normalization
+    # Determine the Normalization
     if w is None:
         fact = m.shape[1] - ddof
     else:
