@@ -103,7 +103,7 @@ def test_matmul_composite():
         for y in scalars:
             output = net(Tensor(x), Tensor(y))
             expect = np.matmul(x, y)
-            np.testing.assert_array_almost_equal(output.asnumpy(), expect)
+            np.testing.assert_array_almost_equal(output.asnumpy(), expect, decimal=4)
 
     broadcastables = [
         np.random.randn(3).astype(np.float32), np.random.randn(3).astype(np.float32),
@@ -120,4 +120,4 @@ def test_matmul_composite():
         y = broadcastables[2*i + 1]
         output = net(Tensor(x), Tensor(y))
         expect = np.matmul(x, y)
-        np.testing.assert_array_almost_equal(output.asnumpy(), expect)
+        np.testing.assert_array_almost_equal(output.asnumpy(), expect, decimal=4)
