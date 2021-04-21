@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
-#include "frontend/optimizer/irpass/switch_layer_defer_inline.h"
+#include "frontend/optimizer/irpass/switch_or_switch_layer_defer_inline.h"
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 
 namespace mindspore {
@@ -230,6 +230,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Value_Based Eliminate
   value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",
                                             {prim::kPrimSelect, prim::kPrimMinimum, prim::kPrimMaximum});
+
+  // switch defer inline
+  switch_defer_inline_ =
+    MakeSubstitution(std::make_shared<SwitchDeferInline>(), "switch_defer_inline", prim::kPrimSwitch);
 
   // switch_layer defer inline
   switch_layer_defer_inline_ =

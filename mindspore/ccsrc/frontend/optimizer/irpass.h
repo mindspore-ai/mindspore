@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,9 @@ class OptimizeIRPassLib {
 
   // Value_Based Eliminate
   SubstitutionPtr value_based_eliminate_;
+
+  // Switch defer inline
+  SubstitutionPtr switch_defer_inline_;
 
   // SwitchLayer defer inline
   SubstitutionPtr switch_layer_defer_inline_;

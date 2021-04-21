@@ -381,6 +381,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
   static void set_drawer(Drawer drawer) { drawer_ = drawer; }
+  std::shared_ptr<bool> switch_input() const { return switch_input_; }
+  void set_switch_input(std::shared_ptr<bool> switch_input) { switch_input_ = switch_input; }
   std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
   void set_switch_layer_input(std::shared_ptr<bool> switch_layer_input) { switch_layer_input_ = switch_layer_input; }
   bool ContainMultiTarget() const;
@@ -462,8 +464,9 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   OrderedSet<CNodePtr> order_;
   bool stub_;
   inline static Drawer drawer_ = nullptr;
-  // Design switch_layer_input as a ptr to
+  // Design switch_input and switch_layer_input as a ptr to
   // share between derived backpropagator and cloned graphs.
+  std::shared_ptr<bool> switch_input_;
   std::shared_ptr<bool> switch_layer_input_;
   int64_t stage_;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
