@@ -19,6 +19,10 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
+const char *GetSubModuleName(SubModuleId module_id, const char **sub_module_names) {
+  return sub_module_names[module_id % NUM_SUBMODUES];
+}
+
 // export GetTimeString for all sub modules
 std::string GetTimeString() {
 #define BUFLEN 80
