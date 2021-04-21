@@ -31,7 +31,7 @@ GENERATE_GOLDEN = False
 
 def normalize_np(image, mean, std):
     """
-    Apply the normalization
+    Apply the Normalization
     """
     #  DE decodes the image in RGB by default, hence
     #  the values here are in RGB

@@ -86,7 +86,7 @@ class ASRDataset(LoadAudioAndTranscript):
             audio_conf: Config containing the sample rate, window and the window length/stride in seconds
             manifest_filepath (str): manifest_file path.
             labels (list): List containing all the possible characters to map to
-            normalize: Apply standard mean and deviation normalization to audio tensor
+            normalize: Apply standard mean and deviation Normalization to audio tensor
             batch_size (int): Dataset batch size (default=32)
         """
     def __init__(self, audio_conf=None,
@@ -195,7 +195,7 @@ def create_dataset(audio_conf, manifest_filepath, labels, normalize, batch_size,
         audio_conf: Config containing the sample rate, window and the window length/stride in seconds
         manifest_filepath (str): manifest_file path.
         labels (list): list containing all the possible characters to map to
-        normalize: Apply standard mean and deviation normalization to audio tensor
+        normalize: Apply standard mean and deviation Normalization to audio tensor
         train_mode (bool): Whether dataset is use for train or eval (default=True).
         batch_size (int): Dataset batch size
         rank (int): The shard ID within num_shards (default=None).

@@ -564,7 +564,7 @@ std::string Execute::AippCfgGenerator() {
 
     std::vector<uint32_t> aipp_size = AippSizeFilter(resize_paras, crop_paras);
 
-    // Process normalization parameters to find out the final normalization parameters for Aipp module
+    // Process Normalization parameters to find out the final Normalization parameters for Aipp module
     std::vector<uint32_t> normalize_paras;
     if (info_->aipp_cfg_.find(vision::kDvppNormalizeOperation) != info_->aipp_cfg_.end()) {
       for (auto pos = info_->aipp_cfg_.equal_range(vision::kDvppNormalizeOperation); pos.first != pos.second;

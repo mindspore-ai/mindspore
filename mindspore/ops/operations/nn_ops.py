@@ -816,7 +816,7 @@ class FusedBatchNormEx(PrimitiveWithCheck):
 
 class InstanceNorm(PrimitiveWithInfer):
     r"""
-    Instance normalization over a 4D input.
+    Instance Normalization over a 4D input.
 
     This operator applies Instance Normalization over a 4D input (a mini-batch of 2D inputs with
     additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for

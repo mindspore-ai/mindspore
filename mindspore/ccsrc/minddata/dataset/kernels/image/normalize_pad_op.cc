@@ -37,7 +37,7 @@ NormalizePadOp::NormalizePadOp(float mean_r, float mean_g, float mean_b, float s
 
 Status NormalizePadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  // Doing the normalization + pad
+  // Doing the Normalization + pad
   return NormalizePad(input, output, mean_, std_, dtype_);
 }
 

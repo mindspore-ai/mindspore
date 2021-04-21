@@ -74,7 +74,7 @@ class CRF(nn.Cell):
 
     def log_sum_exp(self, logits):
         '''
-        Compute the log_sum_exp score for normalization factor.
+        Compute the log_sum_exp score for Normalization factor.
         '''
         max_score = self.reduce_max(logits, -1)  #16 5 5
         score = self.log(self.reduce_sum(self.exp(logits - max_score), -1))
