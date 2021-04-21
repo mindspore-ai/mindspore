@@ -288,7 +288,7 @@ class BatchNorm1d(_BatchNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Raises:
         TypeError: If `num_features` is not an int.
