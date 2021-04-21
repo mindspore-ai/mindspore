@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 div_op_info = TBERegOp("Div") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("div.so") \
+    .binfile_name("truncate_div.so") \
     .compute_cost(10) \
-    .kernel_name("div") \
+    .kernel_name("truncate_div") \
     .partial_flag(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
