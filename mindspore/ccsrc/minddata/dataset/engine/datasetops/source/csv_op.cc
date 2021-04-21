@@ -214,6 +214,7 @@ int CsvOp::CsvParser::PutRow(int c) {
   Status s = rows_connector_->Add(worker_id_, std::move(cur_row_));
   if (s.IsError()) {
     err_message_ = s.ToString();
+    if (s.StatusCode() == kMDInterrupted) return -2;
     return -1;
   }
 
@@ -502,7 +503,9 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
       // which is a 32-bit -1, it's not equal to the 8-bit -1 on Euler OS. So instead of char, we use
       // int to receive its return value.
       int chr = ifs.get();
-      if (csv_parser.ProcessMessage(chr) != 0) {
+      int err = csv_parser.ProcessMessage(chr);
+      if (err != 0) {
+        if (err == -2) return Status(kMDInterrupted);
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse file: " + file + ":" +
                                  std::to_string(csv_parser.GetTotalRows() + 1) +
                                  ". Error message: " + csv_parser.GetErrorMessage());
