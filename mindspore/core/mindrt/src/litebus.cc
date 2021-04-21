@@ -83,15 +83,8 @@ int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const
 
 int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                const std::string &udpUrlAdv, int threadCount) {
-  static std::atomic_bool initLitebusStatus(false);
-  bool inite = false;
-  if (initLitebusStatus.compare_exchange_strong(inite, true) == false) {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus has been initialized");
-    return BUS_OK;
-  }
-
-  int result = BUS_OK;
-  result = InitializeImp(tcpUrl, tcpUrlAdv, udpUrl, udpUrlAdv, threadCount);
+  /* support repeat initialize  */
+  int result = InitializeImp(tcpUrl, tcpUrlAdv, udpUrl, udpUrlAdv, threadCount);
   static LiteBusExit busExit;
 
   return result;

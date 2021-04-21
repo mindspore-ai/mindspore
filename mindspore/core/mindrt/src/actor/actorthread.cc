@@ -15,32 +15,58 @@
  */
 
 #include "actor/actorthread.h"
+#ifdef __WIN32__
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <atomic>
 #include <utility>
 #include <memory>
 
 namespace mindspore {
 constexpr int MAXTHREADNAMELEN = 12;
+
+size_t GetMaxThreadCount() {
+  size_t max_num;
+#ifdef __WIN32__
+  SYSTEM_INFO sys_info;
+  GetSystemInfo(&sys_info);
+  max_num = sys_info.dwNumberOfProcessors;
+#else
+  max_num = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+  return max_num;
+}
+
 ActorThread::ActorThread() : readyActors(), workers() {
   readyActors.clear();
   workers.clear();
 
-  char *envThreadName = getenv("LITEBUS_THREAD_NAME");
+  char *envThreadName = getenv("MINDRT_THREAD_NAME");
   if (envThreadName != nullptr) {
     threadName = envThreadName;
     if (threadName.size() > MAXTHREADNAMELEN) {
       threadName.resize(MAXTHREADNAMELEN);
     }
   } else {
-    threadName = "HARES_LB_ACT";
+    threadName = "HARES_MINDRT_ACT";
   }
+
+  maxThreads_ = GetMaxThreadCount();
 }
 
 ActorThread::~ActorThread() {}
 void ActorThread::AddThread(int threadCount) {
+  std::unique_lock<std::mutex> lock(initLock_);
   for (int i = 0; i < threadCount; ++i) {
+    if (workers.size() >= maxThreads_) {
+      MS_LOG(DEBUG) << "threads number in mindrt reach upper limit. maxThreads:" << maxThreads_;
+      break;
+    }
     std::unique_ptr<std::thread> worker(new (std::nothrow) std::thread(&ActorThread::Run, this));
     BUS_OOM_EXIT(worker);
+
     workers.push_back(std::move(worker));
   }
 }

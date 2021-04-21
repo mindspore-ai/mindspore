@@ -45,6 +45,9 @@ class ActorThread {
 
   std::list<std::unique_ptr<std::thread>> workers;
   std::string threadName;
+
+  size_t maxThreads_;
+  std::mutex initLock_;
 };
 
 };  // end of namespace mindspore
