@@ -49,16 +49,27 @@ link_directories(
     ${LIB_PATH}
 )
 
+# Set output directory
+set(PROJECT_SRC_ROOT ${CMAKE_CURRENT_LIST_DIR}/)
+
+# Set include directory and library directory
+set(ACL_LIB_DIR $ENV{ASCEND_HOME}/acllib)
+set(ATLAS_ACL_LIB_DIR $ENV{ASCEND_HOME}/ascend-toolkit/latest/acllib)
+# Header path
+include_directories(${ACL_LIB_DIR}/include/)
+include_directories(${ATLAS_ACL_LIB_DIR}/include/)
+include_directories(${PROJECT_SRC_ROOT}/../inc)
+
+# add host lib path
+link_directories(${ACL_LIB_DIR})
+find_library(acl libascendcl.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+
 add_executable(main
         ./src/utils.cpp
         ./src/model_process.cpp
         ./src/sample_process.cpp
         ./src/main.cpp)
 
-if(target STREQUAL "Simulator_Function")
-    target_link_libraries(main funcsim)
-else()
-    target_link_libraries(main ascendcl stdc++ gflags)
-endif()
+target_link_libraries(main ${acl} stdc++ gflags)
 
 install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

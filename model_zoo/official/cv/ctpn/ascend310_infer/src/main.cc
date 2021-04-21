@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<TensorTransform> resize(new Resize({576, 960}));
     std::shared_ptr<TensorTransform> normalize(new Normalize({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}));
     std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
-    std::shared_ptr<TensorTransform> typeCast(new TypeCast("float16"));
+    std::shared_ptr<TensorTransform> typeCast(new TypeCast(DataType::kNumberTypeFloat16));
 
     mindspore::dataset::Execute transformDecode(decode);
     mindspore::dataset::Execute transform({resize, normalize, hwc2chw});

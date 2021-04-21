@@ -43,6 +43,7 @@ using mindspore::Graph;
 using mindspore::GraphCell;
 using mindspore::kSuccess;
 using mindspore::MSTensor;
+using mindspore::DataType;
 using mindspore::dataset::Execute;
 using mindspore::dataset::vision::Decode;
 using mindspore::dataset::vision::Resize;
@@ -98,7 +99,7 @@ int main(int argc, char **argv) {
                    std::shared_ptr<Normalize>(new Normalize({127.5, 127.5, 127.5},
                                                                             {127.5, 127.5, 127.5})),
                    std::shared_ptr<HWC2CHW>(new HWC2CHW())});
-  Execute composeCast(std::shared_ptr<TypeCast>(new TypeCast("float16")));
+  Execute composeCast(std::shared_ptr<TypeCast>(new TypeCast(DataType::kNumberTypeFloat16)));
 
   struct timeval start;
   struct timeval end;
