@@ -113,7 +113,9 @@ if __name__ == '__main__':
 
     # When create MindDataset, using the fitst mindrecord file, such as FasterRcnn.mindrecord0.
     dataset = create_fasterrcnn_dataset(mindrecord_file, batch_size=config.batch_size,
-                                        device_num=device_num, rank_id=rank)
+                                        device_num=device_num, rank_id=rank,
+                                        num_parallel_workers=config.num_parallel_workers,
+                                        python_multiprocessing=config.python_multiprocessing)
 
     dataset_size = dataset.get_dataset_size()
     print("Create dataset done!")
