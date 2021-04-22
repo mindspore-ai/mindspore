@@ -37,7 +37,7 @@ int FillOpenCLKernel::RunFill() {
   auto param = reinterpret_cast<FillParameter *>(this->op_parameter_);
   default_ = param->num_dims_;
   ImageSize img_size;
-  cl_float4 fill_value = {};
+  cl_int4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
   allocator_->GetImageSize(src_data, &img_size);
@@ -51,11 +51,11 @@ int FillOpenCLKernel::RunFill() {
 int FillOpenCLKernel::RunShape() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = out_tensors_[0]->data_c();
-  cl_float4 fill_value = {default_, default_, default_, default_};
+  cl_int4 fill_value = {default_, default_, default_, default_};
   auto tensor_shape = in_tensors_[0]->shape();
   void *tensor_shape_data = tensor_shape.data();
   for (int i = 0; i < tensor_shape.size(); ++i) {
-    fill_value.s[i] = reinterpret_cast<float *>(tensor_shape_data)[i];
+    fill_value.s[i] = reinterpret_cast<int *>(tensor_shape_data)[i];
   }
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{1, 1, 1};

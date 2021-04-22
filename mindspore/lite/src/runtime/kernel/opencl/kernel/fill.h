@@ -39,7 +39,7 @@ class FillOpenCLKernel : public OpenCLKernel {
  private:
   int RunFill();
   int RunShape();
-  float default_{0.0f};
+  int default_{0};
 };
 
 }  // namespace mindspore::kernel

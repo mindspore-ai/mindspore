@@ -19,7 +19,7 @@
 namespace mindspore::lite::opencl::test {
 
 class TestOpenCL_Conv2dTranspose : public CommonTest {};
-
+// Check and optimize
 namespace {
 // PrimitiveType_DeConv2D: src/ops/populate/deconv2d_populate.cc
 OpParameter *CreateParameter(int n, int h, int w, int ci, int co, int kh, int kw, std::vector<int> pad, int oh, int ow,

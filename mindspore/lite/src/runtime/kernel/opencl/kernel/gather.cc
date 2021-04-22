@@ -193,6 +193,17 @@ int GatherOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
+int GatherOpenCLKernel::PreProcess() {
+  if (!op_parameter_->infer_flag_) {
+    auto indices_tensor = in_tensors_[1];
+    if (!indices_tensor->IsConst()) {
+      ocl_runtime_->SyncCommandQueue();
+      indices_tensor->MutableData();
+    }
+  }
+  return OpenCLKernel::PreProcess();
+}
+
 int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   if (intensor1_is_tensor) {

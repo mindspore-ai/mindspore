@@ -127,6 +127,7 @@ TEST_F(TestOpenCL_Conv2D, test3_batch2) {
   TestMain_Conv2D(attr, input_data, weight_data, bias_data, output_data, ActType_No, true, 1e-6f);
 }
 
+// Check and optimize
 TEST_F(TestOpenCL_Conv2D, test4) {
   std::vector<std::tuple<std::string, std::string, std::vector<float>, std::vector<float>, std::vector<float>,
                          std::vector<float>, ActType>>

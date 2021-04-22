@@ -72,9 +72,9 @@ TEST_F(TestOpenCL_Stack, input2_ndim3_axis1) {
   std::vector<int> input_shapes[INPUT_NUM] = {{3, 4, 5}, {3, 4, 5}};
   std::vector<int> output_shape = {3, 2, 4, 5};
   size_t input1_size, input2_size, output_size;
-  std::string input1Ppath = "./test_data/stackfp32_input1.bin";
-  std::string input2Ppath = "./test_data/stackfp32_input2.bin";
-  std::string correctOutputPath = "./test_data/stackfp32_output.bin";
+  std::string input1Ppath = "./test_data/stack/input2_ndim3_axis1/stackfp32_input1.bin";
+  std::string input2Ppath = "./test_data/stack/input2_ndim3_axis1/stackfp32_input2.bin";
+  std::string correctOutputPath = "./test_data/stack/input2_ndim3_axis1/stackfp32_output.bin";
   auto input_data1 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto input_data2 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
   auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
@@ -91,9 +91,9 @@ TEST_F(TestOpenCL_Stack, input2_ndim3_axis2) {
   std::vector<int> input_shapes[INPUT_NUM] = {{3, 4, 5}, {3, 4, 5}};
   std::vector<int> output_shape = {3, 4, 2, 5};
   size_t input1_size, input2_size, output_size;
-  std::string input1Ppath = "./test_data/stackfp32_input1.bin";
-  std::string input2Ppath = "./test_data/stackfp32_input2.bin";
-  std::string correctOutputPath = "./test_data/stackfp32_output.bin";
+  std::string input1Ppath = "./test_data/stack/input2_ndim3_axis2/stackfp32_input1.bin";
+  std::string input2Ppath = "./test_data/stack/input2_ndim3_axis2/stackfp32_input2.bin";
+  std::string correctOutputPath = "./test_data/stack/input2_ndim3_axis2/stackfp32_output.bin";
   auto input_data1 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto input_data2 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
   auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
@@ -110,9 +110,9 @@ TEST_F(TestOpenCL_Stack, input2_ndim2_axis2) {
   std::vector<int> input_shapes[INPUT_NUM] = {{1, 96}, {1, 96}};
   std::vector<int> output_shape = {1, 96, 2};
   size_t input1_size, input2_size, output_size;
-  std::string input1Ppath = "./test_data/stackfp32_input1.bin";
-  std::string input2Ppath = "./test_data/stackfp32_input2.bin";
-  std::string correctOutputPath = "./test_data/stackfp32_output.bin";
+  std::string input1Ppath = "./test_data/stack/input2_ndim2_axis2/stackfp32_input1.bin";
+  std::string input2Ppath = "./test_data/stack/input2_ndim2_axis2/stackfp32_input2.bin";
+  std::string correctOutputPath = "./test_data/stack/input2_ndim2_axis2/stackfp32_output.bin";
   auto input_data1 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto input_data2 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
   auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
@@ -129,9 +129,9 @@ TEST_F(TestOpenCL_Stack, input2_ndim3_axis3) {
   std::vector<int> input_shapes[INPUT_NUM] = {{3, 4, 6}, {3, 4, 6}};
   std::vector<int> output_shape = {3, 4, 6, 2};
   size_t input1_size, input2_size, output_size;
-  std::string input1Ppath = "./test_data/stackfp32_input1.bin";
-  std::string input2Ppath = "./test_data/stackfp32_input2.bin";
-  std::string correctOutputPath = "./test_data/stackfp32_output.bin";
+  std::string input1Ppath = "./test_data/stack/input2_ndim3_axis3/stackfp32_input1.bin";
+  std::string input2Ppath = "./test_data/stack/input2_ndim3_axis3/stackfp32_input2.bin";
+  std::string correctOutputPath = "./test_data/stack/input2_ndim3_axis3/stackfp32_output.bin";
   auto input_data1 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
   auto input_data2 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
   auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
@@ -139,46 +139,6 @@ TEST_F(TestOpenCL_Stack, input2_ndim3_axis3) {
     auto *param = CreateParameter(axis);
     TestMain({{input_shapes[0], input_data1, VAR}, {input_shapes[1], input_data2, VAR}}, {output_shape, output_data},
              param, fp16_enable, fp16_enable ? 1e-3 : 1e-9);
-  }
-}
-
-TEST_F(TestOpenCL_Stack, input6_ndim3_axis0) {
-  constexpr int INPUT_NUM = 8;
-  int axis = 0;
-  std::vector<int> input_shapes[INPUT_NUM] = {{1, 17, 18}, {1, 17, 18}, {1, 17, 18}, {1, 17, 18},
-                                              {1, 17, 18}, {1, 17, 18}, {1, 17, 18}, {1, 17, 18}};
-  std::vector<int> output_shape = {8, 1, 17, 18};
-  size_t input1_size, input2_size, input3_size, input4_size, input5_size, input6_size, input7_size, input8_size,
-    output_size;
-  std::string input1Ppath = "./test_data/stackfp32_input1.bin";
-  std::string input2Ppath = "./test_data/stackfp32_input2.bin";
-  std::string input3Ppath = "./test_data/stackfp32_input3.bin";
-  std::string input4Ppath = "./test_data/stackfp32_input4.bin";
-  std::string input5Ppath = "./test_data/stackfp32_input5.bin";
-  std::string input6Ppath = "./test_data/stackfp32_input6.bin";
-  std::string input7Ppath = "./test_data/stackfp32_input7.bin";
-  std::string input8Ppath = "./test_data/stackfp32_input8.bin";
-  std::string correctOutputPath = "./test_data/stackfp32_output.bin";
-  auto input_data1 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
-  auto input_data2 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
-  auto input_data3 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input3Ppath.c_str(), &input3_size));
-  auto input_data4 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input4Ppath.c_str(), &input4_size));
-  auto input_data5 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input5Ppath.c_str(), &input5_size));
-  auto input_data6 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input6Ppath.c_str(), &input6_size));
-  auto input_data7 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input7Ppath.c_str(), &input7_size));
-  auto input_data8 = reinterpret_cast<float *>(mindspore::lite::ReadFile(input8Ppath.c_str(), &input8_size));
-  auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
-  for (auto fp16_enable : {true}) {
-    auto *param = CreateParameter(axis);
-    TestMain({{input_shapes[0], input_data1, VAR},
-              {input_shapes[1], input_data2, VAR},
-              {input_shapes[2], input_data3, VAR},
-              {input_shapes[3], input_data4, VAR},
-              {input_shapes[4], input_data5, VAR},
-              {input_shapes[5], input_data6, VAR},
-              {input_shapes[6], input_data7, VAR},
-              {input_shapes[7], input_data8, VAR}},
-             {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-3 : 1e-9);
   }
 }
 

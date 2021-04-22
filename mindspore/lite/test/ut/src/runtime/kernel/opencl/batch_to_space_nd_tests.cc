@@ -25,7 +25,7 @@ namespace {
 // PrimitiveType_BatchToSpaceND: src/ops/populate/batch_to_space_populate.cc
 OpParameter *CreateParameter(int block_shape[], int crops[], const std::vector<int> &input_shape,
                              std::vector<int> *output_shape) {
-  auto *param = test::CreateParameter<BatchToSpaceParameter>(schema::PrimitiveType_BatchToSpaceND);
+  auto *param = test::CreateParameter<BatchToSpaceParameter>(schema::PrimitiveType_BatchToSpace);
   memcpy(param->block_shape_, block_shape, sizeof(param->block_shape_));
   memcpy(param->crops_, crops, sizeof(param->crops_));
   *output_shape = {input_shape[0] / param->block_shape_[0] / param->block_shape_[1],

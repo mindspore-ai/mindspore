@@ -26,6 +26,7 @@ OpParameter *CreateParameter(int split_dim_, int num_split_, std::vector<int> sp
   auto *param = test::CreateParameter<SplitParameter>(schema::PrimitiveType_Split);
   param->split_dim_ = split_dim_;
   param->num_split_ = num_split_;
+  param->split_count_ = num_split_;
   param->split_sizes_ = reinterpret_cast<int *>(malloc(param->num_split_ * sizeof(int)));
   for (int i = 0; i < param->num_split_; ++i) {
     param->split_sizes_[i] = split_sizes_[i];
@@ -34,6 +35,7 @@ OpParameter *CreateParameter(int split_dim_, int num_split_, std::vector<int> sp
 }
 }  // namespace
 
+// Check and optimize(No data file)
 TEST_F(TestOpenCL_Split, input2_axis3) {
   std::vector<int> input_shape = {2, 2, 2, 12};
   std::vector<int> output_shape1 = {2, 2, 2, 6};

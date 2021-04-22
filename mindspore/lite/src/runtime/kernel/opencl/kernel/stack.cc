@@ -48,8 +48,6 @@ int StackOpenCLKernel::RunAxis0() {
   return RET_OK;
 }
 
-int StackOpenCLKernel::ReSize() { return RET_OK; }
-
 void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;

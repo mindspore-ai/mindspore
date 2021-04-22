@@ -40,7 +40,8 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
   }
   if ((in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) ||
       (out_tensors_[0]->data_type() != kNumberTypeFloat32 && out_tensors_[0]->data_type() != kNumberTypeFloat16)) {
-    MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
+    MS_LOG(ERROR) << "Unsupported input/output data type. input data type is " << in_tensors_[0]->data_type()
+                  << " output data type is " << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() > 4 && in_tensors_[0]->shape().size() == 0) {

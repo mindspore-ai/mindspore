@@ -22,12 +22,10 @@ class TestOpenCL_Slice : public CommonTest {};
 
 namespace {
 // PrimitiveType_Slice: src/ops/populate/slice_populate.cc
-OpParameter *CreateParameter(const std::vector<int> &begin, const std::vector<int> &size) {
+OpParameter *CreateParameter(const std::vector<int> &axis) {
   auto *param = test::CreateParameter<SliceParameter>(schema::PrimitiveType_SliceFusion);
-  param->param_length_ = begin.size();
-  for (int i = 0; i < begin.size(); ++i) {
-    param->begin_[i] = begin[i];
-    param->size_[i] = size[i];
+  for (int i = 0; i < axis.size(); ++i) {
+    param->axis_[i] = axis[i];
   }
   return reinterpret_cast<OpParameter *>(param);
 }
@@ -42,10 +40,16 @@ TEST_F(TestOpenCL_Slice, 4D) {
   float output_data[] = {-0.9135602,  -1.4002057,  1.1080881,  0.40712625, -0.28128958, -1.2808367, 0.1470597,
                          0.03393711,  -0.33282498, -1.0433807, 0.28965706, 0.5343769,   0.75480366, -1.9328151,
                          -0.48714373, -0.14000037, -0.080552,  0.95056856, -0.06886655, 0.5316237};
-  auto param = CreateParameter({0, 0, 0, 2}, {1, 2, 2, 5});
-  TestMain({{{1, 2, 2, 8}, input_data, VAR}}, {{1, 2, 2, 5}, output_data}, param, false);
+  auto param = CreateParameter({0, 1, 2, 3});
+  std::vector<int> begin = {0, 0, 0, 2};
+  std::vector<int> size = {1, 2, 2, 5};
+  TestMain({{{1, 2, 2, 8}, input_data, VAR, kNumberTypeFloat32},
+            {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+            {{static_cast<int>(size.size())}, size.data(), CONST_TENSOR, kNumberTypeInt32}},
+           {{1, 2, 2, 5}, output_data}, param, false);
 }
 
+// Check and optimize(fp16)
 TEST_F(TestOpenCL_Slice, test0) {
   std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>, std::vector<float>, std::vector<float>,
                          std::vector<int>, std::vector<int>>>
@@ -148,11 +152,18 @@ TEST_F(TestOpenCL_Slice, test0) {
     auto &size = std::get<6>(case_);
 
     std::cout << name << std::endl;
-    auto *param = CreateParameter(begin, size);
-    TestMain({{input_shape, input_data.data(), VAR}}, {output_shape, output_data.data()}, param, false);
-    param = CreateParameter(begin, size);
-    TestMain({{input_shape, input_data.data(), VAR}}, {output_shape, output_data.data()}, param, true);
+    std::vector<int> axis(input_shape.size());
+    for (int i = 0; i < input_shape.size(); ++i) {
+      axis[i] = i;
+    }
+    auto *param = CreateParameter(axis);
+    for (auto fp16_enable : {false}) {
+      TestMain({{input_shape, input_data.data(), VAR, kNumberTypeFloat32},
+                {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+                {{static_cast<int>(size.size())}, size.data(), CONST_TENSOR, kNumberTypeInt32}},
+               {output_shape, output_data.data()}, param, fp16_enable);
+    }
   }
-}  // namespace mindspore
+}
 
 }  // namespace mindspore::lite::opencl::test

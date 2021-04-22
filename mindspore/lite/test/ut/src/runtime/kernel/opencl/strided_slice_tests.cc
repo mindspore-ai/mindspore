@@ -41,7 +41,14 @@ TEST_F(TestOpenCL_StridedSlice, 1D) {
   float output_data[] = {3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter({3}, {36}, {3});
-    TestMain({{{36}, input_data, VAR}}, {{11}, output_data}, param, fp16_enable);
+    std::vector<int> begin = {3};
+    std::vector<int> end = {36};
+    std::vector<int> stride = {3};
+    TestMain({{{36}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{11}, output_data}, param, fp16_enable);
   }
 }
 
@@ -50,8 +57,15 @@ TEST_F(TestOpenCL_StridedSlice, 2D) {
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
   float output_data[] = {11, 14};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {1, 2};
+    std::vector<int> end = {3, 8};
+    std::vector<int> stride = {2, 3};
     auto *param = CreateParameter({1, 2}, {3, 8}, {2, 3});
-    TestMain({{{4, 9}, input_data, VAR}}, {{1, 2}, output_data}, param, fp16_enable);
+    TestMain({{{4, 9}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 2}, output_data}, param, fp16_enable);
   }
 }
 
@@ -61,7 +75,14 @@ TEST_F(TestOpenCL_StridedSlice, 3D) {
   float output_data[] = {11, 14};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter({0, 1, 2}, {1, 3, 8}, {1, 2, 3});
-    TestMain({{{1, 4, 9}, input_data, VAR}}, {{1, 1, 2}, output_data}, param, fp16_enable);
+    std::vector<int> begin = {0, 1, 2};
+    std::vector<int> end = {1, 3, 8};
+    std::vector<int> stride = {1, 2, 3};
+    TestMain({{{1, 4, 9}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 1, 2}, output_data}, param, fp16_enable);
   }
 }
 
@@ -72,37 +93,79 @@ TEST_F(TestOpenCL_StridedSlice, 4D) {
   float output_data0[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                           18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {0, 0, 0, 0};
+    std::vector<int> end = {2, 2, 3, 3};
+    std::vector<int> stride = {1, 1, 1, 1};
     auto *param = CreateParameter({0, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{2, 2, 3, 3}, output_data0}, param, fp16_enable);
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{2, 2, 3, 3}, output_data0}, param, fp16_enable);
   }
 
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {0, 0, 0, 0};
+    std::vector<int> end = {2, 2, 3, 3};
+    std::vector<int> stride = {1, 1, 1, 1};
     auto *param = CreateParameter({0, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{2, 2, 3, 3}, output_data0}, param, fp16_enable);
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{2, 2, 3, 3}, output_data0}, param, fp16_enable);
   }
 
   float output_data1[] = {18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {1, 0, 0, 0};
+    std::vector<int> end = {2, 2, 3, 3};
+    std::vector<int> stride = {1, 1, 1, 1};
     auto *param = CreateParameter({1, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 2, 3, 3}, output_data1}, param, fp16_enable);
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 2, 3, 3}, output_data1}, param, fp16_enable);
   }
 
   float output_data2[] = {27, 28, 29, 30, 31, 32, 33, 34, 35};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {1, 1, 0, 0};
+    std::vector<int> end = {2, 2, 3, 3};
+    std::vector<int> stride = {1, 1, 1, 1};
     auto *param = CreateParameter({1, 1, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 1, 3, 3}, output_data2}, param, fp16_enable);
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 1, 3, 3}, output_data2}, param, fp16_enable);
   }
 
   float output_data3[] = {33, 34, 35};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {1, 1, 2, 0};
+    std::vector<int> end = {2, 2, 3, 3};
+    std::vector<int> stride = {1, 1, 1, 1};
     auto *param = CreateParameter({1, 1, 2, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 1, 1, 3}, output_data3}, param, fp16_enable);
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 1, 1, 3}, output_data3}, param, fp16_enable);
   }
 
   float output_data4[] = {34};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {1, 1, 2, 1};
+    std::vector<int> end = {2, 2, 3, 2};
+    std::vector<int> stride = {1, 1, 1, 1};
     auto *param = CreateParameter({1, 1, 2, 1}, {2, 2, 3, 2}, {1, 1, 1, 1});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 1, 1, 1}, output_data4}, param, fp16_enable);
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 1, 1, 1}, output_data4}, param, fp16_enable);
   }
 }
 
@@ -111,8 +174,15 @@ TEST_F(TestOpenCL_StridedSlice, 4D_stride2) {
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
   float output_data[] = {13, 14, 31, 32};
   for (auto fp16_enable : {false, true}) {
+    std::vector<int> begin = {0, 1, 1, 1};
+    std::vector<int> end = {1, 4, 3, 3};
+    std::vector<int> stride = {2, 2, 2, 1};
     auto *param = CreateParameter({0, 1, 1, 1}, {1, 4, 3, 3}, {2, 2, 2, 1});
-    TestMain({{{1, 4, 3, 3}, input_data, VAR}}, {{1, 2, 1, 2}, output_data}, param, fp16_enable);
+    TestMain({{{1, 4, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 2, 1, 2}, output_data}, param, fp16_enable);
   }
 }
 
@@ -122,19 +192,35 @@ TEST_F(TestOpenCL_StridedSlice, 4D_to_3D) {
   float output_data[] = {18, 20, 21, 23, 27, 29, 30, 32};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter({1, 0, 0, 0}, {2, 2, 2, 3}, {1, 1, 1, 2});
-    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{2, 2, 2}, output_data}, param, fp16_enable);
+    std::vector<int> begin = {1, 0, 0, 0};
+    std::vector<int> end = {2, 2, 2, 3};
+    std::vector<int> stride = {1, 1, 1, 2};
+    TestMain({{{2, 2, 3, 3}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{2, 2, 2}, output_data}, param, fp16_enable);
   }
 }
 
+// Check and optimize
 TEST_F(TestOpenCL_StridedSlice, In1D_OutOfRangeBeginNegativeStride) {
   float input_data[] = {1, 2, 3, 4};
   float output_data[] = {4, 3, 2};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter({5}, {0}, {-1});
-    TestMain({{{4}, input_data, VAR}}, {{3}, output_data}, param, fp16_enable);
+    std::vector<int> begin = {5};
+    std::vector<int> end = {0};
+    std::vector<int> stride = {-1};
+    TestMain({{{4}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{3}, output_data}, param, fp16_enable);
   }
 }
 
+// Check and optimize
 TEST_F(TestOpenCL_StridedSlice, test0) {
   std::vector<float> values(32768);
   for (int i = 0; i < values.size(); ++i) {
@@ -320,7 +406,12 @@ TEST_F(TestOpenCL_StridedSlice, test0) {
 
     for (auto fp16_enable : {false, true}) {
       auto *param = CreateParameter(begin, end, stride);
-      TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+      param->infer_flag_ = true;
+      TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+                {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+                {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+                {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+               {output_shape, output_data}, param, fp16_enable);
     }
   }
 }
@@ -332,8 +423,14 @@ TEST_F(TestOpenCL_StridedSlice, test1) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter({0, 1, 0, 1}, {1, 3, 2, 4}, {1, 1, 2, 2});
-    TestMain({{{1, 3, 2, 4}, input_data, VAR}}, {{1, 2, 1, 2}, output_data}, param, fp16_enable,
-             fp16_enable ? 1e-2 : 1e-9);
+    std::vector<int> begin = {0, 1, 0, 1};
+    std::vector<int> end = {1, 3, 2, 4};
+    std::vector<int> stride = {1, 1, 2, 2};
+    TestMain({{{1, 3, 2, 4}, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},
+              {{static_cast<int>(stride.size())}, stride.data(), CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 2, 1, 2}, output_data}, param, fp16_enable, fp16_enable ? 1e-2 : 1e-9);
   }
 }
 

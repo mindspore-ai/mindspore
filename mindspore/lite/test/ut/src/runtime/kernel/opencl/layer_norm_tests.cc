@@ -41,10 +41,10 @@ TEST_F(TestOpenCL_LayerNorm, test1) {
   std::vector<int> beta_shape = {1, 1, 1, 5};
   std::vector<int> output_shape = {2, 3, 4, 5};
   size_t input_size, gamma_size, beta_size, output_size;
-  std::string inputPpath = "./test_data/layernormfp32_input.bin";
-  std::string gammaPpath = "./test_data/gammafp32_input.bin";
-  std::string betaPpath = "./test_data/betafp32_input.bin";
-  std::string correctOutputPath = "./test_data/layernormfp32_output.bin";
+  std::string inputPpath = "./test_data/layer_norm/test1/layernormfp32_input.bin";
+  std::string gammaPpath = "./test_data/layer_norm/test1/gammafp32_input.bin";
+  std::string betaPpath = "./test_data/layer_norm/test1/betafp32_input.bin";
+  std::string correctOutputPath = "./test_data/layer_norm/test1/layernormfp32_output.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(inputPpath.c_str(), &input_size));
   auto gamma_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(gammaPpath.c_str(), &gamma_size));
   auto beta_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(betaPpath.c_str(), &beta_size));

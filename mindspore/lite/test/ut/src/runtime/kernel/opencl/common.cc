@@ -38,7 +38,7 @@ void TestMain(const std::vector<ArgsTuple> &input_infos, const std::vector<ArgsT
   TestMain(input_infos_new, output_info, op_parameter, fp16_enable, atol, rtol, print_data);
 }
 
-void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vector<ArgsTupleOut> &output_info,
+void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vector<ArgsTupleOutWithDType> &output_info,
               OpParameter *op_parameter, bool fp16_enable, float atol, float rtol, bool print_data) {
   auto primitive_type = static_cast<schema::PrimitiveType>(op_parameter->type_);
 #ifdef ENABLE_V0
@@ -71,7 +71,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   }
   for (auto outout_info : output_info) {
     const std::vector<int> &output_shape = std::get<0>(outout_info);
-    out_tensors.emplace_back(std::make_shared<Tensor>(kNumberTypeFloat32, output_shape, Format_NHWC, VAR));
+    out_tensors.emplace_back(std::make_shared<Tensor>(std::get<2>(outout_info), output_shape, Format_NHWC, VAR));
   }
   // secondly, init weight Tensor's data
   std::vector<Tensor *> kernel_inputs;
@@ -179,6 +179,16 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     }
   }
   delete sub_graph;
+}
+void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vector<ArgsTupleOut> &output_info,
+              OpParameter *op_parameter, bool fp16_enable, float atol, float rtol, bool print_data) {
+  std::vector<ArgsTupleOutWithDType> output_info_new;
+  auto transform_fun = [](ArgsTupleOut in) -> ArgsTupleOutWithDType {
+    return ArgsTupleOutWithDType(std::get<0>(in), std::get<1>(in), kNumberTypeFloat32);
+  };
+  std::transform(output_info.begin(), output_info.end(), std::back_inserter(output_info_new), transform_fun);
+
+  TestMain(input_infos, output_info_new, op_parameter, fp16_enable, atol, rtol, print_data);
 }
 
 // single-output
