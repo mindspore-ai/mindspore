@@ -1421,6 +1421,10 @@ class SquaredDifference(_MathBinaryOp):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
+     .. math::
+
+        out_{i} = (x_{i} + y_{i}) * (x_{i} - y_{i}) = x_{i}^2 - y_{i}^2
+
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is float16, float32, int32 or bool.
