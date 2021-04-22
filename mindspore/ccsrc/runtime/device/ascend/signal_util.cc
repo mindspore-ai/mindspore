@@ -28,6 +28,7 @@ SignalGuard::~SignalGuard() {
     (void)sigemptyset(&int_action.sa_mask);
     int_action.sa_flags = SA_RESTART | SA_SIGINFO;
     (void)sigaction(SIGINT, &int_action, nullptr);
+    old_handler = nullptr;
   }
 }
 
