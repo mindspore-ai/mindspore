@@ -64,8 +64,8 @@ struct ParamPtrHasher {
 
 class AnfExporter {
  public:
-  explicit AnfExporter(const std::string &id, bool export_used = true, bool check_integrity = false)
-      : param_index(-1), id_(id), export_used_(export_used), check_integrity_(check_integrity) {
+  explicit AnfExporter(bool export_used = true, bool check_integrity = false)
+      : param_index(-1), export_used_(export_used), check_integrity_(check_integrity) {
     func_graph_set.clear();
     exported.clear();
   }
@@ -78,7 +78,6 @@ class AnfExporter {
   virtual std::string GetNodeType(const AnfNodePtr &nd);
   int GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &param, bool throw_excp = true);
   int GetParamIndexFromExported(const AnfNodePtr &param);
-  std::string DumpObject(const py::object &obj, const std::string &category) const;
   std::string GetValueNodeText(const FuncGraphPtr &func_graph, const ValueNodePtr &node);
   std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph);
   std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const SymbolicKeyInstancePtr &sym_inst);
@@ -102,14 +101,12 @@ class AnfExporter {
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};
   OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>> exported;
-  std::string id_;
   bool export_used_ = true;       // whether export function graphs used in current exporting function graph
   bool check_integrity_ = false;  // whether check integrity or not, when dumping ir for loading, must set it to true
   TaggedNodeMap tagged_cnodes_;
-  abstract::AnfNodeConfigPtr node_cfg_ = nullptr;
 };
 
-void ExportIR(const std::string &filename, const std::string &id, const FuncGraphPtr &func_graph);
+void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph);
 void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs);
 }  // namespace mindspore
 

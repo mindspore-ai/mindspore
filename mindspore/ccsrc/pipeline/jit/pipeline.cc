@@ -728,7 +728,7 @@ void Pipeline::Run() {
           DumpIR(base_name + ".ir", graph, false, kTopStack);
         }
         // generate IR file in a heavily commented format, which can also be reloaded
-        ExportIR(base_name + ".dat", std::to_string(i), graph);
+        ExportIR(base_name + ".dat", graph);
       }
       i++;
 #ifdef ENABLE_TIMELINE

@@ -45,42 +45,6 @@
 using mindspore::tensor::TensorPy;
 
 namespace mindspore {
-// max number of elements in sequence
-const int NUM_MAX_SEQUENCE_ELEMS = 0x00FFFFFF;
-
-// ============================================== MindSpore IR Common ==============================================
-// get MindSpore Intermediate Representation Path
-std::string GetMsIrPath(void) {
-  std::string path;
-  const char *path_ptr = getenv("MS_IR_PATH");
-  if (path_ptr != nullptr) {
-    path = path_ptr;
-    char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-    if (path.size() > PATH_MAX || _fullpath(real_path, path.c_str(), PATH_MAX) == nullptr) {
-      MS_LOG(EXCEPTION) << "MS IR Path error, " << path_ptr;
-    }
-#else
-    if (path.size() > PATH_MAX || nullptr == realpath(path.c_str(), real_path)) {
-      MS_LOG(EXCEPTION) << "MS IR path error, " << path_ptr;
-    }
-#endif
-    path = real_path;
-  }
-  return path;
-}
-
-std::string dump_obj(const py::object &obj, const std::string &path) {
-  py::module mod = parse::python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  py::object name = parse::python_adapter::CallPyModFn(mod, "dump_obj", obj, py::str(path));
-  return py::str(name);
-}
-
-py::object load_obj(const std::string &path) {
-  py::module mod = parse::python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  py::object obj = parse::python_adapter::CallPyModFn(mod, "load_obj", py::str(path));
-  return obj;
-}
 
 // ============================================= MindSpore IR Exporter =============================================
 
@@ -96,17 +60,6 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
     oss << "Undefined";
   }
   return oss.str();
-}
-
-std::string AnfExporter::DumpObject(const py::object &obj, const std::string &category) const {
-  std::string pkl_path = GetMsIrPath();
-  // if not specified env 'MS_IR_PATH', do not create any files
-  if (pkl_path.empty() || (getenv("MS_IR_FILE") != nullptr)) {
-    return "null";
-  }
-  std::string file_prefix = id_ + "." + category;
-  std::string file_name = dump_obj(obj, pkl_path + "/" + file_prefix);
-  return file_prefix + file_name;
 }
 
 int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &param, bool throw_excp) {
@@ -181,9 +134,6 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
       oss << py_func.first[i]->DumpText();
     }
     oss << ")";
-
-    // dump Python Function object
-    oss << "@" << DumpObject(py_func.second, "F");
   }
   oss << "}";
 
@@ -263,17 +213,8 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) {
     return oss.str();
   }
   oss << prim->type_name() << "::" << prim->name();
-  // need to serialize internal python function of PrimitivePy and record its prim_type
-  if (prim->isa<PrimitivePy>()) {
-    PrimitivePyPtr primpy = prim->cast<PrimitivePyPtr>();
-
-    // dump related function in PrimitivePy
-    oss << "@" << DumpObject(primpy->GetPyObj(), "P");
-
-    // output primitive type
-    oss << "{prim_type=" << static_cast<int>(prim->prim_type()) << "}";
-  }
-
+  // output primitive type
+  oss << "{prim_type=" << static_cast<int>(prim->prim_type()) << "}";
   // output primitive attributes
   oss << prim->GetAttrsText();
 
@@ -296,7 +237,7 @@ std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr &ns) {
   }
 
   // dump related module information in Namespace
-  oss << ns->type_name() << "::" << ns->module() << "@" << DumpObject(ns->obj(), "N");
+  oss << ns->type_name() << "::" << ns->module();
 
   return oss.str();
 }
@@ -399,8 +340,7 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const Valu
   } else if (value->isa<Scalar>() || value->isa<StringImm>()) {
     oss << value->DumpText();
   } else if (value->isa<tensor::Tensor>()) {
-    auto tensor_ptr = dyn_cast<tensor::Tensor>(value);
-    oss << value->DumpText() << "@" << DumpObject(TensorPy::AsNumpy(*tensor_ptr), "T");
+    oss << value->DumpText();
   } else if (value->isa<parse::Symbol>() || value->isa<None>() || value->isa<Null>()) {
     oss << value->DumpText();
   } else if (value->isa<ValueSequeue>()) {
@@ -477,20 +417,8 @@ void AnfExporter::OutputParameters(std::ofstream &ofs, const std::vector<AnfNode
     } else {
       ofs << "%para" << param_index << " : " << type_info;
     }
-
-    // dump Default value of parameter if exists
-    const ParameterPtr param_ptr = dyn_cast<Parameter>(param);
-    if (param_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Param could not cast to parameter";
-    }
-    if (param_ptr->has_default()) {
-      auto param_value = param_ptr->default_param();
-      ofs << " = @" << DumpObject(py::cast(param_value), "D");
-    }
-
     // output comment
     ofs << "    # " << param->DumpText() << "\n";
-
     param_index += 1;
   }
 }
@@ -702,13 +630,13 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const std::vector
 }
 
 #ifdef ENABLE_DUMP_IR
-void ExportIR(const std::string &filename, const std::string &id, const FuncGraphPtr &func_graph) {
+void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
   }
 
   auto real_filename = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
-  AnfExporter exporter(id);
+  AnfExporter exporter;
   ChangeFileMode(real_filename, S_IRWXU);
   exporter.ExportFuncGraph(real_filename, func_graph);
   // set file mode to read only by user
