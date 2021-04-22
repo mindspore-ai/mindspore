@@ -36,6 +36,8 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   // infer type
+  std::set<TypePtr> valid_params_types = {kTensorType};
+  CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
   AbstractBasePtrList abs_list;
   std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(abs_list),
                  [](int64_t item) -> std::shared_ptr<abstract::AbstractScalar> {
