@@ -475,7 +475,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         // The outputs may have the same tensor, so need skip when the tensor has been set to device address.
         if ((address == nullptr) || (address->GetPtr() == nullptr)) {
-          return;
+          continue;
         }
         tensor->set_device_address(address);
 
