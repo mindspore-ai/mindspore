@@ -64,38 +64,15 @@ void UnpackCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
     outputs_host_[i] = reinterpret_cast<T *>(outputs[i]->addr);
     MS_EXCEPTION_IF_NULL(outputs_host_[i]);
   }
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = input_size_ < 128 * max_thread_num ? std::ceil(input_size_ / 128.0) : max_thread_num;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num" << thread_num;
-    return;
-  }
-  std::vector<std::thread> threads;
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t one_gap = (input_size_ + thread_num - 1) / thread_num;
-  if (one_gap < 1) {
-    MS_LOG(ERROR) << "Invalid value: one_gap " << one_gap;
-    return;
-  }
-  while (start < input_size_) {
-    size_t end = (start + one_gap) > input_size_ ? input_size_ : (start + one_gap);
-    threads.emplace_back(std::thread(&UnpackCPUKernel::UnpackResult, this, start, end));
-    start += one_gap;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
-}
-
-template <typename T>
-void UnpackCPUKernel<T>::UnpackResult(const size_t start, const size_t end) {
-  for (size_t i = start; i < end; ++i) {
-    size_t output_index = (i / dims_after_axis_) % output_num_;
-    size_t number_of_reset = output_num_ * dims_after_axis_;
-    size_t tensor_index = i / number_of_reset * dims_after_axis_ + i % dims_after_axis_;
-    outputs_host_[output_index][tensor_index] = input_[i];
-  }
+  size_t number_of_reset = output_num_ * dims_after_axis_;
+  auto task = [this, number_of_reset](const size_t start, const size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      size_t output_index = (i / dims_after_axis_) % output_num_;
+      size_t tensor_index = i / number_of_reset * dims_after_axis_ + i % dims_after_axis_;
+      outputs_host_[output_index][tensor_index] = input_[i];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, input_size_);
 }
 
 template <typename T>
