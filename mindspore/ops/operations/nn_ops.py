@@ -3019,7 +3019,7 @@ class LayerNorm(Primitive):
 
 class L2Normalize(PrimitiveWithInfer):
     r"""
-    L2 normalization Operator.
+    L2 Normalization Operator.
 
     This operator will normalize the input using the given axis. The function is shown as follows:
 
@@ -3029,7 +3029,7 @@ class L2Normalize(PrimitiveWithInfer):
     where :math:`\epsilon` is epsilon.
 
     Args:
-        axis (Union[list(int), tuple(int), int]): The starting axis for the input to apply the L2 normalization.
+        axis (Union[list(int), tuple(int), int]): The starting axis for the input to apply the L2 Normalization.
                                                   Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 

@@ -767,10 +767,10 @@ class LayerNorm(Cell):
     r"""
     Applies Layer Normalization over a mini-batch of inputs.
 
-    Layer normalization is widely used in recurrent neural networks. It applies
+    Layer Normalization is widely used in recurrent neural networks. It applies
     normalization on a mini-batch of inputs for each single training case as described
-    in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike batch
-    normalization, layer normalization performs exactly the same computation at training and
+    in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
+    Normalization, Layer Normalization performs exactly the same computation at training and
     testing time. It can be described using the following formula. It is applied across all channels
     and pixel but only one batch size.
 
@@ -853,7 +853,7 @@ class LayerNorm(Cell):
 
 class InstanceNorm2d(Cell):
     r"""
-    Instance normalization layer over a 4D input.
+    Instance Normalization layer over a 4D input.
 
     This layer applies Instance Normalization over a 4D input (a mini-batch of 2D inputs with
     additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
