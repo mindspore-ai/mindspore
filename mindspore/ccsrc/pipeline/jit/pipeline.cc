@@ -667,61 +667,6 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   return ret_value;
 }
 
-#ifdef ENABLE_LOAD_ANF_IR
-// get MindSpore Intermediate Representation File
-std::string GetMsIrFile(void) {
-  std::string file;
-  const char *path = getenv("MS_IR_FILE");
-  if (path == nullptr) {
-    return file;
-  }
-
-  char real_path[PATH_MAX] = {0};
-  if (realpath(path, real_path) == nullptr) {
-    MS_LOG(ERROR) << "MS IR path error, " << path;
-    return file;
-  }
-  file = real_path;
-  return file;
-}
-
-void RunPipelineAction(const ActionItem &action, pipeline::ResourcePtr resource, bool *result) {
-  MS_EXCEPTION_IF_NULL(resource);
-  MS_EXCEPTION_IF_NULL(result);
-
-  std::string ir_file = GetMsIrFile();
-  (void)parse::python_adapter::set_python_scoped();
-  if (ir_file.empty()) {
-    *result = action.second(resource);
-    return;
-  }
-
-  // when in loading anf ir mode, action `parse` do nothing
-  if (action.first == "parse") {
-    return;
-  }
-
-  // load MindSpore IR from file
-  if (action.first == "symbol_resolve") {
-    MS_LOG(DEBUG) << action.first << " read ir file: " << ir_file;
-    std::vector<FuncGraphPtr> graphs = ImportIR(ir_file);
-    if (graphs.size() == 0) {
-      MS_LOG(EXCEPTION) << action.first << " read ir file " << ir_file << " failed as no graph found";
-    }
-    auto manager = resource->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    for (auto &graph : graphs) {
-      manager->AddFuncGraph(graph);
-    }
-    resource->set_func_graph(graphs[0]);
-    return;
-  }
-
-  // do normal action when not in `parse` and `symbol_resolve` stage
-  *result = action.second(resource);
-}
-#endif
-
 void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
@@ -737,11 +682,7 @@ void Pipeline::Run() {
       bool result = true;
       WITH(MsProfile::GetProfile()->Step(action.first))[&result, &action, this]() {
         MS_LOG(DEBUG) << "Action " << action.first << " start ...";
-#ifdef ENABLE_LOAD_ANF_IR
-        RunPipelineAction(action, resource_, &result);
-#else
         result = action.second(resource_);
-#endif
         MS_LOG(DEBUG) << "Action " << action.first << " end.";
       };
       if (action.first == "task_emit") {
