@@ -213,12 +213,12 @@ nlohmann::json ConstructInputs(const std::vector<size_t> &input_shape, const std
   real_input[name] = src;
   real_input[ori_format] = kOpFormat_NCHW;
   for (auto shape : output_shape) {
-    real_input[ori_shape].push_back(shape);
+    (void)real_input[ori_shape].emplace_back(shape);
   }
   real_input[param_type] = param_type_required;
   // obtain inputs shape
   for (auto shape : input_shape) {
-    real_input[shape_str].push_back(shape);
+    (void)real_input[shape_str].emplace_back(shape);
   }
   real_input[valid] = true;
   input_json.push_back(real_input);
@@ -235,12 +235,12 @@ nlohmann::json ConstructOutputs(const std::vector<size_t> &output_shape, mindspo
   real_output[name] = dst;
   real_output[ori_format] = kOpFormat_NCHW;
   for (auto shape : output_shape) {
-    real_output[ori_shape].push_back(shape);
+    (void)real_output[ori_shape].emplace_back(shape);
   }
   real_output[param_type] = param_type_required;
   // obtain outputs shape
   for (auto shape : output_shape) {
-    real_output[shape_str].push_back(shape);
+    (void)real_output[shape_str].emplace_back(shape);
   }
   real_output[valid] = true;
   output_json.push_back(real_output);
@@ -342,7 +342,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   return sync_ok;
 }
 
-void AscendDeviceAddress::LaunchTransData(kernel::KernelModPtr kernel_mod_ptr, void *output_address_ptr,
+void AscendDeviceAddress::LaunchTransData(const kernel::KernelModPtr &kernel_mod_ptr, void *output_address_ptr,
                                           size_t output_size, const std::vector<size_t> &workspace_size_list) const {
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   auto input_address = std::make_shared<kernel::Address>();
@@ -383,7 +383,7 @@ void AscendDeviceAddress::LaunchTransData(kernel::KernelModPtr kernel_mod_ptr, v
 }
 
 kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(const nlohmann::json &kernel_json) const {
-  static std::set<std::string> constructed_kernel;
+  static std::set<std::string> constructed_kernel = {};
   auto build_manager = std::make_shared<kernel::ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manager);
   std::string processor = process_aicore;
@@ -394,7 +394,7 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   std::string json_name = kernel_json[op_info_str][kernel_name_str];
   // op build
   if (constructed_kernel.find(json_name) == constructed_kernel.end()) {
-    auto task_id = build_manager->StartCompileOp(kernel_json);
+    auto task_id = kernel::ParallelBuildManager::StartCompileOp(kernel_json);
     build_manager->SaveTaskInfo(task_id, nullptr, json_name, input_size_list, output_size_list);
   }
   while (!build_manager->IsAllTaskFinish()) {
@@ -410,7 +410,7 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
     }
     (void)build_manager->TaskFinishProcess(task_id, build_result, false);
   }
-  constructed_kernel.insert(json_name);
+  (void)constructed_kernel.insert(json_name);
   // search cache
   auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
   MS_EXCEPTION_IF_NULL(cached_kernel_pack);

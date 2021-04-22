@@ -1016,7 +1016,7 @@ void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
   }
 }
 
-bool KernelRuntime::LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr,
+bool KernelRuntime::LaunchTaskBasedOnSingleKernel(const kernel::KernelModPtr &kernel_mod_ptr,
                                                   const AddressPtrList &kernel_inputs,
                                                   const AddressPtrList &kernel_outputs,
                                                   const AddressPtrList &kernel_workspaces) const {
