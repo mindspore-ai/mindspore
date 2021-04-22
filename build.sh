@@ -422,7 +422,7 @@ build_mindspore()
     echo "start build mindspore project."
     mkdir -pv "${BUILD_PATH}/mindspore"
     cd "${BUILD_PATH}/mindspore"
-    CMAKE_ARGS="-DDEBUG_MODE=$DEBUG_MODE -DBUILD_PATH=$BUILD_PATH"
+    CMAKE_ARGS="-DDEBUG_MODE=$DEBUG_MODE -DBUILD_PATH=$BUILD_PATH -DX86_64_SIMD=${X86_64_SIMD}"
     if [[ "X$ENABLE_COVERAGE" = "Xon" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_COVERAGE=ON"
     fi

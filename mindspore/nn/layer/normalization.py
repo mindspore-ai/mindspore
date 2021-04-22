@@ -809,7 +809,7 @@ class LayerNorm(Cell):
         TypeError: If `epsilon` is not a float.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
