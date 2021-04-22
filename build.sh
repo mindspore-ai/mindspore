@@ -340,6 +340,11 @@ checkopts()
     esac
   done
 
+  if [[ "X$RUN_TESTCASES" == "Xon" && "X$DEVICE" != "X" ]]; then
+    echo "WARNING:Option -e can't be set while option -t on/ut is set, reset device to empty."
+    DEVICE=""
+  fi
+
   # Parse device
   # Process build option
   if [[ "X$DEVICE" == "Xgpu" ]]; then
