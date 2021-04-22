@@ -1226,6 +1226,9 @@ void ClearResAtexit() {
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
+#ifdef ENABLE_DEBUGGER
+  Debugger::GetInstance()->Reset();
+#endif
 }
 }  // namespace pipeline
 }  // namespace mindspore
