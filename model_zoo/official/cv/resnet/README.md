@@ -444,7 +444,7 @@ Evaluation result will be stored in the example path, whose folder name is "eval
 - Evaluating ResNet18 with CIFAR-10 dataset
 
 ```bash
-result: {'acc': 0.9402043269230769} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
+result: {'acc': 0.9363061543521083} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
 ```
 
 - Evaluating ResNet18 with ImageNet2012 dataset
