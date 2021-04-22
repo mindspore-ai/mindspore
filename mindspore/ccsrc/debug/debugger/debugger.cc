@@ -108,6 +108,15 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   version_ = "1.2.0";
 }
 
+bool IsTypeDebuggerSupported(TypeId type) {
+  if (type < TypeId::kNumberTypeEnd && type > TypeId::kNumberTypeBegin && type != kNumberTypeComplex64) {
+    return true;
+  } else {
+    MS_LOG(WARNING) << "Debugger does not support type id: " << type;
+    return false;
+  }
+}
+
 void Debugger::EnableDebugger() {
   // reset some of the class members
   num_step_ = 0;
@@ -1141,7 +1150,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
   MS_EXCEPTION_IF_NULL(addr);
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
-  if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeIOMonad) {
+  if (!IsTypeDebuggerSupported(type)) {
     return;
   }
   auto format = kOpFormat_DEFAULT;
@@ -1206,7 +1215,7 @@ void Debugger::LoadGraphOutputs() {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
       MS_EXCEPTION_IF_NULL(addr);
       auto type = AnfAlgo::GetOutputInferDataType(node, j);
-      if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeIOMonad) {
+      if (!IsTypeDebuggerSupported(type)) {
         continue;
       }
       auto format = kOpFormat_DEFAULT;
