@@ -28,6 +28,7 @@ config = ed({
     "val_annotation_file": "",
     "data_json": "",
 
+    "go_shift": 1,
     "characters_dictionary": {"pad_id": 0, "go_id": 1, "eos_id": 2, "unk_id": 3},
     "labels_not_use": [u'%#�?%', u'%#背景#%', u'%#不识�?%', u'#%不识�?#', u'%#模糊#%', u'%#模糊#%'],
     "vocab_path": "./general_chars.txt",
