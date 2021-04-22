@@ -30,15 +30,15 @@ typedef struct ActivationGradParameter {
 extern "C" {
 #endif
 
-int ReluGrad(float *src0, float *src1, size_t length, float *dst);
-int Relu6Grad(float *src0, float *src1, size_t length, float *dst);
-int LReluGrad(float *src0, float *src1, size_t length, float *dst, float alpha);
-int SigmoidGrad(float *src0, float *src1, size_t length, float *dst);
-int TanhGrad(float *src0, float *src1, size_t length, float *dst);
-int HSwishGrad(float *src0, float *src1, size_t length, float *dst);
-int HSigmoidGrad(float *src0, float *src1, size_t length, float *dst);
-int EluGrad(float *src0, float *src1, size_t length, float *dst, float alpha);
-int GeluGrad(float *src0, float *src1, size_t length, float *dst);
+int ReluGrad(const float *src0, const float *src1, size_t length, float *dst);
+int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst);
+int LReluGrad(const float *src0, const float *src1, size_t length, float *dst, float alpha);
+int SigmoidGrad(const float *src0, const float *src1, size_t length, float *dst);
+int TanhGrad(const float *src0, const float *src1, size_t length, float *dst);
+int HSwishGrad(const float *src0, const float *src1, size_t length, float *dst);
+int HSigmoidGrad(const float *src0, const float *src1, size_t length, float *dst);
+int EluGrad(const float *src0, const float *src1, size_t length, float *dst, float alpha);
+int GeluGrad(const float *src0, const float *src1, size_t length, float *dst);
 
 #ifdef __cplusplus
 }

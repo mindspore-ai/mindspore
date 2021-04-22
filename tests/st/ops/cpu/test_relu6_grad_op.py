@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,16 +29,16 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 class NetReluGrad(nn.Cell):
     def __init__(self):
         super(NetReluGrad, self).__init__()
-        self.relu_grad = G.ReluGrad()
-        self.x = Parameter(initializer(Tensor(np.array([[[[-1, 1, 1],
-                                                          [1, -1, 1],
-                                                          [1, 1, -1]]]]).astype(np.float32)), [1, 1, 3, 3]), name='x')
-        self.dy = Parameter(initializer(Tensor(np.array([[[[1, 0, 1],
-                                                           [0, 1, 0],
-                                                           [1, 1, 1]]]]).astype(np.float32)), [1, 1, 3, 3]), name='dy')
+        self.relu6_grad = G.ReLU6Grad()
+        self.x = Parameter(initializer(Tensor(np.array([[[[1, 0, 6],
+                                                          [-2, 3, 6],
+                                                          [-3, 1, 8]]]]).astype(np.float32)), [1, 1, 3, 3]), name='x')
+        self.dy = Parameter(initializer(Tensor(np.array([[[[1, 2, 3],
+                                                           [4, 5, 6],
+                                                           [7, 8, 9]]]]).astype(np.float32)), [1, 1, 3, 3]), name='dy')
 
     def construct(self):
-        return self.relu_grad(self.dy, self.x)
+        return self.relu6_grad(self.dy, self.x)
 
 
 @pytest.mark.level0
@@ -47,7 +47,7 @@ class NetReluGrad(nn.Cell):
 def test_relu_grad():
     relu_grad = NetReluGrad()
     output = relu_grad()
-    expect = np.array([[[[0, 0, 1], [0, 0, 0], [1, 1, 0]]]]).astype(np.float32)
+    expect = np.array([[[[1, 0, 3], [0, 5, 6], [0, 8, 0]]]]).astype(np.float32)
     error = np.ones(shape=[3, 3]) * 1.0e-6
     diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)

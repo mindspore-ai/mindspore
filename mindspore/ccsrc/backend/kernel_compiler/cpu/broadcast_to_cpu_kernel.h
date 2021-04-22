@@ -21,44 +21,32 @@
 #include <memory>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/base/broadcast_to.h"
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 class BroadcastToCPUKernel : public CPUKernel {
  public:
   BroadcastToCPUKernel() = default;
-  ~BroadcastToCPUKernel() override {
-    if (tmp_ptr_ != nullptr) {
-      free(tmp_ptr_);
-      tmp_ptr_ = nullptr;
-    }
-  };
+  ~BroadcastToCPUKernel() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  void BroadcastToImpl(size_t dim);
-
-  size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
-
  private:
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  size_t nums_{1};
-  T *input_ptr_{nullptr};
-  T *output_ptr_{nullptr};
-  T *tmp_ptr_{nullptr};
+  BroadcastShapeInfo shape_info_;
 };
 
-MS_REG_CPU_KERNEL(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  BroadcastToCPUKernel<float>);
-MS_REG_CPU_KERNEL(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  BroadcastToCPUKernel<int>);
-MS_REG_CPU_KERNEL(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  BroadcastToCPUKernel<bool>);
+MS_REG_CPU_KERNEL_T(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    BroadcastToCPUKernel, float);
+MS_REG_CPU_KERNEL_T(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    BroadcastToCPUKernel, int);
+MS_REG_CPU_KERNEL_T(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                    BroadcastToCPUKernel, bool);
 }  // namespace kernel
 }  // namespace mindspore
 

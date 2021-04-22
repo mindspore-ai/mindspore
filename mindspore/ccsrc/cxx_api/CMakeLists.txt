@@ -57,7 +57,7 @@ else()
 endif()
 
 if(ENABLE_CPU)
-    target_link_libraries(mindspore_shared_lib PRIVATE mindspore::dnnl mindspore::mkldnn)
+    target_link_libraries(mindspore_shared_lib PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
 endif()
 
 if(USE_GLOG)

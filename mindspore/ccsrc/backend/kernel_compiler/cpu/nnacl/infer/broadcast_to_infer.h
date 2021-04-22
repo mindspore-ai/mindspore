@@ -17,7 +17,7 @@
 #define MINDSPORE_NNACL_BROADCAST_TO_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/fp32/broadcast_to_fp32.h"
+#include "nnacl/base/broadcast_to.h"
 
 #ifdef __cplusplus
 extern "C" {

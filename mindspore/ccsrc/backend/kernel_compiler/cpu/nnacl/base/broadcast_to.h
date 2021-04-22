@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_BROADCAST_TO_FP32_H_
-#define MINDSPORE_NNACL_FP32_BROADCAST_TO_FP32_H_
+#ifndef MINDSPORE_NNACL_FP32_BROADCAST_TO_H_
+#define MINDSPORE_NNACL_FP32_BROADCAST_TO_H_
 
-#include "nnacl/op_base.h"
 #include "nnacl/broadcast_to_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int BroadcastTo(const float *input, BroadcastShapeInfo *shape_info, float *output);
+#define BroadcastTo(type, input, shape_info, output) broadcast_to_##type(input, shape_info, output)
+int broadcast_to_int(const int *input, BroadcastShapeInfo *shape_info, int *output);
+int broadcast_to_float(const float *input, BroadcastShapeInfo *shape_info, float *output);
+int broadcast_to_bool(const bool *input, BroadcastShapeInfo *shape_info, bool *output);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_BROADCAST_TO_FP32_H_
+#endif  // MINDSPORE_NNACL_FP32_BROADCAST_TO_H_

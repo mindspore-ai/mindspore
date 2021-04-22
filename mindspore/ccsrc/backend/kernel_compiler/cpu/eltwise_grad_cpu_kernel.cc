@@ -18,28 +18,32 @@
 #include "backend/kernel_compiler/cpu/eltwise_grad_cpu_kernel.h"
 #include "common/thread_pool.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T>
 void EltWiseGradCPUKernel<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    if (input2[i] > 0) {
-      out[i] = input1[i];
-    } else {
-      out[i] = 0;
+  if constexpr (std::is_same_v<T, float>) {
+    int ret = ::ReluGrad(input1 + start, input2 + start, end - start, out + start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "ReLUGrad failed.";
     }
+  } else {
+    MS_LOG(EXCEPTION) << "ReLUGrad only support float";
   }
 }
 
 template <typename T>
 void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    if (input2[i] > 0 && input2[i] <= 6) {
-      out[i] = input1[i];
-    } else {
-      out[i] = 0;
+  if constexpr (std::is_same_v<T, float>) {
+    int ret = ::Relu6Grad(input1 + start, input2 + start, end - start, out + start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "ReLU6Grad failed.";
     }
+  } else {
+    MS_LOG(EXCEPTION) << "ReLU6Grad only support float";
   }
 }
 

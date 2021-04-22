@@ -30,11 +30,8 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/int8/*.c
     ${NNACL_DIR}/infer/*.c
     ${NNACL_DIR}/base/*.c
+    ${NNACL_DIR}/fp32_grad/*.c
 )
-
-if(SUPPORT_TRAIN)
-    file(GLOB TRAIN_SRC ${NNACL_DIR}/fp32_grad/*.c)
-endif()
 
 if(PLATFORM_ARM64)
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.S)
