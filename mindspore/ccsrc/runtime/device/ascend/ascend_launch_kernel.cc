@@ -47,6 +47,9 @@ void AscendLaunchKernel::KernelSelect(std::shared_ptr<session::KernelGraph> kern
 
 void AscendLaunchKernel::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  device::ascend::KernelBuild(kernel_graph->execution_order());
+  auto ret = device::ascend::KernelBuild(kernel_graph->execution_order());
+  if (!ret) {
+    MS_LOG(ERROR) << "kernel build failed";
+  }
 }
 }  // namespace mindspore::device::ascend

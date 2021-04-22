@@ -111,7 +111,7 @@ void Bucket::CalculateMean() {
 void Bucket::UpdateTensorOutputAddr(uint8_t *addr) {
   uint8_t *tensor_output = addr;
   for (size_t i = 0; i < bucket_size_; ++i) {
-    new_tensor_output_addrs_.emplace_back(tensor_output);
+    (void)new_tensor_output_addrs_.emplace_back(tensor_output);
     tensor_output += align_size_list_[i];
   }
 }
