@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,16 +23,9 @@ from mindspore.nn import Dense, Cell
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore import Tensor, Parameter
+from mindspore import context
 
 from src import me_init
-
-
-class Cut(nn.Cell):
-
-
-
-    def construct(self, x):
-        return x
 
 
 def bn_with_initialize(out_channels):
@@ -77,6 +70,7 @@ class BaseBlock(Cell):
 
         self.cast = P.Cast()
         self.add = Add()
+        self.device_target = context.get_context('device_target')
 
     def construct(self, x):
         '''Construct function.'''
@@ -88,8 +82,9 @@ class BaseBlock(Cell):
         out = self.bn2(out)
         out = self.relu2(out)
         # hand cast
-        identity = self.cast(identity, mstype.float16)
-        out = self.cast(out, mstype.float16)
+        if self.device_target != 'CPU':
+            identity = self.cast(identity, mstype.float16)
+            out = self.cast(out, mstype.float16)
 
         out = self.add(out, identity)
         return out
@@ -143,7 +138,6 @@ class SphereNet(Cell):
             raise ValueError('sphere' + str(num_layers) + " IS NOT SUPPORTED! (sphere20 or sphere64)")
         self.shape = P.Shape()
         self.reshape = P.Reshape()
-        self.arg_shape = shape
         block = BaseBlock
 
         self.layer1 = MakeLayer(block, filter_list[0], filter_list[1], layers[0], stride=2)
@@ -153,6 +147,7 @@ class SphereNet(Cell):
 
         self.fc = fc_with_initialize(fc_size, feature_dim)
         self.last_bn = nn.BatchNorm1d(feature_dim, momentum=0.9).add_flags_recursive(fp32=True)
+        self.last_bn_sub = nn.BatchNorm2d(feature_dim, momentum=0.9).add_flags_recursive(fp32=True)
         self.cast = P.Cast()
         self.l2norm = P.L2Normalize(axis=1)
 
@@ -164,6 +159,7 @@ class SphereNet(Cell):
                     cell.bias.set_data(initializer('zeros', cell.bias.shape))
                 else:
                     cell.weight.set_data(initializer(me_init.ReidXavierUniform(), cell.weight.shape))
+        self.device_target = context.get_context('device_target')
 
     def construct(self, x):
         '''Construct function.'''
@@ -175,9 +171,95 @@ class SphereNet(Cell):
         b, _, _, _ = self.shape(x)
         x = self.reshape(x, (b, -1))
         x = self.fc(x)
-        x = self.last_bn(x)
-        x = self.cast(x, mstype.float16)
+
+        if self.device_target == 'Ascend':
+            x = self.last_bn(x)
+        else:
+            old_shape = x.shape
+            x = self.reshape(x, (old_shape[0], old_shape[1], 1, 1))
+            x = self.last_bn_sub(x)
+            x = self.reshape(x, old_shape)
+
+        if self.device_target != 'CPU':
+            x = self.cast(x, mstype.float16)
+
         x = self.l2norm(x)
+
+        return x
+
+
+class SphereNet_float32(Cell):
+    '''SphereNet_float32'''
+    def __init__(self, num_layers=36, feature_dim=128, shape=(96, 64)):
+        super(SphereNet_float32, self).__init__()
+        assert num_layers in [12, 20, 36, 64], 'SphereNet num_layers should be 12, 20 or 64'
+        if num_layers == 12:
+            layers = [1, 1, 1, 1]
+            filter_list = [3, 16, 32, 64, 128]
+            fc_size = 128 * 6 * 4
+        elif num_layers == 20:
+            layers = [1, 2, 4, 1]
+            filter_list = [3, 64, 128, 256, 512]
+            fc_size = 512 * 6 * 4
+        elif num_layers == 36:
+            layers = [2, 4, 4, 2]
+            filter_list = [3, 32, 64, 128, 256]
+            fc_size = 256 * 6 * 4
+        elif num_layers == 64:
+            layers = [3, 7, 16, 3]
+            filter_list = [3, 64, 128, 256, 512]
+            fc_size = 512 * 6 * 4
+        else:
+            raise ValueError('sphere' + str(num_layers) + " IS NOT SUPPORTED! (sphere20 or sphere64)")
+        self.shape = P.Shape()
+        self.reshape = P.Reshape()
+        block = BaseBlock
+
+        self.layer1 = MakeLayer(block, filter_list[0], filter_list[1], layers[0], stride=2)
+        self.layer2 = MakeLayer(block, filter_list[1], filter_list[2], layers[1], stride=2)
+        self.layer3 = MakeLayer(block, filter_list[2], filter_list[3], layers[2], stride=2)
+        self.layer4 = MakeLayer(block, filter_list[3], filter_list[4], layers[3], stride=2)
+
+        self.fc = fc_with_initialize(fc_size, feature_dim)
+        self.last_bn = nn.BatchNorm1d(feature_dim, momentum=0.9).add_flags_recursive(fp32=True)
+        self.last_bn_sub = nn.BatchNorm2d(feature_dim, momentum=0.9).add_flags_recursive(fp32=True)
+        self.cast = P.Cast()
+        self.l2norm = P.L2Normalize(axis=1)
+
+        for _, cell in self.cells_and_names():
+            if isinstance(cell, (nn.Conv2d, nn.Dense)):
+                if cell.bias is not None:
+                    cell.weight.set_data(initializer(me_init.ReidKaimingUniform(a=math.sqrt(5), mode='fan_out'),
+                                                     cell.weight.shape))
+                    cell.bias.set_data(initializer('zeros', cell.bias.shape))
+                else:
+                    cell.weight.set_data(initializer(me_init.ReidXavierUniform(), cell.weight.shape))
+        self.device_target = context.get_context('device_target')
+
+    def construct(self, x):
+        '''Construct function.'''
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        b, _, _, _ = self.shape(x)
+        x = self.reshape(x, (b, -1))
+        x = self.fc(x)
+
+        if self.device_target == 'Ascend':
+            x = self.last_bn(x)
+        else:
+            old_shape = x.shape
+            x = self.reshape(x, (old_shape[0], old_shape[1], 1, 1))
+            x = self.last_bn_sub(x)
+            x = self.reshape(x, old_shape)
+
+        if self.device_target != 'CPU':
+            x = self.cast(x, mstype.float16)
+
+        x = self.l2norm(x)
+        x = self.cast(x, mstype.float32)
 
         return x
 
@@ -208,12 +290,16 @@ class CombineMarginFC(nn.Cell):
         self.cast = P.Cast()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
+        self.device_target = context.get_context('device_target')
 
     def construct(self, x, label):
         '''Construct function.'''
         w = self.normalize(self.weight)
-        cosine = self.fc(self.cast(x, mstype.float16), self.cast(w, mstype.float16))
-        cosine = self.cast(cosine, mstype.float32)
+        if self.device_target == 'CPU':
+            cosine = self.fc(x, w)
+        else:
+            cosine = self.fc(self.cast(x, mstype.float16), self.cast(w, mstype.float16))
+            cosine = self.cast(cosine, mstype.float32)
         cosine_shape = F.shape(cosine)
 
         one_hot_float = self.onehot(

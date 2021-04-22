@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,31 +32,45 @@ from mindspore.nn import TrainOneStepCell
 from mindspore.communication.management import get_group_size, init, get_rank
 
 from src.dataset import get_de_dataset
-from src.config import reid_1p_cfg, reid_8p_cfg
+from src.config import reid_1p_cfg_ascend, reid_1p_cfg, reid_8p_cfg_ascend, reid_8p_cfg_gpu
 from src.lr_generator import step_lr
 from src.log import get_logger, AverageMeter
-from src.reid import SphereNet, CombineMarginFCFp16, BuildTrainNetworkWithHead
+from src.reid import SphereNet, CombineMarginFCFp16, BuildTrainNetworkWithHead, CombineMarginFC
 from src.loss import CrossEntropy
 
 warnings.filterwarnings('ignore')
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=devid)
 random.seed(1)
 np.random.seed(1)
 
 def init_argument():
     """init config argument."""
-    parser = argparse.ArgumentParser(description='Cifar10 classification')
+    parser = argparse.ArgumentParser(description='Face Recognition For Tracking')
+    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
+                        help='device_target')
     parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
-    parser.add_argument('--data_dir', type=str, default='', help='image label list file, e.g. /home/label.txt')
+    parser.add_argument('--data_dir', type=str, default='', help='image folders')
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
 
     args = parser.parse_args()
 
+    graph_path = os.path.join('./graphs_graphmode', datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, save_graphs=True,
+                        save_graphs_path=graph_path)
+
+    if args.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
+
     if args.is_distributed == 0:
-        cfg = reid_1p_cfg
+        if args.device_target == 'Ascend':
+            cfg = reid_1p_cfg_ascend
+        else:
+            cfg = reid_1p_cfg
     else:
-        cfg = reid_8p_cfg
+        if args.device_target == 'Ascend':
+            cfg = reid_8p_cfg_ascend
+        else:
+            cfg = reid_8p_cfg_gpu
     cfg.pretrained = args.pretrained
     cfg.data_dir = args.data_dir
 
@@ -81,10 +95,10 @@ def init_argument():
 
     # Show cfg
     cfg.logger.save_args(cfg)
-    return cfg
+    return cfg, args
 
 def main():
-    cfg = init_argument()
+    cfg, args = init_argument()
     loss_meter = AverageMeter('loss')
     # dataloader
     cfg.logger.info('start create dataloader')
@@ -104,7 +118,10 @@ def main():
     create_network_start = time.time()
 
     network = SphereNet(num_layers=cfg.net_depth, feature_dim=cfg.embedding_size, shape=cfg.input_size)
-    head = CombineMarginFCFp16(embbeding_size=cfg.embedding_size, classnum=cfg.class_num)
+    if args.device_target == 'CPU':
+        head = CombineMarginFC(embbeding_size=cfg.embedding_size, classnum=cfg.class_num)
+    else:
+        head = CombineMarginFCFp16(embbeding_size=cfg.embedding_size, classnum=cfg.class_num)
     criterion = CrossEntropy()
 
     # load the pretrained model
@@ -122,8 +139,12 @@ def main():
         cfg.logger.info('load model %s success', cfg.pretrained)
 
     # mixed precision training
-    network.add_flags_recursive(fp16=True)
-    head.add_flags_recursive(fp16=True)
+    if args.device_target == 'CPU':
+        network.add_flags_recursive(fp32=True)
+        head.add_flags_recursive(fp32=True)
+    else:
+        network.add_flags_recursive(fp16=True)
+        head.add_flags_recursive(fp16=True)
     criterion.add_flags_recursive(fp32=True)
 
     train_net = BuildTrainNetworkWithHead(network, head, criterion)

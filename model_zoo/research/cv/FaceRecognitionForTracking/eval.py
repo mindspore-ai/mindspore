@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.reid import SphereNet
 
 warnings.filterwarnings('ignore')
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=devid)
 
 
 def inclass_likehood(ims_info, types='cos'):
@@ -135,7 +133,10 @@ def main(args):
         else:
             print('-----------------------load model failed -----------------------')
 
-        network.add_flags_recursive(fp16=True)
+        if args.device_target == 'CPU':
+            network.add_flags_recursive(fp32=True)
+        else:
+            network.add_flags_recursive(fp16=True)
         network.set_train(False)
 
         root_path = args.eval_dir
@@ -178,8 +179,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='reid test')
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
     parser.add_argument('--eval_dir', type=str, default='', help='eval image dir, e.g. /home/test')
+    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
+                        help='device_target')
 
     arg = parser.parse_args()
+    context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target, save_graphs=False)
+
+    if arg.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
     print(arg)
 
     main(arg)
