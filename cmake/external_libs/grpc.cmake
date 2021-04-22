@@ -4,7 +4,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
 else()
-    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
+    set(grpc_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2 \
+  -Dgrpc=mindspore_grpc -Dgrpc_impl=mindspore_grpc_impl -Dgrpc_core=mindspore_grpc_core")
     if(NOT ENABLE_GLIBCXX)
         set(grpc_CXXFLAGS "${grpc_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
     endif()
@@ -40,7 +41,7 @@ endif()
 
 mindspore_add_pkg(grpc
         VER 1.27.3
-        LIBS grpc++ grpc gpr upb address_sorting
+        LIBS mindspore_grpc++ mindspore_grpc mindspore_gpr mindspore_upb mindspore_address_sorting
         EXE grpc_cpp_plugin
         URL ${REQ_URL}
         MD5 ${MD5}
@@ -64,10 +65,16 @@ mindspore_add_pkg(grpc
 
 include_directories(${grpc_INC})
 
-add_library(mindspore::grpc++ ALIAS grpc::grpc++)
+add_library(mindspore::grpc++ ALIAS grpc::mindspore_grpc++)
 
 # link other grpc libs
-target_link_libraries(grpc::grpc++ INTERFACE grpc::grpc grpc::gpr grpc::upb grpc::address_sorting)
+target_link_libraries(grpc::mindspore_grpc++ INTERFACE grpc::mindspore_grpc grpc::mindspore_gpr grpc::mindspore_upb
+  grpc::mindspore_address_sorting)
+
+# modify mindspore macro define
+add_compile_definitions(grpc=mindspore_grpc)
+add_compile_definitions(grpc_impl=mindspore_grpc_impl)
+add_compile_definitions(grpc_core=mindspore_grpc_core)
 
 function(ms_grpc_generate c_var h_var)
     if(NOT ARGN)
