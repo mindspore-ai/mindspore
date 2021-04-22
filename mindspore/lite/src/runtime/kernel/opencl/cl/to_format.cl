@@ -79,4 +79,5 @@ IMG_to_BUF(float16, float32, half, float, read_imageh);
 IMG_to_BUF(float16, float16, half, half, read_imageh);
 IMG_to_BUF(int32, int32, int, int, read_imagei);
 IMG_to_BUF(uint32, uint32, int, int, read_imagei);
+IMG_to_BUF(int32, float32, int, float, read_imagei);
 IMG_to_BUF(int8, int8, char, char, read_imagei);

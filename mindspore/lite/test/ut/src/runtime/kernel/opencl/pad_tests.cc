@@ -22,18 +22,10 @@ class TestOpenCL_Pad : public CommonTest {};
 
 namespace {
 // PrimitiveType_Pad: src/ops/populate/pad_populate.cc
-OpParameter *CreateParameter(const std::vector<int> &paddings, float constant_value) {
+OpParameter *CreateParameter(float constant_value) {
   auto *param = test::CreateParameter<PadParameter>(schema::PrimitiveType_PadFusion);
   param->pad_mode_ = schema::PaddingMode_CONSTANT;
   param->constant_value_ = constant_value;
-  param->padding_length = MAX_PAD_SIZE;
-  int size = paddings.size();
-  for (size_t i = 0; i < MAX_PAD_SIZE - size; ++i) {
-    param->paddings_[i] = 0;
-  }
-  for (size_t i = 0; i < size; i++) {
-    param->paddings_[MAX_PAD_SIZE - size + i] = paddings[i];
-  }
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace
@@ -42,8 +34,10 @@ TEST_F(TestOpenCL_Pad, 1D) {
   float input_data[] = {1, 1, 1, 1};
   float output_data[] = {2, 2, 2, 1, 1, 1, 1, 2, 2};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter({3, 2}, 2);
-    TestMain({{{4}, input_data, VAR}}, {{9}, output_data}, param, fp16_enable);
+    auto *param = CreateParameter(2);
+    int padding[] = {3, 2};
+    TestMain({{{4}, input_data, VAR, kNumberTypeFloat32}, {{1, 2}, padding, CONST_TENSOR, kNumberTypeInt32}},
+             {{9}, output_data}, param, fp16_enable);
   }
 }
 
@@ -52,8 +46,10 @@ TEST_F(TestOpenCL_Pad, 2D) {
   float output_data[] = {10, 10, 10, 10, 10, 10, 10, 10, 10, 1,  1,  1,  1,  1,  10, 10,
                          10, 2,  2,  2,  2,  2,  10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter({1, 1, 1, 2}, 10);
-    TestMain({{{2, 5}, input_data, VAR}}, {{4, 8}, output_data}, param, fp16_enable);
+    int padding[] = {1, 1, 1, 2};
+    auto *param = CreateParameter(10);
+    TestMain({{{2, 5}, input_data, VAR, kNumberTypeFloat32}, {{2, 2}, padding, CONST_TENSOR, kNumberTypeInt32}},
+             {{4, 8}, output_data}, param, fp16_enable);
   }
 }
 
@@ -73,8 +69,10 @@ TEST_F(TestOpenCL_Pad, 4D) {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter({0, 0, 3, 3, 3, 3, 0, 0}, 0);
-    TestMain({{{1, 4, 4, 3}, input_data, VAR}}, {{1, 10, 10, 3}, output_data}, param, fp16_enable);
+    auto *param = CreateParameter(0);
+    int padding[] = {0, 0, 3, 3, 3, 3, 0, 0};
+    TestMain({{{1, 4, 4, 3}, input_data, VAR, kNumberTypeFloat32}, {{4, 2}, padding, CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 10, 10, 3}, output_data}, param, fp16_enable);
   }
 
   float output_data1[] = {
@@ -89,8 +87,10 @@ TEST_F(TestOpenCL_Pad, 4D) {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter({0, 0, 3, 3, 3, 3, 0, 0}, 1);
-    TestMain({{{1, 4, 4, 3}, input_data, VAR}}, {{1, 10, 10, 3}, output_data1}, param, fp16_enable);
+    auto *param = CreateParameter(1);
+    int padding[] = {0, 0, 3, 3, 3, 3, 0, 0};
+    TestMain({{{1, 4, 4, 3}, input_data, VAR, kNumberTypeFloat32}, {{4, 2}, padding, CONST_TENSOR, kNumberTypeInt32}},
+             {{1, 10, 10, 3}, output_data1}, param, fp16_enable);
   }
 }
 
@@ -224,8 +224,10 @@ TEST_F(TestOpenCL_Pad, test0) {
     auto constant_value = std::get<6>(case_);
     std::cout << name << std::endl;
     for (auto fp16_enable : {false, true}) {
-      auto *param = CreateParameter(paddings, constant_value);
-      TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+      auto *param = CreateParameter(constant_value);
+      TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+                {{static_cast<int>(paddings.size() / 2), 2}, paddings.data(), CONST_TENSOR, kNumberTypeInt32}},
+               {output_shape, output_data}, param, fp16_enable);
     }
   }
 }

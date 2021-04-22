@@ -46,7 +46,9 @@ TEST_F(TestOpenCL_Transpose, NHWC2NCHW) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(perm);
-    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(perm.size())}, {perm.data()}, CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -62,7 +64,9 @@ TEST_F(TestOpenCL_Transpose, NCHW2NHWC) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(perm);
-    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(perm.size())}, {perm.data()}, CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -78,7 +82,9 @@ TEST_F(TestOpenCL_Transpose, NHWC2NWHC) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(perm);
-    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(perm.size())}, {perm.data()}, CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -94,7 +100,9 @@ TEST_F(TestOpenCL_Transpose, NWC2CWN) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(perm);
-    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(perm.size())}, {perm.data()}, CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 
@@ -112,7 +120,9 @@ TEST_F(TestOpenCL_Transpose, NWC2WNC) {
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(perm);
-    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
+              {{static_cast<int>(perm.size())}, {perm.data()}, CONST_TENSOR, kNumberTypeInt32}},
+             {output_shape, output_data}, param, fp16_enable);
   }
 }
 }  // namespace mindspore::lite::opencl::test

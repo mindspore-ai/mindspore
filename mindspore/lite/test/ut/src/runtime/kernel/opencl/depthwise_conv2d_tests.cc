@@ -21,6 +21,7 @@ namespace mindspore::lite::opencl::test {
 class TestOpenCL_DepthwiseConv2d : public CommonTest {};
 
 namespace {
+// Check and optimize
 // PrimitiveType_DepthwiseConv2D: src/ops/populate/depthwise_conv2d_populate.cc
 OpParameter *CreateParameter(int kernel_h, int kernel_w, int stride_h, int stride_w, int pad_u, int pad_d, int pad_l,
                              int pad_r, int dilation_h, int dilation_w, ActType act_type, int input_channel) {

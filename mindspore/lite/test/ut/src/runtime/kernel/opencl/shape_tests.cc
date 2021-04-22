@@ -30,10 +30,11 @@ TEST_F(TestOpenCL_Shape, test0) {
   std::vector<int> input_shape = {2, 4};
   std::vector<int> output_shape = {2};
   float input_data[] = {-0.4045, -0.0924, -0.617, -0.10114, -0.9893, 0.3342, 2.445, -2.182};
-  float output_data[] = {2, 4};
+  int output_data[] = {2, 4};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter();
-    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32}}, {{output_shape, output_data, kNumberTypeInt32}},
+             param, fp16_enable);
   }
 }
 

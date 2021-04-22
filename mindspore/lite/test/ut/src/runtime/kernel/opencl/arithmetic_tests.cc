@@ -157,44 +157,6 @@ TEST_F(TestOpenCL_Arithmetic, FloorMod) {
   }
 }
 
-TEST_F(TestOpenCL_Arithmetic, FloorModFile) {
-  std::vector<int> input0_shape = {1, 3, 4, 5};
-  std::vector<int> input1_shape = {1, 3, 4, 5};
-  std::vector<int> output_shape = {1, 3, 4, 5};
-  size_t input1_size, input2_size, output_size;
-  std::string input1Ppath = "./test_data/FloodModfp32_input1.bin";
-  std::string input2Ppath = "./test_data/FloodModfp32_input2.bin";
-  std::string correctOutputPath = "./test_data/FloodModfp32_output.bin";
-  auto input0_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
-  auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
-  auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
-
-  for (auto fp16_enable : {true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_FloorMod, input0_shape, input1_shape);
-    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
-             param, fp16_enable, fp16_enable ? 1e-2 : 1e-7);
-  }
-}
-
-TEST_F(TestOpenCL_Arithmetic, SquaredDifference) {
-  std::vector<int> input0_shape = {1, 512, 1, 5};
-  std::vector<int> input1_shape = {1, 1, 1, 5};
-  std::vector<int> output_shape = {1, 512, 1, 5};
-  size_t input1_size, input2_size, output_size;
-  std::string input1Ppath = "./test_data/SquaredDifferencefp32_input1.bin";
-  std::string input2Ppath = "./test_data/SquaredDifferencefp32_input2.bin";
-  std::string correctOutputPath = "./test_data/SquaredDifferencefp32_output.bin";
-  auto input0_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
-  auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
-  auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
-
-  for (auto fp16_enable : {true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_SquaredDifference, input0_shape, input1_shape);
-    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
-             param, fp16_enable, fp16_enable ? 1e-2 : 1e-9);
-  }
-}
-
 TEST_F(TestOpenCL_Arithmetic, ElementwiseDiv) {
   std::vector<int> input0_shape = {1, 2, 2, 3};
   std::vector<int> input1_shape = {1, 2, 2, 3};

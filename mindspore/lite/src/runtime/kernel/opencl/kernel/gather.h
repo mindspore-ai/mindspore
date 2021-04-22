@@ -32,6 +32,7 @@ class GatherOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int InitWeights() override;
   int Prepare() override;
+  int PreProcess() override;
 
   int CheckSpecs() override;
   void SetConstArgs() override;

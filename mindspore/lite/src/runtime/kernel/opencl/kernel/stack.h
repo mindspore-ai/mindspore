@@ -33,8 +33,6 @@ class StackOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
 
-  int ReSize() override;
-
   int Run() override;
 
  private:

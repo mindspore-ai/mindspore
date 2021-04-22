@@ -19,7 +19,7 @@
 namespace mindspore::lite::opencl::test {
 
 class TestOpenCL_SparseToDense : public CommonTest {};
-
+// Check and optimize
 namespace {
 // PrimitiveType_SparseToDense: src/ops/populate/sparse_to_dense_populate.cc
 OpParameter *CreateParameter() {

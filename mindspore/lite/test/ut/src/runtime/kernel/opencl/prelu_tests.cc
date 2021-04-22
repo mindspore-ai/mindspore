@@ -21,6 +21,7 @@ namespace mindspore::lite::opencl::test {
 class TestOpenCL_PRrelu : public CommonTest {};
 
 namespace {
+// Check and optimize
 // PrimitiveType_PReLU: src/ops/populate/p_relu_populate.cc
 OpParameter *CreateParameter() {
   auto *param = test::CreateParameter<PReluParameter>(schema::PrimitiveType_PReLUFusion);
