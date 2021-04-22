@@ -33,8 +33,6 @@ set VERSION_MINOR=%y:~1,1%
 for /f "delims=\= tokens=2" %%c in ('findstr /C:"const int ms_version_revision = " mindspore\lite\include\version.h') do (set z=%%c)
 set VERSION_REVISION=%z:~1,1%
 
-echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
-
 ECHO %2%|FINDSTR "^[0-9][0-9]*$"
 IF %errorlevel% == 0 (
     SET threads=%2%
@@ -74,6 +72,7 @@ IF NOT EXIST "%BUILD_PATH%/mindspore" (
 
 cd %BUILD_PATH%/mindspore
 IF "%1%" == "lite" (
+    echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
     cmake --build "%BUILD_PATH%\mindspore" --target clean
     rd /s /q "%BASE_PATH%\output"
     (git log -1 | findstr "^commit") > %BUILD_PATH%\.commit_id
