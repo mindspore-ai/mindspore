@@ -101,11 +101,11 @@ class OpInfo {
     compute_cost_ = opinfo.compute_cost_;
     kernel_name_ = opinfo.kernel_name();
     partial_flag_ = opinfo.partial_flag_;
-    dynamic_format_ = opinfo.dynamic_format_;
     dynamic_shape_ = opinfo.dynamic_shape_;
     op_pattern_ = opinfo.op_pattern();
     processor_ = opinfo.processor_;
     need_check_supported_ = opinfo.need_check_supported();
+    is_dynamic_format_ = opinfo.is_dynamic_format();
     for (const auto &attr : opinfo.attrs_ptr()) {
       attrs_ptr_.push_back(std::make_shared<OpAttr>(*attr));
     }
@@ -127,6 +127,7 @@ class OpInfo {
   bool dynamic_shape() const { return dynamic_shape_; }
   std::string processor() const { return processor_; }
   bool need_check_supported() const { return need_check_supported_; }
+  bool is_dynamic_format() const { return is_dynamic_format_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr() const { return outputs_ptr_; }
@@ -144,7 +145,8 @@ class OpInfo {
   void set_partial_flag(const bool partial_flag) { partial_flag_ = partial_flag; }
   void set_op_pattern(const OpPattern op_pattern) { op_pattern_ = op_pattern; }
   void set_processor(const std::string &processor) { processor_ = processor; }
-  void set_need_check_supported(const bool need_check_supported) { need_check_supported_ = need_check_supported; }
+  void set_need_check_supported(bool need_check_supported) { need_check_supported_ = need_check_supported; }
+  void set_is_dynamic_format(bool is_dynamic_format) { is_dynamic_format_ = is_dynamic_format; }
   void add_attrs_ptr(const std::shared_ptr<OpAttr> &attr) { attrs_ptr_.push_back(attr); }
   void add_inputs_ptr(const std::shared_ptr<OpIOInfo> &input) { inputs_ptr_.push_back(input); }
   void add_outputs_ptr(const std::shared_ptr<OpIOInfo> &output) { outputs_ptr_.push_back(output); }
@@ -169,9 +171,9 @@ class OpInfo {
   int compute_cost_ = 0;
   std::string kernel_name_;
   bool partial_flag_ = false;
-  bool dynamic_format_ = false;
   bool dynamic_shape_ = false;
   bool need_check_supported_ = false;
+  bool is_dynamic_format_ = false;
   OpPattern op_pattern_ = kCommonPattern;
   std::string processor_;
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;

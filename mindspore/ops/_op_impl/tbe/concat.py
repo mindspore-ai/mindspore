@@ -26,7 +26,7 @@ concat_op_info = TBERegOp("Concat") \
     .attr("axis", "required", "int", "all") \
     .input(0, "input_values", False, "dynamic", "all") \
     .output(0, "output_data", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None) \
     .get_op_info()
 

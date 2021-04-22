@@ -63,19 +63,22 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
     MS_LOG(INFO) << "Warning: node(" << cnode_ptr_->fullname_with_scope() << ") not support tbe aicore.";
     return;
   }
-  OpPattern pattern = op_info_ptr->op_pattern();
-  if (pattern == kCommonPattern) {
-    GetCommonPatternKernelInfo(*op_info_ptr);
-  } else if (pattern == kDynamicFormatPattern) {
+
+  if (op_info_ptr->is_dynamic_format()) {
     GetDynamicFormatPatternKernelInfo(*op_info_ptr);
-  } else if (pattern == kFormatAgnosticPattern) {
-    GetAgnosticPatternKernelInfo(*op_info_ptr);
-  } else if (pattern == kBroadcastPattern) {
-    GetBroadcastPatternKernelInfo(*op_info_ptr);
-  } else if (pattern == kReducePattern) {
-    GetReducePatternKernelInfo(*op_info_ptr);
   } else {
-    MS_LOG(INFO) << "Warning: op pattern is invailed.";
+    OpPattern pattern = op_info_ptr->op_pattern();
+    if (pattern == kCommonPattern) {
+      GetCommonPatternKernelInfo(*op_info_ptr);
+    } else if (pattern == kFormatAgnosticPattern) {
+      GetAgnosticPatternKernelInfo(*op_info_ptr);
+    } else if (pattern == kBroadcastPattern) {
+      GetBroadcastPatternKernelInfo(*op_info_ptr);
+    } else if (pattern == kReducePattern) {
+      GetReducePatternKernelInfo(*op_info_ptr);
+    } else {
+      MS_LOG(INFO) << "Warning: op pattern is invailed.";
+    }
   }
   // check support
   FilterInVaildKernelInfo(*op_info_ptr);

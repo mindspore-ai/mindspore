@@ -27,7 +27,7 @@ fused_mul_add_op_info = TBERegOp("FusedMulAdd") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "x3", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 
