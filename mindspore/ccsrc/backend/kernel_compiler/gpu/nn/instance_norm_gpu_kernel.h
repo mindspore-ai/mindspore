@@ -38,7 +38,6 @@ class InstanceNormGpuKernel : public GpuKernel {
         workspace_size_(0),
         mode_(CUDNN_BATCHNORM_SPATIAL),
         bn_ops_(CUDNN_BATCHNORM_OPS_BN),
-        is_training_(true),
         epsilon_(10e-5),
         exp_avg_factor_(0.1),
         is_null_input_(false),
@@ -89,21 +88,13 @@ class InstanceNormGpuKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
     float *reserve_addr = nullptr;
-    if (is_training_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnBatchNormalizationForwardTrainingEx(
-          handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x_addr, z_desc_, z, y_desc_, y_addr,
-          scale_bias_mean_var_desc_, ws_gamma, ws_beta, exp_avg_factor_, ws_mean, ws_var, epsilon_, save_mean_addr,
-          save_variance_addr, nullptr, workspace_addr, workspace_size_, reserve_addr, 0),
-        "Kernel launch failed");
-    } else {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnBatchNormalizationForwardInference(
-                                    handle_, mode_, &alpha, &beta, x_desc_, x_addr, y_desc_, y_addr,
-                                    scale_bias_mean_var_desc_, ws_gamma, ws_beta, ws_mean, ws_var, epsilon_),
-                                  "Kernel launch failed");
-    }
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudnnBatchNormalizationForwardTrainingEx(
+        handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x_addr, z_desc_, z, y_desc_, y_addr, scale_bias_mean_var_desc_,
+        ws_gamma, ws_beta, exp_avg_factor_, ws_mean, ws_var, epsilon_, save_mean_addr, save_variance_addr, nullptr,
+        workspace_addr, workspace_size_, reserve_addr, 0),
+      "Kernel launch failed");
     return true;
   }
 
@@ -114,8 +105,7 @@ class InstanceNormGpuKernel : public GpuKernel {
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
 
     InitResource();
-    is_training_ = GetAttr<bool>(kernel_node, "is_training");
-    mode_ = is_training_ ? CUDNN_BATCHNORM_SPATIAL_PERSISTENT : CUDNN_BATCHNORM_SPATIAL;
+    mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     exp_avg_factor_ = GetAttr<float>(kernel_node, "momentum");
 
@@ -220,7 +210,6 @@ class InstanceNormGpuKernel : public GpuKernel {
   size_t workspace_size_;
   cudnnBatchNormMode_t mode_;
   cudnnBatchNormOps_t bn_ops_;
-  bool is_training_;
   double epsilon_;
   double exp_avg_factor_;
   bool is_null_input_;

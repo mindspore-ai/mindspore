@@ -49,7 +49,7 @@ class Net(nn.Cell):
 def test_InstanceNorm2d_fp32():
     x_np = np.random.randn(3, 3, 2, 2).astype(np.float32)
     bn_instance_comp = Net(3 * 3)
-    bn_instance_op = nn.InstanceNorm2d(3, use_batch_statistics=True, gamma_init=0.5, beta_init=0.5)
+    bn_instance_op = nn.InstanceNorm2d(3, gamma_init=0.5, beta_init=0.5)
     comp_out = bn_instance_comp(Tensor(x_np))
     op_out = bn_instance_op(Tensor(x_np))
     assert np.allclose(comp_out.asnumpy(), op_out.asnumpy())
