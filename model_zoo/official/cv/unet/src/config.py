@@ -105,7 +105,7 @@ cfg_unet_simple = {
     'lr': 0.0001,
     'epochs': 400,
     'repeat': 400,
-    'distribute_epochs': 1600,
+    'distribute_epochs': 2400,
     'batchsize': 16,
     'cross_valid_ind': 1,
     'num_classes': 2,
