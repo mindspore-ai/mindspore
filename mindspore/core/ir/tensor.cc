@@ -367,7 +367,7 @@ class TensorDataImpl : public TensorData {
       if (num > kThreshold / 2) {
         ssize_t iter_times = std::min(static_cast<ssize_t>(num - kThreshold / 2), static_cast<ssize_t>(kThreshold / 2));
         for (ssize_t i = 0; i < iter_times; i++) {
-          if (use_comma && i != 0) {
+          if (use_comma && (i != 0 || num <= kThreshold)) {  // Not just after ignored part || Not handle ignored part
             ss << ',';
           }
           ss << '\n';
