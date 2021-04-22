@@ -856,11 +856,12 @@ int AnfExporter::ProcessValueSequence(const ValueNodePtr &value_node, std::uniqu
     (*schema_tensor)->dims = {static_cast<int32_t>(shape.size())};
     (*schema_tensor)->nodeType = NodeType_ValueNode;
     (*schema_tensor)->data.resize(shape.size() * sizeof(int));
-    ret = memcpy_s((*schema_tensor)->data.data(), shape.size() * sizeof(int32_t), shape.data(),
-                   shape.size() * sizeof(int32_t));
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "memcpy_s data into schema_tensor failed.";
-      return RET_ERROR;
+    if (!shape.empty()) {
+      if (EOK != memcpy_s((*schema_tensor)->data.data(), shape.size() * sizeof(int32_t), shape.data(),
+                          shape.size() * sizeof(int32_t))) {
+        MS_LOG(ERROR) << "memcpy_s data into schema_tensor failed.";
+        return RET_MEMORY_FAILED;
+      }
     }
     node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
