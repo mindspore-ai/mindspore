@@ -22,6 +22,7 @@
 #include <string>
 #include <sstream>
 #include <thread>
+#include <vector>
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 
@@ -94,6 +95,9 @@ class CacheAdminArgHandler {
   Status AssignArg(std::string option, float *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
+  Status AssignArg(std::string option, std::vector<uint32_t> *out_arg, std::stringstream *arg_stream,
+                   CommandId command_id = CommandId::kCmdUnknown);
+
   Status Validate();
 
   CommandId command_id_;
@@ -102,7 +106,7 @@ class CacheAdminArgHandler {
   int32_t shm_mem_sz_;
   int32_t log_level_;
   float memory_cap_ratio_;
-  session_id_type session_id_;
+  std::vector<session_id_type> session_ids_;
   std::string hostname_;
   std::string spill_dir_;
   std::string trailing_args_;

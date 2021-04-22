@@ -16,7 +16,7 @@
 
 # source the globals and functions for use with cache testing
 export SKIP_ADMIN_COUNTER=false
-declare failed_tests
+declare session_id failed_tests
 . cachetest_lib.sh
 echo
 
@@ -158,6 +158,18 @@ HandleRcExit $? 0 0
 # destroy a non-existing session
 cmd="${CACHE_ADMIN} -d 99999"
 CacheAdminCmd "${cmd}" 1
+HandleRcExit $? 0 0
+
+# generate two new sessions to test multi-destroy
+GetSession
+HandleRcExit $? 0 0
+session_id1=$session_id
+GetSession
+HandleRcExit $? 0 0
+session_id2=$session_id
+# test multi-session destroy
+cmd="${CACHE_ADMIN} -d ${session_id1} ${session_id2}"
+CacheAdminCmd "${cmd}" 0
 HandleRcExit $? 0 0
 
 # stop cache server at this point

@@ -332,16 +332,16 @@ bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet201
 #### Evaluation while training
 
 ```bash
-# evaluation while distributed training Ascend example:
+# evaluation with distributed training Ascend example:
 bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
-# evaluation while standalone training Ascend example:
+# evaluation with standalone training Ascend example:
 bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
-# evaluation while distributed training GPU example:
+# evaluation with distributed training GPU example:
 bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
-# evaluation while standalone training GPU example:
+# evaluation with standalone training GPU example:
 bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 ```
 
