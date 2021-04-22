@@ -130,3 +130,4 @@ if __name__ == '__main__':
 
     print("Start Eval!")
     maskrcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)
+    print("ckpt_path=", args_opt.checkpoint_path)
