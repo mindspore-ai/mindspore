@@ -29,6 +29,7 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
     std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+    tensor_size = std::max(tensor_size, type_size);
     input_size_list_.emplace_back(tensor_size);
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -38,6 +39,7 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
     std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(kernel_node, output_index);
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+    tensor_size = std::max(tensor_size, type_size);
     output_size_list_.emplace_back(tensor_size);
   }
 }
