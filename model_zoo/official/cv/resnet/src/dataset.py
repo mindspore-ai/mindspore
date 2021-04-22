@@ -23,7 +23,8 @@ import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
 
 
-def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
+def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
+                    enable_cache=False, cache_session_id=None):
     """
     create a train or evaluate cifar10 dataset for resnet50
     Args:
@@ -33,6 +34,8 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
+        enable_cache(bool): whether tensor caching service is used for eval.
+        cache_session_id(int): If enable_cache, cache session_id need to be provided.
 
     Returns:
         dataset
@@ -70,7 +73,16 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     type_cast_op = C2.TypeCast(mstype.int32)
 
     data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
-    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    # only enable cache for eval
+    if do_train:
+        enable_cache = False
+    if enable_cache:
+        if not cache_session_id:
+            raise ValueError("A cache session_id must be provided to use cache.")
+        eval_cache = ds.DatasetCache(session_id=int(cache_session_id), size=0)
+        data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8, cache=eval_cache)
+    else:
+        data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
 
     # apply batch operations
     data_set = data_set.batch(batch_size, drop_remainder=True)
@@ -80,7 +92,8 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return data_set
 
 
-def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
+def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
+                    enable_cache=False, cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for resnet50
 
@@ -91,6 +104,8 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
+        enable_cache(bool): whether tensor caching service is used for eval.
+        cache_session_id(int): If enable_cache, cache session_id need to be provided.
 
     Returns:
         dataset
@@ -135,7 +150,17 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     type_cast_op = C2.TypeCast(mstype.int32)
 
     data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    # only enable cache for eval
+    if do_train:
+        enable_cache = False
+    if enable_cache:
+        if not cache_session_id:
+            raise ValueError("A cache session_id must be provided to use cache.")
+        eval_cache = ds.DatasetCache(session_id=int(cache_session_id), size=0)
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8,
+                                cache=eval_cache)
+    else:
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
     data_set = data_set.batch(batch_size, drop_remainder=True)
@@ -146,7 +171,8 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return data_set
 
 
-def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
+def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
+                    enable_cache=False, cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for resnet101
     Args:
@@ -156,6 +182,8 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
+        enable_cache(bool): whether tensor caching service is used for eval.
+        cache_session_id(int): If enable_cache, cache session_id need to be provided.
 
     Returns:
         dataset
@@ -199,7 +227,17 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     type_cast_op = C2.TypeCast(mstype.int32)
 
     data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    # only enable cache for eval
+    if do_train:
+        enable_cache = False
+    if enable_cache:
+        if not cache_session_id:
+            raise ValueError("A cache session_id must be provided to use cache.")
+        eval_cache = ds.DatasetCache(session_id=int(cache_session_id), size=0)
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8,
+                                cache=eval_cache)
+    else:
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
     data_set = data_set.batch(batch_size, drop_remainder=True)
@@ -209,7 +247,8 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return data_set
 
 
-def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
+def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
+                    enable_cache=False, cache_session_id=None):
     """
     create a train or eval imagenet2012 dataset for se-resnet50
 
@@ -220,6 +259,8 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
+        enable_cache(bool): whether tensor caching service is used for eval.
+        cache_session_id(int): If enable_cache, cache session_id need to be provided.
 
     Returns:
         dataset
@@ -261,7 +302,17 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
     data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=12)
-    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12)
+    # only enable cache for eval
+    if do_train:
+        enable_cache = False
+    if enable_cache:
+        if not cache_session_id:
+            raise ValueError("A cache session_id must be provided to use cache.")
+        eval_cache = ds.DatasetCache(session_id=int(cache_session_id), size=0)
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12,
+                                cache=eval_cache)
+    else:
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12)
 
     # apply batch operations
     data_set = data_set.batch(batch_size, drop_remainder=True)

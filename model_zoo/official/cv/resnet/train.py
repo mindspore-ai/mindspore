@@ -60,6 +60,9 @@ parser.add_argument("--eval_start_epoch", type=int, default=40,
                     help="Evaluation start epoch when run_eval is True, default is 40.")
 parser.add_argument("--eval_interval", type=int, default=1,
                     help="Evaluation interval when run_eval is True, default is 1.")
+parser.add_argument('--enable_cache', type=ast.literal_eval, default=False,
+                    help='Caching the eval dataset in memory to speedup evaluation, default is False.')
+parser.add_argument('--cache_session_id', type=str, default="", help='The session id for cache service.')
 args_opt = parser.parse_args()
 
 set_seed(1)
@@ -241,10 +244,11 @@ if __name__ == '__main__':
         if args_opt.eval_dataset_path is None or (not os.path.isdir(args_opt.eval_dataset_path)):
             raise ValueError("{} is not a existing path.".format(args_opt.eval_dataset_path))
         eval_dataset = create_dataset(dataset_path=args_opt.eval_dataset_path, do_train=False,
-                                      batch_size=config.batch_size, target=target)
+                                      batch_size=config.batch_size, target=target, enable_cache=args_opt.enable_cache,
+                                      cache_session_id=args_opt.cache_session_id)
         eval_param_dict = {"model": model, "dataset": eval_dataset, "metrics_name": "acc"}
         eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args_opt.eval_interval,
-                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=True,
+                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=args_opt.save_best_ckpt,
                                ckpt_directory=ckpt_save_dir, besk_ckpt_name="best_acc.ckpt",
                                metrics_name="acc")
         cb += [eval_cb]

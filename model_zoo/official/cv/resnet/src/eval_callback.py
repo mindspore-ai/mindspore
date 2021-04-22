@@ -16,9 +16,11 @@
 
 import os
 import stat
+import time
 from mindspore import save_checkpoint
 from mindspore import log as logger
 from mindspore.train.callback import Callback
+
 
 class EvalCallBack(Callback):
     """
@@ -72,8 +74,11 @@ class EvalCallBack(Callback):
         cb_params = run_context.original_args()
         cur_epoch = cb_params.cur_epoch_num
         if cur_epoch >= self.eval_start_epoch and (cur_epoch - self.eval_start_epoch) % self.interval == 0:
+            eval_start = time.time()
             res = self.eval_function(self.eval_param_dict)
-            print("epoch: {}, {}: {}".format(cur_epoch, self.metrics_name, res), flush=True)
+            eval_cost = time.time() - eval_start
+            print("epoch: {}, {}: {}, eval_cost:{:.2f}".format(cur_epoch, self.metrics_name, res, eval_cost),
+                  flush=True)
             if res >= self.best_res:
                 self.best_res = res
                 self.best_epoch = cur_epoch

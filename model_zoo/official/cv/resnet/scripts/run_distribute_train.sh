@@ -14,9 +14,12 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ] && [ $# != 5 ]
+. cache_util.sh
+
+if [ $# != 4 ] && [ $# != 5 ] && [ $# != 6 ]
 then
   echo "Usage: bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+  echo "       bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
   exit 1
 fi
 
@@ -60,6 +63,12 @@ then
     PATH3=$(get_real_path $5)
 fi
 
+if [ $# == 6 ]
+then
+  RUN_EVAL=$5
+  EVAL_DATASET_PATH=$(get_real_path $6)
+fi
+
 if [ ! -f $PATH1 ]
 then 
     echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
@@ -76,6 +85,18 @@ if [ $# == 5 ] && [ ! -f $PATH3 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH3 is not a file"
 exit 1
+fi
+
+if [ "x${RUN_EVAL}" == "xTrue" ] && [ ! -d $EVAL_DATASET_PATH ]
+then
+  echo "error: EVAL_DATASET_PATH=$EVAL_DATASET_PATH is not a directory"
+  exit 1
+fi
+
+if [ "x${RUN_EVAL}" == "xTrue" ]
+then
+  bootup_cache_server
+  CACHE_SESSION_ID=$(generate_cache_session)
 fi
 
 ulimit -u unlimited
@@ -108,5 +129,10 @@ do
         python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log &
     fi
 
+    if [ $# == 6 ]
+    then
+      python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 \
+      --run_eval=$RUN_EVAL --eval_dataset_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID &> log &
+    fi
     cd ..
 done
