@@ -38,7 +38,7 @@ class TrtUtils {
     static std::map<nvinfer1::DataType, TypeId> type_list = {{nvinfer1::DataType::kFLOAT, TypeId::kNumberTypeFloat32},
                                                              {nvinfer1::DataType::kHALF, TypeId::kNumberTypeFloat16},
                                                              {nvinfer1::DataType::kINT8, TypeId::kNumberTypeInt8},
-                                                             {nvinfer1::DataType::kINT32, TypeId::kNumberTypeInt}};
+                                                             {nvinfer1::DataType::kINT32, TypeId::kNumberTypeInt32}};
 
     auto iter = type_list.find(trt_dtype);
     if (iter == type_list.end()) {
@@ -51,7 +51,8 @@ class TrtUtils {
     static std::map<TypeId, nvinfer1::DataType> type_list = {{TypeId::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
                                                              {TypeId::kNumberTypeFloat16, nvinfer1::DataType::kHALF},
                                                              {TypeId::kNumberTypeInt8, nvinfer1::DataType::kINT8},
-                                                             {TypeId::kNumberTypeInt, nvinfer1::DataType::kINT32}};
+                                                             {TypeId::kNumberTypeInt, nvinfer1::DataType::kINT32},
+                                                             {TypeId::kNumberTypeInt32, nvinfer1::DataType::kINT32}};
     auto iter = type_list.find(ms_dtype);
     if (iter == type_list.end()) {
       MS_LOG(EXCEPTION) << "data type not support: " << ms_dtype;
@@ -69,7 +70,7 @@ class TrtUtils {
     return trt_dims;
   }
 
-  static nvinfer1::Dims TrtDimsToMsDims(const ShapeVector &ms_shape, bool ignore_batch_dim = false) {
+  static nvinfer1::Dims MsDimsToTrtDims(const ShapeVector &ms_shape, bool ignore_batch_dim = false) {
     nvinfer1::Dims trt_dims;
     size_t offset = ignore_batch_dim ? 1 : 0;
     for (size_t i = offset; i < ms_shape.size(); ++i) {
