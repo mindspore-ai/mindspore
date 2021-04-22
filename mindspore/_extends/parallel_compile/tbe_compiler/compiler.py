@@ -148,6 +148,7 @@ def compile_fusion_op(json_str):
     te_set_version(args['fusion_op']["socVersion"])
     if 'fusion_op' not in args or not args['fusion_op']:
         raise ValueError("Json string Errors, key:fusion_op not found.")
+    args['fusion_op']['SocInfo'] = args['SocInfo']
     fusion_op_arg = args['fusion_op']
     return fusion_op(json.dumps(fusion_op_arg))
 
