@@ -2749,9 +2749,12 @@ def kron(a, b):
     Computes the Kronecker product, a composite array made of blocks of the second
     array scaled by the first.
 
+    Note:
+        Booleans are not supported.
+
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): input values.
-        b (Union[int, float, bool, list, tuple, Tensor]): input values.
+        a (Union[int, float, list, tuple, Tensor]): input values.
+        b (Union[int, float, list, tuple, Tensor]): input values.
 
     Returns:
         Tensor.
@@ -2807,8 +2810,8 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
     returned.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Components of the first vector(s).
-        b (Union[int, float, bool, list, tuple, Tensor]): Components of the second vector(s).
+        a (Union[list, tuple, Tensor]): Components of the first vector(s).
+        b (Union[list, tuple, Tensor]): Components of the second vector(s).
         axisa (int, optional): Axis of `a` that defines the vector(s). By default, the last
             axis.
         axisb (int, optional): Axis of `b` that defines the vector(s). By default, the last
