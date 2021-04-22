@@ -955,7 +955,7 @@ int AscendKernelRuntime::DeleteDumpFile(std::string path) {
   if (S_ISREG(statbuf.st_mode)) {
     result = remove(path.c_str());
   } else if (S_ISDIR(statbuf.st_mode)) {
-    if ((dir = opendir(path.c_str())) == NULL) {
+    if ((dir = opendir(path.c_str())) == nullptr) {
       return -1;
     }
 
