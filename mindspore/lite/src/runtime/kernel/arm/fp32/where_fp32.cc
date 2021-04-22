@@ -89,7 +89,6 @@ int WhereCPUKernel::RunWithSingleInput() {
       }
     }
   }
-  out_tensors_.at(0)->set_data_type(kNumberTypeInt32);
   std::vector<int> output_shape = {true_num, where_param_->rank_};
   out_tensors_.at(0)->set_shape(output_shape);
   out_tensors_.at(0)->FreeData();

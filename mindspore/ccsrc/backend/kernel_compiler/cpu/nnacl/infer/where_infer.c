@@ -31,6 +31,8 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   // Need to dynamically allocate at runtime.
   if (inputs_size == 1) {
+    output->data_type_ = kNumberTypeInt32;
+    output->format_ = input->format_;
     return NNACL_INFER_INVALID;
   }
 
