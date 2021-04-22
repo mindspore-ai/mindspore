@@ -132,6 +132,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSparseApplyProximalAdagrad, {InferImplSparseApplyProximalAdagrad, nullptr, true}},
     {prim::kPrimSGD, {InferImplSGD, nullptr, true}},
     {prim::kPrimCTCGreedyDecoder, {InferImplCTCGreedyDecoder, nullptr, true}},
+    {prim::kPrimHSigmoid, {InferImplHSigmoid, nullptr, true}},
+    {prim::kPrimHSigmoidGrad, {InferImplHSigmoidGrad, nullptr, true}},
     // Others
     {prim::kPrimIdentity, {InferImplIdentity, nullptr, true}},
     {prim::kPrimLoad, {InferImplLoad, nullptr, true}},
