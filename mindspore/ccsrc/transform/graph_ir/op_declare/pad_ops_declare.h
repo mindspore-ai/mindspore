@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,5 +31,8 @@ DECLARE_OP_USE_OUTPUT(BroadcastToD)
 
 DECLARE_OP_ADAPTER(Diag)
 DECLARE_OP_USE_OUTPUT(Diag)
+
+DECLARE_OP_ADAPTER(FillD)
+DECLARE_OP_USE_OUTPUT(FillD)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_PAD_OPS_DECLARE_H_

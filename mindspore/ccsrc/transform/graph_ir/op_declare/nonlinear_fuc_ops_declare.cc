@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,12 @@ ATTR_MAP(ReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ReluGrad) = {{0, OUTPUT_DESC(backprops)}};
 REG_ADPT_DESC(ReluGrad, prim::kPrimReluGrad->name(), ADPT_DESC(ReluGrad))
 
+// ReluGradV2
+INPUT_MAP(ReluGradV2) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(mask)}};
+ATTR_MAP(ReluGradV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ReluGradV2) = {{0, OUTPUT_DESC(backprops)}};
+REG_ADPT_DESC(ReluGradV2, kNameReluGradV2, ADPT_DESC(ReluGradV2))
+
 // Tanh
 INPUT_MAP(Tanh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Tanh) = EMPTY_ATTR_MAP;
@@ -100,6 +106,12 @@ INPUT_MAP(TanhGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
 ATTR_MAP(TanhGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TanhGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(TanhGrad, prim::kPrimTanhGrad->name(), ADPT_DESC(TanhGrad))
+
+// Mish
+INPUT_MAP(Mish) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Mish) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Mish) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Mish, kNameMish, ADPT_DESC(Mish))
 
 // GeLU
 INPUT_MAP(Gelu) = {{1, INPUT_DESC(x)}};

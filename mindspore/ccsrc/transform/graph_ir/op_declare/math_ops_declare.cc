@@ -32,4 +32,16 @@ INPUT_MAP(NLLLossGrad) = {{1, INPUT_DESC(x)},
 ATTR_MAP(NLLLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(NLLLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(NLLLossGrad, kNameNLLLossGrad, ADPT_DESC(NLLLossGrad))
+
+// Erf
+INPUT_MAP(Erf) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Erf) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Erf) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Erf, kNameErf, ADPT_DESC(Erf))
+
+// Erfc
+INPUT_MAP(Erfc) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Erfc) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Erfc) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Erfc, kNameErfc, ADPT_DESC(Erfc))
 }  // namespace mindspore::transform

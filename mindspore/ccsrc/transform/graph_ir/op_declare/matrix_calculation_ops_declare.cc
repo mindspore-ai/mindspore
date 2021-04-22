@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,37 @@ ATTR_MAP(ScatterMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>()
 OUTPUT_MAP(ScatterMax) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ScatterMax, kNameScatterMax, ADPT_DESC(ScatterMax))
 
+// MatMul
+INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
+ATTR_MAP(MatMul) = {{"transpose_x1", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
+                    {"transpose_x2", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
+OUTPUT_MAP(MatMul) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatMul, kNameMatMul, ADPT_DESC(MatMul))
+
 // MatMulV2
 INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                       {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatMulV2, prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2))
+
+// MatrixDiagD
+INPUT_MAP(MatrixDiagD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};
+ATTR_MAP(MatrixDiagD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixDiagD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiagD, kNameMatrixDiagD, ADPT_DESC(MatrixDiagD))
+
+// MatrixDiagPartD
+INPUT_MAP(MatrixDiagPartD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};
+ATTR_MAP(MatrixDiagPartD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixDiagPartD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiagPartD, kNameMatrixDiagPartD, ADPT_DESC(MatrixDiagPartD))
+
+// MatrixSetDiagD
+INPUT_MAP(MatrixSetDiagD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(diagonal)}, {3, INPUT_DESC(assist)}};
+ATTR_MAP(MatrixSetDiagD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixSetDiagD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixSetDiagD, kNameMatrixSetDiagD, ADPT_DESC(MatrixSetDiagD))
 
 // DiagPart
 INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};

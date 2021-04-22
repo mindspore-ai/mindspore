@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,25 @@ DECLARE_OP_ADAPTER(ReduceAllD)
 DECLARE_OP_USE_INPUT_ATTR(ReduceAllD)
 DECLARE_OP_USE_OUTPUT(ReduceAllD)
 
+DECLARE_OP_ADAPTER(BNTrainingReduce)
+DECLARE_OP_USE_OUTPUT(BNTrainingReduce)
+
+DECLARE_OP_ADAPTER(BNTrainingReduceGrad)
+DECLARE_OP_USE_OUTPUT(BNTrainingReduceGrad)
+
+DECLARE_OP_ADAPTER(BNTrainingUpdate)
+DECLARE_OP_USE_OUTPUT(BNTrainingUpdate)
+
+DECLARE_OP_ADAPTER(BNTrainingUpdateGrad)
+DECLARE_OP_USE_OUTPUT(BNTrainingUpdateGrad)
+
 DECLARE_OP_ADAPTER(ReduceSumD)
 DECLARE_OP_USE_INPUT_ATTR(ReduceSumD)
 DECLARE_OP_USE_OUTPUT(ReduceSumD)
+
+DECLARE_OP_ADAPTER(ReduceAnyD)
+DECLARE_OP_USE_INPUT_ATTR(ReduceAnyD)
+DECLARE_OP_USE_OUTPUT(ReduceAnyD)
 
 DECLARE_OP_ADAPTER(ReduceMeanD)
 DECLARE_OP_USE_INPUT_ATTR(ReduceMeanD)

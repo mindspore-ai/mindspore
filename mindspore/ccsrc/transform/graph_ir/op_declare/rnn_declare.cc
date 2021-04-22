@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,15 @@ ATTR_MAP(BasicLSTMCellCStateGrad) = {{"forget_bias", ATTR_DESC(forget_bias, AnyT
                                      {"activation", ATTR_DESC(activation, AnyTraits<std::string>())}};
 OUTPUT_MAP(BasicLSTMCellCStateGrad) = {{0, OUTPUT_DESC(dgate)}, {1, OUTPUT_DESC(dct_1)}};
 REG_ADPT_DESC(BasicLSTMCellCStateGrad, kNameBasicLSTMCellCStateGrad, ADPT_DESC(BasicLSTMCellCStateGrad))
+
+// LSTMInputGrad
+INPUT_MAP(LSTMInputGrad) = {{1, INPUT_DESC(w)},  {2, INPUT_DESC(init_c)}, {3, INPUT_DESC(c)},      {4, INPUT_DESC(dy)},
+                            {5, INPUT_DESC(dh)}, {6, INPUT_DESC(dc)},     {7, INPUT_DESC(i)},      {8, INPUT_DESC(j)},
+                            {9, INPUT_DESC(f)},  {10, INPUT_DESC(o)},     {11, INPUT_DESC(tanhct)}};
+ATTR_MAP(LSTMInputGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LSTMInputGrad) = {
+  {0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dh_prev)}, {2, OUTPUT_DESC(dc_prev)}, {4, OUTPUT_DESC(dgate)}};
+REG_ADPT_DESC(LSTMInputGrad, kNameLSTMInputGrad, ADPT_DESC(LSTMInputGrad))
 
 // DynamicRNN
 INPUT_MAP(DynamicRNN) = {{1, INPUT_DESC(x)},          {2, INPUT_DESC(w)},      {3, INPUT_DESC(b)},

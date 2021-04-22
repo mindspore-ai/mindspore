@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,12 @@ ATTR_MAP(TopK) = {{"sorted", ATTR_DESC(sorted, AnyTraits<bool>())}};
 OUTPUT_MAP(TopK) = {{0, OUTPUT_DESC(values)}, {1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(TopK, kNameTopK, ADPT_DESC(TopK))
 
+// InTopK
+INPUT_MAP(InTopK) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {2, INPUT_DESC(k)}};
+ATTR_MAP(InTopK) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(InTopK) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InTopK, kNameInTopK, ADPT_DESC(InTopK))
+
 // TileD
 INPUT_MAP(TileD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(TileD) = {{2, ATTR_DESC(multiples, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
@@ -93,6 +99,27 @@ ATTR_MAP(RangeD) = {{"start", ATTR_DESC(start, AnyTraits<float>())},
                     {"delta", ATTR_DESC(delta, AnyTraits<float>())}};
 OUTPUT_MAP(RangeD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RangeD, kNameRange, ADPT_DESC(RangeD))
+
+// InplaceAddD
+INPUT_MAP(InplaceAddD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
+INPUT_ATTR_MAP(InplaceAddD) = {{3, ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(InplaceAddD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(InplaceAddD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceAddD, kNameInplaceAddD, ADPT_DESC(InplaceAddD))
+
+// InplaceSubD
+INPUT_MAP(InplaceSubD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
+INPUT_ATTR_MAP(InplaceSubD) = {{3, ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(InplaceSubD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(InplaceSubD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceSubD, kNameInplaceSubD, ADPT_DESC(InplaceSubD))
+
+// InplaceUpdateD
+INPUT_MAP(InplaceUpdateD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
+INPUT_ATTR_MAP(InplaceUpdateD) = {{3, ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(InplaceUpdateD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(InplaceUpdateD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InplaceUpdateD, kNameInplaceUpdateD, ADPT_DESC(InplaceUpdateD))
 
 // Select
 INPUT_MAP(Select) = {{1, INPUT_DESC(condition)}, {2, INPUT_DESC(x1)}, {3, INPUT_DESC(x2)}};

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,12 @@ ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
                             {"Seed1", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DropOutGenMask, prim::kPrimDropoutGenMask->name(), ADPT_DESC(DropOutGenMask))
+
+// LinSpaceD
+INPUT_MAP(LinSpaceD) = {{1, INPUT_DESC(assist)}, {2, INPUT_DESC(start)}, {3, INPUT_DESC(stop)}, {4, INPUT_DESC(num)}};
+ATTR_MAP(LinSpaceD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LinSpaceD) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(LinSpaceD, kNameLinSpaceD, ADPT_DESC(LinSpaceD))
 
 // RandomChoiceWithMask
 INPUT_MAP(RandomChoiceWithMask) = {{1, INPUT_DESC(x)}};

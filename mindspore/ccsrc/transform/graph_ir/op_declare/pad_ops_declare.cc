@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +35,10 @@ INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Diag) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Diag) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Diag, kNameDiag, ADPT_DESC(Diag))
+
+// FillD
+INPUT_MAP(FillD) = {{1, INPUT_DESC(value)}};
+ATTR_MAP(FillD) = {{"dims", ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(FillD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FillD, kNameFillD, ADPT_DESC(FillD))
 }  // namespace mindspore::transform

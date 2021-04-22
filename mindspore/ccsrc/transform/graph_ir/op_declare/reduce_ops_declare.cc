@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,48 @@
 #include <vector>
 
 namespace mindspore::transform {
+// BNTrainingReduce
+INPUT_MAP(BNTrainingReduce) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BNTrainingReduce) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BNTrainingReduce) = {{0, OUTPUT_DESC(sum)}, {1, OUTPUT_DESC(square_sum)}};
+REG_ADPT_DESC(BNTrainingReduce, kNameBNTrainingReduce, ADPT_DESC(BNTrainingReduce))
+
+// BNTrainingReduceGrad
+INPUT_MAP(BNTrainingReduceGrad) = {{1, INPUT_DESC(grads)},         {2, INPUT_DESC(x)},     {3, INPUT_DESC(diff_scale)},
+                                   {4, INPUT_DESC(diff_offset)},   {5, INPUT_DESC(scale)}, {6, INPUT_DESC(batch_mean)},
+                                   {7, INPUT_DESC(batch_variance)}};
+ATTR_MAP(BNTrainingReduceGrad) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(BNTrainingReduceGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BNTrainingReduceGrad, kNameBNTrainingReduceGrad, ADPT_DESC(BNTrainingReduceGrad))
+
+// BNTrainingUpdate
+INPUT_MAP(BNTrainingUpdate) = {{1, INPUT_DESC(x)},       {2, INPUT_DESC(sum)},    {3, INPUT_DESC(square_sum)},
+                               {4, INPUT_DESC(scale)},   {5, INPUT_DESC(offset)}, {6, INPUT_DESC(mean)},
+                               {7, INPUT_DESC(variance)}};
+ATTR_MAP(BNTrainingUpdate) = {{"factor", ATTR_DESC(factor, AnyTraits<float>())},
+                              {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(BNTrainingUpdate) = {{0, OUTPUT_DESC(y)},
+                                {1, OUTPUT_DESC(mean)},
+                                {2, OUTPUT_DESC(variance)},
+                                {3, OUTPUT_DESC(batch_mean)},
+                                {4, OUTPUT_DESC(batch_variance)}};
+REG_ADPT_DESC(BNTrainingUpdate, kNameBNTrainingUpdate, ADPT_DESC(BNTrainingUpdate))
+
+// BNTrainingUpdateGrad
+INPUT_MAP(BNTrainingUpdateGrad) = {
+  {1, INPUT_DESC(grads)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(batch_mean)}, {4, INPUT_DESC(batch_variance)}};
+ATTR_MAP(BNTrainingUpdateGrad) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(BNTrainingUpdateGrad) = {{0, OUTPUT_DESC(diff_scale)}, {1, OUTPUT_DESC(diff_offset)}};
+REG_ADPT_DESC(BNTrainingUpdateGrad, kNameBNTrainingUpdateGrad, ADPT_DESC(BNTrainingUpdateGrad))
+
+// ReduceAnyD
+INPUT_MAP(ReduceAnyD) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(ReduceAnyD) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(ReduceAnyD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceAnyD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceAnyD, kNameReduceAnyD, ADPT_DESC(ReduceAnyD))
+
 // ReduceSumD
 INPUT_MAP(ReduceSumD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(ReduceSumD) = {

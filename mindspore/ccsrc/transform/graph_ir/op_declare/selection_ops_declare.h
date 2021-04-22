@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ DECLARE_OP_USE_OUTPUT(GatherNd)
 DECLARE_OP_ADAPTER(TopK)
 DECLARE_OP_USE_OUTPUT(TopK)
 
+DECLARE_OP_ADAPTER(InTopK)
+DECLARE_OP_USE_OUTPUT(InTopK)
+
 DECLARE_OP_ADAPTER(Select)
 DECLARE_OP_USE_OUTPUT(Select)
 
@@ -70,6 +73,18 @@ DECLARE_OP_USE_OUTPUT(GatherV2D)
 
 DECLARE_OP_ADAPTER(RangeD)
 DECLARE_OP_USE_OUTPUT(RangeD)
+
+DECLARE_OP_ADAPTER(InplaceAddD)
+DECLARE_OP_USE_INPUT_ATTR(InplaceAddD)
+DECLARE_OP_USE_OUTPUT(InplaceAddD)
+
+DECLARE_OP_ADAPTER(InplaceSubD)
+DECLARE_OP_USE_INPUT_ATTR(InplaceSubD)
+DECLARE_OP_USE_OUTPUT(InplaceSubD)
+
+DECLARE_OP_ADAPTER(InplaceUpdateD)
+DECLARE_OP_USE_INPUT_ATTR(InplaceUpdateD)
+DECLARE_OP_USE_OUTPUT(InplaceUpdateD)
 
 DECLARE_OP_ADAPTER(CumsumD)
 DECLARE_OP_USE_INPUT_ATTR(CumsumD)

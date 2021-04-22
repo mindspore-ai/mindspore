@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(ReluGrad)
 DECLARE_OP_USE_OUTPUT(ReluGrad)
 
+DECLARE_OP_ADAPTER(ReluGradV2)
+DECLARE_OP_USE_OUTPUT(ReluGradV2)
+
 DECLARE_OP_ADAPTER(Relu6)
 DECLARE_OP_USE_OUTPUT(Relu6)
 
@@ -43,6 +46,9 @@ DECLARE_OP_USE_OUTPUT(Tanh)
 
 DECLARE_OP_ADAPTER(TanhGrad)
 DECLARE_OP_USE_OUTPUT(TanhGrad)
+
+DECLARE_OP_ADAPTER(Mish)
+DECLARE_OP_USE_OUTPUT(Mish)
 
 DECLARE_OP_ADAPTER(Gelu)
 DECLARE_OP_USE_OUTPUT(Gelu)

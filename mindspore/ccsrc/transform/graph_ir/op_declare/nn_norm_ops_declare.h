@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,12 @@ DECLARE_OP_USE_OUTPUT(LayerNorm)
 
 DECLARE_OP_ADAPTER(LayerNormGrad)
 DECLARE_OP_USE_OUTPUT(LayerNormGrad)
+
+DECLARE_OP_ADAPTER(LRN)
+DECLARE_OP_USE_OUTPUT(LRN)
+
+DECLARE_OP_ADAPTER(LRNGrad)
+DECLARE_OP_USE_OUTPUT(LRNGrad)
 
 DECLARE_OP_ADAPTER(DropOutDoMask)
 DECLARE_OP_USE_OUTPUT(DropOutDoMask)

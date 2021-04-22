@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,16 @@ ATTR_MAP(MaxPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>()
 OUTPUT_MAP(MaxPool3DGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool3DGrad, kNameMaxPool3DGrad, ADPT_DESC(MaxPool3DGrad))
 
+// MaxPool3DGradGrad
+INPUT_MAP(MaxPool3DGradGrad) = {{1, INPUT_DESC(orig_x)}, {2, INPUT_DESC(orig_y)}, {3, INPUT_DESC(grads)}};
+ATTR_MAP(MaxPool3DGradGrad) = {
+  {"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPool3DGradGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPool3DGradGrad, kNameMaxPool3DGradGrad, ADPT_DESC(MaxPool3DGradGrad))
+
 // AvgPool
 INPUT_MAP(AvgPool) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AvgPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
@@ -65,6 +75,15 @@ ATTR_MAP(MaxPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), 
                          {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPoolGrad, kNameMaxPoolGrad, ADPT_DESC(MaxPoolGrad))
+
+// MaxPoolGradGrad
+INPUT_MAP(MaxPoolGradGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grad)}};
+ATTR_MAP(MaxPoolGradGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                             {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                             {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
+                             {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolGradGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPoolGradGrad, kNameMaxPoolGradGrad, ADPT_DESC(MaxPoolGradGrad))
 
 // avgpoolgrad
 INPUT_MAP(AvgPoolGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(input_grad)}};
@@ -92,4 +111,13 @@ ATTR_MAP(MaxPoolGradWithArgmax) = {
   {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPoolGradWithArgmax, kNameMaxPoolGradWithArgmax, ADPT_DESC(MaxPoolGradWithArgmax))
+
+// MaxPoolGradGradWithArgmax
+INPUT_MAP(MaxPoolGradGradWithArgmax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}, {3, INPUT_DESC(argmax)}};
+ATTR_MAP(MaxPoolGradGradWithArgmax) = {
+  {"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolGradGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPoolGradGradWithArgmax, kNameMaxPoolGradGradWithArgmax, ADPT_DESC(MaxPoolGradGradWithArgmax))
 }  // namespace mindspore::transform
