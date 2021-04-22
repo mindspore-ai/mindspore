@@ -30,15 +30,10 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
   CoderKey coder_key(target_, data_type_, primitive_type);
   CoderCreatorFunc creator_func = OpCoderFactory::GetInstance()->FindOpCoder(coder_key);
   if (creator_func == nullptr) {
-    MS_LOG(ERROR) << "coderFactor create a null op_coder: " << node_->name_ << " primitive type: "
-                  << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_type))
-                  << " code_target: " << target_ << " data_type: " << EnumNameDataType(data_type_);
+    MS_LOG(ERROR) << "caught unsupported layer: " << node_->name_;
     return nullptr;
   }
   if (inputs_.empty() || outputs_.empty()) {
-    MS_LOG(ERROR) << "coderFactor create a null op_coder: " << node_->name_ << " primitive type: "
-                  << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_type))
-                  << " code_target: " << target_ << " data_type: " << EnumNameDataType(data_type_);
     MS_LOG(ERROR) << "input tensors or output tensors are empty";
     return nullptr;
   } else {
@@ -46,11 +41,11 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
     MS_CHECK_PTR_RET_NULL(outputs_.at(kOutputIndex));
   }
   std::unique_ptr<OperatorCoder> op_coder = creator_func(inputs_, outputs_, node_, node_index_++, target_);
-  if (!op_coder) {
-    MS_LOG(ERROR) << "coderFactor create a null op_coder: " << node_->name_ << " primitive type: "
+  if (op_coder == nullptr) {
+    MS_LOG(ERROR) << "create op_coder failed: " << node_->name_ << " primitive type: "
                   << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_type))
                   << " code_target: " << target_ << " data_type: " << EnumNameDataType(data_type_);
-    return op_coder;
+    return nullptr;
   }
   op_coder->set_input_tensor_indices(input_indices_);
   op_coder->set_output_tensor_indices(output_indices_);

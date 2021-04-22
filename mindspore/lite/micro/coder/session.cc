@@ -294,7 +294,10 @@ int CoderSession::CreateOpCoders() {
                                                 .input_indices(input_indices)
                                                 .output_indices(output_indices)
                                                 .build();
-    MS_CHECK_PTR(op_coder);
+    if (op_coder == nullptr) {
+      coder_graph_->DumpUnSupportLayer(code_target);
+      return RET_ERROR;
+    }
     op_coders_.push_back(std::move(op_coder));
     builder.Reset();
   }

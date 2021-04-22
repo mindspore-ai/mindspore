@@ -22,8 +22,11 @@
 #include <algorithm>
 #include <set>
 #include "coder/log.h"
+#include "coder/opcoders/op_coder_register.h"
+#include "coder/utils/type_cast.h"
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
+#include "src/common/prim_util.h"
 
 namespace mindspore::lite::micro {
 CoderGraph::~CoderGraph() {
@@ -233,4 +236,26 @@ const std::map<std::string, std::vector<lite::Tensor *>> &CoderGraph::GetOutputs
 std::vector<uint32_t> CoderGraph::input_indices() const { return this->input_indices_; }
 
 std::vector<uint32_t> CoderGraph::output_indices() const { return this->output_indices_; }
+
+void CoderGraph::DumpUnSupportLayer(Target target) {
+  std::cerr << "==========dump all unsupported layer for codegen=====" << std::endl;
+  std::for_each(model_->all_nodes_.begin(), model_->all_nodes_.end(), [this, target](const Model::Node *node) {
+    if (node->primitive_ == nullptr) {
+      return;
+    }
+    // fake create opcoders
+    uint32_t input_idx = node->input_indices_.at(0);
+    Tensor *t = all_tensors_.at(input_idx);
+    TypeId dtype = t->data_type();
+    int pt = GetPrimitiveType(node->primitive_);
+    CoderKey key(target, dtype, pt);
+    // search from the opcoder registry
+    if (OpCoderFactory::GetInstance()->FindOpCoder(key) == nullptr) {
+      std::cerr << node->name_ << ", primitive type: "
+                << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(pt))
+                << ", data_type: " << EnumNameDataType(dtype) << std::endl;
+    }
+  });
+}
+
 }  // namespace mindspore::lite::micro
