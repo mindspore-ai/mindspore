@@ -83,118 +83,97 @@ bool ScatterArithmeticCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr>
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterAdd(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      for (size_t j = 0; j < inner_size_; j++) {
-        input[base_index_input + j] += updates[base_index_updates + j];
-      }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] += updates[base_index_updates + j];
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterSub(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      for (size_t j = 0; j < inner_size_; j++) {
-        input[base_index_input + j] -= updates[base_index_updates + j];
-      }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] -= updates[base_index_updates + j];
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterMul(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      for (size_t j = 0; j < inner_size_; j++) {
-        input[base_index_input + j] *= updates[base_index_updates + j];
-      }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] *= updates[base_index_updates + j];
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterDiv(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      for (size_t j = 0; j < inner_size_; j++) {
-        auto dividend = input[indices[i] * inner_size_ + j];
-        auto divisor = updates[i * inner_size_ + j];
-        if (divisor == 0) {
-          if (dividend == 0) {
-            input[indices[i] * inner_size_ + j] = std::numeric_limits<T>::quiet_NaN();
-            continue;
-          }
-          if (std::numeric_limits<T>::has_infinity) {
-            input[indices[i] * inner_size_ + j] =
-              dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-          } else {
-            input[indices[i] * inner_size_ + j] =
-              dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-          }
+  for (size_t i = 0; i < indices_size_; i++) {
+    for (size_t j = 0; j < inner_size_; j++) {
+      auto dividend = input[indices[i] * inner_size_ + j];
+      auto divisor = updates[i * inner_size_ + j];
+      if (divisor == 0) {
+        if (dividend == 0) {
+          input[indices[i] * inner_size_ + j] = std::numeric_limits<T>::quiet_NaN();
           continue;
         }
-        input[indices[i] * inner_size_ + j] = dividend / divisor;
+        if (std::numeric_limits<T>::has_infinity) {
+          input[indices[i] * inner_size_ + j] =
+            dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+        } else {
+          input[indices[i] * inner_size_ + j] =
+            dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        }
+        continue;
       }
+      input[indices[i] * inner_size_ + j] = dividend / divisor;
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterMax(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      for (size_t j = 0; j < inner_size_; j++) {
-        input[base_index_input + j] = input[base_index_input + j] > updates[base_index_updates + j]
-                                        ? input[base_index_input + j]
-                                        : updates[base_index_updates + j];
-      }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] = input[base_index_input + j] > updates[base_index_updates + j]
+                                      ? input[base_index_input + j]
+                                      : updates[base_index_updates + j];
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterMin(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      for (size_t j = 0; j < inner_size_; j++) {
-        input[base_index_input + j] = input[base_index_input + j] < updates[base_index_updates + j]
-                                        ? input[base_index_input + j]
-                                        : updates[base_index_updates + j];
-      }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] = input[base_index_input + j] < updates[base_index_updates + j]
+                                      ? input[base_index_input + j]
+                                      : updates[base_index_updates + j];
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::ScatterUpdate(T *input, const int *indices, const T *updates) {
-  auto task = [this, input, indices, updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      for (size_t j = 0; j < inner_size_; j++) {
-        input[base_index_input + j] = updates[base_index_updates + j];
-      }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] = updates[base_index_updates + j];
     }
-  };
-  CPUKernelUtils::ParallelFor(task, indices_size_);
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
