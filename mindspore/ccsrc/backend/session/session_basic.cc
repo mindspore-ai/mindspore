@@ -1794,7 +1794,7 @@ std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_gr
       result.insert(result.end(), res.begin(), res.end());
       continue;
     }
-    result.emplace_back(user.first);
+    (void)result.emplace_back(user.first);
   }
   return result;
 }

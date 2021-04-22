@@ -29,17 +29,17 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
-  CheckAndConvertUtils::CheckInteger("arg size", input_args.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("arg size", input_args.size(), kEqual, 2, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kGreaterEqual, 2, prim_name);
-  CheckAndConvertUtils::CheckInteger("bias rank", b_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kGreaterEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("bias rank", b_shape.size(), kEqual, 1, prim_name);
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
   auto x_channel = x_shape[1];
   if (format != NCHW) {
     x_channel = x_shape[x_shape.size() - 1];
   }
-  CheckAndConvertUtils::Check("b_shape[0]", b_shape[0], kEqual, "x_shape[1]", x_channel, prim_name);
+  (void)CheckAndConvertUtils::Check("b_shape[0]", b_shape[0], kEqual, "x_shape[1]", x_channel, prim_name);
 
   std::vector<int64_t> out_shape = x_shape;
   return std::make_shared<abstract::Shape>(out_shape);
@@ -53,14 +53,14 @@ TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  types.emplace("input_x", input_args[0]->BuildType());
-  types.emplace("bias", input_args[1]->BuildType());
+  (void)types.emplace("input_x", input_args[0]->BuildType());
+  (void)types.emplace("bias", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
 }
 }  // namespace
 void BiasAdd::set_format(const Format &format) {
   int64_t f = format;
-  this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, MakeValue(f));
 }
 Format BiasAdd::get_format() const {
   auto value_ptr = GetAttr(kFormat);

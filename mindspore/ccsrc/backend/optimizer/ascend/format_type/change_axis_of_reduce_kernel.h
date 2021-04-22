@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H_
-#define MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H_
-#include <memory>
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CHANGE_AXIS_OF_REDUCE_KENRNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CHANGE_AXIS_OF_REDUCE_KENRNEL_H_
+
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/ascend_helper.h"
+
 namespace mindspore {
 namespace opt {
-class ConvertUnSupportNodeToAICPU : public PatternProcessPass {
+class ChangeAxisOfReduceKernel : public PatternProcessPass {
  public:
-  explicit ConvertUnSupportNodeToAICPU(bool multigraph = true)
-      : PatternProcessPass("convert_unsupported_node_to_aicpu", multigraph),
-        supported_checker_(std::make_shared<SupportedChecker>()) {}
-  ~ConvertUnSupportNodeToAICPU() override = default;
+  explicit ChangeAxisOfReduceKernel(bool multigraph = true)
+      : PatternProcessPass("change_axis_of_reduce_kernel", multigraph) {}
+  ~ChangeAxisOfReduceKernel() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-
- private:
-  SupportedCheckerPtr supported_checker_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CHANGE_AXIS_OF_REDUCE_KENRNEL_H_

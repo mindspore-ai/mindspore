@@ -187,7 +187,7 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
     MS_LOG(EXCEPTION) << "Get the type from AbstractType value failed.";
   }
 
-  TypePtr mode_t = mode_v->cast<TypePtr>();
+  auto mode_t = mode_v->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   bool v = IsSubtype(args_spec_list[0], mode_t);
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(v), kBool);
@@ -252,10 +252,10 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
   auto arg_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   auto arg_y = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
 
-  ValueTuplePtr arg_x_value = arg_x->BuildValue()->cast<ValueTuplePtr>();
+  auto arg_x_value = arg_x->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(arg_x_value);
 
-  ValueTuplePtr arg_y_value = arg_y->BuildValue()->cast<ValueTuplePtr>();
+  auto arg_y_value = arg_y->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(arg_y_value);
 
   const std::vector<ValuePtr> x_shape = arg_x_value->value();
@@ -619,9 +619,9 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
     MS_LOG(EXCEPTION) << "Can not make type(" << type->ToString() << ")not TypeType";
   }
 
-  ValuePtr value_track = args_spec_list[0]->GetValueTrack();
+  auto value_track = args_spec_list[0]->GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
-  TypePtr type_ptr = value_track->cast<TypePtr>();
+  auto type_ptr = value_track->cast<TypePtr>();
   if (type_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Value type error, not Me type:" << value_track->ToString();
   }

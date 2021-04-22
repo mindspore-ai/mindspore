@@ -73,7 +73,7 @@
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_dyanmic_gru_v2.h"
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
-#include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
+#include "backend/optimizer/ascend/format_type/change_axis_of_reduce_kernel.h"
 #include "backend/optimizer/ascend/format_type/convert_cast_format.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/pass/optimize_dependence.h"

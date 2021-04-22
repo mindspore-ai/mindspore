@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include "ir/tensor.h"
+#include "ir/dtype/type_id.h"
 namespace mindspore {
 template <typename T>
 void SetTensorData(void *data, T num, size_t data_length) {

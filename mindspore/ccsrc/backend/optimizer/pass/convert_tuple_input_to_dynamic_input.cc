@@ -44,7 +44,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
       // using for graph kernel
       auto dyn_input_node = AnfAlgo::GetInputNode(make_tuple, j);
       MS_EXCEPTION_IF_NULL(dyn_input_node);
-      plant_inputs->emplace_back(dyn_input_node);
+      (void)plant_inputs->emplace_back(dyn_input_node);
     }
     return input_size;
   }
@@ -70,7 +70,7 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
     auto input_node = AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
     if (AnfAlgo::IsTupleOutput(input_node)) {
-      dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
+      (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
     } else {
       dyn_input_sizes.push_back(-1);
       plant_inputs.push_back(input_node);
