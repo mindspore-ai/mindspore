@@ -35,7 +35,7 @@ option(ENABLE_VERBOSE "" off)
 option(ENABLE_SSE "if x86_64 support SSE instruction set" off)
 option(ENABLE_AVX "if x86_64 support SSE instruction set" off)
 option(ENABLE_MINDRT "if support mindrt" on)
-option(SUBGRAPH_SPLIT "if support sub graph split" on)
+option(SUBGRAPH_SPLIT "if support sub graph split" off)
 
 set(DIR_PREFIX mindspore-lite)
 set(MS_VERSION ${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})

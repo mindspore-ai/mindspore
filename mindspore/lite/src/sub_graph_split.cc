@@ -268,13 +268,18 @@ void SearchSubGraph::SubgraphFusion() {
 
   return;
 }
+bool SearchSubGraph::ModelValid() {
+  if (context_->IsNpuEnabled()) {
+    return false;
+  }
+  if (context_->IsGpuEnabled()) {
+    return false;
+  }
+  return false;
+}
 
 void SearchSubGraph::SubGraphSplitByOutput() {
-  if (!context_->IsGpuEnabled() || output_nodes_.size() > 4) {
-    return;
-  }
-
-  if (context_->IsCpuFloat16Enabled() || context_->IsGpuFloat16Enabled()) {
+  if (!ModelValid()) {
     return;
   }
 
