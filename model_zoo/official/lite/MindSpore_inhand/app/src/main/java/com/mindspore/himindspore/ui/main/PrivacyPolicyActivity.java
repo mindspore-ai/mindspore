@@ -17,32 +17,55 @@ package com.mindspore.himindspore.ui.main;
 
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
+import com.alibaba.android.arouter.facade.annotation.Route;
 import com.mindspore.common.config.MSLinkUtils;
 import com.mindspore.himindspore.R;
 
+@Route(path = "/app/PrivacyPolicyActivity")
 public class PrivacyPolicyActivity extends AppCompatActivity {
 
     private static final String TAG = PrivacyPolicyActivity.class.getSimpleName();
 
     private WebView mWebView;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_privacy_policy);
+
         initView();
     }
 
     private void initView() {
-        findViewById(R.id.w_back).setOnClickListener(v -> finish());
+        progressBar = findViewById(R.id.progress);
+        Toolbar mToolbar = findViewById(R.id.brokenside_toolbar);
+        mToolbar.setNavigationOnClickListener(view -> finish());
         mWebView = findViewById(R.id.mWebView);
         WebSettings wSet = mWebView.getSettings();
         wSet.setJavaScriptEnabled(true);
+        mWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+
+
+                if (newProgress == 100) {
+                    progressBar.setVisibility(View.GONE);
+                } else {
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressBar.setProgress(newProgress);
+                }
+
+            }
+        });
         mWebView.loadUrl(MSLinkUtils.USER_PRIVACY_RULES);
 
     }

@@ -27,8 +27,6 @@ import androidx.fragment.app.Fragment;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
-import com.mindspore.common.config.MSLinkUtils;
-import com.mindspore.common.utils.Utils;
 import com.mindspore.himindspore.R;
 
 /**
@@ -70,9 +68,12 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
         view.findViewById(R.id.btn_style_transfer).setOnClickListener(this);  //onClickStyleTransfer
         view.findViewById(R.id.btn_segmentation).setOnClickListener(this);  //onClickSegmentation
         view.findViewById(R.id.btn_image).setOnClickListener(this);  //onClickImage
-        view.findViewById(R.id.btn_image_garbage).setOnClickListener(this);  //onClickGarbage
         view.findViewById(R.id.btn_scene).setOnClickListener(this);  //onClickSceneDetection
         view.findViewById(R.id.btn_image_Intelligent_poetry).setOnClickListener(this);  //onClickIntelligentPoetry
+        view.findViewById(R.id.btn_text_recognition).setOnClickListener(this);  //onClickTextRecognition
+        view.findViewById(R.id.btn_gesture).setOnClickListener(this);  //onClickGestureRecognition
+        view.findViewById(R.id.btn_texttranslation).setOnClickListener(this);  //onClickTextTranslation
+
 
     }
 
@@ -87,30 +88,34 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
                 ARouter.getInstance().build("/imageobject/ObjectCameraActivity").navigation();
                 break;
             case R.id.btn_posenet:
-                ARouter.getInstance().build("/posenet/PosenetMainActivity").navigation();
+                ARouter.getInstance().build("/hms/PosenetMainActivitys").navigation();
                 break;
             case R.id.btn_style_transfer:
                 ARouter.getInstance().build("/styletransfer/StyleMainActivity").navigation();
                 break;
             case R.id.btn_segmentation:
-                ARouter.getInstance().build("/segmentation/SegmentationMainActivity").navigation();
+                ARouter.getInstance().build("/hms/PortraitSegmentationActivity").navigation();
+//                ARouter.getInstance().build("/hms/ImageSegmentationLiveAnalyseActivity").navigation();
+//                ARouter.getInstance().build("/hms/ImageSegmentationActivity").navigation();
                 break;
             case R.id.btn_image:
-                ARouter.getInstance().build("/imageobject/ImageCameraActivity")
-                        .withInt("OPEN_TYPE", 1).navigation();
-                break;
-            case R.id.btn_image_garbage:
-                ARouter.getInstance().build("/imageobject/ImageCameraActivity")
-                        .withInt("OPEN_TYPE", 2).navigation();
+                ARouter.getInstance().build("/imageobject/ImageCameraActivity").navigation();
                 break;
             case R.id.btn_scene:
-                ARouter.getInstance().build("/imageobject/ImageCameraActivity")
-                        .withInt("OPEN_TYPE", 3).navigation();
+                ARouter.getInstance().build("/hms/SenceDetectionStillAnalyseActivity").navigation();
                 break;
             case R.id.btn_image_Intelligent_poetry:
-                Utils.openBrowser(getActivity(), MSLinkUtils.HELP_INTELLIGENT_POETRY);
+                ARouter.getInstance().build("/app/IntelligentPoetryWritingActivity").navigation();
                 break;
-
+            case R.id.btn_text_recognition:
+                ARouter.getInstance().build("/hms/TextRecognitionActivity").navigation();
+                break;
+            case R.id.btn_gesture:
+                ARouter.getInstance().build("/hms/StillHandGestureAnalyseActivity").navigation();
+                break;
+            case R.id.btn_texttranslation:
+                ARouter.getInstance().build("/hms/TextTranslationActivity").navigation();
+                break;
         }
     }
 }

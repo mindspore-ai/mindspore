@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".texttranslation.TextTranslationRealTimeActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/TextVideo_activity_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title="@string/title_real_time_translation"
+        app:titleTextColor="@color/black" />
+
+    <com.mindspore.hms.camera.LensEnginePreview
+        android:id="@+id/scene_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/TextVideo_activity_toolbar">
+
+        <com.mindspore.hms.camera.GraphicOverlay
+            android:id="@+id/scene_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </com.mindspore.hms.camera.LensEnginePreview>
+
+</RelativeLayout>

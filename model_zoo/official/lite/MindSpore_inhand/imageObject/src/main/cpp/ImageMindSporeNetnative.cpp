@@ -202,7 +202,7 @@ Java_com_mindspore_imageobject_imageclassification_help_ImageTrackingMobile_load
  */
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_mindspore_imageobject_imageclassification_help_ImageTrackingMobile_runNet(JNIEnv *env,
-                                                                                   jclass type,
+                                                                                   jobject type,
                                                                                    jlong netEnv,
                                                                                    jobject srcBitmap) {
     LiteMat lite_mat_bgr, lite_norm_mat_cut;
@@ -276,7 +276,7 @@ Java_com_mindspore_imageobject_imageclassification_help_ImageTrackingMobile_runN
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mindspore_imageobject_imageclassification_help_ImageTrackingMobile_unloadModel(JNIEnv *env,
-                                                                                        jclass type,
+                                                                                        jobject type,
                                                                                         jlong netEnv) {
     MS_PRINT("MindSpore release net.");
     void **labelEnv = reinterpret_cast<void **>(netEnv);

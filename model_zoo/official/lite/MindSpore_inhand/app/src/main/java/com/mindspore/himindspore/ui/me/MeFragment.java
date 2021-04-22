@@ -28,10 +28,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.alibaba.android.arouter.launcher.ARouter;
 import com.mindspore.common.config.MSLinkUtils;
-import com.mindspore.common.utils.Utils;
 import com.mindspore.himindspore.R;
-import com.mindspore.himindspore.ui.main.PrivacyPolicyActivity;
 
 public class MeFragment extends Fragment implements View.OnClickListener {
 
@@ -57,6 +56,7 @@ public class MeFragment extends Fragment implements View.OnClickListener {
         view.findViewById(R.id.rl_me_qa).setOnClickListener(this);
         view.findViewById(R.id.rl_me_version).setOnClickListener(this);
         view.findViewById(R.id.me_user_protocol).setOnClickListener(this);
+        view.findViewById(R.id.rl_me_qr_code).setOnClickListener(this);
         showPackageInfo();
     }
 
@@ -88,19 +88,22 @@ public class MeFragment extends Fragment implements View.OnClickListener {
                 onClickShare();
                 break;
             case R.id.rl_me_thumbsup:
-                Utils.openBrowser(getActivity(), MSLinkUtils.ME_STAR_URL);
+                ARouter.getInstance().build("/app/MeThumbsupActivity").navigation();
                 break;
             case R.id.rl_me_official:
-                Utils.openBrowser(getActivity(), MSLinkUtils.BASE_URL);
+                ARouter.getInstance().build("/app/MeOfficialwebsiteActivity").navigation();
                 break;
             case R.id.rl_me_official_code:
-                Utils.openBrowser(getActivity(), MSLinkUtils.ME_CODE_URL);
+                ARouter.getInstance().build("/app/MeCodeRepositoryActivity").navigation();
                 break;
             case R.id.rl_me_qa:
-                Utils.openBrowser(getActivity(), MSLinkUtils.ME_HELP_URL);
+                ARouter.getInstance().build("/app/MeProblemFeedbackActivity").navigation();
                 break;
             case R.id.me_user_protocol:
-                startActivity(new Intent(getContext(), PrivacyPolicyActivity.class));
+                ARouter.getInstance().build("/app/PrivacyPolicyActivity").navigation();
+                break;
+            case R.id.rl_me_qr_code:
+                ARouter.getInstance().build("/app/MyQRCodeActivity").navigation();
                 break;
         }
     }

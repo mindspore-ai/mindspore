@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -57,10 +58,35 @@
                 <TextView
                     style="@style/MeInfoTextLeftStyle"
                     android:layout_marginStart="20dp"
-                    android:drawableStart="@drawable/me_share"
+                    app:drawableStartCompat="@drawable/me_share"
                     android:drawablePadding="15dp"
                     android:gravity="center_vertical"
                     android:text="@string/me_share_title" />
+
+                <ImageView
+                    android:layout_width="6dp"
+                    android:layout_height="12dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="20dp"
+                    android:background="@drawable/me_go" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_me_qr_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:paddingTop="29dp"
+                android:paddingBottom="29dp">
+
+                <TextView
+                    style="@style/MeInfoTextLeftStyle"
+                    android:layout_marginStart="20dp"
+                    app:drawableStartCompat="@drawable/me_qr_code"
+                    android:drawablePadding="15dp"
+                    android:gravity="center_vertical"
+                    android:text="@string/me_my_qr_code" />
 
                 <ImageView
                     android:layout_width="6dp"
@@ -81,7 +107,7 @@
                 <TextView
                     style="@style/MeInfoTextLeftStyle"
                     android:layout_marginStart="20dp"
-                    android:drawableStart="@drawable/me_up"
+                    app:drawableStartCompat="@drawable/me_up"
                     android:drawablePadding="15dp"
                     android:gravity="center_vertical"
                     android:text="@string/me_up_title" />
@@ -105,7 +131,7 @@
                 <TextView
                     style="@style/MeInfoTextLeftStyle"
                     android:layout_marginStart="20dp"
-                    android:drawableStart="@drawable/me_official"
+                    app:drawableStartCompat="@drawable/me_official"
                     android:drawablePadding="15dp"
                     android:gravity="center_vertical"
                     android:text="@string/me_official_title" />
@@ -129,7 +155,7 @@
                 <TextView
                     style="@style/MeInfoTextLeftStyle"
                     android:layout_marginStart="20dp"
-                    android:drawableStart="@drawable/me_official_code"
+                    app:drawableStartCompat="@drawable/me_official_code"
                     android:drawablePadding="15dp"
                     android:gravity="center_vertical"
                     android:text="@string/me_official_code_title" />
@@ -153,7 +179,7 @@
                 <TextView
                     style="@style/MeInfoTextLeftStyle"
                     android:layout_marginStart="20dp"
-                    android:drawableStart="@drawable/me_qa"
+                    app:drawableStartCompat="@drawable/me_qa"
                     android:drawablePadding="15dp"
                     android:gravity="center_vertical"
                     android:text="@string/me_qa_title" />
@@ -177,7 +203,7 @@
                 <TextView
                     style="@style/MeInfoTextLeftStyle"
                     android:layout_marginStart="20dp"
-                    android:drawableStart="@drawable/me_version"
+                    app:drawableStartCompat="@drawable/me_version"
                     android:drawablePadding="15dp"
                     android:gravity="center_vertical"
                     android:text="@string/me_version_title" />

@@ -9,7 +9,6 @@
     <string name="explain_garbage_classification">垃圾分类可识别出镜头中物体所属的垃圾类别。</string>
     <string name="explain_scene_detection">场景检测可以判断目标场景的类型。</string>
     <string name="explain_title">简要说明</string>
-    <string name="segmentation_toolbar_title">图像分割</string>
     <string name="style_transfer_title">风格迁移</string>
     <string name="posenet_activity_title">骨骼检测</string>
     <string name="image_scene_title">场景检测</string>
@@ -17,4 +16,5 @@
     <string name="image_camera_title">图像分类</string>
     <string name="object_camery_title">视频检测</string>
     <string name="activity_photo_title">照片检测</string>
+    <string name="segmentation_toolbar_title">人像分割</string>
 </resources>

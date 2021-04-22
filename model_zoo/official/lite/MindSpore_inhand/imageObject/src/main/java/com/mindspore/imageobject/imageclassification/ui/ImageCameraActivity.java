@@ -33,7 +33,6 @@ import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.mindspore.common.config.MSLinkUtils;
@@ -42,9 +41,7 @@ import com.mindspore.customview.dialog.NoticeDialog;
 import com.mindspore.imageobject.R;
 import com.mindspore.imageobject.camera.CameraPreview;
 import com.mindspore.imageobject.imageclassification.bean.RecognitionImageBean;
-import com.mindspore.imageobject.imageclassification.help.GarbageTrackingMobile;
 import com.mindspore.imageobject.imageclassification.help.ImageTrackingMobile;
-import com.mindspore.imageobject.imageclassification.help.SceneTrackingMobile;
 
 /**
  * The main interface of camera preview.
@@ -53,20 +50,11 @@ import com.mindspore.imageobject.imageclassification.help.SceneTrackingMobile;
 @Route(path = "/imageobject/ImageCameraActivity")
 public class ImageCameraActivity extends AppCompatActivity implements CameraPreview.RecognitionDataCallBack {
     private static final String TAG = "ImageCameraActivity";
-    public static final int TYPE_IMAGE = 1;
-    public static final int TYPE_GARBAGE = 2;
-    public static final int TYPE_SCENE = 3;
 
     private static final String IMAGE_SCENE_MS = "model/mobilenetv2.ms";
-    private static final String GARBAGE_MS = "model/garbage_mobilenetv2.ms";
-    @Autowired(name = "OPEN_TYPE")
-    int enterType;
-
     private LinearLayout bottomLayout;
     private CameraPreview cameraPreview;
     private ImageTrackingMobile imageTrackingMobile;
-    private GarbageTrackingMobile garbageTrackingMobile;
-    private SceneTrackingMobile sceneTrackingMobile;
     private RecognitionImageBean bean;
     private NoticeDialog noticeDialog;
 
@@ -83,24 +71,12 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     }
 
     private void init() {
-        boolean ret = false;
         Toolbar mToolbar = findViewById(R.id.image_camera_toolbar);
-        if (TYPE_IMAGE == enterType) {
-            mToolbar.setTitle(getString(R.string.image_camera_title));
-            imageTrackingMobile = new ImageTrackingMobile(this);
-            ret = imageTrackingMobile.loadModelFromBuf(IMAGE_SCENE_MS);
-        } else if (TYPE_GARBAGE == enterType) {
-            mToolbar.setTitle(getString(R.string.image_garbage_title));
-            garbageTrackingMobile = new GarbageTrackingMobile(this);
-            ret = garbageTrackingMobile.loadModelFromBuf(GARBAGE_MS);
-        } else if (TYPE_SCENE == enterType) {
-            mToolbar.setTitle(getString(R.string.image_scene_title));
-            sceneTrackingMobile = new SceneTrackingMobile(this);
-            ret = sceneTrackingMobile.loadModelFromBuf(IMAGE_SCENE_MS);
-        }
+        mToolbar.setTitle(getString(R.string.image_camera_title));
+        imageTrackingMobile = new ImageTrackingMobile(this);
+        boolean ret = imageTrackingMobile.loadModelFromBuf(IMAGE_SCENE_MS);
         Log.d(TAG, "Loading model return value: " + ret);
         cameraPreview.addImageRecognitionDataCallBack(this);
-
         setSupportActionBar(mToolbar);
         mToolbar.setNavigationOnClickListener(view -> finish());
     }
@@ -109,9 +85,6 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.i(TAG, "onCreateOptionsMenu info");
         getMenuInflater().inflate(R.menu.menu_setting_app, menu);
-        if (TYPE_GARBAGE == enterType) {
-            menu.removeItem(R.id.item_more);
-        }
         return true;
     }
 
@@ -121,11 +94,8 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
         if (itemId == R.id.item_help) {
             showHelpDialog();
         } else if (itemId == R.id.item_more) {
-            if (TYPE_IMAGE == enterType) {
-                Utils.openBrowser(this, MSLinkUtils.HELP_IMAGE_CLASSIFICATION);
-            } else if (TYPE_SCENE == enterType) {
-                Utils.openBrowser(this, MSLinkUtils.HELP_SCENE_DETECTION);
-            }
+            Utils.openBrowser(this, MSLinkUtils.HELP_IMAGE_CLASSIFICATION);
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -133,13 +103,7 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     private void showHelpDialog() {
         noticeDialog = new NoticeDialog(this);
         noticeDialog.setTitleString(getString(R.string.explain_title));
-        if (TYPE_IMAGE == enterType) {
-            noticeDialog.setContentString(getString(R.string.explain_image_classification));
-        } else if (TYPE_GARBAGE == enterType) {
-            noticeDialog.setContentString(getString(R.string.explain_garbage_classification));
-        } else if (TYPE_SCENE == enterType) {
-            noticeDialog.setContentString(getString(R.string.explain_scene_detection));
-        }
+        noticeDialog.setContentString(getString(R.string.explain_image_classification));
         noticeDialog.setYesOnclickListener(() -> {
             noticeDialog.dismiss();
         });
@@ -165,29 +129,13 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
             boolean ret = imageTrackingMobile.unloadModel();
             Log.d(TAG, "imageTrackingMobile Unload model return value: " + ret);
         }
-        if (garbageTrackingMobile != null) {
-            boolean ret = garbageTrackingMobile.unloadModel();
-            Log.d(TAG, "garbageTrackingMobile Unload model return value: " + ret);
-        }
-        if (sceneTrackingMobile != null) {
-            boolean ret = sceneTrackingMobile.unloadModel();
-            Log.d(TAG, "sceneTrackingMobile Unload model return value: " + ret);
-        }
     }
 
     @Override
     public void onRecognitionBitmapCallBack(Bitmap bitmap) {
-        String result = null;
         long startTime = System.currentTimeMillis();
-        if (TYPE_IMAGE == enterType) {
-            result = imageTrackingMobile.MindSpore_runnet(bitmap);
-        } else if (TYPE_GARBAGE == enterType) {
-            result = garbageTrackingMobile.MindSpore_runnet(bitmap);
-        } else if (TYPE_SCENE == enterType) {
-            result = sceneTrackingMobile.MindSpore_runnet(bitmap);
-        }
+        String result = imageTrackingMobile.MindSpore_runnet(bitmap);
         long endTime = System.currentTimeMillis();
-
         onRecognitionDataCallBack(result, (endTime - startTime) + "ms ");
         if (!bitmap.isRecycled()) {
             bitmap.recycle();
@@ -196,72 +144,22 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
 
 
     public void onRecognitionDataCallBack(final String result, final String time) {
-        if (TYPE_IMAGE == enterType) {
+            if (TextUtils.isEmpty(result)) {
+                return;
+            }
             int maxIndex = Integer.parseInt(result);
             String[] IMAGECONTENT = getResources().getStringArray(R.array.image_category_old);
-            runOnUiThread(() -> showResultsInImageGarbage(IMAGECONTENT[maxIndex], time));
-        } else if (TYPE_GARBAGE == enterType) {
-            int maxIndex = Integer.parseInt(result);
-            String[] GABAGETITLE = getResources().getStringArray(R.array.grbage_sort_map);
-            StringBuilder categoryScore = new StringBuilder();
-            if (maxIndex <= 9) {
-                categoryScore.append(GABAGETITLE[0]);
-                categoryScore.append(":");
-            } else if (maxIndex > 9 && maxIndex <= 17) {
-                categoryScore.append(GABAGETITLE[1]);
-                categoryScore.append(":");
-            } else if (maxIndex > 17 && maxIndex <= 21) {
-                categoryScore.append(GABAGETITLE[2]);
-                categoryScore.append(":");
-            } else if (maxIndex > 21 && maxIndex <= 25) {
-                categoryScore.append(GABAGETITLE[3]);
-                categoryScore.append(":");
-            }
-            categoryScore.append(getResources().getStringArray(R.array.grbage_sort_detailed_map)[maxIndex]);
-            String finalCategoryScore = categoryScore.toString();
-            runOnUiThread(() -> showResultsInImageGarbage(finalCategoryScore, time));
-        } else if (TYPE_SCENE == enterType) {
-            if (!result.equals("") && result.contains(":")) {
-                String[] resultArray = result.split(":");
-                int lableIndex = Integer.parseInt(resultArray[0]);
-                float score = Float.parseFloat(resultArray[1]);
-                String[] SCENEOBJECT = getResources().getStringArray(R.array.scene_category);
-                bean = new RecognitionImageBean(SCENEOBJECT[lableIndex], score);
-            }
-            runOnUiThread(() -> showResultsInScene(bean, time));
-        }
+            runOnUiThread(() -> showResultsInImage(IMAGECONTENT[maxIndex], time));
     }
 
     @UiThread
-    protected void showResultsInImageGarbage(String result, String time) {
+    protected void showResultsInImage(String result, String time) {
         bottomLayout.removeAllViews();
         if (!TextUtils.isEmpty(result)) {
             HorTextView horTextView = new HorTextView(this);
             horTextView.setLeftTitle(result);
             horTextView.setBottomLineVisible(View.VISIBLE);
             bottomLayout.addView(horTextView);
-        } else {
-            showLoadView();
-        }
-    }
-
-    @UiThread
-    protected void showResultsInScene(RecognitionImageBean recognitionObjectBean, String time) {
-        bottomLayout.removeAllViews();
-        if (recognitionObjectBean != null) {
-            HorTextView horTextView = new HorTextView(this);
-            horTextView.setLeftTitle(recognitionObjectBean.getName() + ":");
-            horTextView.setRightContent(String.format("%.2f", (100 * recognitionObjectBean.getScore())) + "%");
-            horTextView.getTvRightContent().setTextColor(getResources().getColor(R.color.btn_small_checked));
-            horTextView.setBottomLineVisible(View.VISIBLE);
-            bottomLayout.addView(horTextView);
-
-            HorTextView horTimeView = new HorTextView(this);
-            horTimeView.setLeftTitle(getResources().getString(R.string.title_time));
-            horTimeView.setRightContent(time);
-            horTimeView.getTvRightContent().setTextColor(getResources().getColor(R.color.btn_small_checked));
-            horTimeView.setBottomLineVisible(View.INVISIBLE);
-            bottomLayout.addView(horTimeView);
         } else {
             showLoadView();
         }

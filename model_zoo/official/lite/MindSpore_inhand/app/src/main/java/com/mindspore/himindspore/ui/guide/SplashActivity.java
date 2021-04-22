@@ -17,8 +17,8 @@ package com.mindspore.himindspore.ui.guide;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -52,7 +52,6 @@ import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.AppSettingsDialog;
 import pub.devrel.easypermissions.EasyPermissions;
 
-
 public class SplashActivity extends BaseActivity implements EasyPermissions.PermissionCallbacks {
 
     private static final String TAG = "SplashActivity";
@@ -70,6 +69,7 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
     private TextView mTv_protocol;
     private PopupWindow mPopupW;
 
+    private boolean isLoadindFinish = false;
     @Override
     protected void init() {
         cdvTime = findViewById(R.id.cdv_time);
@@ -80,10 +80,16 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
     private void initCountDownView() {
         cdvTime.setTime(3);
         cdvTime.start();
-        cdvTime.setOnLoadingFinishListener(() -> check());
-        cdvTime.setOnClickListener(view -> {
+        cdvTime.setOnLoadingFinishListener(() -> {
             cdvTime.stop();
+            isLoadindFinish= true;
             check();
+        });
+        cdvTime.setOnClickListener(view -> {
+            if (!isLoadindFinish) {
+                cdvTime.stop();
+                check();
+            }
         });
     }
 
@@ -96,7 +102,7 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
     @AfterPermissionGranted(REQUEST_PERMISSION)
     private void startPermissionsTask() {
         if (hasPermissions()) {
-            setHandler();
+            enterMainView();
         } else {
             EasyPermissions.requestPermissions(this,
                     this.getResources().getString(R.string.app_need_permission),
@@ -132,7 +138,7 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == AppSettingsDialog.DEFAULT_SETTINGS_REQ_CODE) {
-            setHandler();
+            enterMainView();
         }
     }
 
@@ -161,9 +167,6 @@ public class SplashActivity extends BaseActivity implements EasyPermissions.Perm
         return super.onKeyDown(keyCode, event);
     }
 
-    private void setHandler() {
-        enterMainView();
-    }
 
     private void enterMainView() {
         Intent intent = new Intent();

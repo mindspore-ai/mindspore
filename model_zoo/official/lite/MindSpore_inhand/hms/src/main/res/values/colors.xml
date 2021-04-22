@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorPrimary">#ffffff</color>
+    <color name="colorPrimaryDark">#ffffff</color>
+    <color name="colorAccent">#ffffff</color>
+
+    <color name="mindspore_semi_transparent">#66000000</color>
+
+    <color name="transparent">#00000000</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="gray">#A69D9D</color>
+    <color name="gray_btn">#e6e6e6</color>
+    <color name="gray_light_btn">#6C6B6B</color>
+    <color name="gray_light">#Eff3ff</color>
+
+    <color name="text_black">#333333</color>
+    <color name="text_gray">#666666</color>
+    <color name="text_blue">#6DA7FF</color>
+    <color name="text_yellow">#F8E71C</color>
+    <color name="text_orange">#FF844D</color>
+    <color name="text_green">#66B50A</color>
+
+    <color name="main_tab_text_checked">#6189ff</color>
+    <color name="main_tab_text_uncheck">#666666</color>
+    <color name="light_blue_600">#FF039BE5</color>
+    <color name="light_blue_900">#FF01579B</color>
+    <color name="light_blue_A200">#FF40C4FF</color>
+    <color name="light_blue_A400">#FF00B0FF</color>
+    <color name="black_overlay">#66000000</color>
+
+    <color name="blackText4">#66000000</color>
+
+
+    <color name="btn_small_checked">#6189ff</color>
+    <color name="btn_small_unchecked">#f4f3f8</color>
+    <color name="btn_small_text_checked">#fefefe</color>
+    <color name="btn_small_text_unchecked">#666666</color>
+
+    <color name="divider_gray">#e4e4e4</color>
+
+    <color name="default_gray">#33999999</color>
+</resources>

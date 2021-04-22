@@ -18,6 +18,6 @@
     <string name="image_scene_title">场景检测</string>
     <string name="posenet_activity_title">骨骼检测</string>
     <string name="style_transfer_title">风格迁移</string>
-    <string name="segmentation_toolbar_title">图像分割</string>
+    <string name="segmentation_toolbar_title">人像分割</string>
 
 </resources>

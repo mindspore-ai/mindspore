@@ -18,10 +18,8 @@ def cleantargetMindSporeIncludeAAR = "../mindsporelibrary"
 def targetMindSporeIncludeAAR = "../mindsporelibrary/"
 
 def targetObjectModelFile = "src/main/assets/model/ssd.ms"
-def targetGarbageModelFile = "src/main/assets/model/garbage_mobilenetv2.ms"
 
 def modelObjectDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms"
-def modelGarbageDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/garbage_mobilenetv2_lite/garbage_mobilenetv2.ms"
 
 def cleantargetMindSporeInclude = "src/main/cpp"
 
@@ -44,14 +42,6 @@ task downloadObjectModelFile(type: DownloadUrlTask) {
     }
     sourceUrl = "${modelObjectDownloadUrl}"
     target = file("${targetObjectModelFile}")
-}
-
-task downloadGarbageModelFile(type: DownloadUrlTask) {
-    doFirst {
-        println "Downloading ${modelGarbageDownloadUrl}"
-    }
-    sourceUrl = "${modelGarbageDownloadUrl}"
-    target = file("${targetGarbageModelFile}")
 }
 
 task downloadMindSporeLibrary(type: DownloadUrlTask) {
@@ -102,10 +92,6 @@ if (file("src/main/cpp/${mindsporeLite_Version}/lib/aarch64/libmindspore-lite.so
     cleanUnusedmindsporeFiles.enabled = false
 }
 
-if (file("src/main/assets/model/garbage_mobilenetv2.ms").exists()) {
-    downloadGarbageModelFile.enabled = false
-}
-
 if (file("src/main/assets/model/mobilenetv2.ms").exists()) {
     downloadModelFile.enabled = false
 }
@@ -124,7 +110,6 @@ preBuild.dependsOn cleanCmakeCache
 preBuild.dependsOn downloadModelFile
 preBuild.dependsOn downloadObjectModelFile
 preBuild.dependsOn downloadMindSporeLibrary
-preBuild.dependsOn downloadGarbageModelFile
 preBuild.dependsOn unzipMindSporeInclude
 preBuild.dependsOn unzipMindSporeIncludeAAR
 preBuild.dependsOn cleanUnusedmindsporeFiles

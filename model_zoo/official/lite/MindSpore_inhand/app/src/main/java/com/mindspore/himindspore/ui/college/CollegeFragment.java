@@ -30,7 +30,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.mindspore.common.config.MSLinkUtils;
+import com.alibaba.android.arouter.launcher.ARouter;
 import com.mindspore.common.sp.Preferences;
 import com.mindspore.common.utils.Utils;
 import com.mindspore.customview.dialog.NoticeDialog;
@@ -140,19 +140,19 @@ public class CollegeFragment extends Fragment implements CollegeItemAdapter.Coll
                 prefs.edit().putBoolean(Preferences.KEY_COLLEGE_CLOUD, true).apply();
                 collegeDataList.get(1).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_CLOUD, false));
                 collegeItemAdapter.notifyData();
-                Utils.openBrowser(getActivity(), MSLinkUtils.COLLEGE_MAIN_CLOUD);
+                ARouter.getInstance().build("/app/CollegeOneHourActivity").navigation();
                 break;
             case 3:
                 prefs.edit().putBoolean(Preferences.KEY_COLLEGE_FAQ, true).apply();
                 collegeDataList.get(3).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_FAQ, false));
                 collegeItemAdapter.notifyData();
-                Utils.openBrowser(getActivity(), MSLinkUtils.COLLEGE_MAIN_FAQ);
+                ARouter.getInstance().build("/app/CollegeFAQActivity").navigation();
                 break;
             case 4:
                 prefs.edit().putBoolean(Preferences.KEY_COLLEGE_ASK, true).apply();
                 collegeDataList.get(4).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_ASK, false));
                 collegeItemAdapter.notifyData();
-                Utils.openBrowser(getActivity(), MSLinkUtils.COLLEGE_MAIN_ASK);
+                ARouter.getInstance().build("/app/CollegeForumActivity").navigation();
                 break;
         }
     }
@@ -167,6 +167,14 @@ public class CollegeFragment extends Fragment implements CollegeItemAdapter.Coll
         prefs.edit().putBoolean(Preferences.KEY_COLLEGE_QUICK, isHasCheckedTrain && isHasCheckedExecute && isHasCheckedApp && isHasCheckedVideo).apply();
         collegeDataList.get(2).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_QUICK, false));
         collegeItemAdapter.notifyData();
-        Utils.openBrowser(getActivity(), MSLinkUtils.COLLEGE_QUICK_WEB_ARRAY[position]);
+        if (position == 0) {
+            ARouter.getInstance().build("/app/CollegeTrainingmodelActivity").navigation();
+        } else if (position == 1) {
+            ARouter.getInstance().build("/app/CollegePerformReasoningActivity").navigation();
+        } else if (position == 2) {
+            ARouter.getInstance().build("/app/CollegeBrokensideActivity").navigation();
+        } else if (position == 3) {
+            ARouter.getInstance().build("/app/CollegeReferencevideoActivity").navigation();
+        }
     }
 }
