@@ -1145,10 +1145,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   }
   auto format = kOpFormat_DEFAULT;
   string tensor_name = node_name + ':' + "0";
-  ShapeVector int_shapes;
-  auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                       [](size_t inner_item) { return SizeToInt(inner_item); });
+  ShapeVector int_shapes = trans::GetRuntimePaddingShape(anf_node, output_index);
   bool keep_prev;
   if (anf_node->isa<Parameter>()) {
     keep_prev = true;
@@ -1210,10 +1207,7 @@ void Debugger::LoadGraphOutputs() {
       }
       auto format = kOpFormat_DEFAULT;
       string tensor_name = kernel_name + ':' + std::to_string(j);
-      ShapeVector int_shapes;
-      auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                           [](size_t inner_item) { return SizeToInt(inner_item); });
+      ShapeVector int_shapes = trans::GetRuntimePaddingShape(node, j);
       auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost:"
