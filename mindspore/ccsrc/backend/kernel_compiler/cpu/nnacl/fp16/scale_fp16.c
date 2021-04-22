@@ -23,7 +23,7 @@ void Fp16ScaleInner(float16_t *in_data, float16_t *out_data, float16_t *scale, f
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
       for (; in_index < inner_size - 8; in_index += 8) {
         int in_offset = axis_offset + in_index;
         float16x8_t data = vld1q_f16(in_data + in_offset);
@@ -47,7 +47,7 @@ void Fp16ScaleAxis(float16_t *in_data, float16_t *out_data, float16_t *scale, fl
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
     for (; index < axis_size - 8; index += 8) {
       int in_offset = out_offset + index;
       float16x8_t data = vld1q_f16(in_data + in_offset);
@@ -80,7 +80,7 @@ void DoScaleFp16(float16_t *in_data, float16_t *out_data, float16_t *scale, floa
 
 void Fp16ScaleInnerRelu(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int outer_start,
                         int outer_end, int axis_size, int inner_size) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
@@ -88,7 +88,7 @@ void Fp16ScaleInnerRelu(float16_t *in_data, float16_t *out_data, float16_t *scal
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
       for (; in_index < inner_size - 8; in_index += 8) {
         int in_offset = axis_offset + in_index;
         float16x8_t data = vld1q_f16(in_data + in_offset);
@@ -110,13 +110,13 @@ void Fp16ScaleInnerRelu(float16_t *in_data, float16_t *out_data, float16_t *scal
 
 void Fp16ScaleAxisRelu(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int outer_start,
                        int outer_end, int axis_size) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
     for (; index < axis_size - 8; index += 8) {
       int in_offset = out_offset + index;
       float16x8_t data = vld1q_f16(in_data + in_offset);
@@ -151,7 +151,7 @@ void Fp16DoScaleRelu(float16_t *in_data, float16_t *out_data, float16_t *scale, 
 
 void Fp16ScaleInnerRelu6(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int outer_start,
                          int outer_end, int axis_size, int inner_size) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
   float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
 #endif
@@ -160,7 +160,7 @@ void Fp16ScaleInnerRelu6(float16_t *in_data, float16_t *out_data, float16_t *sca
     for (int i = 0; i < axis_size; i++) {
       int axis_offset = out_offset + i * inner_size;
       int in_index = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
       for (; in_index < inner_size - 8; in_index += 8) {
         int in_offset = axis_offset + in_index;
         float16x8_t data = vld1q_f16(in_data + in_offset);
@@ -182,14 +182,14 @@ void Fp16ScaleInnerRelu6(float16_t *in_data, float16_t *out_data, float16_t *sca
 
 void Fp16ScaleAxisRelu6(float16_t *in_data, float16_t *out_data, float16_t *scale, float16_t *offset, int outer_start,
                         int outer_end, int axis_size) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   float16x8_t zeros = {0, 0, 0, 0, 0, 0, 0, 0};
   float16x8_t bounds = {6, 6, 6, 6, 6, 6, 6, 6};
 #endif
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
     for (; index < axis_size - 8; index += 8) {
       int in_offset = out_offset + index;
       float16x8_t data = vld1q_f16(in_data + in_offset);

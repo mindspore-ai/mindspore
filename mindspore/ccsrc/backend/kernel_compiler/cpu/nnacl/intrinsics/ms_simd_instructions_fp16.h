@@ -19,7 +19,7 @@
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #if defined(ENABLE_ARM82_A32)
-static inline float16x8_t divq_f16(float16x8_t in1, float16x8_t in2) {
+static inline float16x8_t ms_vdivq_f16(float16x8_t in1, float16x8_t in2) {
   float16x8_t dst;
   asm volatile(
     "vrecpe.f16 q14, %3\n"
@@ -34,7 +34,7 @@ static inline float16x8_t divq_f16(float16x8_t in1, float16x8_t in2) {
   return dst;
 }
 
-static inline float16x4_t div_f16(float16x4_t in1, float16x4_t in2) {
+static inline float16x4_t ms_vdiv_f16(float16x4_t in1, float16x4_t in2) {
   float16x4_t dst;
   asm volatile(
     "vrecpe.f16 d14, %3\n"
@@ -49,33 +49,47 @@ static inline float16x4_t div_f16(float16x4_t in1, float16x4_t in2) {
   return dst;
 }
 
-static inline float vaddvq_f32(float32x4_t in) {  // is not support in arm82 aarch32
+static inline float ms_vaddvq_f32(float32x4_t in) {
+  // is not support in arm82 aarch32 and there is no assembly instruction to process all the data
   return in[0] + in[1] + in[2] + in[3];
 }
 
-static inline float32x4_t cvt_f32_f16(float16x4_t in) {
+static inline float16_t ms_vmaxvq_f16(float16x8_t in) {
+  // is not support in arm82 aarch32 and there is no assembly instruction to process all the data
+  float16_t dst = in[0];
+  for (int i = 1; i < 8; ++i) {
+    dst = dst > in[i] ? dst : in[i];
+  }
+  return dst;
+}
+
+static inline float32x4_t ms_vcvt_f32_f16(float16x4_t in) {
   float32x4_t dst;
   asm volatile("vcvt.f32.f16 %0, %2\n" : "=w"(dst) : "0"(dst), "w"(in) :);
   return dst;
 }
 
-static inline float16x4_t cvt_f16_f32(float32x4_t in) {
+static inline float16x4_t ms_vcvt_f16_f32(float32x4_t in) {
   float16x4_t dst;
   asm volatile("vcvt.f16.f32 %0, %2\n" : "=w"(dst) : "0"(dst), "w"(in) :);
   return dst;
 }
 
-#define MS_CVT_F32_F16(src) cvt_f32_f16(src)
-#define MS_CVT_F16_F32(src) cvt_f16_f32(src)
-#define MS_DIV_F16(src1, src2) div_f16(src1, src2)
-#define MS_DIVQ_F16(src1, src2) divq_f16(src1, src2)
+#define MS_CVT_F32_F16(src) ms_vcvt_f32_f16(src)
+#define MS_CVT_F16_F32(src) ms_vcvt_f16_f32(src)
+#define MS_DIV_F16(src1, src2) ms_vdiv_f16(src1, src2)
+#define MS_DIVQ_F16(src1, src2) ms_vdivq_f16(src1, src2)
 #define MS_FMAQ_N_F16(src1, src2, src3) vfmaq_f16(src1, src2, vdupq_n_f16(src3))
+#define MS_MAXVQ_F16(src) ms_vmaxvq_f16(src)
+#define MS_ADDVQ_F32(src) ms_vaddvq_f32(src)
 #else
 #define MS_CVT_F32_F16(src) vcvt_f32_f16(src)
 #define MS_CVT_F16_F32(src) vcvt_f16_f32(src)
 #define MS_DIV_F16(src1, src2) vdiv_f16(src1, src2)
 #define MS_DIVQ_F16(src1, src2) vdivq_f16(src1, src2)
 #define MS_FMAQ_N_F16(src1, src2, src3) vfmaq_n_f16(src1, src2, src3)
+#define MS_MAXVQ_F16(src) vmaxvq_f16(src)
+#define MS_ADDVQ_F32(src) vaddvq_f32(src)
 #endif
 
 static inline float16x8_t MS_TANHX8_F16(float16x8_t src) {

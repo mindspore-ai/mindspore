@@ -25,7 +25,7 @@ extern "C" {
 #endif
 void ExpFp16(const float16_t *src, float16_t *dst, int num);
 
-#if defined(ENABLE_ARM64)
+#if defined(ENABLE_NEON)
 static inline float32x4_t exp_fp32(float32x4_t input) {
   static float32x4_t param[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
                                 {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
@@ -49,7 +49,7 @@ static inline void simd_exp_fp16(float16x8_t input, float16_t *dst) {
 
   input = vmaxq_f16(minv, vminq_f16(input, maxv));
   float32x4_t input_low = vcvt_f32_f16(vget_low_f16(input));
-  float32x4_t input_high = vcvt_high_f32_f16(input);
+  float32x4_t input_high = vcvt_f32_f16(vget_high_f16(input));
   vst1q_f16(dst, vcombine_f16(vcvt_f16_f32(exp_fp32(input_low)), vcvt_f16_f32(exp_fp32(input_high))));
 }
 #endif

@@ -1900,6 +1900,181 @@ function Run_arm64_fp16() {
         fi
     done < ${models_multiple_inputs_fp16_config}
 }
+
+# Run on armv8.2-a32-fp16 platform:
+function Run_armv82_a32_fp16() {
+    cd ${armv82_path} || exit 1
+    tar -zxf mindspore-lite-${version}-inference-android-aarch32.tar.gz || exit 1
+
+    # If build with minddata, copy the minddata related libs
+    cd ${benchmark_test_path} || exit 1
+    if [ -f ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    fi
+
+    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+
+    # adb push all needed files to the phone
+    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+
+    # run adb ,run session ,check the result:
+    echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
+    echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark' >> adb_cmd.txt
+
+    adb -s ${device_id} shell < adb_cmd.txt
+
+    # Run fp16 converted models:
+    while read line; do
+        fp16_line_info=${line}
+        column_num=`echo ${fp16_line_info} | awk -F ' ' '{print NF}'`
+        if [[ ${fp16_line_info} == \#* || ${column_num} -lt 3 ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $3}'`
+        model_name=${model_info%%;*}
+        length=${#model_name}
+        input_shapes=${model_info:length+1}
+        echo "---------------------------------------------------------" >> "${run_armv82_a32_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_armv82_a32_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        if [[ $accuracy_limit == "-1" ]]; then
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --enableFp16=true --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        else
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        fi
+        cat adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='armv82_a32_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='armv82_a32_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_onnx_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        column_num=`echo ${fp16_line_info} | awk -F ' ' '{print NF}'`
+        if [[ ${fp16_line_info} == \#* || ${column_num} -lt 3 ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $3}'`
+        echo "---------------------------------------------------------" >> "${run_armv82_a32_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_armv82_a32_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='armv82_a32_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='armv82_a32_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_caffe_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        column_num=`echo ${fp16_line_info} | awk -F ' ' '{print NF}'`
+        if [[ ${fp16_line_info} == \#* || ${column_num} -lt 3 ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $3}'`
+        echo "---------------------------------------------------------" >> "${run_armv82_a32_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_armv82_a32_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='armv82_a32_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='armv82_a32_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tflite_fp16_config}
+
+    # Run fp16 converted models:
+    while read line; do
+        fp16_line_info=${line}
+        column_num=`echo ${fp16_line_info} | awk -F ' ' '{print NF}'`
+        if [[ ${fp16_line_info} == \#* || ${column_num} -lt 3 ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $3}'`
+        model_name=${model_info%%;*}
+        length=${#model_name}
+        input_shapes=${model_info:length+1}
+        echo "---------------------------------------------------------" >> "${run_armv82_a32_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_armv82_a32_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        if [[ $accuracy_limit == "-1" ]]; then
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --enableFp16=true --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        else
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        fi
+        cat adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='armv82_a32_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='armv82_a32_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tf_fp16_config}
+
+    # Run converted models which has multiple inputs in fp16 mode:
+    while read line; do
+        fp16_line_info=${line}
+        column_num=`echo ${fp16_line_info} | awk -F ' ' '{print NF}'`
+        if [[ ${fp16_line_info} == \#* || ${column_num} -lt 3 ]]; then
+          continue
+        fi
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $3}'`
+        model_name=`echo ${model_info}|awk -F ';' '{print $1}'`
+        input_num=`echo ${model_info} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        input_files=''
+        output_file=''
+        data_path="/data/local/tmp/input_output/"
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+        done
+        output_file=${data_path}'output/'${model_name}'.ms.out'
+        if [[ ${model_name##*.} == "caffemodel" ]]; then
+          model_name=${model_name%.*}
+        fi
+        echo "---------------------------------------------------------" >> "${run_armv82_a32_fp16_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_armv82_a32_fp16_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} '--enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_armv82_a32_fp16_log_file}"
+        if [ $? = 0 ]; then
+            run_result='armv82_a32_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='armv82_a32_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_multiple_inputs_fp16_config}
+}
+
 # Run on gpu platform:
 function Run_gpu() {
     cd ${arm64_path} || exit 1
@@ -2249,7 +2424,7 @@ fi
 # Write benchmark result to temp file
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
 echo ' ' > ${run_benchmark_result_file}
-run_x86_log_file
+
 run_x86_log_file=${basepath}/run_x86_log.txt
 echo 'run x86 logs: ' > ${run_x86_log_file}
 
@@ -2270,6 +2445,9 @@ echo 'run arm64_fp32 logs: ' > ${run_arm64_fp32_log_file}
 
 run_arm64_fp16_log_file=${basepath}/run_arm64_fp16_log.txt
 echo 'run arm64_fp16 logs: ' > ${run_arm64_fp16_log_file}
+
+run_armv82_a32_fp16_log_file=${basepath}/run_armv82_a32_fp16_log.txt
+echo 'run arm82_a32_fp16 logs: ' > ${run_armv82_a32_fp16_log_file}
 
 run_arm32_log_file=${basepath}/run_arm32_log.txt
 echo 'run arm32 logs: ' > ${run_arm32_log_file}
@@ -2331,6 +2509,33 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen" ]]
     sleep 1
 fi
 
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32_fp16" ]]; then
+    # Run on armv82-a32-fp16
+    armv82_path=${release_path}/android_aarch32
+    file_name=$(ls ${armv82_path}/*inference-android-aarch32.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
+    echo "start Run armv82-a32-fp16 ..."
+    Run_armv82_a32_fp16
+    Run_armv82_a32_fp16_status=$?
+    sleep 1
+fi
+
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32_fp32" ]]; then
+    # Run on arm32
+    arm32_path=${release_path}/android_aarch32
+    # mv ${arm32_path}/*train-android-aarch32* ./train
+    file_name=$(ls ${arm32_path}/*inference-android-aarch32.tar.gz)
+    IFS="-" read -r -a file_name_array <<< "$file_name"
+    version=${file_name_array[2]}
+
+    echo "start Run arm32 ..."
+    Run_arm32
+    Run_arm32_status=$?
+    sleep 1
+fi
+
 if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp32" ]]; then
     # Run on arm64
     arm64_path=${release_path}/android_aarch64
@@ -2356,20 +2561,6 @@ if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp16" ]];
     echo "start Run arm64-fp16 ..."
     Run_arm64_fp16
     Run_arm64_fp16_status=$?
-    sleep 1
-fi
-
-if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32" ]]; then
-    # Run on arm32
-    arm32_path=${release_path}/android_aarch32
-    # mv ${arm32_path}/*train-android-aarch32* ./train
-    file_name=$(ls ${arm32_path}/*inference-android-aarch32.tar.gz)
-    IFS="-" read -r -a file_name_array <<< "$file_name"
-    version=${file_name_array[2]}
-
-    echo "start Run arm32 ..."
-    Run_arm32
-    Run_arm32_status=$?
     sleep 1
 fi
 
@@ -2468,7 +2659,14 @@ if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp16" ]];
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32" ]]; then
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32_fp16" ]]; then
+    if [[ ${Run_armv82_a32_fp16_status} != 0 ]];then
+        echo "Run_armv82_a32_fp16 failed"
+        cat ${run_armv82_a32_fp16_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm32_fp32" ]]; then
     if [[ ${Run_arm32_status} != 0 ]];then
         echo "Run_arm32 failed"
         cat ${run_arm32_log_file}
@@ -2490,7 +2688,7 @@ if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
     fi
 fi
 
-echo "Run_x86 and Run_x86_sse and Run_arm64_fp32 and Run_arm64_fp16 and Run_arm32 and Run_gpu and Run_npu is ended"
+echo "Run_x86 and Run_x86_sse and Run_x86_avx and Run_arm64_fp32 and Run_arm64_fp16 and Run_arm32_fp32 and Run_armv82_a32_fp16 and Run_gpu and Run_npu and  is ended"
 Print_Benchmark_Result
 if [[ $isFailed == 1 ]]; then
     exit 1

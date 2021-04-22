@@ -43,11 +43,11 @@ int InstanceNormFp16(const float16_t *src_data, float16_t *dst_data, const float
 
         float16x4_t sum2 = vadd_f16(vget_low_f16(srcv), vget_high_f16(srcv));
         float32x4_t sum_f32 = vcvt_f32_f16(sum2);
-        mean += vaddvq_f32(sum_f32);
+        mean += MS_ADDVQ_F32(sum_f32);
 
         float16x4_t square2 = vadd_f16(vget_low_f16(squarev), vget_high_f16(squarev));
         float32x4_t square_f32 = vcvt_f32_f16(square2);
-        square_mean += vaddvq_f32(square_f32);
+        square_mean += MS_ADDVQ_F32(square_f32);
       }
       for (; index < param->inner_size_; index++) {
         mean += src[index];

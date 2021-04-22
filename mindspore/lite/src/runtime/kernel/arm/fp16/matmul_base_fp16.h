@@ -55,6 +55,7 @@ class MatmulBaseFP16CPUKernel : public LiteKernel {
 
  protected:
   MatMulParameter *params_ = nullptr;
+  int row_tile_ = 0;
 
  private:
   int thread_stride_ = 0;

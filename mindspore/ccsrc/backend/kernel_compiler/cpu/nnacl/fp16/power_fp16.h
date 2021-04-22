@@ -22,7 +22,7 @@
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 #include "nnacl/power_parameter.h"
 
-#if defined(ENABLE_ARM64)
+#if defined(ENABLE_NEON)
 typedef float16x8_t (*PowerSimdFunFp16)(float16x8_t x, const void *exponent);
 #endif
 typedef float16_t (*PowerScalarFunFp16)(float16_t x, const void *exponent);
@@ -37,7 +37,7 @@ static inline float16_t StdPowerScalarFp16(float16_t x, const void *exponent) {
   return powf(x, *(float16_t *)exponent);
 }
 
-#if defined(ENABLE_ARM64)
+#if defined(ENABLE_NEON)
 static inline float16x8_t StdPowerSimdFp16(float16x8_t x, const void *exponent) {
   float16x8_t result;
   result[0] = powf(x[0], *(float16_t *)exponent);
