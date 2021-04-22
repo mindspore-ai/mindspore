@@ -286,5 +286,9 @@ uint64_t PSContext::worker_upload_weights() const { return worker_upload_weights
 void PSContext::set_secure_aggregation(bool secure_aggregation) { secure_aggregation_ = secure_aggregation; }
 
 bool PSContext::secure_aggregation() const { return secure_aggregation_; }
+
+bool PSContext::enable_ssl() const { return enable_ssl_; }
+
+void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
 }  // namespace ps
 }  // namespace mindspore

@@ -23,7 +23,6 @@ namespace ps {
 namespace core {
 bool HttpCommunicator::Start() {
   MS_LOG(INFO) << "Initialize http server IP:" << ip_ << ", PORT:" << port_;
-  http_server_ = std::make_shared<HttpServer>(ip_, port_, 32);
   http_server_->InitServer();
   MS_EXCEPTION_IF_NULL(http_server_);
   if (!http_server_->Start()) {

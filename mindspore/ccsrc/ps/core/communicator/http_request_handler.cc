@@ -25,27 +25,29 @@ bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string
   struct evhttp *http = evhttp_new(evbase_);
   MS_EXCEPTION_IF_NULL(http);
 
-  SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(),
-                      SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2);
-  EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-  MS_EXCEPTION_IF_NULL(ecdh);
+  if (PSContext::instance()->enable_ssl()) {
+    SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(),
+                        SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2);
+    EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    MS_EXCEPTION_IF_NULL(ecdh);
 
-  if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
-    MS_LOG(ERROR) << "SSL use certificate chain file failed!";
-    return false;
+    if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
+      MS_LOG(ERROR) << "SSL use certificate chain file failed!";
+      return false;
+    }
+
+    if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(), kPrivateKey, SSL_FILETYPE_PEM)) {
+      MS_LOG(ERROR) << "SSL use private key file failed!";
+      return false;
+    }
+
+    if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx())) {
+      MS_LOG(ERROR) << "SSL check private key file failed!";
+      return false;
+    }
+
+    evhttp_set_bevcb(http, BuffereventCallback, SSLWrapper::GetInstance().GetSSLCtx());
   }
-
-  if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(), kPrivateKey, SSL_FILETYPE_PEM)) {
-    MS_LOG(ERROR) << "SSL use private key file failed!";
-    return false;
-  }
-
-  if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx())) {
-    MS_LOG(ERROR) << "SSL check private key file failed!";
-    return false;
-  }
-
-  evhttp_set_bevcb(http, BuffereventCallback, SSLWrapper::GetInstance().GetSSLCtx());
 
   int result = evhttp_accept_socket(http, fd);
   if (result < 0) {

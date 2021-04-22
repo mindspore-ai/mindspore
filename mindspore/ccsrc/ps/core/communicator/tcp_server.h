@@ -22,6 +22,7 @@
 #include <event2/event.h>
 #include <event2/listener.h>
 #include <event2/thread.h>
+#include <event2/bufferevent_ssl.h>
 
 #include <exception>
 #include <functional>
@@ -35,9 +36,12 @@
 #include <atomic>
 
 #include "ps/core/communicator/tcp_message_handler.h"
+#include "ps/core/communicator/ssl_wrapper.h"
 #include "ps/core/cluster_metadata.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/comm_util.h"
+#include "ps/constants.h"
+#include "ps/ps_context.h"
 
 namespace mindspore {
 namespace ps {

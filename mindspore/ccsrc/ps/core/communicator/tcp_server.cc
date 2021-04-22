@@ -282,7 +282,30 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   MS_EXCEPTION_IF_NULL(base);
   MS_EXCEPTION_IF_NULL(sockaddr);
 
-  struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  struct bufferevent *bev = nullptr;
+
+  if (!PSContext::instance()->enable_ssl()) {
+    bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  } else {
+    SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx());
+
+    if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
+      MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
+    }
+
+    if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(), kPrivateKey, SSL_FILETYPE_PEM)) {
+      MS_LOG(EXCEPTION) << "SSL use private key file failed!";
+    }
+
+    if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx())) {
+      MS_LOG(EXCEPTION) << "SSL check private key file failed!";
+    }
+    SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(), SSL_OP_NO_SSLv2);
+
+    bev = bufferevent_openssl_socket_new(base, fd, ssl, BUFFEREVENT_SSL_ACCEPTING,
+                                         BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  }
+
   if (bev == nullptr) {
     MS_LOG(ERROR) << "Error constructing buffer event!";
     int ret = event_base_loopbreak(base);

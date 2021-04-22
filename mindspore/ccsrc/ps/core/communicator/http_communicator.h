@@ -34,7 +34,10 @@ class HttpCommunicator : public CommunicatorBase {
  public:
   explicit HttpCommunicator(const std::string &ip, std::int16_t port,
                             const std::shared_ptr<TaskExecutor> &task_executor)
-      : task_executor_(task_executor), http_server_(nullptr), ip_(ip), port_(port) {}
+      : task_executor_(task_executor), http_server_(nullptr), ip_(ip), port_(port) {
+    http_server_ = std::make_shared<HttpServer>(ip_, port_, kThreadNum);
+  }
+
   ~HttpCommunicator() = default;
 
   bool Start() override;

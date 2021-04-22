@@ -32,7 +32,7 @@ class SSLWrapper {
     static SSLWrapper instance;
     return instance;
   }
-  SSL_CTX *GetSSLCtx();
+  SSL_CTX *GetSSLCtx(bool is_server = true);
 
  private:
   SSLWrapper();
@@ -44,6 +44,7 @@ class SSLWrapper {
   void CleanSSL();
 
   SSL_CTX *ssl_ctx_;
+  SSL_CTX *client_ssl_ctx_;
 };
 }  // namespace core
 }  // namespace ps

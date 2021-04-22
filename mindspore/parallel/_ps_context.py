@@ -47,7 +47,8 @@ _set_ps_context_func_map = {
     "fl_iteration_num": ps_context().set_fl_iteration_num,
     "client_epoch_num": ps_context().set_client_epoch_num,
     "client_batch_size": ps_context().set_client_batch_size,
-    "secure_aggregation": ps_context().set_secure_aggregation
+    "secure_aggregation": ps_context().set_secure_aggregation,
+    "enable_ps_ssl": ps_context().set_enable_ssl
 }
 
 _get_ps_context_func_map = {

@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-SSLWrapper::SSLWrapper() : ssl_ctx_(nullptr) { InitSSL(); }
+SSLWrapper::SSLWrapper() : ssl_ctx_(nullptr), client_ssl_ctx_(nullptr) { InitSSL(); }
 
 SSLWrapper::~SSLWrapper() { CleanSSL(); }
 
@@ -41,6 +41,10 @@ void SSLWrapper::InitSSL() {
   if (X509_STORE_set_default_paths(store) != 1) {
     MS_LOG(ERROR) << "X509_STORE_set_default_paths failed";
   }
+  client_ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
+  if (!ssl_ctx_) {
+    MS_LOG(ERROR) << "SSL_CTX_new failed";
+  }
 }
 
 void SSLWrapper::CleanSSL() {
@@ -53,7 +57,13 @@ void SSLWrapper::CleanSSL() {
   CRYPTO_cleanup_all_ex_data();
 }
 
-SSL_CTX *SSLWrapper::GetSSLCtx() { return ssl_ctx_; }
+SSL_CTX *SSLWrapper::GetSSLCtx(bool is_server) {
+  if (is_server) {
+    return ssl_ctx_;
+  } else {
+    return client_ssl_ctx_;
+  }
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
