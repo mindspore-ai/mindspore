@@ -152,6 +152,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/full_connection_populate.cc
         ${LITE_DIR}/src/ops/populate/pooling_populate.cc
         ${LITE_DIR}/src/ops/populate/quant_dtype_cast_populate.cc
+        ${LITE_DIR}/src/ops/populate/reduce_populate.cc
         ${LITE_DIR}/src/ops/populate/resize_populate.cc
         ${LITE_DIR}/src/ops/populate/reshape_populate.cc
         ${LITE_DIR}/src/ops/populate/batch_norm_populate.cc

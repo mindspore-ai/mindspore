@@ -56,28 +56,28 @@ class CoderFlags : public virtual FlagParser {
 int Coder::Run(const std::string &model_path) {
   session_ = CreateCoderSession();
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "new session failed while running";
+    MS_LOG(ERROR) << "new session failed while running!";
     return RET_ERROR;
   }
   STATUS status = session_->Init(model_path);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Init session failed.";
+    MS_LOG(ERROR) << "Init session failed!";
     return RET_ERROR;
   }
 
   status = session_->Build();
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Set Input resize shapes error";
+    MS_LOG(ERROR) << "Compile graph failed!";
     return status;
   }
   status = session_->Run();
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Generate Code Files error. " << status;
+    MS_LOG(ERROR) << "Generate Code Files error!" << status;
     return status;
   }
   status = session_->GenerateCode();
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Generate Code Files error " << status;
+    MS_LOG(ERROR) << "Generate Code Files error!" << status;
   }
   return status;
 }

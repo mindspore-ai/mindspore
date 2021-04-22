@@ -65,6 +65,8 @@ class CoderGraph {
 
   const Model *model() const { return this->model_; }
 
+  void DumpUnSupportLayer(Target target);
+
  private:
   // graph_inputs && weight && bias is value_node
   // others are parameter_node
@@ -77,6 +79,7 @@ class CoderGraph {
   std::vector<uint32_t> input_indices_;
 
   std::vector<uint32_t> output_indices_;
+
   std::map<std::string, std::vector<Tensor *>> inputs_map_;
 
   std::map<std::string, std::vector<Tensor *>> outputs_map_;
