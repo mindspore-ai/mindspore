@@ -113,7 +113,7 @@ void PRelu(const float *input, float *output, float *slope, int start, int end, 
     const float *cur_in = input + i * channel;
     float *cur_out = output + i * channel;
     int j = 0;
-#if defined(ENABLE_ARM)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
     for (; j < channel - 3; j += 4) {
       MS_FLOAT32X4 in = MS_LDQ_F32(cur_in + j);
       MS_FLOAT32X4 s = MS_LDQ_F32(slope + j);

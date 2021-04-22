@@ -36,7 +36,7 @@ void MatmulFP16CPUKernel::InitAShape() {
   params_->batch = batch;
   params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
-  params_->row_16_ = UP_ROUND(params_->row_, C16NUM);
+  params_->row_16_ = UP_ROUND(params_->row_, row_tile_);
 }
 
 void MatmulFP16CPUKernel::InitBShape() {
@@ -55,6 +55,11 @@ void MatmulFP16CPUKernel::InitBShape() {
 }
 
 int MatmulFP16CPUKernel::Init() {
+#ifdef ENABLE_ARM64
+  row_tile_ = C16NUM;
+#else
+  row_tile_ = C12NUM;
+#endif
   MatmulBaseFP16CPUKernel::InitParameter();
 
   if (params_->a_const_) {

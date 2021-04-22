@@ -42,6 +42,11 @@ int FullconnectionFP16CPUKernel::ReSize() {
 }
 
 int FullconnectionFP16CPUKernel::Init() {
+#ifdef ENABLE_ARM64
+  row_tile_ = C16NUM;
+#else
+  row_tile_ = C12NUM;
+#endif
   params_->batch = 1;
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;

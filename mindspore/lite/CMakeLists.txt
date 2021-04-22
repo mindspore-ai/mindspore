@@ -7,7 +7,7 @@ endif()
 
 if(PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
     set(ENABLE_FP16 "off")
-    message(WARNING "If you want to build fp16 in arm82_a32, \
+    message(STATUS "If you want to build fp16 in arm82_a32, \
     your Clang version:[${CMAKE_CXX_COMPILER_VERSION}] must not be less than 9.0 and please use android nkd r21e!")
 endif()
 

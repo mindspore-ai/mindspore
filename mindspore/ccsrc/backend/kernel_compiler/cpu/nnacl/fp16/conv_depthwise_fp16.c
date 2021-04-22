@@ -322,7 +322,7 @@ void DeconvDepthwiseCenterFp16(float16_t *dst, const float16_t *src, const float
         float16_t *dst_kw = dst_kh;
         const float16_t *weight_kw = weight_kh;
         for (int kw = 0; kw < kernel_w; kw++) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
           float16x8_t src_8 = vld1q_f16(src_w);
           float16x8_t weight_8 = vld1q_f16(weight_kw);
           float16x8_t dst_8 = vld1q_f16(dst_kw);

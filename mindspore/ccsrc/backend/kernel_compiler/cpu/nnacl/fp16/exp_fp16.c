@@ -21,7 +21,7 @@
 
 void ExpFp16(const float16_t *src, float16_t *dst, int num) {
   int i = 0;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_NEON
   int count = (num / C8NUM) * C8NUM;
   for (; i < count; i += C8NUM) {
     simd_exp_fp16(vld1q_f16(src + i), dst + i);

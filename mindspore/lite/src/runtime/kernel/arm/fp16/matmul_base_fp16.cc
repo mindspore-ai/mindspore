@@ -114,12 +114,7 @@ void MatmulBaseFP16CPUKernel::ResizeParameter() {
     params_->row_align_ = 1;
     params_->col_align_ = params_->col_;
   } else {
-#ifdef ENABLE_ARM64
-    int row_tile = C16NUM;
-#else
-    int row_tile = C12NUM;
-#endif
-    params_->row_align_ = UP_ROUND(params_->row_, row_tile);
+    params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
     params_->col_align_ = UP_ROUND(params_->col_, C8NUM);
   }
   return;

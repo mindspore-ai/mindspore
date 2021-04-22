@@ -290,7 +290,7 @@ void MatMul16x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, cons
 
 void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
                     int deep, int row, int col, int stride, int write_mode) {
-  if (write_mode == OutType_Nhwc) {
+  if (write_mode == OutType_Nhwc) {  // common conv and matmul
     for (int r = 0; r < row; r++) {
       for (int c = 0; c < col; c++) {
         int r12div = r / 12, r12mod = r % 12;
@@ -308,7 +308,7 @@ void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, cons
         dst[ci] = value;
       }
     }
-  } else if (write_mode == OutType_C8) {
+  } else if (write_mode == OutType_C8) {  // common deconv
     int col_8 = UP_ROUND(col, C8NUM);
     int row_12 = UP_ROUND(row, C12NUM);
     for (int r = 0; r < row_12; r++) {
@@ -328,7 +328,7 @@ void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, cons
         dst[ci] = value;
       }
     }
-  } else {
+  } else {  // winograd conv
     for (int i = 0; i < row; ++i) {
       int src_r_offset = i;
       int dst_r_offset = i * col * stride;
@@ -353,12 +353,14 @@ void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, cons
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, int out_type) {
   if (out_type == OutType_C8) {
+    // common deconv
 #ifdef ENABLE_ARM64
     MatmulFp16Neon64(a, b, c, bias, (int)act_type, depth, row, col, stride, false);
 #else
-    MatMul12x8A32Fp16(a, b, c, bias, (int)act_type, depth, row, col, stride, out_type);
+    MatMul12x8Fp16(a, b, c, bias, (int)act_type, depth, row, col, stride, out_type);
 #endif
   } else {
+    // winograd conv(OntType_TileC8) and common conv(OutType_Nhwc) and matmul(OutType_Nhwc)
 #ifdef ENABLE_ARM64
     MatmulFp16Neon64Opt(a, b, c, bias, (int)act_type, depth, row, col, stride, out_type);
 #else
