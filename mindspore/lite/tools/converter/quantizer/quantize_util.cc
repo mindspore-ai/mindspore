@@ -1042,4 +1042,32 @@ void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes,
   }
 }
 
+void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
+                       bool *channel_at_first, int *channel_cnt) {
+  if (primitive.value.type == schema::PrimitiveType_MatMul && static_cast<int>(shapes.size()) == 2) {
+    auto matmul_prim = primitive.value.AsMatMul();
+    MS_ASSERT(matmul_prim != nullptr);
+    *channel_at_first = index != 1 || matmul_prim->transpose_b;
+  } else if (primitive.value.type == schema::PrimitiveType_LSTM) {
+    if (index == 1 || index == 2) {
+      if (shapes.size() != 3) {
+        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
+      } else {
+        *channel_cnt = shapes[0] * shapes[1];
+      }
+    } else if (index == 3) {
+      if (shapes.size() != 2) {
+        MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
+      } else {
+        auto tensor_elem_cnt = shapes[0] * shapes[1];
+        if (tensor_elem_cnt / 4 * 4 == tensor_elem_cnt) {
+          *channel_cnt = 4;
+        }
+      }
+    } else {
+      MS_LOG(WARNING) << "unexpected index of lstm: " << index;
+    }
+  }
+}
+
 }  // namespace mindspore::lite::quant

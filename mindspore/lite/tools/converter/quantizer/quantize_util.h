@@ -120,6 +120,9 @@ int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first
 void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
                        int *channel_cnt);
 
+void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
+                       bool *channel_at_first, int *channel_cnt);
+
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);

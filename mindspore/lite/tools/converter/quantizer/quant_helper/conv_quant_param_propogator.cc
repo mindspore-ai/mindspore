@@ -35,23 +35,22 @@ STATUS ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGra
         return RET_OK;
       }
       auto &input_quant_param = input_tensor->quantParams.at(0);
-      auto &weight_quant_param = weight_tensor->quantParams.at(0);
-
-      if (bias_tensor->quantParams.empty()) {
-        auto tmp_quant_param = std::make_unique<schema::QuantParamT>();
-        bias_tensor->quantParams.emplace_back(std::move(tmp_quant_param));
+      std::vector<std::unique_ptr<schema::QuantParamT>> bias_quant_params;
+      for (auto &weight_quant_param : weight_tensor->quantParams) {
+        auto bias_quant_param = std::make_unique<schema::QuantParamT>();
+        bias_quant_param->min = 0.0;
+        bias_quant_param->max = 0.0;
+        bias_quant_param->dstDtype = kNumberTypeInt32;
+        bias_quant_param->inited = input_quant_param->inited && weight_quant_param->inited;
+        bias_quant_param->zeroPoint = 0;
+        if (bias_quant_param->inited) {
+          bias_quant_param->scale = input_quant_param->scale * weight_quant_param->scale;
+        }
+        bias_quant_param->roundType = 1;
+        bias_quant_param->multiplier = 1;
+        bias_quant_params.emplace_back(std::move(bias_quant_param));
       }
-      auto &bias_quant_param = bias_tensor->quantParams.front();
-      bias_quant_param->min = 0.0;
-      bias_quant_param->max = 0.0;
-      bias_quant_param->dstDtype = kNumberTypeInt32;
-      bias_quant_param->inited = input_quant_param->inited && weight_quant_param->inited;
-      bias_quant_param->zeroPoint = 0;
-      if (bias_quant_param->inited) {
-        bias_quant_param->scale = input_quant_param->scale * weight_quant_param->scale;
-      }
-      bias_quant_param->roundType = 1;
-      bias_quant_param->multiplier = 1;
+      bias_tensor->quantParams = std::move(bias_quant_params);
     }
     for (auto &quantParam : bias_tensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
