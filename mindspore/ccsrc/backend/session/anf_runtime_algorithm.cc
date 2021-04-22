@@ -1429,23 +1429,23 @@ void AnfRuntimeAlgorithm::ReorderOptimizerExecList(NotNull<std::vector<CNodePtr>
     };
 
     if (trans_pose_func(node)) {
-      transpose_list.emplace_back(node);
+      (void)transpose_list.emplace_back(node);
     } else if (trans_data_func(node)) {
-      trans_list.emplace_back(node);
+      (void)trans_list.emplace_back(node);
     } else if (cast_func(node)) {
-      cast_list.emplace_back(node);
+      (void)cast_list.emplace_back(node);
     } else if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(node)) != kOptOperatorSet.end()) {
-      all_opt_list.emplace_back(node);
+      (void)all_opt_list.emplace_back(node);
     } else {
-      non_opt_list.emplace_back(node);
+      (void)non_opt_list.emplace_back(node);
     }
   }
   node_list->clear();
-  std::copy(non_opt_list.begin(), non_opt_list.end(), std::back_inserter(*node_list));
-  std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
-  std::copy(transpose_list.begin(), transpose_list.end(), std::back_inserter(*node_list));
-  std::copy(trans_list.begin(), trans_list.end(), std::back_inserter(*node_list));
-  std::copy(cast_list.begin(), cast_list.end(), std::back_inserter(*node_list));
+  (void)std::copy(non_opt_list.begin(), non_opt_list.end(), std::back_inserter(*node_list));
+  (void)std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
+  (void)std::copy(transpose_list.begin(), transpose_list.end(), std::back_inserter(*node_list));
+  (void)std::copy(trans_list.begin(), trans_list.end(), std::back_inserter(*node_list));
+  (void)std::copy(cast_list.begin(), cast_list.end(), std::back_inserter(*node_list));
 }
 
 void AnfRuntimeAlgorithm::ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_list) {

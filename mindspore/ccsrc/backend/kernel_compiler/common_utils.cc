@@ -763,9 +763,9 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   }
   for (const auto &elem : axis_list) {
     if (elem < 0) {
-      axis.emplace_back(input_shape.size() + elem);
+      (void)axis.emplace_back(input_shape.size() + elem);
     } else {
-      axis.emplace_back(elem);
+      (void)axis.emplace_back(elem);
     }
   }
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);

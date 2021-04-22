@@ -25,7 +25,7 @@ namespace {
 abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("matmul_infer_input", input_args.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("matmul_infer_input", input_args.size(), kEqual, 2, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", input_args[1]->BuildShape(), prim_name);
   auto trans_a = GetValue<bool>(primitive->GetAttr(kTransposeA));
@@ -44,9 +44,9 @@ abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::ve
     out_m = w_shape[0];
     w_C = w_shape[1];
   }
-  CheckAndConvertUtils::CheckInteger("dim C is not equal", x_C, kEqual, w_C, prim_name);
-  primitive->AddAttr("transpose_x1", MakeValue(trans_a));
-  primitive->AddAttr("transpose_x2", MakeValue(trans_b));
+  (void)CheckAndConvertUtils::CheckInteger("dim C is not equal", x_C, kEqual, w_C, prim_name);
+  (void)primitive->AddAttr("transpose_x1", MakeValue(trans_a));
+  (void)primitive->AddAttr("transpose_x2", MakeValue(trans_b));
   std::vector<int64_t> out_shape = {out_n, out_m};
   return std::make_shared<abstract::Shape>(out_shape);
 }
@@ -58,8 +58,8 @@ TypePtr MatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   const std::set<TypeId> valid_types = {kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,  kNumberTypeInt64,
                                         kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  types.emplace("w", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("w", input_args[1]->BuildType());
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   if (infer_type == kNumberTypeInt8) {
     return std::make_shared<TensorType>(TypeIdToType(kNumberTypeInt32));
@@ -73,9 +73,9 @@ void MatMul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_b(transpose_b);
 }
 
-void MatMul::set_transpose_a(bool transpose_a) { AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void MatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
 
-void MatMul::set_transpose_b(bool transpose_b) { AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void MatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
 
 bool MatMul::get_transpose_a() const {
   auto value_ptr = GetAttr(kTransposeA);

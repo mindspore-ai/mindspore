@@ -57,7 +57,7 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
       MS_LOG(EXCEPTION) << op_name << " evaluator keys should be string, but got " << keyPtr->ToString();
     }
     auto key_string = GetValue<std::string>(keyPtr);
-    key_value.emplace_back(key_string, value_list[index]);
+    (void)key_value.emplace_back(key_string, value_list[index]);
   }
   return std::make_shared<AbstractDictionary>(key_value);
 }

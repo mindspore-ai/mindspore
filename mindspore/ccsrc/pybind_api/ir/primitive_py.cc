@@ -51,7 +51,7 @@ void SyncData(const py::object &arg) {
   }
   if (py::isinstance<tensor::Tensor>(arg)) {
     auto tensor = py::cast<tensor::TensorPtr>(arg);
-    (void)tensor->data_sync();
+    tensor->data_sync();
   }
 }
 }  // namespace
@@ -234,7 +234,7 @@ BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
         obj = py_args[2];
       }
       CheckHookConsistency(obj, py_args[2]);
-      hook_grad_.erase(cell_id);
+      (void)hook_grad_.erase(cell_id);
     } else {
       hook_grad_[cell_id] = py_args[2];
       obj = py_args[2];
