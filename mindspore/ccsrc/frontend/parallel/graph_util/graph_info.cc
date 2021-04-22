@@ -49,7 +49,7 @@ void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw(name + ".dot", root);
     DumpIR(name + ".ir", root);
-    ExportIR(name + ".dat", "0", root);
+    ExportIR(name + ".dat", root);
   }
 }
 

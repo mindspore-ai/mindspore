@@ -118,7 +118,7 @@ void TraceGraphEval() {
 
 class AnalyzedFuncGraphExporter : public AnfExporter {
  public:
-  AnalyzedFuncGraphExporter() : AnfExporter("", true, false) {}
+  AnalyzedFuncGraphExporter() : AnfExporter(true, false) {}
   ~AnalyzedFuncGraphExporter() override = default;
 
   void ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
