@@ -40,14 +40,17 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
-                     const QuantType &quant_type) override;
+  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
+                       const QuantType &quant_type) override;
+
+  int PostAdjust() override;
+
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
   static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,
                                    const tensor::TensorPtr &param_value_lite);
+  STATUS InitOriginModel(const std::string &model_file);
 
  private:
-  STATUS InitOriginModel(const std::string &model_file);
   STATUS ConvertNodes(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
                       std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
                       const std::string &root_node_name);
@@ -94,7 +97,6 @@ class OnnxModelParser : public ModelParser {
   std::unordered_map<std::string, AnfNodePtr> anf_nodes_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, AnfNodePtr> *> control_nodes_map_;
   std::unordered_map<std::string, std::string> child_root_map_;  // for nest control flow node
-  FuncGraphPtr anf_root_graph_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

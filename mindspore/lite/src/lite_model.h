@@ -75,12 +75,14 @@ class LiteModel : public Model {
       } else {
         node->name_ = c_node->name()->c_str();
       }
-      auto count = c_node->inputIndex()->size();
-      for (uint32_t j = 0; j < count; ++j) {
-        node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));
+      if (c_node->inputIndex() != nullptr) {
+        auto count = c_node->inputIndex()->size();
+        for (uint32_t j = 0; j < count; ++j) {
+          node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));
+        }
       }
       if (c_node->outputIndex() != nullptr) {
-        count = c_node->outputIndex()->size();
+        auto count = c_node->outputIndex()->size();
         for (uint32_t j = 0; j < count; ++j) {
           node->output_indices_.push_back(size_t(c_node->outputIndex()->template GetAs<uint32_t>(j)));
         }

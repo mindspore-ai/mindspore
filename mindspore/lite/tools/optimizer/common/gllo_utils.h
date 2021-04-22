@@ -57,6 +57,10 @@ int CheckIfAnfNodeIsNull(const AnfNodePtr &node);
 
 int CheckIfCNodeIsNull(const CNodePtr &node);
 
+int CheckIfParameterIsNull(const ParameterPtr &node);
+
+int CheckIfValueNodeIsNull(const ValueNodePtr &node);
+
 int CheckIfVarIsNull(const VarPtr &var);
 
 int CheckInputSize(const CNodePtr &node, int size);

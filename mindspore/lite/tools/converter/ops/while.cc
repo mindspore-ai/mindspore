@@ -15,6 +15,7 @@
  */
 
 #include <vector>
+#include "tools/common/tensor_util.h"
 #include "tools/converter/ops/while.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
@@ -55,7 +56,9 @@ AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   AbstractBasePtrList output;
   for (int64_t i = 0; i < (int64_t)input_args.size(); i++) {
     auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[i]->BuildShape())[kShape];
-    output.push_back(std::make_shared<abstract::AbstractTensor>(input_args[i]->BuildType(), shape));
+    auto abstract_tensor = lite::CreateTensorAbstract(shape, input_args[i]->BuildType()->type_id());
+    MS_EXCEPTION_IF_NULL(abstract_tensor);
+    output.push_back(abstract_tensor);
   }
   return std::make_shared<abstract::AbstractTuple>(output);
 }

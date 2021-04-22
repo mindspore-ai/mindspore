@@ -417,18 +417,17 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
     type = TensorFlowUtils::GetTFDataType(attr_value.type());
   }
 
-  std::vector<int> shape;
+  std::vector<int64_t> shape;
   if (TensorFlowUtils::FindAttrValue(node, "shape", &attr_value)) {
     auto &shape_attr = attr_value.shape();
     for (int i = 0; i < shape_attr.dim_size(); ++i) {
       shape.push_back(shape_attr.dim(i).size());
     }
   }
-  std::vector<int64_t> shape_vector(shape.begin(), shape.end());
 
   if (TensorFlowUtils::FindAttrValue(node, "value", &attr_value)) {
     MS_LOG(INFO) << "Found value attr, means it has default value";
-    auto status = ConvertConstTensor(node, attr_value, type, parameter, &shape_vector);
+    auto status = ConvertConstTensor(node, attr_value, type, parameter, &shape);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "convert const tensor failed.";
       return status;
@@ -437,10 +436,10 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
     graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
   }
 
-  auto type_ptr = TypeIdToType(type == kNumberTypeInt64 ? kNumberTypeInt32 : type);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  type = (type == kNumberTypeInt64) ? kNumberTypeInt32 : type;
+  auto abstract_tensor = CreateTensorAbstract(shape, type);
   if (abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "abstract_tensor is nullptr";
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
     return RET_ERROR;
   }
   parameter->set_name(node.name());
@@ -473,51 +472,51 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
   }
   return RET_OK;
 }
-FuncGraphPtr paserTfFuction() { return nullptr; }
-FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::string &weightFile,
-                                  const QuantType &quantType) {
+
+int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile,
+                                    const QuantType &quantType) {
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.pb";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
   tf_root_graph_ = std::make_unique<tensorflow::GraphDef>();
   if (tf_root_graph_ == nullptr) {
     MS_LOG(ERROR) << "tf_root_graph_ is nullptr";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return nullptr;
+    return status;
   }
   status = ReadProtoFromBinaryFile((const char *)modelFile.c_str(), tf_root_graph_.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Open modelFile for TF converter failed!";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
-  anf_root_graph_ = std::make_shared<FuncGraph>();
-  if (anf_root_graph_ == nullptr) {
+  res_graph_ = std::make_shared<FuncGraph>();
+  if (res_graph_ == nullptr) {
     MS_LOG(ERROR) << "funGraphPtr is nullptr";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return nullptr;
+    return status;
   }
-  anf_root_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  anf_root_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
+  res_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
 
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
     tf_root_graph_nodes_[node_def.name()] = &node_def;
   }
 
-  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_, anf_root_graph_, &anf_root_node_map_);
+  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_, res_graph_, &anf_root_node_map_);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
   bool success_flag = true;
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
-    status = ConvertOps(node_def, tf_root_graph_nodes_, anf_root_graph_, &anf_root_node_map_);
+    status = ConvertOps(node_def, tf_root_graph_nodes_, res_graph_, &anf_root_node_map_);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     if (status != RET_OK) {
       success_flag = false;
@@ -525,7 +524,7 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
   }
   if (!success_flag) {
     MS_LOG(ERROR) << "Convert ops failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   if (!nodes_with_null_input_.empty()) {
@@ -533,7 +532,7 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Connect null inputs failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return nullptr;
+      return status;
     }
   }
 
@@ -541,17 +540,17 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph outputs failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
 
   status = ConvertSubgraph();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert subgraph failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
 
-  return anf_root_graph_;
+  return RET_OK;
 }
 
 STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
@@ -745,7 +744,7 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
     MS_LOG(ERROR) << "while cond body size error";
     return RET_ERROR;
   }
-  static auto root_func_manager = Manage(anf_root_graph_);
+  static auto root_func_manager = Manage(res_graph_);
 
   for (auto &kv : first_func_map) {
     auto control_flow_node = kv.first;
@@ -757,7 +756,7 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
     auto second_value_node = NewValueNode(second_sub_graph);
     auto inputs = control_flow_node->inputs();
     inputs.insert(inputs.begin() + 1, {first_value_node, second_value_node});
-    auto new_node = anf_root_graph_->NewCNode(inputs);  // must create new node, otherwise node_users won't update
+    auto new_node = res_graph_->NewCNode(inputs);  // must create new node, otherwise node_users won't update
     if (new_node == nullptr) {
       MS_LOG(ERROR) << "new node failed";
       return RET_ERROR;
@@ -811,43 +810,46 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
   if (output_size == 0) {
     return RET_OK;
   } else if (output_size == 1) {
-    auto type = kFloat32;
-    std::vector<int64_t> shape_vector;
+    auto type = kNumberTypeFloat32;
     if (IsTensorListOp(anf_node)) {
-      type = TypeIdToType(kObjectTypeTensorType);
+      type = kObjectTypeTensorType;
     }
-    auto abstract = std::make_shared<abstract::AbstractTensor>(type, shape_vector);
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "create AbstractTensor failed";
+    auto abstract_tensor = CreateTensorAbstract({}, type);
+    if (abstract_tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
       return RET_ERROR;
     }
-    anf_node->set_abstract(abstract);
+    anf_node->set_abstract(abstract_tensor);
     anf_node_map->insert(std::pair(op.name(), anf_node));
   } else {
-    AbstractBasePtrList abstractList;
+    AbstractBasePtrList abstract_list;
     for (int output_idx = 0; output_idx < output_size; output_idx++) {
-      std::vector<int64_t> shape_vector;
-      abstractList.emplace_back(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector));
-      auto tupleGetItemPrimPtr = std::make_shared<ops::TupleGetItem>();
-      if (tupleGetItemPrimPtr == nullptr) {
+      auto abstract_tensor = CreateTensorAbstract({}, kNumberTypeFloat32);
+      if (abstract_tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      abstract_list.emplace_back(abstract_tensor);
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+      if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
       }
-      auto tupleGetItemPrim = NewValueNode(tupleGetItemPrimPtr);
-      auto getItemValue = NewValueNode(MakeValue<int>(output_idx));
-      std::vector<AnfNodePtr> inputs{tupleGetItemPrim, anf_node, getItemValue};
-      CNodePtr getItemCNode = anf_graph->NewCNode(inputs);
+      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+      auto get_item_value = NewValueNode(MakeValue<int>(output_idx));
+      std::vector<AnfNodePtr> inputs{tuple_get_item_prim, anf_node, get_item_value};
+      CNodePtr get_item_cnode = anf_graph->NewCNode(inputs);
       std::string output_item_name = anf_node->fullname_with_scope() + "_getitem_" + std::to_string(output_idx);
-      auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
-      if (abstract == nullptr) {
-        MS_LOG(ERROR) << "create AbstractTensor failed";
+      auto get_item_abstract = CreateTensorAbstract({}, kNumberTypeFloat32);
+      if (get_item_abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
         return RET_ERROR;
       }
-      getItemCNode->set_abstract(abstract);
-      getItemCNode->set_fullname_with_scope(output_item_name);
-      anf_node_map->insert(std::pair(op.name() + ":" + std::to_string(output_idx), getItemCNode));
+      get_item_cnode->set_abstract(get_item_abstract);
+      get_item_cnode->set_fullname_with_scope(output_item_name);
+      anf_node_map->insert(std::pair(op.name() + ":" + std::to_string(output_idx), get_item_cnode));
     }
-    anf_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstractList));
+    anf_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   }
   return RET_OK;
 }
@@ -1003,7 +1005,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
       graph_output_names_.push_back(anf_node->fullname_with_scope());
     }
   }
-  auto status = MakeAnfGraphOutputs(&output_nodes, anf_root_graph_);
+  auto status = MakeAnfGraphOutputs(&output_nodes, res_graph_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "make anf graph outputs node error";
     return status;
@@ -1051,5 +1053,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
   }
   return RET_OK;
 }
+
+int TFModelParser::PostAdjust() { return 0; }
 }  // namespace lite
 }  // namespace mindspore

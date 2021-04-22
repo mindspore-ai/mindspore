@@ -502,13 +502,12 @@ CNodePtr TfliteLstmCellFusion::CreateOutputGetItem(const FuncGraphPtr &func_grap
     return nullptr;
   }
   CNodePtr get_item_cnode = func_graph->NewCNode(tuple_get_item_prim, {node, get_item_value});
-  std::vector<int64_t> shape_vector;
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
-  if (abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "create abstract_tensor failed";
+  auto abstract = lite::CreateTensorAbstract({}, kNumberTypeFloat32);
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
     return nullptr;
   }
-  get_item_cnode->set_abstract(abstract_tensor);
+  get_item_cnode->set_abstract(abstract);
   get_item_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_output_getitem_" +
                                           std::to_string(item_index));
   return get_item_cnode;
@@ -581,13 +580,12 @@ STATUS TfliteLstmCellFusion::SetAbstractTuple(const CNodePtr &cnode, const int o
   MS_ASSERT(cnode != nullptr);
   AbstractBasePtrList abstract_list;
   for (int i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape_vector;
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
-    if (abstract_tensor == nullptr) {
-      MS_LOG(ERROR) << "create abstract_tensor failed";
+    auto abstract = lite::CreateTensorAbstract({}, kNumberTypeFloat32);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
       return RET_ERROR;
     }
-    abstract_list.emplace_back(abstract_tensor);
+    abstract_list.emplace_back(abstract);
   }
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   if (abstract_tuple == nullptr) {

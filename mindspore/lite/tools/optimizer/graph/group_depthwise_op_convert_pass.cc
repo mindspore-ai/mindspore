@@ -22,6 +22,7 @@
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
+#include "tools/common/tensor_util.h"
 #include "securec/include/securec.h"
 
 namespace mindspore::opt {
@@ -101,13 +102,16 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
         return false;
       }
       auto type_id = static_cast<TypeId>(weight_value->data_type());
-      auto type_ptr = TypeIdToType(type_id);
       auto shape = weight_value->shape();
       std::vector<int64_t> shape_vector;
       (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                            [](const int32_t &value) { return static_cast<int64_t>(value); });
-      auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-      weight_node->set_abstract(abstract_tensor);
+      auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      weight_node->set_abstract(abstract);
     }
   }
   return true;
