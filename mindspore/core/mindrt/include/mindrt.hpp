@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_LITEBUS_HPP_H
-#define MINDSPORE_CORE_MINDRT_INCLUDE_LITEBUS_HPP_H
+#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_MINDRT_HPP_H_
+#define MINDSPORE_CORE_MINDRT_INCLUDE_MINDRT_HPP_H_
 
 #include <string>
 #include "mindrt/include/actor/actor.h"
@@ -23,10 +23,10 @@
 // brief provide an asynchronous programming framework as Actor model
 namespace mindspore {
 
-struct LitebusAddress {
-    std::string scheme;
-    std::string ip;
-    uint16_t port;
+struct MindrtAddress {
+  std::string scheme;
+  std::string ip;
+  uint16_t port;
 };
 
 // brief initialize the library
@@ -60,11 +60,11 @@ void Finalize();
 // brief set the delegate of restful
 void SetDelegate(const std::string &delegate);
 
-// set log pid of the process use litebus
+// set log pid of the process use mindrt
 void SetLogPID(HARES_LOG_PID pid);
 
-// get global litebus address
-const LitebusAddress &GetLitebusAddress();
+// get global mindrt address
+const MindrtAddress &GetMindrtAddress();
 
 // get flag of http message format
 int GetHttpKmsgFlag();
@@ -72,5 +72,5 @@ int GetHttpKmsgFlag();
 // brief set flag of http message format
 void SetHttpKmsgFlag(int flag);
 
-}    // namespace mindspore
+}  // namespace mindspore
 #endif

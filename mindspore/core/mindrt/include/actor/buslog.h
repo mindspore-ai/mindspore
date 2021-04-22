@@ -35,11 +35,11 @@ namespace mindspore {
 #define BUS_DLOG(verboselevel)  // VLOG(verboselevel)
 
 #define HARES_LOG_PID int  // GetLogPID();
-#define PID_LITEBUS_LOG
+#define PID_MINDRT_LOG
 
 #define ICTSBASE_LOG_COMMON_CODE
 #define HLOG_LEVEL_INFO
-#define PID_LITEBUS_LOG
+#define PID_MINDRT_LOG
 #define HLOG_LEVEL_DEBUG 1
 #define ICTSBASE_LOG0(logig, level, pid, format)
 #define ICTSBASE_LOG1(logig, level, pid, format, para)
@@ -50,8 +50,7 @@ namespace mindspore {
 #define FlushHLogCache()
 // Kill the process for safe exiting.
 inline void KillProcess(const std::string &ret) {
-  ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "BUS Exit Tip: %s", "%s",
-                      ret.c_str());
+  ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "BUS Exit Tip: %s", "%s", ret.c_str());
   // flush the log in cache to disk before exiting.
   FlushHLogCache();
 }
@@ -80,12 +79,12 @@ constexpr int DLEVEL0 = 0;
     mindspore::KillProcess(ss.str());                                           \
   } while (0)
 
-#define BUS_OOM_EXIT(ptr)                                                                                  \
-  {                                                                                                        \
-    if (ptr == nullptr) {                                                                                  \
-      ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "new failed, will exit"); \
-      BUS_EXIT("Exit for OOM.");                                                                           \
-    }                                                                                                      \
+#define BUS_OOM_EXIT(ptr)                                                                                 \
+  {                                                                                                       \
+    if (ptr == nullptr) {                                                                                 \
+      ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "new failed, will exit"); \
+      BUS_EXIT("Exit for OOM.");                                                                          \
+    }                                                                                                     \
   }
 
 constexpr int LOG_CHECK_EVERY_FIRSTNUM = 10;

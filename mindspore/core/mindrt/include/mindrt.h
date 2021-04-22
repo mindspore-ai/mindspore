@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_LITEBUS_H
-#define MINDSPORE_CORE_MINDRT_INCLUDE_LITEBUS_H
+#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_MINDRT_H_
+#define MINDSPORE_CORE_MINDRT_INCLUDE_MINDRT_H_
 
 #ifdef __cplusplus
 #include <string>
@@ -23,20 +23,20 @@
 extern "C" {
 #endif
 
-#define LITEBUS_URL_MAX_LEN 138
+#define MINDRT_URL_MAX_LEN 138
 
-struct LitebusConfig {
-  char tcpUrl[LITEBUS_URL_MAX_LEN];
-  char tcpUrlAdv[LITEBUS_URL_MAX_LEN];
-  char udpUrl[LITEBUS_URL_MAX_LEN];
-  char udpUrlAdv[LITEBUS_URL_MAX_LEN];
+struct MindrtConfig {
+  char tcpUrl[MINDRT_URL_MAX_LEN];
+  char tcpUrlAdv[MINDRT_URL_MAX_LEN];
+  char udpUrl[MINDRT_URL_MAX_LEN];
+  char udpUrlAdv[MINDRT_URL_MAX_LEN];
   int threadCount;
   int httpKmsgFlag;
 };
 
-int LitebusInitializeC(const struct LitebusConfig *config);
+int MindrtInitializeC(const struct MindrtConfig *config);
 
-void LitebusFinalizeC();
+void MindrtFinalizeC();
 
 #ifdef __cplusplus
 }

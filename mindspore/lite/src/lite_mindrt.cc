@@ -16,7 +16,7 @@
 
 #include <utility>
 #include "src/lite_mindrt.h"
-#include "mindrt/include/litebus.hpp"
+#include "mindrt/include/mindrt.hpp"
 
 namespace mindspore::lite {
 int LiteOpActor::CompileArrow() {

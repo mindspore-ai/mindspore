@@ -83,4 +83,4 @@ class MessageBase {
 
 }  // namespace mindspore
 
-#endif  // __LITEBUS_MESSAGE_HPP__
+#endif

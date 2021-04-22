@@ -26,10 +26,8 @@
 #include "async/future.h"
 #include "async/defer.h"
 #include "async/spinlock.h"
-
 #include "actor/actor.h"
-
-#include "litebus.hpp"
+#include "mindrt/include/mindrt.hpp"
 
 namespace mindspore {
 

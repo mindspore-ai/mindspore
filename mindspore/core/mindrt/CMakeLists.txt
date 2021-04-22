@@ -11,5 +11,3 @@ file(GLOB MINDRT_SRC
     )
 
 add_library(mindrt_mid OBJECT ${MINDRT_SRC})
-
-
