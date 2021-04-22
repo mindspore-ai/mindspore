@@ -74,7 +74,7 @@ def get_eval_result(result_path, ann_file):
 
     for img_name, label in ann.items():
         result_file = os.path.join(result_path, img_name[:-4] + "_0.bin")
-        pred_y = np.fromfile(result_file, dtype=np.float32).reshape(config.num_step, -1, config.class_num)
+        pred_y = np.fromfile(result_file, dtype=np.float16).reshape(config.num_step, -1, config.class_num)
         metrics.update(pred_y, [label])
 
     print("result CRNNAccuracy is: ", metrics.eval())
