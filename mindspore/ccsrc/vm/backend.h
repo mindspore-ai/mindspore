@@ -29,11 +29,12 @@
 #include "vm/graph_partition.h"
 #include "vm/vm.h"
 #include "backend/session/session_basic.h"
+#include "runtime/hardware/device_context.h"
 
 namespace mindspore {
 namespace compile {
 using OpRunInfo = session::OpRunInfo;
-
+using DeviceContext = device::DeviceContext;
 enum SwitchCondStatus {
   kCondOk = 0,
   kCondAlreadyRun,
@@ -94,8 +95,9 @@ class MindRTBackend : public Backend {
   MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id);
   ~MindRTBackend() override = default;
 
-  // Compile kernel graph from anf nodes list in the graph mode.
-  GraphId CompileGraph(const AnfNodePtrList &nodes);
+  // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs,
+  // the return is the kernelGraph id of the root graph. It will traverse all subgraphs to call CompileGraph.
+  GraphId CompileGraphs(const FuncGraphPtr &root_graph);
   // Compile single op kernel graph in the pyNative mode.
   GraphId CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                        const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
@@ -106,6 +108,17 @@ class MindRTBackend : public Backend {
   VectorRef RunGraph(const GraphInfo &graph_info, const VectorRef &args);
 
  private:
+  // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
+  // the return is the corresponding kernelGraph id of the graph.
+  GraphId CompileGraph(const FuncGraphPtr &func_graph);
+
+  // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
+  // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
+  // the corresponding device_context.
+  std::unordered_map<GraphId, DeviceContext *> graph_to_device_context_;
+  std::vector<AnfNodePtr> control_nodes_;
+
+  GraphPartitionPtr graph_partition_;
   std::string device_name_;
   uint32_t device_id_;
 };

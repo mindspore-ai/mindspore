@@ -995,7 +995,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
     ConfigManager::GetInstance().set_iter_num(size);
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
-    auto graph_id = mindrt_backend->CompileGraph({app_init});
+    auto graph_id = mindrt_backend->CompileGraphs(func_graph);
     VectorRef args;
     if (need_run) {
       (void)mindrt_backend->RunGraph(graph_id, args);

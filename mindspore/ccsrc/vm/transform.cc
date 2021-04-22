@@ -521,69 +521,6 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   return rt;
 }
 
-GraphCompiler::GraphCompiler(const std::shared_ptr<MindRTBackend> &backend, const std::vector<PrimitivePtr> &cut_list)
-    : backend_(backend) {
-  MS_EXCEPTION_IF_NULL(backend_);
-  if (backend_ == nullptr) {
-    MS_LOG(ERROR) << "The backend isn't created.";
-    return;
-  }
-  graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend->name());
-}
-
-uint32_t GraphCompiler::CompileGraphs(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphPtr root_graph = WrapPrimitives(func_graph);
-  MS_EXCEPTION_IF_NULL(root_graph);
-
-  // Compile root graph.
-  auto root_graph_id = CompileGraph(root_graph);
-
-  // Compile sub graphs.
-  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
-  for (auto sub_graph : sub_graphs) {
-    if (sub_graph != func_graph && sub_graph != nullptr) {
-      (void)CompileGraph(sub_graph);
-    }
-  }
-
-  return root_graph_id;
-}
-
-uint32_t GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(graph_partition_);
-  MS_EXCEPTION_IF_NULL(backend_);
-
-  // Split graph to segments.
-  const auto &segments = graph_partition_->Partition(func_graph);
-  MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
-
-  // Foreach the segments to compile graph.
-  std::vector<uint32_t> graph_ids;
-  for (const auto &segment : segments) {
-    MS_EXCEPTION_IF_NULL(segment);
-    // Compile the normal nodes, which doesn't contain the cut node.
-    if (!segment->is_cut_) {
-      if (segment->nodes_.size() == 0) {
-        MS_LOG(EXCEPTION) << "The segments size is 0.";
-      }
-      MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
-
-      // Compile the anfNodes list to kernelGraph, return the graph id of kernelGraph.
-      auto graph_id = backend_->CompileGraph(segment->nodes_);
-      graph_ids.emplace_back(graph_id);
-    } else {
-      // Compile the cut node.
-      auto cut_node = segment->nodes_[0];
-      MS_EXCEPTION_IF_NULL(cut_node);
-      MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->fullname_with_scope();
-    }
-  }
-
-  return graph_ids[0];
-}
-
 // Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
 // Return false in the transitional stage.
 bool IsMindRTUsed() { return false; }

@@ -226,10 +226,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph);
 
-  // Transform graph to actor DAG, contains build and link.
-  const auto &actor_set = GraphScheduler::GetInstance().Transform(graph, device_context_);
-  GraphScheduler::GetInstance().Schedule(actor_set);
-
   return graph->graph_id();
 }
 
@@ -262,7 +258,8 @@ GraphId GraphCompiler::CompileGraph(session::OpRunInfo *op_run_info, const Graph
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph);
   // Transform graph to actor DAG, contains build and link.
-  GraphScheduler::GetInstance().Transform(graph, device_context_, input_tensors, GraphExecutionStrategy::kStep);
+  GraphScheduler::GetInstance().Transform({graph}, {device_context_}, input_tensors, nullptr,
+                                          GraphExecutionStrategy::kStep);
   run_op_graphs_[graph_info] = graph;
   return graph->graph_id();
 }

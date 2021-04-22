@@ -58,10 +58,8 @@ void TaskEmitActionForMindRT(const ResourcePtr &res) {
   auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
 
-  auto cut_list = compile::GetMsNonlinearOps();
-  auto mindrt_compile = std::make_shared<compile::GraphCompiler>(mindrt_bc_ptr, cut_list);
   // The output of graph compiler is graph id.
-  res->results()[kOutput] = mindrt_compile->CompileGraphs(res->func_graph());
+  res->results()[kOutput] = mindrt_bc_ptr->CompileGraphs(res->func_graph());
 }
 
 void ExecuteActionForMindRT(const ResourcePtr &res) {
