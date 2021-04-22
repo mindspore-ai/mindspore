@@ -1879,6 +1879,10 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
     The first difference is given by :math:`out[i] = a[i+1] - a[i]` along the given axis,
     higher differences are calculated by using `diff` iteratively.
 
+    Note:
+        Since zero-shaped Tensor is not supported in MindSpore, a value error is raised if
+        an empty Tensor is encountered.
+
     Args:
         a (Tensor): Input tensor.
         n (int, optional): The number of times values are differenced. If zero,
@@ -1924,11 +1928,11 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
     if prepend is not None:
         if isinstance(prepend, (int, float, bool)):
             prepend = asarray_const(prepend)
-            prepend_shape = a.shape
-            prepend_shape = _tuple_setitem(prepend_shape, axis, 1)
-            prepend = _broadcast_to_shape(prepend, prepend_shape)
         elif not isinstance(prepend, Tensor):
             _raise_type_error("prepend must be scalar or Tensor, but got ", prepend)
+        prepend_shape = a.shape
+        prepend_shape = _tuple_setitem(prepend_shape, axis, 1)
+        prepend = _broadcast_to_shape(prepend, prepend_shape)
         combined += (prepend,)
 
     combined += (a,)
@@ -1936,22 +1940,19 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
     if append is not None:
         if isinstance(append, (int, float, bool)):
             append = asarray_const(append)
-            append_shape = a.shape
-            append_shape = _tuple_setitem(append_shape, axis, 1)
-            append = _broadcast_to_shape(append, append_shape)
         elif not isinstance(append, Tensor):
             _raise_type_error("append must be scalar or Tensor, but got ", append)
+        append_shape = a.shape
+        append_shape = _tuple_setitem(append_shape, axis, 1)
+        append = _broadcast_to_shape(append, append_shape)
         combined += (append,)
 
     if combined:
         a = concatenate(combined, axis)
 
-    # if n > maximum length allowed, returns empty tensor, with shape matched with
-    # the original tensor
-    if n > a.shape[axis]:
-        empty_shape = a.shape
-        empty_shape = _tuple_setitem(empty_shape, axis, 0)
-        return empty(empty_shape, a.dtype)
+    # if n > maximum length allowed, the tensor is empty, and is not supported
+    if n >= a.shape[axis]:
+        _raise_value_error("n is bigger then the specified dimension, this will result in an empty tensor.")
 
     original_dtype = a.dtype
     # will change once F.tensor_slice supports types other than float32
@@ -2233,7 +2234,13 @@ def convolve(a, v, mode='full'):
         _raise_value_error("a and v must be 1-D tensor.")
     if a_size < v_size:
         a, v = v, a
+        a_size, v_size = v_size, a_size
     v = v[::-1]
+    return _compute_1D_conv(a, v, mode).astype(final_dtype)
+
+def _compute_1D_conv(a, v, mode):
+    """Returns a 1-D sequence which is the cross-correlate of two 1-D sequences (`a` and `v`)."""
+    v_size = F.shape_mul(v.shape)
     if mode not in ('same', 'full', 'valid'):
         _raise_value_error("mode must be one of ['full', 'same', 'valid']")
     if v_size > 1:
@@ -2247,8 +2254,7 @@ def convolve(a, v, mode='full'):
     a = a.reshape(1, 1, 1, a.size)
     v = v.reshape(1, 1, 1, v.size)
     _conv = P.Conv2D(1, (1, v.size))
-    return _conv(a, v).reshape(-1).astype(final_dtype)
-
+    return _conv(a, v).reshape(-1)
 
 def _handle_weights(weights, num_samples):
     """Checks fweight and aweight in np.cov."""
