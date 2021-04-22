@@ -48,7 +48,16 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
       }
     }
   }
-  return std::make_shared<abstract::Shape>(input_x);
+  auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
+  primitive->AddAttr("shape", MakeValue(input_x));
+  for (int64_t i = 0; i < (int64_t)x_shape.size(); i++) {
+    if (input_x[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
+      MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: "
+                               << input_args[0]->BuildShape()->ToString()
+                               << ", target shape: " << x_shape_ptr->ToString();
+    }
+  }
+  return x_shape_ptr;
 }
 
 TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

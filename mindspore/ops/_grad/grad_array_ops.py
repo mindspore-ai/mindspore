@@ -980,11 +980,11 @@ def get_bprop_batch_to_space_nd(self):
 def get_bprop_broadcast_to(self):
     """Generate bprop for BroadcastTo"""
     reduce_keep_dim = P.ReduceSum(keep_dims=True)
-    broadcast_shape = self.shape
 
     def bprop(x, out, dout):
         x_shape = shape_op(x)
         dout_shape = shape_op(dout)
+        broadcast_shape = shape_op(out)
 
         if x_shape == dout_shape:
             return (dout,)
