@@ -80,28 +80,10 @@ class Tensor(Tensor_):
         if isinstance(input_data, np_types):
             input_data = np.array(input_data)
 
-        if input_data is not None and shape is not None:
-            raise ValueError("If input_data is available, shape doesn't need to be set")
-
-        if init is not None and (shape is None or dtype is None):
-            raise ValueError("init, dtype and shape must have values at the same time.")
-
-        if ((input_data is not None and init is None) or (input_data is None and init is not None)) is False:
-            raise TypeError("input_data and init can not be None at the same time.")
-
         if isinstance(shape, numbers.Number):
             shape = (shape,)
 
-        if input_data is not None:
-            if isinstance(input_data, np.ndarray) and input_data.ndim > 1 and input_data.size == 0:
-                raise ValueError("input_data can not contain zero dimension.")
-            if isinstance(input_data, (tuple, list)) and np.array(input_data).ndim > 1 \
-                    and np.array(input_data).size == 0:
-                raise ValueError("input_data can not contain zero dimension.")
-
-        if shape is not None and not (hasattr(init, "__enable_zero_dim__") and init.__enable_zero_dim__):
-            if 0 in shape:
-                raise ValueError("Shape can not contain zero value.")
+        _check_tensor_input(input_data, dtype, shape, init)
 
         # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
         if init is None:
@@ -826,6 +808,28 @@ def _vm_compare(*args):
         fn = getattr(args[1].asnumpy(), obj_str)
         y = args[0]
     return Tensor(np.array(fn(y)))
+
+
+def _check_tensor_input(input_data=None, dtype=None, shape=None, init=None):
+    """Check the tensor input."""
+    if input_data is not None and shape is not None:
+        raise ValueError("If input_data is available, shape doesn't need to be set")
+
+    if init is not None and (shape is None or dtype is None):
+        raise ValueError("init, dtype and shape must have values at the same time.")
+
+    if (int(input_data is None) + int(init is None)) != 1:
+        raise TypeError("input_data and init can not be None at the same time.")
+
+    if input_data is not None:
+        if isinstance(input_data, np.ndarray) and input_data.ndim > 1 and input_data.size == 0:
+            raise ValueError("input_data can not contain zero dimension.")
+        if isinstance(input_data, (tuple, list)) and np.array(input_data).ndim > 1 \
+                and np.array(input_data).size == 0:
+            raise ValueError("input_data can not contain zero dimension.")
+
+    if shape is not None and not (hasattr(init, "__enable_zero_dim__") and init.__enable_zero_dim__) and 0 in shape:
+        raise ValueError("Shape can not contain zero value.")
 
 
 tensor_operator_registry.register('vm_compare', _vm_compare)

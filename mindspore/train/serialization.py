@@ -654,28 +654,17 @@ def _export(net, file_name, file_format, *inputs):
 def _save_mindir(net, file_name, *inputs):
     """Save MindIR format file."""
     model = mindir_model()
-    if net._auto_parallel_mode:
-        phase_name = "predict"
-    else:
-        phase_name = 'export.mindir'
+
+    phase_name = "predict" if net._auto_parallel_mode else "export.mindir"
+
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name,
                                     do_convert=False, auto_parallel_mode=net._auto_parallel_mode)
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
 
     net_dict = net.parameters_dict()
-    data_total = 0
-    save_together = True
-
     model.ParseFromString(mindir_stream)
-    for param_proto in model.graph.parameter:
-        name = param_proto.name[param_proto.name.find(":") + 1:]
-        if name in net_dict.keys():
-            data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
-        else:
-            raise RuntimeError('Graph parameter: {} Undefined in network.'.format(param_proto.name))
-        if data_total > TOTAL_SAVE:
-            save_together = False
-            break
+
+    save_together = _mindir_save_together(net_dict, model)
 
     if save_together:
         for param_proto in model.graph.parameter:
@@ -744,6 +733,20 @@ def _save_mindir(net, file_name, *inputs):
         with open(graph_file_name, 'wb') as f:
             os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
             f.write(model.SerializeToString())
+
+
+def _mindir_save_together(net_dict, model):
+    """Whether graph and parameter save together during save mindir model."""
+    data_total = 0
+    for param_proto in model.graph.parameter:
+        name = param_proto.name[param_proto.name.find(":") + 1:]
+        if name in net_dict.keys():
+            data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
+        else:
+            raise RuntimeError('Graph parameter: {} Undefined in network.'.format(param_proto.name))
+        if data_total > TOTAL_SAVE:
+            return False
+    return True
 
 
 def _quant_export(network, *inputs, file_format, **kwargs):
