@@ -267,8 +267,10 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16 || dtype_ == kNumberTypeInt64) {
+  } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16) {
     LaunchKernel<int>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    LaunchKernel<int64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeBool) {
     LaunchKernelLogic<bool>(inputs, outputs);
   } else {
