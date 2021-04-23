@@ -19,6 +19,7 @@
 #include "common/thread_pool.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "nnacl/fp32_grad/activation_grad.h"
+#include "nnacl/fp32_grad/arithmetic_grad.h"
 #include "nnacl/errorcode.h"
 
 namespace mindspore {
@@ -49,21 +50,25 @@ void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out
 
 template <typename T>
 void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    if (input1[i] > 0) {
-      out[i] = input2[i];
-    } else if (input1[i] < 0) {
-      out[i] = -input2[i];
-    } else {
-      out[i] = 0;
+  if constexpr (std::is_same_v<T, float>) {
+    int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "AbsGrad failed.";
     }
+  } else {
+    MS_LOG(EXCEPTION) << "AbsGrad only support float";
   }
 }
 
 template <typename T>
 void EltWiseGradCPUKernel<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = input2[i] * input1[i] * (1 - input1[i]);
+  if constexpr (std::is_same_v<T, float>) {
+    int ret = ::SigmoidGrad(input2 + start, input1 + start, end - start, out + start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "SigmoidGrad failed.";
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "SigmoidGrad only support float";
   }
 }
 
@@ -76,9 +81,13 @@ void EltWiseGradCPUKernel<T>::SqrtGrad(const T *input1, const T *input2, T *out,
 
 template <typename T>
 void EltWiseGradCPUKernel<T>::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    T tmp = input1[i] * input1[i];
-    out[i] = input2[i] * (1 - tmp);
+  if constexpr (std::is_same_v<T, float>) {
+    int ret = ::TanhGrad(input2 + start, input1 + start, end - start, out + start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "TanhGrad failed.";
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "TanhGrad only support float";
   }
 }
 
