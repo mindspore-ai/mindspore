@@ -131,7 +131,7 @@ std::string ConvertToString(uint32_t *input, const int &size) {
   oss << std::hex;
   for (int i = 0; i < size; ++i) {
     for (int j = static_cast<int>(sizeof(uint32_t) / sizeof(uint8_t)) - 1; j >= 0; --j) {
-      uint8_t val = static_cast<uint8_t>((input[i] >> static_cast<uint32_t>(j * kBitNumber)) & 0xff);
+      auto val = static_cast<uint8_t>((input[i] >> static_cast<uint32_t>(j * kBitNumber)) & 0xff);
       oss << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(val);
     }
   }

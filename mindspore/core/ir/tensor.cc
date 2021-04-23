@@ -387,12 +387,12 @@ class TensorDataImpl : public TensorData {
     }
     // Replace # with placeholder.
     size_t index = str.find('#');
-    while (index != str.npos) {
+    while (index != std::string::npos) {
       size_t pos = index;
       while (str[pos] == '#') {
         pos++;
       }
-      int len = pos - index;
+      size_t len = pos - index;
       std::string space(max_width - len, ' ');
       str = str.replace(index, len, space);
       index = str.find('#', index);

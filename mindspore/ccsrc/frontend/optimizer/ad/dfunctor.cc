@@ -843,7 +843,7 @@ static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGrap
     } else if (IsPrimitive(cnode->inputs().at(0), prim::kPrimJ)) {
       // To find J user.
       auto j_user = GetJUser(node_user_map, cnode, index);
-      primal_j_pair.push_back({nullptr, j_user});
+      primal_j_pair.emplace_back(std::pair<CNodePtr, CNodePtr>(nullptr, j_user));
     }
   }
 
@@ -970,7 +970,7 @@ void DFunctor::EliminatePrimalGraph() {
     idx0->set_abstract(std::make_shared<abstract::AbstractScalar>(imm0));
     auto getitem0 = construct_wrapper->NewCNode({tuple_getitem, primal_user, idx0});
     getitem0->set_abstract(primal_abs);
-    manager->Replace(primal_user, getitem0);
+    (void)manager->Replace(primal_user, getitem0);
   }
 }
 }  // namespace ad
