@@ -382,7 +382,7 @@ AbstractBasePtr InferImplBiasAdd(const AnalysisEnginePtr &, const PrimitivePtr &
     MS_LOG(EXCEPTION) << "BiasAdd shape error, data format is " << data_format
                       << ", got bias_shape[0]: " << bias_shape[0] << ", x_channel: " << x_channel << ".";
   }
-  (void)CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
+  CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x_shape, x_min_shape, x_max_shape));
 }
 
@@ -537,7 +537,7 @@ AbstractBasePtr InferImplDropout(const AnalysisEnginePtr &, const PrimitivePtr &
   ShapeVector shape = x->shape()->shape();
   ShapeVector min_shape = x->shape()->min_shape();
   ShapeVector max_shape = x->shape()->max_shape();
-  (void)CheckMinMaxShape(shape, &min_shape, &max_shape);
+  CheckMinMaxShape(shape, &min_shape, &max_shape);
   auto output_shape =
     std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
   AbstractBasePtrList ret = {output_shape, output_shape};
