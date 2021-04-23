@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import numpy as np
 from mindspore import context
 from mindspore import Tensor, nn
+from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
@@ -104,6 +106,108 @@ def test_single_for_02():
     net = GradNet(for_net)
     pynative_forward_res = for_net(x, y, z)
     pynative_backward_res = net(x, y, z)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_single_for_03():
+    class SingleForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            param_a = np.full((1,), 5, dtype=np.float32)
+            self.param_a = Parameter(Tensor(param_a), name='a')
+            param_b = np.full((1,), 2, dtype=np.float32)
+            self.param_b = Parameter(Tensor(param_b), name='b')
+
+        def func(self, x):
+            x = self.mul(x, 2)
+            for _ in range(0, 5):
+                x = self.add(x, x)
+                self.param_b = self.param_b + 1
+            return x - self.param_b
+
+        def construct(self, x, y):
+            self.assign(self.param_a, x + self.param_a)
+            z = self.func(x)
+            x = self.param_a + y + z
+            return x, self.param_b
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([2], mstype.int32)
+    y = Tensor([5], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    single_for_net = SingleForNet()
+    net = GradNet(single_for_net)
+    graph_forward_res = single_for_net(x, y)
+    graph_backward_res = net(x, y)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    single_for_net = SingleForNet()
+    net = GradNet(single_for_net)
+    pynative_forward_res = single_for_net(x, y)
+    pynative_backward_res = net(x, y)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_single_for_04():
+    class SingleForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            param_a = np.full((1,), 5, dtype=np.float32)
+            self.param_a = Parameter(Tensor(param_a), name='a')
+            param_b = np.full((1,), 2, dtype=np.float32)
+            self.param_b = Parameter(Tensor(param_b), name='b')
+
+        def construct(self, x):
+            self.assign(self.param_a, x + self.param_a)
+            for _ in range(1):
+                self.param_b = x - self.param_a
+            return self.param_b
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([2], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    single_for_net = SingleForNet()
+    net = GradNet(single_for_net)
+    graph_forward_res = single_for_net(x)
+    graph_backward_res = net(x)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    single_for_net = SingleForNet()
+    net = GradNet(single_for_net)
+    pynative_forward_res = single_for_net(x)
+    pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
