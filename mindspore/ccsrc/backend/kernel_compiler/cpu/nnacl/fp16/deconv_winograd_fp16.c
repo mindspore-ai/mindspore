@@ -44,49 +44,49 @@ void DeConvWgInputPackFp16(float16_t *src_ptr, float16_t *dst_ptr, int channel, 
 #ifdef ENABLE_ARM82_A32
 void DeconvWgMergeFp16A32Fun(const float16_t *src_ptr, float16_t *dst_ptr, size_t src_step, size_t dst_step) {
   asm volatile(
-    "mov r7, %[src_ptr]\n"
-    "mov r8, %[dst_ptr]\n"
-    "mov r10, r8\n"
+    "mov r0, %[src_ptr]\n"
+    "mov r1, %[dst_ptr]\n"
+    "mov r2, r1\n"
 
-    "vld1.16 {d0}, [r7], %[src_step]\n"
-    "vld1.16 {d2}, [r8], %[dst_step]\n"
-    "vld1.16 {d4}, [r7], %[src_step]\n"
-    "vld1.16 {d6}, [r8], %[dst_step]\n"
+    "vld1.16 {d0}, [r0], %[src_step]\n"
+    "vld1.16 {d2}, [r1], %[dst_step]\n"
+    "vld1.16 {d4}, [r0], %[src_step]\n"
+    "vld1.16 {d6}, [r1], %[dst_step]\n"
     "vadd.f16 d0, d0, d2\n"
-    "vld1.16 {d8}, [r7], %[src_step]\n"
+    "vld1.16 {d8}, [r0], %[src_step]\n"
     "vadd.f16 d4, d4, d6\n"
-    "vst1.16 {d0}, [r10], %[dst_step]\n"
-    "vst1.16 {d4}, [r10], %[dst_step]\n"
+    "vst1.16 {d0}, [r2], %[dst_step]\n"
+    "vst1.16 {d4}, [r2], %[dst_step]\n"
 
-    "vld1.16 {d10}, [r8], %[dst_step]\n"
-    "vld1.16 {d12}, [r7], %[src_step]\n"
+    "vld1.16 {d10}, [r1], %[dst_step]\n"
+    "vld1.16 {d12}, [r0], %[src_step]\n"
     "vadd.f16 d8, d8, d10\n"
-    "vld1.16 {d14}, [r8], %[dst_step]\n"
+    "vld1.16 {d14}, [r1], %[dst_step]\n"
     "vadd.f16 d12, d12, d14\n"
-    "vld1.16 {d0}, [r7], %[src_step]\n"
-    "vst1.16 {d8}, [r10], %[dst_step]\n"
-    "vst1.16 {d12}, [r10], %[dst_step]\n"
+    "vld1.16 {d0}, [r0], %[src_step]\n"
+    "vst1.16 {d8}, [r2], %[dst_step]\n"
+    "vst1.16 {d12}, [r2], %[dst_step]\n"
 
-    "vld1.16 {d2}, [r8], %[dst_step]\n"
-    "vld1.16 {d4}, [r7], %[src_step]\n"
-    "vld1.16 {d6}, [r8], %[dst_step]\n"
+    "vld1.16 {d2}, [r1], %[dst_step]\n"
+    "vld1.16 {d4}, [r0], %[src_step]\n"
+    "vld1.16 {d6}, [r1], %[dst_step]\n"
     "vadd.f16 d0, d0, d2\n"
     "vadd.f16 d4, d4, d6\n"
-    "vst1.16 {d0}, [r10], %[dst_step]\n"
-    "vst1.16 {d4}, [r10], %[dst_step]\n"
+    "vst1.16 {d0}, [r2], %[dst_step]\n"
+    "vst1.16 {d4}, [r2], %[dst_step]\n"
 
-    "vld1.16 {d8}, [r7], %[src_step]\n"
-    "vld1.16 {d10}, [r8], %[dst_step]\n"
-    "vld1.16 {d12}, [r7], %[src_step]\n"
-    "vld1.16 {d14}, [r8], %[dst_step]\n"
+    "vld1.16 {d8}, [r0], %[src_step]\n"
+    "vld1.16 {d10}, [r1], %[dst_step]\n"
+    "vld1.16 {d12}, [r0], %[src_step]\n"
+    "vld1.16 {d14}, [r1], %[dst_step]\n"
     "vadd.f16 d8, d8, d10\n"
     "vadd.f16 d12, d12, d14\n"
-    "vst1.16 {d8}, [r10], %[dst_step]\n"
-    "vst1.16 {d12}, [r10], %[dst_step]\n"
+    "vst1.16 {d8}, [r2], %[dst_step]\n"
+    "vst1.16 {d12}, [r2], %[dst_step]\n"
 
     :
     : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
-    : "r7", "r8", "r10", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
+    : "r0", "r1", "r2", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
 }
 #endif
 
