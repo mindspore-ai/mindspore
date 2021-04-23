@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
                                  cudaMemcpyAsync(&array_input_[0], input, input_size_ * sizeof(T),
                                                  cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync sampled_candidates failed");
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
       for (const auto item : array_input_) {
         set_input_.insert(item);
       }
