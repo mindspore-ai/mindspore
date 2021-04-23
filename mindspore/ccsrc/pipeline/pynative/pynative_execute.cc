@@ -705,7 +705,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   return op_exec_info;
 }
 
-bool ForwardExecutor::FindOpMask(py::object obj, std::vector<int64_t> *op_masks, std::string id) {
+bool ForwardExecutor::FindOpMask(py::object obj, std::vector<int64_t> *op_masks, const std::string &id) {
   bool op_mask = false;
   auto temp = op_mask_map_.find(id);
   if (temp != op_mask_map_.end()) {
