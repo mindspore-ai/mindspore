@@ -27,4 +27,10 @@ if(WIN32)
             mindspore_quick_start_cpp
             ssp
     )
+else()
+    target_link_libraries(
+            mindspore_quick_start_cpp
+            dl
+    )
 endif()
+
