@@ -362,6 +362,22 @@ __global__ void RoundKernel(const double *input, double *output, const size_t co
   return;
 }
 template <typename T>
+__global__ void SignKernel(const T *input, T *output, const size_t count) {
+  T zero = 0.0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    T res;
+    if (input[i] < zero) {
+      res = -1;
+    } else if (input[i] > zero) {
+      res = 1;
+    } else {
+      res = 0;
+    }
+    output[i] = static_cast<T>(res);
+  }
+  return;
+}
+template <typename T>
 void Exponential(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ExponentialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -476,6 +492,11 @@ void Round(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
   RoundKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
+template <typename T>
+void Sign(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  SignKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
 
 // double
 template void Exponential<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
@@ -500,6 +521,7 @@ template void Abs<double>(const double *input, double *output, const size_t coun
 template void Floor<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Rint<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Sign<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 
 
 // float
@@ -525,6 +547,7 @@ template void Abs<float>(const float *input, float *output, const size_t count, 
 template void Floor<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Rint<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Sign<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 
 // half
 template void Exponential<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -549,6 +572,7 @@ template void Abs<half>(const half *input, half *output, const size_t count, cud
 template void Floor<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Rint<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Sign<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 
 // int32
 template void Exponential<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
@@ -573,3 +597,4 @@ template void Abs<int>(const int *input, int *output, const size_t count, cudaSt
 template void Floor<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Rint<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template void Round<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template void Sign<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);

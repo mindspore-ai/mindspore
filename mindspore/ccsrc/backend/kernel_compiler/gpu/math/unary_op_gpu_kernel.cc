@@ -122,5 +122,13 @@ MS_REG_GPU_KERNEL_ONE(Round, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOu
                       UnaryOpGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(Round, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       UnaryOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(Sign, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                      UnaryOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(Sign, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      UnaryOpGpuKernel, double)
+MS_REG_GPU_KERNEL_ONE(Sign, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      UnaryOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(Sign, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      UnaryOpGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
