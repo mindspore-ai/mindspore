@@ -650,7 +650,8 @@ SomasParameterPtr Somas::CreateSomasParameters(AnfNodePtr node, size_t index) {
   if (device_addr == nullptr) {
     MS_LOG(EXCEPTION) << "Node " << node->fullname_with_scope() << " has no device address before Somas.";
   }
-  auto param = std::make_shared<SomasParameter>(id, node, index, device_addr->GetPtr(), device_addr->GetSize());
+  auto param = std::make_shared<SomasParameter>(id, node->fullname_with_scope(), index, device_addr->GetPtr(),
+                                                device_addr->GetSize());
   parameters_list_.push_back(param);
   return param;
 }
@@ -1511,8 +1512,7 @@ void Somas::DumpParameters(std::ostringstream &oss) const {
         << "\t"
         << "#" << param->size_ << "S"
         << "\t"
-        << "&" << param->addr_ << "\t" << param->source_node_->fullname_with_scope() << "\t" << param->output_index_
-        << "\n";
+        << "&" << param->addr_ << "\t" << param->source_node_name_ << "\t" << param->output_index_ << "\n";
   }
 }
 
