@@ -121,6 +121,7 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
         |   ├──config.py                 //参数配置
         |   ├──lr_generator.py         //学习率创建相关
         |   ├──HarDNet85.ckpt          //预训练权重
+        |   ├──pth2ckpt.py          //将作者给的预训练权重转换为.ckpt文件
         ├── train.py               // 训练脚本
         ├── eval.py               // 评估脚本
         ├── export.py             //将checkpoint文件导出到air/onnx下
@@ -154,6 +155,14 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
 更多配置细节请参考脚本`config.py`。
 
 ## 训练过程
+
+### 加载预训练权重
+
+ 论文作者给出的预训练权重：[HarDNet85.pth](https://ping-chao.com/hardnet/hardnet85-a28faa00.pth)
+
+ ```bash
+ python3 pth2ckpt.py --dataset_path /path/pthfile
+ ```
 
 ### 训练
 
