@@ -157,10 +157,10 @@ def make_tensor(a, dtype=mstype.int32, data_shape=None):
 
 
 @constexpr
-def judge_data_rank(data_rank, min_data_rank=0, max_data_rank=8):
-    if data_rank < min_data_rank or data_rank > max_data_rank:
-        raise ValueError(f"The input data's rank should in the range of[{min_data_rank}, "
-                         f"{max_data_rank}], bug actually is '{data_rank}'")
+def judge_data_dim(data_dim, min_data_dim=0, max_data_dim=8):
+    if data_dim < min_data_dim or data_dim > max_data_dim:
+        raise ValueError(f"The input data's dim should in the range of[{min_data_dim}, "
+                         f"{max_data_dim}], bug actually is '{data_dim}'")
 
 
 @constexpr
@@ -637,15 +637,6 @@ def transform_slice_to_ele_list(slice_index, dim_len):
 
 
 @constexpr
-def check_tuple_index_len(data_rank, tuple_index_len, op_name):
-    """Check if the number of index tensor exceeds the dimension of the operated tensor."""
-    if tuple_index_len <= data_rank:
-        return True
-    raise IndexError(f"For '{op_name}', the number {tuple_index_len} of tuple_index size"
-                     f"is greater than the dimension  {data_rank} of the operated tensor.")
-
-
-@constexpr
 def generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_indexes_shapes,
                                                     slice_shapes, op_name):
     """
@@ -668,6 +659,7 @@ def generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_ind
         index_tensor_new_shape = broadcast_shape + (1,) * len(slice_shapes)
 
     return broadcast_shape, index_tensor_new_shape, final_shape, fancy_position
+
 
 def _judge_order_continuous(order_sequence):
     if not order_sequence:
@@ -711,6 +703,20 @@ def check_number_index_type(number):
 
 
 @constexpr
+def get_stride_info_from_slice(data_shape, slice_index):
+    """Get stride info from a python slice"""
+    begin, end, step = get_slice_stride(data_shape[0], slice_index)
+    begin_strides = [begin]
+    end_strides = [end]
+    step_strides = [step]
+    for end in data_shape[1:]:
+        begin_strides.append(0)
+        end_strides.append(end)
+        step_strides.append(1)
+    return tuple(begin_strides), tuple(end_strides), tuple(step_strides)
+
+
+@constexpr
 def get_stride_info_from_integer(data_shape, number):
     """Get stride info from a integer"""
     begin_strides = [number]
@@ -741,7 +747,7 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
     """Get stride info from a tuple"""
     begin_strides, end_strides, step_strides = [], [], []
     tuple_index_len = len(tuple_index)
-    data_rank = len(data_shape)
+    data_dim = len(data_shape)
     shrink_axis, index_count, ellipsis_count = 0, 0, 0
     for idx, item in enumerate(tuple_index):
         if isinstance(item, slice):
@@ -760,7 +766,7 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
             ellipsis_count = ellipsis_count + 1
             if ellipsis_count > 1:
                 raise IndexError("An index can have only one ellipsis (...)")
-            ellipsis_range_size = data_rank - tuple_index_len + 1
+            ellipsis_range_size = data_dim - tuple_index_len + 1
             begin_strides.extend([0] * (ellipsis_range_size))
             end_strides.extend(
                 [shape for shape in data_shape[index_count: index_count + ellipsis_range_size]])
@@ -769,7 +775,7 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
         else:
             raise IndexError("Not supported index data type, got ",
                              item, " type is ", type(item))
-    for item in range(index_count, data_rank):
+    for item in range(index_count, data_dim):
         begin_strides.append(0)
         end_strides.append(data_shape[item])
         step_strides.append(1)

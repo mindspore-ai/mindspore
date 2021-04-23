@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `sub` operations."""
 
+from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
 
@@ -47,4 +48,32 @@ def _scalar_sub_tensor(x, y):
 @sub.register("Tensor", "Number")
 def _tensor_sub_scalar(x, y):
     """Returns x - y where x is a tensor and y is a scalar. x and y should have same dtype."""
+    return F.tensor_sub(x, y)
+
+
+@sub.register("Tuple", "Tensor")
+def _tuple_sub_tensor(x, y):
+    """Returns x - y where x is a tuple and y is a tensor. """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_sub(x, y)
+
+
+@sub.register("Tensor", "Tuple")
+def _tensor_sub_tuple(x, y):
+    """Returns x - y where x is a tensor and y is a tuple. """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_sub(x, y)
+
+
+@sub.register("List", "Tensor")
+def _list_sub_tensor(x, y):
+    """Returns x - y where x is a list and y is a tensor. """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_sub(x, y)
+
+
+@sub.register("Tensor", "List")
+def _tensor_sub_list(x, y):
+    """Returns x - y where x is a tensor and y is a list. """
+    y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_sub(x, y)

@@ -16,6 +16,7 @@
 """Implementation for internal polymorphism `mul` operations."""
 
 from . import _constexpr_utils as const_utils
+from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
 
@@ -82,17 +83,6 @@ def _list_mul_scalar(x, y):
     return const_utils.sequence_mul_int(x, y)
 
 
-@mul.register("Tuple", "Number")
-def _tuple_mul_scalar(x, y):
-    """
-    Returns x * y where x is a tuple and y is a number. y must be integer.
-
-    Outputs:
-        Tuple.
-    """
-    return const_utils.sequence_mul_int(x, y)
-
-
 @mul.register("Number", "List")
 def _scalar_mul_list(x, y):
     """
@@ -104,6 +94,17 @@ def _scalar_mul_list(x, y):
     return const_utils.sequence_mul_int(y, x)
 
 
+@mul.register("Tuple", "Number")
+def _tuple_mul_scalar(x, y):
+    """
+    Returns x * y where x is a tuple and y is a number. y must be integer.
+
+    Outputs:
+        Tuple.
+    """
+    return const_utils.sequence_mul_int(x, y)
+
+
 @mul.register("Number", "Tuple")
 def _scalar_mul_tuple(x, y):
     """
@@ -113,3 +114,67 @@ def _scalar_mul_tuple(x, y):
         Tuple.
     """
     return const_utils.sequence_mul_int(y, x)
+
+
+@mul.register("Tensor", "Tuple")
+def _tensor_mul_tuple(x, y):
+    """
+    Returns x * y where x is a tensor and y is a tuple.
+
+    Args:
+        x (Tensor): x
+        y (Tuple): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_mul(x, y)
+
+
+@mul.register("Tuple", "Tensor")
+def _tuple_mul_tensor(x, y):
+    """
+    Returns x * y where x is a tuple and y is a tensor.
+
+    Args:
+        x (Tuple): x
+        y (Tensor): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_mul(x, y)
+
+
+@mul.register("Tensor", "List")
+def _tensor_mul_list(x, y):
+    """
+    Returns x * y where x is a tensor and y is a list.
+
+    Args:
+        x (Tensor): x
+        y (List): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_mul(x, y)
+
+
+@mul.register("List", "Tensor")
+def _list_mul_tensor(x, y):
+    """
+    Returns x * y where x is a list and y is a tensor.
+
+    Args:
+        x (List): x
+        y (Tensor): The dtype is same as x.
+
+    Returns:
+        Tensor, has the same dtype as x.
+    """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_mul(x, y)

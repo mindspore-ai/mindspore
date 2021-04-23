@@ -131,10 +131,12 @@ scatter_update = P.ScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
 
+
 def pack(x):
     print("WARNING: 'pack' is deprecated from version 1.1 and will be removed in a future version, use 'stack' instead"
           ".")
     return stack(x)
+
 
 partial = P.Partial()
 # depend: mount a node to another node
@@ -221,13 +223,6 @@ sparse_tensor_get_values = Primitive('SparseTensorGetValues')
 sparse_tensor_get_indices = Primitive('SparseTensorGetIndices')
 sparse_tensor_get_dense_shape = Primitive('SparseTensorGetDenseShape')
 
-tensor_operator_registry.register('__add__', tensor_add)
-tensor_operator_registry.register('__sub__', tensor_sub)
-tensor_operator_registry.register('__mul__', tensor_mul)
-tensor_operator_registry.register('__truediv__', tensor_div)
-tensor_operator_registry.register('__mod__', tensor_mod)
-tensor_operator_registry.register('__pow__', tensor_pow)
-tensor_operator_registry.register('__floordiv__', tensor_floordiv)
 tensor_operator_registry.register('all', P.ReduceAll)
 tensor_operator_registry.register('any', P.ReduceAny)
 tensor_operator_registry.register('abs', P.Abs)

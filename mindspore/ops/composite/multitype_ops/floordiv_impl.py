@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `floordiv` operations."""
 
+from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
 
@@ -47,4 +48,32 @@ def _tensor_floordiv_scalar(x, y):
 @floordiv.register("Number", "Tensor")
 def _scalar_floordiv_tensor(x, y):
     """Returns x // y where x is a scalar and y is a tensor. x and y should have same dtype."""
+    return F.tensor_floordiv(x, y)
+
+
+@floordiv.register("Tuple", "Tensor")
+def _tuple_floordiv_tensor(x, y):
+    """Returns x // y where x is a tuple and y is a tensor. """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_floordiv(x, y)
+
+
+@floordiv.register("Tensor", "Tuple")
+def _tensor_floordiv_tuple(x, y):
+    """Returns x // y where x is a tensor and y is a tuple. """
+    y = utils.sequence_to_tensor(y, x.dtype)
+    return F.tensor_floordiv(x, y)
+
+
+@floordiv.register("List", "Tensor")
+def _list_floordiv_tensor(x, y):
+    """Returns x // y where x is a list and y is a tensor. """
+    x = utils.sequence_to_tensor(x, y.dtype)
+    return F.tensor_floordiv(x, y)
+
+
+@floordiv.register("Tensor", "List")
+def _tensor_floordiv_list(x, y):
+    """Returns x // y where x is a tensor and y is a list. """
+    y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_floordiv(x, y)
