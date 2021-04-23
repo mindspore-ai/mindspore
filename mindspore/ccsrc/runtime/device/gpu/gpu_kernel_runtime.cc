@@ -1220,12 +1220,21 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
     addr_iter = iter;
   }
 
-  if (addr_iter->second[i] == nullptr) {
+  auto &now_addr = addr_iter->second[i];
+  if (now_addr == nullptr) {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
-    addr_iter->second[i] = device_address;
+    now_addr = device_address;
+    addr_state_[now_addr] = true;
+  } else {
+    auto addr_state_iter = addr_state_.find(now_addr);
+    if (addr_state_iter != addr_state_.end() && addr_state_iter->second == false) {
+      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
+      now_addr = device_address;
+      addr_state_[now_addr] = true;
+    }
   }
 
-  return addr_iter->second[i];
+  return now_addr;
 }
 
 DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node) {
@@ -1244,12 +1253,21 @@ DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, 
     addr_iter = iter;
   }
 
-  if (addr_iter->second[i] == nullptr) {
+  auto &now_addr = addr_iter->second[i];
+  if (now_addr == nullptr) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
-    addr_iter->second[i] = device_address;
+    now_addr = device_address;
+    addr_state_[now_addr] = true;
+  } else {
+    auto addr_state_iter = addr_state_.find(now_addr);
+    if (addr_state_iter != addr_state_.end() && addr_state_iter->second == false) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
+      now_addr = device_address;
+      addr_state_[now_addr] = true;
+    }
   }
 
-  return addr_iter->second[i];
+  return now_addr;
 }
 
 session::KernelWithIndex GPUKernelRuntime::GetPrevNodeOutput(const AnfNodePtr &node, size_t i) {

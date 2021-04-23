@@ -50,6 +50,7 @@ class GPUKernelRuntime : public KernelRuntime {
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kGPU; };
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
+  void SetAddrInvalid(const DeviceAddressPtr &addr) { addr_state_[addr] = false; }
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -121,6 +122,7 @@ class GPUKernelRuntime : public KernelRuntime {
 
   bool enable_relation_cache_{false};
 
+  std::unordered_map<DeviceAddressPtr, bool> addr_state_;
   std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> prev_node_mut_output_addr_cache_;
   std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> prev_node_mut_output_addr_skip_nop_node_cache_;
   std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> mut_output_addr_cache_;
