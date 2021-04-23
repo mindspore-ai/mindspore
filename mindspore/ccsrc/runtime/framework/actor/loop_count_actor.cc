@@ -27,9 +27,14 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
   auto sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
   if (input_op_controls_[sequential_num].size() == input_controls_num_) {
+    auto ret = input_op_controls_.erase(sequential_num);
+    if (ret == 0) {
+      std::string error_info = "Erase input controls failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+
     current_count_++;
-    (void)input_op_controls_.erase(sequential_num);
-    MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") runs op control, loop count: " << loop_count_
+    MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
                  << ", current count: " << current_count_;
     if (current_count_ == loop_count_) {
       current_count_ = 0;

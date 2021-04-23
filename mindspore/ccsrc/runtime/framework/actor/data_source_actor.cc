@@ -27,9 +27,12 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
   if (buffers_.size() == buffer_capacity_) {
-    // Send output to trigger computing and free memory.
-    SendOutput(context);
+    //  Note that FreeMemory must be before SendOutput, because SendOutput will trigger AllocateMemory of the next actor
+    //  and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor is
+    //  before AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure the
+    //  execution order and avoid the illegal memory timing problem.
     FreeMemory(context);
+    SendOutput(context);
     buffers_.pop();
     return;
   }
@@ -110,9 +113,12 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  // Send output to trigger computing and free memory.
-  SendOutput(context);
+  //  Note that FreeMemory must be in front of SendOutput, because SendOutput will trigger AllocateMemory of the next
+  //  actor and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor
+  //  is in front of AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure
+  //  the execution order and avoid the illegal memory timing problem.
   FreeMemory(context);
+  SendOutput(context);
   buffers_.pop();
 }
 
@@ -156,9 +162,12 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
     }
   }
 
-  // Send output to trigger computing and free memory.
-  SendOutput(context);
+  //  Note that FreeMemory must be in front of SendOutput, because SendOutput will trigger AllocateMemory of the next
+  //  actor and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor
+  //  is in front of AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure
+  //  the execution order and avoid the illegal memory timing problem.
   FreeMemory(context);
+  SendOutput(context);
   buffers_.pop();
 }
 }  // namespace runtime

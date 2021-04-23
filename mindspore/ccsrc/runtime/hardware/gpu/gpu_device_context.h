@@ -41,7 +41,7 @@ class GPUDeviceContext : public DeviceContext {
 
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
-  bool AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
+  bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                 const std::vector<size_t> &size_list) const override;
 
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -72,6 +72,12 @@ class GPUDeviceContext : public DeviceContext {
 
   // Update Graph Dynamic Shape Attr.
   void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
+
+  bool BindDeviceToCurrentThread() const;
+
+  // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
+  // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
+  mutable std::mutex launch_mutex_;
 
   std::shared_ptr<MemoryManager> mem_manager_;
   std::vector<void *> streams_;

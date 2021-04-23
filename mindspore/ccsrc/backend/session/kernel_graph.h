@@ -292,6 +292,9 @@ class KernelGraph : public FuncGraph {
   // set flag to indicate whether has multi-call.
   void set_subgraph_multi_call(bool flag) { has_subgraph_multicall_ = flag; }
 
+  bool is_all_nop_node() const { return is_all_nop_node_; }
+  void set_is_all_nop_node(bool is_all_nop_node) { is_all_nop_node_ = is_all_nop_node; }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -381,6 +384,9 @@ class KernelGraph : public FuncGraph {
   // Number of labels. This is also the 'batch_num' for DavinciModel,
   // It should be 1 if no labels used for control flow.
   uint32_t label_num_ = 1;
+
+  // If all the nodes of graph is the nop node.
+  bool is_all_nop_node_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

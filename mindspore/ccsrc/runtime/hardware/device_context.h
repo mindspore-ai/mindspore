@@ -58,7 +58,7 @@ class DeviceContext {
   // Allocate continuous device memory end to end into 'addr_list'.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.
-  virtual bool AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
+  virtual bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                         const std::vector<size_t> &size_list) const {
     return true;
   }
