@@ -23,7 +23,7 @@ slice_op_info = TBERegOp("Slice") \
     .compute_cost(10) \
     .kernel_name("slice_d") \
     .partial_flag(True) \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .attr("begin", "required", "listInt", "all") \
     .attr("size", "required", "listInt", "all") \
     .input(0, "x", False, "required", "all") \

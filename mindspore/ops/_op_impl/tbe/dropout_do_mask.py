@@ -27,7 +27,7 @@ drop_out_do_mask_op_info = TBERegOp("DropoutDoMask") \
     .input(1, "mask", False, "required", "all") \
     .input(2, "keep_prob", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 

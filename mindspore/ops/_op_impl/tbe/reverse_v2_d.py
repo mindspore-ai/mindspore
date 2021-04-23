@@ -23,7 +23,7 @@ reverse_v2_d_op_info = TBERegOp("ReverseV2") \
     .compute_cost(10) \
     .kernel_name("reverse_v2_d") \
     .partial_flag(True) \
-    .op_pattern("dynamicFormat") \
+    .is_dynamic_format(True) \
     .attr("axis", "required", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
