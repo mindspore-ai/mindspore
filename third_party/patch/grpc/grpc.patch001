@@ -1,7 +1,113 @@
+diff -Npur grpc/..rej grpc-patch/..rej
+--- grpc/..rej	1970-01-01 08:00:00.000000000 +0800
++++ grpc-patch/..rej	2021-04-22 21:00:17.343178600 +0800
+@@ -0,0 +1,22 @@
++--- CMakeLists.txt	2020-02-27 03:12:33.000000000 +0800
+++++ CMakeLists.txt	2021-04-07 21:27:12.317207600 +0800
++@@ -12992,7 +12992,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
++ add_executable(grpc_cpp_plugin
++   src/compiler/cpp_plugin.cc
++ )
++-
+++set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
++ target_include_directories(grpc_cpp_plugin
++   PRIVATE
++     ${CMAKE_CURRENT_SOURCE_DIR}
++--- cmake/cares.cmake	2020-02-27 03:12:33.000000000 +0800
+++++ cmake/cares.cmake	2021-04-10 14:22:35.895725700 +0800
++@@ -39,7 +39,7 @@ if(gRPC_CARES_PROVIDER STREQUAL "module"
++     set(gRPC_INSTALL FALSE)
++   endif()
++ elseif(gRPC_CARES_PROVIDER STREQUAL "package")
++-  find_package(c-ares 1.13.0 REQUIRED)
+++  find_package(c-ares REQUIRED) # cmake 3.19+ cannot find cares 1.15.0
++   if(TARGET c-ares::cares)
++     set(_gRPC_CARES_LIBRARIES c-ares::cares)
++   endif()
+diff -Npur grpc/.rej grpc-patch/.rej
+--- grpc/.rej	1970-01-01 08:00:00.000000000 +0800
++++ grpc-patch/.rej	2021-04-22 21:03:38.192349100 +0800
+@@ -0,0 +1,22 @@
++--- grpc/CMakeLists.txt	2020-02-27 03:12:33.000000000 +0800
+++++ grpc-patch/CMakeLists.txt	2021-04-07 21:27:12.317207600 +0800
++@@ -12992,7 +12992,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
++ add_executable(grpc_cpp_plugin
++   src/compiler/cpp_plugin.cc
++ )
++-
+++set_target_properties(grpc_cpp_plugin PROPERTIES INSTALL_RPATH $ORIGIN/../lib)
++ target_include_directories(grpc_cpp_plugin
++   PRIVATE
++     ${CMAKE_CURRENT_SOURCE_DIR}
++--- grpc/cmake/cares.cmake	2020-02-27 03:12:33.000000000 +0800
+++++ grpc-patch/cmake/cares.cmake	2021-04-10 14:22:35.895725700 +0800
++@@ -39,7 +39,7 @@ if(gRPC_CARES_PROVIDER STREQUAL "module"
++     set(gRPC_INSTALL FALSE)
++   endif()
++ elseif(gRPC_CARES_PROVIDER STREQUAL "package")
++-  find_package(c-ares 1.13.0 REQUIRED)
+++  find_package(c-ares REQUIRED) # cmake 3.19+ cannot find cares 1.15.0
++   if(TARGET c-ares::cares)
++     set(_gRPC_CARES_LIBRARIES c-ares::cares)
++   endif()
 diff -Npur grpc/CMakeLists.txt grpc-patch/CMakeLists.txt
 --- grpc/CMakeLists.txt	2020-02-27 03:12:33.000000000 +0800
-+++ grpc-patch/CMakeLists.txt	2021-04-07 21:27:12.317207600 +0800
-@@ -12992,7 +12992,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
++++ grpc-patch/CMakeLists.txt	2021-04-22 21:15:04.458188400 +0800
+@@ -936,6 +936,8 @@ set_target_properties(address_sorting PR
+   SOVERSION ${gRPC_CORE_SOVERSION}
+ )
+ 
++set_target_properties(address_sorting PROPERTIES OUTPUT_NAME mindspore_address_sorting)
++
+ if(WIN32 AND MSVC)
+   set_target_properties(address_sorting PROPERTIES COMPILE_PDB_NAME "address_sorting"
+     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -1404,6 +1406,8 @@ set_target_properties(gpr PROPERTIES
+   SOVERSION ${gRPC_CORE_SOVERSION}
+ )
+ 
++set_target_properties(gpr PROPERTIES OUTPUT_NAME mindspore_gpr)
++
+ if(WIN32 AND MSVC)
+   set_target_properties(gpr PROPERTIES COMPILE_PDB_NAME "gpr"
+     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -1869,6 +1873,8 @@ set_target_properties(grpc PROPERTIES
+   SOVERSION ${gRPC_CORE_SOVERSION}
+ )
+ 
++set_target_properties(grpc PROPERTIES OUTPUT_NAME mindspore_grpc)
++
+ if(WIN32 AND MSVC)
+   set_target_properties(grpc PROPERTIES COMPILE_PDB_NAME "grpc"
+     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -3696,6 +3702,8 @@ set_target_properties(grpc++ PROPERTIES
+   SOVERSION ${gRPC_CPP_SOVERSION}
+ )
+ 
++set_target_properties(grpc++ PROPERTIES OUTPUT_NAME mindspore_grpc++)
++
+ if(WIN32 AND MSVC)
+   set_target_properties(grpc++ PROPERTIES COMPILE_PDB_NAME "grpc++"
+     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -4279,6 +4287,8 @@ set_target_properties(grpc++_reflection
+   SOVERSION ${gRPC_CPP_SOVERSION}
+ )
+ 
++set_target_properties(grpc++_reflection PROPERTIES OUTPUT_NAME mindspore_grpc++_reflection)
++
+ if(WIN32 AND MSVC)
+   set_target_properties(grpc++_reflection PROPERTIES COMPILE_PDB_NAME "grpc++_reflection"
+     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -5896,6 +5906,8 @@ set_target_properties(upb PROPERTIES
+   SOVERSION ${gRPC_CORE_SOVERSION}
+ )
+ 
++set_target_properties(upb PROPERTIES OUTPUT_NAME mindspore_upb)
++
+ if(WIN32 AND MSVC)
+   set_target_properties(upb PROPERTIES COMPILE_PDB_NAME "upb"
+     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -12992,7 +13004,7 @@ if(gRPC_BUILD_CODEGEN AND gRPC_BUILD_GRP
  add_executable(grpc_cpp_plugin
    src/compiler/cpp_plugin.cc
  )
@@ -12,7 +118,7 @@ diff -Npur grpc/CMakeLists.txt grpc-patch/CMakeLists.txt
      ${CMAKE_CURRENT_SOURCE_DIR}
 diff -Npur grpc/cmake/cares.cmake grpc-patch/cmake/cares.cmake
 --- grpc/cmake/cares.cmake	2020-02-27 03:12:33.000000000 +0800
-+++ grpc-patch/cmake/cares.cmake	2021-04-10 14:22:35.895725700 +0800
++++ grpc-patch/cmake/cares.cmake	2021-04-22 21:05:06.398251400 +0800
 @@ -39,7 +39,7 @@ if(gRPC_CARES_PROVIDER STREQUAL "module"
      set(gRPC_INSTALL FALSE)
    endif()

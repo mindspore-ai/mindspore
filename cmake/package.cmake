@@ -270,16 +270,16 @@ if(NOT ENABLE_GE)
 endif()
 
 if(MS_BUILD_GRPC)
-    install(FILES ${grpc_LIBPATH}/libgrpc++.so.1.27.3
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libgrpc++.so.1 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libgrpc.so.9.0.0
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libgrpc.so.9 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libgpr.so.9.0.0
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libgpr.so.9 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libupb.so.9.0.0
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libupb.so.9 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libaddress_sorting.so.9.0.0
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libaddress_sorting.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.27.3
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.so.1 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_upb.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.9.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.so.9 COMPONENT mindspore)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
