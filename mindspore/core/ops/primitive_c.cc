@@ -22,8 +22,8 @@
 namespace mindspore {
 namespace ops {
 void PrimitiveC::InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name) {
-  this->AddAttr("input_names", MakeValue(inputs_name));
-  this->AddAttr("output_names", MakeValue(outputs_name));
+  (void)this->AddAttr("input_names", MakeValue(inputs_name));
+  (void)this->AddAttr("output_names", MakeValue(outputs_name));
 }
 
 AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {

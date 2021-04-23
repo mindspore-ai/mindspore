@@ -433,7 +433,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
     MS_EXCEPTION(TypeError) << "The " << prim_name << "'s " << types.begin()->first
                             << " input must be a tensor but got " << type->ToString();
   }
-  TypePtr check_type = _CheckTypeSame(types, prim_name, false);
+  auto check_type = _CheckTypeSame(types, prim_name, false);
   return CheckTypeValid(types.begin()->first, check_type, check_list, prim_name);
 }
 

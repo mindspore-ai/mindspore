@@ -758,15 +758,15 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   }
   std::vector<int64_t> axis_list;
   if (axis_attr->isa<Int64Imm>()) {
-    axis_list.emplace_back(GetValue<int64_t>(axis_attr));
+    (void)axis_list.emplace_back(GetValue<int64_t>(axis_attr));
   } else {
     axis_list = GetValue<std::vector<int64_t>>(axis_attr);
   }
   for (const auto &elem : axis_list) {
     if (elem < 0) {
-      axis.emplace_back(input_shape.size() + elem);
+      (void)axis.emplace_back(input_shape.size() + elem);
     } else {
-      axis.emplace_back(elem);
+      (void)axis.emplace_back(elem);
     }
   }
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);

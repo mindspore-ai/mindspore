@@ -127,12 +127,12 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t index = 0; index < output_num; ++index) {
     if (cast_index == index) {
-      shapes.emplace_back(cast_shape);
-      types.emplace_back(cast_dtype);
+      (void)shapes.emplace_back(cast_shape);
+      (void)types.emplace_back(cast_dtype);
       continue;
     }
-    shapes.emplace_back(AnfAlgo::GetOutputInferShape(cnode, index));
-    types.emplace_back(AnfAlgo::GetOutputInferDataType(cnode, index));
+    (void)shapes.emplace_back(AnfAlgo::GetOutputInferShape(cnode, index));
+    (void)types.emplace_back(AnfAlgo::GetOutputInferDataType(cnode, index));
   }
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, cnode.get());
 }
