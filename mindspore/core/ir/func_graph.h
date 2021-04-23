@@ -387,12 +387,12 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   int64_t stage() { return stage_; }
   void set_stage(int64_t stage) { stage_ = stage; }
 
-  bool dropped() { return dropped_; }
+  bool dropped() const { return dropped_; }
   void set_dropped(bool dropped) { dropped_ = dropped; }
 
  private:
   // Only used for func_graph manager to control resource free.
-  int attached_mng_cnt() { return attached_mng_cnt_; }
+  int attached_mng_cnt() const { return attached_mng_cnt_; }
   void IncAttachedMngCnt() { attached_mng_cnt_++; }
   void DecAttachedMngCnt() { attached_mng_cnt_--; }
   // Clear all info from manager.

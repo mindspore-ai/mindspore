@@ -45,8 +45,8 @@ class DynamicKernel {
   bool is_output_dynamic_shape() const { return is_output_dynamic_shape_; }
   bool have_depends() const { return !depend_list_.empty(); }
   virtual void Initialize();
-  std::string GetKernelName() { return cnode_ptr_.lock()->fullname_with_scope(); }
-  int GetKernelType();
+  std::string GetKernelName() const { return cnode_ptr_.lock()->fullname_with_scope(); }
+  int GetKernelType() const;
 
  protected:
   void RebuildDependTensor();
