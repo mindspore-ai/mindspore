@@ -194,7 +194,7 @@ if(ENABLE_MINDRT)
     set(TEST_LITE_SRC ${TEST_LITE_SRC}
             ${LITE_DIR}/src/lite_mindrt.cc
             ${LITE_DIR}/src/mindrt_executor.cc
-            ${CORE_DIR}/mindrt/src/litebus.cc
+            ${CORE_DIR}/mindrt/src/mindrt.cc
             ${CORE_DIR}/mindrt/src/actor/actor.cc
             ${CORE_DIR}/mindrt/src/actor/actormgr.cc
             ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc

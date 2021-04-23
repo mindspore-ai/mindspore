@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_H
-#define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_H
+#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_H_
+#define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_H_
+
 #include <memory>
 #include <utility>
 #include <future>
 #include <iostream>
 #include <list>
-
 #include "actor/actor.h"
 #include "actor/buslog.h"
-
 #include "async/spinlock.h"
 #include "async/status.h"
 #include "async/uuid_generator.h"
-
-#include "litebus.hpp"
-
 #include "async/future_base.h"
+#include "mindrt/include/mindrt.hpp"
 
 namespace mindspore {
 
@@ -90,7 +87,7 @@ class Future : public FutureBase {
 
   const T &Get() const {
     if (data->status.IsError()) {
-      ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_WARNING, PID_LITEBUS_LOG,
+      ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_WARNING, PID_MINDRT_LOG,
                     "Future::Get() but status == Error: %d", GetErrorCode());
       return data->t;
     }
@@ -103,15 +100,15 @@ class Future : public FutureBase {
     data->t = data->future.get();
     data->gotten = true;
     //        } catch (std::future_error const &e) {
-    //            ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Future error: %s",
+    //            ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Future error: %s",
     //            "%s",
     //                                e.what());
     //        } catch (std::exception const &e) {
-    //            ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Standard exception:
+    //            ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Standard exception:
     //            %s",
     //                                "%s", e.what());
     //        } catch (...) {
-    //            ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Unknown exception.");
+    //            ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Unknown exception.");
     //        }
 
     return data->t;

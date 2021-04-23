@@ -16,13 +16,13 @@
 
 #include <cstdlib>
 #include <atomic>
-#include "mindrt/src/actor/actormgr.h"
-#include "mindrt/src/actor/iomgr.h"
-#include "litebus.hpp"
-#include "include/litebus.h"
+#include "src/actor/actormgr.h"
+#include "src/actor/iomgr.h"
+#include "include/mindrt.hpp"
+#include "include/mindrt.h"
 
 extern "C" {
-int LitebusInitializeC(const struct LitebusConfig *config) {
+int MindrtInitializeC(const struct MindrtConfig *config) {
   if (config == nullptr) {
     return -1;
   }
@@ -40,44 +40,44 @@ int LitebusInitializeC(const struct LitebusConfig *config) {
                                std::string(config->udpUrlAdv), config->threadCount);
 }
 
-void LitebusFinalizeC() { mindspore::Finalize(); }
+void MindrtFinalizeC() { mindspore::Finalize(); }
 }
 
 namespace mindspore {
 
 namespace local {
 
-static LitebusAddress *g_litebusAddress = new (std::nothrow) LitebusAddress();
-static std::atomic_bool g_finalizeLitebusStatus(false);
+static MindrtAddress *g_mindrtAddress = new (std::nothrow) MindrtAddress();
+static std::atomic_bool g_finalizeMindrtStatus(false);
 
 }  // namespace local
 
-const LitebusAddress &GetLitebusAddress() {
-  BUS_OOM_EXIT(local::g_litebusAddress);
-  return *local::g_litebusAddress;
+const MindrtAddress &GetMindrtAddress() {
+  BUS_OOM_EXIT(local::g_mindrtAddress);
+  return *local::g_mindrtAddress;
 }
 
 void SetThreadCount(int threadCount) { ActorMgr::GetActorMgrRef()->Initialize(threadCount); }
 
-class LiteBusExit {
+class MindrtExit {
  public:
-  LiteBusExit() {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "trace: enter LiteBusExit()---------");
+  MindrtExit() {
+    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "trace: enter MindrtExit()---------");
   }
-  ~LiteBusExit() {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "trace: enter ~LiteBusExit()---------");
+  ~MindrtExit() {
+    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "trace: enter ~MindrtExit()---------");
     mindspore::Finalize();
   }
 };
 
 int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                   const std::string &udpUrlAdv, int threadCount) {
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus starts ......");
+  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt starts ......");
 
   // start actor's thread
   SetThreadCount(threadCount);
 
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus has started.");
+  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt has started.");
   return BUS_OK;
 }
 
@@ -85,18 +85,18 @@ int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const st
                const std::string &udpUrlAdv, int threadCount) {
   /* support repeat initialize  */
   int result = InitializeImp(tcpUrl, tcpUrlAdv, udpUrl, udpUrlAdv, threadCount);
-  static LiteBusExit busExit;
+  static MindrtExit busExit;
 
   return result;
 }
 
 AID Spawn(ActorReference actor, bool sharedThread, bool start) {
   if (actor == nullptr) {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Actor is nullptr.");
+    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Actor is nullptr.");
     BUS_EXIT("Actor is nullptr.");
   }
 
-  if (local::g_finalizeLitebusStatus.load() == true) {
+  if (local::g_finalizeMindrtStatus.load() == true) {
     return actor->GetAID();
   } else {
     return ActorMgr::GetActorMgrRef()->Spawn(actor, sharedThread, start);
@@ -117,15 +117,15 @@ void TerminateAll() { mindspore::ActorMgr::GetActorMgrRef()->TerminateAll(); }
 
 void Finalize() {
   bool inite = false;
-  if (local::g_finalizeLitebusStatus.compare_exchange_strong(inite, true) == false) {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus has been Finalized.");
+  if (local::g_finalizeMindrtStatus.compare_exchange_strong(inite, true) == false) {
+    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt has been Finalized.");
     return;
   }
 
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus starts to finalize.");
+  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt starts to finalize.");
   mindspore::ActorMgr::GetActorMgrRef()->Finalize();
 
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus has been finalized.");
+  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt has been finalized.");
   // flush the log in cache to disk before exiting.
   FlushHLogCache();
 }
@@ -134,14 +134,14 @@ void SetDelegate(const std::string &delegate) { mindspore::ActorMgr::GetActorMgr
 
 static HARES_LOG_PID g_busLogPid = 1;
 void SetLogPID(HARES_LOG_PID pid) {
-  ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, pid, "Set LiteBus log PID: %u", pid);
+  ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, pid, "Set Mindrt log PID: %u", pid);
   g_busLogPid = pid;
 }
 HARES_LOG_PID GetLogPID() { return g_busLogPid; }
 
 static int g_httpKmsgEnable = -1;
 void SetHttpKmsgFlag(int flag) {
-  ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "Set LiteBus http message format:%d", flag);
+  ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "Set Mindrt http message format:%d", flag);
   g_httpKmsgEnable = flag;
 }
 

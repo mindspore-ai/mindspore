@@ -56,7 +56,7 @@ class AppActor : public ActorBase {
     APPBehavior behavior = std::bind(&BehaviorBase<T, M>, static_cast<T *>(this), method, std::placeholders::_1);
 
     if (appBehaviors.find(msgName) != appBehaviors.end()) {
-      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "ACTOR msgName conflict:%s",
+      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "ACTOR msgName conflict:%s",
                           "a=%s,msg=%s", GetAID().Name().c_str(), msgName.c_str());
       BUS_EXIT("msgName conflicts.");
       return;
@@ -80,7 +80,7 @@ class AppActor : public ActorBase {
     if (it != appBehaviors.end()) {
       it->second(std::move(msg));
     } else {
-      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "ACTOR can not finds handler:%s",
+      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "ACTOR can not finds handler:%s",
                           "a=%s,msg=%s,hdlno=%zd", GetAID().Name().c_str(), msg->Name().c_str(), appBehaviors.size());
     }
   }

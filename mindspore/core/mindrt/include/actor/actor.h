@@ -50,7 +50,7 @@ class ActorBase {
   inline void PrintMsgRecord() {
     uint32_t startPoint = recordNextPoint % MAX_ACTOR_RECORD_SIZE;
     for (uint32_t i = 0; i < MAX_ACTOR_RECORD_SIZE; i++) {
-      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "Actor message dumps:%s",
+      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "Actor message dumps:%s",
                           "actor:%s,msg:%s", id.Name().c_str(), msgRecords[startPoint].c_str());
       startPoint = (startPoint + MAX_ACTOR_RECORD_SIZE - 1) % MAX_ACTOR_RECORD_SIZE;
     }
@@ -79,7 +79,7 @@ class ActorBase {
   void DelRuleUdp(const std::string &peer, bool outputLog);
 
  protected:
-  using ActorFunction = std::function<void(std::unique_ptr<MessageBase> &msg)>;
+  using ActorFunction = std::function<void(const std::unique_ptr<MessageBase> &msg)>;
 
   // install KMSG handler . This method will be called before the actor start to run.
   virtual void Init() {}
@@ -89,19 +89,19 @@ class ActorBase {
 
   // KHTTPMsg handler
   virtual void HandleHttp(std::unique_ptr<MessageBase> msg) {
-    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG,
+    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG,
                         "ACTOR (%s) HandleHttp() is not implemented", "a=%s", id.Name().c_str());
   }
 
   // KLOCALMsg handler
   virtual void HandleLocalMsg(std::unique_ptr<MessageBase> msg) {
-    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG,
+    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG,
                         "ACTOR (%s) HandleLocalMsg() is not implemented.", "a=%s", id.Name().c_str());
   }
 
   // The link is closed.
   virtual void Exited(const AID &actor) {
-    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG,
+    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG,
                         "ACTOR (%s) Exited() is not implemented. ", "a=%s", id.Name().c_str());
   }
 
@@ -152,13 +152,13 @@ class ActorBase {
   friend class ActorThread;
 
   // KMSG Msg Handler
-  virtual void HandlekMsg(std::unique_ptr<MessageBase> &msg);
+  virtual void HandlekMsg(const std::unique_ptr<MessageBase> &msg);
 
   template <typename T>
   static void BehaviorBase(T *t, void (T::*method)(const mindspore::AID &, std::string &&, std::string &&),
-                           std::unique_ptr<MessageBase> &msg) {
+                           const std::unique_ptr<MessageBase> &msg) {
     if (msg->type != MessageBase::Type::KMSG) {
-      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Drop non-tcp message: %s",
+      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Drop non-tcp message: %s",
                           "from:%s,to:%s,name:%s", std::string(msg->from).c_str(), std::string(msg->to).c_str(),
                           msg->name.c_str());
       return;
@@ -169,9 +169,9 @@ class ActorBase {
   // register the message handle. It will be discarded.
   template <typename T>
   static void BehaviorBase1(T *t, void (T::*method)(mindspore::AID, std::string &&, std::string &&),
-                            std::unique_ptr<MessageBase> &msg) {
+                            const std::unique_ptr<MessageBase> &msg) {
     if (msg->type != MessageBase::Type::KMSG) {
-      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Drop non-tcp message: %s",
+      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Drop non-tcp message: %s",
                           "from:%s,to:%s,name:%s", std::string(msg->from).c_str(), std::string(msg->to).c_str(),
                           msg->name.c_str());
       return;
@@ -182,9 +182,9 @@ class ActorBase {
   // register the udp message handle. Use this closure function to drop non-udp messages
   template <typename T>
   static void BehaviorBaseForUdp(T *t, void (T::*method)(const mindspore::AID &, std::string &&, std::string &&),
-                                 std::unique_ptr<MessageBase> &msg) {
+                                 const std::unique_ptr<MessageBase> &msg) {
     if (msg->type != MessageBase::Type::KUDP) {
-      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_LITEBUS_LOG, "Drop non-udp message: %s",
+      ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Drop non-udp message: %s",
                           "from:%s,to:%s,name:%s", std::string(msg->from).c_str(), std::string(msg->to).c_str(),
                           msg->name.c_str());
       return;
@@ -196,7 +196,7 @@ class ActorBase {
   void Quit();
   int EnqueMessage(std::unique_ptr<MessageBase> msg);
 
-  void Spawn(std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> actorThread);
+  void Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> actorThread);
   void SetRunningStatus(bool start);
 
   std::unique_ptr<ActorPolicy> actorThread;

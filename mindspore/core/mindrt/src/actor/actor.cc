@@ -26,7 +26,7 @@ ActorBase::ActorBase(const std::string &name)
 
 ActorBase::~ActorBase() {}
 
-void ActorBase::Spawn(std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> thread) {
+void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> thread) {
   // lock here or await(). and unlock at Quit() or at aweit.
   waiterLock.lock();
 
@@ -49,13 +49,13 @@ void ActorBase::Terminate() {
   (void)EnqueMessage(std::move(msg));
 }
 
-void ActorBase::HandlekMsg(std::unique_ptr<MessageBase> &msg) {
+void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
   auto it = actionFunctions.find(msg->Name());
   if (it != actionFunctions.end()) {
     ActorFunction &func = it->second;
     func(msg);
   } else {
-    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_WARNING, PID_LITEBUS_LOG,
+    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_WARNING, PID_MINDRT_LOG,
                         "ACTOR can not find function for message (%s)", "a=%s,m=%s", id.Name().c_str(),
                         msg->Name().c_str());
     MS_LOG(WARNING) << "ACTOR can not find function for message, a=" << id.Name().c_str()

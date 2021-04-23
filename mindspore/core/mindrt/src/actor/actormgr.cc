@@ -102,11 +102,11 @@ void ActorMgr::Initialize(int threadCount) { threadPool.AddThread(threadCount); 
 
 void ActorMgr::Finalize() {
   this->TerminateAll();
-  MS_LOG(INFO) << "litebus Actors finish exiting.";
+  MS_LOG(INFO) << "mindrt Actors finish exiting.";
 
   // stop all actor threads;
   threadPool.Finalize();
-  MS_LOG(INFO) << "litebus Threads finish exiting.";
+  MS_LOG(INFO) << "mindrt Threads finish exiting.";
 
   // stop iomgr thread
   for (auto mgrIt = ioMgrs.begin(); mgrIt != ioMgrs.end(); ++mgrIt) {
@@ -114,7 +114,7 @@ void ActorMgr::Finalize() {
     mgrIt->second->Finish();
   }
 
-  MS_LOG(INFO) << "litebus IOMGRS finish exiting.";
+  MS_LOG(INFO) << "mindrt IOMGRS finish exiting.";
 }
 
 ActorReference ActorMgr::GetActor(const AID &id) {
