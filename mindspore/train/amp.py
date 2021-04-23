@@ -19,6 +19,7 @@ from .. import nn
 from .._checkparam import Validator as validator
 from .._checkparam import Rel
 from ..common import dtype as mstype
+from ..nn import acc
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from ..ops import functional as F
 from ..parallel._utils import _get_parallel_mode
@@ -139,7 +140,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             scale the loss by `LossScaleManager`. If set, overwrite the level setting.
     """
     validator.check_value_type('network', network, nn.Cell)
-    validator.check_value_type('optimizer', optimizer, nn.Optimizer)
+    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, acc.FreezeOpt))
     validator.check('level', level, "", ['O0', 'O2', 'O3', "auto"], Rel.IN)
 
     if level == "auto":

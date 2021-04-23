@@ -14,12 +14,12 @@
 # ============================================================================
 """less Batch Normalization"""
 import numpy as np
-from mindspore import nn
+from mindspore.nn.cell import Cell
+from mindspore.nn.layer import Dense
 from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
-from mindspore import dtype as mstype
+from mindspore.common import Tensor, Parameter
+from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from ..cell import Cell
 
 
 __all__ = ["LessBN"]
@@ -126,7 +126,7 @@ class LessBN(Cell):
             subcell = cells[name]
             if subcell == net:
                 continue
-            elif isinstance(subcell, (nn.Dense)):
+            elif isinstance(subcell, (Dense)):
                 dense_name.append(name)
                 dense_list.append(subcell)
             else:

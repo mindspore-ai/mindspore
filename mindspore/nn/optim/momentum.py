@@ -19,6 +19,7 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator
 from .optimizer import Optimizer
+from .optimizer import opt_init_args_register
 
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
@@ -146,6 +147,7 @@ class Momentum(Optimizer):
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
+    @opt_init_args_register
     def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0, use_nesterov=False):
         super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale)
         Validator.check_value_type("momentum", momentum, [float], self.cls_name)

@@ -17,6 +17,8 @@ Accelerating.
 
 Provide auto accelerating for network, such as Less BN.
 """
-from .less_batch_normalization import LessBN
+from .less_batch_normalization import *
+from .grad_freeze import *
 
-__all__ = ['LessBN']
+__all__ = ['LessBN', 'FreezeOpt', 'CONTINUOUS_STRATEGY', 'INTERVAL_STRATEGY',
+           'split_parameters_groups', 'generate_freeze_index_sequence']
