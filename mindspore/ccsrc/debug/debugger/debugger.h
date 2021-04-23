@@ -25,6 +25,7 @@
 #include "backend/session/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
+#include "common/trans.h"
 
 using debugger::Chunk;
 using debugger::DataType;
