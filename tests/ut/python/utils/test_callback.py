@@ -28,7 +28,8 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.train.callback import ModelCheckpoint, RunContext, LossMonitor, _InternalCallbackParam, \
     _CallbackManager, Callback, CheckpointConfig, _set_cur_net, _checkpoint_cb_for_save_op
-from mindspore.train.callback._checkpoint import _check_file_name_prefix, _chg_ckpt_file_name_if_same_exist
+from mindspore.train.callback._checkpoint import _chg_ckpt_file_name_if_same_exist
+
 
 class Net(nn.Cell):
     """Net definition."""
@@ -148,32 +149,6 @@ def test_loss_monitor_normal_mode():
     loss_cb.step_end(run_context)
     loss_cb.epoch_end(run_context)
     loss_cb.end(run_context)
-
-
-def test_check_file_name_not_str():
-    """Test check file name not str."""
-    ret = _check_file_name_prefix(1)
-    assert not ret
-
-
-def test_check_file_name_back_err():
-    """Test check file name back err."""
-    ret = _check_file_name_prefix('abc.')
-    assert ret
-
-
-def test_check_file_name_one_alpha():
-    """Test check file name one alpha."""
-    ret = _check_file_name_prefix('a')
-    assert ret
-    ret = _check_file_name_prefix('_')
-    assert ret
-
-
-def test_check_file_name_err():
-    """Test check file name err."""
-    ret = _check_file_name_prefix('_123')
-    assert ret
 
 
 def test_chg_ckpt_file_name_if_same_exist():
