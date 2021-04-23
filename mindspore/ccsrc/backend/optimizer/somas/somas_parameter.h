@@ -18,18 +18,23 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_PARAMETER_H_
 
 #include <memory>
+#include <string>
 #include "base/base.h"
 
 namespace mindspore {
 namespace somas {
 class SomasParameter {
  public:
-  SomasParameter(size_t id, AnfNodePtr source_node, size_t index, const void *addr, size_t size)
-      : id_(id), source_node_(source_node), output_index_(index), addr_(const_cast<void *>(addr)), size_(size) {}
+  SomasParameter(size_t id, std::string source_node_name, size_t index, const void *addr, size_t size)
+      : id_(id),
+        source_node_name_(source_node_name),
+        output_index_(index),
+        addr_(const_cast<void *>(addr)),
+        size_(size) {}
   ~SomasParameter() = default;
 
   const size_t id_{0};
-  AnfNodePtr source_node_;
+  std::string source_node_name_;
   size_t output_index_;
   void *addr_;
   size_t size_;
