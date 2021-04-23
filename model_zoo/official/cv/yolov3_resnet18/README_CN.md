@@ -15,6 +15,10 @@
         - [Ascend上训练](#ascend上训练)
     - [评估过程](#评估过程)
         - [Ascend评估](#ascend评估)
+    - [导出mindir模型](#导出mindir模型)
+    - [推理过程](#推理过程)
+        - [用法](#用法-2)
+        - [结果](#结果-2)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -193,6 +197,37 @@ YOLOv3整体网络架构如下：
   ```
 
 注意精度和召回值是使用我们自己的标注和COCO 2017的两种分类（人与脸）的结果。
+
+## 导出mindir模型
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+
+## 推理过程
+
+### 用法
+
+在执行推理之前，需要通过export.py导出mindir文件。
+目前仅可处理batch_Size为1，且图片需要根据关联的标签文件导出至待处理文件夹。
+
+```shell
+# Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANNO_PATH] [DEVICE_ID]
+```
+
+`DEVICE_ID` 可选，默认值为 0。
+
+### 结果
+
+推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+
+  ```bash
+  class 0 precision is 88.18%, recall is 66.00%
+  class 1 precision is 85.34%, recall is 79.13%
+  ```
 
 # 模型描述
 
