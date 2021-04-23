@@ -63,6 +63,7 @@ class SearchSubGraph {
   void InitSubgraphDevice();
   void SubgraphFusion();
   void InitMainGraphDevice();
+  bool ModelValid();
 
  private:
   const InnerContext *context_ = nullptr;
