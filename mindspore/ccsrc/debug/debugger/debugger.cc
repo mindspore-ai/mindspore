@@ -288,6 +288,8 @@ void Debugger::Reset() {
   last_overflow_bin_ = 0;
   overflow_bin_path_.clear();
   stream_task_to_opname_.clear();
+  graph_proto_list_.clear();
+  graph_ptr_list_.clear();
 }
 
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
