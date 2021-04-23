@@ -15,6 +15,9 @@
 """math operations, the function docs are adapted from Numpy API."""
 import operator
 import functools
+import itertools
+import sys
+from numpy import dtype as nptype
 
 from ..ops import operations as P
 from ..ops import functional as F
@@ -22,21 +25,24 @@ from ..ops import composite as C
 from ..ops.primitive import constexpr
 from ..common import dtype as mstype
 from ..common import Tensor
+from .._c_expression import typing
 
-from .dtypes import nan, pi
+from .dtypes import nan, pi, dtype_map, inf
 
-from .array_creations import asarray_const, ones, zeros, empty, full, full_like
+from .array_creations import asarray_const, ones, zeros, empty, full, full_like, diag, \
+    arange, histogram_bin_edges, eye
 from .array_ops import where as where_
-from .array_ops import ravel, expand_dims, moveaxis, concatenate
+from .array_ops import ravel, expand_dims, moveaxis, concatenate, flip, stack, atleast_1d
 
 from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
     _raise_value_error, _promote, _check_axis_type, _canonicalize_axis, \
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
-    _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max
+    _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max, _type_convert, \
+    _raise_unimplemented_error, _abs, _in
 from .utils import _expand, _broadcast_to, _broadcast_to_shape, _get_size, \
-    _check_input_tensor, _to_tensor, _isnan
+    _check_input_tensor, _to_tensor, _isnan, _convert_bool_to_int, _to_tensor_origin_dtype
 
 
 ZERO_TENSOR = asarray_const(0)
@@ -53,6 +59,9 @@ _reduce_max_default = P.ReduceMax()
 _reduce_max_keepdims = P.ReduceMax(True)
 _cumsum_default = P.CumSum()
 _concat = P.Concat(-1)
+_cumprod_default = P.CumProd()
+_round = P.Round()
+
 
 def absolute(x, dtype=None):
     """
@@ -265,8 +274,7 @@ def add(x1, x2, dtype=None):
     # broadcast is not fully supported in tensor_add on CPU,
     # so we use tensor_sub as a substitute solution
     if _get_device() == 'CPU':
-        _check_input_tensor(x1, x2)
-        return subtract(x1, F.neg_tensor(x2), dtype=dtype)
+        return subtract(x1, F.neg_tensor(_to_tensor(x2)), dtype=dtype)
     return _apply_tensor_op(F.tensor_add, x1, x2, dtype=dtype)
 
 
@@ -713,11 +721,21 @@ def dot(a, b):
         [105. 105. 105. 105.]]]
     """
     ndim_a, ndim_b = F.rank(a), F.rank(b)
+    if ndim_a == 0 or ndim_b == 0:
+        return F.tensor_mul(a, b)
     if ndim_a > 0 and ndim_b >= 2:
         perm = F.make_range(ndim_b)
         perm = perm[:-2] + (perm[-1],) + (perm[-2],)
         b = F.transpose(b, perm)
-    return inner(a, b)
+
+    if F.shape(a)[-1] != F.shape(b)[-1]:
+        _raise_value_error('shapes are not aligned')
+    a_aligned = F.reshape(a, (-1, F.shape(a)[-1]))
+    b_aligned = F.reshape(b, (-1, F.shape(b)[-1]))
+
+    res = _matmul_T(a_aligned, b_aligned)
+    res = F.reshape(res, F.shape(a)[:-1] + F.shape(b)[:-1])
+    return res
 
 
 def outer(a, b):
@@ -2238,23 +2256,6 @@ def convolve(a, v, mode='full'):
     v = v[::-1]
     return _compute_1D_conv(a, v, mode).astype(final_dtype)
 
-def _compute_1D_conv(a, v, mode):
-    """Returns a 1-D sequence which is the cross-correlate of two 1-D sequences (`a` and `v`)."""
-    v_size = F.shape_mul(v.shape)
-    if mode not in ('same', 'full', 'valid'):
-        _raise_value_error("mode must be one of ['full', 'same', 'valid']")
-    if v_size > 1:
-        if mode == 'same':
-            pad_left = _to_tensor(_list_comprehensions(v_size // 2, 0.0, True))
-            pad_right = _to_tensor(_list_comprehensions(v_size - v_size // 2 - 1, 0.0, True))
-            a = P.Concat(0)((pad_left, a, pad_right))
-        elif mode == 'full':
-            pad = _to_tensor(_list_comprehensions(v_size - 1, 0.0, True))
-            a = P.Concat(0)((pad, a, pad))
-    a = a.reshape(1, 1, 1, a.size)
-    v = v.reshape(1, 1, 1, v.size)
-    _conv = P.Conv2D(1, (1, v.size))
-    return _conv(a, v).reshape(-1)
 
 def _handle_weights(weights, num_samples):
     """Checks fweight and aweight in np.cov."""
@@ -2476,6 +2477,96 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     return reduce_fn(a, axes).astype(dtype)
 
 
+def nanmax(a, axis=None, dtype=None, keepdims=False):
+    """
+    Return the maximum of an array or maximum along an axis, ignoring any NaNs. .
+
+    Note:
+        Numpy arguments `out` is not supported.
+        For all NaN slices, a very small negative number is returned instead of NaN.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers whose maximum
+            is desired. If `a` is not an array, a conversion is attempted.
+        axis (Union[int, tuple of int, None], optional): Axis or axes along which the maximum is
+            computed. The default is to compute the maximum of the flattened array.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+            are reduced are left in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the original `a`.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+            if the axes contain duplicates.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.array([[1, 2], [3, np.nan]])
+        >>> output = np.nanmax(a)
+        >>> print(output)
+        3.0
+        >>> output = np.nanmax(a, axis=0)
+        >>> print(output)
+        [3. 2.]
+    """
+    a = _to_tensor(a)
+    nan_mask = _isnan(a)
+    a = F.select(nan_mask, full(F.shape(a), -sys.maxsize - 1, F.dtype(a)), a)
+    reduce_fn = _reduce_max_keepdims if keepdims else _reduce_max_default
+    return _reduce(a, reduce_fn, axis=axis, keepdims=keepdims, dtype=dtype)
+
+
+def nanmin(a, axis=None, dtype=None, keepdims=False):
+    """
+    Returns the minimum of array elements over a given axis treating Not a Numbers (NaNs) as zero.
+
+    Note:
+        Numpy arguments `out` is not supported.
+        For all-NaN slices, a very large number is returned instead of NaN.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers whose minimum
+            is desired. If `a` is not an array, a conversion is attempted.
+        axis (Union[int, tuple of int, None], optional): Axis or axes along which the minimum is
+            computed. The default is to compute the minimum of the flattened array.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+        keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
+            are reduced are left in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the original `a`.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        ValueError: if axes are out of the range of ``[-a.ndim, a.ndim)``, or
+            if the axes contain duplicates.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.array([[1, 2], [3, np.nan]])
+        >>> output = np.nanmin(a)
+        >>> print(output)
+        1.0
+        >>> output = np.nanmin(a, axis=0)
+        >>> print(output)
+        [1. 2.]
+    """
+    a = _to_tensor(a)
+    nan_mask = _isnan(a)
+    a = F.select(nan_mask, full(F.shape(a), sys.maxsize, F.dtype(a)), a)
+    reduce_fn = _reduce_min_keepdims if keepdims else _reduce_min_default
+    return _reduce(a, reduce_fn, axis=axis, keepdims=keepdims, dtype=dtype)
+
+
 def _reduce_nansum(x, axis, keepdims=False):
     """Computes reduce sum treating NaNs as zeros."""
     x = F.select(_isnan(x), zeros(F.shape(x), F.dtype(x)), x)
@@ -2525,10 +2616,6 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
     a = _to_tensor(a)
     nan_mask = _isnan(a)
     a = F.select(nan_mask, zeros(F.shape(a), F.dtype(a)), a)
-    if dtype is None and _get_device() == 'CPU' and not _check_is_float(F.dtype(a)):
-        # F.reduce_sum only supports float on CPU
-        dtype = F.dtype(a)
-        a = F.cast(a, mstype.float32)
     return _reduce(a, functools.partial(_reduce_nansum, keepdims=keepdims), axis=axis,
                    keepdims=keepdims, dtype=dtype)
 
@@ -3755,6 +3842,603 @@ def promote_types(type1, type2):
     return _promote(type1, type2)
 
 
+def corrcoef(x, y=None, rowvar=True, dtype=None):
+    r"""
+    Returns Pearson product-moment correlation coefficients.
+
+    Please refer to the documentation for cov for more detail. The relationship
+    between the correlation coefficient matrix, R, and the covariance matrix, C, is
+    :math:`R_{ij} = \frac{ C_{ij} } { \sqrt{ C_{ii} * C_{jj} } }`
+    The values of R are between -1 and 1, inclusive.
+
+    Note:
+        Currently, complex numbers are not supported.
+
+    Args:
+        x (Union[int, float, bool, tuple, list, Tensor]): A 1-D or 2-D array containing
+            multiple variables and observations. Each row of `x` represents a variable,
+            and each column a single observation of all those variables. Also see rowvar below.
+        y (Union[int, float, bool, tuple, list, Tensor], optional): An additional set
+            of variables and observations. `y` has the same shape as `x`.
+        rowvar (bool, optional): If rowvar is `True` (default), then each row represents
+            a variable, with observations in the columns. Otherwise, the relationship
+            is transposed: each column represents a variable, while the rows contain observations.
+        dtype (:class:`mindspore.dtype`, optional): Data-type of the result. By default,
+            the return data-type will have at least float32 precision.
+
+    Returns:
+        Tensor, The correlation coefficient matrix of the variables.
+
+    Raises:
+        TypeError: if the inputs have types not specified above.
+        ValueError: if `x` and `y` have wrong dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> output = np.corrcoef([[2., 3., 4., 5.], [0., 2., 3., 4.], [7., 8., 9., 10.]])
+        >>> print(output)
+        [[1.         0.9827076  1.        ]
+        [0.9827077  0.99999994 0.9827077 ]
+        [1.         0.9827076  1.        ]]
+    """
+    # This implementation was adapted from original Numpy.
+    c = cov(x, y, rowvar)
+    if not c.shape:
+        return F.tensor_div(c, c)
+    d = diag(c)
+    stddev = sqrt(d)
+    c /= F.expand_dims(stddev, -1)
+    c /= F.expand_dims(stddev, 0)
+    c = clip(c, -1, 1)
+    if dtype is not None:
+        return c.astype(dtype)
+    return c
+
+
+def _slice_along_axis(f, axis, slice_start, slice_end):
+    """
+    Slice a tensor along a given axis, a helper function for gradient
+
+    Args:
+        f (Tensor): Input Tensor.
+        axis (int): Specified axis.
+        slice_start (int): The start of the slice.
+        slice_end (int): The end of the int.
+
+    Returns:
+        Sliced tensor.
+    """
+    slice_size = slice_end - slice_start
+    index_start = (0,) * f.ndim
+    index_end = f.shape
+    index_start = _tuple_setitem(index_start, axis, slice_start)
+    index_end = _tuple_setitem(index_end, axis, slice_size)
+    return F.tensor_slice(f, index_start, index_end)
+
+
+def _gradient_along_axis(f, h, axis):
+    """compute the gradients of `f` along a given axis, a helper function of gradient."""
+    end = f.shape[axis]
+    upper_edge = _slice_along_axis(f, axis, 1, 2) - _slice_along_axis(f, axis, 0, 1)
+    lower_edge = _slice_along_axis(f, axis, end-1, end) - _slice_along_axis(f, axis, end-2, end-1)
+    if end <= 2:
+        a_grad = concatenate((upper_edge, lower_edge), axis)
+    else:
+        middle = (_slice_along_axis(f, axis, 2, end) - _slice_along_axis(f, axis, 0, end-2)) * 0.5
+        a_grad = concatenate((upper_edge, middle, lower_edge), axis)
+    return a_grad / h
+
+
+def gradient(f, *varargs, axis=None, edge_order=1):
+    """
+    Returns the gradient of a N-dimensional array.
+    The gradient is computed using second order accurate central differences
+    in the interior points and either first or second order accurate one-sides
+    (forward or backwards) differences at the boundaries.
+    The returned gradient hence has the same shape as the input array.
+
+    Note:
+        Currently we only support `edge_order`=1 and uniform spacing of `varargs`.
+
+    Args:
+        f (Union[tuple, list, Tensor]): An N-dimensional array containing samples of
+            a scalar function.
+        varargs (Union[tuple[number], tuple[tensor scalar]], optional)
+            Spacing between f values. Default unitary spacing for all dimensions.
+            Spacing can be specified using:
+            1. single scalar to specify a sample distance for all dimensions.
+            2. N scalars to specify a constant sample distance for each dimension.
+        edge_order (int): Gradient is calculated using N-th order accurate differences
+            at the boundaries. Default: 1.
+        axis (Union[None, int, tuple(int), list(int)], optional): Gradient is calculated
+            only along the given axis or axes. The default :class:`(axis = None)` is to calculate
+            the gradient for all the axes of the input tensor. `axis` may be negative,
+            in which case it counts from the last to the first `axis`.
+
+    Returns:
+        gradient, a list of tensors (or a single tensor if there is only one dimension
+        to be calculated). Each derivative has the same shape as f.
+
+    Raises:
+        TypeError: if the inputs have types not specified above.
+        ValueError: if `axis` values out of bounds, or shape of `f` has entries < 1.
+        NotImplementedError: if `edge_order` != 1, or `varargs` contains non-scalar entries.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> output = np.gradient([[1, 2, 6], [3, 4, 5]], axis=-1)
+        >>> print(output)
+        [[1.  2.5 4. ]
+        [1.  1.  1. ]]
+    """
+    # This implementation was adapted from Numpy and jax.numpy
+    if edge_order != 1:
+        _raise_unimplemented_error("edge_order != 1 not implemented")
+    if not isinstance(f, Tensor):
+        f = asarray_const(f)
+    if f.dtype != mstype.float64:
+        f = f.astype(mstype.float32)
+    if axis is None:
+        axis = F.make_range(f.ndim)
+    else:
+        _check_axis_type(axis, True, True, True)
+        axis = _canonicalize_axis(axis, f.ndim)
+        axis = (axis,) if isinstance(axis, int) else axis
+
+    len_axes = len(axis)
+    n = len(varargs)
+    dx = None
+    # check varargs and make varags the same length as axis
+    if n == 0 or varargs is None:
+        # no spacing
+        dx = (1,) * len_axes
+    elif n == 1:
+        # single value for all axes
+        dx = varargs * len_axes
+    elif n == len_axes:
+        dx = varargs
+    else:
+        _raise_type_error("Invalid number of arguments")
+
+    a_grad = []
+
+    for idx in F.make_range(len_axes):
+        h = dx[idx]
+        ax = axis[idx]
+        if f.shape[ax] < 2:
+            _raise_value_error("Shape of array too small to calculate a numerical gradient, "
+                               "at least 2 elements are required.")
+        # if h is not scalar
+        if not (isinstance(h, (int, float, bool)) or (isinstance(h, Tensor) and h.ndim == 0)):
+            _raise_unimplemented_error("Non-constant spacing not implemented")
+
+        a_grad.append(_gradient_along_axis(f, h, ax))
+
+    if len(axis) == 1:
+        return a_grad[0]
+
+    return a_grad
+
+
+def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
+    """
+    Returns sum of array elements over a given axis.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and
+        `extobj` are not supported.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): Elements to sum.
+        axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
+            If None, sum all of the elements of the input array.
+            If axis is negative it counts from the last to the first axis.
+            If axis is a tuple of ints, a sum is performed on all of the axes specified in the tuple
+            instead of a single axis or all the axes as before.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+        keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
+            dimensions with size one. With this option, the result will broadcast correctly against the input array.
+            If the default value is passed, then keepdims will not be passed through to the sum method of
+            sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
+            implement keepdims any exceptions will be raised.
+        initial (scalar): Starting value for the sum.
+
+    Returns:
+        Tensor. An array with the same shape as a, with the specified axis removed.
+        If a is a 0-d array, or if axis is None, a scalar is returned.
+        If an output array is specified, a reference to out is returned.
+
+    Raises:
+        TypeError: If input is not array_like or `axis` is not int or tuple of ints or
+            `keepdims` is not integer or `initial` is not scalar.
+        ValueError: If any axis is out of range or duplicate axes exist.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.sum([0.5, 1.5]))
+        2.0
+        >>> print(np.sum(np.array([-1, 0, 1], np.int32)))
+        0
+        >>> x = np.arange(10).reshape(2, 5).astype('float32')
+        >>> print(np.sum(x, axis=1))
+        [10. 35.]
+    """
+    if not isinstance(keepdims, int):
+        _raise_type_error("integer argument expected, but got ", keepdims)
+    if initial is not None and not isinstance(initial, (int, float, bool)):
+        _raise_type_error("initial argument should be a scalar.")
+    if axis is None:
+        axis = ()
+    else:
+        _check_axis_type(axis, True, True, False)
+        axis = _canonicalize_axis(axis, a.ndim)
+    a = _convert_bool_to_int(_to_tensor(a))
+    if _is_shape_empty(a.shape):
+        a = F.fill(a.dtype, (1,), 0)
+
+    if keepdims:
+        res = _reduce_sum_keepdims(a, axis)
+    else:
+        res = _reduce_sum_default(a, axis)
+    if initial is not None:
+        res += initial
+    if dtype is not None and not _check_same_type(F.dtype(res), dtype):
+        res = F.cast(res, dtype)
+    return res
+
+
+@constexpr
+def _min_cost_chain_matmul(dims):
+    """
+    Returns indices of splits that has the minimal cost for matmul.
+    s[i, j] holds the index of the split with minimal cost for arrays[i, i + 1, ... j]
+    """
+    dims = tuple(dims)
+    n = len(dims) - 1
+    m = [[0]*n for _ in range(n)]
+    s = [[0]*n for _ in range(n)]
+    for pos in range(1, n):
+        for i in range(n - pos):
+            j = i + pos
+            m[i][j] = sys.maxsize
+            for k in range(i, j):
+                cost = m[i][k] + m[k + 1][j] + dims[i]*dims[k + 1]*dims[j + 1]
+                if cost < m[i][j]:
+                    m[i][j] = cost
+                    s[i][j] = k
+    return s
+
+
+@constexpr
+def _get_dims(shapes):
+    """
+    Returns the chain of the dimensions in arrays.
+    dims[i] == arrays[i - 1].shape[1] == arrays[i].shape[0]
+    """
+    shapes = tuple(shapes)
+    if any(len(shape) != 2 for shape in shapes):
+        raise ValueError('Array must be 2 dimensional')
+    dims = tuple(map(operator.itemgetter(0), shapes))
+    if any(shape[1] != dim for shape, dim in zip(shapes[:-1], dims[1:])):
+        raise ValueError(f'shapes not aligned')
+    return dims + (shapes[-1][1],)
+
+
+def _multi_dot(arrays, i, j, order):
+    """Computes multi dot recursively using minimal cost."""
+    if i == j:
+        return arrays[i]
+    return dot(_multi_dot(arrays, i, order[i][j], order),
+               _multi_dot(arrays, order[i][j] + 1, j, order))
+
+
+def multi_dot(arrays):
+    """
+    Computes the dot product of two or more arrays in a single function call, while automatically
+    selecting the fastest evaluation order.
+    multi_dot chains numpy.dot and uses optimal parenthesization of the matrices
+    `[1] <en.wikipedia.org/wiki/Matrix_chain_multiplication>`. Depending on the shapes of the
+    matrices, this can speed up the multiplication a lot.
+    If the first argument is 1-D it is treated as a row vector. If the last argument is 1-D it
+    is treated as a column vector. The other arguments must be 2-D.
+
+    Note:
+        Numpy argument `out` is not supported.
+
+    Args:
+        arrays (sequence of array_like): If the first argument is 1-D it is treated as row
+            vector. If the last argument is 1-D it is treated as column vector. The other
+            arguments must be 2-D.
+
+    Returns:
+        Tensor, the dot product of the supplied arrays.
+
+    Raises:
+        ValueError: arrays are not 2-D.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> A = np.ones((10000, 100))
+        >>> B = np.ones((100, 1000))
+        >>> C = np.ones((1000, 5))
+        >>> D = np.ones((5, 333))
+        >>> output = np.multi_dot([A, B, C, D])
+        >>> print(output)
+        [[500000. 500000. 500000. ... 500000. 500000. 500000.]
+        [500000. 500000. 500000. ... 500000. 500000. 500000.]
+        [500000. 500000. 500000. ... 500000. 500000. 500000.]
+        ...
+        [500000. 500000. 500000. ... 500000. 500000. 500000.]
+        [500000. 500000. 500000. ... 500000. 500000. 500000.]
+        [500000. 500000. 500000. ... 500000. 500000. 500000.]]
+    """
+    arrays = _to_tensor(*arrays)
+    if len(arrays) < 2:
+        _raise_value_error('Expecting at least 2 arrays')
+    if len(arrays) == 2:
+        return dot(*arrays)
+
+    shape_out = ()
+    arrs = []
+    for arr in arrays:
+        arrs.append(arr)
+
+    if F.rank(arrs[0]) == 1:
+        arrs[0] = F.reshape(arrs[0], (1, arrs[0].size))
+    else:
+        shape_out += (F.shape(arrs[0])[0],)
+    if F.rank(arrs[-1]) == 1:
+        arrs[-1] = F.reshape(arrs[-1], (arrs[-1].size, 1))
+    else:
+        shape_out += (F.shape(arrs[-1])[1],)
+
+    shapes = []
+    for arr in arrs:
+        shapes.append(F.shape(arr))
+    dims = _get_dims(shapes)
+    order = _min_cost_chain_matmul(dims)
+    res = _multi_dot(arrs, 0, len(arrs) - 1, order)
+    return F.reshape(res, shape_out)
+
+
+def argmax(a, axis=None):
+    """
+    Returns the indices of the maximum values along an axis.
+
+    Note:
+        Numpy argument `out` is not supported.
+        On Ascend, in case of multiple occurrences of the maximum values, the return
+        indices may not necessarily correspond to the first occurrence.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input array.
+        axis (int, optional): By default, the index is into
+            the flattened array, otherwise along the specified axis.
+
+    Returns:
+        Tensor, array of indices into the array. It has the same
+        shape as a.shape with the dimension along axis removed.
+
+    Raises:
+        ValueError: if axis is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> print(np.argmax(a))
+        5
+        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> print(np.argmax(a), axis=0)
+        [1 1 1]
+        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> print(np.argmax(a), axis=0)
+        [2 2]
+        >>> b = np.array([0, 5, 2, 3, 4, 5])
+        >>> b[1] = 5
+        >>> print(np.argmax(b))
+        1
+    """
+    return a.argmax(axis)
+
+
+def argmin(a, axis=None):
+    """
+    Returns the indices of the minimum values along an axis.
+
+    Note:
+        Numpy argument `out` is not supported.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input array.
+        axis (int, optional): By default, the index is into
+            the flattened array, otherwise along the specified axis.
+
+    Returns:
+        Tensor, array of indices into the array. It has the same
+        shape as a.shape with the dimension along axis removed.
+
+    Raises:
+        ValueError: if axis is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> print(np.argmin(a))
+        0
+        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> print(np.argmin(a), axis=0)
+        [0 0 0]
+        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> print(np.argmin(a), axis=0)
+        [0 0]
+        >>> b = np.array([0, 5, 2, 3, 4, 5])
+        >>> b[1] = 5
+        >>> print(np.argmin(b))
+        0
+    """
+    return a.argmin(axis)
+
+
+@constexpr
+def _get_sort_range(size):
+    """Returns the range for number of searches (log2(size)) on a sorted array with the given size."""
+    return tuple(range(ceil(log2(_to_tensor(size + 1).astype(mstype.float32))).astype(mstype.int32)))
+
+
+def searchsorted(a, v, side='left', sorter=None):
+    """
+    Finds indices where elements should be inserted to maintain order.
+    Finds the indices into a sorted array a such that, if the corresponding elements
+    in v were inserted before the indices, the order of a would be preserved.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): 1-D input array. If `sorter` is
+            None, then it must be sorted in ascending order, otherwise `sorter` must be
+            an array of indices that sort it.
+        v (Union[int, float, bool, list, tuple, Tensor]): Values to insert into `a`.
+        side ('left', 'right', optional): If ‘left’, the index of the first suitable
+            location found is given. If ‘right’, return the last such index. If there is
+            no suitable index, return either 0 or N (where N is the length of `a`).
+        sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional array of
+            integer indices that sort array `a` into ascending order. They are typically
+            the result of argsort.
+
+    Returns:
+        Tensor, array of insertion points with the same shape as `v`.
+
+    Raises:
+        ValueError: if argument for `side` or `sorter` is invalid.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> print(np.searchsorted([1,2,3,4,5], 3))
+        2
+        >>> print(np.searchsorted([1,2,3,4,5], 3, side='right'))
+        3
+        >>> print(np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3]))
+        [0 5 1 2]
+    """
+    if side not in ('left', 'right'):
+        _raise_value_error(f'{side} is an invalid value for keyword "side"')
+    a = _to_tensor(a).astype(mstype.float32)
+    v = _to_tensor(v)
+    shape = F.shape(v)
+    if sorter is not None:
+        if F.rank(sorter) != 1 or sorter.size != a.size:
+            _raise_value_error('sorter must be 1-D array with the same size as `a`')
+        sorter = _to_tensor(sorter)
+        sorter = F.expand_dims(sorter, -1)
+        a = F.gather_nd(a, sorter)
+    less_op = F.tensor_le if side == 'left' else F.tensor_lt
+    i = F.fill(mstype.int32, shape, 0)
+    j = F.fill(mstype.int32, shape, a.size)
+    two = F.fill(mstype.int32, shape, 2)
+
+    for _ in _get_sort_range(a.size):
+        mid = floor_divide(add(i, j), two)
+        mask = less_op(v, F.gather_nd(a, F.expand_dims(mid, -1)))
+        i = F.select(mask, i, mid)
+        j = F.select(mask, mid, j)
+    return j
+
+
+def interp(x, xp, fp, left=None, right=None):
+    """
+    One-dimensional linear interpolation for monotonically increasing sample points.
+    Returns the one-dimensional piecewise linear interpolant to a function with given
+    discrete data points `(xp, fp)`, evaluated at `x`.
+
+    Note:
+        Numpy argument `period` is not supported.
+        Complex values are not supported.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): The x-coordinates at which
+            to evaluate the interpolated values.
+        xp (Union[int, float, bool, list, tuple, Tensor]): 1-D sequence of floats, the
+            x-coordinates of the data points, must be increasing.
+        fp (Union[int, float, bool, list, tuple, Tensor]): 1-D sequence of floats, the
+            y-coordinates of the data points, same length as `xp`.
+        left (float, optional): Value to return for ``x < xp[0]``, default is ``fp[0]``.
+        right (float, optional): Value to return for ``x > xp[-1]``, default is ``fp[-1]``.
+
+    Returns:
+        Tensor, the interpolated values, same shape as `x`.
+
+    Raises:
+        ValueError: if `xp` or `fp` is not one-dimensional, or if `xp` and `fp` do not have
+            the same length.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> xp = [1, 2, 3]
+        >>> fp = [3, 2, 0]
+        >>> print(np.interp([0, 1, 1.5, 2.72, 3.14], xp, fp))
+        >>> print(np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3]))
+        [3.         3.         2.5        0.55999994 0.        ]
+        >>> UNDEF = -99.0
+        >>> print(np.interp(3.14, xp, fp, right=UNDEF))
+        -99.0
+    """
+    # TODO implement period once sort is supported
+    x, xp, fp = _to_tensor(x, xp, fp)
+    if F.rank(xp) != 1 or F.rank(fp) != 1:
+        _raise_value_error('xp and fp must be 1-d sequences')
+    size = xp.size
+    if fp.size != size:
+        _raise_value_error('the y-coordinates must have the same length as `xp`')
+
+    shape = F.shape(x)
+    xp = xp.astype(mstype.float32)
+    fp = fp.astype(mstype.float32)
+
+    indices_1 = clip(searchsorted(xp, x), 0, size - 1)
+    indices_0 = clip(indices_1 - _to_tensor(1), 0, size - 1)
+    indices_0 = F.expand_dims(indices_0, -1)
+    indices_1 = F.expand_dims(indices_1, -1)
+    x_0 = F.gather_nd(xp, indices_0)
+    x_1 = F.gather_nd(xp, indices_1)
+    y_0 = F.gather_nd(fp, indices_0)
+    y_1 = F.gather_nd(fp, indices_1)
+    res = (y_0*(x_1 - x) + y_1*(x - x_0))/(x_1 - x_0)
+    res = F.select(F.equal(x_0, x_1), y_0, res)
+    # where x < xp[0], y = left or xp[0]
+    # where x > xp[-1], y = right or xp[-1]
+    idx_0 = _to_tensor([0])
+    idx_last = _to_tensor([size - 1])
+    if left is None:
+        left = F.gather_nd(fp, idx_0)
+    left = full(shape, left, mstype.float32)
+    if right is None:
+        right = F.gather_nd(fp, idx_last)
+    right = full(shape, right, mstype.float32)
+    choose_left = F.tensor_lt(x, F.gather_nd(xp, idx_0))
+    choose_right = F.tensor_gt(x, F.gather_nd(xp, idx_last))
+    res = F.select(choose_left, left, res)
+    res = F.select(choose_right, right, res)
+    return res
+
+
 def _apply_tensor_op(fn, *args, dtype=None):
     """Applies tensor operations based on fn"""
     args = _to_tensor(*args)
@@ -3765,3 +4449,1440 @@ def _apply_tensor_op(fn, *args, dtype=None):
     if dtype is not None and not _check_same_type(F.dtype(res), dtype):
         res = F.cast(res, dtype)
     return res
+
+
+def sign(x, dtype=None):
+    """
+    Returns an element-wise indication of the sign of a number.
+
+    The sign function returns `-1 if x < 0, 0 if x == 0, 1 if x > 0`. nan is returned for nan inputs.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+        Complex inputs are not supported now.
+
+    Args:
+        x (Union[int, float, list, tuple, Tensor]): Input values.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        The sign of x. This is a tensor or a scalar when x is a scalar.
+
+    Raises:
+        TypeError: if dtype of the input is not in the given types or
+            the input can not be converted to tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> output = np.sign(np.array([-1., 0., 1., 1.2]))
+        >>> print(output)
+        [-1.  0.  1.  1.]
+    """
+    if not isinstance(x, (int, float, list, tuple, Tensor)):
+        _raise_type_error('integer, float, list, tuple or Tensor are expected, but got', x)
+    x = _to_tensor(x)
+    if _check_same_type(F.dtype(x), mstype.bool_):
+        _raise_type_error("sign does not accept dtype bool.")
+
+    _non_zero_sign = x / absolute(x)
+    _zero = _broadcast_to_shape(_make_tensor(0, x.dtype), x.shape)
+    is_zero = F.equal(x, 0)
+    res = F.select(is_zero, _zero, _non_zero_sign)
+
+    if dtype is not None and not _check_same_type(F.dtype(res), dtype):
+        res = F.cast(res, dtype)
+    return res
+
+
+def copysign(x1, x2, dtype=None):
+    """
+    Changes the sign of `x1` to that of `x2`, element-wise.
+
+    If `x2` is a scalar, its sign will be copied to all elements of `x1`.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+        Complex inputs are not supported now.
+
+    Args:
+        x1 (Union[int, float, list, tuple, Tensor]): Values to change the sign of.
+        x2 (Union[int, float, list, tuple, Tensor]): The sign of x2 is copied to x1. If `x1.shape != x2.shape`,
+            they must be broadcastable to a common shape (which becomes the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar. The values of `x1` with the sign of `x2`. This is a scalar if both `x1` and `x2` are scalars.
+
+    Raises:
+        TypeError: if dtype of the input is not in the given types or
+            the input can not be converted to tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> output = np.copysign(np.array([1, -1, -1]), np.array([-1, 1, -1]))
+        >>> print(output)
+        [-1  1 -1]
+    """
+    if not isinstance(x1, (int, float, list, tuple, Tensor)):
+        _raise_type_error('integer, float, list, tuple or Tensor are expected, but got', x1)
+    if not isinstance(x2, (int, float, list, tuple, Tensor)):
+        _raise_type_error('integer, float, list, tuple or Tensor are expected, but got', x2)
+    x1, x2 = _to_tensor(x1, x2)
+    x2 = _broadcast_to_shape(x2, x1.shape)
+    if _check_same_type(F.dtype(x1), mstype.bool_) or _check_same_type(F.dtype(x2), mstype.bool_):
+        _raise_type_error("sign does not accept dtype bool.")
+
+    original_dtype = x1.dtype
+    if not _check_is_float(original_dtype):
+        pos_tensor = F.absolute(x1.astype('float32')).astype(original_dtype)
+    else:
+        pos_tensor = F.absolute(x1)
+
+    neg_tensor = F.neg_tensor(pos_tensor)
+    less_zero = F.less(x2, 0)
+    res = F.select(less_zero, neg_tensor, pos_tensor)
+
+    if dtype is not None and not _check_same_type(F.dtype(res), dtype):
+        res = F.cast(res, dtype)
+    return res
+
+
+def digitize(x, bins, right=False):
+    """
+    Returns the indices of the bins to which each value in input array belongs.
+    If values in `x` are beyond the bounds of `bins`, 0 or ``len(bins)`` is returned
+    as appropriate.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): Input array to be binned.
+        bins (Union[int, float, bool, list, tuple, Tensor]): Array of bins. It has to
+            be 1-dimensional and monotonic.
+        right (boolean, optional): Indicating whether the intervals include the right
+            or the left bin edge. Default behavior is ``(right==False)`` indicating
+            that the interval does not include the right edge. The left bin end is
+            open in this case, i.e., ``bins[i-1] <= x < bins[i]`` is the default
+            behavior for monotonically increasing bins.
+
+    Returns:
+        Tensor of ints, output array of indices, of same shape as `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
+        >>> bins = np.array([0, 5, 10, 15, 20])
+        >>> inds = np.digitize(x, bins)
+        >>> print(inds)
+        [1 3 3 4 5]
+    """
+    x, bins = _to_tensor(x, bins)
+    if x.size == 0:
+        return x
+    if bins.size == 0:
+        return zeros(F.shape(x), mstype.int32)
+    side = 'left' if right else 'right'
+    first_bin = bins[0]
+    last_bin = bins[_type_convert(int, bins.size) - 1]
+    cond = first_bin <= last_bin
+    incr = searchsorted(bins, x, side)
+    decr = _to_tensor(bins.size) - searchsorted(flip(bins), x, side)
+    return where_(cond, incr, decr)
+
+
+def bincount(x, weights=None, minlength=0, length=None):
+    """
+    Count number of occurrences of each value in array of non-negative ints.
+    The number of bins (of size 1) is one larger than the largest value in `x`.
+    If `minlength` is specified, there will be at least this number of bins in the
+    output array (though it will be longer if necessary, depending on the contents
+    of `x`). Each bin gives the number of occurrences of its index value in `x`. If
+    `weights` is specified the input array is weighted by it, i.e. if a value `n`
+    is found at position `i`, ``out[n] += weight[i]`` instead of ``out[n] += 1``.
+
+    Note:
+        The additional argument `length` specifies the number of bins (overriding
+        ``x.max() + 1``), which must be provided in graph mode.
+        If `x` contains negative values, no error will be raised, and negative values
+        are treated as zeros instead.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): 1-d input array.
+        weights (Union[int, float, bool, list, tuple, Tensor], optional): Weights,
+            array of the same shape as `x`.
+        minlength (int, optional): A minimum number of bins for the output array.
+        length (int, optional): Number of bins.
+
+    Returns:
+        Tensor, the result of binning the input array. The length of out is equal to
+        ``np.amax(x)+1``.
+
+    Raises:
+        ValueError: if `x` is not one-dimensional, or if `x` and `weights` do not have
+            the same shape.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.bincount(np.arange(5)))
+        [1 1 1 1 1]
+        >>> print(np.bincount(np.array([0, 1, 1, 3, 2, 1, 7])))
+        [1 3 1 1 0 0 0 1]
+        >>> w = np.array([0.3, 0.5, 0.2, 0.7, 1., -0.6]) # weights
+        >>> x = np.array([0, 1, 1, 2, 2, 2])
+        >>> print(np.bincount(x,  weights=w))
+        [0.3 0.7 1.1]
+    """
+    x = _to_tensor(x)
+    if F.rank(x) != 1:
+        _raise_value_error('`x` should be one-dimensional')
+    x = clip(x, 0, None)
+    if length is None:
+        if F.isconstant(x):
+            length = int(maximum(F.reduce_max(x), minlength - 1).asnumpy()) + 1
+        else:
+            _raise_value_error('argument `length` must be provided in graph mode')
+    idx = arange(length).reshape(length, 1)
+    idx_mapping = F.equal(x, idx)
+    if weights is not None:
+        weights = _to_tensor(weights)
+        if F.shape(x) != F.shape(weights):
+            _raise_value_error('`x` and `weights` must have the same length')
+        idx_mapping *= weights
+    return F.reduce_sum(idx_mapping.astype(mstype.float32), 1).ravel()
+
+
+def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
+    """
+    Computes the histogram of a dataset.
+
+    Note:
+        String values for `bins` is not supported.
+        Deprecated numpy argument `normed` is not supported.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): Input data. The histogram
+            is computed over the flattened array.
+        bins (Union[int, tuple, list, Tensor], optional): If `bins` is an int, it
+            defines the number of equal-width bins in the given range (10, by
+            default). If `bins` is a sequence, it defines the bin edges, including
+            the rightmost edge, allowing for non-uniform bin widths.
+        range((float, float), optional): The lower and upper range of the bins. If
+            not provided, `range` is simply ``(a.min(), a.max())``. Values outside
+            the range are ignored. The first element of the range must be less than
+            or equal to the second.
+        weights (Union[int, float, bool, list, tuple, Tensor], optional): An array
+            of weights, of the same shape as `a`. Each value in a only contributes
+            its associated weight towards the bin count (instead of 1). If density
+            is True, the weights are normalized, so that the integral of the density
+            over the range remains 1.
+        density (boolean, optional): If False, the result will contain the number of
+            samples in each bin. If True, the result is the value of the probability
+            density function at the bin, normalized such that the integral over the
+            range is 1. Note that the sum of the histogram values will not be equal
+            to 1 unless bins of unity width are chosen; it is not a probability mass
+            function.
+
+    Returns:
+        (Tensor, Tensor), the values of the histogram and the bin edges.
+
+    Raises:
+        ValueError: if `x` and `weights` do not have the same size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import numpy as np
+        >>> print(np.histogram([1, 2, 1], bins=[0, 1, 2, 3]))
+        (Tensor(shape=[3], dtype=Int32, value= [0, 2, 1]),
+        Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
+        >>> print(np.histogram(np.arange(4), bins=np.arange(5), density=True))
+        (Tensor(shape=[4], dtype=Float32, value=
+        [ 2.50000000e-01,  2.50000000e-01,  2.50000000e-01,  2.50000000e-01]),
+        Tensor(shape=[5], dtype=Int32, value= [0, 1, 2, 3, 4]))
+        >>> print(np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3]))
+        (Tensor(shape=[3], dtype=Int32, value= [1, 4, 1]),
+        Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
+    """
+    a = _to_tensor(a).ravel()
+    bin_edges = histogram_bin_edges(a, bins, range, weights)
+    data_to_bins = searchsorted(bin_edges, a, 'right')
+    bin_size = _type_convert(int, bin_edges.size)
+    data_to_bins = where_(a == bin_edges[-1], _to_tensor(bin_size - 1), data_to_bins)
+    count = bincount(data_to_bins, weights, length=bin_size)[1:]
+    if count.size == 0:
+        return count, bin_edges
+    if density:
+        count = F.cast(count, mstype.float32)
+        count = count/diff(bin_edges)/F.reduce_sum(count)
+    return count, bin_edges
+
+
+@constexpr
+def _factor_flattened_hist(nbin):
+    """Returns the factor that will be applied to the histogram to be flattened."""
+    factor = list((itertools.accumulate(nbin[1:][::-1], operator.mul)))[::-1]
+    factor.append(1)
+    return factor
+
+
+def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
+    """
+    Computes the multidimensional histogram of some data.
+
+    Note:
+        Deprecated numpy argument `normed` is not supported.
+
+    Args:
+        sample (Union[list, tuple, Tensor]): The data to be histogrammed, either `(N, D)`
+            array, or `(D, N)` array_like. Note the unusual interpretation of sample
+            when an array_like:
+
+            When an array, each row is a coordinate in a `D-dimensional` space - such as
+            ``histogramdd(np.array([p1, p2, p3]))``.
+
+            When an array_like, each element is the list of values for single coordinate
+            - such as ``histogramdd((X, Y, Z))``.
+
+            The first form should be preferred.
+        bins (Union[int, tuple, list], optional): The bin specification:
+
+            A sequence of arrays describing the monotonically increasing bin edges along
+            each dimension.
+
+            The number of bins for each dimension ``(nx, ny, … =bins)``
+
+            The number of bins for all dimensions ``(nx=ny=…=bins)``.
+        range(Union[list, tuple], optional): A sequence of length `D`, each an optional
+            ``(lower, upper)`` tuple giving the outer bin edges to be used if the edges
+            are not given explicitly in bins. An entry of None in the sequence results in
+            the minimum and maximum values being used for the corresponding dimension.
+            The default, None, is equivalent to passing a tuple of `D` None values.
+        weights (Union[list, tuple, Tensor], optional): An array with shape `(N,)` of values
+            `w_i` weighing each sample ``(x_i, y_i, z_i, …)``.
+        density (boolean, optional): If False, the default, returns the number of samples
+            in each bin. If True, returns the probability density function at the bin,
+            ``bin_count / sample_count / bin_volume``.
+
+    Returns:
+        (Tensor, list of Tensor), the values of the histogram and the bin edges.
+
+    Raises:
+        ValueError: if `range` does not have the same size as the number of samples.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import numpy as np
+        >>> sample = np.arange(15).reshape(5, 3)
+        >>> print(sample)
+        [[ 0  1  2]
+        [ 3  4  5]
+        [ 6  7  8]
+        [ 9 10 11]
+        [12 13 14]]
+        >>> print(np.histogramdd(sample, bins=(2, 3, 4)))
+        (Tensor(shape=[2, 3, 4], dtype=Int32, value=
+        [[[1, 1, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]],
+        [[0, 0, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 2]]]),
+        [Tensor(shape=[3], dtype=Float32, value=
+        [ 0.00000000e+00,  6.00000000e+00,  1.20000000e+01]),
+        Tensor(shape=[4], dtype=Float32, value=
+        [ 1.00000000e+00,  5.00000000e+00,  9.00000000e+00,  1.30000000e+01]),
+        Tensor(shape=[5], dtype=Float32, value=
+        [ 2.00000000e+00,  5.00000000e+00,  8.00000000e+00,  1.10000000e+01,  1.40000000e+01])])
+    """
+    if isinstance(sample, (tuple, list)):
+        sample = _to_tensor(*sample)
+        sample = stack(sample, -1)
+    elif not isinstance(sample, Tensor):
+        _raise_type_error('sample should be (N, D) array, or (D, N) array_like')
+    if F.rank(sample) != 2:
+        _raise_value_error('when an array, sample should be 2-dimensional')
+    ndim = F.shape(sample)[1]
+
+    if isinstance(bins, int):
+        bins = _list_comprehensions(ndim, bins)
+    if isinstance(bins, (tuple, list)):
+        if len(bins) != ndim:
+            _raise_value_error('The dimension of bins must be equal to the dimension of the sample')
+    elif not isinstance(bins, Tensor):
+        _raise_type_error('bins should be int or sequence')
+
+    if range is None:
+        range = _list_comprehensions(ndim, None, False, True)
+    else:
+        if len(range) != ndim:
+            _raise_value_error('range argument must have one entry per dimension')
+
+    bin_edges = []
+    dedges = []
+    for i in F.make_range(ndim):
+        edges = histogram_bin_edges(sample[:, i], bins[i], range[i], weights)
+        bin_edges.append(edges)
+        dedges.append(diff(edges))
+
+    data_indices = []
+    nbin = ()
+    flattened_bin_size = 1
+    for i in F.make_range(ndim):
+        data_to_bins = searchsorted(bin_edges[i], sample[:, i], 'right')
+        bin_size = _type_convert(int, bin_edges[i].size)
+        data_to_bins = where_(sample[:, i] == bin_edges[i][-1], _to_tensor(bin_size - 1), data_to_bins)
+        data_indices.append(data_to_bins)
+        nbin += (bin_size + 1,)
+        flattened_bin_size *= (bin_size + 1)
+
+    factor = F.reshape(_to_tensor(_factor_flattened_hist(nbin)), (ndim, 1))
+    stacked_indices = stack(data_indices) * factor
+    if _get_device() == 'Ascend':
+        stacked_indices = F.cast(stacked_indices, mstype.float32)
+    flattened_hist = F.reduce_sum(stacked_indices.astype(mstype.float32), 0)
+    count = bincount(flattened_hist, weights, length=flattened_bin_size)
+    count = F.reshape(count, nbin)
+    slices = _list_comprehensions(ndim, F.make_slice(1, -1, 1), True)
+    count = count[slices]
+
+    if density:
+        s = F.reduce_sum(count.astype(mstype.float32))
+        for i in F.make_range(ndim):
+            shape = _expanded_shape(ndim, dedges[i].size, i)
+            count /= _to_tensor(dedges[i]).reshape(shape)
+        count /= s
+    return count, bin_edges
+
+
+def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
+    """
+    Computes the multidimensional histogram of some data.
+
+    Note:
+        Deprecated numpy argument `normed` is not supported.
+
+    Args:
+        x (Union[list, tuple, Tensor]): An array with shape `(N,)` containing the x
+            coordinates of the points to be histogrammed.
+        y (Union[list, tuple, Tensor]): An array with shape `(N,)` containing the y
+            coordinates of the points to be histogrammed.
+        bins (Union[int, tuple, list], optional): The bin specification:
+
+            If int, the number of bins for the two dimensions ``(nx=ny=bins)``.
+
+            If array_like, the bin edges for the two dimensions ``(x_edges=y_edges=bins)``.
+
+            If [int, int], the number of bins in each dimension ``(nx, ny = bins)``.
+
+            If [array, array], the bin edges in each dimension ``(x_edges, y_edges = bins)``.
+
+            A combination [int, array] or [array, int], where int is the number of bins and
+            array is the bin edges.
+        range(Union[list, tuple], optional): has shape (2, 2), the leftmost and rightmost
+            edges of the bins along each dimension (if not specified explicitly in the bins
+            parameters): ``[[xmin, xmax], [ymin, ymax]]``. All values outside of this range
+            will be considered outliers and not tallied in the histogram.
+        weights (Union[list, tuple, Tensor], optional): An array with shape `(N,)` of values
+            `w_i` weighing each sample `(x_i, y_i)`.
+        density (boolean, optional): If False, the default, returns the number of samples
+            in each bin. If True, returns the probability density function at the bin,
+            ``bin_count / sample_count / bin_volume``.
+
+    Returns:
+        (Tensor, Tensor, Tensor), the values of the bi-directional histogram and the bin edges
+        along the first and second dimensions.
+
+    Raises:
+        ValueError: if `range` does not have the same size as the number of samples.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import numpy as np
+        >>> x = np.arange(5)
+        >>> y = np.arange(2, 7)
+        >>> print(np.histogram2d(x, y, bins=(4, 6)))
+        (Tensor(shape=[4, 6], dtype=Int32, value=
+        [[1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0]
+        [0, 0, 0, 0, 1, 1]]),
+        Tensor(shape=[5], dtype=Float32, value=
+        [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00,  3.00000000e+00,  4.00000000e+00]),
+        Tensor(shape=[7], dtype=Float32, value=
+        [ 2.00000000e+00,  2.66666675e+00,  3.33333349e+00,  4.00000000e+00,  4.66666698e+00,
+        5.33333349e+00,  6.00000000e+00]))
+    """
+    count, bin_edges = histogramdd((x, y), bins=bins, range=range, weights=weights, density=density)
+    return count, bin_edges[0], bin_edges[1]
+
+
+def matrix_power(a, n):
+    """
+    Raises a square matrix to the (integer) power `n`.
+
+    For positive integers `n`, the power is computed by repeated matrix squarings and
+    matrix multiplications.
+    If :math:`n == 0`, the identity matrix of the same shape as `M` is returned.
+
+    Note:
+        Stacks of object matrices are not currently supported and
+        :math:`n < 0` is not supported.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input matrix.
+        n (int): The exponent can be any integer or long integer, positive or zero.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: if the input can not be converted to a tensor or
+            the exponent is not integer.
+        ValueError: if the input includes less than 2 dimensions or
+            the last 2 dimensions are not square.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import numpy as np
+        >>> a = np.arange(16).reshape(4, 4).astype('float32')
+        >>> print(np.matrix_power(a, 2))
+        [[ 56.  62.  68.  74.]
+         [152. 174. 196. 218.]
+         [248. 286. 324. 362.]
+         [344. 398. 452. 506.]]
+    """
+    a = _to_tensor(a)
+    if not isinstance(n, int):
+        _raise_type_error("exponent must be an integer")
+    if a.ndim < 2:
+        _raise_value_error(str(a.ndim) + "-dimensional array given. Array must be at least two-dimensional")
+    if a.shape[-2] != a.shape[-1]:
+        _raise_value_error("Last 2 dimensions of the array must be square")
+
+    if n < 0:
+        _raise_value_error("n < 0 is not supported now.")
+    if n == 0:
+        return _broadcast_to_shape(eye(a.shape[-1], a.shape[-1], dtype=a.dtype), a.shape)
+    if n == 1:
+        return a
+    res = a
+    while n > 1:
+        res = C.matmul(res, a)
+        n = n - 1
+    return res
+
+
+def around(a, decimals=0):
+    """
+    Evenly round to the given number of decimals.
+
+    Note:
+        Numpy argument `out` is not supported.
+        Complex numbers are not supported.
+
+    Args:
+        a (Union[int, float, list, tuple, Tensor]): Input data.
+        decimals (int): Number of decimal places to round to. Default: 0.
+            If decimals is negative, it specifies the number of positions
+            to the left of the decimal point.
+
+    Returns:
+        Tensor. A tensor of the same type as a, containing the rounded values.
+        The result of rounding a float is a float.
+
+    Raises:
+        TypeError: if the input can not be converted to a tensor or
+            the `decimals` argument is not integer.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.array([-1.3, 0.0, 0.5, 1.5, 2.5])
+        >>> print(np.around(a))
+        [-1. 0. 0. 2. 2.]
+    """
+    a = _to_tensor_origin_dtype(a)
+    if not isinstance(decimals, int):
+        _raise_type_error("decimals must be an integer")
+    if decimals < 0:
+        _raise_value_error("decimals < 0 is not supported now.")
+    if decimals == 0:
+        return _round(a)
+    return F.tensor_div(_round(a * 10**decimals), 10**decimals)
+
+
+def _to_poly1d(x):
+    x = atleast_1d(_to_tensor(x))
+    if F.rank(x) > 1:
+        _raise_value_error('input array must be scalar or 1-d sequence')
+    return x
+
+
+def polyadd(a1, a2):
+    """
+    Finds the sum of two polynomials.
+    Returns the polynomial resulting from the sum of two input polynomials.
+
+    Note:
+        Numpy object poly1d is currently not supported.
+
+    Args:
+        a1 (Union[int, float, bool, list, tuple, Tensor): Input polynomial.
+        a2 (Union[int, float, bool, list, tuple, Tensor): Input polynomial.
+
+    Returns:
+        Tensor, the sum of the inputs.
+
+    Raises:
+        ValueError: if the input array has more than 1 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.polyadd([1, 2], [9, 5, 4]))
+        [9 6 6]
+    """
+    a1 = _to_poly1d(a1)
+    a2 = _to_poly1d(a2)
+    diff_size = a1.size - a2.size
+    if diff_size == 0:
+        return add(a1, a2)
+    if diff_size > 0:
+        return concatenate((a1[:diff_size], add(a1[diff_size:], a2)))
+    return concatenate((a2[:-diff_size], add(a1, a2[-diff_size:])))
+
+
+def polysub(a1, a2):
+    """
+    Difference (subtraction) of two polynomials.
+    Given two polynomials `a1` and `a2`, returns ``a1 - a2``.
+
+    Note:
+        Numpy object poly1d is currently not supported.
+
+    Args:
+        a1 (Union[int, float, bool, list, tuple, Tensor): Minuend polynomial.
+        a2 (Union[int, float, bool, list, tuple, Tensor): Subtrahend polynomial.
+
+    Returns:
+        Tensor, the difference of the inputs.
+
+    Raises:
+        ValueError: if the input array has more than 1 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.polysub([2, 10, -2], [3, 10, -4]))
+        [-1  0  2]
+    """
+    return polyadd(a1, -_to_tensor(a2))
+
+
+def polyval(p, x):
+    """
+    Evaluates a polynomial at specific values.
+    If `p` is of length `N`, this function returns the value:
+    ``p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]``
+    If `x` is a sequence, then ``p(x)`` is returned for each element of `x`. If `x`
+    is another polynomial then the composite polynomial ``p(x(t))`` is returned.
+
+    Note:
+        Numpy object poly1d is currently not supported.
+
+    Args:
+        p (Union[int, float, bool, list, tuple, Tensor): 1D array of polynomial
+            coefficients (including coefficients equal to zero) from highest
+            degree to the constant term.
+        x (Union[int, float, bool, list, tuple, Tensor): A number, an array of
+            numbers, at which to evaluate `p`.
+
+    Returns:
+        Tensor.
+    Raises:
+        ValueError: if `p` has more than 1 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.polyval([3,0,1], 5))
+        76
+    """
+    p = _to_poly1d(p)
+    x = _to_tensor(x)
+    shape = F.shape(x)
+    exp_p = arange(_type_convert(int, p.size) - 1, -1, -1)
+    var_p = (x.reshape(shape + (1,)))**exp_p
+    return F.reduce_sum(p*var_p, -1)
+
+
+def polyder(p, m=1):
+    """
+    Returns the derivative of the specified order of a polynomial.
+
+    Note:
+        Numpy object poly1d is currently not supported.
+
+    Args:
+        p (Union[int, float, bool, list, tuple, Tensor): Polynomial to differentiate.
+            A sequence is interpreted as polynomial coefficients.
+        m (int, optional): Defaults to 1, order of differentiation.
+
+    Returns:
+        Tensor, a new polynomial representing the derivative.
+
+    Raises:
+        ValueError: if `p` has more than 1 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.polyder([1, 1, 1, 1]))
+        [3 2 1]
+    """
+    p = _to_poly1d(p)
+    if m < 0:
+        _raise_value_error('Order of derivative must be positive')
+    if m >= p.size:
+        return _to_tensor([])
+    for _ in range(m):
+        coeff = _to_tensor(F.make_range(_type_convert(int, p.size) - 1, 0, -1))
+        p = p[:-1]*coeff
+    return p
+
+
+def polymul(a1, a2):
+    """
+    Finds the product of two polynomials.
+
+    Note:
+        Numpy object poly1d is currently not supported.
+
+    Args:
+        a1 (Union[int, float, bool, list, tuple, Tensor): Input polynomial.
+        a2 (Union[int, float, bool, list, tuple, Tensor): Input polynomial.
+
+    Returns:
+        Tensor, a new polynomial representing the derivative.
+
+    Raises:
+        ValueError: if the input array has more than 1 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.polyder([1, 1, 1, 1]))
+        [3 2 1]
+    """
+    a1 = _to_poly1d(a1)
+    a2 = _to_poly1d(a2)
+    return convolve(a1, a2)
+
+
+def polyint(p, m=1, k=None):
+    """
+    Returns an antiderivative (indefinite integral) of a polynomial.
+
+    Note:
+        Numpy object poly1d is currently not supported.
+
+    Args:
+        p (Union[int, float, bool, list, tuple, Tensor): Polynomial to integrate. A
+            sequence is interpreted as polynomial coefficients.
+        m (int, optional): Defaults to 1, Order of the antiderivative.
+        k (Union[int, list of int]y, optinoal): Integration constants. They are given
+            in the order of integration: those corresponding to highest-order terms
+            come first. If None (default), all constants are assumed to be zero. If
+            ``m = 1``, a single scalar can be given instead of a list.
+
+    Returns:
+        Tensor, a new polynomial representing the antiderivative.
+
+    Raises:
+        ValueError: if `p` has more than 1 dimensions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.polyint([1, 1, 1]))
+        [0.33333334 0.5        1.         0.        ]
+    """
+    p = _to_poly1d(p)
+    if m < 0:
+        _raise_value_error('Order of derivative must be positive')
+    if m == 0:
+        return p
+    if k is None:
+        k = zeros(m, F.dtype(p))
+    k = atleast_1d(_to_tensor(k))
+    if k.size == 1:
+        k = F.tile(k, (m,))
+    k = F.reshape(k, (m, 1))
+    for i in range(m):
+        coeff = _to_tensor(F.make_range(_type_convert(int, p.size), 0, -1))
+        p = concatenate((true_divide(p, coeff), k[i]))
+    return p
+
+
+@constexpr
+def _get_dtype(x):
+    """Returns the dtype of x."""
+    if isinstance(x, bool):
+        return mstype.bool_
+    if isinstance(x, int):
+        return mstype.int32
+    if isinstance(x, float):
+        return mstype.float32
+    if isinstance(x, typing.Number):
+        return x
+    if isinstance(x, str):
+        t = dtype_map.get(x, None)
+        if t is None:
+            t = dtype_map.get(str(nptype(x)))
+        return t
+    raise TypeError('data type not understood')
+
+
+def result_type(*arrays_and_dtypes):
+    """
+    Returns the type that results from applying the type promotion rules to the arguments.
+
+    Note:
+        The promotion rule is slightly different from original Numpy, but more like
+        jax, due to the preference on ``32-bit`` over ``64-bit`` data types.
+        Complex dtypes are not supported.
+
+    Args:
+        *arrays_and_dtypes (Union[int, float, bool, list, tuple, Tensor, :class:`mindspore.dtype`, str]):
+            The operands of some operation whose result type is needed.
+
+    Returns:
+        :class:`mindspore.dtype`, the result type.
+
+    Raises:
+        TypeError: if the input is not a valid data type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.result_type('i2', np.float32, True))
+        Float32
+    """
+    def get_dtype(x):
+        if isinstance(x, Tensor):
+            return F.dtype(_to_tensor(x))
+        return _get_dtype(x)
+
+    dtype_out = get_dtype(arrays_and_dtypes[0])
+    for i in arrays_and_dtypes[1:]:
+        dtype_out = _promote(dtype_out, get_dtype(i))
+    return dtype_out
+
+
+def unwrap(p, discont=3.141592653589793, axis=-1):
+    """
+    Unwraps by changing deltas between values to ``2*pi`` complement.
+    Unwraps radian phase `p` by changing absolute jumps greater than `discont` to their
+    `2*pi` complement along the given axis.
+
+    Note:
+        For absolute jumps that are within a very close range to pi, unwrapping may be done
+        differently than numpy due to differences in round-off.
+
+    Args:
+        p (Union[int, float, bool, list, tuple, Tensor): Input array.
+        discont (float, optional): Maximum discontinuity between values, default is pi.
+        axis (int, optional): Axis along which unwrap will operate, default is the last axis.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        ValueError: if the axis is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> phase = np.add(np.linspace(0, np.pi, num=5), [0, 0, 0, np.pi, np.pi])
+        >>> print(phase)
+        [0.        0.7853982 1.5707964 5.4977875 6.2831855]
+        >>> print(np.unwrap(phase))
+        [ 0.0000000e+00  7.8539819e-01  1.5707964e+00 -7.8539848e-01 -4.7683716e-07]
+    """
+    p = _to_tensor(p)
+    ndim = F.rank(p)
+    axis = _check_axis_in_range(axis, ndim)
+    dd = diff(p, axis=axis)
+    ddmod = remainder(add(dd, pi), 2*pi) - pi
+    ddmod = where_(F.logical_and(ddmod == -pi, dd > 0), pi, ddmod)
+    ph_correct = ddmod - dd
+    ph_correct = where_(absolute(dd) < discont, 0, ph_correct)
+    slice_all = _list_comprehensions(F.rank(p), F.make_slice(None, None, None), True)
+    slice0 = _tuple_setitem(slice_all, axis, F.make_slice(0, 1, None))
+    slice1 = _tuple_setitem(slice_all, axis, F.make_slice(1, None, None))
+    head = p[slice0]
+    tail = add(p[slice1], cumsum(ph_correct, axis))
+    return concatenate((head, tail), axis=axis)
+
+
+def cumprod(a, axis=None, dtype=None):
+    """
+    Returns the cumulative product of elements along a given axis.
+
+    Note:
+        Numpy argument `out` is not supported.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        axis (int, optional): Axis along which the cumulative product is computed.
+            By default the input is flattened.
+        dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If the input can not be converted to tensor or `axis` is not integer.
+        ValueError: If axis is out of range.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([1, 2, 3])
+        >>> print(np.cumprod(x))
+        [1 2 6]
+    """
+    a = _to_tensor_origin_dtype(a)
+    original_dtype = F.dtype(a)
+
+    if axis is not None and not isinstance(axis, int):
+        _raise_type_error("integer axis is expected, but got", axis)
+    if axis is None:
+        a = a.ravel()
+        axis = 0
+    _check_axis_in_range(axis, a.ndim)
+
+    a = a.astype('float32') if original_dtype != mstype.float64 else a
+    if dtype is None:
+        if original_dtype in [mstype.int8, mstype.int16, mstype.bool_]:
+            dtype = mstype.int32
+        elif original_dtype in [mstype.uint8, mstype.uint16]:
+            dtype = mstype.uint32
+        else:
+            dtype = original_dtype
+    return _cumprod_default(a, axis).astype(dtype, copy=False)
+
+
+def _process_index(index, dims, mode='raise'):
+    """Generates index (Tensor) according to different modes."""
+    if mode == "raise":
+        _raise_unimplemented_error("'raise' mode is not implemented")
+    if mode not in ['clip', 'wrap']:
+        _raise_value_error("invalid mode. Expected 'wrap' or 'clip'")
+    ori_shape = index.shape
+    tup = ()
+    for i, idx in enumerate(index):
+        d = dims[i]
+        if mode == "clip":
+            idx = clip(idx, 0, d - 1)
+        elif mode == "wrap":
+            idx = remainder(idx, d)
+        idx = F.expand_dims(idx, 0) if idx.ndim < 1 else idx
+        tup += (idx,)
+    return P.Concat(0)(tup).reshape(ori_shape)
+
+
+def _get_strides(dims, order='C'):
+    """Generates strides (1-D tensor) according to `dims` (1-D tensor)."""
+    if order not in ['C', 'F']:
+        _raise_value_error("invalid order. Expected 'C' or 'F'")
+    tup = (_to_tensor([1]),)
+    dims = dims[1:][::-1] if order == 'C' else dims[:-1]
+    for d in dims:
+        tensor = tup[-1] * d
+        if tensor.ndim < 1:
+            tensor = F.expand_dims(tensor, 0)
+        tup += (tensor,)
+    tup = tup[::-1] if order == 'C' else tup
+    return P.Concat(0)(tup)
+
+
+def ravel_multi_index(multi_index, dims, mode='clip', order='C'):
+    """
+    Converts a tuple of index arrays into an array of flat indices,
+    applying boundary modes to the multi-index.
+
+    Note:
+        `raise` mode is not supported. Default mode is `clip`.
+
+    Args:
+        multi_index (tuple of array_like):
+            A tuple of integer arrays, one array for each dimension.
+        dims (Union[int, tuple of ints]): The shape of array into which the indices from multi_index apply.
+        mode ({`wrap`, `clip`}): Specifies how out-of-bounds indices are handled. Default: `clip`.
+            - `wrap`: wrap around
+            - `clip`: clip to the range
+            In `clip` mode, a negative index which would normally wrap will clip to 0 instead.
+        order ({`C`, `F`}): Determines whether the multi-index should be viewed as indexing in
+            row-major (C-style) or column-major (Fortran-style) order.
+
+    Returns:
+        Raveled_indices array. An array of indices into the flattened version of an array of dimensions dims.
+
+    Raises:
+        TypeError: If `multi_index` or `dims` can not be converted to tensor or
+            `dims` is not a sequence of integer values.
+        ValueError: If the length of `multi_index` and that of `dims` are not equal.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> arr = np.array([[3, 6, 6], [4, 5, 1]])
+        >>> output = np.ravel_multi_index(arr, (7, 6))
+        >>> print(output)
+        [22. 41. 37.]
+    """
+    if isinstance(dims, int):
+        dims = (dims,)
+    dims = _to_tensor(dims)
+    if dims.ndim > 1:
+        _raise_type_error("only integer scalar arrays can be converted to a scalar index.")
+    multi_index = _to_tensor(multi_index)
+    if len(multi_index) != len(dims):
+        _raise_value_error("parameter multi_index must be a sequence of length ", len(dims))
+
+    multi_index = _process_index(multi_index, dims, mode)
+    strides = _get_strides(dims, order)
+    s_shape = strides.shape + _list_comprehensions(multi_index.ndim - 1, 1, True)
+    strides = _broadcast_to_shape(strides.reshape(s_shape), multi_index.shape)
+    return sum_((multi_index * strides).astype('float32'), axis=0)
+
+
+def _vector_norm(x, ord, axis, keepdims): # pylint: disable=redefined-builtin
+    """Returns norm of a vector."""
+    if _in(ord, ('fro', 'nuc')):
+        _raise_value_error('Frobenius norm and nuclear norm are only defined for vectors')
+    if ord is None:
+        ord = 2
+    if ord == inf:
+        res = P.ReduceMax(keepdims)(absolute(x), axis)
+    elif ord == -inf:
+        res = P.ReduceMin(keepdims)(absolute(x), axis)
+    elif ord == 0:
+        res = P.ReduceSum(keepdims)(F.not_equal(x, 0).astype(mstype.float32), axis)
+    else:
+        res = power(P.ReduceSum(keepdims)(power(absolute(x), ord), axis), 1./ord)
+    return res
+
+
+def _matrix_norm(x, ord, axis, keepdims): # pylint: disable=redefined-builtin
+    """Returns norm of a matrix."""
+    if ord == 0:
+        _raise_value_error('for 0 axis, norm is defined only for 2-D matrices')
+    if ord == 'nuc':
+        _raise_unimplemented_error('nuclear norm is not implemented')
+    if _in(ord, (2, -2)):
+        _raise_unimplemented_error('2-norm is not implemented for matrices')
+    if _in(ord, (None, 'fro')):
+        res = F.sqrt(P.ReduceSum(keepdims)(F.square(x), axis))
+    else:
+        axis0, axis1 = axis
+        if not keepdims:
+            if _abs(ord) == inf and axis0 > axis1:
+                axis0 -= 1
+            elif _abs(ord) == 1 and axis1 > axis0:
+                axis1 -= 1
+        if ord == inf:
+            res = P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
+        elif ord == -inf:
+            res = P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
+        elif ord == 1:
+            res = P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
+        elif ord == -1:
+            res = P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
+        else:
+            return _raise_value_error('invalid norm order for matrices')
+    return res
+
+
+def norm(x, ord=None, axis=None, keepdims=False): # pylint: disable=redefined-builtin
+    """
+    Matrix or vector norm.
+    This function is able to return one of eight different matrix norms, or one of an
+    infinite number of vector norms (described below), depending on the value of the
+    ord parameter.
+
+    Note:
+        Nuclear norm and 2-norm are not supported for matrices.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): Input array. If `axis` is None,
+            `x` must be 1-D or 2-D, unless `ord` is None. If both `axis` and `ord` are None,
+            the 2-norm of ``x.ravel`` will be returned.
+        ord (Union[None, 'fro', 'nuc', inf, -inf, int, float], optional): Order of the norm.
+            inf means numpy’s inf object. The default is None.
+        axis (Union[None, int, 2-tuple of ints], optional): If `axis` is an integer, it
+            specifies the axis of `x` along which to compute the vector norms. If `axis` is
+            a 2-tuple, it specifies the axes that hold 2-D matrices, and the matrix norms of
+            these matrices are computed. If `axis` is None then either a vector norm (when x
+            is 1-D) or a matrix norm (when `x` is 2-D) is returned. The default is None.
+        keepdims (boolean, optional): If this is set to True, the axes which are normed over
+            are left in the result as dimensions with size one. With this option the result
+            will broadcast correctly against the original `x`.
+
+    Returns:
+        Tensor, norm of the matrix or vector(s).
+
+    Raises:
+        ValueError: If the norm order is not defined.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.norm(np.arange(9)))
+        14.282857
+    """
+    if not isinstance(ord, (int, float)) and not _in(ord, (None, 'fro', 'nuc', inf, -inf)):
+        _raise_value_error('invalid value for `ord`')
+    x = _to_tensor(x)
+    ndim = F.rank(x)
+    if axis is None:
+        if ord is None:
+            x = x.ravel()
+        if F.rank(x) not in (1, 2):
+            _raise_value_error('for None axis, array must a vector or a 2-D matrix')
+        axis = F.make_range(F.rank(x))
+    axis = _check_axis_valid(axis, F.rank(x))
+
+    if len(axis) == 1:
+        res = _vector_norm(x, ord, axis, keepdims)
+    elif len(axis) == 2:
+        res = _matrix_norm(x, ord, axis, keepdims)
+    else:
+        return _raise_value_error('invalid number of dimensions to norm')
+
+    if keepdims and ndim > F.rank(res):
+        res = _expand(res, ndim)
+    return res
+
+
+def bitwise_and(x1, x2, dtype=None):
+    """
+    Computes the bit-wise AND of two arrays element-wise.
+    Computes the bit-wise AND of the underlying binary representation of the integers in
+    the input arrays. This ufunc implements the C/Python operator &.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+
+    Args:
+        x1 (Tensor): Input array.
+        x2 (Tensor): Input array. Only integer and boolean types are handled. If
+            ``x1.shape != x2.shape``, they must be broadcastable to a common shape (which becomes
+            the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.bitwise_and(13, 17))
+        1
+    """
+    return _apply_tensor_op(F.bitwise_and, x1, x2, dtype=dtype)
+
+
+def bitwise_or(x1, x2, dtype=None):
+    """
+    Computes the bit-wise OR of two arrays element-wise.
+    Computes the bit-wise OR of the underlying binary representation of the integers in
+    the input arrays. This ufunc implements the C/Python operator |.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+
+    Args:
+        x1 (Tensor): Input array.
+        x2 (Tensor): Input array. Only integer and boolean types are handled. If
+            ``x1.shape != x2.shape``, they must be broadcastable to a common shape (which becomes
+            the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.bitwise_or(13, 16))
+        29
+    """
+    return _apply_tensor_op(F.bitwise_or, x1, x2, dtype=dtype)
+
+
+def bitwise_xor(x1, x2, dtype=None):
+    """
+    Computes the bit-wise XOR of two arrays element-wise.
+    Computes the bit-wise XOR of the underlying binary representation of the integers in
+    the input arrays. This ufunc implements the C/Python operator ^.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+
+    Args:
+        x1 (Tensor): Input array.
+        x2 (Tensor): Input array. Only integer and boolean types are handled. If
+            ``x1.shape != x2.shape``, they must be broadcastable to a common shape (which becomes
+            the shape of the output).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.bitwise_xor(13, 17))
+        28
+    """
+    return _apply_tensor_op(F.bitwise_xor, x1, x2, dtype=dtype)
+
+
+def invert(x, dtype=None):
+    """
+    Computes bit-wise inversion, or bit-wise NOT, element-wise.
+    Computes the bit-wise NOT of the underlying binary representation of the integers in
+    the input arrays. This ufunc implements the C/Python operator ~.
+    For signed integer inputs, the two’s complement is returned. In a two’s-complement system
+    negative numbers are represented by the two’s complement of the absolute value. This is
+    the most common method of representing signed integers on computers
+    `[1] <https://en.wikipedia.org/wiki/Two’s_complement>`. A N-bit two’s-complement system
+    can represent every integer in the range ``-2^{N-1}`` to ``+2^{N-1}-1``.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+        Supported dtypes on Ascend: np.int16, np.uint16.
+
+    Args:
+        x (Tensor): Only integer and boolean types are handled.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.invert(np.array(13, dtype=np.uint16)))
+        65522
+    """
+    return _apply_tensor_op(F.invert, x, dtype=dtype)
+
+
+def rint(x, dtype=None):
+    """
+    Rounds elements of the array to the nearest integer.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Output tensor is same shape and type as x. This is a scalar if x is a scalar.
+
+    Raises:
+        TypeError: If `x` can not be converted to tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([-1.7, -1.5, 0.2, 1.5, 1.7, 2.0])
+        >>> print(np.rint(x))
+        [-2. -2. 0. 2. 2. 2.]
+    """
+    return _apply_tensor_op(_round, x, dtype=dtype)
+
+
+def correlate(a, v, mode='valid'):
+    """
+    Cross-correlation of two 1-dimensional sequences.
+
+    This function computes the correlation as generally defined in signal processing texts:
+
+    :math:`c_{av}[k] = sum_n a[n+k] * conj(v[n])`
+
+    with `a` and `v` sequences being zero-padded where necessary and conj being the conjugate.
+
+    Note:
+        Currently, complex numbers are not supported.
+
+    Args:
+        a (Union[list, tuple, Tensor]): First input sequence.
+        v (Union[list, tuple, Tensor]): Second input sequence.
+        mode (str, optional): By default, mode is `\'valid\'`.
+            If `mode` is `\'valid\'`, it returns output of length :math:`max(M, N) - min(M, N) + 1`.
+            The convolution product is only given for points where the signals overlap
+            completely. Values outside the signal boundary have no effect.
+            If `mode` is `\'full\'`, it returns the convolution at each point of overlap, with
+            an output shape of :math:`(N + M - 1,)`.
+            At the end-points of the convolution, the signals do not overlap completely,
+            and boundary effects may be seen.
+            If `mode` is `\'same\'`, it returns output of length :math:`max(M, N)`. Boundary
+            effects are still visible.
+
+    Returns:
+        Tensor. Discrete cross-correlation of `a` and `v`.
+
+    Raises:
+        TypeError: if the inputs can not be converted to tensor.
+        ValueError: if `a` and `v` are empty or have wrong dimensions
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> output = np.correlate([1, 2, 3], [0, 1, 0.5])
+        >>> print(output)
+        [3.5]
+        >>> output = np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
+        >>> print(output)
+        [2.  3.5 3. ]
+    """
+    a, v = _to_tensor(a, v)
+    if a.ndim != 1 or v.ndim != 1:
+        _raise_value_error("only support 1-dimensional inputs.")
+    if a.size == 0 or v.size == 0:
+        _raise_value_error("Inputs cannot be empty.")
+
+    promote_dtype = _promote(a.dtype, v.dtype)
+    # P.Conv2D requires that the two tensors have the same data type.
+    # If the promote data type is not supported, it will be converted to float32.
+    # The supported dtype list may vary in the future.
+    if promote_dtype not in [mstype.float32, mstype.float16]:
+        promote_dtype = mstype.float32
+    a = a.astype(promote_dtype)
+    v = v.astype(promote_dtype)
+    if a.size < v.size:
+        a, v = v, a
+        return _compute_1D_conv(a, v, mode)[::-1]
+    return _compute_1D_conv(a, v, mode)
+
+
+def _compute_1D_conv(a, v, mode):
+    """Returns a 1-D sequence which is the cross-correlate of two 1-D sequences (`a` and `v`)."""
+    v_size = F.shape_mul(v.shape)
+    if mode not in ('same', 'full', 'valid'):
+        _raise_value_error("mode must be one of ['full', 'same', 'valid']")
+    if v_size > 1:
+        if mode == 'same':
+            pad_left = _to_tensor(_list_comprehensions(v_size // 2, 0.0, True))
+            pad_right = _to_tensor(_list_comprehensions(v_size - v_size // 2 - 1, 0.0, True))
+            a = P.Concat(0)((pad_left, a, pad_right))
+        elif mode == 'full':
+            pad = _to_tensor(_list_comprehensions(v_size - 1, 0.0, True))
+            a = P.Concat(0)((pad, a, pad))
+    a = a.reshape(1, 1, 1, a.size)
+    v = v.reshape(1, 1, 1, v.size)
+    _conv = P.Conv2D(1, (1, v.size))
+    return _conv(a, v).reshape(-1)
+
+
+def radians(x, dtype=None):
+    """
+    Converts angles from degrees to radians.
+
+    Args:
+        x (Tensor): Angles in degrees.
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor, the corresponding radian values. This is a tensor scalar if `x`
+        is a tensor scalar.
+
+    Raises:
+        TypeError: if `x` is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.asarray([1, 2, 3, -4, -5])
+        >>> output = np.radians(x)
+        >>> print(output)
+        [ 0.01745329  0.03490658  0.05235988 -0.06981317 -0.08726647]
+    """
+    return deg2rad(x, dtype=dtype)

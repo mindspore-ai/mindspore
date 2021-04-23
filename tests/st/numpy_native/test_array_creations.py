@@ -811,6 +811,127 @@ def test_vander():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_bartlett():
+    for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
+        match_all_arrays(mnp.bartlett(i), onp.bartlett(i), error=3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_blackman():
+    for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
+        match_all_arrays(mnp.blackman(i), onp.blackman(i), error=3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hamming():
+    for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
+        match_all_arrays(mnp.hamming(i), onp.hamming(i), error=3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hanning():
+    for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
+        match_all_arrays(mnp.hanning(i), onp.hanning(i), error=3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_triu_indices():
+    m = rand_int().tolist()
+    n = rand_int().tolist()
+    k = rand_int().tolist()
+    mnp_res = mnp.triu_indices(n, k, m)
+    onp_res = onp.triu_indices(n, k, m)
+    match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tril_indices():
+    m = rand_int().tolist()
+    n = rand_int().tolist()
+    k = rand_int().tolist()
+    mnp_res = mnp.tril_indices(n, k, m)
+    onp_res = onp.tril_indices(n, k, m)
+    match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_triu_indices_from():
+    m = int(rand_int().tolist())
+    n = int(rand_int().tolist())
+    t = mnp.asarray(rand_int(m, n).tolist())
+    k = rand_int().tolist()
+    mnp_res = mnp.triu_indices_from(t, k)
+    onp_res = onp.triu_indices_from(t.asnumpy(), k)
+    match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tril_indices_from():
+    m = int(rand_int().tolist())
+    n = int(rand_int().tolist())
+    t = mnp.asarray(rand_int(m, n).tolist())
+    k = rand_int().tolist()
+    mnp_res = mnp.tril_indices_from(t, k)
+    onp_res = onp.tril_indices_from(t.asnumpy(), k)
+    match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_histogram_bin_edges():
+    x = onp.random.randint(-10, 10, 10)
+    for bins in [(1, 2, 3), [2], 1, 5, 10]:
+        # pylint: disable=redefined-builtin
+        for range in [None, (3, 3), (2, 20)]:
+            match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=bins, range=range, error=3)
+    match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, onp.arange(5))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_asarray_exception():
     with pytest.raises(TypeError):
         mnp.asarray({1, 2, 3})
@@ -836,3 +957,90 @@ def test_linspace_exception():
 def test_empty_like_exception():
     with pytest.raises(ValueError):
         mnp.empty_like([[1, 2, 3], [4, 5]])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pad():
+    x_np = onp.random.random([2, 3, 4]).astype("float32")
+    x_ms = mnp.asarray(x_np.tolist())
+
+    # pad constant
+    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)))
+    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)))
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 3), (4, 5)), constant_values=((3, 4), (5, 6), (7, 8)))
+    onp_res = onp.pad(x_np, ((1, 1), (2, 3), (4, 5)), constant_values=((3, 4), (5, 6), (7, 8)))
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad statistic
+    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)), mode="mean", stat_length=((1, 2), (2, 10), (3, 4)))
+    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)), mode="mean", stat_length=((1, 2), (2, 10), (3, 4)))
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad edge
+    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)), mode="edge")
+    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)), mode="edge")
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad wrap
+    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)), mode="wrap")
+    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)), mode="wrap")
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad linear_ramp
+    mnp_res = mnp.pad(x_ms, ((1, 3), (5, 2), (3, 0)), mode="linear_ramp", end_values=((0, 10), (9, 1), (-10, 99)))
+    onp_res = onp.pad(x_np, ((1, 3), (5, 2), (3, 0)), mode="linear_ramp", end_values=((0, 10), (9, 1), (-10, 99)))
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+
+def pad_with_msfunc(vector, pad_width, iaxis, kwargs):
+    pad_value = kwargs.get('padder', 10)
+    vector[:pad_width[0]] = pad_value
+    vector[-pad_width[1]:] = pad_value
+    return vector
+
+
+def pad_with_npfunc(vector, pad_width, iaxis, kwargs):
+    pad_value = kwargs.get('padder', 10)
+    vector[:pad_width[0]] = pad_value
+    vector[-pad_width[1]:] = pad_value
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pad_gpu():
+    x_np = onp.random.random([2, 1, 4, 3]).astype("float32")
+    x_ms = mnp.asarray(x_np.tolist())
+
+    # pad symmetric odd
+    mnp_res = mnp.pad(x_ms, ((10, 3), (5, 2), (3, 0), (2, 6)), mode='symmetric', reflect_type='odd')
+    onp_res = onp.pad(x_np, ((10, 3), (5, 2), (3, 0), (2, 6)), mode='symmetric', reflect_type='odd')
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad symmetric even
+    mnp_res = mnp.pad(x_ms, ((10, 13), (5, 12), (3, 0), (2, 6)), mode='symmetric', reflect_type='even')
+    onp_res = onp.pad(x_np, ((10, 13), (5, 12), (3, 0), (2, 6)), mode='symmetric', reflect_type='even')
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad reflect odd
+    mnp_res = mnp.pad(x_ms, ((10, 3), (5, 2), (3, 0), (2, 6)), mode='reflect', reflect_type='odd')
+    onp_res = onp.pad(x_np, ((10, 3), (5, 2), (3, 0), (2, 6)), mode='reflect', reflect_type='odd')
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad reflect even
+    mnp_res = mnp.pad(x_ms, ((10, 13)), mode='reflect', reflect_type='even')
+    onp_res = onp.pad(x_np, ((10, 13)), mode='reflect', reflect_type='even')
+    match_all_arrays(mnp_res, onp_res, error=1e-5)
+
+    # pad func
+    x_np = onp.random.random([2, 4]).astype("float32")
+    x_ms = mnp.asarray(x_np.tolist())
+    mnp_res = mnp.pad(x_ms, ((5, 5)), mode=pad_with_msfunc, padder=99)
+    onp_res = onp.pad(x_np, ((5, 5)), mode=pad_with_npfunc, padder=99)
+    match_all_arrays(mnp_res, onp_res, error=1e-5)

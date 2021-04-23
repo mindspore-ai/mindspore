@@ -398,3 +398,91 @@ def test_logical_not():
         expected = onp_logical_not(arr)
         actual = mnp_logical_not(to_tensor(arr))
         onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_array_equal():
+    a = [0, 1, 2, float('inf'), float('nan')]
+    b = [0, 1, 2, float('inf'), float('nan')]
+    match_all_arrays(mnp.array_equal(a, b), onp.array_equal(a, b))
+    a = [0, 1, 2]
+    b = [[0, 1, 2], [0, 1, 2]]
+    assert mnp.array_equal(a, b) == onp.array_equal(a, b)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_array_equiv():
+    a = [0, 1, 2, float('inf'), float('nan')]
+    b = [0, 1, 2, float('inf'), float('nan')]
+    match_all_arrays(mnp.array_equal(a, b), onp.array_equal(a, b))
+    a = [0, 1, 2]
+    b = [[0, 1, 2], [0, 1, 2]]
+    assert mnp.array_equal(a, b) == onp.array_equal(a, b)
+
+
+def mnp_signbit(*arrs):
+    arr1 = arrs[0]
+    arr2 = arrs[1]
+    a = mnp.signbit(arr1)
+    b = mnp.signbit(arr2, dtype=mnp.bool_)
+    return a, b
+
+
+def onp_signbit(*arrs):
+    arr1 = arrs[0]
+    arr2 = arrs[1]
+    a = onp.signbit(arr1)
+    b = onp.signbit(arr2, dtype='bool')
+    return a, b
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_signbit():
+    onp_arrs = [onp.arange(-10, 10).astype('float32'), onp.arange(-10, 10).astype('int32')]
+    mnp_arrs = [mnp.arange(-10, 10).astype('float32'), mnp.arange(-10, 10).astype('int32')]
+    for actual, expected in zip(mnp_signbit(*mnp_arrs), onp_signbit(*onp_arrs)):
+        onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
+
+
+def mnp_sometrue(x):
+    a = mnp.sometrue(x)
+    b = mnp.sometrue(x, axis=0)
+    c = mnp.sometrue(x, axis=(0, -1))
+    d = mnp.sometrue(x, axis=(0, 1), keepdims=True)
+    e = mnp.sometrue(x, axis=(0, 1), keepdims=-1)
+    f = mnp.sometrue(x, axis=(0, 1), keepdims=0)
+    return a, b, c, d, e, f
+
+
+def onp_sometrue(x):
+    a = onp.sometrue(x)
+    b = onp.sometrue(x, axis=0)
+    c = onp.sometrue(x, axis=(0, -1))
+    d = onp.sometrue(x, axis=(0, 1), keepdims=True)
+    e = onp.sometrue(x, axis=(0, 1), keepdims=-1)
+    f = onp.sometrue(x, axis=(0, 1), keepdims=0)
+    return a, b, c, d, e, f
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_sometrue():
+    onp_arr = onp.full((3, 2), [True, False])
+    mnp_arr = to_tensor(onp_arr)
+    for actual, expected in zip(mnp_sometrue(mnp_arr), onp_sometrue(onp_arr)):
+        onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())

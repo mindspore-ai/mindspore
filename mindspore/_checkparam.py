@@ -728,6 +728,15 @@ class Validator:
                 raise ValueError(f"axis {axes} has shape entry {s} > 1, cannot be squeezed.")
         return tuple(new_shape)
 
+    @staticmethod
+    def check_axis_in_range(axis, ndim):
+        """Checks axes are with the bounds of ndim"""
+        if not isinstance(axis, int):
+            raise TypeError(f'axes should be integers, not {type(axis)}')
+        if not -ndim <= axis < ndim:
+            raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
+        return axis % ndim
+
 
 def check_input_format(input_param):
     """Judge input format."""

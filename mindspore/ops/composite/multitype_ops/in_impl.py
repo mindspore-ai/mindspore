@@ -130,3 +130,33 @@ def _tensor_in_tuple(x, y):
        bool, if x in y return true, x not in y return false.
    """
     return compile_utils.tensor_in_sequence(x, y)
+
+
+@in_.register("mstype", "List")
+def _mstype_in_list(x, y):
+    """
+    Determine if a mindspore type is in a list.
+
+    Args:
+       x: mstype
+       y: List
+
+    Returns:
+       bool, if x in y return true, x not in y return false.
+   """
+    return const_utils.check_in_sequence(x, y)
+
+
+@in_.register("mstype", "Tuple")
+def _mstype_in_tuple(x, y):
+    """
+    Determine if a mindspore type is in a tuple.
+
+    Args:
+       x: mstype
+       y: Tuple
+
+    Returns:
+       bool, if x in y return true, x not in y return false.
+   """
+    return const_utils.check_in_sequence(x, y)

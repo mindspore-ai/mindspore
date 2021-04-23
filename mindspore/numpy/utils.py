@@ -13,11 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """internal utility functions"""
+import types
+
 from ..common import Tensor
 from ..ops import functional as F
 from ..common import dtype as mstype
 
-from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert
+from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
+    _tuple_setitem, _callable_const
 
 
 def _deep_list(array_like):
@@ -154,3 +157,52 @@ def _get_dtype_from_scalar(*input_numbers):
 def _isnan(x):
     """Computes isnan."""
     return F.not_equal(x, x)
+
+
+def _convert_bool_to_int(tensor):
+    """Convert tensor with bool type to int32."""
+    if tensor.dtype == mstype.bool_:
+        return tensor.astype("int32")
+    return tensor
+
+
+def _slice_along_axis(f, axis, slice_start, slice_end):
+    """
+    Slice a tensor along a given axis
+
+    Args:
+        f (Tensor): Input Tensor.
+        axis (int): Specified axis.
+        slice_start (int): The start of the slice.
+        slice_end (int): The end of the slice.
+
+    Returns:
+        Sliced tensor.
+    """
+    index_start = (0,) * f.ndim
+    index_end = f.shape
+    slice_size = slice_end - slice_start
+    index_start = _tuple_setitem(index_start, axis, slice_start)
+    index_end = _tuple_setitem(index_end, axis, slice_size)
+    return F.tensor_slice(f, index_start, index_end)
+
+
+def _to_tensor_origin_dtype(*args):
+    """Returns each input as Tensor and remains original dtype."""
+    res = []
+    for arg in args:
+        if isinstance(arg, (int, float, bool, list, tuple)):
+            arg = _type_convert(Tensor, arg)
+        elif not isinstance(arg, Tensor):
+            _raise_type_error("Expect input to be array like.")
+        res.append(arg)
+    if len(res) == 1:
+        return res[0]
+    return res
+
+
+def _callable(tensor, obj):
+    """Returns True if `obj` is a function."""
+    if F.isconstant(tensor):
+        return isinstance(obj, types.FunctionType)
+    return _callable_const(F.typeof(obj))

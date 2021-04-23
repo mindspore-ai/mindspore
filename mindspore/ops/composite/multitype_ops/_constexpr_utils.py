@@ -778,9 +778,8 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
 
 @constexpr
 def mstype_eq(x, y):
-    if x == y:
-        return True
-    return False
+    """Determine whether the input `x` equals `y`."""
+    return x == y
 
 
 @constexpr
@@ -841,3 +840,26 @@ def tuple_slice(tup, start, end):
 @constexpr
 def expanded_shape(shape, expand_size):
     return (1,)*expand_size + shape
+
+
+@constexpr
+def sequence_mul_int(seq, number):
+    """
+    Make a new list with native python syntax.
+
+    Args:
+        seq (Union[list, tuple]): Input sequence.
+        y (int): Input number.
+
+    Returns:
+        New sequence, has the same type as `seq`.
+    """
+    if not isinstance(number, int):
+        raise TypeError(f"can't multiply sequence by non-int of type {type(number)}")
+    return seq * number
+
+
+@constexpr
+def check_in_sequence(x, y):
+    """Determine whether the input `x` is in the sequence `y`."""
+    return x in y

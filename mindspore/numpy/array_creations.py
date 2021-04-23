@@ -13,10 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """array operations, the function docs are adapted from Numpy API."""
+import math
+import operator
+
 import numpy as onp
 
 from ..common import Tensor
 from ..common import dtype as mstype
+from ..ops import operations as P
 from ..ops import functional as F
 from ..ops.primitive import constexpr
 from ..nn.layer.basic import tril as nn_tril
@@ -25,13 +29,15 @@ from .._c_expression import Tensor as Tensor_
 
 from .utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, \
     _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar, \
-    _expand
+    _expand, _to_tensor, _slice_along_axis, _callable
 from .utils_const import _raise_value_error, _empty, _check_axis_valid, _max, _min, \
     _check_same_type, _is_shape_empty, _check_shape, _check_dtype, _tile_size, _abs, \
     _raise_type_error, _expanded_shape, _check_is_float, _iota, _type_convert, \
-    _canonicalize_axis, _list_comprehensions, _ceil, _tuple_getitem, _tuple_slice
-from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape, broadcast_to
-from .dtypes import nan
+    _canonicalize_axis, _list_comprehensions, _ceil, _tuple_slice, _raise_unimplemented_error, \
+    _tuple_setitem
+from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
+    apply_along_axis, where
+from .dtypes import nan, pi
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -39,6 +45,9 @@ MAX_NUMPY_DIMS = 32
 # All types that can be accepted as "array_like" parameters in graph mode.
 ARRAY_TYPES = (int, float, bool, list, tuple, Tensor)
 
+_reduce_min_keepdims = P.ReduceMin(True)
+_reduce_max_keepdims = P.ReduceMax(True)
+_reduce_mean_keepdims = P.ReduceMean(True)
 
 def array(obj, dtype=None, copy=True, ndmin=0):
     """
@@ -254,6 +263,7 @@ def copy_(a):
     a = a / ones_like(a)
     a = a.astype(origin_dtype)
     return a
+
 
 def ones(shape, dtype=mstype.float32):
     """
@@ -626,7 +636,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
                          num, endpoint=endpoint, dtype=dtype, axis=axis)
     shape = F.shape(bases)
     axis = axis + F.rank(bases) + 1 if axis < 0 else axis
-    expanded_shape = _tuple_getitem(shape, axis, False) + (1,) + _tuple_getitem(shape, axis)
+    expanded_shape = _tuple_slice(shape, None, axis) + (1,) + _tuple_slice(shape, axis, None)
     bases = F.reshape(bases, expanded_shape)
     start = F.reshape(start, expanded_shape)
     res = F.tensor_mul(F.tensor_pow(bases, exponents), start)
@@ -1768,7 +1778,7 @@ def indices(dimensions, dtype=mstype.int32, sparse=False):
 
     Args:
         dimensions (tuple or list of ints): The shape of the grid.
-        dtype (data type, optional): Data type of the result.
+        dtype (:class:`mindspore.dtype`, optional): Data type of the result.
         sparse (boolean, optional): Defaults to False. Return a sparse
             representation of the grid instead of a dense representation.
 
@@ -1801,3 +1811,724 @@ def indices(dimensions, dtype=mstype.int32, sparse=False):
     for d in dimensions:
         grids += (arange(d, dtype=dtype),)
     return meshgrid(*grids, sparse=sparse, indexing='ij')
+
+
+def _check_window_size(x):
+    """Returns True if window size is greater than 1."""
+    if not isinstance(x, int):
+        _raise_type_error('the number fo points should be an int')
+    return x > 1
+
+
+def bartlett(M):
+    """
+    Returns the Bartlett window.
+    The Bartlett window is very similar to a triangular window, except that the
+    end points are at zero. It is often used in signal processing for tapering a
+    signal, without generating too much ripple in the frequency domain.
+
+    Args:
+        M (int): Number of points in the output window. If zero or less, an empty
+            array is returned.
+
+    Returns:
+        Tensor, the triangular window, with the maximum value normalized to one
+        (the value one appears only if the number of samples is odd), with the
+        first and last samples equal to zero.
+
+    Raises:
+        TypeError: if `M` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.bartlett(12))
+        [0.         0.18181819 0.36363637 0.5454545  0.72727275 0.9090909
+        0.9090909  0.72727275 0.5454545  0.36363637 0.18181819 0.        ]
+    """
+    if not _check_window_size(M):
+        return ones(_max(0, M))
+    n = _iota(mstype.float32, M)
+    m_minus_one = _to_tensor(M - 1)
+    return _to_tensor(1) - F.absolute(_to_tensor(2)*n - m_minus_one)/m_minus_one
+
+
+def blackman(M):
+    """
+    Returns the Blackman window.
+    The Blackman window is a taper formed by using the first three terms of a
+    summation of cosines. It was designed to have close to the minimal leakage
+    possible. It is close to optimal, only slightly worse than a Kaiser window.
+
+    Args:
+        M (int): Number of points in the output window. If zero or less, an empty
+            array is returned.
+
+    Returns:
+        Tensor, the window, with the maximum value normalized to one (the value
+        one appears only if the number of samples is odd).
+
+    Raises:
+        TypeError: if `M` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.hamming(12))
+        [0.08000001 0.15302339 0.34890914 0.6054648  0.841236   0.9813669
+        0.9813668  0.8412359  0.6054647  0.34890908 0.15302327 0.08000001]
+    """
+    if not _check_window_size(M):
+        return ones(_max(0, M))
+    n_doubled = arange(1 - M, M, 2, dtype=mstype.float32)
+    return (_to_tensor(0.42) + _to_tensor(0.5)*F.cos(_to_tensor(pi/(M - 1))*n_doubled) +
+            _to_tensor(0.08)*F.cos(_to_tensor(2*pi/(M - 1))*n_doubled))
+
+
+def hamming(M):
+    """
+    Returns the Hamming window.
+    The Hamming window is a taper formed by using a weighted cosine.
+
+    Args:
+        M (int): Number of points in the output window. If zero or less, an empty
+            array is returned.
+
+    Returns:
+        Tensor, the window, with the maximum value normalized to one (the value
+        one appears only if the number of samples is odd).
+
+    Raises:
+        TypeError: if `M` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.hamming(12))
+        [0.08000001 0.15302339 0.34890914 0.6054648  0.841236   0.9813669
+        0.9813668  0.8412359  0.6054647  0.34890908 0.15302327 0.08000001]
+    """
+    if not _check_window_size(M):
+        return ones(_max(0, M))
+    n = _iota(mstype.float32, M)
+    return _to_tensor(0.54) - _to_tensor(0.46)*F.cos(_to_tensor(2*pi/(M - 1))*n)
+
+
+def hanning(M):
+    """
+    Returns the Hanning window.
+    The Hanning window is a taper formed by using a weighted cosine.
+
+    Args:
+        M (int): Number of points in the output window. If zero or less, an empty
+            array is returned.
+
+    Returns:
+        Tensor, the window, with the maximum value normalized to one (the value
+        one appears only if the number of samples is odd).
+
+    Raises:
+        TypeError: if `M` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.hanning(12))
+        [0.         0.07937324 0.29229254 0.5711574  0.8274304  0.9797465
+        0.97974646 0.82743025 0.5711573  0.29229245 0.07937312 0.        ]
+    """
+    if not _check_window_size(M):
+        return ones(_max(0, M))
+    n = _iota(mstype.float32, M)
+    return _to_tensor(0.5) - _to_tensor(0.5)*F.cos(_to_tensor(2*pi/(M - 1))*n)
+
+
+@constexpr
+def tri_indices(n, k=0, m=None, upper=True):
+    """Returns triu/tril indices in o(nm) time."""
+    if not isinstance(n, (int, float, bool)):
+        raise TypeError("Input n must be a number.")
+    if not isinstance(k, (int, float, bool)):
+        raise TypeError("Input k must be a number.")
+    if m is None:
+        m = n
+    elif not isinstance(m, (int, float, bool)):
+        raise TypeError("Input m must be a number.")
+    if upper:
+        compare = operator.ge
+    else:
+        compare = operator.le
+    x_coordinate = []
+    y_coordinate = []
+    # math.ceil is used to match numpy's behaviour
+    for i in range(math.ceil(n)):
+        curr_limit = i + k
+        for j in range(math.ceil(m)):
+            if compare(j, curr_limit):
+                x_coordinate.append(i)
+                y_coordinate.append(j)
+    return asarray_const(x_coordinate), asarray_const(y_coordinate)
+
+
+def triu_indices(n, k=0, m=None):
+    """
+    Returns the indices for the upper-triangle of an (n, m) array.
+
+    Args:
+        n (int): The size of the arrays for which the returned indices will be valid.
+        k (int, optional): Diagonal offset.
+        m (int, optional): The column dimension of the arrays for which the returned
+            arrays will be valid. By default `m` is taken equal to `n`.
+
+    Returns:
+        The indices for the triangle. The returned tuple contains two tensors, each
+        with the indices along one dimension of the tensor.
+
+    Raises:
+        TypeError: if `n`, `k`, `m` are not numbers.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.triu_indices(3))
+        (Tensor(shape=[6], dtype=Int32, value= [0, 0, 0, 1, 1, 2]),
+         Tensor(shape=[6], dtype=Int32, value= [0, 1, 2, 1, 2, 2]))
+    """
+    return tri_indices(n, k, m, True)
+
+
+def tril_indices(n, k=0, m=None):
+    """
+    Returns the indices for the lower-triangle of an (n, m) array.
+
+    Args:
+        n (int): The size of the arrays for which the returned indices will be valid.
+        k (int, optional): Diagonal offset.
+        m (int, optional): The column dimension of the arrays for which the returned
+            arrays will be valid. By default `m` is taken equal to `n`.
+
+    Returns:
+        The indices for the triangle. The returned tuple contains two tensors, each
+        with the indices along one dimension of the tensor.
+
+    Raises:
+        TypeError: if `n`, `k`, `m` are not numbers.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.tril_indices(3))
+        (Tensor(shape=[6], dtype=Int32, value= [0, 1, 1, 2, 2, 2]),
+        Tensor(shape=[6], dtype=Int32, value= [0, 0, 1, 0, 1, 2]))
+    """
+    return tri_indices(n, k, m, False)
+
+
+def triu_indices_from(arr, k=0):
+    """
+    Returns the indices for the upper-triangle of `arr`.
+
+    Args:
+        arr (Union[Tensor, list, tuple]): 2-dimensional array.
+        k (int, optional): Diagonal offset.
+
+    Returns:
+        triu_indices_from, tuple of 2 tensor, shape(N)
+        Indices for the upper-triangle of `arr`.
+
+    Raises:
+        TypeError: if `arr` cannot be converted to tensor, or `k` is not a number.
+        ValueError: if `arr` cannot be converted to a 2-dimensional tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> tensor = np.ones((3,3))
+        >>> print(np.triu_indices_from(tensor))
+        (Tensor(shape=[6], dtype=Int32, value= [0, 0, 0, 1, 1, 2]),
+        Tensor(shape=[6], dtype=Int32, value= [0, 1, 2, 1, 2, 2]))
+    """
+    arr = asarray(arr)
+    if arr.ndim != 2:
+        _raise_value_error("input array must be 2-d")
+    return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])
+
+
+def tril_indices_from(arr, k=0):
+    """
+    Returns the indices for the lower-triangle of `arr`.
+
+    Args:
+        arr (Union[Tensor, list, tuple]): 2-dimensional array.
+        k (int, optional): Diagonal offset.
+
+    Returns:
+        triu_indices_from, tuple of 2 tensor, shape(N)
+        Indices for the upper-triangle of `arr`.
+
+    Raises:
+        TypeError: if `arr` cannot be converted to tensor, or `k` is not a number.
+        ValueError: if `arr` cannot be converted to a 2-dimensional tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> tensor = np.ones((3,3))
+        >>> print(np.tril_indices_from(tensor))
+        (Tensor(shape=[6], dtype=Int32, value= [0, 1, 1, 2, 2, 2]),
+         Tensor(shape=[6], dtype=Int32, value= [0, 0, 1, 0, 1, 2]))
+    """
+    arr = asarray(arr)
+    if arr.ndim != 2:
+        _raise_value_error("input array must be 2-d")
+    return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
+
+
+def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable=redefined-builtin
+    """
+    Function to calculate only the edges of the bins used by the histogram function.
+
+    Note:
+        String values for `bins` is not supported.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input data. The histogram
+            is computed over the flattened array.
+        bins ((Union[int, tuple, list, Tensor])): If `bins` is an int, it defines the number
+            of equal-width bins in the given range (10, by default). If `bins` is a
+            sequence, it defines the bin edges, including the rightmost edge,
+            allowing for non-uniform bin widths.
+        range((float, float), optional): The lower and upper range of the bins. If
+            not provided, `range` is simply ``(a.min(), a.max())``. Values outside
+            the range are ignored. The first element of the range must be less than
+            or equal to the second.
+
+    Returns:
+        Tensor, the edges to pass into `histogram`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: if `bins` is an array and not one-dimensional.
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> arr = np.array([0, 0, 0, 1, 2, 3, 3, 4, 5])
+        >>> print(np.histogram_bin_edges(arr, bins=2))
+        [0.  2.5 5. ]
+    """
+    if isinstance(bins, (tuple, list, Tensor)):
+        bins = _to_tensor(bins)
+        if F.rank(bins) != 1:
+            _raise_value_error('`bins` must be 1d, when an array')
+        return bins
+    if isinstance(bins, str):
+        # linspace does not support Tensor for num
+        _raise_unimplemented_error('string value for `bins` not implemented')
+    a = _to_tensor(a).ravel().astype(mstype.float32)
+    if range is None:
+        start = F.reduce_min(a)
+        end = F.reduce_max(a)
+    else:
+        start, end = _to_tensor(*range)
+    no_range = (end - start) == 0
+    start = where(no_range, start - 0.5, start)
+    end = where(no_range, end + 0.5, end)
+    return linspace(start, end, bins + 1)
+
+
+def _pad_empty(arr, pad_width):
+    """
+    pads the array with constant values, used in mode: "empty"
+    """
+    dtype = arr.dtype
+    for i in range(arr.ndim):
+        shape = arr.shape
+        pad_before = ()
+        pad_after = ()
+        # To avoid any memory issues, we don't make tensor with 0s in their shapes
+        if pad_width[i][0] > 0:
+            pad_before += (empty(_tuple_setitem(shape, i, pad_width[i][0]), dtype=dtype),)
+        if pad_width[i][1] > 0:
+            pad_after += (empty(_tuple_setitem(shape, i, pad_width[i][1]), dtype=dtype),)
+        tensor_with_pad = pad_before + (arr,) + pad_after
+        arr = concatenate(tensor_with_pad, axis=i)
+    return arr
+
+
+def _pad_constant(arr, pad_width, value):
+    """
+    pads the array with constant values, used in mode: "constant"
+    """
+    dtype = arr.dtype
+    for i in range(arr.ndim):
+        shape = arr.shape
+        pad_before = ()
+        pad_after = ()
+        # To avoid any memory issues, we don't make tensor with 0s in their shapes
+        if pad_width[i][0] > 0:
+            pad_before += (full(_tuple_setitem(shape, i, pad_width[i][0]), value[i][0], dtype=dtype),)
+        if pad_width[i][1] > 0:
+            pad_after += (full(_tuple_setitem(shape, i, pad_width[i][1]), value[i][1], dtype=dtype),)
+        tensor_with_pad = pad_before + (arr,) + pad_after
+        arr = concatenate(tensor_with_pad, axis=i)
+    return arr
+
+
+def _pad_statistic(arr, pad_width, stat_length, stat_op):
+    """
+    pads the array with values calculated along the given axis, used in mode: "maximum",
+    "minimum", "mean"
+    """
+    ndim = arr.ndim
+    shape = arr.shape
+    if stat_length is None:
+        stat_length = _make_stat_length(shape)
+    else:
+        stat_length = _convert_pad_to_nd(stat_length, ndim)
+    stat_length = _limit_stat_length(stat_length, shape)
+    for i in range(ndim):
+        pad_before = stat_op(_slice_along_axis(arr, i, 0, stat_length[i][0]), i)
+        pad_before = (F.tile(pad_before, _tuple_setitem((1,)*ndim, i, pad_width[i][0])),)
+        pad_after = stat_op(_slice_along_axis(arr, i, shape[i]-stat_length[i][1], shape[i]), i)
+        pad_after = (F.tile(pad_after, _tuple_setitem((1,)*ndim, i, pad_width[i][1])),)
+        tensor_with_pad = pad_before + (arr,) + pad_after
+        arr = concatenate(tensor_with_pad, axis=i)
+    return arr
+
+
+def _pad_edge(arr, pad_width):
+    """pad_edge is equivalent to pad_statistic with stat_lenght=1, used in mode:"edge"."""
+    def identity_op(arr, axis):
+        return arr
+    return _pad_statistic(arr, pad_width, 1, identity_op)
+
+
+def _pad_wrap(arr, pad_width):
+    """The behaviour of wrap mode is consistent with jax.numpy, used in mode:"wrap"."""
+    ndim = arr.ndim
+    shape = arr.shape
+    for i in range(ndim):
+        padsize_before = pad_width[i][0] % shape[i]
+        padsize_after = pad_width[i][1] % shape[i]
+        total_repeats = pad_width[i][0] // shape[i] + 1 + pad_width[i][1] // shape[i]
+        tensor_with_pad = ()
+        # To avoid any memory issues, we don't make tensor with 0s in their shapes
+        if padsize_before > 0:
+            tensor_with_pad += (_slice_along_axis(arr, i, shape[i]-padsize_before, shape[i]),)
+        tensor_with_pad += (F.tile(arr, _tuple_setitem((1,)*ndim, i, total_repeats)),)
+        if padsize_after > 0:
+            tensor_with_pad += (_slice_along_axis(arr, i, 0, padsize_after),)
+        arr = concatenate(tensor_with_pad, axis=i)
+    return arr
+
+
+def _pad_linear(arr, pad_width, end_values):
+    """Pads the arr with linear range values, used in mode: "linear_ramp"."""
+    ndim = arr.ndim
+    shape = arr.shape
+    dtype = arr.dtype
+    end_values = _convert_pad_to_nd(end_values, ndim)
+    for i in range(ndim):
+        # shape [..., 1, ...]
+        left_value = _slice_along_axis(arr, i, 0, 1)
+        right_value = _slice_along_axis(arr, i, shape[i]-1, shape[i])
+        pad_before = ()
+        pad_after = ()
+        if pad_width[i][0] > 0:
+            # shape [..., pad_width[i][0], ...]
+            pad_before = (linspace(end_values[i][0], left_value, num=pad_width[i][0],
+                                   endpoint=False, dtype=dtype, axis=i).squeeze(i+1),)
+        if pad_width[i][1] > 0:
+            # shape [..., pad_width[i][1], ...]
+            pad_after = linspace(right_value, end_values[i][1], num=pad_width[i][1]+1,
+                                 endpoint=True, dtype=dtype, axis=i).squeeze(i+1)
+            pad_after = (_slice_along_axis(pad_after, i, 1, pad_width[i][1]+1),)
+        tensor_with_pad = pad_before + (arr,) + pad_after
+        arr = concatenate(tensor_with_pad, axis=i)
+    return arr
+
+
+def _pad_symmetric(arr, pad_width, reflect_type):
+    """pad the array with symmetric paddings"""
+    for i in range(arr.ndim):
+        array_length = arr.shape[i]
+
+        has_pad_before = (pad_width[i][0] > 0)
+        has_pad_after = (pad_width[i][1] > 0)
+
+        edge_before = _slice_along_axis(arr, i, 0, 1)
+        edge_end = _slice_along_axis(arr, i, array_length-1, array_length)
+        times_to_pad_before = pad_width[i][0] // array_length + 1
+        additional_pad_before = pad_width[i][0] % array_length
+        times_to_pad_after = pad_width[i][1] // array_length + 1
+        additional_pad_after = pad_width[i][1] % array_length
+        curr_pad = None
+        if has_pad_before:
+            # Deal with paddings before the original array
+            for times in range(times_to_pad_before):
+                if times < times_to_pad_before - 1:
+                    endpoint = array_length
+                else:
+                    endpoint = additional_pad_before
+                if endpoint != 0:
+                    curr_pad = _slice_along_axis(arr, i, 0, endpoint)
+                    curr_pad = flip(curr_pad, axis=i)
+                    if reflect_type == "odd":
+                        curr_pad = 2 * edge_before - curr_pad
+                    arr = P.Concat(i)((curr_pad, arr))
+                    edge_before = _slice_along_axis(arr, i, 0, 1)
+        if has_pad_after:
+            # Deal with paddings after the original array
+            for times in range(times_to_pad_after):
+                if times < times_to_pad_after - 1:
+                    startpoint = arr.shape[i] - array_length
+                else:
+                    startpoint = arr.shape[i] - additional_pad_after
+                if startpoint != arr.shape[i]:
+                    curr_pad = _slice_along_axis(arr, i, startpoint, arr.shape[i])
+                    curr_pad = flip(curr_pad, axis=i)
+                    if reflect_type == "odd":
+                        curr_pad = 2 * edge_end - curr_pad
+                    arr = P.Concat(i)((arr, curr_pad))
+                    edge_end = _slice_along_axis(arr, i, arr.shape[i]-1, arr.shape[i])
+    return arr
+
+
+def _pad_reflect(arr, pad_width, reflect_type):
+    """
+    pad the array with reflect paddings, this is very similar to symmetric paddings,
+    but differs at how edges are selected.
+    """
+    # pylint: disable=too-many-nested-blocks
+    for i in range(arr.ndim):
+        array_length = arr.shape[i]
+        if array_length == 1:
+            total_repeats = pad_width[i][0] + pad_width[i][1] + 1
+            arr = F.tile(arr, _tuple_setitem((1,)*arr.ndim, i, total_repeats))
+        else:
+            has_pad_before = (pad_width[i][0] > 0)
+            has_pad_after = (pad_width[i][1] > 0)
+
+            edge_before = _slice_along_axis(arr, i, 0, 1)
+            edge_end = _slice_along_axis(arr, i, array_length-1, array_length)
+            pad_size = array_length - 1
+            times_to_pad_before = pad_width[i][0] // pad_size + 1
+            additional_pad_before = pad_width[i][0] % pad_size
+            times_to_pad_after = pad_width[i][1] // pad_size + 1
+            additional_pad_after = pad_width[i][1] % pad_size
+            curr_pad = None
+            if has_pad_before:
+                # Deal with paddings before the original array
+                for times in range(times_to_pad_before):
+                    if times < times_to_pad_before - 1:
+                        endpoint = array_length
+                    else:
+                        endpoint = additional_pad_before + 1
+                    if endpoint != 1:
+                        curr_pad = _slice_along_axis(arr, i, 1, endpoint)
+                        curr_pad = flip(curr_pad, axis=i)
+                        if reflect_type == "odd":
+                            curr_pad = 2 * edge_before - curr_pad
+                        arr = P.Concat(i)((curr_pad, arr))
+                        edge_before = _slice_along_axis(arr, i, 0, 1)
+            if has_pad_after:
+                # Deal with paddings after the original array
+                for times in range(times_to_pad_after):
+                    if times < times_to_pad_after - 1:
+                        startpoint = arr.shape[i] - array_length
+                    else:
+                        startpoint = arr.shape[i] - additional_pad_after - 1
+                    if startpoint != arr.shape[i]-1:
+                        curr_pad = _slice_along_axis(arr, i, startpoint, arr.shape[i]-1)
+                        curr_pad = flip(curr_pad, axis=i)
+                        if reflect_type == "odd":
+                            curr_pad = 2 * edge_end - curr_pad
+                        arr = P.Concat(i)((arr, curr_pad))
+                        edge_end = _slice_along_axis(arr, i, arr.shape[i]-1, arr.shape[i])
+    return arr
+
+
+def _pad_func(arr, pad_width, func, **kwargs):
+    """applies padding function over different axis."""
+    # first creates a padded array with fixed length.
+    arr_dim = arr.ndim
+    pad_width = _convert_pad_to_nd(pad_width, arr_dim)
+    arr = _pad_empty(arr, pad_width)
+    for i in range(arr_dim):
+        # function signature: padding_func(tensor, iaxis_pad_width, iaxis, kwargs)
+        arr = apply_along_axis(func, i, arr, pad_width[i], i, kwargs)
+    return arr
+
+
+@constexpr
+def _make_stat_length(shape):
+    """converts the stat_length values."""
+    return tuple((shape[i], shape[i]) for i, _ in enumerate(shape))
+
+
+@constexpr
+def _limit_stat_length(stat_length, shape):
+    """limits the stat_length to current array length along given dimension."""
+    return tuple((min(stat_pair[0], shape[i]), min(stat_pair[1], shape[i])) for i, stat_pair in enumerate(stat_length))
+
+
+@constexpr
+def _convert_pad_to_nd(pad_values, ndim):
+    """broadcasts the pad_values to (ndim * 2)"""
+    if not isinstance(pad_values, (int, list, tuple, Tensor)):
+        raise TypeError(
+            "pad_width, stat_length, constant_values or end_values should only be int, list, tuple or tensor")
+    pad_tensor = _to_tensor(pad_values)
+    pad_shape = pad_tensor.shape
+    if not pad_shape:
+        pad_values = tuple((((pad_values,) * 2) for i in range(ndim)))
+    elif pad_shape == (1,):
+        pad_values = tuple((tuple(pad_values) * 2) for i in range(ndim))
+    elif pad_shape == (2,):
+        pad_values = tuple(tuple(pad_values) for i in range(ndim))
+    elif pad_shape == (1, 2):
+        pad_values = tuple(tuple(pad_values[0]) for i in range(ndim))
+    elif pad_shape == (ndim, 2):
+        pad_values = tuple(tuple(pad_pair) for pad_pair in pad_values)
+    else:
+        raise ValueError(f"input values must be able to broadcast to {(ndim, 2)}")
+    return pad_values
+
+
+def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
+        end_values=0, reflect_type="even", **kwargs):
+    """
+    Pads an array.
+
+    Note:
+        Currently, `median` mode is not supported. `reflect` and `symmetric` mode
+        only supports GPU backend.
+
+    Args:
+        arr (Union[list, tuple, Tensor]): The array to pad.
+        pad_width (Union[int, tuple, list]): Number of values padded to the edges of
+            each axis. :class:`((before_1, after_1), ... (before_N, after_N))` creates
+            unique pad widths for each axis. :class:`((before, after),)` yields same
+            before and after pad for each axis. :class:`(pad,)` or int is a shortcut
+            for :class:`before = after = pad width` for all axes.
+        mode (string, optional):
+            One of the following string values:
+
+            - constant (default): Pads with a constant value.
+            - edge: Pads with the edge values of `arr`.
+            - linear_ramp: Pads with the linear ramp between end_value and the `arr` edge value.
+            - maximum: Pads with the maximum value of all or part of the vector along each axis.
+            - mean: Pads with the mean value of all or part of the vector along each axis.
+            - median: Pads with the median value of all or part of the vector along each axis.
+            - minimum: Pads with the minimum value of all or part of the vector along each axis.
+            - reflect: Pads with the reflection of the vector mirrored on the first
+              and last values of the vector along each axis.
+            - symmetric: Pads with the reflection of the vector mirrored along the edge
+              of the `arr`.
+            - wrap: Pads with the wrap of the vector along the axis. The first values
+              are used to pad the end and the end values are used to pad the beginning.
+            - empty: Pads with undefined values.
+            - <function>: The padding function, if used, should modify and return a new 1-d tensor.
+              It has the following signature: :class:`padding_func(tensor, iaxis_pad_width, iaxis, kwargs)`
+        stat_length (Union[tuple, list, int], optional): Used in \'maximum\', \'mean\',
+            \'median\', and \'minimum\'.  Number of values at edge of each axis used
+            to calculate the statistic value. :class:`((before_1, after_1), ... (before_N, after_N))`
+            creates unique statistic lengths for each axis. :class:`((before, after),)`
+            yields same before and after statistic lengths for each axis. :class:`(stat_length,)`
+            or int is a shortcut for :class:`before = after = statistic length` for all
+            axes. Default is :class:`None`, to use the entire axis.
+        constant_values (Union[tuple, list, int], optional):
+            Used in :class:`constant mode`. The values to set the padded values for each
+            axis. :class:`((before_1, after_1), ... (before_N, after_N))` creates unique pad
+            constants for each axis. :class:`((before, after),)` yields same before and
+            after constants for each axis. :class:`(constant,)` or :class:`constant` is
+            a shortcut for :class:`before = after = constant` for all axes. Default is 0.
+        end_values (Union[tuple, list, int], optional): Used in 'linear_ramp'.  The values
+            used for the ending value of the linear_ramp and that will form the edge of
+            the padded `arr`. :class:`((before_1, after_1), ... (before_N, after_N))`
+            unique end values for each axis. :class`((before, after),)` yields same before
+            and after end values for each axis. :class:`(constant,)` or :class:`constant`
+            is a shortcut for :class:`before = after = constant` for all axes. Default is 0.
+        reflect_type(string, optional) can choose between \'even\' and \'odd\'. Used in
+            \'reflect\', and \'symmetric\'. The \'even\' style is the default with an
+            unaltered reflection around the edge value. For the \'odd\' style, the extended
+            part of the `arr` is created by subtracting the reflected values from two times
+            the edge value.
+
+    Returns:
+        Padded tensor of rank equal to `arr` with shape increased according to `pad_width`.
+
+    Raises:
+        TypeError: if `arr`, `pad_width`, `stat_length`, `constant_values` or `end_values`
+            have types not specified above.
+        ValueError: if `mode` cannot be recognized, or if `pad_width`, `stat_length`,
+            `constant_values`, `end_values` cannot broadcast to :class:`(arr.ndim, 2)`,
+            or if keyword arguments got unexpected inputs.
+        NotImplementedError: if mode is function or '/median'/.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> tensor = np.array([1., 2., 3., 4., 5.])
+        >>> print(np.pad(tensor, (3, 4)))
+        [0. 0. 0. 1. 2. 3. 4. 5. 0. 0. 0. 0.]
+        >>> print(np.pad(tensor, (3, 4), mode="wrap"))
+        [3. 4. 5. 1. 2. 3. 4. 5. 1. 2. 3. 4.]
+        >>> >>> print(np.pad(tensor, (3, 4), mode="linear_ramp", end_values=(10, 10)))
+        [10.    7.    4.    1.    2.    3.    4.    5.    6.25  7.5   8.75 10.  ]
+    """
+    arr = _to_tensor(arr)
+    if arr.ndim == 0:
+        return arr
+    pad_width = _convert_pad_to_nd(pad_width, arr.ndim)
+    stat_func = {"maximum": _reduce_max_keepdims,
+                 "minimum": _reduce_min_keepdims,
+                 "mean": _reduce_mean_keepdims,
+                 "median": "not implemented"}
+
+    if mode not in ("constant", "maximum", "minimum", "mean", "median", "edge",
+                    "wrap", "linear_ramp", "symmetric", "reflect", "empty") and \
+                    not _callable(arr, mode):
+        _raise_value_error("Input mode not supported.")
+
+    if mode == "constant":
+        constant_values = _convert_pad_to_nd(constant_values, arr.ndim)
+        return _pad_constant(arr, pad_width, constant_values)
+    if mode in ("maximum", "minimum", "mean", "median"):
+        # TODO: support median mode once P.Sort/P.Median is supported on GPU/CPU
+        if mode == "median":
+            _raise_unimplemented_error("median mode is not supported yet")
+        return _pad_statistic(arr, pad_width, stat_length, stat_func[mode])
+    if mode == "edge":
+        return _pad_edge(arr, pad_width)
+    if mode == "wrap":
+        return _pad_wrap(arr, pad_width)
+    if mode == "linear_ramp":
+        return _pad_linear(arr, pad_width, end_values)
+    if mode == "symmetric":
+        return _pad_symmetric(arr, pad_width, reflect_type)
+    if mode == "reflect":
+        return _pad_reflect(arr, pad_width, reflect_type)
+    if mode == 'empty':
+        return _pad_empty(arr, pad_width)
+    return _pad_func(arr, pad_width, mode, **kwargs)
