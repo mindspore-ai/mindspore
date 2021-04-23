@@ -21,45 +21,100 @@ from mindspore.common.parameter import Parameter
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_if_after_if():
-    class IfAfterIfNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
 
-        def construct(self, x):
-            out = x + self.param_b
-            if self.param_a > self.param_b:
-                x += 5
-            self.param_b += 4
-            if x < self.param_b:
-                out += self.param_b
-            return out
+class IfAfterIfNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
 
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
+    def construct(self, x, y):
+        out = y
+        if self.param_a > self.param_b:
+            x += 5
+        self.param_b += 4
+        if x < self.param_b:
+            out += self.param_b
+        return out
 
-        def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
 
-    x = Tensor(2, mstype.int32)
+class IfAfterIfNet1(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
 
+    def construct(self, x, y):
+        out = y
+        x = self.func(x)
+        if x < self.param_b:
+            out += self.param_b
+        return out
+
+    def func(self, x):
+        if self.param_a > self.param_b:
+            x += 5
+        self.param_b += 4
+        return x
+
+
+class IfAfterIfNet2(nn.Cell):
+    def construct(self, x, y):
+        x += 1
+        out = self.func(x, y)
+        if out > 10:
+            out += 5
+        return out
+
+    def func(self, x, y):
+        if x < y:
+            y += x
+        else:
+            y -= x
+        return y
+
+
+class GradNet(nn.Cell):
+    def __init__(self, net):
+        super(GradNet, self).__init__()
+        self.net = net
+
+    def construct(self, *inputs):
+        return grad_all(self.net)(*inputs)
+
+
+def control_flow_if_after_if(input_net, x, y):
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    if_after_if_net = IfAfterIfNet()
-    net = GradNet(if_after_if_net)
-    graph_forward_res = if_after_if_net(x)
-    graph_backward_res = net(x)
+    net = input_net()
+    grad_net = GradNet(net)
+    graph_forward_res = net(x, y)
+    graph_backward_res = grad_net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
-    if_after_if_net = IfAfterIfNet()
-    net = GradNet(if_after_if_net)
-    pynative_forward_res = if_after_if_net(x)
-    pynative_backward_res = net(x)
+    net = input_net()
+    grad_net = GradNet(net)
+    pynative_forward_res = net(x, y)
+    pynative_backward_res = grad_net(x, y)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
+
+
+def test_if_after_if():
+    x = Tensor(2, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    control_flow_if_after_if(IfAfterIfNet, x, y)
+
+
+def test_if_after_if_01():
+    x = Tensor(2, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    control_flow_if_after_if(IfAfterIfNet1, x, y)
+
+
+def test_if_after_if_02():
+    x = Tensor(2, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    control_flow_if_after_if(IfAfterIfNet2, x, y)
