@@ -35,7 +35,7 @@ class FunctionalizeWhile {
   FunctionalizeWhile(std::vector<AnfNodePtr> node_cluster, const CNodePtr &loop_cond_node, FuncGraphPtr fg)
       : node_cluster_(node_cluster), loop_cond_node_(loop_cond_node), fg_(fg) {}
 
-  ~FunctionalizeWhile() = default;
+  virtual ~FunctionalizeWhile() = default;
 
   // while
   STATUS BuildWhileNode();

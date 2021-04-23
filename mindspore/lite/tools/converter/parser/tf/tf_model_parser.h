@@ -60,6 +60,9 @@ class TFModelParser : public ModelParser {
   STATUS ConvertOps(const tensorflow::NodeDef &node_def,
                     const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                     const FuncGraphPtr &func_graph_ptr, std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
+
+  STATUS ProcessControlFlowOp(CNodePtr anf_node, const string op_type, const tensorflow::NodeDef &node_def);
+
   STATUS ConvertRootGraphOutputs();
 
   STATUS ConvertSubgraph();
@@ -95,6 +98,7 @@ class TFModelParser : public ModelParser {
   std::vector<std::pair<CNodePtr, std::vector<std::string>>> nodes_with_null_input_{};
   std::vector<std::string> while_cond_branch_name_;
   std::vector<std::string> if_then_branch_name_;
+  std::unordered_map<std::string, int> node_output_num_;
 };
 }  // namespace lite
 }  // namespace mindspore
