@@ -37,6 +37,7 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
+  int InitBias();
 
  protected:
   void *padWeight_{nullptr};
@@ -44,6 +45,8 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   bool transposeA{false};
   bool transposeB{true};
   int dims{};
+  void *bias_{nullptr};
+  int CO_{1};
   static constexpr int MAX_DIMS{4};  // max supported matmul dims
   bool act_weight_{false};
   std::vector<int> inShape{std::vector<int>(MAX_DIMS, 1)};

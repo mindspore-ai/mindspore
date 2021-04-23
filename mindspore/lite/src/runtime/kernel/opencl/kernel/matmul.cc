@@ -49,7 +49,7 @@ bool IsUseStrassenMatmul(const std::vector<lite::Tensor *> &in_tensors_) {
 }
 
 int MatMulOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (!(in_tensors_.size() == 2 || in_tensors_.size() == 3) || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -180,6 +180,40 @@ int MatMulOpenCLKernel::InitWeights() {
   }
 
   allocator->UnmapBuffer(padWeight_);
+  return InitBias();
+}
+
+int MatMulOpenCLKernel::InitBias() {
+  // pad FC Bias
+  CO_ = GpuTensorInfo(out_tensors_[0]).C;
+  auto allocator = ocl_runtime_->GetAllocator();
+  int co4 = UP_DIV(CO_, C4NUM);
+  size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
+  size_t im_dst_x, im_dst_y;
+  im_dst_x = co4;
+  im_dst_y = 1;
+  size_t img_dtype = CL_FLOAT;
+  if (enable_fp16_) {
+    img_dtype = CL_HALF_FLOAT;
+  }
+  lite::opencl::ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
+  bias_ = allocator->Malloc(img_size);
+  bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
+  memset(bias_, 0x00, co4 * C4NUM * dtype_size);
+  if (in_tensors_.size() == 3) {
+    if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
+      for (int i = 0; i < CO_; i++) {
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
+      }
+    } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16 && !enable_fp16_) {
+      for (int i = 0; i < CO_; i++) {
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c())[i];
+      }
+    } else {
+      memcpy(bias_, in_tensors_[2]->data_c(), CO_ * dtype_size);
+    }
+  }
+  allocator->UnmapBuffer(bias_);
   return RET_OK;
 }
 
@@ -202,6 +236,7 @@ void MatMulOpenCLKernel::SetConstArgs() {
   } else {
     ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
   }
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
 }
