@@ -173,7 +173,7 @@ class DetectionEngine:
                 y = y.reshape(-1)
                 w = w.reshape(-1)
                 h = h.reshape(-1)
-                cls_emb = cls_emb.reshape(-1, 80)
+                cls_emb = cls_emb.reshape(-1, self.num_classes)
                 conf = conf.reshape(-1)
                 cls_argmax = cls_argmax.reshape(-1)
 
