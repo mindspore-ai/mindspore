@@ -54,7 +54,7 @@ def _not_equal_mstype(x, y):
     Returns:
        bool, if x != y return true, x == y return false.
    """
-    return not const_utils.mstype_eq(x, y)
+    return not const_utils.is_same_type(x, y)
 
 
 @not_equal.register("String", "String")

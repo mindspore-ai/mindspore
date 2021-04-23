@@ -214,9 +214,6 @@ def _tensor_setitem_by_tuple_with_number(data, tuple_index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    if compile_utils.tuple_indices_have_false(tuple_index):
-        return data
-    tuple_index = compile_utils.format_tuple_indices(tuple_index)
     return compile_utils.tensor_setitem_by_tuple_with_number(data, tuple_index, value)
 
 
@@ -238,9 +235,6 @@ def _tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    if compile_utils.tuple_indices_have_false(tuple_index):
-        return data
-    tuple_index = compile_utils.format_tuple_indices(tuple_index)
     return compile_utils.tensor_setitem_by_tuple_with_tensor(data, tuple_index, value)
 
 
@@ -263,9 +257,6 @@ def _tensor_setitem_by_tuple_with_tuple(data, tuple_index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    if compile_utils.tuple_indices_have_false(tuple_index):
-        return data
-    tuple_index = compile_utils.format_tuple_indices(tuple_index)
     return compile_utils.tensor_setitem_by_tuple_with_sequence(data, tuple_index, value)
 
 
@@ -288,9 +279,6 @@ def _tensor_setitem_by_tuple_with_list(data, tuple_index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    if compile_utils.tuple_indices_have_false(tuple_index):
-        return data
-    tuple_index = compile_utils.format_tuple_indices(tuple_index)
     return compile_utils.tensor_setitem_by_tuple_with_sequence(data, tuple_index, value)
 
 
@@ -587,6 +575,86 @@ def _tensor_setitem_by_ellipsis_with_tuple(data, index, value):
     return compile_utils.tensor_setitem_by_ellipsis_with_sequence(data, value)
 
 
+@setitem.register("Tensor", "None", "Number")
+def _tensor_setitem_by_none_with_number(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a Number.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (None): Index is ``...``.
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_number(data, value)
+
+
+@setitem.register("Tensor", "None", "Tensor")
+def _tensor_setitem_by_none_with_tensor(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tensor.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (None): Index is ``...``.
+        value (Tensor): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_tensor(data, value)
+
+
+@setitem.register("Tensor", "None", "List")
+def _tensor_setitem_by_none_with_list(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a List, with all elements equal in length.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (None): Index is ``...``.
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_sequence(data, value)
+
+
+@setitem.register("Tensor", "None", "Tuple")
+def _tensor_setitem_by_none_with_tuple(data, index, value):
+    """
+    Tensor assignment.
+
+    Note:
+        Syntax support: A[...] = u
+        Restraint condition: A is a Tensor.
+                             u is a Tuple, with all elements equal in length.
+    Inputs:
+        data (Tensor): Assigned tensor.
+        index (None): Index is ``...``.
+        value (Number): Assignment value.
+
+    Outputs:
+        Tensor, element type and shape is same as data.
+    """
+    return compile_utils.tensor_setitem_by_ellipsis_with_sequence(data, value)
+
+
 @setitem.register("Tensor", "List", "Number")
 def _tensor_setitem_by_list_with_number(data, index, value):
     """
@@ -608,9 +676,6 @@ def _tensor_setitem_by_list_with_number(data, index, value):
     index = compile_utils.format_list_indices(index, data.shape[0])
     if isinstance(index, Tensor):
         return compile_utils.tensor_setitem_by_tensor_with_number(data, index, value)
-    if compile_utils.tuple_indices_have_false(index):
-        return data
-    index = compile_utils.format_tuple_indices(index)
     return compile_utils.tensor_setitem_by_tuple_with_number(data, index, value)
 
 
@@ -635,9 +700,6 @@ def _tensor_setitem_by_list_with_tensor(data, index, value):
     index = compile_utils.format_list_indices(index, data.shape[0])
     if isinstance(index, Tensor):
         return compile_utils.tensor_setitem_by_tensor_with_tensor(data, index, value)
-    if compile_utils.tuple_indices_have_false(index):
-        return data
-    index = compile_utils.format_tuple_indices(index)
     return compile_utils.tensor_setitem_by_tuple_with_tensor(data, index, value)
 
 
@@ -662,9 +724,6 @@ def _tensor_setitem_by_list_with_tuple(data, index, value):
     index = compile_utils.format_list_indices(index, data.shape[0])
     if isinstance(index, Tensor):
         return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
-    if compile_utils.tuple_indices_have_false(index):
-        return data
-    index = compile_utils.format_tuple_indices(index)
     return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)
 
 
@@ -689,7 +748,4 @@ def _tensor_setitem_by_list_with_list(data, index, value):
     index = compile_utils.format_list_indices(index, data.shape[0])
     if isinstance(index, Tensor):
         return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
-    if compile_utils.tuple_indices_have_false(index):
-        return data
-    index = compile_utils.format_tuple_indices(index)
     return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)

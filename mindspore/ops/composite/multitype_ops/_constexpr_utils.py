@@ -14,7 +14,7 @@
 # ============================================================================
 """constexpr util"""
 
-from functools import reduce
+from itertools import compress
 
 import numpy as np
 
@@ -75,10 +75,12 @@ def make_empty_slice():
 
 
 @constexpr
-def _deep_list(array_like):
+def _deep_list(array_like, ndim=-1):
     """convert nested tuple/list mixtures to pure nested list"""
+    if ndim != -1:
+        check_range(array_like, ndim)
     if isinstance(array_like, (list, tuple)):
-        return list(map(_deep_list, array_like))
+        return list(map(lambda x: _deep_list(x, ndim), array_like))
     return array_like
 
 
@@ -115,7 +117,16 @@ def _deep_tensor_to_nparray(array_like):
 
 
 @constexpr
-def make_tensor(a, dtype=mstype.int32, data_shape=None):
+def check_range(x, ndim):
+    if isinstance(x, int) and not isinstance(x, bool):
+        if x >= ndim or x < -ndim:
+            raise IndexError(f'index {x} if out of bounds for dimension with size {ndim}')
+        x = x%ndim
+    return x
+
+
+@constexpr
+def make_tensor(a, dtype=mstype.int64, data_shape=None, ndim=-1):
     """
     Converts the input to tensor.
 
@@ -133,16 +144,18 @@ def make_tensor(a, dtype=mstype.int32, data_shape=None):
         TypeError: If input arguments have types not specified above.
         ValueError: If input `a` has different sizes at different dimensions.
     """
-
     if data_shape:
         return Tensor(np.zeros(data_shape), dtype)
 
     if not isinstance(a, (list, tuple, int, float, bool)):
         raise TypeError("input data must be `int`, `float`, `bool`, `list` or `tuple`")
 
+    if ndim != -1:
+        check_range(a, ndim)
+
     if isinstance(a, (list, tuple)):
         # Convert all tuple/nested tuples to lists
-        a = _deep_list(a)
+        a = _deep_list(a, ndim)
         # Convert all tensor sub-elements to numpy arrays
         a = _deep_tensor_to_nparray(a)
         a = np.asarray(a)
@@ -292,51 +305,6 @@ def get_pos_of_indexes_types(indexes_types, op_name):
         tensor_positions, sequence_positions
 
 
-def slice_expand(input_slices, shape):
-    """
-    Converts slice to indices.
-
-    Inputs:
-        slices (Union[Slice, tuple[Slice]]): Slice tuple or slice.
-        shape (tuple): The shape of a sensor is an integer element tuple.
-
-    Outputs:
-        tuple[list], This is expressed as (begins, ends, strides).
-    """
-    begin, end, strides = [], [], []
-    index = 0
-    slices = None
-    # Slice or tuple(Slice...)
-    if isinstance(input_slices, slice):
-        slices = (input_slices,)
-    elif isinstance(input_slices, (tuple, list)) and input_slices and isinstance(input_slices[0], (slice, type(...))):
-        is_have_ellipsis = False
-        for _, element in enumerate(input_slices):
-            if isinstance(element, type(...)):
-                is_have_ellipsis = True
-                break
-        if is_have_ellipsis:
-            slices = ellipsis2slice(input_slices, shape)
-        else:
-            slices = input_slices
-    else:
-        raise IndexError("Tensor's index type is not supported yet.")
-    for s in slices:
-        start = 0 if (s.start is None) else s.start
-        stop = shape[index] if (s.stop is None) else s.stop
-        step = 1 if (s.step is None) else s.step
-        begin.append(start)
-        end.append(stop)
-        strides.append(step)
-        index += 1
-    while index < len(shape):
-        begin.append(0)
-        end.append(shape[index])
-        strides.append(1)
-        index += 1
-    return begin, end, strides
-
-
 def ellipsis2slice(input_, shape):
     """Converts ellipsis to slice."""
     input_slice = input_
@@ -358,30 +326,24 @@ def ellipsis2slice(input_, shape):
 
 
 @constexpr
-def slice2indices(input_slices, shape):
+def slice2indices(input_slice, shape):
     """
     Converts slice to indices.
 
     Inputs:
-        slices (Union[Slice, tuple[Slice]]): Slice tuple or slice.
+        input_slice (Union[Slice, tuple[Slice]]): Slice tuple or slice.
         shape (tuple): The shape of a tensor is an integer element tuple.
 
     Outputs:
         Tensor, the shape is (n, 1).
     """
-    begin, end, strides = slice_expand(input_slices, shape)
-    np_r = []
-    for i, element in enumerate(shape):
-        s = normalize_start(begin[i], element)
-        e = normalize_stop(end[i], element)
-        if s >= e:
-            return False
-        np_r.append(np.r_[s:e:strides[i]])
-    # Reference: np.ravel_multi_index((np.ix_(np.r_[1:3:1], np.r_[0:4:1], np.r_[4:0:-1])), a.shape)
-    np_ix = np.ix_(*np_r)
-    ravel = np.ravel_multi_index(np_ix, shape)
-    ravel = Tensor(ravel.reshape(-1, 1), dtype=mstype.int32)
-    return ravel
+    start, stop, step = normalize_slice(input_slice, shape[0])
+    if check_slice_empty(start, stop, step):
+        return False
+    grids = ([np.array(list(range(start, stop, step)), dtype=np.int64)] +
+             [np.array(list(range(dim_size)), dtype=np.int64) for dim_size in shape[1:]])
+    mesh = np.ix_(*grids)
+    return Tensor(np.stack(np.broadcast_arrays(*mesh), axis=-1))
 
 
 @constexpr
@@ -407,29 +369,6 @@ def check_indices_value_size(indices_size, value_size):
 
 
 @constexpr
-def integer_to_indices(index, shape):
-    """Converts int or tuple[int] to indices."""
-    size = reduce(lambda x, y: x * y, shape)
-    range_ = np.arange(size).reshape(shape)
-    value = range_[index]
-    value = value.reshape(-1, 1)
-    return Tensor(value, dtype=mstype.int32)
-
-
-@constexpr
-def tuple_element_is_int(indexes):
-    """Judges tuple element type."""
-    if not indexes:
-        raise IndexError("Tensor's index cannot be empty.")
-    if isinstance(indexes, tuple):
-        for _, ele in enumerate(indexes):
-            if not isinstance(ele, int):
-                return False
-        return True
-    return False
-
-
-@constexpr
 def tuple_index_int_cnt(types, op_name):
     """count the int type of types which contains the tuple elements' type."""
     int_cnt = sum(isinstance(ele, mstype.Int) for ele in types)
@@ -439,12 +378,9 @@ def tuple_index_int_cnt(types, op_name):
 @constexpr
 def tuple_index_type_cnt(types, op_name):
     """count the tensor type of types which contains the tuple elements' type."""
-    tensor_cnt = sum(isinstance(ele, mstype.tensor_type) for ele in types)
-    basic_cnt = sum(isinstance(
-        ele, (mstype.Int, mstype.Ellipsis_, mstype.Slice)) for ele in types)
-    if tensor_cnt == len(types):
+    if all(isinstance(ele, mstype.tensor_type) for ele in types):
         return ALL_TENSOR
-    if basic_cnt == len(types):
+    if all(isinstance(ele, (mstype.Int, mstype.Ellipsis_, mstype.Slice)) for ele in types):
         return ALL_BASIC
     return MIXED
 
@@ -501,19 +437,10 @@ def generate_broadcast_shape(shapes, op_name):
 
 @constexpr
 def check_two_shapes_need_broadcast(shape_x, shape_y):
-    """Check two shapes need broadcast."""
-    error = ValueError(f"For 'tensor setitem with tensor', the value tensor shape "
-                       f"{shape_y} could not broadcast the required updates shape {shape_x}.")
-    if len(shape_y) > len(shape_x):
-        raise error
-    for i in range(-len(shape_y), 0):
-        if shape_y[i] > shape_x[i]:
-            raise error
-        if shape_y[i] < shape_x[i] and shape_y[i] != 1:
-            raise error
-    if shape_y == shape_x:
-        return False
-    return True
+    """Check shape_y needs to be broadcast to shape_x."""
+    if any(j not in (i, 1) for i, j in zip(reversed(shape_x), reversed(shape_y))):
+        raise ValueError(f"{shape_y} could not broadcast with {shape_x}.")
+    return shape_y != shape_x
 
 
 @constexpr
@@ -524,50 +451,9 @@ def compute_multiples(origin_shape, broadcast_shape):
 
 
 @constexpr
-def compute_new_shape(origin_shape, indexes_shapes_info):
-    """Compute new shape between origin shape with final shape."""
-    new_shape = []
-    for i in indexes_shapes_info:
-        if i == origin_shape:
-            new_shape.extend(origin_shape)
-        else:
-            new_shape.append(1)
-    return tuple(new_shape)
-
-
-@constexpr
 def convert_int_to_slice(tuple_index):
     tuple_index_new = tuple(slice(i, i+1, 1) for i in tuple_index)
     return tuple_index_new
-
-
-@constexpr
-def check_and_transform_int_index(index, shape, op_name):
-    if index < -shape or index >= shape:
-        raise IndexError(f"In the \"{op_name}\", the index should in the range [-{shape}, {shape-1}] to fit "
-                         f"the corresponding dim length, but get {index}.")
-    if index < 0:
-        index += shape
-    return index
-
-
-@constexpr
-def transform_sequence_index(sequence_index, shape, op_name):
-    """transform list or tuple with integer and boolean to tuple with integer index"""
-    bool_count = len(list(filter(lambda index: isinstance(index, bool), sequence_index)))
-    int_count = len(list(filter(lambda index: isinstance(index, int), sequence_index)))-bool_count
-    if int_count == 0 and bool_count != 0:
-        if bool_count == shape:
-            list_index = list(filter(lambda i: sequence_index[i], range(bool_count)))
-        else:
-            raise IndexError("The boolean array should have the same length with the corresponding dimension")
-    else:
-        list_index = [int(index) for index in sequence_index]
-
-    for i, index in enumerate(list_index):
-        list_index[i] = check_and_transform_int_index(index, shape, op_name)
-    sub_tuple_index = tuple(list_index)
-    return sub_tuple_index
 
 
 @constexpr
@@ -586,16 +472,6 @@ def convert_slice_to_tensor(index, final_shape, slice_cnt, broadcast_shape, slic
 
 
 @constexpr
-def check_shapes_same(value_shapes, op_name):
-    """Check if the shapes in the tuple are consistent."""
-    for i, shape in enumerate(value_shapes):
-        if shape != value_shapes[0]:
-            raise ValueError(f"For '{op_name}', the {i}th tensor shape in "
-                             f"value tuple is not same as the first tensor shape.")
-    return True
-
-
-@constexpr
 def convert_scalar_to_tensor(data_shape, data_dtype, indices_shape, value, op_type):
     """Convert a scalar to a tensor."""
     if op_type == SET_ITEM_BY_ONE_TENSOR:
@@ -603,18 +479,6 @@ def convert_scalar_to_tensor(data_shape, data_dtype, indices_shape, value, op_ty
     else:
         updates_shape = indices_shape[:-1] + data_shape[indices_shape[-1]:]
     return Tensor(np.full(updates_shape, value), dtype=data_dtype)
-
-
-@constexpr
-def convert_tuple_of_scalar_to_tensor(data_shape, data_dtype, index_shape, value, op_type):
-    """Convert a tuple of scalar to a tensor."""
-    updates_shape = generate_updates_shape(data_shape, index_shape, op_type)
-    if len(value) != updates_shape[-1]:
-        raise ValueError(f"For '{TENSOR_SETITEM}', the number of elements : {len(value)} "
-                         f"in the updates tuple does not meet the requirements: {updates_shape[-1]}.")
-    array = np.array(value, dtype=mstype.dtype_to_nptype(data_dtype))
-    reps = compute_multiples(updates_shape[-1:], updates_shape)
-    return Tensor(np.tile(array, reps))
 
 
 @constexpr
@@ -679,9 +543,7 @@ def scalar_in_sequence(x, y):
     if y is None:
         raise ValueError("Judge scalar in tuple or list require scalar and sequence should be constant, "
                          "but the sequence is not.")
-    if x in y:
-        return True
-    return False
+    return x in y
 
 
 @constexpr
@@ -783,12 +645,6 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
 
 
 @constexpr
-def mstype_eq(x, y):
-    """Determine whether the input `x` equals `y`."""
-    return x == y
-
-
-@constexpr
 def scalar_to_tensor(x):
     """Convert a scalar to a tensor"""
     return Tensor(x)
@@ -799,11 +655,6 @@ def unpack(x):
     if isinstance(x, (tuple, list)) and len(x) == 1:
         return unpack(x[0])
     return x
-
-
-@constexpr
-def slice_to_tuple(s):
-    return (s.start, s.stop, s.step)
 
 
 @constexpr
@@ -833,8 +684,20 @@ def normalize_stop(stop, dim_size):
 
 
 @constexpr
-def is_ellipsis(x):
-    return x is Ellipsis
+def normalize_slice(input_slice, dim_size):
+    """Normalizes start, stop, step in a slice."""
+    start = normalize_start(input_slice.start, dim_size)
+    stop = normalize_stop(input_slice.stop, dim_size)
+    step = input_slice.step
+    if step is None:
+        step = 1
+    if step >= 0:
+        start = normalize_start(input_slice.start, dim_size)
+        stop = normalize_stop(input_slice.stop, dim_size)
+    else:
+        start = normalize_stop(input_slice.start, dim_size)
+        stop = normalize_start(input_slice.stop, dim_size)
+    return start, stop, step
 
 
 @constexpr
@@ -869,3 +732,64 @@ def sequence_mul_int(seq, number):
 def check_in_sequence(x, y):
     """Determine whether the input `x` is in the sequence `y`."""
     return x in y
+
+
+@constexpr
+def is_slice(x):
+    return isinstance(x, slice)
+
+
+@constexpr
+def filter_expanded_dims(shape, not_expanded_dim):
+    diff = len(not_expanded_dim) - len(shape)
+    if diff < 0:
+        raise ValueError('unable to broadcast {shape}')
+    return tuple(compress(shape, not_expanded_dim[diff:]))
+
+
+@constexpr
+def sequence_to_index(sequence, dim_size):
+    """Transforms sequence to tensor index."""
+    if not sequence:
+        return False
+    if all(isinstance(i, bool) for i in sequence):
+        seq_size = len(sequence)
+        if seq_size != dim_size:
+            raise IndexError('dimension is {dim_size} but corresponding boolean dimension is {seq_size}')
+        sequence = tuple(compress(range(dim_size), sequence))
+        if not sequence:
+            return False
+    return make_tensor(sequence, mstype.int64, None, dim_size)
+
+
+@constexpr
+def int_to_index(i, shape):
+    """Converts integer to tensor indices."""
+    dim_size = shape[0]
+    if i < -dim_size or i >= dim_size:
+        raise IndexError(f'index {i} is out of bounds for axis 0 with size {dim_size}')
+    i = i%dim_size
+    if len(shape) == 1:
+        return Tensor([[i]])
+    grids = [np.array(list(range(size)), dtype=np.int64) for size in shape[1:]]
+    mesh = np.ix_(*grids)
+    index = np.stack(np.broadcast_arrays(*mesh), -1)
+    return Tensor(np.insert(index, 0, i, -1))
+
+
+@constexpr
+def rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim, not_expanded_dim):
+    """Adds remaining dimensions not indexed to not_expanded_dim"""
+    if idx_advanced != -1:
+        if expand_true:
+            # tensor indices generate only one dimension with size 1
+            tensor_dims = (False,)
+        else:
+            tensor_dims = (True,)*tensor_index_ndim
+        not_expanded_dim = not_expanded_dim[:idx_advanced] + tensor_dims + not_expanded_dim[idx_advanced:]
+    return not_expanded_dim + (True,)*rem_ndim
+
+
+@constexpr
+def check_slice_empty(start, stop, step):
+    return (start - stop)*step >= 0
