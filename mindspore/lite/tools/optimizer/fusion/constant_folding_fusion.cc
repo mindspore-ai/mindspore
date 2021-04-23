@@ -15,12 +15,13 @@
  */
 
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <vector>
+#include "tools/anf_exporter/fetch_content.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/anf_exporter/anf_exporter.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/common.h"
@@ -36,47 +37,79 @@ using mindspore::lite::Tensor;
 namespace mindspore::opt {
 namespace {
 constexpr size_t INITIAL_SIZE = 1024;
-std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
+void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *output_tensor) {
+  if (input_tensor != nullptr) {
+    for (auto &i : *input_tensor) {
+      delete i;
+      i = nullptr;
+    }
+  }
+  if (output_tensor != nullptr) {
+    for (auto &i : *output_tensor) {
+      delete i;
+      i = nullptr;
+    }
+  }
+}
+
+std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, lite::converter::FmkType fmk_type) {
   MS_ASSERT(CNode != nullptr);
-  auto tmp_meta_graph = std::make_unique<schema::MetaGraphT>();
-  auto tmp_fb_node = std::make_unique<schema::CNodeT>();
-  lite::AnfExporter anfExporter;
-  anfExporter.SetOpInputNode(CNode, tmp_meta_graph, tmp_fb_node.get());
-  std::vector<Tensor *> input_tensors;
-  for (auto input_index : tmp_fb_node->inputIndex) {
-    auto tensorT = tmp_meta_graph->allTensors.at(input_index).get();
-    auto tensor_shape = tensorT->dims;
-    auto lite_tensor = new (std::nothrow) Tensor(
-      TypeId(tensorT->dataType), tensor_shape, tensorT->format,
-      lite::TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
-    if (lite_tensor == nullptr) {
-      MS_LOG(ERROR) << "lite tensor is nullptr";
-      return input_tensors;
-    }
-    auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
-    // when tensorT as graph input
-    if (lite_tensor_size <= 0) {
-      delete lite_tensor;
-      return input_tensors;
-    }
-    auto tensor_data = new (std::nothrow) uint8_t[lite_tensor_size / sizeof(char)];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "tensor_data is nullptr";
-      delete lite_tensor;
-      return input_tensors;
-    }
-    auto ret = memcpy_s(tensor_data, lite_tensor_size, tensorT->data.data(), lite_tensor_size);
-    if (ret != EOK) {
-      delete lite_tensor;
-      delete[](tensor_data);
-      MS_LOG(ERROR) << "memcpy error: " << ret;
-      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+  std::vector<Tensor *> tensors;
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    int status;
+    lite::DataInfo data_info;
+    if (utils::isa<ParameterPtr>(cnode->input(i))) {
+      if (!cnode->input(i)->cast<ParameterPtr>()->has_default()) {
+        FreeTensors(&tensors, nullptr);
+        return {};
+      }
+      status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, false, &data_info);
+    } else if (utils::isa<ValueNodePtr>(cnode->input(i))) {
+      status = lite::FetchDataFromValueNode(cnode, i, fmk_type, false, &data_info);
+    } else {
+      MS_LOG(ERROR) << "input node is not const node.";
+      FreeTensors(&tensors, nullptr);
       return {};
     }
-    lite_tensor->set_data(tensor_data);
-    input_tensors.emplace_back(lite_tensor);
+    if (status == lite::RET_NO_CHANGE) {
+      continue;
+    }
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "parser const data failed.";
+      FreeTensors(&tensors, nullptr);
+      return {};
+    }
+    if (data_info.shape_.empty() && data_info.data_.empty()) {
+      FreeTensors(&tensors, nullptr);
+      MS_LOG(DEBUG) << "input node is graph input.";
+      return {};
+    }
+    auto tensor = new (std::nothrow)
+      Tensor(TypeId(data_info.data_type_), data_info.shape_, schema::Format(data_info.format_),
+             lite::TensorCategory(0, data_info.shape_.size(), TypeId(data_info.data_type_), data_info.data_.size()));
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "new a tensor is nullptr.";
+      FreeTensors(&tensors, nullptr);
+      return {};
+    }
+    if (data_info.data_.empty()) {
+      tensors.emplace_back(tensor);
+      continue;
+    }
+    auto tensor_data = tensor->MutableData();
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "malloc data failed.";
+      FreeTensors(&tensors, nullptr);
+      return {};
+    }
+    if (memcpy_s(tensor_data, data_info.data_.size(), data_info.data_.data(), data_info.data_.size()) != EOK) {
+      MS_LOG(ERROR) << "memcpy data failed.";
+      FreeTensors(&tensors, nullptr);
+      return {};
+    }
+    tensors.emplace_back(tensor);
   }
-  return input_tensors;
+  return tensors;
 }
 
 ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
@@ -229,21 +262,6 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
   }
   return lite::RET_OK;
 }
-
-void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *output_tensor) {
-  if (input_tensor != nullptr) {
-    for (auto &i : *input_tensor) {
-      delete i;
-      i = nullptr;
-    }
-  }
-  if (output_tensor != nullptr) {
-    for (auto &i : *output_tensor) {
-      delete i;
-      i = nullptr;
-    }
-  }
-}
 }  //  namespace
 
 const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -263,9 +281,8 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       continue;
     }
     auto input_cnode = input_node->cast<CNodePtr>();
-    auto input_tensors = GetCNodeInputTensors(input_cnode);
-    if (input_tensors.empty() || input_tensors.size() != input_cnode->inputs().size() - 1) {
-      FreeTensors(&input_tensors, nullptr);
+    auto input_tensors = GetCNodeInputTensors(input_cnode, fmk_type_);
+    if (input_tensors.empty()) {
       continue;
     }
     changed = true;
@@ -279,7 +296,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       FreeTensors(&input_tensors, &output_tensors);
       return nullptr;
     }
-    auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, input_cnode, context.get());
+    auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, input_cnode, context_.get());
     if (lite_kernel == nullptr) {
       FreeTensors(&input_tensors, &output_tensors);
       MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";

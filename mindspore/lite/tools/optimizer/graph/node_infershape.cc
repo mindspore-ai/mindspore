@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
-#include "tools/anf_exporter/anf_exporter.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
+#include "src/common/utils.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/ops_utils.h"
 #include "src/runtime/infer_manager.h"
@@ -67,8 +67,8 @@ bool DuceInferFlag(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inp
     }
   }
   auto origin_inputs = cnode->inputs();
-  lite::AnfExporter::RemoveIfDepend(cnode);
-  lite::AnfExporter::RemoveIfMakeTuple(cnode);
+  lite::RemoveIfDepend(cnode);
+  lite::RemoveIfMakeTuple(cnode);
   for (size_t i = 1; i < cnode->size(); ++i) {
     if (!utils::isa<CNodePtr>(cnode->input(i))) {
       continue;
@@ -241,8 +241,8 @@ STATUS NodeInferShape::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(inputs != nullptr);
   auto origin_inputs = cnode->inputs();
-  lite::AnfExporter::RemoveIfDepend(cnode);
-  lite::AnfExporter::RemoveIfMakeTuple(cnode);
+  lite::RemoveIfDepend(cnode);
+  lite::RemoveIfMakeTuple(cnode);
   RemoveIfMonad(cnode);
   std::vector<lite::Tensor *> const_inputs;
   if (GetCNodeConstInput(cnode, &const_inputs) != lite::RET_OK) {
@@ -288,28 +288,29 @@ STATUS NodeInferShape::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
 }
 
 STATUS NodeInferShape::GetCNodeConstInput(const CNodePtr &cnode, std::vector<lite::Tensor *> *const_ms_inputs) {
-  MS_ASSERT(cnode != nullptr);
-  auto origin_inputs = cnode->inputs();
-  std::vector<AnfNodePtr> const_inputs;
-  for (auto &input : origin_inputs) {
-    if (utils::isa<CNodePtr>(input)) {
+  MS_ASSERT(cnode != nullptr && const_ms_inputs != nullptr);
+  std::vector<lite::DataInfo> data_infos;
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    if (utils::isa<CNodePtr>(cnode->input(i))) {
       continue;
     }
-    const_inputs.push_back(input);
+    STATUS status;
+    lite::DataInfo data_info;
+    if (utils::isa<ParameterPtr>(cnode->input(i))) {
+      status = lite::FetchDataFromParameterNode(cnode, i, fmk_type_, train_flag_, &data_info);
+    } else {
+      status = lite::FetchDataFromValueNode(cnode, i, fmk_type_, train_flag_, &data_info);
+    }
+    if (status == lite::RET_NO_CHANGE) {
+      continue;
+    }
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "fetch const input data failed.";
+      return status;
+    }
+    data_infos.emplace_back(data_info);
   }
-  cnode->set_inputs(const_inputs);
-  auto meta_graph = std::make_unique<schema::MetaGraphT>();
-  meta_graph->fmkType = fmk_type_;
-  auto fb_node = std::make_unique<schema::CNodeT>();
-  lite::AnfExporter anf_exporter;
-  anf_exporter.set_train_flag(train_flag_);
-  auto status = anf_exporter.SetOpInputNode(cnode, meta_graph, fb_node.get());
-  cnode->set_inputs(origin_inputs);
-  if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "get const inputs failed.";
-    return status;
-  }
-  return ConvertToLiteTensor(meta_graph, fb_node->inputIndex, const_ms_inputs);
+  return ConvertToLiteTensor(data_infos, const_ms_inputs);
 }
 
 STATUS NodeInferShape::GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite::Tensor *> *var_ms_inputs) {
@@ -319,29 +320,16 @@ STATUS NodeInferShape::GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite:
     if (!utils::isa<CNodePtr>(cnode->input(i))) {
       continue;
     }
-    auto abstract = GetCNodeInputAbstract(cnode, i);
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "Abstract cnode is nullptr.";
+    lite::DataInfo data_info;
+    if (lite::FetchDataFromCNode(cnode, i, fmk_type_, train_flag_, &data_info) != lite::RET_OK) {
+      MS_LOG(ERROR) << "parse cnode failed.";
       return lite::RET_ERROR;
     }
-    if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
-      MS_LOG(ERROR) << "Abstract should be anstract tensor.";
-      return lite::RET_ERROR;
-    }
-    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
-    auto type_ptr = abstract_tensor->element()->GetTypeTrack();
-    MS_ASSERT(typePtr != nullptr);
-    if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
-      MS_LOG(ERROR) << "Shape of Abstract should be ShapePtr.";
-      return lite::RET_ERROR;
-    }
-    auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-    std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
     lite::Tensor *tensor = nullptr;
-    if (type_ptr->type_id() == kObjectTypeTensorType) {
-      tensor = GetCNodeTensorListVarInput(dims, abstract_tensor);
+    if (data_info.data_type_ == kObjectTypeTensorType) {
+      tensor = GetCNodeTensorListVarInput(data_info);
     } else {
-      tensor = new (std::nothrow) lite::Tensor(TypeId(type_ptr->type_id()), dims);
+      tensor = new (std::nothrow) lite::Tensor(TypeId(data_info.data_type_), data_info.shape_);
     }
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "new a lite tensor failed";
@@ -352,27 +340,16 @@ STATUS NodeInferShape::GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite:
   return lite::RET_OK;
 }
 
-lite::Tensor *NodeInferShape::GetCNodeTensorListVarInput(std::vector<int> shape,
-                                                         const abstract::AbstractTensorPtr &abstract_tensor) {
-  MS_ASSERT(abstract_tensor != nullptr);
-  auto tensor_list = new (std::nothrow) lite::TensorList(shape, {});
+lite::Tensor *NodeInferShape::GetCNodeTensorListVarInput(const lite::DataInfo &data_info) {
+  auto tensor_list = new (std::nothrow) lite::TensorList(data_info.shape_, {});
   if (tensor_list == nullptr) {
     MS_LOG(ERROR) << "new a lite tensor list failed";
     return nullptr;
   }
-  auto tensor_info = abstract_tensor->GetValueTrack();
-  if (tensor_info == nullptr || !utils::isa<tensor::TensorPtr>(tensor_info)) {
-    delete tensor_list;
-    MS_LOG(ERROR) << "nsor list abstract is invalid.";
-    return nullptr;
+  if (data_info.data_.empty()) {
+    return tensor_list;
   }
-  auto tensor_value = tensor_info->cast<tensor::TensorPtr>();
-  if (tensor_value->data_c() == nullptr) {
-    delete tensor_list;
-    MS_LOG(ERROR) << "cannot get tensor list abstract's info.";
-    return nullptr;
-  }
-  auto status = tensor_list->Decode(static_cast<int *>(tensor_value->data_c()));
+  auto status = tensor_list->Decode(reinterpret_cast<const int *>(data_info.data_.data()));
   if (status != lite::RET_OK) {
     delete tensor_list;
     MS_LOG(ERROR) << "decode tensor list failed.";
@@ -384,41 +361,78 @@ lite::Tensor *NodeInferShape::GetCNodeTensorListVarInput(std::vector<int> shape,
 STATUS NodeInferShape::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *outputs) {
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(outputs != nullptr);
-  auto meta_graph = std::make_unique<schema::MetaGraphT>();
-  meta_graph->fmkType = fmk_type_;
-  auto fb_node = std::make_unique<schema::CNodeT>();
-  lite::AnfExporter anf_exporter;
-  anf_exporter.set_train_flag(train_flag_);
-  anf_exporter.SetOpOutputNode(cnode, meta_graph, fb_node.get());
-  return ConvertToLiteTensor(meta_graph, fb_node->outputIndex, outputs);
+  std::vector<lite::DataInfo> data_infos;
+  if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
+    auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
+    if (tuple == nullptr) {
+      MS_LOG(ERROR) << "tuple is nullptr";
+      return lite::RET_ERROR;
+    }
+    auto elements = tuple->elements();
+    for (size_t i = 0; i < elements.size(); i++) {
+      lite::DataInfo data_info;
+      data_info.node_type_ = lite::NodeType_CNode;
+      if (train_flag_) {
+        data_infos.emplace_back(data_info);
+        if (CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || CheckPrimitiveType(cnode, prim::kPrimAdam)) {
+          break;
+        }
+      } else {
+        if (!utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
+          MS_LOG(ERROR) << "abstract is not AbstractTensor";
+          return lite::RET_ERROR;
+        }
+        auto type = kNumberTypeFloat32;
+        if (utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
+          auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
+          auto typePtr = abstract_tensor->element()->GetTypeTrack();
+          type = typePtr->type_id();
+        }
+        data_info.data_type_ = type;
+        data_infos.emplace_back(data_info);
+        if (CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
+            CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm)) {
+          break;
+        }
+      }
+    }
+  } else {
+    lite::DataInfo data_info;
+    auto type = kNumberTypeFloat32;
+    if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
+      auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
+      auto typePtr = abstract_tensor->element()->GetTypeTrack();
+      type = typePtr->type_id();
+    }
+    data_info.data_type_ = type;
+    data_info.node_type_ = lite::NodeType_CNode;
+    data_infos.emplace_back(data_info);
+  }
+  return ConvertToLiteTensor(data_infos, outputs);
 }
 
-STATUS NodeInferShape::ConvertToLiteTensor(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                           const std::vector<uint32_t> &tensor_indexes,
+STATUS NodeInferShape::ConvertToLiteTensor(const std::vector<lite::DataInfo> &data_infos,
                                            std::vector<lite::Tensor *> *tensors) {
-  MS_ASSERT(meta_graph != nullptr);
   MS_ASSERT(tensors != nullptr);
-  for (auto index : tensor_indexes) {
-    auto tensor_t = meta_graph->allTensors.at(index).get();
-    auto tensor_shape = tensor_t->dims;
-    auto tensor_category = lite::TensorCategory(tensor_t->nodeType, tensor_t->dims.size(), TypeId(tensor_t->dataType),
-                                                tensor_t->data.size());
+  for (auto &data_info : data_infos) {
+    auto tensor_category = lite::TensorCategory(lite::NodeType(data_info.node_type_), data_info.shape_.size(),
+                                                TypeId(data_info.data_type_), data_info.data_.size());
     lite::Tensor *tensor = nullptr;
-    if (tensor_t->dataType != kObjectTypeTensorType) {
-      tensor =
-        new (std::nothrow) lite::Tensor(TypeId(tensor_t->dataType), tensor_shape, tensor_t->format, tensor_category);
+    if (data_info.data_type_ != kObjectTypeTensorType) {
+      tensor = new (std::nothrow) lite::Tensor(TypeId(data_info.data_type_), data_info.shape_,
+                                               (schema::Format)data_info.format_, tensor_category);
     } else {
-      tensor = new (std::nothrow) lite::TensorList(tensor_shape, std::vector<int>(), tensor_category);
+      tensor = new (std::nothrow) lite::TensorList(data_info.shape_, std::vector<int>(), tensor_category);
     }
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "new a lite tensor failed";
       return lite::RET_ERROR;
     }
-    auto tensor_size = tensor_t->data.size() * sizeof(char);
+    auto tensor_size = data_info.data_.size();
     if (tensor_size > 0) {
-      if (tensor_t->dataType == kObjectTypeTensorType) {
+      if (data_info.data_type_ == kObjectTypeTensorType) {
         auto tensor_list = reinterpret_cast<lite::TensorList *>(tensor);
-        if (tensor_list->Decode(reinterpret_cast<const int *>(tensor_t->data.data())) != RET_OK) {
+        if (tensor_list->Decode(reinterpret_cast<const int *>(data_info.data_.data())) != RET_OK) {
           MS_LOG(ERROR) << "Decode tensorlist data failed";
           return RET_ERROR;
         }
@@ -429,7 +443,7 @@ STATUS NodeInferShape::ConvertToLiteTensor(const std::unique_ptr<schema::MetaGra
           delete tensor;
           return lite::RET_ERROR;
         }
-        if (memcpy_s(tensor_data, tensor_size, tensor_t->data.data(), tensor_size) != EOK) {
+        if (memcpy_s(tensor_data, tensor_size, data_info.data_.data(), tensor_size) != EOK) {
           delete tensor;
           delete[](tensor_data);
           MS_LOG(ERROR) << "memcpy error: ";

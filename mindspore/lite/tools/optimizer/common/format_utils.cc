@@ -28,14 +28,15 @@
 #include "ops/concat.h"
 #include "ops/crop.h"
 #include "ops/depth_to_space.h"
+#include "ops/fused_batch_norm.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
-#include "ops/fused_batch_norm.h"
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "ops/fusion/conv2d_backprop_filter_fusion.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/fusion/div_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/pow_fusion.h"
@@ -61,6 +62,7 @@
 #include "ops/space_to_depth.h"
 #include "ops/split.h"
 #include "ops/strided_slice.h"
+#include "tools/anf_exporter/fetch_content.h"
 
 namespace mindspore {
 namespace opt {
@@ -96,9 +98,9 @@ static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {{
 
 // a certain op whose input's format is not fixed.
 static const std::vector<std::string> DynamicFormatOpList = {
-  ops::kNameEltwise,   ops::kNameActivation, ops::kNameConcat,         ops::kNamePowFusion,     ops::kNameStridedSlice,
-  ops::kNameAddFusion, ops::kNameAddN,       ops::kNameSplit,          ops::kNameSliceFusion,   ops::kNameCrop,
-  ops::kNameMulFusion, ops::kNameMaximum,    ops::kNameActivationGrad, ops::kNameQuantDTypeCast};
+  ops::kNameEltwise,      ops::kNameActivation, ops::kNameConcat,  ops::kNameDivFusion,      ops::kNamePowFusion,
+  ops::kNameStridedSlice, ops::kNameAddFusion,  ops::kNameAddN,    ops::kNameSplit,          ops::kNameSliceFusion,
+  ops::kNameCrop,         ops::kNameMulFusion,  ops::kNameMaximum, ops::kNameActivationGrad, ops::kNameQuantDTypeCast};
 
 static const std::unordered_map<int, int> NC2NHAxisMap = {{0, 0}, {1, 3}, {2, 1}, {3, 2}};
 
@@ -120,33 +122,34 @@ Format GetFormat(const CNodePtr &cnode) {
   return format;
 }
 
-STATUS GetTransposePerm(const AnfNodePtr &perm_node, std::vector<int> *perm) {
+STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
   MS_ASSERT(perm_node != nullptr);
-  if (!utils::isa<ParameterPtr>(perm_node)) {
-    return lite::RET_OK;
-  }
-  auto perm_param = perm_node->cast<ParameterPtr>();
-  if (!perm_param->has_default() || perm_param->default_param() == nullptr) {
-    return lite::RET_OK;
-  }
-  auto tensor_info = perm_param->default_param()->cast<tensor::TensorPtr>();
-  if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "default param is not a tensor.";
+  if (cnode->size() != 3) {
+    MS_LOG(ERROR) << "transpose op input size must be three.";
     return lite::RET_ERROR;
   }
-  if (tensor_info->data_type() != kNumberTypeInt && tensor_info->data_type() != kNumberTypeInt32) {
-    MS_LOG(ERROR) << "data type is error, which is " << tensor_info->data_type();
-    return lite::RET_ERROR;
-  }
-  auto tensor_shape = tensor_info->shape();
-  if (tensor_shape.empty()) {
+  if (utils::isa<CNodePtr>(cnode->input(2))) {
     return lite::RET_OK;
   }
-  if (tensor_shape.size() > 1) {
+  lite::DataInfo data_info;
+  int status;
+  if (utils::isa<ParameterPtr>(cnode->input(2))) {
+    status = lite::FetchDataFromParameterNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+  } else {
+    status = lite::FetchDataFromValueNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+  }
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "fetch transpose perm data failed.";
     return lite::RET_ERROR;
   }
-  perm->resize(tensor_shape[0]);
-  if (memcpy_s(perm->data(), tensor_info->Size(), tensor_info->data_c(), tensor_info->Size()) != EOK) {
+  if ((data_info.data_type_ != kNumberTypeInt && data_info.data_type_ != kNumberTypeInt32) ||
+      data_info.shape_.size() != 1) {
+    MS_LOG(ERROR) << "transpose perm data is invalid.";
+    return lite::RET_ERROR;
+  }
+  perm->resize(data_info.shape_[0]);
+  if (!data_info.data_.empty() &&
+      memcpy_s(perm->data(), data_info.data_.size(), data_info.data_.data(), data_info.data_.size()) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     return lite::RET_ERROR;
   }

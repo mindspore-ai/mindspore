@@ -21,15 +21,10 @@
 #include "src/common/log_adapter.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
-#include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
-#include "tools/converter/legacy_optimizer/graph/trans_format_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
-#include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
-#include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
-#include "tools/converter/legacy_optimizer/graph/global_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
@@ -129,7 +124,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto old_nodes = GetGraphNodes();
     Optimizer format_trans_optimizer;
     if (!ctx.trainModel && ctx.fmk != converter::FmkType_ONNX) {
-      format_trans_optimizer.AddPass(new (std::nothrow) GlobalFormatTransformPass());
       format_trans_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
       format_trans_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     }

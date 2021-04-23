@@ -48,6 +48,7 @@ class UnifyFormatPass : public Pass {
   bool ResetFuncGraph(const FuncGraphPtr &func_graph);
   bool BasicProcess(const FuncGraphPtr &func_graph, bool main_graph);
   bool DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph);
+  bool DecreaseTransposeForMultiOp(const FuncGraphPtr &func_graph);
   bool TransTransFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS PostTransposeFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
@@ -55,6 +56,8 @@ class UnifyFormatPass : public Pass {
   void GetTransNodeFormatType(const CNodePtr &cnode, TransTypePair *trans_info);
   STATUS HandleGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                              std::set<CNodePtr> *visit_transposes);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_insert_info);
   STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);

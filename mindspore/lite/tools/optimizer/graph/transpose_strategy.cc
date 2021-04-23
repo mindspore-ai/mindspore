@@ -67,7 +67,7 @@ AnfNodePtr TransposeStrategy::TransposePairFuseWhenInsert(const FuncGraphPtr &fu
       MS_LOG(ERROR) << "input node is invalid.";
       return nullptr;
     }
-    if (GetTransposePerm(input_cnode->input(kTransposePerm), &trans_perm) != lite::RET_OK) {
+    if (GetTransposePerm(input_cnode, &trans_perm) != lite::RET_OK) {
       MS_LOG(ERROR) << "transpose perm get failed.";
       return nullptr;
     }
@@ -142,8 +142,40 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
   return can_insert;
 }
 
+bool TransposeStrategy::CanChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto shape = node_infer_shape_.GetInputShape(cnode, 1);
+  if (shape.size() != 4) {
+    if (cnode->size() > 2) {
+      shape = node_infer_shape_.GetInputShape(cnode, 2);
+      if (shape.size() != 4 && !shape.empty()) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  if (CheckPrimitiveType(cnode, prim::kPrimConcat) || CheckPrimitiveType(cnode, prim::kPrimSplit)) {
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim->GetAttr(ops::kAxis) == nullptr) {
+      return false;
+    }
+  }
+  if (CheckPrimitiveType(cnode, prim::kPrimSliceFusion) || CheckPrimitiveType(cnode, prim::kPrimStridedSlice)) {
+    for (size_t i = 2; i < cnode->size(); ++i) {
+      if (utils::isa<CNodePtr>(cnode->input(i))) {
+        return false;
+      }
+    }
+    if (CheckPrimitiveType(cnode, prim::kPrimStridedSlice) && cnode->size() != kOnnxStridedSlice) {
+      return false;
+    }
+  }
+  return true;
+}
+
 STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto shape = node_infer_shape_.GetInputShape(cnode, 1);
   if (shape.size() != 4) {
     if (cnode->size() > 2) {
@@ -180,6 +212,7 @@ STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNo
     } else {
       offsets.push_back(0);
     }
+    crop_prim->set_axis(new_axis);
     crop_prim->set_offsets(offsets);
   }
   if (CheckPrimitiveType(cnode, prim::kPrimSliceFusion)) {
@@ -231,7 +264,7 @@ bool TransposeStrategy::IsInOutCanFuison(const FuncGraphPtr &func_graph, const s
       if (cnode == nullptr) {
         return false;
       }
-      if (GetTransposePerm(cnode->input(kTransposePerm), &perm) != lite::RET_OK) {
+      if (GetTransposePerm(cnode, &perm) != lite::RET_OK) {
         return false;
       }
       if (perm == NH2NC) {

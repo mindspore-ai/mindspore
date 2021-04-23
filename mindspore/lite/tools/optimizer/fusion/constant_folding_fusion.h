@@ -24,18 +24,23 @@
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "backend/optimizer/common/optimizer.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace opt {
 class ConstFoldPass : public PatternProcessPass {
  public:
-  explicit ConstFoldPass(std::shared_ptr<lite::InnerContext> context_ptr = nullptr, bool multigraph = true)
-      : PatternProcessPass("constfold_pass", multigraph), context(std::move(context_ptr)) {}
+  explicit ConstFoldPass(lite::converter::FmkType fmk_type = lite::converter::FmkType_MS, bool multigraph = true)
+      : PatternProcessPass("constfold_pass", multigraph), fmk_type_(fmk_type) {
+    context_ = std::make_shared<lite::InnerContext>();
+    context_->Init();
+  }
   ~ConstFoldPass() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  std::shared_ptr<lite::InnerContext> context;
+  lite::converter::FmkType fmk_type_{lite::converter::FmkType_MS};
+  std::shared_ptr<lite::InnerContext> context_{nullptr};
 };
 }  // namespace opt
 }  // namespace mindspore
