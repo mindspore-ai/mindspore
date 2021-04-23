@@ -537,7 +537,8 @@ string TbeKernelJsonCreator::GetSocVersion() {
     }
     if (soc_version_env != nullptr) {
       if (std::strcmp(soc_version, soc_version_env) != 0) {
-        MS_LOG(WARNING) << "SocVerison will be change.";
+        MS_LOG(DEBUG) << "Detected the env SOC_VERSION, so the SocVersion will be changed to " << str_soc_version_env
+                      << ".";
         ret = rtSetSocVersion(soc_version_env);
         if (ret != RT_ERROR_NONE) {
           MS_LOG(EXCEPTION) << "SetSocVersion failed, errorno: " << ret;

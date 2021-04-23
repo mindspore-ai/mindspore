@@ -55,8 +55,6 @@ struct FormatArgs {
   TypeId src_data_type;
 };
 
-size_t CubeSizeByType(const TypeId data_type);
-
 std::vector<size_t> PaddingShape(const std::vector<size_t> &shape, const std::string &format,
                                  const std::string &pad_index = {""});
 std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
