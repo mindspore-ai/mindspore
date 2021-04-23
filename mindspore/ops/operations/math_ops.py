@@ -1423,7 +1423,7 @@ class SquaredDifference(_MathBinaryOp):
 
      .. math::
 
-        out_{i} = (x_{i} + y_{i}) * (x_{i} - y_{i}) = x_{i}^2 - y_{i}^2
+        out_{i} = (x_{i} - y_{i}) * (x_{i} - y_{i}) = (x_{i} - y_{i})^2
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
