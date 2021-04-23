@@ -45,7 +45,6 @@ void SearchSubGraph::ConvertSubGraphToModel() {
     if (subgraph.nodes_.empty()) {
       continue;
     }
-    //    DeviceType device = subgraph.device_;
 
     int new_sub_index = model_->sub_graphs_.size();
     int partial_index = model_->all_nodes_.size();
@@ -71,7 +70,6 @@ void SearchSubGraph::ConvertSubGraphToModel() {
       new_sub_graph->node_indices_.push_back(node_index);
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
-      //      model_->all_nodes_[node_index]->device_type_ = device;
     }
 
     for (uint32_t head_index : subgraph.heads_) {
@@ -227,13 +225,7 @@ void SearchSubGraph::InitSubgraphDevice() {
   }
 }
 
-void SearchSubGraph::InitMainGraphDevice() {
-  //  DeviceType main_device = DT_GPU;
-  //  Model::SubGraph *main_graph = model_->sub_graphs_.front();
-  //  for (uint32_t node_index : main_graph->node_indices_) {
-  //    Model::Node *node = model_->all_nodes_[node_index];
-  //    node->device_type_ = main_device;
-}
+void SearchSubGraph::InitMainGraphDevice() { return; }
 
 void SearchSubGraph::SubgraphFusion() {
   while (sub_graphs_.size() > 2) {
