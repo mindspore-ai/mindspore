@@ -226,12 +226,13 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
   MS_ASSERT(tensor != nullptr);
   auto float32_data = tensor->data_c();
   auto own_data = tensor->own_data();
+  tensor->set_data_type(TypeId::kNumberTypeFloat16);
   if (float32_data == nullptr) {
-    MS_LOG(ERROR) << "tensor data is null.";
-    return lite::RET_NULL_PTR;
+    // the input data may be nullptr of merge.
+    MS_LOG(INFO) << "tensor data is null.";
+    return lite::RET_OK;
   }
   tensor->set_data(nullptr);
-  tensor->set_data_type(TypeId::kNumberTypeFloat16);
   auto ret = tensor->MallocData();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "malloc data failed";
