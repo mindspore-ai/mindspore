@@ -15,8 +15,8 @@
 # ============================================================================
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_standalone_train.sh DATASET_PATH"
-echo "for example: sh run_standalone_train.sh /home/workspace/ag"
+echo "sh run_eval_gpu.sh DATASET_PATH DATASET_NAME MODEL_CKPT"
+echo "for example: sh run_eval_gpu.sh /home/workspace/ag/test*.mindrecord ag device0/ckpt0/fasttext-5-118.ckpt"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -30,27 +30,20 @@ get_real_path(){
 
 DATASET=$(get_real_path $1)
 echo $DATASET
-DATANAME=$(basename $DATASET)
-echo $DATANAME
-DEVICEID=$2
-
-export DEVICE_NUM=1
-export DEVICE_ID=$DEVICEID
-export RANK_ID=0
-export RANK_SIZE=1
+DATANAME=$2
+MODEL_CKPT=$(get_real_path $3)
 
 
-if [ -d "train" ];
+if [ -d "eval" ];
 then
-    rm -rf ./train
+    rm -rf ./eval
 fi
-mkdir ./train
-cp ../*.py ./train
-cp -r ../src ./train
-cp -r ../scripts/*.sh ./train
-cd ./train || exit
-echo "start training for device $DEVICE_ID"
-env > env.log
-#python train.py  --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
-python train.py  --data_path $DATASET --data_name $DATANAME
+mkdir ./eval
+cp ../*.py ./eval
+cp -r ../src ./eval
+cp -r ../scripts/*.sh ./eval
+cd ./eval || exit
+echo "start eval on standalone GPU"
+
+python ../../eval.py  --device_target GPU --data_path $DATASET --data_name $DATANAME --model_ckpt $MODEL_CKPT> log_fasttext.log 2>&1 &
 cd ..

@@ -37,18 +37,22 @@ args = parser.parse_args()
 
 if args.data_name == "ag":
     from src.config import config_ag as config
+    from src.config import config_ag_gpu as config_gpu
     target_label1 = ['0', '1', '2', '3']
 elif args.data_name == 'dbpedia':
     from src.config import config_db as config
+    from src.config import config_db_gpu as config_gpu
     target_label1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
 elif args.data_name == 'yelp_p':
     from  src.config import config_yelpp as config
+    from src.config import config_yelpp_gpu as config_gpu
     target_label1 = ['0', '1']
 
 context.set_context(
     mode=context.GRAPH_MODE,
     save_graphs=False,
-    device_target="Ascend")
+    device_target=args.device_target)
+config = config_ascend if args.device_target == 'Ascend' else config_gpu
 
 class FastTextInferExportCell(nn.Cell):
     """
@@ -80,16 +84,18 @@ def run_fasttext_export():
     parameter_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(fasttext_model, parameter_dict)
     ft_infer = FastTextInferExportCell(fasttext_model)
-
+    batch_size = config.batch_size
+    if args.device_target == 'GPU':
+        batch_size = config.distribute_batch_size
     if args.data_name == "ag":
-        src_tokens_shape = [config.batch_size, 467]
-        src_tokens_length_shape = [config.batch_size, 1]
+        src_tokens_shape = [batch_size, 467]
+        src_tokens_length_shape = [batch_size, 1]
     elif args.data_name == 'dbpedia':
-        src_tokens_shape = [config.batch_size, 1120]
-        src_tokens_length_shape = [config.batch_size, 1]
+        src_tokens_shape = [batch_size, 1120]
+        src_tokens_length_shape = [batch_size, 1]
     elif args.data_name == 'yelp_p':
-        src_tokens_shape = [config.batch_size, 2955]
-        src_tokens_length_shape = [config.batch_size, 1]
+        src_tokens_shape = [batch_size, 2955]
+        src_tokens_length_shape = [batch_size, 1]
 
     file_name = args.file_name + '_' + args.data_name
     src_tokens = Tensor(np.ones((src_tokens_shape)).astype(np.int32))
