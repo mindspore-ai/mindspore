@@ -35,7 +35,7 @@ int LiteOpActor::CompileArrow() {
         continue;
       }
       auto id = out->name() + this->GetAID().Url();
-      auto arrow = std::make_shared<OpArrow>(i, id, to_input_index);
+      auto arrow = std::make_shared<OpArrow>(i, AID(id), to_input_index);
       if (arrow == nullptr) {
         MS_LOG(ERROR) << "create OpArrow failed, out kernel: " << out->name();
         return RET_ERROR;

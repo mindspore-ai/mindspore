@@ -53,7 +53,7 @@ static std::atomic_bool g_finalizeMindrtStatus(false);
 }  // namespace local
 
 const MindrtAddress &GetMindrtAddress() {
-  BUS_OOM_EXIT(local::g_mindrtAddress);
+  MINDRT_OOM_EXIT(local::g_mindrtAddress);
   return *local::g_mindrtAddress;
 }
 
@@ -61,39 +61,37 @@ void SetThreadCount(int threadCount) { ActorMgr::GetActorMgrRef()->Initialize(th
 
 class MindrtExit {
  public:
-  MindrtExit() {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "trace: enter MindrtExit()---------");
-  }
+  MindrtExit() { MS_LOG(DEBUG) << "trace: enter MindrtExit()---------"; }
   ~MindrtExit() {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "trace: enter ~MindrtExit()---------");
+    MS_LOG(DEBUG) << "trace: enter ~MindrtExit()---------";
     mindspore::Finalize();
   }
 };
 
 int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                   const std::string &udpUrlAdv, int threadCount) {
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt starts ......");
+  MS_LOG(DEBUG) << "mindrt starts ......";
 
   // start actor's thread
   SetThreadCount(threadCount);
 
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt has started.");
-  return BUS_OK;
+  MS_LOG(DEBUG) << "mindrt has started.";
+  return MINDRT_OK;
 }
 
 int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                const std::string &udpUrlAdv, int threadCount) {
   /* support repeat initialize  */
   int result = InitializeImp(tcpUrl, tcpUrlAdv, udpUrl, udpUrlAdv, threadCount);
-  static MindrtExit busExit;
+  static MindrtExit mindrtExit;
 
   return result;
 }
 
 AID Spawn(ActorReference actor, bool sharedThread, bool start) {
   if (actor == nullptr) {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "Actor is nullptr.");
-    BUS_EXIT("Actor is nullptr.");
+    MS_LOG(DEBUG) << "Actor is nullptr.";
+    MINDRT_EXIT("Actor is nullptr.");
   }
 
   if (local::g_finalizeMindrtStatus.load() == true) {
@@ -118,30 +116,30 @@ void TerminateAll() { mindspore::ActorMgr::GetActorMgrRef()->TerminateAll(); }
 void Finalize() {
   bool inite = false;
   if (local::g_finalizeMindrtStatus.compare_exchange_strong(inite, true) == false) {
-    ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt has been Finalized.");
+    MS_LOG(DEBUG) << "mindrt has been Finalized.";
     return;
   }
 
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt starts to finalize.");
+  MS_LOG(DEBUG) << "mindrt starts to finalize.";
   mindspore::ActorMgr::GetActorMgrRef()->Finalize();
 
-  ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "mindrt has been finalized.");
+  MS_LOG(DEBUG) << "mindrt has been finalized.";
   // flush the log in cache to disk before exiting.
   FlushHLogCache();
 }
 
 void SetDelegate(const std::string &delegate) { mindspore::ActorMgr::GetActorMgrRef()->SetDelegate(delegate); }
 
-static HARES_LOG_PID g_busLogPid = 1;
-void SetLogPID(HARES_LOG_PID pid) {
-  ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, pid, "Set Mindrt log PID: %u", pid);
-  g_busLogPid = pid;
+static int g_mindrtLogPid = 1;
+void SetLogPID(int pid) {
+  MS_LOG(DEBUG) << "Set Mindrt log PID:" << pid;
+  g_mindrtLogPid = pid;
 }
-HARES_LOG_PID GetLogPID() { return g_busLogPid; }
+int GetLogPID() { return g_mindrtLogPid; }
 
 static int g_httpKmsgEnable = -1;
 void SetHttpKmsgFlag(int flag) {
-  ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "Set Mindrt http message format:%d", flag);
+  MS_LOG(DEBUG) << "Set Mindrt http message format:" << flag;
   g_httpKmsgEnable = flag;
 }
 

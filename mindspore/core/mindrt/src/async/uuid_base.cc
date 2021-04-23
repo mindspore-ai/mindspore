@@ -35,18 +35,18 @@ const uint8_t *uuid::EndAddress() const { return uuidData + UUID_SIZE; }
 std::size_t uuid::Size() { return UUID_SIZE; }
 
 std::string uuid::ToBytes(const uuid &u) {
-  BUS_ASSERT(sizeof(u) == UUID_SIZE);
+  MINDRT_ASSERT(sizeof(u) == UUID_SIZE);
   return std::string(reinterpret_cast<const char *>(u.uuidData), sizeof(u.uuidData));
 }
 
 Option<uuid> uuid::FromBytes(const std::string &s) {
   if (s.size() != UUID_SIZE) {
-    return MindrtNone();
+    return Option<uuid>(MindrtNone());
   }
   uuid u;
   memcpy(&u.uuidData, s.data(), s.size());
 
-  return u;
+  return Option(u);
 }
 
 Option<unsigned char> uuid::GetValue(char c) {
@@ -57,15 +57,15 @@ Option<unsigned char> uuid::GetValue(char c) {
   size_t pos = std::find(digitsBegin, digitsEnd, c) - digitsBegin;
   if (pos >= digitsLen) {
     MS_LOG(ERROR) << "invalid char";
-    return MindrtNone();
+    return Option<unsigned char>(MindrtNone());
   }
-  return values[pos];
+  return Option<unsigned char>(values[pos]);
 }
 
 Option<uuid> uuid::FromString(const std::string &s) {
   auto sBegin = s.begin();
   if (sBegin == s.end()) {
-    return MindrtNone();
+    return Option<uuid>(MindrtNone());
   }
   auto c = *sBegin;
   bool hasOpenBrace = (c == '{');
@@ -84,12 +84,12 @@ Option<uuid> uuid::FromString(const std::string &s) {
         c = *(sBegin++);
       } else {
         MS_LOG(ERROR) << "str invalid";
-        return MindrtNone();
+        return Option<uuid>(MindrtNone());
       }
     }
     Option<unsigned char> oc1 = GetValue(c);
     if (oc1.IsNone()) {
-      return MindrtNone();
+      return Option<uuid>(MindrtNone());
     }
     u.uuidData[i] = oc1.Get();
     if (sBegin != s.end()) {
@@ -98,15 +98,15 @@ Option<uuid> uuid::FromString(const std::string &s) {
     u.uuidData[i] <<= SHIFT_BIT;
     Option<unsigned char> oc2 = GetValue(c);
     if (oc2.IsNone()) {
-      return MindrtNone();
+      return Option<uuid>(MindrtNone());
     }
     u.uuidData[i] |= oc2.Get();
   }
   if ((hasOpenBrace && (c != '}')) || (sBegin != s.end())) {
     MS_LOG(ERROR) << "No } end or leng invalid";
-    return MindrtNone();
+    return Option<uuid>(MindrtNone());
   }
-  return u;
+  return Option(u);
 }
 
 // To check whether uuid looks like 0000000-000-000-000-000000000000000
@@ -162,7 +162,7 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
   auto ret = memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
   if (ret != 0) {
     MS_LOG(ERROR) << "memcpy_s error.";
-    BUS_OOM_EXIT(tmpUUID.BeginAddress());
+    MINDRT_OOM_EXIT(tmpUUID.BeginAddress());
   }
 
   // set the variant

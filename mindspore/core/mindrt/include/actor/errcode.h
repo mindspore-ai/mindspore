@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_BUSERRCODE_H
-#define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_BUSERRCODE_H
+#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_ERRCODE_H_
+#define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_ERRCODE_H_
 
 // common err code  -1 ~ -100
-constexpr int BUS_ERROR = -1;
-constexpr int BUS_OK = 0;
+constexpr int MINDRT_ERROR = -1;
+constexpr int MINDRT_OK = 0;
 constexpr int COMM_NULL_PTR = -1;
 constexpr int ERRORCODE_SUCCESS = 1;
 

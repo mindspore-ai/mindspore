@@ -20,7 +20,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "actor/buslog.h"
+#include "actor/log.h"
 
 namespace mindspore {
 
@@ -42,13 +42,13 @@ class Option {
  public:
   Option() : data(), state(NONE) {}
 
-  Option(const T &t) : data(t), state(SOME) {}
+  explicit Option(const T &t) : data(t), state(SOME) {}
 
-  Option(T &&t) : data(std::move(t)), state(SOME) {}
+  explicit Option(T &&t) : data(std::move(t)), state(SOME) {}
 
-  Option(const InnerSome<T> &some) : data(some._t), state(SOME) {}
+  explicit Option(const InnerSome<T> &some) : data(some._t), state(SOME) {}
 
-  Option(const MindrtNone &none) : data(), state(NONE) {}
+  explicit Option(const MindrtNone &none) : data(), state(NONE) {}
 
   Option(const Option<T> &that) : data(), state(that.state) {
     if (that.IsSome()) {
@@ -63,17 +63,17 @@ class Option {
   bool IsSome() const { return state == SOME; }
 
   const T &Get() const & {
-    BUS_ASSERT(IsSome());
+    MINDRT_ASSERT(IsSome());
     return data;
   }
 
   T &&Get() && {
-    BUS_ASSERT(IsSome());
+    MINDRT_ASSERT(IsSome());
     return std::move(data);
   }
 
   const T &&Get() const && {
-    BUS_ASSERT(IsSome());
+    MINDRT_ASSERT(IsSome());
     return std::move(data);
   }
 

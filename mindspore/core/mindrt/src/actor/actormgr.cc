@@ -87,7 +87,7 @@ void ActorMgr::TerminateAll() {
   // send terminal msg to all actors.
   for (auto actorIt = actorsWaiting.begin(); actorIt != actorsWaiting.end(); ++actorIt) {
     std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
-    BUS_OOM_EXIT(msg);
+    MINDRT_OOM_EXIT(msg);
     (void)(*actorIt)->EnqueMessage(std::move(msg));
     (*actorIt)->SetRunningStatus(true);
   }
@@ -136,7 +136,7 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteL
   if (IsLocalAddres(to)) {
     auto actor = GetActor(to);
     if (actor != nullptr) {
-      if (to.GetProtocol() == BUS_UDP && msg->GetType() == MessageBase::Type::KMSG) {
+      if (to.GetProtocol() == MINDRT_UDP && msg->GetType() == MessageBase::Type::KMSG) {
         msg->type = MessageBase::Type::KUDP;
       }
       return actor->EnqueMessage(std::move(msg));
@@ -170,7 +170,7 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
   if (actors.find(actor->GetAID().Name()) != actors.end()) {
     actorsMutex.unlock();
     MS_LOG(ERROR) << "The actor's name conflicts,name:" << actor->GetAID().Name().c_str();
-    BUS_EXIT("Actor name conflicts.");
+    MINDRT_EXIT("Actor name conflicts.");
   }
 
   MS_LOG(DEBUG) << "ACTOR was spawned,a=" << actor->GetAID().Name().c_str();
@@ -179,12 +179,12 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
 
   if (shareThread) {
     threadPolicy.reset(new (std::nothrow) ShardedThread(actor));
-    BUS_OOM_EXIT(threadPolicy);
+    MINDRT_OOM_EXIT(threadPolicy);
     actor->Spawn(actor, std::move(threadPolicy));
 
   } else {
     threadPolicy.reset(new (std::nothrow) SingleThread());
-    BUS_OOM_EXIT(threadPolicy);
+    MINDRT_OOM_EXIT(threadPolicy);
     actor->Spawn(actor, std::move(threadPolicy));
     ActorMgr::GetActorMgrRef()->SetActorReady(actor);
   }
@@ -204,7 +204,7 @@ void ActorMgr::Terminate(const AID &id) {
   auto actor = GetActor(id);
   if (actor != nullptr) {
     std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
-    BUS_OOM_EXIT(msg);
+    MINDRT_OOM_EXIT(msg);
     (void)actor->EnqueMessage(std::move(msg));
     actor->SetRunningStatus(true);
   }

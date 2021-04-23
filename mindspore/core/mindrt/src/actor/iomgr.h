@@ -42,7 +42,7 @@ static const int SOCKET_KEEPINTERVAL = 5;
 // probes without getting a reply.
 static const int SOCKET_KEEPCOUNT = 3;
 
-static const char BUS_MAGICID[] = "BUS0";
+static const char MINDRT_MAGICID[] = "MINDRT0";
 
 static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
 

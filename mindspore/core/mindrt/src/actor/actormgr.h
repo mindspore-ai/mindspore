@@ -40,7 +40,7 @@ class ActorMgr {
 
   static void Receive(std::unique_ptr<MessageBase> &&msg) {
     auto to = msg->To().Name();
-    (void)ActorMgr::GetActorMgrRef()->Send(to, std::move(msg));
+    (void)ActorMgr::GetActorMgrRef()->Send(AID(to), std::move(msg));
   }
 
   ActorMgr();

@@ -19,12 +19,12 @@
 
 #include <string>
 
-#include "actor/buslog.h"
+#include "actor/log.h"
 
 namespace mindspore {
 
-constexpr auto BUS_TCP = "tcp";
-constexpr auto BUS_UDP = "udp";
+constexpr auto MINDRT_TCP = "tcp";
+constexpr auto MINDRT_UDP = "udp";
 
 class AID {
  public:
@@ -32,8 +32,8 @@ class AID {
 
   ~AID() {}
 
-  AID(const char *name);
-  AID(const std::string &name);
+  explicit AID(const char *name);
+  explicit AID(const std::string &name);
 
   AID(const std::string &tmpName, const std::string &sUrl) : name(tmpName), url(sUrl) { SetUnfixUrl(); }
 
@@ -86,7 +86,7 @@ inline std::ostream &operator<<(std::ostream &os, const AID &aid) {
 }
 
 inline bool operator==(const AID &aid1, const AID &aid2) {
-  if (aid1.GetProtocol() == BUS_TCP && aid2.GetProtocol() == BUS_TCP) {
+  if (aid1.GetProtocol() == MINDRT_TCP && aid2.GetProtocol() == MINDRT_TCP) {
     // NOTE : By default, http has no protocol filed, so we use 'UnfixUrl' to compare aids here
     return ((aid1.Name() == aid2.Name()) && (aid1.UnfixUrl() == aid2.UnfixUrl()));
   } else {
