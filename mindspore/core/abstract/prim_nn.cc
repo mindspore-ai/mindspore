@@ -416,6 +416,20 @@ AbstractBasePtr InferImplRelu(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return args_spec_list[0]->Broaden();
 }
 
+AbstractBasePtr InferImplHSigmoid(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor.
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  return args_spec_list[0]->Broaden();
+}
+
+AbstractBasePtr InferImplHSigmoidGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor.
+  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  return args_spec_list[1]->Broaden();
+}
+
 AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
