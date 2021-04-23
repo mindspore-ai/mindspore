@@ -11,6 +11,7 @@ public final class Preferences {
     public static final String KEY_COLLEGE_VIDEO = "preferences_college_video";
     public static final String KEY_COLLEGE_FAQ = "preferences_college_faq";
     public static final String KEY_COLLEGE_ASK = "preferences_college_ask";
+    public static final String API_KEY = "CgB6e3x9ss3nul/jhX9/4Y54MU0plgs6E1bW5SY8YQnq/uWhQHRxVGTf5Jl9f5NjRpvl0QV3Ft9sPihQ/PSL6RjC";
     public static final String KEY_PRIVACY = "preferences_privacy";
     public static final String[] KEY_COLLEGE_QUICK_ARRAY = new String[]{KEY_COLLEGE_TRAIN,KEY_COLLEGE_EXECUTE,KEY_COLLEGE_APP,KEY_COLLEGE_VIDEO};
 }

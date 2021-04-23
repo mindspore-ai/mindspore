@@ -81,3 +81,4 @@ local.properties
 sdk/build
 sdk/.cxx
 app/.cxx
+/mindsporelibrary/mindspore/

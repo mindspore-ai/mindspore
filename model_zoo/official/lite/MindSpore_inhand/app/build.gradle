@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.huawei.agconnect'
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.1"
@@ -7,8 +8,8 @@ android {
         applicationId "com.mindspore.himindspore"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 11
-        versionName "1.2.4"
+        versionCode 14
+        versionName "1.2.7"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
@@ -74,10 +75,9 @@ dependencies {
     annotationProcessor 'com.alibaba:arouter-compiler:1.5.1'
 
     implementation 'pub.devrel:easypermissions:3.0.0'
-    implementation project(':posenet')
     implementation project(':common')
     implementation project(':customView')
     implementation project(':imageObject')
     implementation project(':styletransfer')
-    implementation project(':segmentation')
+    implementation project(':hms')
 }

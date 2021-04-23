@@ -223,7 +223,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressDialog.setTitle(getResources().getString(R.string.app_is_loading));
         progressDialog.setMessage(getResources().getString(R.string.app_wait));
-        progressDialog.setProgressNumberFormat("%1d Mb/%2d Mb");
+     //   progressDialog.setProgressNumberFormat("%1d Mb/%2d Mb");
         progressDialog.setProgress(0);
         progressDialog.show();
         presenter.downloadApk(getApkPath(), "MindSpore_inhand.apk", new FileDownLoadObserver<File>() {
@@ -240,7 +240,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
             @Override
             public void onProgress(final int progress, final long total) {
                 runOnUiThread(() -> {
-                    progressDialog.setMax((int) total / 1024 / 1024);
+                 //   progressDialog.setMax((int) total / 1024 / 1024);
                     progressDialog.setProgress(progress);
                 });
 

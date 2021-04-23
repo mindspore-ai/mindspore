@@ -9,7 +9,7 @@
     <string name="explain_garbage_classification">Garbage classification identifies the garbage category of the object detected by the camera lens.</string>
     <string name="explain_scene_detection">Scene detection can estimate the category of the target scene.</string>
     <string name="explain_title">Summary</string>
-    <string name="segmentation_toolbar_title">Image Segmentation</string>
+    <string name="segmentation_toolbar_title">Portrait Segmentation</string>
     <string name="style_transfer_title">Style Transfer</string>
     <string name="posenet_activity_title">PoseNet</string>
     <string name="image_scene_title">Scene Detection</string>

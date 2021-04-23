@@ -13,8 +13,10 @@
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
 
-
-
+    <style name="anims" parent="AppTheme">
+        <item name="android:windowEnterAnimation">@anim/anim_enter</item>
+        <item name="android:windowExitAnimation">@anim/anim_exit</item>
+    </style>
 
     <!-- Text style "" -->
     <!-- Add this snippet to styles.xml. -->

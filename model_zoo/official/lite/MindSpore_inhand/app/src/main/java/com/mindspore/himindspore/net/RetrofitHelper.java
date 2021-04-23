@@ -28,7 +28,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitHelper {
     public static final String MS_BASE_HOST = "https://download.mindspore.cn/model_zoo/official/lite/apk/";
 
-    private RetrofitService retrofitService;
+    private final RetrofitService retrofitService;
 
 
     public RetrofitHelper() {

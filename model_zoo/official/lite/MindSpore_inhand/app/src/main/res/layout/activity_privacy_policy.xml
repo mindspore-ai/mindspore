@@ -1,51 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".ui.main.PrivacyPolicyActivity">
 
 
-    <RelativeLayout
-        android:id="@+id/w_linear"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/brokenside_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
         android:background="@color/white"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/w_back"
-            android:layout_width="50dp"
-            android:layout_height="18dp"
-            android:layout_marginTop="16dp"
-            android:src="@drawable/back" />
-
-        <TextView
-            android:id="@+id/w_title"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:gravity="center"
-            android:text="@string/me_user_agreements"
-            android:textColor="@color/text_black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-    </RelativeLayout>
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title="@string/me_user_agreements"
+        app:titleTextColor="@color/black" />
 
     <View
         android:id="@+id/w_view"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_below="@id/w_linear"
         android:background="@color/divider_gray" />
+
+
+    <ProgressBar
+        android:id="@+id/progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dip"
+        android:progressDrawable="@drawable/progressbar"
+        android:visibility="gone" />
 
     <WebView
         android:id="@+id/mWebView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/w_view"
+        android:layout_below="@id/progress"
         android:layout_marginBottom="5dp" />
 
 
-</RelativeLayout>
+</LinearLayout>

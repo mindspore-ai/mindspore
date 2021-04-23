@@ -82,11 +82,8 @@ public class ImageTrackingMobile  {
     public boolean loadModelFromBuf(String modelPath) {
         ByteBuffer buffer = loadModelFile(modelPath);
         netEnv = loadModel(buffer, 2);  //numThread's default setting is 2.
-        if (netEnv == 0) { // Loading model failed.
-            return false;
-        }
-
-        return true;
+        // Loading model failed.
+        return netEnv != 0;
     }
 
     /**
