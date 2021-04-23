@@ -69,8 +69,9 @@ class GraphScheduler {
   void Initialize();
 
   // Transform graph to actor DAG, contains build and link.
-  ActorSet *Transform(const KernelGraphPtr &graph, const DeviceContext *device_context,
+  ActorSet *Transform(const std::vector<KernelGraphPtr> &graphs, const std::vector<DeviceContext *> &device_contexts,
                       const std::vector<TensorPtr> *input_tensors = nullptr,
+                      const std::vector<AnfNodePtr> *control_nodes = nullptr,
                       GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Schedule actors in the actor runtime. Single machine scheduling is supported currently, and distributed scheduling

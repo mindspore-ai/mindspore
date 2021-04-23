@@ -308,24 +308,32 @@ void GraphScheduler::Initialize() {
   (void)actorMgr->Spawn(base_actor, false);
 }
 
-ActorSet *GraphScheduler::Transform(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                                    const std::vector<tensor::TensorPtr> *input_tensors,
-                                    GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Graph(" << graph->ToString() << ") transforms actor begin.";
-
-  Initialize();
-  PersistDeviceTensor(graph);
-  auto actor_set = Build(graph, device_context);
-  graph_to_actors_.emplace(graph, actor_set);
-  Link(actor_set.get(), graph, strategy);
-
-  if (!CheckActorValid(actor_set.get())) {
-    MS_LOG(EXCEPTION) << "The actor set of " << graph->ToString() << " is invalid.";
+ActorSet *GraphScheduler::Transform(const std::vector<KernelGraphPtr> &graphs,
+                                    const std::vector<DeviceContext *> &device_contexts,
+                                    const std::vector<TensorPtr> *input_tensors,
+                                    const std::vector<AnfNodePtr> *control_nodes, GraphExecutionStrategy strategy) {
+  if (graphs.size() != device_contexts.size()) {
+    MS_LOG(EXCEPTION) << "The number of graphs is not equal to the number of device_contexts.";
   }
+  Initialize();
+  std::vector<ActorSetPtr> actor_sets;
+  for (size_t i = 0; i < graphs.size(); ++i) {
+    auto graph = graphs[i];
+    auto device_context = device_contexts[i];
+    MS_EXCEPTION_IF_NULL(graph);
+    MS_LOG(INFO) << "Graph(" << graph->ToString() << ") transforms actor begin.";
+    PersistDeviceTensor(graph);
+    auto actor_set = Build(graph, device_context);
+    actor_sets.emplace_back(actor_set);
+    graph_to_actors_.emplace(graph, actor_set);
+    Link(actor_set.get(), graph, strategy);
 
-  MS_LOG(INFO) << "Graph(" << graph->ToString() << ") transforms actor end.";
-  return actor_set.get();
+    if (!CheckActorValid(actor_set.get())) {
+      MS_LOG(EXCEPTION) << "The actor set of " << graph->ToString() << " is invalid.";
+    }
+    MS_LOG(INFO) << "Graph(" << graph->ToString() << ") transforms actor end.";
+  }
+  return actor_sets[0].get();
 }
 
 void GraphScheduler::Schedule(const ActorSet *actor_set) {

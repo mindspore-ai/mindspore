@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "vm/transform.h"
 #include "backend/session/session_factory.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "ir/anf.h"
@@ -230,27 +231,85 @@ void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 #endif
 
 MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
-    : Backend(backend_name), device_name_(device_name), device_id_(device_id) {}
+    : Backend(backend_name), device_name_(device_name), device_id_(device_id) {
+  auto cut_list = compile::GetMsNonlinearOps();
+  graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
+}
 
-GraphId MindRTBackend::CompileGraph(const AnfNodePtrList &nodes) {
-  MS_LOG(INFO) << "Compile graph begin.";
-  // Get and set the device context.
-  const auto &cur_device_name = GetCNodeTarget(nodes[0]);
-  const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
-  device_context->Initialize();
-  runtime::GraphCompiler::GetInstance().set_device_context(device_context);
+GraphId MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphPtr root_graph = WrapPrimitives(func_graph);
+  MS_EXCEPTION_IF_NULL(root_graph);
 
-  // Transform nodes to inputs and outputs.
-  FuncGraphPtr fg;
-  AnfNodePtrList inputs;
-  AnfNodePtrList outputs;
-  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(nodes);
+  // Compile root graph.
+  auto root_graph_id = CompileGraph(root_graph);
 
-  // Compile graph.
-  auto graph_id = runtime::GraphCompiler::GetInstance().CompileGraph(nodes, outputs);
-  MS_LOG(INFO) << "Compile graph end, graph id: " << graph_id;
-  return graph_id;
+  // Compile sub graphs.
+  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
+  for (auto sub_graph : sub_graphs) {
+    if (sub_graph != func_graph && sub_graph != nullptr) {
+      (void)CompileGraph(sub_graph);
+    }
+  }
+
+  // Transform graph to actor DAG, and schedule the actor DAG.
+  std::vector<KernelGraphPtr> graphs;
+  std::vector<DeviceContext *> device_contexts;
+  for (const auto &graph_id_to_context : graph_to_device_context_) {
+    graphs.emplace_back(runtime::GraphCompiler::GetInstance().Fetch(graph_id_to_context.first));
+    device_contexts.emplace_back(graph_id_to_context.second);
+  }
+  const auto &actor_set =
+    runtime::GraphScheduler::GetInstance().Transform(graphs, device_contexts, nullptr, &control_nodes_);
+  runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+
+  return root_graph_id;
+}
+
+GraphId MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(graph_partition_);
+
+  // Split graph to segments.
+  const auto &segments = graph_partition_->Partition(func_graph);
+  MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
+
+  // Foreach the segments to compile graph.
+  for (const auto &segment : segments) {
+    MS_EXCEPTION_IF_NULL(segment);
+    // Compile the normal nodes, which doesn't contain the cut node.
+    if (!segment->is_cut_) {
+      if (segment->nodes_.size() == 0) {
+        MS_LOG(EXCEPTION) << "The segments size is 0.";
+      }
+      MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
+
+      // Get and set the device context.
+      const auto &cur_device_name = GetCNodeTarget(segment->nodes_[0]);
+      const auto &device_context =
+        device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
+      device_context->Initialize();
+      runtime::GraphCompiler::GetInstance().set_device_context(device_context);
+
+      // Transform nodes to inputs and outputs.
+      FuncGraphPtr fg;
+      AnfNodePtrList inputs;
+      AnfNodePtrList outputs;
+      std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
+
+      // Compile graph.
+      auto graph_id = runtime::GraphCompiler::GetInstance().CompileGraph(segment->nodes_, outputs);
+      graph_to_device_context_[graph_id] = device_context;
+    } else {
+      // Compile the cut node.
+      auto cut_node = segment->nodes_[0];
+      MS_EXCEPTION_IF_NULL(cut_node);
+      MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->fullname_with_scope();
+      control_nodes_.push_back(cut_node);
+    }
+  }
+
+  return graph_to_device_context_.begin()->first;
 }
 
 VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
