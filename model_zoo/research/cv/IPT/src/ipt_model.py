@@ -13,15 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import math
 import copy
 import numpy as np
 from mindspore import nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
+from mindspore.common import Tensor, Parameter
 
+class LayerPreprocess(nn.Cell):
+    """
+    Preprocess input of each layer
+    """
+    def __init__(self, in_channels=None):
+        super(LayerPreprocess, self).__init__()
+        self.layernorm = nn.LayerNorm((in_channels,))
+        self.cast = P.Cast()
+        self.get_dtype = P.DType()
+
+    def construct(self, input_tensor):
+        output = self.cast(input_tensor, mstype.float32)
+        output = self.layernorm(output)
+        output = self.cast(output, self.get_dtype(input_tensor))
+        return output
 
 class MultiheadAttention(nn.Cell):
     """
@@ -45,7 +60,7 @@ class MultiheadAttention(nn.Cell):
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         do_return_2d_tensor (bool): True for return 2d tensor. False for return 3d
                              tensor. Default: False.
-        compute_type (:class:`mindspore.dtype`): Compute type in MultiheadAttention. Default: mstype.float32.
+        compute_type (:class:`mindspore.dtype`): Compute type in MultiheadAttention. Default: mstype.float16.
     """
 
     def __init__(self,
@@ -64,13 +79,12 @@ class MultiheadAttention(nn.Cell):
                  use_one_hot_embeddings=False,
                  initializer_range=0.02,
                  do_return_2d_tensor=False,
-                 compute_type=mstype.float32,
+                 compute_type=mstype.float16,
                  same_dim=True):
         super(MultiheadAttention, self).__init__()
         self.num_attention_heads = num_attention_heads
         self.size_per_head = int(hidden_width / num_attention_heads)
         self.has_attention_mask = has_attention_mask
-        assert has_attention_mask
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.initializer_range = initializer_range
         self.do_return_2d_tensor = do_return_2d_tensor
@@ -83,11 +97,9 @@ class MultiheadAttention(nn.Cell):
         self.shape_k_2d = (-1, k_tensor_width)
         self.shape_v_2d = (-1, v_tensor_width)
         self.hidden_width = int(hidden_width)
-        # units = num_attention_heads * self.size_per_head
         if self.same_dim:
-            self.in_proj_layer = \
-                Parameter(Tensor(np.random.rand(hidden_width * 3,
-                                                q_tensor_width), dtype=compute_type), name="weight")
+            self.in_proj_layer = Parameter(Tensor(np.random.rand(hidden_width * 3,
+                                                                 q_tensor_width), dtype=mstype.float32), name="weight")
         else:
             self.query_layer = nn.Dense(q_tensor_width,
                                         hidden_width,
@@ -132,8 +144,10 @@ class MultiheadAttention(nn.Cell):
         self.equal = P.Equal()
         self.shape = P.Shape()
 
-    def construct(self, tensor_q, tensor_k, tensor_v, attention_mask=None):
-        """Apply multihead attention."""
+    def construct(self, tensor_q, tensor_k, tensor_v):
+        """
+        Apply multihead attention.
+        """
         batch_size, seq_length, _ = self.shape(tensor_q)
         shape_qkv = (batch_size, -1,
                      self.num_attention_heads, self.size_per_head)
@@ -161,20 +175,14 @@ class MultiheadAttention(nn.Cell):
             _start = 0
             _end = self.hidden_width
             _w = self.in_proj_layer[_start:_end, :]
-            # _b = None
             query_out = self.matmul_dense(_w, tensor_q_2d)
-
             _start = self.hidden_width
             _end = self.hidden_width * 2
             _w = self.in_proj_layer[_start:_end, :]
-            # _b = None
             key_out = self.matmul_dense(_w, tensor_k_2d)
-
             _start = self.hidden_width * 2
-
             _end = None
             _w = self.in_proj_layer[_start:]
-            # _b = None
             value_out = self.matmul_dense(_w, tensor_v_2d)
         else:
             query_out = self.query_layer(tensor_q_2d)
@@ -193,8 +201,7 @@ class MultiheadAttention(nn.Cell):
 
         attention_scores = self.softmax_cast(attention_scores, mstype.float32)
         attention_probs = self.softmax(attention_scores)
-        attention_probs = self.softmax_cast(
-            attention_probs, self.get_dtype(key_layer))
+        attention_probs = self.softmax_cast(attention_probs, mstype.float16)
         if self.use_dropout:
             attention_probs = self.dropout(attention_probs)
 
@@ -212,11 +219,8 @@ class MultiheadAttention(nn.Cell):
 
 class TransformerEncoderLayer(nn.Cell):
     """ipt"""
-
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
-                 activation="relu"):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, compute_type=mstype.float16):
         super().__init__()
-
         self.self_attn = MultiheadAttention(q_tensor_width=d_model,
                                             k_tensor_width=d_model,
                                             v_tensor_width=d_model,
@@ -224,12 +228,12 @@ class TransformerEncoderLayer(nn.Cell):
                                             out_tensor_width=d_model,
                                             num_attention_heads=nhead,
                                             attention_probs_dropout_prob=dropout)
-        self.linear1 = nn.Dense(d_model, dim_feedforward)
+        self.linear1 = nn.Dense(d_model, dim_feedforward).to_float(compute_type)
         self.dropout = nn.Dropout(1. - dropout)
         self.linear2 = nn.Dense(dim_feedforward, d_model)
 
-        self.norm1 = nn.LayerNorm([d_model])
-        self.norm2 = nn.LayerNorm([d_model])
+        self.norm1 = LayerPreprocess(d_model)
+        self.norm2 = LayerPreprocess(d_model)
         self.dropout1 = nn.Dropout(1. - dropout)
         self.dropout2 = nn.Dropout(1. - dropout)
         self.reshape = P.Reshape()
@@ -237,7 +241,6 @@ class TransformerEncoderLayer(nn.Cell):
         self.activation = P.ReLU()
 
     def with_pos_embed(self, tensor, pos):
-        """ipt"""
         return tensor if pos is None else tensor + pos
 
     def construct(self, src, pos=None):
@@ -258,10 +261,8 @@ class TransformerEncoderLayer(nn.Cell):
 
 
 class TransformerDecoderLayer(nn.Cell):
-    """ipt"""
-
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
-                 activation="relu"):
+    """ ipt"""
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1):
         super().__init__()
         self.self_attn = MultiheadAttention(q_tensor_width=d_model,
                                             k_tensor_width=d_model,
@@ -281,9 +282,9 @@ class TransformerDecoderLayer(nn.Cell):
         self.dropout = nn.Dropout(1. - dropout)
         self.linear2 = nn.Dense(dim_feedforward, d_model)
 
-        self.norm1 = nn.LayerNorm([d_model])
-        self.norm2 = nn.LayerNorm([d_model])
-        self.norm3 = nn.LayerNorm([d_model])
+        self.norm1 = LayerPreprocess(d_model)
+        self.norm2 = LayerPreprocess(d_model)
+        self.norm3 = LayerPreprocess(d_model)
         self.dropout1 = nn.Dropout(1. - dropout)
         self.dropout2 = nn.Dropout(1. - dropout)
         self.dropout3 = nn.Dropout(1. - dropout)
@@ -291,7 +292,6 @@ class TransformerDecoderLayer(nn.Cell):
         self.activation = P.ReLU()
 
     def with_pos_embed(self, tensor, pos):
-        """ipt"""
         return tensor if pos is None else tensor + pos
 
     def construct(self, tgt, memory, pos=None, query_pos=None):
@@ -306,7 +306,7 @@ class TransformerDecoderLayer(nn.Cell):
         tgt2 = self.norm2(tgt)
         tgt2 = self.multihead_attn(tensor_q=self.with_pos_embed(tgt2, query_pos),
                                    tensor_k=self.with_pos_embed(memory, pos),
-                                   tensor_v=memory,)
+                                   tensor_v=memory)
         tgt = tgt + self.dropout2(tgt2)
         tgt2 = self.norm3(tgt)
         tgt2 = self.reshape(tgt2, permute_linear)
@@ -318,47 +318,38 @@ class TransformerDecoderLayer(nn.Cell):
 
 class TransformerEncoder(nn.Cell):
     """ipt"""
-
     def __init__(self, encoder_layer, num_layers):
         super().__init__()
         self.layers = _get_clones(encoder_layer, num_layers)
         self.num_layers = num_layers
 
     def construct(self, src, pos=None):
-        """ipt"""
         output = src
-
         for layer in self.layers:
             output = layer(output, pos=pos)
-
         return output
 
 
 class TransformerDecoder(nn.Cell):
     """ipt"""
-
     def __init__(self, decoder_layer, num_layers):
         super().__init__()
         self.layers = _get_clones(decoder_layer, num_layers)
         self.num_layers = num_layers
 
     def construct(self, tgt, memory, pos=None, query_pos=None):
-        """ipt"""
         output = tgt
-
         for layer in self.layers:
             output = layer(output, memory, pos=pos, query_pos=query_pos)
         return output
 
 
-def _get_clones(module, N):
-    """ipt"""
-    return nn.CellList([copy.deepcopy(module) for i in range(N)])
+def _get_clones(module, n):
+    return nn.CellList([copy.deepcopy(module) for i in range(n)])
 
 
 class LearnedPositionalEncoding(nn.Cell):
     """ipt"""
-
     def __init__(self, max_position_embeddings, embedding_dim, seq_length):
         super(LearnedPositionalEncoding, self).__init__()
         self.pe = nn.Embedding(
@@ -370,8 +361,7 @@ class LearnedPositionalEncoding(nn.Cell):
         self.position_ids = self.reshape(
             self.position_ids, (1, self.seq_length))
 
-    def construct(self, x, position_ids=None):
-        """ipt"""
+    def construct(self, position_ids=None):
         if position_ids is None:
             position_ids = self.position_ids[:, : self.seq_length]
 
@@ -381,46 +371,35 @@ class LearnedPositionalEncoding(nn.Cell):
 
 class VisionTransformer(nn.Cell):
     """ipt"""
-
-    def __init__(
-            self,
-            img_dim,
-            patch_dim,
-            num_channels,
-            embedding_dim,
-            num_heads,
-            num_layers,
-            hidden_dim,
-            num_queries,
-            idx,
-            positional_encoding_type="learned",
-            dropout_rate=0,
-            norm=False,
-            mlp=False,
-            pos_every=False,
-            no_pos=False
-    ):
+    def __init__(self,
+                 img_dim,
+                 patch_dim,
+                 num_channels,
+                 embedding_dim,
+                 num_heads,
+                 num_layers,
+                 hidden_dim,
+                 num_queries,
+                 dropout_rate=0,
+                 norm=False,
+                 mlp=False,
+                 pos_every=False,
+                 no_pos=False,
+                 con_loss=False):
         super(VisionTransformer, self).__init__()
-
-        assert embedding_dim % num_heads == 0
-        assert img_dim % patch_dim == 0
         self.norm = norm
         self.mlp = mlp
         self.embedding_dim = embedding_dim
         self.num_heads = num_heads
         self.patch_dim = patch_dim
         self.num_channels = num_channels
-
         self.img_dim = img_dim
         self.pos_every = pos_every
         self.num_patches = int((img_dim // patch_dim) ** 2)
         self.seq_length = self.num_patches
         self.flatten_dim = patch_dim * patch_dim * num_channels
-
         self.out_dim = patch_dim * patch_dim * num_channels
-
         self.no_pos = no_pos
-
         self.unf = _unfold_(patch_dim)
         self.fold = _fold_(patch_dim, output_shape=(img_dim, img_dim))
 
@@ -432,8 +411,7 @@ class VisionTransformer(nn.Cell):
                 nn.Dropout(1. - dropout_rate),
                 nn.ReLU(),
                 nn.Dense(hidden_dim, self.out_dim),
-                nn.Dropout(1. - dropout_rate)
-            )
+                nn.Dropout(1. - dropout_rate))
 
         self.query_embed = nn.Embedding(
             num_queries, embedding_dim * self.seq_length)
@@ -449,55 +427,54 @@ class VisionTransformer(nn.Cell):
         self.tile = P.Tile()
         self.transpose = P.Transpose()
         if not self.no_pos:
-            self.position_encoding = LearnedPositionalEncoding(
-                self.seq_length, self.embedding_dim, self.seq_length
-            )
+            self.position_encoding = LearnedPositionalEncoding(self.seq_length, self.embedding_dim, self.seq_length)
 
         self.dropout_layer1 = nn.Dropout(1. - dropout_rate)
-        self.query_idx = idx
-        self.query_idx_tensor = Tensor(idx, mstype.int32)
-    def construct(self, x):
+        self.con_loss = con_loss
+
+    def construct(self, x, query_idx_tensor):
         """ipt"""
-        B, _, _, _ = x.shape
         x = self.unf(x)
-        B, N, _ = x.shape
+        b, n, _ = x.shape
 
         if self.mlp is not True:
-            x = self.reshape(x, (B * N, -1))
+            x = self.reshape(x, (b * n, -1))
             x = self.dropout_layer1(self.linear_encoding(x)) + x
-            x = self.reshape(x, (B, N, -1))
+            x = self.reshape(x, (b, n, -1))
         query_embed = self.tile(
-            self.reshape(self.query_embed(self.query_idx_tensor), (1, self.seq_length, self.embedding_dim)),
-            (B, 1, 1))
+            self.reshape(self.query_embed(query_idx_tensor), (1, self.seq_length, self.embedding_dim)), (b, 1, 1))
 
         if not self.no_pos:
-            pos = self.position_encoding(x)
+            pos = self.position_encoding()
             x = self.encoder(x + pos)
         else:
             x = self.encoder(x)
         x = self.decoder(x, x, query_pos=query_embed)
 
         if self.mlp is not True:
-            x = self.reshape(x, (B * N, -1))
+            x = self.reshape(x, (b * n, -1))
             x = self.mlp_head(x) + x
-            x = self.reshape(x, (B, N, -1))
+            x = self.reshape(x, (b, n, -1))
+        if self.con_loss:
+            con_x = x
+            x = self.fold(x)
+            return x, con_x
         x = self.fold(x)
 
         return x
 
 
 def default_conv(in_channels, out_channels, kernel_size, has_bias=True):
-    """ipt"""
-    return nn.Conv2d(
-        in_channels, out_channels, kernel_size, has_bias=has_bias)
+    return nn.Conv2d(in_channels, out_channels, kernel_size, has_bias=has_bias)
 
 
 class MeanShift(nn.Conv2d):
     """ipt"""
-
-    def __init__(
-            self, rgb_range,
-            rgb_mean=(0.4488, 0.4371, 0.4040), rgb_std=(1.0, 1.0, 1.0), sign=-1):
+    def __init__(self,
+                 rgb_range,
+                 rgb_mean=(0.4488, 0.4371, 0.4040),
+                 rgb_std=(1.0, 1.0, 1.0),
+                 sign=-1):
         super(MeanShift, self).__init__(3, 3, kernel_size=1)
         self.reshape = P.Reshape()
         self.eye = P.Eye()
@@ -512,10 +489,14 @@ class MeanShift(nn.Conv2d):
 
 class ResBlock(nn.Cell):
     """ipt"""
-
-    def __init__(
-            self, conv, n_feats, kernel_size,
-            bias=True, bn=False, act=nn.ReLU(), res_scale=1):
+    def __init__(self,
+                 conv,
+                 n_feats,
+                 kernel_size,
+                 bias=True,
+                 bn=False,
+                 act=nn.ReLU(),
+                 res_scale=1):
 
         super(ResBlock, self).__init__()
         m = []
@@ -532,35 +513,28 @@ class ResBlock(nn.Cell):
         self.mul = P.Mul()
 
     def construct(self, x):
-        """ipt"""
         res = self.mul(self.body(x), self.res_scale)
         res += x
-
         return res
 
 
 def _pixelsf_(x, scale):
     """ipt"""
-    N, C, iH, iW = x.shape
-    oH = iH * scale
-    oW = iW * scale
-    oC = C // (scale ** 2)
-
-    output = P.Reshape()(x, (N, oC, scale, scale, iH, iW))
-
-    output = P.Transpose()(output, (0, 1, 5, 3, 4, 2))
-
-    output = P.Reshape()(output, (N, oC, oH, oW))
-
-    output = P.Transpose()(output, (0, 1, 3, 2))
-
+    n, c, ih, iw = x.shape
+    oh = ih * scale
+    ow = iw * scale
+    oc = c // (scale ** 2)
+    output = P.Transpose()(x, (0, 2, 1, 3))
+    output = P.Reshape()(output, (n, ih, oc*scale, scale, iw))
+    output = P.Transpose()(output, (0, 1, 2, 4, 3))
+    output = P.Reshape()(output, (n, ih, oc, scale, ow))
+    output = P.Transpose()(output, (0, 2, 1, 3, 4))
+    output = P.Reshape()(output, (n, oc, oh, ow))
     return output
-
 
 class SmallUpSampler(nn.Cell):
     """ipt"""
-
-    def __init__(self, conv, upsize, n_feats, bn=False, act=False, bias=True):
+    def __init__(self, conv, upsize, n_feats, bias=True):
         super(SmallUpSampler, self).__init__()
         self.conv = conv(n_feats, upsize * upsize * n_feats, 3, bias)
         self.reshape = P.Reshape()
@@ -568,7 +542,6 @@ class SmallUpSampler(nn.Cell):
         self.pixelsf = _pixelsf_
 
     def construct(self, x):
-        """ipt"""
         x = self.conv(x)
         output = self.pixelsf(x, self.upsize)
         return output
@@ -576,47 +549,37 @@ class SmallUpSampler(nn.Cell):
 
 class Upsampler(nn.Cell):
     """ipt"""
-
-    def __init__(self, conv, scale, n_feats, bn=False, act=False, bias=True):
+    def __init__(self, conv, scale, n_feats, bias=True):
         super(Upsampler, self).__init__()
         m = []
         if (scale & (scale - 1)) == 0:
             for _ in range(int(math.log(scale, 2))):
                 m.append(SmallUpSampler(conv, 2, n_feats, bias=bias))
-
         elif scale == 3:
             m.append(SmallUpSampler(conv, 3, n_feats, bias=bias))
         self.net = nn.SequentialCell(m)
 
     def construct(self, x):
-        """ipt"""
         return self.net(x)
 
 
 class IPT(nn.Cell):
     """ipt"""
-
     def __init__(self, args, conv=default_conv):
         super(IPT, self).__init__()
-
+        self.dytpe = mstype.float16
         self.scale_idx = 0
 
         self.args = args
-
+        self.con_loss = args.con_loss
         n_feats = args.n_feats
         kernel_size = 3
         act = nn.ReLU()
 
-        self.sub_mean = MeanShift(args.rgb_range)
-        self.add_mean = MeanShift(args.rgb_range, sign=1)
-
         self.head = nn.CellList([
-            nn.SequentialCell(
-                conv(args.n_colors, n_feats, kernel_size),
-                ResBlock(conv, n_feats, 5, act=act),
-                ResBlock(conv, n_feats, 5, act=act)
-            ) for _ in args.scale
-        ])
+            nn.SequentialCell(conv(args.n_colors, n_feats, kernel_size).to_float(self.dytpe),
+                              ResBlock(conv, n_feats, 5, act=act).to_float(self.dytpe),
+                              ResBlock(conv, n_feats, 5, act=act).to_float(self.dytpe)) for _ in range(6)])
 
         self.body = VisionTransformer(img_dim=args.patch_size,
                                       patch_dim=args.patch_dim,
@@ -630,35 +593,33 @@ class IPT(nn.Cell):
                                       mlp=args.no_mlp,
                                       pos_every=args.pos_every,
                                       no_pos=args.no_pos,
-                                      idx=self.scale_idx)
+                                      con_loss=args.con_loss).to_float(self.dytpe)
 
         self.tail = nn.CellList([
-            nn.SequentialCell(
-                Upsampler(conv, s, n_feats, act=False),
-                conv(n_feats, args.n_colors, kernel_size)
-            ) for s in args.scale
-        ])
+            nn.SequentialCell(Upsampler(conv, s, n_feats).to_float(self.dytpe),
+                              conv(n_feats, args.n_colors, kernel_size).to_float(self.dytpe)) \
+                                  for s in [2, 3, 4, 1, 1, 1]])
 
         self.reshape = P.Reshape()
         self.tile = P.Tile()
         self.transpose = P.Transpose()
+        self.s2t = P.ScalarToTensor()
+        self.cast = P.Cast()
 
-    def construct(self, x):
+    def construct(self, x, idx):
         """ipt"""
-        x = self.sub_mean(x)
-        x = self.head[self.scale_idx](x)
-        res = self.body(x)
+        idx_num = idx.shape[0]
+        x = self.head[idx_num](x)
+        idx_tensor = self.cast(self.s2t(idx_num), mstype.int32)
+        if self.con_loss:
+            res, x_con = self.body(x, idx_tensor)
+            res += x
+            x = self.tail[idx_num](x)
+            return x, x_con
+        res = self.body(x, idx_tensor)
         res += x
-        x = self.tail[self.scale_idx](res)
-        x = self.add_mean(x)
-
+        x = self.tail[idx_num](res)
         return x
-
-    def set_scale(self, scale_idx):
-        """ipt"""
-        self.body.query_idx = scale_idx
-        self.scale_idx = scale_idx
-
 
 class IPT_post():
     """ipt"""
@@ -674,17 +635,13 @@ class IPT_post():
         self.cc_2 = P.Concat(axis=2)
         self.cc_3 = P.Concat(axis=3)
 
-    def set_scale(self, scale_idx):
+    def forward(self, x, idx, shave=12, batchsize=64):
         """ipt"""
-        self.body.query_idx = scale_idx
-        self.scale_idx = scale_idx
-
-    def forward(self, x, shave=12, batchsize=64):
-        """ipt"""
+        self.idx = idx
         h, w = x.shape[-2:]
         padsize = int(self.args.patch_size)
         shave = int(self.args.patch_size / 4)
-        scale = self.args.scale[self.scale_idx]
+        scale = self.args.scale[0]
         h_cut = (h - padsize) % (padsize - shave)
         w_cut = (w - padsize) % (padsize - shave)
 
@@ -692,7 +649,7 @@ class IPT_post():
         x_unfold = unf_1.compute(x)
         x_unfold = self.transpose(x_unfold, (1, 0, 2))  # transpose(0,2)
         x_hw_cut = x[:, :, (h - padsize):, (w - padsize):]
-        y_hw_cut = self.model(x_hw_cut)
+        y_hw_cut = self.model(x_hw_cut, self.idx)
 
         x_h_cut = x[:, :, (h - padsize):, :]
         x_w_cut = x[:, :, :, (w - padsize):]
@@ -714,10 +671,10 @@ class IPT_post():
         for i in range(x_range):
             if i == 0:
                 y_unfold = self.model(
-                    x_unfold[i * batchsize:(i + 1) * batchsize, :, :, :])
+                    x_unfold[i * batchsize:(i + 1) * batchsize, :, :, :], self.idx)
             else:
                 y_unfold = self.cc_0((y_unfold, self.model(
-                    x_unfold[i * batchsize:(i + 1) * batchsize, :, :, :])))
+                    x_unfold[i * batchsize:(i + 1) * batchsize, :, :, :], self.idx)))
         y_unf_shape_0 = y_unfold.shape[0]
         fold_1 = \
             _stride_fold_(padsize * scale, output_shape=((h - h_cut) * scale, (w - w_cut) * scale),
@@ -740,17 +697,18 @@ class IPT_post():
                                stride=padsize * scale - shave * scale)
         y_inter = fold_2.compute(self.transpose(self.reshape(
             y_unfold, (y_unf_shape_0, -1, 1)), (2, 0, 1)))
-        concat1 = self.cc_2((y[:, :, :int(shave / 2 * scale), int(shave / 2 * scale):(w - w_cut) * scale - int(shave / 2 * scale)], y_inter)) #pylint: disable=line-too-long
-        concat2 = self.cc_2((concat1, y[:, :, (h - h_cut) * scale - int(shave / 2 * scale):, int(shave / 2 * scale):(w - w_cut) * scale - int(shave / 2 * scale)])) #pylint: disable=line-too-long
+        concat1 = self.cc_2((y[:, :, :int(shave / 2 * scale), \
+            int(shave / 2 * scale):(w - w_cut) * scale - int(shave / 2 * scale)], y_inter))
+        concat2 = self.cc_2((concat1, y[:, :, (h - h_cut) * scale - int(shave / 2 * scale):, \
+                                               int(shave / 2 * scale):(w - w_cut) * scale - int(shave / 2 * scale)]))
         concat3 = self.cc_3((y[:, :, :, :int(shave / 2 * scale)], concat2))
-        y = self.cc_3((concat3, y[:, :, :, (w - w_cut) * scale - int(shave / 2 * scale):])) #pylint: disable=line-too-long
-        y = self.cc_2((y[:, :, :y.shape[2] - int((padsize - h_cut) / 2 * scale), :], y_h_cut[:, :, int((padsize - h_cut) / 2 * scale + 0.5):, :])) #pylint: disable=line-too-long
-
+        y = self.cc_3((concat3, y[:, :, :, (w - w_cut) * scale - int(shave / 2 * scale):]))
+        y = self.cc_2((y[:, :, :y.shape[2] - int((padsize - h_cut) / 2 * scale), :],
+                       y_h_cut[:, :, int((padsize - h_cut) / 2 * scale + 0.5):, :]))
         y_w_cat = self.cc_2((y_w_cut[:, :, :y_w_cut.shape[2] - int((padsize - h_cut) / 2 * scale), :],
                              y_hw_cut[:, :, int((padsize - h_cut) / 2 * scale + 0.5):, :]))
         y = self.cc_3((y[:, :, :, :y.shape[3] - int((padsize - w_cut) / 2 * scale)],
                        y_w_cat[:, :, :, int((padsize - w_cut) / 2 * scale + 0.5):]))
-
         return y
 
     def cut_h_new(self, x_h_cut, h, w, h_cut, w_cut, padsize, shave, scale, batchsize):
@@ -766,11 +724,11 @@ class IPT_post():
         for i in range(x_range):
             if i == 0:
                 y_h_cut_unfold = self.model(
-                    x_h_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :])
+                    x_h_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :], self.idx)
             else:
                 y_h_cut_unfold = \
                     self.cc_0((y_h_cut_unfold, self.model(
-                        x_h_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :])))
+                        x_h_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :], self.idx)))
         y_h_cut_unfold_shape_0 = y_h_cut_unfold.shape[0]
         fold_1 = \
             _stride_fold_(padsize * scale, output_shape=(padsize * scale, (w - w_cut) * scale),
@@ -802,10 +760,11 @@ class IPT_post():
         for i in range(x_range):
             if i == 0:
                 y_w_cut_unfold = self.model(
-                    x_w_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :])
+                    x_w_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :], self.idx)
             else:
                 y_w_cut_unfold = self.cc_0((y_w_cut_unfold,
-                                            self.model(x_w_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :])))
+                                            self.model(x_w_cut_unfold[i * batchsize:(i + 1) * batchsize, :, :, :], \
+                                            self.idx)))
         y_w_cut_unfold_shape_0 = y_w_cut_unfold.shape[0]
         fold_1 = _stride_fold_(padsize * scale,
                                output_shape=((h - h_cut) * scale,
@@ -827,7 +786,6 @@ class IPT_post():
 
 class _stride_unfold_():
     '''stride'''
-
     def __init__(self,
                  kernel_size,
                  stride=-1):
@@ -874,13 +832,12 @@ class _stride_unfold_():
                 zeros4 = np.zeros(unf_x[:, :, :, unf_j + self.kernel_size:].shape)
                 concat4 = np.concatenate((concat3, zeros4), axis=3)
                 unf_x += concat4
-        unf_x = Tensor(unf_x, mstype.float32)
+        unf_x = Tensor(unf_x, mstype.float16)
         y = self.unfold(unf_x)
         return y
 
 class _stride_fold_():
     '''stride'''
-
     def __init__(self,
                  kernel_size,
                  output_shape=(-1, -1),
@@ -905,7 +862,7 @@ class _stride_fold_():
         self.fold = _fold_(self.kernel_size, self.large_shape)
 
     def compute(self, x):
-        '''stride'''
+        """ compute"""
         NumBlock_x = self.NumBlock_x
         NumBlock_y = self.NumBlock_y
         large_x = self.fold(x)
@@ -917,7 +874,8 @@ class _stride_fold_():
             leftup_idx_x.append(i * self.kernel_size[0])
         for i in range(NumBlock_y):
             leftup_idx_y.append(i * self.kernel_size[1])
-        fold_x = np.zeros((N, C, (NumBlock_x - 1) * self.stride + self.kernel_size[0], (NumBlock_y - 1) * self.stride + self.kernel_size[1]), dtype=np.float32) #pylint: disable=line-too-long
+        fold_x = np.zeros((N, C, (NumBlock_x - 1) * self.stride + self.kernel_size[0], \
+                                          (NumBlock_y - 1) * self.stride + self.kernel_size[1]), dtype=np.float32)
         for i in range(NumBlock_x):
             for j in range(NumBlock_y):
                 fold_i = i * self.stride
@@ -938,12 +896,11 @@ class _stride_fold_():
                 zeros4 = np.zeros(t4.shape)
                 concat4 = np.concatenate((concat3, zeros4), axis=3)
                 fold_x += concat4
-        y = Tensor(fold_x, mstype.float32)
+        y = Tensor(fold_x, mstype.float16)
         return y
 
 class _unfold_(nn.Cell):
     """ipt"""
-
     def __init__(
             self, kernel_size, stride=-1):
 
@@ -965,8 +922,10 @@ class _unfold_(nn.Cell):
         output_img = self.reshape(x, (N, C, numH, self.kernel_size, W))
 
         output_img = self.transpose(output_img, (0, 1, 2, 4, 3))
-        output_img = self.reshape(output_img, (N, C, numH, -1, self.kernel_size, self.kernel_size))
-        output_img = self.transpose(output_img, (0, 2, 3, 1, 5, 4))
+        output_img = self.reshape(output_img, (N*C, numH, numW, self.kernel_size, self.kernel_size))
+        output_img = self.transpose(output_img, (0, 1, 2, 4, 3))
+        output_img = self.reshape(output_img, (N, C, numH * numW, self.kernel_size*self.kernel_size))
+        output_img = self.transpose(output_img, (0, 2, 1, 3))
         output_img = self.reshape(output_img, (N, numH * numW, -1))
         return output_img
 
@@ -1002,14 +961,10 @@ class _fold_(nn.Cell):
         org_W = self.output_shape[1]
         numH = org_H // self.kernel_size[0]
         numW = org_W // self.kernel_size[1]
-        output_img = self.reshape(
-            x, (N, C, org_C, self.kernel_size[0], self.kernel_size[1]))
-
+        output_img = self.reshape(x, (N, C, org_C, self.kernel_size[0], self.kernel_size[1]))
+        output_img = self.transpose(output_img, (0, 2, 3, 1, 4))
+        output_img = self.reshape(output_img, (N*org_C, self.kernel_size[0], numH, numW, self.kernel_size[1]))
         output_img = self.transpose(output_img, (0, 2, 1, 3, 4))
-        output_img = self.reshape(
-            output_img, (N, org_C, numH, numW, self.kernel_size[0], self.kernel_size[1]))
-
-        output_img = self.transpose(output_img, (0, 1, 2, 4, 3, 5))
 
         output_img = self.reshape(output_img, (N, org_C, org_H, org_W))
         return output_img
