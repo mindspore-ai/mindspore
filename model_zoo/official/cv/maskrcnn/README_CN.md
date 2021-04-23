@@ -129,7 +129,7 @@ pip install mmcv=0.2.14
 
    ```bash
    # 评估
-   sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
    ```
 
    注：
@@ -197,7 +197,6 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py                       # 骨干网
       ├─roi_align.py                      # 兴趣点对齐网络
       └─rpn.py                            # 区域候选网络
-    ├─aipp.cfg                            #aipp 配置文件
     ├─config.py                           # 网络配置
     ├─convert_checkpoint.py               # 转换预训练checkpoint文件
     ├─dataset.py                          # 数据集工具
@@ -500,7 +499,7 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` 选项 ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` 选项 ["AIR", "MINDIR"]
 
 ## 推理过程
 
@@ -510,7 +509,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 
 ```shell
 # Ascend310 推理
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### 结果

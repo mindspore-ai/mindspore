@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """post process for 310 inference"""
+import os
 import argparse
 import numpy as np
 from pycocotools.coco import COCO
@@ -25,13 +26,13 @@ dst_height = 768
 
 parser = argparse.ArgumentParser(description="FasterRcnn inference")
 parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
-parser.add_argument("--img_path", type=str, required=True, help="image file path.")
+parser.add_argument("--result_path", type=str, required=True, help="result file path.")
 args = parser.parse_args()
 
-def get_eval_result(ann_file):
+def get_eval_result(ann_file, result_path):
     """ get evaluation result of faster rcnn"""
     max_num = 128
-    result_path = "./result_Files/"
+    result_path = result_path
 
     outputs = []
 
@@ -41,9 +42,9 @@ def get_eval_result(ann_file):
     for img_id in img_ids:
         file_id = str(img_id).zfill(12)
 
-        bbox_result_file = result_path + file_id + "_0.bin"
-        label_result_file = result_path + file_id + "_1.bin"
-        mask_result_file = result_path + file_id + "_2.bin"
+        bbox_result_file = os.path.join(result_path, file_id + "_0.bin")
+        label_result_file = os.path.join(result_path, file_id + "_1.bin")
+        mask_result_file = os.path.join(result_path, file_id + "_2.bin")
 
         all_bbox = np.fromfile(bbox_result_file, dtype=np.float16).reshape(80000, 5)
         all_label = np.fromfile(label_result_file, dtype=np.int32).reshape(80000, 1)
@@ -70,4 +71,4 @@ def get_eval_result(ann_file):
     coco_eval(result_files, eval_types, dataset_coco, single_result=False)
 
 if __name__ == '__main__':
-    get_eval_result(args.ann_file)
+    get_eval_result(args.ann_file, args.result_path)

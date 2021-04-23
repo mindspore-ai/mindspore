@@ -120,7 +120,7 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 #推理
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ## 在GPU上运行
@@ -211,7 +211,6 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
       ├─resnet50.py    // 骨干网络
       ├─roi_align.py    // ROI对齐网络
       └─rpn.py    //  区域候选网络
-    ├─aipp.cfg    // aipp 配置文件
     ├─config.py    // 总配置
     ├─dataset.py    // 创建并处理数据集
     ├─lr_schedule.py    // 学习率生成器
@@ -340,7 +339,7 @@ sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` 可选 ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
 
 ## 推理过程
 
@@ -350,7 +349,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### 结果

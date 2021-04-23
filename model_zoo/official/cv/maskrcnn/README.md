@@ -172,7 +172,7 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
    ```shell
    # inference
-   bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
    ```
 
 # [Script Description](#contents)
@@ -203,7 +203,6 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py                       # backbone network
       ├─roi_align.py                      # roi align network
       └─rpn.py                            # reagion proposal network
-    ├─aipp.cfg                            #aipp config file
     ├─config.py                           # network configuration
     ├─convert_checkpoint.py               # convert resnet50 backbone checkpoint
     ├─dataset.py                          # dataset utils
@@ -502,7 +501,7 @@ Accumulating evaluation results...
 python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 ## Inference Process
 
@@ -513,7 +512,7 @@ Current batch_ Size can only be set to 1. The inference process needs about 600G
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### result

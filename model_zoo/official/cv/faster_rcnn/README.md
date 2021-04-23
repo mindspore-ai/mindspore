@@ -177,7 +177,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```shell
 # inference
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 # Script Description
@@ -210,7 +210,6 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
       ├─resnet50.py    // backbone network
       ├─roi_align.py    // roi align network
       └─rpn.py    //  region proposal network
-    ├─aipp.cfg    // aipp config file
     ├─config.py    // total config
     ├─dataset.py    // create dataset and process dataset
     ├─lr_schedule.py    // learning ratio generator
@@ -339,7 +338,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 ## Inference Process
 
@@ -349,7 +348,7 @@ Before performing inference, the air file must bu exported by export script on t
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### result
