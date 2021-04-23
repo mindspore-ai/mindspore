@@ -406,7 +406,7 @@ class ForwardExecutor {
                                     PynativeStatusCode *status);
   AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
                        abstract::AbstractBasePtrList *args_spec_list);
-  bool FindOpMask(py::object obj, std::vector<int64_t> *op_masks, std::string id);
+  bool FindOpMask(py::object obj, std::vector<int64_t> *op_masks, const std::string &id);
   void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks, std::vector<AnfNodePtr> *inputs,
                    abstract::AbstractBasePtrList *args_spec_list);
   abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
