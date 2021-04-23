@@ -93,7 +93,7 @@ class Tensor(Tensor_):
                             np.float16, np.float32, np.float64, np.bool_)
             if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes:
                 raise TypeError(f"For Tensor, the input_data is a numpy array, "
-                                f"but it's data type is not in supported list:\
+                                f"but it's data type: {input_data.dtype} is not in supported list:\
                                 {list(i.__name__ for i in valid_dtypes)}.")
             if isinstance(input_data, (tuple, list)):
                 if np.array(input_data).dtype not in valid_dtypes:
