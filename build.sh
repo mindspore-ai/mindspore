@@ -340,7 +340,7 @@ checkopts()
     esac
   done
 
-  if [[ "X$RUN_TESTCASES" == "Xon" && "X$DEVICE" != "X" ]]; then
+  if [[ "X$RUN_TESTCASES" == "Xon" && "X$DEVICE" != "X" && "X$COMPILE_LITE" != "Xon" ]]; then
     echo "WARNING:Option -e can't be set while option -t on/ut is set, reset device to empty."
     DEVICE=""
   fi
