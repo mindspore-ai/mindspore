@@ -2079,12 +2079,15 @@ class TopK(PrimitiveWithInfer):
     """
     Finds values and indices of the `k` largest entries along the last dimension.
 
-    If the input is a one-dimensional Tensor, find the k largest entries in the Tensor,
-    and output its value and index as a Tensor. Therefore, "values [k]" is the "k" largest item in "input",
-    and its index is "indices [k]".
+    If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
+    and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
+    and its index is indices [`k`].
 
     For a multi-dimensional matrix,
-    calculate the first k entries in each row (corresponding vector along the last dimension), therefore:
+    calculates the first `k` entries in each row (corresponding vector along the last dimension), therefore:
+
+    .. math::
+
     values.shape = indices.shape = input.shape[:-1] + [k].
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
