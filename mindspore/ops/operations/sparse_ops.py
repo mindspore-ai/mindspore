@@ -34,6 +34,9 @@ class SparseToDense(PrimitiveWithInfer):
     Returns:
         Tensor, the shape of tensor is `dense_shape`.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
