@@ -200,6 +200,9 @@ MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(
+  RealDiv, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
   DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(
