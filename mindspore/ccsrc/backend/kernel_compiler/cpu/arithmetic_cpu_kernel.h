@@ -54,6 +54,8 @@ class ArithmeticCPUKernel : public CPUKernel {
   template <typename T>
   void Mod(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
+  void FloorMod(const T *input1, const T *input2, T *out, size_t size);
+  template <typename T>
   void Pow(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
   void AssignAdd(T *input1, const T *input2, T *out, size_t size);
@@ -143,6 +145,20 @@ MS_REG_CPU_KERNEL(
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   Mod, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  FloorMod, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  FloorMod, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  FloorMod,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  FloorMod,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),

@@ -221,6 +221,40 @@ struct ModFunc<half2> {
 };
 
 template <typename T>
+struct FloorModFunc {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    T res = lhs - floorf(lhs / rhs) * rhs;
+    res = (std::abs(res) > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
+    return res;
+  }
+};
+
+template <>
+struct FloorModFunc<half> {
+  __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
+    float l = __half2float(lhs);
+    float r = __half2float(rhs);
+    float res = l - floorf(l / r) * r;
+    res = (std::abs(res) > 1e-9) && ((res < 0.0) != (r < 0.0)) ? res + r : res;
+    return __float2half_rn(res);
+  }
+};
+
+template <>
+struct FloorModFunc<half2> {
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 l = __half22float2(lhs);
+    float2 r = __half22float2(rhs);
+    float2 res;
+    res.x = l.x - floorf(l.x / r.x) * r.x;
+    res.y = l.y - floorf(l.y / r.y) * r.y;
+    res.x = (std::abs(res.x) > 1e-9) && ((res.x < 0.0) != (r.x < 0.0)) ? res.x + r.x : res.x;
+    res.y = (std::abs(res.y) > 1e-9) && ((res.y < 0.0) != (r.y < 0.0)) ? res.y + r.y : res.y;
+    return __float22half2_rn(res);
+  }
+};
+
+template <typename T>
 struct AbsGradFunc {
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     T zero = 0.0;
@@ -318,6 +352,8 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, SquaredDifferenceFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_MOD:
       return ElewiseArithKernel<T, ModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_FLOORMOD:
+      return ElewiseArithKernel<T, FloorModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
@@ -551,6 +587,11 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_MOD:
       return BroadcastArithKernel<T, ModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_FLOORMOD:
+      return BroadcastArithKernel<T, FloorModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);

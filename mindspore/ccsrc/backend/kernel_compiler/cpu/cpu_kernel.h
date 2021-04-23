@@ -70,6 +70,7 @@ enum OperateType {
   REALDIV,
   FLOORDIV,
   MOD,
+  FLOORMOD,
   NEG,
   LESS,
   ASSIGNADD,
