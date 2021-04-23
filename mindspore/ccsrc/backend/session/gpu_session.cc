@@ -484,6 +484,13 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         if (node->isa<CNode>()) {
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
           AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
+          if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+            auto runtime_instance =
+              device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+            MS_EXCEPTION_IF_NULL(runtime_instance);
+            auto gpu_runtime_instance = dynamic_cast<device::gpu::GPUKernelRuntime *>(runtime_instance);
+            gpu_runtime_instance->SetAddrInvalid(address);
+          }
         }
 
         if (AnfAlgo::IsDynamicShape(node)) {
