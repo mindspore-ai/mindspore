@@ -62,7 +62,7 @@ class ConfigYOLOV3DarkNet53:
                      (116, 90),
                      (156, 198),
                      (373, 326)]
-    out_channel = 255
+    out_channel = 3 * (num_classes + 5)
 
     # test_param
     test_img_shape = [416, 416]
