@@ -133,7 +133,7 @@ class GPT2FinetuneCell(nn.Cell):
             init = self.alloc_status()
             init = F.depend(init, loss)
             clear_before_grad = self.clear_before_grad(init)
-            self.depend_parameter_use(clear_before_grad, scaling_sens)
+            scaling_sens = F.depend(scaling_sens, clear_before_grad)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  label_ids,
