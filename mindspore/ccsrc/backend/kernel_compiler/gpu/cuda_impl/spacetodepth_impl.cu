@@ -19,73 +19,120 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
-__global__ void SpaceToDepth(const size_t size, const T *input, const size_t *input_shape, const size_t *output_shape,
-                             const size_t r, T *output) {
+__global__ void SpaceToDepth(const size_t size, const T *input, const size_t in,
+                             const size_t ic, const size_t ih, const size_t iw,
+                             const size_t on, const size_t oc, const size_t oh,
+                             const size_t ow, const size_t r, T *output) {
   size_t temp_stride = 0;
   size_t temp_pos = 0;
   size_t output_pos = 0;
   size_t input_pos_array[SPACETODEPTH_BUFFER_DIMENSION];
-  size_t output_pos_array[SPACETODEPTH_BUFFER_DIMENSION];
 
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    temp_stride = input_shape[1] * input_shape[2] * input_shape[3];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size;
+       pos += blockDim.x * gridDim.x) {
+    temp_stride = ic * ih * iw;
     input_pos_array[0] = pos / temp_stride;
     temp_pos = pos % temp_stride;
 
-    for (size_t i = 1; i < SPACETODEPTH_BUFFER_DIMENSION; i++) {
-      temp_stride /= input_shape[i];
-      input_pos_array[i] = temp_pos / temp_stride;
-      temp_pos %= temp_stride;
-    }
+    temp_stride /= ic;
+    input_pos_array[1] = temp_pos / temp_stride;
+    temp_pos = pos % temp_stride;
 
-    output_pos_array[0] = input_pos_array[0];
-    output_pos_array[1] = input_pos_array[1] * r * r + r * (input_pos_array[2] % r) + input_pos_array[3] % r;
-    output_pos_array[2] = input_pos_array[2] / r;
-    output_pos_array[3] = input_pos_array[3] / r;
+    temp_stride /= ih;
+    input_pos_array[2] = temp_pos / temp_stride;
+    temp_pos = pos % temp_stride;
 
-    for (size_t i = 0; i < 3; ++i) {
-      output_pos += output_pos_array[i];
-      output_pos *= output_shape[i + 1];
-    }
-    output_pos += output_pos_array[3];
+    temp_stride /= iw;
+    input_pos_array[3] = temp_pos / temp_stride;
+
+    output_pos += input_pos_array[0];
+    output_pos = (output_pos * oc) +
+                 (input_pos_array[1] +
+                  (r * (input_pos_array[2] % r) + input_pos_array[3] % r) * ic);
+    output_pos = (output_pos * oh) + (input_pos_array[2] / r);
+    output_pos = (output_pos * ow) + (input_pos_array[3] / r);
 
     output[output_pos] = input[pos];
+    output_pos = 0;
   }
   return;
 }
 
 template <typename T>
-void CalSpaceToDepth(const size_t size, const T *input, const size_t *input_shape, const size_t *output_shape,
-                     const size_t r, T *output, cudaStream_t cuda_stream) {
-  SpaceToDepth<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, input_shape, output_shape, r, output);
+void CalSpaceToDepth(const size_t size, const T *input, const size_t in,
+                     const size_t ic, const size_t ih, const size_t iw,
+                     const size_t on, const size_t oc, const size_t oh,
+                     const size_t ow, const size_t r, T *output,
+                     cudaStream_t cuda_stream) {
+  SpaceToDepth<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+      size, input, in, ic, ih, iw, on, oc, oh, ow, r, output);
   return;
 }
 
-template void CalSpaceToDepth<float>(const size_t size, const float *input, const size_t *input_shape,
-                                     const size_t *output_shape, const size_t r, float *output,
+template void CalSpaceToDepth<float>(const size_t size, const float *input,
+                                     const size_t in, const size_t ic,
+                                     const size_t ih, const size_t iw,
+                                     const size_t on, const size_t oc,
+                                     const size_t oh, const size_t ow,
+                                     const size_t r, float *output,
                                      cudaStream_t cuda_stream);
-template void CalSpaceToDepth<half>(const size_t size, const half *input, const size_t *input_shape,
-                                    const size_t *output_shape, const size_t r, half *output, cudaStream_t cuda_stream);
-template void CalSpaceToDepth<int>(const size_t size, const int *input, const size_t *input_shape,
-                                   const size_t *output_shape, const size_t r, int *output, cudaStream_t cuda_stream);
-template void CalSpaceToDepth<int64_t>(const size_t size, const int64_t *input, const size_t *input_shape,
-                                       const size_t *output_shape, const size_t r, int64_t *output,
+template void CalSpaceToDepth<half>(const size_t size, const half *input,
+                                    const size_t in, const size_t ic,
+                                    const size_t ih, const size_t iw,
+                                    const size_t on, const size_t oc,
+                                    const size_t oh, const size_t ow,
+                                    const size_t r, half *output,
+                                    cudaStream_t cuda_stream);
+template void CalSpaceToDepth<int>(const size_t size, const int *input,
+                                   const size_t in, const size_t ic,
+                                   const size_t ih, const size_t iw,
+                                   const size_t on, const size_t oc,
+                                   const size_t oh, const size_t ow,
+                                   const size_t r, int *output,
+                                   cudaStream_t cuda_stream);
+template void CalSpaceToDepth<int64_t>(const size_t size, const int64_t *input,
+                                       const size_t in, const size_t ic,
+                                       const size_t ih, const size_t iw,
+                                       const size_t on, const size_t oc,
+                                       const size_t oh, const size_t ow,
+                                       const size_t r, int64_t *output,
                                        cudaStream_t cuda_stream);
-template void CalSpaceToDepth<int16_t>(const size_t size, const int16_t *input, const size_t *input_shape,
-                                       const size_t *output_shape, const size_t r, int16_t *output,
+template void CalSpaceToDepth<int16_t>(const size_t size, const int16_t *input,
+                                       const size_t in, const size_t ic,
+                                       const size_t ih, const size_t iw,
+                                       const size_t on, const size_t oc,
+                                       const size_t oh, const size_t ow,
+                                       const size_t r, int16_t *output,
                                        cudaStream_t cuda_stream);
-template void CalSpaceToDepth<int8_t>(const size_t size, const int8_t *input, const size_t *input_shape,
-                                      const size_t *output_shape, const size_t r, int8_t *output,
+template void CalSpaceToDepth<int8_t>(const size_t size, const int8_t *input,
+                                      const size_t in, const size_t ic,
+                                      const size_t ih, const size_t iw,
+                                      const size_t on, const size_t oc,
+                                      const size_t oh, const size_t ow,
+                                      const size_t r, int8_t *output,
                                       cudaStream_t cuda_stream);
-template void CalSpaceToDepth<uint8_t>(const size_t size, const uint8_t *input, const size_t *input_shape,
-                                       const size_t *output_shape, const size_t r, uint8_t *output,
+template void CalSpaceToDepth<uint8_t>(const size_t size, const uint8_t *input,
+                                       const size_t in, const size_t ic,
+                                       const size_t ih, const size_t iw,
+                                       const size_t on, const size_t oc,
+                                       const size_t oh, const size_t ow,
+                                       const size_t r, uint8_t *output,
                                        cudaStream_t cuda_stream);
-template void CalSpaceToDepth<uint16_t>(const size_t size, const uint16_t *input, const size_t *input_shape,
-                                        const size_t *output_shape, const size_t r, uint16_t *output,
-                                        cudaStream_t cuda_stream);
-template void CalSpaceToDepth<uint32_t>(const size_t size, const uint32_t *input, const size_t *input_shape,
-                                        const size_t *output_shape, const size_t r, uint32_t *output,
-                                        cudaStream_t cuda_stream);
-template void CalSpaceToDepth<uint64_t>(const size_t size, const uint64_t *input, const size_t *input_shape,
-                                        const size_t *output_shape, const size_t r, uint64_t *output,
-                                        cudaStream_t cuda_stream);
+template void
+CalSpaceToDepth<uint16_t>(const size_t size, const uint16_t *input,
+                          const size_t in, const size_t ic, const size_t ih,
+                          const size_t iw, const size_t on, const size_t oc,
+                          const size_t oh, const size_t ow, const size_t r,
+                          uint16_t *output, cudaStream_t cuda_stream);
+template void
+CalSpaceToDepth<uint32_t>(const size_t size, const uint32_t *input,
+                          const size_t in, const size_t ic, const size_t ih,
+                          const size_t iw, const size_t on, const size_t oc,
+                          const size_t oh, const size_t ow, const size_t r,
+                          uint32_t *output, cudaStream_t cuda_stream);
+template void
+CalSpaceToDepth<uint64_t>(const size_t size, const uint64_t *input,
+                          const size_t in, const size_t ic, const size_t ih,
+                          const size_t iw, const size_t on, const size_t oc,
+                          const size_t oh, const size_t ow, const size_t r,
+                          uint64_t *output, cudaStream_t cuda_stream);
