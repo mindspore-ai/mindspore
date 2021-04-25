@@ -24,8 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-enum class ReduceType { ReduceAll, ReduceAny, ReduceMax, ReduceMin, ReduceSum, ReduceMean };
-
 template <typename T>
 class ReduceCPUKernel : public CPUKernel {
  public:
@@ -36,6 +34,7 @@ class ReduceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  enum ReduceType { kReduceAll, kReduceAny, kReduceMax, kReduceMin, kReduceSum, kReduceMean };
   std::vector<size_t> input_shape_;
   std::vector<int64_t> axis_;
   ReduceType reduce_type_;

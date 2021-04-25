@@ -46,26 +46,26 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name == "ReduceAll") {
-      reduce_type_ = ReduceType::ReduceAll;
+      reduce_type_ = kReduceAll;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out &= input[pos]; };
     } else if (kernel_name == "ReduceAny") {
-      reduce_type_ = ReduceType::ReduceAny;
+      reduce_type_ = kReduceAny;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "Unsupported reduce operation: " << kernel_name_ << " for bool.";
     }
   } else {
     if (kernel_name == "ReduceMax") {
-      reduce_type_ = ReduceType::ReduceMax;
+      reduce_type_ = kReduceMax;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::max(input[pos], *out); };
     } else if (kernel_name == "ReduceMin") {
-      reduce_type_ = ReduceType::ReduceMin;
+      reduce_type_ = kReduceMin;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::min(input[pos], *out); };
     } else if (kernel_name == "ReduceSum") {
-      reduce_type_ = ReduceType::ReduceSum;
+      reduce_type_ = kReduceSum;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
     } else if (kernel_name == "ReduceMean") {
-      reduce_type_ = ReduceType::ReduceMean;
+      reduce_type_ = kReduceMean;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "Unsupported reduce operation:  " << kernel_name;
@@ -86,7 +86,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
     for (size_t i = 1; i < input_size; ++i) {
       reduce_func_(input_addr, i, output_addr);
     }
-    if (reduce_type_ == ReduceType::ReduceMean) {
+    if (reduce_type_ == kReduceMean) {
       *output_addr /= input_size;
     }
   } else {
@@ -126,7 +126,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
           reduce_func_(input_addr, iter.GetPos(), &output_addr[i]);
           iter.GenNextPos();
         }
-        if (reduce_type_ == ReduceType::ReduceMean) {
+        if (reduce_type_ == kReduceMean) {
           output_addr[i] /= stride;
         }
       }

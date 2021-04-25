@@ -72,7 +72,7 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
   if (in_data == NULL || out_data == NULL || param == NULL) {
     return NNACL_NULL_PTR;
   }
-  if (param->num_axes_ > DIMENSION_6D) {
+  if (param->num_axes_ > DIMENSION_8D) {
     return NNACL_PARAM_INVALID;
   }
 
@@ -107,6 +107,10 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
                 *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
               } else if (param->data_type == kDataTypeInt) {
                 *((int32_t *)out_data + out_offset) = *((int32_t *)in_data + in_offset);
+              } else if (param->data_type == kDataTypeFloat64) {
+                *((double *)out_data + out_offset) = *((double *)in_data + in_offset);
+              } else if (param->data_type == kDataTypeBool) {
+                *((bool *)out_data + out_offset) = *((bool *)in_data + in_offset);
 #ifdef ENABLE_ARM64
               } else if (param->data_type == kDataTypeFloat16) {
                 *((float16_t *)out_data + out_offset) = *((float16_t *)in_data + in_offset);

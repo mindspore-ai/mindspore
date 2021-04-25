@@ -226,27 +226,14 @@ bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
             {"GeLUGrad", &EltWiseGradCPUKernel<T>::GeluGrad},       {"AsinGrad", &EltWiseGradCPUKernel<T>::AsinGrad},
             {"ACosGrad", &EltWiseGradCPUKernel<T>::ACosGrad},       {"AtanGrad", &EltWiseGradCPUKernel<T>::AtanGrad},
             {"AsinhGrad", &EltWiseGradCPUKernel<T>::AsinhGrad},     {"AcoshGrad", &EltWiseGradCPUKernel<T>::AcoshGrad}};
-  T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
 
   size_t count = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  const float block_size = 128.0;
-  size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
-  std::vector<common::Task> tasks;
-  size_t start = 0;
-  size_t once_compute_size = (count + thread_num - 1) / thread_num;
-  while (start < count) {
-    size_t end = (start + once_compute_size) > count ? count : (start + once_compute_size);
-    auto block = [&, start, end]() {
-      elt_map.at(kernel_name_)(this, input1, input2, output, start, end);
-      return common::SUCCESS;
-    };
-    tasks.emplace_back(block);
-    start += once_compute_size;
-  }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  CPUKernelUtils::ParallelFor(
+    std::bind(elt_map.at(kernel_name_), this, input1, input2, output, std::placeholders::_1, std::placeholders::_2),
+    count);
   return true;
 }
 }  // namespace kernel
