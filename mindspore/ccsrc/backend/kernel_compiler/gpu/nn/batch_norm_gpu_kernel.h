@@ -136,7 +136,7 @@ class BatchNormGpuKernel : public GpuKernel {
     if (format_attr == kOpFormat_NHWC) {
       format = kOpFormat_NHWC;
     }
-    CHECK_TENSOR_SIZE(shape);
+    CheckTensorSize({shape});
     SetTensorDescriptor(format, shape);
     InitSizeLists();
     return true;

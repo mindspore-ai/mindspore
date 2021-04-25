@@ -21,6 +21,7 @@
 #include <cudnn.h>
 #include <string>
 #include <vector>
+#include <initializer_list>
 #include <utility>
 #include <map>
 #include <memory>
@@ -33,6 +34,9 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/executor/dynamic_kernel.h"
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
+
+// The max_limit of tensor shape size: 2 Giga-elements(2^31, the largest number in 32 bits).
+#define SHAPE_SIZE_LIMIT 2147483648
 
 namespace mindspore {
 namespace kernel {
@@ -215,6 +219,20 @@ class GpuKernel : public KernelMod {
            "InputA must match the corresponding dimension of the destination tensor outC, and each "
            "dimension of the inputB "
            "must match the corresponding dimension of outC or must be equal to 1.";
+    }
+  }
+
+  // The tensor size is limited to 2G by cudnn.
+  inline void CheckTensorSize(const std::initializer_list<std::vector<size_t>> &shapes) {
+    for (auto shape : shapes) {
+      size_t total_size = 1;
+      for (auto i : shape) {
+        total_size *= i;
+      }
+      if (total_size >= SHAPE_SIZE_LIMIT) {
+        MS_EXCEPTION(ValueError) << "The total size of the tensor exceeds the max_limit of 2 Giga-elements, which is "
+                                 << total_size << " elements (" << shape << ").";
+      }
     }
   }
 

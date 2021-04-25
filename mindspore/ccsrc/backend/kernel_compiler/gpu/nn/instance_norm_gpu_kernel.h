@@ -134,7 +134,7 @@ class InstanceNormGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(input_shape_);
+    CheckTensorSize({input_shape_});
     SetTensorDescriptor();
     InitSizeLists();
     return true;

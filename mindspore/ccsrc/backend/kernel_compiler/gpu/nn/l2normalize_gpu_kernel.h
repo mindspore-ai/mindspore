@@ -110,7 +110,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(inputA_shape);
+    CheckTensorSize({inputA_shape, output_shape});
     if (inputA_shape.size() > MAX_DIMS) {
       MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
     }

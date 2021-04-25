@@ -96,7 +96,7 @@ class PoolingGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return false;
     }
-    CHECK_TENSOR_SIZE(input_shape);
+    CheckTensorSize({input_shape, input_mask, dout_shape, output_shape});
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format);
     SetDimA(input_shape, dimA, nbDims, data_format);
     SetStrideA(input_shape, strideAin, nbDims, data_format);
