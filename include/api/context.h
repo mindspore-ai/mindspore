@@ -116,7 +116,19 @@ class MS_API NvidiaGPUDeviceInfo : public DeviceInfoContext {
 
   void SetGpuTrtInferMode(bool gpu_trt_infer_mode);
   bool GetGpuTrtInferMode() const;
+
+  inline void SetPrecisionMode(const std::string &precison_mode);
+  inline std::string GetPrecisionMode() const;
+
+ private:
+  void SetPrecisionMode(const std::vector<char> &precision_mode);
+  std::vector<char> GetPrecisionModeChar() const;
 };
+
+void NvidiaGPUDeviceInfo::SetPrecisionMode(const std::string &precision_mode) {
+  SetPrecisionMode(StringToChar(precision_mode));
+}
+std::string NvidiaGPUDeviceInfo::GetPrecisionMode() const { return CharToString(GetPrecisionModeChar()); }
 
 class MS_API Ascend910DeviceInfo : public DeviceInfoContext {
  public:

@@ -31,7 +31,7 @@ class TrtLoader {
 
   std::shared_ptr<nvinfer1::IBuilder> CreateInferBuilder(nvinfer1::ILogger *logger);
   std::shared_ptr<nvinfer1::IRuntime> CreateInferRuntime(nvinfer1::ILogger *logger);
-  bool nvinfer_loaded() { return nvinfer_loaded_; }
+  bool nvinfer_loaded() const { return nvinfer_loaded_; }
 
  private:
   bool nvinfer_loaded_;
