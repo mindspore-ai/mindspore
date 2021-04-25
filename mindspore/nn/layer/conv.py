@@ -119,16 +119,17 @@ class Conv2d(_Conv):
     where :math:`ccor` is the cross-correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
     from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
-    of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
-    :math:`\text{ks_w}` are the height and width of the convolution kernel. The full kernel has shape
-    :math:`(C_{out}, C_{in} // \text{group}, \text{ks_h}, \text{ks_w})`, where group is the group number
-    to split the input in the channel dimension.
+    of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of
+    the convolution kernel. The full kernel has shape
+    :math:`(C_{out}, C_{in} // \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where group is the group number to split the input in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
-    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
-    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor`    and
-    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
-    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor`    respectively.
+    :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
+    (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor`    and
+    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
+    (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor`    respectively.
 
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
@@ -495,12 +496,12 @@ class Conv3d(_Conv):
     where :math:`ccor` is the cross-correlation operator.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
-    :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
-    (\text{ks_d} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
-    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
-    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
+    :math:`\left \lfloor{1 + \frac{D_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
+    (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
+    (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[4]} + \text{padding[5]} - \text{kernel_size[2]} -
+    (\text{kernel_size[2]} - 1) \times (\text{dilation[2]} - 1) }{\text{stride[2]}}} \right \rfloor` respectively.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -839,14 +840,14 @@ class Conv2dTranspose(_Conv):
 
     .. math::
 
-        H_{out} = (H_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
-        (\text{ks_h} - 1) + 1
+        H_{out} = (H_{in} - 1) \times \text{stride[0]} - \left (\text{padding[0]} + \text{padding[1]}\right ) +
+        \text{dilation[0]} \times (\text{kernel_size[0]} - 1) + 1
 
-        W_{out} = (W_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
-        (\text{ks_w} - 1) + 1
+        W_{out} = (W_{in} - 1) \times \text{stride[1]} - \left (\text{padding[2]} + \text{padding[3]}\right ) +
+        \text{dilation[1]} \times (\text{kernel_size[1]} - 1) + 1
 
-    where :math:`\text{ks_h}` is the height of the convolution kernel and :math:`\text{ks_w}` is the width
-    of the convolution kernel.
+    where :math:`\text{kernel_size[0]}` is the height of the convolution kernel and :math:`\text{kernel_size[1]}`
+    is the width of the convolution kernel.
 
     Args:
         in_channels (int): The number of channels in the input space.
