@@ -417,6 +417,15 @@ int CheckIfNodeIsParam(const AnfNodePtr &node) {
   return lite::RET_OK;
 }
 
+int CheckIfNodeIsParamOrValue(const AnfNodePtr &node) {
+  if (node == nullptr || (node != nullptr && !utils::isa<ParameterPtr>(node) && !utils::isa<ValueNode>(node))) {
+    MS_LOG(DEBUG) << "The Node is not param or value node.";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    return lite::RET_INVALID_OP_ATTR;
+  }
+  return lite::RET_OK;
+}
+
 int CheckInputSize(const CNodePtr &node, const int size) {
   if (static_cast<int>(node->inputs().size()) != size) {
     MS_LOG(ERROR) << "The input size of node must be " << size << ", but it is" << node->inputs().size();
@@ -532,6 +541,31 @@ bool IsParamNode(const BaseRef &n) {
     return false;
   }
   return tensor->data_c() != nullptr;
+}
+
+bool IsParamOrValueNodeWithData(const BaseRef &n) {
+  if (utils::isa<ValueNode>(n)) {
+    auto value_node = utils::cast<ValueNodePtr>(n);
+    auto value = value_node->value();
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      if (tensor == nullptr || tensor->data_c() == nullptr) {
+        return false;
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+  if (utils::isa<ParameterPtr>(n)) {
+    auto param = utils::cast<ParameterPtr>(n)->default_param();
+    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param);
+    if (tensor == nullptr || tensor->data_c() == nullptr) {
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 bool IsConvNode(const BaseRef &n) {
