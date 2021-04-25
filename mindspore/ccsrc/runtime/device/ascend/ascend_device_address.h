@@ -58,7 +58,7 @@ class AscendDeviceAddress : public DeviceAddress {
                                                         mindspore::TypeId type, void *host_ptr) const;
   void SyncStream() const;
 
-  void LaunchTransData(kernel::KernelModPtr kernel_mod_ptr, void *output_address_ptr, size_t output_size,
+  void LaunchTransData(const kernel::KernelModPtr &kernel_mod_ptr, void *output_address_ptr, size_t output_size,
                        const std::vector<size_t> &workspace_size_list) const;
   std::vector<size_t> GetDeviceShape(std::vector<size_t> *host_shape) const;
   std::vector<size_t> GetWorkspaceSizeList(const nlohmann::json &kernel_json) const;
