@@ -1123,13 +1123,13 @@ class ExecuteOrderGenerator {
     for (auto &graph : all_graphs) {
       auto out = graph->get_return();
       MS_EXCEPTION_IF_NULL(out);
-      search_list->insert(out->cast<CNodePtr>());
+      (void)search_list->insert(out->cast<CNodePtr>());
       auto nodes = TopoSort(out);
       for (auto &node : nodes) {
         MS_EXCEPTION_IF_NULL(node);
         auto cnode = node->cast<CNodePtr>();
         if (cnode != nullptr) {
-          all_nodes.insert(cnode);
+          (void)all_nodes.insert(cnode);
         }
       }
     }
@@ -1222,11 +1222,11 @@ class ExecuteOrderGenerator {
     auto ref_map = graph_->GetRefMap();
     std::multimap<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> ref_multimap;
     std::set<AnfNodePtr> root_inputs(graph_->inputs().begin(), graph_->inputs().end());
-    std::transform(ref_map.begin(), ref_map.end(), std::inserter(ref_multimap, ref_multimap.end()),
-                   [](const std::pair<std::pair<AnfNodePtr, size_t>, std::pair<AnfNodePtr, size_t>> &p)
-                     -> std::pair<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> {
-                     return {p.first.first, {p.first.second, p.second.first, p.second.second}};
-                   });
+    (void)std::transform(ref_map.begin(), ref_map.end(), std::inserter(ref_multimap, ref_multimap.end()),
+                         [](const std::pair<std::pair<AnfNodePtr, size_t>, std::pair<AnfNodePtr, size_t>> &p)
+                           -> std::pair<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> {
+                           return {p.first.first, {p.first.second, p.second.first, p.second.second}};
+                         });
     auto validate_ref_parameter = [](AnfNodePtr node) -> AnfNodePtr {
       if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::KPrimTransData)) {
         auto cnode = node->cast<CNodePtr>();
@@ -1252,7 +1252,7 @@ class ExecuteOrderGenerator {
     for (auto &node : search_list) {
       std::set<AnfNodePtr> refed_parameters;
       for (auto [iter, end] = ref_multimap.equal_range(node); iter != end; ++iter) {
-        refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
+        (void)refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
       }
       for (auto &in : node->inputs()) {
         auto visit_node = AnfAlgo::VisitKernelWithReturnType(in, 0).first;

@@ -339,7 +339,7 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
   return re_order;
 }
 
-void KernelGraph::GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num) {
+void KernelGraph::GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num) {
   MS_EXCEPTION_IF_NULL(node);
   auto node_input_it = node_input_edges_.find(node);
   if (node_input_it == node_input_edges_.end()) {
@@ -349,7 +349,7 @@ void KernelGraph::GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num) {
   if (*loop_num != 0) {
     return;
   }
-  visited_nodes_.insert(node);
+  (void)visited_nodes_.insert(node);
   for (auto input_edge : node_input_edges_[node]) {
     size_t input_num = node_input_num_[input_edge.first];
     if (input_num == 0) {
@@ -387,8 +387,8 @@ void KernelGraph::GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num) {
 
 uint32_t KernelGraph::GetLoopNum(std::map<AnfNodePtr, size_t> none_zero_nodes) {
   uint32_t loop_num = 0;
-  for (auto iter = none_zero_nodes.begin(); iter != none_zero_nodes.end(); iter++) {
-    auto node = iter->first;
+  for (auto iter : none_zero_nodes) {
+    auto node = iter.first;
     MS_EXCEPTION_IF_NULL(node);
     if (node_input_num_[node] == 0) {
       continue;
