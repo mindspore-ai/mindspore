@@ -24,8 +24,10 @@
 #include "schema/inner/model_generated.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
+#include "tools/anf_exporter/fetch_content.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -44,35 +46,14 @@ class AnfExporter {
                        schema::CNodeT *fb_node);
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      schema::CNodeT *fb_node);
-  static void RemoveIfMakeTuple(const CNodePtr &cnode);
-  static void RemoveIfDepend(const CNodePtr &cnode);
 
  protected:
   int ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode);
   int ConvertInputCNodeCommonOp(const AnfNodePtr &input_anode, schema::CNodeT *output_cnode);
-  int ConvertInputParameter(const std::shared_ptr<AnfNode> &input_anode, const std::shared_ptr<PrimitiveC> &primitive,
-                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
-  int ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_anode, const std::shared_ptr<PrimitiveC> &primitive,
-                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
-  int ProcessTensor(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                    const std::shared_ptr<Value> &value, const std::shared_ptr<PrimitiveC> &primitive,
-                    schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  int ProcessInt32OrInt64Imm(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                             const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  void ProcessBoolImm(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                      const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                      const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  void ProcessInt(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                  schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  int ProcessNumber(const ValueNodePtr &value_node, schema::TensorT *schema_tensor, schema::CNodeT *output_cnode,
-                    const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  int ProcessValueSequence(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                           const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                           const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  int ProcessTensorInfo(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                        const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+  int ConvertInputParameter(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
+                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node);
+  int ConvertInputValueNode(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
+                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node);
   int SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const size_t &subgraph_index);
   int SetGraphoutputIndex(const CNodePtr &cnode, size_t subgraph_index,
                           const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *return_node);

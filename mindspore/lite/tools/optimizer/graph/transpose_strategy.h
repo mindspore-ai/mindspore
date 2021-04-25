@@ -44,6 +44,7 @@ class TransposeStrategy {
   bool CanFusionIfInsert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_info,
                          TransTypePair *trans_insert_info);
   STATUS ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  bool CanChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
  private:
   STATUS TransposeInsertDependOnShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool before, size_t index);

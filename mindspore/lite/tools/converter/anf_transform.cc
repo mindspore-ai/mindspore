@@ -168,9 +168,7 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
   const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
   if (!config->trainModel) {
-    auto inne_context_ptr = std::make_shared<lite::InnerContext>();
-    inne_context_ptr->Init();
-    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(inne_context_ptr));
+    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   update_conv2d_param_pass->SetFmkType(config->fmk);

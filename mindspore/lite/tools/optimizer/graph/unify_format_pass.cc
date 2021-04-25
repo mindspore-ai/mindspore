@@ -15,12 +15,14 @@
  */
 
 #include "tools/optimizer/graph/unify_format_pass.h"
+#include <queue>
+#include <set>
 #include <unordered_map>
 #include <utility>
 #include "ops/op_utils.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/common/tensor_util.h"
 
 using mindspore::lite::NCHW_SHAPE;
 namespace mindspore {
@@ -36,6 +38,173 @@ bool IsSpecialType(const CNodePtr &cnode) {
     return true;
   }
   return false;
+}
+
+STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNodePtr &root_node,
+                                     std::set<CNodePtr> *in_nodes, std::set<CNodePtr> *out_nodes,
+                                     std::set<CNodePtr> *middle_nodes) {
+  MS_ASSERT(func_graph != nullptr && root_node != nullptr);
+  MS_ASSERT(in_nodes != nullptr && out_nodes != nullptr && middle_nodes != nullptr);
+  std::queue<CNodePtr> queue_nodes;
+  queue_nodes.push(root_node);
+  std::queue<bool> is_pre_nodes;
+  is_pre_nodes.push(true);
+  while (!queue_nodes.empty()) {
+    auto cur_node = queue_nodes.front();
+    auto is_pre_node = is_pre_nodes.front();
+    queue_nodes.pop();
+    is_pre_nodes.pop();
+    if (CheckPrimitiveType(cur_node, prim::kPrimTranspose)) {
+      if (is_pre_node) {
+        in_nodes->insert(cur_node);
+      } else {
+        out_nodes->insert(cur_node);
+        continue;
+      }
+    }
+    if (middle_nodes->find(cur_node) != middle_nodes->end()) {
+      continue;
+    }
+    if (in_nodes->find(cur_node) == in_nodes->end()) {
+      middle_nodes->insert(cur_node);
+      // insert pre nodes.
+      auto origin_inputs = cur_node->inputs();
+      lite::RemoveIfDepend(cur_node);
+      for (size_t i = 1; i < cur_node->size(); ++i) {
+        if (!utils::isa<CNodePtr>(cur_node->input(i))) {
+          continue;
+        }
+        auto cur_node_input = cur_node->input(i)->cast<CNodePtr>();
+        if (middle_nodes->find(cur_node_input) != middle_nodes->end() ||
+            in_nodes->find(cur_node_input) != in_nodes->end()) {
+          continue;
+        }
+        queue_nodes.push(cur_node_input);
+        is_pre_nodes.push(true);
+      }
+      if (CheckIsAllInputsParam(cur_node)) {
+        in_nodes->insert(cur_node);
+      }
+      cur_node->set_inputs(origin_inputs);
+    }
+    // insert post nodes
+    auto cur_node_users = func_graph->manager()->node_users()[cur_node];
+    for (auto &cur_node_user : cur_node_users) {
+      if (!utils::isa<CNodePtr>(cur_node_user.first)) {
+        MS_LOG(ERROR) << "post node is not cnode.";
+        return lite::RET_ERROR;
+      }
+      auto cur_node_post = cur_node_user.first->cast<CNodePtr>();
+      if (middle_nodes->find(cur_node_post) != middle_nodes->end() ||
+          out_nodes->find(cur_node_post) != out_nodes->end()) {
+        continue;
+      }
+      queue_nodes.push(cur_node_post);
+      is_pre_nodes.push(false);
+    }
+    if (cur_node_users.empty()) {
+      out_nodes->insert(cur_node);
+    }
+  }
+  return lite::RET_OK;
+}
+
+bool JudgeCanOptimizerForMultiOp(const FuncGraphPtr &func_graph, const std::set<CNodePtr> &in_nodes,
+                                 const std::set<CNodePtr> &out_nodes, const std::set<CNodePtr> &middle_nodes) {
+  MS_ASSERT(func_graph != nullptr);
+  for (auto &in_cnode : in_nodes) {
+    std::vector<int> perm;
+    if (!CheckPrimitiveType(in_cnode, prim::kPrimTranspose) || GetTransposePerm(in_cnode, &perm) != lite::RET_OK ||
+        perm != NH2NC) {
+      return false;
+    }
+  }
+  for (auto &out_cnode : out_nodes) {
+    std::vector<int> perm;
+    if (!CheckPrimitiveType(out_cnode, prim::kPrimTranspose) || GetTransposePerm(out_cnode, &perm) != lite::RET_OK ||
+        perm != NC2NH) {
+      return false;
+    }
+  }
+  auto &dynamic_ops = GetDynamicFormatOpList();
+  TransposeStrategy transpose_strategy;
+  for (auto &middle_cnode : middle_nodes) {
+    if (IsSpecialType(middle_cnode)) {
+      continue;
+    }
+    auto middle_node_prim = GetValueNode<PrimitivePtr>(middle_cnode->input(0));
+    if (!lite::IsContain(dynamic_ops, middle_node_prim->name()) ||
+        !transpose_strategy.CanChangeOpAxis(func_graph, middle_cnode)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void ConvertNcTensor2Nh(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index, FmkType fmk_type,
+                        bool train_flag) {
+  MS_ASSERT(cnode != nullptr);
+  if (utils::isa<CNodePtr>(cnode->input(index))) {
+    return;
+  }
+  lite::DataInfo data_info;
+  int status;
+  if (utils::isa<ParameterPtr>(cnode->input(index))) {
+    status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, train_flag, &data_info);
+  } else {
+    status = lite::FetchDataFromValueNode(cnode, index, fmk_type, train_flag, &data_info);
+  }
+  if (status != lite::RET_OK) {
+    return;
+  }
+  if (data_info.shape_.empty() ||
+      (data_info.data_type_ != kNumberTypeFloat32 && data_info.data_type_ != kNumberTypeFloat)) {
+    return;
+  }
+  std::vector<int> new_shape;
+  if (data_info.shape_.size() == 1) {
+    new_shape = {1, 1, 1, data_info.shape_[0]};
+  } else if (data_info.shape_.size() == 2) {
+    new_shape = {1, 1, data_info.shape_[0], data_info.shape_[1]};
+  } else if (data_info.shape_.size() == 3) {
+    new_shape = {1, data_info.shape_[0], data_info.shape_[1], data_info.shape_[2]};
+  }
+  auto size = data_info.data_.size() / sizeof(float);
+  std::vector<float> new_data(size);
+  auto new_data_ptr = static_cast<float *>(new_data.data());
+  auto nchw_data = reinterpret_cast<float *>(data_info.data_.data());
+  // nchw to nhwc
+  auto batch = new_shape[lite::NCHW_N];
+  auto channel = new_shape[lite::NCHW_C];
+  auto area = new_shape[lite::NCHW_H] * new_shape[lite::NCHW_W];
+  for (auto i = 0; i < batch; i++) {
+    float *src_batch = nchw_data + i * channel * area;
+    float *dst_batch = new_data_ptr + i * channel * area;
+    for (int j = 0; j < area; ++j) {
+      float *src_area = src_batch + i;
+      float *dst_area = dst_batch + i * channel;
+      for (int k = 0; k < channel; ++k) {
+        dst_area[k] = src_area[k * area];
+      }
+    }
+  }
+  auto param_node = func_graph->add_parameter();
+  param_node->set_name(cnode->input(index)->fullname_with_scope());
+  std::vector<int64_t> shape_vec{new_shape[0], new_shape[2], new_shape[3], new_shape[1]};
+  auto tensor_info = lite::CreateTensorInfo(new_data.data(), size * sizeof(float), shape_vec, kNumberTypeFloat32);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return;
+  }
+  status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return;
+  }
+  auto tr = func_graph->manager()->Transact();
+  tr.SetEdge(cnode, index, param_node);
+  tr.Commit();
+  return;
 }
 }  // namespace
 
@@ -79,7 +248,7 @@ bool UnifyFormatPass::TransTransFusion(const FuncGraphPtr &func_graph, const CNo
     return false;
   }
   std::vector<int> post_perm;
-  if (GetTransposePerm(cnode->input(2), &post_perm) != lite::RET_OK) {
+  if (GetTransposePerm(cnode, &post_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "get tanspose perm failed.";
     return false;
   }
@@ -89,7 +258,7 @@ bool UnifyFormatPass::TransTransFusion(const FuncGraphPtr &func_graph, const CNo
   if (pre_cnode == nullptr) {
     return false;
   }
-  if (GetTransposePerm(pre_cnode->input(2), &pre_perm) != lite::RET_OK) {
+  if (GetTransposePerm(pre_cnode, &pre_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "get tanspose perm failed.";
     return false;
   }
@@ -106,7 +275,7 @@ STATUS UnifyFormatPass::PostTransposeFusion(const FuncGraphPtr &func_graph, cons
     return lite::RET_OK;
   }
   std::vector<int> cur_perm;
-  if (GetTransposePerm(cnode->input(2), &cur_perm) != lite::RET_OK) {
+  if (GetTransposePerm(cnode, &cur_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "get transpose perm failed.";
     return lite::RET_ERROR;
   }
@@ -116,7 +285,7 @@ STATUS UnifyFormatPass::PostTransposeFusion(const FuncGraphPtr &func_graph, cons
     if (CheckPrimitiveType(post_node, prim::kPrimTranspose)) {
       std::vector<int> post_trans_perm;
       auto post_trans_node = post_node->cast<CNodePtr>();
-      if (GetTransposePerm(post_trans_node->input(2), &post_trans_perm) != lite::RET_OK) {
+      if (GetTransposePerm(post_trans_node, &post_trans_perm) != lite::RET_OK) {
         MS_LOG(ERROR) << "get post transpose node perm failed.";
         return lite::RET_ERROR;
       }
@@ -218,7 +387,7 @@ STATUS UnifyFormatPass::InsertPreTransNode(const FuncGraphPtr &func_graph, const
   MS_ASSERT(trans_insert_info != nullptr);
   TransTypePair trans_info;
   auto origin_inputs = cnode->inputs();
-  lite::AnfExporter::RemoveIfMakeTuple(cnode);
+  lite::RemoveIfMakeTuple(cnode);
   RemoveIfMonad(cnode);
   if (!transpose_strategy_.CanFusionIfInsert(func_graph, cnode, &trans_info, trans_insert_info)) {
     cnode->set_inputs(origin_inputs);
@@ -366,8 +535,8 @@ STATUS UnifyFormatPass::HandleGraphNode(const FuncGraphPtr &func_graph, const CN
   prim->AddAttr(kTransDone, MakeValue<bool>(true));
   TransTypePair trans_info;
   GetTransNodeFormatType(cnode, &trans_info);
-  if (!need_reset_ && (trans_info.pre_ == kNONE || trans_info.post_ == kNONE)) {
-    if (TransTransFusion(func_graph, cnode)) {
+  if (trans_info.pre_ == kNONE || trans_info.post_ == kNONE) {
+    if (!need_reset_ && TransTransFusion(func_graph, cnode)) {
       return lite::RET_OK;
     }
     std::unordered_map<AnfNodePtr, AnfNodePtr> match;
@@ -397,6 +566,65 @@ STATUS UnifyFormatPass::HandleGraphNode(const FuncGraphPtr &func_graph, const CN
   if (InsertPostTransNode(func_graph, cnode, after_perm) != lite::RET_OK) {
     MS_LOG(ERROR) << "insert post node failed." << cnode->fullname_with_scope();
     return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+STATUS UnifyFormatPass::HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                             std::set<CNodePtr> *visit_transposes) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr && visit_transposes != nullptr);
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  std::set<CNodePtr> middle_nodes;
+  std::set<CNodePtr> in_nodes;
+  std::set<CNodePtr> out_nodes;
+  auto status = FindAreaSurroundedByTranspose(func_graph, cnode, &in_nodes, &out_nodes, &middle_nodes);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "find an area surrounded by transpose failed.";
+    return status;
+  }
+  for (auto &in_cnode : in_nodes) {
+    if (CheckPrimitiveType(in_cnode, prim::kPrimTranspose)) {
+      visit_transposes->insert(in_cnode);
+    }
+  }
+  if (!JudgeCanOptimizerForMultiOp(func_graph, in_nodes, out_nodes, middle_nodes)) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto node_list = TopoSort(func_graph->get_return());
+  std::vector<CNodePtr> middle_ops_vec;
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    if (middle_nodes.find(node->cast<CNodePtr>()) != middle_nodes.end()) {
+      middle_ops_vec.push_back(node->cast<CNodePtr>());
+      middle_nodes.erase(node->cast<CNodePtr>());
+    }
+  }
+  for (auto &in_cnode : in_nodes) {
+    manager->Replace(in_cnode, in_cnode->input(1));
+  }
+  for (auto &out_cnode : out_nodes) {
+    manager->Replace(out_cnode, out_cnode->input(1));
+  }
+  for (auto &middle_cnode : middle_ops_vec) {
+    if (IsSpecialType(middle_cnode)) {
+      continue;
+    }
+    for (size_t i = 1; i < middle_cnode->size(); ++i) {
+      ConvertNcTensor2Nh(func_graph, middle_cnode, i, fmk_type_, train_flag_);
+    }
+    status = transpose_strategy_.ChangeOpAxis(func_graph, middle_cnode);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "change op attr failed.";
+      return lite::RET_ERROR;
+    }
+    status = node_infer_shape_.InferShape(middle_cnode);
+    if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
+      MS_LOG(ERROR) << "infer shape failed.";
+      return lite::RET_ERROR;
+    }
   }
   return lite::RET_OK;
 }
@@ -482,8 +710,8 @@ void UnifyFormatPass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPt
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   auto origin_input = return_node->inputs();
-  lite::AnfExporter::RemoveIfDepend(return_node);
-  lite::AnfExporter::RemoveIfMakeTuple(return_node);
+  lite::RemoveIfDepend(return_node);
+  lite::RemoveIfMakeTuple(return_node);
   for (size_t i = 1; i < return_node->size(); ++i) {
     if (!CheckPrimitiveType(return_node->input(i), prim::kPrimTranspose)) {
       continue;
@@ -511,8 +739,8 @@ void UnifyFormatPass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraph
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   auto origin_inputs = return_node->inputs();
-  lite::AnfExporter::RemoveIfDepend(return_node);
-  lite::AnfExporter::RemoveIfMakeTuple(return_node);
+  lite::RemoveIfDepend(return_node);
+  lite::RemoveIfMakeTuple(return_node);
   AbstractBasePtrList abstract_list;
   bool infer_done = true;
   for (size_t i = 1; i < return_node->size(); ++i) {
@@ -679,6 +907,49 @@ bool UnifyFormatPass::DecreaseTransposeForSingleOp(const FuncGraphPtr &func_grap
   return true;
 }
 
+bool UnifyFormatPass::DecreaseTransposeForMultiOp(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto manager = Manage(func_graph, true);
+  if (manager == nullptr) {
+    MS_LOG(ERROR) << "manager is nullptr.";
+    return false;
+  }
+  auto node_list = TopoSort(func_graph->get_return());
+  std::set<CNodePtr> visit_transposes;
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (IsSpecialType(cnode) || visit_transposes.find(cnode) != visit_transposes.end()) {
+      continue;
+    }
+    if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      if (sub_func_graph == nullptr) {
+        return false;
+      }
+      (void)DecreaseTransposeForMultiOp(sub_func_graph);
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      if (sub_func_graph == nullptr) {
+        return false;
+      }
+      (void)DecreaseTransposeForMultiOp(sub_func_graph);
+    }
+    std::vector<int> perm;
+    if (!CheckPrimitiveType(cnode, prim::kPrimTranspose) || GetTransposePerm(cnode, &perm) != lite::RET_OK ||
+        perm != NH2NC) {
+      continue;
+    }
+    auto status = HandleGraphMultiNode(func_graph, cnode, &visit_transposes);
+    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "global optimizer failed.";
+      return false;
+    }
+  }
+  return true;
+}
+
 bool UnifyFormatPass::ResetFuncGraph(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = Manage(func_graph, true);
@@ -774,9 +1045,15 @@ bool UnifyFormatPass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "run framework transpose unify failed.";
     return false;
   }
-  // if input's format of a certain op can be NHWC, can try transform this op to decrease the number of transpose op.
+  // if input format of a certain op can be NHWC, can try transform this op to decrease the number of transpose op.
   if (!DecreaseTransposeForSingleOp(func_graph)) {
     MS_LOG(ERROR) << "run local trans insert optimizer failed.";
+    return false;
+  }
+  // if input format of several ops surrounded only by transpose op all can be NHWC,
+  // we can delete these transpose ops, and at the same time, transform these middle ops.
+  if (!DecreaseTransposeForMultiOp(func_graph)) {
+    MS_LOG(ERROR) << "run global trans insert optimizer failed.";
     return false;
   }
   return true;

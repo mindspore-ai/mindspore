@@ -22,6 +22,7 @@
 #include <string>
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
+#include "tools/anf_exporter/fetch_content.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 
@@ -44,10 +45,9 @@ class NodeInferShape {
   STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *inputs);
   STATUS GetCNodeConstInput(const CNodePtr &cnode, std::vector<lite::Tensor *> *const_ms_inputs);
   STATUS GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite::Tensor *> *var_ms_inputs);
-  lite::Tensor *GetCNodeTensorListVarInput(std::vector<int> shape, const abstract::AbstractTensorPtr &abstract_tensor);
+  lite::Tensor *GetCNodeTensorListVarInput(const lite::DataInfo &data_info);
   STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *outputs);
-  STATUS ConvertToLiteTensor(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                             const std::vector<uint32_t> &tensor_indexes, std::vector<lite::Tensor *> *tensors);
+  STATUS ConvertToLiteTensor(const std::vector<lite::DataInfo> &data_infos, std::vector<lite::Tensor *> *tensors);
   STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs);
   abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   abstract::AbstractBasePtr ConvertTensorListToAbstract(lite::Tensor *tensor);

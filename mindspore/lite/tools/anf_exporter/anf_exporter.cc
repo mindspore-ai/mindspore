@@ -34,7 +34,6 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/bitpacking.h"
-#include "src/tensor.h"
 #include "src/common/utils.h"
 #include "ops/op_utils.h"
 #include "tools/common/graph_util.h"
@@ -80,158 +79,7 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   }
   return cnodes;
 }
-STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, ShapeVector *shape_vector, size_t *offset) {
-  auto data_type = tensor_info->data_type();
-  if (data_type != kObjectTypeString) {
-    MS_LOG(ERROR) << "This function only used for string tensor.";
-    return RET_ERROR;
-  }
-  shape_vector->clear();
-  auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  std::string shape_str;
-  std::string shape_size_str;
-  *offset = 0;
-  size_t cnt = 0;
-  for (; *offset < tensor_info->Size(); (*offset)++) {
-    if (tensor_data[*offset] == ',') {
-      (*offset)++;
-      break;
-    }
-    shape_size_str.push_back(tensor_data[*offset]);
-  }
-  if (*offset == 0) {
-    MS_LOG(ERROR) << "string tensor's dim size not found.";
-    return RET_ERROR;
-  }
-  size_t shape_size = std::stoi(shape_size_str);
-  for (; *offset < tensor_info->Size(); (*offset)++) {
-    if (tensor_data[*offset] == ',') {
-      cnt++;
-      shape_vector->push_back(std::stoi(shape_str));
-      shape_str.clear();
-    } else {
-      shape_str.push_back(tensor_data[*offset]);
-    }
-    if (cnt == shape_size) {
-      (*offset)++;
-      break;
-    }
-  }
-  if (shape_vector->empty()) {
-    MS_LOG(ERROR) << "string tensor's shape shouldn't be empty.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-schema::Format GetFormatByFmk(int32_t fmk_type) {
-  switch (fmk_type) {
-    case converter::FmkType_ONNX:
-    case lite::converter::FmkType_CAFFE:
-    case lite::converter::FmkType_MS:
-      return schema::Format_NCHW;
-    case lite::converter::FmkType_TF:
-    case lite::converter::FmkType_TFLITE:
-      return schema::Format_NHWC;
-    default:
-      MS_LOG(ERROR) << "don't support current fmk: " + fmk_type;
-      return static_cast<schema::Format>(fmk_type);
-  }
-}
-
-STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, ShapeVector *shape_vector) {
-  auto abstract_base = param_node->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
-    return RET_PARAM_INVALID;
-  }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
-    return RET_INPUT_TENSOR_ERROR;
-  }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-  auto typePtr = abstract_tensor->element()->GetTypeTrack();
-  MS_ASSERT(typePtr != nullptr);
-  *data_type = typePtr->type_id();
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
-    MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
-    return RET_PARAM_INVALID;
-  }
-  *shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-  return RET_OK;
-}
 }  // namespace
-
-void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
-  bool has_make_tuple = false;
-  std::vector<AnfNodePtr> inputs;
-  inputs.clear();
-
-  inputs.emplace_back(cnode->input(0));
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-    AnfNodePtr input_node = cnode->input(i);
-    if (!input_node->isa<CNode>()) {
-      inputs.emplace_back(cnode->input(i));
-      continue;
-    }
-    auto make_tuple_node = utils::cast<CNodePtr>(input_node);
-    auto value_node = make_tuple_node->input(0)->cast<ValueNodePtr>();
-    if (value_node == nullptr) {
-      MS_LOG(ERROR) << "value node is invalid.";
-      return;
-    }
-    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(make_tuple_node, prim::kPrimMakeTuple) ||
-                                           opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTupleV2))) {
-      has_make_tuple = true;
-      for (size_t j = 1; j < make_tuple_node->inputs().size(); ++j) {
-        inputs.emplace_back(make_tuple_node->input(j));
-      }
-    } else {
-      inputs.emplace_back(cnode->input(i));
-    }
-  }
-  if (has_make_tuple) {
-    cnode->set_inputs(inputs);
-  }
-}
-
-void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
-  bool has_depend = false;
-  std::vector<AnfNodePtr> inputs;
-  inputs.clear();
-
-  inputs.emplace_back(cnode->input(0));
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-    AnfNodePtr inputNode = cnode->input(i);
-    if (!inputNode->isa<CNode>()) {
-      inputs.emplace_back(cnode->input(i));
-      continue;
-    }
-    auto depend_node = utils::cast<CNodePtr>(inputNode);
-    auto value_node = depend_node->input(0)->cast<ValueNodePtr>();
-    if (value_node == nullptr) {
-      MS_LOG(ERROR) << "value node is invalid.";
-      return;
-    }
-    if (value_node->value() != nullptr && opt::CheckPrimitiveType(depend_node, prim::kPrimDepend)) {
-      has_depend = true;
-      bool mask_out = (depend_node->inputs().size() == 3);
-      for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
-        AnfNodePtr depend_input_node = depend_node->input(j);
-        if (depend_input_node->isa<CNode>()) {
-          inputs.emplace_back(depend_input_node);
-          if (mask_out) {
-            break;
-          }
-        }
-      }
-    } else {
-      inputs.emplace_back(cnode->input(i));
-    }
-  }
-  if (has_depend) {
-    cnode->set_inputs(inputs);
-  }
-}
 
 int AnfExporter::SetQuantOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                           const std::shared_ptr<mindspore::Primitive> &primitive,
@@ -653,283 +501,58 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, 
   return RET_OK;
 }
 
-int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_anode,
-                                       const std::shared_ptr<PrimitiveC> &primitive_c,
+int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-                                       schema::CNodeT *output_cnode) {
-  auto param_node = input_anode->cast<ParameterPtr>();
+                                       schema::CNodeT *op_node) {
+  auto param_node = cnode->input(index)->cast<ParameterPtr>();
+  MS_ASSERT(param_node != nullptr);
   std::string input_name = param_node->fullname_with_scope();
   if (node_id_map_.find(input_name) != node_id_map_.end()) {
-    output_cnode->inputIndex.emplace_back(node_id_map_[param_node->name()]);
+    op_node->inputIndex.emplace_back(node_id_map_[param_node->name()]);
     return RET_OK;
   }
+  DataInfo data_info;
+  if (FetchDataFromParameterNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info) !=
+      RET_OK) {
+    MS_LOG(ERROR) << "parse const node failed.";
+    return RET_ERROR;
+  }
   auto schema_tensor = std::make_unique<schema::TensorT>();
-  schema_tensor->format = GetFormatByFmk(meta_graphT->fmkType);
-  if (schema_tensor->format != schema::Format_NHWC && schema_tensor->format != schema::Format_NCHW) {
-    MS_LOG(ERROR) << "schema tensor format is wrong, " << schema_tensor->format;
-    return RET_ERROR;
-  }
-
-  // attr weightFormat is only used by conv-like ops' second input
-  if (output_cnode->inputIndex.size() == 1 && primitive_c->GetAttr(opt::kWeightFormat) != nullptr) {
-    schema_tensor->format = static_cast<schema::Format>(GetValue<int64_t>(primitive_c->GetAttr(opt::kWeightFormat)));
-  }
+  schema_tensor->format = static_cast<schema::Format>(data_info.format_);
   schema_tensor->name = param_node->name();
-  ShapeVector shape_vector;
-  TypeId data_type;
-  auto status = GetDataTypeAndShape(param_node, &data_type, &shape_vector);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "get data type and shape from param node failed.";
-    return RET_ERROR;
-  }
-  schema_tensor->dataType = data_type;
-  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
-  size_t offset = 0;
-  if (!shape_vector.empty() && schema_tensor->dataType == kObjectTypeString) {
-    status = GetShapeVectorFromStringTensor(tensor_info, &shape_vector, &offset);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "get shape vector from string tensor failed.";
-      return RET_ERROR;
-    }
-  }
-  std::vector<int32_t> dims;
-  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(dims),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  schema_tensor->dims = dims;
-  if (tensor_info != nullptr && tensor_info->Size() != 0) {
-    if (schema_tensor->dataType == kObjectTypeTensorType && shape_vector.empty() &&
-        meta_graphT->fmkType == converter::FmkType_ONNX) {
-      schema_tensor->data.resize(0);
-    } else {
-      schema_tensor->data.resize(tensor_info->Size() - offset);
-      if (EOK != memcpy_s(schema_tensor->data.data(), schema_tensor->data.size(),
-                          static_cast<uint8_t *>(tensor_info->data_c()) + offset, tensor_info->Size() - offset)) {
-        MS_LOG(ERROR) << "memcpy_s failed.";
-        return RET_ERROR;
-      }
-    }
-  }
-  schema_tensor->name = input_name;
-  QuantParamHolderPtr quant_param_holder = primitive_c->GetAttr("quant_params") == nullptr
-                                             ? nullptr
-                                             : primitive_c->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
-  if (quant_param_holder != nullptr && quant_param_holder->enable_huffman_code() &&
-      schema_tensor->dataType == kNumberTypeInt8) {
-    schema_tensor->enableHuffmanCode = true;
-  }
+  schema_tensor->dims = data_info.shape_;
+  schema_tensor->dataType = data_info.data_type_;
+  schema_tensor->data = data_info.data_;
+  schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
+
   node_id_map_[input_name] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+  op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
   return RET_OK;
 }
 
-int AnfExporter::ProcessTensor(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                               const std::shared_ptr<Value> &value, const std::shared_ptr<PrimitiveC> &primitive,
-                               schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  auto valueAbstract = value_node->abstract();
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(valueAbstract);
-  if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
-    MS_LOG(ERROR) << "abstract_tensor or abstract_tensor->element() is nullptr";
-    return RET_ERROR;
-  }
-  auto typePtr = abstract_tensor->element()->GetTypeTrack();
-  (*schema_tensor)->dataType = typePtr->type_id();
-  auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-  std::vector<int32_t> dims;
-  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(dims),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  (*schema_tensor)->dims = dims;
-  if (train_flag_ && (*schema_tensor)->dims.empty()) (*schema_tensor)->dims = {1};
-  (*schema_tensor)->nodeType = NodeType_ValueNode;
-  auto data = value->cast<tensor::TensorPtr>();
-  (*schema_tensor)->data.resize(data->Size());
-  (*schema_tensor)->format = schema::Format_NHWC;
-
-  (*schema_tensor)->format = GetFormatByFmk(meta_graphT->fmkType);
-  if ((*schema_tensor)->format != schema::Format_NHWC && (*schema_tensor)->format != schema::Format_NCHW) {
-    MS_LOG(ERROR) << "schema tensor format is wrong, " << (*schema_tensor)->format;
-    return RET_ERROR;
-  }
-
-  // process weight tensor
-  if (data->Size() > 0) {
-    if (memcpy_s((*schema_tensor)->data.data(), (*schema_tensor)->data.size(), data->data_c(), data->Size()) != EOK) {
-      MS_LOG(ERROR) << "memcpy_s error.";
-      return RET_ERROR;
-    }
-
-    if (primitive->GetAttr(opt::kWeightFormat) != nullptr) {
-      (*schema_tensor)->format = static_cast<schema::Format>(GetValue<int64_t>(primitive->GetAttr(opt::kWeightFormat)));
-    }
-  }
-
-  node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-  meta_graphT->allTensors.emplace_back(std::move(*schema_tensor));
-  return RET_OK;
-}
-int AnfExporter::ProcessInt32OrInt64Imm(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                                        const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  int ret;
-  // data of int64 is converted to int32 here.
-  (*schema_tensor)->dataType = kNumberTypeInt32;
-  (*schema_tensor)->dims = {1};
-  (*schema_tensor)->nodeType = NodeType_ValueNode;
-  int real_data = opt::CastToInt(value).front();
-  (*schema_tensor)->data.resize(sizeof(int32_t));
-  ret = memcpy_s((*schema_tensor)->data.data(), sizeof(int32_t), &real_data, sizeof(int32_t));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error.";
-    return RET_ERROR;
-  }
-  node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-  meta_graphT->allTensors.emplace_back(std::move(*schema_tensor));
-  return ret;
-}
-void AnfExporter::ProcessBoolImm(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                                 const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                                 const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  auto valueAbstract = value_node->abstract();
-  auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);
-  auto typePtr = abstractScalar->GetTypeTrack();
-  (*schema_tensor)->dataType = typePtr->type_id();
-  (*schema_tensor)->dims = {1};
-  (*schema_tensor)->nodeType = NodeType_ValueNode;
-  auto data = value->cast<mindspore::BoolImmPtr>();
-  (*schema_tensor)->data.emplace_back(data->value());
-  node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-  meta_graphT->allTensors.emplace_back(std::move(*schema_tensor));
-}
-int AnfExporter::ProcessNumber(const ValueNodePtr &value_node, schema::TensorT *schema_tensor,
-                               schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  auto data = value_node->value()->cast<NumberPtr>();
-  schema_tensor->data.resize(sizeof(int));
-  int number_type = data->number_type();
-  if (EOK != ::memcpy_s(schema_tensor->data.data(), sizeof(int), &number_type, sizeof(int))) {
-    MS_LOG(ERROR) << "memcpy_s failed";
-    return RET_MEMORY_FAILED;
-  }
-  schema_tensor->dataType = kNumberTypeInt32;
-  schema_tensor->dims = {1};
-  schema_tensor->nodeType = NodeType_ValueNode;
-  node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-  meta_graphT->allTensors.emplace_back(schema_tensor);
-  return RET_OK;
-}
-void AnfExporter::ProcessInt(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                             schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  (*schema_tensor)->dataType = kNumberTypeInt32;
-  (*schema_tensor)->dims = {1};
-  (*schema_tensor)->nodeType = NodeType_ValueNode;
-  (*schema_tensor)->data.emplace_back(kNumberTypeInt32);
-  node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-  meta_graphT->allTensors.emplace_back(std::move(*schema_tensor));
-}
-int AnfExporter::ProcessValueSequence(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                                      const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                                      const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  int ret = RET_OK;
-  auto valueAbstract = value_node->abstract();
-  auto abstractSequnce = utils::cast<abstract::AbstractSequeuePtr>(valueAbstract);
-  if (abstractSequnce->isa<abstract::AbstractTuple>()) {
-    auto abstractTuple = utils::cast<abstract::AbstractTuplePtr>(valueAbstract);
-    auto x_shape_data = abstractTuple->elements();
-    std::vector<int32_t> shape;
-    for (std::size_t i = 0; i < abstractTuple->size(); ++i) {
-      auto value_track = x_shape_data[i]->GetValueTrack();
-      MS_ASSERT(value_track != nullptr);
-      if (value_track->isa<Int32Imm>()) {
-        shape.push_back((GetValue<int>(value_track)));
-      } else if (value_track->isa<Int64Imm>()) {
-        shape.push_back((GetValue<int64_t>(value_track)));
-      } else {
-        MS_LOG(ERROR) << "Value type is ValueSequence is not integer, it is " << value_track->ToString() << ".";
-        return RET_ERROR;
-      }
-    }
-    (*schema_tensor)->dataType = kNumberTypeInt32;
-    (*schema_tensor)->dims = {static_cast<int32_t>(shape.size())};
-    (*schema_tensor)->nodeType = NodeType_ValueNode;
-    (*schema_tensor)->data.resize(shape.size() * sizeof(int));
-    if (!shape.empty()) {
-      if (EOK != memcpy_s((*schema_tensor)->data.data(), shape.size() * sizeof(int32_t), shape.data(),
-                          shape.size() * sizeof(int32_t))) {
-        MS_LOG(ERROR) << "memcpy_s data into schema_tensor failed.";
-        return RET_MEMORY_FAILED;
-      }
-    }
-    node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-    output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-    meta_graphT->allTensors.emplace_back(std::move(*schema_tensor));
-  }
-  return ret;
-}
-
-int AnfExporter::ProcessTensorInfo(const ValueNodePtr &value_node, std::unique_ptr<schema::TensorT> *schema_tensor,
-                                   const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
-                                   const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(value);
-  if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "Input value is not a tensor";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  auto ret = UpdateTensorTFromTensorInfo(tensor_info, schema_tensor);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UpdateTensorTFromTensorInfo failed";
-    return ret;
-  }
-  if (train_flag_ && (*schema_tensor)->dims.empty()) {
-    (*schema_tensor)->dims = {1};
-  }
-
-  node_id_map_[value_node->fullname_with_scope()] = meta_graphT->allTensors.size();
-  output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-  meta_graphT->allTensors.emplace_back(std::move(*schema_tensor));
-  return ret;
-}
-
-int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_anode,
-                                       const std::shared_ptr<PrimitiveC> &primitive,
+int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-                                       schema::CNodeT *output_cnode) {
-  auto value_node = input_anode->cast<ValueNodePtr>();
+                                       schema::CNodeT *op_node) {
+  DataInfo data_info;
+  auto status = FetchDataFromValueNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info);
+  if (status == RET_NO_CHANGE) {
+    return RET_OK;
+  }
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "parse value node failed.";
+    return status;
+  }
   auto schema_tensor = std::make_unique<schema::TensorT>();
-  auto value = value_node->value();
-  int ret = RET_OK;
-
-  if (train_flag_) {
-    schema_tensor->name = value_node->fullname_with_scope();
-  }
-  if (value->isa<tensor::Tensor>()) {
-    ret = ProcessTensor(value_node, &schema_tensor, value, primitive, output_cnode, meta_graphT);
-  } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
-    ret = ProcessInt32OrInt64Imm(value_node, &schema_tensor, value, output_cnode, meta_graphT);
-  } else if (value->isa<mindspore::BoolImm>()) {
-    ProcessBoolImm(value_node, &schema_tensor, value, output_cnode, meta_graphT);
-  } else if (value->isa<mindspore::Int>()) {
-    ProcessInt(value_node, &schema_tensor, output_cnode, meta_graphT);
-  } else if (value->isa<mindspore::ValueSequeue>()) {
-    ret = ProcessValueSequence(value_node, &schema_tensor, value, output_cnode, meta_graphT);
-  } else if (value->isa<Number>()) {
-    ret = ProcessNumber(value_node, schema_tensor.release(), output_cnode, meta_graphT);
-  } else if (value->isa<mindspore::tensor::Tensor>()) {
-    ret = ProcessTensorInfo(value_node, &schema_tensor, value, output_cnode, meta_graphT);
-  } else if (value->isa<FuncGraph>()) {
-    MS_LOG(INFO) << "op name:" << input_anode->fullname_with_scope() << " input is func_graph";
-    return RET_OK;
-  } else if (value->isa<Monad>()) {
-    MS_LOG(INFO) << "op name:" << input_anode->fullname_with_scope() << " input is Monad";
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Not support value type , need add support.";
-    return RET_ERROR;
-  }
-  return ret;
+  schema_tensor->name = cnode->input(index)->fullname_with_scope();
+  schema_tensor->format = static_cast<schema::Format>(data_info.format_);
+  schema_tensor->dataType = data_info.data_type_;
+  schema_tensor->dims = data_info.shape_;
+  schema_tensor->data = data_info.data_;
+  node_id_map_[cnode->input(index)->fullname_with_scope()] = meta_graphT->allTensors.size();
+  op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
+  meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
+  return RET_OK;
 }
 
 int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
@@ -954,7 +577,7 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
         return ret;
       }
     } else if (input_node->isa<Parameter>()) {
-      auto ret = ConvertInputParameter(input_node, primitive_c, meta_graphT, fb_node);
+      auto ret = ConvertInputParameter(cnode, i, primitive_c, meta_graphT, fb_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "ConvertInputParameter failed";
         return ret;
@@ -963,7 +586,7 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
         is_graph_input = true;
       }
     } else if (input_node->isa<ValueNode>()) {
-      auto ret = ConvertInputValueNode(input_node, primitive_c, meta_graphT, fb_node);
+      auto ret = ConvertInputValueNode(cnode, i, primitive_c, meta_graphT, fb_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "ConvertInputValueNode failed";
         return RET_ERROR;
