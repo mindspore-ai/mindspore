@@ -794,7 +794,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     MS_EXCEPTION_IF_NULL(anf);
     // anf has been created before
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
-      cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+      (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
     } else if (optimize_depend && input_idx > 1) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
@@ -806,7 +806,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       // if input is a value node,
       auto new_value_node = CreateNewValueNode(anf, graph);
       if (new_value_node != nullptr) {
-        cnode_inputs->emplace_back(new_value_node);
+        (void)cnode_inputs->emplace_back(new_value_node);
       }
       continue;
     } else if (anf->isa<Parameter>()) {
@@ -901,17 +901,17 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cno
       std::vector<AnfNodePtr> partial_inputs = partial_node->inputs();
       // Put all call args at the end of partial inputs.
       for (size_t i = kFirstDataInputIndex; i < cnode->size(); ++i) {
-        partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(i)));
+        (void)partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(i)));
       }
       auto new_partial = graph->NewCNode(partial_inputs);
-      switch_inputs.emplace_back(new_partial);
+      (void)switch_inputs.emplace_back(new_partial);
     }
   }
   if (switch_inputs.size() < kSwitchInputSize) {
     MS_LOG(EXCEPTION) << "Switch inputs size: " << switch_inputs.size() << "less than " << kSwitchInputSize;
   }
   auto switch_node = graph->NewCNode(switch_inputs);
-  cnode_inputs.emplace_back(switch_node);
+  (void)cnode_inputs.emplace_back(switch_node);
   return cnode_inputs;
 }
 
@@ -1058,11 +1058,11 @@ std::vector<AnfNodePtr> SessionBasic::CreateSwitchOrPartialNode(const CNodePtr &
     auto partial_node = attr_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(partial_node);
     auto partial_inputs = partial_node->inputs();
-    std::transform(partial_inputs.begin() + kFirstDataInputIndex, partial_inputs.end(),
-                   std::back_inserter(cnode_inputs), [&graph](const AnfNodePtr &node) {
-                     MS_EXCEPTION_IF_NULL(graph->GetBackendAnfByFrontAnf(node));
-                     return graph->GetBackendAnfByFrontAnf(node);
-                   });
+    (void)std::transform(partial_inputs.begin() + kFirstDataInputIndex, partial_inputs.end(),
+                         std::back_inserter(cnode_inputs), [&graph](const AnfNodePtr &node) {
+                           MS_EXCEPTION_IF_NULL(graph->GetBackendAnfByFrontAnf(node));
+                           return graph->GetBackendAnfByFrontAnf(node);
+                         });
     return cnode_inputs;
   } else if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimSwitch)) {
     return CreateCallSwitchInputs(cnode, graph);
@@ -1105,11 +1105,11 @@ void SessionBasic::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
-    cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
+    (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
     for (size_t index = kFirstBranchInSwitch; index < cnode->inputs().size(); index++) {
       auto node_input = cnode->input(index);
       auto switch_input = CreateSwitchInput(cnode, node_input, graph);
-      cnode_inputs->emplace_back(switch_input);
+      (void)cnode_inputs->emplace_back(switch_input);
     }
   } else {
     for (size_t input_idx = kFirstDataInputIndex; input_idx < cnode->inputs().size(); input_idx++) {
@@ -1117,7 +1117,7 @@ void SessionBasic::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       MS_EXCEPTION_IF_NULL(anf);
       // anf has been created before
       if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
-        cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+        (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
         continue;
       } else if (IsValueNode<None>(anf)) {
         continue;
@@ -1127,7 +1127,7 @@ void SessionBasic::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
   }
 }
 
-CNodePtr SessionBasic::CreateNewCNode(CNodePtr cnode, KernelGraph *graph) {
+CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> cnode_inputs;
