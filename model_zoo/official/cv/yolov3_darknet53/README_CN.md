@@ -90,7 +90,7 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
       可以从网站[下载](https://pjreddie.com/media/files/darknet53.conv.74) darknet53.conv.74文件。
       也可以在linux系统中使用指令下载该文件。
 
-      ```command
+   ```command
       wget https://pjreddie.com/media/files/darknet53.conv.74
       ```
 
@@ -118,17 +118,17 @@ python train.py \
 
 ```shell script
 # shell脚本单机训练示例(1卡)
-sh run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
+bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
 ```
 
 ```shell script
 # 对于Ascend设备，使用shell脚本分布式训练示例(8卡)
-sh run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
 ```
 
 ```shell script
 # 对于GPU设备，使用shell脚本分布式训练示例(8卡)
-sh run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
+bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 ```
 
 ```python
@@ -141,7 +141,7 @@ python eval.py \
 
 ```shell script
 # 通过shell脚本运行评估
-sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
+bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 ```
 
 # 脚本说明
@@ -270,13 +270,13 @@ python train.py \
 对于Ascend设备，使用shell脚本分布式训练示例(8卡)
 
 ```shell script
-sh run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
 ```
 
 对于GPU设备，使用shell脚本分布式训练示例(8卡)
 
 ```shell script
-sh run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
+bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 ```
 
 上述shell脚本将在后台运行分布训练。您可以通过`train_parallel[X]/log.txt`文件查看结果。损失值的实现如下：
@@ -312,7 +312,7 @@ python eval.py \
 或者
 
 ```shell script
-sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
+bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 ```
 
 上述python命令将在后台运行，您可以通过log.txt文件查看结果。测试数据集的mAP如下：
