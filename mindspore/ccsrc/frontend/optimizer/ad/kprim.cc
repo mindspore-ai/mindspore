@@ -26,6 +26,7 @@
 #include "ir/manager.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
@@ -35,12 +36,102 @@
 #include "utils/ms_context.h"
 #include "utils/info.h"
 #include "debug/trace.h"
+#include "debug/common.h"
+#include "debug/dump_proto.h"
+#include "mindspore/core/load_mindir/load_model.h"
+#include "utils/system/sha256.h"
 
 namespace mindspore {
 namespace ad {
 KPrim g_k_prims;
 
-FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
+namespace {
+constexpr char kBpropMindIRSuffix[] = "_bprop.mindir";
+constexpr char kBpropMindIRDir[] = "/../bprop_mindir/";
+constexpr char kGenerateMindirEnv[] = "GENERATE_MINDIR";
+
+#ifndef _WIN32
+bool IsSerializableBprop(const PrimitivePtr &prim) {
+  static std::unordered_set<PrimitivePtr> serializable_bprop_list{prim::kPrimRelu, prim::kPrimIdentity};
+
+  return std::any_of(serializable_bprop_list.begin(), serializable_bprop_list.end(),
+                     [&prim](const PrimitivePtr &serializable_bprop_prim) {
+                       auto str1 = prim->name();
+                       auto str2 = serializable_bprop_prim->name();
+                       transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+                       transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
+                       return str1 == str2;
+                     });
+}
+
+std::string GetBpropDir() {
+  static std::string bprop_dir;
+  if (bprop_dir.empty()) {
+    py::module mod = py::module::import("mindspore.ops._grad");
+    auto grad_file_path = mod.attr("__file__").cast<std::string>();
+    bprop_dir = grad_file_path.substr(0, grad_file_path.find_last_of('/'));
+  }
+  return bprop_dir;
+}
+
+std::string GetBpropHash() {
+  static std::string bprop_hash;
+  if (bprop_hash.empty()) {
+    auto bprop_dir = GetBpropDir();
+    auto realpath = Common::GetRealPath(bprop_dir);
+    if (!realpath.has_value()) {
+      MS_LOG(EXCEPTION) << "Get real path of bprop dir failed. path=" << bprop_dir;
+    }
+    bprop_hash = system::sha256::GetHashFromDir(realpath.value());
+  }
+  return bprop_hash;
+}
+
+FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  std::string bprop_dir = GetBpropDir();
+  auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
+  std::optional<std::string> bprop_mindir_realpath =
+    Common::GetRealPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix);
+  bool bprop_cache_file_exists = bprop_mindir_realpath.has_value() && Common::FileExists(bprop_mindir_realpath.value());
+  if (!bprop_cache_file_exists) {
+    return nullptr;
+  }
+  auto bprop_fg = LoadMindIR(bprop_mindir_realpath.value());
+  if (bprop_fg != nullptr && bprop_fg->bprop_hash() != GetBpropHash()) {
+    MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date. Please run the " << bprop_mindir_path
+                      << "generate_mindir.py to generate new mindir files.\n"
+                      << "bprop_fg hash: " << bprop_fg->bprop_hash() << "\n"
+                      << "bprop hash: " << GetBpropHash();
+  }
+  return bprop_fg;
+}
+
+void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(prim);
+  std::string bprop_dir = GetBpropDir();
+  func_graph->set_bprop_hash(GetBpropHash());
+  auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
+  std::optional<std::string> bprop_mindir_realpath =
+    Common::GetRealPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix);
+  if (!bprop_mindir_realpath.has_value()) {
+    MS_LOG(ERROR) << "Failed to get the realpath of bprop mindir: " << bprop_mindir_path << prim->name()
+                  << kBpropMindIRSuffix;
+    return;
+  }
+  std::ofstream fout(bprop_mindir_realpath.value());
+  mind_ir::ModelProto fg_model = GetBinaryProto(func_graph);
+  if (!fg_model.SerializeToOstream(&fout)) {
+    MS_LOG(WARNING) << "Failed to cache the bprop of op \"" << prim->name() << "\" to file \""
+                    << bprop_mindir_realpath.value() << "\".";
+  }
+  fout.close();
+  ChangeFileMode(bprop_mindir_realpath.value(), S_IRUSR | S_IWUSR);
+}
+#endif
+}  // namespace
+
+FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources) {
   // Set a child scope named "grad'PrimitiveName'" for the bprop function,
   // and add "Gradients" to the front.
   static const std::string gradients_scope = "Gradients/";
@@ -50,6 +141,17 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
                                        grad_op_child_scope_prefix + prim->name());
   ScopeGuard scope_guard(scope);
 
+  // Firstly we get bprop from mindir. If failed, parse the python function registered.
+  FuncGraphPtr func_graph = nullptr;
+#ifndef _WIN32
+  bool serializable = IsSerializableBprop(prim);
+  if (serializable && common::GetEnv(kGenerateMindirEnv) != "1") {
+    func_graph = ImportBpropFromMindIR(prim);
+    if (func_graph != nullptr) {
+      return func_graph;
+    }
+  }
+#endif
   py::function fn;
   if (prim->is_base()) {
     fn = GetBpropFunction(prim->name());
@@ -63,7 +165,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
     MS_LOG(DEBUG) << "Fail to find bprop function for " << prim->name() << ".";
     return nullptr;
   }
-  FuncGraphPtr func_graph = parse::ParsePythonCode(fn);
+  func_graph = parse::ParsePythonCode(fn);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Fail to parse bprop function for " << prim->name() << ".";
     return nullptr;
@@ -72,7 +174,14 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
   if (bprop_flag) {
     func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
   }
-
+  pipeline::ResourceBasePtr res = (resources != nullptr) ? resources : std::make_shared<pipeline::Resource>();
+  parse::ResolveFuncGraph(func_graph, res);
+#ifndef _WIN32
+  // Check whether the bprop needs to be exported.
+  if (serializable) {
+    ExportBpropToMindIR(prim, func_graph);
+  }
+#endif
   return func_graph;
 }
 
@@ -187,7 +296,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     }
 
     if (bprop_fg == nullptr) {
-      bprop_fg = GetBprop(prim);
+      bprop_fg = GetBprop(prim, resources);
       if (bprop_fg != nullptr) {
         // Set bprop_g graph cache
         bprop_registry_[prim] = bprop_fg;

@@ -39,6 +39,7 @@ class Common {
 
   static std::string AddId(const std::string &filename, const std::string &suffix);
   static bool SaveStringToFile(const std::string filename, const std::string string_info);
+  static bool FileExists(const std::string &filepath);
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);

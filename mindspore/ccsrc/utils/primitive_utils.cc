@@ -60,6 +60,29 @@ py::tuple ConvertDatatoPyTuple(const VectorRef &args) {
   return py_args;
 }
 
+py::function GetComputeFunctionWithoutPyObj(const std::string &name) {
+  static const std::string module = "tests.vm_impl.vm_impl_function";
+  py::module mod = py::module::import(common::SafeCStr(module));
+  if (!py::hasattr(mod, common::SafeCStr(name))) {
+    return py::none();
+  }
+  py::object fn = mod.attr(common::SafeCStr(name));
+  return fn;
+}
+
+BaseRef RunComputeFunctionWithoutPyObj(const PrimitivePtr &prim, const VectorRef &args) {
+  auto func = GetComputeFunctionWithoutPyObj(prim->name());
+  if (py::isinstance<py::none>(func)) {
+    return nullptr;
+  }
+  auto py_args = ConvertDatatoPyTuple(args);
+  py::object obj = func(*py_args);
+  if (py::isinstance<py::none>(obj)) {
+    return nullptr;
+  }
+  return std::make_shared<PyObjectRef>(obj);
+}
+
 BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args) {
   auto func = GetComputeFunction(prim->name());
   if (py::isinstance<py::none>(func)) {

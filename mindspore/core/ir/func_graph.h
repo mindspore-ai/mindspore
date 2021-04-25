@@ -393,6 +393,9 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   bool dropped() const { return dropped_; }
   void set_dropped(bool dropped) { dropped_ = dropped; }
 
+  std::string bprop_hash() const { return bprop_hash_; }
+  void set_bprop_hash(const std::string &bprop_hash) { bprop_hash_ = bprop_hash; }
+
  private:
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
@@ -477,6 +480,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // If the graph was changed, it should be dropped in cache data_converter::object_map_
   // which used by ConvertToFuncGraph.
   bool dropped_ = false;
+  // If the graph is a bprop graph, it should has a hash of the bprop directory.
+  std::string bprop_hash_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

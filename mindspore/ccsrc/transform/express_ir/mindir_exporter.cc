@@ -176,6 +176,7 @@ void IrExportBuilder::BuildModelInfo() {
 void IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   mind_ir::GraphProto *graph_proto = model_.mutable_graph();
   graph_proto->set_name(func_graph->ToString());
+  graph_proto->set_bprop_hash(func_graph->bprop_hash());
   ResetNodeIndex();
   todo_.clear();
   todo_.push_back(func_graph);
@@ -247,6 +248,9 @@ void IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
   MS_LOG(DEBUG) << "SetValueInfoProto: " << node->DebugString();
   const TypePtr &type = node->Type();
   const BaseShapePtr &shape = node->Shape();
+  if (type == nullptr || shape == nullptr) {
+    return;
+  }
   if (type->isa<TensorType>() && shape->isa<abstract::Shape>()) {
     auto tensor = type->cast<TensorTypePtr>();
     auto elem_type = tensor->element();
@@ -404,9 +408,10 @@ void IrExportBuilder::SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodePro
   // 3. save tuple string in ref_attr_name
   MS_EXCEPTION_IF_NULL(node);
   auto type = node->Type();
-  MS_EXCEPTION_IF_NULL(type);
   auto shape = node->Shape();
-  MS_EXCEPTION_IF_NULL(shape);
+  if (type == nullptr || shape == nullptr) {
+    return;
+  }
   ResetTupleIndex();
   std::string seq_string = "shape:";
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();

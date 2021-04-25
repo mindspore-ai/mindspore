@@ -438,6 +438,9 @@ BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto result = prim->RunComputeFunction(args);
   if (result.is_null()) {
+    result = RunComputeFunctionWithoutPyObj(prim, args);
+  }
+  if (result.is_null()) {
     return RunComputeFunction(prim, args);
   }
   return result;
