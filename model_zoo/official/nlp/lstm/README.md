@@ -12,6 +12,8 @@
     - [Dataset Preparation](#dataset-preparation)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
+    - [Export MindIR](#export-mindir)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
@@ -276,6 +278,34 @@ Ascend:
   ``` bash
   bash run_eval_cpu.sh ./aclimdb ./glove_dir lstm-20_390.ckpt
   ```
+
+## [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export.py. Input files must be in bin format.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_TARGET] [DEVICE_ID]
+```
+
+`DEVICE_TARGET` must choose from ['GPU', 'CPU', 'Ascend']
+`NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'
+`DEVICE_ID` is optional, default value is 0.
+
+#### result
+
+Inference result is saved in current path, you can find result in acc.log file.
 
 # [Model Description](#contents)
 

@@ -10,6 +10,8 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
+    - [Export MindIR](#export-mindir)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
@@ -150,6 +152,39 @@ For more configuration details, please refer the script `config.py`.
   ```python
   # grep "accuracy: " eval.log
   accuracy: {'acc': 0.7971428571428572}
+  ```
+
+## [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export.py. Input files must be in bin format.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DATASET_NAME] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+`DATASET_NAME` must choose from ['MR', 'SUBJ', 'SST2']
+`NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'."
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result in acc.log file.
+
+  ```python
+  # grep "accuracy: " acc.log
+  accuracy: 0.7971428571428572
   ```
 
 # [Model Description](#contents)

@@ -349,7 +349,7 @@ The ckpt_file parameter is required,
 #### Usage
 
 Before performing inference, the air file must bu exported by export.py.
-Current batch_Size can only be set to 1. Because the DVPP hardware is used for processing, the picture must comply with the JPEG encoding format, Otherwise, an error will be reported.
+Current batch_Size can only be set to 1. Because the DVPP hardware is used for processing, the picture must comply with the JPEG encoding format, Otherwise, an error will be reported. For example, the COCO_val2014_000000320612.jpg in coco2014 dataset needs to be deleted.
 
 ```shell
 # Ascend310 inference
