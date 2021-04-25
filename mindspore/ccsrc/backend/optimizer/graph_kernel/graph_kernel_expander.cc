@@ -50,8 +50,8 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimLayerNorm,
     prim::kPrimLayerNormGrad,
     prim::kPrimExpandDims,
-#if ENABLE_D
     prim::kPrimTile,
+#if ENABLE_D
     prim::kPrimSqrtGrad,
     prim::kPrimClipByNormNoDivSum,
     prim::kLambApplyOptimizerAssign,

@@ -61,7 +61,7 @@ def _dump_split_info(flags, graph_json, graph_desc, subgraphs, graph_mode):
         f.write("********** main graph: {} **********\n".format(graph_desc.name))
         f.write("input json:\n{}\n".format(graph_json))
         f.write("graph desc:\n{}\n".format(str(graph_desc)))
-        if len(subgraphs) > 1 or subgraphs[0].stitch_info is not None:
+        if len(subgraphs) > 1:
             for i, g in enumerate(subgraphs):
                 f.write("-------- subgraph {}, mode: {} --------\n".format(i, graph_mode[i]))
                 f.write("{}\n".format(str(g)))
