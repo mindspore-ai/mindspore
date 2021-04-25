@@ -722,9 +722,6 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     if (head_kernel->subgraph_type() != kernel::kNotSubGraph) {
       (*is_kernel_finish)[head_kernel] = true;
       dst_kernel->push_back(head_kernel);
-
-      /* npu support split  */
-      /* ConstructSubGraphs(head_kernel->nodes(), dst_kernel, is_kernel_finish); */
       continue;
     }
     if (head_kernel->desc().arch == mindspore::kernel::kAPU) {

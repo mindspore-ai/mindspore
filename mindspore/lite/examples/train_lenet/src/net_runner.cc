@@ -154,7 +154,6 @@ int NetRunner::InitDB() {
   TypeCast typecast(mindspore::DataType::kNumberTypeInt32);
   train_ds_ = train_ds_->Map({&typecast}, {"label"});
 
-  // train_ds_ = train_ds_->Shuffle(2);
   train_ds_ = train_ds_->Batch(batch_size_, true);
 
   if (verbose_) {
