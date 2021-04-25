@@ -225,6 +225,20 @@ __global__ void FloorKernel(const half *input, half *output, const size_t count)
   return;
 }
 template <typename T>
+__global__ void RintKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = rint(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void RintKernel(const half *input, half *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = hrint(input[i]);
+  }
+  return;
+}
+template <typename T>
 void Exponential(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ExponentialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -329,6 +343,11 @@ void Floor(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
   FloorKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
+template <typename T>
+void Rint(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  RintKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
 
 // double
 template void Exponential<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
@@ -351,6 +370,7 @@ template void Acosh<double>(const double *input, double *output, const size_t co
 template void Rsqrt<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Abs<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 template void Floor<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
+template void Rint<double>(const double *input, double *output, const size_t count, cudaStream_t cuda_stream);
 
 
 // float
@@ -374,6 +394,7 @@ template void Acosh<float>(const float *input, float *output, const size_t count
 template void Rsqrt<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Abs<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Floor<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Rint<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 
 // half
 template void Exponential<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -396,3 +417,4 @@ template void Acosh<half>(const half *input, half *output, const size_t count, c
 template void Rsqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Abs<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Floor<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Rint<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
