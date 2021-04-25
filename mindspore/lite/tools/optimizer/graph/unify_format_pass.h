@@ -45,6 +45,7 @@ class UnifyFormatPass : public Pass {
   bool RunOnlyForShape(const FuncGraphPtr &func_graph);
 
  private:
+  bool JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph);
   bool ResetFuncGraph(const FuncGraphPtr &func_graph);
   bool BasicProcess(const FuncGraphPtr &func_graph, bool main_graph);
   bool DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph);
@@ -61,11 +62,8 @@ class UnifyFormatPass : public Pass {
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_insert_info);
   STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
-  void PreProcessFowardInsert(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                              std::unordered_map<AnfNodePtr, AnfNodePtr> *match);
-  void PostProcessFowardInsert(const FuncGraphPtr &funcgraph, const CNodePtr &cnode,
-                               const std::unordered_map<AnfNodePtr, AnfNodePtr> &match);
   void SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  void ResetSubGraphInput();
   void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   FmkType fmk_type_{lite::converter::FmkType_MS};
@@ -75,7 +73,7 @@ class UnifyFormatPass : public Pass {
   TransposeStrategy transpose_strategy_;
   std::set<AnfNodePtr> pre_insert_trans_;
   std::set<AnfNodePtr> post_insert_trans_;
-  std::unordered_map<std::string, std::unordered_map<AnfNodePtr, AnfNodePtr>> sub_inputs_map_;
+  std::unordered_map<FuncGraphPtr, std::vector<ParameterPtr>> sub_inputs_map_;
 };
 }  // namespace opt
 }  // namespace mindspore
