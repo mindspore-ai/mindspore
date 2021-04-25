@@ -1308,13 +1308,14 @@ class ExecuteOrderGenerator {
       // Use new label if find repeated label.
       if (iter == labels->end()) {
         new_labels.emplace_back(label_id);
+        labels->emplace_back(label_id);
         continue;
       }
       new_labels.emplace_back(++max_label_);
       labels_multimap->insert(std::pair<uint32_t, uint32_t>(*iter, max_label_));
+      labels->emplace_back(max_label_);
       is_new_labels = true;
     }
-    labels->insert(labels->end(), new_labels.begin(), new_labels.end());
     switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
     if (is_new_labels) {
       AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue(new_labels), node);
