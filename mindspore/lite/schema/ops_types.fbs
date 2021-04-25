@@ -142,3 +142,8 @@ table Vec {
 table Vec2D {
     data: [Vec];
 }
+
+table Attribute {
+    name: string;
+    data: [ubyte];
+}

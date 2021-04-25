@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 
 #ifndef MINDSPORE_CORE_OPS_CUSTOM_H_
 #define MINDSPORE_CORE_OPS_CUSTOM_H_
-#include <memory>
-
+#include <string>
+#include <utility>
 #include <vector>
+#include <map>
+#include <memory>
+#include <unordered_map>
 #include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,11 +32,13 @@ constexpr auto kNameCustom = "Custom";
 class Custom : public PrimitiveC {
  public:
   Custom() : PrimitiveC(kNameCustom) {}
-  ~Custom() = default;
+  ~Custom() override = default;
   MS_DECLARE_PARENT(Custom, PrimitiveC);
-  void Init(const std::vector<int64_t> &custom);
-  void set_custom(const std::vector<int64_t> &custom);
-  std::vector<int64_t> get_custom() const;
+  void Init(const std::string &type, const std::map<std::string, std::vector<uint8_t>> &attrs);
+  void set_type(const std::string &type);
+  std::string get_type() const;
+  void set_attr(const std::map<std::string, std::vector<uint8_t>> &attrs);
+  std::map<std::string, std::vector<uint8_t>> get_attr() const;
 };
 
 using PrimCustomPtr = std::shared_ptr<Custom>;
