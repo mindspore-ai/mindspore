@@ -748,11 +748,10 @@ class Unique(Primitive):
     Returns the unique elements of input tensor and also return a tensor containing the index of each value of input
     tensor corresponding to the output unique tensor.
 
-    This operation returns a tuple that contains the tensor `y` and the tensor `idx`;
-    where the tensor `y` contains unique elements along the `axis` of the tensor.
-    The sorting order of the unique elements is the same as the order that
-    they appear along the `axis` in `x`. Another tensor `idx` has the same size as the number of elements in `x`
-    along the `axis` dimension. It contains the index in the unique output `y`.
+    The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be deduplicated,
+    and the shape of Tensor `idx` is consistent with the input.
+
+    To get the same shape between `idx` and `y`, please ref to 'UniqueWithPad' operator
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -970,11 +969,11 @@ class UniqueWithPad(PrimitiveWithInfer):
     """
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
-    The basic function is the same as the Unique operator, but the operator adds a Pad function.
-    The returned tuple(`y`,`idx`) after the input tensor x is processed by the unique operator,
+    The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
+    The returned tuple(`y`,`idx`) after the input Tensor `x` is processed by the unique operator,
     in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
-    the UniqueWithPad operator will fill the `y` tensor with the number specified by the user
-    to make it have the same shape as the tensor `idx`.
+    the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
+    to make it have the same shape as the Tensor `idx`.
 
     Inputs:
         - **x** (Tensor) - The tensor need to be unique. Must be 1-D vector with types: int32, int64.
