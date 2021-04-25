@@ -235,7 +235,9 @@ class ModelCheckpoint(Callback):
         self._last_time_for_keep = time.time()
         self._last_triggered_step = 0
 
-        Validator.check_file_name_by_regular(prefix)
+        if not isinstance(prefix, str) or prefix.find('/') >= 0:
+            raise ValueError("Prefix {} for checkpoint file name invalid, "
+                             "please check and correct it and then continue.".format(prefix))
         self._prefix = prefix
 
         if directory is not None:
