@@ -117,11 +117,15 @@ if(ENABLE_GPU)
                                   "runtime/device/gpu/trt_loader.cc"
                                   )
 
-    if(DEFINED ENV{TENSORRT_HOME} AND NOT $ENV{TENSORRT_HOME} STREQUAL "")
-        message("Enable GPU inference. Tensor-RT dir: $ENV{TENSORRT_HOME}")
+    if(NOT ${TENSORRT_HOME} STREQUAL "")
+        find_path(TENSORRT_HOME_INCLUDE NvInfer.h HINTS ${TENSORRT_HOME}/include)
+        if(TENSORRT_HOME_INCLUDE STREQUAL TENSORRT_HOME_INCLUDE-NOTFOUND)
+          message(FATAL_ERROR "Tensor-RT dir not exist ${TENSORRT_HOME}")
+        endif()
+        message("Enable GPU inference. Tensor-RT include dir: ${TENSORRT_HOME_INCLUDE}")
         set(ENABLE_GPU_INFER TRUE)
         add_compile_definitions(ENABLE_GPU_INFER)
-        include_directories($ENV{TENSORRT_HOME}/include)
+        include_directories(${TENSORRT_HOME_INCLUDE})
         list(APPEND GPU_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/runtime/device/gpu/trt_loader.cc)
     endif()
 
