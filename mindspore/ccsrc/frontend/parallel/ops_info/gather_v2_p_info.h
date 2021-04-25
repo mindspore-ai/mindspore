@@ -70,6 +70,7 @@ class GatherPInfo : public OperatorInfo {
   Status InferBias();
   Status InferOffset();
   Status InferGroup();
+  bool ShardBatchAndAxis(const Strategys &strategy);
 
   int64_t axis_;
   std::string target_ = DEVICE;
@@ -82,6 +83,7 @@ class GatherPInfo : public OperatorInfo {
   bool manual_split_ = false;
   bool dynamic_shape_indices_ = false;
   bool axis_split_forward_allreduce_ = false;  // when axis is split, use reducescatter as default in forward
+  bool shard_batch_and_axis_ = false;
   std::vector<int64_t> param_split_shapes_;
   std::vector<int64_t> index_offsets_;
 };
