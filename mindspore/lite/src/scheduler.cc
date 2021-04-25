@@ -405,6 +405,12 @@ kernel::LiteKernel *Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_ten
       return nullptr;
     }
 
+    // we don't need to restore tensor for copy data
+    ret = CopyConstTensorData(in_tensors, op_parameter->type_);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
+      return nullptr;
+    }
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type);

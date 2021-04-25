@@ -29,6 +29,8 @@ class OpenCLExecutor : public Executor {
  public:
   OpenCLExecutor() : Executor() { allocator_ = ocl_runtime.GetInstance()->GetAllocator(); }
 
+  ~OpenCLExecutor() override = default;
+
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override { return RET_OK; }
 
   int Run(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
