@@ -170,7 +170,24 @@ int ConcatOpenCLKernel::ConvertWeightToTensor() {
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
       PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16,
                       fp16_enable && in_tensor->data_type() != kNumberTypeInt32, in_shape);
-      size_t dtype = fp16_enable && in_tensor->data_type() != kNumberTypeInt32 ? CL_HALF_FLOAT : CL_FLOAT;
+      size_t dtype;
+      switch (in_tensor->data_type()) {
+        case kNumberTypeInt32: {
+          dtype = CL_SIGNED_INT32;
+          break;
+        }
+        case kNumberTypeFloat32: {
+          dtype = CL_FLOAT;
+          break;
+        }
+        case kNumberTypeFloat16: {
+          dtype = CL_HALF_FLOAT;
+          break;
+        }
+        default:
+          MS_LOG(ERROR) << "Unsupported data type is" << in_tensor->data_type();
+          return RET_ERROR;
+      }
       ImageSize img_size{in_shape.width, in_shape.height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
       weight_ptrs_.push_back(weight_ptr_);
@@ -207,7 +224,15 @@ int ConcatOpenCLKernel::Prepare() {
   std::string source = concat_source;
   std::string program_name = "Concat";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
+  std::vector<std::string> build_options_ext;
+  if (desc_.data_type == kNumberTypeInt32) {
+    build_options_ext = {" -DTYPE=int -DTYPE4=int4  -DWRITE_IMAGE=write_imagei  -DREAD_IMAGE=read_imagei "};
+  } else if (desc_.data_type == kNumberTypeFloat32) {
+    build_options_ext = {" -DTYPE=float -DTYPE4=float4 -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (desc_.data_type == kNumberTypeFloat16) {
+    build_options_ext = {" -DTYPE=half -DTYPE4=half4 -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
   SetGlobalLocal();
@@ -235,4 +260,5 @@ int ConcatOpenCLKernel::Run() {
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Concat, OpenCLKernelCreator<ConcatOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Concat, OpenCLKernelCreator<ConcatOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Concat, OpenCLKernelCreator<ConcatOpenCLKernel>)
 }  // namespace mindspore::kernel

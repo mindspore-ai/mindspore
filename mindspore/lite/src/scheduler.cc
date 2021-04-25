@@ -394,7 +394,7 @@ kernel::LiteKernel *Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_ten
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
     kernel::KernelKey gpu_desc{kGPU, desc.data_type, desc.type};
-    if (context_->IsGpuFloat16Enabled()) {
+    if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
       gpu_desc.data_type = kNumberTypeFloat16;
     }
 

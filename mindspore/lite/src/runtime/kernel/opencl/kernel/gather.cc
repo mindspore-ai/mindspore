@@ -106,11 +106,6 @@ void GatherOpenCLKernel::SetGlobalLocal() {
 
 int GatherOpenCLKernel::Prepare() {
   std::string kernel_name = "gather";
-  if (desc_.data_type == kNumberTypeInt32) {
-    kernel_name += "_int";
-  } else {
-    kernel_name += "_float";
-  }
   if (in_tensors_.at(0)->shape().size() == 1 && axis_ == 0) {
     axis_ = 3;
   }
@@ -119,7 +114,15 @@ int GatherOpenCLKernel::Prepare() {
 #else
   std::string program_name = "gather";
   ocl_runtime_->LoadSource(program_name, gather_source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
+  std::vector<std::string> build_options_ext;
+  if (desc_.data_type == kNumberTypeInt32) {
+    build_options_ext = {" -DTYPE=int -DTYPE4=int4  -DWRITE_IMAGE=write_imagei  -DREAD_IMAGE=read_imagei "};
+  } else if (desc_.data_type == kNumberTypeFloat32) {
+    build_options_ext = {" -DTYPE=float -DTYPE4=float4 -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (desc_.data_type == kNumberTypeFloat16) {
+    build_options_ext = {" -DTYPE=half -DTYPE4=half4 -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   if (in_tensors_.at(1)->IsConst()) {
     intensor1_is_tensor = false;

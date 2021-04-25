@@ -166,7 +166,13 @@ int ScaleOpenCLKernel::Prepare() {
   std::string program_name = "Scale";
   std::string source = GetActDefines() + scale_source;
   ocl_runtime_->LoadSource(program_name, source);
-  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  std::vector<std::string> build_options_ext;
+  if (desc_.data_type == kNumberTypeFloat32) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (desc_.data_type == kNumberTypeFloat16) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   if (error_code != RET_OK) {
     return error_code;

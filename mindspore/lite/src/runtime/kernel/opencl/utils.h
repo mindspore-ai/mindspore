@@ -58,7 +58,8 @@ int WriteToBin(const std::string &file_path, void *data, size_t size);
 
 int GetBroadcastGpuAxis(int ndim, int ori_axis);
 
-void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor);
+void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor,
+                     int data_type = kNumberTypeFloat32);
 
 int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
                          TypeId expect_data_type, const std::vector<int> &expect_shape);

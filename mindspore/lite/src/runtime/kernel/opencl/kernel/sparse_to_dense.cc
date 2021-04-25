@@ -148,7 +148,13 @@ int SparseToDenseOpenCLKernel::Prepare() {
   std::string source = sparse_to_dense_source;
   std::string program_name = "SparseToDense";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  std::vector<std::string> build_options_ext;
+  if (desc_.data_type == kNumberTypeFloat32) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (desc_.data_type == kNumberTypeFloat16) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 
   if (in_tensors_.size() > 3) {
     auto input_tensor3 = in_tensors_[3];

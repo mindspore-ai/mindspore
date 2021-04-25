@@ -51,10 +51,17 @@ int OneHotOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
+
   std::string source = one_hot_source;
   std::string program_name = "OneHot";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {});
+  std::vector<std::string> build_options_ext;
+  if (ocl_runtime_->GetFp16Enable()) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=write_imagei "};
+  } else {
+    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagei "};
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   InitWeights();
   SetConstArgs();

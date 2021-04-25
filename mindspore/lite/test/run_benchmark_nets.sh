@@ -2123,15 +2123,17 @@ function Run_gpu() {
             input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
           done
         fi
+        if [[ ${accuracy_limit} == "" ]]; then
+          accuracy_limit="0.5"
+        fi
         echo ${model_name} >> "${run_gpu_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         if [[ $input_shapes == "" ]]; then
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
         else
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --device=GPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --device=GPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-
         fi
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
@@ -2148,17 +2150,39 @@ function Run_gpu() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        accuracy_limit=`echo ${line} | awk -F ';' '{print $2}'`
+        input_num=`echo ${line} | awk -F ';' '{print $3}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $4}'`
+        input_files=""
+        data_path="/data/local/tmp/input_output/"
+        output_file=${data_path}'output/'${model_name}'.ms.out'
+        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+          input_files=/data/local/tmp/input_output/input/${model_name}.ms.bin
+        else
+          for i in $(seq 1 $input_num)
+          do
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+          done
+        fi
+        if [[ ${accuracy_limit} == "" ]]; then
+          accuracy_limit="5"
+        fi
         echo ${model_name} >> "${run_gpu_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_gpu_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        if [[ $input_shapes == "" ]]; then
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
+        else
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
+        fi
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    #sleep 1
     done < ${models_gpu_fp16_config}
 
     # Run GPU weightquant converted models:
@@ -2167,17 +2191,39 @@ function Run_gpu() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        accuracy_limit=`echo ${line} | awk -F ';' '{print $2}'`
+        input_num=`echo ${line} | awk -F ';' '{print $3}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $4}'`
+        input_files=""
+        data_path="/data/local/tmp/input_output/"
+        output_file=${data_path}'output/'${model_name}'.ms.out'
+        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+          input_files=/data/local/tmp/input_output/input/${model_name}.ms.bin
+        else
+          for i in $(seq 1 $input_num)
+          do
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+          done
+        fi
+        if [[ ${accuracy_limit} == "" ]]; then
+          accuracy_limit="5"
+        fi
         echo ${model_name} >> "${run_gpu_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_gpu_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
+        if [[ $input_shapes == "" ]]; then
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
+        else
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
+          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
+        fi
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64_gpu_weightquant: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='arm64_gpu_weightquant: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    #sleep 1
     done < ${models_gpu_weightquant_config}
 }
 

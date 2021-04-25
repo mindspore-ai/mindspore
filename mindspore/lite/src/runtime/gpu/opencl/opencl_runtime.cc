@@ -374,11 +374,11 @@ int OpenCLRuntime::BuildKernel(const cl::Kernel &kernel, const std::string &prog
   if (fp16_enable_) {
     build_option +=
       " -DFP16_ENABLE=1 -DFLT=half -DFLT4=half4 -DFLT16=half16 -DAS_FLT4=as_half4 -DAS_UINT4=as_ushort4 -DUINT4=ushort4"
-      " -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT=convert_half -DTO_FLT4=convert_half4";
+      " -DTO_FLT=convert_half -DTO_FLT4=convert_half4";
   } else {
     build_option +=
       " -DFP16_ENABLE=0 -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4 -DAS_UINT4=as_uint4 -DUINT4=uint4"
-      " -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
+      " -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
   }
   build_option += " -DMAX_IMAGE2D_WIDTH=" + std::to_string(max_image2d_width_);
   build_option =
