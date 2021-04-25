@@ -29,6 +29,8 @@ class TfliteReverseParser : public TfliteNodeParser {
  public:
   TfliteReverseParser() : TfliteNodeParser("reverse") {}
 
+  ~TfliteReverseParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

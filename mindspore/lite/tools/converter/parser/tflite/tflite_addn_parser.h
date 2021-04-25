@@ -29,6 +29,8 @@ class TfliteAddNParser : public TfliteNodeParser {
  public:
   TfliteAddNParser() : TfliteNodeParser("AddN") {}
 
+  ~TfliteAddNParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

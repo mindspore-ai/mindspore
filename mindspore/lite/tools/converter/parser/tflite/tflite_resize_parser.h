@@ -28,6 +28,8 @@ class TfliteResizeParser : public TfliteNodeParser {
  public:
   TfliteResizeParser() : TfliteNodeParser("resize_bilinear") {}
 
+  ~TfliteResizeParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

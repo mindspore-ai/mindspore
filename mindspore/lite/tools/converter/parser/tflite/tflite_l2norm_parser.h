@@ -29,6 +29,8 @@ class TfliteL2NormParser : public TfliteNodeParser {
  public:
   TfliteL2NormParser() : TfliteNodeParser("L2_NORMALIZATION") {}
 
+  ~TfliteL2NormParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

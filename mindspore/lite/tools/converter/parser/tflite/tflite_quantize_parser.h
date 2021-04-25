@@ -28,6 +28,8 @@ class TfliteQuantizeParser : public TfliteNodeParser {
  public:
   TfliteQuantizeParser() : TfliteNodeParser("Quantize") {}
 
+  ~TfliteQuantizeParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

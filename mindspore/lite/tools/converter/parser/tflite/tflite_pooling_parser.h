@@ -29,6 +29,8 @@ class TfliteAvgPoolParser : public TfliteNodeParser {
  public:
   TfliteAvgPoolParser() : TfliteNodeParser("avg_pool") {}
 
+  ~TfliteAvgPoolParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
@@ -36,6 +38,8 @@ class TfliteAvgPoolParser : public TfliteNodeParser {
 class TfliteMaxPoolParser : public TfliteNodeParser {
  public:
   TfliteMaxPoolParser() : TfliteNodeParser("max_pool") {}
+
+  ~TfliteMaxPoolParser() override = default;
 
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
