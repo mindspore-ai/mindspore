@@ -7,7 +7,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
 <img src="../../docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
 
-欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/doc/note/zh-CN/master/design/mindspore/architecture_lite.html)。
+欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/doc/note/zh-CN/r1.2/design/mindspore/architecture_lite.html)。
 
 ## MindSpore Lite技术特点
 
@@ -68,7 +68,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 我们在HUAWEI Mate40（Hisilicon Kirin9000）手机上，基于MindSpore r1.2，测试了一组端侧常见网络的性能数据，供您参考：
 
 | 网络                 | 线程数 | 平均推理时间(毫秒) |
-| ------------------- |------ |---------------- |
+| ------------------- | ----- | --------------- |
 | basic_squeezenet    | 4     | 7.246           |
 | inception_v3        | 4     | 36.767          |
 | mobilenet_v1_10_224 | 4     | 5.187           |
