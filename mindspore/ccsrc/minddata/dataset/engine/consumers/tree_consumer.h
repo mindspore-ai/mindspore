@@ -86,7 +86,7 @@ class IteratorConsumer : public TreeConsumer {
 
  private:
   int32_t num_epochs_;
-  std::vector<std::pair<std::string, int32_t>> column_order_;  // key: column name, val: column id
+  std::map<int32_t, std::string> column_order_;  // key: column id, val: column name
 };
 
 #ifndef ENABLE_ANDROID

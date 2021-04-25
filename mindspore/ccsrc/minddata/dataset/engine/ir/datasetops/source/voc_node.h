@@ -32,7 +32,7 @@ class VOCNode : public MappableSourceNode {
   /// \brief Constructor
   VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
           const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
-          std::shared_ptr<DatasetCache> cache);
+          std::shared_ptr<DatasetCache> cache, bool extra_metadata = false);
 
   /// \brief Destructor
   ~VOCNode() = default;
@@ -97,12 +97,14 @@ class VOCNode : public MappableSourceNode {
   const std::string kColumnLabel = "label";
   const std::string kColumnDifficult = "difficult";
   const std::string kColumnTruncate = "truncate";
+  const std::string kColumnFileName = "filename";
   std::string dataset_dir_;
   std::string task_;
   std::string usage_;
   std::map<std::string, int32_t> class_index_;
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
+  bool extra_metadata_;
 };
 
 }  // namespace dataset

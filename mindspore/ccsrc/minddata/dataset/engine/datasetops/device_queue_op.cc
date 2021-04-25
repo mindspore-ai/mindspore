@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/util/status.h"
@@ -94,6 +95,33 @@ Status DeviceQueueOp::EoeReceived(int32_t worker_id) {
   return Status::OK();
 }
 
+Status DeviceQueueOp::FilterMetadata(TensorRow *row) {
+  std::unordered_map<std::string, int32_t> current_name_id_map = child_[0]->column_name_id_map();
+  TensorRow output;
+  TensorRow tmp = *row;
+  std::vector<size_t> to_keep_indices;
+  for (auto column : current_name_id_map) {
+    std::string column_name = column.first;
+    // Need to filter meta column start with kDftMetaColumnPrefix
+    size_t pos = column_name.find(kDftMetaColumnPrefix);
+    if (pos != std::string::npos && pos == 0) {
+      continue;
+    }
+    to_keep_indices.push_back(column.second);
+  }
+  if (to_keep_indices.size() == 0) {
+    std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
+    err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
+    err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::sort(to_keep_indices.begin(), to_keep_indices.end());
+  (void)std::transform(to_keep_indices.begin(), to_keep_indices.end(), std::back_inserter(output),
+                       [&tmp](const auto &it) { return std::move(tmp[it]); });
+  *row = std::move(output);
+  return Status::OK();
+}
+
 Status DeviceQueueOp::CheckExceptions(const TensorRow &row) const {
   // this method checks if the row meets the conditions to be sent to TDT
   for (const auto &item : row) {
@@ -165,6 +193,7 @@ Status DeviceQueueOp::SendDataToAscend() {
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
   while (!curr_row.eof() && !is_break_loop) {
     while (!curr_row.eoe() && !is_break_loop) {
+      RETURN_IF_NOT_OK(FilterMetadata(&curr_row));
       RETURN_IF_NOT_OK(CheckExceptions(curr_row));
       WaitContinueSignal();
 #ifdef ENABLE_DUMP_IR
@@ -489,6 +518,7 @@ Status DeviceQueueOp::SendDataToGPU() {
   bool is_break_loop = false;
   while (!current_row.eof() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
     while (!current_row.eoe() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
+      RETURN_IF_NOT_OK(FilterMetadata(&current_row));
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(current_row)));
       if (first_push_flag_ != true) {

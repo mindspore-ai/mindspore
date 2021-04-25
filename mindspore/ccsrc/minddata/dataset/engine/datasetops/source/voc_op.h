@@ -160,9 +160,10 @@ class VOCOp : public MappableLeafOp {
   // @param bool decode - whether to decode images
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the VOC dataset
   // @param std::shared_ptr<Sampler> sampler - sampler tells VOCOp what to read
+  // @param extra_metadata - flag to add extra meta-data to row
   VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
         const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
-        std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
+        std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata);
 
   // Destructor
   ~VOCOp() = default;
@@ -259,6 +260,7 @@ class VOCOp : public MappableLeafOp {
   TaskType task_type_;
   std::string usage_;
   std::unique_ptr<DataSchema> data_schema_;
+  bool extra_metadata_;
 
   std::vector<std::string> image_ids_;
   std::map<std::string, int32_t> class_index_;

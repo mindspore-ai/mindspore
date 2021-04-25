@@ -4239,8 +4239,8 @@ class VOCDataset(MappableDataset):
 
     The generated dataset has multiple columns :
 
-    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
-      ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32],
+      ['label', dtype=uint32], ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
     - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
 
     This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
@@ -4297,7 +4297,10 @@ class VOCDataset(MappableDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
             (default="Segmentation").
-        usage (str): The type of data list text file to be read (default="train").
+        usage (str): Set the task type of ImageSets(default="train"). If task is "Segmentation", image and annotation
+            list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is "Detection", image and
+            annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage is not set, image and
+            annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
         class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
             "Detection" task (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
@@ -4317,6 +4320,11 @@ class VOCDataset(MappableDataset):
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
+        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
+            output at the end ['_meta-filename', dtype=string] (default=False).
+
+    Note:
+        '_meta-filename' won't be output unless an explicit rename dataset op is added to remove the prefix('_meta-').
 
     Raises:
         RuntimeError: If xml of Annotations is an invalid format.
@@ -4355,7 +4363,7 @@ class VOCDataset(MappableDataset):
     @check_vocdataset
     def __init__(self, dataset_dir, task="Segmentation", usage="train", class_indexing=None, num_samples=None,
                  num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None,
-                 cache=None):
+                 cache=None, extra_metadata=False):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_dir = dataset_dir
@@ -4363,9 +4371,11 @@ class VOCDataset(MappableDataset):
         self.usage = replace_none(usage, "train")
         self.class_indexing = replace_none(class_indexing, {})
         self.decode = replace_none(decode, False)
+        self.extra_metadata = extra_metadata
 
     def parse(self, children=None):
-        return cde.VOCNode(self.dataset_dir, self.task, self.usage, self.class_indexing, self.decode, self.sampler)
+        return cde.VOCNode(self.dataset_dir, self.task, self.usage, self.class_indexing, self.decode, self.sampler,
+                           self.extra_metadata)
 
     def get_class_indexing(self):
         """

@@ -31,18 +31,20 @@ namespace dataset {
 // Constructor for VOCNode
 VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                  const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
-                 std::shared_ptr<DatasetCache> cache)
+                 std::shared_ptr<DatasetCache> cache, bool extra_metadata)
     : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       task_(task),
       usage_(usage),
       class_index_(class_indexing),
       decode_(decode),
-      sampler_(sampler) {}
+      sampler_(sampler),
+      extra_metadata_(extra_metadata) {}
 
 std::shared_ptr<DatasetNode> VOCNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
-  auto node = std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_);
+  auto node =
+    std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_, extra_metadata_);
   return node;
 }
 
@@ -108,12 +110,18 @@ Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
     RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   }
+  if (extra_metadata_) {
+    std::string meta_file_name = std::string(kDftMetaColumnPrefix) + std::string(kColumnFileName);
+    TensorShape scalar = TensorShape::CreateScalar();
+    RETURN_IF_NOT_OK(schema->AddColumn(
+      ColDescriptor(meta_file_name, DataType(DataType::DE_STRING), TensorImpl::kFlexible, 0, &scalar)));
+  }
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
   std::shared_ptr<VOCOp> voc_op;
   voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, connector_que_size_,
-                                   decode_, std::move(schema), std::move(sampler_rt));
+                                   decode_, std::move(schema), std::move(sampler_rt), extra_metadata_);
   voc_op->set_total_repeats(GetTotalRepeats());
   voc_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(voc_op);

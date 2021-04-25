@@ -264,9 +264,10 @@ PYBIND_REGISTER(TFRecordNode, 2, ([](const py::module *m) {
 PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                   (void)py::class_<VOCNode, DatasetNode, std::shared_ptr<VOCNode>>(*m, "VOCNode", "to create a VOCNode")
                     .def(py::init([](std::string dataset_dir, std::string task, std::string usage,
-                                     py::dict class_indexing, bool decode, py::handle sampler) {
-                      std::shared_ptr<VOCNode> voc = std::make_shared<VOCNode>(
-                        dataset_dir, task, usage, toStringMap(class_indexing), decode, toSamplerObj(sampler), nullptr);
+                                     py::dict class_indexing, bool decode, py::handle sampler, bool extra_metadata) {
+                      std::shared_ptr<VOCNode> voc =
+                        std::make_shared<VOCNode>(dataset_dir, task, usage, toStringMap(class_indexing), decode,
+                                                  toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(voc->ValidateParams());
                       return voc;
                     }));

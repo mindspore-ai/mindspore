@@ -1576,14 +1576,16 @@ class VOCDataset : public Dataset {
  public:
   explicit VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                       const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                      bool decode, const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+                      bool decode, const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache,
+                      bool extra_metadata);
   explicit VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                       const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                      bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+                      bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache,
+                      bool extra_metadata);
   explicit VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                       const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
                       bool decode, const std::reference_wrapper<Sampler> sampler,
-                      const std::shared_ptr<DatasetCache> &cache);
+                      const std::shared_ptr<DatasetCache> &cache, bool extra_metadata);
   ~VOCDataset() = default;
 };
 
@@ -1601,14 +1603,16 @@ class VOCDataset : public Dataset {
 /// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the current Dataset
 inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                                        const std::string &usage = "train",
                                        const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
                                        const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
-                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                       bool extra_metadata = false) {
   return std::make_shared<VOCDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
-                                      MapStringToChar(class_indexing), decode, sampler, cache);
+                                      MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
 /// \brief Function to create a VOCDataset
@@ -1623,13 +1627,15 @@ inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the current Dataset
 inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task,
                                        const std::string &usage, const std::map<std::string, int32_t> &class_indexing,
                                        bool decode, const Sampler *sampler,
-                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                       bool extra_metadata = false) {
   return std::make_shared<VOCDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
-                                      MapStringToChar(class_indexing), decode, sampler, cache);
+                                      MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
 /// \brief Function to create a VOCDataset
@@ -1644,13 +1650,15 @@ inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std
 /// \param[in] decode Decode the images after reading
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the current Dataset
 inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task,
                                        const std::string &usage, const std::map<std::string, int32_t> &class_indexing,
                                        bool decode, const std::reference_wrapper<Sampler> sampler,
-                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                       bool extra_metadata = false) {
   return std::make_shared<VOCDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
-                                      MapStringToChar(class_indexing), decode, sampler, cache);
+                                      MapStringToChar(class_indexing), decode, sampler, cache, extra_metadata);
 }
 
 std::shared_ptr<DatasetCache> CreateDatasetCacheCharIF(session_id_type id, uint64_t mem_sz, bool spill,
