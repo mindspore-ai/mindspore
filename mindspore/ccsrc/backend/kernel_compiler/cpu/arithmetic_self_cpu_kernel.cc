@@ -110,6 +110,16 @@ void Rint(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
+void Round(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(nearbyint(in[i]));
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
+}
+
+template <typename T>
 void Reciprocal(const T *in, T *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -251,6 +261,7 @@ static const std::map<std::string, OperateType> kArithmeticOpTypeMap = {{prim::k
                                                                         {prim::kPrimSign->name(), SIGN},
                                                                         {prim::kPrimFloor->name(), FLOOR},
                                                                         {prim::kPrimRint->name(), RINT},
+                                                                        {prim::kPrimRound->name(), ROUND},
                                                                         {prim::kPrimReciprocal->name(), RECIPROCAL},
                                                                         {prim::kPrimGeLU->name(), GELU},
                                                                         {prim::kPrimAsin->name(), ASIN},
@@ -317,7 +328,7 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     {ATAN, Atan<T>},         {SINH, Sinh<T>},
     {COSH, Cosh<T>},         {ASINH, Asinh<T>},
     {ACOSH, Acosh<T>},       {ATANH, Atanh<T>},
-    {RINT, Rint<T>}};
+    {RINT, Rint<T>},         {ROUND, Round<T>}};
   if (kArithmeticOpFuncMap.find(operate_type_) != kArithmeticOpFuncMap.end()) {
     kArithmeticOpFuncMap.at(operate_type_)(input, output, lens);
   } else {
