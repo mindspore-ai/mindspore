@@ -1,5 +1,4 @@
 
-
 # Arm Cortex-M编译部署
 
  `Linux` `Cortex-M`  `IOT` `C/C++` `全流程` `模型编译` `模型代码生成` `模型部署` `推理应用` `初级` `中级` `高级`
@@ -125,7 +124,7 @@ make -v              # 查看make版本
    └── STM32F746IGKx_FLASH.ld
    └── test_stm32f746.ioc
    ```
-   
+
 3. 修改makefile文件，组织算子静态库以及模型推理代码,具体makefile文件内容参见[示例](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/micro/example/mnist_stm32f746)。
 
    ```bash
@@ -136,10 +135,10 @@ make -v              # 查看make版本
    -IDrivers/STM32F7xx_HAL_Driver/Inc/Legacy \
    -IDrivers/CMSIS/Device/ST/STM32F7xx/Include \
    -Imnist/operator_library/include \                # 新增，指定算子库头文件目录
-   -Imnist/include \                           	  # 新增，指定模型推理代码头文件
-   -Imnist/src                                 	  # 新增，指定模型推理代码头文件
+   -Imnist/include \                              # 新增，指定模型推理代码头文件
+   -Imnist/src                                    # 新增，指定模型推理代码头文件
    ```
-   
+
 4. 在工程目录的Core/Src的main.c编写模型调用代码，具体代码新增如下：
 
    ```cpp
@@ -148,7 +147,7 @@ make -v              # 查看make版本
        SEGGER_RTT_printf(0, "***********mnist test start***********\n");
        const char *model_buffer = nullptr;
        int model_size = 0;
-       session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, 		     model_size, nullptr);
+       session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, nullptr);
        Vector<tensor::MSTensor *> inputs = session->GetInputs();
        size_t inputs_num = inputs.size();
        void *inputs_binbuf[inputs_num];
@@ -208,7 +207,6 @@ c                        # 执行模型推理
 
 ## 更多详情
 
-### [Linux_x86_64平台编译部署](https://www.mindspore.cn/tutorial/lite/zh-CN/master/quick_start/quick_start_codegen.html)
+### [Linux_x86_64平台编译部署](https://www.mindspore.cn/tutorial/lite/zh-CN/r1.2/quick_start/quick_start_codegen.html)
 
 ### [Android平台编译部署](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/micro/example/mobilenetv2)
-
