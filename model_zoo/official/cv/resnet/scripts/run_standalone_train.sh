@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-. cache_util.sh
+bash cache_util.sh
 
 if [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
 then 
