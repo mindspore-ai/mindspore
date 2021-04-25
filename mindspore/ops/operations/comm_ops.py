@@ -670,7 +670,7 @@ class _VirtualDataset(PrimitiveWithInfer):
     """
     Auto parallel virtual dataset operator.
 
-    It would insert Broadcast operator in forward computation and be deleted before backward computation.
+    It would insert VirtualDataset operator in forward computation and be deleted before backward computation.
     """
 
     @prim_attr_register
@@ -686,6 +686,22 @@ class _VirtualDataset(PrimitiveWithInfer):
 
 virtual_dataset = _VirtualDataset()
 
+class _VirtualOutput(PrimitiveWithInfer):
+    """
+    Auto parallel virtual out operator.
+
+    It would insert VirtualOutput operator in forward computation and be deleted before backward computation.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return x_dtype
 
 class _GetTensorSlice(PrimitiveWithInfer):
     """

@@ -195,6 +195,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
+                         {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
                          {"grad", opt::OptPassConfig(opt::irpass::ExpandJPrim())},
                          {"resolve", resolve_pass},
                          {"a_after_grad", a_after_grad},

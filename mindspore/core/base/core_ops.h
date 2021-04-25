@@ -317,6 +317,7 @@ inline const PrimitivePtr kPrimMiniStepAllGather = std::make_shared<Primitive>("
 inline const PrimitivePtr kPrimVirtualDiv = std::make_shared<Primitive>("_VirtualDiv");
 inline const PrimitivePtr kPrimVirtualAdd = std::make_shared<Primitive>("_VirtualAdd");
 inline const PrimitivePtr kPrimVirtualDataset = std::make_shared<Primitive>("_VirtualDataset");
+inline const PrimitivePtr kPrimVirtualOutput = std::make_shared<Primitive>("_VirtualOutput");
 inline const PrimitivePtr kPrimSend = std::make_shared<Primitive>("Send");
 inline const PrimitivePtr kPrimReceive = std::make_shared<Primitive>("Receive");
 inline const PrimitivePtr kPrimAllReduce = std::make_shared<Primitive>("AllReduce");

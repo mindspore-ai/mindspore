@@ -118,6 +118,8 @@ class OptimizeIRPassLib {
   // virtual dataset
   SubstitutionPtr virtual_dataset_eliminate_;
 
+  // virtual output
+  SubstitutionPtr virtual_output_eliminate_;
   // Receive
   SubstitutionPtr receive_eliminate_;
 

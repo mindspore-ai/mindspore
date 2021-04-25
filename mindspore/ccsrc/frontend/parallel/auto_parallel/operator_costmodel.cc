@@ -127,7 +127,7 @@ double MatMulCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, co
 // this operator uses
 double MatMulCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
                                              const std::vector<TensorInfo> &outputs, int64_t) const {
-  // In forward phase, the compuatation cost = slice(A) + slice(B) + (0 or 1) allreduce(slice(C))
+  // In forward phase, the computation cost = slice(A) + slice(B) + (0 or 1) allreduce(slice(C))
   double result = 0.0;
   TensorInfo output0 = outputs[0];
   Shape input0_slice_shape = inputs[0].slice_shape();
@@ -368,7 +368,7 @@ void ReLU6Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_outpu
 
 // Taking account of input
 void TransposeCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
-  // When calulating 'dx', taking account of 'y'
+  // When calculating 'dx', taking account of 'y'
   if (is_parameter_[0]) {
     is_inputs_should_in_memory_[0] = true;
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {

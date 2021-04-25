@@ -158,4 +158,5 @@ def test_only_one_get_next():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = Net()
+    net.set_train()
     compile_net(net)

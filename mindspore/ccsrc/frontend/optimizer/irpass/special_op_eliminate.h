@@ -99,6 +99,24 @@ class VirtualDatasetEliminater : public AnfVisitor {
   void Visit(const AnfNodePtr &) override {}
 };
 
+// {prim::kPrimVirtualOutput, X} -> X
+class VirtualOutputEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualOutput) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->inputs().size() <= 1) {
+      return nullptr;
+    }
+    return cnode->input(1);
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+};
+
 // {prim::kPrimReceive, X} -> prim::kPrimReceive
 class ReceiveEliminater : public AnfVisitor {
  public:
