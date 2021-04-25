@@ -108,7 +108,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
-  CNodePtr CreateNewCNode(CNodePtr cnode, KernelGraph *graph);
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const;

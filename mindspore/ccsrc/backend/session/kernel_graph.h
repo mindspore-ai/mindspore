@@ -314,7 +314,7 @@ class KernelGraph : public FuncGraph {
   // checkout whether loop exist in graph
   void CheckLoop();
   uint32_t GetLoopNum(std::map<AnfNodePtr, size_t> none_zero_nodes);
-  void GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num);
+  void GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num);
 
   // members
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
