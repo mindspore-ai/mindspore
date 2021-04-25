@@ -45,7 +45,7 @@ void ActorBase::Await() {
 }
 void ActorBase::Terminate() {
   std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
-  BUS_OOM_EXIT(msg);
+  MINDRT_OOM_EXIT(msg);
   (void)EnqueMessage(std::move(msg));
 }
 
@@ -55,9 +55,6 @@ void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
     ActorFunction &func = it->second;
     func(msg);
   } else {
-    ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_WARNING, PID_MINDRT_LOG,
-                        "ACTOR can not find function for message (%s)", "a=%s,m=%s", id.Name().c_str(),
-                        msg->Name().c_str());
     MS_LOG(WARNING) << "ACTOR can not find function for message, a=" << id.Name().c_str()
                     << ",m=" << msg->Name().c_str();
   }
@@ -126,7 +123,7 @@ int ActorBase::Send(const AID &to, std::unique_ptr<MessageBase> msg) {
 int ActorBase::Send(const AID &to, std::string &&name, std::string &&strMsg, bool remoteLink, bool isExactNotRemote) {
   std::unique_ptr<MessageBase> msg(
     new (std::nothrow) MessageBase(this->id, to, std::move(name), std::move(strMsg), MessageBase::Type::KMSG));
-  BUS_OOM_EXIT(msg);
+  MINDRT_OOM_EXIT(msg);
   return ActorMgr::GetActorMgrRef()->Send(to, std::move(msg), remoteLink, isExactNotRemote);
 }
 
@@ -134,7 +131,7 @@ int ActorBase::Send(const AID &to, std::string &&name, std::string &&strMsg, boo
 void ActorBase::Receive(const std::string &msgName, ActorFunction &&func) {
   if (actionFunctions.find(msgName) != actionFunctions.end()) {
     MS_LOG(ERROR) << "ACTOR function's name conflicts, a=" << id.Name().c_str() << ",f=" << msgName.c_str();
-    BUS_EXIT("function's name conflicts");
+    MINDRT_EXIT("function's name conflicts");
     return;
   }
   actionFunctions.emplace(msgName, std::move(func));
@@ -201,7 +198,7 @@ uint64_t ActorBase::GetInBufSize(const AID &to) {
 }
 
 int ActorBase::AddRuleUdp(const std::string &peer, int recordNum) {
-  const std::string udp = BUS_UDP;
+  const std::string udp = MINDRT_UDP;
   auto io = ActorMgr::GetIOMgrRef(udp);
   if (io != nullptr) {
     return io->AddRuleUdp(peer, recordNum);
@@ -211,7 +208,7 @@ int ActorBase::AddRuleUdp(const std::string &peer, int recordNum) {
 }
 
 void ActorBase::DelRuleUdp(const std::string &peer, bool outputLog) {
-  const std::string udp = BUS_UDP;
+  const std::string udp = MINDRT_UDP;
   auto io = ActorMgr::GetIOMgrRef(udp);
   if (io != nullptr) {
     io->DelRuleUdp(peer, outputLog);

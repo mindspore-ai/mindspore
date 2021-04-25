@@ -25,7 +25,7 @@ constexpr int PROCOLLEN = 3;  // strlen("://");
 void AID::SetUnfixUrl() {
   size_t index = url.find("://");
   if (index != std::string::npos) {
-    if (url.substr(0, index) == BUS_TCP) {
+    if (url.substr(0, index) == MINDRT_TCP) {
       url = url.substr(index + PROCOLLEN);
     }
   }
@@ -59,9 +59,9 @@ AID::AID(const std::string &tmpName) {
 bool AID::OK() const {
   std::string proto = GetProtocol();
 #ifdef UDP_ENABLED
-  bool protoOK = (proto == BUS_TCP) || (proto == BUS_UDP);
+  bool protoOK = (proto == MINDRT_TCP) || (proto == MINDRT_UDP);
 #else
-  bool protoOK = (proto == BUS_TCP);
+  bool protoOK = (proto == MINDRT_TCP);
 #endif
   int port = GetPort();
   bool portOK = port > PORTMINNUMBER && port < PORTMAXNUMBER;
@@ -78,14 +78,14 @@ AID &AID::operator=(const AID &id) {
 void AID::SetProtocol(const std::string &protocol) {
   size_t index = url.find("://");
   if (index != std::string::npos) {
-    if (protocol == BUS_TCP) {
+    if (protocol == MINDRT_TCP) {
       url = url.substr(index + PROCOLLEN);
     } else {
       url = protocol + url.substr(index);
     }
 
   } else {
-    if (protocol == BUS_TCP) {
+    if (protocol == MINDRT_TCP) {
       //            url = url;
     } else {
       url = protocol + "://" + url;

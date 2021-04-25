@@ -65,7 +65,7 @@ void ActorThread::AddThread(int threadCount) {
       break;
     }
     std::unique_ptr<std::thread> worker(new (std::nothrow) std::thread(&ActorThread::Run, this));
-    BUS_OOM_EXIT(worker);
+    MINDRT_OOM_EXIT(worker)
 
     workers.push_back(std::move(worker));
   }

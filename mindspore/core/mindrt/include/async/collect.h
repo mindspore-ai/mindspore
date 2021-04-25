@@ -93,7 +93,7 @@ inline Future<std::list<T>> Collect(const std::list<Future<T>> &futures) {
   }
 
   Promise<std::list<T>> *promise = new (std::nothrow) Promise<std::list<T>>();
-  BUS_OOM_EXIT(promise);
+  MINDRT_OOM_EXIT(promise);
   using CollectType = Collected<T>;
   std::shared_ptr<CollectType> collect = std::make_shared<CollectType>(futures, promise);
 

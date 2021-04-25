@@ -61,7 +61,7 @@ void Finalize();
 void SetDelegate(const std::string &delegate);
 
 // set log pid of the process use mindrt
-void SetLogPID(HARES_LOG_PID pid);
+void SetLogPID(int pid);
 
 // get global mindrt address
 const MindrtAddress &GetMindrtAddress();

@@ -27,7 +27,7 @@ class ActorBase;
 
 typedef std::shared_ptr<Naught> UniqueNaught;
 typedef std::shared_ptr<Naught> SharedNaught;
-typedef std::string BusString;
+typedef std::string MindrtString;
 
 // Lite , start from Naught
 class Naught {

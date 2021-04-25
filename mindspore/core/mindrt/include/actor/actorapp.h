@@ -46,7 +46,7 @@ class AppActor : public ActorBase {
   template <typename M>
   int Send(const std::string &to, const std::string &msgName, std::unique_ptr<M> msg) {
     std::unique_ptr<MessageLocal> localMsg(new (std::nothrow) MessageLocal(GetAID(), to, msgName, msg.release()));
-    BUS_OOM_EXIT(localMsg);
+    MINDRT_OOM_EXIT(localMsg);
     return Send(to, std::move(localMsg));
   }
 
@@ -58,7 +58,7 @@ class AppActor : public ActorBase {
     if (appBehaviors.find(msgName) != appBehaviors.end()) {
       ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "ACTOR msgName conflict:%s",
                           "a=%s,msg=%s", GetAID().Name().c_str(), msgName.c_str());
-      BUS_EXIT("msgName conflicts.");
+      MINDRT_EXIT("msgName conflicts.");
       return;
     }
 

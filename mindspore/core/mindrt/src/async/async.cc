@@ -34,7 +34,7 @@ class MessageAsync : public MessageBase {
 
 void Async(const AID &aid, std::unique_ptr<std::function<void(ActorBase *)>> handler) {
   std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(std::move(handler)));
-  BUS_OOM_EXIT(msg);
+  MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
 }
 

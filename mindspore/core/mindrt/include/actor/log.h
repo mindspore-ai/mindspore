@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_BUSLOG_H
-#define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_BUSLOG_H
+#ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_LOG_H_
+#define MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_LOG_H_
 
 #include <signal.h>
 #include <iostream>
@@ -23,47 +23,24 @@
 #include <sstream>
 #include <string>
 
-#include "actor/buserrcode.h"
+#include "actor/errcode.h"
 #ifdef USE_GLOG
 #include "utils/log_adapter.h"
 #else
 #include "common/log_adapter.h"
 #endif
 namespace mindspore {
-
-#define BUS_LOG(severity)       // LOG(severity)
-#define BUS_DLOG(verboselevel)  // VLOG(verboselevel)
-
-#define HARES_LOG_PID int  // GetLogPID();
-#define PID_MINDRT_LOG
-
-#define ICTSBASE_LOG_COMMON_CODE
-#define HLOG_LEVEL_INFO
-#define PID_MINDRT_LOG
-#define HLOG_LEVEL_DEBUG 1
-#define ICTSBASE_LOG0(logig, level, pid, format)
-#define ICTSBASE_LOG1(logig, level, pid, format, para)
-#define ICTSBASE_LOG2(logig, level, pid, format, para1, para2)
-#define ICTSBASE_LOG3(logig, level, pid, format, para1, para2, para3)
-#define ICTSBASE_LOG4(logig, level, pid, format, para1, para2, para3, para4)
-#define ICTSBASE_LOG_STRING(logig, level, pid, preformat, format...)
 #define FlushHLogCache()
 // Kill the process for safe exiting.
 inline void KillProcess(const std::string &ret) {
-  ICTSBASE_LOG_STRING(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_MINDRT_LOG, "BUS Exit Tip: %s", "%s", ret.c_str());
+  MS_LOG(DEBUG) << "MINDRT Exit Tip:" << ret.c_str();
   // flush the log in cache to disk before exiting.
   FlushHLogCache();
 }
 
 }  // namespace mindspore
 
-constexpr int DLEVEL4 = 1000;
-constexpr int DLEVEL3 = 3;
-constexpr int DLEVEL2 = 2;
-constexpr int DLEVEL1 = 1;
-constexpr int DLEVEL0 = 0;
-
-#define BUS_ASSERT(expression)                                                                       \
+#define MINDRT_ASSERT(expression)                                                                    \
   do {                                                                                               \
     if (!(expression)) {                                                                             \
       std::stringstream ss;                                                                          \
@@ -72,19 +49,18 @@ constexpr int DLEVEL0 = 0;
     }                                                                                                \
   } while (0)
 
-#define BUS_EXIT(ret)                                                           \
+#define MINDRT_EXIT(ret)                                                        \
   do {                                                                          \
     std::stringstream ss;                                                       \
     ss << (ret) << "  ( file: " << __FILE__ << ", line: " << __LINE__ << " )."; \
     mindspore::KillProcess(ss.str());                                           \
   } while (0)
 
-#define BUS_OOM_EXIT(ptr)                                                                                 \
-  {                                                                                                       \
-    if (ptr == nullptr) {                                                                                 \
-      ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_ERROR, PID_MINDRT_LOG, "new failed, will exit"); \
-      BUS_EXIT("Exit for OOM.");                                                                          \
-    }                                                                                                     \
+#define MINDRT_OOM_EXIT(ptr)        \
+  {                                 \
+    if (ptr == nullptr) {           \
+      MINDRT_EXIT("Exit for OOM."); \
+    }                               \
   }
 
 constexpr int LOG_CHECK_EVERY_FIRSTNUM = 10;

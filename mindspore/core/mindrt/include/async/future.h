@@ -23,7 +23,7 @@
 #include <iostream>
 #include <list>
 #include "actor/actor.h"
-#include "actor/buslog.h"
+#include "actor/log.h"
 #include "async/spinlock.h"
 #include "async/status.h"
 #include "async/uuid_generator.h"
@@ -46,7 +46,7 @@ class Future : public FutureBase {
   typedef typename FutureData<T>::AbandonedCallback AbandonedCallback;
   typedef FutureData<T> Data;
   Future() : data(new (std::nothrow) Data()) {
-    BUS_OOM_EXIT(data);
+    MINDRT_OOM_EXIT(data);
     data->abandoned = true;
   }
 
@@ -55,18 +55,18 @@ class Future : public FutureBase {
   Future(Future<T> &&f) : data(std::move(f.data)) {}
 
   explicit Future(const T &t) : data(new (std::nothrow) Data()) {
-    BUS_OOM_EXIT(data);
+    MINDRT_OOM_EXIT(data);
     SetValue(std::move(t));
   }
 
   template <typename V>
   explicit Future(const V &value) : data(new (std::nothrow) Data()) {
-    BUS_OOM_EXIT(data);
+    MINDRT_OOM_EXIT(data);
     SetValue(value);
   }
 
   explicit Future(const MindrtStatus &s) : data(new (std::nothrow) Data()) {
-    BUS_OOM_EXIT(data);
+    MINDRT_OOM_EXIT(data);
     SetFailed(s.GetCode());
   }
 
@@ -87,8 +87,7 @@ class Future : public FutureBase {
 
   const T &Get() const {
     if (data->status.IsError()) {
-      ICTSBASE_LOG1(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_WARNING, PID_MINDRT_LOG,
-                    "Future::Get() but status == Error: %d", GetErrorCode());
+      MS_LOG(WARNING) << "Future::Get() but status == Error: " << GetErrorCode();
       return data->t;
     }
 
@@ -210,7 +209,7 @@ class Future : public FutureBase {
   }
 
   void SetFailed(int32_t errCode) const {
-    BUS_ASSERT(errCode != MindrtStatus::KINIT && errCode != MindrtStatus::KOK);
+    MINDRT_ASSERT(errCode != MindrtStatus::KINIT && errCode != MindrtStatus::KOK);
 
     bool call = false;
 
@@ -249,7 +248,7 @@ class Future : public FutureBase {
   template <typename R>
   Future<R> Then(const std::function<Future<R>(const T &)> &f) const {
     std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
-    BUS_OOM_EXIT(promise);
+    MINDRT_OOM_EXIT(promise);
     Future<R> future = promise->GetFuture();
 
     std::function<void(const Future<T> &)> handler =
@@ -263,7 +262,7 @@ class Future : public FutureBase {
   template <typename R>
   Future<R> Then(const std::function<R(const T &)> &f) const {
     std::shared_ptr<Promise<R>> promise(new (std::nothrow) Promise<R>());
-    BUS_OOM_EXIT(promise);
+    MINDRT_OOM_EXIT(promise);
     Future<R> future = promise->GetFuture();
 
     std::function<void(const Future<T> &)> handler =
