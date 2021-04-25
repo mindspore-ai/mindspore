@@ -52,7 +52,7 @@ void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init End";
 }
 
-int DynamicKernel::GetKernelType() { return AnfAlgo::GetKernelType(cnode_ptr_.lock()); }
+int DynamicKernel::GetKernelType() const { return AnfAlgo::GetKernelType(cnode_ptr_.lock()); }
 
 void DynamicKernel::RebuildDependTensor() {
   depend_tensor_map_.clear();
