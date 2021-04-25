@@ -177,7 +177,6 @@ void ApplyNewAxisMask(StridedSliceTransferBuffer *transfer_buffer, StridedSliceP
                       size_t *out_shape_size) {
   for (size_t i = 0; i < transfer_buffer->new_axis_mask_size_; i++) {
     if (transfer_buffer->new_axis_mask_[i]) {
-      transfer_buffer->ndim_ += 1;
       ShapeInsert(in_shape, out_shape_size, i, 1);
       transfer_buffer->begins_[i] = 0;
       transfer_buffer->ends_[i] = 1;
