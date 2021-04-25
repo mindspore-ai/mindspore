@@ -79,7 +79,7 @@ name: Softmax-7, DataType: 43, Size: 40, Shape: [1 10], Data:
 ```
 
 codegen在当前目录下将生成mnist目录，其中包含了可编译构建的mnist分类模型的代码。
-> 关于codegen的更多使用命令说明，可参见[codegen工具的详细介绍](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/code_generator.html)。
+> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/micro.html#id4)。
 
 ### 部署应用
 

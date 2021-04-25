@@ -6,7 +6,7 @@ MindSpore lite is a high-performance, lightweight open source reasoning framewor
 
 <img src="../../docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
 
-For more details please check out our [MindSpore Lite Architecture Guide](https://www.mindspore.cn/doc/note/en/master/design/mindspore/architecture_lite.html).
+For more details please check out our [MindSpore Lite Architecture Guide](https://www.mindspore.cn/tutorial/lite/en/master/architecture_lite.html).
 
 ### MindSpore Lite features
 

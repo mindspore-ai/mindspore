@@ -56,6 +56,7 @@ codegen编译[MobileNetv2模型](https://download.mindspore.cn/model_zoo/officia
 在编译此工程之前需要预先获取安卓平台对应的[Release包](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)。
 
 安卓平台对应的Release包的目录如下:
+
 ```text
 mindspore-lite-{version}-inference-android-{arch}
 ├── inference
@@ -143,7 +144,6 @@ name: Softmax-65, ,DataType: 43, Size: 4004, Shape:1 1001, Data:
 
 ## 更多详情
 
-### [Linux_x86_64编译部署](https://www.mindspore.cn/tutorial/lite/zh-CN/master/quick_start/quick_start_codegen.html)
+### [Linux_x86_64编译部署](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/micro.html)
 
 ### [STM32F746编译部署](https://gitee.com/mindspore/mindspore/tree/master/mindspore/lite/micro/example/mnist_stm32f746)
-
