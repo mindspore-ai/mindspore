@@ -170,6 +170,21 @@ void ArithmeticCPUKernel::Mod(const T *input1, const T *input2, T *out, size_t s
 }
 
 template <typename T>
+void ArithmeticCPUKernel::FloorMod(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      auto x = static_cast<double>(input1[idx[0]]);
+      auto y = static_cast<double>(input2[idx[1]]);
+      auto res = x - floor(x / y) * y;
+      out[i] = static_cast<T>((std::abs(res) > 1e-9) && ((res < 0.0) != (y < 0.0)) ? res + y : res);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
+}
+
+template <typename T>
 void ArithmeticCPUKernel::Pow(const T *input1, const T *input2, T *out, size_t size) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -323,7 +338,8 @@ static const std::map<std::string, OperateType> kArithmeticBinOpTypeMap = {
   {prim::kPrimAtan2->name(), ATAN2},
   {prim::kPrimRealDiv->name(), REALDIV},
   {prim::kPrimEqual->name(), EQUAL},
-  {prim::kPrimSquaredDifference->name(), SQUAREDDIFFERENCE}};
+  {prim::kPrimSquaredDifference->name(), SQUAREDDIFFERENCE},
+  {prim::kPrimFloorMod->name(), FLOORMOD}};
 
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -471,6 +487,8 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     FloorDiv<T>(input1, input2, output, lens);
   } else if (operate_type_ == MOD) {
     Mod<T>(input1, input2, output, lens);
+  } else if (operate_type_ == FLOORMOD) {
+    FloorMod<T>(input1, input2, output, lens);
   } else if (operate_type_ == POW) {
     Pow<T>(input1, input2, output, lens);
   } else if (operate_type_ == ASSIGNADD) {

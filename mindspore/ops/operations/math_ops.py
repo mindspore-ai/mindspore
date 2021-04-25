@@ -2505,7 +2505,7 @@ class FloorMod(_MathBinaryOp):
         TypeError: If neither `input_x` nor `input_y` is a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)

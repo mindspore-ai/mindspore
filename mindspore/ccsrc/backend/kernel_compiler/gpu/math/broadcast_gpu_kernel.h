@@ -143,10 +143,11 @@ class BroadcastOpGpuKernel : public GpuKernel {
     }
 
     static std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {
-      {"Maximum", BROADCAST_TYPE_MAXIMUM}, {"Minimum", BROADCAST_TYPE_MINIMUM},   {"Pow", BROADCAST_TYPE_POWER},
-      {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL},           {"Sub", BROADCAST_TYPE_SUB},
-      {"Add", BROADCAST_TYPE_ADD},         {"FloorDiv", BROADCAST_TYPE_FLOORDIV}, {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
-      {"Div", BROADCAST_TYPE_DIV},         {"DivNoNan", BROADCAST_TYPE_DIVNONAN}, {"Mod", BROADCAST_TYPE_MOD},
+      {"Maximum", BROADCAST_TYPE_MAXIMUM},   {"Minimum", BROADCAST_TYPE_MINIMUM},   {"Pow", BROADCAST_TYPE_POWER},
+      {"RealDiv", BROADCAST_TYPE_REALDIV},   {"Mul", BROADCAST_TYPE_MUL},           {"Sub", BROADCAST_TYPE_SUB},
+      {"Add", BROADCAST_TYPE_ADD},           {"FloorDiv", BROADCAST_TYPE_FLOORDIV}, {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
+      {"Div", BROADCAST_TYPE_DIV},           {"DivNoNan", BROADCAST_TYPE_DIVNONAN}, {"Mod", BROADCAST_TYPE_MOD},
+      {"FloorMod", BROADCAST_TYPE_FLOORMOD},
     };
 
     iter = kBroadcastArithmetricTypeMap.find(kernel_name);
