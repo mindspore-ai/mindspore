@@ -46,6 +46,19 @@ def test_occlusion_sensitivity():
     assert np.allclose(score, np.array([0.2, 0.2, 0.2, 0.2]))
 
 
+def test_occlusion_sensitivity_indexes_awareness():
+    """A indexes aware version of test_occlusion_sensitivity"""
+    test_data = np.array([[0.1, 0.2, 0.3, 0.4]]).astype(np.float32)
+    test_data2 = np.array([[0.2, 0.3, 0.1, 0.4]]).astype(np.float32)
+    label = np.array(1).astype(np.int32)
+    metric = OcclusionSensitivity().set_indexes([0, 2, 3])
+    metric.clear()
+    metric.update(model, test_data, test_data2, label)
+    score = metric.eval()
+
+    assert np.allclose(score, np.array([0.3, 0.3, 0.3, 0.3]))
+
+
 def test_occlusion_sensitivity_update1():
     """test_occlusion_sensitivity_update1"""
     test_data = np.array([[5, 8], [3, 2], [4, 2]])

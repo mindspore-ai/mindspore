@@ -14,10 +14,29 @@
 # ============================================================================
 """Metric base class."""
 from abc import ABCMeta, abstractmethod
+import functools
 import numpy as np
 from mindspore.common.tensor import Tensor
 
 _eval_types = {'classification', 'multilabel'}
+
+
+def rearrange_inputs(func):
+    """
+    This decorator is used to rearrange the inputs according to its indexes.
+
+    Args:
+        func (Callable): A candidate function to be wrapped whose input will be rearranged.
+
+    Returns:
+        Callable, used to exchange metadata between functions.
+    """
+    @functools.wraps(func)
+    def wrapper(self, *inputs):
+        indexes = self.indexes
+        inputs = inputs if not indexes else [inputs[i] for i in indexes]
+        return func(self, *inputs)
+    return wrapper
 
 
 class Metric(metaclass=ABCMeta):
@@ -29,7 +48,7 @@ class Metric(metaclass=ABCMeta):
         For examples of subclasses, please refer to the definition of class `MAE`, 'Recall' etc.
     """
     def __init__(self):
-        pass
+        self._indexes = None
 
     def _convert_data(self, data):
         """
@@ -95,6 +114,14 @@ class Metric(metaclass=ABCMeta):
             fps = 1 + threshold_idxs - tps
 
         return fps, tps, preds[threshold_idxs]
+
+    @property
+    def indexes(self):
+        return getattr(self, '_indexes', None)
+
+    def set_indexes(self, indexes):
+        self._indexes = indexes
+        return self
 
     def __call__(self, *inputs):
         """

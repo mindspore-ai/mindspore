@@ -16,7 +16,7 @@
 from collections import Counter
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class BleuScore(Metric):
@@ -82,6 +82,7 @@ class BleuScore(Metric):
 
         return ngram_counter
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result with `candidate_corpus` and `reference_corpus`.

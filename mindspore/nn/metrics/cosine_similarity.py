@@ -15,7 +15,7 @@
 """CosineSimilarity."""
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class CosineSimilarity(Metric):
@@ -61,6 +61,7 @@ class CosineSimilarity(Metric):
         self.sqr_mtx_res = 0
         self._is_update = False
 
+    @rearrange_inputs
     def update(self, inputs):
         """
         Updates the internal evaluation result with 'input1'.

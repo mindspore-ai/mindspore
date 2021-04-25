@@ -15,7 +15,7 @@
 """ConfusionMatrixMetric & ConfusionMatrix."""
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class ConfusionMatrix(Metric):
@@ -77,6 +77,7 @@ class ConfusionMatrix(Metric):
         self.confusion_matrix = np.zeros((self.num_classes, self.num_classes))
         self._is_update = False
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Update state with y_pred and y.
@@ -210,6 +211,7 @@ class ConfusionMatrixMetric(Metric):
         self._total_tn = 0.0
         self._total_fn = 0.0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Update state with predictions and targets.

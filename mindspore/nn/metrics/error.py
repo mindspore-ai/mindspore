@@ -14,7 +14,7 @@
 # ============================================================================
 """Error."""
 import numpy as np
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class MAE(Metric):
@@ -51,6 +51,7 @@ class MAE(Metric):
         self._abs_error_sum = 0
         self._samples_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.
@@ -114,6 +115,7 @@ class MSE(Metric):
         self._squared_error_sum = 0
         self._samples_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.

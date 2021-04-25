@@ -14,7 +14,7 @@
 # ============================================================================
 """Topk."""
 import numpy as np
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class TopKCategoricalAccuracy(Metric):
@@ -57,6 +57,7 @@ class TopKCategoricalAccuracy(Metric):
         self._correct_num = 0
         self._samples_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result y_pred and y.

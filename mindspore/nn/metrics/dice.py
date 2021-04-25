@@ -15,7 +15,7 @@
 """Dice"""
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric
+from .metric import Metric, rearrange_inputs
 
 
 class Dice(Metric):
@@ -59,6 +59,7 @@ class Dice(Metric):
         self._dice_coeff_sum = 0
         self._samples_num = 0
 
+    @rearrange_inputs
     def update(self, *inputs):
         """
         Updates the internal evaluation result :math:`y_pred` and :math:`y`.
