@@ -32,11 +32,10 @@ class UniformReal : public PrimitiveC {
   UniformReal() : PrimitiveC(kNameUniformReal) {}
   ~UniformReal() = default;
   MS_DECLARE_PARENT(UniformReal, PrimitiveC);
-  void Init(const int64_t seed, const int64_t seed2);
+  void Init(int64_t seed, int64_t seed2);
 
-  void set_seed(const int64_t seed);
-  void set_seed2(const int64_t seed2);
-
+  void set_seed(int64_t seed);
+  void set_seed2(int64_t seed2);
   int64_t get_seed() const;
   int64_t get_seed2() const;
 };

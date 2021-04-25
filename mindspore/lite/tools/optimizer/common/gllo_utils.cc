@@ -23,7 +23,7 @@
 #include "Eigen/Core"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "src/common/common.h"
 #include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
@@ -1421,7 +1421,7 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
 
 CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input, size_t index) {
   MS_ASSERT(func_graph != nullptr && input != nullptr);
-  auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
+  auto tuple_get_item_prim = std::make_shared<lite::TupleGetItem>();
   auto second_input = NewValueNode(MakeValue<int>(index));
   auto tuple_cnode = func_graph->NewCNode(tuple_get_item_prim, {input, second_input});
   tuple_cnode->set_fullname_with_scope(input->fullname_with_scope() + "_getitem_" + std::to_string(index));

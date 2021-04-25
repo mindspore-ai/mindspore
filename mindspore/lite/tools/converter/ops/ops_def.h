@@ -42,6 +42,10 @@ ADD_CONVERTER_ONLY_OP(TensorArrayScatterV3);
 ADD_CONVERTER_ONLY_OP(TensorArraySizeV3);
 ADD_CONVERTER_ONLY_OP(TensorArrayV3);
 ADD_CONVERTER_ONLY_OP(TensorArrayWriteV3);
+ADD_CONVERTER_ONLY_OP(Constant);
+ADD_CONVERTER_ONLY_OP(MakeTuple);
+ADD_CONVERTER_ONLY_OP(TupleGetItem);
+ADD_CONVERTER_ONLY_OP(Return);
 }  // namespace lite
 }  // namespace mindspore
 

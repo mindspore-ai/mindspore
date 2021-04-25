@@ -34,7 +34,7 @@
 #include "ops/fusion/full_connection.h"
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/gather.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "src/tensor.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/quant_cast.h"
@@ -414,7 +414,7 @@ STATUS Calibrator::ComputeThreshold() {
           for (const auto &output_diverg_info : outputs_diverg_info.second) {
             auto output_diverg_cnode = output_diverg_info->cnode;
             if (output_diverg_cnode == input_cnode) {
-              if (NodePrimitiveType(input_cnode) != ops::kNameTupleGetItem) {
+              if (NodePrimitiveType(input_cnode) != lite::kNameTupleGetItem) {
                 *(input_infos[i]) = *output_diverg_info;
                 input_infos[i]->cnode = cnode;
                 already_computed = true;
@@ -801,7 +801,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
 
     auto op_type = primitive->name();
     MS_LOG(DEBUG) << "OpName: " << op_name;
-    if (op_type == ops::kNameTupleGetItem) {
+    if (op_type == lite::kNameTupleGetItem) {
       auto index_node = cnode->input(2);
       auto index_value_node = std::dynamic_pointer_cast<mindspore::ValueNode>(index_node);
       if (index_value_node == nullptr) {

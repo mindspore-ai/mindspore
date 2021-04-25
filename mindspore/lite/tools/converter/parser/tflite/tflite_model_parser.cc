@@ -21,9 +21,7 @@
 #include <utility>
 #include "tools/converter/converter_flags.h"
 #include "src/common/file_utils.h"
-#include "ops/return.h"
-#include "ops/make_tuple.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
 
@@ -305,7 +303,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
   const auto &tflite_subgraph = tflite_model_->subgraphs.front();
   if (tflite_subgraph->outputs.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
@@ -325,7 +323,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
-    auto return_prim_ptr = std::make_shared<ops::Return>();
+    auto return_prim_ptr = std::make_shared<lite::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
@@ -337,7 +335,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     cnode->set_fullname_with_scope("Return");
     res_graph_->set_return(cnode);
   } else {
-    auto returnPrim = std::make_shared<ops::Return>();
+    auto returnPrim = std::make_shared<lite::Return>();
     if (returnPrim == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
@@ -463,7 +461,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
         return RET_ERROR;
       }
       abstract_list.emplace_back(abstract_tensor);
-      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+      auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;

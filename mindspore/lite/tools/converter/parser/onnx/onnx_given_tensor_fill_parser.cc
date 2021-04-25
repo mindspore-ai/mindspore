@@ -20,7 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include "tools/common/tensor_util.h"
-#include "ops/constant.h"
+#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {
@@ -62,7 +62,7 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto
 }
 ops::PrimitiveC *OnnxGivenTensorFillParser::Parse(const onnx::GraphProto &onnx_graph,
                                                   const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Constant>();
+  auto prim = std::make_unique<lite::Constant>();
 
   std::vector<int64_t> shape_vector;
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),

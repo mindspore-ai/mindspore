@@ -41,7 +41,7 @@
 #include "ops/reshape.h"
 #include "ops/split.h"
 #include "ops/transpose.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"
@@ -113,7 +113,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
     ops::kNameCrop,          ops::kNameEltwise,         ops::kNameFullConnection,
     ops::kNameGather,        ops::kNameLayerNormFusion, ops::kNameMatMul,
     ops::kNameMaxPoolFusion, ops::kNameMulFusion,       ops::kNameReshape,
-    ops::kNameSplit,         ops::kNameTranspose,       ops::kNameTupleGetItem,
+    ops::kNameSplit,         ops::kNameTranspose,       lite::kNameTupleGetItem,
   };
   bool contain = IsContain(int8OpList, type);
   if (!contain) {

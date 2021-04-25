@@ -19,7 +19,7 @@
 #include <functional>
 #include "ops/lstm.h"
 #include "ops/squeeze.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "utils/utils.h"
@@ -495,7 +495,7 @@ CNodePtr TfliteLstmCellFusion::CreateOutputGetItem(const FuncGraphPtr &func_grap
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   MS_ASSERT(get_items != nullptr);
-  auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
+  auto tuple_get_item_prim = std::make_shared<lite::TupleGetItem>();
   auto get_item_value = NewValueNode(MakeValue<int>(item_index));
   if (tuple_get_item_prim == nullptr || get_item_value == nullptr) {
     MS_LOG(ERROR) << "NewValueNode is nullptr";
