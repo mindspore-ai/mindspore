@@ -25,6 +25,8 @@
 #include <map>
 #include <string>
 
+#include "ps/core/communicator/request_process_result_code.h"
+
 namespace mindspore {
 namespace ps {
 constexpr char kEnvCommType[] = "MS_COMM_TYPE";
@@ -69,6 +71,10 @@ constexpr int64_t kPullCmd = 51;
 
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
+
+constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) << 20));
+constexpr char kServerNum[] = "server_num";
+constexpr char kWorkerNum[] = "worker_num";
 
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
@@ -129,6 +135,10 @@ const std::map<std::string, OptimOriginIdx> kOptimToPSSendIdx = {{kApplyMomentum
                         << " is out of bound.";                                                 \
     }                                                                                           \
   }
+
+#define ERROR_STATUS(result, code, message) \
+  MS_LOG(ERROR) << message;                 \
+  result = RequestProcessResult(code, message)
 }  // namespace ps
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PS_CONSTANTS_H_

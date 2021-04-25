@@ -33,8 +33,9 @@ void HttpClient::Init() {
   MS_EXCEPTION_IF_NULL(dns_base_);
 }
 
-Status HttpClient::Post(const std::string &url, const void *body, size_t len, std::shared_ptr<std::vector<char>> output,
-                        const std::map<std::string, std::string> &headers) {
+ResponseCode HttpClient::Post(const std::string &url, const void *body, size_t len,
+                              std::shared_ptr<std::vector<char>> output,
+                              const std::map<std::string, std::string> &headers) {
   MS_EXCEPTION_IF_NULL(body);
   MS_EXCEPTION_IF_NULL(output);
   auto handler = std::make_shared<HttpMessageHandler>();
@@ -50,13 +51,13 @@ Status HttpClient::Post(const std::string &url, const void *body, size_t len, st
     evhttp_connection_base_new(event_base_, dns_base_, handler->GetHostByUri(), handler->GetUriPort());
   if (connection == nullptr) {
     MS_LOG(ERROR) << "Create http connection failed!";
-    return Status::BADREQUEST;
+    return ResponseCode::BADREQUEST;
   }
 
   struct evbuffer *buffer = evhttp_request_get_output_buffer(request);
   if (evbuffer_add(buffer, body, len) != 0) {
     MS_LOG(ERROR) << "Add buffer failed!";
-    return Status::INTERNAL;
+    return ResponseCode::INTERNAL;
   }
 
   AddHeaders(headers, request, handler);
@@ -64,8 +65,8 @@ Status HttpClient::Post(const std::string &url, const void *body, size_t len, st
   return CreateRequest(handler, connection, request, HttpMethod::HM_POST);
 }
 
-Status HttpClient::Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
-                       const std::map<std::string, std::string> &headers) {
+ResponseCode HttpClient::Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
+                             const std::map<std::string, std::string> &headers) {
   MS_EXCEPTION_IF_NULL(output);
   auto handler = std::make_shared<HttpMessageHandler>();
   output->clear();
@@ -80,7 +81,7 @@ Status HttpClient::Get(const std::string &url, std::shared_ptr<std::vector<char>
     evhttp_connection_base_new(event_base_, dns_base_, handler->GetHostByUri(), handler->GetUriPort());
   if (connection == nullptr) {
     MS_LOG(ERROR) << "Create http connection failed!";
-    return Status::BADREQUEST;
+    return ResponseCode::BADREQUEST;
   }
 
   AddHeaders(headers, request, handler);
@@ -178,8 +179,9 @@ void HttpClient::InitRequest(std::shared_ptr<HttpMessageHandler> handler, const 
                 << ", The port is:" << handler->GetUriPort() << ", The request_url is:" << handler->GetRequestPath();
 }
 
-Status HttpClient::CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,
-                                 struct evhttp_request *request, HttpMethod method) {
+ResponseCode HttpClient::CreateRequest(std::shared_ptr<HttpMessageHandler> handler,
+                                       struct evhttp_connection *connection, struct evhttp_request *request,
+                                       HttpMethod method) {
   MS_EXCEPTION_IF_NULL(handler);
   MS_EXCEPTION_IF_NULL(connection);
   MS_EXCEPTION_IF_NULL(request);
@@ -188,18 +190,18 @@ Status HttpClient::CreateRequest(std::shared_ptr<HttpMessageHandler> handler, st
 
   if (evhttp_make_request(connection, request, evhttp_cmd_type(method), handler->GetRequestPath().c_str()) != 0) {
     MS_LOG(ERROR) << "Make request failed!";
-    return Status::INTERNAL;
+    return ResponseCode::INTERNAL;
   }
 
   if (!Start()) {
     MS_LOG(ERROR) << "Start http client failed!";
-    return Status::INTERNAL;
+    return ResponseCode::INTERNAL;
   }
 
   if (handler->request()) {
-    return Status(evhttp_request_get_response_code(handler->request()));
+    return ResponseCode(evhttp_request_get_response_code(handler->request()));
   }
-  return Status::INTERNAL;
+  return ResponseCode::INTERNAL;
 }
 
 bool HttpClient::Start() {

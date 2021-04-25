@@ -370,7 +370,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 else()
     if(ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
         target_link_libraries(mindspore proto_input mindspore::protobuf
-            mindspore::event mindspore::event_pthreads mindspore::event_openssl)
+            mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::json)
         target_link_libraries(mindspore -Wl,--no-as-needed mindspore::event_core ps_cache)
         if(${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(mindspore ibverbs rdmacm)

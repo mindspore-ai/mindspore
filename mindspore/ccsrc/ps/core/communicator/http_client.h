@@ -47,7 +47,7 @@ namespace ps {
 namespace core {
 enum class HttpMethod { HM_GET = 1 << 0, HM_POST = 1 << 1 };
 
-enum class Status : int {
+enum class ResponseCode : int {
   OK = 200,          // request completed ok
   BADREQUEST = 400,  // invalid http request was made
   NOTFOUND = 404,    // could not find content for uri
@@ -62,10 +62,10 @@ class HttpClient {
 
   virtual ~HttpClient();
 
-  Status Post(const std::string &url, const void *body, size_t len, std::shared_ptr<std::vector<char>> output,
-              const std::map<std::string, std::string> &headers = {});
-  Status Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
-             const std::map<std::string, std::string> &headers = {});
+  ResponseCode Post(const std::string &url, const void *body, size_t len, std::shared_ptr<std::vector<char>> output,
+                    const std::map<std::string, std::string> &headers = {});
+  ResponseCode Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
+                   const std::map<std::string, std::string> &headers = {});
 
   void set_connection_timeout(const int &timeout);
 
@@ -80,8 +80,8 @@ class HttpClient {
                   std::shared_ptr<HttpMessageHandler> handler);
   void InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url,
                    const struct evhttp_request *request);
-  Status CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,
-                       struct evhttp_request *request, HttpMethod method);
+  ResponseCode CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,
+                             struct evhttp_request *request, HttpMethod method);
 
   bool Start();
   void Init();
