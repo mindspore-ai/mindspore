@@ -1421,7 +1421,7 @@ class SquaredDifference(_MathBinaryOp):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
-     .. math::
+    .. math::
 
         out_{i} = (x_{i} - y_{i}) * (x_{i} - y_{i}) = (x_{i} - y_{i})^2
 
