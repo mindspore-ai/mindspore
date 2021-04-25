@@ -55,7 +55,7 @@ void AscendBucket::AllocateAllReduceAddr() {
     auto origin_size = device_address->GetSize();
     auto align_size = MemoryManager::GetCommonAlignSize(origin_size);
     origin_size_list.emplace_back(origin_size);
-    align_size_list_.emplace_back(align_size);
+    (void)align_size_list_.emplace_back(align_size);
     total_size += align_size;
     memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
       static_cast<uint8_t *>(device_address->GetMutablePtr()), device_address->GetSize()));

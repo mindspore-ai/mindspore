@@ -63,7 +63,7 @@ class KernelRuntime {
   virtual bool GenDynamicKernel(const session::KernelGraph *graph) = 0;
   virtual bool RunDynamicKernelAsync(const session::KernelGraph *graph) = 0;
   bool LaunchKernel(const session::KernelGraph *graph);
-  bool LaunchTaskBasedOnSingleKernel(kernel::KernelModPtr kernel_mod_ptr, const AddressPtrList &kernel_inputs,
+  bool LaunchTaskBasedOnSingleKernel(const kernel::KernelModPtr &kernel_mod_ptr, const AddressPtrList &kernel_inputs,
                                      const AddressPtrList &kernel_outputs,
                                      const AddressPtrList &kernel_workspaces) const;
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
