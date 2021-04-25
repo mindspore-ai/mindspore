@@ -448,45 +448,26 @@ class Graph:
 class GraphVisitor:
     """Graph visitor"""
 
-    def __init__(self, forward=True, once_mode=True):
+    def __init__(self, forward=True):
         self.forward = forward
-        self.once_mode = once_mode
-        if self.once_mode:
-            self.visited = set()
 
     def visit_graph(self, graph):
         """Visit graph"""
-        inputs, outputs = graph.deduce_parameters()
         if self.forward:
-            for tensor in inputs:
-                for op in tensor.to_ops:
-                    self.visit(op)
+            for op in graph.ops:
+                self.visit(op)
         else:
-            for tensor in outputs:
-                if not tensor.to_ops:
-                    self.visit(tensor.op)
-
-    def visit(self, op):
-        """Visit op"""
-        next_ops = op.output.to_ops if self.forward else [
-            t.op for t in op.inputs if t.op is not None]
-        if self.once_mode:
-            self.visited.add(op)
-            for n in next_ops:
-                if n not in self.visited:
-                    self.visit(n)
-        else:
-            for n in next_ops:
-                self.visit(n)
-
+            for i in range(len(graph.ops)-1, -1, -1):
+                self.visit(graph.ops[i])
 
 class AlignShape(GraphVisitor):
     """Align shape"""
 
     def __init__(self):
-        super().__init__(once_mode=False)
+        super().__init__()
 
     def visit(self, op):
+        """Visit op node"""
         prim = PrimLib.get_prim(op)
         if prim.iter_type in (PrimLib.ELEMWISE, PrimLib.BROADCAST, PrimLib.REDUCE):
             out_dim = len(op.output.shape)
@@ -496,8 +477,6 @@ class AlignShape(GraphVisitor):
                     align_dim = len(t.shape)
             if align_dim > out_dim:
                 op.output.shape = [1] * (align_dim - out_dim) + op.output.shape
-        super().visit(op)
-
 
 class AddControlBuddy(GraphVisitor):
     """Add control buddy"""
@@ -507,6 +486,7 @@ class AddControlBuddy(GraphVisitor):
         self.buddies = {}  # {op : [ctrl_op]}
 
     def visit(self, op):
+        """Visit op node"""
         if op.prim == "MakeTuple":
             assert len(op.output.to_ops) == 1
             owner = op.output.to_ops[0]
@@ -517,9 +497,9 @@ class AddControlBuddy(GraphVisitor):
             if op in self.buddies:
                 ops = self.buddies.pop(op)
                 self.buddies[owner].extend(ops)
-        super().visit(op)
 
     def visit_graph(self, graph):
+        """Visit graph nodes"""
         super().visit_graph(graph)
         for owner in self.buddies:
             for op in self.buddies[owner]:

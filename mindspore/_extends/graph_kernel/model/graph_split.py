@@ -30,7 +30,7 @@ class GraphSplitByPattern:
                 self.stitch_ops = set()
                 self.stitch_atomic_ops = set()
 
-        def __init__(self, init_op, is_output):
+        def __init__(self, init_op, is_output, unique_id):
             self.pattern = PrimLib.iter_type(init_op)
             self.ops = [init_op]
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
@@ -48,6 +48,8 @@ class GraphSplitByPattern:
                         else:
                             _gather_reduce_exclude(to)
                 _gather_reduce_exclude(init_op)
+            self.reach_map = dict()
+            self.unique_id = unique_id
 
         def __str__(self):
             return '<' + '-'.join([op.output.name for op in self.ops]) + '>'
@@ -122,13 +124,20 @@ class GraphSplitByPattern:
             if area.output_excluded:
                 self.output_excluded.update(area.output_excluded)
             self.update_stitch_info(area.stitch_info)
+            for to, reach in area.reach_map.items():
+                if reach and not self.reach_map.get(to, False):
+                    self.reach_map[to] = True
 
         def check_acyclic(self, to):
             """Check circle. It returns false if circle exists"""
             def _reached(area, to):
+                if to.unique_id in area.reach_map:
+                    return area.reach_map[to.unique_id]
                 for out, _ in area.out_relations.items():
                     if out == to or _reached(out, to):
+                        area.reach_map[to.unique_id] = True
                         return True
+                area.reach_map[to.unique_id] = False
                 return False
             for out, _ in self.out_relations.items():
                 if out != to and _reached(out, to):
@@ -151,9 +160,11 @@ class GraphSplitByPattern:
         self.flags = flags
         area_map = {}
         _, outputs = graph.deduce_parameters()
+        idx = 0
         for op in graph.ops:
             is_output = op.output in outputs
-            a = self.Area(op, is_output)
+            a = self.Area(op, is_output, idx)
+            idx += 1
             self.set_default_mode(a)
             self.areas.append(a)
             area_map[op] = a
@@ -249,7 +260,7 @@ class GraphSplitByPattern:
                         break
             if out_reshape_ops:
                 for op in out_reshape_ops:
-                    a = self.Area(op, False)
+                    a = self.Area(op, False, -1)
                     self.set_default_mode(a)
                     new_areas.append(a)
                 area.ops = remain_ops
