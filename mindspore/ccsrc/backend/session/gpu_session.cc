@@ -481,7 +481,9 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
 
         // When the device address of graph cnode output is set in tensor, the graph output need be set new device
         // address, to avoid that the device address context of tensor be rewritten in the next step or next loop.
-        if (node->isa<CNode>()) {
+        // But one time memory application scenarios need to be skipped, because the memory is not allocated next step:
+        // 1. Non cnode 2. Communication kernel.
+        if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node)) {
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
           AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
           if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
