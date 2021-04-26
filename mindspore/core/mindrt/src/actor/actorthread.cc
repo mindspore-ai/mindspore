@@ -50,7 +50,7 @@ ActorThread::ActorThread() : readyActors(), workers() {
       threadName.resize(MAXTHREADNAMELEN);
     }
   } else {
-    threadName = "HARES_MINDRT_ACT";
+    threadName = "MINDRT_ACT";
   }
 
   maxThreads_ = GetMaxThreadCount();
