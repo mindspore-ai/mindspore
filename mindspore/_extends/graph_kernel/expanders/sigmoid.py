@@ -22,7 +22,7 @@ class Sigmoid(Expander):
     def _expand(self, graph_builder):
         input_x = self.inputs[0]
         # Calculate sigmoid(x)
-        # formula is : sigmoid(x) = 1 / (1 + exp(-x))
+        # sigmoid of x is 1 / (1 + exp(-x))
         const_one = graph_builder.value(input_x.dtype, 1.0)
         neg_x = graph_builder.emit('Neg', [input_x])
         exp_neg_x = graph_builder.emit('Exp', [neg_x])

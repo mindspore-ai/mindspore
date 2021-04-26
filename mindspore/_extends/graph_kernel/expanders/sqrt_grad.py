@@ -21,7 +21,7 @@ class SqrtGrad(Expander):
     """SqrtGrad expander"""
 
     def _expand(self, graph_builder):
-        # sqrt_grad(x, dout) = dout / (2 * x)
+        # formula of sqrt_grad is dout / (2 * x)
         x, dout = self.inputs
         const_two = graph_builder.value(x.dtype, 2)
         dividend = graph_builder.emit('Mul', [x, const_two])
