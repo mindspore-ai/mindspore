@@ -495,7 +495,7 @@ class AdamWeightDecay(PrimitiveWithInfer):
         - **v** (Tensor) - The same shape and data type as `v`.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
