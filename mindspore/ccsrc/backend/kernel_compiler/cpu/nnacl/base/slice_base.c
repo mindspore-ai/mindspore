@@ -15,11 +15,11 @@
  */
 #include "nnacl/base/slice_base.h"
 #include <string.h>
-void PadSliceParameterTo4D(SliceParameter *param) {
-  int32_t begin[DIMENSION_4D];
-  int32_t end[DIMENSION_4D];
-  int32_t slice_size[DIMENSION_4D];
-  int32_t data_shape[DIMENSION_4D];
+void PadSliceParameterTo8D(SliceParameter *param) {
+  int32_t begin[DIMENSION_8D];
+  int32_t end[DIMENSION_8D];
+  int32_t slice_size[DIMENSION_8D];
+  int32_t data_shape[DIMENSION_8D];
   for (int32_t i = 0; i < param->param_length_; ++i) {
     begin[i] = param->begin_[i];
     end[i] = param->end_[i];
@@ -27,7 +27,7 @@ void PadSliceParameterTo4D(SliceParameter *param) {
     data_shape[i] = param->shape_[i];
   }
   int32_t real_index = param->param_length_ - 1;
-  for (int32_t i = DIMENSION_4D - 1; i >= 0; --i) {
+  for (int32_t i = DIMENSION_8D - 1; i >= 0; --i) {
     if (real_index >= 0) {
       param->begin_[i] = begin[real_index];
       param->end_[i] = end[real_index];
@@ -40,39 +40,55 @@ void PadSliceParameterTo4D(SliceParameter *param) {
       param->shape_[i] = 1;
     }
   }
-  param->param_length_ = DIMENSION_4D;
+  param->param_length_ = DIMENSION_8D;
 }
 
 void DoSlice(const void *input, void *output, SliceParameter *param, int thread_id, int data_size) {
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 
-  int32_t out_dim1 = param->size_[1];
-  int32_t out_dim2 = param->size_[2];
-  int32_t out_dim3 = param->size_[3];
-  size_t out_stride2 = out_dim3;
-  size_t out_stride1 = out_stride2 * out_dim2;
-  size_t out_stride0 = out_stride1 * out_dim1;
-  size_t count_per_thread = UP_DIV(out_dim1, param->op_parameter_.thread_num_);
-  size_t thread_stride = thread_id * count_per_thread;
-  size_t copy_size = param->size_[3] * data_size;
-  size_t in_stride2 = param->shape_[3];
-  size_t in_stride1 = param->shape_[2] * in_stride2;
-  size_t in_stride0 = param->shape_[1] * in_stride1;
-  for (int i = 0; i < param->size_[0]; ++i) {
-    size_t out_offset0 = i * out_stride0;
-    size_t in_offset0 = (i + param->begin_[0]) * in_stride0 + param->begin_[3];
-    for (size_t j = 0; j < count_per_thread; ++j) {
-      size_t k = j + thread_stride;
-      if (k >= out_dim1) {
-        break;
-      }
-      size_t out_offset1 = k * out_stride1 + out_offset0;
-      size_t in_offset1 = (k + param->begin_[1]) * in_stride1 + in_offset0;
-      for (int l = 0; l < out_dim2; ++l) {
-        size_t out_offset = out_offset1 + l * out_stride2;
-        size_t in_offset = in_offset1 + (l + param->begin_[2]) * in_stride2;
-        memcpy(int8_out + out_offset * data_size, int8_in + in_offset * data_size, copy_size);
+  size_t out_stride[8];
+  out_stride[7] = 1;
+  for (int i = 6; i >= 0; --i) {
+    out_stride[i] = out_stride[i + 1] * param->size_[i + 1];
+  }
+
+  size_t count_per_thread = UP_DIV(param->size_[5], param->op_parameter_.thread_num_);
+  size_t thread_begin = thread_id * count_per_thread;
+  size_t thread_end = MSMIN(param->size_[5], thread_begin + count_per_thread);
+  size_t copy_size = param->size_[7] * data_size;
+  size_t in_stride[8];
+  in_stride[7] = 1;
+  for (int i = 6; i >= 0; --i) {
+    in_stride[i] = param->shape_[i + 1] * in_stride[i + 1];
+  }
+
+  for (int ii = 0; ii < param->size_[0]; ++ii) {
+    size_t out_offset0 = ii * out_stride[0];
+    size_t in_offset0 = (ii + param->begin_[0]) * in_stride[0] + param->begin_[7];
+    for (int jj = 0; jj < param->size_[1]; ++jj) {
+      size_t out_offset1 = jj * out_stride[1] + out_offset0;
+      size_t in_offset1 = (jj + param->begin_[1]) * in_stride[1] + in_offset0;
+      for (int kk = 0; kk < param->size_[2]; ++kk) {
+        size_t out_offset2 = kk * out_stride[2] + out_offset1;
+        size_t in_offset2 = (kk + param->begin_[2]) * in_stride[2] + in_offset1;
+        for (int ll = 0; ll < param->size_[3]; ++ll) {
+          size_t out_offset3 = ll * out_stride[3] + out_offset2;
+          size_t in_offset3 = (ll + param->begin_[3]) * in_stride[3] + in_offset2;
+          for (int i = 0; i < param->size_[4]; ++i) {
+            size_t out_offset4 = i * out_stride[4] + out_offset3;
+            size_t in_offset4 = (i + param->begin_[4]) * in_stride[4] + in_offset3;
+            for (size_t j = thread_begin; j < thread_end; ++j) {
+              size_t out_offset5 = j * out_stride[5] + out_offset4;
+              size_t in_offset5 = (j + param->begin_[5]) * in_stride[5] + in_offset4;
+              for (int k = 0; k < param->size_[6]; ++k) {
+                size_t out_offset6 = k * out_stride[6] + out_offset5;
+                size_t in_offset6 = (k + param->begin_[6]) * in_stride[6] + in_offset5;
+                memcpy(int8_out + out_offset6 * data_size, int8_in + in_offset6 * data_size, copy_size);
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -82,19 +98,34 @@ void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, i
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 
-  size_t copy_size = param->size_[3] * data_size;
-  size_t in_stride2 = param->shape_[3];
-  size_t in_stride1 = param->shape_[2] * in_stride2;
-  size_t in_stride0 = param->shape_[1] * in_stride1;
+  size_t copy_size = param->size_[7] * data_size;
+  size_t in_stride[8];
+  in_stride[7] = 1;
+  for (int i = 6; i >= 0; --i) {
+    in_stride[i] = param->shape_[i + 1] * in_stride[i + 1];
+  }
+
   size_t out_offset = 0;
   for (int32_t dim0 = param->begin_[0]; dim0 < param->end_[0]; ++dim0) {
-    size_t in_offset0 = dim0 * in_stride0 + param->begin_[3];
+    size_t in_offset0 = dim0 * in_stride[0] + param->begin_[7];
     for (size_t dim1 = param->begin_[1]; dim1 < param->end_[1]; ++dim1) {
-      size_t in_offset1 = dim1 * in_stride1 + in_offset0;
+      size_t in_offset1 = dim1 * in_stride[1] + in_offset0;
       for (int32_t dim2 = param->begin_[2]; dim2 < param->end_[2]; ++dim2) {
-        size_t in_offset = in_offset1 + dim2 * in_stride2;
-        memcpy(int8_out + out_offset * data_size, int8_in + in_offset * data_size, copy_size);
-        out_offset += param->size_[3];
+        size_t in_offset2 = in_offset1 + dim2 * in_stride[2];
+        for (int32_t dim3 = param->begin_[3]; dim3 < param->end_[3]; ++dim3) {
+          size_t in_offset3 = in_offset2 + dim3 * in_stride[3];
+          for (int32_t dim4 = param->begin_[4]; dim4 < param->end_[4]; ++dim4) {
+            size_t in_offset4 = in_offset3 + dim4 * in_stride[4];
+            for (int32_t dim5 = param->begin_[5]; dim5 < param->end_[5]; ++dim5) {
+              size_t in_offset5 = in_offset4 + dim5 * in_stride[5];
+              for (int32_t dim6 = param->begin_[6]; dim6 < param->end_[6]; ++dim6) {
+                size_t in_offset6 = in_offset5 + dim6 * in_stride[6];
+                memcpy(int8_out + out_offset * data_size, int8_in + in_offset6 * data_size, copy_size);
+                out_offset += param->size_[7];
+              }
+            }
+          }
+        }
       }
     }
   }

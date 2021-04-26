@@ -42,6 +42,11 @@ int SliceInt8CPUKernel::Init() {
   param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
+  QuantizeRoundParameterWithDoublePrecision(param_->quant_arg_.in_args_.scale_ / param_->quant_arg_.out_args_.scale_,
+                                            &param_->quant_arg_.multiplier_.multiplier_,
+                                            &param_->quant_arg_.multiplier_.left_shift_,
+                                            &param_->quant_arg_.multiplier_.right_shift_);
+
   param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
   param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   if (!InferShapeDone()) {
@@ -51,9 +56,9 @@ int SliceInt8CPUKernel::Init() {
 }
 
 int SliceInt8CPUKernel::DoSlice(int task_id) {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->data_c());
   MS_ASSERT(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
   MS_ASSERT(output_data);
 
   auto ret = SliceInt8(input_data, output_data, param_, task_id);
@@ -73,17 +78,9 @@ int SliceInt8Run(void *cdata, int task_id) {
 }
 
 int SliceInt8CPUKernel::Run() {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());
-  MS_ASSERT(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(output_data);
-  mindspore::lite::STATUS ret = RET_ERROR;
-  if (param_->size_[1] < param_->op_parameter_.thread_num_) {
-    ret = SliceInt8NoParallel(input_data, output_data, param_);
-  } else {
-    ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SliceInt8Run, this,
-                         op_parameter_->thread_num_);
-  }
+  // param_ shape info has already been extended to 8d
+  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SliceInt8Run, this,
+                            op_parameter_->thread_num_);
 
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SliceInt8Run error, error_code[" << ret << "]";

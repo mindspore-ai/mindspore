@@ -24,6 +24,7 @@ typedef struct SliceQuantArg {
   QuantArg out_args_;
   int output_activation_min_;
   int output_activation_max_;
+  QuantMulArg multiplier_;
 } SliceQuantArg;
 
 typedef struct SliceParameter {
@@ -31,11 +32,11 @@ typedef struct SliceParameter {
   OpParameter op_parameter_;
 
   // shape correlative
-  int32_t shape_[COMM_SHAPE_SIZE];
-  int32_t begin_[COMM_SHAPE_SIZE];
-  int32_t end_[COMM_SHAPE_SIZE];
-  int32_t size_[COMM_SHAPE_SIZE];
-  int32_t axis_[COMM_SHAPE_SIZE];
+  int32_t shape_[DIMENSION_8D];
+  int32_t begin_[DIMENSION_8D];
+  int32_t end_[DIMENSION_8D];
+  int32_t size_[DIMENSION_8D];
+  int32_t axis_[DIMENSION_8D];
 
   // other parameter
   SliceQuantArg quant_arg_;
