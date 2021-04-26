@@ -38,11 +38,11 @@ namespace mindspore::kernel {
 
 int ConvolutionCPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  int in_channel = filter_tensor->Channel();
-  int out_channel = filter_tensor->Batch();
+  size_t in_channel = filter_tensor->Channel();
+  size_t out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   int oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
   int pack_weight_size = oc_block_num * in_channel * kernel_plane;
 

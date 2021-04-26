@@ -32,7 +32,7 @@ class QuantizedAddCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx) {
     arith_para_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
-  ~QuantizedAddCPUKernel() override = default;
+  ~QuantizedAddCPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -43,7 +43,7 @@ class QuantizedAddCPUKernel : public LiteKernel {
   void BroadcastRun(int task_id);
 
  private:
-  AddQuantParameter para_;
+  AddQuantParameter *para_ = nullptr;
   ArithmeticParameter *arith_para_ = nullptr;
   int in_size_ = 0;
   int out_size_ = 0;

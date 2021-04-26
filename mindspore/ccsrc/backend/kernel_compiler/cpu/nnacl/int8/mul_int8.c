@@ -28,19 +28,19 @@ int16x4_t ClacSumHalfWordMul(int16x4_t scaled_input0, int16x4_t scaled_input1, i
 }
 
 void MulInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
-                 MulQuantArg para, int *index) {
-  int32x4_t output_multiplier_vec = vdupq_n_s32(para.output_multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << para.shift_left_);
-  int32x4_t right_shift_out_vec = vdupq_n_s32(-para.shift_right_);
-  int16x8_t out_zp_vec = vdupq_n_s16(para.out_quant_arg_.zp_);
-  int8x16_t out_min_vec = vdupq_n_s8(para.output_activation_min_);
-  int8x16_t out_max_vec = vdupq_n_s8(para.output_activation_max_);
-  int8x8_t out_min_vec_s8 = vdup_n_s8(para.output_activation_min_);
-  int8x8_t out_max_vec_s8 = vdup_n_s8(para.output_activation_max_);
+                 MulQuantArg *quant_arg, int *index) {
+  int32x4_t output_multiplier_vec = vdupq_n_s32(quant_arg->output_multiplier_);
+  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << quant_arg->shift_left_);
+  int32x4_t right_shift_out_vec = vdupq_n_s32(-quant_arg->shift_right_);
+  int16x8_t out_zp_vec = vdupq_n_s16(quant_arg->out_quant_arg_.zp_);
+  int8x16_t out_min_vec = vdupq_n_s8(quant_arg->output_activation_min_);
+  int8x16_t out_max_vec = vdupq_n_s8(quant_arg->output_activation_max_);
+  int8x8_t out_min_vec_s8 = vdup_n_s8(quant_arg->output_activation_min_);
+  int8x8_t out_max_vec_s8 = vdup_n_s8(quant_arg->output_activation_max_);
 
   for (; (*index) <= real_dst_count - 16; (*index) += 16) {
-    int16x8_t zp1_vec = vdupq_n_s16(para.in_quant_args_[0].zp_);
-    int16x8_t zp2_vec = vdupq_n_s16(para.in_quant_args_[1].zp_);
+    int16x8_t zp1_vec = vdupq_n_s16(quant_arg->in_quant_args_[0].zp_);
+    int16x8_t zp2_vec = vdupq_n_s16(quant_arg->in_quant_args_[1].zp_);
     int8x16_t input0_vec = vld1q_s8(input0_data + *index);
     int8x16_t input1_vec = vld1q_s8(input1_data + *index);
     int16x8_t input0_low = vmovl_s8(vget_low_s8(input0_vec));
@@ -81,8 +81,8 @@ void MulInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, 
     output_data += 16;
   }
   for (; (*index) <= real_dst_count - 8; (*index) += 8) {
-    int16x8_t input0_val = LoadAndAddOffset(input0_data, *index, para.in_quant_args_[0].zp_);
-    int16x8_t input1_val = LoadAndAddOffset(input1_data, *index, para.in_quant_args_[1].zp_);
+    int16x8_t input0_val = LoadAndAddOffset(input0_data, *index, quant_arg->in_quant_args_[0].zp_);
+    int16x8_t input1_val = LoadAndAddOffset(input1_data, *index, quant_arg->in_quant_args_[1].zp_);
 
     int16x4_t input0_low = vget_low_s16(input0_val);
     int16x4_t input0_high = vget_high_s16(input0_val);
@@ -105,23 +105,23 @@ void MulInt8NEON(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, 
 #endif
 
 void FastMul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int depth, int64_t real_dst_count,
-             bool input1_broad, MulQuantArg para) {
+             bool input1_broad, MulQuantArg *quant_arg) {
   // input0 need broadcast
-  int32_t zp1 = para.in_quant_args_[0].zp_;
-  int32_t zp2 = para.in_quant_args_[1].zp_;
+  int32_t zp1 = quant_arg->in_quant_args_[0].zp_;
+  int32_t zp2 = quant_arg->in_quant_args_[1].zp_;
   if (input1_broad) {
-    zp1 = para.in_quant_args_[1].zp_;
-    zp2 = para.in_quant_args_[0].zp_;
+    zp1 = quant_arg->in_quant_args_[1].zp_;
+    zp2 = quant_arg->in_quant_args_[0].zp_;
   }
 #ifdef ENABLE_ARM
-  int32x4_t output_multiplier_vec = vdupq_n_s32(para.output_multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << para.shift_left_);
-  int32x4_t right_shift_out_vec = vdupq_n_s32(-para.shift_right_);
-  int16x8_t out_zp_vec = vdupq_n_s16(para.out_quant_arg_.zp_);
-  int8x16_t out_min_vec = vdupq_n_s8(para.output_activation_min_);
-  int8x16_t out_max_vec = vdupq_n_s8(para.output_activation_max_);
-  int8x8_t out_min_vec_s8 = vdup_n_s8(para.output_activation_min_);
-  int8x8_t out_max_vec_s8 = vdup_n_s8(para.output_activation_max_);
+  int32x4_t output_multiplier_vec = vdupq_n_s32(quant_arg->output_multiplier_);
+  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << quant_arg->shift_left_);
+  int32x4_t right_shift_out_vec = vdupq_n_s32(-quant_arg->shift_right_);
+  int16x8_t out_zp_vec = vdupq_n_s16(quant_arg->out_quant_arg_.zp_);
+  int8x16_t out_min_vec = vdupq_n_s8(quant_arg->output_activation_min_);
+  int8x16_t out_max_vec = vdupq_n_s8(quant_arg->output_activation_max_);
+  int8x8_t out_min_vec_s8 = vdup_n_s8(quant_arg->output_activation_min_);
+  int8x8_t out_max_vec_s8 = vdup_n_s8(quant_arg->output_activation_max_);
   int16x8_t zp1_vec = vdupq_n_s16(zp1);
   int16x8_t zp2_vec = vdupq_n_s16(zp2);
 #endif
@@ -199,13 +199,14 @@ void FastMul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int 
     for (; j < depth; ++j) {
       const int32_t input0_val = zp1 + input0_data[j];
       const int32_t input1_val = zp2 + input1_data[0];
-      int32_t mul_result = RoundingDivideByPOT(
-        SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << para.shift_left_), para.output_multiplier_),
-        para.shift_right_);
+      int32_t mul_result =
+        RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << quant_arg->shift_left_),
+                                                              quant_arg->output_multiplier_),
+                            quant_arg->shift_right_);
 
-      mul_result += para.out_quant_arg_.zp_;
-      mul_result = mul_result < para.output_activation_max_ ? mul_result : para.output_activation_max_;
-      mul_result = mul_result > para.output_activation_min_ ? mul_result : para.output_activation_min_;
+      mul_result += quant_arg->out_quant_arg_.zp_;
+      mul_result = mul_result < quant_arg->output_activation_max_ ? mul_result : quant_arg->output_activation_max_;
+      mul_result = mul_result > quant_arg->output_activation_min_ ? mul_result : quant_arg->output_activation_min_;
       output_data[0] = (int8_t)mul_result;
       input1_data++;
       output_data++;
@@ -214,21 +215,23 @@ void FastMul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int 
   return;
 }
 
-void Mul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count, MulQuantArg para) {
+void Mul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
+         MulQuantArg *quant_arg) {
   int index = 0;
 #ifdef ENABLE_NEON
-  MulInt8NEON(input0_data, input1_data, output_data, real_dst_count, para, &index);
+  MulInt8NEON(input0_data, input1_data, output_data, real_dst_count, quant_arg, &index);
 #endif
   for (; index < real_dst_count; ++index) {
-    const int32_t input0_val = para.in_quant_args_[0].zp_ + input0_data[index];
-    const int32_t input1_val = para.in_quant_args_[1].zp_ + input1_data[index];
-    int32_t mul_result = RoundingDivideByPOT(
-      SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << para.shift_left_), para.output_multiplier_),
-      para.shift_right_);
+    const int32_t input0_val = quant_arg->in_quant_args_[0].zp_ + input0_data[index];
+    const int32_t input1_val = quant_arg->in_quant_args_[1].zp_ + input1_data[index];
+    int32_t mul_result =
+      RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << quant_arg->shift_left_),
+                                                            quant_arg->output_multiplier_),
+                          quant_arg->shift_right_);
 
-    mul_result += para.out_quant_arg_.zp_;
-    mul_result = mul_result < para.output_activation_max_ ? mul_result : para.output_activation_max_;
-    mul_result = mul_result > para.output_activation_min_ ? mul_result : para.output_activation_min_;
+    mul_result += quant_arg->out_quant_arg_.zp_;
+    mul_result = mul_result < quant_arg->output_activation_max_ ? mul_result : quant_arg->output_activation_max_;
+    mul_result = mul_result > quant_arg->output_activation_min_ ? mul_result : quant_arg->output_activation_min_;
     output_data[index] = (int8_t)mul_result;
   }
   return;

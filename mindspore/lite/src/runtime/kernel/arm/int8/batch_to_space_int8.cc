@@ -24,18 +24,38 @@ using mindspore::schema::PrimitiveType_BatchToSpace;
 using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
+BatchToSpaceInt8CPUKernel::~BatchToSpaceInt8CPUKernel() {
+  if (in_quant_arg_ != nullptr) {
+    free(in_quant_arg_);
+    in_quant_arg_ = nullptr;
+  }
+  if (out_quant_arg_ != nullptr) {
+    free(out_quant_arg_);
+    out_quant_arg_ = nullptr;
+  }
+}
+
 int BatchToSpaceInt8CPUKernel::Init() {
   MS_ASSERT(in_tensors_.at(0)->format() == schema::Format::Format_NHWC);
-
+  in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (in_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for BatchToSpace int8 op failed!";
+    return RET_ERROR;
+  }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
-  in_quant_arg_.scale_ = in_quant_args.front().scale;
-  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+  in_quant_arg_->scale_ = in_quant_args.front().scale;
+  in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
 
+  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (out_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for BatchToSpace int8 op failed!";
+    return RET_ERROR;
+  }
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
-  out_quant_arg_.scale_ = out_quant_args.front().scale;
-  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  out_quant_arg_->scale_ = out_quant_args.front().scale;
+  out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -56,7 +76,7 @@ int BatchToSpaceInt8CPUKernel::Run() {
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
-  if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
+  if (in_quant_arg_->scale_ == out_quant_arg_->scale_ && in_quant_arg_->zp_ == out_quant_arg_->zp_) {
     if (param->no_crop_) {
       BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
                                 sizeof(int8_t));
@@ -67,10 +87,10 @@ int BatchToSpaceInt8CPUKernel::Run() {
   } else {
     if (param->no_crop_) {
       BatchToSpaceNoCropForNHWCInt8(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                                    &in_quant_arg_, &out_quant_arg_);
+                                    in_quant_arg_, out_quant_arg_);
     } else {
       BatchToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                              param->crops_, &in_quant_arg_, &out_quant_arg_);
+                              param->crops_, in_quant_arg_, out_quant_arg_);
     }
   }
 

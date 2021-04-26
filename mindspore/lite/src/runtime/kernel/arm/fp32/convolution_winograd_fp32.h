@@ -48,7 +48,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int InitWeightBias();
   int InitTmpBuffer();
   int ConfigInputOutput();
-  int WinogradFilterTransform(const float *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
+  int WinogradFilterTransform(const float *weight_data, float *matrix_g, const float *matrix_gt, int oc_block);
 
  private:
   void FreeTmpBuffer() {
@@ -82,8 +82,8 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *col_buffer_ = nullptr;
   float *trans_weight_ = nullptr;
   TmpBufferAddress tmp_buffer_address_list_[4];
-  InputTransFunc in_func_;
-  OutputTransFunc out_func_;
+  InputTransFunc in_func_ = nullptr;
+  OutputTransFunc out_func_ = nullptr;
 };
 
 }  // namespace mindspore::kernel

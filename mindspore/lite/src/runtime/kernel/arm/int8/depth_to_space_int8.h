@@ -29,15 +29,15 @@ class DepthToSpaceInt8CPUKernel : public DepthToSpaceBaseCPUKernel {
   DepthToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~DepthToSpaceInt8CPUKernel() = default;
+  ~DepthToSpaceInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
  private:
-  QuantArg in_quant_arg_;
-  QuantArg out_quant_arg_;
+  QuantArg *in_quant_arg_ = nullptr;
+  QuantArg *out_quant_arg_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

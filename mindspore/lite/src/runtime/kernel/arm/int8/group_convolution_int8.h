@@ -32,6 +32,7 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionBaseCPUKernel {
       : GroupConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, std::move(group_convs), group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
+  ~GroupConvolutionInt8CPUKernel() = default;
   int SeparateInput(int group_id) override;
   int PostConcat(int group_id) override;
 };

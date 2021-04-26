@@ -25,6 +25,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
+SubInt8CPUKernel::~SubInt8CPUKernel() {
+  if (quant_param_ != nullptr) {
+    free(quant_param_);
+    quant_param_ = nullptr;
+  }
+}
+
 int SubInt8CPUKernel::Init() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
@@ -35,37 +42,45 @@ int SubInt8CPUKernel::Init() {
 
   broadcast_ = input0->ElementsNum() != input1->ElementsNum();
 
-  param_.in0_args_.scale_ = input0->quant_params().front().scale;
-  param_.in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
-  param_.in1_args_.scale_ = input1->quant_params().front().scale;
-  param_.in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
-  param_.out_args_.scale_ = output->quant_params().front().scale;
-  param_.out_args_.zp_ = output->quant_params().front().zeroPoint;
+  quant_param_ = reinterpret_cast<SubQuantArg *>(malloc(sizeof(SubQuantArg)));
+  if (quant_param_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc SubQuantArg for Sub int8 op failed!";
+    return RET_ERROR;
+  }
+  quant_param_->in0_args_.scale_ = input0->quant_params().front().scale;
+  quant_param_->in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
+  quant_param_->in1_args_.scale_ = input1->quant_params().front().scale;
+  quant_param_->in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
+  quant_param_->out_args_.scale_ = output->quant_params().front().scale;
+  quant_param_->out_args_.zp_ = output->quant_params().front().zeroPoint;
 
   const int left_shift = 20;
-  const double twice_max_input_scale = 2 * std::max(param_.in0_args_.scale_, param_.in1_args_.scale_);
-  const double real_input0_multiplier = param_.in0_args_.scale_ / twice_max_input_scale;
-  const double real_input1_multiplier = param_.in1_args_.scale_ / twice_max_input_scale;
-  const double real_output_multiplier = twice_max_input_scale / ((1 << left_shift) * param_.out_args_.scale_);
+  const double twice_max_input_scale = 2 * std::max(quant_param_->in0_args_.scale_, quant_param_->in1_args_.scale_);
+  const double real_input0_multiplier = quant_param_->in0_args_.scale_ / twice_max_input_scale;
+  const double real_input1_multiplier = quant_param_->in1_args_.scale_ / twice_max_input_scale;
+  const double real_output_multiplier = twice_max_input_scale / ((1 << left_shift) * quant_param_->out_args_.scale_);
 
-  QuantizeMultiplierSmallerThanOne(real_input0_multiplier, &param_.input0_multiplier_, &param_.input0_shift_);
-  QuantizeMultiplierSmallerThanOne(real_input1_multiplier, &param_.input1_multiplier_, &param_.input1_shift_);
-  QuantizeMultiplierSmallerThanOne(real_output_multiplier, &param_.output_multiplier_, &param_.output_shift_);
+  QuantizeMultiplierSmallerThanOne(real_input0_multiplier, &quant_param_->input0_multiplier_,
+                                   &quant_param_->input0_shift_);
+  QuantizeMultiplierSmallerThanOne(real_input1_multiplier, &quant_param_->input1_multiplier_,
+                                   &quant_param_->input1_shift_);
+  QuantizeMultiplierSmallerThanOne(real_output_multiplier, &quant_param_->output_multiplier_,
+                                   &quant_param_->output_shift_);
 
-  param_.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  param_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_param_->output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_param_->output_activation_max_ = std::numeric_limits<int8_t>::max();
 
-  int left_shift0 = -param_.input0_shift_ > 0 ? -param_.input0_shift_ : 0;
-  param_.right_shift0_ = -param_.input0_shift_ > 0 ? 0 : param_.input0_shift_;
+  int left_shift0 = -quant_param_->input0_shift_ > 0 ? -quant_param_->input0_shift_ : 0;
+  quant_param_->right_shift0_ = -quant_param_->input0_shift_ > 0 ? 0 : quant_param_->input0_shift_;
 
-  int left_shift1 = -param_.input1_shift_ > 0 ? -param_.input1_shift_ : 0;
-  param_.right_shift1_ = -param_.input1_shift_ > 0 ? 0 : param_.input1_shift_;
+  int left_shift1 = -quant_param_->input1_shift_ > 0 ? -quant_param_->input1_shift_ : 0;
+  quant_param_->right_shift1_ = -quant_param_->input1_shift_ > 0 ? 0 : quant_param_->input1_shift_;
 
-  param_.left_shift_out_ = -param_.output_shift_ > 0 ? -param_.output_shift_ : 0;
-  param_.right_shift_out_ = -param_.output_shift_ > 0 ? 0 : param_.output_shift_;
+  quant_param_->left_shift_out_ = -quant_param_->output_shift_ > 0 ? -quant_param_->output_shift_ : 0;
+  quant_param_->right_shift_out_ = -quant_param_->output_shift_ > 0 ? 0 : quant_param_->output_shift_;
 
-  param_.left_shift_result0_ = (1 << left_shift) * ((1 << left_shift0));
-  param_.left_shift_result1_ = (1 << left_shift) * ((1 << left_shift1));
+  quant_param_->left_shift_result0_ = (1 << left_shift) * ((1 << left_shift0));
+  quant_param_->left_shift_result1_ = (1 << left_shift) * ((1 << left_shift1));
 
   MS_ASSERT(left_shift + left_shift0 == left_shift);
   MS_ASSERT(left_shift + left_shift1 == left_shift);
@@ -94,10 +109,10 @@ int SubInt8CPUKernel::DoExecute(int task_id) {
   auto ret = RET_OK;
   if (broadcast_) {
     ret = SubInt8(tile0_data_ + task_id * stride, tile1_data_ + task_id * stride, output_data_ + task_id * stride,
-                  count, &param_);
+                  count, quant_param_);
   } else {
     ret = SubInt8(input0_data_ + task_id * stride, input1_data_ + task_id * stride, output_data_ + task_id * stride,
-                  count, &param_);
+                  count, quant_param_);
   }
 
   if (ret != RET_OK) {

@@ -69,7 +69,7 @@ class DefaultAllocator : public Allocator {
   std::unordered_map<void *, MemBuf *> allocatedList_;
   std::multimap<size_t, MemBuf *> freeList_;
   // 6 is empirical value
-  int shiftFactor_ = 6;
+  unsigned shiftFactor_ = 6;
   bool lockFlag_ = true;
 };
 

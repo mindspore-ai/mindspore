@@ -34,7 +34,6 @@ typedef struct MulParameter {
   OpParameter op_parameter_;
   // other parameter
   int thread_count_;
-  MulQuantArg mul_quant_arg_;
 } MulParameter;
 
 #endif  // MINDSPORE_NNACL_MUL_PARAMETER_H_

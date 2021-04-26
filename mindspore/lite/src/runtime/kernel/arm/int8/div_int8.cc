@@ -28,7 +28,12 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DivFusion;
 
 namespace mindspore::kernel {
-
+DivInt8CPUKernel::~DivInt8CPUKernel() {
+  if (quant_args_ != nullptr) {
+    free(quant_args_);
+    quant_args_ = nullptr;
+  }
+}
 int DivInt8CPUKernel::Init() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
@@ -39,19 +44,25 @@ int DivInt8CPUKernel::Init() {
 
   broadcast_ = input0->ElementsNum() != input1->ElementsNum();
 
-  param_.in0_args_.scale_ = input0->quant_params().front().scale;
-  param_.in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
-  param_.in1_args_.scale_ = input1->quant_params().front().scale;
-  param_.in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
-  param_.out_args_.scale_ = output->quant_params().front().scale;
-  param_.out_args_.zp_ = output->quant_params().front().zeroPoint;
+  quant_args_ = reinterpret_cast<DivQuantArg *>(malloc(sizeof(DivQuantArg)));
+  if (quant_args_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc DivQuantArg for Div int8 op failed!";
+    return RET_ERROR;
+  }
+  quant_args_->in0_args_.scale_ = input0->quant_params().front().scale;
+  quant_args_->in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
+  quant_args_->in1_args_.scale_ = input1->quant_params().front().scale;
+  quant_args_->in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
+  quant_args_->out_args_.scale_ = output->quant_params().front().scale;
+  quant_args_->out_args_.zp_ = output->quant_params().front().zeroPoint;
 
-  const double real_multiplier = param_.in0_args_.scale_ / (param_.in1_args_.scale_ * param_.out_args_.scale_);
+  const double real_multiplier =
+    quant_args_->in0_args_.scale_ / (quant_args_->in1_args_.scale_ * quant_args_->out_args_.scale_);
 
-  QuantizeMultiplier(real_multiplier, &param_.output_multiplier_, &param_.output_shift_);
+  QuantizeMultiplier(real_multiplier, &quant_args_->output_multiplier_, &quant_args_->output_shift_);
 
-  param_.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  param_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_args_->output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_args_->output_activation_max_ = std::numeric_limits<int8_t>::max();
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -74,10 +85,10 @@ int DivInt8CPUKernel::DoExecute(int task_id) {
   auto ret = RET_OK;
   if (broadcast_) {
     ret = DivInt8(tile0_data_ + task_id * count, tile1_data_ + task_id * count, output_data_ + task_id * count, count,
-                  &param_);
+                  quant_args_);
   } else {
     ret = DivInt8(input0_data_ + task_id * count, input1_data_ + task_id * count, output_data_ + task_id * count, count,
-                  &param_);
+                  quant_args_);
   }
 
   if (ret != RET_OK) {

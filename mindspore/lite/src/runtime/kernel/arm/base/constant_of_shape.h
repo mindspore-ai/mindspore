@@ -42,7 +42,7 @@ class ConstantOfShapeCPUKernel : public LiteKernel {
  private:
   ConstantOfShapeParameter *param_ = nullptr;
   void *output_ptr_ = nullptr;
-  int thread_stride_;
+  int thread_stride_ = 0;
 };
 }  // namespace mindspore::kernel
 

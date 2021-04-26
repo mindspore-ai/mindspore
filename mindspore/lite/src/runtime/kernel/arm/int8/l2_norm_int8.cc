@@ -24,16 +24,28 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_L2NormalizeFusion;
 
 namespace mindspore::kernel {
+L2NormInt8CPUKernel::~L2NormInt8CPUKernel() {
+  if (quant_param_ != nullptr) {
+    free(quant_param_);
+    quant_param_ = nullptr;
+  }
+}
+
 int L2NormInt8CPUKernel::Init() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  quant_param_.in_.scale_ = input->quant_params().front().scale;
-  quant_param_.in_.zp_ = input->quant_params().front().zeroPoint;
-  quant_param_.out_.scale_ = output->quant_params().front().scale;
-  quant_param_.out_.zp_ = output->quant_params().front().zeroPoint;
+  quant_param_ = reinterpret_cast<L2NormQuantArg *>(malloc(sizeof(L2NormQuantArg)));
+  if (quant_param_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc L2NormQuantArg for L2Norm int8 op failed!";
+    return RET_ERROR;
+  }
+  quant_param_->in_.scale_ = input->quant_params().front().scale;
+  quant_param_->in_.zp_ = input->quant_params().front().zeroPoint;
+  quant_param_->out_.scale_ = output->quant_params().front().scale;
+  quant_param_->out_.zp_ = output->quant_params().front().zeroPoint;
   return ReSize();
 }
 
@@ -68,7 +80,7 @@ int L2NormInt8CPUKernel::DoExecute(int task_id) {
   int8_t *output_data = static_cast<int8_t *>(out_tensors().front()->MutableData());
   MS_ASSERT(output_data);
   MS_ASSERT(l2_norm_param_);
-  return L2NormalizationInt8(input_data, output_data, l2_norm_param_, &quant_param_, begin, end);
+  return L2NormalizationInt8(input_data, output_data, l2_norm_param_, quant_param_, begin, end);
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_L2NormalizeFusion, LiteKernelCreator<L2NormInt8CPUKernel>)
