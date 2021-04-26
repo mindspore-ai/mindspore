@@ -47,17 +47,24 @@ function Run_Converter() {
     # Convert mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
-        model_name=${line_array[0]}
+        WEIGHT_QUANT=""
+        model_prefix=${line_array[0]}'_train'
+        model_name=${line_array[0]}'_train'
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        echo ${model_name}'_train' >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}'_train.mindir --outputFile='${ms_models_path}'/'${model_name}'_train  --trainModel=true' >> "${run_converter_log_file}"
-        ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_name}_train.mindir --outputFile=${ms_models_path}/${model_name}'_train' --trainModel=true
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
+            model_name=${line_array[0]}'_train_quant'
+        fi
+
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+        ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
         if [ $? = 0 ]; then
-            converter_result='converter mindspore '${model_name}'_train pass';echo ${converter_result} >> ${run_converter_result_file}
+            converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter mindspore '${model_name}'_train failed';echo ${converter_result} >> ${run_converter_result_file}
+            converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
             fail=1
         fi
     done < ${models_mindspore_train_config}
@@ -72,21 +79,27 @@ function Run_x86() {
     fail=0
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
-        model_name=${line_array[0]}
+        model_prefix=${line_array[0]}
+        model_name=${line_array[0]}'_train'
+        accuracy_limit=0.5
         if [[ $model_name == \#* ]]; then
           continue
         fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        fi
         
-        echo ${model_name}'_train' >> "${run_x86_log_file}"
+        echo ${model_name} >> "${run_x86_log_file}"
         ${run_valgrind}./tools/benchmark_train/benchmark_train \
-        --modelFile=${ms_models_path}/${model_name}_train.ms \
-        --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
-        --expectedDataFile=${train_io_path}/${model_name}_output >> "${run_x86_log_file}" \
-        --epochs=${epoch_num} --numThreads=${threads}
+        --modelFile=${ms_models_path}/${model_name}.ms \
+        --inDataFile=${train_io_path}/${model_prefix}_input1.bin,${train_io_path}/${model_prefix}_input2.bin \
+        --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
+        --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
     done < ${models_mindspore_train_config}
@@ -150,19 +163,26 @@ function Run_arm() {
     # Run mindir converted train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
-        model_name=${line_array[0]}
+        model_prefix=${line_array[0]}
+        model_name=${line_array[0]}'_train'
+        accuracy_limit=0.5
         if [[ $model_name == \#* ]]; then
-          continue
+            continue
         fi
-    if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
-          run_result=$1': '${model_name}'_train irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
-          continue
-    fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        fi
+
+        if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
+            run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            continue
+        fi
   
 
         # run benchmark_train test without clib data
-        echo ${model_name}'_train' >> "${run_arm_log_file}"
-        adb -s ${device_id} push ${train_io_path}/${model_name}_input*.bin ${train_io_path}/${model_name}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
+        echo ${model_name} >> "${run_arm_log_file}"
+        adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
         echo 'cd /data/local/tmp/benchmark_train_test' > ${adb_cmd_run_file}
         echo 'chmod 777 benchmark_train' >> ${adb_cmd_run_file}
         if [ "$1" == arm64 ]; then
@@ -170,15 +190,15 @@ function Run_arm() {
         elif [ "$1" == arm32 ]; then
             echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
         fi 
-        echo "rm -f ${tmp_dir}/${model_name}_train_exported.ms" >> ${run_arm_log_file}
-        echo "rm -f ${tmp_dir}/${model_name}_train_exported.ms" >> ${adb_cmd_run_file}
+        echo "rm -f ${tmp_dir}/${model_name}_exported.ms" >> ${run_arm_log_file}
+        echo "rm -f ${tmp_dir}/${model_name}_exported.ms" >> ${adb_cmd_run_file}
         adb_cmd=$(cat <<-ENDM
         export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
         --epochs=${epoch_num} \
-        --modelFile=${model_name}_train.ms \
-        --inDataFile=${tmp_dir}/${model_name}_input1.bin,${tmp_dir}/${model_name}_input2.bin \
-        --expectedDataFile=${tmp_dir}/${model_name}_output \
-        --numThreads=${threads}
+        --modelFile=${model_name}.ms \
+        --inDataFile=${tmp_dir}/${model_prefix}_input1.bin,${tmp_dir}/${model_prefix}_input2.bin \
+        --expectedDataFile=${tmp_dir}/${model_prefix}_output \
+        --numThreads=${threads} --accuracyThreshold=${accuracy_limit}
 ENDM
         )
         echo "${adb_cmd}" >> ${run_arm_log_file}
@@ -186,9 +206,9 @@ ENDM
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         # TODO: change to arm_type
         if [ $? = 0 ]; then
-            run_result=$1': '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result=$1': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            run_result=$1': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
             fail=1
         fi
         
