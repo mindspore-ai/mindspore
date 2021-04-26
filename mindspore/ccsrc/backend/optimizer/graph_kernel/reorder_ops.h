@@ -19,10 +19,18 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "backend/optimizer/common/pass.h"
 
 namespace mindspore {
 namespace opt {
+struct NodeIOInfo {
+  std::vector<std::string> inputs_format;
+  std::vector<std::string> outputs_format;
+  std::vector<TypeId> inputs_type;
+  std::vector<TypeId> outputs_type;
+};
+
 class ReorderOps : public Pass {
  public:
   ReorderOps() : Pass("reorder_ops") {}
@@ -33,6 +41,9 @@ class ReorderOps : public Pass {
   void SetTypeInsensitiveNodeInputs(const CNodePtr &node, const std::vector<size_t> &indexes,
                                     const std::vector<AnfNodePtr> &new_input_in_indexes,
                                     std::vector<AnfNodePtr> *new_inputs);
+  void SetTypeInsensitiveNodeInputsInfo(const CNodePtr &node, const std::vector<size_t> &indexes,
+                                        const std::vector<AnfNodePtr> &input_at_indexes, NodeIOInfo *new_inputs_info,
+                                        bool from_input);
   bool ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
                                       const CNodePtr &node);
   bool ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
