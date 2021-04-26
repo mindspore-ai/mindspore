@@ -30,11 +30,8 @@ class Erf : public PrimitiveC {
   Erf() : PrimitiveC(kNameErf) { InitIOName({"x"}, {"y"}); }
   ~Erf() = default;
   MS_DECLARE_PARENT(Erf, PrimitiveC);
-  void Init() {}
 };
 
-AbstractBasePtr ErfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
 using PrimErfPtr = std::shared_ptr<Erf>;
 }  // namespace ops
 }  // namespace mindspore

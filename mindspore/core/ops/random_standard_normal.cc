@@ -16,7 +16,6 @@
 #include "ops/random_standard_normal.h"
 #include <string>
 #include <memory>
-#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
@@ -27,9 +26,9 @@ void RandomStandardNormal::Init(const int64_t seed, const int64_t seed2) {
   this->set_seed2(seed2);
 }
 
-void RandomStandardNormal::set_seed(const int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
+void RandomStandardNormal::set_seed(int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
 
-void RandomStandardNormal::set_seed2(const int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
+void RandomStandardNormal::set_seed2(int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
 
 int64_t RandomStandardNormal::get_seed() const {
   auto value_ptr = GetAttr(kSeed);

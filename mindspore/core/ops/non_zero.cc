@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <vector>
 #include <memory>
 #include "ops/non_zero.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {

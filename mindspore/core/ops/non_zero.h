@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CORE_OPS_NON_ZERO_H_
 #define MINDSPORE_CORE_OPS_NON_ZERO_H_
-#include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -30,11 +29,7 @@ class NonZero : public PrimitiveC {
   NonZero() : PrimitiveC(kNameNonZero) {}
   ~NonZero() = default;
   MS_DECLARE_PARENT(NonZero, PrimitiveC);
-  void Init() {}
 };
-
-AbstractBasePtr NonZeroInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
 using PrimNonZeroPtr = std::shared_ptr<NonZero>;
 }  // namespace ops
 }  // namespace mindspore

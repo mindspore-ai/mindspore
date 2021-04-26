@@ -30,11 +30,8 @@ class Size : public PrimitiveC {
   Size() : PrimitiveC(kNameSize) {}
   ~Size() = default;
   MS_DECLARE_PARENT(Size, PrimitiveC);
-  void Init() {}
 };
 
-AbstractBasePtr SizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
 using PrimSizePtr = std::shared_ptr<Size>;
 }  // namespace ops
 }  // namespace mindspore

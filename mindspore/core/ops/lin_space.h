@@ -31,7 +31,6 @@ class LinSpace : public PrimitiveC {
   LinSpace() : PrimitiveC(kNameLinSpace) { InitIOName({"start", "stop", "num"}, {"output"}); }
   ~LinSpace() = default;
   MS_DECLARE_PARENT(LinSpace, PrimitiveC);
-  void Init() {}
 };
 }  // namespace ops
 }  // namespace mindspore
