@@ -48,6 +48,7 @@ class RegisterKernelInterface {
  public:
   static RegisterKernelInterface *Instance();
   int Reg(const std::string &vendor, const int op_type, KernelInterfaceCreator creator);
+  virtual ~RegisterKernelInterface() = default;
 
  private:
   RegisterKernelInterface() = default;

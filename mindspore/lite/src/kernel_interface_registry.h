@@ -31,6 +31,7 @@ class KernelInterfaceRegistry {
   }
 
   int Reg(const std::string &vendor, const int &op_type, kernel::KernelInterfaceCreator creator);
+  virtual ~KernelInterfaceRegistry() = default;
 
  private:
   KernelInterfaceRegistry() = default;

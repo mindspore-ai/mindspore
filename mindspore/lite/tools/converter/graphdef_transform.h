@@ -37,7 +37,7 @@ class GraphDefTransform {
   virtual ~GraphDefTransform();
   virtual int Transform(const converter::Flags &ctx);
   void SetGraphDef(schema::MetaGraphT *dst_def);
-  inline schema::MetaGraphT *GetOutput() { return graph_defT_; }
+  inline schema::MetaGraphT *GetOutput() const { return graph_defT_; }
 
  protected:
   std::vector<schema::CNodeT *> GetGraphNodes();
