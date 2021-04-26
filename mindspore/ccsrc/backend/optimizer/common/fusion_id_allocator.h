@@ -30,7 +30,7 @@ class FusionIdAllocator {
 
   void Init();
   int64_t AllocateFusionId();
-  bool HasFusionIdAttr(const AnfNodePtr &node);
+  bool HasFusionIdAttr(const AnfNodePtr &node) const;
   int64_t GetFusionId(const AnfNodePtr &node);
   void SetFusionId(const AnfNodePtr &node, int64_t id);
 

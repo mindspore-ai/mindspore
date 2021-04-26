@@ -29,7 +29,7 @@ int64_t FusionIdAllocator::AllocateFusionId() {
   return fusion_id;
 }
 
-bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) {
+bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
