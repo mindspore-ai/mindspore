@@ -42,7 +42,7 @@
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -407,7 +407,7 @@ bool AddRecomputationPass(const ResourcePtr &res) {
 }
 
 bool AddCacheEmbeddingPass(const ResourcePtr &res) {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_ps_mode()) {
     return true;
   }

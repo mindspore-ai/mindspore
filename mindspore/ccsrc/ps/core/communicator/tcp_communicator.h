@@ -34,13 +34,26 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-enum class TcpUserCommand { kPush, kPull, kCount, kReachThreshold, kResetCount, kGetValue, kPutValue, kCounterEvent };
+enum class TcpUserCommand {
+  kPush,
+  kPull,
+  kCount,
+  kReachThreshold,
+  kResetCount,
+  kGetMetadata,
+  kUpdateMetadata,
+  kCounterEvent
+};
 
 const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
-  {TcpUserCommand::kPush, "push"},           {TcpUserCommand::kPull, "pull"},
-  {TcpUserCommand::kCount, "count"},         {TcpUserCommand::kReachThreshold, "reachThreshold"},
-  {TcpUserCommand::kResetCount, "resetCnt"}, {TcpUserCommand::kGetValue, "getValue"},
-  {TcpUserCommand::kPutValue, "putValue"},   {TcpUserCommand::kCounterEvent, "counterEvent"},
+  {TcpUserCommand::kPush, "push"},
+  {TcpUserCommand::kPull, "pull"},
+  {TcpUserCommand::kCount, "count"},
+  {TcpUserCommand::kReachThreshold, "countReachThreshold"},
+  {TcpUserCommand::kResetCount, "resetCnt"},
+  {TcpUserCommand::kGetMetadata, "getMetadata"},
+  {TcpUserCommand::kUpdateMetadata, "updateMetadata"},
+  {TcpUserCommand::kCounterEvent, "counterEvent"},
 };
 
 class TcpCommunicator : public CommunicatorBase {

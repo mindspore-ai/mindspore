@@ -212,7 +212,7 @@ if(ENABLE_GPU)
     )
 endif()
 
-if(ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
+if(ENABLE_CPU AND NOT WIN32)
     install(
         TARGETS ps_cache
         DESTINATION ${INSTALL_LIB_DIR}

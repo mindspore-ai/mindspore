@@ -49,7 +49,7 @@
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
@@ -528,7 +528,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 
   std::string backend = MsContext::GetInstance()->backend_policy();
 
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_server()) {
     resource->results()[kBackend] = compile::CreateBackend();
     return PServerPipeline();
@@ -961,7 +961,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
@@ -1027,7 +1027,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   }
   ConfigManager::GetInstance().set_iter_num(size);
   // PS cache does not support loop sink.
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     ConfigManager::GetInstance().set_iter_num(1);
@@ -1150,7 +1150,7 @@ void FinalizeBackend() {
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   pynative::ClearPyNativeSession();
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();

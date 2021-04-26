@@ -35,7 +35,7 @@ function(ms_build_flatbuffers source_schema_files
         set(total_schema_dirs -I ${schema_dir} ${total_schema_dirs})
     endforeach()
 
-    foreach(schema ${source_schema_files})
+    foreach(schema IN LISTS ${source_schema_files})
         get_filename_component(filename ${schema} NAME_WE)
         if(NOT ${generated_output_dir} STREQUAL "")
             set(generated_file ${generated_output_dir}/${filename}_generated.h)

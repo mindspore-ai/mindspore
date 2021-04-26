@@ -244,7 +244,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph);
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
   void InitPsWorker(const KernelGraphPtr &kernel_graph);
@@ -263,7 +263,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   bool initialized_ps_cache_{false};
 #endif
 };

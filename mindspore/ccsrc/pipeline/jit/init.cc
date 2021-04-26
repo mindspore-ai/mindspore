@@ -34,7 +34,7 @@
 #else
 #include "runtime/device/gpu/distribution/collective_fake_init.h"
 #endif
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/util.h"
 #endif
 #include "ps/ps_context.h"

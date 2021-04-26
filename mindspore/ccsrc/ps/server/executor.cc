@@ -169,7 +169,7 @@ bool Executor::HandleOverwriteWeightsByKey(const std::map<std::string, Address> 
 }
 
 AddressPtr Executor::HandlePull(const std::string &param_name) {
-  MS_LOG(INFO) << "Handle blocking pull msg for parameter " << param_name;
+  MS_LOG(INFO) << "Handle blocking pull message for parameter " << param_name;
   if (param_aggrs_.count(param_name) == 0) {
     MS_LOG(WARNING) << "Parameter " << param_name << " is not registered in server.";
     return nullptr;
@@ -191,11 +191,6 @@ AddressPtr Executor::HandlePull(const std::string &param_name) {
     param_aggr->ResetOptimizingStatus();
   }
   return addr;
-}
-
-std::map<std::string, AddressPtr> Executor::HandleAsyncGetModel() {
-  std::unique_lock<std::mutex> lock(model_mutex_);
-  return GetModel();
 }
 
 std::map<std::string, AddressPtr> Executor::HandleGetWeightsByKey(const std::vector<std::string> &param_names) {

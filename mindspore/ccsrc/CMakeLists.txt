@@ -373,7 +373,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore mindspore_gvar)
     target_link_libraries(_c_expression PRIVATE -Wl,-force_load mindspore mindspore_core -Wl,-noall_load)
 else()
-    if(ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
+    if(ENABLE_CPU AND NOT WIN32)
         target_link_libraries(mindspore proto_input mindspore::protobuf
             mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::json)
         target_link_libraries(mindspore -Wl,--no-as-needed mindspore::event_core ps_cache)

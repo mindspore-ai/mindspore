@@ -21,7 +21,7 @@
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
 #include "pybind_api/ir/tensor_py.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 

@@ -61,8 +61,8 @@ class ParameterAggregator {
   ~ParameterAggregator() = default;
 
   // Initialize ParameterAggregator with a cnode. This cnode is normally a optimizer kernel for now.
-  // The parameter required_count helps ParameterAggregator to judge the current status if it's stateful.
-  bool Init(const CNodePtr &cnode, size_t required_count = 0);
+  // The parameter threshold_count helps ParameterAggregator to judge the current status if it's stateful.
+  bool Init(const CNodePtr &cnode, size_t threshold_count = 0);
 
   // Update old data stored in ParameterAggregator with new data.
   // The data could have many meanings: weights, gradients, learning_rate, momentum, etc.

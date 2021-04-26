@@ -18,7 +18,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/kernel.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #endif
@@ -68,7 +68,7 @@ void PSContext::Reset() {
   is_worker_ = false;
   is_pserver_ = false;
   is_sched_ = false;
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps_cache_instance.Finalize();
     set_cache_enable(false);
@@ -108,46 +108,62 @@ int PSContext::ps_rank_id() const { return rank_id_; }
 
 void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
                                     size_t vocab_size) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.InsertHashTableSize(param_name, cache_vocab_size, embedding_size, vocab_size);
 #endif
 }
 
 void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
                                       size_t cache_vocab_size, size_t embedding_size) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size, embedding_size);
 #endif
 }
 
 void PSContext::InsertWeightInitInfo(const std::string &param_name, size_t global_seed, size_t op_seed) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.InsertWeightInitInfo(param_name, global_seed, op_seed);
 #endif
 }
 
 void PSContext::InsertAccumuInitInfo(const std::string &param_name, float init_val) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.InsertAccumuInitInfo(param_name, init_val);
 #endif
 }
 
 void PSContext::CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.CloneHashTable(dest_param_name, src_param_name);
 #endif
 }
 
 void PSContext::set_cache_enable(bool cache_enable) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   PsDataPrefetch::GetInstance().set_cache_enable(cache_enable);
 #endif
 }
 
 void PSContext::set_rank_id(int rank_id) const {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.set_rank_id(rank_id);
 #endif
 }
+
+void PSContext::set_fl_name(const std::string &fl_name) { fl_name_ = fl_name; }
+
+const std::string &PSContext::fl_name() const { return fl_name_; }
+
+void PSContext::set_fl_iteration_num(uint64_t fl_iteration_num) { fl_iteration_num_ = fl_iteration_num; }
+
+uint64_t PSContext::fl_iteration_num() const { return fl_iteration_num_; }
+
+void PSContext::set_client_epoch_num(uint64_t client_epoch_num) { client_epoch_num_ = client_epoch_num; }
+
+uint64_t PSContext::client_epoch_num() const { return client_epoch_num_; }
+
+void PSContext::set_client_batch_size(uint64_t client_batch_size) { client_batch_size_ = client_batch_size; }
+
+uint64_t PSContext::client_batch_size() const { return client_batch_size_; }
 }  // namespace ps
 }  // namespace mindspore

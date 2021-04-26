@@ -25,15 +25,15 @@
 namespace mindspore {
 namespace ps {
 namespace server {
-bool ParameterAggregator::Init(const CNodePtr &cnode, size_t required_count) {
+bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   MS_EXCEPTION_IF_NULL(cnode);
   memory_register_ = std::make_shared<MemoryRegister>();
   MS_EXCEPTION_IF_NULL(memory_register_);
 
-  required_push_count_ = required_count;
+  required_push_count_ = threshold_count;
   // The required_pull_count_ is the count for Pull, which should be the same as required_push_count_.
   // required_pull_count_ normally used in parameter server training mode.
-  required_pull_count_ = required_count;
+  required_pull_count_ = threshold_count;
 
   MS_LOG(DEBUG) << "Start initializing kernels for " << AnfAlgo::GetCNodeName(cnode);
   InitAggregationKernels(cnode);
