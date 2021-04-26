@@ -198,6 +198,15 @@ bool TrtConverterContext::Serialize(std::string *model) {
   MS_EXCEPTION_IF_NULL(model);
   builder_->setMaxBatchSize(batch_size_);
   config_->setMaxWorkspaceSize(workspace_size_);
+
+  // Set precision mode
+  const auto &context = MsContext::GetInstance();
+  const auto &precision_mode = context->get_param<std::string>(MS_CTX_INFER_PRECISION_MODE);
+  if (precision_mode == "fp16") {
+    MS_LOG(WARNING) << "Inference with mixed precision mode. It will take few minutes for operators selection.";
+    config_->setFlag(nvinfer1::BuilderFlag::kFP16);
+  }
+
   engine_ = TrtPtr(builder_->buildEngineWithConfig(*network_, *config_));
   MS_EXCEPTION_IF_NULL(engine_);
 
