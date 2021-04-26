@@ -59,6 +59,7 @@ if __name__ == '__main__':
         rank = 0
         group_size = 1
         context.set_context(device_id=args_opt.device_id)
+        config.loss_scale = 128
 
     # define network
     net = ShuffleNetV1(model_size=args_opt.model_size)
