@@ -283,6 +283,82 @@ BaseRef CreateOutputTensors(const AnfNodePtr &output_node, const KernelGraphPtr 
 
   return CreateOutputTensor(item_with_index, graph, input_tensors);
 }
+
+void AllocateContinuousMemoryForInput(const AnfNodePtr &kernel, const DeviceContext *device_context,
+                                      bool is_all_nop_node) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(device_context);
+  bool is_need_alloc_memory = false;
+  size_t total_size = 0;
+  std::vector<size_t> size_list;
+  std::vector<DeviceTensorPtr> addr_list;
+
+  const auto &kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  const auto &intput_sizes = kernel_mod->GetInputSizeList();
+  for (size_t i = 0; i < intput_sizes.size(); ++i) {
+    DeviceTensorPtr device_tensor;
+    if (is_all_nop_node) {
+      // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
+      device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+    } else {
+      device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+    }
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    //  In the scene of communication op and computing op parallel multi stream, the input address of communication op
+    //  can't be reused, so set the max reference count.
+    device_tensor->set_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCountUsed();
+
+    if (device_tensor->GetPtr() == nullptr) {
+      is_need_alloc_memory = true;
+    }
+    total_size += intput_sizes[i];
+    size_list.emplace_back(intput_sizes[i]);
+    addr_list.emplace_back(device_tensor);
+  }
+
+  if (is_need_alloc_memory) {
+    auto ret = device_context->AllocateContinuousMemory(addr_list, total_size, size_list);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+    }
+  }
+}
+
+void AllocateContinuousMemoryForOutput(const AnfNodePtr &kernel, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(device_context);
+  bool is_need_alloc_memory = false;
+  size_t total_size = 0;
+  std::vector<size_t> size_list;
+  std::vector<DeviceTensorPtr> addr_list;
+
+  const auto &kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  const auto &output_sizes = kernel_mod->GetOutputSizeList();
+  for (size_t i = 0; i < output_sizes.size(); ++i) {
+    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    // One time application for continuous memory, so set the max reference count.
+    device_tensor->set_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCountUsed();
+
+    if (device_tensor->GetPtr() == nullptr) {
+      is_need_alloc_memory = true;
+    }
+    total_size += output_sizes[i];
+    size_list.emplace_back(output_sizes[i]);
+    addr_list.emplace_back(device_tensor);
+  }
+
+  if (is_need_alloc_memory) {
+    auto ret = device_context->AllocateContinuousMemory(addr_list, total_size, size_list);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+    }
+  }
+}
 }  // namespace
 
 void GraphScheduler::Initialize() {
@@ -408,6 +484,14 @@ void GraphScheduler::PrepareRun(const KernelGraphPtr &graph, const std::vector<T
     MS_EXCEPTION_IF_NULL(output_node);
     MS_LOG(INFO) << "Create node output: " << output_node->fullname_with_scope();
     outputs->emplace_back(CreateOutputTensors(output_node, graph, *input_tensors));
+  }
+
+  // 4.Prepare the continuous memory for communication kernel.
+  for (const auto &kernel : graph->execution_order()) {
+    if (AnfAlgo::IsCommunicationOp(kernel)) {
+      AllocateContinuousMemoryForInput(kernel, device_context, graph->is_all_nop_node());
+      AllocateContinuousMemoryForOutput(kernel, device_context);
+    }
   }
 }
 

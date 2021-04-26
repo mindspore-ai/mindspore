@@ -74,9 +74,16 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
     std::string error_info = "Launch kernel failed: " + kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
-  SendOutput(context);
-  FreeMemory(context);
+
+  // The input is invalid and needs to be erased when finish kernel launch.
   EraseInput(context);
+
+  //  Note that FreeMemory must be in front of SendOutput, because SendOutput will trigger AllocateMemory of the next
+  //  actor and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor
+  //  is in front of AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure
+  //  the execution order and avoid the illegal memory timing problem.
+  FreeMemory(context);
+  SendOutput(context);
 }
 
 bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
@@ -188,11 +195,19 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
 void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
-    (void)input_op_datas_.erase(context->sequential_num_);
+    auto ret = input_op_datas_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input data failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 
   if (input_controls_num_ != 0) {
-    (void)input_op_controls_.erase(context->sequential_num_);
+    auto ret = input_op_controls_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input controls failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 }
 

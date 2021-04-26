@@ -30,6 +30,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/framework/graph_compiler.h"
 #include "runtime/framework/graph_scheduler.h"
+#include "utils/scoped_long_running.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
 #endif
@@ -345,6 +346,7 @@ VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
   MS_EXCEPTION_IF_NULL(actor_set);
 
   // Run actor DAG.
+  mindspore::ScopedLongRunning long_running;
   VectorRef outputs;
   runtime::GraphScheduler::GetInstance().PrepareRun(kernel_graph, &inputs, &outputs);
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {

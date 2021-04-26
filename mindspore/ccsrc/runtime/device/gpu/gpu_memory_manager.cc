@@ -61,6 +61,7 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
       FreeMemFromMemPool(old_addr);
     }
     addr_list[i]->ptr_ = new_addr;
+    addr_list[i]->size_ = size_list[i];
     addr_list[i]->from_mem_pool_ = true;
   }
   if (need_sync_stream) {

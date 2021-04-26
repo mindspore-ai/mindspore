@@ -214,6 +214,7 @@ bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList ad
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
     MS_EXCEPTION_IF_NULL(addr_list[i]);
     addr_list[i]->ptr_ = device_ptr_list[i];
+    addr_list[i]->size_ = size_list[i];
     addr_list[i]->from_mem_pool_ = true;
   }
   return true;

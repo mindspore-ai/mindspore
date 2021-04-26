@@ -34,6 +34,8 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+static thread_local bool cur_thread_device_inited{false};
+
 bool GPUDeviceContext::Initialize() {
   if (initialized_ == true) {
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SetDevice(UintToInt(device_context_key_.device_id_)),
@@ -130,6 +132,9 @@ void GPUDeviceContext::Destroy() {
 
 bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
+  if (!BindDeviceToCurrentThread()) {
+    return false;
+  }
   auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
   if (!device_ptr) {
     return false;
@@ -147,22 +152,12 @@ void GPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   address->ptr_ = nullptr;
 }
 
-bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddress *> &addr_list, size_t total_size,
+bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                                 const std::vector<size_t> &size_list) const {
-  auto device_ptr_list = mem_manager_->MallocContinuousMemFromMemPool(total_size, size_list);
-  if (device_ptr_list.size() == 0) {
+  if (!BindDeviceToCurrentThread()) {
     return false;
   }
-  if (addr_list.size() != device_ptr_list.size()) {
-    MS_LOG(EXCEPTION) << "The size of device list is not equal to the size of address list.";
-  }
-  for (size_t i = 0; i < addr_list.size(); i++) {
-    MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
-    MS_EXCEPTION_IF_NULL(addr_list[i]);
-    addr_list[i]->ptr_ = device_ptr_list[i];
-    addr_list[i]->from_mem_pool_ = true;
-  }
-  return true;
+  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
 }
 
 DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -265,6 +260,10 @@ bool GPUDeviceContext::LaunchKernel(KernelMod *kernel_mod, const std::vector<Add
                                     const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (!BindDeviceToCurrentThread()) {
+    return false;
+  }
+  std::lock_guard<std::mutex> locker(launch_mutex_);
   return kernel_mod->Launch(inputs, workspace, outputs, streams_.front());
 }
 
@@ -273,6 +272,20 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
     MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
   }
   return GPUDeviceManager::GetInstance().SyncStream(streams_[stream_id]);
+}
+
+bool GPUDeviceContext::BindDeviceToCurrentThread() const {
+  if (cur_thread_device_inited) {
+    return true;
+  }
+
+  if (!CudaDriver::SetDevice(UintToInt(device_context_key_.device_id_))) {
+    MS_LOG(ERROR) << "Failed to set device id: " << device_context_key_.device_id_;
+    return false;
+  }
+
+  cur_thread_device_inited = true;
+  return true;
 }
 
 MS_REGISTER_DEVICE(kGPUDevice, GPUDeviceContext);

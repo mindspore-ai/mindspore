@@ -82,6 +82,7 @@ class GraphScheduler {
   // 1. Prepare the data of device tensor store(such as weights and value nodes of graph).
   // 2. Prepare the data of host tensor queue(such as non weighted parameters of graph).
   // 3. Prepare the output tensor of graph.
+  // 4.Prepare the continuous memory for communication kernel.
   void PrepareRun(const KernelGraphPtr &graph, const std::vector<TensorPtr> *input_tensors, VectorRef *const &outputs);
 
   // The processing entry of actors running.

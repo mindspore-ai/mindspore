@@ -987,12 +987,13 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // AbstractNone indicates there is no output for this apply node.
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
   app_init->set_abstract(abstract_none);
+  // Before the graph compiling, need reset the iter num.
+  ConfigManager::GetInstance().ResetIterNum();
 
   auto backend = compile::CreateBackend();
   MS_EXCEPTION_IF_NULL(backend);
   // The data set graph compiling and running of mindRT.
   if (compile::IsMindRTUsed()) {
-    ConfigManager::GetInstance().set_iter_num(size);
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
     auto graph_id = mindrt_backend->CompileGraphs(func_graph);
@@ -1000,13 +1001,13 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
     if (need_run) {
       (void)mindrt_backend->RunGraph(graph_id, args);
     }
+    ConfigManager::GetInstance().set_iter_num(size);
     return true;
   }
 
   auto convert_fn = backend->convert_fn();
   MS_EXCEPTION_IF_NULL(convert_fn);
   // Convert CNodeList to LinConvertResult.
-  ConfigManager::GetInstance().set_iter_num(1);
   auto segment = std::make_shared<GraphSegment>(std::vector<AnfNodePtr>{app_init}, false);
   auto runner = convert_fn(segment, "");
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {

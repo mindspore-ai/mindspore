@@ -22,6 +22,7 @@
 #include "common/trans.h"
 #include "utils/convert_utils.h"
 #include "ir/tensor.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace runtime {
@@ -226,6 +227,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph);
 
+  graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
+
   return graph->graph_id();
 }
 
@@ -257,6 +260,9 @@ GraphId GraphCompiler::CompileGraph(session::OpRunInfo *op_run_info, const Graph
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph);
+
+  graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
+
   // Transform graph to actor DAG, contains build and link.
   GraphScheduler::GetInstance().Transform({graph}, {device_context_}, input_tensors, nullptr,
                                           GraphExecutionStrategy::kStep);
