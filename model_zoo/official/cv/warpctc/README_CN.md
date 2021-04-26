@@ -42,8 +42,8 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 
 ## 环境要求
 
-- 硬件（Ascend/GPU）
-    - 使用Ascend或GPU处理器来搭建硬件环境。
+- 硬件（Ascend/GPU/CPU）
+    - 使用Ascend,GPU或者CPU处理器来搭建硬件环境。
 - 框架
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - 如需查看详情，请参见如下资源：
@@ -92,7 +92,7 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
     - 在GPU环境运行
 
     ```bash
-    # Ascend分布式训练示例
+    # GPU分布式训练示例
     $ bash run_distribute_train_for_gpu.sh 8 ../data/train
 
     # GPU单机训练示例
@@ -100,6 +100,20 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 
     # GPU评估示例
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
+    ```
+
+    - 在CPU环境运行
+
+    ```bash
+    # CPU训练示例
+    $ bash run_standalone_train.sh ../data/train CPU
+    或者
+    python train.py --dataset_path=./data/train --platform=CPU
+
+    # CPU评估示例
+    $ bash run_eval.sh ../data/test warpctc-30-97.ckpt CPU
+    或者
+    python eval.py --dataset_path=./data/test --checkpoint_path=warpctc-30-97.ckpt --platform=CPU
     ```
 
 ## 脚本说明

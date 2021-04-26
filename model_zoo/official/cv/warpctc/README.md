@@ -37,8 +37,8 @@ The dataset is self-generated using a third-party library called [captcha](https
 
 ## [Environment Requirements](#contents)
 
-- Hardware（Ascend/GPU）
-    - Prepare hardware environment with Ascend or GPU processor.
+- Hardware（Ascend/GPU/CPU）
+    - Prepare hardware environment with Ascend, GPU or CPU processor.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
@@ -68,13 +68,13 @@ The dataset is self-generated using a third-party library called [captcha](https
     - Running on Ascend
 
     ```bash
-    # distribute training example in Ascend
+    # distribute training example on Ascend
     $ bash run_distribute_train.sh rank_table.json ../data/train
 
-    # evaluation example in Ascend
+    # evaluation example on Ascend
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt Ascend
 
-    # standalone training example in Ascend
+    # standalone training example on Ascend
     $ bash run_standalone_train.sh ../data/train Ascend
 
     ```
@@ -88,14 +88,28 @@ The dataset is self-generated using a third-party library called [captcha](https
     - Running on GPU
 
     ```bash
-    # distribute training example in GPU
+    # distribute training example on GPU
     $ bash run_distribute_train_for_gpu.sh 8 ../data/train
 
-    # standalone training example in GPU
+    # standalone training example on GPU
     $ bash run_standalone_train.sh ../data/train GPU
 
-    # evaluation example in GPU
+    # evaluation example on GPU
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt GPU
+    ```
+
+    - Running on CPU
+
+    ```bash
+    # training example on CPU
+    $ bash run_standalone_train.sh ../data/train CPU
+    or
+    python train.py --dataset_path=./data/train --platform=CPU
+
+    # evaluation example on CPU
+    $ bash run_eval.sh ../data/test warpctc-30-97.ckpt CPU
+    or
+    python eval.py --dataset_path=./data/test --checkpoint_path=warpctc-30-97.ckpt --platform=CPU
     ```
 
 ## [Script Description](#contents)
