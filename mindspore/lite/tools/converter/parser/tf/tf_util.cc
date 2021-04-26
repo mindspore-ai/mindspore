@@ -70,9 +70,13 @@ TypeId TensorFlowUtils::ParseAttrDataType(const tensorflow::NodeDef &node_def, c
 }
 
 bool TensorFlowUtils::DecodeInt64(std::string_view *str_view, uint64_t *value) {
-  if (str_view == nullptr || value == nullptr) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (str_view == nullptr) {
     *value = 0;
-    MS_LOG(ERROR) << "str_view or value is nullptr";
+    MS_LOG(ERROR) << "str_view is nullptr";
     return false;
   }
   auto data = str_view->data();

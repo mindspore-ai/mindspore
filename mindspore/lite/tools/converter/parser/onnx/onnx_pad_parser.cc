@@ -45,6 +45,9 @@ ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const 
         padding_mode = mindspore::PaddingMode::REFLECT;
       } else if (mode == "edge") {
         padding_mode = mindspore::PaddingMode::SYMMETRIC;
+      } else {
+        MS_LOG(ERROR) << "Unsupported pad mode: " << mode;
+        return nullptr;
       }
       prim->set_padding_mode(padding_mode);
     }
