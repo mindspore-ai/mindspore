@@ -1144,7 +1144,7 @@ class ExecuteOrderGenerator {
     return input;
   }
 
-  void RemoveSameInputsAssigns(std::vector<CNodePtr> *exec_order) {
+  void RemoveSameInputsAssigns(std::vector<CNodePtr> *exec_order) const {
     for (auto iter = exec_order->begin(); iter != exec_order->end();) {
       auto &node = *iter;
       auto &inputs = node->inputs();

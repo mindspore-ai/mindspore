@@ -28,6 +28,5 @@ class LoadEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 };
-
 }  // namespace mindspore::opt::irpass
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_LOAD_ELIMINATE_H_

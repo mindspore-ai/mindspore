@@ -67,7 +67,7 @@ AnfNodePtr AddMonadParameter(const FuncGraphPtr &func_graph, const std::string &
   // If io monad parameter added before u monad parameter, should insert u monad before io monad in parameters
   if (io_monad_location != params_size && abs->isa<abstract::AbstractUMonad>()) {
     std::vector<AnfNodePtr> params = func_graph->parameters();
-    (void)params.insert(params.begin() + io_monad_location, para);
+    (void)params.insert(params.begin() + SizeToInt(io_monad_location), para);
     func_graph->set_parameters(params);
   } else {
     func_graph->add_parameter(para);
