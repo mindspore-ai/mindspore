@@ -21,14 +21,6 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void EluGradCPUKernel::EluGrad(const T *input0, const T *input1, T *out, size_t start, size_t end) {
-  const T alpha = static_cast<T>(1);
-  for (size_t i = start; i < end; i++) {
-    out[i] = (input1[i] < static_cast<T>(0)) ? input0[i] * (input1[i] + alpha) : input0[i];
-  }
-}
-
 void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
@@ -57,29 +49,13 @@ void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
 
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    threads.emplace_back(std::thread(&EluGradCPUKernel::EluGrad<T>, this, input0, input1, output, start, end));
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
+  auto task = [input0, input1, output](const size_t start, const size_t end) {
+    const T alpha = T(1);
+    for (size_t i = start; i < end; i++) {
+      output[i] = (input1[i] < static_cast<T>(0)) ? input0[i] * (input1[i] + alpha) : input0[i];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, lens);
 }
 }  // namespace kernel
 }  // namespace mindspore
