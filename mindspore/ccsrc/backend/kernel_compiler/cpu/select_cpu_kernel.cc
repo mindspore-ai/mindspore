@@ -37,7 +37,7 @@ void SelectCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool SelectCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool SelectCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                 const std::vector<AddressPtr> &outputs) {
   auto input_cond = reinterpret_cast<bool *>(inputs[0]->addr);
   auto input_x = reinterpret_cast<T *>(inputs[1]->addr);

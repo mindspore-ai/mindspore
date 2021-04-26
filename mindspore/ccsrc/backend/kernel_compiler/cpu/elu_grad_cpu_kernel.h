@@ -35,8 +35,6 @@ class EluGradCPUKernel : public CPUKernel {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  private:
-  template <typename T>
-  void EluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
   TypeId dtype_{kTypeUnknown};
 };
 
