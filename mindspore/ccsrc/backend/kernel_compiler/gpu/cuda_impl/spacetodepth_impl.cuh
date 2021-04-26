@@ -19,7 +19,10 @@
 
 #define SPACETODEPTH_BUFFER_DIMENSION 4
 template <typename T>
-void CalSpaceToDepth(const size_t size, const T *input, const size_t *input_shape, const size_t *output_shape,
-                     const size_t r, T *output, cudaStream_t cuda_stream);
+void CalSpaceToDepth(const size_t size, const T *input, const size_t in,
+                     const size_t ic, const size_t ih, const size_t iw,
+                     const size_t on, const size_t oc, const size_t oh,
+                     const size_t ow, const size_t r, T *output,
+                     cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPACETODEPTH_H_

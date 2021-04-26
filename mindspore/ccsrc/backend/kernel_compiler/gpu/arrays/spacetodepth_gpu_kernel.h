@@ -41,25 +41,11 @@ class SpaceToDepthFwdKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
-    // get device buffer shape ptr
-    size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
-    size_t *output_shape = GetDeviceAddress<size_t>(workspace, 1);
-
-    // buffer shape memcpy from host to device
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size1_, cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync input_shape failed");
-
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_shape, &output_shape_[0], workspace_size2_,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync input_shape failed");
     // get input size
     size_t size = input_size_ / sizeof(T);
 
     // call cuda kernel
-    CalSpaceToDepth(size, input, input_shape, output_shape, block_size_, output,
+    CalSpaceToDepth(size, input, in_, ic_, ih_, iw_, on_, oc_, oh_, ow_, block_size_, output,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -89,14 +75,19 @@ class SpaceToDepthFwdKernel : public GpuKernel {
     input_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
       input_size_ *= input_shape[i];
-      input_shape_.push_back(input_shape[i]);
     }
     input_size_ *= sizeof(T);
     output_size_ = input_size_;
-    output_shape_.push_back(input_shape[0]);
-    output_shape_.push_back(input_shape[1] * block_size_ * block_size_);
-    output_shape_.push_back(input_shape[2] / block_size_);
-    output_shape_.push_back(input_shape[3] / block_size_);
+
+    in_ = input_shape[0];
+    ic_ = input_shape[1];
+    ih_ = input_shape[2];
+    iw_ = input_shape[3];
+
+    on_ = in_;
+    oc_ = ic_ * block_size_ * block_size_;
+    oh_ = ih_ / block_size_;
+    ow_ = iw_ / block_size_;
     // Private members Initialize
     InitSizeLists();
     return true;
@@ -107,11 +98,15 @@ class SpaceToDepthFwdKernel : public GpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     block_size_ = 0;
-    workspace_size1_ = 0;
-    workspace_size2_ = 0;
+    in_ = 0;
+    ic_ = 0;
+    ih_ = 0;
+    iw_ = 0;
+    on_ = 0;
+    oc_ = 0;
+    oh_ = 0;
+    ow_ = 0;
 
-    input_shape_.clear();
-    output_shape_.clear();
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -121,16 +116,10 @@ class SpaceToDepthFwdKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
-    workspace_size1_ = shape_size_ * sizeof(size_t);
-    workspace_size2_ = shape_size_ * sizeof(size_t);
-    workspace_size_list_.push_back(workspace_size1_);
-    workspace_size_list_.push_back(workspace_size2_);
     return;
   }
 
  private:
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
@@ -138,8 +127,14 @@ class SpaceToDepthFwdKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t block_size_;
-  size_t workspace_size1_;
-  size_t workspace_size2_;
+  size_t in_;
+  size_t ic_;
+  size_t ih_;
+  size_t iw_;
+  size_t on_;
+  size_t oc_;
+  size_t oh_;
+  size_t ow_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -22,55 +22,51 @@ from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
-def DepthToSpaceNumpy(arr, block_size):
-    '''
-     DepthToSpace ops use numpy
-    '''
-    tmpshape = arr.shape
-    newshape = []
-    newshape.append(tmpshape[0])
-    newshape.append(tmpshape[1]//block_size//block_size)
-    newshape.append(tmpshape[2]*block_size)
-    newshape.append(tmpshape[3]*block_size)
-    output = arr.reshape(newshape[0], newshape[1], block_size, block_size, tmpshape[2], tmpshape[3])
-    output = np.transpose(output, (0, 1, 4, 2, 5, 3))
-    output = output.reshape(newshape)
-    return output
-
 class DepthToSpaceNet(nn.Cell):
-    def __init__(self, nptype, block_size=2, input_shape=(1, 4, 3, 3)):
+    def __init__(self, nptype, block_size=2, input_shape=(1, 12, 1, 1)):
         super(DepthToSpaceNet, self).__init__()
         self.DepthToSpace = P.DepthToSpace(2)
         input_size = 1
         for i in input_shape:
             input_size = input_size*i
-        self.data_np = np.arange(input_size).reshape(input_shape).astype(nptype)
-        self.x = Parameter(initializer(Tensor(self.data_np), input_shape), name='x')
+        data_np = np.arange(input_size).reshape(input_shape).astype(nptype)
+        self.x1 = Parameter(initializer(Tensor(data_np), input_shape), name='x1')
+
 
     @ms_function
     def construct(self):
-        return self.DepthToSpace(self.x)
+        y1 = self.DepthToSpace(self.x1)
+        return y1
 
 
-def DepthToSpace(nptype, block_size=2, input_shape=(1, 4, 3, 3)):
+def DepthToSpace(nptype, block_size=2, input_shape=(1, 12, 1, 1)):
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_size = 1
     for i in input_shape:
         input_size = input_size*i
-    expect = np.arange(input_size).reshape(input_shape).astype(nptype)
-    expect = DepthToSpaceNumpy(expect, block_size)
+    expect = np.array([[[[0, 3],
+                         [6, 9]],
+                        [[1, 4],
+                         [7, 10]],
+                        [[2, 5],
+                         [8, 11]]]]).astype(nptype)
 
     dts = DepthToSpaceNet(nptype, block_size, input_shape)
     output = dts()
+    print(output)
     assert (output.asnumpy() == expect).all()
 
-def DepthToSpace_pynative(nptype, block_size=2, input_shape=(1, 4, 3, 3)):
+def DepthToSpace_pynative(nptype, block_size=2, input_shape=(1, 12, 1, 1)):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_size = 1
     for i in input_shape:
         input_size = input_size*i
-    expect = np.arange(input_size).reshape(input_shape).astype(nptype)
-    expect = DepthToSpaceNumpy(expect, block_size)
+    expect = np.array([[[[0, 3],
+                         [6, 9]],
+                        [[1, 4],
+                         [7, 10]],
+                        [[2, 5],
+                         [8, 11]]]]).astype(nptype)
 
     dts = P.DepthToSpace(2)
     arr_input = Tensor(np.arange(input_size).reshape(input_shape).astype(nptype))
