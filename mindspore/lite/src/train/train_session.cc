@@ -238,6 +238,7 @@ void TrainSession::CompileEvalOutputs() {
         if (eval_output_node_map_.find(in_kernel->name()) == eval_output_node_map_.end()) {
           auto *ms_tensor = in_kernel->out_tensors().at(0);
           if (ms_tensor != nullptr) {
+            ms_tensor->set_init_ref_count(ms_tensor->init_ref_count() + 1);
             eval_output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
             auto index = TSFindTensor(tensors_, ms_tensor);
             if (index != tensors_.size()) {
