@@ -170,10 +170,16 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   // dev_matrix_shape:[2,4,8,16,32] (transpose_b is false)
   // [16] in the example above
   if (!transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
-    MS_LOG(ERROR) << name_ << " : Strategies of relevant dimensions are not equal.";
+    MS_LOG(ERROR) << name_ << " : Can not do this operator in the strategy: (" << ShapeToString(mat_a_strategy) << ", "
+                  << ShapeToString(mat_b_strategy)
+                  << "), the transpose_b is false, the shard num of first input's column is " << mat_a_strategy.back()
+                  << ", but the shard num of second input's row is " << mat_b_strategy.at(SECOND_FROM_END(mat_b_size));
     return FAILED;
   } else if (transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.back())) {
-    MS_LOG(ERROR) << name_ << " : Strategies of relevant dimensions are not equal.";
+    MS_LOG(ERROR) << name_ << " : Can not do this operator in the strategy: (" << ShapeToString(mat_a_strategy) << ", "
+                  << ShapeToString(mat_b_strategy)
+                  << "), the transpose_b is true, the shard num of first input's column is " << mat_a_strategy.back()
+                  << ", but the shard num of second input's column is " << mat_b_strategy.back();
     return FAILED;
   }
 
