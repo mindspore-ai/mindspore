@@ -274,10 +274,12 @@ def train():
         if i % args.log_interval == 0:
             time_used = time.time() - t_end
             epoch = int(i / args.steps_per_epoch)
+            per_step_time = time_used/args.log_interval
             fps = args.per_batch_size * (i - old_progress) * args.group_size / time_used
             if args.rank == 0:
                 args.logger.info(
-                    'epoch[{}], iter[{}], {}, {:.2f} imgs/sec, lr:{}'.format(epoch, i, loss_meter, fps, lr[i]))
+                    'epoch[{}], iter[{}], {}, {:.2f} imgs/sec, lr:{},'
+                    ' per_step_time:{}'.format(epoch, i, loss_meter, fps, lr[i], per_step_time))
             t_end = time.time()
             loss_meter.reset()
             old_progress = i
