@@ -25,7 +25,7 @@
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/global_context.h"
 
-#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -67,9 +67,13 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
   if (build_num_padded_ > 0) {
     sample_json = ToJson(build_sample_);
   }
-  new_mind_record_op = std::make_shared<MindRecordOp>(
-    build_num_mind_record_workers_, build_dataset_file_, build_load_dataset_, build_op_connector_queue_size_,
-    build_columns_to_load_, build_operators_, build_num_padded_, sample_json, build_sample_bytes_);
+
+  std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
+
+  new_mind_record_op =
+    std::make_shared<MindRecordOp>(build_num_mind_record_workers_, build_dataset_file_, build_load_dataset_,
+                                   build_op_connector_queue_size_, build_columns_to_load_, build_operators_,
+                                   build_num_padded_, sample_json, build_sample_bytes_, std::move(shard_reader));
 
   RETURN_IF_NOT_OK(new_mind_record_op->Init());
   *ptr = std::move(new_mind_record_op);
@@ -110,8 +114,10 @@ mindrecord::json MindRecordOp::Builder::ToJson(const py::handle &obj) {
 MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::string> dataset_file, bool load_dataset,
                            int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
-                           const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes)
-    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::make_shared<SequentialSamplerRT>(0, 0)),
+                           const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes,
+                           std::unique_ptr<ShardReader> shard_reader)
+    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size,
+                     std::make_shared<MindRecordSamplerRT>(shard_reader.get())),
       dataset_file_(dataset_file),
       load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),
@@ -120,7 +126,8 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
       ended_worker_(0),
       num_padded_(num_padded),
       sample_json_(sample_json),
-      sample_bytes_(sample_bytes) {
+      sample_bytes_(sample_bytes),
+      shard_reader_(std::move(shard_reader)) {
   io_block_queues_.Init(num_workers_, op_connector_queue_size);
   epoch_sync_flag_ = true;  // MindRecordOp needs to turn this flag on, otherwise, calling ShuffleTask() before all
                             // tasks are consumed by the worker threads would cause problem.
@@ -128,7 +135,6 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
 
 // Private helper method to encapsulate some common construction/reset tasks
 Status MindRecordOp::Init() {
-  shard_reader_ = std::make_unique<ShardReader>();
   auto rc = shard_reader_->Open(dataset_file_, load_dataset_, num_mind_record_workers_, columns_to_load_, operators_,
                                 num_padded_);
 
@@ -363,9 +369,6 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
 Status MindRecordOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(MappableLeafOp::Reset());  // Call our super class reset first.
-
-  shard_reader_->ShuffleTask();
-
   return Status::OK();
 }
 

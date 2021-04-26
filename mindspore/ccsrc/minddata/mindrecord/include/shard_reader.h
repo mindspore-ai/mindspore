@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,6 +210,9 @@ class API_PUBLIC ShardReader {
   /// \brief get the size of blob data
   MSRStatus GetTotalBlobSize(int64_t *total_blob_size);
 
+  /// \brief get a read-only ptr to the sampled ids for this epoch
+  const std::vector<int> *GetSampleIds();
+
  protected:
   /// \brief sqlite call back function
   static int SelectCallback(void *p_data, int num_fields, char **p_fields, char **p_col_names);
@@ -322,7 +325,7 @@ class API_PUBLIC ShardReader {
   std::vector<std::string> selected_columns_;              // columns which will be read
   std::map<string, uint64_t> column_schema_id_;            // column-schema map
   std::vector<std::shared_ptr<ShardOperator>> operators_;  // data operators, including shuffle, sample and category
-  ShardTask tasks_;                                        // shard task
+  ShardTaskList tasks_;                                    // shard task list
   std::mutex shard_locker_;                                // locker of shard
 
   // flags
@@ -339,7 +342,7 @@ class API_PUBLIC ShardReader {
   std::mutex mtx_delivery_;                      // locker for delivery
   std::condition_variable cv_delivery_;          // conditional variable for delivery
   std::condition_variable cv_iterator_;          // conditional variable for iterator
-  std::atomic<int> task_id_;                     // task ID which is working
+  std::atomic<int> sample_id_position_;          // index into the sample ids vector for the current sample id
   std::atomic<int> deliver_id_;                  // delivery ID which is picked up by iterator
   // map of delivery
   std::unordered_map<int, std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>>> delivery_map_;

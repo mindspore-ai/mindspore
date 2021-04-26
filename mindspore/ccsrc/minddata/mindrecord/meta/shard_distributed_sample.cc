@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_
   return 0;
 }
 
-MSRStatus ShardDistributedSample::PreExecute(ShardTask &tasks) {
+MSRStatus ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
   auto total_no = tasks.Size();
   if (no_of_padded_samples_ > 0 && first_epoch_) {
     if (total_no % denominator_ != 0) {

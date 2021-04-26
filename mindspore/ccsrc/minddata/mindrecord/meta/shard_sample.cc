@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,21 +80,21 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   return 0;
 }
 
-MSRStatus ShardSample::UpdateTasks(ShardTask &tasks, int taking) {
+MSRStatus ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
   if (tasks.permutation_.empty()) {
-    ShardTask new_tasks;
-    int total_no = static_cast<int>(tasks.Size());
+    ShardTaskList new_tasks;
+    int total_no = static_cast<int>(tasks.sample_ids_.size());
     if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
       for (int i = 0; i < indices_.size(); ++i) {
         int index = ((indices_[i] % total_no) + total_no) % total_no;
-        new_tasks.InsertTask(tasks.GetTaskByID(index));  // different mod result between c and python
+        new_tasks.AssignTask(tasks, index);  // different mod result between c and python
       }
     } else {
       int count = 0;
       if (nums_per_shard_.empty()) {
         for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
           if (no_of_samples_ != 0 && count == no_of_samples_) break;
-          new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));  // rounding up. if overflow, go back to start
+          new_tasks.AssignTask(tasks, i % total_no);  // rounding up. if overflow, go back to start
           count++;
         }
       } else {
@@ -102,33 +102,33 @@ MSRStatus ShardSample::UpdateTasks(ShardTask &tasks, int taking) {
         size_t i = partition_id_ - 1 >= 0 ? nums_per_shard_[partition_id_ - 1] : 0;
         for (; i < nums_per_shard_[partition_id_]; i++) {
           if (no_of_samples_ != 0 && count == no_of_samples_) break;
-          new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));
+          new_tasks.AssignTask(tasks, i % total_no);
           count++;
         }
       }
     }
-    std::swap(tasks, new_tasks);
+    ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {
-    ShardTask new_tasks;
-    if (taking > static_cast<int>(tasks.permutation_.size())) {
+    ShardTaskList new_tasks;
+    if (taking > static_cast<int>(tasks.sample_ids_.size())) {
       return FAILED;
     }
     int total_no = static_cast<int>(tasks.permutation_.size());
     int count = 0;
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
       if (no_of_samples_ != 0 && count == no_of_samples_) break;
-      new_tasks.InsertTask(tasks.GetTaskByID(tasks.permutation_[i % total_no]));
+      new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
       count++;
     }
-    std::swap(tasks, new_tasks);
+    ShardTaskList::TaskListSwap(tasks, new_tasks);
   }
   return SUCCESS;
 }
 
-MSRStatus ShardSample::Execute(ShardTask &tasks) {
+MSRStatus ShardSample::Execute(ShardTaskList &tasks) {
   if (offset_ != -1) {
     int64_t old_v = 0;
-    int num_rows_ = static_cast<int>(tasks.Size());
+    int num_rows_ = static_cast<int>(tasks.sample_ids_.size());
     for (int x = 0; x < denominator_; x++) {
       int samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
       int remainder = (num_rows_ + offset_) % denominator_;
@@ -140,8 +140,7 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
     }
   }
   int no_of_categories = static_cast<int>(tasks.categories);
-  int total_no = static_cast<int>(tasks.Size());  // make sure task_size
-
+  int total_no = static_cast<int>(tasks.sample_ids_.size());
   int taking = 0;
   if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
     no_of_samples_ = std::min(no_of_samples_, total_no);
@@ -167,7 +166,7 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
   return UpdateTasks(tasks, taking);
 }
 
-MSRStatus ShardSample::SufExecute(ShardTask &tasks) {
+MSRStatus ShardSample::SufExecute(ShardTaskList &tasks) {
   if (sampler_type_ == kSubsetRandomSampler) {
     if (SUCCESS != (*shuffle_op_)(tasks)) {
       return FAILED;

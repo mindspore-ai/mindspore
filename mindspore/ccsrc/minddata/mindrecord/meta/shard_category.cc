@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ ShardCategory::ShardCategory(const std::string &category_field, int64_t num_elem
       num_categories_(num_categories),
       replacement_(replacement) {}
 
-MSRStatus ShardCategory::Execute(ShardTask &tasks) { return SUCCESS; }
+MSRStatus ShardCategory::Execute(ShardTaskList &tasks) { return SUCCESS; }
 
 int64_t ShardCategory::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (dataset_size == 0) return dataset_size;

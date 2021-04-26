@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 #include "minddata/dataset/util/random.h"
-#include "minddata/mindrecord/include/shard_task.h"
+#include "minddata/mindrecord/include/shard_task_list.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 
@@ -25,55 +25,88 @@ using mindspore::MsLogLevel::DEBUG;
 
 namespace mindspore {
 namespace mindrecord {
-ShardTask::ShardTask() : categories(1) {}
+ShardTaskList::ShardTaskList() : categories(1) {}
 
-ShardTask::ShardTask(const ShardTask &other)
-    : categories(other.categories), permutation_(other.permutation_), task_list_(other.task_list_) {}
+ShardTaskList::ShardTaskList(const ShardTaskList &other)
+    : categories(other.categories),
+      permutation_(other.permutation_),
+      sample_ids_(other.sample_ids_),
+      task_list_(other.task_list_) {}
 
-ShardTask &ShardTask::operator=(const ShardTask &other) {
-  ShardTask tmp(other);
+ShardTaskList &ShardTaskList::operator=(const ShardTaskList &other) {
+  ShardTaskList tmp(other);
   std::swap(categories, tmp.categories);
   permutation_.swap(tmp.permutation_);
+  sample_ids_.swap(tmp.sample_ids_);
   task_list_.swap(tmp.task_list_);
   return *this;
 }
 
-void ShardTask::MakePerm() {
-  permutation_ = std::vector<int>(task_list_.size());
-  for (uint32_t i = 0; i < task_list_.size(); i++) {
+void ShardTaskList::InitSampleIds() {
+  // no-op if there already exists sample ids.  Do not clobber previous list
+  if (sample_ids_.empty()) {
+    sample_ids_ = std::vector<int>(task_list_.size());
+    for (int i = 0; i < task_list_.size(); i++) sample_ids_[i] = i;
+  }
+}
+
+void ShardTaskList::MakePerm() {
+  size_t perm_size = sample_ids_.size();
+  permutation_ = std::vector<int>(perm_size);
+  for (uint32_t i = 0; i < perm_size; i++) {
     permutation_[i] = static_cast<int>(i);
   }
 }
 
-void ShardTask::PopBack() { task_list_.pop_back(); }
+// Swap the new_tasks with orig_tasks
+void ShardTaskList::TaskListSwap(ShardTaskList &orig_tasks, ShardTaskList &new_tasks) {
+  // When swapping, if the orig_tasks contains fields that need to be preserved after the swap, then swapping with a
+  // new_tasks that does not have those fields will result in clobbering/losing the data after the swap.
+  // The task_list_ should not be lost/clobbered.
+  new_tasks.task_list_ = std::move(orig_tasks.task_list_);
 
-uint32_t ShardTask::Size() const { return static_cast<uint32_t>(task_list_.size()); }
+  // Now, it's safe to drive the swap.
+  std::swap(orig_tasks, new_tasks);
+}
 
-uint32_t ShardTask::SizeOfRows() const {
+void ShardTaskList::PopBack() { task_list_.pop_back(); }
+
+uint32_t ShardTaskList::Size() const { return static_cast<uint32_t>(task_list_.size()); }
+
+uint32_t ShardTaskList::SizeOfRows() const {
   if (task_list_.size() == 0) return static_cast<uint32_t>(0);
 
   // 1 task is 1 page
-  auto sum_num_rows = [](int x, std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> y) {
-    return x + std::get<2>(y)[0];
-  };
+  auto sum_num_rows = [](int x, ShardTask y) { return x + std::get<2>(y)[0]; };
   uint32_t nRows = std::accumulate(task_list_.begin(), task_list_.end(), 0, sum_num_rows);
   return nRows;
 }
 
-std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetTaskByID(size_t id) {
+ShardTask &ShardTaskList::GetTaskByID(size_t id) {
   MS_ASSERT(id < task_list_.size());
   return task_list_[id];
 }
 
-std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetRandomTask() {
+int ShardTaskList::GetTaskSampleByID(size_t id) {
+  MS_ASSERT(id < sample_ids_.size());
+  return sample_ids_[id];
+}
+
+int ShardTaskList::GetRandomTaskID() {
+  std::mt19937 gen = mindspore::dataset::GetRandomDevice();
+  std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
+  return dis(gen);
+}
+
+ShardTask &ShardTaskList::GetRandomTask() {
   std::mt19937 gen = mindspore::dataset::GetRandomDevice();
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
   return task_list_[dis(gen)];
 }
 
-ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements,
-                             int64_t num_samples) {
-  ShardTask res;
+ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks, bool replacement, int64_t num_elements,
+                                     int64_t num_samples) {
+  ShardTaskList res;
   if (category_tasks.empty()) return res;
   auto total_categories = category_tasks.size();
   res.categories = static_cast<uint32_t>(total_categories);
@@ -107,6 +140,7 @@ ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replac
       }
     }
   }
+
   return res;
 }
 }  // namespace mindrecord

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ int64_t ShardSequentialSample::GetNumSamples(int64_t dataset_size, int64_t num_c
   return std::min(static_cast<int64_t>(no_of_samples_), dataset_size);
 }
 
-MSRStatus ShardSequentialSample::Execute(ShardTask &tasks) {
-  int64_t total_no = static_cast<int64_t>(tasks.Size());
+MSRStatus ShardSequentialSample::Execute(ShardTaskList &tasks) {
   int64_t taking;
+  int64_t total_no = static_cast<int64_t>(tasks.sample_ids_.size());
   if (no_of_samples_ == 0 && (per_ >= -kEpsilon && per_ <= kEpsilon)) {
     taking = total_no;
   } else if (per_ > kEpsilon && per_ <= 1.0f) {
@@ -50,22 +50,22 @@ MSRStatus ShardSequentialSample::Execute(ShardTask &tasks) {
   }
 
   if (tasks.permutation_.empty()) {
-    ShardTask new_tasks;
+    ShardTaskList new_tasks;
     total_no = static_cast<int64_t>(tasks.Size());
     for (size_t i = offset_; i < taking + offset_; ++i) {
-      new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));
+      new_tasks.AssignTask(tasks, i % total_no);
     }
-    std::swap(tasks, new_tasks);
+    ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {  // shuffled
-    ShardTask new_tasks;
+    ShardTaskList new_tasks;
     if (taking > static_cast<int64_t>(tasks.permutation_.size())) {
       return FAILED;
     }
     total_no = static_cast<int64_t>(tasks.permutation_.size());
     for (size_t i = offset_; i < taking + offset_; ++i) {
-      new_tasks.InsertTask(tasks.GetTaskByID(tasks.permutation_[i % total_no]));
+      new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
     }
-    std::swap(tasks, new_tasks);
+    ShardTaskList::TaskListSwap(tasks, new_tasks);
   }
   return SUCCESS;
 }

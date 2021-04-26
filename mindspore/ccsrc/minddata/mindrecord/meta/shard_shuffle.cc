@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,31 @@ int64_t ShardShuffle::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   return no_of_samples_ == 0 ? dataset_size : std::min(dataset_size, no_of_samples_);
 }
 
-MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
+MSRStatus ShardShuffle::CategoryShuffle(ShardTaskList &tasks) {
+  uint32_t individual_size;
+  individual_size = tasks.sample_ids_.size() / tasks.categories;
+  std::vector<std::vector<int>> new_permutations(tasks.categories, std::vector<int>(individual_size));
+  for (uint32_t i = 0; i < tasks.categories; i++) {
+    for (uint32_t j = 0; j < individual_size; j++) new_permutations[i][j] = static_cast<int>(j);
+    std::shuffle(new_permutations[i].begin(), new_permutations[i].end(), std::default_random_engine(shuffle_seed_));
+  }
+  tasks.permutation_.clear();  // Jamie replace this we setting flag to false or something
+  for (uint32_t j = 0; j < individual_size; j++) {
+    for (uint32_t i = 0; i < tasks.categories; i++) {
+      tasks.permutation_.push_back(new_permutations[i][j] * static_cast<int>(tasks.categories) + static_cast<int>(i));
+    }
+  }
+
+  ShardTaskList new_tasks;
+  for (size_t i = 0; i < individual_size; ++i) {
+    new_tasks.AssignTask(tasks, tasks.permutation_[i]);
+  }
+  ShardTaskList::TaskListSwap(tasks, new_tasks);
+
+  return SUCCESS;
+}
+
+MSRStatus ShardShuffle::Execute(ShardTaskList &tasks) {
   if (reshuffle_each_epoch_) shuffle_seed_++;
   if (tasks.categories < 1) {
     return FAILED;
@@ -52,43 +76,31 @@ MSRStatus ShardShuffle::Execute(ShardTask &tasks) {
       tasks.MakePerm();
     }
     if (replacement_ == true) {
-      ShardTask new_tasks;
-      if (no_of_samples_ == 0) {
-        no_of_samples_ = static_cast<int>(tasks.Size());
-      }
+      ShardTaskList new_tasks;
+      if (no_of_samples_ == 0) no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
       if (no_of_samples_ <= 0) {
         MS_LOG(ERROR) << "no_of_samples need to be positive.";
         return FAILED;
       }
       new_tasks.task_list_.reserve(no_of_samples_);
       for (uint32_t i = 0; i < no_of_samples_; ++i) {
-        new_tasks.InsertTask(tasks.GetRandomTask());
+        new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
       }
-      std::swap(tasks, new_tasks);
+
+      ShardTaskList::TaskListSwap(tasks, new_tasks);
     } else {
       std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
       auto total_no = static_cast<int64_t>(tasks.Size());
-      if (no_of_samples_ > 0 && no_of_samples_ < total_no) {
-        ShardTask new_tasks;
-        for (size_t i = 0; i < no_of_samples_; ++i) {
-          new_tasks.InsertTask(tasks.GetTaskByID(i));
-        }
-        std::swap(tasks, new_tasks);
+      ShardTaskList new_tasks;
+      size_t samples_to_assign =
+        (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
+      for (size_t i = 0; i < samples_to_assign; ++i) {
+        new_tasks.AssignTask(tasks, tasks.permutation_[i]);
       }
+      ShardTaskList::TaskListSwap(tasks, new_tasks);
     }
   } else {  // shuffle unit like: (a1, b1, c1),(a2, b2, c2),..., (an, bn, cn)
-    uint32_t individual_size = tasks.Size() / tasks.categories;
-    std::vector<std::vector<int>> new_permutations(tasks.categories, std::vector<int>(individual_size));
-    for (uint32_t i = 0; i < tasks.categories; i++) {
-      for (uint32_t j = 0; j < individual_size; j++) new_permutations[i][j] = static_cast<int>(j);
-      std::shuffle(new_permutations[i].begin(), new_permutations[i].end(), std::default_random_engine(shuffle_seed_));
-    }
-    tasks.permutation_.clear();
-    for (uint32_t j = 0; j < individual_size; j++) {
-      for (uint32_t i = 0; i < tasks.categories; i++) {
-        tasks.permutation_.push_back(new_permutations[i][j] * static_cast<int>(tasks.categories) + static_cast<int>(i));
-      }
-    }
+    return this->CategoryShuffle(tasks);
   }
   return SUCCESS;
 }
