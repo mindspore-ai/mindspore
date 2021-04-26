@@ -393,7 +393,7 @@ class TensorDataImpl : public TensorData {
         pos++;
       }
       size_t len = pos - index;
-      std::string space(max_width - len, ' ');
+      std::string space(max_width - SizeToInt(len), ' ');
       str = str.replace(index, len, space);
       index = str.find('#', index);
     }
