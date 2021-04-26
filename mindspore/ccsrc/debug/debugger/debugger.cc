@@ -355,7 +355,7 @@ void Debugger::PostExecute() {
       if (device_target_ != kGPUDevice) {
         num_step_++;
       }
-      MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
+
       SendWatchpoints(CheckWatchpoints());
       CommandLoop();
     }

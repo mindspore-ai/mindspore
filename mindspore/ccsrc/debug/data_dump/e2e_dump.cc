@@ -218,11 +218,17 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
 bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  dump_json_parser.UpdateDumpIter();
+  if (starting_graph_id == INT32_MAX) {
+    starting_graph_id = graph->graph_id();
+  }
+  if (starting_graph_id == graph->graph_id()) {
+    dump_json_parser.UpdateDumpIter();
+  }
   if (!dump_json_parser.GetIterDumpFlag()) {
     return true;
   }
   MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
+  MS_LOG(INFO) << "Current graph id is " << graph->graph_id();
   std::string dump_path = GenerateDumpPath(&device_id);
 
   DumpInput(graph, dump_path, debugger);
