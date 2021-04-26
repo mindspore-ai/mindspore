@@ -18,26 +18,91 @@
 #include <memory>
 #include <vector>
 #include "include/errorcode.h"
+#include "ops/depend.h"
 #include "ops/make_tuple.h"
 
 namespace mindspore::opt {
 namespace {
 constexpr size_t kInputDoubleNum = 2;
 constexpr size_t kInputTripleNum = 3;
-void FetchCNodeFromMakeTuple(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *inputs) {
-  MS_ASSERT(anf_node != nullptr);
-  MS_ASSERT(inputs != nullptr);
-  auto cnode = anf_node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return;
-  }
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    if (cnode->input(i)->isa<CNode>()) {
-      inputs->push_back(cnode->input(i));
+int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto first_input = cnode->input(1);
+  auto second_input = cnode->input(2);
+  AnfNodePtr must_monad = nullptr;
+  AnfNodePtr not_must_monad = nullptr;
+  if (utils::isa<ValueNode>(first_input)) {
+    auto value_node = first_input->cast<ValueNodePtr>();
+    MS_ASSERT(value_node->value() != nullptr);
+    if (utils::isa<Monad>(value_node->value())) {
+      must_monad = first_input;
+      not_must_monad = second_input;
     }
   }
+  if (utils::isa<ValueNode>(second_input)) {
+    auto value_node = second_input->cast<ValueNodePtr>();
+    MS_ASSERT(value_node->value() != nullptr);
+    if (utils::isa<Monad>(value_node->value())) {
+      must_monad = second_input;
+      not_must_monad = first_input;
+    }
+  }
+  if (must_monad == nullptr) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  if (!utils::isa<CNode>(not_must_monad) || CheckIsAllInputsParam(not_must_monad)) {
+    manager->Replace(cnode, must_monad);
+  } else {
+    manager->Replace(cnode, not_must_monad);
+  }
+  return lite::RET_OK;
+}
+
+int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool pre_node_is_first) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  AnfNodePtr pre_node = cnode->input(1);
+  AnfNodePtr post_node = cnode->input(2);
+  if (!pre_node_is_first) {
+    pre_node = cnode->input(2);
+    post_node = cnode->input(1);
+  }
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  auto node_users = manager->node_users()[pre_node];
+  auto iter =
+    std::find_if(node_users.begin(), node_users.end(),
+                 [&post_node](const std::pair<AnfNodePtr, int> &post_pair) { return post_pair.first == post_node; });
+  if (iter == node_users.end()) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto tr = manager->Transact();
+  tr.SetEdge(post_node, iter->second, NewValueNode(std::make_shared<UMonad>()));
+  tr.Commit();
+  auto depend_prim = std::make_shared<ops::Depend>();
+  auto depend_node = func_graph->NewCNode(depend_prim, {post_node, pre_node});
+  depend_node->set_fullname_with_scope(cnode->fullname_with_scope());
+  manager->Replace(cnode, depend_node);
+  return lite::RET_OK;
+}
+
+int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  if (ProcessDependencyWithTwoNodes(func_graph, cnode, true) == lite::RET_OK) {
+    return lite::RET_OK;
+  }
+  if (ProcessDependencyWithTwoNodes(func_graph, cnode, false) == lite::RET_OK) {
+    return lite::RET_OK;
+  }
+  auto make_tuple_prim = NewValueNode(std::make_shared<ops::MakeTuple>());
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  manager->Replace(cnode->input(0), make_tuple_prim);
+  return lite::RET_OK;
 }
 }  // namespace
+
 int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(DEBUG) << "anf node is node a cnode.";
@@ -73,28 +138,11 @@ int RemoveRedundantOpPass::ReplaceUpdateStateOp(const FuncGraphPtr &func_graph, 
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  auto inputs = cnode->inputs();
-  std::vector<AnfNodePtr> new_inputs;
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    if (!inputs[i]->isa<CNode>()) {
-      continue;
-    }
-    if (CheckPrimitiveType(inputs[i], prim::kPrimMakeTuple)) {
-      FetchCNodeFromMakeTuple(inputs[i], &new_inputs);
-      continue;
-    }
-    new_inputs.push_back(inputs[i]);
+  if (ProcessInputIsMonad(func_graph, cnode) == lite::RET_OK) {
+    return lite::RET_OK;
   }
-  for (auto &node : new_inputs) {
-    func_graph->get_return()->add_input(node);
-  }
-  auto value = std::make_shared<UMonad>();
-  bool replace_succ = func_graph->manager()->Replace(anf_node, NewValueNode(value));
-  if (!replace_succ) {
-    MS_LOG(ERROR) << "replace redundant op failed.";
-    return lite::RET_ERROR;
-  }
-  return RET_OK;
+  // both of two inputs are not monad, but have dependency.
+  return ProcessInputHaveDependency(func_graph, cnode);
 }
 
 int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
