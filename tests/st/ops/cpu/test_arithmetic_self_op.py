@@ -50,6 +50,15 @@ class ReciprocalNet(nn.Cell):
         return self.reciprocal(x)
 
 
+class RintNet(nn.Cell):
+    def __init__(self):
+        super(RintNet, self).__init__()
+        self.rint = P.Rint()
+
+    def construct(self, x):
+        return self.rint(x)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -121,6 +130,23 @@ def test_floor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_rint():
+    net = RintNet()
+    prop = 100 if np.random.random() > 0.5 else -100
+    x = np.random.randn(3, 4, 5, 6).astype(np.float16) * prop
+    output = net(Tensor(x))
+    expect_output = np.rint(x).astype(np.float16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float32) * prop
+    output = net(Tensor(x))
+    expect_output = np.rint(x).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_reciprocal():
     net = ReciprocalNet()
     prop = 100 if np.random.random() > 0.5 else -100
@@ -137,7 +163,3 @@ def test_reciprocal():
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * 1.0e-5
     assert np.all(np.abs(diff) < error)
-
-test_square()
-test_floor()
-test_reciprocal()

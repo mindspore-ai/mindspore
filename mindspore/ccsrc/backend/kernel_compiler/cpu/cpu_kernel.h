@@ -113,6 +113,7 @@ enum OperateType {
   ASINHGRAD,
   ACOSHGRAD,
   ATAN2,
+  RINT,
 };
 
 class CPUKernel : public kernel::KernelMod {
