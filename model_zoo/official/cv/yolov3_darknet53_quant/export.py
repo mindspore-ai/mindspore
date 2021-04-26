@@ -28,7 +28,7 @@ parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="yolov3_darknet53_quant", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='MINDIR', help='file format')
+parser.add_argument('--file_format', type=str, choices=["AIR", "MINDIR"], default='MINDIR', help='file format')
 args = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
@@ -50,4 +50,5 @@ if __name__ == "__main__":
     input_data = Tensor(np.zeros(shape), ms.float32)
     input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
 
-    export(network, input_data, input_shape, file_name=args.file_name, file_format=args.file_format)
+    export(network, input_data, input_shape, file_name=args.file_name, file_format=args.file_format,
+           quant_mode='QUANT', mean=0., std_dev=48.106)

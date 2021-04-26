@@ -20,13 +20,11 @@ import argparse
 from src.config import config_quant
 from src.dataset import create_dataset
 from src.crossentropy import CrossEntropy
-#from models.resnet_quant import resnet50_quant #auto construct quantative network of resnet50
 from models.resnet_quant_manual import resnet50_quant #manually construct quantative network of resnet50
 
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.compression.quant import QuantizationAwareTraining
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -42,13 +40,8 @@ if args_opt.device_target == "Ascend":
     context.set_context(device_id=device_id)
 
 if __name__ == '__main__':
-    # define fusion network
+    # define manual quantization network
     network = resnet50_quant(class_num=config.class_num)
-    # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
-    network = quantizer.quantize(network)
 
     # define network loss
     if not config.use_label_smooth:

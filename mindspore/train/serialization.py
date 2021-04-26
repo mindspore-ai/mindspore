@@ -596,9 +596,12 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
         kwargs (dict): Configuration options dictionary.
 
-            - quant_mode: The mode of quant.
-            - mean: Input data mean. Default: 127.5.
-            - std_dev: Input data variance. Default: 127.5.
+            - quant_mode: If the network is quantization aware training network, the quant_mode should
+              be set to "QUANT", else the quant_mode should be set to "NONQUANT".
+            - mean: The mean of input data after preprocessing, used for quantizing the first layer of network.
+              Default: 127.5.
+            - std_dev: The variance of input data after preprocessing, used for quantizing the first layer of network.
+              Default: 127.5.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
@@ -748,28 +751,38 @@ def _mindir_save_together(net_dict, model):
             return False
     return True
 
+def quant_mode_manage(func):
+    """
+    Inherit the quant_mode in old version.
+    """
+    def warpper(network, *inputs, file_format, **kwargs):
+        if not kwargs.get('quant_mode', None):
+            return network
+        quant_mode = kwargs['quant_mode']
+        if quant_mode in ('AUTO', 'MANUAL'):
+            kwargs['quant_mode'] = 'QUANT'
+        return func(network, *inputs, file_format=file_format, **kwargs)
+    return warpper
 
+@quant_mode_manage
 def _quant_export(network, *inputs, file_format, **kwargs):
     """
     Exports MindSpore quantization predict model to deploy with AIR and MINDIR.
     """
-    if not kwargs.get('quant_mode', None):
-        return network
-
     supported_device = ["Ascend", "GPU"]
     supported_formats = ['AIR', 'MINDIR']
-    quant_mode_formats = ['AUTO', 'MANUAL']
+    quant_mode_formats = ['QUANT', 'NONQUANT']
 
+    quant_mode = kwargs['quant_mode']
+    if quant_mode not in quant_mode_formats:
+        raise KeyError(f'Quant_mode input is wrong, Please choose the right mode of the quant_mode.')
+    if quant_mode == 'NONQUANT':
+        return network
     quant_net = copy.deepcopy(network)
     quant_net._create_time = int(time.time() * 1e9)
 
     mean = 127.5 if kwargs.get('mean', None) is None else kwargs['mean']
     std_dev = 127.5 if kwargs.get('std_dev', None) is None else kwargs['std_dev']
-
-    quant_mode = kwargs['quant_mode']
-    if quant_mode not in quant_mode_formats:
-        raise KeyError(f'Quant_mode input is wrong, Please choose the right mode of the quant_mode.')
-
     mean = Validator.check_value_type("mean", mean, (int, float))
     std_dev = Validator.check_value_type("std_dev", std_dev, (int, float))
 
@@ -781,15 +794,9 @@ def _quant_export(network, *inputs, file_format, **kwargs):
 
     quant_net.set_train(False)
     if file_format == "MINDIR":
-        if quant_mode == 'MANUAL':
-            exporter = quant_export.ExportManualQuantNetwork(quant_net, mean, std_dev, *inputs, is_mindir=True)
-        else:
-            exporter = quant_export.ExportToQuantInferNetwork(quant_net, mean, std_dev, *inputs, is_mindir=True)
+        exporter = quant_export.ExportToQuantInferNetwork(quant_net, mean, std_dev, *inputs, is_mindir=True)
     else:
-        if quant_mode == 'MANUAL':
-            exporter = quant_export.ExportManualQuantNetwork(quant_net, mean, std_dev, *inputs)
-        else:
-            exporter = quant_export.ExportToQuantInferNetwork(quant_net, mean, std_dev, *inputs)
+        exporter = quant_export.ExportToQuantInferNetwork(quant_net, mean, std_dev, *inputs)
     deploy_net = exporter.run()
     return deploy_net
 

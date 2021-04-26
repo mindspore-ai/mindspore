@@ -19,7 +19,6 @@ import numpy as np
 
 import mindspore
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
-from mindspore.compression.quant import QuantizationAwareTraining
 
 from models.resnet_quant_manual import resnet50_quant
 from src.config import config_quant
@@ -32,13 +31,9 @@ args_opt = parser.parse_args()
 
 if __name__ == '__main__':
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, save_graphs=False)
-    # define fusion network
+    # define manual quantization network
     network = resnet50_quant(class_num=config_quant.class_num)
-    # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
-    network = quantizer.quantize(network)
+
     # load checkpoint
     if args_opt.checkpoint_path:
         param_dict = load_checkpoint(args_opt.checkpoint_path)
@@ -49,5 +44,5 @@ if __name__ == '__main__':
     print("============== Starting export ==============")
     inputs = Tensor(np.ones([1, 3, 224, 224]), mindspore.float32)
     export(network, inputs, file_name="resnet50_quant", file_format=args_opt.file_format,
-           quant_mode='MANUAL', mean=0., std_dev=48.106)
+           quant_mode='QUANT', mean=0., std_dev=48.106)
     print("============== End export ==============")

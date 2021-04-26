@@ -47,9 +47,7 @@ if __name__ == '__main__':
     # export network
     print("============== Starting export ==============")
     inputs = Tensor(np.ones([1, 3, cfg.image_height, cfg.image_width]), mindspore.float32)
-    if args_opt.file_format == 'MINDIR':
-        export(network, inputs, file_name="mobilenet_quant", file_format='MINDIR', quant_mode='AUTO')
-    else:
-        export(network, inputs, file_name="mobilenet_quant", file_format='AIR',
-               quant_mode='AUTO', mean=0., std_dev=48.106)
+    export(network, inputs, file_name="mobilenetv2_quant", file_format=args_opt.file_format,
+           quant_mode='QUANT', mean=0., std_dev=48.106)
+
     print("============== End export ==============")
