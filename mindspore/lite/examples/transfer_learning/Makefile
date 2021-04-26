@@ -1,6 +1,6 @@
 BASE_DIR=$(realpath ../../../../)
 APP:=bin/net_runner
-MSLIB:=mindspore-lite
+LMSLIB:=-lmindspore-lite-train
 LMDLIB:=-lminddata-lite
 MSDIR:=$(realpath package-$(TARGET)/lib)
 ifneq ("$(wildcard $(MSDIR)/libhiai.so)","")
@@ -23,10 +23,10 @@ ifeq ($(TARGET),arm64)
 CXX :=  ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
 CFLAGS  += --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fdata-sections -ffunction-sections 
 LDFLAGS := --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Wl,--gc-sections 
-LDFLAGS += -L$(MSDIR) -l$(MSLIB) $(LMDLIB) $(LHIAILIB) -pthread -llog -latomic -lm -Wl,-rpath,$(MSDIR)
+LDFLAGS += -L$(MSDIR) $(LMSLIB) $(LMDLIB) $(LHIAILIB) -pthread -llog -latomic -lm -Wl,-rpath,$(MSDIR)
 else
 CFLAGS += -g
-LDFLAGS := -L$(MSDIR) -l$(MSLIB) $(LMDLIB) $(LHIAILIB) -lpthread -Wl,-rpath,$(MSDIR)
+LDFLAGS := -L$(MSDIR) $(LMSLIB) $(LMDLIB) $(LHIAILIB) -lpthread -Wl,-rpath,$(MSDIR)
 endif  
 LD := ${CXX}
 

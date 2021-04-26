@@ -211,7 +211,7 @@ int NetRunner::Main() {
   float acc = CalculateAccuracy(ds_.val_data());
   std::cout << "accuracy on validation data = " << acc << std::endl;
 
-  if (cycles_ > 0) {
+  if (cycles_ > 0 && head_model_ != nullptr) {
     auto trained_fn = ms_head_file_.substr(0, ms_head_file_.find_last_of('.')) + "_trained.ms";
     mindspore::lite::Model::Export(head_model_, trained_fn.c_str());
   }
