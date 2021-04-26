@@ -36,7 +36,7 @@ class FunctionalizeCond {
  public:
   FunctionalizeCond(FuncGraphPtr fg, CNodePtr merge_node) : fg_(fg), merge_node_(merge_node) {}
 
-  ~FunctionalizeCond() = default;
+  virtual ~FunctionalizeCond() = default;
 
   STATUS Process();
 

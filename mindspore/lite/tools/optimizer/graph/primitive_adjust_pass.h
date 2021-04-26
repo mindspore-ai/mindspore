@@ -57,6 +57,7 @@ class RegistryPrimitiveAdjust {
   RegistryPrimitiveAdjust(const std::string &key, PrimitiveAdjustCreator creator) {
     PrimitiveAdjustRegistry::GetInstance()->InsertPrimitiveAdjustMap(key, creator);
   }
+  virtual ~RegistryPrimitiveAdjust() = default;
 };
 
 #define REGIST_PRIMITIVE_ADJUST(type, primitive_adjust_func) \
