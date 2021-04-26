@@ -516,7 +516,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
     iota_shape = _tuple_slice(iota_shape, None, axis) + (num,) + _tuple_slice(iota_shape, axis+1, None)
     num_tensor = _type_convert(Tensor, num).astype(mstype.float32)
     div = (num_tensor - 1) if endpoint else num_tensor
-
+    out = None
+    delta = None
     if num > 1:
         delta = (stop - start) / div
         # This is similar to how numpy and jax compute linspace
@@ -530,8 +531,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         delta = nan if endpoint else stop - start
         out = reshape(start, bounds_shape)
     else:  # num == 0
-        delta = nan
-        out = _type_convert(Tensor, []).astype(dtype)
+        _raise_value_error("cannot support Tensor with num=0.")
     if retstep:
         return out.astype(dtype), delta
     return out.astype(dtype)
@@ -631,7 +631,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     root = num
     if endpoint:
         root -= 1
-    bases = F.tensor_pow(F.tensor_div(stop, start), asarray_const(1/(root)))
+    bases = F.tensor_pow(F.tensor_div(stop, start), asarray_const(1./(root)))
     exponents = linspace(zeros(F.shape(bases)), F.fill(F.dtype(bases), F.shape(bases), root),
                          num, endpoint=endpoint, dtype=dtype, axis=axis)
     shape = F.shape(bases)
