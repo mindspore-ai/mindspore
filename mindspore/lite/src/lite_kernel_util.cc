@@ -17,6 +17,7 @@
 #include "src/lite_kernel_util.h"
 #include <queue>
 #include <set>
+#include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -186,5 +187,39 @@ void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel
 }
 
 int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs) { return -1; }
+
+bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
+  auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
+  for (auto &node : subgraph_kernel->nodes()) {
+    if (node->Type() == schema::PrimitiveType_Switch &&
+        InputsContainsSpecificNode(node, schema::PrimitiveType_PartialFusion) && node->out_kernels().size() == 1 &&
+        node->out_kernels().front()->Type() == schema::PrimitiveType_Call) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,
+                                                          const schema::PrimitiveType &primitive_type) {
+  for (auto input : kernel->in_kernels()) {
+    if (input->Type() == primitive_type) {
+      return input;
+    }
+  }
+  return nullptr;
+}
+
+bool LiteKernelUtil::InputsContainsSpecificNode(const kernel::LiteKernel *kernel,
+                                                const schema::PrimitiveType &primitive_type) {
+  if (GetInputsSpecificNode(kernel, primitive_type)) {
+    return true;
+  }
+  return false;
+}
 
 }  // namespace mindspore::kernel

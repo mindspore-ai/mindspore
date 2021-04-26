@@ -23,6 +23,7 @@
 #include "src/common/version_manager.h"
 #include "src/runtime/infer_manager.h"
 #include "src/common/tensor_util.h"
+#include "src/common/utils.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -140,6 +141,11 @@ void SubGraphKernel::InitOutTensorInitRefCount() {
   for (auto *node : nodes_) {
     node->InitOutTensorInitRefCount();
   }
+}
+void SubGraphKernel::DropNode(LiteKernel *node) {
+  lite::VectorErase(&nodes_, node);
+  lite::VectorErase(&in_nodes_, node);
+  lite::VectorErase(&out_nodes_, node);
 }
 
 int CpuSubGraph::Prepare() {

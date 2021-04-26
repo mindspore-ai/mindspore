@@ -145,6 +145,8 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void ResetRefCount() { this->ref_count_ = this->init_ref_count_; }
 
+  void IncRefCount();
+
   void DecRefCount();
 
   std::string ToString() const;

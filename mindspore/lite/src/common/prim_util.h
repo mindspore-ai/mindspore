@@ -24,6 +24,8 @@ const char *PrimitiveTypeName(int type);
 const char *PrimitiveCurVersionTypeName(int type);
 int GenPrimVersionKey(int primitive_type, int schema_version);
 bool IsPartialNode(const void *primitive);
+bool IsCallNode(const void *node);
+bool IsSwitchNode(const void *node);
 int GetPartialGraphIndex(const void *primitive);
 bool IsWhileNode(const void *primitive);
 int GetWhileBodySubgraphIndex(const void *primitive);
