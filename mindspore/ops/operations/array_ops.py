@@ -1345,7 +1345,7 @@ class Zeros(Primitive):
         """Initialize Zeros"""
 
 
-class OnesLike(PrimitiveWithInfer):
+class OnesLike(Primitive):
     """
     Creates a new tensor. The values of all elements are 1.
 
@@ -1375,13 +1375,6 @@ class OnesLike(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize OnesLike"""
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type + (mstype.bool_,), self.name)
-        return x_dtype
 
 
 class ZerosLike(PrimitiveWithCheck):
