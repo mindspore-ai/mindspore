@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <algorithm>
 #include <cerrno>
 #include <iomanip>
 #include <iostream>
@@ -39,7 +40,6 @@ const char CacheAdminArgHandler::kServerBinary[] = "cache_server";
 
 CacheAdminArgHandler::CacheAdminArgHandler()
     : port_(kCfgDefaultCachePort),
-      session_id_(0),
       num_workers_(kDefaultNumWorkers),
       shm_mem_sz_(kDefaultSharedMemorySizeInGB),
       log_level_(kDefaultLogLevel),
@@ -101,6 +101,52 @@ CacheAdminArgHandler::CacheAdminArgHandler()
 }
 
 CacheAdminArgHandler::~CacheAdminArgHandler() = default;
+
+Status CacheAdminArgHandler::AssignArg(std::string option, std::vector<uint32_t> *out_arg,
+                                       std::stringstream *arg_stream, CommandId command_id) {
+  // Detect if the user tried to provide this argument more than once
+  ArgValue selected_arg = arg_map_[option];
+  if (used_args_[selected_arg]) {
+    std::string err_msg = "The " + option + " argument was given more than once.";
+    return Status(StatusCode::kMDSyntaxError, err_msg);
+  }
+
+  // Flag that this arg is used now
+  used_args_[selected_arg] = true;
+
+  // Some options are just arguments, for example "--port 50052" is not a command, it's just a argument.
+  // Other options are actual commands, for example "--destroy_session 1234".  This executes the destroy session.
+  // If this option is also a command, make sure there has not been multiple commands given before assigning it.
+  if (command_id != CommandId::kCmdUnknown) {
+    if (command_id_ != CommandId::kCmdUnknown) {
+      std::string err_msg = "Only one command at a time is allowed.  Invalid command: " + option;
+      return Status(StatusCode::kMDSyntaxError, err_msg);
+    } else {
+      command_id_ = command_id;
+    }
+  }
+
+  uint32_t value_as_uint;
+  while (arg_stream->rdbuf()->in_avail() != 0) {
+    *arg_stream >> value_as_uint;
+    if (arg_stream->fail()) {
+      arg_stream->clear();
+      std::string value_as_string;
+      *arg_stream >> value_as_string;
+      std::string err_msg = "Invalid numeric value: " + value_as_string;
+      return Status(StatusCode::kMDSyntaxError, err_msg);
+    } else {
+      out_arg->push_back(value_as_uint);
+    }
+  }
+
+  if (out_arg->empty()) {
+    std::string err_msg = option + " option requires an argument field.  Syntax: " + option + " <field>";
+    return Status(StatusCode::kMDSyntaxError, err_msg);
+  }
+
+  return Status::OK();
+}
 
 Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
                                        CommandId command_id) {
@@ -269,11 +315,7 @@ Status CacheAdminArgHandler::ParseArgStream(std::stringstream *arg_stream) {
         break;
       }
       case ArgValue::kArgDestroySession: {
-        // session_id is an unsigned type. We may need to template the AssignArg function so that
-        // it can handle different flavours of integers instead of just int32_t.
-        int32_t session_int;
-        RETURN_IF_NOT_OK(AssignArg(tok, &session_int, arg_stream, CommandId::kCmdDestroySession));
-        session_id_ = session_int;
+        RETURN_IF_NOT_OK(AssignArg(tok, &session_ids_, arg_stream, CommandId::kCmdDestroySession));
         break;
       }
       case ArgValue::kArgNumWorkers: {
@@ -376,11 +418,13 @@ Status CacheAdminArgHandler::RunCommand() {
       CacheClientGreeter comm(hostname_, port_, 1);
       RETURN_IF_NOT_OK(comm.ServiceStart());
       CacheClientInfo cinfo;
-      cinfo.set_session_id(session_id_);
-      auto rq = std::make_shared<DropSessionRequest>(cinfo);
-      RETURN_IF_NOT_OK(comm.HandleRequest(rq));
-      RETURN_IF_NOT_OK(rq->Wait());
-      std::cout << "Drop session successfully for server on port " << std::to_string(port_) << std::endl;
+      for (session_id_type id : session_ids_) {
+        cinfo.set_session_id(id);
+        auto rq = std::make_shared<DropSessionRequest>(cinfo);
+        RETURN_IF_NOT_OK(comm.HandleRequest(rq));
+        RETURN_IF_NOT_OK(rq->Wait());
+        std::cout << "Drop session " << id << " successfully for server on port " << std::to_string(port_) << std::endl;
+      }
       break;
     }
     case CommandId::kCmdListSessions: {

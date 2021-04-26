@@ -34,8 +34,8 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
-        enable_cache(bool): whether tensor caching service is used for eval.
-        cache_session_id(int): If enable_cache, cache session_id need to be provided.
+        enable_cache(bool): whether tensor caching service is used for eval. Default: False
+        cache_session_id(int): If enable_cache, cache session_id need to be provided. Default: None
 
     Returns:
         dataset
@@ -104,8 +104,8 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
-        enable_cache(bool): whether tensor caching service is used for eval.
-        cache_session_id(int): If enable_cache, cache session_id need to be provided.
+        enable_cache(bool): whether tensor caching service is used for eval. Default: False
+        cache_session_id(int): If enable_cache, cache session_id need to be provided. Default: None
 
     Returns:
         dataset
@@ -182,8 +182,8 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
-        enable_cache(bool): whether tensor caching service is used for eval.
-        cache_session_id(int): If enable_cache, cache session_id need to be provided.
+        enable_cache(bool): whether tensor caching service is used for eval. Default: False
+        cache_session_id(int): If enable_cache, cache session_id need to be provided. Default: None
 
     Returns:
         dataset
@@ -259,8 +259,8 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         batch_size(int): the batch size of dataset. Default: 32
         target(str): the device target. Default: Ascend
         distribute(bool): data for distribute or not. Default: False
-        enable_cache(bool): whether tensor caching service is used for eval.
-        cache_session_id(int): If enable_cache, cache session_id need to be provided.
+        enable_cache(bool): whether tensor caching service is used for eval. Default: False
+        cache_session_id(int): If enable_cache, cache session_id need to be provided. Default: None
 
     Returns:
         dataset
