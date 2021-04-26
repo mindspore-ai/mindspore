@@ -85,6 +85,7 @@ class TopCellInfo {
   void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
   bool is_topest() const { return is_topest_; }
   size_t grad_order() const { return grad_order_; }
+  void set_grad_order(size_t grad_order) { grad_order_ = grad_order; }
   bool is_dynamic() const { return is_dynamic_; }
   void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   bool vm_compiled() const { return vm_compiled_; }
@@ -172,7 +173,7 @@ class GradExecutor {
 
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
-  bool CheckNeedCompileGraph();
+  void CheckNeedCompileGraph();
   TopCellInfoPtr GetTopCell(const string &cell_id) const;
   bool need_renormalize() const { return need_renormalize_; }
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
@@ -202,6 +203,8 @@ class GradExecutor {
 
   // Higher derivative
   bool IsNestedGrad() const;
+  void SwitchTopcell();
+  size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
   void MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::args &forward_args,
                        const ResourcePtr &resource, const py::object &out);
   void PushCellStack(const std::string &cell_id);
