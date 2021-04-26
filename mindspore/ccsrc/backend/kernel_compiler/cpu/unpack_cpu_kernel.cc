@@ -27,12 +27,20 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   if (axis_tmp < 0) {
     axis_tmp += SizeToLong(input_shape.size());
   }
-  size_t axis_ = LongToSize(axis_tmp);
   output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num"));
+  unstack_param_.num_ = SizeToInt(output_num_);
+  unstack_param_.axis_ = LongToSize(axis_tmp);
+  unstack_param_.pre_dims_ = 1;
+  unstack_param_.axis_dim_ = 1;
+  unstack_param_.after_dims_ = 1;
+
   for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size_ *= input_shape[i];
-    if (i > IntToSize(axis_)) {
-      dims_after_axis_ *= input_shape[i];
+    if (static_cast<int>(i) < unstack_param_.axis_) {
+      unstack_param_.pre_dims_ *= input_shape[i];
+    } else if (static_cast<int>(i) > unstack_param_.axis_) {
+      unstack_param_.after_dims_ *= input_shape[i];
+    } else {
+      unstack_param_.axis_dim_ = input_shape[i];
     }
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
@@ -56,23 +64,16 @@ template <typename T>
 void UnpackCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
-  input_ = reinterpret_cast<T *>(inputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(input_);
-  outputs_host_ = reinterpret_cast<T **>(workspace[0]->addr);
-  MS_EXCEPTION_IF_NULL(outputs_host_);
+  const void *input = reinterpret_cast<void *>(inputs[0]->addr);
+  MS_EXCEPTION_IF_NULL(input);
+  void **outputs_host = reinterpret_cast<void **>(workspace[0]->addr);
+  MS_EXCEPTION_IF_NULL(outputs_host);
   for (size_t i = 0; i < outputs.size(); i++) {
-    outputs_host_[i] = reinterpret_cast<T *>(outputs[i]->addr);
-    MS_EXCEPTION_IF_NULL(outputs_host_[i]);
+    outputs_host[i] = reinterpret_cast<T *>(outputs[i]->addr);
+    MS_EXCEPTION_IF_NULL(outputs_host[i]);
   }
-  size_t number_of_reset = output_num_ * dims_after_axis_;
-  auto task = [this, number_of_reset](const size_t start, const size_t end) {
-    for (size_t i = start; i < end; ++i) {
-      size_t output_index = (i / dims_after_axis_) % output_num_;
-      size_t tensor_index = i / number_of_reset * dims_after_axis_ + i % dims_after_axis_;
-      outputs_host_[output_index][tensor_index] = input_[i];
-    }
-  };
-  CPUKernelUtils::ParallelFor(task, input_size_);
+  int data_size = SizeToInt(sizeof(T));
+  Unstack(input, outputs_host, &unstack_param_, data_size);
 }
 
 template <typename T>
