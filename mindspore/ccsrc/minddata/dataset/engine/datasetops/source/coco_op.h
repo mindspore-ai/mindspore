@@ -158,7 +158,7 @@ class CocoOp : public MappableLeafOp {
   // @param std::shared_ptr<Sampler> sampler - sampler tells CocoOp what to read
   CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
          int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
-         std::shared_ptr<SamplerRT> sampler);
+         std::shared_ptr<SamplerRT> sampler, bool extra_metadata);
 
   // Destructor
   ~CocoOp() = default;
@@ -290,6 +290,7 @@ class CocoOp : public MappableLeafOp {
   std::string annotation_path_;
   TaskType task_type_;
   std::unique_ptr<DataSchema> data_schema_;
+  bool extra_metadata_;
 
   std::vector<std::string> image_ids_;
   std::map<int32_t, std::string> image_index_;

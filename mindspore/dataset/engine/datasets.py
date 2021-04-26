@@ -4454,13 +4454,14 @@ class CocoDataset(MappableDataset):
 
     The generated dataset has multi-columns :
 
-    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-      ['iscrowd', dtype=uint32]].
-    - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd',dtype=uint32]].
+    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32],
+      ['category_id', dtype=uint32], ['iscrowd', dtype=uint32]].
+    - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32],
+      ['iscrowd',dtype=uint32]].
     - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
       ['num_keypoints', dtype=uint32]].
-    - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
-      ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
+    - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32],
+      ['category_id', dtype=uint32], ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
 
     This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. CocoDataset doesn't support
     PKSampler. The table below shows what input arguments are allowed and their expected behavior.
@@ -4536,6 +4537,11 @@ class CocoDataset(MappableDataset):
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
+        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
+            output at the end ['_meta-filename', dtype=string] (default=False).
+
+    Note:
+        '_meta-filename' won't be output unless an explicit rename dataset op is added to remove the prefix('_meta-').
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4577,16 +4583,19 @@ class CocoDataset(MappableDataset):
 
     @check_cocodataset
     def __init__(self, dataset_dir, annotation_file, task="Detection", num_samples=None, num_parallel_workers=None,
-                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None,
+                 extra_metadata=False):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_dir = dataset_dir
         self.annotation_file = annotation_file
         self.task = replace_none(task, "Detection")
         self.decode = replace_none(decode, False)
+        self.extra_metadata = extra_metadata
 
     def parse(self, children=None):
-        return cde.CocoNode(self.dataset_dir, self.annotation_file, self.task, self.decode, self.sampler)
+        return cde.CocoNode(self.dataset_dir, self.annotation_file, self.task, self.decode, self.sampler,
+                            self.extra_metadata)
 
     def get_class_indexing(self):
         """
