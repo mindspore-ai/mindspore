@@ -29,6 +29,8 @@ class TfliteTopKV2Parser : public TfliteNodeParser {
  public:
   TfliteTopKV2Parser() : TfliteNodeParser("TopKV2") {}
 
+  ~TfliteTopKV2Parser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

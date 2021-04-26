@@ -29,6 +29,8 @@ class TfliteSliceParser : public TfliteNodeParser {
  public:
   TfliteSliceParser() : TfliteNodeParser("Slice") {}
 
+  ~TfliteSliceParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

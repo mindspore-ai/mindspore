@@ -29,6 +29,8 @@ class TfliteDeConvParser : public TfliteNodeParser {
  public:
   TfliteDeConvParser() : TfliteNodeParser("DeConv2D") {}
 
+  ~TfliteDeConvParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };

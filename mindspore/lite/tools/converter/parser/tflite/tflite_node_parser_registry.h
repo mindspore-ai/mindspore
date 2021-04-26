@@ -42,6 +42,8 @@ class TfliteNodeRegister {
   TfliteNodeRegister(const tflite::BuiltinOperator &type, TfliteNodeParser *parser) {
     TfliteNodeParserRegistry::GetInstance()->parsers[type] = parser;
   }
+
+  ~TfliteNodeRegister() = default;
 };
 }  // namespace lite
 }  // namespace mindspore

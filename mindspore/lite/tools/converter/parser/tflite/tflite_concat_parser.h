@@ -29,6 +29,8 @@ class TfliteConcatParser : public TfliteNodeParser {
  public:
   TfliteConcatParser() : TfliteNodeParser("Concat") {}
 
+  ~TfliteConcatParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
