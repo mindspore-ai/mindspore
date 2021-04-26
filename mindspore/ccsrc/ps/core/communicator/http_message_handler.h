@@ -36,6 +36,9 @@
 
 #include "ps/core/comm_util.h"
 #include "utils/log_adapter.h"
+#include "ps/core/communicator/request_process_result_code.h"
+#include "nlohmann/json.hpp"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
@@ -92,11 +95,13 @@ class HttpMessageHandler {
   void SendResponse();
   void QuickResponse(int code, const unsigned char *body, size_t len);
   void SimpleResponse(int code, const HttpHeaders &headers, const std::string &body);
+  void ErrorResponse(int code, RequestProcessResult status);
 
   // If message is empty, libevent will use default error code message instead
   void RespError(int nCode, const std::string &message);
   // Body length should no more than MAX_POST_BODY_LEN, default 64kB
   void ParsePostParam();
+  RequestProcessResult ParsePostMessageToJson();
   void ReceiveMessage(const void *buffer, size_t num);
   void set_content_len(const uint64_t &len);
   uint64_t content_len();
@@ -107,6 +112,8 @@ class HttpMessageHandler {
   void InitBodySize();
   VectorPtr body();
   void set_body(VectorPtr body);
+  const nlohmann::json &request_message() const;
+  RequestProcessResult ParseValueFromKey(const std::string &key, int32_t *const value);
 
  private:
   struct evhttp_request *event_request_;
@@ -123,6 +130,7 @@ class HttpMessageHandler {
   uint64_t content_len_;
   struct event_base *event_base_;
   uint64_t offset_;
+  nlohmann::json request_message_;
 };
 }  // namespace core
 }  // namespace ps

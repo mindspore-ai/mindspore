@@ -87,6 +87,43 @@ void HttpMessageHandler::ParsePostParam() {
   }
 }
 
+RequestProcessResult HttpMessageHandler::ParsePostMessageToJson() {
+  MS_EXCEPTION_IF_NULL(event_request_);
+  RequestProcessResult result(RequestProcessResultCode::kSuccess);
+  std::string message;
+
+  size_t len = evbuffer_get_length(event_request_->input_buffer);
+  if (len == 0) {
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, "The post message size is invalid.");
+    return result;
+  } else if (len > kMaxMessageSize) {
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, "The post message is bigger than 100mb.");
+    return result;
+  } else {
+    message.resize(len);
+    auto buffer = evbuffer_pullup(event_request_->input_buffer, -1);
+    if (buffer == nullptr) {
+      ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, "Get http post message failed.");
+      return result;
+    }
+    size_t dest_size = len;
+    size_t src_size = len;
+    if (memcpy_s(message.data(), dest_size, buffer, src_size) != EOK) {
+      ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, "Copy message failed.");
+      return result;
+    }
+
+    try {
+      request_message_ = nlohmann::json::parse(message);
+    } catch (nlohmann::json::exception &e) {
+      std::string illegal_exception = e.what();
+      ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, "Illegal JSON format:" + illegal_exception);
+      return result;
+    }
+  }
+  return result;
+}
+
 std::string HttpMessageHandler::GetPostParam(const std::string &key) {
   if (!post_param_parsed_) {
     ParsePostParam();
@@ -204,7 +241,7 @@ void HttpMessageHandler::SetRespCode(int code) { resp_code_ = code; }
 void HttpMessageHandler::SendResponse() {
   MS_EXCEPTION_IF_NULL(event_request_);
   MS_EXCEPTION_IF_NULL(resp_buf_);
-  evhttp_send_reply(event_request_, resp_code_, nullptr, resp_buf_);
+  evhttp_send_reply(event_request_, resp_code_, "Client", resp_buf_);
 }
 
 void HttpMessageHandler::QuickResponse(int code, const unsigned char *body, size_t len) {
@@ -224,6 +261,14 @@ void HttpMessageHandler::SimpleResponse(int code, const HttpHeaders &headers, co
   AddRespString(body);
   MS_EXCEPTION_IF_NULL(resp_buf_);
   evhttp_send_reply(event_request_, resp_code_, nullptr, resp_buf_);
+}
+
+void HttpMessageHandler::ErrorResponse(int code, RequestProcessResult result) {
+  nlohmann::json error_json = {{"error_message", result.StatusMessage()}};
+  std::string out_error = error_json.dump();
+  AddRespString(out_error);
+  SetRespCode(code);
+  SendResponse();
 }
 
 void HttpMessageHandler::RespError(int nCode, const std::string &message) {
@@ -269,6 +314,25 @@ void HttpMessageHandler::InitBodySize() { body_->resize(content_len()); }
 std::shared_ptr<std::vector<char>> HttpMessageHandler::body() { return body_; }
 
 void HttpMessageHandler::set_body(std::shared_ptr<std::vector<char>> body) { body_ = body; }
+
+const nlohmann::json &HttpMessageHandler::request_message() const { return request_message_; }
+
+RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &key, int32_t *const value) {
+  RequestProcessResult result(RequestProcessResultCode::kSuccess);
+  if (!request_message_.contains(key)) {
+    std::string message = "The json is not contain the key:" + key;
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
+    return result;
+  }
+  int32_t res = request_message_.at(key);
+  if (res < 0) {
+    std::string message = "The value should not be less than 0.";
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
+    return result;
+  }
+  *value = res;
+  return result;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
