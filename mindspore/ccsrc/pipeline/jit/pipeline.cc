@@ -1137,7 +1137,6 @@ void FinalizeBackend() {
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   pynative::ClearPyNativeSession();
-  session::ClearPythonParasMap();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {

@@ -41,7 +41,6 @@ namespace mindspore {
 using GraphId = uint32_t;
 using GraphInfo = std::string;
 namespace session {
-void ClearPythonParasMap();
 using CallBackFunc = uint32_t (*)(uint32_t graph_id,
                                   const std::map<std::string, mindspore::tensor::TensorPtr> &params_list);
 using AnyList = std::vector<Any>;
@@ -254,7 +253,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::map<uint32_t, uint32_t> free_bucket_id_map_;
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
-  std::unordered_map<FuncGraphPtr, KernelGraphPtr> front_backend_graph_map_;
+  std::unordered_map<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   std::unordered_map<GraphId, std::vector<GraphId>> parent_graphs_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;

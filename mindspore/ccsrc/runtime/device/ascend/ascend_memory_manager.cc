@@ -41,8 +41,9 @@ void AscendMemoryManager::MallocDeviceMemory() {
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
       unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-      MS_LOG(EXCEPTION) << "Device " << device_id << " is occupied, malloc device memory failed, size["
-                        << device_mem_size_ << "], ret[" << ret << "]";
+      MS_LOG(EXCEPTION) << "Malloc device memory failed, size[" << device_mem_size_ << "], ret[" << ret << "]"
+                        << "Device " << device_id
+                        << " may be other processes occupying this card, check as: ps -ef|grep python";
     } else {
       MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
     }

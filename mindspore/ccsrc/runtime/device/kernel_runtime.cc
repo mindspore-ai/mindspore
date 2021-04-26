@@ -513,7 +513,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   std::vector<std::pair<DeviceAddressPtr, size_t>> addr_size;
   size_t input_num = AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_num; ++i) {
-    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
+    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(node, i, true);
     auto input_node = input_node_with_index.first;
     if (AnfAlgo::OutputAddrExist(input_node, input_node_with_index.second)) {
       MS_LOG(INFO) << "Communication op " << input_node->fullname_with_scope() << " has input device address";

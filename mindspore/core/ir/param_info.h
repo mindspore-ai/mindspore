@@ -86,6 +86,8 @@ class ParamInfo {
 
   std::vector<int64_t> cache_shape() const { return cache_shape_; }
   void set_cache_shape(const std::vector<int64_t> &cache_shape) { cache_shape_ = cache_shape; }
+  ParameterPtr parameter() { return parameter_; }
+  void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
 
  private:
   std::string name_{"Parameter"};
@@ -100,6 +102,7 @@ class ParamInfo {
   bool parallel_optimizer_{true};
   bool cache_enable_{false};
   std::vector<int64_t> cache_shape_;
+  ParameterPtr parameter_{nullptr};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_
