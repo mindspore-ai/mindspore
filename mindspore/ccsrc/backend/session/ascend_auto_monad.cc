@@ -1307,16 +1307,16 @@ class ExecuteOrderGenerator {
       auto iter = std::find_if(labels->begin(), labels->end(), [label_id](auto id) { return id == label_id; });
       // Use new label if find repeated label.
       if (iter == labels->end()) {
-        new_labels.emplace_back(label_id);
-        labels->emplace_back(label_id);
+        (void)new_labels.emplace_back(label_id);
+        (void)labels->emplace_back(label_id);
         continue;
       }
-      new_labels.emplace_back(++max_label_);
-      labels_multimap->insert(std::pair<uint32_t, uint32_t>(*iter, max_label_));
-      labels->emplace_back(max_label_);
+      (void)new_labels.emplace_back(++max_label_);
+      (void)labels_multimap->insert({*iter, max_label_});
+      (void)labels->emplace_back(label_id);
       is_new_labels = true;
     }
-    switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
+    (void)switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
     if (is_new_labels) {
       AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue(new_labels), node);
     }
@@ -1327,12 +1327,12 @@ class ExecuteOrderGenerator {
     auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
     auto iter = std::find(switch_labels->begin(), switch_labels->end(), label_id);
     if (iter == switch_labels->end()) {
-      labels->emplace_back(label_id);
+      (void)labels->emplace_back(label_id);
       return;
     }
     AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(++max_label_), node);
-    labels_multimap->insert(std::pair<uint32_t, uint32_t>(*iter, max_label_));
-    labels->emplace_back(max_label_);
+    (void)labels_multimap->insert({*iter, max_label_});
+    (void)labels->emplace_back(max_label_);
   }
 
   // Unfold Repeated Labels, avoid same label in labelswitches.
@@ -1377,8 +1377,8 @@ class ExecuteOrderGenerator {
       AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(new_label), cnode);
       auto monad = graph_->NewValueNode(kUMonad->ToAbstract(), kUMonad);
       cnode->set_abstract(monad->abstract());
-      device::ascend::SelectKernelInfo(cnode);
-      nodes->insert(iter, cnode);
+      (void)device::ascend::SelectKernelInfo(cnode);
+      (void)nodes->insert(iter, cnode);
     }
   }
 
