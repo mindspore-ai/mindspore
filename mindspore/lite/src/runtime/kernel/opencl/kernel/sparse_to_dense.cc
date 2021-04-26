@@ -141,6 +141,7 @@ void SparseToDenseOpenCLKernel::SetGlobalLocal() {
 }
 
 int SparseToDenseOpenCLKernel::Prepare() {
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   input_dim_ = in_tensors_[0]->shape().size();
   inshapeindex1_dim = in_tensors_[0]->shape()[1];
   weight_scalar_ = in_tensors_[2]->IsScalar();
@@ -149,10 +150,10 @@ int SparseToDenseOpenCLKernel::Prepare() {
   std::string program_name = "SparseToDense";
   ocl_runtime_->LoadSource(program_name, source);
   std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  if (enable_fp16_) {
+    build_options_ext = {" -DDTYPE=half "};
+  } else {
+    build_options_ext = {" -DDTYPE=float "};
   }
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 
@@ -216,6 +217,5 @@ int SparseToDenseOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SparseToDense, OpenCLKernelCreator<SparseToDenseOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SparseToDense, OpenCLKernelCreator<SparseToDenseOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_SparseToDense, OpenCLKernelCreator<SparseToDenseOpenCLKernel>);
 }  // namespace mindspore::kernel

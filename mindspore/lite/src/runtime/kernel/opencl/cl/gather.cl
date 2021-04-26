@@ -9,7 +9,7 @@ __kernel void gather(__write_only image2d_t dst_data, __read_only image2d_t src_
   if (X >= dst_size.x || Y >= dst_size.y * dst_size.w || Z >= dst_size.z || dst_size.y == 0) {
     return;
   }
-  TYPE4 res_data = (TYPE4)(0.0f, 0.0f, 0.0f, 0.0f);
+  DTYPE4 res_data = (DTYPE4)(0.0f, 0.0f, 0.0f, 0.0f);
   int batch = Y / dst_size.y;
   int height = Y % dst_size.y;
   if (axis == 0) {
@@ -20,10 +20,10 @@ __kernel void gather(__write_only image2d_t dst_data, __read_only image2d_t src_
     res_data = READ_IMAGE(src_data, smp_zero, (int2)(indices[X] * src_size.z + Z, batch * src_size.y + height));
   } else if (axis == 3) {
     int offset[4] = {indices[Z * 4] / 4, indices[Z * 4 + 1] / 4, indices[Z * 4 + 2] / 4, indices[Z * 4 + 3] / 4};
-    TYPE tmp[4];
-    TYPE res_tmp[4];
+    DTYPE tmp[4];
+    DTYPE res_tmp[4];
     for (int i = 0; i < indices_num; ++i) {
-      TYPE4 rd_data = (TYPE4)(0.0f, 0.0f, 0.0f, 0.0f);
+      DTYPE4 rd_data = (DTYPE4)(0.0f, 0.0f, 0.0f, 0.0f);
       rd_data = READ_IMAGE(src_data, smp_zero, (int2)(X * src_size.z + offset[i], batch * src_size.y + height));
       if (i >= 1 && offset[i] != offset[i - 1]) {
         rd_data = READ_IMAGE(src_data, smp_zero, (int2)(X * src_size.z + offset[i], batch * src_size.y + height));

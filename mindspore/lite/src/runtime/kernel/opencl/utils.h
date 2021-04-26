@@ -67,6 +67,8 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
 void StoreTmpWeight(lite::Tensor *tensor);
 void FreeTmpWeight(lite::Tensor *tensor);
 
+std::vector<std::string> CreateBuildOptionsExtByDType(TypeId type_id);
+
 template <class T1, class T2>
 void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane_in, int plane_out, int channel,
                       const std::function<T2(T1)> &to_dtype) {

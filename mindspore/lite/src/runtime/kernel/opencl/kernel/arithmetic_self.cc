@@ -89,14 +89,7 @@ int ArithmeticSelfOpenCLKernel::Prepare() {
   MS_LOG(DEBUG) << "execute kernel name : " << kernel_name;
   std::string program_name = "ArithmeticSelf";
   ocl_runtime_->LoadSource(program_name, arithmeticself_source);
-  std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeInt32) {
-    build_options_ext = {" -DTYPE=int -DTYPE4=int4  -DWRITE_IMAGE=write_imagei  -DREAD_IMAGE=read_imagei "};
-  } else if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DTYPE=float -DTYPE4=float4 -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DTYPE=half -DTYPE4=half4 -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
-  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   SetGlobalLocal();
   SetConstArgs();

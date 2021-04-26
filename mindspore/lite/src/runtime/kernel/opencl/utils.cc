@@ -327,4 +327,15 @@ void FreeTmpWeight(lite::Tensor *tensor) {
   }
 }
 
+std::vector<std::string> CreateBuildOptionsExtByDType(TypeId type_id) {
+  std::vector<std::string> build_options_ext;
+  if (type_id == kNumberTypeInt32) {
+    build_options_ext = {" -DDTYPE=int -DDTYPE4=int4 -DWRITE_IMAGE=write_imagei  -DREAD_IMAGE=read_imagei "};
+  } else if (type_id == kNumberTypeFloat32) {
+    build_options_ext = {" -DDTYPE=float -DDTYPE4=float4 -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (type_id == kNumberTypeFloat16) {
+    build_options_ext = {" -DDTYPE=half -DDTYPE4=half4 -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  return build_options_ext;
+}
 }  // namespace mindspore::kernel
