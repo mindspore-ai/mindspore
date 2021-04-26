@@ -28,9 +28,9 @@ from mindspore.nn.learning_rate_schedule import LearningRateSchedule, Polynomial
 from mindspore.parallel._utils import _get_global_rank
 from mindspore.communication.management import get_group_size
 
-class PanGu1Config:
+class PanguAlphaConfig:
     """
-    PanGu1 config class which defines the model size
+    PanguAlpha config class which defines the model size
     """
     def __init__(self,
                  data_parallel_num,
@@ -77,7 +77,7 @@ class PanGu1Config:
         self.use_top_query_attention = use_top_query_attention
 
     def __str__(self):
-        info = "[PanGu1 Config]" + '===' * 10 + '\n'
+        info = "[PanguAlpha Config]" + '===' * 10 + '\n'
         for k, v in self.__dict__.items():
             var_info = "{}:{}\n".format(k, v)
             info += var_info
@@ -162,7 +162,7 @@ def _get_model_parallel_group(dp, mp):
 
 class LearningRate(LearningRateSchedule):
     """
-    Warmup-decay learning rate for PanGu1 network.
+    Warmup-decay learning rate for PanguAlpha network.
     """
     def __init__(self,
                  learning_rate,
@@ -206,8 +206,8 @@ class LearningRate(LearningRateSchedule):
 
 
 def get_args():
-    """train function for PanGu1"""
-    parser = argparse.ArgumentParser(description="PanGu1 training")
+    """train function for PanguAlpha"""
+    parser = argparse.ArgumentParser(description="PanguAlpha training")
     parser.add_argument('--device_id',
                         type=int,
                         default=0,

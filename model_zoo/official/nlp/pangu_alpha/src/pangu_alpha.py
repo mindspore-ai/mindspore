@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""PanGu1 model"""
+"""PanguAlpha model"""
 import math
 import numpy as np
 import mindspore.nn as nn
@@ -189,7 +189,7 @@ class Output(nn.Cell):
     """
     The output mapping module for each layer
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
         scale: scale factor for initialization
     Inputs:
         x: output of the self-attention module
@@ -219,7 +219,7 @@ class AttentionMask(nn.Cell):
     r"""
     Get the attention matrix for self-attention module
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
     Inputs:
         input_mask: the mask indicating whether each position is a valid input
     Returns:
@@ -255,7 +255,7 @@ class EmbeddingLookup(nn.Cell):
     """
     The embedding lookup table for vocabulary
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
     Inputs:
         input_ids: the tokenized inputs with datatype int32
     Returns:
@@ -289,7 +289,7 @@ class Attention(nn.Cell):
     Self-Attention module for each layer
 
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
         scale: scale factor for initialization
         layer_idx: current layer index
     """
@@ -477,9 +477,9 @@ class Attention(nn.Cell):
 
 class Block(nn.Cell):
     """
-    The basic block of PanGu1 network
+    The basic block of PanguAlpha network
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
         layer_idx: current layer index
     Inputs:
         x: the output of previous layer(input_ids for the first layer)
@@ -623,11 +623,11 @@ class QueryLayer(nn.Cell):
             output = self.last_add(x, mlp_logit)
         return output, layer_present
 
-class PanGu1_Model(nn.Cell):
+class PanguAlpha_Model(nn.Cell):
     """
-    The backbone of PanGu1 network
+    The backbone of PanguAlpha network
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
     Inputs:
         input_ids: the tokenized inputs with datatype int32
         input_mask: the mask indicating whether each position is a valid input
@@ -638,7 +638,7 @@ class PanGu1_Model(nn.Cell):
         embedding_table: Tensor, the embedding table for the vocabulary
     """
     def __init__(self, config):
-        super(PanGu1_Model, self).__init__()
+        super(PanguAlpha_Model, self).__init__()
         self.get_attention_mask = AttentionMask(config)
         self.word_embedding = EmbeddingLookup(config).set_comm_fusion(1)
         self.position_embedding = nn.Embedding(
@@ -714,7 +714,7 @@ class PanGu1_Model(nn.Cell):
 
 
     def construct(self, input_ids, input_mask, input_position=None, attention_mask=None, layer_past=None):
-        """PanGu1 model"""
+        """PanguAlpha model"""
         if not self.use_past:
             layer_past = self.past
 
@@ -748,11 +748,11 @@ class PanGu1_Model(nn.Cell):
         return output_state, present_layer, embedding_table
 
 
-class PanGu1_Head(nn.Cell):
+class PanguAlpha_Head(nn.Cell):
     """
-    Head for PanGu1 to get the logits of each token in the vocab
+    Head for PanguAlpha to get the logits of each token in the vocab
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
     Inputs:
         state: the output of the backbone
         embedding_table: the embedding table of the vocabulary
@@ -760,7 +760,7 @@ class PanGu1_Head(nn.Cell):
         logits: Tensor, the logits of the corresponding inputs
     """
     def __init__(self, config):
-        super(PanGu1_Head, self).__init__()
+        super(PanguAlpha_Head, self).__init__()
         if config.word_emb_dp:
             self.matmul = P.MatMul(transpose_b=True).shard(((config.dp, 1), (1, 1)))
         else:
@@ -776,11 +776,11 @@ class PanGu1_Head(nn.Cell):
         return logits
 
 
-class PanGu1(nn.Cell):
+class PanguAlpha(nn.Cell):
     """
-    The PanGu1 network consisting of two parts the backbone and the head
+    The PanguAlpha network consisting of two parts the backbone and the head
     Args:
-        config(PanGu1Config): the config of network
+        config(PanguAlphaConfig): the config of network
     Inputs:
         input_ids: the tokenized inputs
         input_mask: the mask indicating whether each position is a valid input
@@ -789,9 +789,9 @@ class PanGu1(nn.Cell):
         logits: Tensor: the logits of the corresponding inputs with shape (batch_size, seq_length, vocab_size)
     """
     def __init__(self, config):
-        super(PanGu1, self).__init__()
-        self.backbone = PanGu1_Model(config)
-        self.head = PanGu1_Head(config)
+        super(PanguAlpha, self).__init__()
+        self.backbone = PanguAlpha_Model(config)
+        self.head = PanguAlpha_Head(config)
 
     def construct(self, input_ids, input_mask, input_position=None, attention_mask=None, past=None):
         output_states, _, embedding_table = self.backbone(
@@ -804,7 +804,7 @@ class CrossEntropyLoss(nn.Cell):
     """
     Calculate the cross entropy loss
     Args:
-        config(PanGu1Config): the config of the network
+        config(PanguAlphaConfig): the config of the network
     Inputs:
         logits: the output logits of the backbone
         label: the ground truth label of the sample
@@ -865,11 +865,11 @@ class CrossEntropyLoss(nn.Cell):
         return loss
 
 
-class PanGu1WithLoss(nn.Cell):
+class PanguAlphaWithLoss(nn.Cell):
     """
-    PanGu1 training loss
+    PanguAlpha training loss
     Args:
-        network: backbone network of PanGu1
+        network: backbone network of PanguAlpha
         loss: loss function, e.g., crossentropy
         eos_token: the end_of_sentence token
     Inputs:
@@ -879,7 +879,7 @@ class PanGu1WithLoss(nn.Cell):
         output: Tensor, the loss of the network
     """
     def __init__(self, config, network, loss, eos_token=6):
-        super(PanGu1WithLoss, self).__init__(auto_prefix=False)
+        super(PanguAlphaWithLoss, self).__init__(auto_prefix=False)
         self.network = network
         self.loss = loss
         self.eos_token = eos_token
@@ -893,7 +893,7 @@ class PanGu1WithLoss(nn.Cell):
 
     def construct(self, input_ids, input_position=None, attention_mask=None):
         r"""
-        PanGu1WithLoss
+        PanguAlphaWithLoss
         """
         tokens = self.slice(input_ids, (0, 0), (self.batch_size, -1), (1, 1))
 
@@ -914,9 +914,9 @@ class PanGu1WithLoss(nn.Cell):
 
 class EvalNet(nn.Cell):
     """
-    PanGu1 evaluation net
+    PanguAlpha evaluation net
     Args:
-        backbone: backbone network of PanGu1
+        backbone: backbone network of PanguAlpha
         generate: enable generate mode
     Inputs:
         input_ids: the tokenized inpus

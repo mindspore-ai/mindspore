@@ -75,9 +75,9 @@ class VirtualDatasetOneInputCell(nn.Cell):
         data_ = self._virtual_dataset(*data)
         return self._backbone(*data_)
 
-class PanGu1TrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
+class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
     """
-    Encapsulation class of PanGu1 network training.
+    Encapsulation class of PanguAlpha network training.
 
     Append an optimizer to the training network after that the construct
     function can be called to create the backward graph.
@@ -93,7 +93,7 @@ class PanGu1TrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
                  scale_update_cell=None,
                  enable_global_norm=False,
                  config=None):
-        super(PanGu1TrainOneStepWithLossScaleCell,
+        super(PanguAlphaTrainOneStepWithLossScaleCell,
               self).__init__(network, optimizer, scale_update_cell)
         self.network = network
         self.config = config
