@@ -95,7 +95,9 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Get the rank ID for the current device in the specified collective communication group.
 
     Args:
-        group (str): ProcessGroup, the process group to work on. Default: WORLD_COMM_GROUP.
+        group (str): The communication group to work on. Normally, the group should be created by create_group,
+        otherwise, using the default group.
+        Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the rank ID of the calling process within the group.
@@ -116,7 +118,9 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         Nccl is not supported.
 
     Args:
-        group (str): ProcessGroup, the process group to work on. Default: WORLD_COMM_GROUP.
+        group (str): The communication group to work on. Normally, the group should be created by create_group,
+        otherwise, using the default group.
+        Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the local rank ID of the calling process within the group.
@@ -134,7 +138,9 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     Get the rank size of the specified collective communication group.
 
     Args:
-        group (str): ProcessGroup, the process group to work on.
+        group (str): The communication group to work on. Normally, the group should be created by create_group,
+        otherwise, using the default group.
+        Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the rank size of the group.
@@ -155,7 +161,8 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         Nccl is not supported.
 
     Args:
-        group (str): ProcessGroup, the process group to work on.
+        group (str): The communication group to work on. The group is created by create_group
+        or the default world communication group.
 
     Returns:
         int, the local rank size where the calling process is within the group.
@@ -178,8 +185,9 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         The parameter group should not be "hccl_world_group".
 
     Args:
-        group (str): The user communication group.
-        group_rank_id (int): A rank ID in user communication group.
+        group (str): The communication group to work on. The group is created by create_group
+        or the default world communication group.
+        group_rank_id (int): A rank ID in the communication group.
 
     Returns:
         int, the rank ID in world communication group.
@@ -188,6 +196,13 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         TypeError: If `group_rank_id` is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+    Examples:
+        >>> init()
+        >>> group = "0-4"
+        >>> rank_ids = [0,4]
+        >>> create_group(group, rank_ids)
+        >>> world_rank_id = get_world_rank_from_group_rank(group, 1)
+        >>> print("world_rank_id is: ", world_rank_id) # world_rank_id is: 4
     """
     return _get_world_rank_from_group_rank_helper(group=group, group_rank_id=group_rank_id, backend=GlobalComm.BACKEND)
 
@@ -203,7 +218,8 @@ def get_group_rank_from_world_rank(world_rank_id, group):
 
     Args:
         world_rank_id (int): A rank ID in the world communication group.
-        group (str): The user communication group.
+        group (str): The communication group to work on. The group is created by create_group
+        or the default world communication group.
 
     Returns:
         int, the rank ID in the user communication group.
@@ -212,6 +228,13 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         TypeError: If world_rank_id is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+    Examples:
+        >>> init()
+        >>> group = "0-4"
+        >>> rank_ids = [0,4]
+        >>> create_group(group, rank_ids)
+        >>> group_rank_id = get_group_rank_from_world_rank(4, group)
+        >>> print("group_rank_id is: ", group_rank_id) # group_rank_id is: 1
     """
     return _get_group_rank_from_world_rank_helper(world_rank_id=world_rank_id, group=group, backend=GlobalComm.BACKEND)
 
@@ -226,7 +249,7 @@ def create_group(group, rank_ids):
         Rank_ids should not have duplicate data.
 
     Args:
-        group (str): ProcessGroup, the process group to create.
+        group (str): The name of the communication group to be created.
         rank_ids (list): A list of device IDs.
 
     Raises:
@@ -235,8 +258,8 @@ def create_group(group, rank_ids):
         RuntimeError: If hccl/nccl is not available or nccl not supports.
     Examples:
         >>> init()
-        >>> group = "0-1"
-        >>> rank_ids = [0,1]
+        >>> group = "0-8"
+        >>> rank_ids = [0,8]
         >>> create_group(group, rank_ids)
     """
     _create_group_helper(group, rank_ids, backend=GlobalComm.BACKEND)
@@ -251,7 +274,7 @@ def destroy_group(group):
         The parameter group should not be "hccl_world_group".
 
     Args:
-        group (str): ProcessGroup, the process group to destroy.
+        group (str): The communication group to destroy, the group should be created by create_group.
 
     Raises:
         TypeError: If group is not a string.
