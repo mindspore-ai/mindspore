@@ -1,0 +1,5 @@
+cv2
+mindspore
+numpy
+matplotlib
+shutil

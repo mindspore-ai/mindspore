@@ -65,7 +65,7 @@ bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
 void AscendMemoryPool::ResetIdleMemBuf() {
   auto idle_mem_buf_map = DynamicMemPoolBestFit::global_idle_mem_buf_map();
   for (auto &it : idle_mem_buf_map) {
-    rtMemset(it.second->device_addr_, it.first, 0, it.first);
+    (void)rtMemset(it.second->device_addr_, it.first, 0, it.first);
   }
 }
 

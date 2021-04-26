@@ -766,7 +766,7 @@ class AscendAutoMonadConverter {
       if (target == value) {
         continue;
       }
-      tuple_inputs.emplace_back(AssignAll(target, value, true));
+      (void)tuple_inputs.emplace_back(AssignAll(target, value, true));
     }
     return kernel_graph_->NewCNode(tuple_inputs);
   }
@@ -811,7 +811,7 @@ class AscendAutoMonadConverter {
     tuple_inputs.reserve(targets.size() + 1);
     tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < targets.size(); ++i) {
-      tuple_inputs.emplace_back(Assign(targets[i], sources[i], is_link));
+      (void)tuple_inputs.emplace_back(Assign(targets[i], sources[i], is_link));
     }
     return kernel_graph_->NewCNode(tuple_inputs);
   }
@@ -983,15 +983,16 @@ class ExecuteOrderGenerator {
       auto iter = std::find_if(labels->begin(), labels->end(), [label_id](auto id) { return id == label_id; });
       // Use new label if find repeated label.
       if (iter == labels->end()) {
-        new_labels.emplace_back(label_id);
+        (void)new_labels.emplace_back(label_id);
+        (void)labels->emplace_back(label_id);
         continue;
       }
-      new_labels.emplace_back(++max_label_);
-      labels_multimap->insert(std::pair<uint32_t, uint32_t>(*iter, max_label_));
+      (void)new_labels.emplace_back(++max_label_);
+      (void)labels_multimap->insert({*iter, max_label_});
+      (void)labels->emplace_back(max_label_);
       is_new_labels = true;
     }
-    labels->insert(labels->end(), new_labels.begin(), new_labels.end());
-    switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
+    (void)switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
     if (is_new_labels) {
       AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue(new_labels), node);
     }
@@ -1002,12 +1003,12 @@ class ExecuteOrderGenerator {
     auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
     auto iter = std::find(switch_labels->begin(), switch_labels->end(), label_id);
     if (iter == switch_labels->end()) {
-      labels->emplace_back(label_id);
+      (void)labels->emplace_back(label_id);
       return;
     }
     AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(++max_label_), node);
-    labels_multimap->insert(std::pair<uint32_t, uint32_t>(*iter, max_label_));
-    labels->emplace_back(max_label_);
+    (void)labels_multimap->insert({*iter, max_label_});
+    (void)labels->emplace_back(max_label_);
   }
 
   // Unfold Repeated Labels, avoid same label in labelswitches.
@@ -1036,7 +1037,7 @@ class ExecuteOrderGenerator {
     for (auto labels : labels_multimap) {
       auto old_label = labels.first;
       auto new_label = labels.second;
-      auto iter = std::find_if(nodes->begin(), nodes->end(), [old_label](auto node) {
+      auto iter = std::find_if(nodes->begin(), nodes->end(), [old_label](auto node) -> bool {
         if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSet)) {
           return false;
         }
@@ -1052,8 +1053,8 @@ class ExecuteOrderGenerator {
       AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(new_label), cnode);
       auto monad = graph_->NewValueNode(kUMonad->ToAbstract(), kUMonad);
       cnode->set_abstract(monad->abstract());
-      device::ascend::SelectKernelInfo(cnode);
-      nodes->insert(iter, cnode);
+      (void)device::ascend::SelectKernelInfo(cnode);
+      (void)nodes->insert(iter, cnode);
     }
   }
 
