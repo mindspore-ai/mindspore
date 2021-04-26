@@ -32,12 +32,18 @@ int StrassenOpenCLKernel::Prepare() {
   std::string source = strassen_source;
   std::string program_name = "MatMul";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
-  ocl_runtime_->BuildKernel(kernel_IMG_add_sub_2, program_name, "MatMul_IMG_Add_Sub_2");
-  ocl_runtime_->BuildKernel(kernel_BUF_add_sub_2, program_name, "MatMul_BUF_Add_Sub_2");
-  ocl_runtime_->BuildKernel(kernel_back_result, program_name, "Strassen_Back_Result");
-  ocl_runtime_->BuildKernel(MatMul_StrassenBUFFilled, program_name, "MatMul_BUF_Filled");
-  ocl_runtime_->BuildKernel(MatMul_StrassenIMGFilled, program_name, "MatMul_IMG_Filled");
+  std::vector<std::string> build_options_ext;
+  if (desc_.data_type == kNumberTypeFloat32) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (desc_.data_type == kNumberTypeFloat16) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  ocl_runtime_->BuildKernel(kernel_IMG_add_sub_2, program_name, "MatMul_IMG_Add_Sub_2", build_options_ext);
+  ocl_runtime_->BuildKernel(kernel_BUF_add_sub_2, program_name, "MatMul_BUF_Add_Sub_2", build_options_ext);
+  ocl_runtime_->BuildKernel(kernel_back_result, program_name, "Strassen_Back_Result", build_options_ext);
+  ocl_runtime_->BuildKernel(MatMul_StrassenBUFFilled, program_name, "MatMul_BUF_Filled", build_options_ext);
+  ocl_runtime_->BuildKernel(MatMul_StrassenIMGFilled, program_name, "MatMul_IMG_Filled", build_options_ext);
   auto ret = InitWeights();
   if (ret != RET_OK) {
     return ret;

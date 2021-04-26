@@ -22,7 +22,7 @@ __kernel void OneHotAxis0(__read_only image2d_t src_data, __write_only image2d_t
   int N = Z / out_shape.y;
   int H = Z % out_shape.y;
   int in_index = (H * out_shape.z + Y) * out_shape.w + X;
-  int4 indices = read_imagei(src_data, smp_zero, (int2)(in_index % in_image2d_shape.x, in_index / in_image2d_shape.x));
+  int4 indices = READ_IMAGE(src_data, smp_zero, (int2)(in_index % in_image2d_shape.x, in_index / in_image2d_shape.x));
   int *indices_int = (int *)&indices;
   for (int i = 0; i < C4NUM; i++) {
     if (support_neg_index != 0 && indices_int[i] < 0) {
@@ -42,7 +42,7 @@ __kernel void OneHotAxis0(__read_only image2d_t src_data, __write_only image2d_t
   if (4 * X + 3 < C) {
     SET_ON_OR_OFF_VALUE(result.w, N, indices_int[3], on_value, off_value);
   }
-  write_imagef(dst_data, (int2)(Y * out_shape.w + X, Z), result);
+  WRITE_IMAGE(dst_data, (int2)(Y * out_shape.w + X, Z), result);
 }
 
 __kernel void OneHotAxis1(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 in_image2d_shape,
@@ -54,7 +54,7 @@ __kernel void OneHotAxis1(__read_only image2d_t src_data, __write_only image2d_t
   int N = Z / out_shape.y;
   int H = Z % out_shape.y;
   int in_index = (N * out_shape.z + Y) * out_shape.w + X;
-  int4 indices = read_imagei(src_data, smp_zero, (int2)(in_index % in_image2d_shape.x, in_index / in_image2d_shape.x));
+  int4 indices = READ_IMAGE(src_data, smp_zero, (int2)(in_index % in_image2d_shape.x, in_index / in_image2d_shape.x));
   int *indices_int = (int *)&indices;
   for (int i = 0; i < C4NUM; i++) {
     if (support_neg_index != 0 && indices_int[i] < 0) {
@@ -74,7 +74,7 @@ __kernel void OneHotAxis1(__read_only image2d_t src_data, __write_only image2d_t
   if (4 * X + 3 < C) {
     SET_ON_OR_OFF_VALUE(result.w, H, indices_int[3], on_value, off_value);
   }
-  write_imagef(dst_data, (int2)(Y * out_shape.w + X, Z), result);
+  WRITE_IMAGE(dst_data, (int2)(Y * out_shape.w + X, Z), result);
 }
 
 __kernel void OneHotAxis2(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 in_image2d_shape,
@@ -86,7 +86,7 @@ __kernel void OneHotAxis2(__read_only image2d_t src_data, __write_only image2d_t
   int N = Z / out_shape.y;
   int H = Z % out_shape.y;
   int in_index = (N * out_shape.y + H) * out_shape.w + X;
-  int4 indices = read_imagei(src_data, smp_zero, (int2)(in_index % in_image2d_shape.x, in_index / in_image2d_shape.x));
+  int4 indices = READ_IMAGE(src_data, smp_zero, (int2)(in_index % in_image2d_shape.x, in_index / in_image2d_shape.x));
   int *indices_int = (int *)&indices;
   for (int i = 0; i < C4NUM; i++) {
     if (support_neg_index != 0 && indices_int[i] < 0) {
@@ -106,7 +106,7 @@ __kernel void OneHotAxis2(__read_only image2d_t src_data, __write_only image2d_t
   if (4 * X + 3 < C) {
     SET_ON_OR_OFF_VALUE(result.w, Y, indices_int[3], on_value, off_value);
   }
-  write_imagef(dst_data, (int2)(Y * out_shape.w + X, Z), result);
+  WRITE_IMAGE(dst_data, (int2)(Y * out_shape.w + X, Z), result);
 }
 
 __kernel void OneHotAxis3(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 in_image2d_shape,
@@ -121,7 +121,7 @@ __kernel void OneHotAxis3(__read_only image2d_t src_data, __write_only image2d_t
   int in_index_c4 = (N * out_shape.y + H) * ci4_size + Y / 4;
   int in_index_c4_remainder = Y % 4;
   int4 indices =
-    read_imagei(src_data, smp_zero, (int2)(in_index_c4 % in_image2d_shape.x, in_index_c4 / in_image2d_shape.x));
+    READ_IMAGE(src_data, smp_zero, (int2)(in_index_c4 % in_image2d_shape.x, in_index_c4 / in_image2d_shape.x));
   int *indices_int = (int *)&indices;
   int index_one = indices_int[in_index_c4_remainder];
   if (support_neg_index != 0 && index_one < 0) {
@@ -140,7 +140,7 @@ __kernel void OneHotAxis3(__read_only image2d_t src_data, __write_only image2d_t
   if (4 * X + 3 < C) {
     SET_ON_OR_OFF_VALUE(result.w, 4 * X + 3, index_one, on_value, off_value);
   }
-  write_imagef(dst_data, (int2)(Y * out_shape.w + X, Z), result);
+  WRITE_IMAGE(dst_data, (int2)(Y * out_shape.w + X, Z), result);
 }
 
 __kernel void OneHot2DAxis3(__read_only image2d_t src_data, __write_only image2d_t dst_data, int2 in_image2d_shape,
@@ -150,7 +150,7 @@ __kernel void OneHot2DAxis3(__read_only image2d_t src_data, __write_only image2d
   int Z = get_global_id(2);  // H * N (out_shape.h is 1, so N == Z)
   if (X >= out_shape.w || Y >= out_shape.z || Z >= out_shape.x * out_shape.y) return;
   int in_index_c4_remainder = Z % 4;
-  int4 indices = read_imagei(src_data, smp_zero, (int2)(Z / C4NUM, 0));
+  int4 indices = READ_IMAGE(src_data, smp_zero, (int2)(Z / C4NUM, 0));
   int *indices_int = (int *)&indices;
   int index_one = indices_int[in_index_c4_remainder];
   if (support_neg_index != 0 && index_one < 0) {
@@ -169,5 +169,5 @@ __kernel void OneHot2DAxis3(__read_only image2d_t src_data, __write_only image2d
   if (4 * X + 3 < C) {
     SET_ON_OR_OFF_VALUE(result.w, 4 * X + 3, index_one, on_value, off_value);
   }
-  write_imagef(dst_data, (int2)(Y * out_shape.w + X, Z), result);
+  WRITE_IMAGE(dst_data, (int2)(Y * out_shape.w + X, Z), result);
 }

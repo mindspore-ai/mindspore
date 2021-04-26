@@ -186,7 +186,13 @@ int ReduceOpenCLKernel::Prepare() {
   std::string source = reduce_source;
   std::string program_name = "Reduce";
   ocl_runtime_->LoadSource(program_name, source);
-  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  std::vector<std::string> build_options_ext;
+  if (desc_.data_type == kNumberTypeFloat32) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
+  } else if (desc_.data_type == kNumberTypeFloat16) {
+    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
+  }
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     return ret;
   }

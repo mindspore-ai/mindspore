@@ -11,7 +11,7 @@ __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE |
   if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) { \
     return;                                                                                 \
   }                                                                                         \
-  FLT4 result;
+  TYPE4 result;
 
 // axis = 1
 #define DOConcat2inputaxis1_NHWC4                                              \
@@ -248,12 +248,12 @@ CONCAT2(2input, axis3, _NHWC4)
   int Align_OutShape = output_shape.w;                                                            \
   int index_output = (IN * output_shape.y + IH) * stride_w + IW * Align_OutShape * C4NUM;
 
-int doconcat(__read_only image2d_t input, __global FLT *output, int Align_Shape, int4 input_shape, int IN, int IH,
+int doconcat(__read_only image2d_t input, __global TYPE *output, int Align_Shape, int4 input_shape, int IN, int IH,
              int Y, int index_output) {
   int Remainder = input_shape.w % C4NUM;
   for (int i = 0; i < Align_Shape; ++i) {
-    FLT4 result = READ_IMAGE(input, smp_none, (int2)((Y * Align_Shape + i), (IN * input_shape.y + IH)));
-    FLT result_temp[4] = {result.x, result.y, result.z, result.w};
+    TYPE4 result = READ_IMAGE(input, smp_none, (int2)((Y * Align_Shape + i), (IN * input_shape.y + IH)));
+    TYPE result_temp[4] = {result.x, result.y, result.z, result.w};
     if ((i + 1) * C4NUM <= input_shape.w) {
       for (int j = 0; j < C4NUM; ++j) {
         output[index_output++] = result_temp[j];
@@ -268,7 +268,7 @@ int doconcat(__read_only image2d_t input, __global FLT *output, int Align_Shape,
 }
 
 __kernel void ConcatInput2UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
-                                        __global FLT *output, int4 input_shape0, int4 input_shape1, int stride_w,
+                                        __global TYPE *output, int4 input_shape0, int4 input_shape1, int stride_w,
                                         int4 output_shape) {
   CHECK_IDX_UNALIGN;
   index_output = doconcat(input0, output, Align_Shape0, input_shape0, IN, IH, Y, index_output);
@@ -276,7 +276,7 @@ __kernel void ConcatInput2UnAlign_NHWC4(__read_only image2d_t input0, __read_onl
 }
 
 __kernel void ConcatInput3UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
-                                        __read_only image2d_t input2, __global FLT *output, int4 input_shape0,
+                                        __read_only image2d_t input2, __global TYPE *output, int4 input_shape0,
                                         int4 input_shape1, int4 input_shape2, int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
   int Align_Shape2 = UP_DIV(input_shape2.w, C4NUM);
@@ -287,7 +287,7 @@ __kernel void ConcatInput3UnAlign_NHWC4(__read_only image2d_t input0, __read_onl
 
 __kernel void ConcatInput4UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
                                         __read_only image2d_t input2, __read_only image2d_t input3,
-                                        __global FLT *output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
+                                        __global TYPE *output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
                                         int4 input_shape3, int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
   int Align_Shape2 = UP_DIV(input_shape2.w, C4NUM), Align_Shape3 = UP_DIV(input_shape3.w, C4NUM);
@@ -299,7 +299,7 @@ __kernel void ConcatInput4UnAlign_NHWC4(__read_only image2d_t input0, __read_onl
 
 __kernel void ConcatInput5UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
                                         __read_only image2d_t input2, __read_only image2d_t input3,
-                                        __read_only image2d_t input4, __global FLT *output, int4 input_shape0,
+                                        __read_only image2d_t input4, __global TYPE *output, int4 input_shape0,
                                         int4 input_shape1, int4 input_shape2, int4 input_shape3, int4 input_shape4,
                                         int stride_w, int4 output_shape) {
   CHECK_IDX_UNALIGN;
@@ -315,7 +315,7 @@ __kernel void ConcatInput5UnAlign_NHWC4(__read_only image2d_t input0, __read_onl
 __kernel void ConcatInput6UnAlign_NHWC4(__read_only image2d_t input0, __read_only image2d_t input1,
                                         __read_only image2d_t input2, __read_only image2d_t input3,
                                         __read_only image2d_t input4, __read_only image2d_t input5,
-                                        __global FLT *output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
+                                        __global TYPE *output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
                                         int4 input_shape3, int4 input_shape4, int4 input_shape5, int stride_w,
                                         int4 output_shape) {
   CHECK_IDX_UNALIGN;
