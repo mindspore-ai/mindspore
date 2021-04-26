@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-PanGu1 train script
+PanguAlpha train script
 """
 
 import os
@@ -31,9 +31,9 @@ from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from src.dataset import create_dataset
-from src.pangu1 import PanGu1, PanGu1WithLoss, CrossEntropyLoss
-from src.pangu1_wrapcell import PanGu1TrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell
-from src.utils import PanGu1Config, LearningRate, get_args
+from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
+from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell
+from src.utils import PanguAlphaConfig, LearningRate, get_args
 
 
 class LossCallBack(Callback):
@@ -110,7 +110,7 @@ def run_train():
     model_parallel_num = args_opt.mp
     data_parallel_num = int(device_num / model_parallel_num)
     batch_size = args_opt.per_batch_size * device_num
-    config = PanGu1Config(
+    config = PanguAlphaConfig(
         data_parallel_num=data_parallel_num,
         model_parallel_num=model_parallel_num,
         batch_size=batch_size,
@@ -124,10 +124,10 @@ def run_train():
         compute_dtype=mstype.float16,
         eod_reset=bool(args_opt.eod_reset))
     print("===config is: ", config, flush=True)
-    pangu1 = PanGu1(config)
+    pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
-    pangu1_with_loss = PanGu1WithLoss(config, pangu1, loss)
-    pangu1_with_loss = VirtualDatasetOneInputCell(pangu1_with_loss)
+    pangu_alpha_with_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
+    pangu_alpha_with_loss = VirtualDatasetOneInputCell(pangu_alpha_with_loss)
 
     print("=====args_opt is: ", args_opt, flush=True)
     lr = LearningRate(learning_rate=args_opt.start_lr,
@@ -137,7 +137,7 @@ def run_train():
                       lr_scale=1)
 
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
-    params = pangu1.trainable_params()
+    params = pangu_alpha.trainable_params()
     decay_params = list(filter(decay_filter, params))
     other_params = list(filter(lambda x: not decay_filter(x), params))
     group_params = [{
@@ -171,10 +171,11 @@ def run_train():
         LossCallBack(callback_size, rank, has_trained_epoch, has_trained_step)
     ]
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
-    pangu1_with_grads = PanGu1TrainOneStepWithLossScaleCell(
-        pangu1_with_loss, optimizer=optimizer, scale_update_cell=update_cell, enable_global_norm=True, config=config)
+    pangu_alpha_with_grads = PanguAlphaTrainOneStepWithLossScaleCell(
+        pangu_alpha_with_loss, optimizer=optimizer, scale_update_cell=update_cell, enable_global_norm=True,
+        config=config)
 
-    model = Model(pangu1_with_grads)
+    model = Model(pangu_alpha_with_grads)
     print("=====dataset size: ", ds.get_dataset_size(), flush=True)
     print("=====actual_epoch_num: ", actual_epoch_num, flush=True)
     model.train(actual_epoch_num, ds, callbacks=callback, sink_size=callback_size, dataset_sink_mode=True)
