@@ -48,8 +48,8 @@ constexpr static uint32_t kLocalClientSupport = 1;
 constexpr static uint32_t kDataIsInSharedMemory = 2;
 /// \brief Size of each message used in message queue.
 constexpr static int32_t kSharedMessageSize = 2048;
-/// \brief Prefix for default cache spilling path and log path
-const char kDefaultPathPrefix[] = "/tmp/mindspore/cache";
+/// \brief The default common path for all users
+const char kDefaultCommonPath[] = "/tmp/mindspore/";
 
 /// \brief State of CacheService at the server.
 enum class CacheServiceState : int8_t {
@@ -73,7 +73,7 @@ inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
 /// \param port
 /// \return unix socket url
 inline std::string PortToUnixSocketPath(int port) {
-  return kDefaultPathPrefix + std::string("/cache_server_p") + std::to_string(port);
+  return kDefaultCommonPath + std::string("/cache_server_p") + std::to_string(port);
 }
 
 /// \brief Round up to the next 4k
@@ -92,8 +92,13 @@ using numa_id_t = int32_t;
 using cpu_id_t = int32_t;
 
 /// Return the default log dir for cache
-inline std::string DefaultLogDir() { return kDefaultPathPrefix + std::string("/log"); }
-
+inline std::string DefaultLogDir() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+  return kDefaultCommonPath + Services::GetUserName() + std::string("/cache/log");
+#else
+  return kDefaultCommonPath;
+#endif
+}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_COMMON_H_

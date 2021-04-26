@@ -129,12 +129,15 @@ bool Path::IsDirectory() {
   }
 }
 
-Status Path::CreateDirectory() {
+Status Path::CreateDirectory(bool is_common_dir) {
   if (!Exists()) {
 #if defined(_WIN32) || defined(_WIN64)
     int rc = mkdir(common::SafeCStr(path_));
 #else
     int rc = mkdir(common::SafeCStr(path_), S_IRUSR | S_IWUSR | S_IXUSR);
+    if (rc == 0 && is_common_dir) {
+      rc = chmod(common::SafeCStr(path_), S_IRWXU | S_IRWXG | S_IRWXO);
+    }
 #endif
     if (rc) {
       std::ostringstream oss;
@@ -166,7 +169,7 @@ std::string Path::ParentPath() {
   return r;
 }
 
-Status Path::CreateDirectories() {
+Status Path::CreateDirectories(bool is_common_dir) {
   if (IsDirectory()) {
     MS_LOG(DEBUG) << "Directory " << toString() << " already exists.";
     return Status::OK();
@@ -174,15 +177,17 @@ Status Path::CreateDirectories() {
     MS_LOG(DEBUG) << "Creating directory " << toString() << ".";
     std::string parent = ParentPath();
     if (!parent.empty()) {
-      if (Path(parent).CreateDirectories()) {
-        return CreateDirectory();
+      if (Path(parent).CreateDirectories(is_common_dir)) {
+        return CreateDirectory(is_common_dir);
       }
     } else {
-      return CreateDirectory();
+      return CreateDirectory(is_common_dir);
     }
   }
   return Status::OK();
 }
+
+Status Path::CreateCommonDirectories() { return CreateDirectories(true); }
 
 Status Path::Remove() {
   if (Exists()) {
@@ -223,19 +228,21 @@ Status Path::OpenFile(int *file_descriptor, bool create) {
   }
   char canonical_path[PATH_MAX + 1] = {0x00};
 #if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(canonical_path, common::SafeCStr(path_), PATH_MAX) == nullptr) {
+  auto err = _fullpath(canonical_path, common::SafeCStr(path_), PATH_MAX);
 #else
-  if (realpath(common::SafeCStr(path_), canonical_path) == nullptr) {
+  auto err = realpath(common::SafeCStr(path_), canonical_path);
 #endif
+  if (err == nullptr) {
     if (errno == ENOENT && create) {
       // File doesn't exist and we are to create it. Let's break it down.
       auto file_part = Basename();
       auto parent_part = ParentPath();
 #if defined(_WIN32) || defined(_WIN64)
-      if (_fullpath(canonical_path, common::SafeCStr(parent_part), PATH_MAX) == nullptr) {
+      auto parent_err = _fullpath(canonical_path, common::SafeCStr(parent_part), PATH_MAX);
 #else
-      if (realpath(common::SafeCStr(parent_part), canonical_path) == nullptr) {
+      auto parent_err = realpath(common::SafeCStr(parent_part), canonical_path);
 #endif
+      if (parent_err == nullptr) {
         RETURN_STATUS_UNEXPECTED(strerror(errno));
       }
       auto cur_inx = strlen(canonical_path);
