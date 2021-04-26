@@ -160,6 +160,24 @@ def test_manifest_dataset_exception():
     except RuntimeError as e:
         assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
 
+    NO_SOURCE_DATA_FILE = "../data/dataset/testManifestData/invalidNoSource.manifest"
+    try:
+        data = ds.ManifestDataset(NO_SOURCE_DATA_FILE)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "Invalid data, source is not found in Manifest file" in str(e)
+
+    NO_USAGE_DATA_FILE = "../data/dataset/testManifestData/invalidNoUsage.manifest"
+    try:
+        data = ds.ManifestDataset(NO_USAGE_DATA_FILE)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "Invalid data, usage is not found in Manifest file" in str(e)
+
 
 if __name__ == '__main__':
     test_manifest_dataset_train()

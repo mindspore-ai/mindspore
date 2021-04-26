@@ -174,10 +174,16 @@ Status ManifestOp::ParseManifestFile() {
   }
   std::string line;
   std::set<std::string> classes;
+  uint64_t line_count = 1;
   while (getline(file_handle, line)) {
     try {
       nlohmann::json js = nlohmann::json::parse(line);
       std::string image_file_path = js.value("source", "");
+      if (image_file_path == "") {
+        file_handle.close();
+        RETURN_STATUS_UNEXPECTED("Invalid data, source is not found in Manifest file: " + file_ + " at line " +
+                                 std::to_string(line_count));
+      }
       // If image is not JPEG/PNG/GIF/BMP, drop it
       bool valid = false;
       RETURN_IF_NOT_OK(CheckImageType(image_file_path, &valid));
@@ -185,6 +191,11 @@ Status ManifestOp::ParseManifestFile() {
         continue;
       }
       std::string usage = js.value("usage", "");
+      if (usage == "") {
+        file_handle.close();
+        RETURN_STATUS_UNEXPECTED("Invalid data, usage is not found in Manifest file: " + file_ + " at line " +
+                                 std::to_string(line_count));
+      }
       (void)std::transform(usage.begin(), usage.end(), usage.begin(), ::tolower);
       if (usage != usage_) {
         continue;
@@ -197,7 +208,8 @@ Status ManifestOp::ParseManifestFile() {
         classes.insert(label_name);
         if (label_name == "") {
           file_handle.close();
-          RETURN_STATUS_UNEXPECTED("Invalid data, label name is not found in Manifest file: " + image_file_path);
+          RETURN_STATUS_UNEXPECTED("Invalid data, label name is not found in Manifest file: " + file_ + " at line " +
+                                   std::to_string(line_count));
         }
         if (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) {
           if (label_index_.find(label_name) == label_index_.end()) {
@@ -209,6 +221,7 @@ Status ManifestOp::ParseManifestFile() {
       if (!labels.empty()) {
         image_labelname_.emplace_back(std::make_pair(image_file_path, labels));
       }
+      line_count++;
     } catch (const std::exception &err) {
       file_handle.close();
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse manifest file: " + file_);

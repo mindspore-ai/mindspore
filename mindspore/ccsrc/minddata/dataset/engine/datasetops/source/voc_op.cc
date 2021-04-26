@@ -213,6 +213,17 @@ void VOCOp::ParseNodeValue(XMLElement *bbox_node, const char *name, float *value
   }
 }
 
+Status VOCOp::CheckIfBboxValid(const float &xmin, const float &ymin, const float &xmax, const float &ymax,
+                               const std::string &path) {
+  if (!(xmin > 0 && ymin > 0 && xmax > xmin && ymax > ymin)) {
+    std::string invalid_bbox = "{" + std::to_string(static_cast<int>(xmin)) + ", " +
+                               std::to_string(static_cast<int>(ymin)) + ", " + std::to_string(static_cast<int>(xmax)) +
+                               ", " + std::to_string(static_cast<int>(ymax)) + "}";
+    RETURN_STATUS_UNEXPECTED("Invalid bndbox: " + invalid_bbox + " found in " + path);
+  }
+  return Status::OK();
+}
+
 Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   if (!Path(path).Exists()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + path);
@@ -245,6 +256,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
       ParseNodeValue(bbox_node, "xmax", &xmax);
       ParseNodeValue(bbox_node, "ymin", &ymin);
       ParseNodeValue(bbox_node, "ymax", &ymax);
+      RETURN_IF_NOT_OK(CheckIfBboxValid(xmin, ymin, xmax, ymax, path));
     } else {
       RETURN_STATUS_UNEXPECTED("Invalid data, bndbox dismatch in " + path);
     }
