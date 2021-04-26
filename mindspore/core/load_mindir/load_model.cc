@@ -76,9 +76,13 @@ std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
   return buf;
 }
 
-bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
+bool get_all_files(const std::string &dir_in, std::vector<std::string> *files, int max_dep) {
   if (dir_in.empty()) {
     return false;
+  }
+  max_dep--;
+  if (max_dep < 0) {
+    MS_LOG(EXCEPTION) << "The file is greater than " << max_dep << ", exit the program.";
   }
   struct stat s;
   int ret = stat(dir_in.c_str(), &s);
@@ -104,7 +108,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
-        ret = get_all_files(name, files);
+        ret = get_all_files(name, files, max_dep);
         if (!ret) {
           MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
           return false;
@@ -117,8 +121,6 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
   closedir(open_dir);
   return true;
 }
-
-int endsWith(string s, string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
 
 std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite) {
   const char *file_path = reinterpret_cast<const char *>(file_name.c_str());
@@ -143,17 +145,20 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     return nullptr;
   }
 
+  char tag_str[] = "_graph.mindir";
+  std::string str(abs_path_buff + strlen(abs_path_buff) - strlen(tag_str), abs_path_buff + strlen(abs_path_buff));
   // Load parameter into graph
-  if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
+  if (str == tag_str && origin_model.graph().parameter_size() == 0) {
     int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
     memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
-    abs_path[path_len] = '\0';
-    snprintf(abs_path + path_len, sizeof(abs_path), "variables");
+    char var[] = "variables";
+    memcpy_s(abs_path + path_len, PATH_MAX, var, strlen(var));
+    abs_path[path_len + strlen(var)] = '\0';
     std::ifstream ifs(abs_path);
     if (ifs.good()) {
       MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
       string path = abs_path;
-      get_all_files(path, &files);
+      get_all_files(path, &files, MAX_FILE_DEPTH_RECURSION);
     } else {
       MS_LOG(ERROR) << "Load graph's variable folder failed, please check the correctness of variable folder.";
       return nullptr;

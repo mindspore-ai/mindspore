@@ -23,6 +23,8 @@
 #include "proto/mind_ir.pb.h"
 #include "ir/func_graph.h"
 
+const int MAX_FILE_DEPTH_RECURSION = 1000;
+
 namespace mindspore {
 std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite = false);
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
