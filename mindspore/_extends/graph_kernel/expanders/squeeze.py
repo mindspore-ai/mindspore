@@ -34,10 +34,8 @@ class Squeeze(Expander):
             if not axis:
                 out_shape = [d for d in shape if d != 1]
             else:
-                out_shape = []
-                for idx, dim in enumerate(shape):
-                    if idx not in axis:
-                        out_shape.append(dim)
+                ndim = len(shape)
+                out_shape = [shape[i] for i in range(ndim) if not (i in axis or (i - ndim) in axis)]
             if not out_shape:
                 out_shape = [1]
             return out_shape
