@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ class BucketBatchByLengthOp : public PipelineOp {
  public:
   class Builder {
    public:
-    Builder(std::vector<std::string> length_dependent_columns, std::vector<int32_t> bucket_boundaries,
-            std::vector<int32_t> bucket_batch_sizes);
+    Builder(const std::vector<std::string> &length_dependent_columns, const std::vector<int32_t> &bucket_boundaries,
+            const std::vector<int32_t> &bucket_batch_sizes);
 
     ~Builder() = default;
 
@@ -85,7 +85,7 @@ class BucketBatchByLengthOp : public PipelineOp {
     Status Build(std::shared_ptr<BucketBatchByLengthOp> *new_bucket_batch_by_length_op);
 
    private:
-    Status SanityCheck();
+    Status SanityCheck() const;
 
     std::vector<std::string> builder_length_dependent_columns_;
     std::vector<int32_t> builder_bucket_boundaries_;
@@ -97,9 +97,10 @@ class BucketBatchByLengthOp : public PipelineOp {
     int32_t builder_op_connector_size_;
   };
 
-  BucketBatchByLengthOp(std::vector<std::string> length_dependent_columns, std::vector<int32_t> bucket_boundaries,
-                        std::vector<int32_t> bucket_batch_sizes, std::shared_ptr<TensorOp> element_length_function,
-                        PadInfo pad_info, bool pad_to_bucket_boundary, bool drop_remainder, int32_t op_connector_size);
+  BucketBatchByLengthOp(const std::vector<std::string> &length_dependent_columns,
+                        const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
+                        std::shared_ptr<TensorOp> element_length_function, const PadInfo &pad_info,
+                        bool pad_to_bucket_boundary, bool drop_remainder, int32_t op_connector_size);
 
   // Destructor
   ~BucketBatchByLengthOp() = default;

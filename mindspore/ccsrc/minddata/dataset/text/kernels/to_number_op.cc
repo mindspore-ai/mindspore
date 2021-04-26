@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ Status ToNumberOp::OutputShape(const std::vector<TensorShape> &input_shapes, std
 }
 
 template <typename T>
-Status ToNumberOp::ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status ToNumberOp::ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const {
   std::vector<T> casted;
 
   for (auto it = input->begin<std::string_view>(); it != input->end<std::string_view>(); ++it) {
@@ -128,7 +128,7 @@ Status ToNumberOp::ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::s
 }
 
 template <typename T>
-Status ToNumberOp::ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status ToNumberOp::ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const {
   std::vector<T> casted;
 
   for (auto it = input->begin<std::string_view>(); it != input->end<std::string_view>(); ++it) {
@@ -174,7 +174,7 @@ Status ToNumberOp::ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std:
   return Status::OK();
 }
 
-Status ToNumberOp::ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status ToNumberOp::ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const {
   // special case, float16 does not exist in c++, no native support for
   // casting, so cast to float first then use this method, which use Eigen.
   std::shared_ptr<Tensor> temp;
@@ -184,7 +184,7 @@ Status ToNumberOp::ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_p
   return Status::OK();
 }
 
-Status ToNumberOp::ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status ToNumberOp::ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const {
   std::vector<float> casted;
 
   for (auto it = input->begin<std::string_view>(); it != input->end<std::string_view>(); ++it) {
@@ -222,7 +222,7 @@ Status ToNumberOp::ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr
   return Status::OK();
 }
 
-Status ToNumberOp::ToDouble(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status ToNumberOp::ToDouble(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const {
   std::vector<double> casted;
 
   for (auto it = input->begin<std::string_view>(); it != input->end<std::string_view>(); ++it) {
