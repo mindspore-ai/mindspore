@@ -1285,14 +1285,16 @@ function Run_arm64() {
 
     # Run compatibility test models:
     while read line; do
-        model_name=${line}
+        model_name=${line%;*}
+        length=${#model_name}
+        input_shapes=${line:length+1}
         if [[ $model_name == \#* ]]; then
           continue
         fi
         echo ${model_name} >> "${run_arm64_fp32_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes} >> "${run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -1301,8 +1303,8 @@ function Run_arm64() {
         fi
         # run benchmark test without clib data
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --inputShapes='${input_shapes} >> "${run_arm64_fp32_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --inputShapes='${input_shapes} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
