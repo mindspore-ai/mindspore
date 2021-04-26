@@ -29,8 +29,9 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace dataset {
-BucketBatchByLengthOp::Builder::Builder(std::vector<std::string> length_dependent_columns,
-                                        std::vector<int32_t> bucket_boundaries, std::vector<int32_t> bucket_batch_sizes)
+BucketBatchByLengthOp::Builder::Builder(const std::vector<std::string> &length_dependent_columns,
+                                        const std::vector<int32_t> &bucket_boundaries,
+                                        const std::vector<int32_t> &bucket_batch_sizes)
     : builder_length_dependent_columns_(length_dependent_columns),
       builder_bucket_boundaries_(bucket_boundaries),
       builder_bucket_batch_sizes_(bucket_batch_sizes),
@@ -41,7 +42,7 @@ BucketBatchByLengthOp::Builder::Builder(std::vector<std::string> length_dependen
   builder_op_connector_size_ = config_manager->op_connector_size();
 }
 
-Status BucketBatchByLengthOp::Builder::SanityCheck() {
+Status BucketBatchByLengthOp::Builder::SanityCheck() const {
   std::string error_message;
 
   if (builder_length_dependent_columns_.empty()) {
@@ -66,7 +67,7 @@ Status BucketBatchByLengthOp::Builder::Build(std::shared_ptr<BucketBatchByLength
   RETURN_IF_NOT_OK(SanityCheck());
 
   // insert 0 for the first bucket
-  builder_bucket_boundaries_.insert(builder_bucket_boundaries_.begin(), 0);
+  (void)builder_bucket_boundaries_.insert(builder_bucket_boundaries_.begin(), 0);
 
   *new_bucket_batch_by_length_op = std::make_shared<BucketBatchByLengthOp>(
     builder_length_dependent_columns_, builder_bucket_boundaries_, builder_bucket_batch_sizes_,
@@ -76,10 +77,10 @@ Status BucketBatchByLengthOp::Builder::Build(std::shared_ptr<BucketBatchByLength
   return Status::OK();
 }
 
-BucketBatchByLengthOp::BucketBatchByLengthOp(std::vector<std::string> length_dependent_columns,
-                                             std::vector<int32_t> bucket_boundaries,
-                                             std::vector<int32_t> bucket_batch_sizes,
-                                             std::shared_ptr<TensorOp> element_length_function, PadInfo pad_info,
+BucketBatchByLengthOp::BucketBatchByLengthOp(const std::vector<std::string> &length_dependent_columns,
+                                             const std::vector<int32_t> &bucket_boundaries,
+                                             const std::vector<int32_t> &bucket_batch_sizes,
+                                             std::shared_ptr<TensorOp> element_length_function, const PadInfo &pad_info,
                                              bool pad_to_bucket_boundary, bool drop_remainder,
                                              int32_t op_connector_size)
     : PipelineOp(op_connector_size),
