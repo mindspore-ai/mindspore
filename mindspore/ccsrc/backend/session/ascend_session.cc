@@ -85,7 +85,6 @@ static constexpr uint32_t kLabelSwitchLabelId = 2;
 namespace mindspore {
 namespace session {
 const size_t kInvalidIndex = SIZE_MAX;
-constexpr size_t kReturnDataIndex = 1;
 constexpr char SR_TAG[] = "sr_tag";
 constexpr char BACKWARD[] = "backward";
 namespace {
@@ -142,16 +141,6 @@ std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
     }
   }
   return cnodes;
-}
-void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
-  auto return_node = root_graph->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  if (return_node->size() <= kReturnDataIndex) {
-    return;
-  }
-  auto make_tuple = root_graph->NewCNode(
-    {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
-  root_graph->set_output(make_tuple);
 }
 
 TensorPtr GetCNodeOutputStubTensor(const KernelWithIndex &kernel_with_index,
@@ -483,7 +472,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
-    InsertMakeTupleForOutput(NOT_NULL(root_graph));
+    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
     root_graph->set_executable(false);
     InitRuntimeResource();
     return root_graph->graph_id();
@@ -511,7 +500,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   UpdateRefOutputMap(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
   // add make_tuple to the output graph
-  InsertMakeTupleForOutput(NOT_NULL(root_graph));
+  AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
   // root root_graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(NOT_NULL(root_graph));
   // dump graph before remove nop nodes

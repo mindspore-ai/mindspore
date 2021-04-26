@@ -266,6 +266,7 @@ class AnfRuntimeAlgorithm {
   // Find real input nodes.
   static void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
                                    std::set<AnfNodePtr> *visited);
+  static void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
