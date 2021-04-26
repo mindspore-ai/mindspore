@@ -151,7 +151,7 @@ public class TrainSession {
     }
 
     public boolean setLossName(String lossName) {
-        return this.setLossName(this.sessionPtr,lossName);
+        return this.setLossName(this.sessionPtr, lossName);
     }
     
     
@@ -191,5 +191,5 @@ public class TrainSession {
 
     private native boolean setupVirtualBatch(long sessionPtr, int virtualBatchMultiplier, float learningRate, float momentum);
 
-    private native boolean setLossName(long sessionPtr,String lossName);
+    private native boolean setLossName(long sessionPtr, String lossName);
 }

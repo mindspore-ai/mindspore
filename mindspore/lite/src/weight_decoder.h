@@ -143,7 +143,7 @@ class WeightDecoder {
     if (is_last && remainder > 0) {
       for (size_t i = 0; i < remainder; i++) {
         bool bit = unpack_bit_data->front();
-        uint_result = (static_cast<int>(bit) << i) + uint_result;
+        uint_result = (static_cast<unsigned int>(bit) << i) + uint_result;
         unpack_bit_data->pop();
       }
       result = static_cast<T1>(uint_result - static_cast<T2>(pow(2, origin_bit - 1)));

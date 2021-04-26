@@ -95,6 +95,7 @@ mv mindspore-* msl/
 cp -r dataset ${PACKAGE}
 
 echo "==========Compiling============"
+make clean
 make TARGET=${TARGET}
  
 # Copy the executable to the package

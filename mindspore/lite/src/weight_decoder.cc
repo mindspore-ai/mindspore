@@ -73,6 +73,7 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
   if (!dst_tensor->IsConst() || !src_tensor.enableHuffmanCode()) {
     return RET_NO_CHANGE;
   }
+  MS_ASSERT(src_tensor.data() != nullptr);
   auto data = reinterpret_cast<const char *>(src_tensor.data()->data());
   MS_ASSERT(data != nullptr);
   std::string encode_str(data, src_tensor.data()->size());
