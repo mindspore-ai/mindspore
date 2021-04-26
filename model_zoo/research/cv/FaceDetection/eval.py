@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,14 +35,12 @@ from src.network_define import BuildTestNetwork, get_bounding_boxes, tensor_to_b
     parse_gt_from_anno, parse_rets, calc_recall_precision_ap
 
 plt.switch_backend('agg')
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
-
 
 def parse_args():
     '''parse_args'''
     parser = argparse.ArgumentParser('Yolov3 Face Detection')
-
+    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "CPU"),
+                        help="run platform, support Ascend and CPU.")
     parser.add_argument('--mindrecord_path', type=str, default='', help='dataset path, e.g. /home/data.mindrecord')
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
     parser.add_argument('--local_rank', type=int, default=0, help='current rank to support distributed')
@@ -55,7 +53,8 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-
+    devid = int(os.getenv('DEVICE_ID', '0')) if args.run_platform != 'CPU' else 0
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.run_platform, save_graphs=False, device_id=devid)
     print('=============yolov3 start evaluating==================')
 
     # logger

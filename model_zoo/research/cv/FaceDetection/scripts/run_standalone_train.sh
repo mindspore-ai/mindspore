@@ -14,10 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ] && [ $# != 3 ]
+if [ $# != 3 ] && [ $# != 4 ]
 then
-    echo "Usage: sh run_standalone_train.sh [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]"
-    echo "   or: sh run_standalone_train.sh [MINDRECORD_FILE] [USE_DEVICE_ID]"
+    echo "Usage: bash run_standalone_train.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]"
+    echo "   or: bash run_standalone_train.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID]"
     exit 1
 fi
 
@@ -43,13 +43,14 @@ SCRIPT_NAME='train.py'
 
 ulimit -c unlimited
 
-MINDRECORD_FILE=$(get_real_path $1)
-USE_DEVICE_ID=$2
+PLATFORM=$1
+MINDRECORD_FILE=$(get_real_path $2)
+USE_DEVICE_ID=$3
 PRETRAINED_BACKBONE=''
 
-if [ $# == 3 ]
+if [ $# == 4 ]
 then
-    PRETRAINED_BACKBONE=$(get_real_path $3)
+    PRETRAINED_BACKBONE=$(get_real_path $4)
     if [ ! -f $PRETRAINED_BACKBONE ]
     then
         echo "error: PRETRAINED_PATH=$PRETRAINED_BACKBONE is not a file"
@@ -57,6 +58,7 @@ then
     fi
 fi
 
+echo $PLATFORM
 echo $MINDRECORD_FILE
 echo $USE_DEVICE_ID
 echo $PRETRAINED_BACKBONE
@@ -70,6 +72,7 @@ cd ${current_exec_path}/device$USE_DEVICE_ID  || exit
 dev=`expr $USE_DEVICE_ID + 0`
 export DEVICE_ID=$dev
 python ${dirname_path}/${SCRIPT_NAME} \
+    --run_platform=$PLATFORM \
     --world_size=1 \
     --mindrecord_path=$MINDRECORD_FILE \
     --pretrained=$PRETRAINED_BACKBONE > train.log  2>&1 &

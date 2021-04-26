@@ -69,8 +69,8 @@ We use about 13K images as training dataset and 3K as evaluating dataset in this
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware（Ascend, CPU）
+    - Prepare hardware environment with Ascend or CPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -120,45 +120,45 @@ The entire code structure is as following:
 
     ```bash
     cd ./scripts
-    sh run_standalone_train.sh [MINDRECORD_FILE] [USE_DEVICE_ID]
+    bash run_standalone_train.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID]
     ```
 
     or (fine-tune)
 
     ```bash
     cd ./scripts
-    sh run_standalone_train.sh [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
+    bash run_standalone_train.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
     ```
 
     for example:
 
     ```bash
     cd ./scripts
-    sh run_standalone_train.sh /home/train.mindrecord 0 /home/a.ckpt
+    bash run_standalone_train.sh CPU /home/train.mindrecord 0 /home/a.ckpt
     ```
 
 - Distribute mode (recommended)
 
     ```bash
     cd ./scripts
-    sh run_distribute_train.sh [MINDRECORD_FILE] [RANK_TABLE]
+    bash run_distribute_train.sh [MINDRECORD_FILE] [RANK_TABLE]
     ```
 
     or (fine-tune)
 
     ```bash
     cd ./scripts
-    sh run_distribute_train.sh [MINDRECORD_FILE] [RANK_TABLE] [PRETRAINED_BACKBONE]
+    bash run_distribute_train.sh [MINDRECORD_FILE] [RANK_TABLE] [PRETRAINED_BACKBONE]
     ```
 
     for example:
 
     ```bash
     cd ./scripts
-    sh run_distribute_train.sh /home/train.mindrecord ./rank_table_8p.json /home/a.ckpt
+    bash run_distribute_train.sh /home/train.mindrecord ./rank_table_8p.json /home/a.ckpt
     ```
 
-You will get the loss value of each step as following in "./output/[TIME]/[TIME].log" or "./scripts/device0/train.log":
+*Distribute mode doesn't support running on CPU*. You will get the loss value of each step as following in "./output/[TIME]/[TIME].log" or "./scripts/device0/train.log":
 
 ```python
 rank[0], iter[0], loss[318555.8], overflow:False, loss_scale:1024.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
@@ -177,14 +177,14 @@ rank[0], iter[62499], loss[4294.194], overflow:False, loss_scale:256.0, lr:6.249
 
 ```bash
 cd ./scripts
-sh run_eval.sh [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
+bash run_eval.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 ```
 
 for example:
 
 ```bash
 cd ./scripts
-sh run_eval.sh /home/eval.mindrecord 0 /home/a.ckpt
+bash run_eval.sh Ascend /home/eval.mindrecord 0 /home/a.ckpt
 ```
 
 You will get the result as following in "./scripts/device0/eval.log":
@@ -202,7 +202,7 @@ If you want to infer the network on Ascend 310, you should convert the model to 
 
 ```bash
 cd ./scripts
-sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
+bash run_export.sh [PLATFORM] [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 ```
 
 # [Model Description](#contents)
