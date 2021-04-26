@@ -198,51 +198,6 @@ class BroadcastTo(OpInfer):
         return self.inputs[0].data_format
 
 
-class Tile(OpInfer):
-    """Op Tile"""
-
-    def __init__(self, op_name, inputs, attrs):
-        super().__init__(op_name, inputs, attrs)
-        self.input_reshape = None
-        self.output_reshape = None
-        self.broadcast_compatible = True
-
-    def _infer_shape(self):
-        shape = self.inputs[0].shape
-        multiples = self.attrs["multiples"]
-
-        shape = list(shape)
-        multiples = list(multiples)
-        diff_len = len(multiples) - len(shape)
-        if diff_len < 0:
-            raise ValueError("Dimensions of multiples{} < dimensions of input{} in Tile".format(multiples, shape))
-        if diff_len > 0:
-            for _ in range(diff_len):
-                shape.insert(0, 1)
-
-        self.broadcast_compatible = True
-        output_shape = []
-        self.input_reshape = []
-        self.output_reshape = []
-        for sh, mul in list(zip(shape, multiples)):
-            dim = sh * mul
-            output_shape.append(dim)
-            if sh == 1 or mul == 1:
-                self.input_reshape.append(sh)
-                self.output_reshape.append(dim)
-            else:
-                self.broadcast_compatible = False
-                self.input_reshape.append(1)
-                self.input_reshape.append(sh)
-                self.output_reshape.append(mul)
-                self.output_reshape.append(sh)
-
-        return output_shape
-
-    def _infer_format(self):
-        return DF.DEFAULT
-
-
 class _CompareOp(_Elemwise):
     """Compare operators"""
 
