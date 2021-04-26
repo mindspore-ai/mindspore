@@ -109,6 +109,20 @@ tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
 }
 }  // namespace
 
+bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto prim_t = lite::GetPrimitiveT(cnode->input(0));
+  if (prim_t == nullptr) {
+    return false;
+  }
+  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim_t->value.type, lite::SCHEMA_CUR);
+  if (parameter_gen == nullptr) {
+    delete prim_t;
+    return false;
+  }
+  return true;
+}
+
 STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));

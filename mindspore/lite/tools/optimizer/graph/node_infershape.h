@@ -38,6 +38,7 @@ class NodeInferShape {
     train_flag_ = train_flag;
   }
   STATUS InferShape(const CNodePtr &cnode);
+  bool JudgeOpSupportInfer(const CNodePtr &cnode);
   std::vector<int> GetInputShape(const CNodePtr &cnode, size_t index);
   std::vector<int> GetIntVecInput(const CNodePtr &cnode, size_t index);
 
