@@ -27,6 +27,7 @@ usage()
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] [-H on|off] \\"
   echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
+  echo "              [-L Tensor-RT path]  \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -64,6 +65,7 @@ usage()
   echo "    -k Enable make clean, clean up compilation generated cache "
   echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|avx|neon|off], default off"
   echo "    -H Enable hidden"
+  echo "    -L Link and specify Tensor-RT library path, default disable Tensor-RT lib linking"
 }
 
 # check value of input is 'on' or 'off'
@@ -122,9 +124,11 @@ checkopts()
   ENABLE_NPU="off"
   ENABLE_HIDDEN="on"
   LITE_ENABLE_GPU=""
+  TENSORRT_HOME=""
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:T:A:C:o:S:k:W:H:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:T:A:C:o:S:k:W:H:L:' opt
   do
+    CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
       d)
@@ -333,6 +337,11 @@ checkopts()
         ENABLE_HIDDEN="$OPTARG"
         echo "${OPTARG} hidden"
         ;;
+      L)
+        ENABLE_TRT="on"
+        TENSORRT_HOME="$CASE_SENSIVE_ARG"
+        echo "Link Tensor-RT library. Path: ${CASE_SENSIVE_ARG}"
+        ;;
       *)
         echo "Unknown option ${opt}!"
         usage
@@ -488,6 +497,9 @@ build_mindspore()
     fi
     if [[ "X$ENABLE_HIDDEN" = "Xoff" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_HIDDEN=OFF"
+    fi
+    if [[ "X$ENABLE_TRT" == "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DTENSORRT_HOME=${TENSORRT_HOME}"
     fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
