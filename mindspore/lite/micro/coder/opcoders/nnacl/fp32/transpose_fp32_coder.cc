@@ -131,14 +131,19 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   dims_ = output_tensor_->shape().size();
   if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
     int *dim_size = reinterpret_cast<int *>(malloc(dims_ * sizeof(int)));
-    MS_CHECK_PTR(dim_size);
+    if (dim_size == nullptr) {
+      return RET_NULL_PTR;
+    }
     *(dim_size + dims_ - 1) = 1;
     for (int i = dims_ - 1; i > 0; --i) {
       *(dim_size + i - 1) = *(dim_size + i) * out_shape_[i];
     }
     code.CodeArray("dim_size", dim_size, dims_);
     int *position = reinterpret_cast<int *>(malloc(dims_ * thread_num_ * sizeof(int)));
-    MS_CHECK_PTR(position);
+    if (position == nullptr) {
+      free(dim_size);
+      return RET_NULL_PTR;
+    }
     code.CodeArray("position", position, dims_ * thread_num_);
     code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, out_shape_, "dim_size", "position",
                       "&trans_param", kDefaultTaskId, thread_num_);
