@@ -119,6 +119,7 @@ checkopts()
   ANDROID_STL="c++_shared"
   ENABLE_MAKE_CLEAN="off"
   X86_64_SIMD="off"
+  ARM_SIMD="off"
   DEVICE_VERSION=""
   DEVICE=""
   ENABLE_NPU="off"
@@ -331,6 +332,9 @@ checkopts()
         if [[ "$OPTARG" == "sse" || "$OPTARG" == "avx" ]]; then
           X86_64_SIMD="$OPTARG"
         fi
+        if [[ "$OPTARG" == "neon" ]]; then
+          ARM_SIMD="$OPTARG"
+        fi
         ;;
       H)
         check_on_off $OPTARG H
@@ -474,7 +478,7 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GPU=ON -DUSE_CUDA=ON -DCUDA_PATH=$CUDA_PATH -DMS_REQUIRE_CUDA_VERSION=${CUDA_VERSION}"
     fi
     if [[ "X$ENABLE_CPU" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_CPU=ON -DX86_64_SIMD=${X86_64_SIMD}"
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_CPU=ON -DX86_64_SIMD=${X86_64_SIMD} -DARM_SIMD=${ARM_SIMD}"
     fi
     if [[ "X$COMPILE_MINDDATA" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_MINDDATA=ON"
