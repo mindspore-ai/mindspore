@@ -41,9 +41,9 @@ from src.yolo_dataset import create_yolo_dataset
 from src.initializer import default_recurisive_init, load_yolov4_params
 from src.config import ConfigYOLOV4CspDarkNet53
 from src.util import keep_loss_fp32
+from src.eval_utils import apply_eval, EvalCallBack
 
 set_seed(1)
-
 
 parser = argparse.ArgumentParser('mindspore coco training')
 
@@ -109,13 +109,31 @@ parser.add_argument('--training_shape', type=str, default="", help='Fix training
 parser.add_argument('--resize_rate', type=int, default=10,
                     help='Resize rate for multi-scale training. Default: None')
 
+parser.add_argument("--run_eval", type=ast.literal_eval, default=False,
+                    help="Run evaluation when training, default is False.")
+parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True,
+                    help="Save best checkpoint when run_eval is True, default is True.")
+parser.add_argument("--eval_start_epoch", type=int, default=200,
+                    help="Evaluation start epoch when run_eval is True, default is 200.")
+parser.add_argument("--eval_interval", type=int, default=1,
+                    help="Evaluation interval when run_eval is True, default is 1.")
+parser.add_argument('--ann_file', type=str, default='', help='path to annotation')
+
 args, _ = parser.parse_known_args()
+
 if args.lr_scheduler == 'cosine_annealing' and args.max_epoch > args.t_max:
     args.t_max = args.max_epoch
 
 args.lr_epochs = list(map(int, args.lr_epochs.split(',')))
 args.data_root = os.path.join(args.data_dir, 'train2017')
 args.annFile = os.path.join(args.data_dir, 'annotations/instances_train2017.json')
+
+args.data_val_root = os.path.join(args.data_dir, 'val2017')
+args.ann_val_file = os.path.join(args.data_dir, 'annotations/instances_val2017.json')
+
+config = ConfigYOLOV4CspDarkNet53()
+args.nms_thresh = config.nms_thresh
+args.ignore_threshold = config.eval_ignore_threshold
 
 device_id = int(os.getenv('DEVICE_ID', '0'))
 context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
@@ -138,7 +156,7 @@ if args.is_save_on_master:
 else:
     args.rank_save_ckpt_flag = 1
 
- # logger
+# logger
 args.outputs_dir = os.path.join(args.ckpt_path,
                                 datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
 args.logger = get_logger(args.outputs_dir, args.rank)
@@ -176,9 +194,9 @@ if __name__ == "__main__":
         degree = get_group_size()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
 
-    network = YOLOV4CspDarkNet53(is_training=True)
+    network = YOLOV4CspDarkNet53()
+    network_eval = network
     # default is kaiming-normal
-    config = ConfigYOLOV4CspDarkNet53()
     args.checkpoint_filter_list = config.checkpoint_filter_list
     default_recurisive_init(network)
     load_yolov4_params(args, network)
@@ -222,27 +240,44 @@ if __name__ == "__main__":
         network = TrainingWrapper(network, opt)
         network.set_train()
 
-    if args.rank_save_ckpt_flag:
-        # checkpoint save
-        ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
-                                       keep_checkpoint_max=ckpt_max_num)
+    # checkpoint save
+    ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
+                                   keep_checkpoint_max=ckpt_max_num)
+    save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
+    ckpt_cb = ModelCheckpoint(config=ckpt_config,
+                              directory=save_ckpt_path,
+                              prefix='{}'.format(args.rank))
+    cb_params = _InternalCallbackParam()
+    cb_params.train_network = network
+    cb_params.epoch_num = ckpt_max_num
+    cb_params.cur_epoch_num = 1
+    run_context = RunContext(cb_params)
+    ckpt_cb.begin(run_context)
+
+    if args.run_eval:
+        rank_id = int(os.environ.get('RANK_ID')) if os.environ.get('RANK_ID') else 0
+        data_val_root = args.data_val_root
+        ann_val_file = args.ann_val_file
         save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
-        ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=save_ckpt_path,
-                                  prefix='{}'.format(args.rank))
-        cb_params = _InternalCallbackParam()
-        cb_params.train_network = network
-        cb_params.epoch_num = ckpt_max_num
-        cb_params.cur_epoch_num = 1
-        run_context = RunContext(cb_params)
-        ckpt_cb.begin(run_context)
+        input_val_shape = Tensor(tuple(config.test_img_shape), ms.float32)
+        # init detection engine
+        eval_dataset, eval_data_size = create_yolo_dataset(data_val_root, ann_val_file, is_training=False,
+                                                           batch_size=args.per_batch_size, max_epoch=1, device_num=1,
+                                                           rank=0, shuffle=False, config=config)
+        eval_param_dict = {"net": network_eval, "dataset": eval_dataset, "data_size": eval_data_size,
+                           "anno_json": ann_val_file, "input_shape": input_val_shape, "args": args}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args.eval_interval,
+                               eval_start_epoch=args.eval_start_epoch, save_best_ckpt=True,
+                               ckpt_directory=save_ckpt_path, besk_ckpt_name="best_map.ckpt",
+                               metrics_name="mAP")
 
     old_progress = -1
     t_end = time.time()
     data_loader = ds.create_dict_iterator(output_numpy=True, num_epochs=1)
 
     for i, data in enumerate(data_loader):
+        network.set_train()
         images = data["image"]
         input_shape = images.shape[2:4]
         args.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
@@ -261,8 +296,8 @@ if __name__ == "__main__":
                        batch_gt_box2, input_shape)
         loss_meter.update(loss.asnumpy())
 
+        # ckpt progress
         if args.rank_save_ckpt_flag:
-            # ckpt progress
             cb_params.cur_step_num = i + 1  # current step number
             cb_params.batch_num = i + 2
             ckpt_cb.step_end(run_context)
@@ -271,14 +306,15 @@ if __name__ == "__main__":
             time_used = time.time() - t_end
             epoch = int(i / args.steps_per_epoch)
             fps = args.per_batch_size * (i - old_progress) * args.group_size / time_used
-            if args.rank == 0:
-                args.logger.info(
-                    'epoch[{}], iter[{}], {}, {:.2f} imgs/sec, lr:{}'.format(epoch, i, loss_meter, fps, lr[i]))
+            args.logger.info('epoch[{}], iter[{}], {}, {:.2f} imgs/sec, lr:{}'.format(epoch, i, loss_meter, fps, lr[i]))
             t_end = time.time()
             loss_meter.reset()
             old_progress = i
 
-        if (i + 1) % args.steps_per_epoch == 0 and args.rank_save_ckpt_flag:
+        if args.run_eval and (i + 1) % args.steps_per_epoch == 0:
+            eval_cb.epoch_end(run_context)
+
+        if (i + 1) % args.steps_per_epoch == 0:
             cb_params.cur_epoch_num += 1
 
         if args.need_profiler:

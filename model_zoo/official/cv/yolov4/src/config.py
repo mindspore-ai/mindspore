@@ -52,6 +52,9 @@ class ConfigYOLOV4CspDarkNet53:
 
     # confidence under ignore_threshold means no object when training
     ignore_threshold = 0.7
+    # threshold to throw low quality boxes when eval
+    eval_ignore_threshold = 0.001
+    nms_thresh = 0.5
 
     # h->w
     anchor_scales = [(12, 16),
