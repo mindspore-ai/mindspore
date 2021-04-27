@@ -247,6 +247,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/matmul_add_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/mul_add_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/onnx_gelu_fusion.cc

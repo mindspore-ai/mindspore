@@ -23,6 +23,7 @@
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
 #include "tools/converter/ops/while.h"
+#include "tools/common/tensor_util.h"
 
 namespace {
 mindspore::ValueNodePtr GetWhileAnfPrim() {
@@ -207,9 +208,13 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
       auto node_users = manager->node_users()[node];
       for (auto &node_user : node_users) {
         // new getitem
-        AbstractBasePtrList abstractList;
-        std::vector<int64_t> shape_vector;
-        abstractList.emplace_back(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector));
+        AbstractBasePtrList abstract_list;
+        auto abstract = lite::CreateTensorAbstract({}, kNumberTypeFloat32);
+        if (abstract == nullptr) {
+          MS_LOG(ERROR) << "Create tensor abstarct failed";
+          return RET_ERROR;
+        }
+        abstract_list.emplace_back(abstract);
         auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
         if (tuple_get_item_prim_ptr == nullptr) {
           MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
@@ -225,12 +230,12 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
         std::vector<AnfNodePtr> inputs{tuple_get_item_prim, while_node_, getItemValue};
         CNodePtr get_item_node = fg_->NewCNode(inputs);
         std::string output_item_name = while_node_->fullname_with_scope() + "_getitem_" + std::to_string(output_idx);
-        auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
-        if (abstract == nullptr) {
-          MS_LOG(ERROR) << "create AbstractTensor failed";
-          return RET_NULL_PTR;
+        auto get_item_node_abstract = lite::CreateTensorAbstract({}, kNumberTypeFloat32);
+        if (get_item_node_abstract == nullptr) {
+          MS_LOG(ERROR) << "Create get_item_node_abstract failed";
+          return RET_ERROR;
         }
-        get_item_node->set_abstract(abstract);
+        get_item_node->set_abstract(get_item_node_abstract);
         get_item_node->set_fullname_with_scope(output_item_name);
         // set
         if (fg_->nodes().contains(node_user.first)) {

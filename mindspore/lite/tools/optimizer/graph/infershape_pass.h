@@ -36,7 +36,7 @@ class InferShapePass : public Pass {
 
  private:
   void FreeTensors(std::vector<lite::Tensor *> *tensors);
-  abstract::AbstractTensorPtr ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor);
+  abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *input_tensors);
   STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *output_tensors);
   STATUS SetParameterAbstract(const ParameterPtr &parameter);

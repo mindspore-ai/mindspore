@@ -46,6 +46,11 @@ std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> 
 tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std::vector<int64_t> &shape,
                                    TypeId data_type);
 
+AbstractBasePtr CreateTensorAbstract(const std::vector<int64_t> &shape, TypeId data_type);
+
+int SetParameterAbstractAndParam(const ParameterPtr &parameter, const void *data, size_t data_size,
+                                 const std::vector<int64_t> &shape, TypeId data_type);
+
 int SetTensorData(const tensor::TensorPtr &tensor_info, const void *data, size_t data_size);
 
 std::unique_ptr<schema::TensorT> CreateTensorTFromTensorInfo(const tensor::TensorPtr &tensor_info,

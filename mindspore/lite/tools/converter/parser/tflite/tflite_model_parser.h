@@ -32,13 +32,14 @@ class TfliteModelParser : public ModelParser {
 
   ~TfliteModelParser() override = default;
 
-  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
-                     const QuantType &quant_type) override;
+  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
+                       const QuantType &quant_type) override;
+
+  int PostAdjust() override;
 
  private:
   std::unordered_map<int, AnfNodePtr> nodes_;
   std::unique_ptr<tflite::ModelT> tflite_model_;
-  FuncGraphPtr func_graph_;
   char *tflite_model_buf_ = nullptr;
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
   STATUS ConvertConstTensor(const tflite::TensorT *tensor, const ParameterPtr &parameter,

@@ -39,13 +39,9 @@ struct InferTensor {
 
 class InferShapePass : public GraphPass {
  public:
-  InferShapePass() = default;
-
-  ~InferShapePass() = default;
-
+  explicit InferShapePass(converter::FmkType fmk_type) : fmk_type_(fmk_type) {}
+  ~InferShapePass() override = default;
   STATUS Run(MetaGraphT *graph) override;
-
-  void set_fmk_type(converter::FmkType fmk_type) { this->fmk_type_ = fmk_type; }
 
  private:
   void InitSearchTensor(MetaGraphT *graph);

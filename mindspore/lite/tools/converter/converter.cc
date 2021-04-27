@@ -70,7 +70,7 @@ MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
   }
   MS_LOG(INFO) << "Run anfTransform success";
 
-  // protobuf -> flatbuf
+  // protobuf -> flatbuffer
   auto meta_graph = Export(graph, false, false, flag->trainModel);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";

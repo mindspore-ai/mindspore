@@ -19,6 +19,7 @@
 #include <vector>
 #include "ops/transpose.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/common/tensor_util.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
 using mindspore::lite::converter::FmkType_MS;
@@ -92,9 +93,20 @@ lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const Fu
   auto perm_node = BuildIntVecParameterNode(graph, perm, weight_node->fullname_with_scope() + "_perm");
   auto prim = std::make_shared<ops::Transpose>();
   auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
-  auto type_ptr = TypeIdToType(kTypeUnknown);
-  std::vector<int64_t> shape_vector;
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  if (!weight_node->has_default()) {
+    MS_LOG(DEBUG) << "Weight parameter should has default parameter.";
+    return lite::RET_ERROR;
+  }
+  auto weight_tensor = weight_node->default_param()->cast<tensor::TensorPtr>();
+  if (weight_tensor == nullptr) {
+    MS_LOG(DEBUG) << "Default parameter of weight parameter should be a tensor.";
+    return lite::RET_ERROR;
+  }
+  auto abstract = lite::CreateTensorAbstract(weight_tensor->shape_c(), weight_tensor->data_type());
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return RET_ERROR;
+  }
   transpose_node->set_abstract(abstract);
   transpose_node->set_fullname_with_scope(weight_node->fullname_with_scope() + "_post");
   for (auto &adjust_node : adjust_nodes) {
@@ -177,11 +189,14 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
       return false;
     }
     auto type_id = static_cast<TypeId>(weight_value->data_type());
-    auto type_ptr = TypeIdToType(type_id);
     auto shape = weight_value->shape();
     std::vector<int64_t> shape_vector(shape.begin(), shape.end());
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-    weight_node->set_abstract(abstract_tensor);
+    auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    weight_node->set_abstract(abstract);
   }
   return RET_OK;
 }

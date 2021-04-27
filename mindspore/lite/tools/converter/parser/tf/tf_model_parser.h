@@ -36,9 +36,11 @@ namespace lite {
 class TFModelParser : public ModelParser {
  public:
   TFModelParser() = default;
-  ~TFModelParser() = default;
+  ~TFModelParser() override = default;
 
-  FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
+  int ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
+
+  int PostAdjust() override;
 
  private:
   static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
@@ -87,7 +89,6 @@ class TFModelParser : public ModelParser {
 
   STATUS ConnectNullInput();
 
-  FuncGraphPtr anf_root_graph_;
   std::unique_ptr<tensorflow::GraphDef> tf_root_graph_;                     // tf root graph def
   std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes_;  // tf root graph node map
   std::unordered_map<std::string, AnfNodePtr> anf_root_node_map_;

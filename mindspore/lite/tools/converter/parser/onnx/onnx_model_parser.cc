@@ -45,31 +45,31 @@ static const std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_FLOAT, mindspore::kNumberTypeFloat32},
   {onnx::TensorProto_DataType_BOOL, mindspore::kNumberTypeBool}};
 
-FuncGraphPtr OnnxModelParser::Parse(const std::string &model_file, const std::string &weight_file,
-                                    const QuantType &quant_type) {
+int OnnxModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
+                                      const QuantType &quant_type) {
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
-  anf_root_graph_ = std::make_shared<FuncGraph>();
+  res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "init origin model failed.";
-    return nullptr;
+    return status;
   }
 
-  status = ConvertOnnxGraph(onnx_root_graph_, anf_root_graph_, &anf_nodes_map_, {}, "root_node");
+  status = ConvertOnnxGraph(onnx_root_graph_, res_graph_, &anf_nodes_map_, {}, "root_node");
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "convert onnx graph failed.";
-    return nullptr;
+    return status;
   }
-  static auto root_func_manager = Manage(anf_root_graph_);
+  static auto root_func_manager = Manage(res_graph_);
   for (auto &subgraph : all_subgraphs_) {
     subgraph->set_manager(root_func_manager);
     subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   }
-  anf_root_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  anf_root_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
-  return anf_root_graph_;
+  res_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+  return RET_OK;
 }
 
 STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
@@ -88,9 +88,9 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_root_graph_ = onnx_model_.graph();
   if (OnnxNodeParser::opset_version() > 15) {
-    anf_root_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+    res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   } else {
-    anf_root_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX_LOW_VERSION)));
+    res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX_LOW_VERSION)));
   }
   return RET_OK;
 }
@@ -170,13 +170,16 @@ STATUS OnnxModelParser::ConvertGraphInputs(const onnx::GraphProto &onnx_graph, c
                     << static_cast<onnx::TensorProto_DataType>(input_value.type().tensor_type().elem_type());
       return RET_ERROR;
     }
-    auto type_ptr = TypeIdToType(data_type);
     std::vector<int64_t> shape_vector;
     auto onnx_shape = input_value.type().tensor_type().shape().dim();
     std::transform(onnx_shape.begin(), onnx_shape.end(), std::back_inserter(shape_vector),
                    [](const onnx::TensorShapeProto_Dimension &val) { return static_cast<int64_t>(val.dim_value()); });
     std::replace(shape_vector.begin(), shape_vector.end(), 0, -1);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+    auto abstract_tensor = CreateTensorAbstract(shape_vector, data_type);
+    if (abstract_tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
     parameter->set_abstract(abstract_tensor);
     parameter->set_name(input_value.name());
     anf_nodes_map->emplace(input_value.name(), parameter);
@@ -490,17 +493,23 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const F
     return RET_NULL_PTR;
   }
   if (onnx_node.output_size() == 1) {
-    auto type_ptr = TypeIdToType(kNumberTypeFloat32);
-    std::vector<int64_t> shape_vector;
-    cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+    auto abstract_tensor = CreateTensorAbstract({}, kNumberTypeFloat32);
+    if (abstract_tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    cnode->set_abstract(abstract_tensor);
     anf_nodes_map->emplace(onnx_node.output(0), cnode);
   } else {
     AbstractBasePtrList abstract_list;
     int op_idx = 0;
     for (const auto &output_name : onnx_node.output()) {
-      std::vector<int64_t> shape_vector;
-      auto type_ptr = TypeIdToType(kNumberTypeFloat32);
-      abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+      auto abstract_tensor = CreateTensorAbstract({}, kNumberTypeFloat32);
+      if (abstract_tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      abstract_list.emplace_back(abstract_tensor);
       auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
@@ -687,7 +696,11 @@ ParameterPtr CreateConstParamter(const FuncGraphPtr &anf_graph, int val) {
     return nullptr;
   }
   auto const_node = anf_graph->add_parameter();
-  auto const_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>());
+  auto const_abstract = CreateTensorAbstract({}, kNumberTypeInt32);
+  if (const_abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return nullptr;
+  }
   const_node->set_abstract(const_abstract);
   int *tensor_data = new (std::nothrow) int[1];
   if (tensor_data == nullptr) {
@@ -834,9 +847,16 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
   for (int i = 0; i < act_output_num; i++) {
     // tensor_array need as root while input
     auto while_tensor_array_input = anf_root_graph->add_parameter();
-    std::vector<int64_t> shape_vector;
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(kTensorType, shape_vector);
-    auto tensor_info = std::make_shared<tensor::Tensor>(kObjectTypeTensorType, shape_vector);
+    auto tensor_info = CreateTensorInfo(nullptr, 0, {}, kObjectTypeTensorType);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "Create tensor info failed";
+      return RET_ERROR;
+    }
+    auto abstract_tensor = tensor_info->ToAbstract();
+    if (abstract_tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
     while_tensor_array_input->set_abstract(abstract_tensor);
     while_tensor_array_input->set_default_param(tensor_info);
     while_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray");
@@ -975,7 +995,11 @@ STATUS OnnxModelParser::BuildCondGraph(const FuncGraphPtr &cond_graph, const Anf
     auto input_paramter = cond_graph->add_parameter();
     input_paramter->set_name(cond_graph_name + "_input_" + std::to_string(i) + "_parameter");
     auto root_while_inputs = root_while_node->cast<CNodePtr>()->inputs();
-    auto input_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>());
+    auto input_abstract = CreateTensorAbstract({}, kNumberTypeInt32);
+    if (input_abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
     input_paramter->set_abstract(input_abstract);
     if (i == 0) {
       auto zero_parameter = CreateConstParamter(cond_graph, 0);
@@ -987,7 +1011,11 @@ STATUS OnnxModelParser::BuildCondGraph(const FuncGraphPtr &cond_graph, const Anf
         MS_LOG(ERROR) << "new cnode error";
         return RET_ERROR;
       }
-      auto less_abstract = std::make_shared<abstract::AbstractTensor>(kBool, std::vector<int64_t>());
+      auto less_abstract = CreateTensorAbstract({}, kNumberTypeBool);
+      if (less_abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
       less_cnode->set_abstract(less_abstract);
       less_cnode->set_fullname_with_scope(cond_graph_name + "_less_cnode");
     }
@@ -1020,12 +1048,11 @@ STATUS OnnxModelParser::BuildParameterNodeForQuantParam(const void *data, const 
     MS_LOG(ERROR) << "quant param type don't support.";
     return RET_NOT_SUPPORT;
   }
-  std::vector<int64_t> shape_vector;
-  auto parameter_node = anf_root_graph_->add_parameter();
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape_vector);
+  auto parameter_node = res_graph_->add_parameter();
+  auto abstract_tensor = CreateTensorAbstract({}, type);
   if (abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "new abstract_tensor failed";
-    return RET_MEMORY_FAILED;
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return RET_ERROR;
   }
   parameter_node->set_abstract(abstract_tensor);
   parameter_node->set_name(name);
@@ -1051,9 +1078,12 @@ STATUS OnnxModelParser::BuildParameterNode(const ParameterPtr &parameter_node, c
     MS_LOG(ERROR) << "not support onnx data type " << static_cast<onnx::TensorProto_DataType>(tensor.data_type());
     return RET_ERROR;
   }
-  auto type_ptr = TypeIdToType(data_type);
   std::vector<int64_t> shape_vector(tensor.dims().begin(), tensor.dims().end());
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  auto abstract_tensor = CreateTensorAbstract(shape_vector, data_type);
+  if (abstract_tensor == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return RET_ERROR;
+  }
   parameter_node->set_abstract(abstract_tensor);
   parameter_node->set_name(tensor.name());
 
@@ -1142,5 +1172,7 @@ TypeId OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type
   }
   return iter->second;
 }
+
+int OnnxModelParser::PostAdjust() { return 0; }
 }  // namespace lite
 }  // namespace mindspore

@@ -399,6 +399,24 @@ int CheckIfCNodeIsNull(const CNodePtr &node) {
   return lite::RET_OK;
 }
 
+int CheckIfParameterIsNull(const ParameterPtr &node) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "The Parameter is null.";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return lite::RET_NULL_PTR;
+  }
+  return lite::RET_OK;
+}
+
+int CheckIfValueNodeIsNull(const ValueNodePtr &node) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "The ValueNode is null.";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return lite::RET_NULL_PTR;
+  }
+  return lite::RET_OK;
+}
+
 int CheckIfVarIsNull(const VarPtr &var) {
   if (var == nullptr) {
     MS_LOG(ERROR) << "The Var is null.";

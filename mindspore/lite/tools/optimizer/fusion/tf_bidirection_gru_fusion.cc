@@ -256,11 +256,12 @@ ParameterPtr TfBidirectionGruFusion::AddDefaultParameter(const FuncGraphPtr &fun
   auto parameter = func_graph->add_parameter();
   parameter->set_name(name);
   std::vector<int64_t> shape_vector(shape.begin(), shape.end());
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape_vector);
-  if (abstract_tensor == nullptr) {
+  auto abstract = lite::CreateTensorAbstract(shape_vector, type);
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
     return nullptr;
   }
-  parameter->set_abstract(abstract_tensor);
+  parameter->set_abstract(abstract);
 
   auto gate_weight_default = std::make_shared<tensor::Tensor>(type, shape_vector);
   if (gate_weight_default == nullptr) {

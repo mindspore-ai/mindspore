@@ -38,9 +38,12 @@ int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
+  const TensorC *input_k_tensor = inputs[1];
+  if (input_k_tensor->data_ == NULL) {
+    return NNACL_INFER_INVALID;
+  }
 
   TopkParameter *param = (TopkParameter *)parameter;
-  const TensorC *input_k_tensor = inputs[1];
   param->k_ = ((int32_t *)input_k_tensor->data_)[0];
 
   int out_shape[MAX_SHAPE_SIZE];

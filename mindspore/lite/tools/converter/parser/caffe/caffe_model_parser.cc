@@ -41,34 +41,34 @@ CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-FuncGraphPtr CaffeModelParser::Parse(const std::string &model_file, const std::string &weight_file,
-                                     const QuantType &quant_type) {
+int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
+                                       const QuantType &quant_type) {
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
-  func_graph_ptr_ = std::make_shared<FuncGraph>();
+  res_graph_ = std::make_shared<FuncGraph>();
   status = ConvertGraphInputs();
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
 
   status = ConvertLayers();
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
 
   status = ConvertGraphOutputs();
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
-  func_graph_ptr_->set_attr("graph_name", MakeValue("main_graph"));
-  func_graph_ptr_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
-  return func_graph_ptr_;
+  res_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
+  return RET_OK;
 }
 
 STATUS CaffeModelParser::ConvertLayers() {
@@ -134,7 +134,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c))};
     op_inputs.insert(op_inputs.end(), input_nodes.begin(), input_nodes.end());
     op_inputs.insert(op_inputs.end(), const_parameters.begin(), const_parameters.end());
-    auto new_cnode = func_graph_ptr_->NewCNode(op_inputs);
+    auto new_cnode = res_graph_->NewCNode(op_inputs);
     new_cnode->set_fullname_with_scope(layer.name());
 
     // convert outputs
@@ -194,14 +194,17 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
   for (int i = 0; i < caffe_model_.layer_size(); i++) {
     auto layer = caffe_model_.layer(i);
     if (layer.type() == "Input") {
-      auto parameter = func_graph_ptr_->add_parameter();
+      auto parameter = res_graph_->add_parameter();
       std::vector<int64_t> shape;
       for (int j = 0; j < layer.input_param().shape(0).dim_size(); j++) {
         shape.push_back(layer.input_param().shape(0).dim(j));
       }
-      auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
-      auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
-      parameter->set_abstract(abstract_tensor);
+      auto abstract = CreateTensorAbstract(shape, kNumberTypeFloat32);
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      parameter->set_abstract(abstract);
       parameter->set_name("graph_input-" + std::to_string(i));
       nodes_.insert(std::pair(layer.top(0), parameter));
     }
@@ -220,10 +223,13 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
           shape.push_back(caffe_model_.input_dim(j));
         }
       }
-      auto parameter = func_graph_ptr_->add_parameter();
-      auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
-      auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
-      parameter->set_abstract(abstract_tensor);
+      auto parameter = res_graph_->add_parameter();
+      auto abstract = CreateTensorAbstract(shape, kNumberTypeFloat32);
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      parameter->set_abstract(abstract);
       parameter->set_name("graph_input-" + caffe_model_.input(i));
       nodes_.insert(std::pair(caffe_model_.input(i), parameter));
     }
@@ -234,10 +240,18 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       for (int j = 0; j < shape.dim_size(); j++) {
         shape_vector.push_back(shape.dim(j));
       }
-      auto parameter = func_graph_ptr_->add_parameter();
-      auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
-      auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-      parameter->set_abstract(abstract_tensor);
+      auto parameter = res_graph_->add_parameter();
+      auto tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeFloat32);
+      if (tensor_info == nullptr) {
+        MS_LOG(ERROR) << "Create tensor info failed";
+        return RET_ERROR;
+      }
+      auto abstract = tensor_info->ToAbstract();
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      parameter->set_abstract(abstract);
       parameter->set_name("graph_input-" + caffe_model_.input(i));
       nodes_.insert(std::pair(caffe_model_.input(i), parameter));
     }
@@ -265,7 +279,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       auto cnode = nodes_.find(output_node)->second;
       make_tuple_inputs.emplace_back(cnode);
     }
-    auto make_tuple_cnode = func_graph_ptr_->NewCNode(make_tuple_inputs);
+    auto make_tuple_cnode = res_graph_->NewCNode(make_tuple_inputs);
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
@@ -277,9 +291,9 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     auto value_node = NewValueNode(return_prim_ptr);
     op_inputs.emplace_back(value_node);
     op_inputs.emplace_back(make_tuple_cnode);
-    auto cnode = func_graph_ptr_->NewCNode(op_inputs);
+    auto cnode = res_graph_->NewCNode(op_inputs);
     cnode->set_fullname_with_scope("Return");
-    func_graph_ptr_->set_return(cnode);
+    res_graph_->set_return(cnode);
   } else {
     auto returnPrim = std::make_shared<ops::Return>();
     if (returnPrim == nullptr) {
@@ -298,9 +312,9 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       return RET_NOT_FIND_OP;
     }
     opInputs.emplace_back(cnode);
-    auto returnCnode = func_graph_ptr_->NewCNode(opInputs);
+    auto returnCnode = res_graph_->NewCNode(opInputs);
     returnCnode->set_fullname_with_scope("Return");
-    func_graph_ptr_->set_return(returnCnode);
+    res_graph_->set_return(returnCnode);
   }
   return RET_OK;
 }
@@ -333,7 +347,7 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
     ConvertShape(layer.blobs(i), &shape);
 
     // cal Weight num
-    auto parameter = func_graph_ptr_->add_parameter();
+    auto parameter = res_graph_->add_parameter();
     auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
     std::vector<int64_t> shape_vector;
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
@@ -402,17 +416,25 @@ STATUS CaffeModelParser::ConvertBottom(const caffe::LayerParameter &layer, std::
 }
 
 STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CNodePtr &cnode) {
-  auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
-  std::vector<int64_t> shape_vector;
   if (layer.top_size() == 1) {
-    cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+    auto abstract = CreateTensorAbstract({}, kNumberTypeFloat32);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    cnode->set_abstract(abstract);
     nodes_[layer.top(0)] = cnode;
     return RET_OK;
   }
 
   AbstractBasePtrList abstract_list;
   for (int i = 0; i < layer.top_size(); i++) {
-    abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+    auto abstract = CreateTensorAbstract({}, kNumberTypeFloat32);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    abstract_list.emplace_back(abstract);
     auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
     if (tuple_get_item_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new TupleGetItem failed";
@@ -421,7 +443,7 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CN
     auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
     auto get_item_value = NewValueNode(MakeValue<int>(i));
     std::vector<AnfNodePtr> inputs{tuple_get_item_prim, cnode, get_item_value};
-    CNodePtr get_item_cnode = func_graph_ptr_->NewCNode(inputs);
+    CNodePtr get_item_cnode = res_graph_->NewCNode(inputs);
     get_item_cnode->set_fullname_with_scope(layer.top(i));
     nodes_[layer.top(i)] = get_item_cnode;
   }
@@ -446,4 +468,6 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
+
+int CaffeModelParser::PostAdjust() { return RET_OK; }
 }  // namespace mindspore::lite

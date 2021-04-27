@@ -30,15 +30,12 @@ enum DTypeTransNodeType { kInt8ToFP32, kFP32ToInt8, kUInt8ToInt8, kInt8ToUInt8 }
 
 class DTypeTransPass : public GraphPass {
  public:
-  DTypeTransPass() : id_(0) {}
+  DTypeTransPass(TypeId model_input_data_type, TypeId model_output_data_type)
+      : id_(0), input_data_dtype(model_input_data_type), output_data_dtype(model_output_data_type) {}
 
   ~DTypeTransPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
-
-  void set_input_data_dtype(TypeId data_type);
-
-  void set_output_data_dtype(TypeId dataType);
 
  private:
   STATUS DoModelInputDTypeTrans(schema::MetaGraphT *graph);

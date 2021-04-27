@@ -36,13 +36,11 @@ struct BNWeightTensors {
 };
 class BatchNormConvertScalePass : public GraphPass {
  public:
-  BatchNormConvertScalePass() = default;
+  explicit BatchNormConvertScalePass(converter::FmkType fmk) : fmkType(fmk) {}
 
   ~BatchNormConvertScalePass() = default;
 
   STATUS Run(MetaGraphT *graph) override;
-
-  void SetFmk(converter::FmkType fmk) { this->fmkType = fmk; }
 
  protected:
   STATUS GetTransParam(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode);

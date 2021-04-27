@@ -43,46 +43,46 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
-FuncGraphPtr TfliteModelParser::Parse(const std::string &model_file, const std::string &weight_file,
-                                      const QuantType &quant_type) {
+int TfliteModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
+                                        const QuantType &quant_type) {
   // load graph
   tflite_model_ = ReadTfliteModel(model_file.c_str());
   if (tflite_model_ == nullptr) {
     MS_LOG(ERROR) << "read tflite model failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
-    return nullptr;
+    return RET_GRAPH_FILE_ERR;
   }
 
   if (tflite_model_->subgraphs.size() != 1) {
     MS_LOG(ERROR) << "read tflite model subgraphs failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
-    return nullptr;
+    return RET_GRAPH_FILE_ERR;
   }
-  func_graph_ = std::make_shared<FuncGraph>();
-  func_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TFLITE)));
+  res_graph_ = std::make_shared<FuncGraph>();
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TFLITE)));
 
   auto status = ConvertGraphInputs();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph inputs failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
 
   status = ConvertOps();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert ops failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
 
   status = ConvertGraphOutputs();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph outputs failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return nullptr;
+    return status;
   }
-  func_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  return func_graph_;
+  res_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  return RET_OK;
 }
 
 std::string GetTensorName(size_t index, const tflite::BuiltinOperator &op_type, const std::string &op_name) {
@@ -158,7 +158,7 @@ STATUS TfliteModelParser::ConvertOps() {
       } else {
         tensor_name = GetTensorName(i, tflite_op_type, op_name);
       }
-      auto parameter = func_graph_->add_parameter();
+      auto parameter = res_graph_->add_parameter();
       status = ConvertConstTensor(input_tensor.get(), parameter, tensor_name);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "convert " << op_name << " node: " << input_idx << " const node failed.";
@@ -168,7 +168,7 @@ STATUS TfliteModelParser::ConvertOps() {
       op_inputs.emplace_back(parameter);
       nodes_.insert(std::pair(input_idx, parameter));
     }
-    auto new_cnode = func_graph_->NewCNode(op_inputs);
+    auto new_cnode = res_graph_->NewCNode(op_inputs);
     new_cnode->set_fullname_with_scope(op_name);
 
     // parse outputs
@@ -284,13 +284,16 @@ STATUS TfliteModelParser::ConvertGraphInputs() {
     if (tflite_graph_input < 0) {
       tflite_graph_input = tflite_graph_input + tflite_subgraph->tensors.size();
     }
-    auto parameter = func_graph_->add_parameter();
+    auto parameter = res_graph_->add_parameter();
     const auto &tensor = tflite_subgraph->tensors.at(tflite_graph_input);
     std::vector<int64_t> shape_vector;
     (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
-    auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+    auto abstract_tensor = CreateTensorAbstract(shape_vector, GetTfliteDataType(tensor->type));
+    if (abstract_tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
     parameter->set_abstract(abstract_tensor);
     parameter->set_name("graph_input-" + std::to_string(tflite_graph_input));
     nodes_.insert(std::pair(tflite_graph_input, parameter));
@@ -318,7 +321,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
       }
       make_tuple_inputs.emplace_back(cnode);
     }
-    auto make_tuple_cnode = func_graph_->NewCNode(make_tuple_inputs);
+    auto make_tuple_cnode = res_graph_->NewCNode(make_tuple_inputs);
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
@@ -330,9 +333,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     auto value_node = NewValueNode(return_prim_ptr);
     op_inputs.emplace_back(value_node);
     op_inputs.emplace_back(make_tuple_cnode);
-    auto cnode = func_graph_->NewCNode(op_inputs);
+    auto cnode = res_graph_->NewCNode(op_inputs);
     cnode->set_fullname_with_scope("Return");
-    func_graph_->set_return(cnode);
+    res_graph_->set_return(cnode);
   } else {
     auto returnPrim = std::make_shared<ops::Return>();
     if (returnPrim == nullptr) {
@@ -350,9 +353,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
       return RET_NOT_FIND_OP;
     }
     op_inputs.emplace_back(cnode);
-    auto returnCnode = func_graph_->NewCNode(op_inputs);
+    auto returnCnode = res_graph_->NewCNode(op_inputs);
     returnCnode->set_fullname_with_scope("Return");
-    func_graph_->set_return(returnCnode);
+    res_graph_->set_return(returnCnode);
   }
   return RET_OK;
 }
@@ -436,8 +439,12 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
     std::vector<int64_t> shape_vector;
     (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
-    auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
-    dst_cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+    auto abstract_tensor = CreateTensorAbstract(shape_vector, GetTfliteDataType(tensor->type));
+    if (abstract_tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    dst_cnode->set_abstract(abstract_tensor);
     nodes_.insert(std::pair(op->outputs.front(), dst_cnode));
   } else {
     AbstractBasePtrList abstract_list;
@@ -450,8 +457,12 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
       std::vector<int64_t> shape_vector;
       (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
                            [](const int32_t &value) { return static_cast<int64_t>(value); });
-      auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
-      abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+      auto abstract_tensor = CreateTensorAbstract(shape_vector, GetTfliteDataType(tensor->type));
+      if (abstract_tensor == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      abstract_list.emplace_back(abstract_tensor);
       auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
@@ -460,7 +471,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
       auto get_item_value = NewValueNode(MakeValue<int>(op_idx));
       std::vector<AnfNodePtr> inputs{tuple_get_item_prim, dst_cnode, get_item_value};
-      CNodePtr get_item_cnode = func_graph_->NewCNode(inputs);
+      CNodePtr get_item_cnode = res_graph_->NewCNode(inputs);
       get_item_cnode->set_fullname_with_scope(dst_cnode->fullname_with_scope() + "_getitem_" + std::to_string(op_idx));
       nodes_.insert(std::pair(output_idx, get_item_cnode));
       op_idx++;
@@ -469,4 +480,6 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
   }
   return RET_OK;
 }
+
+int TfliteModelParser::PostAdjust() { return 0; }
 }  // namespace mindspore::lite

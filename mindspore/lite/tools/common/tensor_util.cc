@@ -73,6 +73,40 @@ tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std
   return tensor_info;
 }
 
+AbstractBasePtr CreateTensorAbstract(const std::vector<int64_t> &shape, TypeId data_type) {
+  auto tensor_info = CreateTensorInfo(nullptr, 0, shape, data_type);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
+  auto abstract = tensor_info->ToAbstract();
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return nullptr;
+  }
+  return abstract;
+}
+
+int SetParameterAbstractAndParam(const ParameterPtr &parameter, const void *data, size_t data_size,
+                                 const std::vector<int64_t> &shape, TypeId data_type) {
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "Input parameter is nullptr";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  auto tensor_info = CreateTensorInfo(data, data_size, shape, data_type);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return RET_ERROR;
+  }
+  auto abstract = tensor_info->ToAbstract();
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return RET_ERROR;
+  }
+  parameter->set_abstract(abstract);
+  return RET_OK;
+}
+
 int SetTensorData(const tensor::TensorPtr &tensor_info, const void *data, size_t data_size) {
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "tensor info is nullptr.";

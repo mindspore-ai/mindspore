@@ -21,6 +21,7 @@
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/common.h"
+#include "src/common/tensor_util.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/ops_utils.h"
 #include "src/runtime/infer_manager.h"
@@ -28,19 +29,6 @@
 namespace mindspore::opt {
 namespace {
 constexpr size_t INITIAL_SIZE = 1024;
-tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
-  std::vector<int> shape(tensor->shape());
-  std::vector<int64_t> shape_vector;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                 [](const int32_t &value) { return static_cast<int64_t>(value); });
-  auto tensor_info = std::make_shared<tensor::Tensor>(tensor->data_type(), shape_vector);
-  if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "new tensor::Tensor failed";
-    return nullptr;
-  }
-  return tensor_info;
-}
-
 bool IsSpecialType(const CNodePtr &cnode) {
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || CheckPrimitiveType(cnode, prim::kPrimDepend) ||
       CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, prim::kPrimReturn) ||
@@ -75,21 +63,14 @@ STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr 
 }
 }  // namespace
 
-abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor) {
+abstract::AbstractBasePtr InferShapePass::ConvertLiteTensorToAbstract(lite::Tensor *tensor) {
   MS_ASSERT(nullptr != tensor);
-  std::vector<int> shape(tensor->shape());
+  auto shape = tensor->shape();
   auto type_id = static_cast<TypeId>(tensor->data_type());
-  auto type_ptr = TypeIdToType(type_id);
   std::vector<int64_t> shape_vector(shape.begin(), shape.end());
-  auto new_abstract = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  if (new_abstract == nullptr) {
-    MS_LOG(ERROR) << "new AbstractTensor failed";
-    return nullptr;
-  }
-
-  auto tensor_info = NewTensorInfo(tensor);
+  auto tensor_info = lite::CreateTensorInfo(nullptr, 0, shape_vector, type_id);
   if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "new tensor::Tensor failed";
+    MS_LOG(DEBUG) << "Create tensor info failed";
     return nullptr;
   }
 
@@ -112,8 +93,12 @@ abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(li
       return nullptr;
     }
   }
-  new_abstract->set_value(tensor_info);
-  return new_abstract;
+  auto abstract = tensor_info->ToAbstract();
+  if (abstract == nullptr) {
+    MS_LOG(DEBUG) << "Create tensor abstarct failed";
+    return nullptr;
+  }
+  return abstract;
 }
 
 STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
@@ -143,8 +128,6 @@ STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
   std::vector<int32_t> shape;
   (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
                        [](const int64_t &value) { return static_cast<int32_t>(value); });
-
-  auto new_abstract = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   auto new_tensor_info = std::make_shared<tensor::Tensor>(type_ptr->type_id(), shape_vector);
   if (parameter->has_default()) {
     auto old_tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(parameter->default_param());
@@ -155,7 +138,11 @@ STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
       return RET_ERROR;
     }
   }
-  new_abstract->set_value(new_tensor_info);
+  auto new_abstract = new_tensor_info->ToAbstract();
+  if (new_abstract == nullptr) {
+    MS_LOG(ERROR) << "Create tensor abstarct failed";
+    return RET_ERROR;
+  }
   parameter->set_abstract(new_abstract);
   return RET_OK;
 }
@@ -304,7 +291,7 @@ STATUS InferShapePass::SetCNodeAbstract(const std::vector<lite::Tensor *> &outpu
   }
   if (output_tensors.size() == 1) {
     auto tensor = output_tensors.front();
-    auto new_abstract = ConvertLiteTensorToAbstractTensor(tensor);
+    auto new_abstract = ConvertLiteTensorToAbstract(tensor);
     if (new_abstract == nullptr) {
       return RET_ERROR;
     }
@@ -313,7 +300,7 @@ STATUS InferShapePass::SetCNodeAbstract(const std::vector<lite::Tensor *> &outpu
     AbstractBasePtrList abstract_list;
     for (size_t i = 0; i < output_tensors.size(); i++) {
       auto tensor = output_tensors.front();
-      auto new_abstract = ConvertLiteTensorToAbstractTensor(tensor);
+      auto new_abstract = ConvertLiteTensorToAbstract(tensor);
       if (new_abstract == nullptr) {
         return RET_ERROR;
       }
