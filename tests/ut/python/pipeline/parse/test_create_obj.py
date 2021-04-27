@@ -27,7 +27,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.api import ms_function
-from mindspore.common.tensor import Tensor
+from mindspore.common import Tensor, Parameter
 from mindspore.ops import operations as P
 from ...ut_filter import non_graph_engine
 
@@ -48,7 +48,7 @@ class Net(nn.Cell):
         return x
 
 
-# Test: creat CELL OR Primitive instance on construct
+# Test: Create Cell OR Primitive instance on construct
 @non_graph_engine
 def test_create_cell_object_on_construct():
     """ test_create_cell_object_on_construct """
@@ -65,7 +65,7 @@ def test_create_cell_object_on_construct():
     log.debug("finished test_create_object_on_construct")
 
 
-# Test: creat CELL OR Primitive instance on construct
+# Test: Create Cell OR Primitive instance on construct
 class Net1(nn.Cell):
     """ Net1 definition """
 
@@ -92,7 +92,7 @@ def test_create_primitive_object_on_construct():
     log.debug("finished test_create_object_on_construct")
 
 
-# Test: creat CELL OR Primitive instance on construct use many parameter
+# Test: Create Cell OR Primitive instance on construct use many parameter
 class NetM(nn.Cell):
     """ NetM definition """
 
@@ -120,7 +120,7 @@ class NetC(nn.Cell):
         return x
 
 
-# Test: creat CELL OR Primitive instance on construct
+# Test: Create Cell OR Primitive instance on construct
 @non_graph_engine
 def test_create_cell_object_on_construct_use_many_parameter():
     """ test_create_cell_object_on_construct_use_many_parameter """
@@ -135,3 +135,60 @@ def test_create_cell_object_on_construct_use_many_parameter():
     print(np1)
     print(out_me1)
     log.debug("finished test_create_object_on_construct")
+
+
+class NetD(nn.Cell):
+    """ NetD definition """
+
+    def __init__(self):
+        super(NetD, self).__init__()
+
+    def construct(self, x, y):
+        concat = P.Concat(axis=1)
+        return concat((x, y))
+
+
+# Test: Create Cell OR Primitive instance on construct
+@non_graph_engine
+def test_create_primitive_object_on_construct_use_kwargs():
+    """ test_create_primitive_object_on_construct_use_kwargs """
+    log.debug("begin test_create_primitive_object_on_construct_use_kwargs")
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    y = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    net = NetD()
+    net(x, y)
+    log.debug("finished test_create_primitive_object_on_construct_use_kwargs")
+
+
+class NetE(nn.Cell):
+    """ NetE definition """
+
+    def __init__(self):
+        super(NetE, self).__init__()
+        self.w = Parameter(Tensor(np.ones([16, 16, 3, 3]).astype(np.float32)), name='w')
+
+    def construct(self, x):
+        out_channel = 16
+        kernel_size = 3
+        conv2d = P.Conv2D(out_channel,
+                          kernel_size,
+                          1,
+                          pad_mode='valid',
+                          pad=0,
+                          stride=1,
+                          dilation=1,
+                          group=1)
+        return conv2d(x, self.w)
+
+
+# Test: Create Cell OR Primitive instance on construct
+@non_graph_engine
+def test_create_primitive_object_on_construct_use_args_and_kwargs():
+    """ test_create_primitive_object_on_construct_use_args_and_kwargs """
+    log.debug("begin test_create_primitive_object_on_construct_use_args_and_kwargs")
+    context.set_context(mode=context.GRAPH_MODE)
+    inputs = Tensor(np.ones([1, 16, 16, 16]).astype(np.float32))
+    net = NetE()
+    net(inputs)
+    log.debug("finished test_create_primitive_object_on_construct_use_args_and_kwargs")

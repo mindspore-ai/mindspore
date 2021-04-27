@@ -167,6 +167,14 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
   } else if (value->isa<AnyValue>() || value->isa<None>() || value->isa<Monad>() || value->isa<FuncGraph>()) {
     // FuncGraph is not used in the backend, return None
     ret = py::none();
+  } else if (value->isa<KeywordArg>()) {
+    auto abs_keyword_arg = value->ToAbstract()->cast<abstract::AbstractKeywordArgPtr>();
+    auto key = abs_keyword_arg->get_key();
+    auto val = abs_keyword_arg->get_arg()->BuildValue();
+    auto py_value = ValuePtrToPyData(val);
+    auto kwargs = py::kwargs();
+    kwargs[key.c_str()] = py_value;
+    ret = kwargs;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported convert value: " << value->ToString() << " to a PyData.";
   }

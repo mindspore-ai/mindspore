@@ -278,16 +278,42 @@ def _is_dataclass_instance(obj):
     return is_dataclass(obj) and not isinstance(obj, type)
 
 
-def create_obj_instance(cls_type, args_tuple=None):
+def _convert_tuple_to_args_kwargs(params):
+    args = tuple()
+    kwargs = dict()
+    for param in params:
+        if isinstance(param, dict):
+            kwargs.update(param)
+        else:
+            args += (param,)
+    return (args, kwargs)
+
+
+def create_obj_instance(cls_type, params=None):
     """Create python instance."""
+    if not isinstance(cls_type, type):
+        logger.warning(f"create_obj_instance(), cls_type is not a type, cls_type: {cls_type}")
+        return None
+
+    # Check the type, now only support nn.Cell and Primitive.
     obj = None
-    if isinstance(cls_type, type):
-        # check the type, now only support nn.Cell and Primitive
-        if issubclass(cls_type, (nn.Cell, ops.Primitive)):
-            if args_tuple is not None:
-                obj = cls_type(*args_tuple)
-            else:
-                obj = cls_type()
+    if issubclass(cls_type, (nn.Cell, ops.Primitive)):
+        # Check arguments, only support *args or **kwargs.
+        if params is None:
+            obj = cls_type()
+        elif isinstance(params, tuple):
+            args, kwargs = _convert_tuple_to_args_kwargs(params)
+            logger.debug(f"create_obj_instance(), args: {args}, kwargs: {kwargs}")
+            if args and kwargs:
+                obj = cls_type(*args, **kwargs)
+            elif args:
+                obj = cls_type(*args)
+            elif kwargs:
+                obj = cls_type(**kwargs)
+        # If invalid parameters.
+        if obj is None:
+            raise ValueError(f"When call 'create_instance', the parameter should be *args or **kwargs, "
+                             f"but got {params.__class__.__name__}, params: {params}")
     return obj
 
 

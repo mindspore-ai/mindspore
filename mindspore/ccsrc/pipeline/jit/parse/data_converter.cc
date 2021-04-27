@@ -481,7 +481,7 @@ std::vector<DataConverterPtr> GetDataConverters() {
 }  // namespace
 
 bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature, const TypePtr &dtype) {
-  // check parameter valid
+  // Check parameter valid
   if (data == nullptr) {
     MS_LOG(ERROR) << "Data is null pointer";
     return false;
@@ -503,7 +503,7 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   return converted != nullptr;
 }
 
-// convert data to graph
+// Convert data to graph
 FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python_mod_get_parse_method) {
   std::vector<std::string> results = data_converter::GetObjKey(obj);
   std::string obj_id = results[0] + python_mod_get_parse_method;
@@ -565,7 +565,7 @@ std::vector<std::string> GetObjKey(const py::object &obj) {
   return {py::cast<std::string>(obj_tuple[0]), py::cast<std::string>(obj_tuple[1])};
 }
 
-// get obj detail type
+// Get obj detail type
 ResolveTypeDef GetObjType(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto obj_type =
@@ -573,7 +573,7 @@ ResolveTypeDef GetObjType(const py::object &obj) {
   return obj_type;
 }
 
-// get class instance detail type
+// Get class instance detail type.
 ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto class_type =
@@ -581,26 +581,27 @@ ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
   return class_type;
 }
 
-// check the object is Cell Instance
+// Check the object is Cell Instance.
 bool IsCellInstance(const py::object &obj) {
   auto class_type = GetClassInstanceType(obj);
   bool isCell = (class_type == CLASS_INSTANCE_TYPE_CELL);
   return isCell;
 }
 
-// create the python class instance
-py::object CreatePythonObject(const py::object &type, const py::tuple &params) {
+// Create the python class instance.
+py::object CreatePythonObject(const py::object &type, const py::tuple &args_kwargs) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  return params.empty() ? python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type)
-                        : python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type, params);
+  // `args_kwargs` maybe a tuple(*args), tuple(**kwargs), or tuple(*args, **kwargs).
+  return args_kwargs.empty() ? python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type)
+                             : python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type, args_kwargs);
 }
 
-// Generate an appropriate name and set to graph debuginfo
-// character <> can not used in the dot file, so change to another symbol
+// Generate an appropriate name and set to graph debuginfo,
+// character <> can not used in the dot file, so change to another symbol.
 void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph->debug_info());
-  // set detail name info of function
+  // Set detail name info of function
   std::ostringstream oss;
   for (size_t i = 0; i < name.size(); i++) {
     if (name[i] == '<') {
@@ -629,7 +630,7 @@ void ClearObjectCache() {
 
 static std::unordered_map<std::string, ClassPtr> g_dataClassToClass = {};
 
-// parse dataclass to mindspore Class type
+// Parse dataclass to mindspore Class type
 ClassPtr ParseDataClass(const py::object &cls_obj) {
   std::string cls_name = py::cast<std::string>(python_adapter::GetPyObjAttr(cls_obj, "__name__"));
   std::string cls_module = py::cast<std::string>(python_adapter::GetPyObjAttr(cls_obj, "__module__"));
