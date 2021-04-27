@@ -877,21 +877,21 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   ValuePtr axis = primitive->GetAttr("axis");
   int64_t axis_value = CheckAxis(op_name, axis, -(rank + 1), rank);
-  axis_value = GetPositiveAxis(axis_value, LongToSize(rank));
+  uint64_t axis_value_pos = LongToUlong(GetPositiveAxis(axis_value, LongToSize(rank)));
   int64_t output_num_value = primitive->GetAttr("output_num")->cast<Int64ImmPtr>()->value();
-  if ((x_shape[axis_value] != Shape::SHP_ANY) && (x_shape[axis_value] % output_num_value != 0)) {
-    MS_LOG(EXCEPTION) << "x_shape[" << axis_value << "] = " << x_shape[axis_value]
+  if ((x_shape[axis_value] != Shape::SHP_ANY) && (x_shape[axis_value_pos] % output_num_value != 0)) {
+    MS_LOG(EXCEPTION) << "x_shape[" << axis_value_pos << "] = " << x_shape[axis_value_pos]
                       << " must be divisible by output_num = " << output_num_value;
   }
 
   ShapeVector output_shape = x_shape;
-  if (output_shape[axis_value] != Shape::SHP_ANY) {
-    output_shape[axis_value] = static_cast<int>(x_shape[axis_value] / output_num_value);
+  if (output_shape[axis_value_pos] != Shape::SHP_ANY) {
+    output_shape[axis_value_pos] = static_cast<int>(x_shape[axis_value_pos] / output_num_value);
   }
   ShapeVector output_shape_min = x_shape_min;
-  output_shape_min[axis_value] = static_cast<int>(x_shape_min[axis_value] / output_num_value);
+  output_shape_min[axis_value_pos] = static_cast<int>(x_shape_min[axis_value_pos] / output_num_value);
   ShapeVector output_shape_max = x_shape_max;
-  output_shape_max[axis_value] = static_cast<int>(x_shape_max[axis_value] / output_num_value);
+  output_shape_max[axis_value_pos] = static_cast<int>(x_shape_max[axis_value_pos] / output_num_value);
 
   AbstractBasePtrList output_list;
   for (int64_t i = 0; i < output_num_value; ++i) {

@@ -182,7 +182,7 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
     int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
-    result.insert(result.begin(), num_element, attr_val);
+    (void)result.insert(result.begin(), num_element, attr_val);
   }
   return result;
 }
