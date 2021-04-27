@@ -70,10 +70,6 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
       MS_LOG(ERROR) << "DeConv fp16 only support fp16 weight";
       return RET_ERROR;
     }
-    if (bias_size != in_tensors_.at(2)->Size()) {
-      MS_LOG(ERROR) << "input bias size not match : " << bias_size << " vs " << in_tensors_.at(2)->Size();
-      return RET_ERROR;
-    }
     memcpy(bias_data_, in_tensors_.at(2)->data_c(), bias_size);
   }
 

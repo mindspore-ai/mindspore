@@ -50,12 +50,12 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int output_plane_;
   int thread_count_;
   int thread_stride_;
-  float16_t *pack_input_;
-  float16_t *pack_weight_;
-  float16_t *pack_output_;
-  float16_t *tmp_buffer_;
-  float16_t *batch_input_;
-  float16_t *batch_output_;
+  float16_t *pack_input_ = nullptr;
+  float16_t *pack_weight_ = nullptr;
+  float16_t *pack_output_ = nullptr;
+  float16_t *tmp_buffer_ = nullptr;
+  float16_t *batch_input_ = nullptr;
+  float16_t *batch_output_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_DECONVOLUTION_H_
