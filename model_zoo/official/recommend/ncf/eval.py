@@ -15,7 +15,6 @@
 """Using for eval the model checkpoint"""
 import os
 
-import argparse
 from absl import logging
 
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -26,31 +25,31 @@ from src.dataset import create_dataset
 from src.metrics import NCFMetric
 from src.ncf import NCFModel, NetWithLossClass, TrainStepWrap, PredictWithSigmoid
 
-from src.config import cfg
+from utils.config import config
+from utils.moxing_adapter import moxing_wrapper
+from utils.device_adapter import get_device_id
+
 logging.set_verbosity(logging.INFO)
 
-
-parser = argparse.ArgumentParser(description='NCF')
-parser.add_argument("--data_path", type=str, default="./dataset/")  # The location of the input data.
-parser.add_argument("--dataset", type=str, default="ml-1m", choices=["ml-1m", "ml-20m"])  # Dataset to be trained and evaluated. ["ml-1m", "ml-20m"]
-parser.add_argument("--output_path", type=str, default="./output/")  # The location of the output file.
-parser.add_argument("--eval_file_name", type=str, default="eval.log")  # Eval output file.
-parser.add_argument("--checkpoint_file_path", type=str, default="./checkpoint/NCF-14_19418.ckpt")  # The location of the checkpoint file.
-args, _ = parser.parse_known_args()
-
-def test_eval():
+@moxing_wrapper()
+def run_eval():
     """eval method"""
-    if not os.path.exists(args.output_path):
-        os.makedirs(args.output_path)
+    if not os.path.exists(config.output_path):
+        os.makedirs(config.output_path)
 
-    layers = cfg.layers
-    num_factors = cfg.num_factors
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target="Davinci",
+                        save_graphs=False,
+                        device_id=get_device_id())
+
+    layers = config.layers
+    num_factors = config.num_factors
     topk = rconst.TOP_K
     num_eval_neg = rconst.NUM_EVAL_NEGATIVES
 
-    ds_eval, num_eval_users, num_eval_items = create_dataset(test_train=False, data_dir=args.data_path,
-                                                             dataset=args.dataset, train_epochs=0,
-                                                             eval_batch_size=cfg.eval_batch_size)
+    ds_eval, num_eval_users, num_eval_items = create_dataset(test_train=False, data_dir=config.data_path,
+                                                             dataset=config.dataset, train_epochs=0,
+                                                             eval_batch_size=config.eval_batch_size)
     print("ds_eval.size: {}".format(ds_eval.get_dataset_size()))
 
     ncf_net = NCFModel(num_users=num_eval_users,
@@ -60,7 +59,7 @@ def test_eval():
                        mf_regularization=0,
                        mlp_reg_layers=[0.0, 0.0, 0.0, 0.0],
                        mf_dim=16)
-    param_dict = load_checkpoint(args.checkpoint_file_path)
+    param_dict = load_checkpoint(config.checkpoint_file_path)
     load_param_into_net(ncf_net, param_dict)
 
     loss_net = NetWithLossClass(ncf_net)
@@ -73,18 +72,12 @@ def test_eval():
     ncf_metric.clear()
     out = model.eval(ds_eval)
 
-    eval_file_path = os.path.join(args.output_path, args.eval_file_name)
+    eval_file_path = os.path.join(config.output_path, config.eval_file_name)
     eval_file = open(eval_file_path, "a+")
     eval_file.write("EvalCallBack: HR = {}, NDCG = {}\n".format(out['ncf'][0], out['ncf'][1]))
     eval_file.close()
     print("EvalCallBack: HR = {}, NDCG = {}".format(out['ncf'][0], out['ncf'][1]))
-
+    print("=" * 100 + "Eval Finish!" + "=" * 100)
 
 if __name__ == '__main__':
-    devid = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Davinci",
-                        save_graphs=True,
-                        device_id=devid)
-
-    test_eval()
+    run_eval()
