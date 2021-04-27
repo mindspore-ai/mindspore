@@ -208,6 +208,7 @@ union PrimitiveType {
     Splice,
     LogSoftmax,
     Call,
+    Custom,
 }
 
 table Abs {
@@ -1102,4 +1103,9 @@ table LogSoftmax {
 }
 
 table Call {
+}
+
+table Custom {
+    type: string;
+    attr: [Attribute];
 }

@@ -31,6 +31,7 @@ constexpr auto kActivation = "activation";
 constexpr auto kActivationType = "activation_type";
 constexpr auto kAddress = "address";
 constexpr auto kAlignCorners = "align_corners";
+constexpr auto kAttr = "attr";
 constexpr auto kAspectRatios = "aspect_ratios";
 constexpr auto kAxes = "axes";
 constexpr auto kAxis = "axis";
