@@ -30,17 +30,13 @@ class CropAndResize : public PrimitiveC {
   CropAndResize() : PrimitiveC(kNameCropAndResize) { InitIOName({"x", "boxes", "box_index", "crop_size"}, {"y"}); }
   ~CropAndResize() = default;
   MS_DECLARE_PARENT(CropAndResize, PrimitiveC);
-  void Init(const ResizeMethod method, const float extrapolation_value);
+  void Init(ResizeMethod method, float extrapolation_value);
 
-  void set_method(const ResizeMethod method);
-  void set_extrapolation_value(const float extrapolation_value);
-
+  void set_method(ResizeMethod method);
+  void set_extrapolation_value(float extrapolation_value);
   ResizeMethod get_method() const;
   float get_extrapolation_value() const;
 };
-
-AbstractBasePtr CropAndResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
 using PrimCropAndResizePtr = std::shared_ptr<CropAndResize>;
 }  // namespace ops
 }  // namespace mindspore

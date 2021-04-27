@@ -30,11 +30,8 @@ class InvertPermutation : public PrimitiveC {
   InvertPermutation() : PrimitiveC(kNameInvertPermutation) {}
   ~InvertPermutation() = default;
   MS_DECLARE_PARENT(InvertPermutation, PrimitiveC);
-  void Init() {}
 };
 
-AbstractBasePtr InvertPermutationInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args);
 using PrimInvertPermutationPtr = std::shared_ptr<InvertPermutation>;
 }  // namespace ops
 }  // namespace mindspore

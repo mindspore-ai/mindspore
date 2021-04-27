@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ops/uniform_real.h"
 #include <string>
 #include <memory>
-#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-void UniformReal::Init(const int64_t seed, const int64_t seed2) {
+void UniformReal::Init(int64_t seed, int64_t seed2) {
   this->set_seed(seed);
   this->set_seed2(seed2);
 }
 
-void UniformReal::set_seed(const int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
+void UniformReal::set_seed(int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
 
-void UniformReal::set_seed2(const int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
+void UniformReal::set_seed2(int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
 
 int64_t UniformReal::get_seed() const {
   auto value_ptr = GetAttr(kSeed);

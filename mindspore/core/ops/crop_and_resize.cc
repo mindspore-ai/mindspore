@@ -15,7 +15,6 @@
  */
 
 #include <set>
-#include <vector>
 #include <memory>
 #include "ops/crop_and_resize.h"
 #include "utils/check_convert_utils.h"
@@ -23,17 +22,17 @@
 
 namespace mindspore {
 namespace ops {
-void CropAndResize::Init(const ResizeMethod method, const float extrapolation_value) {
+void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
   this->set_method(method);
   this->set_extrapolation_value(extrapolation_value);
 }
 
-void CropAndResize::set_method(const ResizeMethod method) {
+void CropAndResize::set_method(ResizeMethod method) {
   auto swi = (int64_t)method;
   this->AddAttr(kMethod, MakeValue(swi));
 }
 
-void CropAndResize::set_extrapolation_value(const float extrapolation_value) {
+void CropAndResize::set_extrapolation_value(float extrapolation_value) {
   this->AddAttr(kExtrapolationValue, MakeValue(extrapolation_value));
 }
 
