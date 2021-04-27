@@ -172,12 +172,11 @@ class TensorLoader {
     } else {
       shape = shape + "_0";
     }
-    std::string file_extension = ".bin";
     std::string path = "";
     if (trans_flag) {
-      path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt + file_extension;
+      path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt;
     } else {
-      path = filepath + '_' + shape + '_' + TypeIdToType(device_type)->ToString() + '_' + addr_format + file_extension;
+      path = filepath + '_' + shape + '_' + TypeIdToType(device_type)->ToString() + '_' + addr_format;
     }
 
     MS_LOG(INFO) << "Dump path is " << path;
@@ -188,7 +187,7 @@ class TensorLoader {
       std::shared_ptr<TensorData> node = iter->second;
       size_t host_size = node->GetByteSize();
 
-      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), host_size);
+      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), host_size, host_shape, host_type);
     }
     MS_LOG(INFO) << "Tensor name:" << tensor_name << " not found in tensor_list_map";
     return true;

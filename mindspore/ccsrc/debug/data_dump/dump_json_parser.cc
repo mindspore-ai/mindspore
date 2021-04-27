@@ -20,12 +20,14 @@
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "debug/data_dump/npy_header.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
 constexpr auto kAsyncDumpSettings = "async_dump_settings";
 constexpr auto kE2eDumpSettings = "e2e_dump_settings";
 constexpr auto kDumpMode = "dump_mode";
+constexpr auto kDumpFormat = "dump_format";
 constexpr auto kPath = "path";
 constexpr auto kNetName = "net_name";
 constexpr auto kIteration = "iteration";
@@ -42,6 +44,8 @@ constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 }  // namespace
 
 namespace mindspore {
+uint32_t DumpJsonParser::dump_format_ = 0;
+
 auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std::string &key) {
   auto iter = content.find(key);
   if (iter == content.end()) {
@@ -137,13 +141,15 @@ bool DumpJsonParser::GetIterDumpFlag() {
   return e2e_dump_enabled_ && (iteration_ == 0 || cur_dump_iter_ == iteration_);
 }
 
-bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len) {
+bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
+                                TypeId type) {
   if (filename.empty() || data == nullptr || len == 0) {
     MS_LOG(ERROR) << "Incorrect parameter.";
     return false;
   }
 
-  auto realpath = Common::GetRealPath(filename);
+  std::string file_format = dump_format_ == 1 ? ".npy" : ".bin";
+  auto realpath = Common::GetRealPath(filename + file_format);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed.";
     return false;
@@ -153,6 +159,10 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   if (!fd.is_open()) {
     MS_LOG(ERROR) << "Open file " << realpath.value() << " fail.";
     return false;
+  }
+  if (dump_format_ == 1) {
+    std::string npy_header = GenerateNpyHeader(shape, type);
+    fd << npy_header;
   }
   (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
   fd.close();
@@ -176,6 +186,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseInputOutput(*input_output);
   ParseKernels(*kernels);
   ParseSupportDevice(*support_device);
+  ParseDumpFormat(*common_dump_settings);
 }
 
 void DumpJsonParser::ParseAsyncDumpSetting(const nlohmann::json &content) {
@@ -209,19 +220,19 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
 
 void CheckJsonUnsignedType(const nlohmann::json &content, const std::string &key) {
   if (!content.is_number_unsigned()) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed." << key << " should be unsigned int type";
+    MS_LOG(EXCEPTION) << "Dump config parse failed, " << key << " should be unsigned int type";
   }
 }
 
 void CheckJsonStringType(const nlohmann::json &content, const std::string &key) {
   if (!content.is_string()) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed." << key << " should be string type";
+    MS_LOG(EXCEPTION) << "Dump config parse failed, " << key << " should be string type";
   }
 }
 
 void CheckJsonArrayType(const nlohmann::json &content, const std::string &key) {
   if (!content.is_array()) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed." << key << " should be array type";
+    MS_LOG(EXCEPTION) << "Dump config parse failed, " << key << " should be array type";
   }
 }
 
@@ -229,7 +240,18 @@ void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kDumpMode);
   dump_mode_ = content;
   if (dump_mode_ != 0 && dump_mode_ != 1) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. dump_mode should be 0 or 1";
+    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0 or 1, but got " << dump_format_;
+  }
+}
+
+void DumpJsonParser::ParseDumpFormat(const nlohmann::json &content) {
+  auto iter = content.find(kDumpFormat);
+  if (iter == content.end()) {
+    return;
+  }
+  dump_format_ = *iter;
+  if (dump_format_ != 0 && dump_format_ != 1) {
+    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_format should be 0(.bin) or 1(.npy), but got " << dump_format_;
   }
 }
 

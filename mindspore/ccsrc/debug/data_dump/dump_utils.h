@@ -27,7 +27,7 @@ namespace mindspore {
 static const size_t PARAMETER_OUTPUT_INDEX = 0;
 static const size_t VALUE_NODE_OUTPUT_INDEX = 0;
 
-std::string GenerateDumpPath(const uint32_t *device_id = nullptr);
+std::string GenerateDumpPath(uint32_t graph_id, const uint32_t *device_id = nullptr);
 
 void GetFileKernelName(NotNull<std::string *> kernel_name);
 

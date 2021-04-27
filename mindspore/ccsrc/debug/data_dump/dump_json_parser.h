@@ -33,7 +33,8 @@ class DumpJsonParser {
   }
 
   void Parse();
-  static bool DumpToFile(const std::string &filename, const void *data, size_t len);
+  static bool DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
+                         TypeId type);
   void CopyJsonToDir();
   bool NeedDump(const std::string &op_full_name) const;
   void MatchKernel(const std::string &kernel_name);
@@ -62,6 +63,7 @@ class DumpJsonParser {
   DISABLE_COPY_AND_ASSIGN(DumpJsonParser)
 
   std::mutex lock_;
+  static uint32_t dump_format_;
   bool async_dump_enabled_{false};
   bool e2e_dump_enabled_{false};
   uint32_t dump_mode_{0};
@@ -84,6 +86,7 @@ class DumpJsonParser {
   auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
 
   void ParseDumpMode(const nlohmann::json &content);
+  void ParseDumpFormat(const nlohmann::json &content);
   void ParseDumpPath(const nlohmann::json &content);
   void ParseNetName(const nlohmann::json &content);
   void ParseIteration(const nlohmann::json &content);

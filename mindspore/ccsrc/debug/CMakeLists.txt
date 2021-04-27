@@ -12,6 +12,7 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_json_parser.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/cpu_e2e_dump.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_utils.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/npy_header.cc"
 )
 
 set(_OFFLINE_SRC_LIST
