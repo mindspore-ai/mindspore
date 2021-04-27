@@ -48,12 +48,12 @@ static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
 
 static const char URL_IP_PORT_SEPARATOR[] = ":";
 
-static const char UDP_EVLOOP_THREADNAME[] = "HARES_LB_Udp";
+static const char UDP_EVLOOP_THREADNAME[] = "MINDRT_Udp";
 
-static const char TCP_RECV_EVLOOP_THREADNAME[] = "HARES_LB_TcpR";
-static const char TCP_SEND_EVLOOP_THREADNAME[] = "HARES_LB_TcpS";
+static const char TCP_RECV_EVLOOP_THREADNAME[] = "MINDRT_TcpR";
+static const char TCP_SEND_EVLOOP_THREADNAME[] = "MINDRT_TcpS";
 
-static const char HTTP_CLIENT_EVLOOP_THREADNAME[] = "HARES_LB_Htp";
+static const char HTTP_CLIENT_EVLOOP_THREADNAME[] = "MINDRT_Htp";
 
 class IOMgr {
  public:
