@@ -163,8 +163,8 @@
                 app:layout_constraintWidth_percent="0.44" />
 
 
-            <Button
-                android:id="@+id/btn_scene"
+            <com.mindspore.himindspore.ui.view.IconButtonStyleView
+                android:id="@+id/btn_dance"
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:background="@drawable/btn_vision_item"
@@ -172,11 +172,13 @@
                 android:gravity="left|center_vertical"
                 android:maxLines="1"
                 android:paddingStart="4dp"
-                android:text="@string/title_scene"
+                android:text="@string/title_dance"
                 android:textAllCaps="false"
                 android:textColor="@color/text_black"
                 android:textSize="12sp"
-                app:drawableStartCompat="@drawable/btn_scene"
+                app:buttonImage="@drawable/btn_scene"
+                app:buttonTextName="@string/title_dance"
+                app:buttonTextAngle="@string/title_button_text_angle"
                 app:layout_constraintBottom_toBottomOf="@+id/btn_gesture"
                 app:layout_constraintEnd_toEndOf="@+id/btn_image"
                 app:layout_constraintWidth_percent="0.44" />
@@ -232,7 +234,7 @@
                 app:layout_constraintWidth_percent="0.44" />
 
 
-            <com.mindspore.himindspore.ui.view.MyButton
+            <com.mindspore.himindspore.ui.view.IconButtonStyleView
                 android:id="@+id/btn_image_Intelligent_poetry"
                 android:layout_width="0dp"
                 android:layout_height="50dp"
@@ -244,6 +246,9 @@
                 android:textAllCaps="false"
                 android:textColor="@color/text_black"
                 android:textSize="12sp"
+                app:buttonImage="@drawable/btn_intelligent_poetry"
+                app:buttonTextName="@string/title_intelligent_poetry"
+                app:buttonTextAngle="@string/title_button_text_angle"
                 app:layout_constraintStart_toStartOf="@+id/title_vertical_line_two"
                 app:layout_constraintTop_toBottomOf="@+id/title_vertical_line_two"
                 app:layout_constraintWidth_percent="0.44" />

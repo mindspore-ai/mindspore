@@ -39,7 +39,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
-import com.alibaba.android.arouter.launcher.ARouter;
 import com.bumptech.glide.Glide;
 import com.huawei.hmf.tasks.OnFailureListener;
 import com.huawei.hmf.tasks.OnSuccessListener;
@@ -122,11 +121,6 @@ public class TextRecognitionActivity extends AppCompatActivity {
     public void onClickCamera(View view) {
         openCamera();
         textOriginImage.setVisibility(View.GONE);
-    }
-
-
-    public void onClickRealTime(View view) {
-        ARouter.getInstance().build("/hms/VideoTextRecognitionActivity").navigation();
     }
 
     private void openGallay(int request) {

@@ -68,7 +68,7 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
         view.findViewById(R.id.btn_style_transfer).setOnClickListener(this);  //onClickStyleTransfer
         view.findViewById(R.id.btn_segmentation).setOnClickListener(this);  //onClickSegmentation
         view.findViewById(R.id.btn_image).setOnClickListener(this);  //onClickImage
-        view.findViewById(R.id.btn_scene).setOnClickListener(this);  //onClickSceneDetection
+        view.findViewById(R.id.btn_dance).setOnClickListener(this);  //onClickSceneDetection
         view.findViewById(R.id.btn_image_Intelligent_poetry).setOnClickListener(this);  //onClickIntelligentPoetry
         view.findViewById(R.id.btn_text_recognition).setOnClickListener(this);  //onClickTextRecognition
         view.findViewById(R.id.btn_gesture).setOnClickListener(this);  //onClickGestureRecognition
@@ -94,15 +94,13 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
                 ARouter.getInstance().build("/styletransfer/StyleMainActivity").navigation();
                 break;
             case R.id.btn_segmentation:
-                ARouter.getInstance().build("/hms/PortraitSegmentationActivity").navigation();
-//                ARouter.getInstance().build("/hms/ImageSegmentationLiveAnalyseActivity").navigation();
-//                ARouter.getInstance().build("/hms/ImageSegmentationActivity").navigation();
+                ARouter.getInstance().build("/hms/ImageSegmentationLiveAnalyseActivity").navigation();
                 break;
             case R.id.btn_image:
                 ARouter.getInstance().build("/imageobject/ImageCameraActivity").navigation();
                 break;
-            case R.id.btn_scene:
-                ARouter.getInstance().build("/hms/SenceDetectionStillAnalyseActivity").navigation();
+            case R.id.btn_dance:
+                ARouter.getInstance().build("/dance/DanceMainActivity").navigation();
                 break;
             case R.id.btn_image_Intelligent_poetry:
                 ARouter.getInstance().build("/app/IntelligentPoetryWritingActivity").navigation();

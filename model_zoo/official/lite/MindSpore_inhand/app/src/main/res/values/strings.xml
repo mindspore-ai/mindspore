@@ -15,7 +15,7 @@
     <string name="title_image">Image Classification</string>
     <string name="title_image_garbage">Garbage Classification</string>
     <string name="title_intelligent_poetry">Intelligent poetry</string>
-    <string name="title_intelligent_poetry_new">NEW</string>
+    <string name="title_button_text_angle">HOT</string>
     <string name="title_object">Object Detection(Photo)</string>
     <string name="title_object_camera">Object Detection(Real-time)</string>
     <string name="title_pose_net">PoseNet</string>
@@ -29,7 +29,7 @@
     <string name="title_college_broken_side">端侧应用</string>
     <string name="title_college_video">参考视频</string>
     <string name="title_source">Code</string>
-    <string name="title_scene">Scene Detection</string>
+    <string name="title_dance">Dance Factory</string>
     <string name="title_help">FeedBack</string>
     <string name="title_star">Star</string>
     <string name="title_version">Version: </string>

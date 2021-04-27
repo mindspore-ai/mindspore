@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.mindspore.common.config.MSLinkUtils;
 import com.mindspore.himindspore.R;
+import com.mindspore.himindspore.ui.webview.WebViewUtilsActivity;
 
 public class MeFragment extends Fragment implements View.OnClickListener {
 
@@ -88,16 +89,16 @@ public class MeFragment extends Fragment implements View.OnClickListener {
                 onClickShare();
                 break;
             case R.id.rl_me_thumbsup:
-                ARouter.getInstance().build("/app/MeThumbsupActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.ME_STAR_URL));
                 break;
             case R.id.rl_me_official:
-                ARouter.getInstance().build("/app/MeOfficialwebsiteActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.BASE_URL));
                 break;
             case R.id.rl_me_official_code:
-                ARouter.getInstance().build("/app/MeCodeRepositoryActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.ME_CODE_URL));
                 break;
             case R.id.rl_me_qa:
-                ARouter.getInstance().build("/app/MeProblemFeedbackActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.ME_HELP_URL));
                 break;
             case R.id.me_user_protocol:
                 ARouter.getInstance().build("/app/PrivacyPolicyActivity").navigation();

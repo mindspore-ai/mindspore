@@ -38,17 +38,17 @@ import com.google.android.material.tabs.TabLayout;
 import com.mindspore.common.base.adapter.BasePagerAdapter;
 import com.mindspore.customview.dialog.UpdateDialog;
 import com.mindspore.himindspore.R;
-import com.mindspore.himindspore.base.BaseActivity;
+import com.mindspore.common.base.mvp.BaseActivity;
 import com.mindspore.himindspore.comment.FragmentFactory;
-import com.mindspore.himindspore.net.FileDownLoadObserver;
-import com.mindspore.himindspore.net.UpdateInfoBean;
+import com.mindspore.common.net.FileDownLoadObserver;
+import com.mindspore.common.net.UpdateInfoBean;
 import com.mindspore.himindspore.ui.view.MSTabEntity;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity<MainPresenter> implements MainContract.View {
+public class MainActivity extends BaseActivity<MainActivityPresenter> implements MainContract.View {
     private static final String TAG = "MainActivity";
 
     private ViewPager mVpHome;
@@ -61,7 +61,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainCon
 
     @Override
     protected void init() {
-        presenter = new MainPresenter(this);
+        presenter = new MainActivityPresenter(this);
         mVpHome = findViewById(R.id.vp_home);
         mTabLayout = findViewById(R.id.tab_layout);
         showPackaeInfo();

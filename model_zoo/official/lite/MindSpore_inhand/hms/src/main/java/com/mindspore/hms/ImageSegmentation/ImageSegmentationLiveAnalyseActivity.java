@@ -185,8 +185,7 @@ public class ImageSegmentationLiveAnalyseActivity extends AppCompatActivity impl
             public void transactResult(MLAnalyzer.Result<MLImageSegmentation> result) {
                 mOverlay.clear();
                 SparseArray<MLImageSegmentation> imageSegmentationResult = result.getAnalyseList();
-                MLSegmentGraphic graphic = new MLSegmentGraphic(ImageSegmentationLiveAnalyseActivity.this, mPreview, mOverlay, imageSegmentationResult.valueAt(0), isFront);
-                //mOverlay.setBackgroundColor(Color.BLUE);
+                MLSegmentGraphic graphic = new MLSegmentGraphic(mPreview, mOverlay, imageSegmentationResult.valueAt(0), isFront);
                 mOverlay.add(graphic);
             }
         });

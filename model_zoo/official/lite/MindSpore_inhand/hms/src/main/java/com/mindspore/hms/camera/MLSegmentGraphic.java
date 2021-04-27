@@ -16,18 +16,13 @@
 
 package com.mindspore.hms.camera;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.util.Log;
 
 import com.huawei.hms.mlsdk.imgseg.MLImageSegmentation;
-import com.mindspore.hms.R;
 
 public class MLSegmentGraphic extends GraphicOverlay.Graphic {
     private static final String TAG = MLSegmentGraphic.class.getSimpleName();
@@ -36,12 +31,8 @@ public class MLSegmentGraphic extends GraphicOverlay.Graphic {
     private final Bitmap bitmapForeground;
     private final Boolean isFront;
 
-    private final Bitmap mDstBitmap;
-    private final Context context;
-
-    public MLSegmentGraphic(Context context, LensEnginePreview preview, GraphicOverlay overlay, MLImageSegmentation segmentation, Boolean isFront) {
+    public MLSegmentGraphic(LensEnginePreview preview, GraphicOverlay overlay, MLImageSegmentation segmentation, Boolean isFront) {
         super(overlay);
-        this.context = context;
         this.bitmapForeground = segmentation.getForeground();
         this.isFront = isFront;
 
@@ -49,25 +40,14 @@ public class MLSegmentGraphic extends GraphicOverlay.Graphic {
         int height = bitmapForeground.getHeight();
         int div = overlay.getWidth() - preview.getWidth();
         int left = overlay.getWidth() - width + div / 2;
-
-        // Set the image display area.
-        // Partial display.
         mDestRect = new Rect(left, 0, overlay.getWidth() - div / 2, height / 2);
-
-        // All display.
-        // mDestRect = new Rect(0, 0, overlay.getWidth(), overlay.getHeight());
         this.resultPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         this.resultPaint.setFilterBitmap(true);
         this.resultPaint.setDither(true);
-
-        mDstBitmap = Bitmap.createBitmap(mDestRect.width(), mDestRect.height(), Bitmap.Config.ARGB_8888).copy(Bitmap.Config.ARGB_8888, true);
-        mDstBitmap.eraseColor(Color.parseColor("#FF0000"));//填充颜色
-
     }
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawBitmap(mDstBitmap, null, mDestRect, resultPaint);
         canvas.drawBitmap(isFront ? convert(bitmapForeground) : bitmapForeground, null, mDestRect, resultPaint);
     }
 
