@@ -314,7 +314,9 @@ GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   if (all_graphs.size() != 1) {
     MS_LOG(EXCEPTION) << "Gpu backend does not support multi-graph schedule. graph num" << all_graphs.size();
   }
-
+  // Insert maketuple graph output in case of multi-outputs.
+  // The ConvertTupleOutputToMaketuple pass will insert TupleGetItem.
+  AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
   opt::BackendCommonOptimization(root_graph);
   return CompileGraphImpl(root_graph);
 }

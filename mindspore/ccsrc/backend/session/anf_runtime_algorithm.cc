@@ -48,6 +48,7 @@ using kernel::KernelModPtr;
 namespace {
 constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kNopNodeRealInputIndex = 1;
+constexpr size_t kReturnDataIndex = 1;
 
 using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 
@@ -1918,6 +1919,17 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   node->set_abstract(eval_result);
+}
+
+void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
+  auto return_node = root_graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  if (return_node->size() <= kReturnDataIndex) {
+    return;
+  }
+  auto make_tuple = root_graph->NewCNode(
+    {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
+  root_graph->set_output(make_tuple);
 }
 }  // namespace session
 }  // namespace mindspore
