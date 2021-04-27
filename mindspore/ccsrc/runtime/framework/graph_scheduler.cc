@@ -99,8 +99,8 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(node, output_idx);
   MS_EXCEPTION_IF_NULL(device_tensor);
-  device_tensor->IncreaseRefCount();
-  device_tensor->ResetRefCountUsed();
+  device_tensor->IncreaseOriginalRefCount();
+  device_tensor->ResetRefCount();
 }
 
 //  The branch processing of PrepareDataForValueNode that value type is tensor.
@@ -252,8 +252,8 @@ BaseRef CreateOutputTensor(const session::KernelWithIndex &node_output_pair, con
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, output_index);
     MS_EXCEPTION_IF_NULL(device_tensor);
     tensor->set_device_address(device_tensor);
-    device_tensor->set_ref_count(SIZE_MAX);
-    device_tensor->ResetRefCountUsed();
+    device_tensor->set_original_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCount();
     return tensor;
   }
 }
@@ -307,8 +307,8 @@ void AllocateContinuousMemoryForInput(const AnfNodePtr &kernel, const DeviceCont
     MS_EXCEPTION_IF_NULL(device_tensor);
     //  In the scene of communication op and computing op parallel multi stream, the input address of communication op
     //  can't be reused, so set the max reference count.
-    device_tensor->set_ref_count(SIZE_MAX);
-    device_tensor->ResetRefCountUsed();
+    device_tensor->set_original_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCount();
 
     if (device_tensor->GetPtr() == nullptr) {
       is_need_alloc_memory = true;
@@ -341,8 +341,8 @@ void AllocateContinuousMemoryForOutput(const AnfNodePtr &kernel, const DeviceCon
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     // One time application for continuous memory, so set the max reference count.
-    device_tensor->set_ref_count(SIZE_MAX);
-    device_tensor->ResetRefCountUsed();
+    device_tensor->set_original_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCount();
 
     if (device_tensor->GetPtr() == nullptr) {
       is_need_alloc_memory = true;
@@ -925,8 +925,8 @@ void GraphScheduler::PersistDeviceTensor(const KernelGraphPtr &graph) {
     }
     auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0);
     DeviceTensorStore::GetInstance().Insert(value_node.get(), device_tensor);
-    device_tensor->set_ref_count(SIZE_MAX);
-    device_tensor->ResetRefCountUsed();
+    device_tensor->set_original_ref_count(SIZE_MAX);
+    device_tensor->ResetRefCount();
   }
 
   for (auto &input_node : graph->input_nodes()) {
@@ -935,8 +935,8 @@ void GraphScheduler::PersistDeviceTensor(const KernelGraphPtr &graph) {
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0);
       MS_EXCEPTION_IF_NULL(device_tensor);
       DeviceTensorStore::GetInstance().Insert(input_node.get(), device_tensor);
-      device_tensor->set_ref_count(SIZE_MAX);
-      device_tensor->ResetRefCountUsed();
+      device_tensor->set_original_ref_count(SIZE_MAX);
+      device_tensor->ResetRefCount();
     }
   }
 }
@@ -1008,7 +1008,7 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_kernel, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-          << "\tref_count:" << device_tensor->ref_count_dynamic_used() << "\n ";
+          << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
     }
   } else if (actor_name.find("_HostQueueDataSourceActor") != string::npos) {
     // Dump the member info of host queue data source actor.
@@ -1021,7 +1021,7 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node->fullname_with_scope()
           << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-          << "\tref_count:" << device_tensor->ref_count_dynamic_used() << "\n ";
+          << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
     }
   }
 
@@ -1065,7 +1065,7 @@ void GraphScheduler::DumpKernelActor(const KernelActor *actor, std::ofstream &of
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-        << "\tref_count:" << device_tensor->ref_count_dynamic_used() << "\n ";
+        << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
   }
 
   ofs << "\t\tdevice_tensor_stores:" << actor->device_tensor_store_keys_.size() << "\n ";

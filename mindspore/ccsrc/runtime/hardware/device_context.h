@@ -70,11 +70,8 @@ class DeviceContext {
   // Get device address type according different device type, such GPU, Ascend.
   virtual DeviceAddressType GetDeviceAddressType() const = 0;
 
-  // The two functions below will be merged to one in the future.
-  // General graph optimezer ignore device data type and format.
-  virtual void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {}
-  // Optimize the kernel graph according to device data type and format.
-  virtual void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {}
+  // Optimize the kernel graph for graph mode.
+  virtual void OptimizeGraph(const KernelGraphPtr &graph) const {}
 
   // Optimize the single operator graph for PyNative mode.
   virtual void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {}

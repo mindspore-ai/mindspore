@@ -50,13 +50,13 @@ void MemoryManagerActor::FreeMemory(std::vector<DeviceTensor *> free_list, const
   for (auto &device_tensor : free_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
     // The reference count is decremented to zero to free memory, and reset to the original count.
-    device_tensor->DecreaseRefCountUsed();
-    if (device_tensor->ref_count_dynamic_used() == 0) {
+    device_tensor->DecreaseRefCount();
+    if (device_tensor->ref_count() == 0) {
       // Free memory through the device context.
       if (device_tensor->GetPtr() != nullptr) {
         device_context->FreeMemory(device_tensor);
       }
-      device_tensor->ResetRefCountUsed();
+      device_tensor->ResetRefCount();
     }
   }
 }

@@ -48,11 +48,8 @@ class GPUDeviceContext : public DeviceContext {
                                        TypeId type_id) const override;
   DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
 
-  // General graph optimezer ignore device data type and format.
-  void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const override;
-  // Optimize the kernel graph according to device type, such format transform.
-  void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const override;
-
+  // Optimize the kernel graph for graph mode.
+  void OptimizeGraph(const KernelGraphPtr &graph) const override;
   // Optimize the single operator graph for PyNative mode.
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
@@ -66,6 +63,11 @@ class GPUDeviceContext : public DeviceContext {
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool InitDevice();
+
+  // General graph optimezer ignore device data type and format.
+  void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const;
+  // Optimize the kernel graph according to device type, such format transform.
+  void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const;
 
   // Operator fusion optimization.
   void FuseOperators(const KernelGraphPtr &graph) const;

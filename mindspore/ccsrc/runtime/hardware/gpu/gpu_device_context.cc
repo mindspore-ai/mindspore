@@ -165,6 +165,17 @@ DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
+void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  // Optimization pass which is irrelevant to device type or format.
+  OptimizeGraphWithoutDeviceInfo(graph);
+
+  SetOperatorInfo(graph->execution_order());
+
+  // Optimization pass which is relevant to device type or format.
+  OptimizeGraphWithDeviceInfo(graph);
+}
+
 void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   // Operator fusion optimization.
@@ -240,6 +251,9 @@ void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr>
 }
 
 void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  SetOperatorInfo(graph->execution_order());
+
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));

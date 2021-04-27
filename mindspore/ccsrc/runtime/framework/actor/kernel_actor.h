@@ -37,7 +37,7 @@ using mindspore::kernel::AddressPtr;
 
 // The kernel actor is used to receive the device tensors and control info to luanch kernel.
 // The processing flow is RunOpData/RunOpControl -> CheckLaunchCondition -> AllocateMemory
-// -> OnMemoryAllocFinish -> LaunchKernel -> SendOutput -> FreeMemory.
+// -> OnMemoryAllocFinish -> LaunchKernel -> FreeMemory -> SendOutput.
 class KernelActor : public MemoryInterfaceActor {
  public:
   KernelActor(std::string name, CNodePtr kernel, const DeviceContext *device_context, const AID memory_manager_aid)

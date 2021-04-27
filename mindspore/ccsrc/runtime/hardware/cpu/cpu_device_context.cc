@@ -55,10 +55,11 @@ DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
-void CPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
+void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
 
+  SetOperatorInfo(graph->execution_order());
   OptimizeGraphImpl(graph);
 
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
@@ -67,7 +68,11 @@ void CPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &grap
   graph->set_execution_order(execution_order);
 }
 
-void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const { OptimizeGraphImpl(graph); }
+void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  SetOperatorInfo(graph->execution_order());
+  OptimizeGraphImpl(graph);
+}
 
 void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
