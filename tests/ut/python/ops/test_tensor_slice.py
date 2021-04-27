@@ -448,8 +448,11 @@ def test_tensor_assign():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     net = TensorAssignWithSlice()
     net2 = TensorAssignWithSlice2()
-    net_e1 = TensorAssignWithSliceError1()
-    net_e2 = TensorAssignWithSliceError2()
+    # The test case is no longer appropriate since x[1:3:-1] = np.array(2) does
+    # not incur an error in numpy, which leaves the original array unchanged after
+    # the assign operation.
+    # net_e1 = TensorAssignWithSliceError1()
+    # net_e2 = TensorAssignWithSliceError2()
     a = np.arange(60).reshape(3, 4, 5)
     ck = np.arange(60).reshape(3, 4, 5)
     b = Tensor([1], dtype=mstype.float32)
@@ -465,8 +468,9 @@ def test_tensor_assign():
     net2(t, b, tck)
     # Error for A[Slice] = Number
     # 1. A[Slice] = Number,  0 in shape
-    with pytest.raises(ValueError):
-        net_e2(t, Tensor(2, mstype.int32))
+
+    # with pytest.raises(ValueError):
+    #     net_e2(t, Tensor(2, mstype.int32))
 
     # Error for A[Slice] = U, U is a Tensor
     # 1. A[Slice] = U,  u.size is error
@@ -487,13 +491,13 @@ def test_tensor_assign():
     with pytest.raises(ValueError):
         net(Ta, Tb, Tck)
     # 3. A[Tuple(Slice...)] = U,  Slice error
-    with pytest.raises(IndexError):
-        net_e1(Ta, b)
+    # with pytest.raises(IndexError):
+    #     net_e1(Ta, b)
 
     # Error for A[Tuple(Slice...)] = Number
     # 1. A[Tuple(Slice...)] = Number,  Slice error
-    with pytest.raises(IndexError):
-        net_e1(Ta, Tensor(2, mstype.int32))
+    # with pytest.raises(IndexError):
+    #     net_e1(Ta, Tensor(2, mstype.int32))
 
     net = TensorAssignWithInteger()
     # Error for A[Number] = scalar/Tensor

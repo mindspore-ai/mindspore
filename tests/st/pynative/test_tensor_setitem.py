@@ -195,6 +195,7 @@ def test_setitem_by_slice():
         x[5:0:3] = 5
         x[5:5:5] = 6
         x[-1:2] = 7
+        x[1:0:-1] = 8
         return x
     setup_testcase(x, cases)
 
@@ -212,5 +213,21 @@ def test_setitem_by_tuple_of_slices():
         x[1, -10:3:2] = 4
         x[5:0:3, 3] = 5
         x[1:1, 2:2] = 6
+        return x
+    setup_testcase(x, cases)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_setitem_dim_expand():
+    x = onp.ones((2, 3, 4), dtype=onp.float32)
+    def cases(x):
+        x[None, True, [1, 0], (False, True, True), [2]] = 2
+        x[([[0]]), ..., [[1]]] = [[[3, 3, 3]]]
+        x[0:1] = [[2, 3, 4, 5]]
+        x[..., (0, 1, 2), None, :, True, None] = [[[3], [3], [3], [3]]]
         return x
     setup_testcase(x, cases)

@@ -62,3 +62,17 @@ def _logical_not_tuple(x):
        bool, Return logical not operation result of x.
    """
     return F.bool_not(x.__bool__())
+
+
+@logical_not.register("List")
+def _logical_not_list(x):
+    """
+    Return logical not operation result of a list object.
+
+    Args:
+       x(List): The input tuple.
+
+    Returns:
+       bool, Return logical not operation result of x.
+   """
+    return F.bool_not(x.__bool__())

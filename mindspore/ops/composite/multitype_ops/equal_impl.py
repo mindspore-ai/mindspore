@@ -68,7 +68,7 @@ def _equal_mstype(x, y):
     Returns:
        bool, if x == y return true, x != y return false.
    """
-    return const_utils.mstype_eq(x, y)
+    return const_utils.is_same_type(x, y)
 
 
 @equal.register("String", "String")
