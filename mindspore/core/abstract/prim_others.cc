@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -530,7 +530,7 @@ AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePt
 
   std::vector<int64_t> shape;
   std::vector<int64_t> x_shape = x->shape()->shape();
-  shape.insert(shape.end(), x_shape.begin(), x_shape.end());
+  (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());
   auto axis = primitive->GetAttr("axis");
   auto value = GetValue<int64_t>(axis);
   if (value < -(SizeToInt(x_shape.size()) + 1) || value > SizeToInt(x_shape.size())) {
@@ -540,7 +540,7 @@ AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePt
   if (value < 0) {
     value = value + SizeToInt(x_shape.size()) + 1;
   }
-  shape.insert(shape.begin() + value, 1);
+  (void)shape.insert(shape.begin() + value, 1);
 
   auto ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
   return ret;

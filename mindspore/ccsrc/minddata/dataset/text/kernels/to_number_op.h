@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,16 +61,16 @@ class ToNumberOp : public TensorOp {
 
  private:
   template <typename T>
-  Status ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+  Status ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const;
 
   template <typename T>
-  Status ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+  Status ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const;
 
-  Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+  Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const;
 
-  Status ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+  Status ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const;
 
-  Status ToDouble(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+  Status ToDouble(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) const;
 
   DataType cast_to_type_;
 };
