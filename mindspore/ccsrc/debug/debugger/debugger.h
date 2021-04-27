@@ -143,7 +143,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
-  std::list<KernelGraphPtr> GetGraphPtrList() { return graph_ptr_list_; }
+  std::list<KernelGraphPtr> GetGraphPtrList() const { return graph_ptr_list_; }
 
   bool TensorExistsInCurrent(std::string tensor_name);
 
@@ -164,7 +164,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if debugger enabled
   bool CheckDebuggerEnabled();
 
-  void CheckDebuggerEnabledParam();
+  void CheckDebuggerEnabledParam() const;
 
   bool CheckDebuggerPartialMemoryEnabled();
 
@@ -219,7 +219,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::vector<std::string> CheckOpOverflow();
 
   // Check if the port is valid
-  bool CheckPort(const char *port);
+  bool CheckPort(const char *port) const;
 
   // Check if the IP is valid
   bool CheckIp(const char *host);
