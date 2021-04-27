@@ -228,6 +228,8 @@ Status SaveToDisk::Save() {
   TensorRow row;
   uint64_t mr_schema_id = 0;
   bool first_loop = true;  // build schema in first loop
+  auto PreTensorRowShapes = std::map<std::string, std::vector<int>>();
+
   do {
     nlohmann::json row_raw_data;
     std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> row_bin_data;
@@ -235,11 +237,12 @@ Status SaveToDisk::Save() {
     if (row.empty()) {
       break;
     }
+    RETURN_IF_NOT_OK(CheckTensorRowShapes(column_name_id_map, row, &PreTensorRowShapes));
     if (first_loop) {
       nlohmann::json mr_json;
       std::vector<std::string> index_fields;
       RETURN_IF_NOT_OK(FetchMetaFromTensorRow(column_name_id_map, row, &mr_json, &index_fields));
-      MS_LOG(DEBUG) << "Schema of saved mindrecord: " << mr_json.dump();
+      MS_LOG(INFO) << "Schema of saved mindrecord: " << mr_json.dump();
       if (mindrecord::SUCCESS !=
           mindrecord::ShardHeader::initialize(&mr_header, mr_json, index_fields, blob_fields, mr_schema_id)) {
         RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardHeader.");
@@ -267,6 +270,47 @@ Status SaveToDisk::Save() {
   if (mindrecord::SUCCESS != mindrecord::ShardIndexGenerator::finalize(file_names)) {
     RETURN_STATUS_UNEXPECTED("Error: failed to finalize ShardIndexGenerator.");
   }
+  return Status::OK();
+}
+
+template <typename T>
+bool SaveToDisk::map_compare(T const &lhs, T const &rhs) {
+  return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin());
+}
+
+Status SaveToDisk::CheckTensorRowShapes(const std::unordered_map<std::string, int32_t> &column_name_id_map,
+                                        const TensorRow &row,
+                                        std::map<std::string, std::vector<int>> *PreTensorRowShapes_ptr) {
+  std::map<std::string, std::vector<int>> CurrTensorRowShapes;
+  for (auto &col : column_name_id_map) {
+    auto idx = col.second;
+    auto column_name = col.first;
+    auto &tensor = row[idx];
+    auto column_type = tensor->type();
+    auto column_shape = tensor->shape();
+
+    auto shapes = column_shape.AsVector();
+    std::vector<int> mr_shape(shapes.begin(), shapes.end());
+
+    if (mr_shape.empty() || mr_shape.size() == 1) continue;  // ignore scalar and one dimension tensor
+    std::string mr_type;
+    std::string el = column_type.ToString();
+    if (mindrecord::kTypesMap.find(el) == mindrecord::kTypesMap.end()) {
+      std::string err_msg("Error: can not support data type: " + el);
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    } else {
+      mr_type = mindrecord::kTypesMap.at(el);
+    }
+    if (mr_type == "bytes" || mr_type == "string") continue;
+    mr_shape.erase(mr_shape.begin());  // ignore the first dimension
+    CurrTensorRowShapes[column_name] = mr_shape;
+  }
+  if (PreTensorRowShapes_ptr->empty()) {
+    *PreTensorRowShapes_ptr = CurrTensorRowShapes;
+    return Status::OK();
+  }
+  auto res = map_compare(*PreTensorRowShapes_ptr, CurrTensorRowShapes);
+  CHECK_FAIL_RETURN_UNEXPECTED(res, "Error: current tensor shape is different from the previous's.");
   return Status::OK();
 }
 
@@ -314,6 +358,7 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
       if (mr_type == "bytes") {  // ignore shape of bytes in minrecord
         (*schema)[column_name] = {{"type", mr_type}};
       } else {
+        mr_shape[0] = -1;  // make first dimension -1
         (*schema)[column_name] = {{"type", mr_type}, {"shape", mr_shape}};
       }
     }

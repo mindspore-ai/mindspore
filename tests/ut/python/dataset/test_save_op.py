@@ -23,38 +23,38 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
 
-CV_FILE_NAME1 = "../data/mindrecord/testMindDataSet/temp.mindrecord"
-CV_FILE_NAME2 = "../data/mindrecord/testMindDataSet/auto.mindrecord"
+TEMP_FILE = "../data/mindrecord/testMindDataSet/temp.mindrecord"
+AUTO_FILE = "../data/mindrecord/testMindDataSet/auto.mindrecord"
 TFRECORD_FILES = "../data/mindrecord/testTFRecordData/dummy.tfrecord"
 FILES_NUM = 1
 num_readers = 1
 
 
-@pytest.fixture(name="add_and_remove_cv_file")
+@pytest.fixture(name="add_remove_file")
 def fixture_remove():
     """add/remove cv file"""
-    if os.path.exists("{}".format(CV_FILE_NAME1)):
-        os.remove("{}".format(CV_FILE_NAME1))
-    if os.path.exists("{}.db".format(CV_FILE_NAME1)):
-        os.remove("{}.db".format(CV_FILE_NAME1))
+    if os.path.exists("{}".format(TEMP_FILE)):
+        os.remove("{}".format(TEMP_FILE))
+    if os.path.exists("{}.db".format(TEMP_FILE)):
+        os.remove("{}.db".format(TEMP_FILE))
 
-    if os.path.exists("{}".format(CV_FILE_NAME2)):
-        os.remove("{}".format(CV_FILE_NAME2))
-    if os.path.exists("{}.db".format(CV_FILE_NAME2)):
-        os.remove("{}.db".format(CV_FILE_NAME2))
+    if os.path.exists("{}".format(AUTO_FILE)):
+        os.remove("{}".format(AUTO_FILE))
+    if os.path.exists("{}.db".format(AUTO_FILE)):
+        os.remove("{}.db".format(AUTO_FILE))
     yield "yield_cv_data"
-    if os.path.exists("{}".format(CV_FILE_NAME1)):
-        os.remove("{}".format(CV_FILE_NAME1))
-    if os.path.exists("{}.db".format(CV_FILE_NAME1)):
-        os.remove("{}.db".format(CV_FILE_NAME1))
+    if os.path.exists("{}".format(TEMP_FILE)):
+        os.remove("{}".format(TEMP_FILE))
+    if os.path.exists("{}.db".format(TEMP_FILE)):
+        os.remove("{}.db".format(TEMP_FILE))
 
-    if os.path.exists("{}".format(CV_FILE_NAME2)):
-        os.remove("{}".format(CV_FILE_NAME2))
-    if os.path.exists("{}.db".format(CV_FILE_NAME2)):
-        os.remove("{}.db".format(CV_FILE_NAME2))
+    if os.path.exists("{}".format(AUTO_FILE)):
+        os.remove("{}".format(AUTO_FILE))
+    if os.path.exists("{}.db".format(AUTO_FILE)):
+        os.remove("{}.db".format(AUTO_FILE))
 
 
-def test_case_00(add_and_remove_cv_file):  # only bin data
+def test_case_00(add_remove_file):  # only bin data
     data = [{"image1": bytes("image1 bytes abc", encoding='UTF-8'),
              "image2": bytes("image1 bytes def", encoding='UTF-8'),
              "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
@@ -86,13 +86,13 @@ def test_case_00(add_and_remove_cv_file):  # only bin data
         "image3": {"type": "bytes"},
         "image4": {"type": "bytes"},
         "image5": {"type": "bytes"}}
-    writer = FileWriter(CV_FILE_NAME1, FILES_NUM)
+    writer = FileWriter(TEMP_FILE, FILES_NUM)
     writer.add_schema(schema, "schema")
     writer.write_raw_data(data)
     writer.commit()
 
-    d1 = ds.MindDataset(CV_FILE_NAME1, None, num_readers, shuffle=False)
-    d1.save(CV_FILE_NAME2, FILES_NUM)
+    d1 = ds.MindDataset(TEMP_FILE, None, num_readers, shuffle=False)
+    d1.save(AUTO_FILE, FILES_NUM)
     data_value_to_list = []
 
     for item in data:
@@ -104,7 +104,7 @@ def test_case_00(add_and_remove_cv_file):  # only bin data
         new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 5
@@ -121,7 +121,7 @@ def test_case_00(add_and_remove_cv_file):  # only bin data
     assert num_iter == 5
 
 
-def test_case_01(add_and_remove_cv_file):  # only raw data
+def test_case_01(add_remove_file):  # only raw data
     data = [{"file_name": "001.jpg", "label": 43},
             {"file_name": "002.jpg", "label": 91},
             {"file_name": "003.jpg", "label": 61},
@@ -132,13 +132,13 @@ def test_case_01(add_and_remove_cv_file):  # only raw data
               "label": {"type": "int32"}
               }
 
-    writer = FileWriter(CV_FILE_NAME1, FILES_NUM)
+    writer = FileWriter(TEMP_FILE, FILES_NUM)
     writer.add_schema(schema, "schema")
     writer.write_raw_data(data)
     writer.commit()
 
-    d1 = ds.MindDataset(CV_FILE_NAME1, None, num_readers, shuffle=False)
-    d1.save(CV_FILE_NAME2, FILES_NUM)
+    d1 = ds.MindDataset(TEMP_FILE, None, num_readers, shuffle=False)
+    d1.save(AUTO_FILE, FILES_NUM)
 
     data_value_to_list = []
     for item in data:
@@ -147,7 +147,7 @@ def test_case_01(add_and_remove_cv_file):  # only raw data
         new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 6
@@ -165,7 +165,7 @@ def test_case_01(add_and_remove_cv_file):  # only raw data
     assert num_iter == 6
 
 
-def test_case_02(add_and_remove_cv_file):  # muti-bytes
+def test_case_02(add_remove_file):  # muti-bytes
     data = [{"file_name": "001.jpg", "label": 43,
              "float32_array": np.array([1.2, 2.78, 3.1234, 4.9871, 5.12341], dtype=np.float32),
              "float64_array": np.array([48.1234556789, 49.3251241431, 50.13514312414, 51.8971298471,
@@ -258,13 +258,13 @@ def test_case_02(add_and_remove_cv_file):  # muti-bytes
               "label": {"type": "int32"},
               "image4": {"type": "bytes"},
               "image5": {"type": "bytes"}}
-    writer = FileWriter(CV_FILE_NAME1, FILES_NUM)
+    writer = FileWriter(TEMP_FILE, FILES_NUM)
     writer.add_schema(schema, "schema")
     writer.write_raw_data(data)
     writer.commit()
 
-    d1 = ds.MindDataset(CV_FILE_NAME1, None, num_readers, shuffle=False)
-    d1.save(CV_FILE_NAME2, FILES_NUM)
+    d1 = ds.MindDataset(TEMP_FILE, None, num_readers, shuffle=False)
+    d1.save(AUTO_FILE, FILES_NUM)
     data_value_to_list = []
 
     for item in data:
@@ -284,7 +284,7 @@ def test_case_02(add_and_remove_cv_file):  # muti-bytes
         new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 6
@@ -310,14 +310,14 @@ def generator_1d():
         yield (np.array([i]),)
 
 
-def test_case_03(add_and_remove_cv_file):
+def test_case_03(add_remove_file):
 
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
-    d1.save(CV_FILE_NAME2)
+    d1.save(AUTO_FILE)
 
-    d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -343,9 +343,9 @@ def type_tester(t):
 
     data1 = data1.repeat(3)
 
-    data1.save(CV_FILE_NAME2)
+    data1.save(AUTO_FILE)
 
-    d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -360,10 +360,10 @@ def type_tester(t):
             i = 0
             num_repeat += 1
     assert num_repeat == 3
-    if os.path.exists("{}".format(CV_FILE_NAME2)):
-        os.remove("{}".format(CV_FILE_NAME2))
-    if os.path.exists("{}.db".format(CV_FILE_NAME2)):
-        os.remove("{}.db".format(CV_FILE_NAME2))
+    if os.path.exists("{}".format(AUTO_FILE)):
+        os.remove("{}".format(AUTO_FILE))
+    if os.path.exists("{}.db".format(AUTO_FILE)):
+        os.remove("{}.db".format(AUTO_FILE))
 
 
 def test_case_04():
@@ -375,20 +375,20 @@ def test_case_04():
         type_tester(t)
 
 
-def test_case_05(add_and_remove_cv_file):
+def test_case_05(add_remove_file):
 
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
     with pytest.raises(Exception, match="num_files should between 1 and 1000."):
-        d1.save(CV_FILE_NAME2, 0)
+        d1.save(AUTO_FILE, 0)
 
 
-def test_case_06(add_and_remove_cv_file):
+def test_case_06(add_remove_file):
 
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
     with pytest.raises(Exception, match="tfrecord dataset format is not supported."):
-        d1.save(CV_FILE_NAME2, 1, "tfrecord")
+        d1.save(AUTO_FILE, 1, "tfrecord")
 
 
 def cast_name(key):
@@ -403,16 +403,16 @@ def cast_name(key):
 
 
 def test_case_07():
-    if os.path.exists("{}".format(CV_FILE_NAME2)):
-        os.remove("{}".format(CV_FILE_NAME2))
-    if os.path.exists("{}.db".format(CV_FILE_NAME2)):
-        os.remove("{}.db".format(CV_FILE_NAME2))
+    if os.path.exists("{}".format(AUTO_FILE)):
+        os.remove("{}".format(AUTO_FILE))
+    if os.path.exists("{}.db".format(AUTO_FILE)):
+        os.remove("{}.db".format(AUTO_FILE))
     d1 = ds.TFRecordDataset(TFRECORD_FILES, shuffle=False)
     tf_data = []
     for x in d1.create_dict_iterator(num_epochs=1, output_numpy=True):
         tf_data.append(x)
-    d1.save(CV_FILE_NAME2, FILES_NUM)
-    d2 = ds.MindDataset(dataset_file=CV_FILE_NAME2,
+    d1.save(AUTO_FILE, FILES_NUM)
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     mr_data = []
@@ -428,7 +428,79 @@ def test_case_07():
         count += 1
     assert count == 10
 
-    if os.path.exists("{}".format(CV_FILE_NAME2)):
-        os.remove("{}".format(CV_FILE_NAME2))
-    if os.path.exists("{}.db".format(CV_FILE_NAME2)):
-        os.remove("{}.db".format(CV_FILE_NAME2))
+    if os.path.exists("{}".format(AUTO_FILE)):
+        os.remove("{}".format(AUTO_FILE))
+    if os.path.exists("{}.db".format(AUTO_FILE)):
+        os.remove("{}.db".format(AUTO_FILE))
+
+def generator_dynamic_1d():
+    arr = []
+    for i in range(10):
+        if i % 5 == 0:
+            arr = []
+        arr += [i]
+        yield (np.array(arr),)
+
+def generator_dynamic_2d_0():
+    for i in range(10):
+        if i < 5:
+            yield (np.arange(5).reshape([1, 5]),)
+        else:
+            yield (np.arange(10).reshape([2, 5]),)
+
+
+def generator_dynamic_2d_1():
+    for i in range(10):
+        if i < 5:
+            yield (np.arange(5).reshape([5, 1]),)
+        else:
+            yield (np.arange(10).reshape([5, 2]),)
+
+def test_case_08(add_remove_file):
+
+    # apply dataset operations
+    d1 = ds.GeneratorDataset(generator_dynamic_1d, ["data"], shuffle=False)
+
+    d1.save(AUTO_FILE)
+
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+                        num_parallel_workers=num_readers,
+                        shuffle=False)
+
+    i = 0
+    arr = []
+    for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):
+        if i % 5 == 0:
+            arr = []
+        arr += [i]
+        golden = np.array(arr)
+        np.testing.assert_array_equal(item["data"], golden)
+        i = i + 1
+
+def test_case_09(add_remove_file):
+
+    # apply dataset operations
+    d1 = ds.GeneratorDataset(generator_dynamic_2d_0, ["data"], shuffle=False)
+
+    d1.save(AUTO_FILE)
+
+    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+                        num_parallel_workers=num_readers,
+                        shuffle=False)
+
+    i = 0
+    for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):
+        if i < 5:
+            golden = np.arange(5).reshape([1, 5])
+        else:
+            golden = np.arange(10).reshape([2, 5])
+        np.testing.assert_array_equal(item["data"], golden)
+        i = i + 1
+
+def test_case_10(add_remove_file):
+
+    # apply dataset operations
+    d1 = ds.GeneratorDataset(generator_dynamic_2d_1, ["data"], shuffle=False)
+
+    with pytest.raises(Exception, match="Error: current tensor shape is different from the previous's"):
+        d1.save(AUTO_FILE)
