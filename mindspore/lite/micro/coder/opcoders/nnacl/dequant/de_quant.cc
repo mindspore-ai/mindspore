@@ -78,7 +78,7 @@ void Dequant::DeQuantFunction(const Tensor *quant_tensor, const std::vector<DeQu
   }
   *de_quant_code << "&" << de_quant_arg_base_str << std::to_string(quant_arg_dims - 1);
   *de_quant_code << "};\n";
-  auto channels = static_cast<size_t>(quant_tensor->Batch());
+  int32_t channels = quant_tensor->Batch();
   std::string quant_tensor_addr_str = "(int8_t *)(" + quant_tensor_addr_ + ")";
   de_quant_code->CodeFunction("DequantData", quant_tensor_addr_str, de_quant_args_name, de_quant_nums, channels,
                               de_quant_buffer_str_);

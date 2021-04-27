@@ -41,7 +41,7 @@ int SubInt8Coder::Prepare(CoderContext *const context) {
   param_.out_args_.scale_ = output_tensor_->quant_params().front().scale;
   param_.out_args_.zp_ = output_tensor_->quant_params().front().zeroPoint;
 
-  const int left_shift = 20;
+  const uint32_t left_shift = 20;
   const double twice_max_input_scale = 2 * std::max(param_.in0_args_.scale_, param_.in1_args_.scale_);
   const double real_input0_multiplier = param_.in0_args_.scale_ / twice_max_input_scale;
   const double real_input1_multiplier = param_.in1_args_.scale_ / twice_max_input_scale;
@@ -54,10 +54,10 @@ int SubInt8Coder::Prepare(CoderContext *const context) {
   param_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   param_.output_activation_max_ = std::numeric_limits<int8_t>::max();
 
-  int left_shift0 = -param_.input0_shift_ > 0 ? -param_.input0_shift_ : 0;
+  uint32_t left_shift0 = -param_.input0_shift_ > 0 ? -param_.input0_shift_ : 0;
   param_.right_shift0_ = -param_.input0_shift_ > 0 ? 0 : param_.input0_shift_;
 
-  int left_shift1 = -param_.input1_shift_ > 0 ? -param_.input1_shift_ : 0;
+  uint32_t left_shift1 = -param_.input1_shift_ > 0 ? -param_.input1_shift_ : 0;
   param_.right_shift1_ = -param_.input1_shift_ > 0 ? 0 : param_.input1_shift_;
 
   param_.left_shift_out_ = -param_.output_shift_ > 0 ? -param_.output_shift_ : 0;
