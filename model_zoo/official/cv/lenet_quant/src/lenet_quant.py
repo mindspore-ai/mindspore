@@ -15,7 +15,8 @@
 """Manual construct network for LeNet"""
 
 import mindspore.nn as nn
-
+from mindspore.compression.quant import create_quant_config
+from mindspore.compression.common import QuantDtype
 
 class LeNet5(nn.Cell):
     """
@@ -34,14 +35,16 @@ class LeNet5(nn.Cell):
     def __init__(self, num_class=10, channel=1):
         super(LeNet5, self).__init__()
         self.num_class = num_class
+        self.qconfig = create_quant_config(per_channel=(True, False), symmetric=(True, False))
 
-        self.conv1 = nn.Conv2dBnFoldQuant(channel, 6, 5, pad_mode='valid', per_channel=True, quant_delay=900)
-        self.conv2 = nn.Conv2dBnFoldQuant(6, 16, 5, pad_mode='valid', per_channel=True, quant_delay=900)
-        self.fc1 = nn.DenseQuant(16 * 5 * 5, 120, per_channel=True, quant_delay=900)
-        self.fc2 = nn.DenseQuant(120, 84, per_channel=True, quant_delay=900)
-        self.fc3 = nn.DenseQuant(84, self.num_class, per_channel=True, quant_delay=900)
+        self.conv1 = nn.Conv2dQuant(channel, 6, 5, pad_mode='valid', quant_config=self.qconfig,
+                                    quant_dtype=QuantDtype.INT8)
+        self.conv2 = nn.Conv2dQuant(6, 16, 5, pad_mode='valid', quant_config=self.qconfig, quant_dtype=QuantDtype.INT8)
+        self.fc1 = nn.DenseQuant(16 * 5 * 5, 120, quant_config=self.qconfig, quant_dtype=QuantDtype.INT8)
+        self.fc2 = nn.DenseQuant(120, 84, quant_config=self.qconfig, quant_dtype=QuantDtype.INT8)
+        self.fc3 = nn.DenseQuant(84, self.num_class, quant_config=self.qconfig, quant_dtype=QuantDtype.INT8)
 
-        self.relu = nn.ActQuant(nn.ReLU(), per_channel=False, quant_delay=900)
+        self.relu = nn.ActQuant(nn.ReLU(), quant_config=self.qconfig, quant_dtype=QuantDtype.INT8)
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
         self.flatten = nn.Flatten()
 

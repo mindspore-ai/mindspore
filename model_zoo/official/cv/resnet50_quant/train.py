@@ -25,14 +25,12 @@ from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint
-from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from mindspore.common import set_seed
 
-#from models.resnet_quant import resnet50_quant #auto construct quantative network of resnet50
 from models.resnet_quant_manual import resnet50_quant #manually construct quantative network of resnet50
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
@@ -80,7 +78,7 @@ if __name__ == '__main__':
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True, all_reduce_fusion_config=[107, 160])
 
-    # define network
+    # define manual quantization network
     net = resnet50_quant(class_num=config.class_num)
     net.set_train(True)
 
@@ -111,13 +109,6 @@ if __name__ == '__main__':
                              batch_size=config.batch_size,
                              target=args_opt.device_target)
     step_size = dataset.get_dataset_size()
-
-    # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False],
-                                          one_conv_fold=False)
-    net = quantizer.quantize(net)
 
     # get learning rate
     lr = get_lr(lr_init=config.lr_init,

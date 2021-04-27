@@ -30,18 +30,20 @@ from ..quant import quant_utils
 from ..quant.qat import QuantizationAwareTraining, _AddFakeQuantInput, _AddFakeQuantAfterSubCell
 
 
-__all__ = ["ExportToQuantInferNetwork", "ExportManualQuantNetwork"]
+__all__ = ["ExportToQuantInferNetwork"]
 
 class ExportToQuantInferNetwork:
     """
     Convert quantization aware network to infer network.
 
     Args:
-        network (Cell): MindSpore network API `convert_quant_network`.
+        network (Cell): MindSpore quantization aware training network.
         inputs (Tensor): Input tensors of the `quantization aware training network`.
-        mean (int): Input data mean. Default: 127.5.
-        std_dev (int, float): Input data variance. Default: 127.5.
-        is_mindir (bool): Whether is MINDIR format. Default: False.
+        mean (int, float): The mean of input data after preprocessing, used for quantizing the first layer of network.
+          Default: 127.5.
+        std_dev (int, float): The variance of input data after preprocessing, used for quantizing the first layer
+          of network. Default: 127.5.
+        is_mindir (bool): Whether export MINDIR format. Default: False.
 
     Returns:
         Cell, Infer network.
@@ -59,9 +61,11 @@ class ExportToQuantInferNetwork:
         self.mean = mean
         self.std_dev = std_dev
         self.is_mindir = is_mindir
+        self.upcell = None
+        self.upname = None
 
     def get_inputs_table(self, inputs):
-        """Get the support info for quant export."""
+        """Get the input quantization parameters of quantization cell for quant export."""
         phase_name = 'export_quant'
         graph_id, _ = _executor.compile(self.network, *inputs, phase=phase_name, do_convert=False)
         self.quant_info_table = _executor.fetch_info_for_quant_export(graph_id)
@@ -151,7 +155,6 @@ class ExportToQuantInferNetwork:
         dequant_param = np.zeros(scale_length, dtype=np.uint64)
         for index in range(scale_length):
             dequant_param[index] += uint32_deq_scale[index]
-
         scale_deq = Tensor(dequant_param, mstype.uint64)
         # get op
         if isinstance(cell_core, quant.DenseQuant):
@@ -170,69 +173,8 @@ class ExportToQuantInferNetwork:
             block = quant.QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
         return block
 
-    def _convert_quant2deploy(self, network):
-        """Convert network's all quant subcell to deploy subcell."""
-        cells = network.name_cells()
-        change = False
-        for name in cells:
-            subcell = cells[name]
-            if subcell == network:
-                continue
-            cell_core = None
-            fake_quant_act = None
-            activation = None
-            if isinstance(subcell, nn.Conv2dBnAct):
-                cell_core = subcell.conv
-                activation = subcell.activation
-                fake_quant_act = activation.fake_quant_act if hasattr(activation, "fake_quant_act") else None
-            elif isinstance(subcell, nn.DenseBnAct):
-                cell_core = subcell.dense
-                activation = subcell.activation
-                fake_quant_act = activation.fake_quant_act if hasattr(activation, "fake_quant_act") else None
-            if cell_core is not None:
-                new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
-                if new_subcell:
-                    prefix = subcell.param_prefix
-                    new_subcell.update_parameters_name(prefix + '.')
-                    network.insert_child_to_cell(name, new_subcell)
-                    change = True
-            elif isinstance(subcell, _AddFakeQuantAfterSubCell):
-                op = subcell.subcell
-                if op.name in QuantizationAwareTraining.__quant_op_name__ and isinstance(op, ops.Primitive):
-                    if self.is_mindir:
-                        op.add_prim_attr('output_maxq', Tensor(subcell.fake_quant_act.maxq.data.asnumpy()))
-                        op.add_prim_attr('output_minq', Tensor(subcell.fake_quant_act.minq.data.asnumpy()))
-                    network.__delattr__(name)
-                    network.__setattr__(name, op)
-                    change = True
-            else:
-                self._convert_quant2deploy(subcell)
-        if isinstance(network, nn.SequentialCell) and change:
-            network.cell_list = list(network.cells())
-        return network
-
-class ExportManualQuantNetwork(ExportToQuantInferNetwork):
-    """
-        Convert manual quantization aware network to infer network.
-
-        Args:
-            network (Cell): MindSpore network API `convert_quant_network`.
-            inputs (Tensor): Input tensors of the `quantization aware training network`.
-            mean (int): Input data mean. Default: 127.5.
-            std_dev (int, float): Input data variance. Default: 127.5.
-            is_mindir (bool): Whether is MINDIR format. Default: False.
-
-        Returns:
-            Cell, Infer network.
-        """
-    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
-
-    def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
-        super(ExportManualQuantNetwork, self).__init__(network, mean, std_dev, *inputs, is_mindir=is_mindir)
-        self.upcell = None
-        self.upname = None
-
     def _add_output_min_max_for_op(self, origin_op, fake_quant_cell):
+        """add output quant info for quant op for export mindir."""
         if self.is_mindir:
             np_type = mstype.dtype_to_nptype(self.data_type)
             _, _, maxq, minq = quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_cell, np_type)
@@ -251,8 +193,8 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
                 network, change = self._convert_subcell(network, change, name, subcell)
             elif isinstance(subcell, nn.DenseBnAct):
                 network, change = self._convert_subcell(network, change, name, subcell, conv=False)
-            elif isinstance(subcell, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant,
-                                      quant.Conv2dQuant, quant.DenseQuant)):
+            elif isinstance(subcell, (quant.Conv2dBnFoldQuant, quant.Conv2dBnFoldQuantOneConv,
+                                      quant.Conv2dBnWithoutFoldQuant, quant.Conv2dQuant, quant.DenseQuant)):
                 network, change = self._convert_subcell(network, change, name, subcell, core=False)
             elif isinstance(subcell, nn.ActQuant) and hasattr(subcell, "get_origin"):
                 if self.upcell:
@@ -292,16 +234,16 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
     def _convert_subcell(self, network, change, name, subcell, core=True, conv=True):
         """Convert subcell to ant subcell."""
         new_subcell = None
+        fake_quant_act = None
         if core:
             cell_core = subcell.conv if conv else subcell.dense
             activation = subcell.activation
             if hasattr(activation, 'fake_quant_act'):
                 fake_quant_act = activation.fake_quant_act
-                new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
         else:
             cell_core = subcell
             activation = None
-            fake_quant_act = None
+        if cell_core is not None and hasattr(cell_core, "fake_quant_weight"):
             new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
         if new_subcell:
             prefix = subcell.param_prefix
