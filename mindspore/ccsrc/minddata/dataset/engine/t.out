@@ -380,7 +380,7 @@ Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string 
       name->clear();
       (void)name->append(op_name[op_id]);
     }
-    (void)extra_message->append(op_name[op_id] + " utilization per thread: " + std::to_string(op_util) + "% (" +
+    (void)extra_message->append(op_name[op_id] + " utiliization per thread: " + std::to_string(op_util) + "% (" +
                                 std::to_string(op_parallel_workers[op_id]) + " parallel_workers); ");
   }
   return Status::OK();

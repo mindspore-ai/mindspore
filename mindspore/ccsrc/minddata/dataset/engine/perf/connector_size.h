@@ -64,7 +64,7 @@ class ConnectorSize : public Sampling {
   // Change file mode after save throughput data
   Status ChangeFileMode() { return Status::OK(); }
 
-  Status Analyze() override;
+  Status Analyze() const override;
 
  private:
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer

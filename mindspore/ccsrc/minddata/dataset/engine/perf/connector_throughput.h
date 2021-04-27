@@ -74,7 +74,7 @@ class ConnectorThroughput : public Sampling {
 
   Status ChangeFileMode() override;
 
-  Status Analyze() override;
+  Status Analyze() const override;
 
  private:
   ExecutionTree *tree_ = nullptr;  // ExecutionTree pointer

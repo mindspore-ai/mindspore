@@ -110,6 +110,6 @@ Status ConnectorSize::Init(const std::string &dir_path, const std::string &devic
   return Status::OK();
 }
 
-Status ConnectorSize::Analyze() { return Status::OK(); }
+Status ConnectorSize::Analyze() const { return Status::OK(); }
 }  // namespace dataset
 }  // namespace mindspore

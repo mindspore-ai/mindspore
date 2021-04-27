@@ -194,7 +194,7 @@ class CpuSampling : public Sampling {
   Status ChangeFileMode() override;
 
   // Analyze sampling data and print message to log
-  Status Analyze() override;
+  Status Analyze() const override;
 
  private:
   Status CollectTimeStamp();
