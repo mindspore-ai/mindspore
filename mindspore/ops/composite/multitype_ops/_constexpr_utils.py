@@ -78,7 +78,7 @@ def make_empty_slice():
 def _deep_list(array_like, ndim=-1):
     """convert nested tuple/list mixtures to pure nested list"""
     if ndim != -1:
-        check_range(array_like, ndim)
+        array_like = check_range(array_like, ndim)
     if isinstance(array_like, (list, tuple)):
         return list(map(lambda x: _deep_list(x, ndim), array_like))
     return array_like
@@ -151,7 +151,7 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, ndim=-1):
         raise TypeError("input data must be `int`, `float`, `bool`, `list` or `tuple`")
 
     if ndim != -1:
-        check_range(a, ndim)
+        a = check_range(a, ndim)
 
     if isinstance(a, (list, tuple)):
         # Convert all tuple/nested tuples to lists

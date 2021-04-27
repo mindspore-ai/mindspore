@@ -2516,6 +2516,8 @@ def nanmax(a, axis=None, dtype=None, keepdims=False):
         [3. 2.]
     """
     a = _to_tensor(a)
+    if not isinstance(keepdims, int):
+        _raise_type_error("integer argument expected, got", keepdims)
     nan_mask = _isnan(a)
     a = F.select(nan_mask, full(F.shape(a), -sys.maxsize - 1, F.dtype(a)), a)
     reduce_fn = _reduce_max_keepdims if keepdims else _reduce_max_default
@@ -2561,6 +2563,8 @@ def nanmin(a, axis=None, dtype=None, keepdims=False):
         [1. 2.]
     """
     a = _to_tensor(a)
+    if not isinstance(keepdims, int):
+        _raise_type_error("integer argument expected, got", keepdims)
     nan_mask = _isnan(a)
     a = F.select(nan_mask, full(F.shape(a), sys.maxsize, F.dtype(a)), a)
     reduce_fn = _reduce_min_keepdims if keepdims else _reduce_min_default
@@ -3859,7 +3863,7 @@ def corrcoef(x, y=None, rowvar=True, dtype=None):
             multiple variables and observations. Each row of `x` represents a variable,
             and each column a single observation of all those variables. Also see rowvar below.
         y (Union[int, float, bool, tuple, list, Tensor], optional): An additional set
-            of variables and observations. `y` has the same shape as `x`.
+            of variables and observations.
         rowvar (bool, optional): If rowvar is `True` (default), then each row represents
             a variable, with observations in the columns. Otherwise, the relationship
             is transposed: each column represents a variable, while the rows contain observations.
@@ -4252,6 +4256,7 @@ def argmax(a, axis=None):
         >>> print(np.argmax(b))
         1
     """
+    a = _to_tensor(a)
     return a.argmax(axis)
 
 
@@ -4292,6 +4297,7 @@ def argmin(a, axis=None):
         >>> print(np.argmin(b))
         0
     """
+    a = _to_tensor(a)
     return a.argmin(axis)
 
 
@@ -5716,7 +5722,7 @@ def invert(x, dtype=None):
     For signed integer inputs, the two’s complement is returned. In a two’s-complement system
     negative numbers are represented by the two’s complement of the absolute value. This is
     the most common method of representing signed integers on computers
-    `[1] <https://en.wikipedia.org/wiki/Two’s_complement>`. A N-bit two’s-complement system
+    `[1] <https://en.wikipedia.org/wiki/Two’s_complement>`_. A N-bit two’s-complement system
     can represent every integer in the range ``-2^{N-1}`` to ``+2^{N-1}-1``.
 
     Note:
