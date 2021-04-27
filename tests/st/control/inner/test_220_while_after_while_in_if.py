@@ -19,6 +19,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore import context
+from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
 
@@ -29,6 +30,7 @@ class ForwardNet(nn.Cell):
         self.max_cycles = max_cycles
         self.zero = Tensor(np.array(0), mstype.int32)
         self.i = Tensor(np.array(0), mstype.int32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
 
     def construct(self, x, y):
         out = self.zero
@@ -37,9 +39,11 @@ class ForwardNet(nn.Cell):
             while i < self.max_cycles:
                 out = x * y + out
                 i = i + 1
+                self.weight = i
         while out > 20:
+            self.weight = out
             out = out - 20
-        return out
+        return out, self.weight
 
 
 class BackwardNet(nn.Cell):
