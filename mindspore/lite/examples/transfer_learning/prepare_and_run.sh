@@ -95,6 +95,7 @@ mv mindspore-* msl/
 cp -r dataset ${PACKAGE}
 
 echo "==========Compiling============"
+make clean
 make TARGET=${TARGET}
  
 # Copy the executable to the package
@@ -112,10 +113,6 @@ if [ "${TARGET}" == "arm64" ]; then
   echo "========Training on Device====="
   adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh"
 
-  echo
-  echo "===Evaluating trained Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh"
-  echo
 else
   cd ${PACKAGE} || exit 1
   echo "==Evaluating Untrained Model==="
@@ -124,8 +121,5 @@ else
   echo "======Training Locally========="
   ./train.sh
 
-  echo "===Evaluating trained Model====="
-  ./eval.sh
-  cd ..
 fi
 
