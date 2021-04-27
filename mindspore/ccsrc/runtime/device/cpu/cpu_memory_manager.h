@@ -24,6 +24,8 @@
 #include "runtime/device/device_address.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/cpu/cpu_simple_mem_plan.h"
+#include "runtime/hardware/cpu/cpu_memory_pool.h"
+
 namespace mindspore {
 namespace device {
 namespace cpu {
@@ -33,7 +35,7 @@ class CPUMemoryManager : public MemoryManager {
   virtual ~CPUMemoryManager();
 
   void MallocDeviceMemory() override {}
-  void FreeDeviceMemory() override {}
+  void FreeDeviceMemory() override { CPUMemoryPool::GetInstance().ReleaseDeviceRes(); }
   void ResetDynamicMemory() override;
 
   void AssignMemory(const session::KernelGraph *graph);
@@ -43,6 +45,12 @@ class CPUMemoryManager : public MemoryManager {
   void MemFree(void *ptr);
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
+
+  void *MallocMemFromMemPool(size_t size) override { return CPUMemoryPool::GetInstance().AllocTensorMem(size); }
+  void FreeMemFromMemPool(void *device_ptr) override { CPUMemoryPool::GetInstance().FreeTensorMem(device_ptr); }
+  std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override {
+    return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(total_size, size_list);
+  }
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) override;

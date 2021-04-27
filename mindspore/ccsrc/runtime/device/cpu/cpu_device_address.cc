@@ -91,7 +91,14 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /*shape*/, size_t si
     MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
     return true;
   }
-  if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat16) {
+
+  if (type == type_id_) {
+    auto ret_code = memcpy_s(ptr_, size_, host_ptr, size);
+    if (ret_code != EOK) {
+      MS_LOG(ERROR) << "Failed to copy tensor!";
+      return false;
+    }
+  } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat16) {
     HalfToFloat(ptr_, host_ptr, size / 2);
   } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
     DoubleToFloat(ptr_, host_ptr, size / sizeof(double));
