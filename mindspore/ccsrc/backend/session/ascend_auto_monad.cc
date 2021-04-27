@@ -1454,13 +1454,13 @@ class ExecuteOrderGenerator {
     graph_->set_execution_order(std::move(execution_order));
   }
 
-  std::set<CNodePtr> GetAllNodes(std::set<CNodePtr> *search_list) {
+  std::set<CNodePtr> GetAllNodes(std::map<CNodePtr, size_t> *search_list) {
     const auto &all_graphs = context_.visited_graphs();
     std::set<CNodePtr> all_nodes;
     for (auto &graph : all_graphs) {
       auto out = graph->get_return();
       MS_EXCEPTION_IF_NULL(out);
-      (void)search_list->insert(out->cast<CNodePtr>());
+      (void)search_list->emplace(out->cast<CNodePtr>(), 0);
       auto nodes = TopoSort(out);
       for (auto &node : nodes) {
         MS_EXCEPTION_IF_NULL(node);
@@ -1497,7 +1497,10 @@ class ExecuteOrderGenerator {
   void EraseParameter() {
     // Copy out execution order list.
     auto exec_order = graph_->execution_order();
-    std::set<CNodePtr> search_list(exec_order.begin(), exec_order.end());
+    std::map<CNodePtr, size_t> search_list;
+    for (size_t i = 0; i < exec_order.size(); i++) {
+      search_list.emplace(exec_order[i], i);
+    }
 
     // Remove assigns that target and source are same.
     RemoveSameInputsAssigns(&exec_order);
@@ -1518,13 +1521,14 @@ class ExecuteOrderGenerator {
         auto &target = node->inputs().at(kAssignTargetIndex);
         MS_EXCEPTION_IF_NULL(target);
         auto para = param_write_times.find(target);
-        if (para != param_write_times.end() && para->second == 1) {
+        if (para != param_write_times.end() && para->second.first == 1) {
           // Check source of the Assign.
           auto &source = node->inputs().at(kAssignSourceIndex);
           MS_EXCEPTION_IF_NULL(source);
           if (source->isa<Parameter>()) {
             auto it = param_write_times.find(source);
-            if (it != param_write_times.end() && it->second > 0) {
+            auto index = search_list[node];
+            if (it != param_write_times.end() && it->second.first > 0 && it->second.second > index) {
               // Skip if Assign source is a parameter and be written in other place.
               ++iter;
               continue;
@@ -1566,7 +1570,7 @@ class ExecuteOrderGenerator {
   }
 
   // Count parameter write times by check all assign nodes.
-  std::map<AnfNodePtr, int> CountParameterAssigns(const std::set<CNodePtr> &search_list) {
+  std::map<AnfNodePtr, std::pair<int, size_t>> CountParameterAssigns(const std::map<CNodePtr, size_t> &search_list) {
     auto ref_map = graph_->GetRefMap();
     std::multimap<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> ref_multimap;
     std::set<AnfNodePtr> root_inputs(graph_->inputs().begin(), graph_->inputs().end());
@@ -1587,17 +1591,18 @@ class ExecuteOrderGenerator {
     };
 
     // Find all graph input parameters.
-    std::map<AnfNodePtr, int> param_write_times;
+    std::map<AnfNodePtr, std::pair<int, size_t>> param_write_times;
     const auto &all_graphs = context_.visited_graphs();
     for (const auto &graph : all_graphs) {
       for (auto &input : graph->inputs()) {
         if (input->isa<Parameter>()) {
-          param_write_times.emplace(input, 0);
+          param_write_times.emplace(input, std::make_pair(0, 0));
         }
       }
     }
     // Search all nodes for parameter write assigns.
-    for (auto &node : search_list) {
+    for (auto &item : search_list) {
+      auto &node = item.first;
       std::set<AnfNodePtr> refed_parameters;
       for (auto [iter, end] = ref_multimap.equal_range(node); iter != end; ++iter) {
         (void)refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
@@ -1612,7 +1617,8 @@ class ExecuteOrderGenerator {
           auto iter = param_write_times.find(visit_node);
           if (iter != param_write_times.end()) {
             // Found a parameter writer, count it.
-            ++(iter->second);
+            ++(iter->second.first);
+            iter->second.second = item.second;
           }
         }
       }
