@@ -65,25 +65,59 @@ After installing MindSpore via the official website, you can start training and 
   sh scripts/run_eval.sh ckpt_path
   ```
 
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the code directory to "/path/textcnn" on the website UI interface.
+# (3) Set the startup file to "train.py" on the website UI interface.
+# (4) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (5) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the code directory to "/path/textcnn" on the website UI interface.
+# (4) Set the startup file to "eval.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
 
 ```bash
 ├── model_zoo
-    ├── README.md                          // descriptions about all the models
+    ├── README.md                            // descriptions about all the models
     ├── textcnn
-        ├── README.md                    // descriptions about textcnn
+        ├── README.md                        // descriptions about textcnn
         ├──scripts
-        │   ├── run_train.sh             // shell script for distributed on Ascend
-        │   ├── run_eval.sh              // shell script for evaluation on Ascend
+        │   ├── run_train.sh                 // shell script for distributed on Ascend
+        │   ├── run_eval.sh                  // shell script for evaluation on Ascend
         ├── src
-        │   ├── dataset.py             // Processing dataset
-        │   ├── textcnn.py          // textcnn architecture
-        │   ├── config.py            // parameter configuration
-        ├── train.py               // training script
-        ├── eval.py               //  evaluation script
-        ├── export.py               //  export checkpoint to other format file
+        │   ├── dataset.py                     // Processing dataset
+        │   ├── textcnn.py                     // textcnn architecture
+        ├── utils
+        │   ├──device_adapter.py      // device adapter
+        │   ├──local_adapter.py         // local adapter
+        │   ├──moxing_adapter.py   // moxing adapter
+        │   ├── config.py                       // parameter analysis
+        ├── mr_config.yaml                 // parameter configuration
+        ├── sst2_config.yaml              // parameter configuration
+        ├── subj_config.yaml             // parameter configuration
+        ├── train.py                                // training script
+        ├── eval.py                                 //  evaluation script
+        ├── export.py                            //  export checkpoint to other format file
 ```
 
 ## [Script Parameters](#contents)
