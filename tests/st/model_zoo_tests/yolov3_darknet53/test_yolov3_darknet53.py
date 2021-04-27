@@ -38,6 +38,7 @@ from src.lr_scheduler import warmup_cosine_annealing_lr
 from src.yolo_dataset import create_yolo_dataset
 from src.initializer import default_recurisive_init
 from src.config import ConfigYOLOV3DarkNet53
+from tests.st.model_zoo_tests import utils
 
 np.random.seed(1)
 def get_lr(learning_rate, start_step, global_step, decay_step, decay_rate, steps=False):
@@ -209,3 +210,41 @@ def test_yolov3_darknet53():
     print('time_used_per_epoch:{}'.format(time_used_per_epoch))
     assert time_used_per_epoch < export_time_used
     print('==========test case passed===========')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_single
+def test_yolov3_darknet_8p():
+    cur_path = os.path.dirname(os.path.abspath(__file__))
+    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_name = "yolov3_darknet53"
+    dataset_path = os.path.join(utils.data_root, "coco/coco2014/")
+    ckpt_path = os.path.join(utils.ckpt_root, "yolov3_darknet/yolov3_darknet53_pretrain.ckpt")
+    utils.copy_files(model_path, cur_path, model_name)
+    cur_model_path = os.path.join(cur_path, model_name)
+    train_file = os.path.join(cur_model_path, "train.py")
+    old_list = ["--lr_scheduler=cosine_annealing"]
+    new_list = ["--lr_scheduler=cosine_annealing --training_shape=416"]
+    utils.exec_sed_command(old_list, new_list,
+                           os.path.join(cur_model_path, "scripts/run_distribute_train.sh"))
+    old_list = ["default=100", "max_epoch=args.max_epoch"]
+    new_list = ["default=10", "max_epoch=1"]
+    utils.exec_sed_command(old_list, new_list, train_file)
+    old_list = ["sampler=distributed_sampler"]
+    new_list = ["sampler=distributed_sampler, num_samples=100*batch_size"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/yolo_dataset.py"))
+    exec_network_shell = "cd yolov3_darknet53/scripts; bash run_distribute_train.sh {0} {1} {2}"\
+        .format(dataset_path, ckpt_path, utils.rank_table_path)
+    os.system(exec_network_shell)
+    cmd = "ps -ef | grep python | grep train.py | grep -v grep"
+    ret = utils.process_check(120, cmd)
+    assert ret
+    train_log_file = os.path.join(cur_path, "yolov3_darknet53/scripts/train_parallel0/log.txt")
+    pattern1 = r", *([\d\.]+) imgs/sec"
+    pattern2 = r"loss:*([\d\.]+),"
+    fps_list = utils.parse_log_file(pattern1, train_log_file)[1:]
+    assert sum(fps_list) / len(fps_list) > 480
+    loss_list = utils.parse_log_file(pattern2, train_log_file)
+    assert loss_list[-1] < 280
