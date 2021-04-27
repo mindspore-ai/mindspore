@@ -21,3 +21,5 @@ psutil >= 5.6.1
 subword-nmt>=0.3.7          # for st test
 sacrebleu>=1.4.14           # for st test
 sacremoses>=0.0.35          # for st test
+absl-py>=0.10.0             # for st test
+six>=1.15.0                 # for st test
