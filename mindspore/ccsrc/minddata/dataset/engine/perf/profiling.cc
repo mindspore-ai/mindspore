@@ -176,7 +176,7 @@ Status ProfilingManager::SaveProfilingData() {
   MS_LOG(INFO) << "Save profiling data end.";
   return Status::OK();
 }
-Status ProfilingManager::Analyze() {
+Status ProfilingManager::Analyze() const {
   if (!IsProfilingEnable()) {
     return Status::OK();
   }

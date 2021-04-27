@@ -151,6 +151,6 @@ Status ConnectorThroughput::ChangeFileMode() {
   return Status::OK();
 }
 
-Status ConnectorThroughput::Analyze() { return Status::OK(); }
+Status ConnectorThroughput::Analyze() const { return Status::OK(); }
 }  // namespace dataset
 }  // namespace mindspore

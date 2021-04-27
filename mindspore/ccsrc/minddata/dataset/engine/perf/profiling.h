@@ -65,7 +65,7 @@ class Sampling : public Profiling {
   // Sampling action function. This function will be invoked by performance monitor thread.
   virtual Status Sample() = 0;
   // virtual Status TestPrint() = 0;
-  virtual Status Analyze() = 0;
+  virtual Status Analyze() const = 0;
   virtual ~Sampling() = default;
 };
 
@@ -120,7 +120,7 @@ class ProfilingManager {
   Status ChangeFileMode();
 
   // Analyze profile data and print warning messages
-  Status Analyze();
+  Status Analyze() const;
 
  private:
   std::unique_ptr<Monitor> perf_monitor_;
