@@ -23,11 +23,13 @@ from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedEx
 
 def create_expander(expand_info):
     """Create an expander according to op name"""
+    def call_func(func, arg):
+        return func(arg)
     op_name = str(expand_info['name'])
     if not hasattr(expanders, op_name):
         raise GraphKernelUnsupportedException("Generator do not support op: {}".format(op_name))
     expander = getattr(expanders, op_name)
-    return expander(expand_info)
+    return call_func(expander, expand_info)
 
 
 def extract_expand_info(kernel_info):
