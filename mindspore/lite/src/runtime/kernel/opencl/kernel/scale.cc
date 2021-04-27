@@ -42,6 +42,25 @@ int ScaleOpenCLKernel::CheckSpecs() {
       param->activation_type_ != ActType_Relu6) {
     return RET_ERROR;
   }
+  auto *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
+  auto in_tensor = in_tensors_.at(0);
+  auto in_shape = in_tensor->shape();
+  auto scale_tensor = in_tensors_.at(1);
+  auto scale_shape = scale_tensor->shape();
+  auto axis = scale_param->axis_;
+  if (axis < 0) {
+    axis += in_shape.size();
+  }
+  bool isBroadCast = scale_shape.size() != in_shape.size();
+  if (isBroadCast) {
+    bool isScalar = scale_tensor->ElementsNum() == 1;
+    bool isScaleC = (in_shape.size() == 4 && axis == 3) || (in_shape.size() == 2 && axis == 1);
+    bool isScaleH = in_shape.size() == 4 && axis == 1;
+    if (isScalar || !(isScaleC || isScaleH)) {
+      MS_LOG(ERROR) << "unsupported scale axis " << axis << ", in shape " << in_shape << ", scale shape" << scale_shape;
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
