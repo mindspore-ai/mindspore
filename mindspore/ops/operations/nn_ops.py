@@ -5016,7 +5016,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
         \begin{array}{ll} \\
             m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
             v_{t+1} = \max(\beta_2 * v_{t}, \left| g \right|) \\
-            var = var - \frac{l}{1 - \beta_1^{t+1} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
+            var = var - \frac{l}{1 - \beta_1^{t+1}} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
         \end{array}
 
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
