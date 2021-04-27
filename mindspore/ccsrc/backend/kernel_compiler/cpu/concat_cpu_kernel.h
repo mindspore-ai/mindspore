@@ -34,7 +34,7 @@ class ConcatCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckParam(const CNodePtr &kernel_node) const;
   int axis_ = 0;
   CNodeWeakPtr node_wpt_;
 };
