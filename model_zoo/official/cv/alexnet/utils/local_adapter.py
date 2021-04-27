@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-# an simple tutorial as follows, more parameters can be setting
-script_self=$(readlink -f "$0")
-self_path=$(dirname "${script_self}")
-# DATA_PATH=$1
-# CKPT_PATH=$2
-# --data_path=$DATA_PATH --device_target="Ascend" --ckpt_path=$CKPT_PATH
-python -s ${self_path}/../eval.py > log_eval.txt 2>&1 &
+"""Local adapter"""
+
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

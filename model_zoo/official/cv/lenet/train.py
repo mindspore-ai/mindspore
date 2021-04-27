@@ -19,8 +19,12 @@ python train.py --data_path /YourDataPath
 """
 
 import os
-import argparse
-from src.config import mnist_cfg as cfg
+# import sys
+# sys.path.append(os.path.join(os.getcwd(), 'utils'))
+from utils.config import config
+from utils.moxing_adapter import moxing_wrapper
+from utils.device_adapter import get_rank_id
+
 from src.dataset import create_dataset
 from src.lenet import LeNet5
 import mindspore.nn as nn
@@ -30,36 +34,40 @@ from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.common import set_seed
 
-
-parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
-parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
-                    help='device where the code will be implemented (default: Ascend)')
-parser.add_argument('--data_path', type=str, default="./Data",
-                    help='path where the dataset is saved')
-parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
-                    path where the trained ckpt file')
-args = parser.parse_args()
 set_seed(1)
 
+if os.path.exists(config.data_path_local):
+    config.data_path = config.data_path_local
+    config.checkpoint_path = os.path.join(config.checkpoint_path, str(get_rank_id()))
+else:
+    config.checkpoint_path = os.path.join(config.output_path, config.checkpoint_path, str(get_rank_id()))
 
-if __name__ == "__main__":
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-    ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size)
+def modelarts_pre_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_lenet():
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    ds_train = create_dataset(os.path.join(config.data_path, "train"), config.batch_size)
     if ds_train.get_dataset_size() == 0:
         raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
 
-    network = LeNet5(cfg.num_classes)
+    network = LeNet5(config.num_classes)
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
+    net_opt = nn.Momentum(network.trainable_params(), config.lr, config.momentum)
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", directory=args.ckpt_path, config=config_ck)
+    config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
+                                 keep_checkpoint_max=config.keep_checkpoint_max)
+    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", directory=config.checkpoint_path, config=config_ck)
 
-    if args.device_target != "Ascend":
+    if config.device_target != "Ascend":
         model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
     else:
         model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
 
     print("============== Starting Training ==============")
-    model.train(cfg['epoch_size'], ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()])
+    model.train(config.epoch_size, ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()])
+
+if __name__ == "__main__":
+    train_lenet()

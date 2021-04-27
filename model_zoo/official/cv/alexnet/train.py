@@ -18,10 +18,14 @@ train alexnet and get network model files(.ckpt) :
 python train.py --data_path /YourDataPath
 """
 
-import ast
-import argparse
 import os
-from src.config import alexnet_cifar10_cfg, alexnet_imagenet_cfg
+# import sys
+# sys.path.append(os.path.join(os.getcwd(), 'utils'))
+from utils.config import config
+from utils.moxing_adapter import moxing_wrapper
+from utils.device_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+# from src.config import alexnet_cifar10_config, alexnet_imagenet_config
 from src.dataset import create_dataset_cifar10, create_dataset_imagenet
 from src.generator_lr import get_lr_cifar10, get_lr_imagenet
 from src.alexnet import AlexNet
@@ -40,88 +44,84 @@ from mindspore.common import set_seed
 set_seed(1)
 de.config.set_seed(1)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MindSpore AlexNet Example')
-    parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['imagenet', 'cifar10'],
-                        help='dataset name.')
-    parser.add_argument('--sink_size', type=int, default=-1, help='control the amount of data in each sink')
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
-                        help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--data_path', type=str, default="./", help='path where the dataset is saved')
-    parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
-                            path where the trained ckpt file')
-    parser.add_argument('--dataset_sink_mode', type=ast.literal_eval,
-                        default=True, help='dataset_sink_mode is False or True')
-    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend. (Default: 0)')
-    args = parser.parse_args()
+if os.path.exists(config.data_path_local):
+    config.data_path = config.data_path_local
+    config.checkpoint_path = os.path.join(config.checkpoint_path, str(get_rank_id()))
+else:
+    config.checkpoint_path = os.path.join(config.output_path, config.checkpoint_path, str(get_rank_id()))
 
-    device_num = int(os.environ.get("DEVICE_NUM", 1))
-    if args.dataset_name == "cifar10":
-        cfg = alexnet_cifar10_cfg
+def modelarts_pre_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_alexnet():
+    print(config)
+    print('device id:', get_device_id())
+    print('device num:', get_device_num())
+    print('rank id:', get_rank_id())
+    print('job id:', get_job_id())
+
+    device_target = config.device_target
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    context.set_context(save_graphs=False)
+
+    device_num = get_device_num()
+    if config.dataset_name == "cifar10":
         if device_num > 1:
-            cfg.learning_rate = cfg.learning_rate * device_num
-            cfg.epoch_size = cfg.epoch_size * 2
-    elif args.dataset_name == "imagenet":
-        cfg = alexnet_imagenet_cfg
+            config.learning_rate = config.learning_rate * device_num
+            config.epoch_size = config.epoch_size * 2
+    elif config.dataset_name == "imagenet":
+        pass
     else:
         raise ValueError("Unsupported dataset.")
 
-    device_target = args.device_target
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-    context.set_context(save_graphs=False)
-
-    if device_target == "Ascend":
-        context.set_context(device_id=args.device_id)
-
-        if device_num > 1:
-            context.reset_auto_parallel_context()
-            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
+    if device_num > 1:
+        context.reset_auto_parallel_context()
+        context.set_auto_parallel_context(device_num=device_num, \
+            parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True)
+        if device_target == "Ascend":
+            context.set_context(device_id=get_device_id())
             init()
-    elif device_target == "GPU":
-        if device_num > 1:
+        elif device_target == "GPU":
             init()
-            context.reset_auto_parallel_context()
-            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
     else:
-        raise ValueError("Unsupported platform.")
+        context.set_context(device_id=get_device_id())
 
-    if args.dataset_name == "cifar10":
-        ds_train = create_dataset_cifar10(args.data_path, cfg.batch_size, target=args.device_target)
-    elif args.dataset_name == "imagenet":
-        ds_train = create_dataset_imagenet(args.data_path, cfg.batch_size)
+    if config.dataset_name == "cifar10":
+        ds_train = create_dataset_cifar10(config.data_path, config.batch_size, target=config.device_target)
+    elif config.dataset_name == "imagenet":
+        ds_train = create_dataset_imagenet(config.data_path, config.batch_size)
     else:
         raise ValueError("Unsupported dataset.")
 
     if ds_train.get_dataset_size() == 0:
         raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
 
-    network = AlexNet(cfg.num_classes, phase='train')
+    network = AlexNet(config.num_classes, phase='train')
 
     loss_scale_manager = None
     metrics = None
-    step_per_epoch = ds_train.get_dataset_size() if args.sink_size == -1 else args.sink_size
-    if args.dataset_name == 'cifar10':
+    step_per_epoch = ds_train.get_dataset_size() if config.sink_size == -1 else config.sink_size
+    if config.dataset_name == 'cifar10':
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        lr = Tensor(get_lr_cifar10(0, cfg.learning_rate, cfg.epoch_size, step_per_epoch))
-        opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
+        lr = Tensor(get_lr_cifar10(0, config.learning_rate, config.epoch_size, step_per_epoch))
+        opt = nn.Momentum(network.trainable_params(), lr, config.momentum)
         metrics = {"Accuracy": Accuracy()}
 
-    elif args.dataset_name == 'imagenet':
+    elif config.dataset_name == 'imagenet':
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        lr = Tensor(get_lr_imagenet(cfg.learning_rate, cfg.epoch_size, step_per_epoch))
+        lr = Tensor(get_lr_imagenet(config.learning_rate, config.epoch_size, step_per_epoch))
         opt = nn.Momentum(params=get_param_groups(network),
                           learning_rate=lr,
-                          momentum=cfg.momentum,
-                          weight_decay=cfg.weight_decay,
-                          loss_scale=cfg.loss_scale)
+                          momentum=config.momentum,
+                          weight_decay=config.weight_decay,
+                          loss_scale=config.loss_scale)
 
         from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
-        if cfg.is_dynamic_loss_scale == 1:
+        if config.is_dynamic_loss_scale == 1:
             loss_scale_manager = DynamicLossScaleManager(init_loss_scale=65536, scale_factor=2, scale_window=2000)
         else:
-            loss_scale_manager = FixedLossScaleManager(cfg.loss_scale, drop_overflow_update=False)
+            loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
 
     else:
         raise ValueError("Unsupported dataset.")
@@ -135,15 +135,18 @@ if __name__ == "__main__":
         raise ValueError("Unsupported platform.")
 
     if device_num > 1:
-        ckpt_save_dir = os.path.join(args.ckpt_path + "_" + str(get_rank()))
+        ckpt_save_dir = os.path.join(config.checkpoint_path + "_" + str(get_rank()))
     else:
-        ckpt_save_dir = args.ckpt_path
+        ckpt_save_dir = config.checkpoint_path
 
     time_cb = TimeMonitor(data_size=step_per_epoch)
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
+    config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
+                                 keep_checkpoint_max=config.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_alexnet", directory=ckpt_save_dir, config=config_ck)
 
     print("============== Starting Training ==============")
-    model.train(cfg.epoch_size, ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
-                dataset_sink_mode=args.dataset_sink_mode, sink_size=args.sink_size)
+    model.train(config.epoch_size, ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
+                dataset_sink_mode=config.dataset_sink_mode, sink_size=config.sink_size)
+
+if __name__ == "__main__":
+    train_alexnet()
