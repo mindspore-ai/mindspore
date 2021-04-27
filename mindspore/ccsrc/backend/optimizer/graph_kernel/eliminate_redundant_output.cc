@@ -66,13 +66,14 @@ bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr 
   auto output_num = output->cast<CNodePtr>()->size() - 1;
   getitem_list->clear();
   getitem_list->resize(output_num, nullptr);
-  const auto &users = mng->node_users()[node];
+  auto users = mng->node_users()[node];
   bool changed = false;
-  AnfNodePtrList user_nodes;
-  std::transform(users.begin(), users.end(), std::back_inserter(user_nodes),
-                 [](const std::pair<AnfNodePtr, int> &user) { return user.first; });
-  for (const auto &getitem : user_nodes) {
-    MS_EXCEPTION_IF_NULL(getitem);
+  for (const auto &user : users) {
+    if (!IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem)) {
+      // Sometime, the user of MakeTuple is not a TupleGetItem, but a UpdateState.
+      continue;
+    }
+    auto &getitem = user.first;
     auto idx = GetIndex(getitem);
     if (idx >= output_num) {
       MS_LOG(EXCEPTION) << "Index of GetItem is out of range of MakeTuple. getitem node: " << getitem->DebugString();

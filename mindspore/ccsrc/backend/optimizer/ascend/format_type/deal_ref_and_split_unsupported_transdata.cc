@@ -163,7 +163,20 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::MakeDependency(const CNodePtr &get
   return func_graph->NewCNode(depend_nodes);
 }
 CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
-  const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::shared_ptr<kernel::OpInfo> &op_info) const {
+  const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode, const std::shared_ptr<kernel::OpInfo> &op_info) const {
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto cnode = orig_cnode;
+  auto update_states = AnfAlgo::GetUpdateStateUsers(manager, orig_cnode);
+  if (!update_states.empty()) {
+    auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    cnode = kernel_graph->NewCNode(orig_cnode);
+    cnode->set_inputs(orig_cnode->inputs());
+    for (auto &update_state : update_states) {
+      manager->SetEdge(update_state.first, update_state.second, cnode);
+    }
+  }
   MS_EXCEPTION_IF_NULL(op_info);
   auto ref_infos = op_info->ref_infos();
   std::vector<AnfNodePtr> make_tuple_inputs;

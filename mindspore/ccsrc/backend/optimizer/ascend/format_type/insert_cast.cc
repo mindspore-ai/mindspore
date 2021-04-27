@@ -30,9 +30,16 @@
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode,
+                                       const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto update_states = AnfAlgo::GetUpdateStateUsers(manager, orig_cnode);
+  for (auto &update_state : update_states) {
+    manager->SetEdge(update_state.first, update_state.second, cnode);
+  }
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
@@ -69,9 +76,9 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;
-}  // namespace
+}
 
-AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetOutputTensorNum(cnode) == 0) {
@@ -99,7 +106,7 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &c
     return replace_node;
   }
   // Multiple output
-  return InsertCastForMultipleOutput(func_graph, cnode);
+  return InsertCastForMultipleOutput(func_graph, orig_cnode, cnode);
 }
 }  // namespace
 
@@ -124,7 +131,7 @@ const AnfNodePtr InsertCast::Process(const FuncGraphPtr &func_graph, const AnfNo
     kernel_graph->ReplaceInternalOutput(node, new_node);
   }
   // process output
-  return InsertCastForOutput(func_graph, new_node);
+  return InsertCastForOutput(func_graph, cnode, new_node);
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -1456,7 +1456,10 @@ def test_while_forward():
     assert np.allclose(output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.skip(reason="not supported yet")
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_multi_add_assign():
     class Net(Cell):
         def __init__(self, i1):
@@ -1493,7 +1496,10 @@ def test_multi_add_assign():
     np.testing.assert_array_equal(outputs, expects)
 
 
-@pytest.mark.skip(reason="not supported yet")
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_multi_abs_add_assign():
     class Net(Cell):
         def __init__(self, para):

@@ -297,9 +297,11 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
       } else {
         int64_t prev_idx = 0;
         std::vector<AnfNodePtr> tuple_getitem_nodes;
-        std::transform(manager->node_users()[node].begin(), manager->node_users()[node].end(),
-                       std::back_inserter(tuple_getitem_nodes),
-                       [](const std::pair<AnfNodePtr, int> &use_node) { return use_node.first; });
+        for (auto &user : manager->node_users()[node]) {
+          if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimTupleGetItem)) {
+            tuple_getitem_nodes.emplace_back(user.first);
+          }
+        }
         std::sort(tuple_getitem_nodes.begin(), tuple_getitem_nodes.end(), TupleGetitemNodeCompare);
         for (auto &getitem : tuple_getitem_nodes) {
           MS_EXCEPTION_IF_NULL(getitem);

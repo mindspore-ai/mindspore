@@ -341,6 +341,8 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   SelectKernel(graph);
   // Graph optimization relevant to device data format
   HardwareOptimize(graph);
+  // Run final optimization
+  FinalOptimize(graph);
   // Graph kernel fusion optimization
   GraphKernelOptimize(graph);
   // Start gpu kernel runtime

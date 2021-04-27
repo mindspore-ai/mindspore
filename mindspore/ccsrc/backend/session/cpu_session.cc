@@ -104,6 +104,7 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   SetKernelInfo(graph.get());
   MS_LOG(INFO) << "Set kernel info end";
   Optimize(graph);
+  FinalOptimize(graph);
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.

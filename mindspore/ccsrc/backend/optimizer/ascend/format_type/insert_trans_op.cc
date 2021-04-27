@@ -43,7 +43,7 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
   if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node)) {
     kernel_graph->ReplaceInternalOutput(node, new_node);
   }
-  return InsertTransOpForOutput(func_graph, new_node, kernel_select_);
+  return InsertTransOpForOutput(func_graph, node, new_node, kernel_select_);
 }
 }  // namespace opt
 }  // namespace mindspore
