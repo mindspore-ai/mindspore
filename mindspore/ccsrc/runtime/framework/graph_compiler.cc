@@ -78,10 +78,8 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
-      // if graph output is a weight and doesn't link to any cnode, it's data type will be unknown
       if (output_type_id == kTypeUnknown) {
-        MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
-        continue;
+        output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
       }
 
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
@@ -212,13 +210,9 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
 GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context_);
-  // Optimization pass which is irrelevant to device type or format.
-  device_context_->OptimizeGraphWithoutDeviceInfo(graph);
 
-  device_context_->SetOperatorInfo(graph->execution_order());
-
-  // Optimization pass which is relevant to device type or format.
-  device_context_->OptimizeGraphWithDeviceInfo(graph);
+  // Execute optimization pass.
+  device_context_->OptimizeGraph(graph);
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
@@ -248,9 +242,8 @@ GraphId GraphCompiler::CompileGraph(session::OpRunInfo *op_run_info, const Graph
   MS_EXCEPTION_IF_NULL(graph);
 
   MS_EXCEPTION_IF_NULL(device_context_);
-  device_context_->SetOperatorInfo(graph->execution_order());
-
   device_context_->OptimizeSingleOpGraph(graph);
+
   MS_EXCEPTION_IF_NULL(session_);
   session_->RunOpHideNopNode(graph);
   session_->RunOpRemoveNopNode(graph);

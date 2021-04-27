@@ -36,7 +36,7 @@ using mindspore::device::DeviceContext;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
 // and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> AllocateMemory
-// -> OnMemoryAllocFinish -> SendOutput -> FreeMemory.
+// -> OnMemoryAllocFinish -> FreeMemory -> SendOutput.
 class DataSourceActor : public MemoryInterfaceActor {
  public:
   DataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,

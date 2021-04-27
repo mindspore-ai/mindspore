@@ -41,7 +41,7 @@ class CPUDeviceContext : public DeviceContext {
                                        TypeId type_id) const override;
   DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kCPU; }
 
-  void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const override;
+  void OptimizeGraph(const KernelGraphPtr &graph) const override;
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
