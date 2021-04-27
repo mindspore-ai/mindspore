@@ -52,13 +52,18 @@ static bool IsInWhiteList(const CNodePtr &cnode) {
   return false;
 }
 
-static void SetGradTag(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
+static void SetGradTag(const AnfNodePtr &node, const FuncGraphManagerPtr &manager, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When setting the tags for Grad nodes, exceeded the maximum recursion depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return;
+  }
   const auto &node_users = manager->node_users()[node];
   for (auto &user_pair : node_users) {
     auto user_node = user_pair.first;
     if (!user_node->grad()) {
       user_node->set_grad(true);
-      SetGradTag(user_node, manager);
+      SetGradTag(user_node, manager, ++curr_depth);
     }
   }
 }
@@ -69,7 +74,7 @@ void PipelineTransformer::LabelRequiredGradCNode() {
     if (!ParameterRequireGrad(parameter)) {
       continue;
     }
-    SetGradTag(parameter, manager_);
+    SetGradTag(parameter, manager_, 0);
   }
 }
 

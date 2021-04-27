@@ -839,7 +839,8 @@ Status PrepareStrategyBase(int64_t stage_id, size_t dev_num, const Shapes &input
   for (auto &input_partition : inputs_partitions) {
     product *= std::accumulate(input_partition.begin(), input_partition.end(), 1, std::multiplies<int64_t>());
   }
-  if (!FULLY_USE_DEVICES) {
+  const auto fully_use_device = CostModelContext::GetInstance()->fully_use_device();
+  if (!fully_use_device) {
     if (LongToSize(product) > dev_num) {
       return FAILED;
     }
@@ -1202,12 +1203,12 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   double computation_cost =
     operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   double communication_cost = operator_cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
   std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
     operator_cost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
-    result->communication_without_parameter_ +
-    COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
+    result->communication_without_parameter_ + gamma * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
   BreakingTiesForPerferringDataParallel(strategy, result);
