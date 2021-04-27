@@ -83,3 +83,6 @@ RUN cd /tmp \
 
 # Install MindSpore cuda-10.1 whl package
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.2.0/MindSpore/gpu/ubuntu_x86/cuda-10.1/mindspore_gpu-1.2.0-cp37-cp37m-linux_x86_64.whl
+
+# Install MindInsight whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.2.0/MindInsight/ascend/ubuntu_x86/mindinsight-1.2.0-cp37-cp37m-linux_x86_64.whl
