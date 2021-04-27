@@ -47,7 +47,7 @@ class HttpRequestHandler {
 
   bool Initialize(int fd, const std::unordered_map<std::string, OnRequestReceive *> &handlers);
   void Run();
-  void Stop();
+  bool Stop();
   static bufferevent *BuffereventCallback(event_base *base, void *arg);
 
  private:

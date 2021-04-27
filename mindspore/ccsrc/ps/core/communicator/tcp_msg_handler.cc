@@ -1,0 +1,46 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "ps/core/communicator/tcp_msg_handler.h"
+#include <memory>
+
+namespace mindspore {
+namespace ps {
+namespace core {
+TcpMsgHandler::TcpMsgHandler(ServerNode *server_node, std::shared_ptr<core::TcpConnection> conn,
+                             std::shared_ptr<MessageMeta> meta, DataPtr data, size_t size)
+    : server_node_(server_node), tcp_conn_(conn), meta_(meta), data_ptr_(data), data_(nullptr), len_(size) {
+  if (data_ptr_ != nullptr) {
+    data_ = data_ptr_.get();
+  }
+}
+
+void *TcpMsgHandler::data() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "TcpMsgHandler data is nullptr.";
+  }
+  return data_;
+}
+
+size_t TcpMsgHandler::len() const { return len_; }
+
+bool TcpMsgHandler::SendResponse(const void *data, const size_t &len) {
+  server_node_->Response(tcp_conn_, meta_, const_cast<void *>(data), len);
+  return true;
+}
+}  // namespace core
+}  // namespace ps
+}  // namespace mindspore

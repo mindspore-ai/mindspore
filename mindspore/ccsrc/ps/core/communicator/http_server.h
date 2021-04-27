@@ -66,7 +66,7 @@ class HttpServer {
 
   bool Start();
   bool Wait();
-  void Stop();
+  bool Stop();
 
  private:
   std::string server_address_;
