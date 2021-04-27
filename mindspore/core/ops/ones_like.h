@@ -24,10 +24,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameOnesLike = "OnesLike";
 class OnesLike : public PrimitiveC {
  public:
-  OnesLike() : PrimitiveC(kNameOnesLike) {}
+  OnesLike() : PrimitiveC(prim::kPrimOnesLike->name()) {}
   ~OnesLike() = default;
   MS_DECLARE_PARENT(OnesLike, PrimitiveC);
   void Init() {}
