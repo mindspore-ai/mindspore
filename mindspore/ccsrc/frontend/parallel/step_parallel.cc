@@ -1040,14 +1040,17 @@ void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
         cnode = node_pair.first->cast<CNodePtr>();
         last_indexs[last_node_index] = size_t(node_pair.second);
       }
+      auto pre_node = cnode->input(last_indexs[last_node_index]);
+      Shapes shape_outputs = GetNodeShape(pre_node);
+      if (shape_outputs[0].empty()) {
+        continue;
+      }
       FuncGraphPtr func_graph = node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       OperatorParams params;
       OperatorAttrs attrs;
       OperatorArgs args = std::make_pair(attrs, params);
       Operator op = std::make_pair(VIRTUAL_OUTPUT, args);
-      auto pre_node = cnode->input(last_indexs[last_node_index]);
-      Shapes shape_outputs = GetNodeShape(pre_node);
       InsertNode(op, cnode, last_indexs[last_node_index], pre_node, func_graph, VIRTUAL_OUTPUT);
       auto virtual_output_node = cnode->input(last_indexs[last_node_index]);
       AbstractBasePtr virtual_output_abstract = pre_node->abstract()->Clone();
