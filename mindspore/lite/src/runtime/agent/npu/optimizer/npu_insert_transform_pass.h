@@ -31,6 +31,7 @@ class NPUInsertTransformPass : public NPUBasePass {
     name_ = "NPUInsertTransformPass";
   }
 
+  virtual ~NPUInsertTransformPass() = default;
   int Run() override;
 
  private:

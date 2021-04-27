@@ -140,7 +140,7 @@ class MSTensor::Impl {
 
   virtual bool IsDevice() const { return false; }
 
-  tensor::MSTensor *lite_tensor() { return lite_tensor_; }
+  tensor::MSTensor *lite_tensor() const { return lite_tensor_; }
 
   Status set_lite_tensor(tensor::MSTensor *tensor) {
     if (tensor == nullptr) {

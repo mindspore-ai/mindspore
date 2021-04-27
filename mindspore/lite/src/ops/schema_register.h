@@ -37,6 +37,8 @@ class SchemaRegisterImpl {
 
   GetSchemaDef GetPrimTypeGenFunc() const { return prim_type_gen_; }
 
+  virtual ~SchemaRegisterImpl() = default;
+
  private:
   std::vector<GetSchemaDef> op_def_funcs_;
   GetSchemaDef prim_type_gen_;
@@ -45,11 +47,13 @@ class SchemaRegisterImpl {
 class SchemaOpRegister {
  public:
   explicit SchemaOpRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->OpPush(func); }
+  virtual ~SchemaOpRegister() = default;
 };
 
 class PrimitiveTypeRegister {
  public:
   explicit PrimitiveTypeRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->SetPrimTypeGenFunc(func); }
+  virtual ~PrimitiveTypeRegister() = default;
 };
 }  // namespace mindspore::lite::ops
 

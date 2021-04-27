@@ -36,6 +36,8 @@ class NPUTransformPass : public NPUBasePass {
     name_ = "NPUTransformPass";
   }
 
+  virtual ~NPUTransformPass() = default;
+
  private:
   int InsertPreNodes(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *trans_kernels);
 

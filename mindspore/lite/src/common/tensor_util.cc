@@ -128,7 +128,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   return NNACL_OK;
 }
 
-void TensorListC2TensorList(TensorListC *src, TensorList *dst) {
+int TensorListC2TensorList(TensorListC *src, TensorList *dst) {
   dst->set_data_type(static_cast<TypeId>(src->data_type_));
   dst->set_format(static_cast<schema::Format>(src->format_));
   dst->set_shape(std::vector<int>(1, src->element_num_));
@@ -136,11 +136,17 @@ void TensorListC2TensorList(TensorListC *src, TensorList *dst) {
 
   // Set Tensors
   for (size_t i = 0; i < src->element_num_; i++) {
+    if (dst->GetTensor(i) == nullptr) {
+      MS_LOG(ERROR) << "Tensor i is null ptr";
+      return RET_NULL_PTR;
+    }
+
     TensorC2Tensor(&src->tensors_[i], dst->GetTensor(i));
   }
 
   dst->set_element_shape(std::vector<int>(src->element_shape_, src->element_shape_ + src->element_shape_size_));
   dst->set_max_elements_num(src->max_elements_num_);
+  return RET_OK;
 }
 
 int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
@@ -189,6 +195,7 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
       memset(tensor_list_c, 0, sizeof(TensorListC));
       ret = TensorList2TensorListC(tensor_list, tensor_list_c);
       if (ret != RET_OK) {
+        free(tensor_list_c);
         return NNACL_ERR;
       }
       in_tensor_c->push_back(reinterpret_cast<TensorC *>(tensor_list_c));
