@@ -134,15 +134,20 @@ bool HttpServer::Wait() {
   return true;
 }
 
-void HttpServer::Stop() {
+bool HttpServer::Stop() {
   MS_LOG(INFO) << "Stop http server!";
+  bool result = true;
 
   if (!is_stop_.load()) {
     for (size_t i = 0; i < thread_num_; i++) {
-      http_request_handlers[i]->Stop();
+      bool res = http_request_handlers[i]->Stop();
+      if (res == false) {
+        result = false;
+      }
     }
     is_stop_ = true;
   }
+  return result;
 }
 }  // namespace core
 }  // namespace ps

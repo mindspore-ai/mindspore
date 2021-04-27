@@ -99,13 +99,15 @@ void HttpRequestHandler::Run() {
   }
 }
 
-void HttpRequestHandler::Stop() {
+bool HttpRequestHandler::Stop() {
   MS_LOG(INFO) << "Stop http server!";
 
   int ret = event_base_loopbreak(evbase_);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "event base loop break failed!";
+    MS_LOG(ERROR) << "event base loop break failed!";
+    return false;
   }
+  return true;
 }
 
 bufferevent *HttpRequestHandler::BuffereventCallback(event_base *base, void *arg) {
