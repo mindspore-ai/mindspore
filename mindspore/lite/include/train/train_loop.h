@@ -56,7 +56,7 @@ class TrainLoop {
   /// \brief Accessor to the TrainSession
   ///
   /// \return pointer of the train_session
-  virtual session::TrainSession *train_session() = 0;
+  const virtual session::TrainSession *train_session() = 0;
 
   /// \brief Initialize object with metrics
   ///

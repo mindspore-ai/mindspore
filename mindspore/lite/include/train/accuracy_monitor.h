@@ -30,7 +30,7 @@ class AccuracyMonitor : public session::TrainLoopCallBack {
  public:
   explicit AccuracyMonitor(mindspore::dataset::Dataset *dataset, int check_every_n, int max_steps = -1)
       : ds_(dataset), check_every_n_(check_every_n), max_steps_(max_steps) {}
-
+  ~AccuracyMonitor() = default;
   void Begin(const session::TrainLoopCallBackData &cb_data) override;
   int EpochEnd(const mindspore::session::TrainLoopCallBackData &cb_data) override;
   const std::vector<GraphPoint> &GetAccuracyPoints() const { return accuracies_; }

@@ -34,7 +34,7 @@ class TrainLoop : virtual public session::TrainLoop {
  public:
   explicit TrainLoop(session::TrainSession *session) : train_session_(session) {}
 
-  session::TrainSession *train_session() override { return train_session_; }
+  const session::TrainSession *train_session() override { return train_session_; }
 
   int Reset() override {
     epoch_ = 0;

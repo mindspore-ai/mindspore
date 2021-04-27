@@ -104,7 +104,7 @@ OpParameter *PopulateSmoothL1LossParameter(const void *primitive) {
   p->op_parameter_.type_ = schema::PrimitiveType_SmoothL1Loss;
 
   auto smoothL1Loss_prim = prim->value_as_SmoothL1Loss();
-
+  MS_ASSERT(smoothL1Loss_prim != nullptr);
   p->beta_ = smoothL1Loss_prim->beta();
   return reinterpret_cast<OpParameter *>(p);
 }
@@ -123,7 +123,7 @@ OpParameter *PopulateSmoothL1LossGradParameter(const void *primitive) {
   p->op_parameter_.type_ = schema::PrimitiveType_SmoothL1LossGrad;
 
   auto smoothL1LossGrad_prim = prim->value_as_SmoothL1LossGrad();
-
+  MS_ASSERT(smoothL1LossGrad_prim != nullptr);
   p->beta_ = smoothL1LossGrad_prim->beta();
   return reinterpret_cast<OpParameter *>(p);
 }
@@ -142,7 +142,7 @@ OpParameter *PopulateApplyMomentumParameter(const void *primitive) {
   p->op_parameter_.type_ = schema::PrimitiveType_ApplyMomentum;
 
   auto applyMomentum_prim = prim->value_as_ApplyMomentum();
-
+  MS_ASSERT(applyMomentum_prim != nullptr);
   p->grad_scale_ = applyMomentum_prim->gradientScale();
   p->use_nesterov_ = applyMomentum_prim->useNesterov();
 
@@ -157,6 +157,7 @@ OpParameter *PopulateBCEParameter(const void *primitive) {
     return nullptr;
   }
   auto bCE_prim = prim->value_as_BinaryCrossEntropy();
+  MS_ASSERT(bCE_prim != nullptr);
   *reduction = bCE_prim->reduction();
   return reinterpret_cast<OpParameter *>(reduction);
 }
@@ -169,7 +170,7 @@ OpParameter *PopulateBCEGradParameter(const void *primitive) {
     return nullptr;
   }
   auto bCEGrad_prim = prim->value_as_BinaryCrossEntropyGrad();
-
+  MS_ASSERT(bCEGrad_prim != nullptr);
   *reduction = bCEGrad_prim->reduction();
   return reinterpret_cast<OpParameter *>(reduction);
 }
@@ -188,7 +189,7 @@ OpParameter *PopulateAdamParameter(const void *primitive) {
   p->op_parameter_.type_ = schema::PrimitiveType_Adam;
 
   auto adam_prim = prim->value_as_Adam();
-
+  MS_ASSERT(adam_prim != nullptr);
   p->use_nesterov_ = adam_prim->useNesterov();
   return reinterpret_cast<OpParameter *>(p);
 }
@@ -207,7 +208,7 @@ OpParameter *PopulateSgdParameter(const void *primitive) {
   p->op_parameter_.type_ = schema::PrimitiveType_SGD;
 
   auto sgd_prim = prim->value_as_Sgd();
-
+  MS_ASSERT(sgd_prim != nullptr);
   p->weight_decay_ = sgd_prim->weightDecay();
   p->dampening_ = sgd_prim->dampening();
   p->use_nesterov_ = sgd_prim->useNesterov();
@@ -228,7 +229,7 @@ OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const void *primitive) {
     return nullptr;
   }
   auto sparseSoftmaxCrossEntropy_prim = prim->value_as_SparseSoftmaxCrossEntropy();
-
+  MS_ASSERT(sparseSoftmaxCrossEntropy_prim != nullptr);
   sce_param->is_grad_ = sparseSoftmaxCrossEntropy_prim->isGrad();
 
   sce_param->op_parameter_.type_ = schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits;
@@ -264,7 +265,7 @@ OpParameter *PopulatePoolingGradParameter(const void *primitive) {
   }
 
   auto poolingGrad_prim = prim->value_as_PoolingGrad();
-
+  MS_ASSERT(poolingGrad_prim != nullptr);
   pooling_param->global_ = poolingGrad_prim->global();
   pooling_param->window_w_ = poolingGrad_prim->windowW();
   pooling_param->window_h_ = poolingGrad_prim->windowH();
@@ -321,7 +322,7 @@ OpParameter *PopulateActivationGradParameter(const void *primitive) {
   }
   act_param->op_parameter_.type_ = schema::PrimitiveType_ActivationGrad;
   auto activationGrad_prim = prim->value_as_ActivationGrad();
-
+  MS_ASSERT(activationGrad_prim != nullptr);
   act_param->type_ = static_cast<int>(activationGrad_prim->type());
   act_param->alpha_ = activationGrad_prim->alpha();
   return reinterpret_cast<OpParameter *>(act_param);
@@ -342,7 +343,9 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *primitive) {
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropFilterFusion;
 
   auto convolutionGradFilter_prim = prim->value_as_Conv2DGradFilter();
+  MS_ASSERT(convolutionGradFilter_prim != nullptr);
   auto fb_vector = convolutionGradFilter_prim->filter_shape();
+  MS_ASSERT(fb_vector != nullptr);
   auto filter_shape = std::vector<int>(fb_vector->begin(), fb_vector->end());
   if (filter_shape.size() > MAX_SHAPE_SIZE) {
     free(param);
@@ -390,7 +393,9 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
 
   auto convolutionGradInput_prim = prim->value_as_Conv2DGradInput();
+  MS_ASSERT(convolutionGradInput_prim != nullptr);
   auto fb_vector = convolutionGradInput_prim->input_shape();
+  MS_ASSERT(fb_vector != nullptr);
   auto filter_shape = std::vector<int>(fb_vector->begin(), fb_vector->end());
   if (filter_shape.size() > MAX_SHAPE_SIZE) {
     free(param);
@@ -438,7 +443,9 @@ OpParameter *PopulateGroupConvolutionGradInputParameter(const void *primitive) {
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
 
   auto groupConvolutionGradInput_prim = prim->value_as_GroupConv2DGradInput();
+  MS_ASSERT(groupConvolutionGradInput_prim != nullptr);
   auto fb_vector = groupConvolutionGradInput_prim->input_shape();
+  MS_ASSERT(fb_vector != nullptr);
   auto filter_shape = std::vector<int>(fb_vector->begin(), fb_vector->end());
   if (filter_shape.size() > MAX_SHAPE_SIZE) {
     free(param);
@@ -485,7 +492,7 @@ OpParameter *PopulatePowerGradParameter(const void *primitive) {
   }
   power_param->op_parameter_.type_ = schema::PrimitiveType_PowerGrad;
   auto powerGrad_prim = prim->value_as_PowerGrad();
-
+  MS_ASSERT(powerGrad_prim != nullptr);
   power_param->power_ = powerGrad_prim->power();
   power_param->scale_ = powerGrad_prim->scale();
   power_param->shift_ = powerGrad_prim->shift();
@@ -521,7 +528,7 @@ OpParameter *PopulateBNGradParameter(const void *primitive) {
   }
   bnGrad_param->op_parameter_.type_ = schema::PrimitiveType_BatchNormGrad;
   auto bNGrad_prim = prim->value_as_BNGrad();
-
+  MS_ASSERT(bNGrad_prim != nullptr);
   bnGrad_param->epsilon_ = bNGrad_prim->eps();
   return reinterpret_cast<OpParameter *>(bnGrad_param);
 }
@@ -536,7 +543,7 @@ OpParameter *PopulateDropoutParameter(const void *primitive) {
   memset(dropout_parameter, 0, sizeof(DropoutParameter));
   dropout_parameter->op_parameter_.type_ = schema::PrimitiveType_Dropout;
   auto dropout_prim = prim->value_as_Dropout();
-
+  MS_ASSERT(dropout_prim != nullptr);
   dropout_parameter->ratio_ = dropout_prim->ratio();
   if (dropout_parameter->ratio_ < 0.f || dropout_parameter->ratio_ > 1.f) {
     MS_LOG(ERROR) << "Dropout ratio must be between 0 to 1, got " << dropout_parameter->ratio_;
@@ -556,7 +563,7 @@ OpParameter *PopulateDropoutGradParameter(const void *primitive) {
   memset(dropoutGrad_parameter, 0, sizeof(DropoutParameter));
   dropoutGrad_parameter->op_parameter_.type_ = schema::PrimitiveType_DropoutGrad;
   auto dropoutGrad_prim = prim->value_as_DropoutGrad();
-
+  MS_ASSERT(dropoutGrad_prim != nullptr);
   dropoutGrad_parameter->ratio_ = dropoutGrad_prim->ratio();
   if (dropoutGrad_parameter->ratio_ < 0.f || dropoutGrad_parameter->ratio_ > 1.f) {
     MS_LOG(ERROR) << "Dropout Grad ratio must be between 0 to 1, got " << dropoutGrad_parameter->ratio_;
