@@ -28,7 +28,7 @@ class SelectCPUKernel : public CPUKernel {
   SelectCPUKernel() = default;
   ~SelectCPUKernel() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
   void InitKernel(const CNodePtr &kernel_node) override;
