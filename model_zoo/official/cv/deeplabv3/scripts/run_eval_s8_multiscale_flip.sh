@@ -37,6 +37,5 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
                     --scales=1.25  \
                     --scales=1.75  \
                     --flip  \
-                    --freeze_bn  \
                     --ckpt_path=/PATH/TO/PRETRAIN_MODEL >${eval_path}/eval_log 2>&1 &
 

@@ -26,9 +26,15 @@ mkdir -p ${train_path}
 mkdir ${train_path}/device${DEVICE_ID}
 mkdir ${train_path}/ckpt
 cd ${train_path}/device${DEVICE_ID} || exit
-
+'''
+If turn on the verification function while training, need to set `data_root` and `data_lst`.
+Otherwise, it can be empty string with "".
+'''
 python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
                     --train_dir=${train_path}/ckpt  \
+                    --data_root=/PATH/TO/DATA \
+                    --val_data=/PATH/TO/DATA_lst.txt  \
+                    --scales=1.0  \
                     --train_epochs=200  \
                     --batch_size=32  \
                     --crop_size=513  \

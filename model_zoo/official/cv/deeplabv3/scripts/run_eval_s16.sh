@@ -32,6 +32,5 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
                     --num_classes=21  \
                     --model=deeplab_v3_s16  \
                     --scales=1.0  \
-                    --freeze_bn  \
                     --ckpt_path=/PATH/TO/PRETRAIN_MODEL >${eval_path}/eval_log 2>&1 &
 
