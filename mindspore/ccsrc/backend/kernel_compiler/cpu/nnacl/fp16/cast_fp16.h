@@ -46,6 +46,7 @@ inline void Float16ToInt64(const float16_t *input, int64_t *output, int number) 
   }
 }
 
+#ifdef ENABLE_ARM64
 inline void Float32ToFloat16(const float *input, float16_t *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = (float16_t)input[i];
@@ -57,6 +58,11 @@ inline void Float16ToFloat32(const float16_t *input, float *output, int number) 
     output[i] = (float)input[i];
   }
 }
+#else
+void Float32ToFloat16(const float *input, float16_t *output, int number);
+
+void Float16ToFloat32(const float16_t *input, float *output, int number);
+#endif
 
 #ifdef __cplusplus
 }
