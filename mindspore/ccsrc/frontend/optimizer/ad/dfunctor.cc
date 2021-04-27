@@ -880,7 +880,7 @@ static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGrap
     } else if (IsPrimitive(cnode->inputs().at(0), prim::kPrimJ)) {
       // To find J user.
       auto j_user = GetJUser(node_user_map, cnode, index);
-      primal_j_pair.emplace_back(std::pair<CNodePtr, CNodePtr>(nullptr, j_user));
+      (void)primal_j_pair.emplace_back(std::pair<CNodePtr, CNodePtr>(nullptr, j_user));
     }
   }
 

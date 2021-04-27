@@ -74,6 +74,25 @@ class IfAfterIfNet2(nn.Cell):
         return y
 
 
+class IfAfterIfNet3(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+    def construct(self, x, y):
+        out = x * y + self.func(self.param_b)
+        if self.param_a > self.param_b:
+            out += 5
+        return out
+
+    def func(self, x):
+        if self.param_a > self.param_b:
+            x += 5
+        self.param_b += 4
+        return x
+
+
 class GradNet(nn.Cell):
     def __init__(self, net):
         super(GradNet, self).__init__()
@@ -118,3 +137,9 @@ def test_if_after_if_02():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
     control_flow_if_after_if(IfAfterIfNet2, x, y)
+
+
+def test_if_after_if_03():
+    x = Tensor(2, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    control_flow_if_after_if(IfAfterIfNet3, x, y)
