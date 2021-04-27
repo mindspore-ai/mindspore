@@ -129,6 +129,74 @@ class Flatten(PrimitiveWithInfer):
         return input_x
 
 
+class AdaptiveAvgPool2D(PrimitiveWithInfer):
+    r"""
+    AdaptiveAvgPool2D operation.
+
+    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is H x W.
+    The number of output features is equal to the number of input planes.
+
+    Args:
+        output_size (Union[int, tuple]): The target output size is H x W.
+            ouput_size can be a tulpe, or a single H for H x H, and H x W can be int or None
+            which means the output size is the same as the input.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
+          with float16, float32, float64 data type.
+
+    Outputs:
+        Tensor, with the same type and same dimensions as the input_x.
+
+    Raises:
+        ValueError: if `output_size` is not a tuple and if `output_size` length is not 2.
+        TypeError: If `input_x` is not a tensor.
+        TypeError: If dtype of `input_x` is not float16, float32, float64.
+        ValueError: If `input_x` dimension is less than or more than output_size dimension.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        >>>                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        >>>                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((2, 2))
+        >>> output = adaptive_avg_pool_2d(input_x)
+        >>> print(output)
+        [[[3.0, 4.0], [6.0, 7.0]],
+        [[3.0, 4.0], [6.0, 7.0]],
+        [[3.0, 4.0], [6.0, 7.0]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, output_size):
+        validator.check_value_type("output_size", output_size, [int, tuple], self.name)
+        if isinstance(output_size, tuple):
+            validator.check_int(len(output_size), 2, Rel.EQ, 'output_size', self.name)
+        self.output_size = (output_size, output_size) if isinstance(self.output_size, int) else output_size
+
+    def infer_shape(self, x_shape):
+        if len(x_shape) <= len(self.output_size):
+            raise ValueError("{} dimension should be larger than {} dimension".format(x_shape, self.output_size))
+        validator.check_int(len(x_shape), 5, Rel.LT, 'input_x_dimensions', self.name)
+        for input_x_dimension in x_shape:
+            validator.check_int(input_x_dimension, 0, Rel.GT, 'input_x dimension', self.name)
+        zipped = zip(self.output_size, x_shape[-len(self.output_size):])
+        out_size = [i if i else j for i, j in zipped]
+        for item in out_size:
+            validator.check_value_type("item of output_size", item, [int], self.name)
+        self.add_prim_attr('output_size', (out_size))
+        output_shape = x_shape[:len(x_shape) - len(out_size)] + out_size
+        return output_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32, mstype.float64],
+                                           self.name)
+        return x_dtype
+
+
 class Softmax(Primitive):
     r"""
     Softmax operation.
@@ -3298,6 +3366,7 @@ class Gelu(PrimitiveWithInfer):
     Same as operator GeLU. Gelu will be deprecated in the future.
     Please use GeLU instead.
     """
+
     @deprecated("1.1", "GeLU", True)
     @prim_attr_register
     def __init__(self):
@@ -3354,13 +3423,12 @@ class GeLU(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-
-
 class FastGelu(PrimitiveWithInfer):
     """
     Same as operator FastGeLU. FastGelu will be deprecated in the future.
     Please use FastGeLU instead.
     """
+
     @deprecated("1.1", "FastGeLU", True)
     @prim_attr_register
     def __init__(self):
@@ -8111,11 +8179,11 @@ class Conv3DTranspose(PrimitiveWithInfer):
         output_padding = (self.output_padding[2], self.output_padding[3], self.output_padding[4])
         if self.pad_mode != 'pad' and output_padding != (0, 0, 0):
             raise ValueError(f"For '{self.name}', when output_padding is not 0, pad_mode should be set as 'pad'.")
-        validator.check_int_range(self.kernel_size[0]*self.kernel_size[1]*self.kernel_size[2], 1, 343, Rel.INC_BOTH,
+        validator.check_int_range(self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2], 1, 343, Rel.INC_BOTH,
                                   'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
-        validator.check_int_range(self.stride[0]*self.stride[1]*self.stride[2], 1, 343, Rel.INC_BOTH,
+        validator.check_int_range(self.stride[0] * self.stride[1] * self.stride[2], 1, 343, Rel.INC_BOTH,
                                   'The product of height, width and depth of stride belonging [1, 343]', self.name)
-        validator.check_int_range(self.stride[1]*self.stride[2], 1, 256, Rel.INC_BOTH,
+        validator.check_int_range(self.stride[1] * self.stride[2], 1, 256, Rel.INC_BOTH,
                                   'The product of height, width and depth of stride belonging [1, 256]', self.name)
         validator.check_int_range(self.output_padding[2], 0, max(self.dilation[2], self.stride[2]), Rel.INC_LEFT,
                                   'output_padding_d belonging [0, max(stride_d, dilation_d))', self.name)
@@ -8180,7 +8248,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
         self.add_prim_attr('pad_list', self.pad_list)
         self.add_prim_attr('output_padding', self.output_padding)
-        output_shape = (x_shape[0], w_shape[1]*self.group, d_out, h_out, w_out)
+        output_shape = (x_shape[0], w_shape[1] * self.group, d_out, h_out, w_out)
         self.add_prim_attr('input_size', output_shape)
         out = {
             'value': None,
