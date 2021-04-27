@@ -178,18 +178,16 @@ FuncGraphPtr BuildFakeBProp(const PrimitivePtr &prim, size_t inputs_num) {
 
 class PynativeAdjoint {
  public:
-  PynativeAdjoint(const FuncGraphPtr &tape, const ValuePtrList &op_args, const ValuePtr &out,
-                  const FuncGraphPtr &bprop_fg)
-      : tape_(tape), op_args_(op_args), out_(out), bprop_fg_(bprop_fg) {}
-  PynativeAdjoint(const FuncGraphPtr &tape, const ValuePtrList &op_args, const ValuePtr &out,
-                  const CNodePtr &bprop_cnode)
-      : tape_(tape), op_args_(op_args), out_(out), bprop_cnode_(bprop_cnode) {}
+  enum FuncGraphType { kForwardPropagate, kBackwardPropagate };
+  PynativeAdjoint(const FuncGraphPtr &tape, const ValuePtrList &op_args, const ValuePtr &out, const FuncGraphPtr &fg,
+                  FuncGraphType fg_type = kBackwardPropagate)
+      : tape_(tape), op_args_(op_args), out_(out), fg_(fg), fg_type_(fg_type) {}
 
   AnfNodePtrList &users() { return users_; }
   const ValuePtrList &op_args() { return op_args_; }
   const ValuePtr &out() { return out_; }
-  const FuncGraphPtr &bprop_fg() { return bprop_fg_; }
-  const CNodePtr &bprop_cnode() { return bprop_cnode_; }
+  const FuncGraphPtr &fg() { return fg_; }
+  const FuncGraphType &fg_type() { return fg_type_; }
   AnfNodePtr RealDout() {
     if (dout_ != nullptr) {
       return dout_;
@@ -227,11 +225,11 @@ class PynativeAdjoint {
   const ValuePtrList op_args_;
   // For CNode , it's output of cnode. For Parameter or ValueNode, it's its value.
   const ValuePtr out_;
-  // bprop_fg passed from ad caller, it may be user defined back propagate funcgragh.
-  const FuncGraphPtr bprop_fg_;
-  // the origin bprop_cnode passed refer to Primal FuncGraph, this bprop_cnode_ replace all CNode refer from Primal
+  // fg_ is a bprop_fg generated from Primitive.
+  // or a fprop_fg passed from caller.
   // FuncGraph to tape_;
-  const CNodePtr bprop_cnode_;
+  const FuncGraphPtr fg_;
+  const FuncGraphType fg_type_;
   // k mapped cnode for primal CNode; primal CNode is owned by primal funcgraph, this is owned by tape_;
   AnfNodePtr k_node_;
 };
@@ -277,9 +275,8 @@ class KPynativeCellImpl : public KPynativeCell {
   PynativeAdjointPtr ForgeGetItemAdjoint(const CNodePtr &cnode);
   PynativeAdjointPtr ForgeMakeSequenceAdjoint(const CNodePtr &cnode);
   bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                    const FuncGraphPtr &bprop_fg);
-  bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                    const CNodePtr &bprop_cnode);
+                    const FuncGraphPtr &bprop_fg,
+                    PynativeAdjoint::FuncGraphType fg_type = PynativeAdjoint::kBackwardPropagate);
   void BuildAdjointForInput(const CNodePtr &cnode, const ValuePtrList &op_args);
   void PropagateStopGradient();
   bool AllReferencesStopped(const CNodePtr &curr_cnode);
@@ -289,9 +286,10 @@ class KPynativeCellImpl : public KPynativeCell {
   bool BackPropagate(bool by_value);
   bool BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint,
                                                const FuncGraphPtr &bprop_fg, bool by_value);
-  bool BackPropagateOneCNodeWithBPropCNode(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint,
-                                           const AnfNodePtr &bprop_cnode, bool by_value);
+  bool BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint,
+                                               const FuncGraphPtr &fprop_fg, bool by_value);
   bool BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app);
+  const AnfNodePtrList BuildKNodeListFromPrimalCNode(const CNodePtr &cnode);
   FuncGraphPtr BuildBPropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode);
   // Back propagate for MakeList or MakeTuple is generated from MetaFuncGraph.
   FuncGraphPtr BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode);
@@ -304,7 +302,7 @@ class KPynativeCellImpl : public KPynativeCell {
   // Build k mapped node owned by tape_ for each cnode in primal funcgraph, so these node can be
   // used in tape_ to keep tracking the cnode dependency.
   bool BuildKNode();
-  CNodePtr GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const ValuePtrList &args);
+  CNodePtr GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -473,10 +471,7 @@ bool KPynativeCellImpl::KPynativeWithFProp(const CNodePtr &cnode, const ValuePtr
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(fprop_fg);
 
-  auto new_bprop_cnode = GetBPropFromFProp(fprop_fg, op_args);
-  MS_EXCEPTION_IF_NULL(new_bprop_cnode);
-
-  BuildAdjoint(cnode, op_args, out, new_bprop_cnode);
+  BuildAdjoint(cnode, op_args, out, fprop_fg, PynativeAdjoint::kForwardPropagate);
 
   return true;
 }
@@ -579,8 +574,9 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &c
   // () or [] is not supported yet.
   if (cnode->size() <= 1) {
     MS_LOG(DEBUG) << "MakeTuple/MakeList CNode is empty Tuple/List, CNode: " << cnode->DebugString();
+    static auto empty_tuple = MakeValue(std::vector<ValuePtr>{});
     static auto dummy_adjoint =
-      std::make_shared<PynativeAdjoint>(nullptr, ValuePtrList{}, nullptr, FuncGraphPtr(nullptr));
+      std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, empty_tuple, FuncGraphPtr(nullptr));
     anfnode_to_adjoin_[cnode] = dummy_adjoint;
     cnode->set_stop_gradient(true);
     return dummy_adjoint;
@@ -670,7 +666,7 @@ void KPynativeCellImpl::BuildAdjointForInput(const CNodePtr &cnode, const ValueP
 }
 
 bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                                     const FuncGraphPtr &bprop_fg) {
+                                     const FuncGraphPtr &fg, const PynativeAdjoint::FuncGraphType fg_type) {
   // Optimize the bprop_fg based on value.
   // Clone op_args and out, so the address of tensor data can be reset to nullptr if the value of tensor
   // is not used in bprop_fg;
@@ -678,28 +674,16 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
   std::transform(op_args.begin(), op_args.end(), std::back_inserter(cloned_op_args),
                  [](const ValuePtr &value) { return ShallowCopyValue(value); });
   ValuePtr cloned_out = ShallowCopyValue(out);
-  auto optimized_bprop_fg = OptimizeBPropFuncGraph(bprop_fg, cnode, cloned_op_args, cloned_out);
+  PynativeAdjointPtr cnode_adjoint;
+  if (fg_type == PynativeAdjoint::kBackwardPropagate) {
+    auto optimized_bprop_fg = OptimizeBPropFuncGraph(fg, cnode, cloned_op_args, cloned_out);
+    cnode_adjoint = std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, optimized_bprop_fg);
+  } else {
+    cnode_adjoint = std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, fg, fg_type);
+  }
 
   BuildAdjointForInput(cnode, op_args);
 
-  auto cnode_adjoint = std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, optimized_bprop_fg);
-  anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_adjoint));
-
-  return true;
-}
-
-bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                                     const CNodePtr &bprop_cnode) {
-  BuildAdjointForInput(cnode, op_args);
-
-  // Clone op_args and out, so the address of tensor data can be reset to nullptr if the value of tensor
-  // is not used in bprop_fg;
-  ValuePtrList cloned_op_args;
-  std::transform(op_args.begin(), op_args.end(), std::back_inserter(cloned_op_args),
-                 [](const ValuePtr &value) { return ShallowCopyValue(value); });
-  ValuePtr cloned_out = ShallowCopyValue(out);
-
-  auto cnode_adjoint = std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, bprop_cnode);
   anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_adjoint));
 
   return true;
@@ -754,6 +738,23 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
   return true;
 }
 
+const AnfNodePtrList KPynativeCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode) {
+  AnfNodePtrList node_list;
+  std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(node_list),
+                 [this](const AnfNodePtr &input) {
+                   if (input->isa<CNode>()) {
+                     auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
+                     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+                       MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input->DebugString();
+                     }
+                     return input_adjoint_iter->second->k_node();
+                   } else {
+                     return input;
+                   }
+                 });
+  return node_list;
+}
+
 bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &cnode,
                                                                 const PynativeAdjointPtr &adjoint,
                                                                 const FuncGraphPtr &bprop_fg, bool by_value) {
@@ -781,18 +782,8 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &
     node_list.push_back(out_node);
     node_list.push_back(adjoint->RealDout());
   } else {
-    std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(node_list),
-                   [this](const AnfNodePtr &input) {
-                     if (input->isa<CNode>()) {
-                       auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
-                       if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-                         MS_LOG(EXCEPTION) << "cannot find input in adjoint map, inp: " << input->DebugString();
-                       }
-                       return input_adjoint_iter->second->k_node();
-                     } else {
-                       return input;
-                     }
-                   });
+    const auto &k_node_list = BuildKNodeListFromPrimalCNode(cnode);
+    node_list.insert(node_list.end(), k_node_list.begin(), k_node_list.end());
     // out;
     node_list.push_back(adjoint->k_node());
     // dout;
@@ -805,18 +796,30 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &
   return true;
 }
 
-bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropCNode(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint,
-                                                            const AnfNodePtr &bprop_cnode, bool by_value) {
+bool KPynativeCellImpl::BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &cnode,
+                                                                const PynativeAdjointPtr &adjoint,
+                                                                const FuncGraphPtr &fprop_fg, bool by_value) {
   MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->ToString();
 
   AnfNodePtrList node_list;
-  node_list.push_back(bprop_cnode);
+  CNodePtr bprop_cnode;
   if (by_value) {
-    node_list.push_back(adjoint->RealDout());
+    AnfNodePtrList args_node_list;
+    std::transform(adjoint->op_args().begin(), adjoint->op_args().end(), std::back_inserter(args_node_list),
+                   [](const ValuePtr &value) {
+                     auto v_node = NewValueNode(value);
+                     v_node->set_abstract(value->ToAbstract()->Broaden());
+                     return v_node;
+                   });
+
+    bprop_cnode = GetBPropFromFProp(fprop_fg, args_node_list);
   } else {
-    // dout;
-    node_list.push_back(adjoint->RealDout());
+    const auto &k_node_list = BuildKNodeListFromPrimalCNode(cnode);
+    bprop_cnode = GetBPropFromFProp(fprop_fg, k_node_list);
   }
+  node_list.push_back(bprop_cnode);
+  // dout;
+  node_list.push_back(adjoint->RealDout());
   // Back propagate process
   auto bprop_app = tape_->NewCNode(node_list);
   BackPropagate(cnode, bprop_app);
@@ -834,19 +837,13 @@ bool KPynativeCellImpl::BackPropagate(bool by_value) {
       continue;
     }
     MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->ToString();
-    auto bprop_fg = iter->second->bprop_fg();
-    auto bprop_cnode = iter->second->bprop_cnode();
-    if (bprop_fg == nullptr && bprop_cnode == nullptr) {
-      MS_LOG(EXCEPTION) << "BackPropagate function for cnode is null";
-    }
-    if (bprop_fg != nullptr && bprop_cnode != nullptr) {
-      MS_LOG(EXCEPTION) << "BackPropagate function for cnode both are not null";
-    }
+    auto fg = iter->second->fg();
+    auto fg_type = iter->second->fg_type();
 
-    if (bprop_fg != nullptr) {
-      BackPropagateOneCNodeWithBPropFuncGraph(cnode, iter->second, bprop_fg, by_value);
+    if (fg_type == PynativeAdjoint::kBackwardPropagate) {
+      BackPropagateOneCNodeWithBPropFuncGraph(cnode, iter->second, fg, by_value);
     } else {
-      BackPropagateOneCNodeWithBPropCNode(cnode, iter->second, bprop_cnode, by_value);
+      BackPropagateOneCNodeWithFPropFuncGraph(cnode, iter->second, fg, by_value);
     }
   }
   return true;
@@ -1066,7 +1063,7 @@ bool KPynativeCellImpl::BuildKNode() {
   return true;
 }
 
-CNodePtr KPynativeCellImpl::GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const ValuePtrList &args) {
+CNodePtr KPynativeCellImpl::GetBPropFromFProp(const FuncGraphPtr &fprop_fg, const AnfNodePtrList &args) {
   // Wrap tuple_getitem(fprop_app, 1) in a FuncGraph and optimize it;
   auto bprop_builder = std::make_shared<FuncGraph>();
   bprop_builder->debug_info()->set_name("bprop_builder");
@@ -1076,7 +1073,7 @@ CNodePtr KPynativeCellImpl::GetBPropFromFProp(const FuncGraphPtr &fprop_fg, cons
   for (const auto &arg : args) {
     auto param = bprop_builder->add_parameter();
     fprop_app_inputs.push_back(param);
-    bprop_builder_inputs.push_back(NewValueNode(arg));
+    bprop_builder_inputs.push_back(arg);
   }
   auto fprop_app = bprop_builder->NewCNode(fprop_app_inputs);
   auto get_bprop =
