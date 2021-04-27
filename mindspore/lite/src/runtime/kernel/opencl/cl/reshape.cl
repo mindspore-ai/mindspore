@@ -16,9 +16,9 @@ __kernel void reshape_NHWC4(__read_only image2d_t src_data, __write_only image2d
   int CI4_rem = src_size.x % C4NUM;
   CI4_rem = (CI4_rem == 0) ? C4NUM : CI4_rem;
   int in_img_x = CI4 * src_size.y;
-  TYPE4 res = (TYPE4)(0.0f);
-  TYPE tmp[4];
-  TYPE res_tmp[4];
+  DTYPE4 res = (DTYPE4)(0.0f);
+  DTYPE tmp[4];
+  DTYPE res_tmp[4];
   int gcnt = 0;
   if (CO4_rem == 0 && ((CI4_rem & 0x3) == 0)) {
     gcnt = X + dst_size.x * Y;

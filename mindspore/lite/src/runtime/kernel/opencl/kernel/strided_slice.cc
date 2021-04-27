@@ -89,12 +89,7 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
 int StridedSliceOpenCLKernel::Prepare() {
   std::string program_name = "strided_slice";
   ocl_runtime_->LoadSource(program_name, strided_slice_source);
-  std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
-  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
   ocl_runtime_->BuildKernel(kernel_, program_name, "strided_slice", build_options_ext);
   SetConstArgs();
   SetGlobalLocal();

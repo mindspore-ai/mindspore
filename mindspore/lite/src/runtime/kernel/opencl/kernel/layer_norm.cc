@@ -171,12 +171,7 @@ int LayerNormOpenCLKernel::Prepare() {
   std::string source = layer_norm_source;
   std::string program_name = "LayerNormalization";
   ocl_runtime_->LoadSource(program_name, source);
-  std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
-  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   kernel_name_mean_var += "Axis" + std::to_string(normalized_axis_) + "NHWC4";
   ocl_runtime_->BuildKernel(kernel_mean_var_, program_name, kernel_name_mean_var, build_options_ext);

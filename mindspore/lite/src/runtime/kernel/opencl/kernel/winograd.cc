@@ -82,12 +82,7 @@ std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, si
 void WinogradOpenCLKernel::BuildKernel() {
   std::string program_name = "winograd";
   ocl_runtime_->LoadSource(program_name, GetActDefines() + winograd_source);
-  std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
-  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
   ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options_ext);
   ocl_runtime_->BuildKernel(kernel_, program_name,
                             filter_type_ == MemType::IMG ? "WinogradConv2D_Img" : "WinogradConv2D", build_options_ext);

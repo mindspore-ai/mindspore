@@ -144,12 +144,7 @@ void Conv2DOpenCLKernel::BuildKernel() {
     kernel_name << "_Img";
   }
   ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source);
-  std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
-  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), build_options_ext);
 }
 

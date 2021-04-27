@@ -65,9 +65,9 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getByte
     return env->NewByteArray(0);
   }
 
-  auto local_element_num = ms_tensor_ptr->ElementsNum();
-  auto ret = env->NewByteArray(local_element_num);
-  env->SetByteArrayRegion(ret, 0, local_element_num, local_data);
+  auto local_size = ms_tensor_ptr->Size();
+  auto ret = env->NewByteArray(local_size);
+  env->SetByteArrayRegion(ret, 0, local_size, local_data);
   return ret;
 }
 

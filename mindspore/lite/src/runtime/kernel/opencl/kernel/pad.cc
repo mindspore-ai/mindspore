@@ -74,12 +74,7 @@ int PadOpenCLKernel::Prepare() {
   const std::string source = pad_source;
   const std::string program_name = "Pad";
   ocl_runtime_->LoadSource(program_name, source);
-  std::vector<std::string> build_options_ext;
-  if (desc_.data_type == kNumberTypeFloat32) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
-  } else if (desc_.data_type == kNumberTypeFloat16) {
-    build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
-  }
+  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
   ocl_runtime_->BuildKernel(kernel_, program_name, "Pad", build_options_ext);
   SetConstArgs();
   return RET_OK;
