@@ -15,7 +15,6 @@
  */
 
 #include "nnacl/infer/mean_infer.h"
-#include "nnacl/infer/infer_register.h"
 
 int MeanInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -34,7 +33,7 @@ int MeanInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
   ReduceParameter *param = (ReduceParameter *)parameter;
   bool keep_dims = (bool)(param->keep_dims_);
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   int *axes = param->axes_;
   int num_axes = param->num_axes_;

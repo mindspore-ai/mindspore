@@ -37,7 +37,7 @@ int UnsqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   UnSqueezeParameter *param = (UnSqueezeParameter *)parameter;
   int in_rank = input->shape_size_;
   int dim_rank = param->num_dim_;
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   if (dim_rank == 0) {
     for (size_t i = 0; i < input->shape_size_; i++) {

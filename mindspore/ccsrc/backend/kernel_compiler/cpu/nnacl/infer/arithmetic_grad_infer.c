@@ -40,13 +40,13 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
   TensorC *dx1 = outputs[0];
   TensorC *dx2 = outputs[1];
 
-  int in_shape0[MAX_SHAPE_SIZE];
+  int in_shape0[MAX_SHAPE_SIZE] = {0};
   size_t in_shape0_size = 0;
   ShapeSet(in_shape0, &in_shape0_size, x1->shape_, x1->shape_size_);
-  int in_shape1[MAX_SHAPE_SIZE];
+  int in_shape1[MAX_SHAPE_SIZE] = {0};
   size_t in_shape1_size = 0;
   ShapeSet(in_shape1, &in_shape1_size, x2->shape_, x2->shape_size_);
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, dy->shape_, dy->shape_size_);
 

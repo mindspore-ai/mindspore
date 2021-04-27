@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void PRelu(const float *input, float *output, float *slope, int start, int end, int channel);
+void PRelu(const float *input, float *output, const float *slope, int start, int end, int channel);
 
 void PReluShareChannel(const float *input, float *output, float slope, int start, int end);
 #ifdef __cplusplus

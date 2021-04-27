@@ -30,7 +30,7 @@ int UnsortedSegmentSumInferShape(const TensorC *const *inputs, size_t inputs_siz
   const TensorC *x = inputs[0];
   const TensorC *segment_id = inputs[1];
   int num_segments = *(int *)(inputs[2]->data_);
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapePush(output_shape, &output_shape_size, num_segments);
   for (int index = segment_id->shape_size_; index < (int)(x->shape_size_); index++) {

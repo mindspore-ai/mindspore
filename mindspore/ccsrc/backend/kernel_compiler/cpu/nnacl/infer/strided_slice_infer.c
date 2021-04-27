@@ -94,9 +94,6 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
       return NNACL_ERR;
     }
     stride_data = (int *)(stride_tensor->data_);
-    if (stride_data == NULL) {
-      return NNACL_ERR;
-    }
   }
 
   int axes[MAX_SHAPE_SIZE];
@@ -138,6 +135,9 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
       // begins or ends exceed limit will be set to limit
       begins[i] = imax(imin(begin_data[axis], input_tensor->shape_[i] - 1), -input_tensor->shape_[i]);
       ends[i] = imax(imin(end_data[axis], input_tensor->shape_[i]), -input_tensor->shape_[i] - 1);
+      if (stride_data == NULL) {
+        return NNACL_ERR;
+      }
       strides[i] = stride_data[axis];
     } else {
       begins[i] = 0;
@@ -164,12 +164,12 @@ int StrideSlicePreCheck(const TensorC *const *inputs, size_t inputs_size, Tensor
 }
 
 void Bit2Vector(StridedSliceTransferBuffer *transfer_buffer, StridedSliceParameter *param) {
-  for (int i = 0; i < transfer_buffer->ndim_; i++) {
-    transfer_buffer->begins_mask_[i] = (uint32_t)(param->begins_mask_) & (1 << i);
-    transfer_buffer->ends_mask_[i] = (uint32_t)(param->ends_mask_) & (1 << i);
-    transfer_buffer->ellipsis_mask_[i] = (uint32_t)(param->ellipsisMask_) & (1 << i);
-    transfer_buffer->new_axis_mask_[i] = (uint32_t)(param->newAxisMask_) & (1 << i);
-    transfer_buffer->shrink_axis_mask_[i] = (uint32_t)(param->shrinkAxisMask_) & (1 << i);
+  for (unsigned i = 0; i < (unsigned)transfer_buffer->ndim_; i++) {
+    transfer_buffer->begins_mask_[i] = (unsigned)(param->begins_mask_) & (1 << i);
+    transfer_buffer->ends_mask_[i] = (unsigned)(param->ends_mask_) & (1 << i);
+    transfer_buffer->ellipsis_mask_[i] = (unsigned)(param->ellipsisMask_) & (1 << i);
+    transfer_buffer->new_axis_mask_[i] = (unsigned)(param->newAxisMask_) & (1 << i);
+    transfer_buffer->shrink_axis_mask_[i] = (unsigned)(param->shrinkAxisMask_) & (1 << i);
   }
 }
 

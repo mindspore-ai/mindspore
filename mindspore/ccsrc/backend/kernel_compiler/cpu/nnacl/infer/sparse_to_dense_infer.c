@@ -34,7 +34,7 @@ int SparseToDenseInferShape(const TensorC *const *inputs, size_t inputs_size, Te
     return NNACL_INFER_INVALID;
   }
   int *input1_data = (int *)(input1->data_);
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   for (int i = 0; i < GetElementNum(input1); i++) {
     ShapePush(output_shape, &output_shape_size, input1_data[i]);

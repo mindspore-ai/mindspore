@@ -63,7 +63,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
       return NNACL_NULL_PTR;
     }
     int *ele_shape_data = (int *)(input2->data_);
-    int element_shape[MAX_SHAPE_SIZE];
+    int element_shape[MAX_SHAPE_SIZE] = {0};
     size_t element_shape_size = 0;
     for (int i = 0; i < GetElementNum(input2); ++i) {
       ShapePush(element_shape, &element_shape_size, ele_shape_data[i]);

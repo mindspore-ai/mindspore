@@ -61,7 +61,7 @@ int TensorListMergeShape(int *element_shape, size_t *element_shape_size, const i
   return NNACL_OK;
 }
 
-bool TensorListIsFullyDefined(int *shape, size_t shape_size) {
+bool TensorListIsFullyDefined(const int *shape, size_t shape_size) {
   for (size_t i = 0; i < shape_size; ++i) {
     if (shape[i] < 0) {
       return false;
@@ -145,7 +145,7 @@ int SetShapeTensor(TensorC *dst, const TensorC *src) {
   return NNACL_OK;
 }
 
-int SetShapeArray(TensorC *dst, int *src, size_t src_size) {
+int SetShapeArray(TensorC *dst, const int *src, size_t src_size) {
   for (size_t i = 0; i < src_size; i++) {
     dst->shape_[i] = src[i];
   }
@@ -359,7 +359,7 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-  int input_shape[MAX_SHAPE_SIZE];
+  int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, input->shape_, input->shape_size_);
   input_shape_size--;
@@ -381,23 +381,30 @@ int VectorCInit(VectorC *vc, size_t per_malloc_size) {
   return NNACL_OK;
 }
 
-void VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size) {
+int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size) {
   if (src_shape_size == 0) {
     vc->size_ = 0;
   } else {
     free(vc->data_);
     vc->max_size_ = (src_shape_size / vc->per_malloc_size_ + 1) * vc->per_malloc_size_;
     vc->data_ = (int *)malloc(sizeof(int) * vc->max_size_);
+    if (vc->data_ == NULL) {
+      return NNACL_ERR;
+    }
     for (size_t i = 0; i < src_shape_size; i++) {
       vc->data_[i] = src_shape[i];
     }
     vc->size_ = src_shape_size;
   }
+  return NNACL_OK;
 }
 
-void VectorCPush(VectorC *vc, int value) {
+int VectorCPush(VectorC *vc, int value) {
   if (vc->size_ + 1 > vc->max_size_) {
     int *tmp = (int *)malloc(vc->per_malloc_size_ * sizeof(int) + vc->max_size_ * sizeof(int));
+    if (tmp == NULL) {
+      return NNACL_ERR;
+    }
     memcpy(tmp, vc->data_, vc->size_ * sizeof(int));
     free(vc->data_);
     vc->data_ = tmp;
@@ -405,6 +412,7 @@ void VectorCPush(VectorC *vc, int value) {
   }
   vc->data_[vc->size_] = value;
   vc->size_++;
+  return NNACL_OK;
 }
 
 void VectorCInsert(VectorC *vc, int index, int value) {

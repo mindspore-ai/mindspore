@@ -18,7 +18,7 @@
 #include "nnacl/infer/infer_register.h"
 
 int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, OpParameter *parameter) {
-  int input_shape[MAX_SHAPE_SIZE];
+  int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, inputs[0]->shape_, inputs[0]->shape_size_);
 
@@ -60,7 +60,7 @@ int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, OpP
 }
 
 int SetOutputShapeFromInput(const TensorC *const *inputs, TensorC **outputs) {
-  int input_shape[MAX_SHAPE_SIZE];
+  int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, inputs[0]->shape_, inputs[0]->shape_size_);
   if (input_shape_size != 4) {

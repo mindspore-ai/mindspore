@@ -31,7 +31,7 @@ int StackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-  int32_t output_shape[MAX_SHAPE_SIZE];
+  int32_t output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapeSet(output_shape, &output_shape_size, input->shape_, input->shape_size_);
   int axis = param->axis_ < 0 ? param->axis_ + input->shape_size_ + 1 : param->axis_;

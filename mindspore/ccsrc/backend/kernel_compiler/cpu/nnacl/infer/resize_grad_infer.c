@@ -39,7 +39,7 @@ int ResizeGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   if (input_1->shape_size_ == 4) {
     ShapeSet(output->shape_, &output->shape_size_, input_1->shape_, input_1->shape_size_);
   } else if (input_1->shape_size_ == 1 && input_1->shape_[0] == 2 && input_1->data_type_ == kNumberTypeInt32) {
-    int output_shape[MAX_SHAPE_SIZE];
+    int output_shape[MAX_SHAPE_SIZE] = {0};
     size_t output_shape_size = 0;
     int32_t *data = (int32_t *)(input_1->data_);
 

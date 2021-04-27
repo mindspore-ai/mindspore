@@ -16,7 +16,7 @@
 #include "nnacl/fp32/prelu_fp32.h"
 
 #ifdef ENABLE_ARM64
-static inline void PRelu4x16(const float *in, float *out, float *cur_slope, size_t step) {
+static inline void PRelu4x16(const float *in, float *out, const float *cur_slope, size_t step) {
   asm volatile(
     "mov x10, %[in]\n"
     "mov x11, %[out]\n"
@@ -85,7 +85,7 @@ static inline void PRelu4x16(const float *in, float *out, float *cur_slope, size
 }
 #endif
 
-void PRelu(const float *input, float *output, float *slope, int start, int end, int channel) {
+void PRelu(const float *input, float *output, const float *slope, int start, int end, int channel) {
   int i = start;
 #ifdef ENABLE_ARM64
   for (; i < end - 3; i += 4) {
@@ -95,7 +95,7 @@ void PRelu(const float *input, float *output, float *slope, int start, int end, 
     for (; j < channel - 15; j += 16) {
       const float *in = cur_in + j;
       float *out = cur_out + j;
-      float *cur_slope = slope + j;
+      const float *cur_slope = slope + j;
       size_t step = channel * sizeof(float);
       PRelu4x16(in, out, cur_slope, step);
     }

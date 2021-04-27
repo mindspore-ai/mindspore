@@ -41,14 +41,14 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   size_t indices_shape_size = 0;
   ShapeSet(indices_shape, &indices_shape_size, indices->shape_, indices->shape_size_);
   int indices_rank = indices_shape_size;
-  int in_shape[MAX_SHAPE_SIZE];
+  int in_shape[MAX_SHAPE_SIZE] = {0};
   size_t in_shape_size = 0;
   ShapeSet(in_shape, &in_shape_size, input->shape_, input->shape_size_);
   int in_rank = in_shape_size;
   if (in_rank < axis + 1) {
     return NNACL_ERR;
   }
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, in_shape, in_shape_size);
   ShapeErase(out_shape, &out_shape_size, axis);

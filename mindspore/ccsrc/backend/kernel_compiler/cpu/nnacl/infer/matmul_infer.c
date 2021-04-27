@@ -36,10 +36,10 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_INFER_INVALID;
   }
 
-  int a_shape[MAX_SHAPE_SIZE];
+  int a_shape[MAX_SHAPE_SIZE] = {0};
   size_t a_shape_size = 0;
   ShapeSet(a_shape, &a_shape_size, input0->shape_, input0->shape_size_);
-  int b_shape[MAX_SHAPE_SIZE];
+  int b_shape[MAX_SHAPE_SIZE] = {0};
   size_t b_shape_size = 0;
   ShapeSet(b_shape, &b_shape_size, input1->shape_, input1->shape_size_);
 
@@ -67,9 +67,15 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 
   if (param->a_transpose_) {
+    if (a_shape_size < 2) {
+      return NNACL_ERR;
+    }
     iswap(&a_shape[a_shape_size - 1], &a_shape[a_shape_size - 2]);
   }
   if (param->b_transpose_) {
+    if (b_shape_size < 2) {
+      return NNACL_ERR;
+    }
     iswap(&b_shape[b_shape_size - 1], &b_shape[b_shape_size - 2]);
   }
   int c_shape[MAX_SHAPE_SIZE];

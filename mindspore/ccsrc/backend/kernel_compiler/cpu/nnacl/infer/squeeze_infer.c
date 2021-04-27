@@ -32,7 +32,7 @@ int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
 
   for (size_t i = 0; i < param->axis_size_; i++) {

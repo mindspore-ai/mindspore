@@ -40,7 +40,7 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_NULL_PTR;
   }
   int *ele_shape_ptr = (int *)(ele_shape->data_);
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   for (int i = 0; i < GetElementNum(ele_shape); ++i) {
     ShapePush(output_shape, &output_shape_size, ele_shape_ptr[i]);

@@ -36,8 +36,8 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, Poolin
   const float32x4_t factor = vdupq_n_f32(kk);
 #endif
   for (int ib = 0; ib < count; ib++) {
-    float *out = &output_ptr[(ib * in_h * in_w * channel)];
-    const float *inPtr = &input_ptr[(ib * output_h * output_w * channel)];
+    float *out = output_ptr + ib * in_h * in_w * channel;
+    const float *inPtr = input_ptr + ib * output_h * output_w * channel;
     // iterate over yt
     for (int yh = 0; yh < output_h; yh++) {
       int over_h = pad_h - yh * stride_h;
@@ -115,9 +115,9 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
   int output_h = pooling_param->output_h_;
 
   for (int ib = 0; ib < output_batch; ib++) {
-    float *out = &output_ptr[(ib * in_h * in_w * channel)];
-    const float *inPtr = &input_ptr[(ib * in_h * in_w * channel)];
-    const float *dyPtr = &dy_ptr[(ib * output_h * output_w * channel)];
+    float *out = output_ptr + ib * in_h * in_w * channel;
+    const float *inPtr = input_ptr + ib * in_h * in_w * channel;
+    const float *dyPtr = dy_ptr + ib * output_h * output_w * channel;
     for (int yh = 0; yh < output_h; yh++) {
       int over_h = pad_h - yh * stride_h;
       int kh_s = MSMAX(0, over_h);
@@ -127,7 +127,7 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
         int kw_s = MSMAX(0, over_w);
         int kw_e = MSMIN(win_w, in_w + over_w);
         int ic = 0;
-        for (; ic < (channel & ~3); ic += 4) {
+        for (; ic <= channel - 4; ic += 4) {
           int idx = (yw + yh * output_w) * channel + ic;
 #ifdef ENABLE_ARM
           uint32x4_t max_idx = vdupq_n_u32(0);

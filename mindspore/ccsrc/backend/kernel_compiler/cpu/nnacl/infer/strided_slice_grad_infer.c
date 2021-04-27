@@ -39,16 +39,16 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   SetDataTypeFormat(outputs[0], input);
   bool inferflag = parameter->infer_flag_;
 
-  int in_shape_[MAX_SHAPE_SIZE];
+  int in_shape_[MAX_SHAPE_SIZE] = {0};
   size_t in_shape_size = 0;
   if (inferflag) {
     ShapeSet(in_shape_, &in_shape_size, input->shape_, input->shape_size_);
   }
-  int begins_[MAX_SHAPE_SIZE];
+  int begins_[MAX_SHAPE_SIZE] = {0};
   size_t begins_size = 0;
-  int ends_[MAX_SHAPE_SIZE];
+  int ends_[MAX_SHAPE_SIZE] = {0};
   size_t ends_size = 0;
-  int strides_[MAX_SHAPE_SIZE];
+  int strides_[MAX_SHAPE_SIZE] = {0};
   size_t strides_size = 0;
 
   if (!StridedSliceCheckInputs(inputs, inputs_size)) {
@@ -69,17 +69,17 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   }
 
   // set all mask to original input shape
-  uint32_t begins_mask_[MAX_SHAPE_SIZE];
-  uint32_t ends_mask_[MAX_SHAPE_SIZE];
-  uint32_t ellipsis_mask_[MAX_SHAPE_SIZE];
-  uint32_t new_axis_mask_[MAX_SHAPE_SIZE];
+  uint32_t begins_mask_[MAX_SHAPE_SIZE] = {0};
+  uint32_t ends_mask_[MAX_SHAPE_SIZE] = {0};
+  uint32_t ellipsis_mask_[MAX_SHAPE_SIZE] = {0};
+  uint32_t new_axis_mask_[MAX_SHAPE_SIZE] = {0};
 
   StridedSliceParameter *param = (StridedSliceParameter *)parameter;
   for (size_t i = 0; i < ndim_; i++) {
-    begins_mask_[i] = (bool)(param->begins_mask_) & (1 << i);
-    ends_mask_[i] = (bool)(param->ends_mask_) & (1 << i);
-    ellipsis_mask_[i] = (bool)(param->ellipsisMask_) & (1 << i);
-    new_axis_mask_[i] = (bool)(param->newAxisMask_) & (1 << i);
+    begins_mask_[i] = (unsigned)(param->begins_mask_) & (1 << i);
+    ends_mask_[i] = (unsigned)(param->ends_mask_) & (1 << i);
+    ellipsis_mask_[i] = (unsigned)(param->ellipsisMask_) & (1 << i);
+    new_axis_mask_[i] = (unsigned)(param->newAxisMask_) & (1 << i);
   }
   param->num_axes_ = in_shape_size;
   param->in_shape_length_ = in_shape_size;
@@ -133,7 +133,7 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   }
 
   size_t output_size = inputs[1]->shape_[0];
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   if (inputs[1]->data_ == NULL) {
     return NNACL_ERR;

@@ -28,7 +28,7 @@ int ReduceOnAllAxes(const TensorC *input, TensorC *output, int *out_shape, size_
   return NNACL_OK;
 }
 
-int ReduceOnSelectedAxes(const TensorC *input, size_t num_axes, int *actual_axes, TensorC *output, int *out_shape,
+int ReduceOnSelectedAxes(const TensorC *input, size_t num_axes, const int *actual_axes, TensorC *output, int *out_shape,
                          size_t out_shape_size, bool keep_dims) {
   for (size_t i = 0; i < input->shape_size_; i++) {
     bool reduce_axis = false;
@@ -67,7 +67,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_INFER_INVALID;
   }
   bool keep_dims = param->keep_dims_;
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   const size_t out_shape_size = 0;
   // get axes from input tensor
   const TensorC *axes_input = inputs[1];

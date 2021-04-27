@@ -47,7 +47,7 @@ int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
     param->paddings_[i] = ((int *)paddings->data_)[i];
   }
 
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   if (input->shape_size_ > 4) {
     return NNACL_INPUT_TENSOR_ERROR;
