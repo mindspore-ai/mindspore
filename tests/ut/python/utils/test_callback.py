@@ -14,6 +14,7 @@
 # ============================================================================
 """test callback function."""
 import os
+import platform
 import stat
 from unittest import mock
 
@@ -244,6 +245,43 @@ def test_checkpoint_save_ckpt_seconds():
     cb_params.cur_step_num = 16
     ckpt_cb2.begin(run_context)
     ckpt_cb2.step_end(run_context)
+
+
+def test_checkpoint_save_ckpt_with_encryption():
+    """Test checkpoint save ckpt with encryption."""
+    train_config = CheckpointConfig(
+        save_checkpoint_steps=16,
+        save_checkpoint_seconds=0,
+        keep_checkpoint_max=5,
+        keep_checkpoint_per_n_minutes=0,
+        enc_key=os.urandom(16),
+        enc_mode="AES-GCM")
+    ckpt_cb = ModelCheckpoint(config=train_config)
+    cb_params = _InternalCallbackParam()
+    net = Net()
+    loss = nn.SoftmaxCrossEntropyWithLogits()
+    optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    network_ = WithLossCell(net, loss)
+    _train_network = TrainOneStepCell(network_, optim)
+    cb_params.train_network = _train_network
+    cb_params.epoch_num = 10
+    cb_params.cur_epoch_num = 5
+    cb_params.cur_step_num = 160
+    cb_params.batch_num = 32
+    run_context = RunContext(cb_params)
+    ckpt_cb.begin(run_context)
+    ckpt_cb.step_end(run_context)
+    ckpt_cb2 = ModelCheckpoint(config=train_config)
+    cb_params.cur_epoch_num = 1
+    cb_params.cur_step_num = 15
+
+    if platform.system().lower() == "windows":
+        with pytest.raises(NotImplementedError):
+            ckpt_cb2.begin(run_context)
+            ckpt_cb2.step_end(run_context)
+    else:
+        ckpt_cb2.begin(run_context)
+        ckpt_cb2.step_end(run_context)
 
 
 def test_CallbackManager():

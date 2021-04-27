@@ -28,6 +28,7 @@
 #include "utils/mpi/mpi_config.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/costmodel_context.h"
+#include "crypto/crypto_pybind.h"
 #ifdef ENABLE_GPU_COLLECTIVE
 #include "runtime/device/gpu/distribution/collective_init.h"
 #else
@@ -330,4 +331,8 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())
     .def("get_all_ops_info", &OpInfoLoaderPy::GetAllOpsInfo, "get all ops info.");
+
+  (void)m.def("_encrypt", &mindspore::crypto::PyEncrypt, "Encrypt the data.");
+  (void)m.def("_decrypt", &mindspore::crypto::PyDecrypt, "Decrypt the data.");
+  (void)m.def("_is_cipher_file", &mindspore::crypto::PyIsCipherFile, "Determine whether the file is encrypted");
 }
