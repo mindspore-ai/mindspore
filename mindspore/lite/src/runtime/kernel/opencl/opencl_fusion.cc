@@ -135,7 +135,6 @@ std::vector<T *> RemoveDuplicationsButKeepOrder(const std::vector<T *> &vec) {
 void Merge(LiteKernel *a, LiteKernel *b, bool remove_a) {
   MS_ASSERT(a);
   MS_ASSERT(b);
-  MS_ASSERT(a->op_parameter()->infer_flag_);
   MS_ASSERT(b->op_parameter()->infer_flag_);
   if (remove_a) {  // pred->tensor0->a->tensor1->b: remove a tensor1
     // update pred out_kernels: a.in_kernels.out_kernels.replace(a,b)
