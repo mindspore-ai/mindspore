@@ -271,7 +271,7 @@ def test():
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=1)
 
     args.logger.info('Creating Network....')
-    network = YOLOV4CspDarkNet53(is_training=False)
+    network = YOLOV4CspDarkNet53()
 
     args.logger.info(args.pretrained)
     if os.path.isfile(args.pretrained):
