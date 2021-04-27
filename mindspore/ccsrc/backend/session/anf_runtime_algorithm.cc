@@ -1931,5 +1931,15 @@ void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_
     {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
   root_graph->set_output(make_tuple);
 }
+
+AnfNodeIndexSet AnfRuntimeAlgorithm::GetUpdateStateUsers(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+  AnfNodeIndexSet update_states;
+  for (auto &user : manager->node_users()[node]) {
+    if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
+      update_states.insert(user);
+    }
+  }
+  return update_states;
+}
 }  // namespace session
 }  // namespace mindspore

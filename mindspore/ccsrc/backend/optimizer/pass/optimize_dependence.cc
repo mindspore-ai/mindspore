@@ -35,19 +35,17 @@ CNodePtr CreateNewDependNode(const FuncGraphPtr &func_graph, const CNodePtr &cno
                              const std::vector<AnfNodePtr> &new_depend_inputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
-  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
-  CNodePtr new_depend = nullptr;
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   if (kernel_graph == nullptr) {
-    new_depend = func_graph->NewCNode(new_depend_inputs);
+    auto new_depend = func_graph->NewCNode(new_depend_inputs);
     MS_EXCEPTION_IF_NULL(new_depend);
     new_depend->set_abstract(cnode->abstract());
     new_depend->set_scope(cnode->scope());
-  } else {
-    new_depend = kernel_graph->NewCNode(cnode);
-    MS_EXCEPTION_IF_NULL(new_depend);
-    new_depend->set_inputs(new_depend_inputs);
+    return new_depend;
   }
-  func_graph->manager()->Replace(cnode, new_depend);
+  auto new_depend = kernel_graph->NewCNode(cnode);
+  MS_EXCEPTION_IF_NULL(new_depend);
+  new_depend->set_inputs(new_depend_inputs);
   return new_depend;
 }
 
@@ -77,9 +75,9 @@ AnfNodePtr EliminateIsolatedVirtualNodeInput(const FuncGraphPtr &func_graph, con
   auto replace_node = eliminate_node->input(kSingleInputIndex);
   std::vector<AnfNodePtr> new_depend_inputs = cnode->inputs();
   new_depend_inputs[kIsolatedDependRealInputIndex + 1] = replace_node;
-  auto new_cnode = CreateNewDependNode(func_graph, cnode, new_depend_inputs);
-  auto new_node = new_cnode->cast<AnfNodePtr>();
-  return new_node;
+  auto new_depend = CreateNewDependNode(func_graph, cnode, new_depend_inputs);
+  func_graph->manager()->Replace(cnode, new_depend);
+  return new_depend;
 }
 
 AnfNodePtr GetReplaceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
@@ -157,55 +155,53 @@ const BaseRef OptimizeDependence::DefinePattern() const {
   return VectorRef({X, Xs});
 }
 
-std::pair<AnfNodePtr, size_t> SearchTransDataAndCast(const AnfNodePtr &node, bool is_first_node) {
-  if (node == nullptr || !node->isa<CNode>()) {
-    return std::pair<AnfNodePtr, size_t>(nullptr, 0);
+std::vector<size_t> SearchTransDataAndCast(const CNodePtr &cnode) {
+  // Search Depend and UpdateState only.
+  if (!cnode->IsApply(prim::kPrimDepend) && !cnode->IsApply(prim::kPrimUpdateState)) {
+    return {};
   }
-  // get real input of depend and update state.
-  size_t replace_input_index = 0;
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
-    replace_input_index = is_first_node ? kDependAttachNodeIndex : kRealInputIndexInDepend;
-  } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
-    replace_input_index = is_first_node ? kUpdateStateStateInput : kUpdateStateRealInput;
-  } else {
-    return std::pair<AnfNodePtr, size_t>(nullptr, 0);
+  // Find inputs which is Cast or TransData.
+  std::vector<size_t> result;
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    auto &input = cnode->input(i);
+    if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimCast) ||
+        AnfAlgo::CheckPrimitiveType(input, prim::KPrimTransData) ||
+        AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
+      result.emplace_back(i);
+    }
   }
-  // check whether real input is cast or trans data
-  auto real_input = node->cast<CNodePtr>()->input(replace_input_index);
-  if (AnfAlgo::CheckPrimitiveType(real_input, prim::kPrimCast) ||
-      AnfAlgo::CheckPrimitiveType(real_input, prim::KPrimTransData) ||
-      AnfAlgo::CheckPrimitiveType(real_input, prim::kPrimMakeTuple)) {
-    return std::pair<AnfNodePtr, size_t>(node, replace_input_index);
-  }
-  return SearchTransDataAndCast(real_input, false);
+  return result;
 }
 
 const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr) {
     return nullptr;
   }
-  // Get the cnode with repalce input index
-  auto cnode_with_input_index = SearchTransDataAndCast(node, true);
-  if (cnode_with_input_index.first == nullptr) {
+  // Search inputs to be replaced.
+  auto candidate_inputs = SearchTransDataAndCast(cnode);
+  if (candidate_inputs.empty()) {
     return nullptr;
   }
-  size_t replace_index = cnode_with_input_index.second;
-  auto depend_cnode = cnode_with_input_index.first->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(depend_cnode);
-  // Get new node which will act as new input of depend or UpdateState.
-  std::vector<AnfNodePtr> new_depend_inputs = depend_cnode->inputs();
-  auto replace_node = GetConvertNode(func_graph, depend_cnode, replace_index);
-  if (replace_node == nullptr) {
+  // Get new nodes which will act as new inputs of Depend or UpdateState.
+  std::vector<AnfNodePtr> new_inputs = cnode->inputs();
+  bool inputs_changed = false;
+  for (auto index : candidate_inputs) {
+    auto replace_node = GetConvertNode(func_graph, cnode, index);
+    if (replace_node != nullptr) {
+      new_inputs[index] = replace_node;
+      inputs_changed = true;
+    }
+  }
+  if (!inputs_changed) {
     return nullptr;
   }
-  new_depend_inputs[replace_index] = replace_node;
-  auto new_depend = CreateNewDependNode(func_graph, depend_cnode, new_depend_inputs);
-  if (new_depend == nullptr) {
-    return nullptr;
-  }
+  // Create a new Depend node to replace the old one if inputs changed.
+  auto new_depend = CreateNewDependNode(func_graph, cnode, new_inputs);
+  func_graph->manager()->Replace(cnode, new_depend);
   return nullptr;
 }
 

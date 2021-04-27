@@ -66,6 +66,9 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
       std::vector<int64_t> output_used_num(AnfAlgo::GetOutputTensorNum(bnupdate), 0);
       for (auto out_getitem : manager->node_users()[bnupdate]) {
         MS_EXCEPTION_IF_NULL(out_getitem.first);
+        if (!AnfAlgo::CheckPrimitiveType(out_getitem.first, prim::kPrimTupleGetItem)) {
+          continue;
+        }
         auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(out_getitem_ptr);
         auto input2 = out_getitem_ptr->input(2);

@@ -90,7 +90,7 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
   MS_EXCEPTION_IF_NULL(node_with_index.first);
   auto real_input = node_with_index.first;
   if (real_input->isa<ValueNode>() || real_input->isa<Parameter>()) {
-    input_node = InsertTransOpForOutput(func_graph, input_node, kernel_select);
+    input_node = InsertTransOpForOutput(func_graph, input_node, input_node, kernel_select);
     MS_EXCEPTION_IF_NULL(input_node);
     AnfAlgo::SetNodeInput(node, input_node, index);
   }
@@ -120,10 +120,16 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
   return node;
 }
 
-AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                          const KernelSelectPtr &kernel_select) {
+AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &orig_node,
+                                          const AnfNodePtr &node, const KernelSelectPtr &kernel_select) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto update_states = AnfAlgo::GetUpdateStateUsers(manager, orig_node);
+  for (auto &update_state : update_states) {
+    manager->SetEdge(update_state.first, update_state.second, node);
+  }
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   size_t out_num = AnfAlgo::GetOutputTensorNum(node);
@@ -282,7 +288,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   return cast;
 }
 
-AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &orig_node, const AnfNodePtr &node,
                                   const KernelSelectPtr &kernel_select) {
   size_t outputs_num = AnfAlgo::GetOutputTensorNum(node);
   if (outputs_num == 0) {
@@ -298,7 +304,7 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
     return new_node;
   }
   // Multiple output
-  return InsertTransOpForMultipleOutput(func_graph, node, kernel_select);
+  return InsertTransOpForMultipleOutput(func_graph, orig_node, node, kernel_select);
 }
 
 AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

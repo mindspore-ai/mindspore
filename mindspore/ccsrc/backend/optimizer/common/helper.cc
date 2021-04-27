@@ -401,11 +401,9 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   }
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
-    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
-        output_info.second == kDependAttachNodeIndex) {
-      continue;
-    }
-    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimUpdateState->name()) {
+    auto cnode_name = AnfAlgo::GetCNodeName(output_info.first);
+    if ((cnode_name == prim::kPrimDepend->name() && output_info.second == kDependAttachNodeIndex) ||
+        (cnode_name == prim::kPrimUpdateState->name())) {
       continue;
     }
     output_node_list->push_back(output_info);
@@ -426,12 +424,13 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
   }
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
-    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
-        output_info.second == kDependAttachNodeIndex) {
+    auto cnode_name = AnfAlgo::GetCNodeName(output_info.first);
+    if ((cnode_name == prim::kPrimDepend->name() && output_info.second == kDependAttachNodeIndex) ||
+        (cnode_name == prim::kPrimUpdateState->name())) {
       continue;
     }
     size_t used_output_index;
-    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimTupleGetItem->name()) {
+    if (cnode_name == prim::kPrimTupleGetItem->name()) {
       used_output_index = AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(output_info.first));
     } else if (AnfAlgo::GetCNodeName(node) == prim::kPrimTupleGetItem->name()) {
       used_output_index = output_index;
@@ -906,12 +905,13 @@ void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  // find BatchNorm's output which is a Depend
+  // Find BatchNorm's output which is a Depend or UpdateState.
   for (const auto &node_index : manager->node_users()[old_node]) {
     AnfNodePtr output = node_index.first;
     size_t index = IntToSize(node_index.second);
     MS_EXCEPTION_IF_NULL(output);
-    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend)) {
+    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend) ||
+        AnfAlgo::CheckPrimitiveType(output, prim::kPrimUpdateState)) {
       auto depend = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(depend);
       depend->set_input(index, new_node);

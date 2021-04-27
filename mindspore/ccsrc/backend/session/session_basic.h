@@ -172,6 +172,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void UpdateOutputTensors(const VectorRef *outputs,
                                    const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node);
   virtual void UnifyMindIR(const KernelGraphPtr &graph) {}
+  virtual void FinalOptimize(const KernelGraphPtr &graph) const;
   virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) { return 0; }
   virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
   virtual void BuildGraphImpl(GraphId) {}

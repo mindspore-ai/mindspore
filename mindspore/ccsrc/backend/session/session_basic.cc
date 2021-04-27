@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <set>
+#include <queue>
 #include <unordered_map>
 #include <utility>
 
@@ -2341,6 +2342,12 @@ void SessionBasic::ClearAllBucket(const GraphId &graph_id) {
   if (free_iter != free_bucket_id_map_.end()) {
     free_iter->second = 0;
   }
+}
+
+void SessionBasic::FinalOptimize(const KernelGraphPtr &graph) const {
+  MS_LOG(INFO) << "Start FinalOptimize for graph: " << graph->graph_id();
+  opt::CommonFinalOptimization(graph);
+  MS_LOG(INFO) << "End FinalOptimize for graph: " << graph->graph_id();
 }
 
 void SessionBasic::DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {

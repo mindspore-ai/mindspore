@@ -32,6 +32,7 @@
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
+#include "pipeline/jit/static_analysis/order_enforce.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"
@@ -340,6 +341,18 @@ bool AutoMonadAction(const ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "Auto-Monad failed, graph is null";
   }
   (void)pipeline::AutoMonad(func_graph);
+  return true;
+}
+
+bool OrderEnforceAction(const ResourcePtr &res) {
+  if (res->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "Order-Enforce error, manager is null";
+  }
+  auto func_graph = res->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Order-Enforce error, graph is null";
+  }
+  pipeline::OrderEnforce(func_graph);
   return true;
 }
 
@@ -752,6 +765,7 @@ std::vector<ActionItem> GePipeline() {
   // Add opt-stage python pass stub
   actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
   actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
+  actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
   actions.emplace_back(std::make_pair("validate", ValidateAction));
   return actions;
 }
@@ -764,6 +778,8 @@ std::vector<ActionItem> VmPipeline() {
 
   // Add opt-stage python pass stub
   actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
+
+  actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
@@ -784,6 +800,7 @@ std::vector<ActionItem> VmPipeline() {
 std::vector<ActionItem> PServerPipeline() {
   auto actions = CommonPipeline();
   actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
   actions.emplace_back(std::make_pair("validate", ValidateAction));
   actions.emplace_back(std::make_pair("pserver", StartPSServerAction));
   return actions;

@@ -132,7 +132,7 @@ def Depend(value, expr):
     return value
 
 
-def UpdateState(monad, expr):
+def UpdateState(monad, *exprs):
     """Implement `UpdateState`."""
     return monad
 

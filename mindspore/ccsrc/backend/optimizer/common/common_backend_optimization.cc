@@ -25,6 +25,7 @@
 #include "backend/optimizer/pass/convert_const_scalar_to_tensor.h"
 #include "backend/optimizer/pass/convert_attr_to_unify_mindir.h"
 #include "backend/optimizer/pass/add_training_attr.h"
+#include "backend/optimizer/pass/optimize_updatestate.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -56,6 +57,25 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   if (save_graphs) {
     std::string file_name = "hwopt_common_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
+  }
+}
+
+void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  // Run optimizer passes.
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto pm = std::make_shared<PassManager>("final_opt");
+  pm->AddPass(std::make_shared<OptimizeUpdateState>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+  // Dump IR if save_graphs is set.
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const bool save_graphs = context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string filename = "hwopt_common_final_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(filename, kernel_graph);
   }
 }
 }  // namespace opt
