@@ -14,7 +14,6 @@
 # ===========================================================================
 """GraphKernel Op Infer"""
 
-
 import copy
 import sys
 from functools import reduce
@@ -24,6 +23,7 @@ from .model import PrimLib, DataFormat as DF
 
 def infer(op_name, inputs, attrs):
     """infer shape dtype and format"""
+
     def _create_opinfer():
         if hasattr(sys.modules[__name__], op_name):
             op_cls = getattr(sys.modules[__name__], op_name)
@@ -38,6 +38,7 @@ def infer(op_name, inputs, attrs):
             raise GKException("OpInfo does not support op {}".format(op_name))
         op_cls = getattr(sys.modules[__name__], cls_name)
         return op_cls(op_name, inputs, attrs)
+
     return _create_opinfer().infer()
 
 
@@ -168,7 +169,7 @@ class _Reshape(OpInfer):
         raise GKException("_infer_shape should be implemented by subclass")
 
     def _infer_format(self):
-        return DF.DEFAULT
+        return DF.DEFAULT if "format" not in self.attrs else self.attrs["format"]
 
 
 class Reshape(_Reshape):
@@ -236,3 +237,108 @@ class Select(_Elemwise):
 
     def _infer_type(self):
         return self.inputs[1].dtype
+
+
+def check_nd(data, nd):
+    if not isinstance(data, (list, tuple)) or len(data) != nd:
+        raise GKException("input should be {}D list or tuple, but got {}.".format(nd, data))
+
+
+def conv_had_pad(pad_list, pad_mode):
+    if not isinstance(pad_list, (list, tuple)) or len(pad_list) != 4:
+        raise GKException("pad_list should be 4D list or tuple, but got {}".format(pad_list))
+    if pad_list[0] != pad_list[1] or pad_list[2] != pad_list[3]:
+        return True
+    if pad_mode not in ["VALID", "valid"]:
+        for _, pad in enumerate(pad_list):
+            if pad != 0:
+                return True
+    return False
+
+
+class Conv2D(OpInfer):
+    """Conv2D infer"""
+    def _infer_type(self):
+        if isinstance(self.attrs, dict) and "dst_type" in self.attrs:
+            return self.attrs["dst_type"]
+        return self.inputs[0].dtype
+
+    def _infer_shape(self):
+        shape_0 = list(self.inputs[0].shape)
+        shape_1 = list(self.inputs[1].shape)
+        check_nd(shape_0, 4)
+        check_nd(shape_1, 4)
+
+        format_0 = self.inputs[0].data_format
+        format_1 = self.inputs[1].data_format
+        if format_0 != DF.NHWC or format_1 != DF.NHWC:
+            raise GKException("Conv2D's inputs format must be NHWC, but got {} and {}".format(format_0, format_1))
+
+        n, h, w, out_channel = shape_0[0], shape_0[1], shape_0[2], shape_1[0]
+        pad_list = self.attrs["pad_list"]
+        pad_mode = self.attrs["pad_mode"]
+        kernel_size = self.attrs["kernel_size"]
+        stride = self.attrs["stride"]
+        dilation = self.attrs["dilation"]
+        check_nd(pad_list, 4)
+        check_nd(kernel_size, 2)
+        check_nd(stride, 4)
+        check_nd(dilation, 4)
+
+        has_pad = conv_had_pad(pad_list, pad_mode)
+        if not has_pad:
+            pad_list = [0, 0, 0, 0]
+
+        k_h = (kernel_size[0] - 1) * dilation[-2] + 1
+        k_w = (kernel_size[1] - 1) * dilation[-1] + 1
+        out_h = (h + pad_list[0] + pad_list[1] - k_h) // stride[-2] + 1
+        out_w = (w + pad_list[2] + pad_list[3] - k_w) // stride[-1] + 1
+        return [n, out_h, out_w, out_channel]
+
+
+class MatMul(OpInfer):
+    """MatMul infer"""
+    def _infer_type(self):
+        if isinstance(self.attrs, dict) and "dst_type" in self.attrs:
+            return self.attrs["dst_type"]
+        return self.inputs[0].dtype
+
+    def _infer_shape(self):
+        shape_0 = list(self.inputs[0].shape)
+        shape_1 = list(self.inputs[1].shape)
+        if len(shape_0) != 2 or len(shape_1) != 2:
+            raise GKException("MatMul's inputs shape must be 2D, but got {}, {}".format(len(shape_0), len(shape_1)))
+        transpose_a = self.attrs["transpose_a"]
+        transpose_b = self.attrs["transpose_b"]
+        m, k1 = (shape_0[-1], shape_0[-2]) if transpose_a else (shape_0[-2], shape_0[-1])
+        k2, n = (shape_1[-1], shape_1[-2]) if transpose_b else (shape_1[-2], shape_1[-1])
+        if k1 != k2:
+            raise GKException("MatMul's inputs have different k value: {} vs {}".format(k1, k2))
+        output_shape = [m, n]
+        return output_shape
+
+
+class PadAkg(OpInfer):
+    """PadAkg infer"""
+    def _infer_shape(self):
+        shape = list(self.inputs[0].shape)
+        n = len(shape)
+        pad_before = list(self.attrs["head"])
+        pad_after = list(self.attrs["tail"])
+        if len(pad_before) != n or len(pad_after) != n:
+            raise GKException("Input dimension and pad mismatch: {}d vs {}d vs {}d"
+                              .format(n, len(pad_before), len(pad_after)))
+        out_shape = [shape[i] + pad_before[i] + pad_after[i] for i in range(n)]
+        return out_shape
+
+
+class UnPadAkg(OpInfer):
+    """UnPadAkg infer"""
+    def _infer_shape(self):
+        shape = list(self.inputs[0].shape)
+        n = len(shape)
+        unpad_after = list(self.attrs["tail"])
+        if len(unpad_after) != n:
+            raise GKException("Input dimension and pad mismatch: {}d vs {}d".format(n, len(unpad_after)))
+        out_shape = [shape[i] - unpad_after[i] for i in range(n)]
+        return out_shape
