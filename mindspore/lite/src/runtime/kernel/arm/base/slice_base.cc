@@ -40,14 +40,14 @@ int SliceCPUKernel::ReSize() {
 
   MS_ASSERT(in_tensor->shape().size() == begin_tensor->ElementsNum());
   MS_ASSERT(in_tensor->shape().size() == size_tensor->ElementsNum());
-  MS_ASSERT(in_tensor->shape().size() <= DIMENSION_4D);
+  MS_ASSERT(in_tensor->shape().size() <= DIMENSION_8D);
 
   auto begin = reinterpret_cast<int32_t *>(begin_tensor->data_c());
   auto size = reinterpret_cast<int32_t *>(size_tensor->data_c());
 
   param_->param_length_ = in_tensor->shape().size();
-  if (param_->param_length_ > DIMENSION_4D) {
-    MS_LOG(ERROR) << "input dimension num should <= " << DIMENSION_4D;
+  if (param_->param_length_ > DIMENSION_8D) {
+    MS_LOG(ERROR) << "input dimension num should <= " << DIMENSION_8D;
     return RET_ERROR;
   }
   for (int i = 0; i < param_->param_length_; ++i) {
@@ -56,8 +56,8 @@ int SliceCPUKernel::ReSize() {
     param_->size_[i] = size[i] < 0 ? param_->shape_[i] - param_->begin_[i] : size[i];
     param_->end_[i] = param_->begin_[i] + param_->size_[i];
   }
-  if (param_->param_length_ < DIMENSION_4D) {
-    PadSliceParameterTo4D(param_);
+  if (param_->param_length_ < DIMENSION_8D) {
+    PadSliceParameterTo8D(param_);
   }
   return RET_OK;
 }
@@ -76,7 +76,8 @@ int SliceCPUKernel::SliceParallelRun(int thread_id) {
 }
 
 int SliceCPUKernel::Run() {
-  if (param_->size_[1] < op_parameter_->thread_num_) {
+  // param_ shape info has already been extended to 8d
+  if (param_->size_[5] < op_parameter_->thread_num_) {
     DoSliceNoParallel(in_tensors_.at(0)->data_c(), out_tensors_.at(0)->data_c(), param_,
                       lite::DataTypeSize(in_tensors_.at(0)->data_type()));
     return RET_OK;
