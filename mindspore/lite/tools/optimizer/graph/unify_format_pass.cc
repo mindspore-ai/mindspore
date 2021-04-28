@@ -807,7 +807,6 @@ bool UnifyFormatPass::BasicProcess(const FuncGraphPtr &func_graph, bool main_gra
       return false;
     }
   }
-  ResetSubGraphInput();
   return true;
 }
 
@@ -868,7 +867,6 @@ bool UnifyFormatPass::DecreaseTransposeForSingleOp(const FuncGraphPtr &func_grap
       return false;
     }
   }
-  ResetSubGraphInput();
   return true;
 }
 
@@ -1029,6 +1027,7 @@ bool UnifyFormatPass::RunOnlyForShape(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "run framework transpose unify failed.";
     return false;
   }
+  ResetSubGraphInput();
   // delete insert transpose op and update op output shape.
   if (!ResetFuncGraph(func_graph)) {
     MS_LOG(ERROR) << "reset func_graph failed.";
@@ -1059,11 +1058,13 @@ bool UnifyFormatPass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "run framework transpose unify failed.";
     return false;
   }
+  ResetSubGraphInput();
   // if input format of a certain op can be NHWC, can try transform this op to decrease the number of transpose op.
   if (!DecreaseTransposeForSingleOp(func_graph)) {
     MS_LOG(ERROR) << "run local trans insert optimizer failed.";
     return false;
   }
+  ResetSubGraphInput();
   // if input format of several ops surrounded only by transpose op all can be NHWC,
   // we can delete these transpose ops, and at the same time, transform these middle ops.
   if (!DecreaseTransposeForMultiOp(func_graph)) {

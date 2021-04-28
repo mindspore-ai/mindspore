@@ -41,8 +41,8 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
         }
       }
     }
-    if (utils::isa<FuncGraphPtr>(node)) {
-      auto sub_graph = utils::cast<FuncGraphPtr>(node);
+    if (utils::isa<ValueNode>(node) && GetValueNode<FuncGraphPtr>(node) != nullptr) {
+      auto sub_graph = GetValueNode<FuncGraphPtr>(node);
       auto status = ProcessGraph(sub_graph);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "process sub graph failed";
@@ -51,8 +51,10 @@ STATUS UnusedNodeRemovePass::ProcessGraph(const FuncGraphPtr &func_graph) {
     }
   }
   auto nodes = func_graph->nodes();
+  auto graph_inputs = func_graph->get_inputs();
   for (auto &node : nodes) {
-    if (vis.find(node) == vis.end()) {
+    if (vis.find(node) == vis.end() &&
+        std::find(graph_inputs.begin(), graph_inputs.end(), node) == graph_inputs.end()) {
       func_graph->DropNode(node);
     }
   }
