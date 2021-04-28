@@ -1914,7 +1914,11 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
 }
 
 // find previous parallel care node's next node.
-bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids, vector<size_t> *indexes) {
+bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids, vector<size_t> *indexes, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When find the previous node, exceeded the maximum recursion depth: " << MAX_RECURSIVE_DEPTH;
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(unique_ids);
   MS_EXCEPTION_IF_NULL(indexes);
   if (!node->isa<CNode>()) {
@@ -1942,7 +1946,7 @@ bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids, vecto
       find = true;
       continue;
     }
-    if (FindPreNodes(cnode, unique_ids, indexes)) {
+    if (FindPreNodes(cnode, unique_ids, indexes, ++curr_depth)) {
       find = true;
       continue;
     }
@@ -1954,7 +1958,7 @@ void FindLastNodesUniqueId(const FuncGraphPtr &root, std::vector<std::string> *u
                            std::vector<size_t> *indexes) {
   MS_EXCEPTION_IF_NULL(unique_ids);
   CNodePtr cnode = root->get_return();
-  if (!FindPreNodes(cnode, unique_ids, indexes)) {
+  if (!FindPreNodes(cnode, unique_ids, indexes, 0)) {
     MS_LOG(WARNING) << "cannot find the last parallel care node in eval graph";
   }
 }
@@ -2044,7 +2048,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     // load strategy checkpoint
     // key of strategy map
     std::string strategy_key_name = "";
-    auto param_names = NodeParameterName(cnode);
+    auto param_names = NodeParameterName(cnode, -1, 0);
     if (!param_names.empty()) {
       strategy_key_name = prim->name() + "_" + param_names[0].first;
     }
@@ -2151,13 +2155,18 @@ std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr &n
   return nullptr;
 }
 
-std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node) {
+std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding the next tensor layout for the parameter, exceeded the maximum recursion depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return nullptr;
+  }
   FuncGraphManagerPtr manager = node->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
   AnfNodeIndexSet node_set = manager->node_users()[node];
   for (auto &node_pair : node_set) {
     if (IsPrimitiveCNode(node_pair.first, prim::kPrimLoad)) {
-      auto layout_param = FindParameterNextLayout(node_pair.first);
+      auto layout_param = FindParameterNextLayout(node_pair.first, ++curr_depth);
       if (!layout_param) {
         continue;
       }
@@ -2184,7 +2193,7 @@ std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node) {
 
 std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
   // Create DataParallel tensor layout for parameter(support WideDeep).
-  auto next_layout = FindParameterNextLayout(node);
+  auto next_layout = FindParameterNextLayout(node, 0);
   if (next_layout != nullptr) {
     return next_layout;
   }
@@ -2329,14 +2338,19 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
-CNodePtr HandleDependLoss(const CNodePtr &cnode) {
+CNodePtr HandleDependLoss(const CNodePtr &cnode, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When handling the loss node of Depend, exceeded the max recursive depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return nullptr;
+  }
   // Handle return->depend->loss
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == DEPEND) {
     auto depend_before = cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_before);
-    return HandleDependLoss(depend_before);
+    return HandleDependLoss(depend_before, ++curr_depth);
   }
   return cnode;
 }
@@ -2370,7 +2384,7 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
     pre_cnode = pre_cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(pre_cnode);
   }
-  pre_cnode = HandleDependLoss(pre_cnode);
+  pre_cnode = HandleDependLoss(pre_cnode, 0);
   auto current_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
 
   // notice: the GetNext op has not input
@@ -2792,7 +2806,12 @@ bool IsCohesiveNode(const CNodePtr &cnode) {
          IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather);
 }
 
-std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index) {
+std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding the parameters' name of a operator, exceeded the maximum depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return {};
+  }
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   std::vector<std::pair<std::string, int64_t>> param_names;
   for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
@@ -2809,7 +2828,7 @@ std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &n
         continue;
       }
       if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
-        auto input_param_names = NodeParameterName(cnode, idx);
+        auto input_param_names = NodeParameterName(cnode, idx, 0);
         param_names.insert(param_names.end(), input_param_names.begin(), input_param_names.end());
       }
     }
@@ -2827,7 +2846,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
-    auto param_names = NodeParameterName(cnode);
+    auto param_names = NodeParameterName(cnode, -1, 0);
     if (param_names.empty()) {
       continue;
     }
@@ -2950,13 +2969,17 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   InsertNode(op, node, 2, pre_node, root, "shape");
 }
 
-static AnfNodePtr FindGrad(const CNodePtr &cnode) {
+static AnfNodePtr FindGrad(const CNodePtr &cnode, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding Grad nodes, exceeded the maximum recursion depth: " << MAX_RECURSIVE_DEPTH;
+    return nullptr;
+  }
   for (auto &node : cnode->inputs()) {
     if (!node->isa<CNode>()) {
       continue;
     }
     if (!IsPrimitiveCNode(node, prim::kPrimEnvGetItem)) {
-      return FindGrad(node->cast<CNodePtr>());
+      return FindGrad(node->cast<CNodePtr>(), ++curr_depth);
     } else {
       return node;
     }
@@ -2995,7 +3018,7 @@ void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) 
       continue;
     }
     auto root = node->func_graph();
-    auto grad_node = FindGrad(cnode);
+    auto grad_node = FindGrad(cnode, 0);
     if (grad_node) {
       InsertShapeOp(cnode, grad_node, root);
     }

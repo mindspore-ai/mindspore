@@ -24,6 +24,7 @@
 #include <vector>
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/costmodel_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -44,8 +45,8 @@ using RedistributionOpListPtr = std::shared_ptr<std::pair<OperatorVector, OutPut
 
 struct Cost {
   Cost();
-  Cost(double computation, double commuication, const std::shared_ptr<Decision> &decision_ = nullptr)
-      : computation_cost_(computation), communication_cost_(commuication), decision_ptr_(std::move(decision_)) {
+  Cost(double computation, double communication, const std::shared_ptr<Decision> &decision_ = nullptr)
+      : computation_cost_(computation), communication_cost_(communication), decision_ptr_(std::move(decision_)) {
     memory_with_reuse_ = 0.0;
     communication_without_parameter_ = 0.0;
     communication_with_partial_para_ = 0.0;
@@ -273,7 +274,7 @@ struct TriangleEliminationDecision : public Decision {
  *
  *  v <--- u ---> w  ==> v    w  In the original graph, u has 0 incoming edges, and multiple outgoing edges.
  *  In addition, v and w have other complicated connections, resulting in v and w can not be performed other
- *  eliminations. After the StarElimination, u is merged into v, and the resulting graph is splitted into multiple
+ *  eliminations. After the StarElimination, u is merged into v, and the resulting graph is split into multiple
  *  connected components.
  *  NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
  */
