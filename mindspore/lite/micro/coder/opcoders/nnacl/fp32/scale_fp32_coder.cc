@@ -130,11 +130,10 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/scale.h",
-            "nnacl/fp32/scale.h",
-            "nnacl/quantization/quantize.h",
+            "nnacl/fp32/scale_fp32.h",
           },
           {
-            "scale.c",
+            "scale_fp32.c",
           });
 
   NNaclFp32Serializer code;
