@@ -23,10 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto local_response_normalization_prim = primitive->value_as_LocalResponseNormalization();
-
-  LocalResponseNormParameter *lrn_param =
-    reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
+  if (local_response_normalization_prim == nullptr) {
+    MS_LOG(ERROR) << "local_response_normalization_prim is nullptr";
+    return nullptr;
+  }
+  auto *lrn_param = reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
   if (lrn_param == nullptr) {
     MS_LOG(ERROR) << "malloc LocalResponseNormParameter failed.";
     return nullptr;

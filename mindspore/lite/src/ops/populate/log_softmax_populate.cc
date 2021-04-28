@@ -21,15 +21,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateLogSoftmaxParameter(const void *prim) {
-  SoftmaxParameter *log_softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
+  auto *log_softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
   if (log_softmax_param == nullptr) {
     MS_LOG(ERROR) << "malloc LogSoftmaxParameter failed.";
     return nullptr;
   }
   memset(log_softmax_param, 0, sizeof(SoftmaxParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   log_softmax_param->op_parameter_.type_ = primitive->value_type();
   auto prim_log_softmax = primitive->value_as_LogSoftmax();
+  if (prim_log_softmax == nullptr) {
+    MS_LOG(ERROR) << "prim_log_softmax is nullptr";
+    return nullptr;
+  }
   log_softmax_param->axis_ = prim_log_softmax->axis();
   return reinterpret_cast<OpParameter *>(log_softmax_param);
 }

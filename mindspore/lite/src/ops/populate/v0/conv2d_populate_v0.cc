@@ -24,8 +24,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateConvParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto conv2d_prim = primitive->value_as_Conv2D();
-  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (conv2d_prim == nullptr) {
+    MS_LOG(ERROR) << "conv2d_prim is nullptr";
+    return nullptr;
+  }
+  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
@@ -38,7 +43,6 @@ OpParameter *PopulateConvParameter(const void *prim) {
   conv_param->group_ = conv2d_prim->group();
   conv_param->stride_h_ = conv2d_prim->strideH();
   conv_param->stride_w_ = conv2d_prim->strideW();
-
   conv_param->pad_u_ = conv2d_prim->padUp();
   conv_param->pad_d_ = conv2d_prim->padDown();
   conv_param->pad_l_ = conv2d_prim->padLeft();

@@ -24,8 +24,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateAddParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto add_prim = primitive->value_as_Add();
-  ArithmeticParameter *param = PopulateArithmeticV0CommonPara(primitive);
+  if (add_prim == nullptr) {
+    MS_LOG(ERROR) << "add_prim is nullptr";
+    return nullptr;
+  }
+  auto *param = PopulateArithmeticV0CommonPara(primitive);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;

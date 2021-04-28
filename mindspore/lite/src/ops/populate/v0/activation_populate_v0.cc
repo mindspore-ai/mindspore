@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateActivationParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto activation_prim = primitive->value_as_Activation();
-  ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  if (activation_prim == nullptr) {
+    MS_LOG(ERROR) << "activation_prim is nullptr";
+    return nullptr;
+  }
+  auto *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (act_param == nullptr) {
     MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;

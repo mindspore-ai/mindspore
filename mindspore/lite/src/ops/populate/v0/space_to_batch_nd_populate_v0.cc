@@ -23,7 +23,12 @@ namespace lite {
 namespace {
 OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto space_to_batch_nd_prim = primitive->value_as_SpaceToBatchND();
+  if (space_to_batch_nd_prim == nullptr) {
+    MS_LOG(ERROR) << "space_to_batch_nd_prim is nullptr";
+    return nullptr;
+  }
   auto *space_batch_param_nd = reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
   if (space_batch_param_nd == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
@@ -32,6 +37,10 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
 
   space_batch_param_nd->op_parameter_.type_ = schema::PrimitiveType_SpaceToBatchND;
   auto block_sizes = space_to_batch_nd_prim->blockShape();
+  if (block_sizes == nullptr) {
+    MS_LOG(ERROR) << "block_sizes is nullptr";
+    return nullptr;
+  }
   space_batch_param_nd->m_ = block_sizes->size();
   if (((size_t)block_sizes->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of block_sizes.size() is too big";
@@ -40,6 +49,10 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
   }
   memcpy(space_batch_param_nd->block_sizes_, (block_sizes->data()), block_sizes->size() * sizeof(int));
   auto paddings = space_to_batch_nd_prim->paddings();
+  if (paddings == nullptr) {
+    MS_LOG(ERROR) << "paddings is nullptr";
+    return nullptr;
+  }
   if (((size_t)paddings->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of paddings.size() is too big";
     free(space_batch_param_nd);

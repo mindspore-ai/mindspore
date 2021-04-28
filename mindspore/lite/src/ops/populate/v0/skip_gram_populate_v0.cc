@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateSkipGramParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto skip_gram_prim = primitive->value_as_SkipGram();
-  SkipGramParameter *skipGramParameter = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
+  if (skip_gram_prim == nullptr) {
+    MS_LOG(ERROR) << "skip_gram_prim is nullptr";
+    return nullptr;
+  }
+  auto *skipGramParameter = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
   if (skipGramParameter == nullptr) {
     MS_LOG(ERROR) << "malloc SkipGramParameter failed.";
     return nullptr;

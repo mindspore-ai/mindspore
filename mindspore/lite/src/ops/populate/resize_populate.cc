@@ -19,16 +19,20 @@ using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateResizeParameter(const void *prim) {
-  ResizeParameter *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
+  auto *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
   if (resize_param == nullptr) {
     MS_LOG(ERROR) << "malloc ResizeParameter failed.";
     return nullptr;
   }
   memset(resize_param, 0, sizeof(ResizeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Resize();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   resize_param->op_parameter_.type_ = primitive->value_type();
 
   resize_param->method_ = static_cast<int>(value->method());

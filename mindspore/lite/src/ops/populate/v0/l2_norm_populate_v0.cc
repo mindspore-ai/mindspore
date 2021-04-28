@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateL2NormParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto l2_norm_prim = primitive->value_as_L2Norm();
-  L2NormParameter *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
+  if (l2_norm_prim == nullptr) {
+    MS_LOG(ERROR) << "l2_norm_prim is nullptr";
+    return nullptr;
+  }
+  auto *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
   if (l2_norm_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc L2NormParameter failed.";
     return nullptr;
@@ -32,8 +37,11 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
   memset(l2_norm_parameter, 0, sizeof(L2NormParameter));
   l2_norm_parameter->op_parameter_.type_ = schema::PrimitiveType_L2NormalizeFusion;
 
-  MS_ASSERT(l2_norm_prim != nullptr);
   auto axis_vec = l2_norm_prim->axis();
+  if (axis_vec == nullptr) {
+    MS_LOG(ERROR) << "axis_vec is nullptr";
+    return nullptr;
+  }
   l2_norm_parameter->axis_num_ = axis_vec->size();
   if (((size_t)axis_vec->size()) > SIZE_MAX / sizeof(int)) {
     MS_LOG(ERROR) << "axis_vec size too big";

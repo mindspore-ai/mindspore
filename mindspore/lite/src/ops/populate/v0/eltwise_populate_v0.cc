@@ -23,12 +23,19 @@ namespace lite {
 namespace {
 OpParameter *PopulateEltwiseParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto eltwise_prim = primitive->value_as_Eltwise();
+  if (eltwise_prim == nullptr) {
+    MS_LOG(ERROR) << "eltwise_prim is nullptr";
+    return nullptr;
+  }
   ArithmeticParameter *param = PopulateArithmeticV0CommonPara(primitive);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticV0CommonPara failed.";
     return nullptr;
   }
-  param->eltwise_mode_ = primitive->value_as_Eltwise()->mode();
+
+  param->eltwise_mode_ = eltwise_prim->mode();
   param->op_parameter_.type_ = schema::PrimitiveType_Eltwise;
   return reinterpret_cast<OpParameter *>(param);
 }

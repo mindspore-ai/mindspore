@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateTransposeParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto transpose_prim = primitive->value_as_Transpose();
-  TransposeParameter *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
+  if (transpose_prim == nullptr) {
+    MS_LOG(ERROR) << "transpose_prim is nullptr";
+    return nullptr;
+  }
+  auto *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (transpose_param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
@@ -33,12 +38,16 @@ OpParameter *PopulateTransposeParameter(const void *prim) {
 
   transpose_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   auto perm_vector_ = transpose_prim->perm();
+  if (perm_vector_ == nullptr) {
+    MS_LOG(ERROR) << "perm_vector_ is nullptr";
+    return nullptr;
+  }
   int i = 0;
   for (auto iter = perm_vector_->begin(); iter != perm_vector_->end(); iter++) {
     transpose_param->perm_[i++] = *iter;
   }
   transpose_param->num_axes_ = i;
-  transpose_param->perm_size_ = transpose_prim->perm()->size();
+  transpose_param->perm_size_ = perm_vector_->size();
 
   return reinterpret_cast<OpParameter *>(transpose_param);
 }

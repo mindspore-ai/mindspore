@@ -19,13 +19,14 @@ using mindspore::schema::PrimitiveType_Switch;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSwitchParameter(const void *prim) {
-  OpParameter *switch_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto *switch_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (switch_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc SwitchParameter failed.";
     return nullptr;
   }
   memset(switch_parameter, 0, sizeof(OpParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   switch_parameter->type_ = primitive->value_type();
 
   return reinterpret_cast<OpParameter *>(switch_parameter);

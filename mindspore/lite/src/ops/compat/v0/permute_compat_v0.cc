@@ -31,8 +31,17 @@ int TransferPermuteAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_te
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto order_attr = prim->value_as_Permute()->order();
-
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Permute();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto order_attr = param->order();
+  if (order_attr == nullptr) {
+    MS_LOG(ERROR) << "order_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> dst_shape;
   for (auto it = order_attr->begin(); it != order_attr->end(); ++it) {
     dst_shape.push_back(static_cast<int>(*it));

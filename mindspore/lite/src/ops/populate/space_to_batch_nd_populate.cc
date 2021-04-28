@@ -27,13 +27,19 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
     return nullptr;
   }
   memset(space_batch_param_nd, 0, sizeof(SpaceToBatchParameter));
-  const schema::Primitive *primitive = static_cast<const schema::Primitive *>(prim);
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   space_batch_param_nd->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_SpaceToBatchND();
-  if (param->block_shape() == nullptr) {
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
+  auto block_shape = param->block_shape();
+  if (block_shape == nullptr) {
     return reinterpret_cast<OpParameter *>(space_batch_param_nd);
   }
-  auto block_shapes = std::vector<int64_t>(param->block_shape()->begin(), param->block_shape()->end());
+  auto block_shapes = std::vector<int64_t>(block_shape->begin(), block_shape->end());
   if (block_shapes.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of block_shapes.size() is too big";
     free(space_batch_param_nd);
@@ -41,10 +47,20 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
   }
   space_batch_param_nd->m_ = block_shapes.size();
 
-  auto fb_paddings = param->paddings()->data();
+  auto param_paddings = param->paddings();
+  if (param_paddings == nullptr) {
+    MS_LOG(ERROR) << "param_paddings is nullptr";
+    return nullptr;
+  }
+  auto fb_paddings = param_paddings->data();
+  if (fb_paddings == nullptr) {
+    MS_LOG(ERROR) << "fb_paddings is nullptr";
+    return nullptr;
+  }
   if (fb_paddings->size() == 0 ||
-      static_cast<uint64_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size()) >
-        std::numeric_limits<size_t>::max() / sizeof(int64_t)) {
+      ((*(fb_paddings->begin())) != nullptr && (*(fb_paddings->begin()))->data() != nullptr &&
+       static_cast<uint64_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size()) >
+         std::numeric_limits<size_t>::max() / sizeof(int64_t))) {
     MS_LOG(ERROR) << "The value of paddings.size() is zero or too big";
     free(space_batch_param_nd);
     return nullptr;
@@ -52,6 +68,10 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
   std::vector<int64_t> paddings;
   for (auto iter = fb_paddings->begin(); iter != fb_paddings->end(); ++iter) {
     auto paddings_data = (*iter)->data();
+    if (paddings_data == nullptr) {
+      MS_LOG(ERROR) << "paddings_data is nullptr";
+      return nullptr;
+    }
     auto paddings_vec = std::vector<int64_t>(paddings_data->begin(), paddings_data->end());
     paddings.insert(paddings.end(), paddings_vec.begin(), paddings_vec.end());
   }

@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateTileParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto tile_prim = primitive->value_as_Tile();
-  TileParameter *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
+  if (tile_prim == nullptr) {
+    MS_LOG(ERROR) << "tile_prim is nullptr";
+    return nullptr;
+  }
+  auto *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
   if (tile_param == nullptr) {
     MS_LOG(ERROR) << "malloc TileParameter failed.";
     return nullptr;
@@ -45,7 +50,7 @@ OpParameter *PopulateTileParameter(const void *prim) {
         tile_param->dims_[i] = static_cast<int>(dims->Get(i));
       }
     }
-    tile_param->dims_size_ = tile_prim->dims()->size();
+    tile_param->dims_size_ = dims->size();
   }
 
 #endif

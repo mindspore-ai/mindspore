@@ -21,15 +21,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateTopKParameter(const void *prim) {
-  TopkParameter *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
+  auto *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
   if (topk_param == nullptr) {
     MS_LOG(ERROR) << "malloc TopkParameter failed.";
     return nullptr;
   }
   memset(topk_param, 0, sizeof(TopkParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   topk_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_TopKFusion();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   topk_param->sorted_ = param->sorted();
   return reinterpret_cast<OpParameter *>(topk_param);
 }

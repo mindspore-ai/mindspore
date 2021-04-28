@@ -20,16 +20,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateCropAndResizeParameter(const void *prim) {
-  CropAndResizeParameter *crop_resize_param =
-    reinterpret_cast<CropAndResizeParameter *>(malloc(sizeof(CropAndResizeParameter)));
+  auto *crop_resize_param = reinterpret_cast<CropAndResizeParameter *>(malloc(sizeof(CropAndResizeParameter)));
   if (crop_resize_param == nullptr) {
     MS_LOG(ERROR) << "malloc CropAndResizeParameter failed.";
     return nullptr;
   }
   memset(crop_resize_param, 0, sizeof(CropAndResizeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   crop_resize_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_CropAndResize();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   crop_resize_param->method_ = static_cast<int>(param->method());
   crop_resize_param->extrapolation_value_ = param->extrapolation_value();
   return reinterpret_cast<OpParameter *>(crop_resize_param);

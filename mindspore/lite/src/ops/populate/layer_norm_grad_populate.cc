@@ -28,8 +28,13 @@ OpParameter *PopulateLayerNormGradParameter(const void *prim) {
   }
   memset(layer_norm_grad_parameter, 0, sizeof(LayerNormGradParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   layer_norm_grad_parameter->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_LayerNormGrad();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   layer_norm_grad_parameter->begin_norm_axis_ = param->begin_norm_axis();
   layer_norm_grad_parameter->begin_params_axis_ = param->begin_params_axis();
   return reinterpret_cast<OpParameter *>(layer_norm_grad_parameter);

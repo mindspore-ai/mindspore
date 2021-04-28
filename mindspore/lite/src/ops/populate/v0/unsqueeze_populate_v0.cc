@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateUnsqueezeParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto unsqueeze_prim = primitive->value_as_Unsqueeze();
-
-  UnSqueezeParameter *unsqueeze_param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
+  if (unsqueeze_prim == nullptr) {
+    MS_LOG(ERROR) << "unsqueeze_prim is nullptr";
+    return nullptr;
+  }
+  auto *unsqueeze_param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
   if (unsqueeze_param == nullptr) {
     MS_LOG(ERROR) << "malloc UnSqueezeParameter failed.";
     return nullptr;
@@ -33,6 +37,10 @@ OpParameter *PopulateUnsqueezeParameter(const void *prim) {
   memset(unsqueeze_param, 0, sizeof(UnSqueezeParameter));
   unsqueeze_param->op_parameter_.type_ = schema::PrimitiveType_Unsqueeze;
   auto flatAxis = unsqueeze_prim->axis();
+  if (flatAxis == nullptr) {
+    MS_LOG(ERROR) << "flatAxis is nullptr";
+    return nullptr;
+  }
   unsqueeze_param->num_dim_ = flatAxis->size();
   int i = 0;
   for (auto iter = flatAxis->begin(); iter != flatAxis->end(); iter++) {

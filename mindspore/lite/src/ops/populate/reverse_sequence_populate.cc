@@ -21,15 +21,19 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateReverseSequenceParameter(const void *prim) {
-  ReverseSequenceParameter *reverse_sequence_param =
-    reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
+  auto *reverse_sequence_param = reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
   if (reverse_sequence_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReverseSequenceParameter failed.";
     return nullptr;
   }
   memset(reverse_sequence_param, 0, sizeof(ReverseSequenceParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto param = primitive->value_as_ReverseSequence();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   reverse_sequence_param->op_parameter_.type_ = primitive->value_type();
   reverse_sequence_param->seq_axis_ = static_cast<int>(param->seq_dim());
   reverse_sequence_param->batch_axis_ = static_cast<int>(param->batch_dim());

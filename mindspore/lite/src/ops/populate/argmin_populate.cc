@@ -30,6 +30,10 @@ OpParameter *PopulateArgMinParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   arg_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_ArgMinFusion();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   arg_param->axis_ = param->axis();
   arg_param->topk_ = param->top_k();
   arg_param->out_value_ = param->out_max_value();

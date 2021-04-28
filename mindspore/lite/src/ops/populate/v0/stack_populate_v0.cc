@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateStackParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto stack_prim = primitive->value_as_Stack();
-  StackParameter *stack_param = reinterpret_cast<StackParameter *>(malloc(sizeof(StackParameter)));
+  if (stack_prim == nullptr) {
+    MS_LOG(ERROR) << "stack_prim is nullptr";
+    return nullptr;
+  }
+  auto *stack_param = reinterpret_cast<StackParameter *>(malloc(sizeof(StackParameter)));
   if (stack_param == nullptr) {
     MS_LOG(ERROR) << "malloc StackParameter failed.";
     return nullptr;

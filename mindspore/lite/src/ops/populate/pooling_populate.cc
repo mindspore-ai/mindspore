@@ -22,28 +22,44 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateAvgPoolParameter(const void *primitive) {
-  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  auto *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
   memset(pooling_param, 0, sizeof(PoolingParameter));
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
+  MS_ASSERT(pooling_prim != nullptr);
   pooling_param->op_parameter_.type_ = pooling_prim->value_type();
   auto pooling_primitive = pooling_prim->value_as_AvgPoolFusion();
+  if (pooling_primitive == nullptr) {
+    MS_LOG(ERROR) << "pooling_primitive is nullptr";
+    return nullptr;
+  }
   pooling_param->pool_mode_ = PoolMode_AvgPool;
   pooling_param->global_ = pooling_primitive->global();
-  pooling_param->stride_w_ = static_cast<int>(*(pooling_primitive->strides()->begin() + 1));
-  pooling_param->stride_h_ = static_cast<int>(*(pooling_primitive->strides()->begin()));
-  if (pooling_primitive->pad() != nullptr) {
-    pooling_param->pad_u_ = static_cast<int>(*(pooling_primitive->pad()->begin()));
-    pooling_param->pad_d_ = static_cast<int>(*(pooling_primitive->pad()->begin() + 1));
-    pooling_param->pad_l_ = static_cast<int>(*(pooling_primitive->pad()->begin() + 2));
-    pooling_param->pad_r_ = static_cast<int>(*(pooling_primitive->pad()->begin() + 3));
+  auto strides = pooling_primitive->strides();
+  if (strides == nullptr) {
+    MS_LOG(ERROR) << "strides is nullptr";
+    return nullptr;
+  }
+  pooling_param->stride_w_ = static_cast<int>(*(strides->begin() + 1));
+  pooling_param->stride_h_ = static_cast<int>(*(strides->begin()));
+  auto pad = pooling_primitive->pad();
+  if (pad != nullptr) {
+    pooling_param->pad_u_ = static_cast<int>(*(pad->begin()));
+    pooling_param->pad_d_ = static_cast<int>(*(pad->begin() + 1));
+    pooling_param->pad_l_ = static_cast<int>(*(pad->begin() + 2));
+    pooling_param->pad_r_ = static_cast<int>(*(pad->begin() + 3));
   }
   if (!pooling_param->global_) {
-    pooling_param->window_w_ = static_cast<int>(*(pooling_primitive->kernel_size()->begin() + 1));
-    pooling_param->window_h_ = static_cast<int>(*(pooling_primitive->kernel_size()->begin()));
+    auto kernel_size = pooling_primitive->kernel_size();
+    if (kernel_size == nullptr) {
+      MS_LOG(ERROR) << "kernel_size is nullptr";
+      return nullptr;
+    }
+    pooling_param->window_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+    pooling_param->window_h_ = static_cast<int>(*(kernel_size->begin()));
   }
 
   auto round_mode = pooling_primitive->round_mode();
@@ -82,27 +98,39 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
 }
 
 OpParameter *PopulateMaxPoolParameter(const void *primitive) {
-  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  auto *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
   memset(pooling_param, 0, sizeof(PoolingParameter));
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
+  MS_ASSERT(pooling_prim != nullptr);
   pooling_param->op_parameter_.type_ = pooling_prim->value_type();
   auto max_pool_prim = pooling_prim->value_as_MaxPoolFusion();
+  if (max_pool_prim == nullptr) {
+    MS_LOG(ERROR) << "max_pool_prim is nullptr";
+    return nullptr;
+  }
   pooling_param->pool_mode_ = PoolMode_MaxPool;
   pooling_param->global_ = max_pool_prim->global();
   if (!pooling_param->global_) {
-    pooling_param->window_w_ = static_cast<int>(*(max_pool_prim->kernel_size()->begin() + 1));
-    pooling_param->window_h_ = static_cast<int>(*(max_pool_prim->kernel_size()->begin()));
-    pooling_param->stride_w_ = static_cast<int>(*(max_pool_prim->strides()->begin() + 1));
-    pooling_param->stride_h_ = static_cast<int>(*(max_pool_prim->strides()->begin()));
-    if (max_pool_prim->pad() != nullptr) {
-      pooling_param->pad_u_ = static_cast<int>(*(max_pool_prim->pad()->begin()));
-      pooling_param->pad_d_ = static_cast<int>(*(max_pool_prim->pad()->begin() + 1));
-      pooling_param->pad_l_ = static_cast<int>(*(max_pool_prim->pad()->begin() + 2));
-      pooling_param->pad_r_ = static_cast<int>(*(max_pool_prim->pad()->begin() + 3));
+    auto kernel_size = max_pool_prim->kernel_size();
+    auto strides = max_pool_prim->strides();
+    if (kernel_size == nullptr || strides == nullptr) {
+      MS_LOG(ERROR) << "kernel_size or strides is nullptr";
+      return nullptr;
+    }
+    pooling_param->window_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+    pooling_param->window_h_ = static_cast<int>(*(kernel_size->begin()));
+    pooling_param->stride_w_ = static_cast<int>(*(strides->begin() + 1));
+    pooling_param->stride_h_ = static_cast<int>(*(strides->begin()));
+    auto pad = max_pool_prim->pad();
+    if (pad != nullptr) {
+      pooling_param->pad_u_ = static_cast<int>(*(pad->begin()));
+      pooling_param->pad_d_ = static_cast<int>(*(pad->begin() + 1));
+      pooling_param->pad_l_ = static_cast<int>(*(pad->begin() + 2));
+      pooling_param->pad_r_ = static_cast<int>(*(pad->begin() + 3));
     }
   }
 

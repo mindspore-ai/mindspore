@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateGatherParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto gather_prim = primitive->value_as_Gather();
-
-  GatherParameter *gather_param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
+  if (gather_prim == nullptr) {
+    MS_LOG(ERROR) << "gather_prim is nullptr";
+    return nullptr;
+  }
+  auto *gather_param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
   if (gather_param == nullptr) {
     MS_LOG(ERROR) << "malloc GatherParameter failed.";
     return nullptr;

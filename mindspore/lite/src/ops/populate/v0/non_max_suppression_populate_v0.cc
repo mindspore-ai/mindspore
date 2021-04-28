@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto non_max_suppression_prim = primitive->value_as_NonMaxSuppression();
-  NMSParameter *param = reinterpret_cast<NMSParameter *>(malloc(sizeof(NMSParameter)));
+  if (non_max_suppression_prim == nullptr) {
+    MS_LOG(ERROR) << "non_max_suppression_prim is nullptr";
+    return nullptr;
+  }
+  auto *param = reinterpret_cast<NMSParameter *>(malloc(sizeof(NMSParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc param failed.";
     return nullptr;

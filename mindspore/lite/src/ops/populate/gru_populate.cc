@@ -21,18 +21,19 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateGruParameter(const void *prim) {
-  GruParameter *gru_param = reinterpret_cast<GruParameter *>(malloc(sizeof(GruParameter)));
+  auto *gru_param = reinterpret_cast<GruParameter *>(malloc(sizeof(GruParameter)));
   if (gru_param == nullptr) {
     MS_LOG(ERROR) << "malloc GruParameter failed.";
     return nullptr;
   }
   memset(gru_param, 0, sizeof(GruParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   gru_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_GRU();
   if (param == nullptr) {
     free(gru_param);
-    MS_LOG(ERROR) << "get Gru param nullptr.";
+    MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
   gru_param->bidirectional_ = param->bidirectional();

@@ -21,15 +21,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateFullconnectionParameter(const void *prim) {
-  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;
   }
   memset(matmul_param, 0, sizeof(MatMulParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   matmul_param->op_parameter_.type_ = primitive->value_type();
   auto full_conn_prim = primitive->value_as_FullConnection();
+  if (full_conn_prim == nullptr) {
+    MS_LOG(ERROR) << "full_conn_prim is nullptr";
+    return nullptr;
+  }
   matmul_param->b_transpose_ = true;
   matmul_param->a_transpose_ = false;
   matmul_param->has_bias_ = full_conn_prim->has_bias();

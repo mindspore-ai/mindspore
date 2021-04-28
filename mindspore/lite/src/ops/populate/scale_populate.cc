@@ -21,14 +21,19 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateScaleParameter(const void *prim) {
-  ScaleParameter *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
+  auto *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
   if (scale_param == nullptr) {
     MS_LOG(ERROR) << "malloc ScaleParameter failed.";
     return nullptr;
   }
   memset(scale_param, 0, sizeof(ScaleParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ScaleFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   scale_param->op_parameter_.type_ = primitive->value_type();
   scale_param->axis_ = value->axis();
   scale_param->activation_type_ = value->activation_type();

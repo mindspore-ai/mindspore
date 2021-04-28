@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulatePadParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto pad_prim = primitive->value_as_Pad();
-  PadParameter *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
+  if (pad_prim == nullptr) {
+    MS_LOG(ERROR) << "pad_prim is nullptr";
+    return nullptr;
+  }
+  auto *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
   if (pad_param == nullptr) {
     MS_LOG(ERROR) << "malloc PadParameter failed.";
     return nullptr;

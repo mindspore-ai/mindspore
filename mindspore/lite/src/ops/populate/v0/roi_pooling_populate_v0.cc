@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateROIPoolingParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto roi_pooling_prim = primitive->value_as_ROIPooling();
-
-  ROIPoolingParameter *roi_pooling_param = reinterpret_cast<ROIPoolingParameter *>(malloc(sizeof(ROIPoolingParameter)));
+  if (roi_pooling_prim == nullptr) {
+    MS_LOG(ERROR) << "roi_pooling_prim is nullptr";
+    return nullptr;
+  }
+  auto *roi_pooling_param = reinterpret_cast<ROIPoolingParameter *>(malloc(sizeof(ROIPoolingParameter)));
   if (roi_pooling_param == nullptr) {
     MS_LOG(ERROR) << "malloc ROIPoolingParameter failed.";
     return nullptr;

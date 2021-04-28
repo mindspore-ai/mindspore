@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateResizeParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto resize_prim = primitive->value_as_Resize();
-  ResizeParameter *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
+  if (resize_prim == nullptr) {
+    MS_LOG(ERROR) << "resize_prim is nullptr";
+    return nullptr;
+  }
+  auto *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
   if (resize_param == nullptr) {
     MS_LOG(ERROR) << "malloc ResizeParameter failed.";
     return nullptr;

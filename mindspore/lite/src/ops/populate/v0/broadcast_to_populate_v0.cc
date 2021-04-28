@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateBroadcastToParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto broadcast_to_prim = primitive->value_as_BroadcastTo();
-  BroadcastToParameter *broadcast_param =
-    reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
+  if (broadcast_to_prim == nullptr) {
+    MS_LOG(ERROR) << "broadcast_to_prim is nullptr";
+    return nullptr;
+  }
+  auto *broadcast_param = reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
   if (broadcast_param == nullptr) {
     MS_LOG(ERROR) << "malloc BroadcastToParameter failed.";
     return nullptr;
@@ -34,6 +38,10 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
 
   broadcast_param->op_parameter_.type_ = schema::PrimitiveType_BroadcastTo;
   auto dst_shape = broadcast_to_prim->dst_shape();
+  if (dst_shape == nullptr) {
+    MS_LOG(ERROR) << "dst_shape is nullptr";
+    return nullptr;
+  }
   broadcast_param->shape_size_ = dst_shape->size();
   for (size_t i = 0; i < broadcast_param->shape_size_; ++i) {
     broadcast_param->shape_[i] = *(dst_shape->begin() + i);

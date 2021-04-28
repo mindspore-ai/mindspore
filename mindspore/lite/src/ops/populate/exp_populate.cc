@@ -20,7 +20,7 @@ using mindspore::schema::PrimitiveType_ExpFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateExpParameter(const void *prim) {
-  ExpParameter *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
+  auto *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
   if (exp_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc ExpParameter failed.";
     return nullptr;
@@ -28,7 +28,12 @@ OpParameter *PopulateExpParameter(const void *prim) {
   memset(exp_parameter, 0, sizeof(ExpParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ExpFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   exp_parameter->op_parameter_.type_ = primitive->value_type();
   exp_parameter->base_ = value->base();
   exp_parameter->scale_ = value->scale();

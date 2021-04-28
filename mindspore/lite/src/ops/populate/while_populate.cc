@@ -26,14 +26,19 @@ typedef struct WhileParemeter {
 } WhileParemeter;
 
 OpParameter *PopulateWhileParemeter(const void *prim) {
-  WhileParemeter *while_paremeter = reinterpret_cast<WhileParemeter *>(malloc(sizeof(WhileParemeter)));
+  auto *while_paremeter = reinterpret_cast<WhileParemeter *>(malloc(sizeof(WhileParemeter)));
   if (while_paremeter == nullptr) {
     MS_LOG(ERROR) << "malloc WhileParemeter failed.";
     return nullptr;
   }
   memset(while_paremeter, 0, sizeof(WhileParemeter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_While();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   while_paremeter->op_parameter_.type_ = primitive->value_type();
   while_paremeter->body_subgraph_index = value->body_subgraph_index();
   while_paremeter->cond_subgraph_index = value->cond_subgraph_index();

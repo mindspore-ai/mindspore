@@ -19,16 +19,20 @@ using mindspore::schema::PrimitiveType_NonMaxSuppression;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
-  NMSParameter *param = reinterpret_cast<NMSParameter *>(malloc(sizeof(NMSParameter)));
+  auto *param = reinterpret_cast<NMSParameter *>(malloc(sizeof(NMSParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc param failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(NMSParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_NonMaxSuppression();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   param->op_parameter_.type_ = primitive->value_type();
   param->center_point_box_ = value->center_point_box();
   return reinterpret_cast<OpParameter *>(param);

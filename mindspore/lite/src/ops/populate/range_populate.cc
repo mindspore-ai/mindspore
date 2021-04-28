@@ -21,15 +21,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateRangeParameter(const void *prim) {
-  RangeParameter *range_param = reinterpret_cast<RangeParameter *>(malloc(sizeof(RangeParameter)));
+  auto *range_param = reinterpret_cast<RangeParameter *>(malloc(sizeof(RangeParameter)));
   if (range_param == nullptr) {
     MS_LOG(ERROR) << "malloc RangeParameter failed.";
     return nullptr;
   }
   memset(range_param, 0, sizeof(RangeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   range_param->op_parameter_.type_ = primitive->value_type();
   auto range_prim = primitive->value_as_Range();
+  if (range_prim == nullptr) {
+    MS_LOG(ERROR) << "range_prim is nullptr";
+    return nullptr;
+  }
   range_param->start_ = range_prim->start();
   range_param->limit_ = range_prim->limit();
   range_param->delta_ = range_prim->delta();

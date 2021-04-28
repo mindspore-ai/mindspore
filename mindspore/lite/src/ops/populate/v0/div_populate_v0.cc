@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateDivParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto div_prim = primitive->value_as_Div();
-  ArithmeticParameter *param = PopulateArithmeticCommonPara(primitive);
+  if (div_prim == nullptr) {
+    MS_LOG(ERROR) << "div_prim is nullptr";
+    return nullptr;
+  }
+  auto *param = PopulateArithmeticCommonPara(primitive);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;

@@ -29,7 +29,12 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   memset(split_param, 0, sizeof(SplitParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Split();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   split_param->op_parameter_.type_ = primitive->value_type();
   split_param->num_split_ = value->output_num();
   if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
@@ -47,7 +52,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   }
   memset(split_param->split_sizes_, 0, split_param->num_split_ * sizeof(int));
   auto split_sizes_vector_ = value->size_splits();
-  if (split_sizes_vector_ != NULL) {
+  if (split_sizes_vector_ != nullptr) {
     int i = 0;
     for (auto iter : *split_sizes_vector_) {
       split_param->split_sizes_[i++] = iter;

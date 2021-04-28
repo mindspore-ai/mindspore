@@ -31,7 +31,17 @@ int TransferTransposeAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto perm_attr = prim->value_as_Transpose()->perm();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Transpose();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto perm_attr = param->perm();
+  if (perm_attr == nullptr) {
+    MS_LOG(ERROR) << "perm_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> dst_shape = std::vector<int>(perm_attr->begin(), perm_attr->end());
   auto dst_shape_tensor = AttrToTensor(dst_shape.data(), dst_shape.size(), true, kNumberTypeInt32, tensor_bufs);
   if (dst_shape_tensor == nullptr) {

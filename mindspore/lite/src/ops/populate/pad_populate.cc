@@ -19,16 +19,20 @@ using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePadParameter(const void *prim) {
-  PadParameter *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
+  auto *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
   if (pad_param == nullptr) {
     MS_LOG(ERROR) << "malloc PadParameter failed.";
     return nullptr;
   }
   memset(pad_param, 0, sizeof(PadParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PadFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   pad_param->op_parameter_.type_ = primitive->value_type();
   pad_param->pad_mode_ = value->padding_mode();
   pad_param->constant_value_ = value->constant_value();

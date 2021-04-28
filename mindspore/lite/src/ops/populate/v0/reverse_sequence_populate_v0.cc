@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateReverseSequenceParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto reverse_sequence_prim = primitive->value_as_ReverseSequence();
-  ReverseSequenceParameter *reverse_sequence_param =
-    reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
+  if (reverse_sequence_prim == nullptr) {
+    MS_LOG(ERROR) << "reverse_sequence_prim is nullptr";
+    return nullptr;
+  }
+  auto *reverse_sequence_param = reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
   if (reverse_sequence_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReverseSequenceParameter failed.";
     return nullptr;

@@ -20,15 +20,19 @@ using mindspore::schema::PrimitiveType_SpaceToDepth;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSpaceToDepthParameter(const void *prim) {
-  SpaceToDepthParameter *space_depth_param =
-    reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
+  auto *space_depth_param = reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
   if (space_depth_param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
     return nullptr;
   }
   memset(space_depth_param, 0, sizeof(SpaceToDepthParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_SpaceToDepth();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   space_depth_param->op_parameter_.type_ = primitive->value_type();
   space_depth_param->block_size_ = value->block_size();
   if (value->format() != schema::Format::Format_NHWC) {

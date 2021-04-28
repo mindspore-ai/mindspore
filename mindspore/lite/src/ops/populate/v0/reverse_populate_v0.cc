@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateReverseParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto reverse_prim = primitive->value_as_Reverse();
-
-  ReverseParameter *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
+  if (reverse_prim == nullptr) {
+    MS_LOG(ERROR) << "reverse_prim is nullptr";
+    return nullptr;
+  }
+  auto *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
   if (reverse_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReverseParameter failed.";
     return nullptr;
@@ -33,6 +37,10 @@ OpParameter *PopulateReverseParameter(const void *prim) {
   memset(reverse_param, 0, sizeof(ReverseParameter));
   reverse_param->op_parameter_.type_ = schema::PrimitiveType_ReverseV2;
   auto flatAxis = reverse_prim->axis();
+  if (flatAxis == nullptr) {
+    MS_LOG(ERROR) << "flatAxis is nullptr";
+    return nullptr;
+  }
   reverse_param->num_axis_ = flatAxis->size();
   int i = 0;
   for (auto iter = flatAxis->begin(); iter != flatAxis->end(); iter++) {

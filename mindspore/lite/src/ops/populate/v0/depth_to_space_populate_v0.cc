@@ -21,12 +21,15 @@
 namespace mindspore {
 namespace lite {
 namespace {
-
 OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto depth_to_space_prim = primitive->value_as_DepthToSpace();
-  DepthToSpaceParameter *depth_space_param =
-    reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
+  if (depth_to_space_prim == nullptr) {
+    MS_LOG(ERROR) << "depth_to_space_prim is nullptr";
+    return nullptr;
+  }
+  auto *depth_space_param = reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
   if (depth_space_param == nullptr) {
     MS_LOG(ERROR) << "malloc DepthToSpaceParameter failed.";
     return nullptr;

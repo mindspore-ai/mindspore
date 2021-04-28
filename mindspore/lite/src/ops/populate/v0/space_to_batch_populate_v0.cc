@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto space_to_batch_prim = primitive->value_as_SpaceToBatch();
-  SpaceToBatchParameter *space_batch_param =
-    reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
+  if (space_to_batch_prim == nullptr) {
+    MS_LOG(ERROR) << "space_to_batch_prim is nullptr";
+    return nullptr;
+  }
+  auto *space_batch_param = reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
   if (space_batch_param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
@@ -33,6 +37,10 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   memset(space_batch_param, 0, sizeof(SpaceToBatchParameter));
   space_batch_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToBatch;
   auto block_sizes = space_to_batch_prim->blockShape();  // maybe error
+  if (block_sizes == nullptr) {
+    MS_LOG(ERROR) << "block_sizes is nullptr";
+    return nullptr;
+  }
   space_batch_param->m_ = block_sizes->size();
   if (((size_t)block_sizes->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of block_sizes.size() is too big";
@@ -41,6 +49,10 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   }
   memcpy(space_batch_param->block_sizes_, (block_sizes->data()), block_sizes->size() * sizeof(int));
   auto paddings = space_to_batch_prim->paddings();
+  if (paddings == nullptr) {
+    MS_LOG(ERROR) << "paddings is nullptr";
+    return nullptr;
+  }
   if (((size_t)paddings->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of paddings.size() is too big";
     free(space_batch_param);
@@ -48,9 +60,9 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   }
   memcpy(space_batch_param->paddings_, (paddings->data()), paddings->size() * sizeof(int));
 
-  space_batch_param->m_ = space_to_batch_prim->blockShape()->size();
+  space_batch_param->m_ = block_sizes->size();
   for (int i = 0; i < space_batch_param->m_; i++) {
-    space_batch_param->block_sizes_[i] = space_to_batch_prim->blockShape()->data()[i];
+    space_batch_param->block_sizes_[i] = block_sizes->data()[i];
   }
 
   return reinterpret_cast<OpParameter *>(space_batch_param);

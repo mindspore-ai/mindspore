@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto quant_dtype_cast_prim = primitive->value_as_QuantDTypeCast();
-  QuantDTypeCastParameter *parameter =
-    reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
+  if (quant_dtype_cast_prim == nullptr) {
+    MS_LOG(ERROR) << "quant_dtype_cast_prim is nullptr";
+    return nullptr;
+  }
+  auto *parameter = reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
     return nullptr;

@@ -21,13 +21,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateUniqueParameter(const void *prim) {
-  UniqueParameter *unique_param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
+  auto *unique_param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
   if (unique_param == nullptr) {
     MS_LOG(ERROR) << "malloc UniqueParameter failed.";
     return nullptr;
   }
   memset(unique_param, 0, sizeof(UniqueParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   unique_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(unique_param);
 }

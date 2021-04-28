@@ -21,13 +21,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateReshapeParameter(const void *prim) {
-  ReshapeParameter *reshape_param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
+  auto *reshape_param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
   if (reshape_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReshapeParameter failed.";
     return nullptr;
   }
   memset(reshape_param, 0, sizeof(ReshapeParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   reshape_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(reshape_param);
 }

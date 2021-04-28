@@ -23,9 +23,13 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateStridedSliceParameterV0(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto strided_slice_prim = primitive->value_as_StridedSlice();
-  StridedSliceParameter *strided_slice_param =
-    reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
+  if (strided_slice_prim == nullptr) {
+    MS_LOG(ERROR) << "strided_slice_prim is nullptr";
+    return nullptr;
+  }
+  auto *strided_slice_param = reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
   if (strided_slice_param == nullptr) {
     MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
     return nullptr;

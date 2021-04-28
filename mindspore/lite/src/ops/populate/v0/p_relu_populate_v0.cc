@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulatePReLUParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto p_relu_prim = primitive->value_as_PReLU();
-
-  PReluParameter *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
+  if (p_relu_prim == nullptr) {
+    MS_LOG(ERROR) << "p_relu_prim is nullptr";
+    return nullptr;
+  }
+  auto *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
   if (prelu_param == nullptr) {
     MS_LOG(ERROR) << "malloc PReluParameter failed.";
     return nullptr;

@@ -19,17 +19,20 @@ using mindspore::schema::PrimitiveType_LRN;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
-  LocalResponseNormParameter *lrn_param =
-    reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
+  auto *lrn_param = reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
   if (lrn_param == nullptr) {
     MS_LOG(ERROR) << "malloc LocalResponseNormParameter failed.";
     return nullptr;
   }
   memset(lrn_param, 0, sizeof(LocalResponseNormParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_LRN();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   lrn_param->op_parameter_.type_ = primitive->value_type();
   lrn_param->depth_radius_ = value->depth_radius();
   lrn_param->bias_ = value->bias();

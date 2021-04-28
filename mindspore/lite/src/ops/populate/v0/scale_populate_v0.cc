@@ -23,12 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateScaleParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto scale_prim = primitive->value_as_Scale();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "input primitive is nullptr";
+  if (scale_prim == nullptr) {
+    MS_LOG(ERROR) << "scale_prim is nullptr";
     return nullptr;
   }
-  ScaleParameter *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
+  auto *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
   if (scale_param == nullptr) {
     MS_LOG(ERROR) << "malloc ScaleParameter failed.";
     return nullptr;

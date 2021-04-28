@@ -19,7 +19,6 @@ using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePReLUParameter(const void *prim) {
   PReluParameter *param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
   if (param == nullptr) {
@@ -28,7 +27,12 @@ OpParameter *PopulatePReLUParameter(const void *prim) {
   }
   memset(param, 0, sizeof(PReluParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PReLUFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   param->op_parameter_.type_ = primitive->value_type();
   param->channelShared = value->channel_shared();
   return reinterpret_cast<OpParameter *>(param);

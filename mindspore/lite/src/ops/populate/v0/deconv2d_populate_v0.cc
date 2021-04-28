@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateDeconvParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto deconv2d_prim = primitive->value_as_DeConv2D();
-  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (deconv2d_prim == nullptr) {
+    MS_LOG(ERROR) << "deconv2d_prim is nullptr";
+    return nullptr;
+  }
+  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;

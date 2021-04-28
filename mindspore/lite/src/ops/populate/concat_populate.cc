@@ -21,15 +21,21 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateConcatParameter(const void *prim) {
-  ConcatParameter *concat_param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
+  auto *concat_param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
   if (concat_param == nullptr) {
     MS_LOG(ERROR) << "malloc ConcatParameter failed.";
     return nullptr;
   }
   memset(concat_param, 0, sizeof(ConcatParameter));
-  const schema::Primitive *primitive = static_cast<const schema::Primitive *>(prim);
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   concat_param->op_parameter_.type_ = primitive->value_type();
-  concat_param->axis_ = static_cast<int>(primitive->value_as_Concat()->axis());
+  auto param = primitive->value_as_Concat();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
+  concat_param->axis_ = static_cast<int>(param->axis());
   return reinterpret_cast<OpParameter *>(concat_param);
 }
 }  // namespace

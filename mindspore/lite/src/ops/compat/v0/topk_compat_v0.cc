@@ -30,7 +30,13 @@ int TransferTopkAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tenso
   }
   MS_ASSERT(dst_tensors->size() == 0);
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  int32_t topk_k = prim->value_as_TopK()->k();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_TopK();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  int32_t topk_k = param->k();
   auto k_tensor = AttrToTensor(&topk_k, 1, false, kNumberTypeInt32, tensor_bufs);
   if (k_tensor == nullptr) {
     MS_LOG(ERROR) << "attr tensor is nullptr, transform is failed.";

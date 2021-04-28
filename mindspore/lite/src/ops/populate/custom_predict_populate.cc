@@ -19,7 +19,6 @@ using mindspore::schema::PrimitiveType_CustomPredict;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateCustomPredictParameter(const void *prim) {
   PredictParameter *param = reinterpret_cast<PredictParameter *>(malloc(sizeof(PredictParameter)));
   if (param == nullptr) {
@@ -28,7 +27,12 @@ OpParameter *PopulateCustomPredictParameter(const void *prim) {
   }
   memset(param, 0, sizeof(PredictParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_CustomPredict();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   param->op_parameter_.type_ = primitive->value_type();
   param->output_num = value->output_num();
   param->weight_threshold = value->weight_threshold();

@@ -18,15 +18,15 @@ using mindspore::schema::PrimitiveType_Merge;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateMergeParameter(const void *prim) {
-  OpParameter *merge_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto *merge_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (merge_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc Merge parameter failed.";
     return nullptr;
   }
   memset(merge_parameter, 0, sizeof(OpParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   merge_parameter->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(merge_parameter);
 }

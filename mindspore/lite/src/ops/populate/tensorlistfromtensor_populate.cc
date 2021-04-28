@@ -21,14 +21,19 @@ using mindspore::schema::PrimitiveType_TensorListFromTensor;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateTensorListFromTensorParameter(const void *prim) {
-  TensorListParameter *TensorList_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
+  auto *TensorList_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
   if (TensorList_param == nullptr) {
     MS_LOG(ERROR) << "malloc TensorListParameter failed.";
     return nullptr;
   }
   memset(TensorList_param, 0, sizeof(TensorListParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_TensorListFromTensor();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   TensorList_param->op_parameter_.type_ = primitive->value_type();
   TensorList_param->shape_type_ = value->shape_type();
   TensorList_param->element_dtype_ = value->element_dtype();

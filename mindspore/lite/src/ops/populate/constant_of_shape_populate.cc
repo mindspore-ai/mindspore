@@ -20,27 +20,36 @@ using mindspore::schema::PrimitiveType_ConstantOfShape;
 namespace mindspore::lite {
 namespace {
 OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
-  ConstantOfShapeParameter *param =
-    reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
+  auto *param = reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(ConstantOfShapeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   param->op_parameter_.type_ = primitive->value_type();
   auto attr = primitive->value_as_ConstantOfShape();
-  auto value = std::vector<float>(attr->value()->begin(), attr->value()->end());
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "attr is nullptr";
+    return nullptr;
+  }
+  auto val = attr->value();
+  if (val == nullptr) {
+    MS_LOG(ERROR) << "val is nullptr";
+    return nullptr;
+  }
+  auto value = std::vector<float>(val->begin(), val->end());
   param->data_type_ = static_cast<int>(attr->data_type());
   if (value.empty() || value.size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
   } else {
     switch (param->data_type_) {
       case kNumberTypeFloat32:
-        param->value_.f32_value_ = *(attr->value()->begin());
+        param->value_.f32_value_ = *(val->begin());
         break;
       case kNumberTypeInt32:
-        param->value_.int32_value_ = *(attr->value()->begin());
+        param->value_.int32_value_ = *(val->begin());
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";

@@ -20,13 +20,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateCastParameter(const void *prim) {
-  OpParameter *cast_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto *cast_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (cast_param == nullptr) {
     MS_LOG(ERROR) << "malloc CastParameter failed.";
     return nullptr;
   }
   memset(cast_param, 0, sizeof(OpParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   cast_param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(cast_param);
 }

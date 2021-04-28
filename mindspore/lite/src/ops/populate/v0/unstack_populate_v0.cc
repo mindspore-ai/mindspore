@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateUnstackParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto unstack_prim = primitive->value_as_Unstack();
-  UnstackParameter *unstack_param = reinterpret_cast<UnstackParameter *>(malloc(sizeof(UnstackParameter)));
+  if (unstack_prim == nullptr) {
+    MS_LOG(ERROR) << "unstack_prim is nullptr";
+    return nullptr;
+  }
+  auto *unstack_param = reinterpret_cast<UnstackParameter *>(malloc(sizeof(UnstackParameter)));
   if (unstack_param == nullptr) {
     MS_LOG(ERROR) << "malloc UnstackParameter failed.";
     return nullptr;

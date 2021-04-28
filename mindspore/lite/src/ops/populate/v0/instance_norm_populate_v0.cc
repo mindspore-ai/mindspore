@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateInstanceNormParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto instance_norm_prim = primitive->value_as_InstanceNorm();
-  InstanceNormParameter *instance_norm_param =
-    reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  if (instance_norm_prim == nullptr) {
+    MS_LOG(ERROR) << "instance_norm_prim is nullptr";
+    return nullptr;
+  }
+  auto *instance_norm_param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
   if (instance_norm_param == nullptr) {
     MS_LOG(ERROR) << "malloc InstanceNormParameter failed.";
     return nullptr;

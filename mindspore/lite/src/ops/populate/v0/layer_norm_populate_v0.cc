@@ -23,7 +23,12 @@ namespace mindspore {
 namespace lite {
 OpParameter *PopulateLayerNormParameterV0(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto layer_norm_prim = primitive->value_as_LayerNorm();
+  if (layer_norm_prim == nullptr) {
+    MS_LOG(ERROR) << "layer_norm_prim is nullptr";
+    return nullptr;
+  }
   auto layer_norm_parameter = reinterpret_cast<LayerNormParameter *>(malloc(sizeof(LayerNormParameter)));
   if (layer_norm_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc LayerNormParameter failed.";

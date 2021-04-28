@@ -19,9 +19,8 @@ using mindspore::schema::PrimitiveType_PriorBox;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePriorBoxParameter(const void *prim) {
-  PriorBoxParameter *prior_box_param = reinterpret_cast<PriorBoxParameter *>(malloc(sizeof(PriorBoxParameter)));
+  auto *prior_box_param = reinterpret_cast<PriorBoxParameter *>(malloc(sizeof(PriorBoxParameter)));
   if (prior_box_param == nullptr) {
     MS_LOG(ERROR) << "malloc PriorBoxParameter failed.";
     return nullptr;
@@ -29,38 +28,64 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   memset(prior_box_param, 0, sizeof(PriorBoxParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PriorBox();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   prior_box_param->op_parameter_.type_ = primitive->value_type();
-  if (value->min_sizes()->size() > MAX_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << MAX_SHAPE_SIZE << ", got " << value->min_sizes();
+  auto min_sizes = value->min_sizes();
+  if (min_sizes == nullptr) {
+    MS_LOG(ERROR) << "min_sizes is nullptr";
+    return nullptr;
+  }
+  if (min_sizes->size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << MAX_SHAPE_SIZE << ", got " << min_sizes->size();
     free(prior_box_param);
     return nullptr;
   }
-  prior_box_param->min_sizes_size = value->min_sizes()->size();
-  if (value->max_sizes()->size() > MAX_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "PriorBox max_sizes size exceeds max num " << MAX_SHAPE_SIZE << ", got " << value->max_sizes();
-    free(prior_box_param);
-    return nullptr;
-  }
-  prior_box_param->max_sizes_size = value->max_sizes()->size();
-  memcpy(prior_box_param->max_sizes, value->max_sizes()->data(), value->max_sizes()->size() * sizeof(int32_t));
-  memcpy(prior_box_param->min_sizes, value->min_sizes()->data(), value->min_sizes()->size() * sizeof(int32_t));
+  prior_box_param->min_sizes_size = min_sizes->size();
+  memcpy(prior_box_param->min_sizes, min_sizes->data(), min_sizes->size() * sizeof(int32_t));
 
-  if (value->aspect_ratios()->size() > MAX_SHAPE_SIZE) {
+  auto max_sizes = value->max_sizes();
+  if (max_sizes == nullptr) {
+    MS_LOG(ERROR) << "max_sizes is nullptr";
+    return nullptr;
+  }
+  if (max_sizes->size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox max_sizes size exceeds max num " << MAX_SHAPE_SIZE << ", got " << max_sizes->size();
+    free(prior_box_param);
+    return nullptr;
+  }
+  prior_box_param->max_sizes_size = max_sizes->size();
+  memcpy(prior_box_param->max_sizes, max_sizes->data(), max_sizes->size() * sizeof(int32_t));
+
+  auto aspect_ratios = value->aspect_ratios();
+  if (aspect_ratios == nullptr) {
+    MS_LOG(ERROR) << "aspect_ratios is nullptr";
+    return nullptr;
+  }
+  if (aspect_ratios->size() > MAX_SHAPE_SIZE) {
     MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << MAX_SHAPE_SIZE << ", got "
-                  << value->aspect_ratios();
+                  << aspect_ratios->size();
     free(prior_box_param);
     return nullptr;
   }
-  prior_box_param->aspect_ratios_size = value->aspect_ratios()->size();
-  memcpy(prior_box_param->aspect_ratios, value->aspect_ratios()->data(),
-         value->aspect_ratios()->size() * sizeof(float));
-  if (value->variances()->size() != COMM_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "PriorBox variances size should be " << COMM_SHAPE_SIZE << ", got " << value->variances()->size();
+  prior_box_param->aspect_ratios_size = aspect_ratios->size();
+  memcpy(prior_box_param->aspect_ratios, aspect_ratios->data(), aspect_ratios->size() * sizeof(float));
+
+  auto variances = value->variances();
+  if (variances == nullptr) {
+    MS_LOG(ERROR) << "variances is nullptr";
+    return nullptr;
+  }
+  if (variances->size() != COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox variances size should be " << COMM_SHAPE_SIZE << ", got " << variances->size();
     free(prior_box_param);
     return nullptr;
   }
-  memcpy(prior_box_param->variances, value->variances()->data(), COMM_SHAPE_SIZE * sizeof(float));
+  memcpy(prior_box_param->variances, variances->data(), COMM_SHAPE_SIZE * sizeof(float));
   prior_box_param->flip = value->flip();
   prior_box_param->clip = value->clip();
   prior_box_param->offset = value->offset();
