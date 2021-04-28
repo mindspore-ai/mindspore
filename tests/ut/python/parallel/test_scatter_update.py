@@ -22,13 +22,13 @@ from mindspore import context
 
 class Net(nn.Cell):
     """Net definition"""
-    def __init__(self):
+    def __init__(self, strategy1=None, strategy2=None):
         super(Net, self).__init__()
-        self.inputs = Parameter(Tensor(np.ones([32, 128]).astype(np.float32)), "input")
-        self.indices = Tensor(np.ones([4]).astype(np.int32))
-        self.updates = Tensor(np.ones([4, 128]).astype(np.float32))
-        self.scatter_update = P.ScatterUpdate().shard(((1, 8), (1,), (1, 8)))
-        self.add = P.TensorAdd().shard(((8, 1), (8, 1)))
+        self.inputs = Parameter(Tensor(np.ones([32, 64, 128]).astype(np.float32)), "input")
+        self.indices = Tensor(np.ones([4, 8]).astype(np.int32))
+        self.updates = Tensor(np.ones([4, 8, 64, 128]).astype(np.float32))
+        self.scatter_update = P.ScatterUpdate().shard(strategy1)
+        self.add = P.TensorAdd().shard(strategy2)
         self.relu = P.ReLU()
 
     def construct(self, x):
@@ -41,7 +41,21 @@ class Net(nn.Cell):
 def test_distribute_predict():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True)
-    inputs = Tensor(np.ones([32, 128]).astype(np.float32))
+    inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
+    strategy1 = ((1, 2, 4), (1, 1), (1, 1, 2, 4))
+    strategy2 = ((1, 2, 4), (1, 2, 4))
+    net = Net(strategy1, strategy2)
+    model = Model(net)
+    predict_map = model.infer_predict_layout(inputs)
+    output = model.predict(inputs)
+    context.reset_auto_parallel_context()
+    return predict_map, output
+
+
+def test_distribute_predict_auto_parallel():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, full_batch=True)
+    inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     net = Net()
     model = Model(net)
     predict_map = model.infer_predict_layout(inputs)

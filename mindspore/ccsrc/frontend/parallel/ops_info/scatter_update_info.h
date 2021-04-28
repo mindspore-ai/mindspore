@@ -45,7 +45,7 @@ class ScatterUpdateInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override { return SUCCESS; }
+  Status InferMirrorOps() override { return SUCCESS; }  // the scatter_update only use in eval/predict
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
