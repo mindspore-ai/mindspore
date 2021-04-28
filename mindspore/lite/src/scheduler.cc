@@ -48,6 +48,7 @@
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
+#include "src/kernel_interface_registry.h"
 
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -130,6 +131,10 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
+  if (KernelInterfaceRegistry::Instance()->CheckReg(node)) {
+    return KernelInferShape(inputs, outputs, node->primitive_);
+  }
+
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   auto parame_gen =
     PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
@@ -432,6 +437,18 @@ int Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   return RET_NOT_SUPPORT;
 }
 
+int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                  const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
+  int ret = RET_ERROR;
+  if (KernelRegistry::GetInstance()->kernel_creators().size() != 0 &&
+      VersionManager::GetInstance()->GetSchemaVersion() != SCHEMA_V0) {
+    kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), "", ""};
+    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
+                                                   node->primitive_);
+  }
+  return ret;
+}
+
 kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                                  TypeId prefer_data_type) {
@@ -439,14 +456,18 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   // why we need this
   TypeId data_type =
     (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
+  kernel::LiteKernel *kernel = nullptr;
+  int status;
+  status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
+  if (status == RET_OK && kernel != nullptr) {
+    return kernel;
+  }
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
   }
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
-  kernel::LiteKernel *kernel = nullptr;
-  int status;
 #ifdef SUPPORT_GPU
   //  if (node->device_type_ == DT_GPU || node->device_type_ == DEFAULT) {
   status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);

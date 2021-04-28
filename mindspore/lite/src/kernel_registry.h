@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
 
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <set>
@@ -42,9 +43,14 @@ class KernelRegistry {
   virtual kernel::CreateKernel GetDelegateCreator(const kernel::KernelKey &desc);
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   int GetFuncIndex(const kernel::KernelKey &desc);
+  const std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> &kernel_creators() {
+    return kernel_creators_;
+  }
+  int RegCustomKernel(const std::string &arch, const std::string &vendor, TypeId data_type, const std::string &type,
+                      kernel::CreateKernel creator);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);
   void RegKernel(kernel::KERNEL_ARCH arch, TypeId data_type, int type, kernel::KernelCreator creator);
-  int RegKernel(const std::string &arch, const std::string &vendor, const TypeId data_type, const int type,
+  int RegKernel(const std::string &arch, const std::string &vendor, TypeId data_type, int type,
                 kernel::CreateKernel creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
   bool SupportKernel(const kernel::KernelKey &key);
@@ -58,8 +64,8 @@ class KernelRegistry {
   static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};
   static const int array_size_{device_type_length_ * data_type_length_ * op_type_length_};
   kernel::KernelCreator *creator_arrays_ = nullptr;
-  std::unordered_map<std::size_t, std::unordered_map<std::size_t, kernel::CreateKernel *>> kernel_creators_;
-  std::set<std::string> all_vendors_;
+  std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> kernel_creators_;
+  std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> custom_kernel_creators_;
 
  private:
   std::mutex lock_;

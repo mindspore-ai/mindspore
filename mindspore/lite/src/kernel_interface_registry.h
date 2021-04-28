@@ -18,8 +18,10 @@
 #define MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_REGISTRY_H_
 
 #include <string>
-#include <unordered_map>
+#include <map>
+#include <mutex>
 #include "src/kernel_interface.h"
+#include "include/model.h"
 
 namespace mindspore {
 namespace lite {
@@ -29,14 +31,21 @@ class KernelInterfaceRegistry {
     static KernelInterfaceRegistry instance;
     return &instance;
   }
-
-  int Reg(const std::string &vendor, const int &op_type, kernel::KernelInterfaceCreator creator);
-  virtual ~KernelInterfaceRegistry() = default;
+  bool CheckReg(const lite::Model::Node *node);
+  kernel::KernelInterface *GetKernelInterface(const std::string &provider, int op_type);
+  const std::map<std::string, kernel::KernelInterfaceCreator *> &kernel_interfaces() { return kernel_interfaces_; }
+  int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);
+  int Reg(const std::string &provider, int op_type, kernel::KernelInterfaceCreator creator);
+  virtual ~KernelInterfaceRegistry();
 
  private:
   KernelInterfaceRegistry() = default;
 
-  std::unordered_map<size_t, kernel::KernelInterfaceCreator *> kernel_interfaces_;
+  std::mutex mutex_;
+  // key: provider
+  std::map<std::string, kernel::KernelInterfaceCreator *> kernel_interfaces_;
+  // key: provider        key: custom type
+  std::map<std::string, std::map<std::string, kernel::KernelInterfaceCreator>> custom_interfaces_;
 };
 }  // namespace lite
 }  // namespace mindspore

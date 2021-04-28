@@ -14,14 +14,43 @@
  * limitations under the License.
  */
 #include "src/runtime/infer_manager.h"
+#include <algorithm>
+#include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
 #include "src/tensorlist.h"
+#include "src/kernel_interface_registry.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore {
 namespace lite {
+int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                     const void *primitive) {
+  std::vector<tensor::MSTensor *> in_tensors;
+  std::copy(inputs.begin(), inputs.end(), std::back_inserter(in_tensors));
+  std::vector<tensor::MSTensor *> out_tensors;
+  std::copy(outputs.begin(), outputs.end(), std::back_inserter(out_tensors));
+  int op_type = GetPrimitiveType(primitive);
+  for (auto &&item : KernelInterfaceRegistry::Instance()->kernel_interfaces()) {
+    auto provider = item.first;
+    auto kernel_interface = KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, op_type);
+    if (kernel_interface == nullptr) {
+      continue;
+    }
+    auto ret = kernel_interface->Infer(in_tensors, out_tensors, static_cast<const schema::Primitive *>(primitive));
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "provider: " << provider << ", op_type: " << PrimitiveTypeName(GetPrimitiveType(primitive))
+                    << " infer fail!";
+      return ret;
+    }
+    return RET_OK;
+  }
+
+  return RET_ERROR;
+}
+
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
                      OpParameter *parameter) {
   std::vector<TensorC *> in_tensors;
