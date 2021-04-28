@@ -220,7 +220,7 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
       return RET_ERROR;
     }
     if (tensor->data_type() != kObjectTypeTensorType && tensor->data_c() == nullptr) {
-      MS_LOG(ERROR) << "Graph input tensor is nullptr " << tensors;
+      MS_LOG(ERROR) << "Graph input tensor data is nullptr " << tensor->tensor_name();
       return RET_ERROR;
     }
     auto shape = tensor->shape();

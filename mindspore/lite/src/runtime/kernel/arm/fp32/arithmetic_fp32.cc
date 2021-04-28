@@ -72,7 +72,8 @@ int ArithmeticCPUKernel::CheckDataType() {
   auto in0_dataType = in_tensors_.at(0)->data_type();
   auto in1_dataType = in_tensors_.at(1)->data_type();
   if (in0_dataType != in1_dataType) {
-    MS_LOG(ERROR) << "The dataTypes of input tensor0 and input tensor1 should be the same.";
+    MS_LOG(ERROR) << "The dataTypes of input tensor0 and input tensor1 should be the same. input 0 dataType: "
+                  << in0_dataType << " input 1 dataType: " << in1_dataType;
     return RET_ERROR;
   }
   return RET_OK;
@@ -408,7 +409,7 @@ int ArithmeticsRun(void *cdata, int task_id) {
 
 int ArithmeticCPUKernel::Run() {
   if (CheckDataType() != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticCPUKernel check dataType failed.";
+    MS_LOG(ERROR) << "ArithmeticCPUKernel check dataType failed, kernel name: " << this->name();
     return RET_ERROR;
   }
   if (!input0_broadcast_) {

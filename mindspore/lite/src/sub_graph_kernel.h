@@ -112,6 +112,8 @@ class SubGraphKernel : public LiteKernel {
 
   std::vector<LiteKernel *> nodes() { return this->nodes_; }
 
+  void DropNode(LiteKernel *node);
+
  protected:
   std::vector<LiteKernel *> nodes_{};
   // entry nodes in nodes

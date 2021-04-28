@@ -48,7 +48,7 @@ int LiteOpActor::CompileArrow() {
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
   for (auto op_arrow : output_op_arrows_) {
-    auto data = context->outputData_->at(op_arrow->from_output_index_);
+    auto data = context->output_data_->at(op_arrow->from_output_index_);
     Async(op_arrow->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data, context);
   }
   return;

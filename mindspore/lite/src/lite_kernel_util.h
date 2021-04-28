@@ -35,6 +35,13 @@ class LiteKernelUtil {
   static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
 
   static int SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
+
+  static bool IsSwitchCall(kernel::LiteKernel *kernel);
+
+  static kernel::LiteKernel *GetInputsSpecificNode(const kernel::LiteKernel *kernel,
+                                                   const schema::PrimitiveType &primitive_type);
+
+  static bool InputsContainsSpecificNode(const kernel::LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
 };
 
 }  // namespace mindspore::kernel

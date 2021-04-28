@@ -66,6 +66,22 @@ bool IsPartialNode(const void *primitive) {
   return false;
 }
 
+bool IsCallNode(const void *primitive) {
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  if (schema_version == SCHEMA_CUR) {
+    return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Call;
+  }
+  return false;
+}
+
+bool IsSwitchNode(const void *primitive) {
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  if (schema_version == SCHEMA_CUR) {
+    return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Switch;
+  }
+  return false;
+}
+
 int GetPartialGraphIndex(const void *primitive) {
   MS_ASSERT(primitive != nullptr);
   int index = -1;

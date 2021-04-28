@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/partial_fusion_parameter.h"
 using mindspore::schema::PrimitiveType_PartialFusion;
 
 namespace mindspore {
 namespace lite {
-typedef struct PartialParameter {
-  OpParameter op_parameter_;
-  int sub_graph_index_;
-} PartialParameter;
 
 OpParameter *PopulatePartialParameter(const void *prim) {
   PartialParameter *partial_parameter = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));

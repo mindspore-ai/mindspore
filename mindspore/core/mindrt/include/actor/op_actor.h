@@ -54,7 +54,7 @@ using OpDataPtr = std::shared_ptr<OpData<T>>;
 template <typename T>
 struct OpContext {
   uuids::uuid *sequential_num_;
-  std::vector<OpDataPtr<T>> *outputData_;
+  std::vector<OpDataPtr<T>> *output_data_;
   std::vector<Promise<int>> *results_;
   const void *kernel_call_back_before_;
   const void *kernel_call_back_after_;
@@ -97,14 +97,14 @@ class OpActor : public ActorBase {
 };
 
 template <typename T>
-Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &inputData, OpContext<T> *context) {
+Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &input_data, OpContext<T> *context) {
   std::list<Future<int>> futures;
   for (auto promise : *(context->results_)) {
     futures.push_back(promise.GetFuture());
   }
   Future<std::list<int>> collect = mindspore::Collect<int>(futures);
 
-  for (auto data : inputData) {
+  for (auto data : input_data) {
     Async(data->op_id_, &mindspore::OpActor<T>::RunOpData, data, context);
   }
 
@@ -112,18 +112,18 @@ Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &inputData
 }
 
 template <typename T>
-int MindrtRun(const std::vector<OpDataPtr<T>> &inputData, std::vector<OpDataPtr<T>> *outputData,
+int MindrtRun(const std::vector<OpDataPtr<T>> &input_data, std::vector<OpDataPtr<T>> *output_data,
               const void *kernel_call_back_before, const void *kernel_call_back_after) {
   OpContext<T> context;
-  std::vector<Promise<int>> promises(outputData->size());
+  std::vector<Promise<int>> promises(output_data->size());
   uuids::uuid uid;
   context.sequential_num_ = &uid;
   context.results_ = &promises;
-  context.outputData_ = outputData;
+  context.output_data_ = output_data;
   context.kernel_call_back_before_ = kernel_call_back_before;
   context.kernel_call_back_after_ = kernel_call_back_after;
 
-  auto collect = MindrtAsyncRun<T>(inputData, &context);
+  auto collect = MindrtAsyncRun<T>(input_data, &context);
   collect.Wait();
   if (!collect.IsOK()) {
     return -1;

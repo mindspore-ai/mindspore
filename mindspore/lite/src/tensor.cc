@@ -348,6 +348,8 @@ void *Tensor::MutableData() {
   return this->data_;
 }
 
+void Tensor::IncRefCount() { ++ref_count_; }
+
 void Tensor::DecRefCount() {
   if (this->IsConst() || this->IsGraphInput()) {
     return;

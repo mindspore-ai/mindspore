@@ -188,23 +188,25 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
   // clean io kernels
   this->in_kernels_.clear();
   this->out_kernels_.clear();
-  // find io kernels
-  for (auto *scope_kernel : scope_kernels) {
-    if (scope_kernel == this) {
-      continue;
-    }
-    for (auto *tensor : this->in_tensors_) {
-      if (lite::IsContain(scope_kernel->out_tensors(), tensor)) {
-        if (!lite::IsContain(this->in_kernels(), scope_kernel)) {
-          this->AddInKernel(scope_kernel);
-        }
+  // find io kernels, need optimize time
+  for (auto *tensor : this->in_tensors_) {
+    for (auto *scope_kernel : scope_kernels) {
+      if (scope_kernel == this) {
+        continue;
+      }
+      if (lite::IsContain(scope_kernel->out_tensors(), tensor) && !lite::IsContain(this->in_kernels(), scope_kernel)) {
+        this->AddInKernel(scope_kernel);
       }
     }
-    for (auto *tensor : this->out_tensors_) {
-      if (lite::IsContain(scope_kernel->in_tensors(), tensor)) {
-        if (!lite::IsContain(this->out_kernels(), scope_kernel)) {
-          this->AddOutKernel(scope_kernel);
-        }
+  }
+
+  for (auto *tensor : this->out_tensors_) {
+    for (auto *scope_kernel : scope_kernels) {
+      if (scope_kernel == this) {
+        continue;
+      }
+      if (lite::IsContain(scope_kernel->in_tensors(), tensor) && !lite::IsContain(this->out_kernels(), scope_kernel)) {
+        this->AddOutKernel(scope_kernel);
       }
     }
   }
