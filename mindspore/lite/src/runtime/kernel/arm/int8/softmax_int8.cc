@@ -30,35 +30,46 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
+SoftmaxInt8CPUKernel::~SoftmaxInt8CPUKernel() {
+  if (quant_param_ != nullptr) {
+    free(quant_param_);
+    quant_param_ = nullptr;
+  }
+}
 
 int SoftmaxInt8CPUKernel::Init() {
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
+  quant_param_ = reinterpret_cast<SoftmaxQuantArg *>(malloc(sizeof(SoftmaxQuantArg)));
+  if (quant_param_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc SoftmaxQuantArg for Softmax int8 op failed!";
+    return RET_ERROR;
+  }
 
   auto *input_tensor = in_tensors_.at(kInputIndex);
   MS_ASSERT(input_tensor);
 
   auto in_quant_args = input_tensor->quant_params();
-  quant_params_.in_quant_args_.scale_ = in_quant_args.front().scale;
-  quant_params_.in_quant_args_.zp_ = -in_quant_args.front().zeroPoint;
+  quant_param_->in_quant_args_.scale_ = in_quant_args.front().scale;
+  quant_param_->in_quant_args_.zp_ = -in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   MS_ASSERT(out_tensor);
 
   auto out_quant_args = out_tensor->quant_params();
-  quant_params_.out_quant_arg_.scale_ = out_quant_args.front().scale;
-  quant_params_.out_quant_arg_.zp_ = -out_quant_args.front().zeroPoint;
-  quant_params_.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  quant_params_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_param_->out_quant_arg_.scale_ = out_quant_args.front().scale;
+  quant_param_->out_quant_arg_.zp_ = -out_quant_args.front().zeroPoint;
+  quant_param_->output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_param_->output_activation_max_ = std::numeric_limits<int8_t>::max();
 
   const double input_real_multiplier =
-    MSMIN(quant_params_.in_quant_args_.scale_ * (1 << (unsigned int)(31 - 5)), (1ll << 31) - 1.0);
+    MSMIN(quant_param_->in_quant_args_.scale_ * (1 << (unsigned int)(31 - 5)), (1ll << 31) - 1.0);
   int right_shift = 0;
-  QuantizeMultiplierSmallerThanOne(input_real_multiplier, &quant_params_.output_multiplier_, &right_shift);
-  quant_params_.shift_left_ = right_shift < 0 ? -right_shift : 0;
-  quant_params_.shift_right_ = right_shift > 0 ? right_shift : 0;
+  QuantizeMultiplierSmallerThanOne(input_real_multiplier, &quant_param_->output_multiplier_, &right_shift);
+  quant_param_->shift_left_ = right_shift < 0 ? -right_shift : 0;
+  quant_param_->shift_right_ = right_shift > 0 ? right_shift : 0;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -91,7 +102,7 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   int stride_size = stride * task_id * inner_size;
 
   auto error_code = SoftmaxInt8(input_ptr + stride_size, output_ptr + stride_size, count, exp_data_ + stride_size,
-                                sum_data_, quant_params_, softmax_param_);
+                                sum_data_, quant_param_, softmax_param_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DoSoftmax error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

@@ -63,7 +63,7 @@ class MatmulBaseInt8CPUKernel : public LiteKernel {
 
  protected:
   MatMulParameter *param_ = nullptr;
-  MatmulQuantParameter quant_;
+  MatmulQuantParameter *quant_param_ = nullptr;
   int thread_count_ = 1;
   int thread_stride_ = 0;
   int8_t *pack_a_ptr_ = nullptr;

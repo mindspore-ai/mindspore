@@ -33,7 +33,7 @@ class MulInt8CPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx_->thread_num_) {
     tile_para = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
-  ~MulInt8CPUKernel() override{};
+  ~MulInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -46,7 +46,7 @@ class MulInt8CPUKernel : public LiteKernel {
  private:
   const lite::InnerContext *ctx_ = nullptr;
   ArithmeticParameter *tile_para = nullptr;
-  MulParameter para_;
+  MulQuantArg *quant_args_ = nullptr;
   bool fast_hw_broadcast_ = false;
   bool input1_hw_broadcast_ = false;
   int thread_count_ = 1;

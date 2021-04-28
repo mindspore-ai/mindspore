@@ -17,7 +17,7 @@
 #include "nnacl/int8/softmax_int8.h"
 
 int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp_data, int *sum_data,
-                SoftmaxQuantArg quant_param, SoftmaxParameter *parameter) {
+                SoftmaxQuantArg *quant_param, SoftmaxParameter *parameter) {
   int32_t axis = parameter->axis_;
   int n_dim = parameter->n_dim_;
   int *input_shape = parameter->input_shape_;
@@ -32,7 +32,7 @@ int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp
     int outter_offset = o * axis_shape_size * inner_size;
 
     for (int c = 0; c < inner_size; c++) {
-      int8_t max_row = quant_param.output_activation_min_;
+      int8_t max_row = quant_param->output_activation_min_;
       for (int i = 0; i < axis_shape_size; ++i) {
         int axis_offset = outter_offset + c + i * inner_size;
         max_row = MSMAX(max_row, input_ptr[axis_offset]);
@@ -43,7 +43,7 @@ int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp
         int axis_offset = outter_offset + c + i * inner_size;
         const int32_t input_val = input_ptr[axis_offset] - max_row;
         const int32_t input_scaled = SaturatingRoundingDoublingHighMul(
-          input_val * (1 << (unsigned int)quant_param.shift_left_), quant_param.output_multiplier_);
+          input_val * (1 << (unsigned int)quant_param->shift_left_), quant_param->output_multiplier_);
         int exp_val = exp_on_negative_values(input_scaled, 5);
         exp_data[axis_offset] = exp_val;
         exp_sum = exp_sum + Rescale(exp_val, 0, 12);
@@ -58,9 +58,9 @@ int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp
         int unsat_output = RoundingDivideByPOT(
           SaturatingRoundingDoublingHighMul(shifted_scale, exp_data[axis_offset + c]), num_bits_over_unit + 31 - 8);
 
-        int raw_output = unsat_output + quant_param.output_activation_min_;
+        int raw_output = unsat_output + quant_param->output_activation_min_;
         output_ptr[axis_offset + c] =
-          (int8_t)MSMAX(quant_param.output_activation_min_, MSMIN(raw_output, quant_param.output_activation_max_));
+          (int8_t)MSMAX(quant_param->output_activation_min_, MSMIN(raw_output, quant_param->output_activation_max_));
       }
     }
   }

@@ -35,6 +35,7 @@ class PhiloxRandom {
     counter_[2] = static_cast<uint32_t>(seed_hi);
     counter_[3] = static_cast<uint32_t>(seed_hi >> 32);
   }
+  ~PhiloxRandom() = default;
 
   // Skip the specified number of samples of 128-bits in the current stream.
   void Skip(uint64_t count) {

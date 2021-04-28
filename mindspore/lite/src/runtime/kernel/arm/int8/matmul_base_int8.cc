@@ -41,14 +41,15 @@ int MatmulBaseInt8CPUKernel::RunImpl(int task_id) {
     return RET_OK;
   }
 
-  int32_t *cur_left = filter_per_channel_ ? quant_.left_shift_ + cur_stride : quant_.left_shift_;
-  int32_t *cur_right = filter_per_channel_ ? quant_.right_shift_ + cur_stride : quant_.right_shift_;
-  int32_t *cur_mul = filter_per_channel_ ? quant_.quant_multiplier_ + cur_stride : quant_.quant_multiplier_;
-  int32_t *cur_zp = filter_per_channel_ ? quant_.filter_zp_ + cur_stride : quant_.filter_zp_;
+  int32_t *cur_left = filter_per_channel_ ? quant_param_->left_shift_ + cur_stride : quant_param_->left_shift_;
+  int32_t *cur_right = filter_per_channel_ ? quant_param_->right_shift_ + cur_stride : quant_param_->right_shift_;
+  int32_t *cur_mul =
+    filter_per_channel_ ? quant_param_->quant_multiplier_ + cur_stride : quant_param_->quant_multiplier_;
+  int32_t *cur_zp = filter_per_channel_ ? quant_param_->filter_zp_ + cur_stride : quant_param_->filter_zp_;
 
   MatmulInt8Opt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_16_, batch_c_ptr_ + cur_stride, param_->row_,
-                cur_oc, param_->deep_16_, input_sums_, weight_bias_sums_ + cur_stride, quant_.out_act_min_,
-                quant_.out_act_max_, quant_.output_.zp_, cur_mul, cur_left, cur_right, param_->col_,
+                cur_oc, param_->deep_16_, input_sums_, weight_bias_sums_ + cur_stride, quant_param_->out_act_min_,
+                quant_param_->out_act_max_, quant_param_->output_.zp_, cur_mul, cur_left, cur_right, param_->col_,
                 filter_per_channel_, cur_zp);
 
   return RET_OK;
@@ -63,29 +64,32 @@ MatmulBaseInt8CPUKernel::~MatmulBaseInt8CPUKernel() {
     free(bias_ptr_);
     bias_ptr_ = nullptr;
   }
-  return;
+  if (quant_param_ != nullptr) {
+    free(quant_param_);
+    quant_param_ = nullptr;
+  }
 }
 
 void MatmulBaseInt8CPUKernel::FreeQuantParam() {
-  if (quant_.filter_scale_ != nullptr) {
-    free(quant_.filter_scale_);
-    quant_.filter_scale_ = nullptr;
+  if (quant_param_->filter_scale_ != nullptr) {
+    free(quant_param_->filter_scale_);
+    quant_param_->filter_scale_ = nullptr;
   }
-  if (quant_.filter_zp_ != nullptr) {
-    free(quant_.filter_zp_);
-    quant_.filter_zp_ = nullptr;
+  if (quant_param_->filter_zp_ != nullptr) {
+    free(quant_param_->filter_zp_);
+    quant_param_->filter_zp_ = nullptr;
   }
-  if (quant_.left_shift_ != nullptr) {
-    free(quant_.left_shift_);
-    quant_.left_shift_ = nullptr;
+  if (quant_param_->left_shift_ != nullptr) {
+    free(quant_param_->left_shift_);
+    quant_param_->left_shift_ = nullptr;
   }
-  if (quant_.right_shift_ != nullptr) {
-    free(quant_.right_shift_);
-    quant_.right_shift_ = nullptr;
+  if (quant_param_->right_shift_ != nullptr) {
+    free(quant_param_->right_shift_);
+    quant_param_->right_shift_ = nullptr;
   }
-  if (quant_.quant_multiplier_ != nullptr) {
-    free(quant_.quant_multiplier_);
-    quant_.quant_multiplier_ = nullptr;
+  if (quant_param_->quant_multiplier_ != nullptr) {
+    free(quant_param_->quant_multiplier_);
+    quant_param_->quant_multiplier_ = nullptr;
   }
   return;
 }
@@ -99,24 +103,29 @@ int MatmulBaseInt8CPUKernel::MallocQuantParam() {
 
   int init_size = filter_per_channel_ ? col : 1;
 
-  quant_.filter_scale_ = reinterpret_cast<float *>(malloc(init_size * sizeof(float)));
-  if (quant_.filter_scale_ == nullptr) {
+  quant_param_ = reinterpret_cast<MatmulQuantParameter *>(malloc(sizeof(MatmulQuantParameter)));
+  if (quant_param_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc MatmulQuantParameter for Matmul int8 op failed!";
     return RET_ERROR;
   }
-  quant_.filter_zp_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
-  if (quant_.filter_zp_ == nullptr) {
+  quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(init_size * sizeof(float)));
+  if (quant_param_->filter_scale_ == nullptr) {
     return RET_ERROR;
   }
-  quant_.left_shift_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
-  if (quant_.left_shift_ == nullptr) {
+  quant_param_->filter_zp_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
+  if (quant_param_->filter_zp_ == nullptr) {
     return RET_ERROR;
   }
-  quant_.right_shift_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
-  if (quant_.right_shift_ == nullptr) {
+  quant_param_->left_shift_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
+  if (quant_param_->left_shift_ == nullptr) {
     return RET_ERROR;
   }
-  quant_.quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
-  if (quant_.quant_multiplier_ == nullptr) {
+  quant_param_->right_shift_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
+  if (quant_param_->right_shift_ == nullptr) {
+    return RET_ERROR;
+  }
+  quant_param_->quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(init_size * sizeof(int32_t)));
+  if (quant_param_->quant_multiplier_ == nullptr) {
     return RET_ERROR;
   }
   return RET_OK;
@@ -124,32 +133,32 @@ int MatmulBaseInt8CPUKernel::MallocQuantParam() {
 
 void MatmulBaseInt8CPUKernel::InitQuantParam() {
   auto in_quant_params = in_tensors_.at(0)->quant_params();
-  quant_.input_.zp_ = in_quant_params.front().zeroPoint;
-  quant_.input_.scale_ = in_quant_params.front().scale;
+  quant_param_->input_.zp_ = in_quant_params.front().zeroPoint;
+  quant_param_->input_.scale_ = in_quant_params.front().scale;
 
   auto out_quant_params = out_tensors_.at(0)->quant_params();
-  quant_.output_.zp_ = out_quant_params.front().zeroPoint;
-  quant_.output_.scale_ = out_quant_params.front().scale;
+  quant_param_->output_.zp_ = out_quant_params.front().zeroPoint;
+  quant_param_->output_.scale_ = out_quant_params.front().scale;
 
   auto weight_tensor = in_tensors_.at(1);
   int weight_quant_num = filter_per_channel_ ? weight_tensor->shape().front() : 1;
   auto weight_quant_params = weight_tensor->quant_params();
 
   for (int i = 0; i < weight_quant_num; i++) {
-    quant_.filter_zp_[i] = weight_quant_params[i].zeroPoint;
-    quant_.filter_scale_[i] = weight_quant_params[i].scale;
+    quant_param_->filter_zp_[i] = weight_quant_params[i].zeroPoint;
+    quant_param_->filter_scale_[i] = weight_quant_params[i].scale;
   }
 
   for (int i = 0; i < weight_quant_num; ++i) {
-    const double in_scale = static_cast<double>(quant_.input_.scale_ * quant_.filter_scale_[i]);
-    double real_multiplier = in_scale / static_cast<double>(quant_.output_.scale_);
-    QuantizeRoundParameterWithDoublePrecision(real_multiplier, &quant_.quant_multiplier_[i], &quant_.left_shift_[i],
-                                              &quant_.right_shift_[i]);
+    const double in_scale = static_cast<double>(quant_param_->input_.scale_ * quant_param_->filter_scale_[i]);
+    double real_multiplier = in_scale / static_cast<double>(quant_param_->output_.scale_);
+    QuantizeRoundParameterWithDoublePrecision(real_multiplier, &quant_param_->quant_multiplier_[i],
+                                              &quant_param_->left_shift_[i], &quant_param_->right_shift_[i]);
   }
 
   CalculateActivationRangeQuantized(param_->act_type_ == ActType_Relu, param_->act_type_ == ActType_Relu6,
-                                    quant_.output_.zp_, quant_.output_.scale_, &quant_.out_act_min_,
-                                    &quant_.out_act_max_);
+                                    quant_param_->output_.zp_, quant_param_->output_.scale_,
+                                    &quant_param_->out_act_min_, &quant_param_->out_act_max_);
 }
 
 void MatmulBaseInt8CPUKernel::InitParameter() {
@@ -207,16 +216,16 @@ void MatmulBaseInt8CPUKernel::TransferB() {
 #else
       RowMajor2Row16x4MajorInt8(current_weight, current_b_pack, param_->col_, param_->deep_);
 #endif
-      CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_.input_.zp_, quant_.filter_zp_, bias_ptr_,
-                         current_sums, ColMajor, filter_per_channel_);
+      CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_param_->input_.zp_,
+                         quant_param_->filter_zp_, bias_ptr_, current_sums, ColMajor, filter_per_channel_);
     } else {
 #ifdef ENABLE_ARM32
       RowMajor2Col16x2MajorInt8(current_weight, current_b_pack, param_->deep_, param_->col_);
 #else
       RowMajor2Col16x4MajorInt8(current_weight, param_->deep_, param_->col_, current_b_pack);
 #endif
-      CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_.input_.zp_, quant_.filter_zp_, bias_ptr_,
-                         current_sums, RowMajor, false);
+      CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_param_->input_.zp_,
+                         quant_param_->filter_zp_, bias_ptr_, current_sums, RowMajor, false);
     }
   }
   return;
@@ -312,7 +321,7 @@ int MatmulBaseInt8CPUKernel::Run() {
 
   int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   int8_t *c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
-  int32_t tmp_weight_zp = filter_per_channel_ ? 1 : quant_.filter_zp_[0];
+  int32_t tmp_weight_zp = filter_per_channel_ ? 1 : quant_param_->filter_zp_[0];
   for (int i = 0; i < param_->batch; i++) {
     auto current_src_a = a_ptr + i * param_->row_ * param_->deep_;
     if (param_->a_transpose_) {

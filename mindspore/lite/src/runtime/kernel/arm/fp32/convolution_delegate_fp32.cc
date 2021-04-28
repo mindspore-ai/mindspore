@@ -168,9 +168,13 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
 kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                const InnerContext *ctx) {
+  if (opParameter == nullptr) {
+    MS_LOG(ERROR) << "Get null opParameter for CpuConvDwFp32KernelCreator.";
+    return nullptr;
+  }
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
-  if (opParameter != nullptr && opParameter->infer_flag_) {
+  if (opParameter->infer_flag_) {
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
     if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
@@ -209,9 +213,14 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
     group_conv_creator.get_group_conv()->emplace_back(new (std::nothrow) ConvolutionDelegateCPUKernel(
       reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx));
   }
-  return new (std::nothrow)
+  auto group_kernel = new (std::nothrow)
     GroupConvolutionFp32CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()),
                                   reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+  if (group_kernel == nullptr) {
+    MS_LOG(ERROR) << "New GroupConvolutionFp32CPUKernel failed.";
+    return nullptr;
+  }
+  return group_kernel;
 }
 
 /* creator func */

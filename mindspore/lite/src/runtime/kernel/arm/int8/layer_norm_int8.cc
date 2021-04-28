@@ -24,6 +24,10 @@ using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 LayerNormInt8CPUKernel::~LayerNormInt8CPUKernel() {
+  if (quant_param_ != nullptr) {
+    free(quant_param_);
+    quant_param_ = nullptr;
+  }
   if (gamma_ptr_ != nullptr) {
     free(gamma_ptr_);
     gamma_ptr_ = nullptr;
@@ -38,10 +42,15 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
 
-  quant_param_.in_zp_ = input->quant_params().front().zeroPoint;
-  quant_param_.in_scale_ = input->quant_params().front().scale;
-  quant_param_.out_zp_ = output->quant_params().front().zeroPoint;
-  quant_param_.out_scale_ = output->quant_params().front().scale;
+  quant_param_ = reinterpret_cast<LayerNormQuantArg *>(malloc(sizeof(LayerNormQuantArg)));
+  if (quant_param_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc LayerNormQuantArg for LayerNorm int8 op failed!";
+    return RET_ERROR;
+  }
+  quant_param_->in_zp_ = input->quant_params().front().zeroPoint;
+  quant_param_->in_scale_ = input->quant_params().front().scale;
+  quant_param_->out_zp_ = output->quant_params().front().zeroPoint;
+  quant_param_->out_scale_ = output->quant_params().front().scale;
 
   lite::Tensor *gamma_tensor = in_tensors_.at(1);
   lite::Tensor *beta_tensor = in_tensors_.at(2);
@@ -67,7 +76,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   }
   int32_t *src_beta = reinterpret_cast<int32_t *>(beta_tensor->data_c());
   for (int i = 0; i < beta_tensor->ElementsNum(); i++) {
-    beta_ptr_[i] = src_beta[i] * quant_param_.in_scale_ * gamma_scale;
+    beta_ptr_[i] = src_beta[i] * quant_param_->in_scale_ * gamma_scale;
   }
   return RET_OK;
 }
@@ -109,7 +118,7 @@ int LayerNormInt8CPUKernel::ReSize() {
 }
 
 int LayerNormInt8CPUKernel::DoExecute(int task_id) {
-  LayerNormInt8(src_ptr_, gamma_ptr_, beta_ptr_, dst_ptr_, param_, &quant_param_, task_id);
+  LayerNormInt8(src_ptr_, gamma_ptr_, beta_ptr_, dst_ptr_, param_, quant_param_, task_id);
   return RET_OK;
 }
 

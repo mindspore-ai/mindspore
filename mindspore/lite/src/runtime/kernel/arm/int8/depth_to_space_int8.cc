@@ -25,18 +25,39 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_DepthToSpace;
 
 namespace mindspore::kernel {
+DepthToSpaceInt8CPUKernel::~DepthToSpaceInt8CPUKernel() {
+  if (in_quant_arg_ != nullptr) {
+    free(in_quant_arg_);
+    in_quant_arg_ = nullptr;
+  }
+  if (out_quant_arg_ != nullptr) {
+    free(out_quant_arg_);
+    out_quant_arg_ = nullptr;
+  }
+}
+
 int DepthToSpaceInt8CPUKernel::Init() {
   param_->data_type_size_ = sizeof(int8_t);
 
+  in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (in_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for DepthToSpace int8 op failed!";
+    return RET_ERROR;
+  }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
-  in_quant_arg_.scale_ = in_quant_args.front().scale;
-  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+  in_quant_arg_->scale_ = in_quant_args.front().scale;
+  in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
 
+  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (out_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for DepthToSpace int8 op failed!";
+    return RET_ERROR;
+  }
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
-  out_quant_arg_.scale_ = out_quant_args.front().scale;
-  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  out_quant_arg_->scale_ = out_quant_args.front().scale;
+  out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -51,10 +72,10 @@ int DepthToSpaceInt8CPUKernel::Run() {
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->data_c());
   int8_t *output_data = reinterpret_cast<int8_t *>(output->data_c());
   auto in_shape = input->shape();
-  if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
+  if (in_quant_arg_->scale_ == out_quant_arg_->scale_ && in_quant_arg_->zp_ == out_quant_arg_->zp_) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param_);
   } else {
-    DepthToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), param_, &in_quant_arg_, &out_quant_arg_);
+    DepthToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), param_, in_quant_arg_, out_quant_arg_);
   }
   return RET_OK;
 }

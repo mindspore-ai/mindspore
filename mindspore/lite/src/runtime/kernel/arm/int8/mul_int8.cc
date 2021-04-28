@@ -25,6 +25,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MulFusion;
 
 namespace mindspore::kernel {
+MulInt8CPUKernel::~MulInt8CPUKernel() {
+  if (quant_args_ != nullptr) {
+    free(quant_args_);
+    quant_args_ = nullptr;
+  }
+}
+
 int MulInt8CPUKernel::Init() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
@@ -33,24 +40,28 @@ int MulInt8CPUKernel::Init() {
   MS_ASSERT(input1);
   MS_ASSERT(output);
 
-  para_.mul_quant_arg_.in_quant_args_[0].scale_ = input0->quant_params().front().scale;
-  para_.mul_quant_arg_.in_quant_args_[0].zp_ = input0->quant_params().front().zeroPoint * -1;
-  para_.mul_quant_arg_.in_quant_args_[1].scale_ = input1->quant_params().front().scale;
-  para_.mul_quant_arg_.in_quant_args_[1].zp_ = input1->quant_params().front().zeroPoint * -1;
-  para_.mul_quant_arg_.out_quant_arg_.scale_ = output->quant_params().front().scale;
-  para_.mul_quant_arg_.out_quant_arg_.zp_ = output->quant_params().front().zeroPoint;
-  para_.mul_quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
-  para_.mul_quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_args_ = reinterpret_cast<MulQuantArg *>(malloc(sizeof(MulQuantArg)));
+  if (quant_args_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc MulQuantArg for Mul int8 op failed!";
+    return RET_ERROR;
+  }
+  quant_args_->in_quant_args_[0].scale_ = input0->quant_params().front().scale;
+  quant_args_->in_quant_args_[0].zp_ = input0->quant_params().front().zeroPoint * -1;
+  quant_args_->in_quant_args_[1].scale_ = input1->quant_params().front().scale;
+  quant_args_->in_quant_args_[1].zp_ = input1->quant_params().front().zeroPoint * -1;
+  quant_args_->out_quant_arg_.scale_ = output->quant_params().front().scale;
+  quant_args_->out_quant_arg_.zp_ = output->quant_params().front().zeroPoint;
+  quant_args_->output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_args_->output_activation_min_ = std::numeric_limits<int8_t>::min();
 
-  const double real_multiplier =
-    (para_.mul_quant_arg_.in_quant_args_[0].scale_ * para_.mul_quant_arg_.in_quant_args_[1].scale_) /
-    para_.mul_quant_arg_.out_quant_arg_.scale_;
+  const double real_multiplier = (quant_args_->in_quant_args_[0].scale_ * quant_args_->in_quant_args_[1].scale_) /
+                                 quant_args_->out_quant_arg_.scale_;
 
   int right_shift = 0;
-  QuantizeMultiplierSmallerThanOne(real_multiplier, &para_.mul_quant_arg_.output_multiplier_, &right_shift);
+  QuantizeMultiplierSmallerThanOne(real_multiplier, &quant_args_->output_multiplier_, &right_shift);
 
-  para_.mul_quant_arg_.shift_left_ = right_shift < 0 ? -right_shift : 0;
-  para_.mul_quant_arg_.shift_right_ = right_shift > 0 ? right_shift : 0;
+  quant_args_->shift_left_ = right_shift < 0 ? -right_shift : 0;
+  quant_args_->shift_right_ = right_shift > 0 ? right_shift : 0;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -202,8 +213,7 @@ int MulInt8CPUKernel::FastDoExecute(int task_id) {
     cur_input0_data = input1_data_;
     cur_input1_data = input0_data_ + task_id * count_unit_ * depth;
   }
-  FastMul(cur_input0_data, cur_input1_data, cur_output_data, depth, real_dst_count, input1_hw_broadcast_,
-          para_.mul_quant_arg_);
+  FastMul(cur_input0_data, cur_input1_data, cur_output_data, depth, real_dst_count, input1_hw_broadcast_, quant_args_);
   return RET_OK;
 }
 
@@ -216,7 +226,7 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
   int8_t *cur_input1_data = input1_data_ + task_id * count_unit_;
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
-  Mul(cur_input0_data, cur_input1_data, cur_output_data, real_dst_count, para_.mul_quant_arg_);
+  Mul(cur_input0_data, cur_input1_data, cur_output_data, real_dst_count, quant_args_);
   return lite::RET_OK;
 }
 

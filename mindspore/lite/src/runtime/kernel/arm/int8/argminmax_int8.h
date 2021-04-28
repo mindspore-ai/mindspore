@@ -30,15 +30,15 @@ class ArgMinMaxInt8CPUKernel : public LiteKernel {
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
 
-  ~ArgMinMaxInt8CPUKernel() = default;
+  ~ArgMinMaxInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
  private:
-  QuantArg in_quant_arg_;
-  QuantArg out_quant_arg_;
+  QuantArg *in_quant_arg_ = nullptr;
+  QuantArg *out_quant_arg_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -31,7 +31,7 @@ class SubInt8CPUKernel : public LiteKernel {
   explicit SubInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
-  ~SubInt8CPUKernel() = default;
+  ~SubInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -39,7 +39,7 @@ class SubInt8CPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  SubQuantArg param_;
+  SubQuantArg *quant_param_ = nullptr;
   int8_t *tile0_data_ = nullptr;
   int8_t *tile1_data_ = nullptr;
   bool broadcast_ = false;

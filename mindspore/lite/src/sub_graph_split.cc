@@ -29,6 +29,9 @@ const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph
   fbb.Finish(prim_offset);
   auto tmp_buf = fbb.GetBufferPointer();
   auto prim_buf = reinterpret_cast<char *>(malloc(fbb.GetSize()));
+  if (prim_buf == nullptr) {
+    return nullptr;
+  }
   memcpy(prim_buf, tmp_buf, fbb.GetSize());
 
   auto primitive = flatbuffers::GetRoot<schema::Primitive>(prim_buf);
@@ -59,6 +62,7 @@ void SearchSubGraph::ConvertSubGraphToModel() {
     Model::Node *new_partial_node = new (std::nothrow) Model::Node();
     if (new_partial_node == nullptr) {
       MS_LOG(ERROR) << "New partial node failed!";
+      free(new_sub_graph);
       return;
     }
     new_partial_node->name_ = "Partial-subgraph-split-" + std::to_string(new_sub_index);
@@ -230,15 +234,17 @@ void SearchSubGraph::InitMainGraphDevice() { return; }
 void SearchSubGraph::SubgraphFusion() {
   while (sub_graphs_.size() > 2) {
     size_t sub1_index = 0;
-    int sub2_index = -1;
+    size_t sub2_index = 0;
+    bool is_found = false;
     for (; sub1_index < sub_graphs_.size(); sub1_index++) {
       for (size_t tmp2 = sub1_index + 1; tmp2 < sub_graphs_.size(); tmp2++) {
         if (sub_graphs_[sub1_index].device_ == sub_graphs_[tmp2].device_) {
           sub2_index = tmp2;
+          is_found = true;
           break;
         }
       }
-      if (sub2_index != -1) {
+      if (!is_found) {
         break;
       }
     }

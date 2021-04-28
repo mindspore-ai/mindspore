@@ -51,7 +51,7 @@ class TransposeCPUKernel : public LiteKernel {
   TransposeParameter *param_ = nullptr;
   TransposeFunc NHNCTransposeFunc_ = nullptr;
   int thread_count_ = 0;
-  int nhnc_param_[3];
+  int nhnc_param_[3] = {0};
   int dims_ = 0;
 };
 }  // namespace mindspore::kernel

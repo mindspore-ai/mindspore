@@ -27,40 +27,52 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::kernel {
+QuantizedAddCPUKernel::~QuantizedAddCPUKernel() {
+  if (para_ != nullptr) {
+    free(para_);
+    para_ = nullptr;
+  }
+}
+
 int QuantizedAddCPUKernel::Init() {
+  para_ = reinterpret_cast<AddQuantParameter *>(malloc(sizeof(AddQuantParameter)));
+  if (para_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc AddQuantParameter for add int8 op failed!";
+    return RET_ERROR;
+  }
   auto *input0 = in_tensors_.at(0);
   auto *input1 = in_tensors_.at(1);
   auto *output = out_tensors_.at(0);
 
-  para_.in0_args_.zp_ = input0->quant_params().front().zeroPoint * -1;
-  para_.in1_args_.zp_ = input1->quant_params().front().zeroPoint * -1;
-  para_.out_zp_ = output->quant_params().front().zeroPoint;
+  para_->in0_args_.zp_ = input0->quant_params().front().zeroPoint * -1;
+  para_->in1_args_.zp_ = input1->quant_params().front().zeroPoint * -1;
+  para_->out_zp_ = output->quant_params().front().zeroPoint;
 
   const double in0_scale = input0->quant_params().front().scale;
   const double in1_scale = input1->quant_params().front().scale;
   const double out_scale = output->quant_params().front().scale;
 
-  para_.left_shift_ = 20;
+  para_->left_shift_ = 20;
   const double twice_max_input_scale = 2 * std::max(in0_scale, in1_scale);
   const double in0_multiplier = in0_scale / twice_max_input_scale;
   const double in1_multiplier = in1_scale / twice_max_input_scale;
-  const double out_multiplier = twice_max_input_scale / ((1 << para_.left_shift_) * out_scale);
+  const double out_multiplier = twice_max_input_scale / ((1 << para_->left_shift_) * out_scale);
 
-  QuantizeMultiplierSmallerThanOne(in0_multiplier, &para_.in0_args_.multiplier_, &para_.in0_args_.left_shift_);
-  QuantizeMultiplierSmallerThanOne(in1_multiplier, &para_.in1_args_.multiplier_, &para_.in1_args_.left_shift_);
-  QuantizeMultiplierSmallerThanOne(out_multiplier, &para_.out_multiplier_, &para_.out_left_shift_);
+  QuantizeMultiplierSmallerThanOne(in0_multiplier, &(para_->in0_args_.multiplier_), &(para_->in0_args_.left_shift_));
+  QuantizeMultiplierSmallerThanOne(in1_multiplier, &(para_->in1_args_.multiplier_), &(para_->in1_args_.left_shift_));
+  QuantizeMultiplierSmallerThanOne(out_multiplier, &(para_->out_multiplier_), &(para_->out_left_shift_));
 
-  para_.in0_args_.right_shift_ = -para_.in0_args_.left_shift_ > 0 ? 0 : para_.in0_args_.left_shift_;
-  para_.in1_args_.right_shift_ = -para_.in1_args_.left_shift_ > 0 ? 0 : para_.in1_args_.left_shift_;
-  para_.out_right_shift_ = -para_.out_left_shift_ > 0 ? 0 : para_.out_left_shift_;
+  para_->in0_args_.right_shift_ = -para_->in0_args_.left_shift_ > 0 ? 0 : para_->in0_args_.left_shift_;
+  para_->in1_args_.right_shift_ = -para_->in1_args_.left_shift_ > 0 ? 0 : para_->in1_args_.left_shift_;
+  para_->out_right_shift_ = -para_->out_left_shift_ > 0 ? 0 : para_->out_left_shift_;
 
-  para_.in0_args_.left_shift_ = -para_.in0_args_.left_shift_ > 0 ? -para_.in0_args_.left_shift_ : 0;
-  para_.in1_args_.left_shift_ = -para_.in1_args_.left_shift_ > 0 ? -para_.in1_args_.left_shift_ : 0;
-  para_.out_left_shift_ = -para_.out_left_shift_ > 0 ? -para_.out_left_shift_ : 0;
+  para_->in0_args_.left_shift_ = -para_->in0_args_.left_shift_ > 0 ? -para_->in0_args_.left_shift_ : 0;
+  para_->in1_args_.left_shift_ = -para_->in1_args_.left_shift_ > 0 ? -para_->in1_args_.left_shift_ : 0;
+  para_->out_left_shift_ = -para_->out_left_shift_ > 0 ? -para_->out_left_shift_ : 0;
 
   auto act = arith_para_->activation_type_;
-  CalculateActivationRangeQuantized(act == ActType_Relu, act == ActType_Relu6, para_.out_zp_,
-                                    static_cast<float>(out_scale), &para_.min_, &para_.max_);
+  CalculateActivationRangeQuantized(act == ActType_Relu, act == ActType_Relu6, para_->out_zp_,
+                                    static_cast<float>(out_scale), &(para_->min_), &(para_->max_));
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -154,9 +166,9 @@ void QuantizedAddCPUKernel::BroadcastRun(int task_id) {
       cur_out = output_data_ + task_id * stride * in_size_ + i * in_size_;
     }
 #ifdef ENABLE_AVX
-    AddInt8_AVX2(cur_in0, cur_in1, cur_out, in_size_, &para_);
+    AddInt8_AVX2(cur_in0, cur_in1, cur_out, in_size_, para_);
 #else
-    AddInt8(cur_in0, cur_in1, cur_out, in_size_, &para_);
+    AddInt8(cur_in0, cur_in1, cur_out, in_size_, para_);
 #endif
   }
   return;
@@ -182,18 +194,18 @@ int QuantizedAddCPUKernel::DoExecute(int task_id) {
   if (support_opt_add_) {
     int8_t *ptr_in = arith_para_->in_elements_num0_ == 1 ? cur_in1 : cur_in0;
     int8_t element_in = arith_para_->in_elements_num0_ == 1 ? input0_data_[0] : input1_data_[0];
-    AddQuantQrgs *ptr_args = arith_para_->in_elements_num0_ == 1 ? &para_.in1_args_ : &para_.in0_args_;
-    AddQuantQrgs *ele_args = arith_para_->in_elements_num0_ == 1 ? &para_.in0_args_ : &para_.in1_args_;
+    AddQuantQrgs *ptr_args = arith_para_->in_elements_num0_ == 1 ? &(para_->in1_args_) : &(para_->in0_args_);
+    AddQuantQrgs *ele_args = arith_para_->in_elements_num0_ == 1 ? &(para_->in0_args_) : &(para_->in1_args_);
 #ifdef ENABLE_AVX
-    AddOptInt8_AVX2(ptr_in, element_in, cur_out, rest_count, &para_, ptr_args, ele_args);
+    AddOptInt8_AVX2(ptr_in, element_in, cur_out, rest_count, para_, ptr_args, ele_args);
 #else
-    AddOptInt8(ptr_in, element_in, cur_out, rest_count, &para_, ptr_args, ele_args);
+    AddOptInt8(ptr_in, element_in, cur_out, rest_count, para_, ptr_args, ele_args);
 #endif
   } else {
 #ifdef ENABLE_AVX
-    AddInt8_AVX2(cur_in0, cur_in1, cur_out, rest_count, &para_);
+    AddInt8_AVX2(cur_in0, cur_in1, cur_out, rest_count, para_);
 #else
-    AddInt8(cur_in0, cur_in1, cur_out, rest_count, &para_);
+    AddInt8(cur_in0, cur_in1, cur_out, rest_count, para_);
 #endif
   }
 

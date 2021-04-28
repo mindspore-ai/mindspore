@@ -62,7 +62,7 @@ class TransposeInt8CPUKernel : public LiteKernel {
   int num_unit_ = 0;
   int in_shape_[8] = {0};
   int out_shape_[8] = {0};
-  int nhnc_param_[3];
+  int nhnc_param_[3] = {0};
 };
 }  // namespace mindspore::kernel
 

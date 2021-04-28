@@ -44,7 +44,7 @@ class LayerNormInt8CPUKernel : public LiteKernel {
 
  private:
   LayerNormParameter *param_ = nullptr;
-  LayerNormQuantArg quant_param_;
+  LayerNormQuantArg *quant_param_ = nullptr;
   int8_t *src_ptr_ = nullptr;
   int8_t *dst_ptr_ = nullptr;
   float *gamma_ptr_ = nullptr;

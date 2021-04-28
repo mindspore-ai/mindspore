@@ -62,7 +62,7 @@ class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int8_t *output_ptr_ = nullptr;
   size_t thread_count_ = 1;
   size_t thread_stride_ = 0;
-  MATMUL_OPT_R4_FUNC matmul_func_;
+  MATMUL_OPT_R4_FUNC matmul_func_ = nullptr;
   MatMulParameter *matmul_param_ = nullptr;
   bool support_optimize_ = true;
 };

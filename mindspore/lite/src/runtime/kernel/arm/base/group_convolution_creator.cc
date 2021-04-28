@@ -33,16 +33,22 @@ ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
   return conv_parameter;
 }
 
-void FreeCurrentConv(ConvParameter *conv_param, const std::vector<lite::Tensor *> *new_inputs,
-                     const std::vector<lite::Tensor *> *new_outputs) {
+void FreeCurrentConv(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
+                     std::vector<lite::Tensor *> *new_outputs) {
   if (conv_param != nullptr) {
     free(conv_param);
   }
-  for (auto &in_tensor : *new_inputs) {
-    delete in_tensor;
+  if (new_inputs != nullptr) {
+    for (auto &in_tensor : *new_inputs) {
+      delete in_tensor;
+      in_tensor = nullptr;
+    }
   }
-  for (auto &out_tensor : *new_outputs) {
-    delete out_tensor;
+  if (new_outputs != nullptr) {
+    for (auto &out_tensor : *new_outputs) {
+      delete out_tensor;
+      out_tensor = nullptr;
+    }
   }
 }
 
@@ -112,6 +118,7 @@ void GroupConvCreator::FreeGroupConvs() {
       delete out_tensor;
     }
     delete sub_conv;
+    sub_conv = nullptr;
   }
   group_convs_.clear();
 }

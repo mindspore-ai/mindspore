@@ -26,14 +26,14 @@ class L2NormInt8CPUKernel : public L2NormCPUKernel {
   explicit L2NormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : L2NormCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~L2NormInt8CPUKernel() {}
+  ~L2NormInt8CPUKernel() override;
 
   int Init() override;
   int Run() override;
   int DoExecute(int tId);
 
  private:
-  L2NormQuantArg quant_param_;
+  L2NormQuantArg *quant_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

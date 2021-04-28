@@ -25,8 +25,8 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_data, float *matrix_g, float *matrix_gt,
-                                                          int oc_block) {
+int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_data, float *matrix_g,
+                                                          const float *matrix_gt, int oc_block) {
   if (oc_block == 0) {
     MS_LOG(ERROR) << "Divide by zero";
     return RET_ERROR;

@@ -27,14 +27,14 @@ class BroadcastToCPUKernel : public LiteKernel {
   BroadcastToCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
-  ~BroadcastToCPUKernel() = default;
+  ~BroadcastToCPUKernel();
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
  private:
-  BroadcastShapeInfo shape_info_;
+  BroadcastShapeInfo *shape_info_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

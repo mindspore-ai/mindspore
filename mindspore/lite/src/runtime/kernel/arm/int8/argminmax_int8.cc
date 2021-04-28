@@ -27,18 +27,39 @@ using mindspore::schema::PrimitiveType_ArgMaxFusion;
 using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
+ArgMinMaxInt8CPUKernel::~ArgMinMaxInt8CPUKernel() {
+  if (in_quant_arg_ != nullptr) {
+    free(in_quant_arg_);
+    in_quant_arg_ = nullptr;
+  }
+  if (out_quant_arg_ != nullptr) {
+    free(out_quant_arg_);
+    out_quant_arg_ = nullptr;
+  }
+}
+
 int ArgMinMaxInt8CPUKernel::Init() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   param->data_type_ = kNumberTypeInt8;
+  in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (in_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
+    return RET_ERROR;
+  }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
-  in_quant_arg_.scale_ = in_quant_args.front().scale;
-  in_quant_arg_.zp_ = in_quant_args.front().zeroPoint;
+  in_quant_arg_->scale_ = in_quant_args.front().scale;
+  in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
-  out_quant_arg_.scale_ = out_quant_args.front().scale;
-  out_quant_arg_.zp_ = out_quant_args.front().zeroPoint;
+  out_quant_arg_->scale_ = out_quant_args.front().scale;
+  out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
+  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
+  if (out_quant_arg_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -72,22 +93,22 @@ int ArgMinMaxInt8CPUKernel::Run() {
   auto in_shape = input->shape();
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   if (param->topk_ == 1) {
-    Int8ArgMinMaxQuant(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
+    Int8ArgMinMaxQuant(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
     return RET_OK;
   }
 
   switch (param->axis_) {
     case 0:
-      Int8ArgMinMaxDim0(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim0(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     case 1:
-      Int8ArgMinMaxDim1(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim1(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     case 2:
-      Int8ArgMinMaxDim2(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim2(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     case 3:
-      Int8ArgMinMaxDim3(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
+      Int8ArgMinMaxDim3(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     default:
       MS_LOG(ERROR) << "axis is invalid";

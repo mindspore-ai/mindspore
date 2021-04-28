@@ -27,7 +27,7 @@ class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
   SoftmaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~SoftmaxInt8CPUKernel() = default;
+  ~SoftmaxInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -37,7 +37,7 @@ class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
  private:
   int *sum_data_ = nullptr;
   int *exp_data_ = nullptr;
-  SoftmaxQuantArg quant_params_;
+  SoftmaxQuantArg *quant_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
