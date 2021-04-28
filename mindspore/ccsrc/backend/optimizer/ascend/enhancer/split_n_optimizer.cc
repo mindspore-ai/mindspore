@@ -30,7 +30,7 @@ namespace {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 const std::set<std::string> InvalidOps = {kSplitOpName, kSplitVOpName, kConcatOpName};
 
-void GetSplitOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, std::vector<AnfNodePtr> *out_nodes) {
+void GetSplitOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, std::vector<AnfNodePtr> *const out_nodes) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

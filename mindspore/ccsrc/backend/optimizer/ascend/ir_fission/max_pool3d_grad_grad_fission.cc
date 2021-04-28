@@ -36,12 +36,12 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
     MS_LOG(ERROR) << "MaxPool3DGradGrad only support NCDHW.";
   }
   MS_LOG(DEBUG) << "ksize of MaxPool3DGradGrad:" << ksize;
-  int64_t D = ksize[2];
-  int64_t H = ksize[3];
-  int64_t W = ksize[4];
+  int64_t d = ksize[2];
+  int64_t h = ksize[3];
+  int64_t w = ksize[4];
 
   // 1 create tensor
-  std::vector<int64_t> assist_shape = {1, 1, D, H, W};  // shape:NCDHW
+  std::vector<int64_t> assist_shape = {1, 1, d, h, w};  // shape:NCDHW
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
   MS_EXCEPTION_IF_NULL(tensor_type);
   tensor::DeviceInfo device_info{kOpFormat_NDC1HWC0, tensor_type};
@@ -52,14 +52,14 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   auto data_ptr = assist_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
   std::vector<float16> half_data;
-  int64_t dims = 1 * 1 * D * H * W;
+  int64_t dims = 1 * 1 * d * h * w;
   int64_t counter = dims;
   for (int64_t i = 0; i < dims; i++) {
     half_data.emplace_back(float16(static_cast<float>(counter)));
     counter--;
   }
 
-  auto elem_num = dims * kFloat16Len;
+  int64_t elem_num = dims * kFloat16Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()), half_data.data(), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data into Tensor.";
