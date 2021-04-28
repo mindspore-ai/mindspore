@@ -279,6 +279,9 @@ void Executor::ClearDoneTasks() {
 }
 
 void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run) {
+  if (sync) {
+    ClearDoneTasks();
+  }
   {
     std::lock_guard<std::mutex> lock(task_mutex_);
     sync_run_task_finished_ = false;
