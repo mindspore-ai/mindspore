@@ -87,18 +87,12 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   TraceGuard trace_guard(node->debug_info(), relation_);
   CNodePtr new_node = std::make_shared<CNode>(AnfNodePtrList{}, target);
   auto old_node = node->cast<CNodePtr>();
-  new_node->set_abstract(old_node->abstract());
-  new_node->set_forward(old_node->forward().first, old_node->forward().second);
-  new_node->set_inputs_value(old_node->inputs_value());
-  new_node->set_attrs(old_node->attrs());
-  new_node->set_load_flag(old_node->get_load_flag());
+  new_node->CloneCNodeInfo(old_node);
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
-  new_node->CloneUserData(old_node);
   if (IsParallelConsiderCNode(old_node) && new_node->scope() == kDefaultScope) {
     new_node->set_fullname_with_scope(old_node->fullname_with_scope());
   }
-  new_node->set_kernel_info(old_node->kernel_info_ptr());
   repl_node_[old_node] = new_node;
   nodes_.emplace_back(old_node, new_node);
 }

@@ -965,7 +965,6 @@ void DFunctor::EliminatePrimalGraph() {
 
     // Replace primal graph with k graph.
     auto k_vnode = NewValueNode(k_graph_);
-    auto primal_abs = primal_user->abstract();
     primal_user->set_input(0, k_vnode);
     primal_user->set_abstract(j_user->abstract());
 
@@ -984,7 +983,7 @@ void DFunctor::EliminatePrimalGraph() {
     auto idx0 = NewValueNode(SizeToLong(0));
     idx0->set_abstract(std::make_shared<abstract::AbstractScalar>(imm0));
     auto getitem0 = construct_wrapper->NewCNode({tuple_getitem, primal_user, idx0});
-    getitem0->set_abstract(primal_abs);
+    getitem0->CloneCNodeInfo(primal_user);
     (void)manager->Replace(primal_user, getitem0);
   }
 }

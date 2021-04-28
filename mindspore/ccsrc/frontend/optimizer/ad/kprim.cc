@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
+#include "utils/utils.h"
 #include "utils/symbolic.h"
 #include "utils/primitive_utils.h"
 #include "utils/ms_context.h"
@@ -178,6 +179,17 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
       }
     }
   }
+
+  if (cnode != nullptr) {
+    Manage({cnode->func_graph(), bprop_fg}, false);
+    const auto &bprop_fg_cnodes = bprop_fg->GetOrderedCnodes();
+    const auto forward_node_primal_attr = prim->name() + "_" + cnode->UniqueId();
+    for (auto &bprop_fg_cnode : bprop_fg_cnodes) {
+      bprop_fg_cnode->set_primal_attrs(cnode->primal_attrs());
+      bprop_fg_cnode->AddPrimalAttr(kPrimalAttrForwardNodeName, MakeValue(forward_node_primal_attr));
+    }
+  }
+
   AdjustForAutoMonad(prim, bprop_fg);
   auto expanded_fg = BpropToK(prim, bprop_fg, nullptr, cnode);
   if (expanded_fg == nullptr) {

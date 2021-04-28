@@ -341,7 +341,6 @@ void DumpCNodeAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
     return;
   }
   if (op->attrs().empty()) {
-    gsub->buffer << std::endl;
     return;
   }
 
@@ -349,6 +348,32 @@ void DumpCNodeAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
   gsub->buffer << " cnode_attrs: {";
   int i = 0;
   for (const auto &attr : attrs) {
+    if (i++ != 0) {
+      gsub->buffer << ", ";
+    }
+    gsub->buffer << attr.first << ": ";
+    if (attr.second == nullptr) {
+      gsub->buffer << "null";
+    } else {
+      gsub->buffer << attr.second->ToString();
+    }
+  }
+  gsub->buffer << "}";
+}
+
+void DumpCNodePrimalAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (op == nullptr || gsub == nullptr) {
+    return;
+  }
+  if (op->primal_attrs().empty()) {
+    gsub->buffer << std::endl;
+    return;
+  }
+
+  auto primal_attrs = op->primal_attrs();
+  gsub->buffer << " cnode_primal_attrs: {";
+  int i = 0;
+  for (const auto &attr : primal_attrs) {
     if (i++ != 0) {
       gsub->buffer << ", ";
     }
@@ -414,6 +439,9 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
 
   // print cnode attrs
   DumpCNodeAttrs(nd, gsub);
+
+  // print cnode primal attrs
+  DumpCNodePrimalAttrs(nd, gsub);
 
   // print parallel info
   DumpParallelInfo(nd, gsub);

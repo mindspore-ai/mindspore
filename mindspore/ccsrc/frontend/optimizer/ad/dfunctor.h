@@ -230,7 +230,7 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
     TraceGuard trace_guard(std::make_shared<TraceEquiv>(cnode->debug_info()));
     out_value = outer->NewCNode(transf_args);
     if constexpr (std::is_same<T, PrimitivePtr>::value) {
-      out_value->CloneUserData(cnode);
+      out_value->CloneCNodeInfo(cnode);
     }
   } else {
     out_value = outer->NewCNode(transf_args);

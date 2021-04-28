@@ -427,6 +427,9 @@ constexpr auto kAttrRecursiveEnd = "recursive_end";
 constexpr auto kAttrRecursive = "recursive";
 constexpr auto kAttrMultiCallEnd = "multicall_end";
 
+// primal attr key name
+constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
+
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
 constexpr auto kValueTargetOther = "target_other";
