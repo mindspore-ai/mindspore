@@ -24,6 +24,7 @@ import json
 import math
 import os
 import signal
+import stat
 import time
 import uuid
 import multiprocessing
@@ -119,6 +120,23 @@ def _get_operator_process():
         fetched_all = fetched_all and item_full
     return op_process, fetched_all
 
+def _set_dataset_permissions(file_name, num_files):
+    """
+    set saved dataset files' permissions to 600
+    the rule of dataset filenames should be the same as those in C++.
+    """
+    num_digits = len(str(num_files - 1))
+    if num_files == 1:
+        paths = [file_name]
+    else:
+        paths = ["{}{}".format(file_name, str(x).rjust(num_digits, '0')) for x in range(num_files)]
+
+    for item in paths:
+        if os.path.exists(item):
+            os.chmod(item, stat.S_IRUSR | stat.S_IWUSR)
+            index_file = item + ".db"
+            if os.path.exists(index_file):
+                os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
 
 class Dataset:
     """
@@ -1290,7 +1308,8 @@ class Dataset:
             1. To save the samples in order, set dataset's shuffle to False and num_files to 1.
             2. Before calling the function, do not use batch operator, repeat operator or data augmentation operators
                with random attribute in map operator.
-            3. Can not save number type tensor whose shape is dynamic.
+            3. When array dimension is variable, one-dimensional arrays or
+               multi-dimensional arrays with variable dimension 0 are supported.
             4. Mindrecord does not support DE_UINT64, multi-dimensional DE_UINT8(drop dimension) nor
                multi-dimensional DE_STRING.
 
@@ -1309,6 +1328,7 @@ class Dataset:
         runtime_context.AssignConsumer(consumer)
 
         consumer.Save()
+        _set_dataset_permissions(file_name, num_files)
         del api_tree
 
     @check_tuple_iterator
