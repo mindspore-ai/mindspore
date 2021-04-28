@@ -30,6 +30,7 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#include <nlohmann/json.hpp>
 #include "include/model.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
@@ -125,7 +126,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   bool time_profiling_ = false;
   bool perf_profiling_ = false;
   std::string perf_event_ = "CYCLE";
-  bool dump_profiling_ = false;
+  bool dump_tensor_data_ = false;
+  bool print_tensor_data_ = false;
 };
 
 class MS_API Benchmark {
@@ -152,6 +154,8 @@ class MS_API Benchmark {
 
   int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name, const std::vector<size_t> &dims);
 
+  void InitContext(const std::shared_ptr<Context> &context);
+
   int CompareOutput();
 
   tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
@@ -163,13 +167,17 @@ class MS_API Benchmark {
   int CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
                                      int *total_size);
 
+  int InitDumpConfigFromJson(char *path);
+
   int InitCallbackParameter();
 
   int InitTimeProfilingCallbackParameter();
 
   int InitPerfProfilingCallbackParameter();
 
-  int InitDumpProfilingCallbackParameter();
+  int InitDumpTensorDataCallbackParameter();
+
+  int InitPrintTensorDataCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
@@ -287,6 +295,10 @@ class MS_API Benchmark {
   float op_cost_total_ = 0.0f;
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
+
+  // dump data
+  nlohmann::json dump_cfg_json_;
+  std::string dump_file_output_dir_;
 #ifdef ENABLE_ARM64
   int perf_fd = 0;
   int perf_fd2 = 0;
