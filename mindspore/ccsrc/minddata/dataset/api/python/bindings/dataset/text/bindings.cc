@@ -20,7 +20,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/text/vocab.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {

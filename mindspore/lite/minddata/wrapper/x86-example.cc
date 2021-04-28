@@ -16,7 +16,7 @@
 
 #include <string>
 #include <memory>
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 
 using Dataset = mindspore::dataset::Dataset;
 using Iterator = mindspore::dataset::Iterator;

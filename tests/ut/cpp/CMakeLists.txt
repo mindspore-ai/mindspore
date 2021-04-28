@@ -35,6 +35,7 @@ if(ENABLE_MINDDATA)
 endif()
 # fetch ut test files
 if(ENABLE_MINDDATA)
+    include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
     include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
     file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             ./stub/*.cc

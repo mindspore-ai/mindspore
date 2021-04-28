@@ -19,7 +19,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/util/path.h"
 #if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/core/global_context.h"
 
 using namespace mindspore::dataset;

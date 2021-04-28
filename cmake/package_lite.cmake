@@ -10,9 +10,8 @@ if(SUPPORT_TRAIN)
     set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/train)
     set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/train/include)
     set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/train/lib)
-    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/train/minddata/include)
-    set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/train/minddata/lib)
-    set(TURBO_DIR ${RUNTIME_PKG_NAME}/train/minddata/third_party/libjpeg-turbo)
+    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/train/include/dataset)
+    set(TURBO_DIR ${RUNTIME_PKG_NAME}/train/third_party/libjpeg-turbo)
     set(MINDSPORE_LITE_LIB_NAME libmindspore-lite-train)
     set(BENCHMARK_NAME benchmark_train)
     set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
@@ -20,31 +19,38 @@ else()
     set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/inference)
     set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/inference/include)
     set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/inference/lib)
-    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/minddata/include)
-    set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/inference/minddata/lib)
-    set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/minddata/third_party/libjpeg-turbo)
+    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/include/dataset)
+    set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/third_party/libjpeg-turbo)
     set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
     set(BENCHMARK_NAME benchmark)
     set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
 endif()
 
 if(BUILD_MINDDATA STREQUAL "full")
-    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/liteapi/include/ DESTINATION
-            ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/data_helper.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/iterator.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/samplers.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h
+            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/liteapi/include/datasets.h
+        DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 
     if(PLATFORM_ARM64)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so
-                DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     elseif(PLATFORM_ARM32)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
-                ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
-                ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib
                 RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0 DESTINATION ${TURBO_DIR}/lib
@@ -57,16 +63,16 @@ if(BUILD_MINDDATA STREQUAL "wrapper")
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "vision.h" EXCLUDE)
     if(PLATFORM_ARM64)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     elseif(PLATFORM_ARM32)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib RENAME libjpeg.so.62
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -79,21 +85,21 @@ if(BUILD_MINDDATA STREQUAL "lite")
     install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${MIND_DATA_INC_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     if(PLATFORM_ARM64)
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so DESTINATION ${TURBO_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libturbojpeg.so DESTINATION ${TURBO_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     elseif(PLATFORM_ARM32)
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so DESTINATION ${TURBO_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libturbojpeg.so DESTINATION ${TURBO_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so.62.3.0
                 DESTINATION ${TURBO_DIR}/lib RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -107,16 +113,16 @@ if(BUILD_MINDDATA STREQUAL "lite_cv")
         install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv
                 DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so
-                DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     elseif(PLATFORM_ARM32)
         install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv
                 DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv
                 DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR}
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 endif()

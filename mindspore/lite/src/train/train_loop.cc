@@ -21,7 +21,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "include/train/train_session.h"
-#include "include/iterator.h"
+#include "include/dataset/iterator.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {

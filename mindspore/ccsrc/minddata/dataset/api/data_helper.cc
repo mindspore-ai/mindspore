@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/include/data_helper.h"
+#include "minddata/dataset/include/dataset/data_helper.h"
 
 #include <algorithm>
 #include <iostream>

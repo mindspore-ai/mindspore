@@ -25,11 +25,11 @@
 #include <set>
 
 #include "album_op_android.h"  //NOLINT
-#include "minddata/dataset/include/execute.h"
-#include "minddata/dataset/include/type_id.h"
+#include "minddata/dataset/include/dataset/execute.h"
+#include "minddata/dataset/include/dataset/type_id.h"
 #include "minddata/dataset/util/path.h"
-#include "minddata/dataset/include/vision.h"
-#include "minddata/dataset/include/data_helper.h"
+#include "minddata/dataset/include/dataset/vision.h"
+#include "minddata/dataset/include/dataset/data_helper.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "include/api/types.h"
 #if defined(__ANDROID__) || defined(ANDROID)

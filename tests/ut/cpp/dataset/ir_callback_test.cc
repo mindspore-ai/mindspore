@@ -23,8 +23,8 @@
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/tree_adapter.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/data/no_op.h"
 #include "utils/log_adapter.h"
 

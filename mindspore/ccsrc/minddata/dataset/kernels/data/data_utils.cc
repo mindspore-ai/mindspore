@@ -22,7 +22,7 @@
 #include <vector>
 #include <utility>
 
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"

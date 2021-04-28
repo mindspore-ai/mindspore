@@ -21,7 +21,7 @@
 #include "minddata/dataset/core/client.h"  // DE client
 #include "minddata/dataset/util/status.h"
 #include "pybind11/numpy.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {

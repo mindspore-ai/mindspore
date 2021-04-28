@@ -26,7 +26,7 @@
 #include "include/train/train_loop.h"
 #include "include/train/accuracy_metrics.h"
 #include "include/ms_tensor.h"
-#include "include/datasets.h"
+#include "include/dataset/datasets.h"
 #include "include/model.h"
 
 using mindspore::dataset::Dataset;

@@ -80,8 +80,7 @@ cp scripts/*.sh ${PACKAGE}/
 # Copy the shared MindSpore ToD library
 tar -xzf ${TARBALL}
 mv mindspore-*/train/lib ${PACKAGE}/
-mv mindspore-*/train/minddata/lib/* ${PACKAGE}/lib/
-mv mindspore-*/train/minddata/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+mv mindspore-*/train/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
 if [ "${TARGET}" == "arm64" ]; then
   tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
   mv mindspore-*/train/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/

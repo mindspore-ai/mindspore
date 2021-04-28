@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/samplers.h"
+#include "minddata/dataset/include/dataset/samplers.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 
 namespace mindspore {

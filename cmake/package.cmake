@@ -367,13 +367,13 @@ install(
 
 ## Public header files for minddata
 install(
-    FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/constants.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/transforms.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision_lite.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision_ascend.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/execute.h
-    DESTINATION ${INSTALL_BASE_DIR}/include/minddata/dataset/include
+    FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
+    DESTINATION ${INSTALL_BASE_DIR}/include/dataset
     COMPONENT mindspore
 )
 

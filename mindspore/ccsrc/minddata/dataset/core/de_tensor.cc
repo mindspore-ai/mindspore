@@ -16,7 +16,7 @@
 
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/type_id.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"

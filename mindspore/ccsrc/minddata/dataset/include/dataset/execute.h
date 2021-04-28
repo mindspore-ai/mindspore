@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
 
 #include <string>
 #include <vector>
@@ -23,8 +23,8 @@
 #include <memory>
 #include "include/api/context.h"
 #include "include/api/types.h"
-#include "include/constants.h"
-#include "include/transforms.h"
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -34,18 +34,22 @@ class Execute {
  public:
   /// \brief Constructor
   // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
-  explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
-  explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
-  explicit Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
-  explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu,
+                   uint32_t device_id = 0);
+  explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu,
+                   uint32_t device_id = 0);
+  explicit Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu,
+                   uint32_t device_id = 0);
+  explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
 
   explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops,
-                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
   explicit Execute(std::vector<std::shared_ptr<TensorTransform>> ops,
-                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
   explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
-                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
-  explicit Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType = MapTargetDevice::kCpu);
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
+  explicit Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice deviceType = MapTargetDevice::kCpu,
+                   uint32_t device_id = 0);
 
   /// \brief Destructor
   ~Execute();
@@ -85,4 +89,4 @@ class Execute {
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_

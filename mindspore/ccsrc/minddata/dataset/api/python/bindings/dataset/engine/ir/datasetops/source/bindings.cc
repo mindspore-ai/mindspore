@@ -17,8 +17,8 @@
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
-#include "minddata/dataset/include/constants.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/data_type.h"

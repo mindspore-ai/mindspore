@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include <algorithm>
 #include <fstream>
 #include <unordered_set>
@@ -23,9 +23,9 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/runtime_context.h"
-#include "minddata/dataset/include/iterator.h"
-#include "minddata/dataset/include/samplers.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/iterator.h"
+#include "minddata/dataset/include/dataset/samplers.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/client.h"

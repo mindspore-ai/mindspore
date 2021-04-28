@@ -15,7 +15,7 @@
  */
 #include "common/common.h"
 #include "common/cvop_common.h"
-#include "minddata/dataset/include/vision_ascend.h"
+#include "minddata/dataset/include/dataset/vision_ascend.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_jpeg_op.h"
 #include "utils/log_adapter.h"
 

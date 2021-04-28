@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TEXT_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TEXT_H_
 
 #include <memory>
 #include <optional>
@@ -25,8 +25,8 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
-#include "minddata/dataset/include/constants.h"
-#include "minddata/dataset/include/transforms.h"
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -539,4 +539,4 @@ class WhitespaceTokenizer final : public TensorTransform {
 }  // namespace text
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TEXT_H_

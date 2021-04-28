@@ -16,7 +16,7 @@
 #include "common/common.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include <functional>
 
 using namespace mindspore::dataset;

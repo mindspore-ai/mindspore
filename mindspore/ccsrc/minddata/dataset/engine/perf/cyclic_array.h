@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <cstring>
 #include <type_traits>
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {

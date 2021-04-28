@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <utility>
 #include <iomanip>
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/core/config_manager.h"

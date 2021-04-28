@@ -19,8 +19,8 @@
 #include <memory>
 #include <vector>
 
-#include "mindspore/ccsrc/minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/constants.h"
+#include "mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {

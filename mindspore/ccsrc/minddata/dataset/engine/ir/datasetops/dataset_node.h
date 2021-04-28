@@ -37,7 +37,7 @@
 #include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/engine/ir/cache/dataset_cache.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 

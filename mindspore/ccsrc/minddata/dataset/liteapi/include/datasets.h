@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -32,9 +32,9 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/types.h"
-#include "include/iterator.h"
-#include "include/samplers.h"
-#include "include/transforms.h"
+#include "include/dataset/iterator.h"
+#include "include/dataset/samplers.h"
+#include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -570,4 +570,4 @@ inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATASETS_H_

@@ -29,9 +29,9 @@
 #include "include/train/accuracy_metrics.h"
 #include "include/train/classification_train_accuracy_monitor.h"
 #include "src/utils.h"
-#include "include/datasets.h"
-#include "include/vision_lite.h"
-#include "include/transforms.h"
+#include "include/dataset/datasets.h"
+#include "include/dataset/vision_lite.h"
+#include "include/dataset/transforms.h"
 
 using mindspore::dataset::Dataset;
 using mindspore::dataset::Mnist;

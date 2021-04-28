@@ -15,8 +15,8 @@
  */
 #include <stdio.h>
 #include "common/common.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
 

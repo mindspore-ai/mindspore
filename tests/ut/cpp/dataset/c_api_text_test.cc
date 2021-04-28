@@ -19,10 +19,10 @@
 
 #include "common/common.h"
 #include "include/api/status.h"
-#include "minddata/dataset/include/config.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/text.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/config.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/text/vocab.h"
 
 using namespace mindspore::dataset;

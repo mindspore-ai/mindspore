@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 #include <algorithm>
 

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/include/iterator.h"
+#include "minddata/dataset/include/dataset/iterator.h"
 #include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/runtime_context.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 
 namespace mindspore {
 namespace dataset {

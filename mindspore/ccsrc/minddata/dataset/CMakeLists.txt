@@ -52,7 +52,7 @@ include_directories(${CMAKE_BINARY_DIR}) # for protobuf generated .h
 
 include_directories(${CMAKE_SOURCE_DIR}/mindspore)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/mindrecord/include)
-include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
 
 ######################################################################

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_CONFIG_H
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_CONFIG_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONFIG_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONFIG_H
 
 #include <cstdint>
 #include <string>
@@ -83,4 +83,4 @@ inline bool load(std::string file) { return load(StringToChar(file)); }
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_CONFIG_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_CONFIG_H

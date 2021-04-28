@@ -18,7 +18,7 @@
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/callback/py_ds_callback.h"
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
 

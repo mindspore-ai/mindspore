@@ -17,8 +17,8 @@
 #include "include/api/types.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
-#include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/vision.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;

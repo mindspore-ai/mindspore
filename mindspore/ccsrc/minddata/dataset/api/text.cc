@@ -18,10 +18,10 @@
 #include <fstream>
 #include <regex>
 
-#include "minddata/dataset/include/text.h"
-#include "mindspore/core/ir/dtype/type_id.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
+#include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace dataset {

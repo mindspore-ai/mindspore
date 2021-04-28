@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/core/global_context.h"
 
 #include "ir/dtype/type_id.h"

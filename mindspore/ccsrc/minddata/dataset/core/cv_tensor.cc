@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/tensor.h"
 
 namespace mindspore {
