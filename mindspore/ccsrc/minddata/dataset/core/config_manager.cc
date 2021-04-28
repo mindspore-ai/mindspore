@@ -17,6 +17,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <thread>
 #include <utility>
@@ -49,6 +50,8 @@ ConfigManager::ConfigManager()
       num_cpu_threads_(std::thread::hardware_concurrency()),
       auto_num_workers_num_shards_(1),
       auto_worker_config_(0) {
+  num_cpu_threads_ = num_cpu_threads_ > 0 ? num_cpu_threads_ : std::numeric_limits<uint16_t>::max();
+  num_parallel_workers_ = num_parallel_workers_ < num_cpu_threads_ ? num_parallel_workers_ : num_cpu_threads_;
   auto env_cache_host = std::getenv("MS_CACHE_HOST");
   auto env_cache_port = std::getenv("MS_CACHE_PORT");
   if (env_cache_host != nullptr) {
@@ -76,7 +79,7 @@ void ConfigManager::Print(std::ostream &out) const {
 
 // Private helper function that takes a nlohmann json format and populates the settings
 Status ConfigManager::FromJson(const nlohmann::json &j) {
-  set_num_parallel_workers(j.value("numParallelWorkers", num_parallel_workers_));
+  RETURN_IF_NOT_OK(set_num_parallel_workers(j.value("numParallelWorkers", num_parallel_workers_)));
   set_worker_connector_size(j.value("workerConnectorSize", worker_connector_size_));
   set_op_connector_size(j.value("opConnectorSize", op_connector_size_));
   set_seed(j.value("seed", seed_));
@@ -113,8 +116,14 @@ Status ConfigManager::LoadFile(const std::string &settingsFile) {
 }
 
 // Setter function
-void ConfigManager::set_num_parallel_workers(int32_t num_parallel_workers) {
+Status ConfigManager::set_num_parallel_workers(int32_t num_parallel_workers) {
+  if (num_parallel_workers > num_cpu_threads_ || num_parallel_workers < 1) {
+    std::string err_msg = "Invalid Parameter, num_parallel_workers exceeds the boundary between 1 and " +
+                          std::to_string(num_cpu_threads_) + ", as got " + std::to_string(num_parallel_workers) + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
   num_parallel_workers_ = num_parallel_workers;
+  return Status::OK();
 }
 
 // Setter function
