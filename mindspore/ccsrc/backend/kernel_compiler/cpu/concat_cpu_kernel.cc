@@ -32,8 +32,7 @@ void ConcatCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto node_ = node_wpt_.lock();
   if (!node_) {
@@ -71,7 +70,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void ConcatCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
+void ConcatCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) const {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ConcatCPUKernel needs 1 output.";
