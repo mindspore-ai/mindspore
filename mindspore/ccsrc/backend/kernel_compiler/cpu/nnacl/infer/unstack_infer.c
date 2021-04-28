@@ -39,7 +39,7 @@ int UnstackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   for (size_t i = 0; i < input->shape_size_; ++i) {
     if (i != axis) {

@@ -36,7 +36,7 @@ int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_s
     return NNACL_INFER_INVALID;
   }
   int input_num = GetElementNum(inputs[0]);
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   for (int i = 0; i < input_num; i++) {
     ShapePush(output_shape, &output_shape_size, input_data[i]);

@@ -34,7 +34,7 @@ int LshProjectionInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   out_tensor->data_type_ = kNumberTypeInt32;
   out_tensor->format_ = Format_NHWC;
 
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   LshProjectionParameter *param = (LshProjectionParameter *)parameter;
   switch (param->lsh_type_) {

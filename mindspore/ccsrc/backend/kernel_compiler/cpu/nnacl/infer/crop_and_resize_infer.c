@@ -37,7 +37,7 @@ int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
     return NNACL_INFER_INVALID;
   }
 
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   if (inputs[1]->data_ != NULL) {
     const TensorC *boxes_tensor = inputs[1];

@@ -157,7 +157,7 @@ typedef struct VectorC {
 
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tensor_shape);
 int TensorListMergeShape(int *element_shape, size_t *element_shape_size, const int *tmp, size_t tmp_size);
-bool TensorListIsFullyDefined(int *shape, size_t shape_size);
+bool TensorListIsFullyDefined(const int *shape, size_t shape_size);
 
 int GetBatch(const TensorC *tensor);
 int GetHeight(const TensorC *tensor);
@@ -180,7 +180,7 @@ int CheckAugmentNullOutputSize(const TensorC *const *inputs, size_t inputs_size,
 void SetDataTypeFormat(TensorC *dst, const TensorC *src);
 
 int SetShapeTensor(TensorC *dst, const TensorC *src);
-int SetShapeArray(TensorC *dst, int *src, size_t src_size);
+int SetShapeArray(TensorC *dst, const int *src, size_t src_size);
 int ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size);
 int ShapePush(int *shape, size_t *shape_size, int value);
 int ShapeInsert(int *shape, size_t *shape_size, int index, int value);
@@ -198,8 +198,8 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
                   OpParameter *parameter);
 
 int VectorCInit(VectorC *vc, size_t per_malloc_size);
-void VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size);
-void VectorCPush(VectorC *vc, int value);
+int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size);
+int VectorCPush(VectorC *vc, int value);
 void VectorCInsert(VectorC *vc, int index, int value);
 void VectorCErase(VectorC *vc, int index);
 bool VectorCEqual(VectorC *vc1, VectorC *vc2);

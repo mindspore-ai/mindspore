@@ -35,6 +35,9 @@ int RfftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
   ShapeSet(output->shape_, &(output->shape_size_), input->shape_, input->shape_size_);
   RfftParameter *param = (RfftParameter *)parameter;
+  if (input->shape_size_ < 1) {
+    return NNACL_ERR;
+  }
   output->shape_[input->shape_size_ - 1] = param->fft_length_ / 2 + 1;
   ShapePush(output->shape_, &(output->shape_size_), 2);
   return NNACL_OK;

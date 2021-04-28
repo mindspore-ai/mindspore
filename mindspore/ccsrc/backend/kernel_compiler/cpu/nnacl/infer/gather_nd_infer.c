@@ -40,7 +40,7 @@ int GatherNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
     return NNACL_OK;
   }
   int i = 0;
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   for (i = 0; i < indices_rank - 1; ++i) {
     ShapePush(out_shape, &out_shape_size, indices->shape_[i]);

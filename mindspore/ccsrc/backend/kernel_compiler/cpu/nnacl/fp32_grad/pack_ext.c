@@ -222,7 +222,7 @@ void col2im_hwc(const float *data_col, float *data_im, const ConvParameter *conv
           int input_col = -pad_left + kernel_col * dilation_w + col_stride_offset;
           if (((unsigned)(input_row) < (unsigned)(in_height)) && ((unsigned)(input_col) < (unsigned)(in_width))) {
             int offset = (input_row * in_width + input_col) * tot_channels;
-            float *data_im_ptr = &data_im[offset];
+            float *data_im_ptr = data_im + offset;
             for (int i = 0; i < channels; i++) {
               data_im_ptr[i] += data_col[i];
             }
@@ -270,7 +270,7 @@ void rolling_col2im_hwc(const float *data_col, float *data_im, const ConvParamet
           int input_col = -pad_left + kernel_col * dilation_w + col_stride_offset;
           if (((unsigned)(input_row) < (unsigned)(in_height)) && ((unsigned)(input_col) < (unsigned)(in_width))) {
             int offset = (input_row * in_width + input_col) * tot_channels;
-            float *data_im_ptr = &data_im[offset];
+            float *data_im_ptr = data_im + offset;
             *data_im_ptr += *data_col;
           }
           data_col++;

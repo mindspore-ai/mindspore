@@ -52,12 +52,12 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (perms_num != 0 && perm_data == NULL) {
     return NNACL_INFER_INVALID;
   }
-  int perm[MAX_SHAPE_SIZE];
+  int perm[MAX_SHAPE_SIZE] = {0};
   size_t perm_size = 0;
   for (size_t i = 0; i < perms_num; i++) {
     ShapePush(perm, &perm_size, perm_data[i]);
   }
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   if (input->shape_size_ != 4 && perms_num == 4) {
     for (size_t i = 0; i < input->shape_size_; ++i) {
       out_shape[i] = input->shape_[i];

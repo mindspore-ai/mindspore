@@ -17,14 +17,14 @@
 #include "nnacl/infer/audio_spectrogram_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int Log2Ceil(uint32_t length) {
+unsigned Log2Ceil(unsigned length) {
   if (length == 0) {
-    return -1;
+    return 0;
   }
   int floor = 0;
   for (int i = 4; i >= 0; --i) {
-    const int shift = (1 << i);
-    uint32_t tmp = length >> shift;
+    const unsigned shift = (1 << i);
+    unsigned tmp = length >> shift;
     if (tmp != 0) {
       length = tmp;
       floor += shift;
@@ -33,8 +33,8 @@ int Log2Ceil(uint32_t length) {
   return length == (length & ~(length - 1)) ? floor : floor + 1;
 }
 
-uint32_t GetFftLength(uint32_t length) {
-  int shift = Log2Ceil(length);
+unsigned GetFftLength(unsigned length) {
+  unsigned shift = Log2Ceil(length);
   return 1 << shift;
 }
 

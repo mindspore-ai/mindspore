@@ -140,7 +140,7 @@ int ElementLogicalOr(const float *in0, const float *in1, float *out, int size) {
   }
 #endif
   for (; index < size; index++) {
-    out[index] = (float)((bool)(in0[index]) | (bool)(in1[index]));
+    out[index] = (float)((unsigned int)(in0[index]) | (unsigned int)(in1[index]));
   }
   return NNACL_OK;
 }
@@ -148,7 +148,7 @@ int ElementLogicalOr(const float *in0, const float *in1, float *out, int size) {
 int ElementLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size) {
   int index = 0;
   for (; index < size; index++) {
-    out[index] = (in0[index]) | (in1[index]);
+    out[index] = (bool)((unsigned int)(in0[index]) | (unsigned int)(in1[index]));
   }
   return NNACL_OK;
 }

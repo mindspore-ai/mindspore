@@ -15,7 +15,6 @@
  */
 #include "nnacl/fp32/log_softmax_fp32.h"
 #include <math.h>
-#include <float.h>
 #include "nnacl/fp32/softmax_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
 

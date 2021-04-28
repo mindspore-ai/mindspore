@@ -41,13 +41,13 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (axis < 0 || axis >= input0_shape_size) {
     return NNACL_ERR;
   }
-  int input0_shape_without_axis[MAX_SHAPE_SIZE];
+  int input0_shape_without_axis[MAX_SHAPE_SIZE] = {0};
   size_t input0_shape_without_axis_size = 0;
   ShapeSet(input0_shape_without_axis, &input0_shape_without_axis_size, input0_shape, input0_shape_size);
   ShapeErase(input0_shape_without_axis, &input0_shape_without_axis_size, axis);
   int output_axis_dim = input0_shape[axis];
   for (size_t i = 1; i < inputs_size; ++i) {
-    int shape_tmp[MAX_SHAPE_SIZE];
+    int shape_tmp[MAX_SHAPE_SIZE] = {0};
     size_t shape_tmp_size = 0;
     ShapeSet(shape_tmp, &shape_tmp_size, inputs[i]->shape_, inputs[i]->shape_size_);
     if (shape_tmp_size != input0_shape_size) {

@@ -43,7 +43,7 @@ void BinaryCrossEntropy(const int input_size, const int reduction, const float *
     if (input_size % 2 == 1) {
       tmp_loss[0] += tmp_loss[input_size - 1];
     }
-    for (int stride = input_size / 2; stride > 0; stride >>= 1) {
+    for (int stride = input_size / 2; stride > 0; stride = stride / 2) {
       for (int i = 0; i < stride; i++) {
         tmp_loss[i] += tmp_loss[i + stride];
       }

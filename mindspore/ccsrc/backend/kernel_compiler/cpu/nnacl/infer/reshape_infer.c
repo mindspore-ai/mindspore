@@ -17,7 +17,7 @@
 #include "nnacl/infer/reshape_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-void CalShape(int *data, const TensorC *const *inputs, int *out_shape, size_t *out_shape_size, int shape_size) {
+void CalShape(const int *data, const TensorC *const *inputs, int *out_shape, size_t *out_shape_size, int shape_size) {
   int input_count = GetElementNum(inputs[0]);
   int index = 0;
   int size = 1;
@@ -68,6 +68,9 @@ int CalNewShape(const TensorC *in_tensor, int *out_shape, size_t out_shape_size)
     return NNACL_ERR;
   }
   if (infer_index != -1) {
+    if (out_shape_size_new == 0) {
+      return NNACL_ERR;
+    }
     out_shape[infer_index] = in_shape_size / out_shape_size_new;
   }
   return NNACL_OK;
@@ -118,6 +121,9 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
     case kNumberTypeUInt32: {
       uint32_t *data = (uint32_t *)(shape_tensor->data_);
       int *data_int = (int *)malloc(sizeof(int) * shape_size);
+      if (data_int == NULL) {
+        return NNACL_ERR;
+      }
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
@@ -147,7 +153,7 @@ int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
     return NNACL_INFER_INVALID;
   }
 
-  int out_shape[MAX_SHAPE_SIZE];
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   if (inputs_size == 2) {
     const TensorC *shape_tensor = inputs[1];

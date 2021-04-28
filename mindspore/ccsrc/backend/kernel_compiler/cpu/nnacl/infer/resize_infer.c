@@ -127,7 +127,7 @@ int ResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_INFER_INVALID;
   }
 
-  int output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapePush(output_shape, &output_shape_size, GetBatch(input));
   int ret = CalculateNewHeightAndWidth(inputs, inputs_size, param);

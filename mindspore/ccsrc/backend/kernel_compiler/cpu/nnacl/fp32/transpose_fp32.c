@@ -171,7 +171,7 @@ void TransposeDim6Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_shape, const int *size, int *position,
                        TransposeParameter *transpose_param, int task_id, int thread_num) {
   int *perm = transpose_param->perm_;
   int *strides = transpose_param->strides_;
