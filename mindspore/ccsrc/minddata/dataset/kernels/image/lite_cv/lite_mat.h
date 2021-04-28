@@ -229,7 +229,13 @@ class LiteMat {
 
   void Init(int width, int height, void *p_data, LDataType data_type = LDataType::UINT8);
 
-  void Init(int width, int height, int channel, LDataType data_type = LDataType::UINT8);
+  // Perform Init operation on given LiteMat, will malloc memory for it.
+  // @param width set width for given LiteMat.
+  // @param height set height for given LiteMat.
+  // @param channel set channel for given LiteMat.
+  // @param data_type set data type for given LiteMat.
+  // @param align_memory whether malloc align memory or not, default is true, which is better for doing acceleration.
+  void Init(int width, int height, int channel, LDataType data_type = LDataType::UINT8, bool align_memory = true);
 
   void Init(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
 
